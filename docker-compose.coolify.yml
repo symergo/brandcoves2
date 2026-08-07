@@ -1,0 +1,165 @@
+# Production / staging compose, deployed by Coolify from GitHub.
+#
+# Coolify settings:
+#   Build Pack              = Docker Compose
+#   Docker Compose Location = /docker-compose.coolify.yml
+#   Domain                  -> assigned to the `app` service (Traefik + Let's Encrypt)
+#   Auto Deploy             = on
+#   Scheduled Backups       = on the `postgres` service
+#
+# Everything is built from the repo. There are NO bind mounts and no seeded
+# volumes — the only persistent state is the postgres volume. That is the whole
+# reason this deployment is simpler than v1's WordPress one.
+#
+# BUILD VARIABLES: VITE_* is baked into the client bundle at BUILD time. In
+# Coolify these must be ticked "Build Variable". Left as plain runtime vars they
+# are undefined in the browser and every client-side interaction breaks, while
+# server-rendered pages look perfectly fine — a genuinely confusing failure.
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      VITE_APP_NAME: ${APP_NAME:-Brandcoves}
+  environment: &app-env
+    APP_NAME: ${APP_NAME:-Brandcoves}
+    APP_ENV: production
+    APP_KEY: ${APP_KEY}
+    APP_DEBUG: "false"
+    APP_URL: ${APP_URL}
+    APP_LOCALE: en
+
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: ${LOG_LEVEL:-warning}
+
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: ${POSTGRES_DB}
+    DB_USERNAME: ${POSTGRES_USER}
+    DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+    REDIS_CLIENT: phpredis
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+
+    SESSION_DRIVER: redis
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: redis
+
+    MAIL_MAILER: resend
+    RESEND_API_KEY: ${RESEND_API_KEY}
+    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+    MAIL_FROM_NAME: ${APP_NAME:-Brandcoves}
+
+    GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+    GOOGLE_REDIRECT_URI: ${APP_URL}/auth/google/callback
+
+    CREDENTIALS_ENCRYPTION_KEY: ${CREDENTIALS_ENCRYPTION_KEY}
+    CLAIM_HASH_SECRET: ${CLAIM_HASH_SECRET}
+
+    AI_ENABLED: ${AI_ENABLED:-false}
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+
+    AWIN_API_TOKEN: ${AWIN_API_TOKEN}
+    AWIN_PUBLISHER_ID: ${AWIN_PUBLISHER_ID}
+    BOL_CLIENT_ID: ${BOL_CLIENT_ID}
+    BOL_CLIENT_SECRET: ${BOL_CLIENT_SECRET}
+    AMAZON_ENABLED: ${AMAZON_ENABLED:-false}
+    AMAZON_ACCESS_KEY: ${AMAZON_ACCESS_KEY}
+    AMAZON_SECRET_KEY: ${AMAZON_SECRET_KEY}
+    AMAZON_PARTNER_TAGS: ${AMAZON_PARTNER_TAGS}
+
+    # Staging leaves this false so it never enters the index.
+    ROBOTS_ALLOW: ${ROBOTS_ALLOW:-false}
+    GIT_COMMIT_SHA: ${SOURCE_COMMIT:-unknown}
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  # Runs once per deploy and exits. app/queue/scheduler wait for it to succeed,
+  # so nothing ever serves traffic against an un-migrated schema.
+  migrate:
+    <<: *app
+    command: ["php", "artisan", "migrate", "--force", "--isolated"]
+    restart: "no"
+
+  app:
+    <<: *app
+    expose:
+      - "8080"          # Coolify's Traefik routes the domain here. Never publish ports.
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8080/health') ? 0 : 1);"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # EXACTLY ONE REPLICA. Horizon supervises its own worker pool; running two
+  # Horizons would double-process every job, including feed ingestion.
+  queue:
+    <<: *app
+    command: ["php", "artisan", "horizon"]
+    deploy:
+      replicas: 1
+    # SIGTERM lets Horizon finish the job in flight instead of abandoning a
+    # half-ingested feed chunk mid-transaction.
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Replaces cron. Runs in its own container so a redeploy of `app` never drops
+  # a scheduled run.
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    deploy:
+      replicas: 1
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Queues live here. Without persistence, a restart loses every queued job —
+    # including a half-finished ingestion run.
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pg_data:
+  redis_data:

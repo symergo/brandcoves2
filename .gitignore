@@ -1,0 +1,49 @@
+*.log
+.DS_Store
+.phpactor.json
+.phpunit.result.cache
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db
+
+# Secrets — never commit. .env holds live Awin/bol/Anthropic credentials plus
+# the claim-hash secret, which is effectively permanent (rotating it orphans
+# every existing wishlist claim).
+.env
+.env.*
+!.env.example
+
+*.pem
+*.ppk
+*.key
+# Amazon credentials currently sit unencrypted in the parent folder. They belong
+# in .env / the Coolify UI, never in the repo.
+PAAPICredentials.csv
+Amazon-tags.txt
+
+# Database dumps. A production dump contains real user emails and personal gift
+# notes, and this repo lives inside a Synology-synced folder.
+*.dump
+*.sql
+*.sql.gz
+
+# Synology Drive
+@eaDir/
+.sync*

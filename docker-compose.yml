@@ -1,0 +1,56 @@
+# Local development infrastructure ONLY.
+#
+# PHP, Composer and Node run on the Windows host — bind-mounting a PHP project
+# into a Linux container on Windows makes every request stat hundreds of
+# autoloaded files across the filesystem boundary, which is painfully slow.
+#
+#   docker compose up -d
+#   php artisan migrate --seed
+#   composer dev          # serve + queue worker + vite, all at once
+#
+# Production is a different file: docker-compose.coolify.yml
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: brandcoves
+      POSTGRES_USER: brandcoves
+      POSTGRES_PASSWORD: brandcoves
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brandcoves -d brandcoves"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Catches every outbound email in dev — magic-link logins, price-drop alerts,
+  # the daily digest. Web UI on http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # web UI
+
+volumes:
+  pg_data:
+  redis_data:

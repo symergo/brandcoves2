@@ -1,0 +1,75 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens.
+ *
+ * The warm "Maison Commerce" palette is carried over from v1 — white cards on
+ * cream, terracotta for action. It is the one thing from the old site worth
+ * keeping verbatim: it reads as a considered shop rather than a price-comparison
+ * spreadsheet, which is exactly the difference this product is selling.
+ *
+ * Inter throughout. v1 replaced a three-font stack with one and the pages got
+ * both faster and more coherent.
+ */
+@theme {
+    --color-cream: #f7f4ef;
+    --color-ink: #1a1614;
+    --color-ink-soft: #5b524c;
+    --color-accent: #c9503a;
+    --color-accent-dark: #a83f2c;
+    --color-sage: #4a6741;
+    --color-amber: #c4956a;
+    --color-line: #e5ded4;
+    --color-card: #ffffff;
+
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    --radius-card: 0.75rem;
+}
+
+/*
+ * Dark mode is a token swap, not a second stylesheet. Defined against the
+ * `prefers-color-scheme` default only — an explicit in-app toggle comes later
+ * and will set data-theme, which must win over the media query.
+ */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --color-cream: #17130f;
+        --color-ink: #f2ece4;
+        --color-ink-soft: #a89d93;
+        --color-line: #2f2822;
+        --color-card: #1f1a15;
+    }
+}
+
+:root[data-theme='dark'] {
+    --color-cream: #17130f;
+    --color-ink: #f2ece4;
+    --color-ink-soft: #a89d93;
+    --color-line: #2f2822;
+    --color-card: #1f1a15;
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        background-color: var(--color-cream);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Feed images vary wildly in aspect ratio and some 404 outright. */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+    }
+}
