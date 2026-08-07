@@ -9,7 +9,8 @@ cannot be recovered from a diff.
 | [localisation.md](localisation.md) | Core / Frontend | Active |
 | [ingestion.md](ingestion.md) | Catalogue | Active |
 | [product-identity.md](product-identity.md) | Catalogue | Active |
-| [search.md](search.md) | Search | Partial — schema + indexes only |
+| [search.md](search.md) | Search | Active |
+| [seo.md](seo.md) | SEO / Frontend | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Planned — late Phase 2 / early Phase 3 |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Planned |
 | [daily-picks.md](daily-picks.md) | Discovery | Planned |
@@ -17,19 +18,11 @@ cannot be recovered from a diff.
 | [wishlists.md](wishlists.md) | Wishlist | Planned |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 
-## Known gap to close before Phase 6
+## Closed in Phase 2
 
-**Pages are currently client-rendered.** Inertia is running without SSR, so the
-HTML shell carries only the JSON payload and React renders in the browser. That
-is fine for the wizard and the wishlist tray, but buying guides, per-pick pages
-and product pages are the entire SEO growth model and must not depend on the
-crawler executing JavaScript.
-
-Two options, to be decided in Phase 2: enable Inertia SSR
-(`@inertiajs/react/server` + a `php artisan inertia:start-ssr` container), or
-render the SEO-critical routes as Blade and keep Inertia/React for the
-interactive surfaces only. The second is closer to what CLAUDE.md already
-describes ("Blade for the document shell only" was too narrow a reading).
+The client-rendering gap flagged after Phase 0 is resolved: Inertia SSR now runs
+as its own Node container, so crawlers receive fully rendered HTML. See
+[seo.md](seo.md).
 
 ## Build phases
 
