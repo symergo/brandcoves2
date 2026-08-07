@@ -21,15 +21,26 @@ use Illuminate\Support\Facades\Schedule;
 | may run outside a queued job. See docs/features/ai-invariant.md.
 */
 
-// Feed ingestion. Hourly rather than nightly because prices move during the
-// day and a stale "cheapest offer" is the one claim this site cannot get wrong.
+/*
+ * Feed ingestion, twice a day.
+ *
+ * Awin regenerates an advertiser feed once or twice daily, so downloading
+ * hourly re-fetches an unchanged file — hundreds of megabytes of bandwidth,
+ * per feed, for no new data.
+ *
+ * Prices that move intra-day are covered by the live sources (bol queries at
+ * request time) and by the wishlist refresh, which re-checks only the handful
+ * of products someone actually cares about.
+ *
+ * 04:10 and 16:10: after the overnight regeneration, and again mid-afternoon.
+ */
 Schedule::call(function (): void {
     Feed::query()->enabled()->get()->each(
         fn (Feed $feed) => IngestFeed::dispatch($feed->id)
     );
 })
     ->name('ingest-feeds')
-    ->hourly()
+    ->twiceDailyAt(4, 16, 10)
     // A run that overlaps the previous one would fight over the same cursor.
     // name() must come first — the mutex is keyed on it.
     ->withoutOverlapping()
@@ -38,13 +49,16 @@ Schedule::call(function (): void {
 // Grouping runs after ingestion has had time to land. Separate from ingestion
 // because it is set-based over a whole market: doing it per feed would compute
 // a group's cheapest offer from a half-loaded catalogue.
+//
+// Offset by 50 minutes rather than a few, because a multi-hundred-megabyte feed
+// legitimately takes a while.
 Schedule::call(function (): void {
     foreach (Market::cases() as $market) {
         GroupProducts::dispatch($market);
     }
 })
     ->name('group-products')
-    ->hourlyAt(40)
+    ->twiceDailyAt(5, 17, 0)
     ->withoutOverlapping()
     ->onOneServer();
 
