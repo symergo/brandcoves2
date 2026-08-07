@@ -1,16 +1,18 @@
 import { Link, usePage } from '@inertiajs/react'
 import type { PropsWithChildren } from 'react'
 import type { SharedProps } from '../types'
+import { useTranslations } from '../useTranslations'
 
 export default function SiteLayout({ children }: PropsWithChildren) {
     const { market, markets, auth } = usePage<SharedProps>().props
+    const { t } = useTranslations()
     const base = `/${market.key}`
 
     const nav = [
-        { href: `${base}/search`, label: 'Search' },
-        { href: `${base}/gift`, label: 'Gift Finder' },
-        { href: `${base}/daily`, label: 'Daily Picks' },
-        { href: `${base}/guides`, label: 'Guides' },
+        { href: `${base}/search`, label: t('nav.search') },
+        { href: `${base}/gift`, label: t('nav.gift') },
+        { href: `${base}/daily`, label: t('nav.daily') },
+        { href: `${base}/guides`, label: t('nav.guides') },
     ]
 
     return (
@@ -19,7 +21,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                 href="#main"
                 className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-white"
             >
-                Skip to content
+                {t('nav.skip')}
             </a>
 
             <header className="border-b border-line">
@@ -28,7 +30,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                         Brandcoves
                     </Link>
 
-                    <nav className="hidden gap-5 text-sm text-ink-soft sm:flex" aria-label="Main">
+                    <nav className="hidden gap-5 text-sm text-ink-soft sm:flex" aria-label={t('nav.main')}>
                         {nav.map((item) => (
                             <Link key={item.href} href={item.href} className="hover:text-ink">
                                 {item.label}
@@ -39,11 +41,11 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                     <div className="ml-auto flex items-center gap-3">
                         {/*
                           A plain <select> with a full page load. Switching market
-                          changes the catalogue, the currency and the URL — a
-                          client-side swap would leave stale prices on screen.
+                          changes the catalogue, the currency and the language —
+                          a client-side swap would leave stale prices on screen.
                         */}
                         <label className="sr-only" htmlFor="market-switcher">
-                            Choose your market
+                            {t('nav.choose_market')}
                         </label>
                         <select
                             id="market-switcher"
@@ -62,11 +64,11 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
                         {auth.user ? (
                             <Link href={`${base}/lists`} className="text-sm hover:text-ink">
-                                My lists
+                                {t('nav.lists')}
                             </Link>
                         ) : (
                             <Link href="/login" className="text-sm hover:text-ink">
-                                Sign in
+                                {t('nav.sign_in')}
                             </Link>
                         )}
                     </div>
@@ -79,10 +81,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
             <footer className="border-t border-line">
                 <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-ink-soft">
-                    <p>
-                        Brandcoves compares offers across shops. We may earn a commission on
-                        purchases made through our links — it never changes what you pay.
-                    </p>
+                    <p>{t('footer.affiliate')}</p>
                 </div>
             </footer>
         </div>

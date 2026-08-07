@@ -21,10 +21,15 @@ export interface AuthUser {
     isAdmin: boolean
 }
 
+/** Nested translation tree, as returned by Lang::get('site'). */
+export type Translations = { [key: string]: string | Translations }
+
 export interface SharedProps {
     auth: { user: AuthUser | null }
     market: CurrentMarket
     markets: MarketSummary[]
+    translations: Translations
+    translationVersion: string
     flash: { success?: string; error?: string }
     [key: string]: unknown
 }

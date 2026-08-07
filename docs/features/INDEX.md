@@ -6,7 +6,9 @@ cannot be recovered from a diff.
 | Feature | Area | Status |
 |---|---|---|
 | [market-routing.md](market-routing.md) | Core | Active |
-| [product-identity.md](product-identity.md) | Catalogue | Designed |
+| [localisation.md](localisation.md) | Core / Frontend | Active |
+| [ingestion.md](ingestion.md) | Catalogue | Active |
+| [product-identity.md](product-identity.md) | Catalogue | Active |
 | [search.md](search.md) | Search | Partial — schema + indexes only |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Planned |
 | [daily-picks.md](daily-picks.md) | Discovery | Planned |

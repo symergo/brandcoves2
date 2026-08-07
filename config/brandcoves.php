@@ -201,6 +201,9 @@ return [
             'enabled' => true,
             'client_id' => env('BOL_CLIENT_ID'),
             'client_secret' => env('BOL_CLIENT_SECRET'),
+            // Turns a plain product URL into a tracked one. Without it the
+            // click still works but earns nothing.
+            'partner_id' => env('BOL_PARTNER_ID'),
 
             // bol documents 10 requests/second. A token bucket can emit
             // capacity + rate inside a single second — the full bucket plus

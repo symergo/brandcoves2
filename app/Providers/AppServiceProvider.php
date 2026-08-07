@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Services\Connectors\Awin\AwinConnector;
+use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
@@ -21,9 +22,11 @@ class AppServiceProvider extends ServiceProvider
             $registry = new ConnectorRegistry;
 
             $registry->registerFeed(new AwinConnector);
+            $registry->registerLive(new BolConnector);
 
-            // bol and Amazon land here in the next increments. Amazon stays
-            // config-disabled until its credentials are verified.
+            // Amazon is written but stays config-disabled until its credentials
+            // are verified (Phase 8). Registering it here is what makes that a
+            // config change rather than a refactor.
 
             return $registry;
         });

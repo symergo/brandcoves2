@@ -7,6 +7,7 @@ namespace App\Http\Middleware;
 use App\Enums\Market;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -16,6 +17,18 @@ class HandleInertiaRequests extends Middleware
     public function version(Request $request): ?string
     {
         return parent::version($request);
+    }
+
+    /**
+     * Bust the client cache when translations change.
+     *
+     * Without this a visitor who has the page cached keeps the old strings
+     * after a copy fix, and the Inertia asset version alone would not notice
+     * because no JS or CSS changed.
+     */
+    private function translationVersion(): string
+    {
+        return (string) filemtime(lang_path(app()->getLocale().'/site.php'));
     }
 
     /**
@@ -57,6 +70,17 @@ class HandleInertiaRequests extends Middleware
                 'label' => $m->label(),
                 'nativeName' => $m->nativeName(),
             ], Market::cases()),
+
+            /*
+             * Site copy for the current market's language.
+             *
+             * Shipped whole rather than fetched: it is a few kilobytes, and a
+             * separate request would mean the first paint shows translation
+             * keys. Keyed by language, so be-nl and nl-nl share one file —
+             * they are two markets, not two languages.
+             */
+            'translations' => Lang::get('site'),
+            'translationVersion' => $this->translationVersion(),
 
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

@@ -30,8 +30,12 @@ composer dev                         # http://localhost:8000
 Grant yourself admin:
 
 ```bash
-php artisan tinker --execute="App\Models\User::firstWhere('email','you@example.com')?->update(['is_admin'=>true]);"
+php artisan bc:make-admin you@example.com
 ```
+
+`is_admin` is deliberately not mass-assignable, so `update(['is_admin' => true])`
+silently does nothing — no request payload can ever grant admin access, and there
+is no self-service path to the panel.
 
 ## Architecture in one paragraph
 
