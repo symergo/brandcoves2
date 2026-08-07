@@ -52,13 +52,19 @@ RUN install-php-extensions \
 
 WORKDIR /app
 
+# The composer binary itself, not just its output: dump-autoload has to run
+# after the application source is present, which is here rather than in the
+# vendor stage. frankenphp ships no composer.
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
 COPY --from=vendor /build/vendor ./vendor
 COPY . .
 COPY --from=frontend /build/public/build ./public/build
 
 # Now that the full app is present, finish the autoloader and run discovery.
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative \
-    && php artisan package:discover --ansi
+    && php artisan package:discover --ansi \
+    && rm -f /usr/local/bin/composer
 
 # Compiled once at build time rather than on first request. Deliberately NOT
 # config:cache — that would bake build-time env values into the image, and the
