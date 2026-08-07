@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Ingestion;
 
 use App\Enums\ProductStatus;
+use App\Enums\Source;
 use App\Models\Feed;
 use App\Models\Merchant;
 use App\Services\Connectors\Offer;
@@ -117,26 +118,45 @@ class OfferUpserter
      */
     private function recordPriceHistory(array $rows, Carbon $now): void
     {
-        $priced = array_values(array_filter($rows, fn (array $r) => $r['price'] !== null));
+        // Prices are recorded for every source, Amazon included: storing a
+        // price is not the restricted act. What Amazon prohibits is building a
+        // price-tracking feature on top — that is gated on the read side by
+        // Source::allowsPriceTracking(). See docs/features/amazon-compliance.md.
+        $priced = array_values(array_filter(
+            $rows,
+            fn (array $r) => $r['price'] !== null && Source::from($r['source'])->allowsPriceStorage(),
+        ));
+
         if ($priced === []) {
             return;
         }
 
-        // Every row in a chunk comes from one feed, so they share a source and
-        // a market. That makes the lookup a single indexed IN rather than a
-        // composite-key tuple match, which the query builder cannot express
-        // anyway.
-        $externalIds = array_column($priced, 'external_id');
+        // Grouped by (source, market) rather than assuming the whole batch
+        // shares one. A feed chunk does, but the live search path upserts bol
+        // offers alongside whatever else it found — and an earlier version
+        // keyed the lookup off the first row, silently dropping the price
+        // history of every other source in the batch.
+        $bySourceAndMarket = [];
+        foreach ($priced as $row) {
+            $bySourceAndMarket[$row['source'].'|'.$row['market']][] = $row['external_id'];
+        }
 
-        $ids = DB::table('products')
-            ->select('id', 'price', 'availability')
-            ->where('source', $priced[0]['source'])
-            ->where('market', $priced[0]['market'])
-            ->whereIn('external_id', $externalIds)
-            ->get();
+        $products = collect();
+        foreach ($bySourceAndMarket as $key => $externalIds) {
+            [$source, $market] = explode('|', $key, 2);
+
+            $products = $products->merge(
+                DB::table('products')
+                    ->select('id', 'price', 'availability')
+                    ->where('source', $source)
+                    ->where('market', $market)
+                    ->whereIn('external_id', $externalIds)
+                    ->get()
+            );
+        }
 
         $history = [];
-        foreach ($ids as $product) {
+        foreach ($products as $product) {
             if ($product->price === null) {
                 continue;
             }

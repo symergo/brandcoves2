@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Market;
 use App\Enums\ProductStatus;
+use App\Enums\Source;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Services\Seo\PageMeta;
@@ -160,13 +161,25 @@ class ProductController extends Controller
      * The minimum rather than any single shop's price: the line answers "what
      * would this have cost me", which is the question a price chart is for.
      *
+     * COMPLIANCE: sources that disallow price tracking are excluded from the
+     * chart. Their prices are still recorded — storage is permitted — but they
+     * may not appear in a user-facing price-tracking feature. Filtering on the
+     * read side keeps that distinction exactly where the policy draws it.
+     * See docs/features/amazon-compliance.md.
+     *
      * @return list<array{date: string, price: int}>
      */
     private function priceHistory(ProductGroup $group): array
     {
+        $trackable = array_values(array_filter(
+            Source::values(),
+            fn (string $s) => Source::from($s)->allowsPriceTracking(),
+        ));
+
         return DB::table('price_history as h')
             ->join('products as p', 'p.id', '=', 'h.product_id')
             ->where('p.group_id', $group->id)
+            ->whereIn('p.source', $trackable)
             ->where('h.captured_on', '>=', now()->subDays(90)->toDateString())
             ->groupBy('h.captured_on')
             ->orderBy('h.captured_on')
