@@ -34,6 +34,29 @@ working on real infrastructure.
 Two Horizons would double-process every job, including feed ingestion. `stop_grace_period: 60s` lets
 the in-flight job finish rather than abandoning a half-ingested chunk.
 
+## Gotchas hit standing staging up (2026-08-07)
+
+Five real ones, all fixed. Recorded because every one of them would recur on a
+fresh environment.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Build fails `composer: not found` | Runtime stage copies `vendor/` from the composer stage but frankenphp ships no composer binary, and `dump-autoload` must run *after* the app source is present | `COPY --from=composer:2 /usr/bin/composer`, removed again in the same layer |
+| Every request 502s while the container reports **healthy** | frankenphp exposes 80, 443 and 2019; adding 8080 gave Traefik four candidates and no `loadbalancer.server.port` label, so it routed to 80 where nothing listened. The healthcheck hit 8080 directly, so the container looked fine | Serve on **80** — the port Traefik already assumes. v1's WordPress works because it exposes exactly one port |
+| Redirects and asset URLs come out `http://` | Traefik terminates TLS and forwards plain HTTP; Laravel saw an insecure request | `$middleware->trustProxies(at: '*')` in `bootstrap/app.php`. Safe here: the container publishes no ports and is reachable only through Traefik |
+| `queue` and `scheduler` heading for permanently unhealthy | Both inherited the base image's healthcheck (`curl localhost:2019/metrics`, Caddy's admin API). Neither runs a web server | `horizon:status` for queue; healthcheck disabled for scheduler — a check that can never pass is worse than none |
+| `/health` reported `"commit": "unknown"` | Coolify exposes **no commit SHA** to the container — only `COOLIFY_BRANCH`, `COOLIFY_FQDN`, `COOLIFY_URL`, `COOLIFY_RESOURCE_UUID` | Build timestamp written into the image (`/app/BUILD_STAMP`) plus the branch |
+
+Two process notes worth as much as the fixes:
+
+- **Coolify rebuilt the same old commit three times** because the fix had been
+  committed to `main` while the app deploys `staging`, and `git push -q origin
+  staging` was a silent no-op. Check `git ls-remote --heads origin` against the
+  local SHA before concluding a deploy is broken.
+- **The API token needs `read`**, not just `write` and `deploy` — every GET
+  endpoint 403s otherwise. UUIDs can be read straight from `coolify-db` over SSH
+  as a workaround, which is how this one was set up.
+
 ## The gotcha that will bite
 
 **`VITE_*` is baked into the client bundle at build time.** In Coolify these must be ticked
