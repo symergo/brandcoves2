@@ -27,7 +27,8 @@ class SyncAwinFeedsCommand extends Command
 {
     protected $signature = 'bc:awin-feeds
         {--min-products=100 : Skip feeds smaller than this}
-        {--limit= : Register at most this many feeds per market, largest first}
+        {--limit= : Register at most this many merchants per market, largest first}
+        {--all : Ignore the advertiser allowlist and show everything available}
         {--enable : Enable the feeds it registers (default: register disabled)}
         {--dry-run : Show what would happen and change nothing}';
 
@@ -46,6 +47,37 @@ class SyncAwinFeedsCommand extends Command
         'es' => ['region' => 'ES', 'language' => 'spanish'],
         'en' => ['region' => 'GB', 'language' => 'english'],
     ];
+
+    /**
+     * Whether an advertiser is on the allowlist.
+     *
+     * Matched loosely: Awin writes "Vanden Borre BE", "Krefel BE",
+     * "Coolblue NL", and the exact spelling changes without warning. Comparing
+     * a stripped, lowercased form survives that — an allowlist that silently
+     * stops matching would quietly empty the catalogue.
+     */
+    private function isWanted(string $advertiser): bool
+    {
+        if ($this->option('all')) {
+            return true;
+        }
+
+        $allowed = (array) config('brandcoves.connectors.awin.advertisers', []);
+        if ($allowed === []) {
+            return true;
+        }
+
+        $normalise = fn (string $v) => strtolower((string) preg_replace('/[^a-z0-9]/i', '', $v));
+        $name = $normalise($advertiser);
+
+        foreach ($allowed as $wanted) {
+            if ($name !== '' && str_contains($name, $normalise((string) $wanted))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public function handle(): int
     {
@@ -105,7 +137,8 @@ class SyncAwinFeedsCommand extends Command
                 fn (array $f) => $f['region'] === $want['region']
                     && $f['language'] === $want['language']
                     // A feed of 12 products is not worth an hourly download.
-                    && $f['products'] >= $minProducts,
+                    && $f['products'] >= $minProducts
+                    && $this->isWanted($f['advertiser']),
             );
 
             /*

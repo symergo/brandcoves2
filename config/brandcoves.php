@@ -195,6 +195,24 @@ return [
             'api_token' => env('AWIN_API_TOKEN'),
             'publisher_id' => env('AWIN_PUBLISHER_ID'),
             'chunk_size' => 1000,
+
+            /*
+             * Advertisers we actually want, matched loosely on name.
+             *
+             * An allowlist rather than "the biggest feeds", because feed size is
+             * a terrible proxy for usefulness here. FNAC's Belgian catalogue is
+             * 550,000 rows of marketplace listings; Krefel and Coolblue are a
+             * tenth the size but sell overlapping mainstream products with real
+             * EANs — which is what makes two offers comparable at all.
+             *
+             * Comparison needs the SAME product at DIFFERENT shops. Three
+             * overlapping electronics retailers produce far more comparable
+             * products than one enormous marketplace.
+             *
+             * Empty array means "no filter", which is how you explore what else
+             * is available: bc:awin-feeds --all --dry-run
+             */
+            'advertisers' => ['krefel', 'coolblue', 'vandenborre'],
         ],
 
         'bol' => [
