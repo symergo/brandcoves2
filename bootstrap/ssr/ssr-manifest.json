@@ -84,6 +84,7 @@
   "resources/js/Components/Sparkline.tsx": [],
   "resources/js/Layouts/SiteLayout.tsx": [],
   "resources/js/Pages/Auth/Login.tsx": [],
+  "resources/js/Pages/Gift/Wizard.tsx": [],
   "resources/js/Pages/Home.tsx": [],
   "resources/js/Pages/Lists/Index.tsx": [],
   "resources/js/Pages/Lists/Shared.tsx": [],
@@ -91,6 +92,7 @@
   "resources/js/Pages/Notifications.tsx": [],
   "resources/js/Pages/Product.tsx": [],
   "resources/js/Pages/Search.tsx": [],
+  "resources/js/Pages/Surprise.tsx": [],
   "resources/js/ssr.tsx": [],
   "resources/js/types.ts": [],
   "resources/js/useTranslations.ts": []

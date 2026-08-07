@@ -9,6 +9,7 @@ return [
         'gift' => 'Cadeauzoeker',
         'daily' => 'Dagtips',
         'guides' => 'Koopgidsen',
+        'surprise' => 'Verras me',
         'lists' => 'Mijn lijstjes',
         'notifications' => 'Meldingen',
         'sign_in' => 'Inloggen',
@@ -196,5 +197,84 @@ return [
         'until' => 'Onder :price',
         'any_drop' => 'Elke daling',
         'now' => 'nu :price',
+    ],
+
+    'gift' => [
+        'title' => 'Cadeauzoeker',
+        'subtitle' => 'Vertel ons over die persoon. Wij zoeken vier cadeaus die kloppen.',
+        'seo_description' => 'Beschrijf voor wie je zoekt en krijg vier cadeau-ideeën, elk met de reden erbij, vergeleken tussen winkels.',
+
+        'step_who' => 'Voor wie is het?',
+        'step_interests' => 'Waar houdt die persoon van?',
+        'step_vibe' => 'Hoe moet het voelen?',
+        'step_budget' => 'Wat wil je uitgeven?',
+        'step_avoid' => 'Iets vermijden?',
+        'step_values' => 'Waar hecht je waarde aan?',
+
+        'interests' => [
+            'cooking' => 'Koken', 'coffee' => 'Koffie', 'photography' => 'Fotografie',
+            'music' => 'Muziek', 'gaming' => 'Gamen', 'reading' => 'Lezen',
+            'fitness' => 'Sporten', 'outdoors' => 'Buiten zijn', 'travel' => 'Reizen',
+            'gardening' => 'Tuinieren', 'diy' => 'Klussen', 'beauty' => 'Verzorging',
+            'fashion' => 'Mode', 'tech' => 'Techniek', 'home' => 'Hun huis',
+            'craft' => 'Zelf maken', 'film' => 'Films en series', 'pets' => 'Hun huisdier',
+            'wellness' => 'Ontspannen', 'kids' => 'Kinderen',
+        ],
+
+        'vibes' => [
+            'practical' => 'Handig',
+            'playful' => 'Leuk',
+            'beautiful' => 'Mooi',
+        ],
+
+        'values' => [
+            'sustainable' => 'Duurzaam',
+            'local' => 'Uit de buurt',
+            'handmade' => 'Handgemaakt',
+        ],
+
+        'find' => 'Zoek cadeaus',
+        'again' => 'Opnieuw proberen',
+        'swap' => 'Iets anders',
+        'start_over' => 'Opnieuw beginnen',
+        'results_title' => 'Vier ideeën',
+        'no_results' => 'Hier paste niets bij. Probeer een ruimer budget of een andere interesse.',
+        'budget_any' => 'Geen limiet',
+        'budget_up_to' => 'Tot',
+        'avoid_placeholder' => 'bv. alcohol, wol',
+        'avoid_hint' => 'Wat op deze woorden lijkt, laten we weg.',
+        'avoid_add' => 'Toevoegen',
+        'recipient_use' => 'Gebruik wat we over :name weten',
+        'recipient_none' => 'Iemand nieuw',
+        'step' => 'Stap :current van :total',
+        'back' => 'Terug',
+        'next' => 'Volgende',
+        'skip' => 'Overslaan',
+
+        // The card shows one reason, not a breakdown: three reasons read as a
+        // machine justifying itself.
+        'reasons' => [
+            'interest_fit' => 'Past bij :match',
+            'budget_fit' => 'Past binnen je budget',
+            'surprise' => 'Niet de voor de hand liggende keuze',
+            'vibe' => 'Past bij het gevoel dat je zocht',
+            'values' => 'Sluit aan bij wat jij belangrijk vindt',
+        ],
+    ],
+
+    'surprise' => [
+        'title' => 'Dingen waarvan je niet wist dat ze bestonden',
+        'subtitle' => 'Zeldzaam, op voorraad, en door bijna niemand verkocht.',
+        'seo_description' => 'Ongewone producten die op geen enkele bestsellerlijst staan — beoordeeld op hoe zeldzaam ze zijn en gecontroleerd of ze het bekijken waard zijn.',
+        'reroll' => 'Laat meer zien',
+        'empty' => 'Nog niets beoordeeld. Kom terug na de volgende catalogusronde.',
+
+        'why' => [
+            'lexical' => 'Bijna niets anders wordt zo omschreven',
+            'category' => 'Een hoek van de catalogus waar niemand komt',
+            'brand' => 'Een merk waar je waarschijnlijk nooit van hoorde',
+            'exclusivity' => 'Bijna geen winkel heeft het',
+            'novelty' => 'Deze maand nieuw bij ons',
+        ],
     ],
 ];

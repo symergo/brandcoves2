@@ -9,6 +9,7 @@ return [
         'gift' => 'Trouver un cadeau',
         'daily' => 'Trouvailles du jour',
         'guides' => "Guides d'achat",
+        'surprise' => 'Surprenez-moi',
         'lists' => 'Mes listes',
         'notifications' => 'Notifications',
         'sign_in' => 'Se connecter',
@@ -196,5 +197,84 @@ return [
         'until' => 'Sous :price',
         'any_drop' => 'Toute baisse',
         'now' => 'actuellement :price',
+    ],
+
+    'gift' => [
+        'title' => 'Trouveur de cadeaux',
+        'subtitle' => 'Parlez-nous d’elle ou de lui. Nous trouvons quatre cadeaux qui tiennent la route.',
+        'seo_description' => 'Décrivez la personne à qui vous offrez et recevez quatre idées de cadeaux, chacune avec sa raison, comparées entre magasins.',
+
+        'step_who' => 'C’est pour qui ?',
+        'step_interests' => 'Qu’est-ce qui lui plaît ?',
+        'step_vibe' => 'Quel effet doit-il faire ?',
+        'step_budget' => 'Quel budget ?',
+        'step_avoid' => 'Quelque chose à éviter ?',
+        'step_values' => 'Qu’est-ce qui compte pour vous ?',
+
+        'interests' => [
+            'cooking' => 'La cuisine', 'coffee' => 'Le café', 'photography' => 'La photo',
+            'music' => 'La musique', 'gaming' => 'Les jeux vidéo', 'reading' => 'La lecture',
+            'fitness' => 'Le sport', 'outdoors' => 'Le plein air', 'travel' => 'Les voyages',
+            'gardening' => 'Le jardinage', 'diy' => 'Le bricolage', 'beauty' => 'Les soins',
+            'fashion' => 'La mode', 'tech' => 'La tech', 'home' => 'Son intérieur',
+            'craft' => 'Créer de ses mains', 'film' => 'Films et séries', 'pets' => 'Son animal',
+            'wellness' => 'Se détendre', 'kids' => 'Les enfants',
+        ],
+
+        'vibes' => [
+            'practical' => 'Utile',
+            'playful' => 'Amusant',
+            'beautiful' => 'Beau',
+        ],
+
+        'values' => [
+            'sustainable' => 'Durable',
+            'local' => 'Fabriqué près d’ici',
+            'handmade' => 'Fait main',
+        ],
+
+        'find' => 'Trouver des cadeaux',
+        'again' => 'Réessayer',
+        'swap' => 'Autre chose',
+        'start_over' => 'Recommencer',
+        'results_title' => 'Quatre idées',
+        'no_results' => 'Rien ne correspondait. Essayez un budget plus large ou un autre centre d’intérêt.',
+        'budget_any' => 'Sans limite',
+        'budget_up_to' => 'Jusqu’à',
+        'avoid_placeholder' => 'p. ex. alcool, laine',
+        'avoid_hint' => 'Nous écarterons tout ce qui correspond à ces mots.',
+        'avoid_add' => 'Ajouter',
+        'recipient_use' => 'Utiliser ce que nous savons de :name',
+        'recipient_none' => 'Quelqu’un de nouveau',
+        'step' => 'Étape :current sur :total',
+        'back' => 'Retour',
+        'next' => 'Suivant',
+        'skip' => 'Passer',
+
+        // The card shows one reason, not a breakdown: three reasons read as a
+        // machine justifying itself.
+        'reasons' => [
+            'interest_fit' => 'Correspond à :match',
+            'budget_fit' => 'Bien placé dans votre budget',
+            'surprise' => 'Pas le choix évident',
+            'vibe' => 'Correspond à l’effet recherché',
+            'values' => 'Correspond à ce qui compte pour vous',
+        ],
+    ],
+
+    'surprise' => [
+        'title' => 'Des choses dont vous ignoriez l’existence',
+        'subtitle' => 'Rares, en stock, et vendues par presque personne.',
+        'seo_description' => 'Des produits inhabituels absents de toute liste des meilleures ventes — notés selon leur rareté et vérifiés pour valoir le coup d’œil.',
+        'reroll' => 'Montrez-m’en d’autres',
+        'empty' => 'Rien n’a encore été évalué. Revenez après le prochain passage du catalogue.',
+
+        'why' => [
+            'lexical' => 'Presque rien d’autre n’est décrit ainsi',
+            'category' => 'Un coin du catalogue où personne ne va',
+            'brand' => 'Une marque dont vous n’avez sans doute jamais entendu parler',
+            'exclusivity' => 'Presque aucun magasin ne l’a',
+            'novelty' => 'Nouveau chez nous ce mois-ci',
+        ],
     ],
 ];

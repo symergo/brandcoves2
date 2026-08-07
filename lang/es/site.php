@@ -9,6 +9,7 @@ return [
         'gift' => 'Buscador de regalos',
         'daily' => 'Hallazgos del día',
         'guides' => 'Guías de compra',
+        'surprise' => 'Sorpréndeme',
         'lists' => 'Mis listas',
         'notifications' => 'Avisos',
         'sign_in' => 'Iniciar sesión',
@@ -196,5 +197,84 @@ return [
         'until' => 'Por debajo de :price',
         'any_drop' => 'Cualquier bajada',
         'now' => 'ahora :price',
+    ],
+
+    'gift' => [
+        'title' => 'Buscador de regalos',
+        'subtitle' => 'Cuéntanos cómo es. Buscamos cuatro regalos que encajen.',
+        'seo_description' => 'Describe a la persona a quien regalas y recibe cuatro ideas, cada una con su motivo, comparadas entre tiendas.',
+
+        'step_who' => '¿Para quién es?',
+        'step_interests' => '¿Qué le gusta?',
+        'step_vibe' => '¿Cómo debe sentirse?',
+        'step_budget' => '¿Cuánto quieres gastar?',
+        'step_avoid' => '¿Algo que evitar?',
+        'step_values' => '¿Qué te importa?',
+
+        'interests' => [
+            'cooking' => 'Cocinar', 'coffee' => 'El café', 'photography' => 'La fotografía',
+            'music' => 'La música', 'gaming' => 'Los videojuegos', 'reading' => 'Leer',
+            'fitness' => 'El deporte', 'outdoors' => 'El aire libre', 'travel' => 'Viajar',
+            'gardening' => 'La jardinería', 'diy' => 'El bricolaje', 'beauty' => 'El cuidado personal',
+            'fashion' => 'La moda', 'tech' => 'La tecnología', 'home' => 'Su casa',
+            'craft' => 'Hacer cosas', 'film' => 'Cine y series', 'pets' => 'Su mascota',
+            'wellness' => 'Desconectar', 'kids' => 'Los niños',
+        ],
+
+        'vibes' => [
+            'practical' => 'Útil',
+            'playful' => 'Divertido',
+            'beautiful' => 'Bonito',
+        ],
+
+        'values' => [
+            'sustainable' => 'Sostenible',
+            'local' => 'Hecho cerca',
+            'handmade' => 'Hecho a mano',
+        ],
+
+        'find' => 'Buscar regalos',
+        'again' => 'Probar otra vez',
+        'swap' => 'Otra cosa',
+        'start_over' => 'Empezar de nuevo',
+        'results_title' => 'Cuatro ideas',
+        'no_results' => 'Nada encajaba. Prueba con más presupuesto u otro interés.',
+        'budget_any' => 'Sin límite',
+        'budget_up_to' => 'Hasta',
+        'avoid_placeholder' => 'p. ej. alcohol, lana',
+        'avoid_hint' => 'Dejaremos fuera todo lo que coincida con estas palabras.',
+        'avoid_add' => 'Añadir',
+        'recipient_use' => 'Usar lo que sabemos de :name',
+        'recipient_none' => 'Alguien nuevo',
+        'step' => 'Paso :current de :total',
+        'back' => 'Atrás',
+        'next' => 'Siguiente',
+        'skip' => 'Saltar',
+
+        // The card shows one reason, not a breakdown: three reasons read as a
+        // machine justifying itself.
+        'reasons' => [
+            'interest_fit' => 'Encaja con :match',
+            'budget_fit' => 'Bien situado en tu presupuesto',
+            'surprise' => 'No es la opción obvia',
+            'vibe' => 'Encaja con la sensación que buscabas',
+            'values' => 'Encaja con lo que te importa',
+        ],
+    ],
+
+    'surprise' => [
+        'title' => 'Cosas que no sabías que existían',
+        'subtitle' => 'Raras, disponibles y vendidas por casi nadie.',
+        'seo_description' => 'Productos poco comunes que no aparecen en ninguna lista de más vendidos: puntuados por lo raros que son y comprobados para que merezcan la pena.',
+        'reroll' => 'Enséñame más',
+        'empty' => 'Aún no hay nada puntuado. Vuelve tras la próxima pasada del catálogo.',
+
+        'why' => [
+            'lexical' => 'Casi nada más se describe así',
+            'category' => 'Un rincón del catálogo por el que nadie pasa',
+            'brand' => 'Una marca de la que seguramente nunca has oído hablar',
+            'exclusivity' => 'Casi ninguna tienda lo tiene',
+            'novelty' => 'Nuevo para nosotros este mes',
+        ],
     ],
 ];

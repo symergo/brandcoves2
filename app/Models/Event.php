@@ -29,4 +29,28 @@ class Event extends Model
             'created_at' => 'datetime',
         ];
     }
+
+    /**
+     * Record one interaction.
+     *
+     * Never throws. This is analytics hanging off a request that has already
+     * done its real work — losing a row is not worth failing a page the visitor
+     * is waiting for. The market and identity come from the payload rather than
+     * from globals so the method stays usable from a job.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public static function record(string $kind, array $payload = []): void
+    {
+        try {
+            static::create([
+                'kind' => $kind,
+                'market' => $payload['market'] ?? null,
+                'user_id' => auth()->id(),
+                'payload' => $payload,
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
 }

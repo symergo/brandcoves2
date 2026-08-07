@@ -33772,6 +33772,328 @@ function Login({ googleEnabled }) {
 	})] });
 }
 //#endregion
+//#region resources/js/types.ts
+function formatPrice(cents, market) {
+	return new Intl.NumberFormat(market.hrefLang, {
+		style: "currency",
+		currency: market.currency
+	}).format(cents / 100);
+}
+//#endregion
+//#region resources/js/Components/SaveToList.tsx
+/**
+* Save a product to a list, from anywhere.
+*
+* No account required and no list required: the controller creates a default
+* list on first save. Asking someone to sign in or to name a list before they
+* can keep a product is how you lose the save.
+*/
+function SaveToList({ groupId }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [saved, setSaved] = (0, import_react.useState)(false);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	function save() {
+		if (saved || busy) return;
+		setBusy(true);
+		router.post(`/${market.key}/list-items`, { group_id: groupId }, {
+			preserveScroll: true,
+			preserveState: true,
+			onSuccess: () => setSaved(true),
+			onFinish: () => setBusy(false)
+		});
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		onClick: save,
+		disabled: busy,
+		"aria-pressed": saved,
+		className: `rounded-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink disabled:opacity-60"}`,
+		children: saved ? `✓ ${t("lists.saved")}` : t("lists.save")
+	});
+}
+//#endregion
+//#region resources/js/Pages/Gift/Wizard.tsx
+var Wizard_exports = /* @__PURE__ */ __exportAll({ default: () => GiftWizard });
+var STEPS = [
+	"who",
+	"interests",
+	"vibe",
+	"budget",
+	"avoid",
+	"values"
+];
+function GiftWizard({ options, recipients, picks, brief }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [step, setStep] = (0, import_react.useState)(0);
+	const [interests, setInterests] = (0, import_react.useState)(brief?.interests ?? []);
+	const [vibe, setVibe] = (0, import_react.useState)(brief?.vibe ?? null);
+	const [budgetMax, setBudgetMax] = (0, import_react.useState)(brief?.budget_max != null ? String(brief.budget_max) : "");
+	const [avoid, setAvoid] = (0, import_react.useState)(brief?.avoid ?? []);
+	const [avoidDraft, setAvoidDraft] = (0, import_react.useState)("");
+	const [values, setValues] = (0, import_react.useState)(brief?.values ?? []);
+	const [relationship, setRelationship] = (0, import_react.useState)(brief?.relationship ?? null);
+	const [rejected, setRejected] = (0, import_react.useState)([]);
+	const payload = () => ({
+		interests,
+		vibe,
+		budget_max: budgetMax === "" ? null : Number(budgetMax),
+		avoid,
+		values,
+		relationship
+	});
+	const submit = () => {
+		router.post(`/${market.key}/gift`, payload(), { preserveScroll: false });
+	};
+	const swap = (pickId) => {
+		const exclude = [...rejected, ...(picks ?? []).map((p) => p.id)];
+		setRejected(exclude);
+		router.post(`/${market.key}/gift/swap`, {
+			...payload(),
+			exclude,
+			rejected: pickId
+		}, { preserveScroll: true });
+	};
+	const toggle = (list, setter, value) => {
+		setter(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+	};
+	const useRecipient = (recipient) => {
+		setInterests(recipient.interests);
+		setVibe(recipient.vibe);
+		setAvoid(recipient.avoid);
+		setValues(recipient.values);
+		setRelationship(recipient.relationship);
+		setBudgetMax(recipient.budgetMax != null ? String(recipient.budgetMax / 100) : "");
+		setStep(1);
+	};
+	const reason = (pick) => t(`gift.reasons.${pick.reason}`, { match: pick.reasonMatch ?? "" });
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("gift.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold sm:text-3xl",
+				children: t("gift.title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-ink-soft",
+				children: t("gift.subtitle")
+			})]
+		}),
+		picks !== null ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-8",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-sm font-medium text-ink-soft",
+					children: t("gift.results_title")
+				}),
+				picks.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 text-ink-soft",
+					children: t("gift.no_results")
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4",
+					children: picks.map((pick) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex flex-col rounded-lg border border-line bg-card p-4",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+								href: pick.url,
+								children: [pick.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+									src: pick.image,
+									alt: "",
+									className: "mx-auto h-36 object-contain",
+									loading: "lazy"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+									className: "mt-3 line-clamp-2 font-medium",
+									children: pick.title
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 text-sm text-ink-soft",
+								children: reason(pick)
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "mt-auto space-y-2 pt-4",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "block font-semibold",
+									children: pick.price === null ? "—" : formatPrice(pick.price, market)
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-center gap-3",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: pick.id }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										className: "text-xs text-ink-soft underline hover:text-ink",
+										onClick: () => swap(pick.id),
+										children: t("gift.swap")
+									})]
+								})]
+							})
+						]
+					}, pick.id))
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-8 flex flex-wrap gap-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "rounded border border-line px-4 py-2 text-sm",
+						onClick: () => router.get(`/${market.key}/gift`),
+						children: t("gift.start_over")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "rounded bg-accent px-4 py-2 text-sm font-medium text-white",
+						onClick: submit,
+						children: t("gift.again")
+					})]
+				})
+			]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-8 max-w-2xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-xs text-ink-soft",
+					children: t("gift.step", {
+						current: step + 1,
+						total: STEPS.length
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "mt-1 text-lg font-medium",
+					children: t(`gift.step_${STEPS[step]}`)
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4",
+					children: [
+						STEPS[step] === "who" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "space-y-2",
+							children: [recipients.map((recipient) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								className: "block w-full rounded border border-line px-4 py-3 text-left hover:bg-card",
+								onClick: () => useRecipient(recipient),
+								children: t("gift.recipient_use", { name: recipient.name })
+							}, recipient.id)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								className: "block w-full rounded border border-line px-4 py-3 text-left hover:bg-card",
+								onClick: () => setStep(1),
+								children: t("gift.recipient_none")
+							})]
+						}),
+						STEPS[step] === "interests" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "flex flex-wrap gap-2",
+							children: options.interests.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								"aria-pressed": interests.includes(option.value),
+								className: `rounded-full border px-3 py-1.5 text-sm ${interests.includes(option.value) ? "border-accent bg-accent text-white" : "border-line hover:bg-card"}`,
+								onClick: () => toggle(interests, setInterests, option.value),
+								children: option.label
+							}, option.value))
+						}),
+						STEPS[step] === "vibe" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "flex flex-wrap gap-2",
+							children: options.vibes.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								"aria-pressed": vibe === option.value,
+								className: `rounded-full border px-4 py-2 text-sm ${vibe === option.value ? "border-accent bg-accent text-white" : "border-line hover:bg-card"}`,
+								onClick: () => setVibe(vibe === option.value ? null : option.value),
+								children: option.label
+							}, option.value))
+						}),
+						STEPS[step] === "budget" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex items-center gap-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+								htmlFor: "budget-max",
+								className: "text-sm",
+								children: t("gift.budget_up_to")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								id: "budget-max",
+								type: "number",
+								min: "0",
+								step: "1",
+								className: "w-32 rounded border border-line px-3 py-2",
+								placeholder: t("gift.budget_any"),
+								value: budgetMax,
+								onChange: (e) => setBudgetMax(e.target.value)
+							})]
+						}),
+						STEPS[step] === "avoid" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex gap-2",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									type: "text",
+									className: "flex-1 rounded border border-line px-3 py-2",
+									placeholder: t("gift.avoid_placeholder"),
+									value: avoidDraft,
+									onChange: (e) => setAvoidDraft(e.target.value),
+									onKeyDown: (e) => {
+										if (e.key === "Enter" && avoidDraft.trim() !== "") {
+											e.preventDefault();
+											setAvoid([...avoid, avoidDraft.trim()]);
+											setAvoidDraft("");
+										}
+									}
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "rounded border border-line px-4 text-sm",
+									onClick: () => {
+										if (avoidDraft.trim() !== "") {
+											setAvoid([...avoid, avoidDraft.trim()]);
+											setAvoidDraft("");
+										}
+									},
+									children: t("gift.avoid_add")
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 text-xs text-ink-soft",
+								children: t("gift.avoid_hint")
+							}),
+							avoid.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+								className: "mt-3 flex flex-wrap gap-2",
+								children: avoid.map((word) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+									type: "button",
+									className: "rounded-full border border-line px-3 py-1 text-sm",
+									onClick: () => setAvoid(avoid.filter((w) => w !== word)),
+									children: [word, " ×"]
+								}) }, word))
+							})
+						] }),
+						STEPS[step] === "values" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "flex flex-wrap gap-2",
+							children: options.values.map((value) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								"aria-pressed": values.includes(value),
+								className: `rounded-full border px-3 py-1.5 text-sm ${values.includes(value) ? "border-accent bg-accent text-white" : "border-line hover:bg-card"}`,
+								onClick: () => toggle(values, setValues, value),
+								children: t(`gift.values.${value}`)
+							}, value))
+						})
+					]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-8 flex items-center gap-3",
+					children: [step > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "rounded border border-line px-4 py-2 text-sm",
+						onClick: () => setStep(step - 1),
+						children: t("gift.back")
+					}), step < STEPS.length - 1 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "rounded bg-accent px-5 py-2 font-medium text-white",
+						onClick: () => setStep(step + 1),
+						children: t("gift.next")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "text-sm text-ink-soft underline",
+						onClick: submit,
+						children: t("gift.find")
+					})] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "rounded bg-accent px-5 py-2 font-medium text-white",
+						onClick: submit,
+						children: t("gift.find")
+					})]
+				})
+			]
+		})
+	] });
+}
+//#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
 function Home({ stats }) {
@@ -33981,14 +34303,6 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 			}) }, list.id))
 		})
 	] });
-}
-//#endregion
-//#region resources/js/types.ts
-function formatPrice(cents, market) {
-	return new Intl.NumberFormat(market.hrefLang, {
-		style: "currency",
-		currency: market.currency
-	}).format(cents / 100);
 }
 //#endregion
 //#region resources/js/Pages/Lists/Shared.tsx
@@ -34363,38 +34677,6 @@ function Sparkline({ points, market }) {
 			className: "mt-2 flex justify-between text-xs text-ink-soft",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: formatPrice(lo, market) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: formatPrice(hi, market) })]
 		})]
-	});
-}
-//#endregion
-//#region resources/js/Components/SaveToList.tsx
-/**
-* Save a product to a list, from anywhere.
-*
-* No account required and no list required: the controller creates a default
-* list on first save. Asking someone to sign in or to name a list before they
-* can keep a product is how you lose the save.
-*/
-function SaveToList({ groupId }) {
-	const { market } = usePage().props;
-	const { t } = useTranslations();
-	const [saved, setSaved] = (0, import_react.useState)(false);
-	const [busy, setBusy] = (0, import_react.useState)(false);
-	function save() {
-		if (saved || busy) return;
-		setBusy(true);
-		router.post(`/${market.key}/list-items`, { group_id: groupId }, {
-			preserveScroll: true,
-			preserveState: true,
-			onSuccess: () => setSaved(true),
-			onFinish: () => setBusy(false)
-		});
-	}
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-		onClick: save,
-		disabled: busy,
-		"aria-pressed": saved,
-		className: `rounded-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink disabled:opacity-60"}`,
-		children: saved ? `✓ ${t("lists.saved")}` : t("lists.save")
 	});
 }
 //#endregion
@@ -34978,6 +35260,73 @@ function Facet({ title, items, onToggle, format }) {
 			]
 		}) }, item.key))
 	})] });
+}
+//#endregion
+//#region resources/js/Pages/Surprise.tsx
+var Surprise_exports = /* @__PURE__ */ __exportAll({ default: () => Surprise });
+function Surprise({ finds, seen }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const reroll = () => {
+		router.get(`/${market.key}/surprise`, { seen }, { preserveScroll: false });
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("surprise.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold sm:text-3xl",
+				children: t("surprise.title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-ink-soft",
+				children: t("surprise.subtitle")
+			})]
+		}),
+		finds.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-10 text-ink-soft",
+			children: t("surprise.empty")
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3",
+			children: finds.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: "flex flex-col rounded-lg border border-line bg-card p-4",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+						href: find.url,
+						className: "block",
+						children: [find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: find.image,
+							alt: "",
+							className: "mx-auto h-40 object-contain",
+							loading: "lazy"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "mt-3 line-clamp-2 font-medium",
+							children: find.title
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-2 text-sm text-ink-soft",
+						children: t(`surprise.why.${find.why}`)
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "mt-auto flex items-center justify-between pt-4",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "font-semibold",
+							children: find.price === null ? "—" : formatPrice(find.price, market)
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.id })]
+					})
+				]
+			}, find.id))
+		}),
+		finds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-10",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: reroll,
+				className: "rounded bg-accent px-5 py-3 font-medium text-white",
+				children: t("surprise.reroll")
+			})
+		})
+	] });
 }
 //#endregion
 //#region node_modules/@jridgewell/sourcemap-codec/dist/sourcemap-codec.mjs
@@ -54830,6 +55179,10 @@ function SiteLayout({ children }) {
 			label: t("nav.daily")
 		},
 		{
+			href: `${base}/surprise`,
+			label: t("nav.surprise")
+		},
+		{
 			href: `${base}/guides`,
 			label: t("nav.guides")
 		}
@@ -54943,13 +55296,15 @@ server_default((page) => createInertiaApp({
 	resolve: async (name) => {
 		const module = (/* @__PURE__ */ Object.assign({
 			"./Pages/Auth/Login.tsx": Login_exports,
+			"./Pages/Gift/Wizard.tsx": Wizard_exports,
 			"./Pages/Home.tsx": Home_exports,
 			"./Pages/Lists/Index.tsx": Index_exports,
 			"./Pages/Lists/Shared.tsx": Shared_exports,
 			"./Pages/Lists/Show.tsx": Show_exports,
 			"./Pages/Notifications.tsx": Notifications_exports,
 			"./Pages/Product.tsx": Product_exports,
-			"./Pages/Search.tsx": Search_exports
+			"./Pages/Search.tsx": Search_exports,
+			"./Pages/Surprise.tsx": Surprise_exports
 		}))[`./Pages/${name}.tsx`];
 		if (!module) throw new Error(`Inertia page not found: ./Pages/${name}.tsx`);
 		module.default.layout ??= (child) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SiteLayout, { children: child });

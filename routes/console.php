@@ -3,9 +3,12 @@
 declare(strict_types=1);
 
 use App\Enums\Market;
+use App\Jobs\ClassifyGiftability;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\RefreshWishlistedProducts;
+use App\Jobs\ScoreSerendipity;
+use App\Jobs\WidenGiftAngles;
 use App\Models\Feed;
 use Illuminate\Support\Facades\Schedule;
 
@@ -62,6 +65,60 @@ Schedule::call(function (): void {
     ->twiceDailyAt(5, 17, 0)
     ->withoutOverlapping()
     ->onOneServer();
+
+/*
+ * Re-classify giftability after grouping.
+ *
+ * A full pass over the catalogue, not an incremental one: the classifier's
+ * rules change more often than the products do, and a partial pass would leave
+ * yesterday's verdict on most rows with no way to tell which. It is pure CPU
+ * with no network, so a full pass is seconds.
+ *
+ * Ten minutes after grouping, because it reads the denormalised title, category
+ * and cheapest price that grouping is what produces.
+ */
+Schedule::call(function (): void {
+    foreach (Market::cases() as $market) {
+        ClassifyGiftability::dispatch($market);
+    }
+})
+    ->name('classify-giftability')
+    ->twiceDailyAt(5, 17, 10)
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Score serendipity.
+ *
+ * After giftability, because the quality gate reads that verdict — a row
+ * already known to be a printer cartridge must never be scored as an exciting
+ * find. Builds the whole market's word-frequency distribution once per run,
+ * which is why this is a job and not something a request could ever do.
+ */
+Schedule::call(function (): void {
+    foreach (Market::cases() as $market) {
+        ScoreSerendipity::dispatch($market);
+    }
+})
+    ->name('score-serendipity')
+    ->twiceDailyAt(5, 17, 25)
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Widen the gift angle map, one market per night.
+ *
+ * The AI invariant in one line: the model runs here, on a schedule, under a
+ * daily cap, and writes rows the request path only reads. Staggered across the
+ * hour so five markets do not open five connections at once, and a no-op when
+ * AI_ENABLED=false — the curated seed is written to be sufficient alone.
+ */
+foreach (Market::cases() as $index => $market) {
+    Schedule::job(new WidenGiftAngles($market))
+        ->name('widen-gift-angles-'.$market->value)
+        ->dailyAt(sprintf('02:%02d', $index * 7))
+        ->onOneServer();
+}
 
 /*
  * Fire price and restock alerts.

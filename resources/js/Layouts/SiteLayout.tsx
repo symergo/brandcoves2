@@ -12,6 +12,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
         { href: `${base}/search`, label: t('nav.search') },
         { href: `${base}/gift`, label: t('nav.gift') },
         { href: `${base}/daily`, label: t('nav.daily') },
+        { href: `${base}/surprise`, label: t('nav.surprise') },
         { href: `${base}/guides`, label: t('nav.guides') },
     ]
 

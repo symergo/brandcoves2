@@ -8,12 +8,14 @@ use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
+use App\Http\Controllers\GiftController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SerendipityController;
 use App\Http\Controllers\SharedListController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\WishlistController;
@@ -165,8 +167,37 @@ Route::prefix('{market}')->group(function () {
             ->name('notifications.read');
     });
 
-    // Phase 4-6 routes land here:
-    //   /{market}/gift                       Gift Whisperer wizard
+    /*
+    |----------------------------------------------------------------------
+    | Gift Whisperer
+    |----------------------------------------------------------------------
+    |
+    | The wizard is a GET page so it can be indexed and shared. Results come
+    | from a POST: a brief describes a real person, and that does not belong in
+    | a URL that lands in a referrer header or a shared browser history.
+    |
+    | Throttled because scoring touches a few hundred rows — cheap, but not
+    | free, and the endpoint is unauthenticated.
+    */
+    Route::get('/gift', [GiftController::class, 'show'])->name('gift');
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::post('/gift', [GiftController::class, 'suggest'])->name('gift.suggest');
+        Route::post('/gift/swap', [GiftController::class, 'swap'])->name('gift.swap');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Serendipity
+    |----------------------------------------------------------------------
+    |
+    | "Show me something I didn't know existed." Reads the surprise scores the
+    | scoring job wrote; nothing is computed per request.
+    */
+    Route::get('/surprise', SerendipityController::class)
+        ->middleware('throttle:120,1')
+        ->name('surprise');
+
+    // Phase 5-6 routes land here:
     //   /{market}/scan                       mobile barcode scanner
     //   /{market}/daily                      today's picks
     //   /{market}/guides                     buying guides

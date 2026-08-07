@@ -15,6 +15,7 @@ return [
         'gift' => 'Gift Finder',
         'daily' => 'Daily Picks',
         'guides' => 'Guides',
+        'surprise' => 'Surprise me',
         'lists' => 'My lists',
         'notifications' => 'Notifications',
         'sign_in' => 'Sign in',
@@ -202,5 +203,84 @@ return [
         'until' => 'Under :price',
         'any_drop' => 'Any drop',
         'now' => 'now :price',
+    ],
+
+    'gift' => [
+        'title' => 'Gift Finder',
+        'subtitle' => 'Tell us about them. We will find four things worth giving.',
+        'seo_description' => 'Describe the person you are buying for and get four gift ideas, each with the reason it was chosen, compared across shops.',
+
+        'step_who' => 'Who is it for?',
+        'step_interests' => 'What are they into?',
+        'step_vibe' => 'How should it feel?',
+        'step_budget' => 'What are you spending?',
+        'step_avoid' => 'Anything to avoid?',
+        'step_values' => 'Anything that matters?',
+
+        'interests' => [
+            'cooking' => 'Cooking', 'coffee' => 'Coffee', 'photography' => 'Photography',
+            'music' => 'Music', 'gaming' => 'Gaming', 'reading' => 'Reading',
+            'fitness' => 'Fitness', 'outdoors' => 'The outdoors', 'travel' => 'Travel',
+            'gardening' => 'Gardening', 'diy' => 'DIY', 'beauty' => 'Beauty',
+            'fashion' => 'Fashion', 'tech' => 'Tech', 'home' => 'Their home',
+            'craft' => 'Making things', 'film' => 'Film and TV', 'pets' => 'Their pet',
+            'wellness' => 'Winding down', 'kids' => 'Kids',
+        ],
+
+        'vibes' => [
+            'practical' => 'Useful',
+            'playful' => 'Fun',
+            'beautiful' => 'Beautiful',
+        ],
+
+        'values' => [
+            'sustainable' => 'Sustainable',
+            'local' => 'Made nearby',
+            'handmade' => 'Handmade',
+        ],
+
+        'find' => 'Find gifts',
+        'again' => 'Try again',
+        'swap' => 'Something else',
+        'start_over' => 'Start over',
+        'results_title' => 'Four ideas',
+        'no_results' => 'Nothing fit that brief. Try a wider budget or another interest.',
+        'budget_any' => 'No limit',
+        'budget_up_to' => 'Up to',
+        'avoid_placeholder' => 'e.g. alcohol, wool',
+        'avoid_hint' => 'We will not show anything matching these words.',
+        'avoid_add' => 'Add',
+        'recipient_use' => 'Use what we know about :name',
+        'recipient_none' => 'Someone new',
+        'step' => 'Step :current of :total',
+        'back' => 'Back',
+        'next' => 'Next',
+        'skip' => 'Skip',
+
+        // The card shows one reason, not a breakdown: three reasons read as a
+        // machine justifying itself.
+        'reasons' => [
+            'interest_fit' => 'Matches :match',
+            'budget_fit' => 'Right for your budget',
+            'surprise' => 'Not the obvious choice',
+            'vibe' => 'Fits the feeling you wanted',
+            'values' => 'Matches what matters to you',
+        ],
+    ],
+
+    'surprise' => [
+        'title' => 'Things you did not know existed',
+        'subtitle' => 'Rare, in stock, and sold by almost nobody.',
+        'seo_description' => 'Unusual products you will not find on a bestseller list — scored for how rare they are and checked for whether they are worth seeing.',
+        'reroll' => 'Show me more',
+        'empty' => 'Nothing scored yet. Come back after the next catalogue run.',
+
+        'why' => [
+            'lexical' => 'Barely anything else is described like this',
+            'category' => 'A corner of the catalogue nobody browses',
+            'brand' => 'A brand you probably have not heard of',
+            'exclusivity' => 'Almost no shop stocks it',
+            'novelty' => 'New to us this month',
+        ],
     ],
 ];
