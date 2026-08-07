@@ -10,6 +10,7 @@ use App\Enums\Source;
 use App\Models\Feed;
 use App\Services\Connectors\FeedConnector;
 use App\Services\Connectors\Offer;
+use App\Services\Identity\Gtin;
 use Generator;
 use Illuminate\Support\Facades\Http;
 use League\Csv\Reader;
@@ -49,7 +50,23 @@ class AwinConnector implements FeedConnector
         'merchant_image_url',
         'aw_deep_link',
         'merchant_deep_link',
+        /*
+         * THREE barcode columns, because advertisers disagree about which one
+         * to use and Awin does not normalise them.
+         *
+         * Measured on the live feeds: Krefel populates `ean` for 9,121 of 9,140
+         * rows and leaves `upc` empty; Coolblue populates `upc` for 17,482 of
+         * 17,504 and leaves `ean` empty. Reading only `ean` meant every Coolblue
+         * product fell back to title-based identity, so the two shops occupied
+         * separate identity spaces and produced ZERO comparable products —
+         * despite sharing 1,955 barcodes.
+         *
+         * Whichever column a merchant uses, the value is a GTIN and
+         * Gtin::normalise() validates it.
+         */
         'ean',
+        'upc',
+        'product_GTIN',
         'in_stock',
         'merchant_category',
         'commission_group',
@@ -242,12 +259,40 @@ class AwinConnector implements FeedConnector
             merchantDeepLink: $merchantDeepLink,
             merchantCategory: trim((string) ($record['merchant_category'] ?? '')) ?: null,
             imageUrl: $image ?: null,
-            ean: trim((string) ($record['ean'] ?? '')) ?: null,
+            ean: $this->barcode($record),
             referencePrice: $this->parsePrice($record['rrp_price'] ?? null),
             currency: strtoupper(trim((string) ($record['currency'] ?? 'EUR'))) ?: 'EUR',
             availability: Availability::fromFeedValue($record['in_stock'] ?? null),
             commissionRate: $this->parseCommission($record['commission_group'] ?? null),
         );
+    }
+
+    /**
+     * The product's barcode, from whichever column the advertiser used.
+     *
+     * Tried in order of how likely the column is to hold a real GTIN. Each
+     * candidate is validated rather than trusted: `Gtin::normalise()` checks the
+     * length and the GS1 check digit, so a part number that happens to sit in
+     * the wrong column is rejected instead of becoming a bogus identity that
+     * merges unrelated products.
+     *
+     * `mpn` is deliberately excluded. Some advertisers copy the EAN into it, but
+     * it is a manufacturer part number by definition, and two manufacturers can
+     * legitimately use the same one.
+     *
+     * @param  array<string, string|null>  $record
+     */
+    private function barcode(array $record): ?string
+    {
+        foreach (['ean', 'upc', 'product_GTIN'] as $column) {
+            $raw = trim((string) ($record[$column] ?? ''));
+
+            if ($raw !== '' && Gtin::isValid($raw)) {
+                return $raw;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Availability;
+use App\Enums\IdentityKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
@@ -46,6 +47,10 @@ class Product extends Model
             'market' => Market::class,
             'availability' => Availability::class,
             'status' => ProductStatus::class,
+            // Added late: without it this column came back as a bare string
+            // while ProductGroup cast the same value to an enum, so comparisons
+            // between the two silently never matched.
+            'identity_kind' => IdentityKind::class,
             'first_seen_at' => 'datetime',
             'last_seen_at' => 'datetime',
         ];
