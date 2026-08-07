@@ -336,4 +336,42 @@ return [
         'template_title' => 'De beste :topic',
         'template_intro' => ':count opties voor :topic, met de prijs van elke winkel naast elkaar.',
     ],
+
+    'discover' => [
+        'dial_label' => 'Hoeveel weet je al?',
+        'dial_low' => 'Ik weet precies wat ik wil',
+        'dial_high' => 'Verras me',
+        'surprise_label' => 'Verrassing',
+        'query_placeholder' => 'Een product, een merk, of helemaal niets',
+        'go' => 'Zoek',
+        'thinking' => 'Bezig met herschikken…',
+        'considered' => ':shown van :considered kandidaten getoond.',
+        'empty' => 'Hier is nog niets te tonen.',
+        'shops' => ':count winkels',
+        'not_for_me' => 'Niets voor mij',
+        'now_showing' => 'Nu: :mode',
+
+        // Required of every mode: the dominant scoring factor, in words.
+        'why' => [
+            'relevance' => 'Ligt het dichtst bij wat je vroeg',
+            'unexpectedness' => 'Je hebt dit waarschijnlijk nog nooit gezien',
+            'novelty' => 'Nieuw hier',
+            'quality' => 'Goed verkrijgbaar en makkelijk te vergelijken',
+        ],
+
+        'modes' => [
+            'search' => [
+                'title' => 'Zoeken',
+                'description' => 'Je weet wat je wilt. De prijs van elke winkel, één kaart per product.',
+            ],
+            'guides' => [
+                'title' => 'Gidsen',
+                'description' => 'Iemand deed het denkwerk al — shortlists op basis van wat mensen hier zoeken.',
+            ],
+            'serendipity' => [
+                'title' => 'Verras me',
+                'description' => 'Dingen waarvan je niet wist dat ze bestonden, precies daarop gerangschikt.',
+            ],
+        ],
+    ],
 ];

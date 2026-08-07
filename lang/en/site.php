@@ -343,4 +343,45 @@ return [
         'template_title' => 'The best :topic',
         'template_intro' => ':count options for :topic, with every shop’s price compared side by side.',
     ],
+
+    'discover' => [
+        'dial_label' => 'How much do you already know?',
+        'dial_low' => 'I know exactly what I want',
+        'dial_high' => 'Surprise me',
+        'surprise_label' => 'Surprise',
+        'query_placeholder' => 'A product, a brand, or nothing at all',
+        'go' => 'Go',
+        'thinking' => 'Rearranging…',
+        'considered' => 'Showing :shown of :considered candidates.',
+        'empty' => 'Nothing to show here yet.',
+        'shops' => ':count shops',
+        'not_for_me' => 'Not for me',
+        'now_showing' => 'Now: :mode',
+
+        // Required of every mode: the dominant scoring factor, in words. A
+        // surface that reorganises as a dial moves is incomprehensible without
+        // it — the same product has to be able to say it is here for a
+        // different reason than it was a moment ago.
+        'why' => [
+            'relevance' => 'Closest to what you asked for',
+            'unexpectedness' => 'You are unlikely to have seen this',
+            'novelty' => 'New here',
+            'quality' => 'Well stocked and easy to compare',
+        ],
+
+        'modes' => [
+            'search' => [
+                'title' => 'Search',
+                'description' => 'You know what you want. Every shop’s price, one card per product.',
+            ],
+            'guides' => [
+                'title' => 'Guides',
+                'description' => 'Someone already did the thinking — shortlists built from what people search for here.',
+            ],
+            'serendipity' => [
+                'title' => 'Surprise me',
+                'description' => 'Things you did not know existed, ranked for exactly that.',
+            ],
+        ],
+    ],
 ];

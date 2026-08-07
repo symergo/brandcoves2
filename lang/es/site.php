@@ -336,4 +336,42 @@ return [
         'template_title' => 'Los mejores :topic',
         'template_intro' => ':count opciones de :topic, con el precio de cada tienda una al lado de la otra.',
     ],
+
+    'discover' => [
+        'dial_label' => '¿Cuánto sabes ya?',
+        'dial_low' => 'Sé exactamente lo que quiero',
+        'dial_high' => 'Sorpréndeme',
+        'surprise_label' => 'Sorpresa',
+        'query_placeholder' => 'Un producto, una marca o nada',
+        'go' => 'Buscar',
+        'thinking' => 'Reorganizando…',
+        'considered' => 'Mostrando :shown de :considered candidatos.',
+        'empty' => 'Aquí todavía no hay nada que mostrar.',
+        'shops' => ':count tiendas',
+        'not_for_me' => 'No es para mí',
+        'now_showing' => 'Ahora: :mode',
+
+        // Required of every mode: the dominant scoring factor, in words.
+        'why' => [
+            'relevance' => 'Lo más cercano a lo que pediste',
+            'unexpectedness' => 'Es poco probable que hayas visto esto',
+            'novelty' => 'Nuevo aquí',
+            'quality' => 'Bien disponible y fácil de comparar',
+        ],
+
+        'modes' => [
+            'search' => [
+                'title' => 'Búsqueda',
+                'description' => 'Sabes lo que quieres. El precio de cada tienda, una ficha por producto.',
+            ],
+            'guides' => [
+                'title' => 'Guías',
+                'description' => 'Alguien ya lo pensó: selecciones construidas con lo que la gente busca aquí.',
+            ],
+            'serendipity' => [
+                'title' => 'Sorpréndeme',
+                'description' => 'Cosas que no sabías que existían, clasificadas exactamente para eso.',
+            ],
+        ],
+    ],
 ];

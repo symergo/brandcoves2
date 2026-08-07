@@ -7,6 +7,12 @@ namespace App\Providers;
 use App\Services\Connectors\Awin\AwinConnector;
 use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Discover\ModeEngine;
+use App\Services\Discover\ModeRegistry;
+use App\Services\Discover\Ranker;
+use App\Services\Discover\Retrievers\CuratedRetriever;
+use App\Services\Discover\Retrievers\KeywordRetriever;
+use App\Services\Discover\Retrievers\OutlierRetriever;
 use App\Services\Seo\PageMeta;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
@@ -36,6 +42,32 @@ class AppServiceProvider extends ServiceProvider
 
             return $registry;
         });
+
+        /*
+         * The discovery pipeline.
+         *
+         * The retriever list is the only place that knows which retrievers
+         * exist. A mode profile names them by key; adding one is a class plus a
+         * line here, and nothing in ModeEngine changes — which is the property
+         * that makes "a mode is config" true rather than aspirational.
+         *
+         * Retrievers not yet built (semantic, image, twoTower, fresh, value,
+         * slots, spectrum) are absent deliberately. The engine renormalises
+         * weights over what is actually registered and available, so a profile
+         * naming a missing retriever degrades onto its others instead of
+         * returning an empty page. See config/discovery.php.
+         */
+        $this->app->singleton(ModeRegistry::class);
+
+        $this->app->singleton(ModeEngine::class, fn ($app) => new ModeEngine(
+            $app->make(ModeRegistry::class),
+            $app->make(Ranker::class),
+            [
+                $app->make(KeywordRetriever::class),
+                $app->make(OutlierRetriever::class),
+                $app->make(CuratedRetriever::class),
+            ],
+        ));
     }
 
     public function boot(): void

@@ -10,6 +10,7 @@ use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
 use App\Http\Controllers\DailyCoveController;
+use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HealthController;
@@ -187,6 +188,28 @@ Route::prefix('{market}')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Route::post('/gift', [GiftController::class, 'suggest'])->name('gift.suggest');
         Route::post('/gift/swap', [GiftController::class, 'swap'])->name('gift.swap');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Discovery modes
+    |----------------------------------------------------------------------
+    |
+    | One pipeline, reconfigured by a Mode Profile. The GET landing is
+    | deep-linkable and indexable per mode; the POST is what the dial calls as
+    | it moves, so the surface reorganises in place rather than navigating.
+    |
+    | Market-prefixed like everything else: identity, prices and language are
+    | all scoped to a market, and an unprefixed discovery route would be the one
+    | endpoint that has to resolve it some other way.
+    */
+    Route::get('/discover/{mode?}', [DiscoverController::class, 'show'])
+        ->where('mode', '[a-z-]+')
+        ->name('discover');
+
+    Route::middleware('throttle:120,1')->group(function () {
+        Route::post('/discover', [DiscoverController::class, 'discover'])->name('discover.run');
+        Route::post('/discover/react', [DiscoverController::class, 'react'])->name('discover.react');
     });
 
     /*

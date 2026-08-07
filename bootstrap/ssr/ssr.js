@@ -34117,6 +34117,228 @@ function Edition({ edition, challenge, finds, guide, streak, archive }) {
 	] });
 }
 //#endregion
+//#region resources/js/Pages/Discover.tsx
+var Discover_exports = /* @__PURE__ */ __exportAll({ default: () => Discover });
+function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	const [dial, setDial] = (0, import_react.useState)(modeMeta.position);
+	const [surpriseDial, setSurpriseDial] = (0, import_react.useState)(surprise);
+	const [term, setTerm] = (0, import_react.useState)(query ?? "");
+	const [results, setResults] = (0, import_react.useState)(items);
+	const [meta, setMeta] = (0, import_react.useState)(modeMeta);
+	const [activeLayout, setActiveLayout] = (0, import_react.useState)(layout);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const requestId = (0, import_react.useRef)(0);
+	const run = (0, import_react.useCallback)(async (nextDial, nextSurprise, nextTerm) => {
+		const id = ++requestId.current;
+		setBusy(true);
+		try {
+			const response = await fetch(`/${market.key}/discover`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Accept: "application/json",
+					"X-CSRF-TOKEN": document.querySelector("meta[name=\"csrf-token\"]")?.content ?? ""
+				},
+				body: JSON.stringify({
+					mode,
+					dial: nextDial,
+					surprise: nextSurprise,
+					input: { query: nextTerm || null },
+					overlays: {
+						modality: "text",
+						social: false
+					}
+				})
+			});
+			if (!response.ok || id !== requestId.current) return;
+			const data = await response.json();
+			setResults(data.items);
+			setMeta(data.modeMeta);
+			setActiveLayout(data.layout);
+		} finally {
+			if (id === requestId.current) setBusy(false);
+		}
+	}, [market.key, mode]);
+	(0, import_react.useEffect)(() => {
+		const timer = setTimeout(() => run(dial, surpriseDial, term), 180);
+		return () => clearTimeout(timer);
+	}, [
+		dial,
+		surpriseDial,
+		run
+	]);
+	const react = (item, reaction) => {
+		setResults(results.filter((r) => r.id !== item.id));
+		fetch(`/${market.key}/discover/react`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRF-TOKEN": document.querySelector("meta[name=\"csrf-token\"]")?.content ?? ""
+			},
+			body: JSON.stringify({
+				mode: meta.key,
+				group_id: item.id,
+				reaction,
+				factor: item.reason
+			})
+		});
+	};
+	const nearestStop = stops.reduce((best, stop) => Math.abs(stop.position - dial) < Math.abs(best.position - dial) ? stop : best);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t(`discover.modes.${meta.key}.title`) }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold sm:text-3xl",
+				children: t(`discover.modes.${meta.key}.title`)
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-ink-soft",
+				children: t(`discover.modes.${meta.key}.description`)
+			})]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-6 rounded-lg border border-line bg-card p-5",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+					htmlFor: "dial",
+					className: "block text-sm font-medium",
+					children: t("discover.dial_label")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					id: "dial",
+					type: "range",
+					min: "0",
+					max: "1",
+					step: "0.01",
+					value: dial,
+					onChange: (e) => setDial(Number(e.target.value)),
+					className: "mt-3 w-full",
+					"aria-valuetext": t(`discover.modes.${nearestStop.key}.title`)
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-1 flex justify-between text-xs text-ink-soft",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("discover.dial_low") }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("discover.dial_high") })]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-3 font-mono text-xs text-ink-soft",
+					children: [
+						t("discover.now_showing", { mode: t(`discover.modes.${meta.key}.title`) }),
+						" · ",
+						"α ",
+						meta.scoring.alpha,
+						" · β ",
+						meta.scoring.beta,
+						" · γ ",
+						meta.scoring.gamma,
+						" · λ",
+						" ",
+						meta.scoring.lambda,
+						" · ε ",
+						meta.scoring.epsilon,
+						" · ",
+						Object.entries(meta.retrievers).map(([key, weight]) => `${key} ${weight}`).join(" · ")
+					]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 flex flex-wrap items-center gap-4",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex items-center gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+							htmlFor: "surprise",
+							className: "text-sm",
+							children: t("discover.surprise_label")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							id: "surprise",
+							type: "range",
+							min: "0",
+							max: "1",
+							step: "0.05",
+							value: surpriseDial,
+							onChange: (e) => setSurpriseDial(Number(e.target.value))
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+						className: "flex flex-1 gap-2",
+						onSubmit: (e) => {
+							e.preventDefault();
+							run(dial, surpriseDial, term);
+						},
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "search",
+							className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
+							placeholder: t("discover.query_placeholder"),
+							value: term,
+							onChange: (e) => setTerm(e.target.value),
+							"aria-label": t("discover.query_placeholder")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "submit",
+							className: "rounded bg-accent px-4 py-2 text-sm text-white",
+							children: t("discover.go")
+						})]
+					})]
+				})
+			]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-4 text-sm text-ink-soft",
+			"aria-live": "polite",
+			children: busy ? t("discover.thinking") : t("discover.considered", {
+				shown: n(results.length),
+				considered: n(meta.candidatesConsidered)
+			})
+		}),
+		results.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-8 text-ink-soft",
+			children: t("discover.empty")
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: activeLayout === "list" ? "mt-6 divide-y divide-line rounded border border-line" : "mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4",
+			children: results.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: activeLayout === "list" ? "flex items-center gap-4 p-4" : "flex flex-col rounded-lg border border-line bg-card p-4",
+				children: [item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: item.image,
+					alt: "",
+					className: activeLayout === "list" ? "h-20 w-20 shrink-0 object-contain" : "mx-auto h-36 object-contain",
+					loading: "lazy"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: activeLayout === "list" ? "min-w-0 flex-1" : "contents",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+							href: item.url,
+							className: "line-clamp-2 font-medium hover:underline",
+							children: item.title
+						}),
+						item.reason && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-sm text-ink-soft",
+							children: t(`discover.why.${item.reason}`)
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: `flex items-center gap-3 ${activeLayout === "list" ? "mt-2" : "mt-auto pt-4"}`,
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "font-semibold",
+									children: item.price === null ? "—" : formatPrice(item.price, market)
+								}),
+								item.merchantCount > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "text-xs text-ink-soft",
+									children: t("discover.shops", { count: n(item.merchantCount) })
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: item.id }),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "ml-auto text-xs text-ink-soft underline",
+									onClick: () => react(item, "meh"),
+									children: t("discover.not_for_me")
+								})
+							]
+						})
+					]
+				})]
+			}, item.id))
+		})
+	] });
+}
+//#endregion
 //#region resources/js/Pages/Gift/Wizard.tsx
 var Wizard_exports = /* @__PURE__ */ __exportAll({ default: () => GiftWizard });
 var STEPS = [
@@ -55751,6 +55973,7 @@ server_default((page) => createInertiaApp({
 		const module = (/* @__PURE__ */ Object.assign({
 			"./Pages/Auth/Login.tsx": Login_exports,
 			"./Pages/Daily/Edition.tsx": Edition_exports,
+			"./Pages/Discover.tsx": Discover_exports,
 			"./Pages/Gift/Wizard.tsx": Wizard_exports,
 			"./Pages/Guides/Index.tsx": Index_exports$1,
 			"./Pages/Guides/Show.tsx": Show_exports$1,
