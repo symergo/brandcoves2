@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Enums\Market;
+use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
 use App\Http\Controllers\HealthController;
@@ -76,6 +78,35 @@ Route::prefix('{market}')->group(function () {
     Route::post('/track/click', ClickBeaconController::class)
         ->middleware('throttle:120,1')
         ->name('click.beacon');
+
+    /*
+    |----------------------------------------------------------------------
+    | Auth
+    |----------------------------------------------------------------------
+    |
+    | Passwordless. This site holds gift lists and email addresses, not payment
+    | details, and a password is a liability people reuse.
+    */
+    Route::middleware('guest')->group(function () {
+        Route::get('/login', [MagicLinkController::class, 'show'])->name('login');
+        Route::post('/login', [MagicLinkController::class, 'send'])
+            // Rate limited per address and per IP inside the controller too;
+            // this is the blunt outer guard.
+            ->middleware('throttle:10,1')
+            ->name('login.send');
+
+        Route::get('/auth/magic/{token}', [MagicLinkController::class, 'consume'])
+            ->middleware('throttle:20,1')
+            ->name('login.magic');
+
+        Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('login.google');
+        Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
+            ->name('login.google.callback');
+    });
+
+    Route::post('/logout', [MagicLinkController::class, 'logout'])
+        ->middleware('auth')
+        ->name('logout');
 
     // Phase 3-6 routes land here:
     //   /{market}/gift                       Gift Whisperer wizard

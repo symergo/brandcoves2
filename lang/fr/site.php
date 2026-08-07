@@ -93,4 +93,25 @@ return [
     'footer' => [
         'affiliate' => 'Brandcoves compare les offres de différentes boutiques. Nous pouvons percevoir une commission sur les achats effectués via nos liens — cela ne change jamais le prix que vous payez.',
     ],
+
+    'auth' => [
+        'title' => 'Se connecter',
+        'intro' => 'Indiquez votre adresse e-mail et nous vous enverrons un lien. Aucun mot de passe à retenir.',
+        'email' => 'Adresse e-mail',
+        'send' => 'Envoyez-moi un lien',
+        'link_sent' => 'Consultez votre boîte de réception — si un compte existe pour cette adresse, le lien est en route.',
+        'link_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.',
+        'too_many' => 'Trop de demandes. Réessayez dans :seconds secondes.',
+        'or' => 'ou',
+        'google' => 'Continuer avec Google',
+        'sign_out' => 'Se déconnecter',
+        'mail_subject' => 'Votre lien de connexion Brandcoves',
+        'mail_heading' => 'Connexion à Brandcoves',
+        'mail_body' => 'Appuyez sur le bouton ci-dessous pour vous connecter. Le lien fonctionne une seule fois et uniquement depuis cet e-mail.',
+        'mail_button' => 'Se connecter',
+        'mail_expiry' => 'Le lien expire dans 15 minutes.',
+        'mail_requested_from' => 'Demandé depuis :ip',
+        'mail_ignore' => 'Si vous n\'êtes pas à l\'origine de cette demande, ignorez cet e-mail — personne ne peut se connecter sans le lien.',
+        'mail_fallback' => 'Si le bouton ne fonctionne pas, collez ceci dans votre navigateur :',
+    ],
 ];

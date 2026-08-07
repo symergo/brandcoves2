@@ -93,4 +93,25 @@ return [
     'footer' => [
         'affiliate' => 'Brandcoves vergelijkt aanbiedingen van verschillende winkels. We verdienen mogelijk commissie op aankopen via onze links — dat verandert nooit wat jij betaalt.',
     ],
+
+    'auth' => [
+        'title' => 'Inloggen',
+        'intro' => 'Vul je e-mailadres in en we sturen je een link. Geen wachtwoord om te onthouden.',
+        'email' => 'E-mailadres',
+        'send' => 'Stuur me een link',
+        'link_sent' => 'Kijk in je inbox — als er een account bij dat adres hoort, is de inloglink onderweg.',
+        'link_invalid' => 'Die link is verlopen of al gebruikt. Vraag een nieuwe aan.',
+        'too_many' => 'Te veel aanvragen. Probeer het over :seconds seconden opnieuw.',
+        'or' => 'of',
+        'google' => 'Doorgaan met Google',
+        'sign_out' => 'Uitloggen',
+        'mail_subject' => 'Je inloglink voor Brandcoves',
+        'mail_heading' => 'Inloggen bij Brandcoves',
+        'mail_body' => 'Tik op de knop hieronder om in te loggen. De link werkt één keer en alleen vanuit deze e-mail.',
+        'mail_button' => 'Inloggen',
+        'mail_expiry' => 'De link verloopt over 15 minuten.',
+        'mail_requested_from' => 'Aangevraagd vanaf :ip',
+        'mail_ignore' => 'Heb je dit niet aangevraagd? Dan kun je deze e-mail gerust negeren — zonder de link kan niemand inloggen.',
+        'mail_fallback' => 'Werkt de knop niet? Plak dit in je browser:',
+    ],
 ];

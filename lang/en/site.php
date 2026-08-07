@@ -99,4 +99,25 @@ return [
     'footer' => [
         'affiliate' => 'Brandcoves compares offers across shops. We may earn a commission on purchases made through our links — it never changes what you pay.',
     ],
+
+    'auth' => [
+        'title' => 'Sign in',
+        'intro' => 'Enter your email and we will send you a link. No password to remember.',
+        'email' => 'Email address',
+        'send' => 'Send me a link',
+        'link_sent' => 'Check your inbox — if that address has an account, a sign-in link is on its way.',
+        'link_invalid' => 'That link has expired or has already been used. Request a new one.',
+        'too_many' => 'Too many requests. Try again in :seconds seconds.',
+        'or' => 'or',
+        'google' => 'Continue with Google',
+        'sign_out' => 'Sign out',
+        'mail_subject' => 'Your Brandcoves sign-in link',
+        'mail_heading' => 'Sign in to Brandcoves',
+        'mail_body' => 'Tap the button below to sign in. The link works once and only from this email.',
+        'mail_button' => 'Sign in',
+        'mail_expiry' => 'The link expires in 15 minutes.',
+        'mail_requested_from' => 'Requested from :ip',
+        'mail_ignore' => 'If you did not request this, you can safely ignore this email — nobody can sign in without the link.',
+        'mail_fallback' => 'If the button does not work, paste this into your browser:',
+    ],
 ];

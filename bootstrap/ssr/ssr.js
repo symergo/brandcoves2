@@ -33693,9 +33693,87 @@ var require_jsx_runtime = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	else module.exports = require_react_jsx_runtime_development();
 }));
 //#endregion
+//#region resources/js/Pages/Auth/Login.tsx
+var Login_exports = /* @__PURE__ */ __exportAll({ default: () => Login });
+var import_jsx_runtime = require_jsx_runtime();
+function Login({ googleEnabled }) {
+	const { market, flash } = usePage().props;
+	const { t } = useTranslations();
+	const base = `/${market.key}`;
+	const form = useForm({ email: "" });
+	function submit(e) {
+		e.preventDefault();
+		form.post(`${base}/login`, { preserveScroll: true });
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("auth.title") }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mx-auto max-w-md",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold",
+				children: t("auth.title")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-ink-soft",
+				children: t("auth.intro")
+			}),
+			flash.success && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-6 rounded-card border border-sage/30 bg-sage/10 p-4 text-sm",
+				role: "status",
+				children: flash.success
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				onSubmit: submit,
+				className: "mt-6 space-y-3",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+						htmlFor: "email",
+						className: "block text-sm font-medium",
+						children: t("auth.email")
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						id: "email",
+						type: "email",
+						inputMode: "email",
+						autoComplete: "email",
+						required: true,
+						value: form.data.email,
+						onChange: (e) => form.setData("email", e.target.value),
+						"aria-invalid": form.errors.email ? true : void 0,
+						"aria-describedby": form.errors.email ? "email-error" : void 0,
+						className: "w-full rounded-lg border border-line bg-card px-4 py-3"
+					}),
+					form.errors.email && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						id: "email-error",
+						className: "text-sm text-accent",
+						role: "alert",
+						children: form.errors.email
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						disabled: form.processing,
+						className: "w-full rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-60",
+						children: t("auth.send")
+					})
+				]
+			}),
+			googleEnabled && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "my-6 flex items-center gap-3 text-xs text-ink-soft",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "h-px flex-1 bg-line" }),
+					t("auth.or"),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "h-px flex-1 bg-line" })
+				]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+				href: `${base}/auth/google`,
+				className: "flex w-full items-center justify-center gap-2 rounded-lg border border-line px-5 py-3 font-medium transition hover:border-ink",
+				children: t("auth.google")
+			})] })
+		]
+	})] });
+}
+//#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
-var import_jsx_runtime = require_jsx_runtime();
 function Home({ stats }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
@@ -54275,6 +54353,7 @@ server_default((page) => createInertiaApp({
 	title: (title) => title ? `${title} · Brandcoves` : "Brandcoves",
 	resolve: async (name) => {
 		const module = (/* @__PURE__ */ Object.assign({
+			"./Pages/Auth/Login.tsx": Login_exports,
 			"./Pages/Home.tsx": Home_exports,
 			"./Pages/Product.tsx": Product_exports,
 			"./Pages/Search.tsx": Search_exports

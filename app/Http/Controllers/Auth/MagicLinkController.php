@@ -33,13 +33,22 @@ class MagicLinkController extends Controller
 {
     public function show(): Response
     {
-        return Inertia::render('Auth/Login');
+        return Inertia::render('Auth/Login', [
+            // Staging may legitimately run without OAuth credentials, and a
+            // button that leads to an exception is worse than no button.
+            'googleEnabled' => filled(config('services.google.client_id'))
+                && filled(config('services.google.client_secret')),
+        ]);
     }
 
     public function send(Request $request, CurrentMarket $current): RedirectResponse
     {
         $validated = $request->validate([
-            'email' => ['required', 'email:rfc,dns', 'max:254'],
+            // rfc only, deliberately not dns. A DNS check rejects perfectly
+            // valid addresses whenever resolution is slow or a corporate domain
+            // hides its MX, and it makes sign-in fail for reasons the visitor
+            // cannot understand or fix. A wrong address simply never arrives.
+            'email' => ['required', 'email:rfc', 'max:254'],
         ]);
 
         $email = mb_strtolower(trim($validated['email']));
@@ -74,12 +83,13 @@ class MagicLinkController extends Controller
         return back()->with('success', __('site.auth.link_sent'));
     }
 
-    public function consume(Request $request, string $token, IdentityMerger $merger): RedirectResponse
+    /** `{market}` is consumed by middleware but still passed positionally. */
+    public function consume(Request $request, string $market, string $token, IdentityMerger $merger): RedirectResponse
     {
         $loginToken = LoginToken::consume($token);
 
         if ($loginToken === null) {
-            return redirect()->route('login')->withErrors([
+            return redirect()->to("/{$market}/login")->withErrors([
                 'email' => __('site.auth.link_invalid'),
             ]);
         }

@@ -81,6 +81,7 @@
   "resources/js/Components/ProductCard.tsx": [],
   "resources/js/Components/Sparkline.tsx": [],
   "resources/js/Layouts/SiteLayout.tsx": [],
+  "resources/js/Pages/Auth/Login.tsx": [],
   "resources/js/Pages/Home.tsx": [],
   "resources/js/Pages/Product.tsx": [],
   "resources/js/Pages/Search.tsx": [],

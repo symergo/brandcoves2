@@ -93,4 +93,25 @@ return [
     'footer' => [
         'affiliate' => 'Brandcoves compara ofertas de distintas tiendas. Podemos recibir una comisión por las compras realizadas a través de nuestros enlaces — eso nunca cambia lo que pagas tú.',
     ],
+
+    'auth' => [
+        'title' => 'Iniciar sesión',
+        'intro' => 'Escribe tu correo y te enviaremos un enlace. Sin contraseñas que recordar.',
+        'email' => 'Correo electrónico',
+        'send' => 'Envíame un enlace',
+        'link_sent' => 'Revisa tu bandeja de entrada — si hay una cuenta con ese correo, el enlace va de camino.',
+        'link_invalid' => 'Ese enlace ha caducado o ya se ha usado. Pide uno nuevo.',
+        'too_many' => 'Demasiadas solicitudes. Inténtalo de nuevo en :seconds segundos.',
+        'or' => 'o',
+        'google' => 'Continuar con Google',
+        'sign_out' => 'Cerrar sesión',
+        'mail_subject' => 'Tu enlace de acceso a Brandcoves',
+        'mail_heading' => 'Inicia sesión en Brandcoves',
+        'mail_body' => 'Pulsa el botón de abajo para entrar. El enlace funciona una sola vez y solo desde este correo.',
+        'mail_button' => 'Iniciar sesión',
+        'mail_expiry' => 'El enlace caduca en 15 minutos.',
+        'mail_requested_from' => 'Solicitado desde :ip',
+        'mail_ignore' => 'Si no has sido tú, puedes ignorar este correo — nadie puede entrar sin el enlace.',
+        'mail_fallback' => 'Si el botón no funciona, pega esto en tu navegador:',
+    ],
 ];

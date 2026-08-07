@@ -14,6 +14,19 @@ return [
     |
     */
 
+    /*
+     * Google sign-in, via Socialite.
+     *
+     * Optional: with no credentials the button is hidden entirely rather than
+     * rendered and broken. The redirect URI must be registered in the Google
+     * console for every environment, staging included.
+     */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
