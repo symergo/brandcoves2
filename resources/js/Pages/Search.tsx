@@ -24,9 +24,21 @@ interface Props {
     }
     lanes: Record<string, GroupCard[]> | null
     emptyBecauseOfFilters: boolean
+    /** Indexable prose built from what this query actually found. Null on thin pages. */
+    intro: { lead: string; detail: string | null } | null
 }
 
-export default function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters }: Props) {
+export default function Search({
+    q,
+    filters,
+    sort,
+    view,
+    facets,
+    results,
+    lanes,
+    emptyBecauseOfFilters,
+    intro,
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [term, setTerm] = useState(q)
@@ -129,6 +141,23 @@ export default function Search({ q, filters, sort, view, facets, results, lanes,
                 </aside>
 
                 <section>
+                    {/*
+                      Above the grid, not buried under it.
+
+                      A results page is otherwise almost pure markup — titles,
+                      prices, a filter rail — with nothing for a crawler to
+                      understand the page as being *about*. This is the only
+                      prose on it, so it goes where prose goes. Server-rendered
+                      via SSR, so it is in the HTML a crawler receives.
+                    */}
+                    {intro && (
+                        <div className="mb-5 max-w-3xl text-sm leading-relaxed text-ink-soft">
+                            <h2 className="sr-only">{t('search.results_for', { term: q })}</h2>
+                            <p>{intro.lead}</p>
+                            {intro.detail && <p className="mt-1">{intro.detail}</p>}
+                        </div>
+                    )}
+
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                         <p className="text-sm text-ink-soft" aria-live="polite">
                             {q ? t('search.results_for', { term: q }) : t('search.browse')}

@@ -33812,6 +33812,311 @@ function SaveToList({ groupId }) {
 	});
 }
 //#endregion
+//#region resources/js/Pages/Daily/Edition.tsx
+var Edition_exports = /* @__PURE__ */ __exportAll({ default: () => Edition });
+var EMOJI = {
+	exact: ["🎯", "🎯"],
+	warm: ["🟩", "🟩"],
+	cool: ["🔼", "🔽"],
+	cold: ["⬆️", "⬇️"]
+};
+function Edition({ edition, challenge, finds, guide, streak, archive }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	const [state, setState] = (0, import_react.useState)(challenge);
+	const [guess, setGuess] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const [copied, setCopied] = (0, import_react.useState)(false);
+	const [streakState, setStreakState] = (0, import_react.useState)(streak);
+	const [reactions, setReactions] = (0, import_react.useState)({});
+	const [counts, setCounts] = (0, import_react.useState)(Object.fromEntries(finds.map((f) => [f.id, {
+		mindblown: f.mindblown,
+		meh: f.meh
+	}])));
+	const csrf = () => document.querySelector("meta[name=\"csrf-token\"]")?.content ?? "";
+	const submitGuess = async () => {
+		if (guess === "" || busy || state?.finished) return;
+		setBusy(true);
+		try {
+			const response = await fetch(`/${market.key}/daily/${edition.date}/guess`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-TOKEN": csrf(),
+					Accept: "application/json"
+				},
+				body: JSON.stringify({ guess: Number(guess) })
+			});
+			if (!response.ok) return;
+			const data = await response.json();
+			setState({
+				...state,
+				...data
+			});
+			setStreakState(data.streak ?? streakState);
+			setGuess("");
+		} finally {
+			setBusy(false);
+		}
+	};
+	const react = async (pickId, reaction) => {
+		const response = await fetch(`/${market.key}/picks/${pickId}/react`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRF-TOKEN": csrf(),
+				Accept: "application/json"
+			},
+			body: JSON.stringify({ reaction })
+		});
+		if (!response.ok) return;
+		const data = await response.json();
+		setReactions({
+			...reactions,
+			[pickId]: data.mine
+		});
+		setCounts({
+			...counts,
+			[pickId]: {
+				mindblown: data.mindblown,
+				meh: data.meh
+			}
+		});
+	};
+	const shareText = () => {
+		const row = (state?.bands ?? []).map((entry) => (EMOJI[entry.band] ?? EMOJI.cold)[entry.over ? 1 : 0]).join("");
+		const score = state?.solved ? `${(state?.bands ?? []).length}/${state?.maxAttempts}` : `X/${state?.maxAttempts}`;
+		return `Brandcoves ${state?.shareLabel} ${score}\n${row}`;
+	};
+	const share = async () => {
+		const text = shareText();
+		if (navigator.share) try {
+			await navigator.share({ text });
+			return;
+		} catch {}
+		await navigator.clipboard.writeText(text);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2e3);
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: edition.theme }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "text-xs tracking-wide text-ink-soft uppercase",
+					children: [
+						t("daily.title"),
+						" · ",
+						edition.label
+					]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-1 text-2xl font-semibold sm:text-3xl",
+					children: edition.theme
+				}),
+				edition.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-ink-soft",
+					children: edition.blurb
+				})
+			]
+		}),
+		state && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-8 rounded-lg border border-line bg-card p-5",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex items-baseline justify-between gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-medium",
+					children: t("daily.hunt_title")
+				}), streakState.current > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+					className: "text-sm text-ink-soft",
+					children: ["🔥 ", t("daily.streak", { days: n(streakState.current) })]
+				})]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-4 flex flex-col gap-4 sm:flex-row",
+				children: [state.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: state.image,
+					alt: "",
+					className: "h-40 w-40 shrink-0 self-center object-contain"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "min-w-0 flex-1",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "font-medium",
+							children: state.title
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-sm text-ink-soft",
+							children: t("daily.hunt_prompt")
+						}),
+						state.bands.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-3 text-2xl",
+							"aria-label": t("daily.your_guesses"),
+							children: state.bands.map((entry, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: (EMOJI[entry.band] ?? EMOJI.cold)[entry.over ? 1 : 0] }, i))
+						}),
+						!state.finished ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-3 flex flex-wrap items-center gap-2",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+									className: "sr-only",
+									htmlFor: "guess",
+									children: t("daily.hunt_prompt")
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									id: "guess",
+									type: "number",
+									min: "0",
+									step: "0.01",
+									inputMode: "decimal",
+									className: "w-32 rounded border border-line px-3 py-2",
+									value: guess,
+									onChange: (e) => setGuess(e.target.value),
+									onKeyDown: (e) => e.key === "Enter" && submitGuess()
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									className: "rounded bg-accent px-4 py-2 font-medium text-white disabled:opacity-50",
+									onClick: submitGuess,
+									disabled: busy || guess === "",
+									children: t("daily.guess")
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "text-sm text-ink-soft",
+									children: t("daily.tries_left", { count: n(state.attemptsLeft) })
+								})
+							]
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-4 space-y-2",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+									className: "text-lg font-semibold",
+									children: [state.solved ? t("daily.solved") : t("daily.missed"), state.answer !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [" — ", formatPrice(state.answer, market)] })]
+								}),
+								state.community?.solvedPercent !== null && state.community !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-sm text-ink-soft",
+									children: t("daily.community", {
+										percent: n(state.community.solvedPercent ?? 0),
+										players: n(state.community.players)
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex flex-wrap gap-3 pt-1",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										className: "rounded border border-line px-4 py-2 text-sm",
+										onClick: share,
+										children: copied ? t("daily.copied") : t("daily.share")
+									}), state.productUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+										href: state.productUrl,
+										className: "rounded bg-accent px-4 py-2 text-sm font-medium text-white",
+										children: t("daily.see_offers")
+									})]
+								})
+							]
+						})
+					]
+				})]
+			})]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-sm font-medium text-ink-soft",
+				children: t("daily.finds_title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3",
+				children: finds.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex flex-col rounded-lg border border-line bg-card p-4",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+							href: find.url,
+							children: [find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: find.image,
+								alt: "",
+								className: "mx-auto h-36 object-contain",
+								loading: "lazy"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "mt-3 line-clamp-2 font-medium",
+								children: find.title
+							})]
+						}),
+						find.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 text-sm text-ink-soft",
+							children: find.blurb
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-auto space-y-3 pt-4",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "flex items-center justify-between",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "font-semibold",
+									children: find.price === null ? "—" : formatPrice(find.price, market)
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.groupId })]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "flex gap-2 text-sm",
+								children: ["mindblown", "meh"].map((kind) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+									type: "button",
+									"aria-pressed": reactions[find.id] === kind,
+									className: `rounded-full border px-3 py-1 ${reactions[find.id] === kind ? "border-accent" : "border-line"}`,
+									onClick: () => react(find.id, kind),
+									children: [
+										kind === "mindblown" ? "🤯" : "😐",
+										" ",
+										n(counts[find.id]?.[kind] ?? 0)
+									]
+								}, kind))
+							})]
+						})
+					]
+				}, find.id))
+			})]
+		}),
+		guide && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10 rounded-lg border border-line p-5",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-sm font-medium text-ink-soft",
+					children: t("daily.guide_title")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: guide.url,
+					className: "mt-2 block text-lg font-medium hover:underline",
+					children: guide.title
+				}),
+				guide.intro && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-ink-soft",
+					children: guide.intro
+				}),
+				guide.searchVolume > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-xs text-ink-soft",
+					children: t("daily.guide_why", { count: n(guide.searchVolume) })
+				})
+			]
+		}),
+		archive.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-sm font-medium text-ink-soft",
+				children: t("daily.archive")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-3 flex flex-wrap gap-2",
+				children: archive.map((entry) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+					href: entry.url,
+					className: "block rounded border border-line px-3 py-1.5 text-sm hover:bg-card",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-ink-soft",
+							children: entry.label
+						}),
+						" · ",
+						entry.theme
+					]
+				}) }, entry.date))
+			})]
+		})
+	] });
+}
+//#endregion
 //#region resources/js/Pages/Gift/Wizard.tsx
 var Wizard_exports = /* @__PURE__ */ __exportAll({ default: () => GiftWizard });
 var STEPS = [
@@ -34090,6 +34395,141 @@ function GiftWizard({ options, recipients, picks, brief }) {
 					})]
 				})
 			]
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/Guides/Index.tsx
+var Index_exports$1 = /* @__PURE__ */ __exportAll({ default: () => GuidesIndex });
+function GuidesIndex({ guides }) {
+	const { t } = useTranslations();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("guides.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold sm:text-3xl",
+				children: t("guides.title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-ink-soft",
+				children: t("guides.subtitle")
+			})]
+		}),
+		guides.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-8 text-ink-soft",
+			children: t("guides.empty")
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-8 grid gap-4 sm:grid-cols-2",
+			children: guides.map((guide) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: "rounded-lg border border-line p-5",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: guide.url,
+					className: "text-lg font-medium hover:underline",
+					children: guide.title
+				}), guide.intro && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 line-clamp-3 text-sm text-ink-soft",
+					children: guide.intro
+				})]
+			}, guide.url))
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/Guides/Show.tsx
+var Show_exports$1 = /* @__PURE__ */ __exportAll({ default: () => GuideShow });
+function GuideShow({ guide, items }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: guide.title }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+			className: "max-w-3xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "text-2xl font-semibold sm:text-3xl",
+					children: guide.title
+				}),
+				guide.intro && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-3 text-lg text-ink-soft",
+					children: guide.intro
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-3 text-xs text-ink-soft",
+					children: [guide.updatedAt && t("guides.updated", { date: guide.updatedAt }), guide.searchVolume > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [" · ", t("guides.why", { count: n(guide.searchVolume) })] })]
+				}),
+				guide.body && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+					className: "mt-8",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						className: "text-lg font-medium",
+						children: t("guides.how_to_choose")
+					}), guide.body.split(/\n{2,}/).map((paragraph, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-3 leading-relaxed",
+						children: paragraph
+					}, i))]
+				})
+			]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
+			className: "mt-10 space-y-5",
+			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: `flex flex-col gap-4 rounded-lg border border-line p-5 sm:flex-row ${item.unavailable ? "opacity-60" : ""}`,
+				children: [item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: item.image,
+					alt: "",
+					className: "h-32 w-32 shrink-0 self-center object-contain",
+					loading: "lazy"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "min-w-0 flex-1",
+					children: [
+						item.verdict && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-xs font-medium tracking-wide text-accent uppercase",
+							children: item.verdict
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "mt-1 font-medium",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: item.url,
+								className: "hover:underline",
+								children: item.title
+							})
+						}),
+						item.copy && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 text-sm text-ink-soft",
+							children: item.copy
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-3 flex flex-wrap items-center gap-4",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "font-semibold",
+									children: item.unavailable ? t("guides.unavailable") : item.price === null ? "—" : formatPrice(item.price, market)
+								}),
+								item.merchantCount > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "text-sm text-ink-soft",
+									children: t("guides.shops", { count: n(item.merchantCount) })
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: item.groupId })
+							]
+						})
+					]
+				})]
+			}, item.rank))
+		}),
+		guide.faq && guide.faq.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-12 max-w-3xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-lg font-medium",
+				children: t("guides.faq")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
+				className: "mt-4 space-y-4",
+				children: guide.faq.map((pair, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", {
+					className: "font-medium",
+					children: pair.q
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+					className: "mt-1 text-ink-soft",
+					children: pair.a
+				})] }, i))
+			})]
 		})
 	] });
 }
@@ -35016,7 +35456,7 @@ function ProductCard({ group }) {
 //#endregion
 //#region resources/js/Pages/Search.tsx
 var Search_exports = /* @__PURE__ */ __exportAll({ default: () => Search });
-function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters }) {
+function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, intro }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
@@ -35115,6 +35555,20 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 					})
 				]
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [
+				intro && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mb-5 max-w-3xl text-sm leading-relaxed text-ink-soft",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "sr-only",
+							children: t("search.results_for", { term: q })
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: intro.lead }),
+						intro.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1",
+							children: intro.detail
+						})
+					]
+				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "mb-4 flex flex-wrap items-center gap-3",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
@@ -55296,7 +55750,10 @@ server_default((page) => createInertiaApp({
 	resolve: async (name) => {
 		const module = (/* @__PURE__ */ Object.assign({
 			"./Pages/Auth/Login.tsx": Login_exports,
+			"./Pages/Daily/Edition.tsx": Edition_exports,
 			"./Pages/Gift/Wizard.tsx": Wizard_exports,
+			"./Pages/Guides/Index.tsx": Index_exports$1,
+			"./Pages/Guides/Show.tsx": Show_exports$1,
 			"./Pages/Home.tsx": Home_exports,
 			"./Pages/Lists/Index.tsx": Index_exports,
 			"./Pages/Lists/Shared.tsx": Shared_exports,

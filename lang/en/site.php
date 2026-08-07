@@ -71,6 +71,17 @@ return [
         'next' => 'Next',
         'page_of' => 'Page :current of :last',
         'seo_term' => 'Compare :count products matching :term across bol, Amazon and hundreds of shops. Find the cheapest offer in seconds.',
+
+        /*
+         * On-page copy above the results.
+         *
+         * Every clause is a fact this page can back up — the counts, the range
+         * and the brands are all read off the results themselves. Keyword-
+         * stuffed filler would rank for a fortnight and then not at all.
+         */
+        'intro_lead' => 'We found :count products for “:term”, with :shops shop listings between them.',
+        'intro_prices' => 'Prices for :term here run from :low to :high.',
+        'intro_brands' => 'Brands on this page include :brands.',
         'seo_default' => 'Search products across bol, Amazon and hundreds of shops at once, and compare every offer side by side.',
     ],
 
@@ -282,5 +293,54 @@ return [
             'exclusivity' => 'Almost no shop stocks it',
             'novelty' => 'New to us this month',
         ],
+    ],
+
+    'daily' => [
+        'title' => 'The Daily Cove',
+        'seo_description' => 'One puzzle, a handful of things you did not know existed, and a buying guide built from what people actually searched for.',
+        'hunt_title' => 'Guess the price',
+        'hunt_prompt' => 'What does this cost?',
+        'guess' => 'Guess',
+        'tries_left' => ':count tries left',
+        'your_guesses' => 'Your guesses',
+        'solved' => 'Got it',
+        'missed' => 'Out of tries',
+        'community' => ':percent% of :players players got it today',
+        'share' => 'Share your result',
+        'copied' => 'Copied',
+        'see_offers' => 'See the offers',
+        'streak' => ':days day streak',
+        'finds_title' => "Today's finds",
+        'guide_title' => "Today's guide",
+        'guide_why' => 'Written because :count searches here asked for it.',
+        'archive' => 'Earlier editions',
+
+        // The no-AI theme rotation, indexed by day of year modulo 7. Dated
+        // rather than random so a rebuild of the same day is identical.
+        'themes' => [
+            'Things nobody else is selling',
+            'Quietly excellent',
+            'Solves a problem you have',
+            'Odd but useful',
+            'Worth the shelf space',
+            'Found in the back of the catalogue',
+            'You did not know you needed this',
+        ],
+    ],
+
+    'guides' => [
+        'title' => 'Buying guides',
+        'subtitle' => 'Written from what people search for here — not from a keyword tool.',
+        'seo_description' => 'Buying guides built from real search demand, with live prices compared across every shop that stocks each product.',
+        'empty' => 'No guides yet. They are written as topics build up enough demand.',
+        'how_to_choose' => 'How to choose',
+        'faq' => 'Questions',
+        'updated' => 'Checked :date',
+        'why' => 'written because :count searches here asked for it',
+        'shops' => ':count shops',
+        'unavailable' => 'Out of stock',
+        'slug_prefix' => 'best',
+        'template_title' => 'The best :topic',
+        'template_intro' => ':count options for :topic, with every shop’s price compared side by side.',
     ],
 ];

@@ -10,6 +10,7 @@ use Database\Factories\DailyPickSetFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -40,6 +41,32 @@ class DailyPickSet extends Model
     public function picks(): HasMany
     {
         return $this->hasMany(DailyPick::class, 'set_id')->orderBy('rank');
+    }
+
+    /**
+     * The buying guide attached to this edition.
+     *
+     * Nullable, and often the *previous* edition's guide: topics ripen at the
+     * speed of search volume, not at the speed of the calendar, and a guide a
+     * week is a healthier rate than a guide a day.
+     *
+     * @return BelongsTo<Guide, $this>
+     */
+    public function guide(): BelongsTo
+    {
+        return $this->belongsTo(Guide::class);
+    }
+
+    /** @return BelongsTo<ProductGroup, $this> */
+    public function challengeGroup(): BelongsTo
+    {
+        return $this->belongsTo(ProductGroup::class, 'challenge_group_id');
+    }
+
+    /** @return HasMany<ChallengeAttempt, $this> */
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(ChallengeAttempt::class, 'set_id');
     }
 
     /** @param Builder<$this> $query */

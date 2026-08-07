@@ -100,6 +100,59 @@ class StructuredData
         ];
     }
 
+    /**
+     * A ranked list of products — a buying guide, or a day's picks.
+     *
+     * ItemList rather than a bare set of Products: the order is editorial and
+     * saying so is the difference between "here are seven things" and "here are
+     * seven things, ranked". Items carry a url and a name only; the price lives
+     * on each product's own page, where it is generated from live offers rather
+     * than from copy that goes stale.
+     *
+     * @param  list<array{name: string, url: string, image: string|null}>  $items
+     * @return array<string, mixed>
+     */
+    public static function itemList(array $items, string $name, string $url): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'ItemList',
+            'name' => $name,
+            'url' => $url,
+            'numberOfItems' => count($items),
+            'itemListOrder' => 'https://schema.org/ItemListOrderAscending',
+            'itemListElement' => array_values(array_map(fn (int $i, array $item) => array_filter([
+                '@type' => 'ListItem',
+                'position' => $i + 1,
+                'name' => $item['name'],
+                'url' => $item['url'],
+                'image' => $item['image'] ?? null,
+            ], fn ($v) => $v !== null), array_keys($items), $items)),
+        ];
+    }
+
+    /**
+     * FAQPage.
+     *
+     * Only emitted when both halves of every pair are present — a half-empty
+     * Q&A renders as an invalid FAQPage and Search Console will say so.
+     *
+     * @param  list<array{q: string, a: string}>  $faq
+     * @return array<string, mixed>
+     */
+    public static function faq(array $faq): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'FAQPage',
+            'mainEntity' => array_values(array_map(fn (array $pair) => [
+                '@type' => 'Question',
+                'name' => $pair['q'],
+                'acceptedAnswer' => ['@type' => 'Answer', 'text' => $pair['a']],
+            ], $faq)),
+        ];
+    }
+
     /** @return array<string, mixed> */
     public static function website(string $url, Market $market): array
     {

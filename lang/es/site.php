@@ -65,6 +65,16 @@ return [
         'next' => 'Siguiente',
         'page_of' => 'Página :current de :last',
         'seo_term' => 'Compara :count productos de :term en bol, Amazon y cientos de tiendas. Encuentra la oferta más barata en segundos.',
+
+        /*
+         * On-page copy above the results.
+         *
+         * Every clause is a fact this page can back up — the counts, the range
+         * and the brands are all read off the results themselves.
+         */
+        'intro_lead' => 'Encontramos :count productos para «:term», con :shops ofertas de tiendas entre ellos.',
+        'intro_prices' => 'Aquí los precios de :term van de :low a :high.',
+        'intro_brands' => 'Marcas presentes en esta página: :brands.',
         'seo_default' => 'Busca productos en bol, Amazon y cientos de tiendas a la vez, y compara todas las ofertas una al lado de la otra.',
     ],
 
@@ -276,5 +286,54 @@ return [
             'exclusivity' => 'Casi ninguna tienda lo tiene',
             'novelty' => 'Nuevo para nosotros este mes',
         ],
+    ],
+
+    'daily' => [
+        'title' => 'La Cala del día',
+        'seo_description' => 'Un acertijo, un puñado de cosas que no sabías que existían y una guía de compra construida con lo que la gente buscó aquí de verdad.',
+        'hunt_title' => 'Adivina el precio',
+        'hunt_prompt' => '¿Cuánto cuesta esto?',
+        'guess' => 'Adivinar',
+        'tries_left' => 'te quedan :count intentos',
+        'your_guesses' => 'Tus intentos',
+        'solved' => 'Acertaste',
+        'missed' => 'Sin intentos',
+        'community' => 'El :percent % de :players jugadores acertó hoy',
+        'share' => 'Comparte tu resultado',
+        'copied' => 'Copiado',
+        'see_offers' => 'Ver las ofertas',
+        'streak' => ':days días seguidos',
+        'finds_title' => 'Los hallazgos de hoy',
+        'guide_title' => 'La guía de hoy',
+        'guide_why' => 'Escrita porque :count búsquedas aquí la pidieron.',
+        'archive' => 'Ediciones anteriores',
+
+        // The no-AI theme rotation, indexed by day of year modulo 7. Dated
+        // rather than random so a rebuild of the same day is identical.
+        'themes' => [
+            'Cosas que nadie más vende',
+            'Discretamente excelente',
+            'Resuelve un problema que tienes',
+            'Raro pero útil',
+            'Merece el sitio en la estantería',
+            'Encontrado al fondo del catálogo',
+            'No sabías que lo necesitabas',
+        ],
+    ],
+
+    'guides' => [
+        'title' => 'Guías de compra',
+        'subtitle' => 'Escritas a partir de lo que la gente busca aquí, no de una herramienta de palabras clave.',
+        'seo_description' => 'Guías de compra construidas sobre demanda real, con precios en vivo comparados en todas las tiendas que venden cada producto.',
+        'empty' => 'Aún no hay guías. Se escriben cuando un tema acumula suficiente demanda.',
+        'how_to_choose' => 'Cómo elegir',
+        'faq' => 'Preguntas',
+        'updated' => 'Revisada el :date',
+        'why' => 'escrita porque :count búsquedas aquí la pidieron',
+        'shops' => ':count tiendas',
+        'unavailable' => 'Sin stock',
+        'slug_prefix' => 'mejor',
+        'template_title' => 'Los mejores :topic',
+        'template_intro' => ':count opciones de :topic, con el precio de cada tienda una al lado de la otra.',
     ],
 ];

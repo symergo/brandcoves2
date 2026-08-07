@@ -65,6 +65,16 @@ return [
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',
         'seo_term' => 'Vergelijk :count producten voor :term op bol, Amazon en honderden winkels. Vind in seconden het goedkoopste aanbod.',
+
+        /*
+         * On-page copy above the results.
+         *
+         * Every clause is a fact this page can back up — the counts, the range
+         * and the brands are all read off the results themselves.
+         */
+        'intro_lead' => 'We vonden :count producten voor “:term”, samen goed voor :shops winkelaanbiedingen.',
+        'intro_prices' => 'De prijzen voor :term lopen hier van :low tot :high.',
+        'intro_brands' => 'Merken op deze pagina zijn onder meer :brands.',
         'seo_default' => 'Zoek producten op bol, Amazon en honderden winkels tegelijk, en vergelijk elk aanbod naast elkaar.',
     ],
 
@@ -276,5 +286,54 @@ return [
             'exclusivity' => 'Bijna geen winkel heeft het',
             'novelty' => 'Deze maand nieuw bij ons',
         ],
+    ],
+
+    'daily' => [
+        'title' => 'De Dagelijkse Cove',
+        'seo_description' => 'Eén raadsel, een handvol dingen waarvan je niet wist dat ze bestonden, en een koopgids gebouwd op wat mensen hier echt zochten.',
+        'hunt_title' => 'Raad de prijs',
+        'hunt_prompt' => 'Wat kost dit?',
+        'guess' => 'Raden',
+        'tries_left' => 'nog :count pogingen',
+        'your_guesses' => 'Jouw pogingen',
+        'solved' => 'Geraden',
+        'missed' => 'Geen pogingen meer',
+        'community' => ':percent% van :players spelers had het vandaag goed',
+        'share' => 'Deel je resultaat',
+        'copied' => 'Gekopieerd',
+        'see_offers' => 'Bekijk de aanbiedingen',
+        'streak' => ':days dagen op rij',
+        'finds_title' => 'De vondsten van vandaag',
+        'guide_title' => 'De gids van vandaag',
+        'guide_why' => 'Geschreven omdat :count zoekopdrachten hier erom vroegen.',
+        'archive' => 'Eerdere edities',
+
+        // The no-AI theme rotation, indexed by day of year modulo 7. Dated
+        // rather than random so a rebuild of the same day is identical.
+        'themes' => [
+            'Dingen die niemand anders verkoopt',
+            'Stilletjes uitstekend',
+            'Lost een probleem op dat je hebt',
+            'Vreemd maar bruikbaar',
+            'De kastruimte waard',
+            'Achteraan in de catalogus gevonden',
+            'Je wist niet dat je dit nodig had',
+        ],
+    ],
+
+    'guides' => [
+        'title' => 'Koopgidsen',
+        'subtitle' => 'Geschreven op basis van wat mensen hier zoeken — niet van een zoekwoordtool.',
+        'seo_description' => 'Koopgidsen gebouwd op echte zoekvraag, met live prijzen vergeleken over elke winkel die het product heeft.',
+        'empty' => 'Nog geen gidsen. Ze worden geschreven zodra een onderwerp genoeg vraag opbouwt.',
+        'how_to_choose' => 'Hoe kies je',
+        'faq' => 'Vragen',
+        'updated' => 'Gecontroleerd op :date',
+        'why' => 'geschreven omdat :count zoekopdrachten hier erom vroegen',
+        'shops' => ':count winkels',
+        'unavailable' => 'Niet op voorraad',
+        'slug_prefix' => 'beste',
+        'template_title' => 'De beste :topic',
+        'template_intro' => ':count opties voor :topic, met de prijs van elke winkel naast elkaar.',
     ],
 ];

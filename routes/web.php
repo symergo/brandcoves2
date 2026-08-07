@@ -6,12 +6,16 @@ use App\Enums\Market;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MagicLinkController;
+use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
+use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\GiftController;
+use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\SearchController;
@@ -197,7 +201,36 @@ Route::prefix('{market}')->group(function () {
         ->middleware('throttle:120,1')
         ->name('surprise');
 
-    // Phase 5-6 routes land here:
+    /*
+    |----------------------------------------------------------------------
+    | The Daily Cove
+    |----------------------------------------------------------------------
+    |
+    | One page a day: a price guess, a themed set of finds, and a buying guide.
+    | Every edition keeps a permanent dated URL — the archive is the SEO asset,
+    | and a daily game whose past rounds 404 has no archive to link to.
+    */
+    Route::get('/daily', DailyCoveController::class)->name('daily');
+    Route::get('/daily/{date}', DailyCoveController::class)
+        ->where('date', '\d{4}-\d{2}-\d{2}')
+        ->name('daily.edition');
+
+    // Throttled per minute: four guesses is a whole round, so anything much
+    // above that is someone probing for the answer.
+    Route::post('/daily/{date}/guess', ChallengeController::class)
+        ->where('date', '\d{4}-\d{2}-\d{2}')
+        ->middleware('throttle:20,1')
+        ->name('daily.guess');
+
+    Route::post('/picks/{pick}/react', PickReactionController::class)
+        ->whereNumber('pick')
+        ->middleware('throttle:60,1')
+        ->name('picks.react');
+
+    Route::get('/guides', [GuideController::class, 'index'])->name('guides');
+    Route::get('/guides/{slug}', [GuideController::class, 'show'])->name('guides.show');
+
+    // Phase 7 routes land here:
     //   /{market}/scan                       mobile barcode scanner
     //   /{market}/daily                      today's picks
     //   /{market}/guides                     buying guides

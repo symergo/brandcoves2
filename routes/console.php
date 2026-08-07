@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Market;
+use App\Jobs\BuildDailyEdition;
 use App\Jobs\ClassifyGiftability;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
@@ -117,6 +118,25 @@ foreach (Market::cases() as $index => $market) {
     Schedule::job(new WidenGiftAngles($market))
         ->name('widen-gift-angles-'.$market->value)
         ->dailyAt(sprintf('02:%02d', $index * 7))
+        ->onOneServer();
+}
+
+/*
+ * Build the day's Daily Cove edition, one market at a time.
+ *
+ * At 06:00, three hours before the 09:00 drop time. The gap is deliberate: the
+ * build can fail — a thin catalogue day, an AI hiccup, a feed that arrived late
+ * — and three hours is enough for the retry to land or for someone to notice
+ * before the page is meant to be there.
+ *
+ * Staggered per market so five editions do not build at once, each holding a
+ * catalogue-wide statistics pass in memory.
+ */
+foreach (Market::cases() as $index => $market) {
+    Schedule::job(new BuildDailyEdition($market))
+        ->name('build-daily-cove-'.$market->value)
+        ->dailyAt(sprintf('06:%02d', $index * 6))
+        ->withoutOverlapping()
         ->onOneServer();
 }
 

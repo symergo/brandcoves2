@@ -41,12 +41,23 @@ final readonly class Owner
         return $this->user !== null;
     }
 
-    /** Columns for creating a row owned by whoever this is. */
-    public function attributes(): array
+    /**
+     * Columns for creating a row owned by whoever this is.
+     *
+     * The column names are parameters because two table families use different
+     * ones: wishlists and recipients say `owner_user_id` / `owner_anon_id`
+     * (they have a CHECK constraint naming exactly one owner), while
+     * challenge_attempts says `user_id` / `anon_id`. Passing the names in beats
+     * a second copy of this class, and beats renaming live columns to suit a
+     * helper.
+     *
+     * @return array<string, mixed>
+     */
+    public function attributes(string $userColumn = 'owner_user_id', string $anonColumn = 'owner_anon_id'): array
     {
         return $this->user !== null
-            ? ['owner_user_id' => $this->user->id, 'owner_anon_id' => null]
-            : ['owner_user_id' => null, 'owner_anon_id' => $this->anonymous?->getKey()];
+            ? [$userColumn => $this->user->id, $anonColumn => null]
+            : [$userColumn => null, $anonColumn => $this->anonymous?->getKey()];
     }
 
     /**
@@ -58,14 +69,17 @@ final readonly class Owner
      *
      * @param  Builder<covariant \Illuminate\Database\Eloquent\Model>  $query
      */
-    public function scope(Builder $query): Builder
-    {
+    public function scope(
+        Builder $query,
+        string $userColumn = 'owner_user_id',
+        string $anonColumn = 'owner_anon_id',
+    ): Builder {
         if ($this->user !== null) {
-            return $query->where('owner_user_id', $this->user->id);
+            return $query->where($userColumn, $this->user->id);
         }
 
         if ($this->anonymous !== null) {
-            return $query->where('owner_anon_id', $this->anonymous->getKey());
+            return $query->where($anonColumn, $this->anonymous->getKey());
         }
 
         return $query->whereRaw('1 = 0');
@@ -82,5 +96,28 @@ final readonly class Owner
     {
         return $this->user?->claimIdentity()
             ?? ($this->anonymous === null ? null : 'anon:'.$this->anonymous->getKey());
+    }
+
+    /**
+     * A one-way, per-purpose identity hash.
+     *
+     * `$purpose` is mixed in so the same visitor produces a different hash for a
+     * gift claim than for a pick reaction. Without it, two tables would share a
+     * value and either could be used to look the visitor up in the other —
+     * a join nobody intended and nobody would notice.
+     */
+    public function identityHash(string $purpose): ?string
+    {
+        $identity = $this->claimIdentity();
+
+        if ($identity === null) {
+            return null;
+        }
+
+        return hash_hmac(
+            'sha256',
+            $purpose.'|'.$identity,
+            (string) config('brandcoves.wishlist.claim_hash_secret'),
+        );
     }
 }

@@ -65,6 +65,16 @@ return [
         'next' => 'Suivant',
         'page_of' => 'Page :current sur :last',
         'seo_term' => 'Comparez :count produits pour :term sur bol, Amazon et des centaines de boutiques. Trouvez la meilleure offre en quelques secondes.',
+
+        /*
+         * On-page copy above the results.
+         *
+         * Every clause is a fact this page can back up — the counts, the range
+         * and the brands are all read off the results themselves.
+         */
+        'intro_lead' => 'Nous avons trouvé :count produits pour « :term », représentant :shops offres en boutique.',
+        'intro_prices' => 'Ici, les prix pour :term vont de :low à :high.',
+        'intro_brands' => 'Marques présentes sur cette page : :brands.',
         'seo_default' => 'Cherchez des produits sur bol, Amazon et des centaines de boutiques à la fois, et comparez toutes les offres côte à côte.',
     ],
 
@@ -276,5 +286,54 @@ return [
             'exclusivity' => 'Presque aucun magasin ne l’a',
             'novelty' => 'Nouveau chez nous ce mois-ci',
         ],
+    ],
+
+    'daily' => [
+        'title' => 'La Crique du jour',
+        'seo_description' => 'Une énigme, une poignée de choses dont vous ignoriez l’existence, et un guide d’achat bâti sur ce que les gens ont réellement cherché ici.',
+        'hunt_title' => 'Devinez le prix',
+        'hunt_prompt' => 'Combien cela coûte-t-il ?',
+        'guess' => 'Deviner',
+        'tries_left' => 'encore :count essais',
+        'your_guesses' => 'Vos essais',
+        'solved' => 'Trouvé',
+        'missed' => 'Plus d’essais',
+        'community' => ':percent % des :players joueurs ont trouvé aujourd’hui',
+        'share' => 'Partagez votre résultat',
+        'copied' => 'Copié',
+        'see_offers' => 'Voir les offres',
+        'streak' => ':days jours d’affilée',
+        'finds_title' => 'Les trouvailles du jour',
+        'guide_title' => 'Le guide du jour',
+        'guide_why' => 'Écrit parce que :count recherches ici l’ont demandé.',
+        'archive' => 'Éditions précédentes',
+
+        // The no-AI theme rotation, indexed by day of year modulo 7. Dated
+        // rather than random so a rebuild of the same day is identical.
+        'themes' => [
+            'Ce que personne d’autre ne vend',
+            'Discrètement excellent',
+            'Résout un problème que vous avez',
+            'Étrange mais utile',
+            'Mérite sa place sur l’étagère',
+            'Trouvé au fond du catalogue',
+            'Vous ignoriez en avoir besoin',
+        ],
+    ],
+
+    'guides' => [
+        'title' => 'Guides d’achat',
+        'subtitle' => 'Écrits à partir de ce que les gens cherchent ici — pas d’un outil de mots-clés.',
+        'seo_description' => 'Des guides d’achat bâtis sur une demande réelle, avec les prix en direct comparés dans toutes les boutiques qui vendent chaque produit.',
+        'empty' => 'Pas encore de guides. Ils s’écrivent dès qu’un sujet accumule assez de demande.',
+        'how_to_choose' => 'Comment choisir',
+        'faq' => 'Questions',
+        'updated' => 'Vérifié le :date',
+        'why' => 'écrit parce que :count recherches ici l’ont demandé',
+        'shops' => ':count boutiques',
+        'unavailable' => 'En rupture',
+        'slug_prefix' => 'meilleur',
+        'template_title' => 'Les meilleurs :topic',
+        'template_intro' => ':count options pour :topic, avec le prix de chaque boutique côte à côte.',
     ],
 ];
