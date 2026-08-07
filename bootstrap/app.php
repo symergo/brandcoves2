@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Market;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetMarket;
@@ -41,6 +42,24 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
         ]);
+
+        /*
+         * Where a guest is sent when they hit an auth-only route.
+         *
+         * Laravel's default calls route('login'), which cannot be generated
+         * here: every route is prefixed with {market}, and the exception
+         * handler has no market to give it. The result is a 500 instead of a
+         * login page. Resolving the market from the request restores the
+         * intended behaviour, and returns the visitor to the market they were
+         * already browsing.
+         */
+        $middleware->redirectGuestsTo(function (Request $request) {
+            $segment = $request->segment(1);
+            $market = Market::tryFrom((string) $segment)
+                ?? Market::fromAcceptLanguage($request->header('Accept-Language'));
+
+            return '/'.$market->value.'/login';
+        });
 
         // navigator.sendBeacon cannot set headers, so the click beacon cannot
         // carry a CSRF token. Exempt deliberately: it writes an analytics row

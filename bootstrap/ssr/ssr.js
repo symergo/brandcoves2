@@ -33861,12 +33861,454 @@ function Stat({ label, value, hint }) {
 	});
 }
 //#endregion
+//#region resources/js/Pages/Lists/Index.tsx
+var Index_exports = /* @__PURE__ */ __exportAll({ default: () => ListsIndex });
+function ListsIndex({ lists, recipients, isSignedIn }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	const [creating, setCreating] = (0, import_react.useState)(false);
+	const form = useForm({
+		title: "",
+		recipient_id: "",
+		is_gift_list: false
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("lists.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "flex flex-wrap items-end justify-between gap-4",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold",
+				children: t("lists.title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-1 text-ink-soft",
+				children: t("lists.subtitle")
+			})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				onClick: () => setCreating((v) => !v),
+				className: "rounded-lg bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark",
+				children: t("lists.new_list")
+			})]
+		}),
+		!isSignedIn && lists.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mt-6 rounded-card border border-amber/40 bg-amber/10 p-4",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "font-medium",
+					children: t("lists.sign_in_to_keep")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-sm text-ink-soft",
+					children: t("lists.sign_in_hint")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/login`,
+					className: "mt-2 inline-block text-sm text-accent underline",
+					children: t("nav.sign_in")
+				})
+			]
+		}),
+		creating && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+			onSubmit: (e) => {
+				e.preventDefault();
+				form.post(`/${market.key}/lists`, { onSuccess: () => setCreating(false) });
+			},
+			className: "mt-6 space-y-3 rounded-card border border-line bg-card p-5",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+					className: "block text-sm font-medium",
+					htmlFor: "title",
+					children: t("lists.list_name")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					id: "title",
+					required: true,
+					value: form.data.title,
+					onChange: (e) => form.setData("title", e.target.value),
+					className: "w-full rounded-lg border border-line bg-cream px-3 py-2"
+				}),
+				recipients.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+					className: "block text-sm font-medium",
+					htmlFor: "recipient",
+					children: t("lists.for_whom")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+					id: "recipient",
+					value: form.data.recipient_id,
+					onChange: (e) => form.setData("recipient_id", e.target.value),
+					className: "w-full rounded-lg border border-line bg-cream px-3 py-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+						value: "",
+						children: t("lists.no_recipient")
+					}), recipients.map((r) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+						value: r.id,
+						children: r.name
+					}, r.id))]
+				})] }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					disabled: form.processing,
+					className: "rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-60",
+					children: t("lists.create")
+				})
+			]
+		}),
+		lists.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mt-10 rounded-card border border-line bg-card p-8 text-center",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "font-medium",
+					children: t("lists.empty")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-sm text-ink-soft",
+					children: t("lists.empty_hint")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/search`,
+					className: "mt-3 inline-block text-accent underline",
+					children: t("nav.search")
+				})
+			]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+			children: lists.map((list) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+				href: list.url,
+				className: "block rounded-card border border-line bg-card p-5 transition hover:border-ink/30",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-medium",
+					children: list.title
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-1 text-sm text-ink-soft",
+					children: [list.itemCount === 1 ? t("lists.one_item") : t("lists.items", { count: n(list.itemCount) }), list.recipient && ` · ${list.recipient.name}`]
+				})]
+			}) }, list.id))
+		})
+	] });
+}
+//#endregion
 //#region resources/js/types.ts
 function formatPrice(cents, market) {
 	return new Intl.NumberFormat(market.hrefLang, {
 		style: "currency",
 		currency: market.currency
 	}).format(cents / 100);
+}
+//#endregion
+//#region resources/js/Pages/Lists/Shared.tsx
+var Shared_exports = /* @__PURE__ */ __exportAll({ default: () => SharedList });
+function SharedList({ list, isOwner, items }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const token = window.location.pathname.split("/").pop();
+	const base = `/${market.key}`;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
+			title: list.title,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meta", {
+				name: "robots",
+				content: "noindex, nofollow"
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", { children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold",
+				children: list.title
+			}),
+			list.description && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-ink-soft",
+				children: list.description
+			}),
+			list.isGiftList && !isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-4 rounded-card border border-line bg-card p-4 text-sm",
+				children: t("lists.shared_intro", { name: list.recipient ?? list.title })
+			}),
+			isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-4 rounded-card border border-amber/40 bg-amber/10 p-4 text-sm",
+				children: t("lists.owner_view_note")
+			})
+		] }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-8 grid gap-4 sm:grid-cols-2",
+			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: `flex flex-col rounded-card border bg-card p-4 ${item.claimed && !item.claimedByMe ? "border-line opacity-60" : "border-line"}`,
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex gap-4",
+					children: [item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: item.image,
+						alt: "",
+						className: "h-20 w-20 rounded object-contain",
+						onError: (e) => {
+							e.currentTarget.style.visibility = "hidden";
+						}
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "min-w-0 flex-1",
+						children: [
+							item.url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: item.url,
+								className: "font-medium hover:underline",
+								children: item.title
+							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "font-medium",
+								children: item.title
+							}),
+							item.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 text-sm text-ink-soft",
+								children: item.note
+							}),
+							item.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 font-semibold",
+								children: formatPrice(item.price, market)
+							})
+						]
+					})]
+				}), !isOwner && item.claimed !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-4",
+					children: item.claimedByMe ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						onClick: () => router.delete(`${base}/l/${token}/claim/${item.id}`, { preserveScroll: true }),
+						className: "w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-sm font-medium text-sage",
+						children: [
+							t("lists.claimed"),
+							" · ",
+							t("lists.unclaim")
+						]
+					}) : item.claimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "w-full rounded-lg border border-line px-4 py-2 text-center text-sm text-ink-soft",
+						children: t("lists.claimed_by_someone")
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						onClick: () => router.post(`${base}/l/${token}/claim/${item.id}`, {}, { preserveScroll: true }),
+						className: "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark",
+						children: t("lists.claim")
+					})
+				})]
+			}, item.id))
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/Lists/Show.tsx
+var Show_exports = /* @__PURE__ */ __exportAll({ default: () => ListShow });
+function ListShow({ list, items }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [copied, setCopied] = (0, import_react.useState)(false);
+	const base = `/${market.key}`;
+	const shared = list.visibility !== "private";
+	function toggleSharing() {
+		router.patch(`${base}/lists/${list.id}`, { visibility: shared ? "private" : "link" }, { preserveScroll: true });
+	}
+	async function copyLink() {
+		if (!list.shareUrl) return;
+		await navigator.clipboard.writeText(list.shareUrl);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2e3);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: list.title }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "flex flex-wrap items-start justify-between gap-4",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+					href: `${base}/lists`,
+					className: "text-sm text-ink-soft hover:text-ink",
+					children: ["← ", t("lists.title")]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-1 text-2xl font-semibold",
+					children: list.title
+				}),
+				list.recipient && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-ink-soft",
+					children: list.recipient.name
+				})
+			] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-wrap items-center gap-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					onClick: toggleSharing,
+					className: "rounded-lg border border-line px-3 py-2 text-sm hover:border-ink",
+					children: shared ? t("lists.disable_sharing") : t("lists.enable_sharing")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					onClick: () => {
+						if (confirm(t("lists.delete_confirm"))) router.delete(`${base}/lists/${list.id}`);
+					},
+					className: "rounded-lg border border-line px-3 py-2 text-sm text-accent hover:border-accent",
+					children: t("lists.delete_list")
+				})]
+			})]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-3 text-sm text-ink-soft",
+			children: shared ? t("lists.sharing_on") : t("lists.sharing_off")
+		}),
+		shared && list.shareUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mt-3 flex flex-wrap items-center gap-2",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
+				className: "flex-1 truncate rounded border border-line bg-card px-3 py-2 text-xs",
+				children: list.shareUrl
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				onClick: copyLink,
+				className: "rounded-lg bg-ink px-3 py-2 text-sm text-cream",
+				children: copied ? t("lists.copied") : t("lists.copy_link")
+			})]
+		}),
+		list.isGiftList && shared && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft",
+			children: t("lists.owner_view_note")
+		}),
+		items.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-10 rounded-card border border-line bg-card p-8 text-center text-ink-soft",
+			children: t("lists.empty_list")
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-8 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
+			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: "flex items-center gap-4 p-4",
+				children: [
+					item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: item.image,
+						alt: "",
+						className: "h-14 w-14 rounded object-contain",
+						onError: (e) => {
+							e.currentTarget.style.visibility = "hidden";
+						}
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "min-w-0 flex-1",
+						children: [item.groupId && item.slug ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							href: `${base}/p/${item.groupId}/${item.slug}`,
+							className: "font-medium hover:underline",
+							children: item.title
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "font-medium",
+							children: item.title
+						}), item.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-sm text-ink-soft",
+							children: item.note
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "text-right text-sm",
+						children: [item.currentPrice !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "font-semibold",
+							children: t("lists.price_now", { price: formatPrice(item.currentPrice, market) })
+						}), item.price !== null && item.currentPrice !== null && item.price !== item.currentPrice && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "text-xs text-ink-soft line-through",
+							children: formatPrice(item.price, market)
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						onClick: () => router.delete(`${base}/list-items/${item.id}`, { preserveScroll: true }),
+						"aria-label": t("lists.remove"),
+						className: "rounded p-2 text-ink-soft hover:text-accent",
+						children: "✕"
+					})
+				]
+			}, item.id))
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/Notifications.tsx
+var Notifications_exports = /* @__PURE__ */ __exportAll({ default: () => Notifications });
+function Notifications({ notifications, watching }) {
+	const { market, unreadCount } = usePage().props;
+	const { t } = useTranslations();
+	(0, import_react.useEffect)(() => {
+		if (unreadCount > 0) router.post(`/${market.key}/notifications/read`, {}, {
+			preserveScroll: true,
+			preserveState: true,
+			only: ["unreadCount"]
+		});
+	}, [unreadCount, market.key]);
+	const dateFormat = new Intl.DateTimeFormat(market.hrefLang, {
+		day: "numeric",
+		month: "short"
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("notifications.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+			className: "text-2xl font-semibold",
+			children: t("notifications.title")
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-8",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-sm font-medium text-ink-soft",
+				children: t("notifications.recent")
+			}), notifications.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-sm text-ink-soft",
+				children: t("notifications.empty")
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-3 divide-y divide-line rounded border border-line",
+				children: notifications.map((notice) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: `flex items-baseline gap-3 px-4 py-3 text-sm ${notice.readAt === null ? "bg-card" : ""}`,
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							"aria-hidden": true,
+							children: notice.kind === "restock" ? "📦" : "↓"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "min-w-0 flex-1",
+							children: [notice.url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: notice.url,
+								className: "font-medium hover:underline",
+								children: notice.title
+							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "font-medium",
+								children: notice.title
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-ink-soft",
+								children: notice.kind === "restock" ? t("notifications.back_in_stock") : t("notifications.dropped_to", {
+									price: notice.price === null ? "—" : formatPrice(notice.price, market),
+									was: notice.baseline === null ? "—" : formatPrice(notice.baseline, market)
+								})
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("time", {
+							className: "shrink-0 text-xs text-ink-soft",
+							dateTime: notice.createdAt,
+							children: dateFormat.format(new Date(notice.createdAt))
+						})
+					]
+				}, notice.id))
+			})]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-sm font-medium text-ink-soft",
+				children: t("notifications.watching")
+			}), watching.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-sm text-ink-soft",
+				children: t("notifications.watching_empty")
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-3 grid gap-3 sm:grid-cols-2",
+				children: watching.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex items-center gap-3 rounded border border-line p-3",
+					children: [
+						item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: item.image,
+							alt: "",
+							className: "h-12 w-12 shrink-0 object-contain",
+							loading: "lazy"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "min-w-0 flex-1 text-sm",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: item.url,
+								className: "font-medium hover:underline",
+								children: item.title
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+								className: "text-ink-soft",
+								children: [item.restock ? t("notifications.await_restock") : item.target !== null ? t("notifications.until", { price: formatPrice(item.target, market) }) : t("notifications.any_drop"), item.currentPrice !== null && ` · ${t("notifications.now", { price: formatPrice(item.currentPrice, market) })}`]
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							className: "shrink-0 text-xs text-ink-soft underline hover:text-ink",
+							onClick: () => router.delete(`/${market.key}/alerts/${item.groupId}`, { preserveScroll: true }),
+							children: t("alerts.stop")
+						})
+					]
+				}, item.groupId))
+			})]
+		})
+	] });
 }
 //#endregion
 //#region resources/js/Components/Sparkline.tsx
@@ -33924,6 +34366,133 @@ function Sparkline({ points, market }) {
 	});
 }
 //#endregion
+//#region resources/js/Components/SaveToList.tsx
+/**
+* Save a product to a list, from anywhere.
+*
+* No account required and no list required: the controller creates a default
+* list on first save. Asking someone to sign in or to name a list before they
+* can keep a product is how you lose the save.
+*/
+function SaveToList({ groupId }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [saved, setSaved] = (0, import_react.useState)(false);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	function save() {
+		if (saved || busy) return;
+		setBusy(true);
+		router.post(`/${market.key}/list-items`, { group_id: groupId }, {
+			preserveScroll: true,
+			preserveState: true,
+			onSuccess: () => setSaved(true),
+			onFinish: () => setBusy(false)
+		});
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		onClick: save,
+		disabled: busy,
+		"aria-pressed": saved,
+		className: `rounded-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink disabled:opacity-60"}`,
+		children: saved ? `✓ ${t("lists.saved")}` : t("lists.save")
+	});
+}
+//#endregion
+//#region resources/js/Components/AlertButton.tsx
+/**
+* Watch a product for a price drop, or for it coming back in stock.
+*
+* Which of the two is offered depends on the product's state: telling someone
+* they can be notified about a drop on something nobody currently sells is
+* an offer we cannot keep.
+*/
+function AlertButton({ groupId, alert, currentPrice, inStock }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const [target, setTarget] = (0, import_react.useState)("");
+	if (!alert.eligible) return null;
+	const watching = alert.price || alert.restock;
+	if (alert.requiresAccount) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+		href: `/${market.key}/login`,
+		className: "inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-sm hover:bg-card",
+		children: inStock ? t("alerts.watch_price") : t("alerts.watch_restock")
+	});
+	if (watching) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex items-center gap-3 text-sm",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "text-ink-soft",
+			children: alert.price ? t("alerts.watching_price") : t("alerts.watching_restock")
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			className: "underline hover:text-ink",
+			onClick: () => router.delete(`/${market.key}/alerts/${groupId}`, { preserveScroll: true }),
+			children: t("alerts.stop")
+		})]
+	});
+	const submit = (type) => {
+		router.post(`/${market.key}/alerts`, {
+			group_id: groupId,
+			type,
+			target_price: type === "price" && target !== "" ? target : null
+		}, {
+			preserveScroll: true,
+			onSuccess: () => setOpen(false)
+		});
+	};
+	if (!inStock) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		type: "button",
+		className: "inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-sm hover:bg-card",
+		onClick: () => submit("restock"),
+		children: t("alerts.watch_restock")
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "space-y-2",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			className: "inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-sm hover:bg-card",
+			onClick: () => setOpen(!open),
+			"aria-expanded": open,
+			children: t("alerts.watch_price")
+		}), open && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "space-y-2 rounded border border-line bg-card p-3 text-sm",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+					className: "block",
+					htmlFor: `target-${groupId}`,
+					children: t("alerts.target_label")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						id: `target-${groupId}`,
+						type: "number",
+						min: "0",
+						step: "0.01",
+						className: "w-32 rounded border border-line px-2 py-1",
+						placeholder: currentPrice === null ? "" : formatPrice(currentPrice, market),
+						value: target,
+						onChange: (e) => setTarget(e.target.value)
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						className: "rounded bg-accent px-3 py-1 text-white",
+						onClick: () => submit("price"),
+						children: t("alerts.confirm")
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-ink-soft",
+					children: t("alerts.any_drop_hint")
+				}),
+				alert.excluded.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-ink-soft",
+					children: t("alerts.excluded", { shops: alert.excluded.join(", ") })
+				})
+			]
+		})]
+	});
+}
+//#endregion
 //#region resources/js/Pages/Product.tsx
 var Product_exports = /* @__PURE__ */ __exportAll({ default: () => Product });
 /**
@@ -33944,7 +34513,7 @@ function reportClick(offer) {
 		navigator.sendBeacon?.(offer.beacon, new Blob([JSON.stringify({ offer: offer.id })], { type: "application/json" }));
 	} catch {}
 }
-function Product({ product, offers, history }) {
+function Product({ product, offers, history, alert }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const cheapestId = offers.filter((o) => o.isBuyable)[0]?.id;
@@ -33984,6 +34553,15 @@ function Product({ product, offers, history }) {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 					className: "mt-2 text-sm text-ink-soft",
 					children: product.merchantCount > 1 ? t("product.compare", { count: n(offers.length) }) : t("product.one_shop")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-5 flex flex-wrap items-start gap-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: product.id }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AlertButton, {
+						groupId: product.id,
+						alert,
+						currentPrice: product.minPrice,
+						inStock: product.inStock
+					})]
 				}),
 				history.length > 2 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "mt-8",
@@ -54235,7 +54813,7 @@ var import_server_node = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(
 	exports.resume = s.resume;
 })))(), 1);
 function SiteLayout({ children }) {
-	const { market, markets, auth } = usePage().props;
+	const { market, markets, auth, unreadCount } = usePage().props;
 	const { t } = useTranslations();
 	const base = `/${market.key}`;
 	const nav = [
@@ -54303,11 +54881,22 @@ function SiteLayout({ children }) {
 										children: m.label
 									}, m.key))
 								}),
-								auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+									href: `${base}/notifications`,
+									className: "relative text-sm hover:text-ink",
+									"aria-label": unreadCount > 0 ? `${t("nav.notifications")} (${unreadCount})` : t("nav.notifications"),
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										"aria-hidden": true,
+										children: "🔔"
+									}), unreadCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-[11px] leading-4 font-semibold text-white",
+										children: unreadCount > 9 ? "9+" : unreadCount
+									})]
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 									href: `${base}/lists`,
 									className: "text-sm hover:text-ink",
 									children: t("nav.lists")
-								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								})] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 									href: "/login",
 									className: "text-sm hover:text-ink",
 									children: t("nav.sign_in")
@@ -54355,6 +54944,10 @@ server_default((page) => createInertiaApp({
 		const module = (/* @__PURE__ */ Object.assign({
 			"./Pages/Auth/Login.tsx": Login_exports,
 			"./Pages/Home.tsx": Home_exports,
+			"./Pages/Lists/Index.tsx": Index_exports,
+			"./Pages/Lists/Shared.tsx": Shared_exports,
+			"./Pages/Lists/Show.tsx": Show_exports,
+			"./Pages/Notifications.tsx": Notifications_exports,
 			"./Pages/Product.tsx": Product_exports,
 			"./Pages/Search.tsx": Search_exports
 		}))[`./Pages/${name}.tsx`];

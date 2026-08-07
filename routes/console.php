@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Market;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
+use App\Jobs\RefreshWishlistedProducts;
 use App\Models\Feed;
 use Illuminate\Support\Facades\Schedule;
 
@@ -59,6 +60,20 @@ Schedule::call(function (): void {
 })
     ->name('group-products')
     ->twiceDailyAt(5, 17, 0)
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Fire price and restock alerts.
+ *
+ * Twenty minutes after grouping, not on its own cadence: the only thing that
+ * moves a stored price is a feed ingest, and grouping is what turns that into
+ * the aggregates an alert compares against. Running more often than the data
+ * changes would burn queries to re-read the same numbers.
+ */
+Schedule::job(new RefreshWishlistedProducts)
+    ->name('refresh-wishlisted')
+    ->twiceDailyAt(5, 17, 20)
     ->withoutOverlapping()
     ->onOneServer();
 

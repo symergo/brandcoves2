@@ -3,6 +3,9 @@ import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 import Sparkline from '../Components/Sparkline'
+import SaveToList from '../Components/SaveToList'
+import AlertButton from '../Components/AlertButton'
+import type { AlertState } from '../Components/AlertButton'
 
 interface Offer {
     id: number
@@ -39,6 +42,7 @@ interface Props {
     }
     offers: Offer[]
     history: { date: string; price: number }[]
+    alert: AlertState
 }
 
 /**
@@ -66,7 +70,7 @@ function reportClick(offer: Offer): void {
     }
 }
 
-export default function Product({ product, offers, history }: Props) {
+export default function Product({ product, offers, history, alert }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -123,6 +127,16 @@ export default function Product({ product, offers, history }: Props) {
                             ? t('product.compare', { count: n(offers.length) })
                             : t('product.one_shop')}
                     </p>
+
+                    <div className="mt-5 flex flex-wrap items-start gap-3">
+                        <SaveToList groupId={product.id} />
+                        <AlertButton
+                            groupId={product.id}
+                            alert={alert}
+                            currentPrice={product.minPrice}
+                            inStock={product.inStock}
+                        />
+                    </div>
 
                     {history.length > 2 && (
                         <div className="mt-8">

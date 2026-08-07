@@ -7,8 +7,11 @@ namespace App\Http\Controllers;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
+use App\Models\PriceAlert;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Models\RestockAlert;
+use App\Services\Alerts\AlertEligibility;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -74,7 +77,37 @@ class ProductController extends Controller
             ],
             'offers' => $this->presentOffers($offers),
             'history' => $this->priceHistory($productGroup),
+            'alert' => $this->alertState($productGroup),
         ]);
+    }
+
+    /**
+     * Whether this product can carry an alert, and whether it already does.
+     *
+     * `excluded` is sent so the button can say which shops are *not* watched.
+     * Silently narrowing what "alert me when it drops" means would be a lie the
+     * shopper only discovers when a drop passes them by.
+     *
+     * @return array<string, mixed>
+     */
+    private function alertState(ProductGroup $group): array
+    {
+        $eligibility = app(AlertEligibility::class);
+        $user = request()->user();
+
+        return [
+            'eligible' => $eligibility->isEligible($group),
+            'excluded' => $eligibility->excludedSources($group),
+            'requiresAccount' => $user === null,
+            'price' => $user !== null && PriceAlert::query()
+                ->where('group_id', $group->id)
+                ->where('user_id', $user->id)
+                ->exists(),
+            'restock' => $user !== null && RestockAlert::query()
+                ->where('group_id', $group->id)
+                ->where('user_id', $user->id)
+                ->exists(),
+        ];
     }
 
     /**

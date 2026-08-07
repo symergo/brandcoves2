@@ -3,15 +3,21 @@
 declare(strict_types=1);
 
 use App\Enums\Market;
+use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SharedListController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\WishlistItemController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -108,10 +114,59 @@ Route::prefix('{market}')->group(function () {
         ->middleware('auth')
         ->name('logout');
 
-    // Phase 3-6 routes land here:
+    /*
+    |----------------------------------------------------------------------
+    | Wishlists
+    |----------------------------------------------------------------------
+    |
+    | No auth middleware: lists work before signup, keyed on the anonymous
+    | cookie identity, and merge into the account at sign-in. Requiring a login
+    | to save a product is how you lose the visit.
+    */
+    Route::get('/lists', [WishlistController::class, 'index'])->name('lists');
+    Route::post('/lists', [WishlistController::class, 'store'])->name('lists.store');
+    Route::get('/lists/{list}', [WishlistController::class, 'show'])->name('lists.show');
+    Route::patch('/lists/{list}', [WishlistController::class, 'update'])->name('lists.update');
+    Route::delete('/lists/{list}', [WishlistController::class, 'destroy'])->name('lists.destroy');
+
+    Route::post('/list-items', [WishlistItemController::class, 'store'])->name('items.store');
+    Route::patch('/list-items/{item}', [WishlistItemController::class, 'update'])->name('items.update');
+    Route::delete('/list-items/{item}', [WishlistItemController::class, 'destroy'])->name('items.destroy');
+
+    Route::post('/recipients', [RecipientController::class, 'store'])->name('recipients.store');
+    Route::patch('/recipients/{recipient}', [RecipientController::class, 'update'])->name('recipients.update');
+    Route::delete('/recipients/{recipient}', [RecipientController::class, 'destroy'])->name('recipients.destroy');
+
+    // The shared, claimable view. Rate-limited because it is unauthenticated
+    // and the token is the only thing guarding it.
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::get('/l/{token}', [SharedListController::class, 'show'])->name('lists.shared');
+        Route::post('/l/{token}/claim/{item}', [SharedListController::class, 'claim'])->name('lists.claim');
+        Route::delete('/l/{token}/claim/{item}', [SharedListController::class, 'unclaim'])->name('lists.unclaim');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Alerts and the inbox
+    |----------------------------------------------------------------------
+    |
+    | Signed-in only, unlike lists: an alert fires days later and has to reach
+    | someone. A cookie identity has no delivery address, and the cookie may
+    | well be gone by the time the price moves.
+    */
+    Route::middleware('auth')->group(function () {
+        Route::post('/alerts', [AlertController::class, 'store'])->name('alerts.store');
+        Route::delete('/alerts/{group}', [AlertController::class, 'destroy'])
+            ->whereNumber('group')
+            ->name('alerts.destroy');
+
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
+        Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])
+            ->name('notifications.read');
+    });
+
+    // Phase 4-6 routes land here:
     //   /{market}/gift                       Gift Whisperer wizard
-    //   /{market}/lists                      wishlists
-    //   /{market}/l/{shareToken}             shared list, claimable
     //   /{market}/scan                       mobile barcode scanner
     //   /{market}/daily                      today's picks
     //   /{market}/guides                     buying guides

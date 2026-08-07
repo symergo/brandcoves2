@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Enums\Market;
+use App\Models\Notification;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
@@ -81,6 +82,17 @@ class HandleInertiaRequests extends Middleware
              */
             'translations' => Lang::get('site'),
             'translationVersion' => $this->translationVersion(),
+
+            /*
+             * Unread badge count.
+             *
+             * A closure so it costs nothing for the anonymous majority, and one
+             * indexed count for everyone else — notifications is indexed on
+             * (user_id, read_at, created_at), so this is an index-only scan.
+             */
+            'unreadCount' => fn () => $request->user() === null
+                ? 0
+                : Notification::query()->where('user_id', $request->user()->id)->unread()->count(),
 
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

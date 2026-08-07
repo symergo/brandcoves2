@@ -15,7 +15,7 @@ cannot be recovered from a diff.
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Planned |
 | [daily-picks.md](daily-picks.md) | Discovery | Planned |
 | [buying-guides.md](buying-guides.md) | Content | Planned |
-| [wishlists.md](wishlists.md) | Wishlist | Planned |
+| [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 
 ## Closed in Phase 2
@@ -30,10 +30,10 @@ as its own Node container, so crawlers receive fully rendered HTML. See
 |---|---|---|
 | 0 | Foundation: schema, market routing, admin shell, deploy pipeline | ✅ Done |
 | 0.5 | Staging deployed and verified at `staging.brandcoves.com` | ✅ Done 2026-08-07 |
-| 1 | Ingestion & catalogue — Awin feeds, bol live, grouping, price history | Next |
-| 2 | Search & offer comparison | |
-| 3 | Accounts & wishlists | |
-| 4 | Gift Whisperer | |
+| 1 | Ingestion & catalogue — Awin feeds, bol live, grouping, price history | ✅ Done |
+| 2 | Search & offer comparison | ✅ Done |
+| 3 | Accounts & wishlists, sharing, claiming, alerts, inbox | ✅ Done |
+| 4 | Gift Whisperer | Next |
 | 5 | Daily Picks | |
 | 6 | Buying guides | |
 | 7 | Admin, SEO, cutover from v1 | |

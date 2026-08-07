@@ -30,6 +30,7 @@ export interface SharedProps {
     markets: MarketSummary[]
     translations: Translations
     translationVersion: string
+    unreadCount: number
     flash: { success?: string; error?: string }
     [key: string]: unknown
 }

@@ -4,7 +4,7 @@ import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 export default function SiteLayout({ children }: PropsWithChildren) {
-    const { market, markets, auth } = usePage<SharedProps>().props
+    const { market, markets, auth, unreadCount } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
 
@@ -63,9 +63,27 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                         </select>
 
                         {auth.user ? (
-                            <Link href={`${base}/lists`} className="text-sm hover:text-ink">
-                                {t('nav.lists')}
-                            </Link>
+                            <>
+                                <Link
+                                    href={`${base}/notifications`}
+                                    className="relative text-sm hover:text-ink"
+                                    aria-label={
+                                        unreadCount > 0
+                                            ? `${t('nav.notifications')} (${unreadCount})`
+                                            : t('nav.notifications')
+                                    }
+                                >
+                                    <span aria-hidden>🔔</span>
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-[11px] leading-4 font-semibold text-white">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </Link>
+                                <Link href={`${base}/lists`} className="text-sm hover:text-ink">
+                                    {t('nav.lists')}
+                                </Link>
+                            </>
                         ) : (
                             <Link href="/login" className="text-sm hover:text-ink">
                                 {t('nav.sign_in')}
