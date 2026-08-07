@@ -192,9 +192,38 @@ return [
     'connectors' => [
         'awin' => [
             'enabled' => true,
+            'chunk_size' => 1000,
+
+            /*
+             * Awin publisher accounts.
+             *
+             * More than one, because an advertiser is only reachable through the
+             * account actually joined to them. Vanden Borre sits under a
+             * separate account from Coolblue and Krefel, and its feeds are
+             * completely absent from the primary account's feed list — not
+             * "Not Joined", simply not there.
+             *
+             * Each feed records which account it came from, so the connector
+             * downloads it with the right key. Accounts with no token are
+             * skipped silently, which is what lets this ship before the second
+             * set of credentials exists.
+             */
+            'accounts' => array_filter([
+                'default' => [
+                    'label' => 'Brandcoves',
+                    'api_token' => env('AWIN_API_TOKEN'),
+                    'publisher_id' => env('AWIN_PUBLISHER_ID'),
+                ],
+                'vandenborre' => [
+                    'label' => 'Vanden Borre',
+                    'api_token' => env('AWIN_VDB_API_TOKEN'),
+                    'publisher_id' => env('AWIN_VDB_PUBLISHER_ID'),
+                ],
+            ], fn (array $account) => filled($account['api_token'])),
+
+            // Kept for anything still reading the single-token form.
             'api_token' => env('AWIN_API_TOKEN'),
             'publisher_id' => env('AWIN_PUBLISHER_ID'),
-            'chunk_size' => 1000,
 
             /*
              * Advertisers we actually want, matched loosely on name.

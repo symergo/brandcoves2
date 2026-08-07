@@ -54,4 +54,28 @@ class Feed extends Model
     {
         return sprintf('%s:%s:%s', $this->source->value, $this->external_feed_id, $this->market->value);
     }
+
+    /**
+     * The affiliate account this feed is reachable through.
+     *
+     * An advertiser can only be downloaded with the credentials of the
+     * publisher account actually joined to them — a different affiliate member
+     * id sees a completely different advertiser list, so using the wrong key
+     * yields a 401 or an empty file rather than a partial result.
+     *
+     * @return array{label: string, api_token: string, publisher_id: string|null}|null
+     */
+    public function account(): ?array
+    {
+        $accounts = (array) config('brandcoves.connectors.awin.accounts', []);
+
+        return $accounts[$this->account ?? 'default'] ?? null;
+    }
+
+    public function apiToken(): ?string
+    {
+        $token = $this->account()['api_token'] ?? null;
+
+        return is_string($token) && $token !== '' ? $token : null;
+    }
 }

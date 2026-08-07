@@ -81,48 +81,80 @@ class SyncAwinFeedsCommand extends Command
 
     public function handle(): int
     {
-        $token = (string) config('brandcoves.connectors.awin.api_token');
-        if ($token === '') {
-            $this->error('AWIN_API_TOKEN is not set.');
+        $accounts = (array) config('brandcoves.connectors.awin.accounts', []);
+
+        if ($accounts === []) {
+            $this->error('No Awin account has an API token configured.');
 
             return self::FAILURE;
         }
 
-        $this->line('Fetching the Awin feed list…');
-        $response = Http::timeout(60)->get("https://productdata.awin.com/datafeed/list/apikey/{$token}/");
-
-        if ($response->failed()) {
-            $this->error("Awin returned HTTP {$response->status()}.");
-
-            return self::FAILURE;
-        }
-
-        $csv = Reader::createFromString($response->body());
-        $csv->setHeaderOffset(0);
-
+        /*
+         * Every account is queried, and each feed remembers which one it came
+         * from.
+         *
+         * An advertiser is only reachable through the publisher account joined
+         * to them — a different affiliate member id sees a different advertiser
+         * list entirely. Vanden Borre is simply absent from the primary
+         * account's list, not marked "Not Joined", so there is no way to reach
+         * it without its own credentials.
+         */
         $available = [];
-        foreach ($csv->getRecords() as $record) {
-            // Only advertisers this publisher is actually approved for; the
-            // list otherwise includes every advertiser on the network.
-            if (($record['Membership Status'] ?? '') !== 'active') {
+
+        foreach ($accounts as $key => $account) {
+            $this->line("Fetching the feed list for <info>{$account['label']}</info>…");
+
+            $response = Http::timeout(60)
+                ->get("https://productdata.awin.com/datafeed/list/apikey/{$account['api_token']}/");
+
+            if ($response->failed()) {
+                // One bad account must not stop the others. A wrong or revoked
+                // key is a configuration problem, not a reason to leave the
+                // rest of the catalogue unregistered.
+                $this->warn("  {$account['label']}: Awin returned HTTP {$response->status()} — skipped.");
+
                 continue;
             }
 
-            $id = trim((string) ($record['Feed ID'] ?? ''));
-            if ($id === '') {
-                continue;
+            $csv = Reader::createFromString($response->body());
+            $csv->setHeaderOffset(0);
+
+            $found = 0;
+            foreach ($csv->getRecords() as $record) {
+                // Only advertisers this account is actually approved for; the
+                // list otherwise includes every advertiser on the network.
+                if (($record['Membership Status'] ?? '') !== 'active') {
+                    continue;
+                }
+
+                $id = trim((string) ($record['Feed ID'] ?? ''));
+                if ($id === '') {
+                    continue;
+                }
+
+                // Keyed by account AND feed id: two accounts can legitimately
+                // both be joined to the same advertiser.
+                $available[$key.':'.$id] = [
+                    'id' => $id,
+                    'account' => $key,
+                    'accountLabel' => $account['label'],
+                    'advertiser' => trim((string) ($record['Advertiser Name'] ?? '')),
+                    'region' => strtoupper(trim((string) ($record['Primary Region'] ?? ''))),
+                    'language' => strtolower(trim((string) ($record['Language'] ?? ''))),
+                    'products' => (int) str_replace([',', '.'], '', (string) ($record['No of products'] ?? '0')),
+                ];
+                $found++;
             }
 
-            $available[$id] = [
-                'id' => $id,
-                'advertiser' => trim((string) ($record['Advertiser Name'] ?? '')),
-                'region' => strtoupper(trim((string) ($record['Primary Region'] ?? ''))),
-                'language' => strtolower(trim((string) ($record['Language'] ?? ''))),
-                'products' => (int) str_replace([',', '.'], '', (string) ($record['No of products'] ?? '0')),
-            ];
+            $this->line("  {$found} active feeds.");
         }
 
-        $this->info(count($available).' active feeds available.');
+        if ($available === []) {
+            $this->error('No active feeds found on any account.');
+
+            return self::FAILURE;
+        }
+
         $this->newLine();
 
         $minProducts = (int) $this->option('min-products');
@@ -155,7 +187,10 @@ class SyncAwinFeedsCommand extends Command
              */
             $byAdvertiser = [];
             foreach ($matched as $feed) {
-                $key = $feed['advertiser'];
+                // Keyed on the advertiser alone, not advertiser+account: if two
+                // accounts both reach a shop we want one feed, not a duplicate
+                // that would double every offer and inflate the merchant count.
+                $key = strtolower($feed['advertiser']);
                 if (! isset($byAdvertiser[$key]) || $feed['products'] > $byAdvertiser[$key]['products']) {
                     $byAdvertiser[$key] = $feed;
                 }
@@ -180,9 +215,10 @@ class SyncAwinFeedsCommand extends Command
             }
 
             foreach ($matched as $feed) {
-                $this->line(sprintf('        %-8s %-32s %s products',
+                $this->line(sprintf('        %-8s %-30s %-12s %s products',
                     $feed['id'],
-                    mb_substr($feed['advertiser'], 0, 32),
+                    mb_substr($feed['advertiser'], 0, 30),
+                    '['.$feed['account'].']',
                     number_format($feed['products']),
                 ));
 
@@ -198,6 +234,9 @@ class SyncAwinFeedsCommand extends Command
                     ],
                     [
                         'label' => $feed['advertiser'],
+                        // Which credentials to download it with. Without this the
+                        // connector would use the primary key and get a 401.
+                        'account' => $feed['account'],
                         // Registered disabled by default: turning on 30 feeds at
                         // once means 30 concurrent multi-hundred-megabyte
                         // downloads on the next scheduled run.

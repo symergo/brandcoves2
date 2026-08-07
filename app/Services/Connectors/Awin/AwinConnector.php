@@ -208,9 +208,14 @@ class AwinConnector implements FeedConnector
             return $override;
         }
 
-        $token = (string) config('brandcoves.connectors.awin.api_token');
-        if ($token === '') {
-            throw new RuntimeException('AWIN_API_TOKEN is not configured');
+        // The feed's own account, not a global token: a different affiliate
+        // member id sees a different advertiser list entirely, so the wrong key
+        // returns 401 or an empty file rather than a partial result.
+        $token = $feed->apiToken();
+        if ($token === null) {
+            throw new RuntimeException(
+                "No Awin API token configured for account \"{$feed->account}\" (feed {$feed->external_feed_id})"
+            );
         }
 
         $columns = implode(',', self::COLUMNS);
