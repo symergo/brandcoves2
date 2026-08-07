@@ -90,12 +90,12 @@ class ProductController extends Controller
         $url = url($current->url("p/{$group->id}/{$group->slug}"));
 
         $description = $group->min_price !== null && $group->merchant_count > 1
-            ? __('product.seo_compare', [
+            ? __('site.product.seo_compare', [
                 'title' => $group->title,
                 'price' => $this->money($group->min_price, $market),
                 'count' => $group->merchant_count,
             ])
-            : __('product.seo_single', [
+            : __('site.product.seo_single', [
                 'title' => $group->title,
                 'price' => $group->min_price === null ? '' : $this->money($group->min_price, $market),
             ]);
@@ -115,7 +115,7 @@ class ProductController extends Controller
         $meta->addJsonLd(StructuredData::product($group, $offers, $market, $url));
         $meta->addJsonLd(StructuredData::breadcrumbs([
             ['name' => 'Brandcoves', 'url' => url($current->url())],
-            ['name' => __('search.title'), 'url' => url($current->url('search'))],
+            ['name' => __('site.search.title'), 'url' => url($current->url('search'))],
             ['name' => $group->title, 'url' => $url],
         ]));
     }

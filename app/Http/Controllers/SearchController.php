@@ -61,11 +61,11 @@ class SearchController extends Controller
         app(PageMeta::class)
             ->set(
                 title: $query->hasTerm()
-                    ? __('search.results_for', ['term' => $query->term])
-                    : __('search.title'),
+                    ? __('site.search.results_for', ['term' => $query->term])
+                    : __('site.search.title'),
                 description: $query->hasTerm()
-                    ? __('search.seo_term', ['term' => $query->term, 'count' => $result->groups->total()])
-                    : __('search.seo_default'),
+                    ? __('site.search.seo_term', ['term' => $query->term, 'count' => $result->groups->total()])
+                    : __('site.search.seo_default'),
                 // Canonical points at the unfiltered term, so any ranking signal
                 // a filtered variant picks up consolidates onto one URL.
                 canonical: url($current->url('search')).($query->hasTerm() ? '?q='.urlencode($query->term) : ''),

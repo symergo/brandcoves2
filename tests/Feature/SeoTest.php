@@ -91,6 +91,33 @@ class SeoTest extends TestCase
     }
 
     #[Test]
+    public function meta_descriptions_are_real_copy_not_translation_keys(): void
+    {
+        $group = $this->seedCatalogue();
+
+        // Shipped once with `__('search.seo_term')` instead of
+        // `__('site.search.seo_term')`. Laravel returns the key unchanged when
+        // it cannot resolve it, so the meta description read literally
+        // "search.seo_term" in production — visible in a search listing.
+        foreach ([
+            "/be-nl/p/{$group->id}/{$group->slug}",
+            '/be-nl/search?q=koptelefoon',
+            '/be-fr/search?q=casque',
+        ] as $path) {
+            $html = (string) $this->get($path)->getContent();
+
+            preg_match('/<meta name="description" content="([^"]*)"/', $html, $m);
+
+            $this->assertNotEmpty($m[1] ?? '', "no description on {$path}");
+            $this->assertDoesNotMatchRegularExpression(
+                '/^(site\.)?(search|product|nav|home|footer)\./',
+                $m[1],
+                "unresolved translation key in the description on {$path}",
+            );
+        }
+    }
+
+    #[Test]
     public function metadata_never_leaks_between_requests(): void
     {
         $group = $this->seedCatalogue();

@@ -15,6 +15,16 @@ export default defineConfig({
         react(),
         tailwindcss(),
     ],
+    ssr: {
+        // Bundle dependencies into ssr.js instead of leaving them as bare
+        // imports. Vite externalises them by default, which assumes a
+        // node_modules sits next to the bundle — the SSR container has none, so
+        // it crash-looped on "Cannot find package '@inertiajs/react'".
+        //
+        // Shipping the ~200 MB of node_modules instead would work and is what
+        // most setups do; a self-contained 30 KB bundle is the better trade.
+        noExternal: true,
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**', '**/vendor/**'],
