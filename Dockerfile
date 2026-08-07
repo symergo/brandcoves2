@@ -72,11 +72,11 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative \
 RUN php artisan event:cache \
     && php artisan view:cache
 
-# Coolify passes the deployed commit as a build arg. Baking it into the image
-# is the only reliable way to have it at runtime — the same variable is
-# "unknown" in the runtime environment.
-ARG SOURCE_COMMIT=unknown
-ENV GIT_COMMIT_SHA=$SOURCE_COMMIT
+# Coolify does not expose the deployed commit to the container — it provides
+# COOLIFY_BRANCH, FQDN, URL and UUID, but no SHA. A build timestamp answers the
+# question that actually matters after a deploy ("is this my build, or the
+# previous one still serving?") and, unlike the commit, is always available.
+RUN date -u +%Y-%m-%dT%H:%M:%SZ > /app/BUILD_STAMP
 
 ENV APP_ENV=production \
     APP_DEBUG=false \

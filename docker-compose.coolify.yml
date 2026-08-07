@@ -22,7 +22,6 @@ x-app: &app
     dockerfile: Dockerfile
     args:
       VITE_APP_NAME: ${APP_NAME:-Brandcoves}
-      SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
   environment: &app-env
     APP_NAME: ${APP_NAME:-Brandcoves}
     APP_ENV: production
@@ -114,6 +113,15 @@ services:
     command: ["php", "artisan", "horizon"]
     deploy:
       replicas: 1
+    # Override the base image's healthcheck. frankenphp checks Caddy's admin
+    # endpoint on :2019, which this container never starts — it runs Horizon.
+    # Left inherited, the container reports unhealthy forever.
+    healthcheck:
+      test: ["CMD", "php", "artisan", "horizon:status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     # SIGTERM lets Horizon finish the job in flight instead of abandoning a
     # half-ingested feed chunk mid-transaction.
     stop_signal: SIGTERM
@@ -129,6 +137,11 @@ services:
     command: ["php", "artisan", "schedule:work"]
     deploy:
       replicas: 1
+    # Same inherited-healthcheck problem as `queue`. There is no meaningful
+    # liveness probe for schedule:work — it sleeps between minutes — and a
+    # permanently-failing check is worse than none, so it is disabled outright.
+    healthcheck:
+      disable: true
     depends_on:
       migrate:
         condition: service_completed_successfully

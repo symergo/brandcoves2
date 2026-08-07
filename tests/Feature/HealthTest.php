@@ -20,9 +20,10 @@ class HealthTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('status', 'ok')
             ->assertJsonPath('checks.database.ok', true)
-            // The commit and the applied migration are what turn "it looks
-            // fine after deploy" into a verifiable fact.
-            ->assertJsonStructure(['status', 'commit', 'migration', 'environment', 'checks']);
+            // The build stamp and the applied migration are what turn "it looks
+            // fine after deploy" into a verifiable fact. Coolify exposes no
+            // commit SHA to the container, so the build time stands in for it.
+            ->assertJsonStructure(['status', 'built', 'branch', 'migration', 'environment', 'checks']);
     }
 
     #[Test]

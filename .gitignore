@@ -23,7 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# Secrets — never commit. .env holds live Awin/bol/Anthropic credentials plus
+# Secrets - never commit. .env holds live Awin/bol/Anthropic credentials plus
 # the claim-hash secret, which is effectively permanent (rotating it orphans
 # every existing wishlist claim).
 .env
@@ -47,3 +47,6 @@ Amazon-tags.txt
 # Synology Drive
 @eaDir/
 .sync*
+
+# Written into the Docker image at build time, never committed.
+/BUILD_STAMP

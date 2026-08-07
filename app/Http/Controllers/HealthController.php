@@ -29,7 +29,11 @@ class HealthController extends Controller
 
         return response()->json([
             'status' => $healthy ? 'ok' : 'degraded',
-            'commit' => config('brandcoves.commit_sha'),
+            // When the image was built, and from which branch. Coolify exposes
+            // no commit SHA to the container, so this is what answers "is my
+            // build actually serving, or is the previous one still up?".
+            'built' => $this->buildStamp(),
+            'branch' => env('COOLIFY_BRANCH', 'local'),
             'migration' => $this->lastMigration(),
             'environment' => app()->environment(),
             'checks' => $checks,
@@ -57,6 +61,14 @@ class HealthController extends Controller
     private function elapsedMs(int $start): float
     {
         return round((hrtime(true) - $start) / 1_000_000, 2);
+    }
+
+    /** Written into the image at build time; absent when running locally. */
+    private function buildStamp(): string
+    {
+        $path = base_path('BUILD_STAMP');
+
+        return is_readable($path) ? trim((string) file_get_contents($path)) : 'dev';
     }
 
     private function lastMigration(): ?string
