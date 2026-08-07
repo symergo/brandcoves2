@@ -83,6 +83,7 @@ return [
         'no_history' => "Pas encore assez d'historique de prix.",
         'typical_price' => 'Prix habituel :price',
         'barcode' => 'Code-barres',
+        'price_as_of' => 'Prix et disponibilité au moment indiqué, susceptibles de changer.',
         'disclosure' => 'Nous pouvons percevoir une commission si vous achetez via ce lien. Le prix que vous payez ne change pas.',
         'unavailable' => "Ce produit n'est actuellement disponible dans aucune boutique que nous suivons.",
         'seo_compare' => ':title à partir de :price — comparez les offres de :count boutiques et trouvez la moins chère.',

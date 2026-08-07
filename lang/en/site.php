@@ -89,6 +89,7 @@ return [
         'no_history' => 'Not enough price history yet.',
         'typical_price' => 'Typical price :price',
         'barcode' => 'Barcode',
+        'price_as_of' => 'Price and availability as of the time shown and may change.',
         'disclosure' => 'We may earn a commission if you buy through this link. The price you pay is unchanged.',
         'unavailable' => 'This product is not currently available from any shop we track.',
         'seo_compare' => ':title from :price — compare offers from :count shops and find the cheapest.',

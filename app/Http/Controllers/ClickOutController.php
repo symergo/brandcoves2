@@ -36,6 +36,18 @@ class ClickOutController extends Controller
         }
 
         /*
+         * Sources that require a direct, unobscured link must never be reachable
+         * through the redirector — Amazon's terms are explicit about it, and a
+         * redirector that quietly still works for them is exactly how a
+         * hand-built or cached URL ends up violating the agreement.
+         *
+         * One path per source, enforced here rather than trusted to the view.
+         */
+        if ($product->source->requiresDirectLink()) {
+            throw new NotFoundHttpException;
+        }
+
+        /*
          * THE INVARIANT.
          *
          * Affiliate URLs come from third-party feeds and are hostile input.

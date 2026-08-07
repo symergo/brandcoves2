@@ -41,6 +41,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
         ]);
+
+        // navigator.sendBeacon cannot set headers, so the click beacon cannot
+        // carry a CSRF token. Exempt deliberately: it writes an analytics row
+        // and nothing else, is rate-limited, and the worst a forged request can
+        // do is skew a click count. Blocking it instead would mean losing the
+        // click data on every Amazon link.
+        $middleware->validateCsrfTokens(except: [
+            '*/track/click',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

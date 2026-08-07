@@ -14,6 +14,11 @@ interface Offer {
     isBuyable: boolean
     title: string
     url: string
+    /** True where the programme requires an unobscured link (Amazon). */
+    direct: boolean
+    /** Set only on direct links, which bypass the click-recording redirector. */
+    beacon: string | null
+    needsPriceTimestamp: boolean
 }
 
 interface Props {
@@ -34,6 +39,31 @@ interface Props {
     }
     offers: Offer[]
     history: { date: string; price: number }[]
+}
+
+/**
+ * Report a click on a direct link.
+ *
+ * Links that go through our redirector are recorded server-side. Links that
+ * must be direct anchors — Amazon requires unobscured Associates links — have
+ * no server hop, so the browser reports the click instead.
+ *
+ * sendBeacon rather than fetch: it survives the page being replaced by the
+ * navigation that fires it, which a normal request often does not. Fired on
+ * mousedown rather than click so it is queued before the browser starts
+ * unloading. Failure loses one analytics row and never the sale.
+ */
+function reportClick(offer: Offer): void {
+    if (!offer.direct || !offer.beacon) return
+
+    try {
+        navigator.sendBeacon?.(
+            offer.beacon,
+            new Blob([JSON.stringify({ offer: offer.id })], { type: 'application/json' }),
+        )
+    } catch {
+        // Analytics must never break an outbound click.
+    }
 }
 
 export default function Product({ product, offers, history }: Props) {
@@ -154,6 +184,17 @@ export default function Product({ product, offers, history }: Props) {
                                     <div className={`text-xs ${offer.isBuyable ? 'text-sage' : 'text-ink-soft'}`}>
                                         {offer.isBuyable ? t('product.in_stock') : t('product.out_of_stock')}
                                     </div>
+                                    {/*
+                                      Required where the programme mandates it
+                                      (Amazon): the price may have moved since we
+                                      fetched it, and saying so is the condition
+                                      of being allowed to show it at all.
+                                    */}
+                                    {offer.needsPriceTimestamp && (
+                                        <div className="mt-0.5 text-[11px] text-ink-soft/70">
+                                            {t('product.price_as_of')}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <a
@@ -163,6 +204,7 @@ export default function Product({ product, offers, history }: Props) {
                                     // any target=_blank to a third party.
                                     rel="sponsored noopener nofollow"
                                     target="_blank"
+                                    onMouseDown={() => reportClick(offer)}
                                     className={`rounded-lg px-4 py-2 text-sm font-medium ${
                                         offer.isBuyable
                                             ? 'bg-accent text-white hover:bg-accent-dark'

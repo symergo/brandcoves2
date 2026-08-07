@@ -147,10 +147,21 @@ class ProductController extends Controller
                 'availability' => $offer->availability->value,
                 'isBuyable' => $offer->availability->isBuyable(),
                 'title' => $offer->title,
-                // Never the raw affiliate URL: the click goes through our own
-                // redirector so it can be scheme-checked and logged.
-                'url' => route('go', ['market' => $offer->market->value, 'offer' => $offer->id]),
+                // Our redirector for most sources; a direct anchor where the
+                // programme requires an unobscured link (Amazon). Null when the
+                // stored URL is unsafe, so the view renders no link at all.
+                'url' => $offer->outboundUrl(),
+                'direct' => $offer->source->requiresDirectLink(),
+                // Direct links bypass the redirector, so the click is reported
+                // by the browser instead.
+                'beacon' => $offer->source->requiresDirectLink()
+                    ? route('click.beacon', ['market' => $offer->market->value])
+                    : null,
+                // Amazon requires an "as of" note: the price may have moved
+                // since it was fetched.
+                'needsPriceTimestamp' => $offer->source->requiresPriceTimestamp(),
             ])
+            ->filter(fn (array $offer) => $offer['url'] !== null)
             ->values()
             ->all();
     }

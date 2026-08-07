@@ -77,26 +77,42 @@ email attached, so it collides with both.
 | **Buying guides** | ⚠️ live prices | ✅ | An Amazon item in a guide needs its price fetched at render, not baked into the page |
 | **Gift Whisperer** | ⚠️ live only | ✅ | Scoring may use live data; the giftable index may not store Amazon rows |
 | **Barcode scanner** | ✅ live lookup | ✅ | A live lookup by EAN is exactly the permitted pattern |
-| **Click-out redirector** | ⚠️ **VERIFY** | ✅ | See below |
+| **Outbound links** | ✅ direct anchor | ✅ via redirector | `requiresDirectLink()` — see below |
+| **Price "as of" disclaimer** | ✅ shown | n/a | `requiresPriceTimestamp()` |
 | **Search-result caching** | ⚠️ 15 min | ✅ | `maxPriceAgeSeconds()` — well inside the 24-hour limit |
 
-## The click-out redirector — VERIFY before enabling Amazon
+## Outbound links: two paths, one per source
 
-Every outbound link goes through `/{market}/go/{offer}`, which validates the URL
-scheme and logs the click before redirecting. That is good engineering and it is
-how the affiliate invariant is enforced.
+**Resolved — Amazon links are direct anchors.** Amazon requires Associates links
+to be unobscured, so its offers never touch the redirector.
 
-It is also the item I am least certain about. Amazon requires that Associates
-links are not obscured, and the rules around redirects and link shorteners have
-tightened over time. The redirector is *not* cloaking in the deceptive sense —
-it is a 302 to a properly formed Associates link, the destination is disclosed,
-and the visitor lands on Amazon — but "we think it is fine" is not a basis for
-risking the account.
+| Source | Link | Click recorded by |
+|---|---|---|
+| Awin, bol | `/{market}/go/{offer}` → 302 | Server, in the redirector |
+| **Amazon** | **direct `<a href>` to amazon.xx** | `navigator.sendBeacon` on mousedown |
 
-**Before Phase 8:** confirm whether a first-party 302 is acceptable, or whether
-Amazon links must be direct `<a href>` to amazon.xx. If direct links are
-required, `ClickOutController` gains an Amazon branch that renders a direct link
-and records the click with `sendBeacon` instead of a redirect.
+`Source::requiresDirectLink()` decides, and `Product::outboundUrl()` returns the
+right one. Three things make this safe rather than merely different:
+
+- **The redirector refuses a direct-link source outright** (404). A hand-built
+  or cached `/go/` URL must not quietly still work — that is exactly how the
+  requirement gets violated months later by someone who did not know about it.
+- **`outboundUrl()` returns null when the stored URL is unsafe**, so the view
+  renders no link at all. The redirector normally performs the scheme check;
+  on the direct path there is nothing between us and the browser.
+- **The beacon is fire-and-forget.** It fires on mousedown so it is queued
+  before the browser starts unloading, uses `sendBeacon` because a normal fetch
+  usually dies with the page, and returns 204. A failure loses one analytics row
+  rather than a sale.
+
+The beacon route is CSRF-exempt, deliberately: `sendBeacon` cannot set headers.
+It writes an analytics row and nothing else, is rate-limited, and the worst a
+forged request can do is skew a click count.
+
+**Trade-off accepted:** beacon-recorded clicks are less reliable than redirector
+ones — ad blockers and privacy settings drop some. Amazon click counts will
+therefore under-report relative to Awin and bol. Events carry `via: beacon` so
+the two are never compared as if they were the same measurement.
 
 ## Rules that bind us even with Amazon disabled
 

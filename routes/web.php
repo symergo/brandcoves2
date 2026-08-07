@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Market;
+use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
@@ -68,6 +69,13 @@ Route::prefix('{market}')->group(function () {
         ->whereNumber('offer')
         ->middleware('throttle:60,1')
         ->name('go');
+
+    // Click tracking for links that must be direct anchors (Amazon requires
+    // unobscured Associates links). Fire-and-forget: the browser reports the
+    // click, and losing one never affects the visitor's navigation.
+    Route::post('/track/click', ClickBeaconController::class)
+        ->middleware('throttle:120,1')
+        ->name('click.beacon');
 
     // Phase 3-6 routes land here:
     //   /{market}/gift                       Gift Whisperer wizard

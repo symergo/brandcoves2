@@ -83,6 +83,7 @@ return [
         'no_history' => 'Nog niet genoeg prijsgeschiedenis.',
         'typical_price' => 'Gebruikelijke prijs :price',
         'barcode' => 'Streepjescode',
+        'price_as_of' => 'Prijs en beschikbaarheid gelden op het getoonde moment en kunnen wijzigen.',
         'disclosure' => 'We verdienen mogelijk commissie als je via deze link koopt. Wat jij betaalt verandert niet.',
         'unavailable' => 'Dit product is nu bij geen enkele winkel die we volgen verkrijgbaar.',
         'seo_compare' => ':title vanaf :price — vergelijk aanbiedingen van :count winkels en vind de goedkoopste.',

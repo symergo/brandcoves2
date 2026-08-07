@@ -33848,6 +33848,24 @@ function Sparkline({ points, market }) {
 //#endregion
 //#region resources/js/Pages/Product.tsx
 var Product_exports = /* @__PURE__ */ __exportAll({ default: () => Product });
+/**
+* Report a click on a direct link.
+*
+* Links that go through our redirector are recorded server-side. Links that
+* must be direct anchors — Amazon requires unobscured Associates links — have
+* no server hop, so the browser reports the click instead.
+*
+* sendBeacon rather than fetch: it survives the page being replaced by the
+* navigation that fires it, which a normal request often does not. Fired on
+* mousedown rather than click so it is queued before the browser starts
+* unloading. Failure loses one analytics row and never the sale.
+*/
+function reportClick(offer) {
+	if (!offer.direct || !offer.beacon) return;
+	try {
+		navigator.sendBeacon?.(offer.beacon, new Blob([JSON.stringify({ offer: offer.id })], { type: "application/json" }));
+	} catch {}
+}
 function Product({ product, offers, history }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
@@ -33950,18 +33968,26 @@ function Product({ product, offers, history }) {
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								className: "text-right",
-								children: [offer.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "text-lg font-semibold",
-									children: formatPrice(offer.price, market)
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: `text-xs ${offer.isBuyable ? "text-sage" : "text-ink-soft"}`,
-									children: offer.isBuyable ? t("product.in_stock") : t("product.out_of_stock")
-								})]
+								children: [
+									offer.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "text-lg font-semibold",
+										children: formatPrice(offer.price, market)
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: `text-xs ${offer.isBuyable ? "text-sage" : "text-ink-soft"}`,
+										children: offer.isBuyable ? t("product.in_stock") : t("product.out_of_stock")
+									}),
+									offer.needsPriceTimestamp && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "mt-0.5 text-[11px] text-ink-soft/70",
+										children: t("product.price_as_of")
+									})
+								]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
 								href: offer.url,
 								rel: "sponsored noopener nofollow",
 								target: "_blank",
+								onMouseDown: () => reportClick(offer),
 								className: `rounded-lg px-4 py-2 text-sm font-medium ${offer.isBuyable ? "bg-accent text-white hover:bg-accent-dark" : "pointer-events-none border border-line text-ink-soft opacity-50"}`,
 								children: t("product.go_to_shop")
 							})

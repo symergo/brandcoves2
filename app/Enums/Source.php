@@ -103,6 +103,22 @@ enum Source: string
     }
 
     /**
+     * Must the outbound link be a direct anchor to the merchant?
+     *
+     * Amazon requires Associates links to be unobscured, so its offers bypass
+     * the /go/ redirector entirely and render as a plain `<a href>` to
+     * amazon.xx. The click is still recorded, via a fire-and-forget beacon that
+     * does not sit between the visitor and the destination.
+     *
+     * Everything else keeps the redirector, which is where the affiliate-URL
+     * scheme check lives.
+     */
+    public function requiresDirectLink(): bool
+    {
+        return $this === self::Amazon;
+    }
+
+    /**
      * Must a displayed price carry an "as of <time>" note and a disclaimer?
      *
      * Amazon requires it, because the price may have changed since it was

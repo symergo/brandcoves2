@@ -108,6 +108,28 @@ class Product extends Model
     }
 
     /**
+     * Where the "go to shop" button should point.
+     *
+     * Most sources go through our redirector, which is where the affiliate-URL
+     * scheme check and click logging live. Amazon requires Associates links to
+     * be direct and unobscured, so its offers return the raw affiliate URL and
+     * the click is recorded by a beacon instead.
+     *
+     * Returns null when the stored URL is unsafe, so a caller cannot render a
+     * link at all rather than rendering a dangerous one.
+     */
+    public function outboundUrl(): ?string
+    {
+        if (! $this->source->requiresDirectLink()) {
+            return route('go', ['market' => $this->market->value, 'offer' => $this->id]);
+        }
+
+        // The redirector normally performs this check. On the direct path there
+        // is nothing between us and the browser, so it happens here.
+        return $this->hasSafeAffiliateUrl() ? $this->affiliate_url : null;
+    }
+
+    /**
      * The merchant's real domain, taken from their own deep link.
      *
      * Never derive this from affiliate_url: that is a network tracking URL
