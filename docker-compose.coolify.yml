@@ -74,6 +74,10 @@ x-app: &app
 
     # Staging leaves this false so it never enters the index.
     ROBOTS_ALLOW: ${ROBOTS_ALLOW:-false}
+    # Server-side rendering, in its own container. If it is unreachable Laravel
+    # falls back to client rendering rather than erroring.
+    INERTIA_SSR_ENABLED: "true"
+    INERTIA_SSR_URL: http://ssr:13714
     # GIT_COMMIT_SHA is deliberately NOT set here. It is baked into the image
     # from the SOURCE_COMMIT build arg; a runtime value would override that
     # image ENV and Coolify only sets SOURCE_COMMIT meaningfully at build time.
@@ -145,6 +149,29 @@ services:
     depends_on:
       migrate:
         condition: service_completed_successfully
+
+  # Pre-renders React on the server so crawlers receive real HTML instead of an
+  # empty div and a JSON blob. Without it the product and guide pages — the
+  # entire SEO growth model — depend on the crawler executing JavaScript.
+  #
+  # Deliberately NOT a dependency of `app`: SSR is an enhancement, and if it is
+  # down the site must still serve.
+  ssr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ssr
+      args:
+        VITE_APP_NAME: ${APP_NAME:-Brandcoves}
+    restart: unless-stopped
+    expose:
+      - "13714"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:13714/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   postgres:
     image: postgres:16-alpine

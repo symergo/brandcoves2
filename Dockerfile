@@ -19,6 +19,8 @@ COPY resources ./resources
 # in Coolify, not runtime environment variables.
 ARG VITE_APP_NAME=Brandcoves
 ENV VITE_APP_NAME=$VITE_APP_NAME
+# Builds both bundles: the client one into public/build, and the SSR one into
+# bootstrap/ssr for the `ssr` stage below.
 RUN npm run build
 
 # ------------------------------------------------------------- vendor -------
@@ -33,6 +35,21 @@ RUN composer install \
         --no-autoloader \
         --prefer-dist \
         --ignore-platform-reqs
+
+# ---------------------------------------------------------------- ssr -------
+# Server-side rendering runs as its own tiny Node container.
+#
+# Kept separate rather than adding Node to the PHP image: the app image stays
+# lean, and if SSR dies Laravel silently falls back to client rendering — the
+# site stays up and only loses pre-rendered HTML.
+#
+# Runs the bundle directly rather than via `artisan inertia:start-ssr`, which is
+# a thin wrapper that adds a PHP process and a failure mode for no benefit.
+FROM node:24-alpine AS ssr
+WORKDIR /app
+COPY --from=frontend /build/bootstrap/ssr ./bootstrap/ssr
+EXPOSE 13714
+CMD ["node", "bootstrap/ssr/ssr.js"]
 
 # ------------------------------------------------------------ runtime -------
 FROM dunglas/frankenphp:php8.4-alpine AS runtime

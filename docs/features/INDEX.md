@@ -10,6 +10,7 @@ cannot be recovered from a diff.
 | [ingestion.md](ingestion.md) | Catalogue | Active |
 | [product-identity.md](product-identity.md) | Catalogue | Active |
 | [search.md](search.md) | Search | Partial — schema + indexes only |
+| [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Planned — late Phase 2 / early Phase 3 |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Planned |
 | [daily-picks.md](daily-picks.md) | Discovery | Planned |
 | [buying-guides.md](buying-guides.md) | Content | Planned |

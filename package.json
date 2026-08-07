@@ -3,8 +3,11 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "build": "vite build && vite build --ssr",
+        "dev": "vite",
+        "build:client": "vite build",
+        "build:ssr": "vite build --ssr",
+        "dev:ssr": "vite build --ssr && node bootstrap/ssr/ssr.js"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

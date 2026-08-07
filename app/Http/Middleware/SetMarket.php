@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Enums\Market;
+use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Closure;
 use Illuminate\Http\Request;
@@ -32,6 +33,12 @@ class SetMarket
 
         app()->instance(CurrentMarket::class, new CurrentMarket($market));
         app()->setLocale($market->language());
+
+        // Clear any SEO metadata left over from a previous request. Under a
+        // persistent runtime this object outlives the request, and a leaked
+        // JSON-LD block would advertise the wrong product's price on someone
+        // else's page.
+        app(PageMeta::class)->reset();
 
         // Formatting follows the market, not the language: nl-BE and nl-NL
         // agree on words and disagree on number formatting.

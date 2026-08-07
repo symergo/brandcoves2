@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Services\Connectors\Awin\AwinConnector;
 use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Seo\PageMeta;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -15,6 +16,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // scoped(), not singleton(): under FrankenPHP and Octane the container
+        // persists between requests, and a singleton here would leak one page's
+        // SEO metadata and structured data into the next visitor's page.
+        $this->app->scoped(PageMeta::class);
+
         // The single place that knows which connectors exist. Adding a source
         // is a registration here plus a config entry — the ingestion pipeline
         // and search service only ever see the interfaces.
