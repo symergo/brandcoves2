@@ -108,16 +108,32 @@ class SyncAwinFeedsCommand extends Command
                     && $f['products'] >= $minProducts,
             );
 
-            // Largest first: catalogue breadth is the binding constraint on
-            // Daily Picks and the gift engine.
-            uasort($matched, fn ($a, $b) => $b['products'] <=> $a['products']);
-
-            if ($limit !== null) {
-                $matched = array_slice($matched, 0, $limit, true);
+            /*
+             * One feed per ADVERTISER, largest first — not simply the largest
+             * feeds.
+             *
+             * Retailers publish many category feeds, so ranking by size alone
+             * returns six slices of one shop. That is useless here: offer
+             * comparison needs the same product at *different* merchants, and a
+             * catalogue of one retailer produces zero comparable products no
+             * matter how many rows it has.
+             *
+             * Breadth of merchants beats depth of catalogue.
+             */
+            $byAdvertiser = [];
+            foreach ($matched as $feed) {
+                $key = $feed['advertiser'];
+                if (! isset($byAdvertiser[$key]) || $feed['products'] > $byAdvertiser[$key]['products']) {
+                    $byAdvertiser[$key] = $feed;
+                }
             }
 
+            uasort($byAdvertiser, fn ($a, $b) => $b['products'] <=> $a['products']);
+
+            $matched = $limit === null ? $byAdvertiser : array_slice($byAdvertiser, 0, $limit, true);
+
             $this->line(sprintf(
-                '<info>%s</info>  %d feeds, %s products',
+                '<info>%s</info>  %d merchants, %s products',
                 str_pad($market->value, 6),
                 count($matched),
                 number_format(array_sum(array_column($matched, 'products'))),
