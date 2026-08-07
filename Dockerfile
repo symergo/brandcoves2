@@ -90,7 +90,13 @@ RUN { \
 RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
-EXPOSE 8080
+EXPOSE 80
 
 # Coolify's Traefik terminates TLS, so FrankenPHP serves plain HTTP internally.
-CMD ["frankenphp", "php-server", "--listen", ":8080", "--root", "/app/public", "-v"]
+#
+# Port 80, not 8080: the frankenphp base image already exposes 80, 443 and 2019.
+# Adding a fourth left Traefik with several candidates and no
+# `loadbalancer.server.port` label to disambiguate, so it picked 80 — where
+# nothing was listening — and every request 502'd. Serving on the port Traefik
+# already assumes removes the ambiguity rather than papering over it.
+CMD ["frankenphp", "php-server", "--listen", ":80", "--root", "/app/public", "-v"]
