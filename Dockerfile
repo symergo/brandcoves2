@@ -72,6 +72,12 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative \
 RUN php artisan event:cache \
     && php artisan view:cache
 
+# Coolify passes the deployed commit as a build arg. Baking it into the image
+# is the only reliable way to have it at runtime — the same variable is
+# "unknown" in the runtime environment.
+ARG SOURCE_COMMIT=unknown
+ENV GIT_COMMIT_SHA=$SOURCE_COMMIT
+
 ENV APP_ENV=production \
     APP_DEBUG=false \
     OCTANE_SERVER=frankenphp

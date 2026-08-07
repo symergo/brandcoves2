@@ -22,6 +22,7 @@ x-app: &app
     dockerfile: Dockerfile
     args:
       VITE_APP_NAME: ${APP_NAME:-Brandcoves}
+      SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
   environment: &app-env
     APP_NAME: ${APP_NAME:-Brandcoves}
     APP_ENV: production
@@ -74,7 +75,9 @@ x-app: &app
 
     # Staging leaves this false so it never enters the index.
     ROBOTS_ALLOW: ${ROBOTS_ALLOW:-false}
-    GIT_COMMIT_SHA: ${SOURCE_COMMIT:-unknown}
+    # GIT_COMMIT_SHA is deliberately NOT set here. It is baked into the image
+    # from the SOURCE_COMMIT build arg; a runtime value would override that
+    # image ENV and Coolify only sets SOURCE_COMMIT meaningfully at build time.
   restart: unless-stopped
   depends_on:
     postgres:

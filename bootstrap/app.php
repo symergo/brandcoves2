@@ -19,6 +19,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Coolify's Traefik terminates TLS and forwards plain HTTP, so without
+        // this Laravel believes every request is insecure and generates http://
+        // URLs for redirects, assets, canonical tags and the sitemap.
+        //
+        // Trusting all proxies is correct here: the container publishes no
+        // ports and is reachable only through Traefik, so a forged
+        // X-Forwarded-* header cannot originate outside the Docker network.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             // Order matters: the market must be resolved before Inertia shares
             // it with the frontend, and the visitor identity must exist before
