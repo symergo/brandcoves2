@@ -8,6 +8,7 @@ use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\PublishStatus;
 use App\Enums\Source;
+use App\Models\CovePlan;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Guide;
@@ -56,12 +57,22 @@ class EditionBuilder
         $date = $date ?? CarbonImmutable::today();
         $perDay = (int) config('brandcoves.picks.per_day');
 
+        /*
+         * An approved plan outranks the calendar, which outranks the model.
+         *
+         * In that order because it is the order of how much a human meant it: a
+         * person who scheduled this day beats a recurring observance, which
+         * beats a line generated at 06:00. Drafts are excluded — the clock
+         * coming round is not a reason to publish someone thinking out loud.
+         */
+        $plan = CovePlan::approvedFor($market, $date);
+
         // A themed day gives the edition a shape the Serendipity Engine cannot
         // invent on its own, and a reason to open a shopping page that is
         // better than "Tuesday".
         $observance = $this->calendar->on($date, $market);
 
-        $finds = $this->finds($market, $perDay, $observance);
+        $finds = $this->finds($market, $perDay, $observance, $plan);
 
         if (count($finds) < 3) {
             // A three-item edition is worse than no edition. Publishing a thin
@@ -85,14 +96,21 @@ class EditionBuilder
          * can recognise, and a generated line competing with "International Pet
          * Day" loses every time.
          */
-        $theme = $observance !== null
-            ? [
+        $theme = match (true) {
+            $plan !== null => [
+                'title' => $plan->title,
+                'blurb' => $plan->blurb,
+                'slug' => Str::slug($plan->title).'-'.$plan->id,
+                'source' => 'planned',
+            ],
+            $observance !== null => [
                 'title' => $observance->title($market),
                 'blurb' => $observance->blurb($market),
                 'slug' => $observance->slug(),
                 'source' => 'observance',
-            ]
-            : $this->theme($market, $finds);
+            ],
+            default => $this->theme($market, $finds),
+        };
 
         $editorial = $this->editorial($market, $finds, $observance, $theme['title']);
 
@@ -148,8 +166,12 @@ class EditionBuilder
      *
      * @return list<ProductGroup>
      */
-    private function finds(Market $market, int $count, ?Observance $observance = null): array
-    {
+    private function finds(
+        Market $market,
+        int $count,
+        ?Observance $observance = null,
+        ?CovePlan $plan = null,
+    ): array {
         $memoryDays = (int) config('brandcoves.picks.memory_days');
 
         /*
@@ -163,9 +185,31 @@ class EditionBuilder
             ->whereNotNull('group_id')
             ->pluck('group_id');
 
-        $themed = $observance === null || $observance->queries === []
+        /*
+         * Pinned products lead, and are exempt from the repeat memory.
+         *
+         * The entire point of curation is to override a score, so a pin the
+         * ranker could veto would not be a pin. If an editor wants to show
+         * something again, that is a decision and not an accident — which is
+         * exactly what the rolling memory exists to prevent for everything the
+         * engine picks on its own.
+         */
+        $pinned = $plan === null || $plan->pinned_group_ids === []
             ? collect()
-            : $this->matching($market, $observance->queries, $recent, $count);
+            : ProductGroup::query()
+                ->forMarket($market)
+                ->presentable()
+                ->whereIn('id', $plan->pinned_group_ids)
+                ->get();
+
+        $queries = array_values(array_unique([
+            ...($plan?->queries ?? []),
+            ...($observance?->queries ?? []),
+        ]));
+
+        $themed = $queries === []
+            ? collect()
+            : $this->matching($market, $queries, $recent->merge($pinned->pluck('id')), $count);
 
         $rest = ProductGroup::query()
             ->forMarket($market)
@@ -187,7 +231,13 @@ class EditionBuilder
          * that did not appear is worse than one where two of seven finds are
          * off-theme.
          */
-        return $this->spread($themed->concat($rest)->all(), $count);
+        /*
+         * Pinned first, then themed, then the rest.
+         *
+         * `spread` trims for category variety but never reorders, so a pin
+         * keeps its place at the top of the edition.
+         */
+        return $this->spread($pinned->concat($themed)->concat($rest)->unique('id')->all(), $count);
     }
 
     /**

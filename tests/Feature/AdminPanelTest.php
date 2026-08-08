@@ -113,6 +113,7 @@ class AdminPanelTest extends TestCase
             '/admin/guides',
             '/admin/daily-editions',
             '/admin/mode-profiles',
+            '/admin/cove-plans',
             '/admin/ai-usage',
         ] as $path) {
             // Named, so a failure says which page rather than which loop
