@@ -287,6 +287,26 @@ return [
             'access_key' => env('AMAZON_ACCESS_KEY'),
             'secret_key' => env('AMAZON_SECRET_KEY'),
             'partner_tags' => env('AMAZON_PARTNER_TAGS', ''),
+
+            /*
+             * Storefronts to hide, per market.
+             *
+             * Empty means every locale is offered everywhere, which is the
+             * default and the right one: a shopper can judge a foreign price
+             * for themselves better than we can decide it is irrelevant to
+             * them.
+             *
+             * Populate a market's list when a storefront ships badly to it, or
+             * when the Associates account is not approved there. The market's
+             * primary locale is never hidden — see AmazonLocale::selectableFor.
+             */
+            'hidden_locales' => [
+                'be-nl' => [],
+                'be-fr' => [],
+                'nl-nl' => [],
+                'en' => [],
+                'es' => [],
+            ],
         ],
     ],
 

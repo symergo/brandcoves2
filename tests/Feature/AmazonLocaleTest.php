@@ -80,15 +80,52 @@ class AmazonLocaleTest extends TestCase
     }
 
     #[Test]
-    public function every_locale_is_selectable_from_every_market(): void
+    public function every_locale_is_selectable_from_every_market_by_default(): void
     {
-        $locales = AmazonLocale::selectableFor(Market::BeFr);
+        // All of them, in every market. Someone who reads French and lives in
+        // Belgium may still want the German price, and hiding it is us guessing
+        // on their behalf about something they can see for themselves.
+        foreach (Market::cases() as $market) {
+            $locales = AmazonLocale::selectableFor($market);
 
-        // All of them. Someone who reads French and lives in Belgium may still
-        // want the German price, and hiding it is us guessing on their behalf
-        // about something they can see for themselves.
-        $this->assertCount(count(AmazonLocale::cases()), $locales);
-        $this->assertSame(AmazonLocale::Fr, $locales[0]);
+            $this->assertCount(
+                count(AmazonLocale::cases()),
+                $locales,
+                "{$market->value} did not offer every locale",
+            );
+            $this->assertSame(AmazonLocale::primaryFor($market), $locales[0]);
+        }
+    }
+
+    #[Test]
+    public function a_locale_can_be_hidden_per_market(): void
+    {
+        config(['brandcoves.connectors.amazon.hidden_locales' => [
+            'be-nl' => [AmazonLocale::It->value, AmazonLocale::Uk->value],
+        ]]);
+
+        $beNl = AmazonLocale::selectableFor(Market::BeNl);
+
+        $this->assertNotContains(AmazonLocale::It, $beNl);
+        $this->assertNotContains(AmazonLocale::Uk, $beNl);
+        $this->assertContains(AmazonLocale::De, $beNl);
+
+        // Per market, not globally: hiding a storefront for Belgium says
+        // nothing about the Netherlands.
+        $this->assertContains(AmazonLocale::It, AmazonLocale::selectableFor(Market::NlNl));
+    }
+
+    #[Test]
+    public function the_primary_locale_can_never_be_hidden(): void
+    {
+        config(['brandcoves.connectors.amazon.hidden_locales' => [
+            'be-fr' => [AmazonLocale::Fr->value],
+        ]]);
+
+        // The config is an editorial preference, not a way to leave a market
+        // with an empty selector and no Amazon at all.
+        $this->assertSame(AmazonLocale::Fr, AmazonLocale::selectableFor(Market::BeFr)[0]);
+        $this->assertFalse(AmazonLocale::Fr->isHiddenIn(Market::BeFr));
     }
 
     #[Test]

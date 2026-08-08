@@ -105,21 +105,39 @@ enum AmazonLocale: string
     /**
      * Every locale offered to a visitor in this market, primary first.
      *
-     * All of them, deliberately. A shopper who reads French and lives in
-     * Belgium may still want the German price, and hiding it because we decided
-     * it was not "their" storefront is us guessing on their behalf about
-     * something they can see for themselves.
+     * All of them by default, deliberately. A shopper who reads French and
+     * lives in Belgium may still want the German price, and hiding it because
+     * we decided it was not "their" storefront is us guessing on their behalf
+     * about something they can see for themselves.
+     *
+     * Individual locales can be switched off per market via
+     * `config('brandcoves.connectors.amazon.hidden_locales')` — useful when a
+     * storefront turns out to ship badly to a market, or when an account is not
+     * approved for it. **The primary can never be hidden**: a market with no
+     * Amazon storefront at all would be a selector with nothing in it, and the
+     * config is an editorial preference, not a way to break the feature.
      *
      * @return list<self>
      */
     public static function selectableFor(Market $market): array
     {
         $primary = self::primaryFor($market);
+        $hidden = array_map(
+            'strval',
+            (array) config("brandcoves.connectors.amazon.hidden_locales.{$market->value}", []),
+        );
 
-        return [$primary, ...array_values(array_filter(
+        $rest = array_values(array_filter(
             self::cases(),
-            fn (self $locale) => $locale !== $primary,
-        ))];
+            fn (self $locale) => $locale !== $primary && ! in_array($locale->value, $hidden, true),
+        ));
+
+        return [$primary, ...$rest];
+    }
+
+    public function isHiddenIn(Market $market): bool
+    {
+        return ! in_array($this, self::selectableFor($market), true);
     }
 
     /**
