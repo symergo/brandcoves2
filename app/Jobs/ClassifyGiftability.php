@@ -73,8 +73,14 @@ class ClassifyGiftability implements ShouldQueue
     /**
      * One statement per chunk.
      *
-     * A per-row UPDATE over 70,000 groups is 70,000 round trips; a CASE
-     * expression over a thousand ids is one. The difference is minutes.
+     * A per-row UPDATE over 70,000 groups is 70,000 round trips; one statement
+     * over a thousand ids is one. The difference is minutes.
+     *
+     * Joined against a VALUES list with explicit casts rather than built from a
+     * CASE expression. PDO sends every bound parameter as text, and Postgres
+     * will not coerce text into a boolean column inside a CASE — it fails with
+     * "column giftable is of type boolean but expression is of type text".
+     * Naming the type once in the VALUES list settles it for every row.
      *
      * @param  list<array{id: int, giftable: bool, giftable_reason: string}>  $updates
      */
@@ -84,32 +90,25 @@ class ClassifyGiftability implements ShouldQueue
             return;
         }
 
-        $ids = array_column($updates, 'id');
-
-        $giftableCase = 'CASE id';
-        $reasonCase = 'CASE id';
+        $placeholders = implode(',', array_fill(0, count($updates), '(?::bigint, ?::boolean, ?::text)'));
         $bindings = [];
 
         foreach ($updates as $row) {
-            $giftableCase .= ' WHEN ? THEN ?';
             $bindings[] = $row['id'];
-            $bindings[] = $row['giftable'];
-        }
-
-        $giftableCase .= ' END';
-
-        foreach ($updates as $row) {
-            $reasonCase .= ' WHEN ? THEN ?';
-            $bindings[] = $row['id'];
+            // 'true'/'false', not PHP booleans: PDO renders false as an empty
+            // string, which Postgres rejects as a boolean literal.
+            $bindings[] = $row['giftable'] ? 'true' : 'false';
             $bindings[] = $row['giftable_reason'];
         }
 
-        $reasonCase .= ' END';
-
         DB::update(
-            "UPDATE product_groups SET giftable = {$giftableCase}, giftable_reason = {$reasonCase}, updated_at = now() ".
-            'WHERE id IN ('.implode(',', array_fill(0, count($ids), '?')).')',
-            [...$bindings, ...$ids],
+            "UPDATE product_groups g
+             SET giftable = v.giftable,
+                 giftable_reason = v.reason,
+                 updated_at = now()
+             FROM (VALUES {$placeholders}) AS v(id, giftable, reason)
+             WHERE g.id = v.id",
+            $bindings,
         );
     }
 }
