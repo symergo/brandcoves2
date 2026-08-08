@@ -47,6 +47,16 @@ final readonly class ModeProfile
         public string $layout,
         public array $requiredInput = [],
         public bool $enabled = true,
+        /**
+         * How the chosen items are ordered on the page.
+         *
+         * Ranking decides *which* results appear; this decides the order they
+         * are read in, and they are not always the same question. Compare is a
+         * price ladder — its whole content is the ordering, and presenting it
+         * by score would scramble the one thing the mode is for. Everywhere
+         * else, score order is the answer.
+         */
+        public string $order = 'score',
     ) {}
 
     /** @param array<string, mixed> $row */
@@ -67,6 +77,7 @@ final readonly class ModeProfile
             layout: (string) ($row['layout'] ?? 'list'),
             requiredInput: array_values((array) ($row['required_input'] ?? [])),
             enabled: (bool) ($row['enabled'] ?? true),
+            order: (string) ($row['order'] ?? 'score'),
         );
     }
 
@@ -112,6 +123,9 @@ final readonly class ModeProfile
             epsilon: $lerp($this->epsilon, $other->epsilon),
             layout: $t < 0.5 ? $this->layout : $other->layout,
             requiredInput: $t < 0.5 ? $this->requiredInput : $other->requiredInput,
+            // Order follows the layout, for the same reason: a ladder cannot be
+            // half a ladder.
+            order: $t < 0.5 ? $this->order : $other->order,
         );
     }
 
@@ -141,6 +155,7 @@ final readonly class ModeProfile
             epsilon: $this->epsilon,
             layout: $this->layout,
             requiredInput: $this->requiredInput,
+            order: $this->order,
         );
     }
 

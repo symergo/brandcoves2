@@ -349,6 +349,8 @@ return [
         'empty' => 'Hier is nog niets te tonen.',
         'shops' => ':count winkels',
         'not_for_me' => 'Niets voor mij',
+        'goal_placeholder' => 'Wat richt je in? bv. thuiswerkplek, koffiehoek',
+        'kit_total' => ':count onderdelen · :total in totaal',
         'now_showing' => 'Nu: :mode',
 
         // Required of every mode: the dominant scoring factor, in words.
@@ -367,6 +369,26 @@ return [
             'guides' => [
                 'title' => 'Gidsen',
                 'description' => 'Iemand deed het denkwerk al — shortlists op basis van wat mensen hier zoeken.',
+            ],
+            'compare' => [
+                'title' => 'Vergelijken',
+                'description' => 'De hele categorie, van goedkoop naar duur, met de lookalikes aangeduid.',
+            ],
+            'deals' => [
+                'title' => 'Koopjes',
+                'description' => 'Echte kortingen, gemeten tegen onze eigen prijsgeschiedenis en tegen de andere winkels — nooit tegen een “van”-prijs van de winkel zelf.',
+            ],
+            'projects' => [
+                'title' => 'Projecten',
+                'description' => 'Vertel ons de situatie en een budget. Wij zetten de onderdelen bij elkaar en tellen ze op.',
+            ],
+            'trends' => [
+                'title' => 'Nieuw en in opkomst',
+                'description' => 'Net binnen, of deze twee weken door meer winkels opgepikt.',
+            ],
+            'follow' => [
+                'title' => 'De huissmaak',
+                'description' => 'Een rustige stroom van alles wat we recent hebben uitgekozen.',
             ],
             'serendipity' => [
                 'title' => 'Verras me',

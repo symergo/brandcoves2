@@ -90,9 +90,33 @@ optional per mode — a printer cartridge is wrong in every mode), degrade rathe
 | `keyword` | **built** | wraps the existing `SearchService`, so the `<%` word-similarity path and live bol folding are not reimplemented |
 | `outlier` | **built** | reads `surprise_score`; lexical-rarity surrogate until pgvector |
 | `curated` | **built** | daily editions + published guide shortlists |
-| `semantic` · `image` · `twoTower` | blocked on embeddings | Phase 8 |
-| `fresh` · `value` · `slots` | Phase 2 | |
-| `spectrum` | Phase 2 | |
+| `fresh` | **built** | new arrivals *and* velocity — see below |
+| `value` | **built** | measured against our own history and against other shops, never a merchant's "was" price |
+| `spectrum` | **built** | an even sample across the price range, dupes marked |
+| `slots` | **built** | curated goal→slots map; no AI in the request path |
+| `twoTower` | **built, honestly scoped** | item-item co-occurrence over saved lists, not a trained model — see below |
+| `semantic` · `image` | blocked on embeddings | Phase 8 |
+
+### Three judgement calls worth recording
+
+**`fresh` measures two things.** "New" is `first_seen_at`; "rising" is what share of a product's shops
+arrived in the last fortnight. Newness alone would make this a feed-ingest changelog — one big
+advertiser's first import floods it with ten thousand products that are new to *us* and years old in
+the world.
+
+**`value` never reads a merchant's reference price.** A large share of feed rows carry a "was" price
+that was never charged. Ranking on it produces a page of 60%-off badges that are all fiction, and a
+deals surface whose discounts are fiction is worth less than none — it teaches people not to trust
+the numbers anywhere else on the site. Both measures are ours: against the 30-day median we recorded,
+and against the same product at another shop right now. Savings under 8% score zero rather than a
+small number, because a 3% "deal" on a deals page is a broken promise.
+
+**`twoTower` is not a two-tower model, and is named for where one goes.** A learned user embedding
+from three weeks of a new site's traffic is a confident-looking function of noise, indistinguishable
+from a working one until it has been shaping results for months. What ships is item-item co-occurrence
+over saved lists, requiring two distinct lists to agree before it will claim anything, counted
+`DISTINCT` on the list so one enthusiastic user cannot steer the surface. When there is enough
+interaction volume, this class is the seam.
 
 **Weights renormalise over what is available.** Search declares `semantic: 0.2` and there is no
 embedding index yet, so the mode runs on `keyword` alone and returns a full page rather than four
@@ -169,9 +193,49 @@ POST /{market}/discover/react    reaction → learning loop
 - `resources/js/Pages/Discover.tsx`
 - `tests/Feature/ModeEngineTest.php`
 
+## Two modes are deliberately off
+
+A disabled mode here is one that cannot yet do its job *honestly* — not one that would crash. Both of
+the two currently off would return a perfectly plausible page, and that is exactly the problem.
+
+- **`inspiration`** — 80% of its weight is `semantic` + `image`. With those unavailable it
+  renormalises onto `curated` alone and answers "show me something calm and woody" with whatever was
+  in last week's guide. A mood is a vector or it is nothing.
+- **`advisor`** — the Gift Whisperer already *is* this mode and is better at it: a six-step brief with
+  skippable questions, a reason per card, a per-card swap. Exposing a thinner version would put two
+  different answers to the same question on one site, and the worse one would be the one with the
+  dial on it. Turning it on means folding the wizard's brief into `DiscoveryRequest::$answers` and
+  writing a retriever that reads them — real work, not a flag flip.
+
+A plausible wrong answer costs more than a missing one.
+
+## Ranking order is not reading order
+
+`ModeProfile::$order` is a separate field because they are separate questions. The ranker decides
+*which* results appear; Compare is a price ladder whose entire content is the ordering, so presenting
+it by score scrambles the one thing the mode is for. `spectrum` also hands over exactly the requested
+number of rungs rather than letting the engine over-fetch — over-fetching exists so MMR has choices,
+and here that actively hurts: given four times the ladder, MMR discards the top as near-duplicates of
+the bottom and returns the cheap end again.
+
+## Two bugs the Phase 2 tests caught
+
+**A zero-weight term won every explanation.** `dominant()` compared `β·log(unexpectedness)` against
+the others; with β = 0 that term is exactly `0.0`, and every other contribution is negative (all
+inputs ≤ 1). So Deals explained every result as "unexpectedness" *because* unexpectedness was doing
+nothing. Zero-weight terms are now excluded. The Phase 1 test passed only by luck — its top result had
+relevance ≈ 1.0, making that term 0.0 too, and a stable sort broke the tie the right way.
+
+**Quality won the rest.** It is a gate, not a distinguishing factor: nearly every surviving candidate
+scores 1.0, `log(1.0)` is 0, and it beat every real reason for the same arithmetic reason. It is also
+a useless thing to tell someone — "well stocked and easy to compare" is true of everything on the
+page, which is what makes it not an explanation. Excluded too.
+
 ## Phases
 
-1. **Done.** ModeEngine with Search, Guides and Serendipity on the shared pipeline, the dial
-   interpolating between them, reading real Awin/bol data with live pricing.
-2. Advisor, Inspiration, Deals, Trends, Compare, Projects, Follow — profiles and layouts only.
-3. Overlays (image/voice modality, social retriever) and reaction-driven per-mode weight tuning.
+1. **Done.** ModeEngine with Search, Guides and Serendipity — the two endpoints of the axis plus the
+   editorial stop — proving the shared pipeline and the dial on real Awin/bol data.
+2. **Done.** Deals, Trends, Compare, Projects and Follow enabled; five new retrievers. No new
+   pipeline, which was the claim Phase 1 existed to test.
+3. Overlays (image/voice modality, social retriever), reaction-driven per-mode weight tuning, and the
+   two modes above once embeddings land.

@@ -25,11 +25,18 @@ declare(strict_types=1);
 |   - social (solo / collaborative) — adds a collaborative retriever and blends
 |     its signal into ranking. Applies across Inspiration, Serendipity, Follow.
 |
-| ENABLED FLAGS: modes whose retrievers do not exist yet are declared and
-| disabled, so the axis is visible in one place and turning one on is a flag
-| flip plus a retriever class. Phase 1 ships the two endpoints of the axis —
-| Search and Serendipity — which is what proves the shared pipeline and the
-| dial. See docs/features/discovery-modes.md.
+| ENABLED FLAGS: every mode is declared here whether or not it runs, so the
+| whole axis is visible in one place. A disabled mode is one that cannot yet do
+| its job honestly — not one that would crash. Both of the two currently off
+| would happily return a page; that is exactly why they are off:
+|
+|   - `inspiration` would renormalise onto `curated` and answer a mood with
+|     last week's guide.
+|   - `advisor` would be a thinner version of the Gift Whisperer, which already
+|     answers that question better.
+|
+| A plausible wrong answer costs more than a missing one. See
+| docs/features/discovery-modes.md.
 |
 | Scoring: score = relevance^α · unexpectedness^β · novelty^γ · quality,
 | then MMR at λ, then ε-greedy exploration. Multiplicative, so an exponent of
@@ -63,9 +70,17 @@ return [
         /*
          * "I know the need, not the product."
          *
-         * The Gift Whisperer generalised. Already shipped as its own surface;
-         * folding it in here is a Phase 2 job, and until then the wizard's
-         * dedicated flow is the better experience for a six-step brief.
+         * DISABLED, and not because a retriever is missing.
+         *
+         * The Gift Whisperer is already this mode, and it is better at it: a
+         * six-step brief with skippable questions, a reason per card and a
+         * per-card swap. Exposing a thinner version here would put two
+         * different answers to the same question on one site, and the worse one
+         * would be the one with the dial on it.
+         *
+         * Turning this on means folding the wizard's brief into
+         * DiscoveryRequest::$answers and giving it a retriever that reads them
+         * — a real piece of work, not a flag flip. See gift-whisperer.md.
          */
         'advisor' => [
             'intent' => 'need',
@@ -85,7 +100,10 @@ return [
             'retrievers' => ['spectrum' => 1.0],
             'scoring' => ['alpha' => 0.7, 'beta' => 0.1, 'gamma' => 0.0, 'lambda' => 0.6, 'epsilon' => 0.0],
             'layout' => 'compare',
-            'enabled' => false,
+            // The ranker picks which rungs; the ladder decides their order.
+            // Presented by score, a spectrum is just a list again.
+            'order' => 'price_asc',
+            'enabled' => true,
         ],
 
         /* "Best price or timing, not a specific item." */
@@ -96,7 +114,7 @@ return [
             'retrievers' => ['value' => 0.8, 'fresh' => 0.2],
             'scoring' => ['alpha' => 0.5, 'beta' => 0.0, 'gamma' => 0.3, 'lambda' => 0.4, 'epsilon' => 0.05],
             'layout' => 'deals',
-            'enabled' => false,
+            'enabled' => true,
         ],
 
         /* "Solve a situation." Decompose a goal into slots and fill each. */
@@ -107,15 +125,21 @@ return [
             'retrievers' => ['slots' => 1.0],
             'scoring' => ['alpha' => 0.7, 'beta' => 0.1, 'gamma' => 0.0, 'lambda' => 0.5, 'epsilon' => 0.0],
             'layout' => 'kit',
-            'enabled' => false,
+            'enabled' => true,
         ],
 
         /*
          * "I know the vibe, not the item."
          *
-         * The mode most obviously blocked on embeddings: a mood is a vector or
-         * it is nothing, and matching moods on keywords produces exactly the
-         * junk this whole system exists to avoid.
+         * DISABLED. The mode most obviously blocked on embeddings: a mood is a
+         * vector or it is nothing, and matching moods on keywords produces
+         * exactly the junk this whole system exists to avoid.
+         *
+         * It *would* run — 80% of its weight is unavailable, so it would
+         * renormalise onto `curated` alone and return the editorial pool. That
+         * is a working page and a dishonest one: it would answer "show me
+         * something calm and woody" with whatever was in last week's guide.
+         * Better absent than plausible.
          */
         'inspiration' => [
             'intent' => 'vibe',
@@ -135,7 +159,7 @@ return [
             'retrievers' => ['fresh' => 1.0],
             'scoring' => ['alpha' => 0.3, 'beta' => 0.0, 'gamma' => 0.7, 'lambda' => 0.5, 'epsilon' => 0.05],
             'layout' => 'feed',
-            'enabled' => false,
+            'enabled' => true,
         ],
 
         /*
@@ -178,8 +202,11 @@ return [
         /*
          * "Entertain me / let me follow a taste."
          *
-         * Needs a curator or persona to follow before it means anything, which
-         * is a Phase 3 concern alongside the social overlay.
+         * Runs on the editorial pool today, which is a real lean-back stream —
+         * everything in it was chosen by a job or a person. Following a
+         * *specific* curator or persona needs those to exist first, and that is
+         * a Phase 3 concern alongside the social overlay. Until then this is
+         * "the house taste", which is an honest thing to offer.
          */
         'follow' => [
             'intent' => 'ambient',
@@ -188,7 +215,7 @@ return [
             'retrievers' => ['curated' => 1.0],
             'scoring' => ['alpha' => 0.4, 'beta' => 0.4, 'gamma' => 0.2, 'lambda' => 0.8, 'epsilon' => 0.1],
             'layout' => 'stream',
-            'enabled' => false,
+            'enabled' => true,
         ],
     ],
 ];

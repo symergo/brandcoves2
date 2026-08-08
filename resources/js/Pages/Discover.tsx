@@ -41,6 +41,15 @@ interface Props {
     modeMeta: ModeMeta
 }
 
+/**
+ * Layouts that read as rows rather than a grid.
+ *
+ * `compare` is a price ladder and `kit` is an ordered set of parts — both lose
+ * their meaning the moment they wrap into columns, because the ordering *is*
+ * the content. Everything else is browsing, which is a grid.
+ */
+const LIST_LAYOUTS = ['list', 'compare', 'kit', 'deals', 'stream']
+
 export default function Discover({ mode, stops, query, surprise, items, layout, modeMeta }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -57,6 +66,12 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
     // burst, and without this the surface settles on whichever response
     // happened to land last rather than the one for the current position.
     const requestId = useRef(0)
+
+    // A ref rather than the state value: `run` is memoised on [market, mode],
+    // and closing over `activeLayout` would send the layout as it was when the
+    // callback was built rather than as it is now.
+    const layoutRef = useRef(layout)
+    layoutRef.current = activeLayout
 
     const run = useCallback(
         async (nextDial: number, nextSurprise: number, nextTerm: string) => {
@@ -77,7 +92,16 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                         mode,
                         dial: nextDial,
                         surprise: nextSurprise,
-                        input: { query: nextTerm || null },
+                        /*
+                          The same box feeds `query` or `goal` depending on the
+                          mode. One input, because the dial's premise is one
+                          surface — a second text field appearing when you drag
+                          past a stop would break it.
+                        */
+                        input:
+                            layoutRef.current === 'kit'
+                                ? { goal: nextTerm || null }
+                                : { query: nextTerm || null },
                         overlays: { modality: 'text', social: false },
                     }),
                 })
@@ -214,7 +238,18 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                         <input
                             type="search"
                             className="min-w-0 flex-1 rounded border border-line px-3 py-2"
-                            placeholder={t('discover.query_placeholder')}
+                            /*
+                              The prompt follows the mode. "A product, a brand,
+                              or nothing" is wrong in Projects, where the box
+                              wants a situation — and a placeholder that
+                              contradicts the mode is how someone concludes the
+                              control is broken.
+                            */
+                            placeholder={
+                                meta.layout === 'kit'
+                                    ? t('discover.goal_placeholder')
+                                    : t('discover.query_placeholder')
+                            }
                             value={term}
                             onChange={(e) => setTerm(e.target.value)}
                             aria-label={t('discover.query_placeholder')}
@@ -239,78 +274,137 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
             {results.length === 0 ? (
                 <p className="mt-8 text-ink-soft">{t('discover.empty')}</p>
             ) : (
-                <ul
-                    className={
-                        /*
-                         * One component, several appearances. The server sends a
-                         * layout name and the surface renders by it — which is
-                         * what stops nine modes becoming nine pages.
-                         */
-                        activeLayout === 'list'
-                            ? 'mt-6 divide-y divide-line rounded border border-line'
-                            : 'mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4'
-                    }
-                >
-                    {results.map((item) => (
-                        <li
-                            key={item.id}
-                            className={
-                                activeLayout === 'list'
-                                    ? 'flex items-center gap-4 p-4'
-                                    : 'flex flex-col rounded-lg border border-line bg-card p-4'
-                            }
-                        >
-                            {item.image && (
-                                <img
-                                    src={item.image}
-                                    alt=""
+                <>
+                    {/*
+                      A kit is the one layout with a fact about the *set* rather
+                      than about each item. The running total is the reason
+                      Projects exists — five products that add up to a number
+                      you can decide about.
+                    */}
+                    {activeLayout === 'kit' && (
+                        <p className="mt-6 text-lg font-semibold">
+                            {t('discover.kit_total', {
+                                total: formatPrice(
+                                    results.reduce((sum, item) => sum + (item.price ?? 0), 0),
+                                    market,
+                                ),
+                                count: n(results.length),
+                            })}
+                        </p>
+                    )}
+
+                    <ul
+                        className={
+                            /*
+                             * One component, several appearances. The server
+                             * sends a layout name and the surface renders by
+                             * it — which is what stops nine modes becoming nine
+                             * pages.
+                             *
+                             * `compare` is a price ladder, so it stays a single
+                             * column however wide the screen: side by side, a
+                             * ladder reads as a grid and the ordering — the
+                             * whole point — disappears.
+                             */
+                            LIST_LAYOUTS.includes(activeLayout)
+                                ? 'mt-6 divide-y divide-line rounded border border-line'
+                                : 'mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4'
+                        }
+                    >
+                        {results.map((item, index) => {
+                            const asRow = LIST_LAYOUTS.includes(activeLayout)
+
+                            return (
+                                <li
+                                    key={item.id}
                                     className={
-                                        activeLayout === 'list'
-                                            ? 'h-20 w-20 shrink-0 object-contain'
-                                            : 'mx-auto h-36 object-contain'
+                                        asRow
+                                            ? 'flex items-center gap-4 p-4'
+                                            : 'flex flex-col rounded-lg border border-line bg-card p-4'
                                     }
-                                    loading="lazy"
-                                />
-                            )}
-
-                            <div className={activeLayout === 'list' ? 'min-w-0 flex-1' : 'contents'}>
-                                <a href={item.url} className="line-clamp-2 font-medium hover:underline">
-                                    {item.title}
-                                </a>
-
-                                {/* Required of every mode: why this is here. */}
-                                {item.reason && (
-                                    <p className="mt-1 text-sm text-ink-soft">
-                                        {t(`discover.why.${item.reason}`)}
-                                    </p>
-                                )}
-
-                                <div
-                                    className={`flex items-center gap-3 ${
-                                        activeLayout === 'list' ? 'mt-2' : 'mt-auto pt-4'
-                                    }`}
                                 >
-                                    <span className="font-semibold">
-                                        {item.price === null ? '—' : formatPrice(item.price, market)}
-                                    </span>
-                                    {item.merchantCount > 1 && (
-                                        <span className="text-xs text-ink-soft">
-                                            {t('discover.shops', { count: n(item.merchantCount) })}
+                                    {activeLayout === 'compare' && (
+                                        <span className="w-6 shrink-0 text-sm text-ink-soft tabular-nums">
+                                            {index + 1}
                                         </span>
                                     )}
-                                    <SaveToList groupId={item.id} />
-                                    <button
-                                        type="button"
-                                        className="ml-auto text-xs text-ink-soft underline"
-                                        onClick={() => react(item, 'meh')}
-                                    >
-                                        {t('discover.not_for_me')}
-                                    </button>
-                                </div>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+
+                                    {item.image && (
+                                        <img
+                                            src={item.image}
+                                            alt=""
+                                            className={
+                                                asRow
+                                                    ? 'h-20 w-20 shrink-0 object-contain'
+                                                    : 'mx-auto h-36 object-contain'
+                                            }
+                                            loading="lazy"
+                                        />
+                                    )}
+
+                                    <div className={asRow ? 'min-w-0 flex-1' : 'contents'}>
+                                        <a
+                                            href={item.url}
+                                            className="line-clamp-2 font-medium hover:underline"
+                                        >
+                                            {item.title}
+                                        </a>
+
+                                        {/* Required of every mode: why this is here. */}
+                                        {item.reason && (
+                                            <p className="mt-1 text-sm text-ink-soft">
+                                                {t(`discover.why.${item.reason}`)}
+                                            </p>
+                                        )}
+
+                                        <div
+                                            className={`flex flex-wrap items-center gap-3 ${
+                                                asRow ? 'mt-2' : 'mt-auto pt-4'
+                                            }`}
+                                        >
+                                            <span className="font-semibold">
+                                                {item.price === null
+                                                    ? '—'
+                                                    : formatPrice(item.price, market)}
+                                            </span>
+
+                                            {/*
+                                              Only where it is the point. A
+                                              discount badge on every layout is
+                                              a badge nobody reads; on the deals
+                                              lane it is the headline.
+                                            */}
+                                            {activeLayout === 'deals' &&
+                                                item.discountPercent !== null &&
+                                                item.discountPercent > 0 && (
+                                                    <span className="rounded bg-accent px-2 py-0.5 text-xs font-semibold text-white">
+                                                        −{n(item.discountPercent)}%
+                                                    </span>
+                                                )}
+
+                                            {item.merchantCount > 1 && (
+                                                <span className="text-xs text-ink-soft">
+                                                    {t('discover.shops', {
+                                                        count: n(item.merchantCount),
+                                                    })}
+                                                </span>
+                                            )}
+
+                                            <SaveToList groupId={item.id} />
+                                            <button
+                                                type="button"
+                                                className="ml-auto text-xs text-ink-soft underline"
+                                                onClick={() => react(item, 'meh')}
+                                            >
+                                                {t('discover.not_for_me')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </li>
+                            )
+                        })}
+                    </ul>
+                </>
             )}
         </>
     )

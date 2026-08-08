@@ -14,7 +14,7 @@ cannot be recovered from a diff.
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Planned — late Phase 2 / early Phase 3 |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active |
 | [serendipity.md](serendipity.md) | Discovery | Active |
-| [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 1 active |
+| [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | In progress |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |

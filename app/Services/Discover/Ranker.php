@@ -82,17 +82,47 @@ class Ranker
         float $quality,
         ModeProfile $profile,
     ): string {
-        $contributions = [
-            // log, because these are multiplied: the log of a product is the
-            // sum of the logs, so this compares like with like.
-            'relevance' => $profile->alpha * log(max(1e-6, $relevance)),
-            'unexpectedness' => $profile->beta * log(max(1e-6, $unexpected)),
-            'novelty' => $profile->gamma * log(max(1e-6, $novelty)),
-            'quality' => log(max(1e-6, $quality)),
+        /*
+         * Two exclusions, both learned the hard way.
+         *
+         * **Zero-weight terms.** A zero exponent contributes exactly 0.0, and
+         * every other contribution is negative (all inputs are ≤ 1, so every
+         * log is ≤ 0). Left in, a neutralised term wins *always* — Deals would
+         * explain every result as "unexpectedness" precisely because β = 0 and
+         * unexpectedness is doing nothing at all.
+         *
+         * **Quality.** It is a gate, not a distinguishing factor: nearly every
+         * surviving candidate scores 1.0 on it, log(1.0) is 0, and it would
+         * then beat every real reason for the same arithmetic reason. "Well
+         * stocked and easy to compare" is also a useless thing to tell someone
+         * who searched for a specific product — it is true of everything on the
+         * page, which is what makes it not an explanation.
+         */
+        $weighted = [
+            'relevance' => [$profile->alpha, $relevance],
+            'unexpectedness' => [$profile->beta, $unexpected],
+            'novelty' => [$profile->gamma, $novelty],
         ];
 
-        // Every log here is negative (all inputs are ≤ 1), so the *least*
-        // negative contribution is the one holding the score up.
+        $contributions = [];
+
+        foreach ($weighted as $name => [$weight, $value]) {
+            if ($weight > 0.0) {
+                // log, because these are multiplied: the log of a product is
+                // the sum of the logs, so this compares like with like.
+                $contributions[$name] = $weight * log(max(1e-6, $value));
+            }
+        }
+
+        if ($contributions === []) {
+            // No weighted term at all. Not reachable from any declared profile,
+            // but an override row could do it, and a result with no reason is
+            // worse than a blunt one.
+            return 'quality';
+        }
+
+        // Every remaining log is negative, so the *least* negative contribution
+        // is the one holding the score up.
         arsort($contributions);
 
         return (string) array_key_first($contributions);

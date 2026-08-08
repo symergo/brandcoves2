@@ -356,6 +356,8 @@ return [
         'empty' => 'Nothing to show here yet.',
         'shops' => ':count shops',
         'not_for_me' => 'Not for me',
+        'goal_placeholder' => 'What are you setting up? e.g. home office, coffee corner',
+        'kit_total' => ':count parts · :total in total',
         'now_showing' => 'Now: :mode',
 
         // Required of every mode: the dominant scoring factor, in words. A
@@ -377,6 +379,26 @@ return [
             'guides' => [
                 'title' => 'Guides',
                 'description' => 'Someone already did the thinking — shortlists built from what people search for here.',
+            ],
+            'compare' => [
+                'title' => 'Compare',
+                'description' => 'The whole category, cheapest to dearest, with the lookalikes marked.',
+            ],
+            'deals' => [
+                'title' => 'Deals',
+                'description' => 'Real savings, measured against our own price history and against the other shops — never against a merchant’s “was” price.',
+            ],
+            'projects' => [
+                'title' => 'Projects',
+                'description' => 'Tell us the situation and a budget. We will put the parts together and add them up.',
+            ],
+            'trends' => [
+                'title' => 'New and rising',
+                'description' => 'Just arrived, or picked up by more shops this fortnight.',
+            ],
+            'follow' => [
+                'title' => 'The house taste',
+                'description' => 'A slow stream of everything we have chosen lately.',
             ],
             'serendipity' => [
                 'title' => 'Surprise me',

@@ -34119,6 +34119,20 @@ function Edition({ edition, challenge, finds, guide, streak, archive }) {
 //#endregion
 //#region resources/js/Pages/Discover.tsx
 var Discover_exports = /* @__PURE__ */ __exportAll({ default: () => Discover });
+/**
+* Layouts that read as rows rather than a grid.
+*
+* `compare` is a price ladder and `kit` is an ordered set of parts — both lose
+* their meaning the moment they wrap into columns, because the ordering *is*
+* the content. Everything else is browsing, which is a grid.
+*/
+var LIST_LAYOUTS = [
+	"list",
+	"compare",
+	"kit",
+	"deals",
+	"stream"
+];
 function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
@@ -34130,6 +34144,8 @@ function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
 	const [activeLayout, setActiveLayout] = (0, import_react.useState)(layout);
 	const [busy, setBusy] = (0, import_react.useState)(false);
 	const requestId = (0, import_react.useRef)(0);
+	const layoutRef = (0, import_react.useRef)(layout);
+	layoutRef.current = activeLayout;
 	const run = (0, import_react.useCallback)(async (nextDial, nextSurprise, nextTerm) => {
 		const id = ++requestId.current;
 		setBusy(true);
@@ -34145,7 +34161,7 @@ function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
 					mode,
 					dial: nextDial,
 					surprise: nextSurprise,
-					input: { query: nextTerm || null },
+					input: layoutRef.current === "kit" ? { goal: nextTerm || null } : { query: nextTerm || null },
 					overlays: {
 						modality: "text",
 						social: false
@@ -34267,7 +34283,7 @@ function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
 							type: "search",
 							className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
-							placeholder: t("discover.query_placeholder"),
+							placeholder: meta.layout === "kit" ? t("discover.goal_placeholder") : t("discover.query_placeholder"),
 							value: term,
 							onChange: (e) => setTerm(e.target.value),
 							"aria-label": t("discover.query_placeholder")
@@ -34291,51 +34307,75 @@ function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
 		results.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-8 text-ink-soft",
 			children: t("discover.empty")
-		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-			className: activeLayout === "list" ? "mt-6 divide-y divide-line rounded border border-line" : "mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4",
-			children: results.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-				className: activeLayout === "list" ? "flex items-center gap-4 p-4" : "flex flex-col rounded-lg border border-line bg-card p-4",
-				children: [item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-					src: item.image,
-					alt: "",
-					className: activeLayout === "list" ? "h-20 w-20 shrink-0 object-contain" : "mx-auto h-36 object-contain",
-					loading: "lazy"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: activeLayout === "list" ? "min-w-0 flex-1" : "contents",
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [activeLayout === "kit" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-6 text-lg font-semibold",
+			children: t("discover.kit_total", {
+				total: formatPrice(results.reduce((sum, item) => sum + (item.price ?? 0), 0), market),
+				count: n(results.length)
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: LIST_LAYOUTS.includes(activeLayout) ? "mt-6 divide-y divide-line rounded border border-line" : "mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4",
+			children: results.map((item, index) => {
+				const asRow = LIST_LAYOUTS.includes(activeLayout);
+				return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: asRow ? "flex items-center gap-4 p-4" : "flex flex-col rounded-lg border border-line bg-card p-4",
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-							href: item.url,
-							className: "line-clamp-2 font-medium hover:underline",
-							children: item.title
+						activeLayout === "compare" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "w-6 shrink-0 text-sm text-ink-soft tabular-nums",
+							children: index + 1
 						}),
-						item.reason && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-1 text-sm text-ink-soft",
-							children: t(`discover.why.${item.reason}`)
+						item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: item.image,
+							alt: "",
+							className: asRow ? "h-20 w-20 shrink-0 object-contain" : "mx-auto h-36 object-contain",
+							loading: "lazy"
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: `flex items-center gap-3 ${activeLayout === "list" ? "mt-2" : "mt-auto pt-4"}`,
+							className: asRow ? "min-w-0 flex-1" : "contents",
 							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "font-semibold",
-									children: item.price === null ? "—" : formatPrice(item.price, market)
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+									href: item.url,
+									className: "line-clamp-2 font-medium hover:underline",
+									children: item.title
 								}),
-								item.merchantCount > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "text-xs text-ink-soft",
-									children: t("discover.shops", { count: n(item.merchantCount) })
+								item.reason && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 text-sm text-ink-soft",
+									children: t(`discover.why.${item.reason}`)
 								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: item.id }),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									className: "ml-auto text-xs text-ink-soft underline",
-									onClick: () => react(item, "meh"),
-									children: t("discover.not_for_me")
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: `flex flex-wrap items-center gap-3 ${asRow ? "mt-2" : "mt-auto pt-4"}`,
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "font-semibold",
+											children: item.price === null ? "—" : formatPrice(item.price, market)
+										}),
+										activeLayout === "deals" && item.discountPercent !== null && item.discountPercent > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "rounded bg-accent px-2 py-0.5 text-xs font-semibold text-white",
+											children: [
+												"−",
+												n(item.discountPercent),
+												"%"
+											]
+										}),
+										item.merchantCount > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "text-xs text-ink-soft",
+											children: t("discover.shops", { count: n(item.merchantCount) })
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: item.id }),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+											type: "button",
+											className: "ml-auto text-xs text-ink-soft underline",
+											onClick: () => react(item, "meh"),
+											children: t("discover.not_for_me")
+										})
+									]
 								})
 							]
 						})
 					]
-				})]
-			}, item.id))
-		})
+				}, item.id);
+			})
+		})] })
 	] });
 }
 //#endregion

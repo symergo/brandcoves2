@@ -349,6 +349,8 @@ return [
         'empty' => 'Rien à montrer ici pour l’instant.',
         'shops' => ':count boutiques',
         'not_for_me' => 'Pas pour moi',
+        'goal_placeholder' => 'Qu’aménagez-vous ? p. ex. bureau à domicile, coin café',
+        'kit_total' => ':count éléments · :total au total',
         'now_showing' => 'Actuellement : :mode',
 
         // Required of every mode: the dominant scoring factor, in words.
@@ -367,6 +369,26 @@ return [
             'guides' => [
                 'title' => 'Guides',
                 'description' => 'Quelqu’un a déjà réfléchi — des sélections bâties sur ce que les gens cherchent ici.',
+            ],
+            'compare' => [
+                'title' => 'Comparer',
+                'description' => 'Toute la catégorie, du moins cher au plus cher, avec les équivalents signalés.',
+            ],
+            'deals' => [
+                'title' => 'Bonnes affaires',
+                'description' => 'De vraies remises, mesurées sur notre propre historique et sur les autres boutiques — jamais sur un prix « avant » annoncé par le marchand.',
+            ],
+            'projects' => [
+                'title' => 'Projets',
+                'description' => 'Dites-nous la situation et un budget. Nous assemblons les éléments et faisons le total.',
+            ],
+            'trends' => [
+                'title' => 'Nouveau et en hausse',
+                'description' => 'Tout juste arrivé, ou repris par davantage de boutiques cette quinzaine.',
+            ],
+            'follow' => [
+                'title' => 'Le goût de la maison',
+                'description' => 'Un flux tranquille de tout ce que nous avons choisi récemment.',
             ],
             'serendipity' => [
                 'title' => 'Surprenez-moi',

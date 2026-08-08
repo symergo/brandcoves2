@@ -41,6 +41,17 @@ class DailyCoveTest extends TestCase
     {
         parent::setUp();
 
+        /*
+         * Freeze the clock after the drop time.
+         *
+         * An edition is built at 06:00 for a 09:00 publish, and `published()`
+         * hides it until then — correctly. Without a fixed clock this suite
+         * passes when it is run in the evening and 404s when it is run in the
+         * morning, which is the worst kind of failing test: one that blames
+         * whoever happened to run it.
+         */
+        $this->travelTo(CarbonImmutable::today()->setTime(12, 0));
+
         $this->merchant = Merchant::create([
             'source' => Source::Awin->value,
             'external_id' => 'shop',

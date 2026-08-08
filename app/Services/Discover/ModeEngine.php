@@ -76,10 +76,33 @@ class ModeEngine
         $ranked = $this->ranker->rank($candidates, $profile, $request->limit, $seed);
 
         return new DiscoveryResult(
-            items: $ranked,
+            items: $this->order($ranked, $profile),
             profile: $profile,
             candidateCount: count($candidates),
         );
+    }
+
+    /**
+     * Reading order, which is not always ranking order.
+     *
+     * The ranker decides *which* results appear; a layout can have its own
+     * opinion about the order they are read in. Compare is the case that forces
+     * the distinction: it is a price ladder, and its entire content is the
+     * ordering, so presenting it by score scrambles the one thing the mode is
+     * for. Everywhere else score order is the answer, which is why this is a
+     * profile field rather than a branch.
+     *
+     * @param  list<Candidate>  $items
+     * @return list<Candidate>
+     */
+    private function order(array $items, ModeProfile $profile): array
+    {
+        if ($profile->order === 'price_asc') {
+            usort($items, fn (Candidate $a, Candidate $b) => ($a->group->min_price ?? PHP_INT_MAX)
+                <=> ($b->group->min_price ?? PHP_INT_MAX));
+        }
+
+        return $items;
     }
 
     /**
