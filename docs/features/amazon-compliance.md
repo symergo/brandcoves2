@@ -147,6 +147,44 @@ cheaper to honour now than to retrofit:
 5. Tests assert each of the above, so an Amazon offer cannot acquire a price
    history or an alert by accident.
 
+## Across locales
+
+The same ASIN is the same physical product on every Amazon storefront. That
+single fact splits the data cleanly in two, and the split is what the schema
+encodes:
+
+| | Where it lives | Why |
+|---|---|---|
+| **The decision** — ASIN, giftability, surprise score, category | `amazon_products`, **one row, no market column** | A property of the product, not the storefront. Ours, and expensive to derive. |
+| **What a shopper reads** — price, description, image, availability | Nowhere. Fetched live per locale at render | Mirroring is not permitted, and these genuinely differ per storefront. |
+
+**Classification runs once per ASIN.** Doing it per locale would spend five
+times the compute to produce five answers that ought to be identical — and
+would not be, because the classifier reads the title and the title is
+translated. `classified_locale` records which storefront's title was used, so a
+surprising verdict is traceable.
+
+### Every locale is offered; only one of them competes
+
+A visitor in any market can select any locale. Someone who reads French and
+lives in Belgium may still want the German price, and hiding it is us guessing
+on their behalf about something they can see for themselves.
+
+But **only the primary locale's price may enter the comparison**
+(`AmazonLocale::isComparableIn()`). A foreign price carries foreign tax and
+cross-border shipping; letting it win "cheapest" would beat a local offer the
+shopper can actually act on. That is exactly the failure market-scoped identity
+exists to prevent, so a foreign locale is always a labelled extra — *"also on
+amazon.de for €40"* — and never a row in the offer table.
+
+Belgium is the awkward case and the reason `primaryFor()` is a method rather
+than a flat map: `amazon.com.be` exists but is thin, so `be-nl` defaults to
+`amazon.nl` and `be-fr` to `amazon.fr`. The selector lets a visitor disagree.
+
+`seen_in_locales` orders the tabs and is explicitly **a hint, not a fact** —
+refreshed on a schedule, while the price is always fetched live. A stale entry
+therefore costs one empty tab, never a wrong number.
+
 ## Other programmes
 
 **bol** permits caching within its terms and has no equivalent email
