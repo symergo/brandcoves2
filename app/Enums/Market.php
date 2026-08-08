@@ -92,6 +92,26 @@ enum Market: string
     }
 
     /**
+     * The bol Partner site id that earns on a click from this market.
+     *
+     * Follows the country, not the language: Belgium and the Netherlands are
+     * separate partner accounts with separate ids, so `be-fr` and `be-nl` share
+     * one and `nl-nl` has its own. A market bol does not serve has none.
+     */
+    public function bolPartnerSiteId(): ?string
+    {
+        $country = $this->bolCountry();
+
+        if ($country === null) {
+            return null;
+        }
+
+        $id = config("brandcoves.connectors.bol.partner_site_id.{$country}");
+
+        return blank($id) ? null : (string) $id;
+    }
+
+    /**
      * Accept-Language sent to bol.
      *
      * bol has no English catalogue, so the English market receives Dutch product

@@ -31,7 +31,7 @@ class BolConnectorTest extends TestCase
             'brandcoves.connectors.bol.enabled' => true,
             'brandcoves.connectors.bol.client_id' => 'test-id',
             'brandcoves.connectors.bol.client_secret' => 'test-secret',
-            'brandcoves.connectors.bol.partner_id' => 'partner123',
+            'brandcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
         ]);
 
         Cache::flush();
@@ -53,27 +53,56 @@ class BolConnectorTest extends TestCase
         return ['login.bol.com/*' => Http::response(['access_token' => 'tok', 'expires_in' => 300])];
     }
 
+    /**
+     * bol's actual response shape.
+     *
+     * Copied from v1's connector, which has been running against this API in
+     * production — not from the docs and not from what our own parser happens
+     * to expect. The previous version of this fixture used `products` and
+     * `images[]`, which the parser also used, so the pair agreed with each
+     * other and with nothing else. Green tests, zero live results: the same
+     * failure as the Awin barcode-column bug.
+     *
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
     private function product(array $overrides = []): array
     {
         return array_merge([
-            'id' => '9200000123456',
+            'bolProductId' => '9200000123456',
             'ean' => '4006381333931',
             'title' => 'Sony WH-1000XM5 Koptelefoon',
-            'summary' => 'Ruisonderdrukking',
+            // HTML, as bol actually sends it.
+            'description' => 'Ruisonderdrukking<br /><ul><li>Kleur: Zwart</li></ul>',
             'url' => 'https://www.bol.com/nl/p/sony/9200000123456/',
-            'images' => [['url' => 'https://media.bol.com/1.jpg']],
-            'attributes' => [
-                ['key' => 'brand', 'value' => 'Sony'],
-                ['key' => 'category', 'value' => 'Audio'],
+            // Singular object on search results, not a plural array.
+            'image' => ['url' => 'https://media.bol.com/1.jpg'],
+            // GPC taxonomy, coarse to fine. No `attributes`, and no brand
+            // anywhere in the payload.
+            'gpc' => [
+                ['level' => 'SEGMENT', 'name' => 'Audio Visual/Photography'],
+                ['level' => 'CHUNK', 'name' => 'Koptelefoon'],
             ],
-            'offer' => ['price' => 329.99, 'available' => true],
+            // No `available` flag — the presence of a price is the signal.
+            'offer' => ['price' => 329.99, 'strikethroughPrice' => 399.00],
         ], $overrides);
+    }
+
+    /**
+     * The search envelope: `results`, not `products`.
+     *
+     * @param  list<array<string, mixed>>|null  $products
+     * @return array<string, mixed>
+     */
+    private function searchResponse(?array $products = null): array
+    {
+        return ['results' => $products ?? [$this->product()]];
     }
 
     #[Test]
     public function it_normalises_a_search_result(): void
     {
-        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response(['products' => [$this->product()]])]);
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse())]);
 
         $offers = $this->connector->search('koptelefoon', Market::BeNl);
 
@@ -81,29 +110,131 @@ class BolConnectorTest extends TestCase
         $offer = $offers[0];
 
         $this->assertSame('Sony WH-1000XM5 Koptelefoon', $offer->title);
-        $this->assertSame('Sony', $offer->brand);
         // Cents, not floats — 329.99 must not become 32998 or 33000.
         $this->assertSame(32999, $offer->price);
-        $this->assertSame(Availability::InStock, $offer->availability);
         $this->assertSame('4006381333931', $offer->ean);
+
+        // bolProductId, not the EAN: the EAN identifies the product, and two
+        // listings of it would collide on one external id.
+        $this->assertSame('9200000123456', $offer->externalId);
+
+        // The deepest GPC level, because specificity is what makes a category
+        // useful for grouping and for the rarity signal.
+        $this->assertSame('Koptelefoon', $offer->merchantCategory);
+
+        // Markup stripped at the boundary, so nothing downstream has to decide
+        // whether this field is safe to render.
+        $this->assertStringNotContainsString('<', (string) $offer->description);
+
+        /*
+         * No brand, deliberately.
+         *
+         * This endpoint does not return one, and guessing it from the title is
+         * worse than leaving it null — grouping and the brand facet both key on
+         * it, so a wrong brand splits a product or mislabels a filter.
+         */
+        $this->assertNull($offer->brand);
+
+        // The response carries no `available` flag. bol only returns an offer
+        // block for something it can sell, so a price IS the signal — reading
+        // a missing flag as "out of stock" would remove bol from the site.
+        $this->assertSame(Availability::InStock, $offer->availability);
     }
 
     #[Test]
-    public function the_affiliate_url_carries_the_partner_id(): void
+    public function a_result_with_no_offer_block_is_out_of_stock(): void
     {
-        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response(['products' => [$this->product()]])]);
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response(
+            $this->searchResponse([$this->product(['offer' => []])])
+        )]);
 
         $offer = $this->connector->search('koptelefoon', Market::BeNl)[0];
 
-        // Without this the click is real but earns nothing.
-        $this->assertStringContainsString('partner123', $offer->affiliateUrl);
+        $this->assertNull($offer->price);
+        $this->assertSame(Availability::OutOfStock, $offer->availability);
+    }
+
+    #[Test]
+    public function an_empty_result_is_not_cached(): void
+    {
+        // A sequence, not two fake() calls: Http::fake() MERGES stubs rather
+        // than replacing them, so a second registration for the same URL never
+        // takes effect and the first response answers both requests.
+        Http::fake([
+            ...$this->fakeToken(),
+            'api.bol.com/*' => Http::sequence()
+                ->push($this->searchResponse([]))
+                ->push($this->searchResponse()),
+        ]);
+
+        $this->assertSame([], $this->connector->search('niets', Market::BeNl));
+
+        /*
+         * Every degraded path returns an empty array — expired token, rate
+         * limit, timeout. Caching that would blank bol for this query for the
+         * full fifteen minutes, long after the cause had cleared.
+         *
+         * Cost an hour of debugging: the connector was fixed and working, and a
+         * poisoned cache entry from an earlier broken run kept reporting
+         * nothing.
+         */
+        $this->assertCount(1, $this->connector->search('niets', Market::BeNl));
+    }
+
+    #[Test]
+    public function the_affiliate_url_goes_through_bols_click_tracker(): void
+    {
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse())]);
+
+        $offer = $this->connector->search('koptelefoon', Market::BeNl)[0];
+
+        /*
+         * bol attributes a sale through partner.bol.com carrying a site id, not
+         * through a parameter appended to the product URL.
+         *
+         * This is the one bug in the connector that is invisible from outside:
+         * an untracked link works perfectly — the visitor clicks, the visitor
+         * buys — and the commission simply goes to nobody. It shows up as an
+         * empty statement months later, never as an error.
+         */
+        $this->assertStringStartsWith('https://partner.bol.com/click/click?', $offer->affiliateUrl);
+        $this->assertStringContainsString('s=25421', $offer->affiliateUrl);
+        $this->assertStringContainsString(urlencode('https://www.bol.com/nl/p/sony/9200000123456/'), $offer->affiliateUrl);
         $this->assertTrue($offer->hasSafeAffiliateUrl());
+    }
+
+    #[Test]
+    public function each_country_earns_on_its_own_partner_account(): void
+    {
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse())]);
+
+        // Belgium and the Netherlands are separate partner accounts. Sending a
+        // Dutch click on the Belgian site id earns nothing on either.
+        $this->assertStringContainsString('s=25421', $this->connector->search('x', Market::BeNl)[0]->affiliateUrl);
+
+        Cache::flush();
+        $this->assertStringContainsString('s=1005548', $this->connector->search('x', Market::NlNl)[0]->affiliateUrl);
+    }
+
+    #[Test]
+    public function the_search_request_asks_for_the_offer_and_the_image(): void
+    {
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse([]))]);
+
+        $this->connector->search('koptelefoon', Market::BeNl);
+
+        // Without include-offer bol returns the catalogue entry with no price,
+        // and without include-image there is nothing to render. Both would
+        // produce results that pass validation and are useless on a card.
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'search-term=koptelefoon')
+            && str_contains($r->url(), 'include-offer=true')
+            && str_contains($r->url(), 'include-image=true'));
     }
 
     #[Test]
     public function each_market_gets_its_own_country_and_language(): void
     {
-        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response(['products' => []])]);
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse([]))]);
 
         $this->connector->search('test', Market::BeFr);
         Http::assertSent(fn (Request $r) => str_contains($r->url(), 'api.bol.com')
@@ -119,7 +250,7 @@ class BolConnectorTest extends TestCase
     #[Test]
     public function english_falls_back_to_dutch_because_bol_has_no_english_catalogue(): void
     {
-        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response(['products' => []])]);
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse([]))]);
 
         $this->connector->search('headphones', Market::En);
 
@@ -174,7 +305,7 @@ class BolConnectorTest extends TestCase
     #[Test]
     public function results_are_cached_so_a_burst_costs_one_call(): void
     {
-        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response(['products' => [$this->product()]])]);
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse())]);
 
         $this->connector->search('koptelefoon', Market::BeNl);
         $this->connector->search('koptelefoon', Market::BeNl);

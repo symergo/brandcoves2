@@ -59,14 +59,32 @@ class BolConnector implements LiveConnector
 
         $cacheKey = sprintf('bc:bol:search:%s:%s:%d', $market->value, sha1(mb_strtolower($query)), $limit);
 
-        // Absorbs a burst of identical searches without spending rate budget,
-        // and is short enough that a price on a results page is not
-        // embarrassingly stale.
-        return Cache::remember(
-            $cacheKey,
-            (int) config('brandcoves.search.live_cache_ttl'),
-            fn () => $this->fetchSearch($query, $market, $limit),
-        );
+        $cached = Cache::get($cacheKey);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $offers = $this->fetchSearch($query, $market, $limit);
+
+        /*
+         * An empty result is NOT cached.
+         *
+         * `Cache::remember` would store it, and an empty array is what every
+         * degraded path returns — an expired token, a rate limit, a timeout. So
+         * one transient failure used to blank bol for this query for the full
+         * fifteen minutes, long after the cause had cleared. Found while
+         * debugging exactly that: a failed run poisoned the cache and the next
+         * (working) run still returned nothing.
+         *
+         * A real zero-result query is cheap to repeat and rare; a cached
+         * failure is expensive and invisible.
+         */
+        if ($offers !== []) {
+            Cache::put($cacheKey, $offers, (int) config('brandcoves.search.live_cache_ttl'));
+        }
+
+        return $offers;
     }
 
     public function fetchById(string $externalId, Market $market): ?Offer
@@ -103,16 +121,27 @@ class BolConnector implements LiveConnector
         }
 
         $response = $this->request('/products/search', $market, 'search', [
-            'q' => $query,
+            // `search-term`, not `q`. The parameter names below are the ones v1
+            // has been running against this API in production for months —
+            // taken from its connector rather than guessed.
+            'search-term' => $query,
             'country-code' => $market->bolCountry(),
             'page-size' => min($limit, 50),
+            // Without these bol returns the catalogue entry and omits the offer
+            // and the image entirely, so every result would arrive with no
+            // price and nothing to render.
+            'include-offer' => 'true',
+            'include-image' => 'true',
         ]);
 
         if ($response === null) {
             return [];
         }
 
-        $products = $response->json('products') ?? [];
+        // The envelope is `results`. A wrong key here fails silently — an empty
+        // array is indistinguishable from "bol found nothing", which is how a
+        // broken connector survives a green test suite.
+        $products = $response->json('results') ?? [];
         if (! is_array($products)) {
             return [];
         }
@@ -211,10 +240,20 @@ class BolConnector implements LiveConnector
         });
     }
 
-    /** @param array<string, mixed> $product */
+    /**
+     * bol's payload → our canonical Offer.
+     *
+     * Every field name below was read off a live response, not from the docs.
+     * The catalogue API returns `bolProductId`, `description` and a `gpc`
+     * taxonomy array — not `id`, `summary` and `attributes`.
+     *
+     * @param  array<string, mixed>  $product
+     */
     private function normalise(array $product, Market $market): ?Offer
     {
-        $id = (string) ($product['id'] ?? $product['ean'] ?? '');
+        // bolProductId first: the EAN identifies the *product*, and two
+        // merchants' listings of it would collide on one external id.
+        $id = (string) ($product['bolProductId'] ?? $product['id'] ?? $product['ean'] ?? '');
         $title = trim((string) ($product['title'] ?? ''));
 
         if ($id === '' || $title === '') {
@@ -231,21 +270,89 @@ class BolConnector implements LiveConnector
             title: $title,
             affiliateUrl: $this->affiliateUrl($product, $market),
             price: $price,
-            description: trim((string) ($product['summary'] ?? '')) ?: null,
-            brand: $this->attribute($product, 'brand'),
+            // HTML, and often long: bol embeds <br> and <ul> in the description.
+            description: $this->description($product),
+            // Not returned by this endpoint at all. Left null rather than
+            // guessed from the title — a wrong brand is worse than none, since
+            // grouping and the brand facet both key on it.
+            brand: null,
             merchantName: 'bol.com',
             merchantExternalId: 'bol',
             merchantDeepLink: $product['url'] ?? null,
-            merchantCategory: $this->attribute($product, 'category'),
+            merchantCategory: $this->category($product),
             imageUrl: $this->image($product),
             ean: (string) ($product['ean'] ?? '') ?: null,
-            availability: ($offerData['available'] ?? false) === true
+            // The "was" price. Recorded, but never used for a discount badge —
+            // those measure against our own 30-day median, because a merchant's
+            // reference price is frequently fiction.
+            referencePrice: isset($offerData['strikethroughPrice'])
+                ? (int) round(((float) $offerData['strikethroughPrice']) * 100)
+                : null,
+            /*
+             * There is no `available` flag in the response.
+             *
+             * bol only returns an `offer` block for something it can sell, so a
+             * price IS the availability signal — the same inference v1 makes.
+             * Treating a missing flag as "out of stock" would mark every single
+             * result unbuyable and quietly remove bol from the site.
+             */
+            availability: $price !== null
                 ? Availability::InStock
                 : Availability::OutOfStock,
         );
     }
 
+    /**
+     * The product's own category, from bol's GPC taxonomy.
+     *
+     * The array runs coarse to fine — SEGMENT, FAMILY, CLASS, CHUNK. The last
+     * entry is the most specific, and specificity is what makes a category
+     * useful for grouping and for the serendipity engine's rarity signal.
+     *
+     * @param  array<string, mixed>  $product
+     */
+    private function category(array $product): ?string
+    {
+        $levels = $product['gpc'] ?? [];
+
+        if (! is_array($levels) || $levels === []) {
+            return null;
+        }
+
+        $last = end($levels);
+        $name = is_array($last) ? trim((string) ($last['name'] ?? '')) : '';
+
+        return $name !== '' ? $name : null;
+    }
+
     /** @param array<string, mixed> $product */
+    private function description(array $product): ?string
+    {
+        $raw = trim((string) ($product['description'] ?? $product['summary'] ?? ''));
+
+        if ($raw === '') {
+            return null;
+        }
+
+        // bol embeds markup. Strip it here, at the boundary, so nothing
+        // downstream has to decide whether this field is safe to render.
+        $text = trim(html_entity_decode(strip_tags(str_replace(['<br />', '<br>', '</li>'], ' ', $raw))));
+
+        return $text !== '' ? mb_substr($text, 0, 2000) : null;
+    }
+
+    /**
+     * A tracked link, via bol's own click redirector.
+     *
+     * bol attributes a sale through `partner.bol.com/click/click` carrying a
+     * site id — NOT through a parameter appended to the product URL. This
+     * matters more than it looks: an untracked link works perfectly. The
+     * visitor clicks, buys, and the commission goes to nobody, and nothing in
+     * the site reports a problem. It is the one bug here that is invisible from
+     * the outside and only shows up as an empty statement.
+     *
+     * @param  array<string, mixed>  $product
+     */
     private function affiliateUrl(array $product, Market $market): string
     {
         $url = (string) ($product['url'] ?? '');
@@ -253,42 +360,49 @@ class BolConnector implements LiveConnector
             return '';
         }
 
-        // The partner id turns a plain product URL into a tracked one. Without
-        // it the click is real but earns nothing.
-        $partnerId = config('brandcoves.connectors.bol.partner_id');
-        if (blank($partnerId)) {
+        // bol sometimes returns a path rather than an absolute URL.
+        if (! str_starts_with($url, 'http')) {
+            $url = 'https://www.bol.com'.$url;
+        }
+
+        $siteId = $market->bolPartnerSiteId();
+
+        // No site id for this market: send the plain product URL rather than a
+        // tracker with an empty id, which bol rejects.
+        if ($siteId === null) {
             return $url;
         }
 
-        $separator = str_contains($url, '?') ? '&' : '?';
-
-        return $url.$separator.http_build_query([
-            'bltgh' => $partnerId,
-            'Referrer' => 'brandcoves-'.$market->value,
+        return 'https://partner.bol.com/click/click?'.http_build_query([
+            'p' => '2',
+            't' => 'url',
+            's' => $siteId,
+            'f' => 'TXL',
+            'name' => 'brandcoves-'.$market->value,
+            'url' => $url,
         ]);
     }
 
-    /** @param array<string, mixed> $product */
+    /**
+     * The product image.
+     *
+     * bol returns a single `image` object on search results. The plural
+     * `images` array is checked as a fallback because the product endpoint
+     * shapes it that way.
+     *
+     * @param  array<string, mixed>  $product
+     */
     private function image(array $product): ?string
     {
+        $single = $product['image']['url'] ?? null;
+        if (is_string($single) && $single !== '') {
+            return $single;
+        }
+
         foreach ($product['images'] ?? [] as $image) {
             $url = $image['url'] ?? null;
             if (is_string($url) && $url !== '') {
                 return $url;
-            }
-        }
-
-        return null;
-    }
-
-    /** @param array<string, mixed> $product */
-    private function attribute(array $product, string $key): ?string
-    {
-        foreach ($product['attributes'] ?? [] as $attribute) {
-            if (($attribute['key'] ?? null) === $key) {
-                $value = trim((string) ($attribute['value'] ?? ''));
-
-                return $value !== '' ? $value : null;
             }
         }
 

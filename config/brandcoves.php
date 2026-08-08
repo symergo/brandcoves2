@@ -248,9 +248,24 @@ return [
             'enabled' => true,
             'client_id' => env('BOL_CLIENT_ID'),
             'client_secret' => env('BOL_CLIENT_SECRET'),
-            // Turns a plain product URL into a tracked one. Without it the
-            // click still works but earns nothing.
-            'partner_id' => env('BOL_PARTNER_ID'),
+
+            /*
+             * Partner site ids, per country.
+             *
+             * bol attributes a sale through the partner.bol.com click tracker,
+             * NOT through a parameter on the product URL — a tracked link is a
+             * redirect through their domain carrying a site id. Getting this
+             * wrong costs nothing visible: the click works, the visitor buys,
+             * and the commission goes to nobody.
+             *
+             * Two ids because the Belgian and Dutch partner programmes are
+             * separate accounts. Defaults are the ids v1 has been earning on.
+             * Not secrets — they appear in every outbound link.
+             */
+            'partner_site_id' => [
+                'BE' => env('BOL_PARTNER_SITE_ID_BE', '25421'),
+                'NL' => env('BOL_PARTNER_SITE_ID_NL', '1005548'),
+            ],
 
             // bol documents 10 requests/second. A token bucket can emit
             // capacity + rate inside a single second — the full bucket plus
