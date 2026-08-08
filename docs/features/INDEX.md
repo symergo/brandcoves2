@@ -18,6 +18,7 @@ cannot be recovered from a diff.
 | [daily-cove.md](daily-cove.md) | Discovery / Content | In progress |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
+| [cutover.md](cutover.md) | Operations | Ready — not yet executed |
 
 ## Closed in Phase 2
 
@@ -37,5 +38,5 @@ as its own Node container, so crawlers receive fully rendered HTML. See
 | 4 | Gift Whisperer + Serendipity Engine | ✅ Done |
 | 5 | The Daily Cove — Daily Picks and buying guides merged into one daily edition | Next |
 | 6 | *(folded into Phase 5)* | |
-| 7 | Admin, SEO, cutover from v1 | |
+| 7 | Admin, SEO, cutover from v1 | ✅ Built — cutover not yet executed |
 | 8 | Deferred: Amazon, catalogue breadth, embeddings | |
