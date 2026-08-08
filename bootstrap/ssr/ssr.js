@@ -35971,7 +35971,18 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
 	const [scannerOpen, setScannerOpen] = (0, import_react.useState)(false);
+	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
 	const base = `/${market.key}/search`;
+	const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
+		if ([
+			"q",
+			"view",
+			"sort",
+			"page"
+		].includes(key)) return false;
+		if (Array.isArray(value)) return value.length > 0;
+		return value !== null && value !== void 0 && value !== "" && value !== false;
+	}).length;
 	/**
 	* Every filter is a link, not a form post.
 	*
@@ -36055,203 +36066,221 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
-				"aria-label": t("search.filters"),
-				className: "space-y-6 text-sm",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
-						label: t("search.in_stock_only"),
-						checked: filters.in_stock !== "0",
-						onChange: (v) => go({ in_stock: v ? null : "0" })
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
-						label: t("search.discounted_only"),
-						checked: filters.discounted === "1",
-						onChange: (v) => go({ discounted: v ? "1" : null })
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
-						label: t("search.comparable_only"),
-						checked: filters.comparable === "1",
-						onChange: (v) => go({ comparable: v ? "1" : null })
-					}),
-					facets.brands.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Facet, {
-						title: t("search.brand"),
-						items: facets.brands.map((b) => ({
-							key: b.value,
-							label: b.value,
-							count: b.count,
-							active: [].concat(filters.brand ?? []).includes(b.value)
-						})),
-						onToggle: (key, active) => {
-							const current = [].concat(filters.brand ?? []);
-							go({ brand: active ? current.filter((b) => b !== key) : [...current, key] });
-						},
-						format: n
-					}),
-					facets.merchants.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Facet, {
-						title: t("search.shop"),
-						items: facets.merchants.map((m) => ({
-							key: String(m.id),
-							label: m.name,
-							count: m.count,
-							active: [].concat(filters.merchant ?? []).map(String).includes(String(m.id))
-						})),
-						onToggle: (key, active) => {
-							const current = [].concat(filters.merchant ?? []).map(String);
-							go({ merchant: active ? current.filter((m) => m !== key) : [...current, key] });
-						},
-						format: n
-					})
-				]
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [
-				intro && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "mb-5 max-w-3xl text-sm leading-relaxed text-ink-soft",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+					type: "button",
+					className: "flex items-center justify-between rounded border border-line px-4 py-3 text-sm lg:hidden",
+					"aria-expanded": filtersOpen,
+					"aria-controls": "search-filters",
+					onClick: () => setFiltersOpen(!filtersOpen),
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [t("search.filters"), activeFilterCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "ml-2 rounded-full bg-accent px-2 py-0.5 text-xs text-white",
+						children: n(activeFilterCount)
+					})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						"aria-hidden": true,
+						children: filtersOpen ? "▲" : "▼"
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
+					id: "search-filters",
+					"aria-label": t("search.filters"),
+					className: `space-y-6 text-sm lg:block ${filtersOpen ? "block" : "hidden"}`,
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-							className: "sr-only",
-							children: t("search.results_for", { term: q })
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
+							label: t("search.in_stock_only"),
+							checked: filters.in_stock !== "0",
+							onChange: (v) => go({ in_stock: v ? null : "0" })
 						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: intro.lead }),
-						intro.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-1",
-							children: intro.detail
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
+							label: t("search.discounted_only"),
+							checked: filters.discounted === "1",
+							onChange: (v) => go({ discounted: v ? "1" : null })
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
+							label: t("search.comparable_only"),
+							checked: filters.comparable === "1",
+							onChange: (v) => go({ comparable: v ? "1" : null })
+						}),
+						facets.brands.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Facet, {
+							title: t("search.brand"),
+							items: facets.brands.map((b) => ({
+								key: b.value,
+								label: b.value,
+								count: b.count,
+								active: [].concat(filters.brand ?? []).includes(b.value)
+							})),
+							onToggle: (key, active) => {
+								const current = [].concat(filters.brand ?? []);
+								go({ brand: active ? current.filter((b) => b !== key) : [...current, key] });
+							},
+							format: n
+						}),
+						facets.merchants.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Facet, {
+							title: t("search.shop"),
+							items: facets.merchants.map((m) => ({
+								key: String(m.id),
+								label: m.name,
+								count: m.count,
+								active: [].concat(filters.merchant ?? []).map(String).includes(String(m.id))
+							})),
+							onToggle: (key, active) => {
+								const current = [].concat(filters.merchant ?? []).map(String);
+								go({ merchant: active ? current.filter((m) => m !== key) : [...current, key] });
+							},
+							format: n
 						})
 					]
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "mb-4 flex flex-wrap items-center gap-3",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-						className: "text-sm text-ink-soft",
-						"aria-live": "polite",
-						children: [q ? t("search.results_for", { term: q }) : t("search.browse"), results.total > 0 && ` · ${t("search.count", { count: n(results.total) })}`]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "ml-auto flex items-center gap-2",
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [
+					intro && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "mb-5 max-w-3xl text-sm leading-relaxed text-ink-soft",
 						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 								className: "sr-only",
-								htmlFor: "sort",
-								children: t("search.sort")
+								children: t("search.results_for", { term: q })
 							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
-								id: "sort",
-								value: sort,
-								onChange: (e) => go({ sort: e.target.value }),
-								className: "rounded border border-line bg-card px-2 py-1.5 text-sm",
-								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-										value: "relevance",
-										children: t("search.sort_relevance")
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-										value: "price_asc",
-										children: t("search.sort_price_asc")
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-										value: "price_desc",
-										children: t("search.sort_price_desc")
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-										value: "discount",
-										children: t("search.sort_discount")
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-										value: "newest",
-										children: t("search.sort_newest")
-									})
-								]
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-								className: "flex rounded border border-line text-sm",
-								children: ["grid", "store"].map((v) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									onClick: () => go({ view: v === "grid" ? null : v }),
-									"aria-pressed": view === v,
-									className: `px-3 py-1.5 ${view === v ? "bg-ink text-cream" : ""}`,
-									children: t(`search.view_${v}`)
-								}, v))
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: intro.lead }),
+							intro.detail && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1",
+								children: intro.detail
 							})
 						]
-					})]
-				}),
-				results.total === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "rounded-card border border-line bg-card p-8 text-center",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "font-medium",
-						children: emptyBecauseOfFilters ? t("search.empty_filters") : t("search.empty", { term: q })
-					}), emptyBecauseOfFilters ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-						href: `${base}?q=${encodeURIComponent(q)}`,
-						className: "mt-3 inline-block text-accent underline",
-						children: t("search.clear_filters")
-					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-2 text-sm text-ink-soft",
-						children: t("search.empty_hint")
-					})]
-				}) : view === "store" && lanes ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2",
-					children: Object.entries(lanes).map(([shop, items]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-						className: "w-56 shrink-0 snap-start sm:w-64",
-						"aria-label": shop,
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h2", {
-							className: "mb-3 truncate border-b border-line pb-2 font-medium",
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "mb-4 flex flex-wrap items-center gap-3",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "text-sm text-ink-soft",
+							"aria-live": "polite",
+							children: [q ? t("search.results_for", { term: q }) : t("search.browse"), results.total > 0 && ` · ${t("search.count", { count: n(results.total) })}`]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "ml-auto flex items-center gap-2",
 							children: [
-								shop,
-								" ",
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "text-ink-soft",
-									children: n(items.length)
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+									className: "sr-only",
+									htmlFor: "sort",
+									children: t("search.sort")
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+									id: "sort",
+									value: sort,
+									onChange: (e) => go({ sort: e.target.value }),
+									className: "rounded border border-line bg-card px-2 py-1.5 text-sm",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "relevance",
+											children: t("search.sort_relevance")
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "price_asc",
+											children: t("search.sort_price_asc")
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "price_desc",
+											children: t("search.sort_price_desc")
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "discount",
+											children: t("search.sort_discount")
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+											value: "newest",
+											children: t("search.sort_newest")
+										})
+									]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "flex rounded border border-line text-sm",
+									children: ["grid", "store"].map((v) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										onClick: () => go({ view: v === "grid" ? null : v }),
+										"aria-pressed": view === v,
+										className: `px-3 py-1.5 ${view === v ? "bg-ink text-cream" : ""}`,
+										children: t(`search.view_${v}`)
+									}, v))
 								})
 							]
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-							className: "space-y-3",
-							children: items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
-								href: `/${market.key}/p/${g.id}/${g.slug}`,
-								className: "flex gap-3 rounded border border-line bg-card p-2 hover:bg-cream",
-								children: [g.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-									src: g.image,
-									alt: "",
-									className: "h-14 w-14 shrink-0 object-contain",
-									loading: "lazy"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-									className: "min-w-0 flex-1",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "line-clamp-2 text-sm",
-										children: g.title
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "mt-1 block text-sm font-semibold",
-										children: g.minPrice === null ? "—" : formatPrice(g.minPrice, market)
-									})]
-								})]
-							}) }, g.id))
 						})]
-					}, shop))
-				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4",
-					children: results.items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProductCard, { group: g }, g.id))
-				}),
-				results.lastPage > 1 && view === "grid" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
-					className: "mt-8 flex items-center justify-center gap-4 text-sm",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							disabled: results.currentPage <= 1,
-							onClick: () => go({ page: results.currentPage - 1 }),
-							className: "rounded border border-line px-3 py-1.5 disabled:opacity-40",
-							children: t("search.previous")
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "text-ink-soft",
-							children: t("search.page_of", {
-								current: n(results.currentPage),
-								last: n(results.lastPage)
+					}),
+					results.total === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "rounded-card border border-line bg-card p-8 text-center",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "font-medium",
+							children: emptyBecauseOfFilters ? t("search.empty_filters") : t("search.empty", { term: q })
+						}), emptyBecauseOfFilters ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							href: `${base}?q=${encodeURIComponent(q)}`,
+							className: "mt-3 inline-block text-accent underline",
+							children: t("search.clear_filters")
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 text-sm text-ink-soft",
+							children: t("search.empty_hint")
+						})]
+					}) : view === "store" && lanes ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2",
+						children: Object.entries(lanes).map(([shop, items]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+							className: "w-56 shrink-0 snap-start sm:w-64",
+							"aria-label": shop,
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h2", {
+								className: "mb-3 truncate border-b border-line pb-2 font-medium",
+								children: [
+									shop,
+									" ",
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-ink-soft",
+										children: n(items.length)
+									})
+								]
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+								className: "space-y-3",
+								children: items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+									href: `/${market.key}/p/${g.id}/${g.slug}`,
+									className: "flex gap-3 rounded border border-line bg-card p-2 hover:bg-cream",
+									children: [g.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+										src: g.image,
+										alt: "",
+										className: "h-14 w-14 shrink-0 object-contain",
+										loading: "lazy"
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+										className: "min-w-0 flex-1",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "line-clamp-2 text-sm",
+											children: g.title
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "mt-1 block text-sm font-semibold",
+											children: g.minPrice === null ? "—" : formatPrice(g.minPrice, market)
+										})]
+									})]
+								}) }, g.id))
+							})]
+						}, shop))
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4",
+						children: results.items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProductCard, { group: g }, g.id))
+					}),
+					results.lastPage > 1 && view === "grid" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
+						className: "mt-8 flex items-center justify-center gap-4 text-sm",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								disabled: results.currentPage <= 1,
+								onClick: () => go({ page: results.currentPage - 1 }),
+								className: "rounded border border-line px-3 py-1.5 disabled:opacity-40",
+								children: t("search.previous")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-ink-soft",
+								children: t("search.page_of", {
+									current: n(results.currentPage),
+									last: n(results.lastPage)
+								})
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								disabled: results.currentPage >= results.lastPage,
+								onClick: () => go({ page: results.currentPage + 1 }),
+								className: "rounded border border-line px-3 py-1.5 disabled:opacity-40",
+								children: t("search.next")
 							})
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							disabled: results.currentPage >= results.lastPage,
-							onClick: () => go({ page: results.currentPage + 1 }),
-							className: "rounded border border-line px-3 py-1.5 disabled:opacity-40",
-							children: t("search.next")
-						})
-					]
-				})
-			] })]
+						]
+					})
+				] })
+			]
 		})
 	] });
 }
@@ -56197,6 +56226,7 @@ function SiteLayout({ children }) {
 	const { market, markets, auth, unreadCount } = usePage().props;
 	const { t } = useTranslations();
 	const base = `/${market.key}`;
+	const [menuOpen, setMenuOpen] = (0, import_react.useState)(false);
 	const nav = [
 		{
 			href: `${base}/search`,
@@ -56231,9 +56261,9 @@ function SiteLayout({ children }) {
 				className: "sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-2 focus:text-white",
 				children: t("nav.skip")
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("header", {
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 				className: "border-b border-line",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "mx-auto flex max-w-6xl items-center gap-6 px-4 py-4",
 					children: [
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
@@ -56250,8 +56280,22 @@ function SiteLayout({ children }) {
 								children: item.label
 							}, item.href))
 						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+							type: "button",
+							className: "ml-auto rounded border border-line px-3 py-2 text-sm sm:hidden",
+							"aria-expanded": menuOpen,
+							"aria-controls": "mobile-menu",
+							onClick: () => setMenuOpen(!menuOpen),
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								"aria-hidden": true,
+								children: menuOpen ? "✕" : "☰"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "sr-only",
+								children: t("nav.main")
+							})]
+						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "ml-auto flex items-center gap-3",
+							className: "ml-auto hidden items-center gap-3 sm:flex",
 							children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
 									className: "sr-only",
@@ -56293,7 +56337,57 @@ function SiteLayout({ children }) {
 							]
 						})
 					]
-				})
+				}), menuOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					id: "mobile-menu",
+					className: "border-t border-line px-4 py-4 sm:hidden",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
+							className: "flex flex-col gap-3 text-sm",
+							"aria-label": t("nav.main"),
+							children: [nav.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: item.href,
+								className: "hover:text-ink",
+								onClick: () => setMenuOpen(false),
+								children: item.label
+							}, item.href)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "border-t border-line pt-3",
+								children: auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+									className: "flex flex-col gap-3",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+										href: `${base}/notifications`,
+										onClick: () => setMenuOpen(false),
+										children: [t("nav.notifications"), unreadCount > 0 && ` (${unreadCount})`]
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+										href: `${base}/lists`,
+										onClick: () => setMenuOpen(false),
+										children: t("nav.lists")
+									})]
+								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+									href: "/login",
+									onClick: () => setMenuOpen(false),
+									children: t("nav.sign_in")
+								})
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+							className: "mt-4 block text-xs text-ink-soft",
+							htmlFor: "market-switcher-mobile",
+							children: t("nav.choose_market")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
+							id: "market-switcher-mobile",
+							className: "mt-1 w-full rounded border border-line bg-card px-2 py-2 text-sm",
+							value: market.key,
+							onChange: (e) => {
+								window.location.href = `/${e.target.value}`;
+							},
+							children: markets.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: m.key,
+								children: m.label
+							}, m.key))
+						})
+					]
+				})]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("main", {
 				id: "main",

@@ -45,7 +45,23 @@ export default function Search({
     const { t, n } = useTranslations()
     const [term, setTerm] = useState(q)
     const [scannerOpen, setScannerOpen] = useState(false)
+    const [filtersOpen, setFiltersOpen] = useState(false)
     const base = `/${market.key}/search`
+
+    /*
+     * How many filters are narrowing the results.
+     *
+     * Shown on the collapsed toggle, because a hidden panel must not be able to
+     * conceal the reason a search looks empty. `q`, `view`, `sort` and `page`
+     * are excluded — they are not filters, and counting them would put a badge
+     * on every search anyone ever runs.
+     */
+    const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
+        if (['q', 'view', 'sort', 'page'].includes(key)) return false
+        if (Array.isArray(value)) return value.length > 0
+
+        return value !== null && value !== undefined && value !== '' && value !== false
+    }).length
 
     /**
      * Every filter is a link, not a form post.
@@ -143,7 +159,39 @@ export default function Search({
             )}
 
             <div className="mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]">
-                <aside aria-label={t('search.filters')} className="space-y-6 text-sm">
+                {/*
+                  Collapsed on mobile, always open from `lg`.
+
+                  Stacked above the results, the filter rail pushed every product
+                  off a phone screen — the page opened on a column of switches
+                  and you had to scroll past all of them to see whether the
+                  search had found anything. `activeFilterCount` goes on the
+                  button so a collapsed panel cannot hide the fact that
+                  something is filtering the results.
+                */}
+                <button
+                    type="button"
+                    className="flex items-center justify-between rounded border border-line px-4 py-3 text-sm lg:hidden"
+                    aria-expanded={filtersOpen}
+                    aria-controls="search-filters"
+                    onClick={() => setFiltersOpen(!filtersOpen)}
+                >
+                    <span>
+                        {t('search.filters')}
+                        {activeFilterCount > 0 && (
+                            <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs text-white">
+                                {n(activeFilterCount)}
+                            </span>
+                        )}
+                    </span>
+                    <span aria-hidden>{filtersOpen ? '▲' : '▼'}</span>
+                </button>
+
+                <aside
+                    id="search-filters"
+                    aria-label={t('search.filters')}
+                    className={`space-y-6 text-sm lg:block ${filtersOpen ? 'block' : 'hidden'}`}
+                >
                     <Toggle
                         label={t('search.in_stock_only')}
                         checked={filters.in_stock !== '0'}
