@@ -59,29 +59,61 @@ class BolConnector implements LiveConnector
 
         $cacheKey = sprintf('bc:bol:search:%s:%s:%d', $market->value, sha1(mb_strtolower($query)), $limit);
 
+        /*
+         * The cache holds bol's RAW PAYLOAD, never our Offer objects.
+         *
+         * Caching the objects put a serialised `App\Services\Connectors\Offer`
+         * into Redis, and reading it back produced
+         * "tried to call a method on an incomplete object" — a 500 on every
+         * search that hit a warm cache. Storing domain objects in a shared
+         * cache makes every cached entry depend on the class being loadable at
+         * unserialize time and on its shape never changing, and a redeploy
+         * breaks both at once.
+         *
+         * Arrays have neither problem. Re-normalising on a cache hit costs
+         * microseconds and cannot go stale against a class definition.
+         */
         $cached = Cache::get($cacheKey);
 
         if (is_array($cached)) {
-            return $cached;
+            return $this->offersFrom($cached, $market);
         }
 
-        $offers = $this->fetchSearch($query, $market, $limit);
+        $products = $this->fetchSearch($query, $market, $limit);
 
         /*
          * An empty result is NOT cached.
          *
-         * `Cache::remember` would store it, and an empty array is what every
-         * degraded path returns — an expired token, a rate limit, a timeout. So
-         * one transient failure used to blank bol for this query for the full
-         * fifteen minutes, long after the cause had cleared. Found while
-         * debugging exactly that: a failed run poisoned the cache and the next
-         * (working) run still returned nothing.
+         * An empty array is what every degraded path returns — an expired
+         * token, a rate limit, a timeout — so caching it blanked bol for this
+         * query for the full fifteen minutes, long after the cause had cleared.
+         * Found while debugging exactly that: a failed run poisoned the cache
+         * and the next working run still returned nothing.
          *
          * A real zero-result query is cheap to repeat and rare; a cached
          * failure is expensive and invisible.
          */
-        if ($offers !== []) {
-            Cache::put($cacheKey, $offers, (int) config('brandcoves.search.live_cache_ttl'));
+        if ($products !== []) {
+            Cache::put($cacheKey, $products, (int) config('brandcoves.search.live_cache_ttl'));
+        }
+
+        return $this->offersFrom($products, $market);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $products
+     * @return list<Offer>
+     */
+    private function offersFrom(array $products, Market $market): array
+    {
+        $offers = [];
+
+        foreach ($products as $product) {
+            $offer = is_array($product) ? $this->normalise($product, $market) : null;
+
+            if ($offer?->isValid()) {
+                $offers[] = $offer;
+            }
         }
 
         return $offers;
@@ -109,7 +141,11 @@ class BolConnector implements LiveConnector
         return is_array($product) ? $this->normalise($product, $market) : null;
     }
 
-    /** @return list<Offer> */
+    /**
+     * bol's raw product rows, straight from the API.
+     *
+     * @return list<array<string, mixed>>
+     */
     private function fetchSearch(string $query, Market $market, int $limit): array
     {
         if (! $this->limiter('search')->attempt()) {
@@ -142,19 +178,10 @@ class BolConnector implements LiveConnector
         // array is indistinguishable from "bol found nothing", which is how a
         // broken connector survives a green test suite.
         $products = $response->json('results') ?? [];
-        if (! is_array($products)) {
-            return [];
-        }
 
-        $offers = [];
-        foreach ($products as $product) {
-            $offer = is_array($product) ? $this->normalise($product, $market) : null;
-            if ($offer?->isValid()) {
-                $offers[] = $offer;
-            }
-        }
-
-        return $offers;
+        // Raw payload, not Offers: the caller caches this, and only plain
+        // arrays are safe to put in a shared cache.
+        return is_array($products) ? array_values(array_filter($products, 'is_array')) : [];
     }
 
     /** @param array<string, mixed> $params */

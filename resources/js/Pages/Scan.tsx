@@ -84,7 +84,11 @@ export default function Scan() {
 
     const [scanning, setScanning] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+    // Which error, not its wording. `t` is a new closure on every render, so
+    // holding translated text here would drag `t` into the deps of the camera
+    // effect below and restart the decoder on every keystroke in the manual
+    // field. Translated at render instead.
+    const [errorKey, setErrorKey] = useState<string | null>(null)
     const [hit, setHit] = useState<Hit | null>(null)
     const [manual, setManual] = useState('')
 
@@ -112,7 +116,7 @@ export default function Scan() {
     }, [])
 
     const start = useCallback(async () => {
-        setError(null)
+        setErrorKey(null)
         setHit(null)
         lastCodeRef.current = null
         setLoading(true)
@@ -122,7 +126,7 @@ export default function Scan() {
             // and there is no reason to pay for it again on a second scan.
             detectorRef.current ??= await makeDetector()
         } catch {
-            setError(t('scan.unsupported'))
+            setErrorKey('scan.unsupported')
             setLoading(false)
 
             return
@@ -138,44 +142,73 @@ export default function Scan() {
 
             streamRef.current = stream
 
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream
-                await videoRef.current.play()
-            }
-
+            // The stream is attached to the <video> by the effect below, not
+            // here. The element is only rendered while `scanning` is true, so
+            // at this point `videoRef.current` is still null — see the comment
+            // on that effect.
             setScanning(true)
         } catch {
             // Denied, or no camera. Either way the manual field below still
             // works, so this is a message rather than a dead end.
-            setError(t('scan.no_camera'))
+            setErrorKey('scan.no_camera')
         } finally {
             setLoading(false)
         }
-    }, [t])
+    }, [])
 
     // Release the camera on unmount. A page that keeps the light on after the
     // visitor has navigated away is the fastest way to lose their trust.
     useEffect(() => stop, [stop])
 
+    /*
+     * Show the camera, then read from it.
+     *
+     * The stream is attached here rather than in `start()` because the <video>
+     * is rendered only while `scanning` is true: when `start()` has the stream
+     * in hand the element is not mounted yet and the ref is still null, so the
+     * assignment there landed on nothing. The camera came on, the preview
+     * stayed black, and every frame threw `InvalidStateError` into the silent
+     * catch below — the scanner looked like it was running and could never
+     * decode anything, in every browser. An effect runs after the commit that
+     * mounts the element, which is the only point at which the ref exists.
+     */
     useEffect(() => {
+        const video = videoRef.current
+        const stream = streamRef.current
         const detector = detectorRef.current
 
-        if (!scanning || detector === null) return
+        if (!scanning || video === null || stream === null || detector === null) return
 
         let cancelled = false
 
+        video.srcObject = stream
+
+        // Muted and playsInline, so autoplay policies allow this. A rejection
+        // means no preview and therefore no frames to read, so say so rather
+        // than spinning on a video that will never produce one.
+        video.play().catch(() => {
+            if (!cancelled) setErrorKey('scan.unsupported')
+        })
+
         const tick = async () => {
-            if (cancelled || !videoRef.current) return
+            if (cancelled) return
 
-            try {
-                const codes = await detector.detect(videoRef.current)
+            // Only ask about a frame that exists. The decoder throws
+            // `InvalidStateError` for a video below HAVE_CURRENT_DATA, which
+            // the catch below cannot tell apart from an unreadable barcode —
+            // that is what hid the bug above. Frames start arriving a moment
+            // after play(), so the early ticks legitimately land here.
+            if (video.readyState >= video.HAVE_CURRENT_DATA) {
+                try {
+                    const codes = await detector.detect(video)
 
-                if (codes.length > 0) {
-                    await lookup(codes[0].rawValue)
+                    if (codes.length > 0) {
+                        await lookup(codes[0].rawValue)
+                    }
+                } catch {
+                    // A frame that cannot be decoded is the normal case, not an
+                    // error. Swallow and try the next one.
                 }
-            } catch {
-                // A frame that cannot be decoded is the normal case, not an
-                // error. Swallow and try the next one.
             }
 
             if (!cancelled) setTimeout(tick, 300)
@@ -185,6 +218,7 @@ export default function Scan() {
 
         return () => {
             cancelled = true
+            video.srcObject = null
         }
     }, [scanning, lookup])
 
@@ -225,7 +259,7 @@ export default function Scan() {
                     </div>
                 )}
 
-                {error && <p className="mt-3 text-sm text-ink-soft">{error}</p>}
+                {errorKey && <p className="mt-3 text-sm text-ink-soft">{t(errorKey)}</p>}
 
                 {/*
                   Always available, not a fallback shown only on failure.

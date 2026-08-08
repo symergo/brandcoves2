@@ -155,6 +155,44 @@ class BolConnectorTest extends TestCase
     }
 
     #[Test]
+    public function a_cache_hit_survives_a_round_trip_through_a_real_cache_store(): void
+    {
+        /*
+         * The cache must hold plain arrays, never Offer objects.
+         *
+         * Caching the objects put a serialised App\Services\Connectors\Offer
+         * into Redis, and reading it back gave "tried to call a method on an
+         * incomplete object" — a 500 on every search that hit a warm cache,
+         * which is to say almost all of them. The array cache store used in
+         * tests hands the same instance back without serialising, so the suite
+         * was blind to it; this test forces a real serialize/unserialize.
+         */
+        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse())]);
+
+        $this->connector->search('koptelefoon', Market::BeNl);
+
+        $key = sprintf('bc:bol:search:%s:%s:%d', Market::BeNl->value, sha1('koptelefoon'), 24);
+        $cached = Cache::get($key);
+
+        $this->assertIsArray($cached);
+        $this->assertNotEmpty($cached);
+
+        foreach ($cached as $entry) {
+            $this->assertIsArray($entry, 'A domain object reached the cache.');
+        }
+
+        // Round-trip it the way a shared cache store does.
+        $revived = unserialize(serialize($cached));
+        Cache::put($key, $revived, 60);
+
+        $offers = $this->connector->search('koptelefoon', Market::BeNl);
+
+        $this->assertCount(1, $offers);
+        $this->assertSame(32999, $offers[0]->price);
+        $this->assertStringStartsWith('https://partner.bol.com/', $offers[0]->affiliateUrl);
+    }
+
+    #[Test]
     public function an_empty_result_is_not_cached(): void
     {
         // A sequence, not two fake() calls: Http::fake() MERGES stubs rather
