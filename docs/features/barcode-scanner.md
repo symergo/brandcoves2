@@ -66,10 +66,14 @@ EAN-addressable and much broader than any single Awin advertiser.
 
 ### Browser support is uneven
 
-`BarcodeDetector` is native on Chrome/Android and recent Safari, absent
-elsewhere. The fallback is a WASM decoder (ZXing), which costs ~200 KB and must
-be **lazy-loaded only when the scanner opens** — never on the homepage, where it
-would be pure weight for the majority who never scan.
+`BarcodeDetector` is native on Chrome for Android, ChromeOS and macOS. It is
+**not** in Chrome on Windows or Linux desktop, and **Safari and Firefox do not
+ship it at all** — including Chrome on iOS, which is WebKit underneath and so
+behaves like Safari here. The fallback is a WASM decoder (ZXing), lazy-loaded
+**only when the scanner opens** — never on the homepage, where it would be pure
+weight for the majority who never scan. The wasm is served from our own origin,
+not zxing's default CDN: a core feature should not depend on a third party at
+runtime, and a blocked or mismatched CDN build fails silently.
 
 Requires HTTPS for camera access. Staging and production both have it; note it
 for local dev, where `localhost` is treated as a secure context.
@@ -81,6 +85,39 @@ mitigations: torch toggle where `MediaStreamTrack` exposes it, a wide scan
 region rather than a narrow line, continuous scanning with a stability check
 (same code decoded twice before accepting), and a **manual entry fallback** —
 typing 13 digits is tedious but it always works.
+
+## The stream is attached after the preview mounts, never before
+
+Fixed 2026-08-08. The `<video>` is rendered only while `scanning` is true, so at
+the moment `start()` had the `MediaStream` in hand the element was not mounted
+and `videoRef.current` was still `null`. The guarded assignment
+(`if (videoRef.current)`) therefore did nothing at all: the camera came on, the
+preview stayed black, and the decoder was handed a video with no source. That is
+**every browser**, not a device quirk — it was reported on iPhone only because
+that is where it was tested.
+
+Two things conspired to hide it:
+
+- The decoder throws `InvalidStateError` for a video below `HAVE_CURRENT_DATA`,
+  and the frame loop swallows exceptions because *an undecodable frame is the
+  normal case*. A permanently broken pipeline and an unreadable barcode produced
+  identical behaviour: a running scanner that never finds anything.
+- Nothing in the UI distinguishes "waiting for a barcode" from "will never see
+  one".
+
+So the fix is in three parts, and the last two matter as much as the first:
+
+1. Attach the stream in an effect keyed on `scanning`. An effect runs after the
+   commit that mounts the element, which is the only point where the ref exists.
+2. Tick only when `readyState >= HAVE_CURRENT_DATA`, so the silent catch is
+   reached only by genuine decode failures and cannot mask a dead preview again.
+3. Surface a rejected `play()` instead of spinning on a video that will never
+   produce a frame.
+
+The error state holds a **translation key**, not translated text. `t` is a new
+closure on every render, so storing a translated string would pull `t` into the
+camera effect's dependencies and tear down and restart the decoder on every
+keystroke in the manual-entry field.
 
 ## Privacy
 
@@ -125,9 +162,10 @@ worth landing on. Building it before that means scanning into an empty result.
 - **Scanning a shelf label or a price tag.** OCR is a much harder problem with a
   much worse failure mode; barcodes are a solved, checksummed format.
 
-## Files (when built)
+## Files
 
-- `resources/js/Pages/Scan.tsx` — camera UI, lazy-loaded decoder
-- `resources/js/scanner/` — `BarcodeDetector` with ZXing fallback
+- `resources/js/Pages/Scan.tsx` — camera UI, and `makeDetector()`: native
+  `BarcodeDetector` where it exists, lazy-loaded ZXing wasm everywhere else.
+  Small enough to stay in the page; there is no separate `scanner/` module.
 - `app/Http/Controllers/ScanController.php` — validate, look up, fall back to bol
 - Reuses `App\Services\Identity\Gtin` and `BolConnector::fetchById()` unchanged

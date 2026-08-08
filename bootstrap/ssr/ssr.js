@@ -35686,7 +35686,7 @@ function Scan() {
 	const detectorRef = (0, import_react.useRef)(null);
 	const [scanning, setScanning] = (0, import_react.useState)(false);
 	const [loading, setLoading] = (0, import_react.useState)(false);
-	const [error, setError] = (0, import_react.useState)(null);
+	const [errorKey, setErrorKey] = (0, import_react.useState)(null);
 	const [hit, setHit] = (0, import_react.useState)(null);
 	const [manual, setManual] = (0, import_react.useState)("");
 	const lookup = (0, import_react.useCallback)(async (code) => {
@@ -35701,14 +35701,14 @@ function Scan() {
 		setScanning(false);
 	}, []);
 	const start = (0, import_react.useCallback)(async () => {
-		setError(null);
+		setErrorKey(null);
 		setHit(null);
 		lastCodeRef.current = null;
 		setLoading(true);
 		try {
 			detectorRef.current ??= await makeDetector();
 		} catch {
-			setError(t("scan.unsupported"));
+			setErrorKey("scan.unsupported");
 			setLoading(false);
 			return;
 		}
@@ -35718,26 +35718,28 @@ function Scan() {
 				width: { ideal: 1280 }
 			} });
 			streamRef.current = stream;
-			if (videoRef.current) {
-				videoRef.current.srcObject = stream;
-				await videoRef.current.play();
-			}
 			setScanning(true);
 		} catch {
-			setError(t("scan.no_camera"));
+			setErrorKey("scan.no_camera");
 		} finally {
 			setLoading(false);
 		}
-	}, [t]);
+	}, []);
 	(0, import_react.useEffect)(() => stop, [stop]);
 	(0, import_react.useEffect)(() => {
+		const video = videoRef.current;
+		const stream = streamRef.current;
 		const detector = detectorRef.current;
-		if (!scanning || detector === null) return;
+		if (!scanning || video === null || stream === null || detector === null) return;
 		let cancelled = false;
+		video.srcObject = stream;
+		video.play().catch(() => {
+			if (!cancelled) setErrorKey("scan.unsupported");
+		});
 		const tick = async () => {
-			if (cancelled || !videoRef.current) return;
-			try {
-				const codes = await detector.detect(videoRef.current);
+			if (cancelled) return;
+			if (video.readyState >= video.HAVE_CURRENT_DATA) try {
+				const codes = await detector.detect(video);
 				if (codes.length > 0) await lookup(codes[0].rawValue);
 			} catch {}
 			if (!cancelled) setTimeout(tick, 300);
@@ -35745,6 +35747,7 @@ function Scan() {
 		tick();
 		return () => {
 			cancelled = true;
+			video.srcObject = null;
 		};
 	}, [scanning, lookup]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
@@ -35782,9 +35785,9 @@ function Scan() {
 						children: t("scan.stop")
 					})]
 				}),
-				error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				errorKey && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 					className: "mt-3 text-sm text-ink-soft",
-					children: error
+					children: t(errorKey)
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
 					className: "mt-6 flex gap-2",
