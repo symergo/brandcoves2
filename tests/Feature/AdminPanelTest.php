@@ -96,6 +96,33 @@ class AdminPanelTest extends TestCase
     }
 
     #[Test]
+    public function the_content_and_operations_pages_render(): void
+    {
+        /*
+         * A smoke test, and a load-bearing one.
+         *
+         * Filament resources are configured entirely in static methods that no
+         * other test touches, so a wrong column name or a renamed enum case is
+         * invisible until someone opens the page — usually while trying to fix
+         * something else. Rendering each one is the cheapest way to keep that
+         * from being a surprise.
+         */
+        $admin = $this->user(admin: true);
+
+        foreach ([
+            '/admin/guides',
+            '/admin/daily-editions',
+            '/admin/mode-profiles',
+            '/admin/ai-usage',
+        ] as $path) {
+            // Named, so a failure says which page rather than which loop
+            // iteration — the whole value of a smoke test is being able to act
+            // on it without re-running it.
+            $this->actingAs($admin)->get($path)->assertOk("{$path} did not render");
+        }
+    }
+
+    #[Test]
     public function offers_and_ingestion_state_cannot_be_edited_by_hand(): void
     {
         // Offers are owned by the feeds and would be overwritten on the next

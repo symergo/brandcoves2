@@ -7,11 +7,13 @@ use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SetMarket;
 use App\Http\Middleware\TrackAnonymousIdentity;
+use App\Services\Seo\LegacyRedirects;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -74,4 +76,32 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        /*
+         * Catch v1's URLs on their way to a 404.
+         *
+         * As a 404 handler rather than a route table: v1 is a WordPress site
+         * with thousands of indexed paths, and registering them all as routes
+         * would put a legacy lookup in front of every real request forever.
+         * Here the cost is paid only by requests that were going to fail
+         * anyway.
+         *
+         * The mapper returns null for anything it does not recognise, so a
+         * genuine v2 typo still 404s visibly instead of being swallowed into a
+         * silent redirect. See docs/features/cutover.md.
+         */
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return null;
+            }
+
+            $destination = app(LegacyRedirects::class)->urlFor(
+                $request->path(),
+                Market::fromAcceptLanguage($request->header('Accept-Language')),
+            );
+
+            // 301, not 302: the move is permanent, and a 302 tells a crawler to
+            // keep the old URL indexed.
+            return $destination === null ? null : redirect()->away($destination, 301);
+        });
     })->create();

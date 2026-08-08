@@ -35,13 +35,20 @@
 
     {{-- Tell search engines the same page exists in the other markets. Without
          these, five market versions of one page compete with each other and the
-         wrong language can rank in the wrong country. --}}
-    @foreach (Market::cases() as $alternate)
-        <link rel="alternate" hreflang="{{ $alternate->hrefLang() }}"
-              href="{{ url(CurrentMarket::swapMarketInPath(request()->path(), $alternate)) }}">
+         wrong language can rank in the wrong country.
+
+         Resolved rather than guessed: product identity is market-scoped, so
+         swapping the URL segment on a product page produces four links to
+         404s — and Google discards a whole hreflang cluster when one member is
+         missing, taking the genuine translations down with it. See
+         App\Services\Seo\Alternates. --}}
+    @php($alternates = app(App\Services\Seo\Alternates::class)->for(request()->path(), $market))
+    @foreach ($alternates as $hrefLang => $href)
+        <link rel="alternate" hreflang="{{ $hrefLang }}" href="{{ $href }}">
     @endforeach
-    <link rel="alternate" hreflang="x-default"
-          href="{{ url(CurrentMarket::swapMarketInPath(request()->path(), Market::En)) }}">
+    @if ($default = app(App\Services\Seo\Alternates::class)->defaultFor($alternates))
+        <link rel="alternate" hreflang="x-default" href="{{ $default }}">
+    @endif
 
     {{-- Social cards. Scrapers do not execute JavaScript, so these have to be
          server-rendered — a React-set meta tag is invisible to every one of them. --}}

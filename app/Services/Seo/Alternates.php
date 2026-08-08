@@ -1,0 +1,203 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Seo;
+
+use App\Enums\Market;
+use App\Enums\PublishStatus;
+use App\Models\ProductGroup;
+use App\Support\CurrentMarket;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * hreflang alternates that actually resolve.
+ *
+ * ## The bug this exists to fix
+ *
+ * Swapping the market segment — `/be-nl/p/204/x` → `/be-fr/p/204/x` — is right
+ * for a page whose content is market-independent, and wrong for every page
+ * keyed on a database row. Product identity is **market-scoped by design**:
+ * group 204 exists in `be-nl` and nowhere else, so four of the five alternates
+ * emitted that way are links to 404s.
+ *
+ * Google treats hreflang as a mutual declaration. An alternate pointing at a
+ * missing page is not merely ignored — the whole cluster is discarded, so the
+ * pages that *do* have real translations lose the annotation too. On a
+ * five-market site that is one of the more expensive mistakes available.
+ *
+ * So: market-independent paths swap the segment; keyed paths look the sibling
+ * up and emit nothing when there is not one. A missing alternate costs nothing.
+ */
+class Alternates
+{
+    /**
+     * @return array<string, string> hreflang => absolute URL
+     */
+    public function for(string $path, Market $current): array
+    {
+        $path = '/'.trim($path, '/');
+        $segments = explode('/', trim($path, '/'));
+
+        // segments[0] is the market prefix on every public route.
+        $kind = $segments[1] ?? null;
+
+        return match ($kind) {
+            'p' => $this->product($segments, $current),
+            'guides' => $this->guide($segments, $current),
+            'daily' => $this->daily($segments, $current),
+            // Home, search, discover, gift, surprise, lists: the same page in
+            // another market, and the segment swap is exactly right.
+            default => $this->swap($path),
+        };
+    }
+
+    /**
+     * The same physical product in other markets.
+     *
+     * Joined on `identity_key`, which is what "the same product" means here —
+     * the GTIN, or the brand+title fallback. The id differs per market and is
+     * meaningless across one.
+     *
+     * @param  list<string>  $segments
+     * @return array<string, string>
+     */
+    private function product(array $segments, Market $current): array
+    {
+        $id = (int) ($segments[2] ?? 0);
+
+        if ($id <= 0) {
+            return $this->self($current, implode('/', $segments));
+        }
+
+        $group = ProductGroup::query()->find($id, ['id', 'identity_key', 'slug']);
+
+        if ($group === null) {
+            return [];
+        }
+
+        $alternates = [];
+
+        $siblings = ProductGroup::query()
+            ->where('identity_key', $group->identity_key)
+            ->presentable()
+            ->get(['id', 'market', 'slug']);
+
+        foreach ($siblings as $sibling) {
+            $alternates[$sibling->market->hrefLang()] =
+                url("/{$sibling->market->value}/p/{$sibling->id}/{$sibling->slug}");
+        }
+
+        // A product with no sibling anywhere is a single-market page. Emitting
+        // a self-referential annotation alone is pointless noise, so it gets
+        // nothing at all.
+        return count($alternates) > 1 ? $alternates : [];
+    }
+
+    /**
+     * A guide with the same slug in another market.
+     *
+     * Slugs are written in the market's language, so this is usually empty —
+     * "beste-koptelefoons" has no French twin unless one was generated. That is
+     * the honest answer: two guides on the same topic in two languages are
+     * translations of each other, and until the builder records that link we
+     * cannot claim it.
+     *
+     * @param  list<string>  $segments
+     * @return array<string, string>
+     */
+    private function guide(array $segments, Market $current): array
+    {
+        $slug = $segments[2] ?? null;
+
+        if ($slug === null) {
+            // The index page itself exists in every market.
+            return $this->swap('/'.implode('/', $segments));
+        }
+
+        $rows = DB::table('guides')
+            ->where('slug', $slug)
+            ->where('status', PublishStatus::Published->value)
+            ->get(['market', 'slug']);
+
+        $alternates = [];
+
+        foreach ($rows as $row) {
+            $market = Market::tryFrom((string) $row->market);
+
+            if ($market !== null) {
+                $alternates[$market->hrefLang()] = url("/{$market->value}/guides/{$row->slug}");
+            }
+        }
+
+        return count($alternates) > 1 ? $alternates : [];
+    }
+
+    /**
+     * The same day's edition in another market.
+     *
+     * Editions are built per market per date, so the date *is* the shared key —
+     * unlike a product id or a guide slug. Only markets that actually published
+     * that day are listed; a build can be skipped on a thin catalogue day.
+     *
+     * @param  list<string>  $segments
+     * @return array<string, string>
+     */
+    private function daily(array $segments, Market $current): array
+    {
+        $date = $segments[2] ?? null;
+
+        if ($date === null) {
+            return $this->swap('/'.implode('/', $segments));
+        }
+
+        $rows = DB::table('daily_pick_sets')
+            ->where('drop_date', $date)
+            ->where('status', PublishStatus::Published->value)
+            ->pluck('market');
+
+        $alternates = [];
+
+        foreach ($rows as $value) {
+            $market = Market::tryFrom((string) $value);
+
+            if ($market !== null) {
+                $alternates[$market->hrefLang()] = url("/{$market->value}/daily/{$date}");
+            }
+        }
+
+        return count($alternates) > 1 ? $alternates : [];
+    }
+
+    /** @return array<string, string> */
+    private function swap(string $path): array
+    {
+        $alternates = [];
+
+        foreach (Market::cases() as $market) {
+            $alternates[$market->hrefLang()] = url(CurrentMarket::swapMarketInPath($path, $market));
+        }
+
+        return $alternates;
+    }
+
+    /** @return array<string, string> */
+    private function self(Market $current, string $path): array
+    {
+        return [$current->hrefLang() => url('/'.trim($path, '/'))];
+    }
+
+    /**
+     * The x-default target.
+     *
+     * English when it is among the alternates. A crawler that cannot match any
+     * of the declared locales needs somewhere to land, and the alternative —
+     * omitting x-default — leaves that choice to a heuristic.
+     *
+     * @param  array<string, string>  $alternates
+     */
+    public function defaultFor(array $alternates): ?string
+    {
+        return $alternates[Market::En->hrefLang()] ?? (reset($alternates) ?: null);
+    }
+}

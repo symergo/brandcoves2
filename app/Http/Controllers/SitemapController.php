@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\Market;
+use App\Enums\PublishStatus;
 use App\Models\ProductGroup;
-use App\Support\CurrentMarket;
+use App\Services\Discover\ModeRegistry;
+use App\Services\Seo\Alternates;
+use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Sitemaps.
@@ -62,7 +66,54 @@ class SitemapController extends Controller
             $urls = [
                 ['loc' => url("/{$resolved->value}"), 'priority' => '1.0', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/search"), 'priority' => '0.5', 'changefreq' => 'weekly'],
+                ['loc' => url("/{$resolved->value}/daily"), 'priority' => '0.9', 'changefreq' => 'daily'],
+                ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
+                ['loc' => url("/{$resolved->value}/gift"), 'priority' => '0.8', 'changefreq' => 'weekly'],
+                ['loc' => url("/{$resolved->value}/surprise"), 'priority' => '0.6', 'changefreq' => 'daily'],
             ];
+
+            // One landing per discovery mode. Each is a distinct answer to a
+            // distinct question, which is exactly what makes them worth
+            // indexing separately rather than as query strings on one page.
+            foreach (array_keys(app(ModeRegistry::class)->all()) as $mode) {
+                $urls[] = [
+                    'loc' => url("/{$resolved->value}/discover/{$mode}"),
+                    'priority' => '0.6',
+                    'changefreq' => 'weekly',
+                ];
+            }
+
+            // Published guides and every past edition. The archive is the point:
+            // a daily page whose history 404s has nothing accumulating.
+            DB::table('guides')
+                ->where('market', $resolved->value)
+                ->where('status', PublishStatus::Published->value)
+                ->orderBy('id')
+                ->get(['slug', 'updated_at'])
+                ->each(function ($guide) use (&$urls, $resolved): void {
+                    $urls[] = [
+                        'loc' => url("/{$resolved->value}/guides/{$guide->slug}"),
+                        'lastmod' => $guide->updated_at ? Carbon::parse($guide->updated_at)->toAtomString() : null,
+                        'priority' => '0.8',
+                        'changefreq' => 'weekly',
+                    ];
+                });
+
+            DB::table('daily_pick_sets')
+                ->where('market', $resolved->value)
+                ->where('status', PublishStatus::Published->value)
+                ->orderByDesc('drop_date')
+                ->limit(400)
+                ->pluck('drop_date')
+                ->each(function ($date) use (&$urls, $resolved): void {
+                    $urls[] = [
+                        'loc' => url("/{$resolved->value}/daily/{$date}"),
+                        'priority' => '0.5',
+                        // A past edition never changes. Saying so stops a
+                        // crawler re-fetching ninety static pages a day.
+                        'changefreq' => 'never',
+                    ];
+                });
 
             ProductGroup::query()
                 ->forMarket($resolved)
@@ -82,20 +133,27 @@ class SitemapController extends Controller
                     ];
                 });
 
-            $body = implode('', array_map(function (array $url): string {
+            $alternates = app(Alternates::class);
+
+            $body = implode('', array_map(function (array $url) use ($alternates, $resolved): string {
                 $xml = '<url><loc>'.e($url['loc']).'</loc>';
-                if (isset($url['lastmod'])) {
+                if (! empty($url['lastmod'])) {
                     $xml .= '<lastmod>'.$url['lastmod'].'</lastmod>';
                 }
                 $xml .= '<changefreq>'.$url['changefreq'].'</changefreq>';
                 $xml .= '<priority>'.$url['priority'].'</priority>';
 
-                // hreflang inside the sitemap as well as in the page head:
-                // Google treats the two as independent signals and the sitemap
-                // version is what gets picked up fastest on a new URL.
-                foreach (Market::cases() as $alternate) {
-                    $path = CurrentMarket::swapMarketInPath(parse_url($url['loc'], PHP_URL_PATH) ?? '/', $alternate);
-                    $xml .= '<xhtml:link rel="alternate" hreflang="'.$alternate->hrefLang().'" href="'.e(url($path)).'"/>';
+                /*
+                 * hreflang inside the sitemap as well as in the page head:
+                 * Google treats the two as independent signals, and the sitemap
+                 * version is what gets picked up fastest on a new URL.
+                 *
+                 * Resolved through the same service as the head, so the two can
+                 * never disagree. They used to be computed separately, and a
+                 * product's alternates were four links to 404s in both places.
+                 */
+                foreach ($alternates->for(parse_url($url['loc'], PHP_URL_PATH) ?? '/', $resolved) as $hrefLang => $href) {
+                    $xml .= '<xhtml:link rel="alternate" hreflang="'.$hrefLang.'" href="'.e($href).'"/>';
                 }
 
                 return $xml.'</url>';
