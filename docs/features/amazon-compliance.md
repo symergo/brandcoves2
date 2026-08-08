@@ -147,6 +147,42 @@ cheaper to honour now than to retrofit:
 5. Tests assert each of the above, so an Amazon offer cannot acquire a price
    history or an alert by accident.
 
+## Email: the link is not the only restriction
+
+The question that comes up every time someone designs a digest: *if we do not
+link to Amazon, can we include the product?*
+
+**No.** There are two separate rules and dropping the link clears only one.
+
+| | What it restricts | Does linking to our own page help? |
+|---|---|---|
+| Associates Operating Agreement | Special Links in email | Yes — no Associates link, no breach of this one |
+| PA-API licence | *Product Advertising Content* — titles, images, prices, review data from Amazon's APIs — displayed anywhere but your site or app | **No.** The restriction is on the content, not the destination |
+
+So an email carrying an Amazon product's title, image and price breaches the
+second rule even when every link points at brandcoves.com. That is why
+`Source::allowsEmail()` is documented as *"product data **or** links"* rather
+than just links.
+
+### What this means for the Cove digest
+
+It pushes strongly toward **a teaser that links to the edition**, not the
+edition rendered into an email:
+
+- our own editorial line, the observance, a tease of the puzzle, a few
+  non-Amazon finds
+- one link: *see today's Cove*
+
+Amazon items then live only on the page, live-fetched as already designed, and
+the email has no Amazon surface at all. The alternative — full edition in
+email with Amazon items stripped — is defensible on the same reading, but every
+future template inherits a filter someone has to remember. A digest with
+nothing to filter cannot be got wrong later.
+
+> Terms change and the EU Associates Programme differs from the US one. Read
+> the current agreement for the locales in use before the first send. This
+> document records reasoning, not legal advice.
+
 ## Across locales
 
 The same ASIN is the same physical product on every Amazon storefront. That
