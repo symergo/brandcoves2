@@ -11,6 +11,7 @@ cannot be recovered from a diff.
 | [product-identity.md](product-identity.md) | Catalogue | Active |
 | [search.md](search.md) | Search | Active |
 | [seo.md](seo.md) | SEO / Frontend | Active |
+| [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active |
 | [serendipity.md](serendipity.md) | Discovery | Active |

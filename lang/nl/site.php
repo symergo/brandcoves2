@@ -82,10 +82,49 @@ return [
          */
         'intro_lead' => 'We vonden :count producten voor “:term”, samen goed voor :shops winkelaanbiedingen.',
         'intro_prices' => 'De prijzen voor :term lopen hier van :low tot :high.',
-        'intro_brands' => 'Merken op deze pagina zijn onder meer :brands.',
+        'intro_brands' => 'Merken op deze pagina:',
+        'intro_discounts' => ':count van de producten op deze pagina staan onder hun 30-daagse medianprijs, met een maximale korting van :percent%.',
+        'intro_comparable' => ':count van deze :term worden door meer dan één winkel verkocht, dus er is een goedkoopste aanbieding te vinden in plaats van één prijs om te accepteren.',
+        'intro_terms' => 'Woorden die terugkomen in deze :term-resultaten: :terms.',
         'seo_default' => 'Zoek producten op bol, Amazon en honderden winkels tegelijk, en vergelijk elk aanbod naast elkaar.',
     ],
 
+    /*
+     * Merkpagina's. Elke regel wordt alleen getoond als het bijbehorende getal
+     * bestaat — zie App\Services\Seo\BrandCopy.
+     */
+    'brand' => [
+        'title' => ':brand',
+        'heading' => ':brand',
+        'seo_description' => 'Vergelijk :count :brand-producten bij alle winkels die we volgen en vind de goedkoopste aanbieding.',
+        'crumb' => 'Merken',
+        'index_title' => 'Merken',
+        'index_intro' => 'Alle merken in de catalogus, met actuele prijzen vergeleken tussen de winkels die ze verkopen.',
+        'index_count' => ':count producten',
+        'all_brands' => 'Alle merken',
+        'products_heading' => 'Producten van :brand',
+        'coves_heading' => 'Coves waarin :brand voorkomt',
+        'related_heading' => 'Andere merken die mensen vergelijken',
+        'empty' => 'Er is momenteel niets van :brand op voorraad.',
+        'empty_hint' => 'Prijzen en voorraad worden twee keer per dag opnieuw gecontroleerd, dus deze pagina verandert.',
+
+        'lead_1' => 'Op zoek naar :brand? We volgen :count producten van :brand en vergelijken wat elke winkel ervoor rekent.',
+        'lead_2' => 'Er staan nu :count producten van :brand in de catalogus, met alle aanbiedingen per product naast elkaar.',
+        'lead_3' => 'Dit is elk product van :brand waarvoor we een actuele prijs vinden — :count in totaal, bij de winkels die het merk echt verkopen.',
+        'lead_4' => ':count producten van :brand, één pagina, de prijs van elke winkel erbij.',
+
+        'shops_named' => ':shop heeft meer van :brand dan elke andere winkel die we volgen, en in totaal verkopen :count winkels het merk — precies daarom is het vergelijken hieronder de moeite waard.',
+        'shops_count' => ':count winkel verkoopt :brand op dit moment.',
+
+        'price_from' => ':brand begint hier bij :low.',
+        'price_range' => 'De prijzen van :brand lopen op deze pagina van :low tot :high.',
+        'price_range_category' => 'De prijzen van :brand lopen van :low tot :high, en het meeste dat we hebben valt onder :category.',
+
+        'discount_named' => ':shop heeft momenteel kortingen op :brand — :count producten staan onder hun gebruikelijke prijs, de grootste met :percent%. Gemeten tegen onze eigen 30-daagse mediaan, niet tegen een doorgestreepte winkelprijs.',
+        'discount_count' => ':count producten van :brand staan nu onder hun 30-daagse medianprijs.',
+
+        'comparison' => 'Omdat hetzelfde product van :brand vaak bij meerdere winkels voor verschillende prijzen te koop is, is de goedkoopste aanbieding het interessante — en die staat op elke kaart hieronder bovenaan.',
+    ],
     'product' => [
         'from' => 'vanaf',
         'one_offer' => '1 aanbod',
@@ -112,6 +151,7 @@ return [
 
     'footer' => [
         'affiliate' => 'Brandcoves vergelijkt aanbiedingen van verschillende winkels. We verdienen mogelijk commissie op aankopen via onze links — dat verandert nooit wat jij betaalt.',
+        'explore' => 'Ontdekken',
     ],
 
     'auth' => [

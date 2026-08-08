@@ -101,6 +101,8 @@
   "resources/js/Components/Sparkline.tsx": [],
   "resources/js/Layouts/SiteLayout.tsx": [],
   "resources/js/Pages/Auth/Login.tsx": [],
+  "resources/js/Pages/Brand.tsx": [],
+  "resources/js/Pages/Brands.tsx": [],
   "resources/js/Pages/Daily/Edition.tsx": [],
   "resources/js/Pages/Discover.tsx": [],
   "resources/js/Pages/Gift/Wizard.tsx": [],

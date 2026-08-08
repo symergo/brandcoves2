@@ -6,6 +6,7 @@ use App\Enums\Market;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MagicLinkController;
+use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
@@ -253,6 +254,30 @@ Route::prefix('{market}')->group(function () {
 
     Route::get('/guides', [GuideController::class, 'index'])->name('guides');
     Route::get('/guides/{slug}', [GuideController::class, 'show'])->name('guides.show');
+
+    /*
+    |----------------------------------------------------------------------
+    | Brand pages
+    |----------------------------------------------------------------------
+    |
+    | A brand page IS a search with the brand preselected — same service, same
+    | filters, same cards. What the route buys is the thing a facet URL can never
+    | have: one canonical, indexable address per brand per market, with prose
+    | above the results.
+    |
+    | `?brand[]=Sony` stays `noindex` because facet combinations are a
+    | crawl-budget trap. `/brand/sony` is the version worth ranking, and it is
+    | what every brand link on the site points at.
+    |
+    | The index exists so this URL space is not orphaned: a crawler that has not
+    | seen a search result still finds every brand from one page.
+    */
+    Route::get('/brands', [BrandController::class, 'index'])->name('brands');
+    Route::get('/brand/{slug}', [BrandController::class, 'show'])
+        // Slugs are what Str::slug() produces, so anything else is a probe
+        // rather than a link — rejected at the router, not in the database.
+        ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
+        ->name('brand');
 
     /*
     |----------------------------------------------------------------------

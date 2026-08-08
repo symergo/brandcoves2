@@ -7,6 +7,7 @@ use App\Jobs\BuildDailyEdition;
 use App\Jobs\ClassifyGiftability;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
+use App\Jobs\RefreshBrandStats;
 use App\Jobs\RefreshWishlistedProducts;
 use App\Jobs\ScoreSerendipity;
 use App\Jobs\WidenGiftAngles;
@@ -103,6 +104,24 @@ Schedule::call(function (): void {
 })
     ->name('score-serendipity')
     ->twiceDailyAt(5, 17, 25)
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Recompute brand statistics.
+ *
+ * Brand pages are made entirely of these numbers — "N products, from €X, M of
+ * them reduced" — so this has to follow grouping, which is what produces the
+ * cheapest price and the median those sentences quote. Five minutes after
+ * serendipity, which is the last thing that touches product_groups.
+ */
+Schedule::call(function (): void {
+    foreach (Market::cases() as $market) {
+        RefreshBrandStats::dispatch($market);
+    }
+})
+    ->name('refresh-brand-stats')
+    ->twiceDailyAt(5, 17, 30)
     ->withoutOverlapping()
     ->onOneServer();
 

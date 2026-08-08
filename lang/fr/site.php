@@ -82,10 +82,49 @@ return [
          */
         'intro_lead' => 'Nous avons trouvé :count produits pour « :term », représentant :shops offres en boutique.',
         'intro_prices' => 'Ici, les prix pour :term vont de :low à :high.',
-        'intro_brands' => 'Marques présentes sur cette page : :brands.',
+        'intro_brands' => 'Marques sur cette page :',
+        'intro_discounts' => ':count des produits de cette page sont sous leur prix médian sur 30 jours, la plus forte remise étant de :percent%.',
+        'intro_comparable' => ':count de ces :term sont vendus par plus d\'une boutique : il y a donc une offre la moins chère à trouver, et pas un prix unique à accepter.',
+        'intro_terms' => 'Mots qui reviennent dans ces résultats pour :term : :terms.',
         'seo_default' => 'Cherchez des produits sur bol, Amazon et des centaines de boutiques à la fois, et comparez toutes les offres côte à côte.',
     ],
 
+    /*
+     * Pages de marque. Chaque phrase n'apparaît que si le chiffre correspondant
+     * existe — voir App\Services\Seo\BrandCopy.
+     */
+    'brand' => [
+        'title' => ':brand',
+        'heading' => ':brand',
+        'seo_description' => 'Comparez :count produits :brand dans toutes les boutiques que nous suivons et trouvez l\'offre la moins chère.',
+        'crumb' => 'Marques',
+        'index_title' => 'Marques',
+        'index_intro' => 'Toutes les marques du catalogue, avec les prix actuels comparés entre les boutiques qui les vendent.',
+        'index_count' => ':count produits',
+        'all_brands' => 'Toutes les marques',
+        'products_heading' => 'Produits :brand',
+        'coves_heading' => 'Coves qui mentionnent :brand',
+        'related_heading' => 'D\'autres marques que les gens comparent',
+        'empty' => 'Rien de :brand n\'est en stock pour le moment.',
+        'empty_hint' => 'Les prix et les stocks sont revérifiés deux fois par jour : cette page change.',
+
+        'lead_1' => 'Vous cherchez :brand ? Nous suivons :count produits :brand et comparons ce que chaque boutique en demande.',
+        'lead_2' => 'Le catalogue compte actuellement :count produits :brand, avec toutes les offres de chacun côte à côte.',
+        'lead_3' => 'Voici tous les produits :brand pour lesquels nous trouvons un prix en direct — :count au total, chez les boutiques qui vendent réellement la marque.',
+        'lead_4' => ':count produits :brand, une page, le prix de chaque boutique sur chacun d\'eux.',
+
+        'shops_named' => ':shop propose plus de :brand que toute autre boutique que nous suivons, et :count boutiques au total distribuent la marque — c\'est précisément ce qui rend la comparaison ci-dessous utile.',
+        'shops_count' => ':count boutique propose :brand en ce moment.',
+
+        'price_from' => ':brand commence ici à :low.',
+        'price_range' => 'Les prix :brand vont de :low à :high sur cette page.',
+        'price_range_category' => 'Les prix :brand vont de :low à :high, et l\'essentiel de ce que nous référençons relève de :category.',
+
+        'discount_named' => ':shop propose actuellement des remises sur :brand — :count produits sont sous leur prix habituel, le plus fort de :percent%. Mesuré sur notre propre médiane à 30 jours, pas sur un prix barré.',
+        'discount_count' => ':count produits :brand sont actuellement sous leur prix médian sur 30 jours.',
+
+        'comparison' => 'Comme le même produit :brand est souvent vendu par plusieurs boutiques à des prix différents, c\'est l\'offre la moins chère qui compte — et elle apparaît en premier sur chaque fiche ci-dessous.',
+    ],
     'product' => [
         'from' => 'à partir de',
         'one_offer' => '1 offre',
@@ -112,6 +151,7 @@ return [
 
     'footer' => [
         'affiliate' => 'Brandcoves compare les offres de différentes boutiques. Nous pouvons percevoir une commission sur les achats effectués via nos liens — cela ne change jamais le prix que vous payez.',
+        'explore' => 'Explorer',
     ],
 
     'auth' => [

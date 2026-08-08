@@ -189,6 +189,30 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
             <footer className="border-t border-line">
                 <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-ink-soft">
+                    {/*
+                      The brand and Cove indexes live here rather than in the nav.
+
+                      Not because they matter less, but because their job is
+                      different: the nav is for someone deciding what to do, and
+                      these are for a crawler that has landed on an arbitrary page
+                      and needs a route into the two largest indexable URL spaces
+                      on the site. A footer link on every page is exactly that.
+                    */}
+                    <nav aria-label={t('footer.explore')} className="mb-4 flex flex-wrap gap-x-5 gap-y-2">
+                        <Link href={`/${market.key}/brands`} className="hover:text-accent">
+                            {t('brand.index_title')}
+                        </Link>
+                        <Link href={`/${market.key}/guides`} className="hover:text-accent">
+                            {t('nav.guides')}
+                        </Link>
+                        <Link href={`/${market.key}/daily`} className="hover:text-accent">
+                            {t('nav.daily')}
+                        </Link>
+                        <Link href={`/${market.key}/surprise`} className="hover:text-accent">
+                            {t('nav.surprise')}
+                        </Link>
+                    </nav>
+
                     <p>{t('footer.affiliate')}</p>
                 </div>
             </footer>

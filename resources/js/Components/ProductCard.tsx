@@ -24,18 +24,31 @@ export interface GroupCard {
  * on a single row of one query. One card per physical product — never one per
  * offer, which is what makes a comparison site different from a search engine
  * pointed at a feed.
+ *
+ * ## Two links, one card
+ *
+ * The card used to be a single wrapping `<Link>`, which is the simplest thing
+ * that works right up until part of the card needs to point somewhere else. The
+ * brand does: a brand page is the most valuable internal link a results grid can
+ * offer, and it is not the same destination as the product.
+ *
+ * Nesting an anchor inside an anchor is invalid HTML and browsers resolve it by
+ * discarding one of them, unpredictably. So the structure is the stretched-link
+ * pattern instead: the product link carries an `absolute inset-0` overlay that
+ * makes the whole card clickable, and the brand link sits above it on the
+ * z-axis. Both are real anchors, both are crawlable, neither is inside the other.
+ *
+ * `brandUrl` is resolved server-side and is null for brands with no page —
+ * slugifying in the browser would link confidently to a 404, from every card.
  */
-export default function ProductCard({ group }: { group: GroupCard }) {
+export default function ProductCard({ group, brandUrl }: { group: GroupCard; brandUrl?: string | null }) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
     const comparable = group.merchantCount > 1
 
     return (
-        <Link
-            href={`/${market.key}/p/${group.id}/${group.slug}`}
-            className="group flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30"
-        >
+        <article className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30">
             <div className="relative aspect-square overflow-hidden bg-cream">
                 {group.image ? (
                     <img
@@ -66,10 +79,30 @@ export default function ProductCard({ group }: { group: GroupCard }) {
 
             <div className="flex flex-1 flex-col p-4">
                 {group.brand && (
-                    <div className="text-xs tracking-wide text-ink-soft uppercase">{group.brand}</div>
+                    <div className="text-xs tracking-wide text-ink-soft uppercase">
+                        {brandUrl ? (
+                            // z-20 puts it above the product overlay; without it
+                            // the overlay swallows the click and the brand link
+                            // is decoration.
+                            <Link href={brandUrl} className="relative z-20 hover:text-accent hover:underline">
+                                {group.brand}
+                            </Link>
+                        ) : (
+                            group.brand
+                        )}
+                    </div>
                 )}
 
-                <h3 className="mt-1 line-clamp-2 text-sm font-medium">{group.title}</h3>
+                <h3 className="mt-1 line-clamp-2 text-sm font-medium">
+                    <Link href={`/${market.key}/p/${group.id}/${group.slug}`}>
+                        {group.title}
+                        {/* The stretched link: an empty span covering the card,
+                            so the whole thing is a click target while the anchor
+                            itself still wraps only the title for a screen
+                            reader. */}
+                        <span className="absolute inset-0 z-10" aria-hidden />
+                    </Link>
+                </h3>
 
                 <div className="mt-auto pt-3">
                     {group.minPrice !== null && (
@@ -95,6 +128,6 @@ export default function ProductCard({ group }: { group: GroupCard }) {
                     </div>
                 </div>
             </div>
-        </Link>
+        </article>
     )
 }

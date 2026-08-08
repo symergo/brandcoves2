@@ -18,6 +18,7 @@ use App\Services\Discover\Retrievers\SlotsRetriever;
 use App\Services\Discover\Retrievers\SpectrumRetriever;
 use App\Services\Discover\Retrievers\TwoTowerRetriever;
 use App\Services\Discover\Retrievers\ValueRetriever;
+use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
@@ -31,6 +32,13 @@ class AppServiceProvider extends ServiceProvider
         // persists between requests, and a singleton here would leak one page's
         // SEO metadata and structured data into the next visitor's page.
         $this->app->scoped(PageMeta::class);
+
+        // Also scoped, and for a subtler reason than PageMeta: the cache here is
+        // "which brands have a page", which is true for the length of a request
+        // and changes when the nightly refresh runs. A singleton under Octane
+        // would serve yesterday's answer until the process restarted, quietly
+        // linking to brand pages that no longer exist.
+        $this->app->scoped(BrandLinker::class);
 
         // The single place that knows which connectors exist. Adding a source
         // is a registration here plus a config entry — the ingestion pipeline

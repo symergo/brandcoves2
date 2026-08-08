@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Enums\Market;
 use App\Jobs\BuildDailyEdition;
 use App\Jobs\ClassifyGiftability;
+use App\Jobs\RefreshBrandStats;
 use App\Jobs\ScoreSerendipity;
 use Illuminate\Console\Command;
 
@@ -51,6 +52,13 @@ class RefreshDiscoveryCommand extends Command
             $this->components->task(
                 "{$market->value} · serendipity",
                 fn () => $this->fire(new ScoreSerendipity($market)),
+            );
+
+            // Brand pages read nothing but these numbers, so a fresh deploy
+            // whose brand_stats are empty has a whole URL space that 404s.
+            $this->components->task(
+                "{$market->value} · brand stats",
+                fn () => $this->fire(new RefreshBrandStats($market)),
             );
 
             if (! $this->option('skip-edition')) {

@@ -27,7 +27,14 @@ interface Props {
     lanes: Record<string, GroupCard[]> | null
     emptyBecauseOfFilters: boolean
     /** Indexable prose built from what this query actually found. Null on thin pages. */
-    intro: { lead: string; detail: string | null } | null
+    intro: {
+        lead: string
+        paragraphs: string[]
+        brands: { name: string; url: string | null }[]
+        terms: string[]
+    } | null
+    /** Lowercase brand name → brand page URL, for brands that have one. */
+    brandLinks: Record<string, string>
 }
 
 export default function Search({
@@ -40,6 +47,7 @@ export default function Search({
     lanes,
     emptyBecauseOfFilters,
     intro,
+    brandLinks,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -216,6 +224,11 @@ export default function Search({
                                 label: b.value,
                                 count: b.count,
                                 active: ([] as string[]).concat((filters.brand as string[]) ?? []).includes(b.value),
+                                // The checkbox filters this page; the arrow goes
+                                // to the brand's own page. Two different
+                                // intentions that a single control cannot serve —
+                                // and only the second one is indexable.
+                                href: brandLinks[b.value.toLowerCase()] ?? null,
                             }))}
                             onToggle={(key, active) => {
                                 const current = ([] as string[]).concat((filters.brand as string[]) ?? [])
@@ -254,10 +267,42 @@ export default function Search({
                       via SSR, so it is in the HTML a crawler receives.
                     */}
                     {intro && (
-                        <div className="mb-5 max-w-3xl text-sm leading-relaxed text-ink-soft">
+                        <div className="mb-5 max-w-3xl space-y-1.5 text-sm leading-relaxed text-ink-soft">
                             <h2 className="sr-only">{t('search.results_for', { term: q })}</h2>
-                            <p>{intro.lead}</p>
-                            {intro.detail && <p className="mt-1">{intro.detail}</p>}
+                            <p className="text-ink">{intro.lead}</p>
+                            {intro.paragraphs.map((p) => (
+                                <p key={p}>{p}</p>
+                            ))}
+
+                            {/*
+                              The brands are links, not prose.
+
+                              These are the most valuable internal links the page
+                              can offer — a brand page is indexable where
+                              `?brand[]=Sony` is not — so rendering them as a
+                              comma-separated string was throwing away the useful
+                              half of a useful sentence. A brand without a page
+                              still appears, unlinked: dropping it would make the
+                              sentence untrue.
+                            */}
+                            {intro.brands.length > 0 && (
+                                <p>
+                                    {t('search.intro_brands')}{' '}
+                                    {intro.brands.map((brand, i) => (
+                                        <span key={brand.name}>
+                                            {i > 0 && ', '}
+                                            {brand.url ? (
+                                                <Link href={brand.url} className="text-accent hover:underline">
+                                                    {brand.name}
+                                                </Link>
+                                            ) : (
+                                                brand.name
+                                            )}
+                                        </span>
+                                    ))}
+                                    .
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -379,7 +424,13 @@ export default function Search({
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                            {results.items.map((g) => <ProductCard key={g.id} group={g} />)}
+                            {results.items.map((g) => (
+                                <ProductCard
+                                    key={g.id}
+                                    group={g}
+                                    brandUrl={g.brand ? brandLinks[g.brand.toLowerCase()] : null}
+                                />
+                            ))}
                         </div>
                     )}
 
@@ -426,7 +477,7 @@ function Facet({
     format,
 }: {
     title: string
-    items: { key: string; label: string; count: number; active: boolean }[]
+    items: { key: string; label: string; count: number; active: boolean; href?: string | null }[]
     onToggle: (key: string, active: boolean) => void
     format: (n: number) => string
 }) {
@@ -435,8 +486,8 @@ function Facet({
             <h2 className="mb-2 font-medium">{title}</h2>
             <ul className="space-y-1">
                 {items.map((item) => (
-                    <li key={item.key}>
-                        <label className="flex cursor-pointer items-center gap-2">
+                    <li key={item.key} className="flex items-center gap-1">
+                        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
                             <input
                                 type="checkbox"
                                 checked={item.active}
@@ -446,6 +497,16 @@ function Facet({
                             <span className="flex-1 truncate">{item.label}</span>
                             <span className="text-xs text-ink-soft">{format(item.count)}</span>
                         </label>
+                        {item.href && (
+                            <Link
+                                href={item.href}
+                                className="shrink-0 px-1 text-xs text-ink-soft hover:text-accent"
+                                aria-label={item.label}
+                                title={item.label}
+                            >
+                                <span aria-hidden>→</span>
+                            </Link>
+                        )}
                     </li>
                 ))}
             </ul>

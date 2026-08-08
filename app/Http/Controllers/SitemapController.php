@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Market;
 use App\Enums\PublishStatus;
+use App\Models\BrandStat;
 use App\Models\ProductGroup;
 use App\Services\Discover\ModeRegistry;
 use App\Services\Seo\Alternates;
@@ -68,6 +69,7 @@ class SitemapController extends Controller
                 ['loc' => url("/{$resolved->value}/search"), 'priority' => '0.5', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/daily"), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
+                ['loc' => url("/{$resolved->value}/brands"), 'priority' => '0.6', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/gift"), 'priority' => '0.8', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/surprise"), 'priority' => '0.6', 'changefreq' => 'daily'],
             ];
@@ -98,6 +100,37 @@ class SitemapController extends Controller
                         'changefreq' => 'weekly',
                     ];
                 });
+
+            /*
+             * Brand pages, only on the first page of the sitemap.
+             *
+             * Not paginated with the products, because the product pages run to
+             * tens of thousands and brands to a few hundred — repeating the brand
+             * block in every chunk would list each one dozens of times, which a
+             * crawler reads as a sitemap it cannot trust.
+             *
+             * `pageworthy` is what keeps this honest: the same three-product
+             * threshold the controller enforces. Listing a URL that 404s is worse
+             * than not listing it.
+             */
+            if ($page === 1) {
+                BrandStat::query()
+                    ->forMarket($resolved)
+                    ->pageworthy()
+                    ->orderByDesc('product_count')
+                    ->limit(2000)
+                    ->get(['slug', 'product_count', 'computed_at'])
+                    ->each(function (BrandStat $brand) use (&$urls, $resolved): void {
+                        $urls[] = [
+                            'loc' => url("/{$resolved->value}/brand/{$brand->slug}"),
+                            'lastmod' => $brand->computed_at?->toAtomString(),
+                            // A brand carried by a lot of the catalogue is a
+                            // better landing page than one with four products.
+                            'priority' => $brand->product_count >= 25 ? '0.7' : '0.5',
+                            'changefreq' => 'weekly',
+                        ];
+                    });
+            }
 
             DB::table('daily_pick_sets')
                 ->where('market', $resolved->value)

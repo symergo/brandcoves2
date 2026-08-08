@@ -105,9 +105,21 @@ class TopicMiner
      *
      * Ripe means: enough demand, enough products, not already written, and not
      * rejected. Ordered by score so the best available topic goes first.
+     *
+     * **An in-season seasonal topic wins outright**, whatever its score. Not a
+     * hedge — a timing argument. A Halloween Cove written on 20 October is nearly
+     * worthless and the same Cove written on 1 August is an asset for a decade,
+     * and no evergreen topic's score can outweigh a window that is about to shut.
+     * See `SeasonalTopics` for why the log alone cannot see a season coming.
      */
     public function ripest(Market $market): ?GuideTopic
     {
+        $seasonal = app(SeasonalTopics::class)->ripest($market);
+
+        if ($seasonal !== null) {
+            return $seasonal;
+        }
+
         return GuideTopic::query()
             ->where('market', $market->value)
             ->whereIn('status', ['candidate', 'queued'])

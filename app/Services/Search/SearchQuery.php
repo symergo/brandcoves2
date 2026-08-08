@@ -75,6 +75,33 @@ final readonly class SearchQuery
         return $value > 0 ? (int) round($value * 100) : null;
     }
 
+    /**
+     * The same query, pinned to one brand.
+     *
+     * A brand page is a search with the brand preselected, and the brand comes
+     * from the resolved `brand_stats` row rather than from the URL — so this
+     * REPLACES any `?brand[]=` a visitor supplied instead of adding to it.
+     * Allowing both would let `/brand/sony?brand[]=Philips` render a page whose
+     * copy talks about Sony and whose results are Philips.
+     */
+    public function withBrand(string $brand): self
+    {
+        return new self(
+            market: $this->market,
+            term: $this->term,
+            minPrice: $this->minPrice,
+            maxPrice: $this->maxPrice,
+            merchantIds: $this->merchantIds,
+            brands: [$brand],
+            inStockOnly: $this->inStockOnly,
+            discountedOnly: $this->discountedOnly,
+            comparableOnly: $this->comparableOnly,
+            sort: $this->sort,
+            page: $this->page,
+            view: $this->view,
+        );
+    }
+
     public function hasTerm(): bool
     {
         return $this->term !== '';

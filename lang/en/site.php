@@ -89,10 +89,56 @@ return [
          */
         'intro_lead' => 'We found :count products for “:term”, with :shops shop listings between them.',
         'intro_prices' => 'Prices for :term here run from :low to :high.',
-        'intro_brands' => 'Brands on this page include :brands.',
+        'intro_brands' => 'Brands on this page:',
+        'intro_discounts' => ':count of the products on this page are below their 30-day median price, the largest saving being :percent%.',
+        'intro_comparable' => ':count of these :term are sold by more than one shop, so there is a cheapest offer to find rather than a single price to accept.',
+        'intro_terms' => 'Words that come up across these :term listings: :terms.',
         'seo_default' => 'Search products across bol, Amazon and hundreds of shops at once, and compare every offer side by side.',
     ],
 
+    /*
+     * Brand pages.
+     *
+     * Every one of these is emitted only when the number behind it exists — see
+     * App\Services\Seo\BrandCopy. Rewriting one of them into a claim the
+     * catalogue cannot back up is a bug, not a copy tweak.
+     *
+     * The four `lead_*` variants exist because thousands of pages opening with
+     * one identical sentence is a pattern a crawler sees in a single sample.
+     * BrandCopy::LEAD_VARIANTS must match how many there are.
+     */
+    'brand' => [
+        'title' => ':brand',
+        'heading' => ':brand',
+        'seo_description' => 'Compare :count :brand products across every shop we track, and find the cheapest offer.',
+        'crumb' => 'Brands',
+        'index_title' => 'Brands',
+        'index_intro' => 'Every brand in the catalogue, with live prices compared across the shops that stock it.',
+        'index_count' => ':count products',
+        'all_brands' => 'All brands',
+        'products_heading' => ':brand products',
+        'coves_heading' => 'Coves that mention :brand',
+        'related_heading' => 'Other brands people compare',
+        'empty' => 'Nothing from :brand is in stock right now.',
+        'empty_hint' => 'Prices and stock are re-checked twice a day, so this page changes.',
+
+        'lead_1' => 'Looking for :brand? We are tracking :count :brand products and comparing what every shop charges for them.',
+        'lead_2' => 'There are :count :brand products in the catalogue right now, with every offer for each one priced side by side.',
+        'lead_3' => 'This is every :brand product we can find a live price for — :count of them, across the shops that actually stock the brand.',
+        'lead_4' => ':count :brand products, one page, every shop\'s price on each of them.',
+
+        'shops_named' => ':shop stocks more :brand than anyone else we track, and :count shops in total carry the brand — which is what makes the prices below worth comparing.',
+        'shops_count' => ':count shop carries :brand at the moment.',
+
+        'price_from' => ':brand starts at :low here.',
+        'price_range' => ':brand prices run from :low to :high on this page.',
+        'price_range_category' => ':brand prices run from :low to :high, and most of what we carry is :category.',
+
+        'discount_named' => ':shop currently has discounts on :brand — :count products are below their usual price, the largest by :percent%. Measured against our own 30-day median, not a shop\'s crossed-out figure.',
+        'discount_count' => ':count :brand products are below their 30-day median price right now.',
+
+        'comparison' => 'Because the same :brand product is often sold by several shops at different prices, the cheapest offer is the thing worth finding — and it is the first one shown on every card below.',
+    ],
     'product' => [
         'from' => 'from',
         'one_offer' => '1 offer',
@@ -119,6 +165,7 @@ return [
 
     'footer' => [
         'affiliate' => 'Brandcoves compares offers across shops. We may earn a commission on purchases made through our links — it never changes what you pay.',
+        'explore' => 'Explore',
     ],
 
     'auth' => [

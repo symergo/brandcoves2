@@ -8,7 +8,9 @@ use App\Models\ProductGroup;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
+use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
+use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
@@ -35,9 +37,39 @@ class SearchController extends Controller
             'lanes' => $query->view === 'store'
                 ? $this->presentLanes($search->storeLanes($query))
                 : null,
-            'intro' => $this->intro($query, $result),
+            'intro' => $this->intro($query, $result, $current),
             'emptyBecauseOfFilters' => $result->emptyBecauseOfFilters(),
+
+            /*
+             * Brand pages for the brands on this page.
+             *
+             * Resolved server-side rather than slugified in the browser: not
+             * every brand has a page (three products minimum), and a client-side
+             * slug both links to 404s and disagrees with the stored slug the
+             * moment transliteration is involved — "Kärcher" folds to "karcher"
+             * in PHP and to something else in whatever the browser does.
+             */
+            'brandLinks' => $this->brandLinks($result, $current),
         ]);
+    }
+
+    /**
+     * Brand name → brand page URL, for the brands present in these results.
+     *
+     * One query for the whole page. Keyed by the lowercase name so the client can
+     * look up a card's brand without caring about the feed's capitalisation.
+     *
+     * @return array<string, string>
+     */
+    private function brandLinks(SearchResult $result, CurrentMarket $current): array
+    {
+        $brands = array_map(fn (ProductGroup $group) => $group->brand, $result->groups->items());
+
+        foreach ($result->facets['brands'] ?? [] as $facet) {
+            $brands[] = $facet['value'] ?? null;
+        }
+
+        return app(BrandLinker::class)->urls($brands, $current->get());
     }
 
     /**
@@ -93,9 +125,9 @@ class SearchController extends Controller
      * Null on thin pages. A paginated or filtered variant is `noindex` anyway,
      * and repeating this text across them would be the doorway-page pattern.
      *
-     * @return array{lead: string, detail: string|null}|null
+     * @return array{lead: string, paragraphs: list<string>, brands: list<array{name: string, url: string|null}>, terms: list<string>}|null
      */
-    private function intro(SearchQuery $query, SearchResult $result): ?array
+    private function intro(SearchQuery $query, SearchResult $result, CurrentMarket $current): ?array
     {
         if (! $query->hasTerm() || $result->isEmpty() || $query->page > 1 || $query->hasFilters()) {
             return null;
@@ -104,34 +136,126 @@ class SearchController extends Controller
         $total = $result->groups->total();
         $items = $result->groups->items();
 
-        $prices = array_values(array_filter(array_map(fn ($g) => $g->min_price, $items)));
-        $merchants = array_sum(array_map(fn ($g) => max(1, (int) $g->merchant_count), $items));
+        $prices = array_values(array_filter(array_map(fn (ProductGroup $g) => $g->min_price, $items)));
+        $merchants = array_sum(array_map(fn (ProductGroup $g) => max(1, (int) $g->merchant_count), $items));
 
-        $brands = array_values(array_unique(array_filter(array_map(fn ($g) => $g->brand, $items))));
-
-        $lead = __('site.search.intro_lead', [
-            'term' => $query->term,
-            'count' => $total,
-            'shops' => $merchants,
-        ]);
-
-        $detail = null;
+        $paragraphs = [];
 
         if ($prices !== []) {
-            $detail = __('site.search.intro_prices', [
+            $paragraphs[] = __('site.search.intro_prices', [
                 'term' => $query->term,
                 'low' => $this->money(min($prices), $query),
                 'high' => $this->money(max($prices), $query),
             ]);
         }
 
-        if ($brands !== []) {
-            $detail = trim(($detail ?? '').' '.__('site.search.intro_brands', [
-                'brands' => implode(', ', array_slice($brands, 0, 5)),
-            ]));
+        /*
+         * How many of these are actually reduced.
+         *
+         * Counted over this page rather than the whole result set, because that
+         * is what a reader can verify by looking down the page — a claim about
+         * 400 results nobody can see is a claim nobody can check.
+         */
+        $reduced = array_values(array_filter(array_map(
+            fn (ProductGroup $g) => $g->discountPercent(),
+            $items,
+        )));
+
+        if ($reduced !== []) {
+            $paragraphs[] = __('site.search.intro_discounts', [
+                'count' => count($reduced),
+                'percent' => max($reduced),
+            ]);
         }
 
-        return ['lead' => $lead, 'detail' => $detail];
+        // How many of these can be compared at all. The site's whole premise, so
+        // worth stating on the page where it is true.
+        $comparable = count(array_filter($items, fn (ProductGroup $g) => $g->merchant_count > 1));
+
+        if ($comparable > 0) {
+            $paragraphs[] = __('site.search.intro_comparable', [
+                'count' => $comparable,
+                'term' => $query->term,
+            ]);
+        }
+
+        /*
+         * The vocabulary of the results.
+         *
+         * The one clause here that is about words rather than numbers, and the
+         * one that gives a crawler something to understand the page's subject
+         * from. Extracted from the titles on the page, never generated — see
+         * ResultTerms.
+         */
+        $terms = app(ResultTerms::class)->extract($items, $query->market, $query->term);
+
+        if ($terms !== []) {
+            $paragraphs[] = __('site.search.intro_terms', [
+                'term' => $query->term,
+                'terms' => implode(', ', $terms),
+            ]);
+        }
+
+        return [
+            'lead' => __('site.search.intro_lead', [
+                'term' => $query->term,
+                'count' => $total,
+                'shops' => $merchants,
+            ]),
+            'paragraphs' => $paragraphs,
+
+            /*
+             * Brands as links, not as a comma-separated string.
+             *
+             * This sentence used to read "Brands on this page include Sony,
+             * Philips, JBL" as plain text, which is the least useful form of a
+             * genuinely useful fact: those are the three most valuable internal
+             * links the page can offer, and it was rendering them as prose.
+             */
+            'brands' => $this->introBrands($items, $current),
+            'terms' => $terms,
+        ];
+    }
+
+    /**
+     * The leading brands on this page, each with its brand page if it has one.
+     *
+     * A brand with no page still appears, unlinked. Dropping it would make the
+     * sentence quietly untrue — the brand *is* on the page — and linking it
+     * anyway would be a 404 in the first paragraph.
+     *
+     * @param  list<ProductGroup>  $items
+     * @return list<array{name: string, url: string|null}>
+     */
+    private function introBrands(array $items, CurrentMarket $current): array
+    {
+        $counts = [];
+        $display = [];
+
+        foreach ($items as $group) {
+            if ($group->brand === null || trim($group->brand) === '') {
+                continue;
+            }
+
+            $key = mb_strtolower($group->brand);
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
+            $display[$key] ??= $group->brand;
+        }
+
+        // Most-represented first: the brand with eight products on the page is a
+        // more useful link than the one with a single listing.
+        arsort($counts);
+
+        $top = array_slice(array_keys($counts), 0, 5);
+        $links = app(BrandLinker::class)->urls(
+            array_map(fn (string $key) => $display[$key], $top),
+            $current->get(),
+        );
+
+        return array_values(array_map(fn (string $key) => [
+            'name' => $display[$key],
+            'url' => $links[$key] ?? null,
+        ], $top));
     }
 
     private function money(int $cents, SearchQuery $query): string

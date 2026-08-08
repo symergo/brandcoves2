@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\Market;
 use App\Services\Cove\EditionBuilder;
+use App\Services\Guides\SeasonalTopics;
 use App\Services\Guides\TopicMiner;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -30,17 +31,23 @@ class BuildDailyEdition implements ShouldQueue
 
     public function __construct(public Market $market) {}
 
-    public function handle(TopicMiner $miner, EditionBuilder $builder): void
+    public function handle(TopicMiner $miner, SeasonalTopics $seasonal, EditionBuilder $builder): void
     {
         // Mine first: the edition asks for the ripest topic, and yesterday's
         // searches are what ripen one.
         $candidates = $miner->mine($this->market);
+
+        // Then the calendar, which knows about seasons the log cannot see yet —
+        // barbecue demand peaks in June and a log-only queue would commission the
+        // barbecue Cove in July.
+        $inSeason = $seasonal->seed($this->market);
 
         $edition = $builder->build($this->market);
 
         Log::info('Daily Cove built', [
             'market' => $this->market->value,
             'topic_candidates' => $candidates,
+            'topics_in_season' => $inSeason,
             'edition' => $edition?->id,
             'picks' => $edition?->picks()->count() ?? 0,
             'has_challenge' => $edition?->challenge_group_id !== null,

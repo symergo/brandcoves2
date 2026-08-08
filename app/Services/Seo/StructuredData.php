@@ -153,6 +153,28 @@ class StructuredData
         ];
     }
 
+    /**
+     * A brand, as an entity with a page of its own.
+     *
+     * Deliberately minimal: `Brand` with a name and a URL and nothing else. The
+     * temptation is to add `logo`, `sameAs` or an `aggregateRating` — we have no
+     * logo we are licensed to serve, no verified Wikidata mapping, and no
+     * ratings at all. Structured data that asserts something unverifiable is
+     * worse than none, because it is the half of the page a search engine reads
+     * literally.
+     *
+     * @return array<string, mixed>
+     */
+    public static function brand(string $name, string $url): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'Brand',
+            'name' => $name,
+            'url' => $url,
+        ];
+    }
+
     /** @return array<string, mixed> */
     public static function website(string $url, Market $market): array
     {

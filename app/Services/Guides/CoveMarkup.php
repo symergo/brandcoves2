@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Guides;
 
 use App\Enums\Market;
+use App\Services\Seo\BrandLinker;
 use App\Support\CurrentMarket;
 
 /**
@@ -49,6 +50,11 @@ class CoveMarkup
         $links = 0;
         $rejected = [];
 
+        // One query for every brand the article is allowed to mention, resolved
+        // before the walk rather than inside it — the callback runs once per
+        // token and would otherwise be an N+1 on a page of prose.
+        $brandUrls = app(BrandLinker::class)->urls($allowed['brands'] ?? [], $market);
+
         // Escape first, resolve second. The prose is model output and is
         // rendered as HTML, so anything that arrives already looking like
         // markup must stop being markup before we add our own.
@@ -56,14 +62,14 @@ class CoveMarkup
 
         $html = preg_replace_callback(
             self::TOKEN,
-            function (array $m) use ($allowed, $base, &$links, &$rejected): string {
+            function (array $m) use ($allowed, $base, $brandUrls, &$links, &$rejected): string {
                 $kind = $m[1];
                 // The token survived escaping, so its contents are escaped too.
                 $value = html_entity_decode($m[2], ENT_QUOTES);
                 $label = isset($m[3]) ? html_entity_decode($m[3], ENT_QUOTES) : $value;
 
                 $href = match ($kind) {
-                    'brand' => $this->brand($value, $allowed['brands'] ?? [], $base),
+                    'brand' => $this->brand($value, $allowed['brands'] ?? [], $base, $brandUrls),
                     'search' => $this->search($value, $allowed['searches'] ?? [], $base),
                     'product' => $this->product($value, $allowed['products'] ?? [], $base),
                     default => null,
@@ -112,14 +118,33 @@ class CoveMarkup
         return ['html' => $out, 'links' => $links, 'rejected' => $rejected];
     }
 
-    /** @param list<string> $brands */
-    private function brand(string $value, array $brands, string $base): ?string
+    /**
+     * @param  list<string>  $brands
+     * @param  array<string, string>  $brandUrls  lowered brand => brand page URL
+     */
+    private function brand(string $value, array $brands, string $base, array $brandUrls = []): ?string
     {
         // Case-insensitive, because the model will not reproduce a feed's
         // capitalisation and "sony" meaning Sony is not a hallucination.
         foreach ($brands as $brand) {
             if (mb_strtolower($brand) === mb_strtolower(trim($value))) {
-                return $base.'/search?'.http_build_query(['brand' => [$brand]]);
+                /*
+                 * A brand page where one exists, a filtered search otherwise.
+                 *
+                 * This is the difference between a Cove being an SEO asset and a
+                 * Cove being a dead end. `?brand[]=Sony` is `noindex` — facet
+                 * URLs are a crawl-budget trap — so every brand mention in every
+                 * generated article was a link a crawler followed and then
+                 * declined to index. `/brand/sony` is the version worth linking
+                 * to, and it links back here.
+                 *
+                 * The fallback stays because a brand can be in the allowlist and
+                 * still have too few products for a page of its own, and a
+                 * sentence whose link silently disappears reads worse than one
+                 * pointing at a filtered search.
+                 */
+                return $brandUrls[mb_strtolower($brand)]
+                    ?? $base.'/search?'.http_build_query(['brand' => [$brand]]);
             }
         }
 
