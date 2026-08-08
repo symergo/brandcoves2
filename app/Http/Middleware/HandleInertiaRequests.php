@@ -97,6 +97,10 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+                // Neutral outcome messages — the Cove signup deliberately says
+                // the same thing however it went, so it is neither a success nor
+                // an error and calling it either would leak which one it was.
+                'status' => fn () => $request->session()->get('status'),
             ],
         ];
     }

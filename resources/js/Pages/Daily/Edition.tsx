@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import CoveSubscribe from '../../Components/CoveSubscribe'
 import SaveToList from '../../Components/SaveToList'
 
 interface BandEntry {
@@ -393,6 +394,17 @@ export default function Edition({ edition, challenge, finds, guide, streak, arch
                     )}
                 </section>
             )}
+
+            {/*
+              After the edition, before the archive.
+
+              Someone who has just read today's Cove is the only person who has
+              evidence that tomorrow's is worth an inbox slot. Above the fold it
+              would be an interruption; below the archive nobody would reach it.
+            */}
+            <div className="mt-12">
+                <CoveSubscribe source="daily" />
+            </div>
 
             {archive.length > 0 && (
                 <section className="mt-10">

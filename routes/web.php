@@ -10,6 +10,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
+use App\Http\Controllers\CoveSubscriptionController;
 use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\GiftController;
@@ -246,6 +247,36 @@ Route::prefix('{market}')->group(function () {
         ->where('date', '\d{4}-\d{2}-\d{2}')
         ->middleware('throttle:20,1')
         ->name('daily.guess');
+
+    /*
+    |----------------------------------------------------------------------
+    | Cove subscriptions
+    |----------------------------------------------------------------------
+    |
+    | Double opt-in. A signup sends exactly one email and nothing else until the
+    | address confirms — the legal argument is that consent must be demonstrable,
+    | and the operational one is that a form anyone can type any address into is
+    | a way to mail people who never asked.
+    |
+    | Unsubscribe is a GET as well as a POST. Email clients cannot POST from a
+    | footer link, and a reader who cannot leave in one click marks the mail as
+    | spam instead — which costs the sending domain far more than the
+    | unsubscribe does. The POST is RFC 8058 one-click, which Gmail and Yahoo
+    | require of bulk senders.
+    */
+    Route::post('/coves/subscribe', [CoveSubscriptionController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('coves.subscribe');
+
+    Route::get('/coves/confirm/{token}', [CoveSubscriptionController::class, 'confirm'])
+        ->where('token', '[a-f0-9]{64}')
+        ->middleware('throttle:30,1')
+        ->name('coves.confirm');
+
+    Route::match(['get', 'post'], '/coves/unsubscribe/{token}', [CoveSubscriptionController::class, 'unsubscribe'])
+        ->where('token', '[a-f0-9]{64}')
+        ->middleware('throttle:30,1')
+        ->name('coves.unsubscribe');
 
     Route::post('/picks/{pick}/react', PickReactionController::class)
         ->whereNumber('pick')

@@ -17,6 +17,7 @@ cannot be recovered from a diff.
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | In progress |
+| [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [cutover.md](cutover.md) | Operations | Ready — not yet executed |

@@ -139,6 +139,79 @@ return [
 
         'comparison' => 'Because the same :brand product is often sold by several shops at different prices, the cheapest offer is the thing worth finding — and it is the first one shown on every card below.',
     ],
+    /*
+     * Long-form copy below a results grid.
+     *
+     * Every line is either a fact read off the page (counts, ranges, brands) or a
+     * true explanation of how the site works. Neither can be padded with the
+     * keyword, which is the point — see App\Services\Seo\PageNarrative.
+     *
+     * Placeholders available everywhere: :term :count :shown :shops :comparable
+     * :reduced :percent :low :high
+     */
+    'narrative' => [
+        'faq_heading' => 'Questions about :term',
+        'related_heading' => 'Related searches',
+        'related_intro' => 'Other things people looked for here after searching for :term.',
+
+        'compare_heading' => 'Comparing :term across shops',
+        'compare_1' => 'This page collects every :term we can find a live price for and puts one card per physical product, not one card per listing. That distinction is the whole reason the page exists: a shop that stocks the same :term as three others is offering the same object at a different number, and the only interesting question is which number is lowest today.',
+        'compare_2' => ':comparable of the :shown products shown here are stocked by more than one shop, so each of those cards is a small comparison in itself — the cheapest offer first, the rest a click away, and the shop names on every one of them. Where a product is sold by a single shop we say so rather than implying a choice that does not exist.',
+        'compare_3' => 'Offers come from retailer feeds and from live queries at the moment you load the page, which is why a price here can differ from one you saw this morning. Every link goes to the shop that made the offer; we do not sell anything ourselves and we hold no stock.',
+
+        'prices_heading' => 'What the prices for :term mean',
+        'prices_1' => 'Prices on this page run from :low to :high, and that spread is usually a spread of products rather than of shops — the cheapest :term and the most expensive one are rarely the same thing with a different sticker. Sorting by price is the fastest way to see where the useful middle of that range sits.',
+        'prices_2' => 'A discount badge here is measured against our own 30-day median price for that exact product, never against a shop’s crossed-out figure. The two disagree more often than you would expect: a "was" price is a marketing decision, while a median is what the thing has actually cost over a month across everyone selling it. If nothing genuinely moved, no badge appears.',
+        'prices_3' => ':reduced of the products on this page are currently below that median, the largest by :percent%. Prices and stock are re-checked twice a day and live sources are queried on every search, so this page is not a snapshot of last week.',
+
+        'choosing_heading' => 'Choosing between :term',
+        'choosing_1' => 'Start with the offer count rather than the price. A product carried by four shops has a real market price and a floor you can trust; one carried by a single shop has a price and no way to test it, which is worth knowing before you decide the deal is good.',
+        'choosing_2' => 'Then check stock. Everything on this page is in stock by default, because an unbuyable price is not an offer — you can turn that filter off if you want to see the full range, including things that are only temporarily unavailable. The price history on each product page shows whether today is genuinely a good moment or an ordinary one.',
+        'choosing_3' => 'Brands appearing in these results include :brands. Each has a page of its own listing everything we carry from it, with the same comparison across shops.',
+
+        'faq_price_q' => 'How much does :term cost?',
+        'faq_price_a' => 'On this page, :term ranges from :low to :high. That range covers :count products across the shops we track, so the low end and the high end are usually different kinds of product rather than the same one at two prices.',
+        'faq_where_q' => 'Where can I buy :term?',
+        'faq_where_a' => 'From the shops listed on each card — this page draws :shops shop listings across the products shown. We are a comparison site, not a retailer: every link goes to the shop making the offer, and you buy from them on their own terms.',
+        'faq_fresh_q' => 'How current are these :term prices?',
+        'faq_fresh_a' => 'Feed prices are refreshed twice a day and live sources are queried when you search, so this page reflects today rather than last week. A price can still change between loading the page and reaching the shop, and the shop’s own page is always the final word.',
+    ],
+
+    /*
+     * The same idea on a brand page. Different framing: this reader has already
+     * chosen the brand and is choosing between its products and its shops.
+     *
+     * Placeholders: :brand :shop :category :count :shown :shops :comparable
+     * :reduced :percent :low :high
+     */
+    'brand_narrative' => [
+        'faq_heading' => 'Questions about :brand',
+        'related_heading' => 'Related searches',
+        'related_intro' => 'What people looked for here around :brand.',
+
+        'compare_heading' => 'Comparing :brand prices across shops',
+        'compare_2' => ':comparable of the :shown :brand products shown here are carried by more than one shop. Those are the ones where comparing actually pays: the same :brand model, the same warranty, a different number at the till. Where only one shop stocks something we say so, rather than implying a choice you do not have.',
+        'compare_1' => 'This page gathers every :brand product we can find a live price for and shows one card per product rather than one per listing. Two shops selling the same :brand item produce one card with both prices on it, cheapest first — which is the comparison a shop’s own :brand page structurally cannot show you.',
+        'compare_3' => ':shop carries more :brand than any other shop we track, which makes it a sensible place to start and a poor place to stop. The cheapest offer on a given :brand product is frequently somewhere else, and it is on the card either way.',
+
+        'prices_heading' => 'What :brand costs here',
+        'prices_1' => ':brand prices on this page run from :low to :high. That is a range of products rather than a range of margins — the cheapest :brand thing and the most expensive one are different objects, and sorting by price is the quickest way to see where the range actually clusters.',
+        'prices_2' => 'When we mark a :brand product as reduced, that is measured against our own 30-day median for that exact product, not against a shop’s crossed-out "was" price. The difference matters: one is a marketing decision, the other is what the product has genuinely cost over a month across everyone selling it.',
+        'prices_3' => ':reduced :brand products are below that median right now, the biggest saving being :percent%. Feed prices are re-checked twice a day, so this page is current rather than archived.',
+
+        'choosing_heading' => 'Choosing a :brand product',
+        'choosing_1' => 'Most of what we carry from :brand falls under :category, which is a useful thing to know before you scroll: it tells you what this brand is actually for in this market, as opposed to what its catalogue claims worldwide.',
+        'choosing_2' => 'Look at the offer count before the price. A :brand product stocked by four shops has a market price you can trust; one stocked by a single shop has a price and nothing to check it against. Everything here is in stock by default — an unbuyable price is not an offer — and you can turn that filter off to see the full catalogue.',
+        'choosing_3' => 'Each product page carries the full offer table and 90 days of price history, so you can see whether today is a genuinely good moment to buy this :brand product or an ordinary one.',
+
+        'faq_price_q' => 'How much do :brand products cost?',
+        'faq_price_a' => ':brand products on this page range from :low to :high, across :count products from the shops we track. The low and the high are usually different products rather than the same one at two prices.',
+        'faq_where_q' => 'Which shops sell :brand?',
+        'faq_where_a' => 'The shops named on each card — this page draws :shops shop listings across the :brand products shown. We compare rather than sell: every link goes to the shop making the offer.',
+        'faq_discount_q' => 'Is :brand on offer right now?',
+        'faq_discount_a' => 'Yes — :reduced :brand products are currently below their 30-day median price, the largest by :percent%. That is measured against our own price history rather than a shop’s crossed-out figure, so it reflects a real movement rather than a claimed one.',
+    ],
+
     'product' => [
         'from' => 'from',
         'one_offer' => '1 offer',
@@ -163,6 +236,41 @@ return [
         'seo_single' => ':title from :price. Compare offers and check the price history before you buy.',
     ],
 
+    /*
+     * Cove subscriptions.
+     *
+     * Every response to the signup form is identical whatever actually happened,
+     * so the form cannot be used to discover whether an address reads this site.
+     */
+    'cove' => [
+        'subscribe_heading' => 'The Cove, every morning',
+        'subscribe_intro' => 'One short email a day: the theme, a few of the finds, and the puzzle. No product spam, and one click to leave.',
+        'subscribe_placeholder' => 'you@example.com',
+        'subscribe_button' => 'Send it to me',
+        'subscribe_thanks' => 'Check your inbox — if that address is new to us, a confirmation link is on its way.',
+        'subscribe_privacy' => 'We use your address for this email and nothing else.',
+        'confirm_done' => "You're on the list. The next Cove arrives tomorrow morning.",
+        'confirm_invalid' => 'That link has expired or has already been used. Sign up again to get a new one.',
+        'unsubscribed' => "You're unsubscribed. No hard feelings.",
+    ],
+
+    'cove_mail' => [
+        'confirm_subject' => 'Confirm your Daily Cove subscription',
+        'confirm_heading' => 'One click and you are in',
+        'confirm_body' => 'Tap below to confirm you want the Daily Cove. Until you do, we will not send you anything else.',
+        'confirm_button' => 'Confirm my subscription',
+        'confirm_expiry' => 'The link works for 48 hours.',
+        'confirm_requested_from' => 'Requested from :ip',
+        'confirm_ignore' => 'If this was not you, ignore this email — nothing happens without the click, and we will not write again.',
+
+        'digest_subject' => "Today's Cove: :theme",
+        'digest_button' => "Open today's Cove",
+        'across_shops' => 'at :count shops',
+        'more_on_page' => 'There are :count more finds on the page, including some we can only show there.',
+        'puzzle_tease' => "Today's price puzzle is waiting. Most people get it in three.",
+        'why_receiving' => 'You are receiving this because you confirmed a subscription to the Daily Cove.',
+        'unsubscribe' => 'Unsubscribe',
+    ],
     'footer' => [
         'affiliate' => 'Brandcoves compares offers across shops. We may earn a commission on purchases made through our links — it never changes what you pay.',
         'explore' => 'Explore',

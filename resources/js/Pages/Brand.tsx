@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -35,6 +36,8 @@ interface Props {
     }
     coves: { title: string; intro: string | null; url: string }[]
     related: { name: string; url: string; count: number }[]
+    /** Long-form copy below the grid. Null on sorted or paginated variants. */
+    narrative: Narrative | null
 }
 
 /**
@@ -45,7 +48,7 @@ interface Props {
  * discounted, comparable, sort, pagination) is the same as search, because it is
  * the same query object underneath.
  */
-export default function Brand({ brand, copy, filters, sort, facets, results, coves, related }: Props) {
+export default function Brand({ brand, copy, filters, sort, facets, results, coves, related, narrative }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [filtersOpen, setFiltersOpen] = useState(false)
@@ -311,6 +314,15 @@ export default function Brand({ brand, copy, filters, sort, facets, results, cov
                     )}
                 </section>
             </div>
+
+            {narrative && (
+                <PageNarrative
+                    narrative={narrative}
+                    faqHeading={t('brand_narrative.faq_heading', { brand: brand.name })}
+                    relatedHeading={t('brand_narrative.related_heading')}
+                    relatedIntro={t('brand_narrative.related_intro', { brand: brand.name })}
+                />
+            )}
         </>
     )
 }

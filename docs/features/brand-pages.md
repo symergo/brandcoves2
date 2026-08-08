@@ -163,6 +163,53 @@ costs one pass over 24 titles. Excluded: the query's own words (echoing "bluetoo
 searched for "bluetooth" is filler), per-language stopwords, anything under three characters, pure
 numbers, and anything appearing in only one title.
 
+## The long copy below the grid
+
+The intro above the results states the page's facts in four sentences. That is not enough text for a
+search engine to treat the page as a document, and a results grid has nothing else on it — strip the
+prices and titles and only markup remains.
+
+`PageNarrative` adds ~350–450 words **below** the products: three sections, an FAQ, and a strip of
+related searches. Below, not above — a shopper came for products, and several hundred words between
+them and the first card is a worse page for a human, which Google has been explicit about for years.
+
+Every line is one of exactly two things:
+
+1. **A fact about this page** — counts, the price range, how many are reduced and by how much, how
+   many are comparable, which brands are present. Read off the items on the page rather than the whole
+   result set, because a reader can check a claim about twenty-four visible products and cannot check
+   one about four hundred they will never see.
+2. **A true explanation of how the site works** — what the 30-day median is and why it beats a
+   crossed-out "was" price, what an offer count tells you that a price does not, why everything
+   defaults to in-stock.
+
+The second kind repeats across pages, which is fine and deliberate: it is boilerplate in the honest
+sense, the way a shipping policy is. The first kind cannot repeat, because it is read off the results.
+
+The obvious alternative is to hit a word count by repeating the query with filler around it. It works
+for about a fortnight, and then a helpful-content update decides the domain is mostly padding and
+takes the pages that were good down with it. `PageNarrativeTest` asserts a 300-word floor *and* that
+no placeholder is left unfilled — the two ways this fails.
+
+### FAQ, in both halves
+
+Three questions answered from the page's own numbers, rendered as visible `<dl>` **and** as `FAQPage`
+JSON-LD. Both are required: structured data whose answer is not on the page is a misrepresentation,
+and search engines have started treating it as one.
+
+### Related searches
+
+From `search_log`, matched with the `<%` word-similarity operator — never `%`, whose whole-string
+`similarity()` scores a realistic neighbour under the 0.3 default and finds nothing. Real searches
+with real results, which is the demand signal no competitor has, and the outbound links that stop a
+results page being a leaf a crawler reaches and then stops at.
+
+### Where it does not appear
+
+Null on any page that is `noindex` anyway: page 2+, a filtered search, a sorted brand page. Repeating
+four hundred words across dozens of near-identical URLs is the doorway-page pattern at scale, and
+those pages were never going to rank.
+
 ## Seasonal Coves
 
 `TopicMiner` reads 30 days of our own searches, which is the right primary signal — real demand no

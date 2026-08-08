@@ -10,6 +10,7 @@ use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
+use App\Services\Seo\PageNarrative;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -50,7 +51,48 @@ class SearchController extends Controller
              * in PHP and to something else in whatever the browser does.
              */
             'brandLinks' => $this->brandLinks($result, $current),
+
+            /*
+             * The long copy, below the grid.
+             *
+             * A grid of cards is almost pure markup; strip the prices and titles
+             * and there is nothing for a search engine to decide the page is
+             * *about*. This is what makes the page legible as a document — and
+             * it goes below the products, because three hundred words between a
+             * shopper and the first card is a worse page for them and for Google.
+             *
+             * Null on the same pages the intro is null on: a filtered variant is
+             * noindex anyway, and repeating several hundred words across dozens
+             * of near-identical URLs is the doorway-page pattern at scale.
+             */
+            'narrative' => $this->narrative($query, $result),
         ]);
+    }
+
+    /**
+     * @return array{sections: list<array{heading: string, body: list<string>}>, faq: list<array{q: string, a: string}>, related: list<array{term: string, url: string}>}|null
+     */
+    private function narrative(SearchQuery $query, SearchResult $result): ?array
+    {
+        if (! $query->hasTerm() || $result->isEmpty() || $query->page > 1 || $query->hasFilters()) {
+            return null;
+        }
+
+        $narrative = app(PageNarrative::class)->forSearch(
+            $query->term,
+            $result->groups->items(),
+            $query->market,
+            $result->groups->total(),
+        );
+
+        // Rendered as FAQPage as well as visible text. Both halves are required:
+        // structured data whose answer is not on the page is a misrepresentation,
+        // and search engines have started treating it as one.
+        if ($narrative['faq'] !== []) {
+            app(PageMeta::class)->addJsonLd(StructuredData::faq($narrative['faq']));
+        }
+
+        return $narrative;
     }
 
     /**

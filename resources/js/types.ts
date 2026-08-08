@@ -31,7 +31,7 @@ export interface SharedProps {
     translations: Translations
     translationVersion: string
     unreadCount: number
-    flash: { success?: string; error?: string }
+    flash: { success?: string; error?: string; status?: string }
     [key: string]: unknown
 }
 

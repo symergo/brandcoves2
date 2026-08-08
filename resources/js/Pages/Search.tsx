@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import BarcodeScanner from '../Components/BarcodeScanner'
+import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -35,6 +36,8 @@ interface Props {
     } | null
     /** Lowercase brand name → brand page URL, for brands that have one. */
     brandLinks: Record<string, string>
+    /** Long-form copy below the grid. Null on pages that are noindex anyway. */
+    narrative: Narrative | null
 }
 
 export default function Search({
@@ -48,6 +51,7 @@ export default function Search({
     emptyBecauseOfFilters,
     intro,
     brandLinks,
+    narrative,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -457,6 +461,24 @@ export default function Search({
                     )}
                 </section>
             </div>
+
+            {/*
+              Below the grid, deliberately.
+
+              A shopper came for products; several hundred words between them and
+              the first card is a worse page for a human, and Google has been
+              explicit for years that it is a worse page for them too. This is
+              what gives a crawler something to understand the page as being
+              about — the grid itself is almost pure markup.
+            */}
+            {narrative && (
+                <PageNarrative
+                    narrative={narrative}
+                    faqHeading={t('narrative.faq_heading', { term: q })}
+                    relatedHeading={t('narrative.related_heading')}
+                    relatedIntro={t('narrative.related_intro', { term: q })}
+                />
+            )}
         </>
     )
 }

@@ -33772,6 +33772,85 @@ function Login({ googleEnabled }) {
 	})] });
 }
 //#endregion
+//#region resources/js/Components/PageNarrative.tsx
+/**
+* The long copy below a results grid.
+*
+* Rendered after the products, never before them. A shopper came for products,
+* and several hundred words between them and the first card is a worse page for
+* a human — which Google has been explicit about for years, so it is not even a
+* trade against ranking.
+*
+* The FAQ is plain markup rather than a `<details>` accordion. Collapsed answers
+* are still indexed, but they are also still hidden, and the point of putting
+* them on the page at all is that a reader can see the answer that the FAQPage
+* structured data claims is there.
+*/
+function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) {
+	const { t } = useTranslations();
+	if (narrative.sections.length === 0 && narrative.faq.length === 0 && narrative.related.length === 0) return null;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mt-16 border-t border-line pt-10",
+		children: [
+			narrative.sections.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "grid gap-8 md:grid-cols-2 lg:grid-cols-3",
+				children: narrative.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-semibold",
+					children: section.heading
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-2 space-y-2 text-sm leading-relaxed text-ink-soft",
+					children: section.body.map((paragraph) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: paragraph }, paragraph))
+				})] }, section.heading))
+			}),
+			narrative.faq.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "mt-10",
+				"aria-labelledby": "narrative-faq",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					id: "narrative-faq",
+					className: "text-xl font-semibold tracking-tight",
+					children: faqHeading
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
+					className: "mt-4 grid gap-6 md:grid-cols-2",
+					children: narrative.faq.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", {
+						className: "font-medium",
+						children: item.q
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+						className: "mt-1 text-sm leading-relaxed text-ink-soft",
+						children: item.a
+					})] }, item.q))
+				})]
+			}),
+			narrative.related.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "mt-10",
+				"aria-labelledby": "narrative-related",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						id: "narrative-related",
+						className: "font-semibold",
+						children: relatedHeading
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 text-sm text-ink-soft",
+						children: relatedIntro
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-3 flex flex-wrap gap-2",
+						children: narrative.related.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							href: item.url,
+							className: "block rounded-full border border-line px-3 py-1.5 text-sm hover:border-ink",
+							children: item.term
+						}) }, item.url))
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-8 text-xs text-ink-soft",
+				children: t("footer.affiliate")
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/types.ts
 function formatPrice(cents, market) {
 	return new Intl.NumberFormat(market.hrefLang, {
@@ -33888,7 +33967,7 @@ var Brand_exports = /* @__PURE__ */ __exportAll({ default: () => Brand });
 * discounted, comparable, sort, pagination) is the same as search, because it is
 * the same query object underneath.
 */
-function Brand({ brand, copy, filters, sort, facets, results, coves, related }) {
+function Brand({ brand, copy, filters, sort, facets, results, coves, related, narrative }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
@@ -34150,6 +34229,12 @@ function Brand({ brand, copy, filters, sort, facets, results, coves, related }) 
 					})
 				] })
 			]
+		}),
+		narrative && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageNarrative, {
+			narrative,
+			faqHeading: t("brand_narrative.faq_heading", { brand: brand.name }),
+			relatedHeading: t("brand_narrative.related_heading"),
+			relatedIntro: t("brand_narrative.related_intro", { brand: brand.name })
 		})
 	] });
 }
@@ -34225,6 +34310,86 @@ function Brands({ brands }) {
 			}, letter))
 		})] })
 	] });
+}
+//#endregion
+//#region resources/js/Components/CoveSubscribe.tsx
+/**
+* Subscribe to the Daily Cove.
+*
+* The response is the same whatever happened — new address, already subscribed,
+* previously unsubscribed — so the form cannot be used to find out whether
+* someone reads this site. That is decided server-side; this component simply
+* shows whatever it is told.
+*
+* `source` records where the signup came from, which is the only way to learn
+* whether the front-page placement is worth its space.
+*/
+function CoveSubscribe({ source = "daily" }) {
+	const { t } = useTranslations();
+	const { market, flash } = usePage().props;
+	const form = useForm({
+		email: "",
+		source
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+		className: "rounded-card border border-line bg-card p-6",
+		"aria-labelledby": "cove-subscribe",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				id: "cove-subscribe",
+				className: "text-xl font-semibold tracking-tight",
+				children: t("cove.subscribe_heading")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 max-w-xl text-sm text-ink-soft",
+				children: t("cove.subscribe_intro")
+			}),
+			flash?.status ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-4 rounded border border-sage/40 bg-sage/10 p-3 text-sm",
+				role: "status",
+				children: flash.status
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				onSubmit: (e) => {
+					e.preventDefault();
+					form.post(`/${market.key}/coves/subscribe`, { preserveScroll: true });
+				},
+				className: "mt-4 flex max-w-md flex-wrap gap-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+						className: "sr-only",
+						htmlFor: "cove-email",
+						children: t("cove.subscribe_placeholder")
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						id: "cove-email",
+						type: "email",
+						required: true,
+						autoComplete: "email",
+						value: form.data.email,
+						onChange: (e) => form.setData("email", e.target.value),
+						placeholder: t("cove.subscribe_placeholder"),
+						"aria-invalid": form.errors.email ? true : void 0,
+						"aria-describedby": form.errors.email ? "cove-email-error" : void 0,
+						className: "min-w-0 flex-1 rounded-lg border border-line bg-cream px-4 py-2.5"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						disabled: form.processing,
+						className: "rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-dark disabled:opacity-60",
+						children: t("cove.subscribe_button")
+					}),
+					form.errors.email && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						id: "cove-email-error",
+						className: "w-full text-sm text-accent",
+						children: form.errors.email
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "w-full text-xs text-ink-soft",
+						children: t("cove.subscribe_privacy")
+					})
+				]
+			})
+		]
+	});
 }
 //#endregion
 //#region resources/js/Components/SaveToList.tsx
@@ -34543,6 +34708,10 @@ function Edition({ edition, challenge, finds, guide, streak, archive }) {
 					children: t("daily.guide_why", { count: n(guide.searchVolume) })
 				})
 			]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-12",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CoveSubscribe, { source: "daily" })
 		}),
 		archive.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-10",
@@ -35354,6 +35523,10 @@ function Home({ stats, today, coves }) {
 					})
 				]
 			})
+		}),
+		today && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-10",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CoveSubscribe, { source: "home" })
 		}),
 		coves.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-14",
@@ -36454,7 +36627,7 @@ function Scan() {
 //#endregion
 //#region resources/js/Pages/Search.tsx
 var Search_exports = /* @__PURE__ */ __exportAll({ default: () => Search });
-function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, intro, brandLinks }) {
+function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, intro, brandLinks, narrative }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
@@ -36783,6 +36956,12 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 					})
 				] })
 			]
+		}),
+		narrative && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageNarrative, {
+			narrative,
+			faqHeading: t("narrative.faq_heading", { term: q }),
+			relatedHeading: t("narrative.related_heading"),
+			relatedIntro: t("narrative.related_intro", { term: q })
 		})
 	] });
 }

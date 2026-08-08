@@ -125,6 +125,69 @@ return [
 
         'comparison' => 'Como el mismo producto de :brand lo venden a menudo varias tiendas a precios distintos, la oferta más barata es lo que importa — y es la primera que aparece en cada ficha de abajo.',
     ],
+    /*
+     * Texto largo bajo una parrilla de resultados. Cada línea es o un dato leído
+     * de la propia página o una explicación cierta de cómo funciona el sitio.
+     */
+    'narrative' => [
+        'faq_heading' => 'Preguntas sobre :term',
+        'related_heading' => 'Búsquedas relacionadas',
+        'related_intro' => 'Lo que la gente buscó aquí después de :term.',
+
+        'compare_heading' => 'Comparar :term entre tiendas',
+        'compare_1' => 'Esta página reúne cada :term del que encontramos un precio en vivo y muestra una ficha por producto físico, no una por anuncio. Esa distinción es la razón de ser de la página: una tienda que vende el mismo :term que otras tres ofrece el mismo objeto con otra cifra, y la única pregunta interesante es cuál es la más baja hoy.',
+        'compare_2' => ':comparable de los :shown productos mostrados los venden más de una tienda, así que cada una de esas fichas ya es una comparación en sí misma — la oferta más barata primero, el resto a un clic, y el nombre de la tienda en todas. Cuando algo lo vende una sola tienda lo decimos, en lugar de insinuar una elección que no existe.',
+        'compare_3' => 'Las ofertas vienen de los feeds de las tiendas y de consultas en vivo en el momento en que cargas la página; por eso un precio puede diferir del que viste esta mañana. Cada enlace lleva a la tienda que hace la oferta: nosotros no vendemos nada ni tenemos stock.',
+
+        'prices_heading' => 'Qué significan los precios de :term',
+        'prices_1' => 'Los precios de esta página van de :low a :high, y esa diferencia suele ser una diferencia de productos y no de tiendas — el :term más barato y el más caro rara vez son la misma cosa con otra etiqueta. Ordenar por precio es la forma más rápida de ver dónde está el centro útil de ese rango.',
+        'prices_2' => 'Una etiqueta de descuento aquí se mide contra nuestra propia mediana de 30 días para ese producto exacto, nunca contra un precio tachado de la tienda. Los dos discrepan más de lo que parece: un precio «antes» es una decisión de marketing, y una mediana es lo que la cosa ha costado realmente durante un mes entre todos los que la venden. Si nada se ha movido de verdad, no aparece etiqueta.',
+        'prices_3' => ':reduced productos de esta página están ahora por debajo de esa mediana, el mayor un :percent%. Precios y stock se revisan dos veces al día y las fuentes en vivo se consultan en cada búsqueda, así que esto no es una foto de la semana pasada.',
+
+        'choosing_heading' => 'Elegir entre :term',
+        'choosing_1' => 'Empieza por el número de ofertas y no por el precio. Un producto que venden cuatro tiendas tiene un precio de mercado real y un suelo fiable; uno que vende una sola tienda tiene un precio y ninguna forma de contrastarlo, y eso conviene saberlo antes de decidir que es una ganga.',
+        'choosing_2' => 'Después mira el stock. Todo en esta página está disponible por defecto, porque un precio que no puedes pagar no es una oferta — puedes desactivar ese filtro para ver el catálogo completo, incluido lo que está agotado temporalmente. El histórico de precios de cada ficha muestra si hoy es realmente un buen momento o uno cualquiera.',
+        'choosing_3' => 'Entre las marcas de estos resultados están :brands. Cada una tiene su propia página con todo lo que llevamos de ella y la misma comparación entre tiendas.',
+
+        'faq_price_q' => '¿Cuánto cuesta :term?',
+        'faq_price_a' => 'En esta página, :term va de :low a :high. Ese rango cubre :count productos en las tiendas que seguimos, así que el extremo bajo y el alto suelen ser tipos de producto distintos y no el mismo a dos precios.',
+        'faq_where_q' => '¿Dónde puedo comprar :term?',
+        'faq_where_a' => 'En las tiendas que aparecen en cada ficha — esta página reúne :shops anuncios de tiendas sobre los productos mostrados. Somos un comparador, no una tienda: cada enlace lleva a quien hace la oferta y compras allí, en sus condiciones.',
+        'faq_fresh_q' => '¿Están actualizados estos precios de :term?',
+        'faq_fresh_a' => 'Los precios de los feeds se actualizan dos veces al día y las fuentes en vivo se consultan al buscar, así que esta página refleja hoy y no la semana pasada. Un precio puede cambiar entre cargar la página y llegar a la tienda; la página de la tienda siempre manda.',
+    ],
+
+    /*
+     * La misma idea en una página de marca: este lector ya ha elegido la marca.
+     */
+    'brand_narrative' => [
+        'faq_heading' => 'Preguntas sobre :brand',
+        'related_heading' => 'Búsquedas relacionadas',
+        'related_intro' => 'Lo que la gente buscó aquí en torno a :brand.',
+
+        'compare_heading' => 'Comparar precios de :brand entre tiendas',
+        'compare_1' => 'Esta página reúne cada producto de :brand del que encontramos un precio en vivo y muestra una ficha por producto en lugar de una por anuncio. Dos tiendas que venden el mismo artículo de :brand producen una sola ficha con ambos precios, el más barato primero — justo la comparación que la página de :brand de una tienda no puede mostrar por definición.',
+        'compare_2' => ':comparable de los :shown productos de :brand mostrados los venden más de una tienda. Ahí es donde comparar sale a cuenta de verdad: el mismo modelo de :brand, la misma garantía, otra cifra en caja. Cuando solo una tienda lo tiene, lo decimos.',
+        'compare_3' => ':shop tiene más :brand que cualquier otra tienda que sigamos, lo que la convierte en un buen punto de partida y en un mal punto final: la oferta más barata de un producto concreto de :brand suele estar en otro sitio, y en cualquier caso aparece en la ficha.',
+
+        'prices_heading' => 'Cuánto cuesta :brand aquí',
+        'prices_1' => 'Los precios de :brand en esta página van de :low a :high. Es un rango de productos, no de márgenes — el artículo de :brand más barato y el más caro son objetos distintos, y ordenar por precio muestra antes que nada dónde se concentra el rango.',
+        'prices_2' => 'Cuando marcamos un producto de :brand como rebajado, se mide contra nuestra propia mediana de 30 días para ese producto exacto, no contra un precio tachado de la tienda. La diferencia importa: uno es una decisión de marketing y el otro es lo que el producto ha costado realmente durante un mes entre todos los que lo venden.',
+        'prices_3' => ':reduced productos de :brand están ahora por debajo de esa mediana, con un descuento máximo del :percent%. Los precios de los feeds se revisan dos veces al día, así que esta página está al día y no archivada.',
+
+        'choosing_heading' => 'Elegir un producto de :brand',
+        'choosing_1' => 'La mayor parte de lo que llevamos de :brand cae en :category, y conviene saberlo antes de desplazarse: dice para qué sirve realmente esta marca en este mercado, frente a lo que afirma su catálogo mundial.',
+        'choosing_2' => 'Mira el número de ofertas antes que el precio. Un producto de :brand en cuatro tiendas tiene un precio de mercado fiable; en una sola tiene un precio y nada con que contrastarlo. Todo está disponible por defecto — un precio que no puedes pagar no es una oferta — y ese filtro se puede desactivar.',
+        'choosing_3' => 'Cada ficha de producto lleva la tabla completa de ofertas y 90 días de histórico de precios, así que puedes ver si hoy es realmente un buen momento para ese producto de :brand o uno cualquiera.',
+
+        'faq_price_q' => '¿Cuánto cuestan los productos de :brand?',
+        'faq_price_a' => 'Los productos de :brand en esta página van de :low a :high, sobre :count productos en las tiendas que seguimos. El extremo bajo y el alto suelen ser productos distintos, no el mismo a dos precios.',
+        'faq_where_q' => '¿Qué tiendas venden :brand?',
+        'faq_where_a' => 'Las que aparecen en cada ficha — esta página reúne :shops anuncios de tiendas sobre los productos de :brand mostrados. Comparamos, no vendemos: cada enlace lleva a la tienda que hace la oferta.',
+        'faq_discount_q' => '¿Hay ofertas de :brand ahora mismo?',
+        'faq_discount_a' => 'Sí — :reduced productos de :brand están por debajo de su precio mediano de 30 días, el mayor un :percent%. Se mide contra nuestro propio histórico y no contra un precio tachado, así que refleja un movimiento real.',
+    ],
+
     'product' => [
         'from' => 'desde',
         'one_offer' => '1 oferta',
@@ -149,6 +212,39 @@ return [
         'seo_single' => ':title desde :price. Compara ofertas y consulta el historial de precios antes de comprar.',
     ],
 
+    /*
+     * Suscripciones a las Coves. Todas las respuestas del formulario son
+     * idénticas, pase lo que pase.
+     */
+    'cove' => [
+        'subscribe_heading' => 'La Cove, cada mañana',
+        'subscribe_intro' => 'Un correo corto al día: el tema, algunos hallazgos y el acertijo. Sin spam de productos, y un clic para salir.',
+        'subscribe_placeholder' => 'tu@ejemplo.es',
+        'subscribe_button' => 'Envíamela',
+        'subscribe_thanks' => 'Mira tu bandeja de entrada — si esa dirección es nueva para nosotros, hay un enlace de confirmación en camino.',
+        'subscribe_privacy' => 'Usamos tu dirección para este correo y para nada más.',
+        'confirm_done' => 'Ya estás en la lista. La próxima Cove llega mañana por la mañana.',
+        'confirm_invalid' => 'Ese enlace ha caducado o ya se ha usado. Vuelve a suscribirte para recibir uno nuevo.',
+        'unsubscribed' => 'Te has dado de baja. Sin rencores.',
+    ],
+
+    'cove_mail' => [
+        'confirm_subject' => 'Confirma tu suscripción a la Daily Cove',
+        'confirm_heading' => 'Un clic y estás dentro',
+        'confirm_body' => 'Pulsa abajo para confirmar que quieres la Daily Cove. Hasta entonces no te enviaremos nada más.',
+        'confirm_button' => 'Confirmar mi suscripción',
+        'confirm_expiry' => 'El enlace funciona durante 48 horas.',
+        'confirm_requested_from' => 'Solicitado desde :ip',
+        'confirm_ignore' => 'Si no has sido tú, ignora este correo — sin el clic no pasa nada y no volveremos a escribir.',
+
+        'digest_subject' => 'La Cove de hoy: :theme',
+        'digest_button' => 'Abrir la Cove de hoy',
+        'across_shops' => 'en :count tiendas',
+        'more_on_page' => 'Hay :count hallazgos más en la página, incluidos algunos que solo podemos mostrar allí.',
+        'puzzle_tease' => 'El acertijo de precios de hoy te espera. La mayoría lo acierta en tres intentos.',
+        'why_receiving' => 'Recibes esto porque confirmaste una suscripción a la Daily Cove.',
+        'unsubscribe' => 'Darse de baja',
+    ],
     'footer' => [
         'affiliate' => 'Brandcoves compara ofertas de distintas tiendas. Podemos recibir una comisión por las compras realizadas a través de nuestros enlaces — eso nunca cambia lo que pagas tú.',
         'explore' => 'Explorar',

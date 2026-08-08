@@ -1,4 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react'
+import CoveSubscribe from '../Components/CoveSubscribe'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -119,6 +120,15 @@ export default function Home({ stats, today, coves }: Props) {
                         </Link>
                     </div>
                 </section>
+            )}
+
+            {/* Only where there is a Cove to subscribe to. Offering a daily
+                email on a site with no editions yet is a promise we would then
+                have to keep. */}
+            {today && (
+                <div className="mt-10">
+                    <CoveSubscribe source="home" />
+                </div>
             )}
 
             {coves.length > 0 && (

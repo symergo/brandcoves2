@@ -68,6 +68,17 @@ class ScrubDatabase extends Command
             DB::statement('UPDATE price_alerts   SET email = NULL WHERE email IS NOT NULL');
             DB::statement('UPDATE restock_alerts SET email = NULL WHERE email IS NOT NULL');
 
+            /*
+             * Cove subscribers: deleted, not anonymised.
+             *
+             * Everything else here keeps its row because something joins to it.
+             * Nothing joins to a subscriber, and the table is a mailing list —
+             * the one shape of data where a laptop copy could actually send mail
+             * to real people if a misconfigured MAIL_MAILER ever pointed at a
+             * real transport. There is nothing here worth keeping locally.
+             */
+            DB::statement('DELETE FROM cove_subscribers');
+
             DB::statement('DELETE FROM notifications');
             DB::statement('DELETE FROM sessions');
 

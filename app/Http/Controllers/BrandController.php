@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Market;
 use App\Models\BrandStat;
 use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Services\Search\SearchQuery;
+use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
 use App\Services\Seo\BrandCopy;
 use App\Services\Seo\PageMeta;
+use App\Services\Seo\PageNarrative;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
@@ -111,7 +114,41 @@ class BrandController extends Controller
             // any personality on the page comes from.
             'coves' => $this->coves($stat, $current),
             'related' => $this->related($stat, $current),
+
+            // The long copy, below the grid. Same reasoning as the search page:
+            // a results grid has nothing on it for a crawler to understand the
+            // page as being about, and a shopper should not have to scroll past
+            // three hundred words to reach a product.
+            'narrative' => $this->narrative($stat, $result, $query, $market),
         ]);
+    }
+
+    /**
+     * @return array{sections: list<array{heading: string, body: list<string>}>, faq: list<array{q: string, a: string}>, related: list<array{term: string, url: string}>}|null
+     */
+    private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
+    {
+        // Only on the canonical page. A sorted or paginated variant is noindex,
+        // and repeating several hundred words across them is the doorway-page
+        // pattern.
+        if ($query->page > 1 || $query->sort !== 'relevance' || $result->isEmpty()) {
+            return null;
+        }
+
+        $narrative = app(PageNarrative::class)->forBrand(
+            $stat->brand,
+            $result->groups->items(),
+            $market,
+            $result->groups->total(),
+            $stat->topMerchant?->name,
+            $stat->top_category,
+        );
+
+        if ($narrative['faq'] !== []) {
+            app(PageMeta::class)->addJsonLd(StructuredData::faq($narrative['faq']));
+        }
+
+        return $narrative;
     }
 
     /**

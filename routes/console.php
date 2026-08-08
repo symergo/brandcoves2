@@ -10,6 +10,7 @@ use App\Jobs\IngestFeed;
 use App\Jobs\RefreshBrandStats;
 use App\Jobs\RefreshWishlistedProducts;
 use App\Jobs\ScoreSerendipity;
+use App\Jobs\SendCoveDigest;
 use App\Jobs\WidenGiftAngles;
 use App\Models\Feed;
 use Illuminate\Support\Facades\Schedule;
@@ -155,6 +156,27 @@ foreach (Market::cases() as $index => $market) {
     Schedule::job(new BuildDailyEdition($market))
         ->name('build-daily-cove-'.$market->value)
         ->dailyAt(sprintf('06:%02d', $index * 6))
+        ->withoutOverlapping()
+        ->onOneServer();
+}
+
+/*
+ * Send the day's digest, after the edition is live.
+ *
+ * 09:15, three hours after the build and fifteen minutes after the 09:00 drop.
+ * The gap is the point: an email that arrives before the page it links to is a
+ * link to a 404 in every inbox at once, and unlike a broken page a sent email
+ * cannot be fixed.
+ *
+ * Staggered per market so five sends do not open five SMTP connections at the
+ * same moment.
+ */
+foreach (Market::cases() as $index => $market) {
+    Schedule::job(new SendCoveDigest($market))
+        ->name('send-cove-digest-'.$market->value)
+        ->dailyAt(sprintf('09:%02d', 15 + ($index * 4)))
+        // A second run overlapping the first would re-read `last_sent_on` mid
+        // flight; the guard is per subscriber, but the mutex is cheaper.
         ->withoutOverlapping()
         ->onOneServer();
 }
