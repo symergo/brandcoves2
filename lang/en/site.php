@@ -16,6 +16,7 @@ return [
         'daily' => 'Daily Picks',
         'guides' => 'Guides',
         'surprise' => 'Surprise me',
+        'scan' => 'Scan',
         'lists' => 'My lists',
         'notifications' => 'Notifications',
         'sign_in' => 'Sign in',
@@ -277,6 +278,22 @@ return [
             'vibe' => 'Fits the feeling you wanted',
             'values' => 'Matches what matters to you',
         ],
+    ],
+
+    'scan' => [
+        'title' => 'Scan a barcode',
+        'subtitle' => 'Standing in a shop? Scan it and see what it costs everywhere else.',
+        'seo_description' => 'Scan a product barcode and compare the price across every shop that stocks it.',
+        'start' => 'Open the camera',
+        'stop' => 'Stop',
+        'manual_placeholder' => 'Or type the barcode',
+        'look_up' => 'Look up',
+        'shops' => 'at :count shops',
+        'unsupported' => 'This browser cannot scan. Type the number below instead — it is on the label under the bars.',
+        'no_camera' => 'No camera available, or permission was declined. Type the number below instead.',
+        'invalid' => 'That is not a valid barcode. Check the digits under the bars.',
+        'not_found' => 'We do not have that one yet.',
+        'search_instead' => 'Search for it anyway',
     ],
 
     'surprise' => [

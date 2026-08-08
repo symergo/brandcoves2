@@ -19,6 +19,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
+use App\Http\Controllers\ScanController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SerendipityController;
 use App\Http\Controllers\SharedListController;
@@ -253,8 +254,22 @@ Route::prefix('{market}')->group(function () {
     Route::get('/guides', [GuideController::class, 'index'])->name('guides');
     Route::get('/guides/{slug}', [GuideController::class, 'show'])->name('guides.show');
 
-    // Phase 7 routes land here:
-    //   /{market}/scan                       mobile barcode scanner
+    /*
+    |----------------------------------------------------------------------
+    | Barcode scanner
+    |----------------------------------------------------------------------
+    |
+    | Scan in a shop, find out whether it is cheaper elsewhere. Nearly free:
+    | product_groups is unique on (market, identity_key) and for an EAN-grouped
+    | product that key IS the GTIN, so a scan is one unique-index hit.
+    */
+    Route::get('/scan', [ScanController::class, 'show'])->name('scan');
+    Route::get('/scan/{barcode}', [ScanController::class, 'resolve'])
+        // Digits only. A camera misread is rejected at the router rather than
+        // becoming a database lookup for a string of noise.
+        ->where('barcode', '[0-9]{8,14}')
+        ->middleware('throttle:120,1')
+        ->name('scan.resolve');
     //   /{market}/daily                      today's picks
     //   /{market}/guides                     buying guides
 });

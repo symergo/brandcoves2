@@ -10,6 +10,7 @@ return [
         'daily' => 'Dagtips',
         'guides' => 'Koopgidsen',
         'surprise' => 'Verras me',
+        'scan' => 'Scannen',
         'lists' => 'Mijn lijstjes',
         'notifications' => 'Meldingen',
         'sign_in' => 'Inloggen',
@@ -270,6 +271,22 @@ return [
             'vibe' => 'Past bij het gevoel dat je zocht',
             'values' => 'Sluit aan bij wat jij belangrijk vindt',
         ],
+    ],
+
+    'scan' => [
+        'title' => 'Scan een barcode',
+        'subtitle' => 'Sta je in de winkel? Scan het en zie wat het elders kost.',
+        'seo_description' => 'Scan een barcode en vergelijk de prijs bij elke winkel die het product heeft.',
+        'start' => 'Camera openen',
+        'stop' => 'Stoppen',
+        'manual_placeholder' => 'Of tik de barcode in',
+        'look_up' => 'Opzoeken',
+        'shops' => 'bij :count winkels',
+        'unsupported' => 'Deze browser kan niet scannen. Tik het nummer hieronder in — het staat onder de streepjes.',
+        'no_camera' => 'Geen camera beschikbaar, of toestemming geweigerd. Tik het nummer hieronder in.',
+        'invalid' => 'Dat is geen geldige barcode. Controleer de cijfers onder de streepjes.',
+        'not_found' => 'Die hebben we nog niet.',
+        'search_instead' => 'Toch zoeken',
     ],
 
     'surprise' => [

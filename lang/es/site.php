@@ -10,6 +10,7 @@ return [
         'daily' => 'Hallazgos del día',
         'guides' => 'Guías de compra',
         'surprise' => 'Sorpréndeme',
+        'scan' => 'Escanear',
         'lists' => 'Mis listas',
         'notifications' => 'Avisos',
         'sign_in' => 'Iniciar sesión',
@@ -270,6 +271,22 @@ return [
             'vibe' => 'Encaja con la sensación que buscabas',
             'values' => 'Encaja con lo que te importa',
         ],
+    ],
+
+    'scan' => [
+        'title' => 'Escanear un código de barras',
+        'subtitle' => '¿Estás en la tienda? Escanéalo y mira cuánto cuesta en el resto.',
+        'seo_description' => 'Escanea un código de barras y compara el precio en todas las tiendas que lo venden.',
+        'start' => 'Abrir la cámara',
+        'stop' => 'Parar',
+        'manual_placeholder' => 'O escribe el código de barras',
+        'look_up' => 'Buscar',
+        'shops' => 'en :count tiendas',
+        'unsupported' => 'Este navegador no puede escanear. Escribe el número de abajo: está bajo las barras.',
+        'no_camera' => 'No hay cámara disponible, o se denegó el permiso. Escribe el número abajo.',
+        'invalid' => 'Ese código de barras no es válido. Comprueba los dígitos bajo las barras.',
+        'not_found' => 'Todavía no lo tenemos.',
+        'search_instead' => 'Buscarlo igualmente',
     ],
 
     'surprise' => [

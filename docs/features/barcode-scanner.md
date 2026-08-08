@@ -1,7 +1,7 @@
 ---
 name: Barcode scanner (mobile)
 area: Search / Mobile
-status: Planned — depends on Phase 2 (search + product pages)
+status: Active
 date_added: 2026-08-07
 ---
 

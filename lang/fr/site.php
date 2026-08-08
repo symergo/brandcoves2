@@ -10,6 +10,7 @@ return [
         'daily' => 'Trouvailles du jour',
         'guides' => "Guides d'achat",
         'surprise' => 'Surprenez-moi',
+        'scan' => 'Scanner',
         'lists' => 'Mes listes',
         'notifications' => 'Notifications',
         'sign_in' => 'Se connecter',
@@ -270,6 +271,22 @@ return [
             'vibe' => 'Correspond à l’effet recherché',
             'values' => 'Correspond à ce qui compte pour vous',
         ],
+    ],
+
+    'scan' => [
+        'title' => 'Scanner un code-barres',
+        'subtitle' => 'Vous êtes en magasin ? Scannez et voyez le prix partout ailleurs.',
+        'seo_description' => 'Scannez un code-barres et comparez le prix dans toutes les boutiques qui vendent le produit.',
+        'start' => 'Ouvrir la caméra',
+        'stop' => 'Arrêter',
+        'manual_placeholder' => 'Ou saisissez le code-barres',
+        'look_up' => 'Rechercher',
+        'shops' => 'dans :count boutiques',
+        'unsupported' => 'Ce navigateur ne peut pas scanner. Saisissez le numéro ci-dessous — il figure sous les barres.',
+        'no_camera' => 'Pas de caméra disponible, ou autorisation refusée. Saisissez le numéro ci-dessous.',
+        'invalid' => 'Ce n’est pas un code-barres valide. Vérifiez les chiffres sous les barres.',
+        'not_found' => 'Nous ne l’avons pas encore.',
+        'search_instead' => 'Chercher quand même',
     ],
 
     'surprise' => [

@@ -11,7 +11,7 @@ cannot be recovered from a diff.
 | [product-identity.md](product-identity.md) | Catalogue | Active |
 | [search.md](search.md) | Search | Active |
 | [seo.md](seo.md) | SEO / Frontend | Active |
-| [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Planned — late Phase 2 / early Phase 3 |
+| [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active |
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |

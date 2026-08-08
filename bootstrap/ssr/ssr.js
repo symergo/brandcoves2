@@ -35643,6 +35643,180 @@ function Product({ product, offers, history, alert }) {
 	] });
 }
 //#endregion
+//#region resources/js/Pages/Scan.tsx
+var Scan_exports = /* @__PURE__ */ __exportAll({ default: () => Scan });
+function Scan() {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	const videoRef = (0, import_react.useRef)(null);
+	const streamRef = (0, import_react.useRef)(null);
+	const lastCodeRef = (0, import_react.useRef)(null);
+	const [scanning, setScanning] = (0, import_react.useState)(false);
+	const [error, setError] = (0, import_react.useState)(null);
+	const [hit, setHit] = (0, import_react.useState)(null);
+	const [manual, setManual] = (0, import_react.useState)("");
+	const supported = typeof window !== "undefined" && "BarcodeDetector" in window;
+	const lookup = (0, import_react.useCallback)(async (code) => {
+		if (lastCodeRef.current === code) return;
+		lastCodeRef.current = code;
+		const response = await fetch(`/${market.key}/scan/${encodeURIComponent(code)}`, { headers: { Accept: "application/json" } });
+		setHit(await response.json());
+	}, [market.key]);
+	const stop = (0, import_react.useCallback)(() => {
+		streamRef.current?.getTracks().forEach((track) => track.stop());
+		streamRef.current = null;
+		setScanning(false);
+	}, []);
+	const start = (0, import_react.useCallback)(async () => {
+		setError(null);
+		setHit(null);
+		lastCodeRef.current = null;
+		if (!supported) {
+			setError(t("scan.unsupported"));
+			return;
+		}
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({ video: {
+				facingMode: { ideal: "environment" },
+				width: { ideal: 1280 }
+			} });
+			streamRef.current = stream;
+			if (videoRef.current) {
+				videoRef.current.srcObject = stream;
+				await videoRef.current.play();
+			}
+			setScanning(true);
+		} catch {
+			setError(t("scan.no_camera"));
+		}
+	}, [supported, t]);
+	(0, import_react.useEffect)(() => stop, [stop]);
+	(0, import_react.useEffect)(() => {
+		if (!scanning || !supported) return;
+		const detector = new window.BarcodeDetector({ formats: [
+			"ean_13",
+			"ean_8",
+			"upc_a",
+			"upc_e",
+			"itf"
+		] });
+		let cancelled = false;
+		const tick = async () => {
+			if (cancelled || !videoRef.current) return;
+			try {
+				const codes = await detector.detect(videoRef.current);
+				if (codes.length > 0) await lookup(codes[0].rawValue);
+			} catch {}
+			if (!cancelled) setTimeout(tick, 300);
+		};
+		tick();
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		scanning,
+		supported,
+		lookup
+	]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("scan.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold sm:text-3xl",
+				children: t("scan.title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-ink-soft",
+				children: t("scan.subtitle")
+			})]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mt-6 max-w-md",
+			children: [
+				!scanning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: start,
+					className: "w-full rounded bg-accent px-5 py-3 font-medium text-white",
+					children: t("scan.start")
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "space-y-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {
+						ref: videoRef,
+						className: "w-full rounded-lg border border-line bg-black",
+						muted: true,
+						playsInline: true
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: stop,
+						className: "w-full rounded border border-line px-5 py-2 text-sm",
+						children: t("scan.stop")
+					})]
+				}),
+				error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-3 text-sm text-ink-soft",
+					children: error
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+					className: "mt-6 flex gap-2",
+					onSubmit: (e) => {
+						e.preventDefault();
+						lastCodeRef.current = null;
+						if (manual.trim() !== "") lookup(manual.trim());
+					},
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						type: "text",
+						inputMode: "numeric",
+						className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
+						placeholder: t("scan.manual_placeholder"),
+						value: manual,
+						onChange: (e) => setManual(e.target.value),
+						"aria-label": t("scan.manual_placeholder")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						className: "rounded border border-line px-4 text-sm",
+						children: t("scan.look_up")
+					})]
+				})
+			]
+		}),
+		hit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+			className: "mt-8 max-w-md rounded-lg border border-line bg-card p-5",
+			children: hit.status === "found" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+				href: hit.url,
+				className: "flex gap-4",
+				children: [hit.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+					src: hit.image,
+					alt: "",
+					className: "h-24 w-24 shrink-0 object-contain"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "min-w-0",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "font-medium",
+							children: hit.title
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-lg font-semibold",
+							children: hit.price == null ? "—" : formatPrice(hit.price, market)
+						}),
+						(hit.merchantCount ?? 0) > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-sm text-ink-soft",
+							children: t("scan.shops", { count: n(hit.merchantCount ?? 0) })
+						})
+					]
+				})]
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "text-sm",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: hit.message }), hit.searchUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					href: hit.searchUrl,
+					className: "mt-2 inline-block underline",
+					children: t("scan.search_instead")
+				})]
+			})
+		})
+	] });
+}
+//#endregion
 //#region resources/js/Components/ProductCard.tsx
 /**
 * The offer-comparison card.
@@ -55899,6 +56073,10 @@ function SiteLayout({ children }) {
 			label: t("nav.surprise")
 		},
 		{
+			href: `${base}/scan`,
+			label: t("nav.scan")
+		},
+		{
 			href: `${base}/guides`,
 			label: t("nav.guides")
 		}
@@ -56023,6 +56201,7 @@ server_default((page) => createInertiaApp({
 			"./Pages/Lists/Show.tsx": Show_exports,
 			"./Pages/Notifications.tsx": Notifications_exports,
 			"./Pages/Product.tsx": Product_exports,
+			"./Pages/Scan.tsx": Scan_exports,
 			"./Pages/Search.tsx": Search_exports,
 			"./Pages/Surprise.tsx": Surprise_exports
 		}))[`./Pages/${name}.tsx`];
