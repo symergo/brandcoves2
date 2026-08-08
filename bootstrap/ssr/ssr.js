@@ -33921,6 +33921,10 @@ function Edition({ edition, challenge, finds, guide, streak, archive }) {
 				})
 			]
 		}),
+		edition.editorial.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-6 max-w-2xl space-y-3 leading-relaxed text-ink [&_a]:underline",
+			children: edition.editorial.map((paragraph, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { dangerouslySetInnerHTML: { __html: paragraph } }, i))
+		}),
 		state && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-8 rounded-lg border border-line bg-card p-5",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -35776,7 +35780,7 @@ function BarcodeScanner({ autoStart = false, onFound }) {
 				className: "space-y-3",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {
 					ref: videoRef,
-					className: "w-full rounded-lg border border-line bg-black",
+					className: "h-40 w-full rounded-lg border border-line bg-black object-cover sm:h-48",
 					muted: true,
 					playsInline: true
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -36177,14 +36181,43 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 						children: t("search.empty_hint")
 					})]
 				}) : view === "store" && lanes ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "space-y-8",
-					children: Object.entries(lanes).map(([shop, items]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-						className: "mb-3 font-medium",
-						children: shop
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						className: "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4",
-						children: items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProductCard, { group: g }, g.id))
-					})] }, shop))
+					className: "-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2",
+					children: Object.entries(lanes).map(([shop, items]) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "w-56 shrink-0 snap-start sm:w-64",
+						"aria-label": shop,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h2", {
+							className: "mb-3 truncate border-b border-line pb-2 font-medium",
+							children: [
+								shop,
+								" ",
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "text-ink-soft",
+									children: n(items.length)
+								})
+							]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "space-y-3",
+							children: items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+								href: `/${market.key}/p/${g.id}/${g.slug}`,
+								className: "flex gap-3 rounded border border-line bg-card p-2 hover:bg-cream",
+								children: [g.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+									src: g.image,
+									alt: "",
+									className: "h-14 w-14 shrink-0 object-contain",
+									loading: "lazy"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+									className: "min-w-0 flex-1",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "line-clamp-2 text-sm",
+										children: g.title
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mt-1 block text-sm font-semibold",
+										children: g.minPrice === null ? "—" : formatPrice(g.minPrice, market)
+									})]
+								})]
+							}) }, g.id))
+						})]
+					}, shop))
 				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4",
 					children: results.items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProductCard, { group: g }, g.id))

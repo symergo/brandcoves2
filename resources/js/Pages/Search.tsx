@@ -3,6 +3,7 @@ import { useState } from 'react'
 import BarcodeScanner from '../Components/BarcodeScanner'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import type { SharedProps } from '../types'
+import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Facets {
@@ -267,14 +268,65 @@ export default function Search({
                             )}
                         </div>
                     ) : view === 'store' && lanes ? (
-                        <div className="space-y-8">
+                        /*
+                         * Shops side by side, one column each.
+                         *
+                         * Stacked, this view answered "what does Krefel have"
+                         * and then, several screens later, "what does Coolblue
+                         * have" — which is two answers to one question and
+                         * defeats the point of grouping by shop at all. In
+                         * columns the comparison is the layout.
+                         *
+                         * Horizontal scroll rather than wrapping: a fourth shop
+                         * belongs beside the third, not underneath the first,
+                         * and the column width is fixed so the scroll is
+                         * legible rather than a squeeze.
+                         */
+                        <div className="-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-2">
                             {Object.entries(lanes).map(([shop, items]) => (
-                                <div key={shop}>
-                                    <h2 className="mb-3 font-medium">{shop}</h2>
-                                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                                        {items.map((g) => <ProductCard key={g.id} group={g} />)}
-                                    </div>
-                                </div>
+                                <section
+                                    key={shop}
+                                    className="w-56 shrink-0 snap-start sm:w-64"
+                                    aria-label={shop}
+                                >
+                                    <h2 className="mb-3 truncate border-b border-line pb-2 font-medium">
+                                        {shop}{' '}
+                                        <span className="text-ink-soft">{n(items.length)}</span>
+                                    </h2>
+
+                                    {/* Compact cards: in a column the price and
+                                        the title are what get compared, so the
+                                        image gives up most of its height. */}
+                                    <ul className="space-y-3">
+                                        {items.map((g) => (
+                                            <li key={g.id}>
+                                                <a
+                                                    href={`/${market.key}/p/${g.id}/${g.slug}`}
+                                                    className="flex gap-3 rounded border border-line bg-card p-2 hover:bg-cream"
+                                                >
+                                                    {g.image && (
+                                                        <img
+                                                            src={g.image}
+                                                            alt=""
+                                                            className="h-14 w-14 shrink-0 object-contain"
+                                                            loading="lazy"
+                                                        />
+                                                    )}
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="line-clamp-2 text-sm">
+                                                            {g.title}
+                                                        </span>
+                                                        <span className="mt-1 block text-sm font-semibold">
+                                                            {g.minPrice === null
+                                                                ? '—'
+                                                                : formatPrice(g.minPrice, market)}
+                                                        </span>
+                                                    </span>
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </section>
                             ))}
                         </div>
                     ) : (

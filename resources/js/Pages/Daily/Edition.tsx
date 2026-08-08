@@ -52,6 +52,8 @@ interface Props {
         theme: string
         blurb: string | null
         isToday: boolean
+        /** Paragraphs of HTML, links already resolved server-side. */
+        editorial: string[]
     }
     challenge: Challenge | null
     finds: Find[]
@@ -191,6 +193,23 @@ export default function Edition({ edition, challenge, finds, guide, streak, arch
                 <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{edition.theme}</h1>
                 {edition.blurb && <p className="mt-2 text-ink-soft">{edition.blurb}</p>}
             </header>
+
+            {/*
+              The editorial.
+
+              dangerouslySetInnerHTML, deliberately and narrowly: this HTML is
+              built by CoveMarkup, which escapes the model's text FIRST and then
+              emits only its own <a> tags pointing at allowlisted destinations.
+              The model cannot introduce a tag or a URL — see CoveMarkupTest,
+              which asserts both.
+            */}
+            {edition.editorial.length > 0 && (
+                <div className="mt-6 max-w-2xl space-y-3 leading-relaxed text-ink [&_a]:underline">
+                    {edition.editorial.map((paragraph, i) => (
+                        <p key={i} dangerouslySetInnerHTML={{ __html: paragraph }} />
+                    ))}
+                </div>
+            )}
 
             {/* ── Beat 1: the guess ─────────────────────────────────────── */}
             {state && (

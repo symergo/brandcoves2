@@ -14,6 +14,7 @@ use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
+use App\Services\Guides\CoveMarkup;
 use App\Services\Guides\GuideBuilder;
 use App\Services\Guides\TopicMiner;
 use Carbon\CarbonImmutable;
@@ -39,6 +40,7 @@ class EditionBuilder
         private readonly TopicMiner $miner,
         private readonly GuideBuilder $guides,
         private readonly ObservanceCalendar $calendar,
+        private readonly CoveMarkup $markup,
     ) {}
 
     /**
@@ -92,7 +94,9 @@ class EditionBuilder
             ]
             : $this->theme($market, $finds);
 
-        return DB::transaction(function () use ($market, $date, $finds, $challenge, $theme): DailyPickSet {
+        $editorial = $this->editorial($market, $finds, $observance, $theme['title']);
+
+        return DB::transaction(function () use ($market, $date, $finds, $challenge, $theme, $editorial): DailyPickSet {
             $edition = DailyPickSet::updateOrCreate(
                 ['market' => $market->value, 'drop_date' => $date->toDateString()],
                 [
@@ -100,6 +104,8 @@ class EditionBuilder
                     'theme_blurb' => $theme['blurb'],
                     'theme_slug' => $theme['slug'],
                     'theme_source' => $theme['source'],
+                    'editorial' => $editorial['text'],
+                    'editorial_source' => $editorial['source'],
                     'challenge_group_id' => $challenge?->id,
                     'challenge_price' => $challenge?->min_price,
                     'challenge_reveal' => null,
@@ -182,6 +188,135 @@ class EditionBuilder
          * off-theme.
          */
         return $this->spread($themed->concat($rest)->all(), $count);
+    }
+
+    /**
+     * The edition's long-form copy.
+     *
+     * This is what makes a Cove worth reading rather than scrolling. The finds
+     * are the substance; the prose is what connects them, and connecting them
+     * is a judgement a ranking function cannot make.
+     *
+     * Stored with its link tokens unresolved, so the anchors follow the market
+     * the page is read in and a product that later disappears degrades to plain
+     * text rather than leaving a dead link in a row nobody revisits.
+     *
+     * @param  list<ProductGroup>  $finds
+     * @return array{text: string|null, source: string}
+     */
+    private function editorial(Market $market, array $finds, ?Observance $observance, string $title): array
+    {
+        if (! $this->ai->isEnabled()) {
+            /*
+             * No filler.
+             *
+             * A templated paragraph that says nothing is worse than no
+             * paragraph — it costs the reader time and teaches them to skip
+             * the section permanently. The finds stand on their own.
+             */
+            return ['text' => null, 'source' => 'none'];
+        }
+
+        $allowed = $this->linkAllowlist($market, $finds);
+
+        try {
+            $response = $this->ai->json(
+                self::FEATURE,
+                $this->editorialSystem()."\n\n".$this->markup->promptContract($allowed),
+                $this->editorialPrompt($market, $finds, $observance, $title),
+                schemaHint: ['editorial' => "First paragraph.\n\nSecond paragraph."],
+                maxTokens: 1200,
+            );
+        } catch (AiUnavailable $e) {
+            Log::info('Cove editorial unavailable', ['reason' => $e->getMessage()]);
+
+            return ['text' => null, 'source' => 'none'];
+        }
+
+        $text = trim(strip_tags((string) ($response['editorial'] ?? '')));
+
+        return $text === ''
+            ? ['text' => null, 'source' => 'none']
+            : ['text' => Str::limit($text, 4000, ''), 'source' => 'ai'];
+    }
+
+    /**
+     * What the model is allowed to link to.
+     *
+     * Everything in today's edition, plus the brands behind it and the
+     * observance's own queries. Nothing else — a token outside this list is
+     * stripped to plain text by CoveMarkup, so the worst a hallucination costs
+     * is an unlinked phrase.
+     *
+     * @param  list<ProductGroup>  $finds
+     * @return array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>}
+     */
+    private function linkAllowlist(Market $market, array $finds, ?Observance $observance = null): array
+    {
+        $products = [];
+        $brands = [];
+
+        foreach ($finds as $group) {
+            $products[$group->id] = ['slug' => $group->slug, 'title' => $group->title];
+
+            if ($group->brand !== null) {
+                $brands[] = $group->brand;
+            }
+        }
+
+        $searches = array_values(array_unique(array_filter([
+            ...($observance?->queries ?? []),
+            ...array_map(fn (ProductGroup $g) => $g->category, $finds),
+        ])));
+
+        return [
+            'brands' => array_values(array_unique($brands)),
+            'searches' => $searches,
+            'products' => $products,
+        ];
+    }
+
+    private function editorialSystem(): string
+    {
+        return <<<'TXT'
+        You write the short editorial that opens a daily shopping column about
+        unusual products. Two or three paragraphs.
+
+        Voice: dry, specific, quietly amused. You are pointing at odd things and
+        explaining why they are worth a second look. You are not selling.
+
+        Rules:
+        - Only discuss the products listed below. Never invent one, and never
+          invent a price, a rating or a claim about quality.
+        - No prices at all: they change, and the page renders live ones.
+        - No "amazing", no exclamation marks, no rhetorical questions.
+        - Do not list the products in order. Pick two or three worth a sentence
+          and let the rest speak for themselves.
+        TXT;
+    }
+
+    /** @param list<ProductGroup> $finds */
+    private function editorialPrompt(Market $market, array $finds, ?Observance $observance, string $title): string
+    {
+        $lines = [];
+
+        foreach ($finds as $group) {
+            $lines[] = sprintf(
+                '- [[product:%d]] %s (%s)',
+                $group->id,
+                $group->title,
+                $group->category ?? 'uncategorised',
+            );
+        }
+
+        return implode("\n", array_filter([
+            "Language: {$market->language()}.",
+            "Today's title: {$title}",
+            $observance === null ? null : "The occasion: {$observance->key}.",
+            '',
+            "Today's finds:",
+            implode("\n", $lines),
+        ]));
     }
 
     /**

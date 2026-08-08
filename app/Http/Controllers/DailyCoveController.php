@@ -8,6 +8,7 @@ use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Guide;
 use App\Services\Cove\PriceHunt;
+use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -58,6 +59,16 @@ class DailyCoveController extends Controller
                 'theme' => $edition->theme_title,
                 'blurb' => $edition->theme_blurb,
                 'isToday' => $edition->drop_date->isToday(),
+                /*
+                 * Long-form copy, with its link tokens resolved here rather
+                 * than at write time.
+                 *
+                 * That is what lets the anchors follow the market the page is
+                 * being read in, and lets a product that has since gone out of
+                 * the catalogue degrade to plain text instead of leaving a dead
+                 * link baked into a row nobody revisits.
+                 */
+                'editorial' => $this->editorial($edition, $current),
             ],
 
             /*
@@ -99,6 +110,38 @@ class DailyCoveController extends Controller
         }
 
         return $query->where('drop_date', $parsed->toDateString())->first();
+    }
+
+    /**
+     * The edition's prose, as paragraphs of safe HTML.
+     *
+     * Every destination comes from the allowlist the builder supplied; a token
+     * naming anything else was stripped to plain text before it ever reached
+     * the database's neighbours here. See CoveMarkup.
+     *
+     * @return list<string>
+     */
+    private function editorial(DailyPickSet $edition, CurrentMarket $current): array
+    {
+        if (blank($edition->editorial)) {
+            return [];
+        }
+
+        $groups = $edition->picks
+            ->map(fn (DailyPick $pick) => $pick->group)
+            ->filter()
+            ->values();
+
+        $allowed = [
+            'brands' => $groups->pluck('brand')->filter()->unique()->values()->all(),
+            'searches' => $groups->pluck('category')->filter()->unique()->values()->all(),
+            'products' => $groups
+                ->mapWithKeys(fn ($g) => [$g->id => ['slug' => $g->slug, 'title' => $g->title]])
+                ->all(),
+        ];
+
+        return app(CoveMarkup::class)
+            ->paragraphs((string) $edition->editorial, $current->get(), $allowed)['html'];
     }
 
     /** @return array<string, mixed>|null */

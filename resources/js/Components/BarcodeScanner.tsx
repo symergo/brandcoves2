@@ -270,9 +270,19 @@ export default function BarcodeScanner({ autoStart = false, onFound }: Props) {
                     </button>
                 ) : (
                     <div className="space-y-3">
+                        {/*
+                          Deliberately small, and cropped rather than letterboxed.
+
+                          A barcode needs a few centimetres of the frame, not a
+                          whole phone screen — a large preview pushes the result
+                          and the manual field below the fold, so a successful
+                          scan appears to do nothing. Fixed height with
+                          object-cover keeps the aiming area steady whatever the
+                          camera's aspect ratio turns out to be.
+                        */}
                         <video
                             ref={videoRef}
-                            className="w-full rounded-lg border border-line bg-black"
+                            className="h-40 w-full rounded-lg border border-line bg-black object-cover sm:h-48"
                             muted
                             playsInline
                         />
