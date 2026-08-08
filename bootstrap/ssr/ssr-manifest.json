@@ -7,6 +7,12 @@
   "node_modules/@jridgewell/resolve-uri/dist/resolve-uri.mjs": [],
   "node_modules/@jridgewell/sourcemap-codec/dist/sourcemap-codec.mjs": [],
   "node_modules/@jridgewell/trace-mapping/dist/trace-mapping.mjs": [],
+  "node_modules/barcode-detector/dist/es/ponyfill.js": [
+    "/build/assets/ponyfill-DwzQoYTH.js"
+  ],
+  "node_modules/barcode-detector/dist/es/zxing-exported.js": [
+    "/build/assets/ponyfill-DwzQoYTH.js"
+  ],
   "node_modules/es-toolkit/dist/_internal/globalThis.mjs": [],
   "node_modules/es-toolkit/dist/_internal/isUnsafeProperty.mjs": [],
   "node_modules/es-toolkit/dist/compat/_internal/assignValue.mjs": [],
@@ -78,6 +84,16 @@
   "node_modules/scheduler/cjs/scheduler.development.js": [],
   "node_modules/scheduler/cjs/scheduler.production.js": [],
   "node_modules/scheduler/index.js": [],
+  "node_modules/zxing-wasm/dist/es/reader/index.js": [
+    "/build/assets/reader-BSjAMM6O.js"
+  ],
+  "node_modules/zxing-wasm/dist/es/share.js": [
+    "/build/assets/reader-BSjAMM6O.js"
+  ],
+  "node_modules/zxing-wasm/dist/reader/zxing_reader.wasm?url": [
+    "/build/assets/zxing_reader-WcExx7Sk.js",
+    "/build/assets/zxing_reader-DHMvH2D8.wasm"
+  ],
   "resources/js/Components/AlertButton.tsx": [],
   "resources/js/Components/ProductCard.tsx": [],
   "resources/js/Components/SaveToList.tsx": [],

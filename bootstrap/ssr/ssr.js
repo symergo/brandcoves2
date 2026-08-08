@@ -35645,17 +35645,50 @@ function Product({ product, offers, history, alert }) {
 //#endregion
 //#region resources/js/Pages/Scan.tsx
 var Scan_exports = /* @__PURE__ */ __exportAll({ default: () => Scan });
+var FORMATS = [
+	"ean_13",
+	"ean_8",
+	"upc_a",
+	"upc_e",
+	"itf",
+	"code_128"
+];
+/**
+* A detector that works in every browser, not just the lucky ones.
+*
+* The native `BarcodeDetector` is not a general capability: Chrome ships it on
+* Android, ChromeOS and macOS, and **not on Windows or Linux desktop**, and
+* Safari and Firefox do not ship it at all. Feature-detecting it and showing
+* "your browser cannot scan" is technically correct and useless — most desktops
+* land there, and it looks like the feature is broken.
+*
+* So: native where it exists, and a WebAssembly decoder (ZXing) everywhere
+* else. The polyfill is imported dynamically, inside the click handler, so the
+* decoder — a megabyte of wasm, 450 KB over the wire — is fetched only by
+* someone who actually pressed "scan", and never by the pages that share this
+* bundle. That is also why the button shows a preparing state: on a phone the
+* fetch is noticeable, and a button that appears to do nothing gets pressed
+* again.
+*/
+async function makeDetector() {
+	if (typeof window !== "undefined" && window.BarcodeDetector) return new window.BarcodeDetector({ formats: FORMATS });
+	const [{ BarcodeDetector: Polyfill }, { prepareZXingModule }] = await Promise.all([import("./assets/ponyfill-DwzQoYTH.js"), import("./assets/reader-BSjAMM6O.js")]);
+	const wasmUrl = (await import("./assets/zxing_reader-WcExx7Sk.js")).default;
+	prepareZXingModule({ overrides: { locateFile: () => wasmUrl } });
+	return new Polyfill({ formats: FORMATS });
+}
 function Scan() {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const videoRef = (0, import_react.useRef)(null);
 	const streamRef = (0, import_react.useRef)(null);
 	const lastCodeRef = (0, import_react.useRef)(null);
+	const detectorRef = (0, import_react.useRef)(null);
 	const [scanning, setScanning] = (0, import_react.useState)(false);
+	const [loading, setLoading] = (0, import_react.useState)(false);
 	const [error, setError] = (0, import_react.useState)(null);
 	const [hit, setHit] = (0, import_react.useState)(null);
 	const [manual, setManual] = (0, import_react.useState)("");
-	const supported = typeof window !== "undefined" && "BarcodeDetector" in window;
 	const lookup = (0, import_react.useCallback)(async (code) => {
 		if (lastCodeRef.current === code) return;
 		lastCodeRef.current = code;
@@ -35671,8 +35704,12 @@ function Scan() {
 		setError(null);
 		setHit(null);
 		lastCodeRef.current = null;
-		if (!supported) {
+		setLoading(true);
+		try {
+			detectorRef.current ??= await makeDetector();
+		} catch {
 			setError(t("scan.unsupported"));
+			setLoading(false);
 			return;
 		}
 		try {
@@ -35688,18 +35725,14 @@ function Scan() {
 			setScanning(true);
 		} catch {
 			setError(t("scan.no_camera"));
+		} finally {
+			setLoading(false);
 		}
-	}, [supported, t]);
+	}, [t]);
 	(0, import_react.useEffect)(() => stop, [stop]);
 	(0, import_react.useEffect)(() => {
-		if (!scanning || !supported) return;
-		const detector = new window.BarcodeDetector({ formats: [
-			"ean_13",
-			"ean_8",
-			"upc_a",
-			"upc_e",
-			"itf"
-		] });
+		const detector = detectorRef.current;
+		if (!scanning || detector === null) return;
 		let cancelled = false;
 		const tick = async () => {
 			if (cancelled || !videoRef.current) return;
@@ -35713,11 +35746,7 @@ function Scan() {
 		return () => {
 			cancelled = true;
 		};
-	}, [
-		scanning,
-		supported,
-		lookup
-	]);
+	}, [scanning, lookup]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("scan.title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
@@ -35736,8 +35765,9 @@ function Scan() {
 				!scanning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 					type: "button",
 					onClick: start,
-					className: "w-full rounded bg-accent px-5 py-3 font-medium text-white",
-					children: t("scan.start")
+					disabled: loading,
+					className: "w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60",
+					children: loading ? t("scan.preparing") : t("scan.start")
 				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "space-y-3",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {

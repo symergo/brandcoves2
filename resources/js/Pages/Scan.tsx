@@ -17,13 +17,59 @@ interface Hit {
     message?: string
 }
 
-/** Present in Chrome/Edge on Android and Chrome desktop. Not in Safari. */
+interface Detector {
+    detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]>
+}
+
 declare global {
     interface Window {
-        BarcodeDetector?: new (options?: { formats?: string[] }) => {
-            detect: (source: CanvasImageSource) => Promise<{ rawValue: string }[]>
-        }
+        BarcodeDetector?: new (options?: { formats?: string[] }) => Detector
     }
+}
+
+const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'code_128']
+
+/**
+ * A detector that works in every browser, not just the lucky ones.
+ *
+ * The native `BarcodeDetector` is not a general capability: Chrome ships it on
+ * Android, ChromeOS and macOS, and **not on Windows or Linux desktop**, and
+ * Safari and Firefox do not ship it at all. Feature-detecting it and showing
+ * "your browser cannot scan" is technically correct and useless — most desktops
+ * land there, and it looks like the feature is broken.
+ *
+ * So: native where it exists, and a WebAssembly decoder (ZXing) everywhere
+ * else. The polyfill is imported dynamically, inside the click handler, so the
+ * decoder — a megabyte of wasm, 450 KB over the wire — is fetched only by
+ * someone who actually pressed "scan", and never by the pages that share this
+ * bundle. That is also why the button shows a preparing state: on a phone the
+ * fetch is noticeable, and a button that appears to do nothing gets pressed
+ * again.
+ */
+async function makeDetector(): Promise<Detector> {
+    if (typeof window !== 'undefined' && window.BarcodeDetector) {
+        return new window.BarcodeDetector({ formats: FORMATS })
+    }
+
+    const [{ BarcodeDetector: Polyfill }, { prepareZXingModule }] = await Promise.all([
+        import('barcode-detector/pure'),
+        import('zxing-wasm/reader'),
+    ])
+
+    /*
+     * Serve the wasm ourselves.
+     *
+     * By default zxing-wasm fetches its binary from a public CDN, which makes a
+     * core feature depend on a third party at runtime — and fail silently when
+     * that third party is blocked, slow, or ships a different build than the JS
+     * expects. Vite fingerprints and emits the file from node_modules, so it is
+     * served from our own origin and versioned with the bundle.
+     */
+    const wasmUrl = (await import('zxing-wasm/reader/zxing_reader.wasm?url')).default
+
+    prepareZXingModule({ overrides: { locateFile: () => wasmUrl } })
+
+    return new Polyfill({ formats: FORMATS }) as Detector
 }
 
 export default function Scan() {
@@ -34,12 +80,13 @@ export default function Scan() {
     const streamRef = useRef<MediaStream | null>(null)
     const lastCodeRef = useRef<string | null>(null)
 
+    const detectorRef = useRef<Detector | null>(null)
+
     const [scanning, setScanning] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [hit, setHit] = useState<Hit | null>(null)
     const [manual, setManual] = useState('')
-
-    const supported = typeof window !== 'undefined' && 'BarcodeDetector' in window
 
     const lookup = useCallback(
         async (code: string) => {
@@ -68,9 +115,15 @@ export default function Scan() {
         setError(null)
         setHit(null)
         lastCodeRef.current = null
+        setLoading(true)
 
-        if (!supported) {
+        try {
+            // Built once and kept: the wasm decoder is expensive to construct
+            // and there is no reason to pay for it again on a second scan.
+            detectorRef.current ??= await makeDetector()
+        } catch {
             setError(t('scan.unsupported'))
+            setLoading(false)
 
             return
         }
@@ -95,19 +148,19 @@ export default function Scan() {
             // Denied, or no camera. Either way the manual field below still
             // works, so this is a message rather than a dead end.
             setError(t('scan.no_camera'))
+        } finally {
+            setLoading(false)
         }
-    }, [supported, t])
+    }, [t])
 
     // Release the camera on unmount. A page that keeps the light on after the
     // visitor has navigated away is the fastest way to lose their trust.
     useEffect(() => stop, [stop])
 
     useEffect(() => {
-        if (!scanning || !supported) return
+        const detector = detectorRef.current
 
-        const detector = new window.BarcodeDetector!({
-            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf'],
-        })
+        if (!scanning || detector === null) return
 
         let cancelled = false
 
@@ -133,7 +186,7 @@ export default function Scan() {
         return () => {
             cancelled = true
         }
-    }, [scanning, supported, lookup])
+    }, [scanning, lookup])
 
     return (
         <>
@@ -149,9 +202,10 @@ export default function Scan() {
                     <button
                         type="button"
                         onClick={start}
-                        className="w-full rounded bg-accent px-5 py-3 font-medium text-white"
+                        disabled={loading}
+                        className="w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60"
                     >
-                        {t('scan.start')}
+                        {loading ? t('scan.preparing') : t('scan.start')}
                     </button>
                 ) : (
                     <div className="space-y-3">
