@@ -124,6 +124,29 @@ class AdminPanelTest extends TestCase
     }
 
     #[Test]
+    public function an_admin_without_a_name_can_use_the_panel(): void
+    {
+        /*
+         * `users.name` is nullable — this site signs people in by magic link
+         * and a shopper never gives a name. Filament declares
+         * `getUserName(): string` and threw a TypeError on every panel page for
+         * an admin who had none, which surfaced as a 500 immediately after a
+         * successful login and read as "login is broken".
+         *
+         * Every other test in this file creates users WITH a name, which is
+         * exactly why none of them caught it.
+         */
+        $user = User::create(['email' => 'nameless@example.test', 'password' => 'password-for-testing']);
+        $user->forceFill(['is_admin' => true, 'name' => null])->save();
+
+        $this->actingAs($user->fresh())->get('/admin')->assertOk();
+
+        // Recognisably them, rather than every nameless admin sharing one
+        // placeholder.
+        $this->assertSame('nameless', $user->fresh()->getFilamentName());
+    }
+
+    #[Test]
     public function offers_and_ingestion_state_cannot_be_edited_by_hand(): void
     {
         // Offers are owned by the feeds and would be overwritten on the next

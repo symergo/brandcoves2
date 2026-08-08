@@ -35700,17 +35700,22 @@ function BarcodeScanner({ autoStart = false, onFound }) {
 	const [errorKey, setErrorKey] = (0, import_react.useState)(null);
 	const [hit, setHit] = (0, import_react.useState)(null);
 	const [manual, setManual] = (0, import_react.useState)("");
-	const lookup = (0, import_react.useCallback)(async (code) => {
-		if (lastCodeRef.current === code) return;
-		lastCodeRef.current = code;
-		const response = await fetch(`/${market.key}/scan/${encodeURIComponent(code)}`, { headers: { Accept: "application/json" } });
-		setHit(await response.json());
-	}, [market.key]);
 	const stop = (0, import_react.useCallback)(() => {
 		streamRef.current?.getTracks().forEach((track) => track.stop());
 		streamRef.current = null;
 		setScanning(false);
 	}, []);
+	const lookup = (0, import_react.useCallback)(async (code) => {
+		if (lastCodeRef.current === code) return;
+		lastCodeRef.current = code;
+		const result = await (await fetch(`/${market.key}/scan/${encodeURIComponent(code)}`, { headers: { Accept: "application/json" } })).json();
+		if (result.searchUrl) {
+			stop();
+			router.visit(result.searchUrl);
+			return;
+		}
+		setHit(result);
+	}, [market.key, stop]);
 	const start = (0, import_react.useCallback)(async () => {
 		setErrorKey(null);
 		setHit(null);

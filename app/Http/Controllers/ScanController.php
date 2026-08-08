@@ -103,6 +103,16 @@ class ScanController extends Controller
             'merchantCount' => $group->merchant_count,
             'inStock' => $group->in_stock,
             'url' => $current->url("p/{$group->id}/{$group->slug}"),
+            /*
+             * Where a scan actually lands.
+             *
+             * The search rather than the product page, and searched by the
+             * NORMALISED barcode: a camera reads a UPC-A as 12 digits, the
+             * catalogue stores 13, and sending the raw read would find nothing
+             * for every American product. Search also queries the live sources,
+             * so a scan can surface an offer that has never been ingested.
+             */
+            'searchUrl' => $current->url('search').'?q='.$gtin,
         ]);
     }
 }

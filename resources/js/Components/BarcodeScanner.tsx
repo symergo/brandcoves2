@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react'
+import { router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -114,6 +114,16 @@ export default function BarcodeScanner({ autoStart = false, onFound }: Props) {
     const [hit, setHit] = useState<Hit | null>(null)
     const [manual, setManual] = useState('')
 
+    // Declared before `lookup`, which lists it as a dependency: a `const` is in
+    // its temporal dead zone until initialised, and a dependency array is
+    // evaluated during render — so the other order throws before the component
+    // ever mounts.
+    const stop = useCallback(() => {
+        streamRef.current?.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+        setScanning(false)
+    }, [])
+
     const lookup = useCallback(
         async (code: string) => {
             // The camera fires the same barcode many times a second. Without
@@ -126,16 +136,31 @@ export default function BarcodeScanner({ autoStart = false, onFound }: Props) {
                 headers: { Accept: 'application/json' },
             })
 
-            setHit(await response.json())
-        },
-        [market.key],
-    )
+            const result: Hit = await response.json()
 
-    const stop = useCallback(() => {
-        streamRef.current?.getTracks().forEach((track) => track.stop())
-        streamRef.current = null
-        setScanning(false)
-    }, [])
+            /*
+             * A good read goes straight to the results.
+             *
+             * Someone holding a product up to a camera has asked one question —
+             * "what does this cost elsewhere" — and an intermediate card that
+             * makes them tap again to find out is a step that exists only
+             * because the code was easier to write that way.
+             *
+             * A misread stays put: the camera is still running and the next
+             * frame will probably be readable, so navigating away would throw
+             * away the attempt.
+             */
+            if (result.searchUrl) {
+                stop()
+                router.visit(result.searchUrl)
+
+                return
+            }
+
+            setHit(result)
+        },
+        [market.key, stop],
+    )
 
     const start = useCallback(async () => {
         setErrorKey(null)

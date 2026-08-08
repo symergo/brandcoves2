@@ -86,6 +86,10 @@ class MakeAdminCommand extends Command
 
         $user->forceFill([
             'email' => $email,
+            // A name so the panel has something to show. The model falls back
+            // to the email's local part anyway, but an admin created here is a
+            // person somebody knows, and a real name beats a derived one.
+            'name' => $user->name ?? Str::of($email)->before('@')->headline()->toString(),
             // Cast to `hashed` on the model, so this is not stored in the clear.
             'password' => $password,
             'is_admin' => true,

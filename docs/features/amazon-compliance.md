@@ -179,6 +179,30 @@ email with Amazon items stripped — is defensible on the same reading, but ever
 future template inherits a filter someone has to remember. A digest with
 nothing to filter cannot be got wrong later.
 
+### Link by EAN, not by offer
+
+The neat resolution: **an email link points at our own search for the barcode**,
+not at a product page and certainly not at Amazon.
+
+```
+/{market}/search?q={ean}
+```
+
+`SearchService` treats a GTIN as an exact identity *and* queries the live
+sources, so the reader lands on the full comparison — Amazon included, fetched
+live, on our page where it is licensed to appear. The email itself carries a
+number and our own words.
+
+This works because of what the email does **not** contain, so the rule that
+makes it safe has to be stated as a rule:
+
+> The email may name a product only when we hold that name from a **non-Amazon**
+> source — an Awin feed, bol, or our own editorial. An Amazon-only item gets a
+> link and no description, or is left out.
+
+A title lifted from PA-API is Product Advertising Content wherever it appears,
+and putting it next to a compliant link does not launder it.
+
 > Terms change and the EU Associates Programme differs from the US one. Read
 > the current agreement for the locales in use before the first send. This
 > document records reasoning, not legal advice.

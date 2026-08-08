@@ -46,7 +46,30 @@ class ScanTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'found')
             ->assertJsonPath('merchantCount', 3)
-            ->assertJsonPath('url', "/be-nl/p/{$group->id}/sony-wh-1000xm5");
+            ->assertJsonPath('url', "/be-nl/p/{$group->id}/sony-wh-1000xm5")
+            // Where a scan actually lands. Someone holding a product up to a
+            // camera has asked one question, and a card that makes them tap
+            // again to answer it is a step that exists only because the code
+            // was easier to write that way.
+            ->assertJsonPath('searchUrl', '/be-nl/search?q=4905524930184');
+    }
+
+    #[Test]
+    public function a_scan_always_searches_the_normalised_barcode(): void
+    {
+        $this->group('0049055249309');
+
+        /*
+         * The destination carries the NORMALISED GTIN, not what the camera
+         * read.
+         *
+         * A camera reads a UPC-A as 12 digits and the catalogue stores 13, so
+         * navigating to the raw read would land on an empty results page for
+         * every American product — with the product sitting in the database.
+         */
+        $this->getJson('/be-nl/scan/049055249309')
+            ->assertOk()
+            ->assertJsonPath('searchUrl', '/be-nl/search?q=0049055249309');
     }
 
     #[Test]
