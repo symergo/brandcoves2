@@ -35643,8 +35643,7 @@ function Product({ product, offers, history, alert }) {
 	] });
 }
 //#endregion
-//#region resources/js/Pages/Scan.tsx
-var Scan_exports = /* @__PURE__ */ __exportAll({ default: () => Scan });
+//#region resources/js/Components/BarcodeScanner.tsx
 var FORMATS = [
 	"ean_13",
 	"ean_8",
@@ -35677,7 +35676,15 @@ async function makeDetector() {
 	prepareZXingModule({ overrides: { locateFile: () => wasmUrl } });
 	return new Polyfill({ formats: FORMATS });
 }
-function Scan() {
+/**
+* The scanner itself, shared by the /scan page and the search-page dialog.
+*
+* One implementation rather than two: the camera lifecycle, the decoder
+* fallback and the frame loop are all subtle enough that a second copy would
+* drift, and the bug it drifted into would only show up on one of the two
+* surfaces.
+*/
+function BarcodeScanner({ autoStart = false, onFound }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const videoRef = (0, import_react.useRef)(null);
@@ -35750,6 +35757,112 @@ function Scan() {
 			video.srcObject = null;
 		};
 	}, [scanning, lookup]);
+	(0, import_react.useEffect)(() => {
+		if (autoStart) start();
+	}, [autoStart, start]);
+	(0, import_react.useEffect)(() => {
+		if (hit?.status === "found") onFound?.();
+	}, [hit, onFound]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "max-w-md",
+		children: [
+			!scanning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: start,
+				disabled: loading,
+				className: "w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60",
+				children: loading ? t("scan.preparing") : t("scan.start")
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "space-y-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {
+					ref: videoRef,
+					className: "w-full rounded-lg border border-line bg-black",
+					muted: true,
+					playsInline: true
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: stop,
+					className: "w-full rounded border border-line px-5 py-2 text-sm",
+					children: t("scan.stop")
+				})]
+			}),
+			errorKey && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-sm text-ink-soft",
+				children: t(errorKey)
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "mt-6 flex gap-2",
+				onSubmit: (e) => {
+					e.preventDefault();
+					lastCodeRef.current = null;
+					if (manual.trim() !== "") lookup(manual.trim());
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					type: "text",
+					inputMode: "numeric",
+					className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
+					placeholder: t("scan.manual_placeholder"),
+					value: manual,
+					onChange: (e) => setManual(e.target.value),
+					"aria-label": t("scan.manual_placeholder")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "submit",
+					className: "rounded border border-line px-4 text-sm",
+					children: t("scan.look_up")
+				})]
+			})
+		]
+	}), hit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+		className: "mt-8 max-w-md rounded-lg border border-line bg-card p-5",
+		children: hit.status === "found" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+			href: hit.url,
+			className: "flex gap-4",
+			children: [hit.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+				src: hit.image,
+				alt: "",
+				className: "h-24 w-24 shrink-0 object-contain"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "min-w-0",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "font-medium",
+						children: hit.title
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 text-lg font-semibold",
+						children: hit.price == null ? "—" : formatPrice(hit.price, market)
+					}),
+					(hit.merchantCount ?? 0) > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-ink-soft",
+						children: t("scan.shops", { count: n(hit.merchantCount ?? 0) })
+					})
+				]
+			})]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "text-sm",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: hit.message }), hit.searchUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+				href: hit.searchUrl,
+				className: "mt-2 inline-block underline",
+				children: t("scan.search_instead")
+			})]
+		})
+	})] });
+}
+//#endregion
+//#region resources/js/Pages/Scan.tsx
+var Scan_exports = /* @__PURE__ */ __exportAll({ default: () => Scan });
+/**
+* The standalone scanner page.
+*
+* Page chrome only — the scanner itself lives in a component shared with the
+* search-page dialog, because the camera lifecycle and the decoder fallback are
+* subtle enough that a second copy would drift and only break on one surface.
+*
+* No autoStart here: on a dedicated page the button IS the page, and turning a
+* camera on because someone followed a link is not a thing to do uninvited.
+*/
+function Scan() {
+	const { t } = useTranslations();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("scan.title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
@@ -35762,90 +35875,9 @@ function Scan() {
 				children: t("scan.subtitle")
 			})]
 		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "mt-6 max-w-md",
-			children: [
-				!scanning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: start,
-					disabled: loading,
-					className: "w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60",
-					children: loading ? t("scan.preparing") : t("scan.start")
-				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "space-y-3",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {
-						ref: videoRef,
-						className: "w-full rounded-lg border border-line bg-black",
-						muted: true,
-						playsInline: true
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						onClick: stop,
-						className: "w-full rounded border border-line px-5 py-2 text-sm",
-						children: t("scan.stop")
-					})]
-				}),
-				errorKey && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-3 text-sm text-ink-soft",
-					children: t(errorKey)
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-					className: "mt-6 flex gap-2",
-					onSubmit: (e) => {
-						e.preventDefault();
-						lastCodeRef.current = null;
-						if (manual.trim() !== "") lookup(manual.trim());
-					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						type: "text",
-						inputMode: "numeric",
-						className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
-						placeholder: t("scan.manual_placeholder"),
-						value: manual,
-						onChange: (e) => setManual(e.target.value),
-						"aria-label": t("scan.manual_placeholder")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "submit",
-						className: "rounded border border-line px-4 text-sm",
-						children: t("scan.look_up")
-					})]
-				})
-			]
-		}),
-		hit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
-			className: "mt-8 max-w-md rounded-lg border border-line bg-card p-5",
-			children: hit.status === "found" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
-				href: hit.url,
-				className: "flex gap-4",
-				children: [hit.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-					src: hit.image,
-					alt: "",
-					className: "h-24 w-24 shrink-0 object-contain"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "min-w-0",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "font-medium",
-							children: hit.title
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-1 text-lg font-semibold",
-							children: hit.price == null ? "—" : formatPrice(hit.price, market)
-						}),
-						(hit.merchantCount ?? 0) > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "text-sm text-ink-soft",
-							children: t("scan.shops", { count: n(hit.merchantCount ?? 0) })
-						})
-					]
-				})]
-			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "text-sm",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: hit.message }), hit.searchUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-					href: hit.searchUrl,
-					className: "mt-2 inline-block underline",
-					children: t("scan.search_instead")
-				})]
-			})
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-6",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BarcodeScanner, {})
 		})
 	] });
 }
@@ -35929,6 +35961,7 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
+	const [scannerOpen, setScannerOpen] = (0, import_react.useState)(false);
 	const base = `/${market.key}/search`;
 	/**
 	* Every filter is a link, not a form post.
@@ -35961,17 +35994,55 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 			},
 			className: "flex gap-2",
 			role: "search",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-				type: "search",
-				value: term,
-				onChange: (e) => setTerm(e.target.value),
-				placeholder: t("search.placeholder"),
-				"aria-label": t("search.title"),
-				className: "flex-1 rounded-lg border border-line bg-card px-4 py-3"
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				className: "rounded-lg bg-accent px-5 py-3 font-medium text-white hover:bg-accent-dark",
-				children: t("search.submit")
-			})]
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					type: "search",
+					value: term,
+					onChange: (e) => setTerm(e.target.value),
+					placeholder: t("search.placeholder"),
+					"aria-label": t("search.title"),
+					className: "flex-1 rounded-lg border border-line bg-card px-4 py-3"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => setScannerOpen(true),
+					className: "rounded-lg border border-line px-4 py-3",
+					"aria-label": t("scan.title"),
+					title: t("scan.title"),
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						"aria-hidden": true,
+						children: "▚"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					className: "rounded-lg bg-accent px-5 py-3 font-medium text-white hover:bg-accent-dark",
+					children: t("search.submit")
+				})
+			]
+		}),
+		scannerOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center",
+			role: "dialog",
+			"aria-modal": "true",
+			"aria-label": t("scan.title"),
+			onMouseDown: (e) => {
+				if (e.target === e.currentTarget) setScannerOpen(false);
+			},
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "w-full max-w-md rounded-lg bg-cream p-5 shadow-lg",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mb-3 flex items-baseline justify-between gap-4",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						className: "font-medium",
+						children: t("scan.title")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => setScannerOpen(false),
+						className: "text-sm text-ink-soft underline",
+						children: t("scan.close")
+					})]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BarcodeScanner, { autoStart: true })]
+			})
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]",

@@ -288,6 +288,7 @@ return [
         'stop' => 'Stop',
         'manual_placeholder' => 'Or type the barcode',
         'look_up' => 'Look up',
+        'close' => 'Close',
         'shops' => 'at :count shops',
         'preparing' => 'Getting ready…',
         'unsupported' => 'The scanner could not start. Type the number below instead — it is on the label under the bars.',
@@ -335,6 +336,35 @@ return [
 
         // The no-AI theme rotation, indexed by day of year modulo 7. Dated
         // rather than random so a rebuild of the same day is identical.
+        // Days worth building an edition around. A blurb is optional; a missing
+        // one renders as no blurb rather than as a dotted key.
+        'observances' => [
+            'hugs' => ['title' => 'Soft things day', 'blurb' => 'It is International Hug Day, so today is about things you want to touch.'],
+            'pizza' => ['title' => 'Pizza, seriously', 'blurb' => 'World Pizza Day. The kit is more interesting than you would think.'],
+            'wildlife' => ['title' => 'For watching wildlife', 'blurb' => 'World Wildlife Day — things for looking closely at animals that have not agreed to it.'],
+            'happiness' => ['title' => 'Cheerful objects', 'blurb' => 'International Day of Happiness, taken literally.'],
+            'health' => ['title' => 'Quietly good for you', 'blurb' => 'World Health Day, without the lecture.'],
+            'pets' => ['title' => 'For the animal that runs your house', 'blurb' => 'National Pet Day. They did not ask, but here we are.'],
+            'earth' => ['title' => 'Things that last', 'blurb' => 'Earth Day — objects built to be owned twice.'],
+            'books' => ['title' => 'For readers', 'blurb' => 'World Book Day, and everything around the reading rather than the books.'],
+            'bicycle' => ['title' => 'Two wheels', 'blurb' => 'World Bicycle Day. Some of this is genuinely clever.'],
+            'environment' => ['title' => 'Less rubbish', 'blurb' => 'World Environment Day — things that replace something disposable.'],
+            'music' => ['title' => 'Make some noise', 'blurb' => 'World Music Day, instruments included.'],
+            'cats' => ['title' => 'Cat day', 'blurb' => 'International Cat Day. They are aware.'],
+            'photography' => ['title' => 'For looking properly', 'blurb' => 'World Photography Day — the accessories nobody tells you about.'],
+            'coffee' => ['title' => 'The coffee rabbit hole'],
+            'peace_quiet' => ['title' => 'Peace and quiet', 'blurb' => 'International Day of Peace, interpreted as loudly as possible: things that make it stop.'],
+            'coffee_intl' => ['title' => 'International Coffee Day', 'blurb' => 'The gear, from the sensible to the excessive.'],
+            'animals' => ['title' => 'World Animal Day', 'blurb' => 'For the ones who live with you.'],
+            'food' => ['title' => 'World Food Day', 'blurb' => 'The tools, not the ingredients.'],
+            'mens_health' => ['title' => 'Grooming, unfussily'],
+            'wildlife_conservation' => ['title' => 'Watching, not disturbing'],
+            'sinterklaas' => ['title' => 'Pakjesavond', 'blurb' => 'Small things worth wrapping.'],
+            'mothers_day' => ['title' => 'For your mother', 'blurb' => 'Not a mug.'],
+            'fathers_day' => ['title' => 'For your father', 'blurb' => 'Not socks.'],
+            'black_friday' => ['title' => 'Actually cheaper', 'blurb' => 'Measured against our own price history, not a sticker.'],
+        ],
+
         'themes' => [
             'Things nobody else is selling',
             'Quietly excellent',

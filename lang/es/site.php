@@ -281,6 +281,7 @@ return [
         'stop' => 'Parar',
         'manual_placeholder' => 'O escribe el código de barras',
         'look_up' => 'Buscar',
+        'close' => 'Cerrar',
         'shops' => 'en :count tiendas',
         'preparing' => 'Preparando…',
         'unsupported' => 'El escáner no pudo iniciarse. Escribe el número de abajo: está bajo las barras.',
@@ -325,6 +326,35 @@ return [
         'guide_title' => 'La guía de hoy',
         'guide_why' => 'Escrita porque :count búsquedas aquí la pidieron.',
         'archive' => 'Ediciones anteriores',
+
+        // Days worth building an edition around. A blurb is optional; a missing
+        // one renders as no blurb rather than as a dotted key.
+        'observances' => [
+            'hugs' => ['title' => 'El día de las cosas suaves', 'blurb' => 'Es el Día Internacional del Abrazo: hoy van cosas que apetece tocar.'],
+            'pizza' => ['title' => 'Pizza, en serio', 'blurb' => 'Día Mundial de la Pizza. El equipo es más interesante de lo que parece.'],
+            'wildlife' => ['title' => 'Para observar fauna', 'blurb' => 'Día Mundial de la Naturaleza: cosas para mirar de cerca animales que no lo han pedido.'],
+            'happiness' => ['title' => 'Objetos alegres', 'blurb' => 'Día Internacional de la Felicidad, tomado al pie de la letra.'],
+            'health' => ['title' => 'Discretamente bueno para ti', 'blurb' => 'Día Mundial de la Salud, sin sermón.'],
+            'pets' => ['title' => 'Para el animal que manda en casa', 'blurb' => 'Día de las Mascotas. No lo pidieron, pero aquí estamos.'],
+            'earth' => ['title' => 'Cosas que duran', 'blurb' => 'Día de la Tierra: objetos hechos para tenerse dos veces.'],
+            'books' => ['title' => 'Para quien lee', 'blurb' => 'Día del Libro, y todo lo que lo rodea menos los libros.'],
+            'bicycle' => ['title' => 'Dos ruedas', 'blurb' => 'Día Mundial de la Bicicleta. Algunas de estas ideas son realmente buenas.'],
+            'environment' => ['title' => 'Menos basura', 'blurb' => 'Día Mundial del Medio Ambiente: cosas que sustituyen a algo desechable.'],
+            'music' => ['title' => 'Haz ruido', 'blurb' => 'Día Mundial de la Música, instrumentos incluidos.'],
+            'cats' => ['title' => 'Día del gato', 'blurb' => 'Día Internacional del Gato. Ellos ya lo saben.'],
+            'photography' => ['title' => 'Para mirar bien', 'blurb' => 'Día Mundial de la Fotografía: los accesorios de los que nadie te habla.'],
+            'coffee' => ['title' => 'La madriguera del café'],
+            'peace_quiet' => ['title' => 'Paz y silencio', 'blurb' => 'Día Internacional de la Paz, interpretado a todo volumen: cosas que hacen que pare.'],
+            'coffee_intl' => ['title' => 'Día Internacional del Café', 'blurb' => 'El equipo, de lo sensato a lo excesivo.'],
+            'animals' => ['title' => 'Día Mundial de los Animales', 'blurb' => 'Para los que viven contigo.'],
+            'food' => ['title' => 'Día Mundial de la Alimentación', 'blurb' => 'Las herramientas, no los ingredientes.'],
+            'mens_health' => ['title' => 'Cuidarse sin complicaciones'],
+            'wildlife_conservation' => ['title' => 'Observar sin molestar'],
+            'sinterklaas' => ['title' => 'San Nicolás', 'blurb' => 'Cosas pequeñas que merecen envolverse.'],
+            'mothers_day' => ['title' => 'Para tu madre', 'blurb' => 'No una taza.'],
+            'fathers_day' => ['title' => 'Para tu padre', 'blurb' => 'No calcetines.'],
+            'black_friday' => ['title' => 'Más barato de verdad', 'blurb' => 'Medido contra nuestro propio historial de precios, no contra una pegatina.'],
+        ],
 
         // The no-AI theme rotation, indexed by day of year modulo 7. Dated
         // rather than random so a rebuild of the same day is identical.

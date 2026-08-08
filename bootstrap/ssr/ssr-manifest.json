@@ -95,6 +95,7 @@
     "/build/assets/zxing_reader-DHMvH2D8.wasm"
   ],
   "resources/js/Components/AlertButton.tsx": [],
+  "resources/js/Components/BarcodeScanner.tsx": [],
   "resources/js/Components/ProductCard.tsx": [],
   "resources/js/Components/SaveToList.tsx": [],
   "resources/js/Components/Sparkline.tsx": [],

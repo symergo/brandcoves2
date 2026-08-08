@@ -281,6 +281,7 @@ return [
         'stop' => 'Arrêter',
         'manual_placeholder' => 'Ou saisissez le code-barres',
         'look_up' => 'Rechercher',
+        'close' => 'Fermer',
         'shops' => 'dans :count boutiques',
         'preparing' => 'Préparation…',
         'unsupported' => 'Le scanner n’a pas pu démarrer. Saisissez le numéro ci-dessous — il figure sous les barres.',
@@ -325,6 +326,35 @@ return [
         'guide_title' => 'Le guide du jour',
         'guide_why' => 'Écrit parce que :count recherches ici l’ont demandé.',
         'archive' => 'Éditions précédentes',
+
+        // Days worth building an edition around. A blurb is optional; a missing
+        // one renders as no blurb rather than as a dotted key.
+        'observances' => [
+            'hugs' => ['title' => 'Le jour des choses douces', 'blurb' => 'C’est la Journée internationale du câlin : aujourd’hui, des objets qu’on a envie de toucher.'],
+            'pizza' => ['title' => 'La pizza, sérieusement', 'blurb' => 'Journée mondiale de la pizza. Le matériel est plus intéressant qu’on ne croit.'],
+            'wildlife' => ['title' => 'Pour observer la faune', 'blurb' => 'Journée mondiale de la vie sauvage — de quoi regarder de près des animaux qui n’ont rien demandé.'],
+            'happiness' => ['title' => 'Objets réjouissants', 'blurb' => 'Journée internationale du bonheur, prise au pied de la lettre.'],
+            'health' => ['title' => 'Discrètement bon pour vous', 'blurb' => 'Journée mondiale de la santé, sans la leçon.'],
+            'pets' => ['title' => 'Pour l’animal qui dirige la maison', 'blurb' => 'Journée des animaux de compagnie. Ils n’ont rien demandé, et pourtant.'],
+            'earth' => ['title' => 'Ce qui dure', 'blurb' => 'Jour de la Terre — des objets faits pour être possédés deux fois.'],
+            'books' => ['title' => 'Pour les lecteurs', 'blurb' => 'Journée mondiale du livre, et tout ce qui l’entoure sauf les livres.'],
+            'bicycle' => ['title' => 'Deux roues', 'blurb' => 'Journée mondiale du vélo. Certaines de ces idées sont vraiment malignes.'],
+            'environment' => ['title' => 'Moins de déchets', 'blurb' => 'Journée mondiale de l’environnement — des objets qui remplacent du jetable.'],
+            'music' => ['title' => 'Faites du bruit', 'blurb' => 'Fête de la musique, instruments compris.'],
+            'cats' => ['title' => 'Journée du chat', 'blurb' => 'Journée internationale du chat. Ils sont au courant.'],
+            'photography' => ['title' => 'Pour bien regarder', 'blurb' => 'Journée mondiale de la photographie — les accessoires dont personne ne parle.'],
+            'coffee' => ['title' => 'Le terrier du café'],
+            'peace_quiet' => ['title' => 'La paix et le calme', 'blurb' => 'Journée internationale de la paix, interprétée bruyamment : de quoi faire cesser le bruit.'],
+            'coffee_intl' => ['title' => 'Journée internationale du café', 'blurb' => 'Le matériel, du raisonnable à l’excessif.'],
+            'animals' => ['title' => 'Journée mondiale des animaux', 'blurb' => 'Pour ceux qui vivent avec vous.'],
+            'food' => ['title' => 'Journée mondiale de l’alimentation', 'blurb' => 'Les outils, pas les ingrédients.'],
+            'mens_health' => ['title' => 'Se soigner sans chichis'],
+            'wildlife_conservation' => ['title' => 'Observer sans déranger'],
+            'sinterklaas' => ['title' => 'Saint-Nicolas', 'blurb' => 'De petites choses qui méritent un emballage.'],
+            'mothers_day' => ['title' => 'Pour votre mère', 'blurb' => 'Pas une tasse.'],
+            'fathers_day' => ['title' => 'Pour votre père', 'blurb' => 'Pas des chaussettes.'],
+            'black_friday' => ['title' => 'Vraiment moins cher', 'blurb' => 'Mesuré sur notre propre historique de prix, pas sur une étiquette.'],
+        ],
 
         // The no-AI theme rotation, indexed by day of year modulo 7. Dated
         // rather than random so a rebuild of the same day is identical.

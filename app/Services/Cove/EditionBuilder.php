@@ -17,6 +17,7 @@ use App\Services\Ai\AiUnavailable;
 use App\Services\Guides\GuideBuilder;
 use App\Services\Guides\TopicMiner;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -37,6 +38,7 @@ class EditionBuilder
         private readonly AiClient $ai,
         private readonly TopicMiner $miner,
         private readonly GuideBuilder $guides,
+        private readonly ObservanceCalendar $calendar,
     ) {}
 
     /**
@@ -52,7 +54,12 @@ class EditionBuilder
         $date = $date ?? CarbonImmutable::today();
         $perDay = (int) config('brandcoves.picks.per_day');
 
-        $finds = $this->finds($market, $perDay);
+        // A themed day gives the edition a shape the Serendipity Engine cannot
+        // invent on its own, and a reason to open a shopping page that is
+        // better than "Tuesday".
+        $observance = $this->calendar->on($date, $market);
+
+        $finds = $this->finds($market, $perDay, $observance);
 
         if (count($finds) < 3) {
             // A three-item edition is worse than no edition. Publishing a thin
@@ -67,7 +74,23 @@ class EditionBuilder
         }
 
         $challenge = $this->challenge($market, $finds);
-        $theme = $this->theme($market, $finds);
+
+        /*
+         * An observance names the day; otherwise the model (or the curated
+         * rotation) names it.
+         *
+         * The observance wins because it is a fact about the date that a reader
+         * can recognise, and a generated line competing with "International Pet
+         * Day" loses every time.
+         */
+        $theme = $observance !== null
+            ? [
+                'title' => $observance->title($market),
+                'blurb' => $observance->blurb($market),
+                'slug' => $observance->slug(),
+                'source' => 'observance',
+            ]
+            : $this->theme($market, $finds);
 
         return DB::transaction(function () use ($market, $date, $finds, $challenge, $theme): DailyPickSet {
             $edition = DailyPickSet::updateOrCreate(
@@ -119,7 +142,7 @@ class EditionBuilder
      *
      * @return list<ProductGroup>
      */
-    private function finds(Market $market, int $count): array
+    private function finds(Market $market, int $count, ?Observance $observance = null): array
     {
         $memoryDays = (int) config('brandcoves.picks.memory_days');
 
@@ -134,17 +157,65 @@ class EditionBuilder
             ->whereNotNull('group_id')
             ->pluck('group_id');
 
+        $themed = $observance === null || $observance->queries === []
+            ? collect()
+            : $this->matching($market, $observance->queries, $recent, $count);
+
+        $rest = ProductGroup::query()
+            ->forMarket($market)
+            ->presentable()
+            ->where('surprise_score', '>', 0)
+            ->whereNotIn('id', $recent)
+            ->when($themed->isNotEmpty(), fn ($q) => $q->whereNotIn('id', $themed->pluck('id')))
+            ->orderByDesc('surprise_score')
+            // Three times the target, so the set can be trimmed for variety
+            // without dropping to the bottom of the ranking.
+            ->limit($count * 3)
+            ->get();
+
+        /*
+         * Themed finds lead; the rest fill the edition.
+         *
+         * A bias, not a filter. An edition that can only show pet products on a
+         * thin catalogue day is an edition that fails to publish, and a page
+         * that did not appear is worse than one where two of seven finds are
+         * off-theme.
+         */
+        return $this->spread($themed->concat($rest)->all(), $count);
+    }
+
+    /**
+     * Surprising finds that also match the day's theme.
+     *
+     * Still gated on `surprise_score`: the point of the Cove is the find, and a
+     * themed day is a lens on that rather than a licence to show the obvious
+     * pet bed everyone has seen.
+     *
+     * @param  list<string>  $queries
+     * @param  Collection<int, int>  $recent
+     * @return Collection<int, ProductGroup>
+     */
+    private function matching(Market $market, array $queries, $recent, int $count)
+    {
+        $tsquery = implode(' OR ', array_map('trim', $queries));
+
         return ProductGroup::query()
             ->forMarket($market)
             ->presentable()
             ->where('surprise_score', '>', 0)
             ->whereNotIn('id', $recent)
+            ->whereExists(fn ($sub) => $sub
+                ->select(DB::raw(1))
+                ->from('products')
+                ->whereColumn('products.group_id', 'product_groups.id')
+                ->where('products.status', 'active')
+                ->whereRaw(
+                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
+                    [$tsquery]
+                ))
             ->orderByDesc('surprise_score')
-            // Three times the target, so the set can be trimmed for variety
-            // without dropping to the bottom of the ranking.
-            ->limit($count * 3)
-            ->get()
-            ->pipe(fn ($groups) => $this->spread($groups->all(), $count));
+            ->limit($count * 2)
+            ->get();
     }
 
     /**

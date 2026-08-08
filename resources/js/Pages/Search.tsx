@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import BarcodeScanner from '../Components/BarcodeScanner'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -42,6 +43,7 @@ export default function Search({
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [term, setTerm] = useState(q)
+    const [scannerOpen, setScannerOpen] = useState(false)
     const base = `/${market.key}/search`
 
     /**
@@ -82,10 +84,62 @@ export default function Search({
                     aria-label={t('search.title')}
                     className="flex-1 rounded-lg border border-line bg-card px-4 py-3"
                 />
+                {/*
+                  Next to the search box, not buried in the nav.
+
+                  Scanning is a way of *entering a query* — the same intent as
+                  typing, expressed with a camera — so it belongs where queries
+                  are entered. It is also the only place someone standing in a
+                  shop will look for it.
+                */}
+                <button
+                    type="button"
+                    onClick={() => setScannerOpen(true)}
+                    className="rounded-lg border border-line px-4 py-3"
+                    aria-label={t('scan.title')}
+                    title={t('scan.title')}
+                >
+                    <span aria-hidden>▚</span>
+                </button>
+
                 <button className="rounded-lg bg-accent px-5 py-3 font-medium text-white hover:bg-accent-dark">
                     {t('search.submit')}
                 </button>
             </form>
+
+            {scannerOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={t('scan.title')}
+                    // Backdrop click closes. The check keeps a click that
+                    // started inside the panel from closing it on mouse-up.
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) setScannerOpen(false)
+                    }}
+                >
+                    <div className="w-full max-w-md rounded-lg bg-cream p-5 shadow-lg">
+                        <div className="mb-3 flex items-baseline justify-between gap-4">
+                            <h2 className="font-medium">{t('scan.title')}</h2>
+                            <button
+                                type="button"
+                                onClick={() => setScannerOpen(false)}
+                                className="text-sm text-ink-soft underline"
+                            >
+                                {t('scan.close')}
+                            </button>
+                        </div>
+
+                        {/*
+                          Unmounted entirely when closed, which is what releases
+                          the camera — the component stops its own stream on
+                          unmount. Hiding it with CSS would leave the light on.
+                        */}
+                        <BarcodeScanner autoStart />
+                    </div>
+                </div>
+            )}
 
             <div className="mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]">
                 <aside aria-label={t('search.filters')} className="space-y-6 text-sm">

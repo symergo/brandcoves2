@@ -281,6 +281,7 @@ return [
         'stop' => 'Stoppen',
         'manual_placeholder' => 'Of tik de barcode in',
         'look_up' => 'Opzoeken',
+        'close' => 'Sluiten',
         'shops' => 'bij :count winkels',
         'preparing' => 'Even klaarzetten…',
         'unsupported' => 'De scanner kon niet starten. Tik het nummer hieronder in — het staat onder de streepjes.',
@@ -328,6 +329,35 @@ return [
 
         // The no-AI theme rotation, indexed by day of year modulo 7. Dated
         // rather than random so a rebuild of the same day is identical.
+        // Days worth building an edition around. A blurb is optional; a missing
+        // one renders as no blurb rather than as a dotted key.
+        'observances' => [
+            'hugs' => ['title' => 'Dag van de zachte dingen', 'blurb' => 'Het is Internationale Knuffeldag, dus vandaag gaat het over spullen die je wilt aanraken.'],
+            'pizza' => ['title' => 'Pizza, serieus', 'blurb' => 'Wereldpizzadag. Het gerei is interessanter dan je denkt.'],
+            'wildlife' => ['title' => 'Om dieren te bekijken', 'blurb' => 'Wereld Natuurdag — spullen om dieren van dichtbij te bekijken die daar niet om vroegen.'],
+            'happiness' => ['title' => 'Vrolijke voorwerpen', 'blurb' => 'Internationale Dag van het Geluk, letterlijk genomen.'],
+            'health' => ['title' => 'Stilletjes goed voor je', 'blurb' => 'Wereldgezondheidsdag, zonder het preken.'],
+            'pets' => ['title' => 'Voor het dier dat je huis bestuurt', 'blurb' => 'Dag van het Huisdier. Ze vroegen er niet om, maar hier zijn we.'],
+            'earth' => ['title' => 'Dingen die meegaan', 'blurb' => 'Dag van de Aarde — spullen die je twee keer kunt bezitten.'],
+            'books' => ['title' => 'Voor lezers', 'blurb' => 'Wereldboekendag, en alles eromheen behalve de boeken.'],
+            'bicycle' => ['title' => 'Twee wielen', 'blurb' => 'Wereldfietsdag. Sommige hiervan zijn echt slim bedacht.'],
+            'environment' => ['title' => 'Minder rommel', 'blurb' => 'Wereldmilieudag — dingen die iets wegwerpbaars vervangen.'],
+            'music' => ['title' => 'Maak wat lawaai', 'blurb' => 'Wereldmuziekdag, instrumenten inbegrepen.'],
+            'cats' => ['title' => 'Kattendag', 'blurb' => 'Internationale Kattendag. Ze weten het.'],
+            'photography' => ['title' => 'Om goed te kijken', 'blurb' => 'Wereldfotografiedag — de accessoires waar niemand je over vertelt.'],
+            'coffee' => ['title' => 'Het koffiekonijnenhol'],
+            'peace_quiet' => ['title' => 'Rust', 'blurb' => 'Internationale Dag van de Vrede, zo luid mogelijk uitgelegd: dingen die het laten ophouden.'],
+            'coffee_intl' => ['title' => 'Internationale Koffiedag', 'blurb' => 'Van verstandig tot volledig overdreven.'],
+            'animals' => ['title' => 'Werelddierendag', 'blurb' => 'Voor degenen die bij je wonen.'],
+            'food' => ['title' => 'Wereldvoedseldag', 'blurb' => 'Het gereedschap, niet de ingrediënten.'],
+            'mens_health' => ['title' => 'Verzorging, zonder gedoe'],
+            'wildlife_conservation' => ['title' => 'Kijken, niet storen'],
+            'sinterklaas' => ['title' => 'Pakjesavond', 'blurb' => 'Kleine dingen die het inpakken waard zijn.'],
+            'mothers_day' => ['title' => 'Voor je moeder', 'blurb' => 'Geen mok.'],
+            'fathers_day' => ['title' => 'Voor je vader', 'blurb' => 'Geen sokken.'],
+            'black_friday' => ['title' => 'Echt goedkoper', 'blurb' => 'Gemeten tegen onze eigen prijsgeschiedenis, niet tegen een sticker.'],
+        ],
+
         'themes' => [
             'Dingen die niemand anders verkoopt',
             'Stilletjes uitstekend',
