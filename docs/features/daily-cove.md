@@ -75,6 +75,79 @@ product's actual asset.
 And the guess is *interesting* precisely because the product is unusual — which is the Serendipity
 Engine's output. The three beats are one machine.
 
+## The calendar: a theme for every day
+
+An edition that opens with "Today's picks" and nothing else gives nobody a reason to return, so
+**every date of the year resolves to a theme**. Two mechanisms, deliberately unlike each other:
+
+| | Named days (`config/observances.php`) | Evergreen themes (`config/cove_themes.php`) |
+|---|---|---|
+| Count | ~100 | ~54 |
+| What it claims | A fact about the date | Nothing about the date |
+| Failure mode | Wrong in public, once a year, forever | None — "the desk reset" is true on any Tuesday |
+| Copy | Hand-written, checked | Hand-written, seasonal |
+
+`ObservanceCalendar::themeFor()` returns the named day if there is one and falls through to
+`ThemeRotation` otherwise. `on()` still answers the narrower "is this a *named* day?", which is what
+the "coming up" strip wants — nobody is counting down to the desk reset.
+
+### Where the named days come from, and where they do not
+
+**Not the UN international-day list.** It is the obvious source for filling 365 slots and it is the
+wrong one: a large share of it is atrocity remembrance and disease awareness — Holocaust Memorial
+Day, the Srebrenica genocide, victims of enforced disappearances, World AIDS Day. Real dates, and not
+shopping occasions. Putting "today's finds" under a genocide remembrance banner is the kind of
+mistake that ends up in a screenshot.
+
+The list is drawn from the commercial and playful calendars instead — food days, fandom days, hobby
+days, retail moments. One test decides an entry: *would a reader be pleased, rather than appalled, to
+be sold something today?*
+
+### How a date gets an evergreen theme
+
+`ThemeRotation` shuffles the themes eligible for the month with a seed of (year, month, market), then
+hands them out by day of month. Consequences worth knowing:
+
+- **Deterministic.** The same date always yields the same theme, so a plan drafted in January still
+  matches the edition built in June. `bc:plan-coves` would otherwise describe editions that never
+  appear.
+- **No repeat inside a month**, because the eligible pool is always longer than any month. A test
+  asserts this — add a seasonal theme while removing an all-year one and that is what tells you.
+- **Markets diverge.** The market is in the seed, so five markets do not run one identical calendar.
+- Sorting is by `hash(seed, key)` rather than a seeded `shuffle()`, because `mt_srand`'s sequence is
+  not guaranteed stable across PHP versions and this ordering has to survive an upgrade.
+
+### Seasonal run-ups
+
+A month tag is too coarse for the thing that actually sells: the weeks *before* an event. Nobody buys
+a Halloween costume on 31 October, and the first warm weekend in May is when a paddling pool stops
+being a silly idea. So a theme may carry a `window` of `MM-DD` dates (wrapping the year end if `to`
+precedes `from`), and while the window is open its themes take roughly **one day in three** —
+enough that the season is unmistakable, not so much that the site becomes a costume shop for a
+fortnight. Named days still win outright, so 31 October is Halloween and not its trailer.
+
+Windows in place: early summer, poolside, barbecue season, holiday packing, back to school,
+pre-Halloween, autumn indoors, the Sinterklaas run-up (`be-nl`/`nl-nl` only), gift season, and the
+January reset.
+
+The slot decision is `hash(seed, day) % 3`, not `day % 3` — modulo on the day number would put the
+seasonal slots on identical dates in every market and every year, which reads as a pattern the second
+time you look.
+
+### Copy, and what may be missing
+
+Titles are mandatory in all five markets: `Observance::title()` falls back market language → English
+→ **null**, and a theme with no title is simply not a theme, which the builder already handles. The
+one-line blurb is optional and deliberately does **not** fall back to English — a Dutch heading with
+an English sentence under it looks broken in a way a missing sentence does not. `LocalisationTest`
+exempts exactly that one key shape and nothing else.
+
+`fr` and `es` currently carry titles only. The AI editorial pass fills the prose; with `AI_ENABLED=false`
+those editions run with a title and no blurb, which is correct rather than broken.
+
+An evergreen theme is passed to the model as "today's angle … this is NOT a named day", because told
+"the occasion: cosy" a model writes "today we celebrate cosiness" and invents a holiday.
+
 ## Compliance
 
 The guessed price must come from a source that permits price storage and display in this context.

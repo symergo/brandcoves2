@@ -70,7 +70,10 @@ class EditionBuilder
         // A themed day gives the edition a shape the Serendipity Engine cannot
         // invent on its own, and a reason to open a shopping page that is
         // better than "Tuesday".
-        $observance = $this->calendar->on($date, $market);
+        // themeFor(), not on(): every date gets a theme. A named day if there is
+        // one, an evergreen theme otherwise — an edition that opens with
+        // "Today's picks" and nothing else is the reason nobody returns.
+        $observance = $this->calendar->themeFor($date, $market);
 
         $finds = $this->finds($market, $perDay, $observance, $plan);
 
@@ -107,7 +110,9 @@ class EditionBuilder
                 'title' => $observance->title($market),
                 'blurb' => $observance->blurb($market),
                 'slug' => $observance->slug(),
-                'source' => 'observance',
+                // Recorded separately so the admin can see at a glance which
+                // editions ran on a real occasion and which on the rotation.
+                'source' => $observance->evergreen ? 'theme' : 'observance',
             ],
             default => $this->theme($market, $finds),
         };
@@ -362,7 +367,14 @@ class EditionBuilder
         return implode("\n", array_filter([
             "Language: {$market->language()}.",
             "Today's title: {$title}",
-            $observance === null ? null : "The occasion: {$observance->key}.",
+            // An evergreen theme is NOT an occasion, and saying so matters:
+            // told "the occasion: cosy", the model writes "today we celebrate
+            // cosiness", inventing a holiday that does not exist.
+            match (true) {
+                $observance === null => null,
+                $observance->evergreen => "Today's angle: {$observance->key}. This is NOT a named day or holiday — do not imply the date has any significance.",
+                default => "The occasion: {$observance->key}.",
+            },
             '',
             "Today's finds:",
             implode("\n", $lines),

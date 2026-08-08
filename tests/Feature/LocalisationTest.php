@@ -78,12 +78,40 @@ class LocalisationTest extends TestCase
         foreach (['nl', 'fr', 'es'] as $language) {
             $translated = $this->flatten(require lang_path("{$language}/site.php"));
 
-            $missing = array_diff(array_keys($reference), array_keys($translated));
+            $missing = array_diff(
+                array_keys($reference),
+                array_keys($translated),
+                $this->optional(array_keys($reference)),
+            );
             $this->assertSame([], array_values($missing), "{$language} is missing: ".implode(', ', $missing));
 
             $extra = array_diff(array_keys($translated), array_keys($reference));
             $this->assertSame([], array_values($extra), "{$language} has stale keys: ".implode(', ', $extra));
         }
+    }
+
+    /**
+     * Keys a language is allowed to omit.
+     *
+     * The Cove calendar carries ~165 themes. A title is mandatory — without one
+     * the day loses its theme entirely — but the one-line blurb under it is not,
+     * and `Observance::blurb()` deliberately does NOT fall back to English: a
+     * Dutch heading with an English sentence under it looks broken in a way a
+     * missing sentence does not. So a blurb may be absent, and the editorial
+     * pass fills it in when it runs.
+     *
+     * Scoped to that one shape on purpose. Everything else is still required,
+     * because everything else is chrome that a reader sees on every page.
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    private function optional(array $keys): array
+    {
+        return array_values(array_filter(
+            $keys,
+            fn (string $key) => (bool) preg_match('/^daily\.(observances|day_themes)\.[a-z0-9_]+\.blurb$/', $key),
+        ));
     }
 
     #[Test]

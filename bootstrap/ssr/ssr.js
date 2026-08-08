@@ -34802,7 +34802,7 @@ function GuideShow({ guide, items }) {
 //#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
-function Home({ stats }) {
+function Home({ stats, today, coves }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const base = `/${market.key}`;
@@ -34834,6 +34834,120 @@ function Home({ stats }) {
 						className: "rounded-lg border border-line px-5 py-3 font-medium transition hover:border-ink",
 						children: t("home.cta_search")
 					})]
+				})
+			]
+		}),
+		today && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+			className: "mt-14",
+			"aria-labelledby": "today-heading",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "rounded-card border border-line bg-card p-6 sm:p-8",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap items-baseline gap-x-3 gap-y-1",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent",
+								children: t("home.today_badge")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("time", {
+								dateTime: today.date,
+								className: "text-sm text-ink-soft",
+								children: today.label
+							}),
+							today.hasPuzzle && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+								className: "text-sm text-ink-soft",
+								children: ["· ", t("home.today_puzzle")]
+							})
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						id: "today-heading",
+						className: "mt-3 text-2xl font-semibold tracking-tight sm:text-3xl",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							href: today.url,
+							className: "hover:text-accent",
+							children: today.theme
+						})
+					}),
+					today.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-2 max-w-2xl text-ink-soft",
+						children: today.blurb
+					}),
+					today.finds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4",
+						children: today.finds.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+							href: find.url,
+							className: "group block",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "aspect-square overflow-hidden rounded-lg bg-cream",
+									children: find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+										src: find.image,
+										alt: "",
+										loading: "lazy",
+										className: "h-full w-full object-contain transition group-hover:scale-105"
+									})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "mt-2 line-clamp-2 text-sm group-hover:text-accent",
+									children: find.title
+								}),
+								find.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "text-sm font-medium tabular-nums",
+									children: formatPrice(find.price, market)
+								})
+							]
+						}) }, find.id))
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: today.url,
+						className: "mt-6 inline-block font-medium text-accent hover:text-accent-dark",
+						children: [t("home.today_cta"), " →"]
+					})
+				]
+			})
+		}),
+		coves.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-14",
+			"aria-labelledby": "coves-heading",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-wrap items-baseline justify-between gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						id: "coves-heading",
+						className: "text-2xl font-semibold tracking-tight",
+						children: t("home.coves_heading")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: `${base}/guides`,
+						className: "text-sm font-medium text-accent hover:text-accent-dark",
+						children: [t("home.coves_all"), " →"]
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 max-w-2xl text-ink-soft",
+					children: t("home.coves_intro")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+					children: coves.map((cove) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: cove.url,
+						className: "flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "font-medium",
+								children: cove.title
+							}),
+							cove.intro && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 line-clamp-3 text-sm text-ink-soft",
+								children: cove.intro
+							}),
+							cove.searches > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "mt-auto pt-3 text-xs text-ink-soft/70",
+								children: t("home.coves_volume", { count: n(cove.searches) })
+							})
+						]
+					}) }, cove.url))
 				})
 			]
 		}),

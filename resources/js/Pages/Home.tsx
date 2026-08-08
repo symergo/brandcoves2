@@ -1,6 +1,13 @@
 import { Head, Link, usePage } from '@inertiajs/react'
-import type { SharedProps } from '../types'
+import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+
+interface Cove {
+    title: string
+    intro: string | null
+    url: string
+    searches: number
+}
 
 interface Props {
     stats: {
@@ -8,9 +15,19 @@ interface Props {
         comparable: number
         guides: number
     }
+    today: {
+        theme: string
+        blurb: string | null
+        date: string
+        label: string
+        url: string
+        hasPuzzle: boolean
+        finds: { id: number; title: string; image: string | null; price: number | null; url: string }[]
+    } | null
+    coves: Cove[]
 }
 
-export default function Home({ stats }: Props) {
+export default function Home({ stats, today, coves }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
@@ -42,6 +59,102 @@ export default function Home({ stats }: Props) {
                     </Link>
                 </div>
             </section>
+
+            {today && (
+                <section className="mt-14" aria-labelledby="today-heading">
+                    <div className="rounded-card border border-line bg-card p-6 sm:p-8">
+                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">
+                                {t('home.today_badge')}
+                            </span>
+                            <time dateTime={today.date} className="text-sm text-ink-soft">
+                                {today.label}
+                            </time>
+                            {today.hasPuzzle && (
+                                <span className="text-sm text-ink-soft">· {t('home.today_puzzle')}</span>
+                            )}
+                        </div>
+
+                        <h2 id="today-heading" className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+                            <Link href={today.url} className="hover:text-accent">
+                                {today.theme}
+                            </Link>
+                        </h2>
+                        {today.blurb && <p className="mt-2 max-w-2xl text-ink-soft">{today.blurb}</p>}
+
+                        {today.finds.length > 0 && (
+                            <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                                {today.finds.map((find) => (
+                                    <li key={find.id}>
+                                        <Link href={find.url} className="group block">
+                                            <div className="aspect-square overflow-hidden rounded-lg bg-cream">
+                                                {find.image && (
+                                                    <img
+                                                        src={find.image}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        className="h-full w-full object-contain transition group-hover:scale-105"
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="mt-2 line-clamp-2 text-sm group-hover:text-accent">
+                                                {find.title}
+                                            </div>
+                                            {find.price !== null && (
+                                                <div className="text-sm font-medium tabular-nums">
+                                                    {formatPrice(find.price, market)}
+                                                </div>
+                                            )}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <Link
+                            href={today.url}
+                            className="mt-6 inline-block font-medium text-accent hover:text-accent-dark"
+                        >
+                            {t('home.today_cta')} →
+                        </Link>
+                    </div>
+                </section>
+            )}
+
+            {coves.length > 0 && (
+                <section className="mt-14" aria-labelledby="coves-heading">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight">
+                            {t('home.coves_heading')}
+                        </h2>
+                        <Link href={`${base}/guides`} className="text-sm font-medium text-accent hover:text-accent-dark">
+                            {t('home.coves_all')} →
+                        </Link>
+                    </div>
+                    <p className="mt-1 max-w-2xl text-ink-soft">{t('home.coves_intro')}</p>
+
+                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {coves.map((cove) => (
+                            <li key={cove.url}>
+                                <Link
+                                    href={cove.url}
+                                    className="flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
+                                >
+                                    <h3 className="font-medium">{cove.title}</h3>
+                                    {cove.intro && (
+                                        <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{cove.intro}</p>
+                                    )}
+                                    {cove.searches > 0 && (
+                                        <span className="mt-auto pt-3 text-xs text-ink-soft/70">
+                                            {t('home.coves_volume', { count: n(cove.searches) })}
+                                        </span>
+                                    )}
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
 
             {/*
               Real counts, not placeholders. An empty catalogue should say so —

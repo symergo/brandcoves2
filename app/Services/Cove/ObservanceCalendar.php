@@ -17,9 +17,30 @@ use Carbon\CarbonImmutable;
  */
 class ObservanceCalendar
 {
+    public function __construct(private readonly ThemeRotation $rotation) {}
+
+    /**
+     * The theme for a date — named day if there is one, otherwise evergreen.
+     *
+     * This is what the edition builder and the planner should call. `on()`
+     * answers a narrower question ("is this a *named* day?") and is what the
+     * "coming up" strip wants, because "the desk reset, in eleven days" is not
+     * something anyone is counting down to.
+     */
+    public function themeFor(CarbonImmutable $date, Market $market): ?Observance
+    {
+        return $this->on($date, $market) ?? $this->rotation->on($date, $market);
+    }
+
     public function on(CarbonImmutable $date, Market $market): ?Observance
     {
-        return $this->moving($date, $market) ?? $this->fixed($date, $market);
+        $observance = $this->moving($date, $market) ?? $this->fixed($date, $market);
+
+        // An observance with no copy is not a themed day. Returning it would
+        // put a dotted translation key on the front of an edition; returning
+        // null lets the builder fall through to the model or the rotation,
+        // which is the correct behaviour for an ordinary Tuesday anyway.
+        return $observance?->isUsable($market) === true ? $observance : null;
     }
 
     /**
