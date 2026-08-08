@@ -7,6 +7,7 @@ namespace App\Services\Discover\Retrievers;
 use App\Models\ProductGroup;
 use App\Services\Discover\Candidate;
 use App\Services\Discover\DiscoveryRequest;
+use App\Services\Discovery\CatalogueAge;
 
 /**
  * The long tail — things almost nobody stocks and almost nobody describes that way.
@@ -24,6 +25,8 @@ use App\Services\Discover\DiscoveryRequest;
  */
 class OutlierRetriever implements Retriever
 {
+    public function __construct(private readonly CatalogueAge $age) {}
+
     public function key(): string
     {
         return 'outlier';
@@ -73,18 +76,19 @@ class OutlierRetriever implements Retriever
                 // objective collapse to nothing for every candidate.
                 'relevance' => $request->hasQuery() ? 0.3 : 0.5,
                 'quality' => $group->in_stock ? 1.0 : 0.0,
-                'novelty' => $this->novelty($group),
+                'novelty' => $this->novelty($request, $group),
             ], $this->key()))
             ->values()
             ->all();
     }
 
-    private function novelty(ProductGroup $group): float
+    /**
+     * Against the catalogue's own history, not the calendar — see
+     * {@see CatalogueAge}. A bulk import stamps every product with today's date
+     * and would otherwise make the whole catalogue read as new.
+     */
+    private function novelty(DiscoveryRequest $request, ProductGroup $group): float
     {
-        if ($group->first_seen_at === null) {
-            return 0.0;
-        }
-
-        return max(0.0, min(1.0, 1.0 - ($group->first_seen_at->diffInDays(now()) / 30)));
+        return $this->age->novelty($request->market, $group->first_seen_at);
     }
 }

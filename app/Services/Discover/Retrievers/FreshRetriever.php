@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Discover\Retrievers;
 
+use App\Enums\Market;
 use App\Models\ProductGroup;
 use App\Services\Discover\Candidate;
 use App\Services\Discover\DiscoveryRequest;
+use App\Services\Discovery\CatalogueAge;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -31,6 +33,8 @@ class FreshRetriever implements Retriever
     /** The window velocity is measured over. */
     private const VELOCITY_DAYS = 14;
 
+    public function __construct(private readonly CatalogueAge $age) {}
+
     public function key(): string
     {
         return 'fresh';
@@ -53,8 +57,20 @@ class FreshRetriever implements Retriever
                 fn ($q) => $q->whereNotIn('id', $request->excludeGroupIds),
             )
             ->when($request->budgetMax !== null, fn ($q) => $q->where('min_price', '<=', $request->budgetMax))
-            ->where(function ($q) use ($rising): void {
-                $q->where('first_seen_at', '>=', now()->subDays(self::NEW_DAYS));
+            ->where(function ($q) use ($rising, $request): void {
+                /*
+                 * The pool respects the bulk-import cutoff too, not just the
+                 * scoring.
+                 *
+                 * Otherwise a freshly imported catalogue fills this mode with
+                 * forty thousand products that all score zero novelty — ranked
+                 * last, but still the only thing on the page. "Nothing is new
+                 * yet" is the honest answer and a short page is how to say it.
+                 */
+                $cutoff = $this->age->bulkImportedThrough($request->market);
+
+                $q->where('first_seen_at', '>=', now()->subDays(self::NEW_DAYS))
+                    ->when($cutoff !== null, fn ($sub) => $sub->where('first_seen_at', '>', $cutoff));
 
                 if ($rising !== []) {
                     $q->orWhereIn('id', array_keys($rising));
@@ -69,7 +85,7 @@ class FreshRetriever implements Retriever
         return $groups
             ->map(fn (ProductGroup $group) => (new Candidate($group))->withSignals([
                 'novelty' => max(
-                    $this->newness($group),
+                    $this->newness($request->market, $group),
                     $rising[$group->id] ?? 0.0,
                 ),
                 'relevance' => 0.5,
@@ -121,12 +137,16 @@ class FreshRetriever implements Retriever
         return $velocity;
     }
 
-    private function newness(ProductGroup $group): float
+    /**
+     * Measured against the catalogue's own history, not the calendar.
+     *
+     * `first_seen_at` means "we first saw it", not "it is new" — onboarding an
+     * advertiser stamps forty thousand years-old products with today's date. On
+     * a freshly imported catalogue that made every product maximally novel and
+     * turned this mode into a random sample.
+     */
+    private function newness(Market $market, ProductGroup $group): float
     {
-        if ($group->first_seen_at === null) {
-            return 0.0;
-        }
-
-        return max(0.0, min(1.0, 1.0 - ($group->first_seen_at->diffInDays(now()) / self::NEW_DAYS)));
+        return $this->age->novelty($market, $group->first_seen_at, self::NEW_DAYS);
     }
 }
