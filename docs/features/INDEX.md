@@ -13,7 +13,11 @@ cannot be recovered from a diff.
 | [seo.md](seo.md) | SEO / Frontend | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
+| [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect waits on the connector |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active |
+| [gifting-lenses.md](gifting-lenses.md) | Gifting / Core | Active |
+| [secret-santa.md](secret-santa.md) | Gifting / Social | Active |
+| [list-quiz.md](list-quiz.md) | Gifting / Growth | Active |
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | In progress |
@@ -43,3 +47,4 @@ as its own Node container, so crawlers receive fully rendered HTML. See
 | 6 | *(folded into Phase 5)* | |
 | 7 | Admin, SEO, cutover from v1 | ✅ Built — cutover not yet executed |
 | 8 | Deferred: Amazon, catalogue breadth, embeddings | |
+| 9 | Gifting lenses: recipient linking, Secret Santa, co-givers, the quiz, occasion reminders | ✅ Done |

@@ -108,6 +108,32 @@ final readonly class SearchQuery
         );
     }
 
+    /**
+     * The same query, searching for something else.
+     *
+     * Used when the box did not contain a search term at all — a pasted Amazon
+     * URL, which is rewritten to the product's title words. Filters, sort and
+     * view survive, because the visitor chose those and the paste did not
+     * change their mind about them.
+     */
+    public function withTerm(string $term): self
+    {
+        return new self(
+            market: $this->market,
+            term: trim($term),
+            minPrice: $this->minPrice,
+            maxPrice: $this->maxPrice,
+            merchantIds: $this->merchantIds,
+            brands: $this->brands,
+            inStockOnly: $this->inStockOnly,
+            discountedOnly: $this->discountedOnly,
+            comparableOnly: $this->comparableOnly,
+            sort: $this->sort,
+            page: $this->page,
+            view: $this->view,
+        );
+    }
+
     public function hasTerm(): bool
     {
         return $this->term !== '';

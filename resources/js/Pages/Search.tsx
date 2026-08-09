@@ -27,6 +27,13 @@ interface Props {
     }
     lanes: Record<string, GroupCard[]> | null
     emptyBecauseOfFilters: boolean
+    /** Set when the search box held an Amazon URL rather than a search term. */
+    pastedLink: {
+        asin: string | null
+        terms: string
+        shortlink: boolean
+        usable: boolean
+    } | null
     /** Indexable prose built from what this query actually found. Null on thin pages. */
     intro: {
         lead: string
@@ -49,6 +56,7 @@ export default function Search({
     results,
     lanes,
     emptyBecauseOfFilters,
+    pastedLink,
     intro,
     brandLinks,
     narrative,
@@ -135,6 +143,24 @@ export default function Search({
                     {t('search.submit')}
                 </button>
             </form>
+
+            {/*
+              What we made of a pasted Amazon link.
+
+              Directly under the box, because the query that ran is not the text
+              that was pasted. Without this the page is unreadable: a grid of
+              headphones under a URL gives no way to tell whether we found *that*
+              product or something sharing a word with it.
+            */}
+            {pastedLink && (
+                <p className="mt-3 rounded-lg border border-line bg-cream px-4 py-3 text-sm text-ink-soft">
+                    {pastedLink.shortlink
+                        ? t('search.pasted_shortlink')
+                        : pastedLink.usable
+                          ? t('search.pasted_searched', { terms: pastedLink.terms })
+                          : t('search.pasted_unreadable')}
+                </p>
+            )}
 
             {scannerOpen && (
                 <div

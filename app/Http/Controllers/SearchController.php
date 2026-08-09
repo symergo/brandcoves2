@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\AmazonProduct;
+use App\Models\Event;
 use App\Models\ProductGroup;
+use App\Services\Search\AmazonLink;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
@@ -14,6 +17,7 @@ use App\Services\Seo\PageNarrative;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Number;
 use Inertia\Inertia;
@@ -21,9 +25,33 @@ use Inertia\Response;
 
 class SearchController extends Controller
 {
-    public function __invoke(Request $request, CurrentMarket $current, SearchService $search): Response
+    public function __invoke(Request $request, CurrentMarket $current, SearchService $search): Response|RedirectResponse
     {
         $query = SearchQuery::fromRequest($request, $current->get());
+
+        /*
+         * A pasted Amazon URL is a search term too.
+         *
+         * Handled here rather than in a second input, because the box someone
+         * pastes into is whichever one is nearest, and that is the search field.
+         */
+        $link = AmazonLink::parse($query->term);
+
+        if ($link !== null) {
+            $known = $this->knownAsin($link);
+
+            if (($landing = $this->productFor($known, $current)) !== null) {
+                return redirect()->to($landing);
+            }
+
+            /*
+             * The classified title beats the URL slug when we have it: it is the
+             * product's real name rather than a marketing string with the colour
+             * and the pack size welded on.
+             */
+            $query = $query->withTerm($known?->classified_title ?: $link->terms);
+        }
+
         $result = $search->search($query);
 
         $this->seo($query, $result, $current);
@@ -40,6 +68,16 @@ class SearchController extends Controller
                 : null,
             'intro' => $this->intro($query, $result, $current),
             'emptyBecauseOfFilters' => $result->emptyBecauseOfFilters(),
+
+            /*
+             * What we made of a pasted link, if the box held one.
+             *
+             * Shown to the visitor because the query they typed is not the query
+             * that ran, and a page of results under a URL they pasted is
+             * otherwise unreadable — they cannot tell whether we found *that*
+             * product or something that happens to share a word with it.
+             */
+            'pastedLink' => $this->pastedLink($link, $query),
 
             /*
              * Brand pages for the brands on this page.
@@ -67,6 +105,84 @@ class SearchController extends Controller
              */
             'narrative' => $this->narrative($query, $result),
         ]);
+    }
+
+    /**
+     * What we already know about a pasted ASIN.
+     *
+     * `amazon_products` is the decision store the compliance rule requires: the
+     * ASIN, what we classified it as, and the identity it resolved to. One hit on
+     * a unique index, and only when the URL actually carried an ASIN.
+     *
+     * Empty until the connector runs, which is why the slug path is the one that
+     * works today and not a fallback.
+     */
+    private function knownAsin(AmazonLink $link): ?AmazonProduct
+    {
+        return $link->asin === null
+            ? null
+            : AmazonProduct::query()->where('asin', $link->asin)->first();
+    }
+
+    /**
+     * The product page for a pasted ASIN, when we hold the same physical product.
+     *
+     * `amazon_products.identity_key` is the bridge: it is the same key
+     * `product_groups` is unique on per market, so an Amazon product we have
+     * classified points straight at the group the other shops' offers hang off.
+     * That page is the answer to the question the paste was asking.
+     *
+     * Market-scoped, per invariant 2. A group in another market is a different
+     * product with different tax and shipping, and landing someone on it would
+     * be showing them a price they cannot pay.
+     */
+    private function productFor(?AmazonProduct $known, CurrentMarket $current): ?string
+    {
+        if ($known?->identity_key === null) {
+            return null;
+        }
+
+        $group = ProductGroup::query()
+            ->forMarket($current->get())
+            ->where('identity_key', $known->identity_key)
+            ->first();
+
+        return $group === null
+            ? null
+            : $current->url("p/{$group->id}/{$group->slug}");
+    }
+
+    /**
+     * @return array{asin: string|null, terms: string, shortlink: bool, usable: bool}|null
+     */
+    private function pastedLink(?AmazonLink $link, SearchQuery $query): ?array
+    {
+        if ($link === null) {
+            return null;
+        }
+
+        /*
+         * Recorded like a barcode miss, and for the same reason: someone has
+         * told us a product exists and that we could not identify it, which is a
+         * supply gap worth counting.
+         *
+         * The ASIN and the outcome, never the URL. A pasted Amazon link carries
+         * `ref=` breadcrumbs and occasionally a session identifier, and none of
+         * that belongs in an analytics table with a 90-day life.
+         */
+        Event::record('amazon_paste', [
+            'market' => $query->market->value,
+            'asin' => $link->asin,
+            'shortlink' => $link->shortlink,
+            'searched' => $link->isUsable(),
+        ]);
+
+        return [
+            'asin' => $link->asin,
+            'terms' => $link->terms,
+            'shortlink' => $link->shortlink,
+            'usable' => $link->isUsable(),
+        ];
     }
 
     /**
