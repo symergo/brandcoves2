@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * Passwordless sign-in.
@@ -83,11 +84,34 @@ class MagicLinkController extends Controller
 
         ['token' => $token] = LoginToken::issue($email, $request->ip(), $name);
 
-        Mail::to($email)->send(new MagicLinkMail(
-            token: $token,
-            market: $current->get(),
-            requestedFrom: $request->ip(),
-        ));
+        /*
+         * A mail transport that is down must not be a stack trace.
+         *
+         * This is sent synchronously on purpose — a magic link expires in
+         * fifteen minutes, so queueing it would turn a broken transport into a
+         * page that says "check your email" while nothing ever arrives, which is
+         * the worse failure by far. The cost of sending inline is that any SMTP
+         * problem lands in the request, and it landed as a 500 on a form whose
+         * whole job is to be the way in.
+         *
+         * Reported as a validation error rather than swallowed: the person needs
+         * to know the link is not coming, and somebody needs to see it in the
+         * logs. It says nothing about whether the address has an account, so the
+         * form stays non-oracular.
+         */
+        try {
+            Mail::to($email)->send(new MagicLinkMail(
+                token: $token,
+                market: $current->get(),
+                requestedFrom: $request->ip(),
+            ));
+        } catch (TransportExceptionInterface $e) {
+            report($e);
+
+            throw ValidationException::withMessages([
+                'email' => __('site.auth.mail_failed'),
+            ]);
+        }
 
         // Deliberately identical whether or not the address has an account.
         // Anything else turns this form into an account-existence oracle.

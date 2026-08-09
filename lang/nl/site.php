@@ -348,6 +348,7 @@ return [
         'mail_ignore' => 'Heb je dit niet aangevraagd? Dan kun je deze e-mail gerust negeren, zonder de link kan niemand inloggen.',
         'mail_fallback' => 'Werkt de knop niet? Plak dit in je browser:',
         'name' => 'Je naam (optioneel)',
+        'mail_failed' => 'We konden de e-mail nu niet versturen. Probeer het zo nog eens.',
     ],
 
     'lists' => [
@@ -522,6 +523,11 @@ return [
         'open' => 'Open de quiz',
         'intro_anon' => 'Vier dingen. Een ervan staat echt op hun lijstje. Kies welke.',
     ],
+    'preview' => [
+        'badge' => 'Voorbeeld',
+        'note' => 'Dit is nog niet gepubliceerd. Niemand anders ziet het, en zoekmachines wordt gevraagd het te negeren.',
+    ],
+
     'cove' => [
         'title' => 'De Gift Cove',
         'intro' => 'Alles om voor anderen te kopen, en om te vertellen wat je zelf leuk zou vinden. Niemand ziet ooit wie wat gekocht heeft.',

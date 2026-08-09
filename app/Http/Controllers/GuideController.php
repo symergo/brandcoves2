@@ -10,6 +10,8 @@ use App\Models\GuideItem;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
+use App\Support\PreviewAccess;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -47,12 +49,15 @@ class GuideController extends Controller
         return Inertia::render('Guides/Index', ['guides' => $guides]);
     }
 
-    public function show(CurrentMarket $current, string $market, string $slug): Response
+    public function show(Request $request, CurrentMarket $current, string $market, string $slug): Response
     {
+        // An admin, or somebody holding a signed preview link, reads the draft.
+        $preview = PreviewAccess::allowed($request);
+
         $guide = Guide::query()
             ->where('market', $current->value())
             ->where('slug', $slug)
-            ->where('status', PublishStatus::Published->value)
+            ->unless($preview, fn ($query) => $query->where('status', PublishStatus::Published->value))
             ->with(['items.group'])
             ->first();
 
@@ -84,6 +89,8 @@ class GuideController extends Controller
         $this->seo($guide, $items->all(), $current);
 
         return Inertia::render('Guides/Show', [
+            // Renders a banner, and only ever true for somebody entitled to it.
+            'preview' => $preview && $guide->status !== PublishStatus::Published,
             'guide' => [
                 'title' => $guide->title,
                 'intro' => $guide->intro,
@@ -100,7 +107,7 @@ class GuideController extends Controller
     }
 
     /** @param list<array<string, mixed>> $items */
-    private function seo(Guide $guide, array $items, CurrentMarket $current): void
+    private function seo(Guide $guide, array $items, CurrentMarket $current, bool $preview = false): void
     {
         $url = url($current->url("guides/{$guide->slug}"));
         $meta = app(PageMeta::class);
@@ -112,8 +119,17 @@ class GuideController extends Controller
             // seven, and leading with one of them misrepresents it.
             image: url($current->url("og/guide/{$guide->slug}.png")),
             canonical: $url,
-            // A guide whose products have all gone out of stock is a thin page.
-            robots: $items === [] ? 'noindex, follow' : null,
+            /*
+             * A draft is never indexed, whatever else the page would say.
+             *
+             * A preview is the real page at the real URL, which is exactly what
+             * makes it useful and exactly what makes this necessary: without it
+             * a crawler following a shared preview link would put unpublished
+             * copy in the index, at the address the finished piece will use.
+             */
+            robots: $preview
+                ? 'noindex, nofollow'
+                : ($items === [] ? 'noindex, follow' : null),
         );
 
         $meta->addJsonLd(StructuredData::itemList(

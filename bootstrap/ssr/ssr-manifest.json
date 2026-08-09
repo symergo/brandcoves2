@@ -99,6 +99,7 @@
   "resources/js/Components/CoveSubscribe.tsx": [],
   "resources/js/Components/FlashMessage.tsx": [],
   "resources/js/Components/PageNarrative.tsx": [],
+  "resources/js/Components/PreviewBanner.tsx": [],
   "resources/js/Components/ProductCard.tsx": [],
   "resources/js/Components/SaveToList.tsx": [],
   "resources/js/Components/ShareMenu.tsx": [],

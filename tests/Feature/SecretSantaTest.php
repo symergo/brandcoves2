@@ -236,6 +236,48 @@ class SecretSantaTest extends TestCase
     }
 
     #[Test]
+    public function a_member_can_point_the_group_at_their_own_list(): void
+    {
+        $organiser = User::factory()->create();
+        $group = $this->group($organiser);
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $organiser->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        /*
+         * The join between the two halves of the feature. It 500'd in
+         * production on a missing import — the class was used and never
+         * referenced by any test, so nothing exercised the code path at all.
+         */
+        $this->actingAs($organiser)
+            ->post("/be-nl/santa/{$group->id}/list", ['wishlist_id' => $list->id])
+            ->assertRedirect();
+
+        $member = $group->members()->where('user_id', $organiser->id)->firstOrFail();
+        $this->assertSame($list->id, $member->wishlist_id);
+    }
+
+    #[Test]
+    public function you_cannot_attach_a_list_you_do_not_own(): void
+    {
+        $organiser = User::factory()->create();
+        $group = $this->group($organiser);
+
+        $someoneElses = Wishlist::factory()->create([
+            'owner_user_id' => User::factory()->create()->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        $this->actingAs($organiser)
+            ->post("/be-nl/santa/{$group->id}/list", ['wishlist_id' => $someoneElses->id])
+            ->assertForbidden();
+    }
+
+    #[Test]
     public function joining_after_the_draw_is_refused(): void
     {
         $group = $this->group();

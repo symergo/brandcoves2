@@ -344,6 +344,7 @@ return [
         'mail_ignore' => 'Si vous n\'êtes pas à l\'origine de cette demande, ignorez cet e-mail, personne ne peut se connecter sans le lien.',
         'mail_fallback' => 'Si le bouton ne fonctionne pas, collez ceci dans votre navigateur :',
         'name' => 'Votre nom (facultatif)',
+        'mail_failed' => "Nous n'avons pas pu envoyer l'e-mail pour le moment. Réessayez dans un instant.",
     ],
 
     'lists' => [
@@ -518,6 +519,11 @@ return [
         'open' => 'Ouvrir le quiz',
         'intro_anon' => "Quatre objets. L'un d'eux figure vraiment sur leur liste. Trouvez lequel.",
     ],
+    'preview' => [
+        'badge' => 'Aperçu',
+        'note' => "Ceci n'est pas publié. Personne d'autre ne le voit, et les moteurs de recherche sont priés de l'ignorer.",
+    ],
+
     'cove' => [
         'title' => 'La Gift Cove',
         'intro' => 'Tout pour offrir aux autres, et pour dire ce qui vous ferait plaisir. Personne ne voit jamais qui a acheté quoi.',

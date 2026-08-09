@@ -34586,6 +34586,34 @@ function Brands({ brands }) {
 	] });
 }
 //#endregion
+//#region resources/js/Components/PreviewBanner.tsx
+/**
+* "You are looking at something nobody else can see."
+*
+* Unmissable on purpose. A draft rendered by the real controller looks exactly
+* like the live page — which is the point of previewing it that way — and the
+* failure mode of that fidelity is an editor who believes a piece is published
+* because they have been reading it all afternoon.
+*/
+function PreviewBanner() {
+	const { t } = useTranslations();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		role: "status",
+		className: "mb-6 rounded-card border border-amber/50 bg-amber/10 p-4 text-sm",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", {
+				className: "font-medium",
+				children: t("preview.badge")
+			}),
+			" ",
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "text-ink-soft",
+				children: t("preview.note")
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Components/CoveSubscribe.tsx
 /**
 * Subscribe to the Daily Cove.
@@ -34674,7 +34702,7 @@ var EMOJI = {
 	cool: ["🔼", "🔽"],
 	cold: ["⬆️", "⬇️"]
 };
-function Edition({ edition, challenge, finds, guide, streak, archive }) {
+function Edition({ preview = false, edition, challenge, finds, guide, streak, archive }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [state, setState] = (0, import_react.useState)(challenge);
@@ -34753,6 +34781,7 @@ function Edition({ edition, challenge, finds, guide, streak, archive }) {
 		setTimeout(() => setCopied(false), 2e3);
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		preview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PreviewBanner, {}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: edition.theme }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "max-w-2xl",
@@ -35725,10 +35754,11 @@ function GuidesIndex({ guides }) {
 //#endregion
 //#region resources/js/Pages/Guides/Show.tsx
 var Show_exports$1 = /* @__PURE__ */ __exportAll({ default: () => GuideShow });
-function GuideShow({ guide, items }) {
+function GuideShow({ preview = false, guide, items }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		preview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PreviewBanner, {}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: guide.title }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
 			className: "max-w-3xl",

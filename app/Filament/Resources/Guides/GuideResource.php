@@ -8,6 +8,7 @@ use App\Enums\PublishStatus;
 use App\Filament\Resources\Guides\Pages\EditGuide;
 use App\Filament\Resources\Guides\Pages\ListGuides;
 use App\Models\Guide;
+use App\Support\PreviewAccess;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -108,6 +109,34 @@ class GuideResource extends Resource
                     ->url(fn (Guide $record) => url("/{$record->market->value}/guides/{$record->slug}"))
                     ->openUrlInNewTab()
                     ->icon(Heroicon::OutlinedArrowTopRightOnSquare),
+
+                /*
+                 * A link somebody without an admin account can open.
+                 *
+                 * The person whose opinion you want on the prose — a colleague,
+                 * a native speaker checking the Dutch — usually does not have
+                 * one, and the alternative has been publishing the piece to find
+                 * out whether it reads well.
+                 *
+                 * Only on a draft: a published guide is already readable by
+                 * everybody, and offering a signed link to it would imply
+                 * otherwise.
+                 */
+                Action::make('preview')
+                    ->label('Copy preview link')
+                    ->icon(Heroicon::OutlinedEye)
+                    ->visible(fn (Guide $record) => $record->status !== PublishStatus::Published)
+                    ->action(function (Guide $record): void {
+                        Notification::make()
+                            ->title('Preview link, good for 7 days')
+                            ->body(PreviewAccess::link('guides.show', [
+                                'market' => $record->market->value,
+                                'slug' => $record->slug,
+                            ]))
+                            ->persistent()
+                            ->success()
+                            ->send();
+                    }),
 
                 Action::make('unpublish')
                     ->requiresConfirmation()

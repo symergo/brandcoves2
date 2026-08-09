@@ -376,6 +376,7 @@ return [
         'mail_ignore' => 'If you did not request this, you can safely ignore this email, nobody can sign in without the link.',
         'mail_fallback' => 'If the button does not work, paste this into your browser:',
         'name' => 'Your name (optional)',
+        'mail_failed' => 'We could not send the email just now. Try again in a moment.',
     ],
 
     'lists' => [
@@ -567,6 +568,11 @@ return [
         'open' => 'Open the quiz',
         'intro_anon' => 'Four things. One of them is really on their list. Pick it.',
     ],
+    'preview' => [
+        'badge' => 'Preview',
+        'note' => 'This has not been published. Nobody else can see it, and search engines are told to ignore it.',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | The Gift Cove

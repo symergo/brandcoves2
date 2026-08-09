@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
+import PreviewBanner from '../../Components/PreviewBanner'
 import { useTranslations } from '../../useTranslations'
 import SaveToList from '../../Components/SaveToList'
 
@@ -20,6 +21,8 @@ interface Item {
 }
 
 interface Props {
+    preview?: boolean
+
     guide: {
         title: string
         intro: string | null
@@ -31,12 +34,13 @@ interface Props {
     items: Item[]
 }
 
-export default function GuideShow({ guide, items }: Props) {
+export default function GuideShow({ preview = false, guide, items }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
     return (
         <>
+            {preview && <PreviewBanner />}
             <Head title={guide.title} />
 
             <article className="max-w-3xl">

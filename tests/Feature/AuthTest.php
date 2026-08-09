@@ -14,6 +14,7 @@ use App\Models\Wishlist;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Mailer\Exception\TransportException;
 use Tests\TestCase;
 
 /**
@@ -28,6 +29,21 @@ class AuthTest extends TestCase
     {
         parent::setUp();
         Mail::fake();
+    }
+
+    #[Test]
+    public function a_mail_transport_failure_is_reported_rather_than_thrown(): void
+    {
+        Mail::shouldReceive('to->send')
+            ->andThrow(new TransportException('down'));
+
+        /*
+         * The link is sent inline because it expires in fifteen minutes, so a
+         * broken transport lands in the request. It landed as a 500 on the one
+         * form whose whole job is to be the way in.
+         */
+        $this->post('/be-nl/login', ['email' => 'someone@example.test'])
+            ->assertSessionHasErrors('email');
     }
 
     #[Test]

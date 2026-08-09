@@ -69,6 +69,21 @@ class DailyPickSet extends Model
         return $this->hasMany(ChallengeAttempt::class, 'set_id');
     }
 
+    /**
+     * Is this edition live yet?
+     *
+     * The same three conditions as the `published` scope, asked of one row.
+     * A preview banner has to know whether it is looking at a draft, and
+     * re-deriving that from `status` alone would call a scheduled-but-not-yet
+     * dropped edition published.
+     */
+    public function isPublished(): bool
+    {
+        return $this->status === PublishStatus::Published
+            && $this->published_at !== null
+            && $this->published_at->lte(now());
+    }
+
     /** @param Builder<$this> $query */
     public function scopePublished(Builder $query): void
     {

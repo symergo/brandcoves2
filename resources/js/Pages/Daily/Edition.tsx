@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
+import PreviewBanner from '../../Components/PreviewBanner'
 import { useTranslations } from '../../useTranslations'
 import CoveSubscribe from '../../Components/CoveSubscribe'
 import SaveToList from '../../Components/SaveToList'
@@ -46,6 +47,8 @@ interface Find {
 }
 
 interface Props {
+    preview?: boolean
+
     edition: {
         id: number
         date: string
@@ -78,7 +81,7 @@ const EMOJI: Record<string, [string, string]> = {
     cold: ['⬆️', '⬇️'],
 }
 
-export default function Edition({ edition, challenge, finds, guide, streak, archive }: Props) {
+export default function Edition({ preview = false, edition, challenge, finds, guide, streak, archive }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -185,6 +188,7 @@ export default function Edition({ edition, challenge, finds, guide, streak, arch
 
     return (
         <>
+            {preview && <PreviewBanner />}
             <Head title={edition.theme} />
 
             <header className="max-w-2xl">

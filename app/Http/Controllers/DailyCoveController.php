@@ -13,6 +13,7 @@ use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
+use App\Support\PreviewAccess;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -40,7 +41,11 @@ class DailyCoveController extends Controller
         string $market,
         ?string $date = null,
     ): Response {
-        $edition = $this->findEdition($current, $date);
+        // An admin, or somebody holding a signed preview link, reads a draft —
+        // including one dated tomorrow, which is the whole point of checking it.
+        $preview = PreviewAccess::allowed($request);
+
+        $edition = $this->findEdition($current, $date, $preview);
 
         if ($edition === null) {
             throw new NotFoundHttpException;
@@ -49,9 +54,11 @@ class DailyCoveController extends Controller
         $owner = Owner::fromRequest($request);
         $attempt = $hunt->existingAttempt($edition, $owner);
 
-        $this->seo($edition, $current, $date !== null);
+        $this->seo($edition, $current, $date !== null, $preview && ! $edition->isPublished());
 
         return Inertia::render('Daily/Edition', [
+            // Renders a banner, and only ever true for somebody entitled to it.
+            'preview' => $preview && ! $edition->isPublished(),
             'edition' => [
                 'id' => $edition->id,
                 'date' => $edition->drop_date->toDateString(),
@@ -86,11 +93,13 @@ class DailyCoveController extends Controller
         ]);
     }
 
-    private function findEdition(CurrentMarket $current, ?string $date): ?DailyPickSet
+    private function findEdition(CurrentMarket $current, ?string $date, bool $preview = false): ?DailyPickSet
     {
         $query = DailyPickSet::query()
             ->forMarket($current->get())
-            ->published()
+            // A preview is for the edition that has *not* dropped yet, so the
+            // published filter is exactly what has to come off.
+            ->unless($preview, fn ($q) => $q->published())
             ->with(['picks.group']);
 
         if ($date === null) {
@@ -103,9 +112,15 @@ class DailyCoveController extends Controller
             return null;
         }
 
-        // A future date is a 404, not an empty page. Guessing tomorrow's puzzle
-        // by URL would be an obvious hole in a daily game.
-        if ($parsed === false || $parsed->isFuture()) {
+        /*
+         * A future date is a 404, not an empty page: guessing tomorrow's puzzle
+         * by URL would be an obvious hole in a daily game.
+         *
+         * Unless this is a preview, where tomorrow's edition is precisely the
+         * thing being checked — and the reader is an editor rather than a
+         * player.
+         */
+        if ($parsed === false || ($parsed->isFuture() && ! $preview)) {
             return null;
         }
 
@@ -239,7 +254,7 @@ class DailyCoveController extends Controller
             ->all();
     }
 
-    private function seo(DailyPickSet $edition, CurrentMarket $current, bool $isArchive): void
+    private function seo(DailyPickSet $edition, CurrentMarket $current, bool $isArchive, bool $preview = false): void
     {
         $url = $isArchive
             ? url($current->url('daily/'.$edition->drop_date->toDateString()))

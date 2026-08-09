@@ -344,6 +344,7 @@ return [
         'mail_ignore' => 'Si no has sido tú, puedes ignorar este correo, nadie puede entrar sin el enlace.',
         'mail_fallback' => 'Si el botón no funciona, pega esto en tu navegador:',
         'name' => 'Tu nombre (opcional)',
+        'mail_failed' => 'No hemos podido enviar el correo ahora mismo. Intentalo de nuevo en un momento.',
     ],
 
     'lists' => [
@@ -518,6 +519,11 @@ return [
         'open' => 'Abrir el quiz',
         'intro_anon' => 'Cuatro cosas. Una está de verdad en su lista. Elige cuál.',
     ],
+    'preview' => [
+        'badge' => 'Vista previa',
+        'note' => 'Esto no está publicado. Nadie más lo ve, y a los buscadores se les pide que lo ignoren.',
+    ],
+
     'cove' => [
         'title' => 'La Gift Cove',
         'intro' => 'Todo para regalar a los demás, y para contar lo que te gustaría a ti. Nadie ve nunca quién ha comprado qué.',
