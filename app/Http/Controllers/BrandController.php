@@ -293,6 +293,7 @@ class BrandController extends Controller
                     'brand' => $stat->brand,
                     'count' => $total,
                 ]),
+                image: url($current->url("og/brand/{$stat->slug}.png")),
                 canonical: url($current->url("brand/{$stat->slug}")),
                 robots: $thin ? 'noindex, follow' : null,
             )

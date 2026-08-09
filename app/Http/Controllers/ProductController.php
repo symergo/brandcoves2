@@ -136,7 +136,17 @@ class ProductController extends Controller
         $meta->set(
             title: $group->title,
             description: $description,
-            image: $group->image_url,
+            /*
+             * Our card, not the merchant's photograph.
+             *
+             * A photo says nothing about the offer, arrives in whatever shape
+             * the feed happened to store, and raises a per-source question we
+             * would rather not answer one source at a time — an Amazon-sourced
+             * group may not have its imagery reused at all (invariant 6). The
+             * rendered card carries the title, the shop count and the price,
+             * which is the part worth putting in a timeline.
+             */
+            image: url($current->url("og/p/{$group->id}.png")),
             canonical: $url,
             // A product nobody stocks is a thin page; keep it out of the index
             // but keep following its links.

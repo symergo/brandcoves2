@@ -396,6 +396,12 @@ return [
         'unfollow' => 'Unfollow',
         'followed' => 'Following them now.',
         'shared_intro_anon' => 'Tap an item to mark that you are getting it. Whoever made this list will not see who claimed what.',
+        'for_me' => 'For me',
+        'for_someone_else' => 'For someone else',
+        'for_person' => 'For :name',
+        'cancel' => 'Cancel',
+        'share_heading' => 'Share this list',
+        'share_text' => 'Here is my list: :title',
     ],
 
     /*
@@ -475,6 +481,10 @@ return [
         'email_date' => 'You are exchanging on :date.',
         'email_list' => 'They have made a list. Have a look:',
         'email_no_list' => 'They have not made a list yet, so you are going in blind. We can help with that:',
+        'attach_hint' => 'Point a group at this list so whoever drew you has something to go on.',
+        'attach_list' => 'Use this list',
+        'list_attached' => 'That group now sees this list.',
+        'list_attached_short' => 'In use',
     ],
     'quiz' => [
         'title' => 'How well do you know them?',
@@ -493,6 +503,8 @@ return [
         'missed' => 'What you missed',
         'missed_hint' => 'Every one of these is something they actually want.',
         'play_again' => 'You have already played. One go each, otherwise the score means nothing.',
+        'intro_own' => 'Turn this list into a game. Four things, one of them really on it.',
+        'share_text' => 'How well do you know me?',
     ],
     'reminders' => [
         'birthday_title' => ":name's birthday is coming up",
@@ -943,5 +955,22 @@ return [
                 'description' => 'Things you did not know existed, ranked for exactly that.',
             ],
         ],
+    ],
+
+    /*
+     * Social cards. Rendered into a 1200x630 PNG by OgImage, so these are read
+     * by people scrolling a timeline rather than by a crawler: label, headline,
+     * one line of substance.
+     */
+    'og' => [
+        'default_title' => 'Discover products and brands',
+        'default_footnote' => 'brandcoves.com',
+        'product' => 'Product',
+        'guide' => 'Buying guide',
+        'guide_footnote' => ':count products, chosen and written up',
+        'brand' => 'Brand',
+        'brand_footnote' => ':products products at :shops shops',
+        'shops' => '{1} 1 shop|[2,*] :count shops',
+        'from_price' => 'from :price',
     ],
 ];

@@ -74,16 +74,24 @@
     @endisset
     @isset($meta['image'])
         <meta property="og:image" content="{{ $meta['image'] }}">
+        {{-- Declared so a platform can reserve the right space before it has
+             fetched the file. Every image a page sets is one of our own cards,
+             so the dimensions are known rather than guessed. --}}
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:image" content="{{ $meta['image'] }}">
     @else
-        {{-- The logo rather than nothing. A shared link with no image renders as
-             a bare grey rectangle in every chat app, which reads as a broken
-             page; the mark at least says whose page it is. Square, so it pairs
-             with the small `summary` card and not the wide one. --}}
-        <meta property="og:image" content="{{ asset('icons/brandcoves-512.png') }}">
-        <meta name="twitter:card" content="summary">
-        <meta name="twitter:image" content="{{ asset('icons/brandcoves-512.png') }}">
+        {{-- The generic card rather than nothing. A shared link with no image
+             renders as a bare grey rectangle in every chat app, which reads as a
+             broken page. Full width, because a page worth sharing deserves the
+             large card even when it has no picture of its own. --}}
+        @php($fallbackCard = url($market->value.'/og/default.png'))
+        <meta property="og:image" content="{{ $fallbackCard }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{ $fallbackCard }}">
     @endisset
 
     {{-- The highest-leverage SEO on the site: a Product with an AggregateOffer

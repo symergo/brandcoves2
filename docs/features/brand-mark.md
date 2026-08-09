@@ -27,19 +27,17 @@ it is there to show.
 | Home screen | `apple-touch-icon`, the 512 PNG |
 | Site header | The SVG next to the wordmark ([SiteLayout.tsx](../../resources/js/Layouts/SiteLayout.tsx)) |
 | Admin | Filament `brandLogo` and `favicon` |
-| Social cards | The 512 PNG as the `og:image` fallback |
+| Social cards | A drawn 1200×630 card, see [social-cards.md](social-cards.md) |
 
 Two small decisions inside those:
 
 - **The header mark is `aria-hidden`.** The word "Brandcoves" sits right next to it inside the same
   link, and a screen reader announcing the name twice is worse than not announcing the image at all.
   Width and height are set as attributes so the header does not reflow while it loads.
-- **The `og:image` fallback is new behaviour, not just a new file.** A shared link with no image
-  renders as a bare grey rectangle in every chat app, which reads as a broken page. The square mark
-  pairs with the small `summary` card; a page that sets its own image still wins and gets the wide
-  one.
+- **The mark is the seed of the social card**, not the card itself: [social-cards.md](social-cards.md)
+  renders the cove and the palette into a 1200×630 image per page.
 
-## Not done
+## Social cards
 
-No wide (1200×630) social image exists, so pages without their own image get the small card. That is
-correct rather than broken, but a proper OG template would earn more clicks.
+Superseded by [social-cards.md](social-cards.md): pages no longer fall back to the square mark, they
+render a real 1200×630 card with their own title on it.

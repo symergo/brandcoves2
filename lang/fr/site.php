@@ -364,6 +364,12 @@ return [
         'unfollow' => 'Ne plus suivre',
         'followed' => 'Vous les suivez maintenant.',
         'shared_intro_anon' => "Touchez un article pour indiquer que vous l'offrez. La personne qui a fait cette liste ne verra pas qui a reserve quoi.",
+        'for_me' => 'Pour moi',
+        'for_someone_else' => 'Pour quelquun dautre',
+        'for_person' => 'Pour :name',
+        'cancel' => 'Annuler',
+        'share_heading' => 'Partager cette liste',
+        'share_text' => 'Voici ma liste : :title',
     ],
 
     'recipients' => [
@@ -426,6 +432,10 @@ return [
         'email_date' => 'Vous echangez le :date.',
         'email_list' => 'Ils ont fait une liste. Jetez-y un oeil :',
         'email_no_list' => 'Ils nont pas encore fait de liste, vous partez donc a laveugle. Nous pouvons aider :',
+        'attach_hint' => 'Reliez un groupe a cette liste pour que la personne qui vous a tire ait de quoi se guider.',
+        'attach_list' => 'Utiliser cette liste',
+        'list_attached' => 'Ce groupe voit maintenant cette liste.',
+        'list_attached_short' => 'Utilisee',
     ],
     'quiz' => [
         'title' => 'Les connaissez-vous vraiment ?',
@@ -444,6 +454,8 @@ return [
         'missed' => 'Ce que vous avez rate',
         'missed_hint' => 'Chacun de ces objets leur ferait vraiment plaisir.',
         'play_again' => 'Vous avez deja joue. Une fois chacun, sinon le score ne veut rien dire.',
+        'intro_own' => 'Transformez cette liste en jeu. Quatre objets, dont un y figure vraiment.',
+        'share_text' => 'Me connaissez-vous vraiment ?',
     ],
     'reminders' => [
         'birthday_title' => "L'anniversaire de :name approche",
@@ -892,5 +904,17 @@ return [
                 'description' => 'Des choses dont vous ignoriez l’existence, classées exactement pour cela.',
             ],
         ],
+    ],
+
+    'og' => [
+        'default_title' => 'Découvrez des produits et des marques',
+        'default_footnote' => 'brandcoves.com',
+        'product' => 'Produit',
+        'guide' => 'Guide d\'achat',
+        'guide_footnote' => ':count produits, choisis et commentés',
+        'brand' => 'Marque',
+        'brand_footnote' => ':products produits chez :shops boutiques',
+        'shops' => '{1} 1 boutique|[2,*] :count boutiques',
+        'from_price' => 'à partir de :price',
     ],
 ];

@@ -364,6 +364,12 @@ return [
         'unfollow' => 'Dejar de seguir',
         'followed' => 'Ya los sigues.',
         'shared_intro_anon' => 'Toca algo para indicar que lo regalas tu. Quien hizo esta lista no vera quien ha reservado que.',
+        'for_me' => 'Para mi',
+        'for_someone_else' => 'Para otra persona',
+        'for_person' => 'Para :name',
+        'cancel' => 'Cancelar',
+        'share_heading' => 'Comparte esta lista',
+        'share_text' => 'Esta es mi lista: :title',
     ],
 
     'recipients' => [
@@ -426,6 +432,10 @@ return [
         'email_date' => 'Os hareis los regalos el :date.',
         'email_list' => 'Ha hecho una lista. Echale un vistazo:',
         'email_no_list' => 'Aun no ha hecho ninguna lista, asi que vas a ciegas. Podemos ayudarte:',
+        'attach_hint' => 'Conecta un grupo con esta lista para que quien te haya sacado tenga en que basarse.',
+        'attach_list' => 'Usar esta lista',
+        'list_attached' => 'Ese grupo ya ve esta lista.',
+        'list_attached_short' => 'En uso',
     ],
     'quiz' => [
         'title' => 'Cuanto los conoces?',
@@ -444,6 +454,8 @@ return [
         'missed' => 'Lo que has fallado',
         'missed_hint' => 'Cada una de estas cosas les gustaria de verdad.',
         'play_again' => 'Ya has jugado. Una vez cada uno, si no la puntuacion no significa nada.',
+        'intro_own' => 'Convierte esta lista en un juego. Cuatro cosas, una esta de verdad en ella.',
+        'share_text' => 'Cuanto me conoces?',
     ],
     'reminders' => [
         'birthday_title' => 'El cumpleanos de :name se acerca',
@@ -891,5 +903,17 @@ return [
                 'description' => 'Cosas que no sabías que existían, clasificadas exactamente para eso.',
             ],
         ],
+    ],
+
+    'og' => [
+        'default_title' => 'Descubre productos y marcas',
+        'default_footnote' => 'brandcoves.com',
+        'product' => 'Producto',
+        'guide' => 'Guía de compra',
+        'guide_footnote' => ':count productos, elegidos y comentados',
+        'brand' => 'Marca',
+        'brand_footnote' => ':products productos en :shops tiendas',
+        'shops' => '{1} 1 tienda|[2,*] :count tiendas',
+        'from_price' => 'desde :price',
     ],
 ];

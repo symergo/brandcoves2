@@ -20,6 +20,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ListQuizController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
@@ -144,6 +145,8 @@ Route::prefix('{market}')->group(function () {
     Route::patch('/lists/{list}', [WishlistController::class, 'update'])->name('lists.update');
     Route::delete('/lists/{list}', [WishlistController::class, 'destroy'])->name('lists.destroy');
 
+    // Where a save could go. JSON, fetched by the save picker on first open.
+    Route::get('/list-options', [WishlistItemController::class, 'options'])->name('items.options');
     Route::post('/list-items', [WishlistItemController::class, 'store'])->name('items.store');
     Route::patch('/list-items/{item}', [WishlistItemController::class, 'update'])->name('items.update');
     Route::delete('/list-items/{item}', [WishlistItemController::class, 'destroy'])->name('items.destroy');
@@ -230,6 +233,7 @@ Route::prefix('{market}')->group(function () {
         Route::post('/santa/{group}/join/{token}', [SecretSantaController::class, 'join'])->name('santa.join');
         Route::get('/santa/{group}/me/{token}', [SecretSantaController::class, 'me'])->name('santa.me');
         Route::post('/santa/{group}/me/{token}/done', [SecretSantaController::class, 'markDone'])->name('santa.done');
+        Route::post('/santa/{group}/list', [SecretSantaController::class, 'attachList'])->name('santa.list');
     });
 
     /*
@@ -403,6 +407,38 @@ Route::prefix('{market}')->group(function () {
         // rather than a link — rejected at the router, not in the database.
         ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
         ->name('brand');
+
+    /*
+    |----------------------------------------------------------------------
+    | Social cards
+    |----------------------------------------------------------------------
+    |
+    | The 1200×630 image a shared link turns into, drawn per page from the
+    | record behind it. Every route takes an id or a slug and reads its own
+    | text: an endpoint that renders words from the query string would let
+    | anyone publish "Brandcoves says ..." on our own domain.
+    |
+    | Throttled despite being cached. The cache key includes the record's
+    | updated_at, so a flood of requests for products nobody has shared is a
+    | flood of cache misses, and each miss rasterises type at 1200×630. Sixty a
+    | minute is far more than every scraper on earth needs and far less than a
+    | useful amplification vector.
+    */
+    Route::middleware('throttle:60,1')->group(function (): void {
+        Route::get('/og/default.png', [OgImageController::class, 'default'])->name('og.default');
+
+        Route::get('/og/p/{group}.png', [OgImageController::class, 'product'])
+            ->whereNumber('group')
+            ->name('og.product');
+
+        Route::get('/og/guide/{slug}.png', [OgImageController::class, 'guide'])
+            ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
+            ->name('og.guide');
+
+        Route::get('/og/brand/{slug}.png', [OgImageController::class, 'brand'])
+            ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
+            ->name('og.brand');
+    });
 
     /*
     |----------------------------------------------------------------------

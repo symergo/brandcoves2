@@ -368,6 +368,12 @@ return [
         'unfollow' => 'Ontvolgen',
         'followed' => 'Je volgt ze nu.',
         'shared_intro_anon' => 'Tik op iets om aan te geven dat jij het koopt. Wie dit lijstje maakte, ziet niet wie wat geclaimd heeft.',
+        'for_me' => 'Voor mezelf',
+        'for_someone_else' => 'Voor iemand anders',
+        'for_person' => 'Voor :name',
+        'cancel' => 'Annuleren',
+        'share_heading' => 'Deel dit lijstje',
+        'share_text' => 'Dit is mijn lijstje: :title',
     ],
 
     'recipients' => [
@@ -430,6 +436,10 @@ return [
         'email_date' => 'Jullie geven de cadeaus op :date.',
         'email_list' => 'Ze hebben een lijstje gemaakt. Kijk maar:',
         'email_no_list' => 'Ze hebben nog geen lijstje gemaakt, dus je gaat blind. Daar helpen we bij:',
+        'attach_hint' => 'Koppel een groep aan dit lijstje, zodat wie jou getrokken heeft iets heeft om op af te gaan.',
+        'attach_list' => 'Gebruik dit lijstje',
+        'list_attached' => 'Die groep ziet dit lijstje nu.',
+        'list_attached_short' => 'In gebruik',
     ],
     'quiz' => [
         'title' => 'Hoe goed ken je ze?',
@@ -448,6 +458,8 @@ return [
         'missed' => 'Wat je miste',
         'missed_hint' => 'Elk hiervan willen ze echt hebben.',
         'play_again' => 'Je hebt al gespeeld. Een keer per persoon, anders zegt de score niets.',
+        'intro_own' => 'Maak van dit lijstje een spel. Vier dingen, een ervan staat er echt op.',
+        'share_text' => 'Hoe goed ken je mij?',
     ],
     'reminders' => [
         'birthday_title' => 'De verjaardag van :name komt eraan',
@@ -894,5 +906,17 @@ return [
                 'description' => 'Dingen waarvan je niet wist dat ze bestonden, precies daarop gerangschikt.',
             ],
         ],
+    ],
+
+    'og' => [
+        'default_title' => 'Ontdek producten en merken',
+        'default_footnote' => 'brandcoves.com',
+        'product' => 'Product',
+        'guide' => 'Koopgids',
+        'guide_footnote' => ':count producten, uitgezocht en beschreven',
+        'brand' => 'Merk',
+        'brand_footnote' => ':products producten bij :shops winkels',
+        'shops' => '{1} 1 winkel|[2,*] :count winkels',
+        'from_price' => 'vanaf :price',
     ],
 ];

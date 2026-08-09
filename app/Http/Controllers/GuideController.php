@@ -108,7 +108,9 @@ class GuideController extends Controller
         $meta->set(
             title: $guide->title,
             description: $guide->meta_description ?? $guide->intro,
-            image: $items[0]['image'] ?? null,
+            // The card, not the first product's photograph: a guide is about all
+            // seven, and leading with one of them misrepresents it.
+            image: url($current->url("og/guide/{$guide->slug}.png")),
             canonical: $url,
             // A guide whose products have all gone out of stock is a thin page.
             robots: $items === [] ? 'noindex, follow' : null,
