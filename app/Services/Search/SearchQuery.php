@@ -76,15 +76,21 @@ final readonly class SearchQuery
     }
 
     /**
-     * The same query, pinned to one brand.
+     * The same query, pinned to one brand's spellings.
      *
-     * A brand page is a search with the brand preselected, and the brand comes
+     * A brand page is a search with the brand preselected, and the spellings come
      * from the resolved `brand_stats` row rather than from the URL — so this
      * REPLACES any `?brand[]=` a visitor supplied instead of adding to it.
      * Allowing both would let `/brand/sony?brand[]=Philips` render a page whose
      * copy talks about Sony and whose results are Philips.
+     *
+     * A list rather than one string because feeds disagree about punctuation:
+     * "Audio-Technica" and "Audio Technica" are one brand with one page, and
+     * filtering on a single spelling would hide half its offers.
+     *
+     * @param  list<string>  $brands
      */
-    public function withBrand(string $brand): self
+    public function withBrands(array $brands): self
     {
         return new self(
             market: $this->market,
@@ -92,7 +98,7 @@ final readonly class SearchQuery
             minPrice: $this->minPrice,
             maxPrice: $this->maxPrice,
             merchantIds: $this->merchantIds,
-            brands: [$brand],
+            brands: array_values($brands),
             inStockOnly: $this->inStockOnly,
             discountedOnly: $this->discountedOnly,
             comparableOnly: $this->comparableOnly,

@@ -6,6 +6,7 @@ namespace App\Services\Seo;
 
 use App\Enums\Market;
 use App\Models\BrandStat;
+use Illuminate\Support\Str;
 
 /**
  * Brand name → brand page URL, but only when the page exists.
@@ -72,14 +73,35 @@ class BrandLinker
         $missing = array_diff_key($wanted, $asked);
 
         if ($missing !== []) {
+            /*
+             * Matched on the slug rather than on the brand name.
+             *
+             * A card can carry any of a brand's feed spellings — "Audio-Technica"
+             * from Awin, "Audio Technica" from bol — and only one of them is the
+             * row's display name. Slugifying the wanted names and matching on
+             * that finds the page whichever spelling the card happens to hold,
+             * which is the same fold `brand_stats` was built with.
+             */
+            $slugs = [];
+
+            foreach ($missing as $lowered => $original) {
+                $slug = Str::slug($original);
+
+                if ($slug !== '') {
+                    $slugs[$slug][] = $lowered;
+                }
+            }
+
             $rows = BrandStat::query()
                 ->forMarket($market)
                 ->pageworthy()
-                ->whereIn('brand', array_values($missing))
-                ->pluck('slug', 'brand');
+                ->whereIn('slug', array_keys($slugs))
+                ->pluck('slug');
 
-            foreach ($rows as $brand => $slug) {
-                $known[mb_strtolower((string) $brand)] = '/'.$market->value.'/brand/'.$slug;
+            foreach ($rows as $slug) {
+                foreach ($slugs[$slug] ?? [] as $lowered) {
+                    $known[$lowered] = '/'.$market->value.'/brand/'.$slug;
+                }
             }
 
             foreach (array_keys($missing) as $lowered) {

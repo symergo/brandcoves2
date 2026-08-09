@@ -103,6 +103,38 @@ computed:
 Unique on `(market, slug)`, not globally — "Bosch" is a different row per market because its
 catalogue, prices and merchants differ per market, exactly as product identity does.
 
+### One row per slug, not per feed spelling
+
+The first refresh against the real catalogue failed on
+`(be-nl, audio-technica) already exists`. An Awin feed calls it "Audio-Technica", bol calls it
+"Audio Technica", and `Str::slug()` correctly folds both to the same thing. The unique index turned a
+silent wrong answer into a loud failure on the first run, which is what it was for.
+
+Two fixes were rejected before the third:
+
+- **Disambiguate the slugs** (`audio-technica-2`) — two pages that are each half a brand, one of which
+  nobody will ever link to, and a URL that depends on which spelling had more products this week.
+- **Normalise the feed at ingestion** — the feed value is what the merchant said, it is what the
+  search index is built from, and rewriting it throws away the ability to tell which merchant spells
+  it which way. Ingestion should record; presentation should decide.
+
+So the **slug is the identity** and the spellings are aliases of it. One row per `(market, slug)`,
+holding the most-stocked spelling as the display name and the rest in `aliases`, and the brand page
+filters on all of them. `/brand/audio-technica` shows every Audio-Technica product however the shop
+that listed it chose to punctuate.
+
+That is strictly more correct than the naive version rather than a workaround for it: a reader
+searching for a brand does not care about a hyphen, and a comparison site that shows them half the
+offers because two feeds disagree about punctuation has failed at its one job.
+
+The display name is chosen by product count with alphabetical tie-breaking, so it is stable across
+runs — an unstable one would rewrite every brand page's heading at random. `merchant_count` takes the
+`max()` across spellings rather than the sum: it means "how many shops carry the brand's most-carried
+product", and adding two spellings' figures would claim a breadth that does not exist.
+
+`BrandLinker` matches on the slugified name rather than the literal one, so a card carrying either
+spelling links to the same page.
+
 ### Three products, minimum
 
 `BrandStat::pageworthy()`. A page of copy about a brand with one product on it is filler, and

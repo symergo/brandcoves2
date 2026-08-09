@@ -195,6 +195,23 @@ Schedule::job(new RefreshWishlistedProducts)
     ->withoutOverlapping()
     ->onOneServer();
 
+/*
+ * Keep the editorial calendar stocked, 120 days ahead.
+ *
+ * Weekly rather than daily: it drafts a plan for every day in the window, so a
+ * daily run would add exactly one row and re-read four months of dates to do it.
+ * Weekly keeps the horizon between 113 and 120 days, which is far enough ahead
+ * for anyone planning around Christmas.
+ *
+ * Idempotent, and it never touches a row a human has looked at — an editor's
+ * rejected plan would otherwise come back every Monday.
+ */
+Schedule::command('bc:plan-coves')
+    ->name('plan-coves')
+    ->weeklyOn(1, '03:50')
+    ->withoutOverlapping()
+    ->onOneServer();
+
 // Trim price history to the retention window. Without this the table grows
 // without bound to support a 30-day median and a sparkline.
 Schedule::command('bc:prune-price-history')

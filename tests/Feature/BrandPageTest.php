@@ -19,6 +19,7 @@ use App\Models\GuideItem;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Services\Seo\BrandLinker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -354,6 +355,50 @@ class BrandPageTest extends TestCase
         // out; the page 404s because the copy would have nothing to say.
         $this->assertSame(0, BrandStat::query()->where('brand', 'Aurex')->value('product_count'));
         $this->get('/be-nl/brand/aurex')->assertNotFound();
+    }
+
+    #[Test]
+    public function two_feed_spellings_of_one_brand_share_a_page(): void
+    {
+        /*
+         * The failure that actually happened on the real catalogue: an Awin feed
+         * says "Audio-Technica", bol says "Audio Technica", and Str::slug folds
+         * both to audio-technica. The first refresh died on the unique index —
+         * which is the index doing its job.
+         *
+         * The right answer is one page showing both, not two half-pages: a reader
+         * searching for a brand does not care about a hyphen, and a comparison
+         * site that hides half the offers because two merchants punctuate
+         * differently has failed at its one job.
+         */
+        $this->seedBrand('Audio-Technica', count: 5);
+        $this->seedBrand('Audio Technica', count: 3);
+
+        $stat = BrandStat::query()->where('slug', 'audio-technica')->first();
+
+        $this->assertNotNull($stat, 'the two spellings did not fold into one row');
+        // The most-stocked spelling becomes the display name.
+        $this->assertSame('Audio-Technica', $stat->brand);
+        $this->assertSame(8, $stat->product_count);
+        $this->assertEqualsCanonicalizing(['Audio-Technica', 'Audio Technica'], $stat->brandSpellings());
+
+        // And the page shows all eight, not five.
+        $this->get('/be-nl/brand/audio-technica')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('results.total', 8));
+    }
+
+    #[Test]
+    public function a_card_carrying_either_spelling_links_to_the_same_page(): void
+    {
+        $this->seedBrand('Audio-Technica', count: 5);
+        $this->seedBrand('Audio Technica', count: 3);
+
+        $links = app(BrandLinker::class)
+            ->urls(['Audio-Technica', 'Audio Technica'], Market::BeNl);
+
+        $this->assertSame('/be-nl/brand/audio-technica', $links['audio-technica'] ?? null);
+        $this->assertSame('/be-nl/brand/audio-technica', $links['audio technica'] ?? null);
     }
 
     #[Test]

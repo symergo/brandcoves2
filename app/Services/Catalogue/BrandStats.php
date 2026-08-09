@@ -45,7 +45,8 @@ class BrandStats
                 $payload[] = [
                     'market' => $market->value,
                     'brand' => $row['brand'],
-                    'slug' => Str::slug((string) $row['brand']),
+                    'slug' => $row['slug'],
+                    'aliases' => json_encode($row['aliases']),
                     'product_count' => $row['product_count'],
                     'merchant_count' => $row['merchant_count'],
                     // Share of the market's catalogue, for ordering the index.
@@ -61,8 +62,12 @@ class BrandStats
                 ];
             }
 
-            BrandStat::query()->upsert($payload, ['market', 'brand'], [
-                'slug', 'product_count', 'merchant_count', 'share',
+            // Keyed on the slug, not the brand: `brand` is a display name that
+            // can change spelling between runs, and keying on it would insert a
+            // second row for the same slug the first time a feed's punctuation
+            // shifted — which is exactly the collision the unique index caught.
+            BrandStat::query()->upsert($payload, ['market', 'slug'], [
+                'brand', 'aliases', 'product_count', 'merchant_count', 'share',
                 'min_price', 'max_price', 'discounted_count', 'in_stock_count',
                 'best_discount_percent', 'top_merchant_id', 'top_category', 'computed_at',
             ]);
@@ -75,11 +80,11 @@ class BrandStats
          * a URL that used to work no longer does. Deleting makes that
          * unanswerable, and a brand often comes back with the next feed.
          */
-        $present = array_map(fn (array $row) => $row['brand'], $rows);
+        $present = array_map(fn (array $row) => $row['slug'], $rows);
 
         BrandStat::query()
             ->forMarket($market)
-            ->whereNotIn('brand', $present)
+            ->whereNotIn('slug', $present)
             ->update([
                 'product_count' => 0,
                 'merchant_count' => 0,
@@ -122,11 +127,33 @@ class BrandStats
             ->groupBy('brand')
             ->get();
 
-        $out = [];
+        /*
+         * Folded by slug, in PHP.
+         *
+         * An Awin feed calls it "Audio-Technica" and bol calls it "Audio
+         * Technica"; `Str::slug()` correctly folds both to one thing, and one
+         * page per slug is the right answer — a reader searching for a brand does
+         * not care about a hyphen, and showing them half the offers because two
+         * feeds disagree about punctuation is a failure at the site's one job.
+         *
+         * In PHP rather than SQL because Postgres cannot reproduce `Str::slug()`:
+         * it transliterates, and `lower(replace(...))` does not, so grouping in
+         * SQL would fold "Kärcher" differently from the links.
+         */
+        $bySlug = [];
 
         foreach ($rows as $row) {
-            $out[] = [
-                'brand' => (string) $row->brand,
+            $brand = (string) $row->brand;
+            $slug = Str::slug($brand);
+
+            if ($slug === '') {
+                // A brand whose name is entirely punctuation or emoji. Rare, and
+                // there is no URL to give it.
+                continue;
+            }
+
+            $bySlug[$slug][] = [
+                'brand' => $brand,
                 'product_count' => (int) $row->product_count,
                 'merchant_count' => (int) $row->merchant_count,
                 'min_price' => $row->min_price === null ? null : (int) $row->min_price,
@@ -134,8 +161,44 @@ class BrandStats
                 'discounted_count' => (int) $row->discounted_count,
                 'in_stock_count' => (int) $row->in_stock_count,
                 'best_discount_percent' => $row->best_discount_percent === null ? null : (int) $row->best_discount_percent,
-                'top_merchant_id' => $this->topMerchant($market, (string) $row->brand),
-                'top_category' => $this->topCategory($market, (string) $row->brand),
+            ];
+        }
+
+        $out = [];
+
+        foreach ($bySlug as $slug => $variants) {
+            // The most-stocked spelling becomes the display name. Ties broken
+            // alphabetically so the choice is stable across runs rather than
+            // depending on row order — an unstable display name would rewrite
+            // every brand page's heading at random.
+            usort($variants, fn (array $a, array $b) => [$b['product_count'], $a['brand']] <=> [$a['product_count'], $b['brand']]);
+
+            $aliases = array_map(fn (array $v) => $v['brand'], $variants);
+            $canonical = $variants[0]['brand'];
+
+            $minPrices = array_values(array_filter(array_column($variants, 'min_price'), fn ($p) => $p !== null));
+            $maxPrices = array_values(array_filter(array_column($variants, 'max_price'), fn ($p) => $p !== null));
+            $discounts = array_values(array_filter(array_column($variants, 'best_discount_percent'), fn ($p) => $p !== null));
+
+            $out[] = [
+                'brand' => $canonical,
+                'slug' => $slug,
+                // Includes the canonical spelling: the brand page filters on this
+                // array, and one that excluded the main spelling would show
+                // everything except the products people came for.
+                'aliases' => $aliases,
+                'product_count' => array_sum(array_column($variants, 'product_count')),
+                // max(), not sum(): this is "how many shops carry the brand's
+                // most-carried product", and adding two spellings' figures would
+                // claim a breadth that does not exist.
+                'merchant_count' => max(array_column($variants, 'merchant_count')),
+                'min_price' => $minPrices === [] ? null : min($minPrices),
+                'max_price' => $maxPrices === [] ? null : max($maxPrices),
+                'discounted_count' => array_sum(array_column($variants, 'discounted_count')),
+                'in_stock_count' => array_sum(array_column($variants, 'in_stock_count')),
+                'best_discount_percent' => $discounts === [] ? null : max($discounts),
+                'top_merchant_id' => $this->topMerchant($market, $aliases),
+                'top_category' => $this->topCategory($market, $aliases),
             ];
         }
 
@@ -149,12 +212,13 @@ class BrandStats
      * the copy answers is "who stocks the most of it" and one group can be sold
      * by several shops.
      */
-    private function topMerchant(Market $market, string $brand): ?int
+    /** @param list<string> $brands every spelling folding to this slug */
+    private function topMerchant(Market $market, array $brands): ?int
     {
         $row = DB::table('products')
             ->join('product_groups', 'product_groups.id', '=', 'products.group_id')
             ->where('product_groups.market', $market->value)
-            ->where('product_groups.brand', $brand)
+            ->whereIn('product_groups.brand', $brands)
             ->whereNotNull('products.merchant_id')
             ->selectRaw('products.merchant_id, count(*) AS offers')
             ->groupBy('products.merchant_id')
@@ -165,11 +229,12 @@ class BrandStats
         return $row === null ? null : (int) $row->merchant_id;
     }
 
-    private function topCategory(Market $market, string $brand): ?string
+    /** @param list<string> $brands */
+    private function topCategory(Market $market, array $brands): ?string
     {
         $row = DB::table('product_groups')
             ->where('market', $market->value)
-            ->where('brand', $brand)
+            ->whereIn('brand', $brands)
             ->whereNotNull('category')
             ->selectRaw('category, count(*) AS n')
             ->groupBy('category')

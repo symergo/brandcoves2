@@ -39,9 +39,31 @@ class BrandStat extends Model
     {
         return [
             'market' => Market::class,
+            'aliases' => 'array',
             'share' => 'float',
             'computed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Every feed spelling that folds to this slug.
+     *
+     * What the brand page actually filters on. An Awin feed says
+     * "Audio-Technica" and bol says "Audio Technica"; both are this brand, and a
+     * page that showed only one of them would hide half the offers because two
+     * merchants disagree about a hyphen.
+     *
+     * Falls back to the display name, so a row written before `aliases` existed —
+     * or by a future path that forgets it — still filters to something rather
+     * than to nothing.
+     *
+     * @return list<string>
+     */
+    public function brandSpellings(): array
+    {
+        $aliases = array_values(array_filter((array) $this->aliases, 'is_string'));
+
+        return $aliases === [] ? [$this->brand] : $aliases;
     }
 
     /** @return BelongsTo<Merchant, $this> */
@@ -68,6 +90,6 @@ class BrandStat extends Model
      */
     public function scopePageworthy(Builder $query): void
     {
-        $query->whereNotNull('slug')->where('product_count', '>=', 3);
+        $query->where('product_count', '>=', 3);
     }
 }

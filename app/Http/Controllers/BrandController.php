@@ -81,7 +81,7 @@ class BrandController extends Controller
 
         // The brand comes from the resolved row, never from the URL, so the
         // filter can only ever be a brand that exists in this market.
-        $query = SearchQuery::fromRequest($request, $market)->withBrand($stat->brand);
+        $query = SearchQuery::fromRequest($request, $market)->withBrands($stat->brandSpellings());
         $result = $search->search($query);
 
         $this->seo($stat, $result->groups->total(), $current, $query);
@@ -203,22 +203,27 @@ class BrandController extends Controller
      */
     private function coves(BrandStat $stat, CurrentMarket $current): array
     {
-        $token = '%[[brand:'.$stat->brand.']]%';
-        $tokenLabelled = '%[[brand:'.$stat->brand.'|%';
+        $spellings = $stat->brandSpellings();
 
         $featured = Guide::query()
             ->forMarket($current->get())
             ->published()
-            ->whereHas('items.group', fn ($q) => $q->where('brand', $stat->brand))
+            ->whereHas('items.group', fn ($q) => $q->whereIn('brand', $spellings))
             ->pluck('id');
 
         return Guide::query()
             ->forMarket($current->get())
             ->published()
-            ->where(fn ($q) => $q
-                ->whereIn('id', $featured)
-                ->orWhere('body_md', 'like', $token)
-                ->orWhere('body_md', 'like', $tokenLabelled))
+            ->where(function ($q) use ($featured, $spellings) {
+                $q->whereIn('id', $featured);
+
+                // Every spelling, because a Cove's allowlist was built from
+                // whichever spelling the feed behind that product used.
+                foreach ($spellings as $spelling) {
+                    $q->orWhere('body_md', 'like', '%[[brand:'.$spelling.']]%')
+                        ->orWhere('body_md', 'like', '%[[brand:'.$spelling.'|%');
+                }
+            })
             ->orderByDesc('published_at')
             ->limit(4)
             ->get(['slug', 'title', 'intro'])
