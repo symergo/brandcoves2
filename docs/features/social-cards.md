@@ -54,11 +54,19 @@ that adding `?title=` changes nothing about the bytes.
 Product cards are market-scoped like everything else: a card served under `/be-nl/` that describes a
 Dutch product would put a price nobody can pay into a Belgian timeline.
 
-## Caching
+## Caching, and the thing it got wrong first
 
-Keyed on the record's `updated_at`, so a retitled product renders once more and never again and no
-cache needs clearing at deploy. The response carries a week of `max-age` for platforms that respect
-it and an ETag for those that revalidate.
+Keyed on the record's `updated_at` **and the commit that rendered it**. The response carries a week
+of `max-age` for platforms that respect it and an ETag for those that revalidate.
+
+The commit half was learned the hard way, in public, within an hour of shipping. A card's content
+comes from the row *and* from the code and language files that lay it out, and only the first of
+those moves `updated_at`. The Daily Cove card first rendered during a container swap, picked up a
+translation key that build did not have, and cached `SITE.OG.DAILY` in 24pt amber for thirty days —
+with no way to clear it short of shell access to the box.
+
+Keying on the commit costs one re-render per card per deploy, which nothing but a scraper will ever
+notice, and makes a bad card impossible to inherit across a deploy.
 
 Throttled at 60/minute despite the cache: a flood of requests for products nobody has shared is a
 flood of cache *misses*, and each miss rasterises type at 1200×630.

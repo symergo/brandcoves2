@@ -29,10 +29,20 @@ use Illuminate\Support\Number;
  * also completely stable between changes to the row behind it, and the only
  * clients are scrapers.
  *
- * So the bytes are cached under a key that includes the record's `updated_at`: a
- * retitled product renders once more and never again, and no cache needs
- * clearing at deploy. The response carries a long `max-age` for the platforms
- * that respect it and an ETag for the ones that revalidate instead.
+ * So the bytes are cached under a key built from two things: the record's
+ * `updated_at`, and **the commit that rendered them**.
+ *
+ * The commit half is not belt and braces. A card's content comes from the row
+ * *and* from the code and language files that lay it out, and only the first of
+ * those moves `updated_at`. Caught in the act: the Daily Cove card first
+ * rendered during a container swap, picked up a missing translation key, and
+ * cached `SITE.OG.DAILY` in 24pt amber for thirty days — with no way to clear it
+ * short of shell access to the box. Keying on the commit costs one re-render per
+ * card per deploy, which nothing but a scraper will ever notice, and it makes a
+ * bad card impossible to inherit across a deploy.
+ *
+ * The response carries a long `max-age` for the platforms that respect it and an
+ * ETag for the ones that revalidate instead.
  */
 class OgImageController extends Controller
 {
@@ -171,7 +181,11 @@ class OgImageController extends Controller
     /** @param callable(): string $render */
     private function send(string $key, callable $render): Response
     {
-        $png = Cache::remember('og:'.$key, self::TTL, $render);
+        $png = Cache::remember(
+            'og:'.config('brandcoves.commit_sha').':'.$key,
+            self::TTL,
+            $render,
+        );
 
         return response($png, 200, [
             'Content-Type' => 'image/png',
