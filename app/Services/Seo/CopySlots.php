@@ -77,11 +77,19 @@ final class CopySlots
     public static function all(): array
     {
         $slots = [];
+        $group = 'General';
 
-        $define = function (string $surface, string $slot, string $label, string $guard, array $extra = []) use (&$slots): void {
+        // Groups are declared positionally, so the registry reads in the same
+        // order as the page and the editor can be generated straight from it.
+        $section = function (string $name) use (&$group): void {
+            $group = $name;
+        };
+
+        $define = function (string $surface, string $slot, string $label, string $guard, array $extra = []) use (&$slots, &$group): void {
             $slots["{$surface}.{$slot}"] = [
                 'surface' => $surface,
                 'slot' => $slot,
+                'group' => $group,
                 'label' => $label,
                 'guard' => $guard,
                 'placeholders' => array_values(array_unique([...self::common($surface), ...$extra])),
@@ -91,21 +99,25 @@ final class CopySlots
         /*
          * Search results — long copy.
          */
+        $section('Comparing');
         $define('search', 'compare_heading', 'Comparing — heading', 'Always');
         $define('search', 'compare_1', 'Comparing — one card per product', 'Always');
         $define('search', 'compare_2', 'Comparing — how many are comparable', 'Only when at least one product is sold by more than one shop', ['comparable']);
         $define('search', 'compare_3', 'Comparing — where the offers come from', 'Always');
 
+        $section('Prices');
         $define('search', 'prices_heading', 'Prices — heading', 'Always');
         $define('search', 'prices_1', 'Prices — the range on this page', 'Only when at least one product has a price', ['low', 'high']);
         $define('search', 'prices_2', 'Prices — what a discount badge means', 'Always');
         $define('search', 'prices_3', 'Prices — how many are reduced', 'Only when at least one product is below its 30-day median', ['reduced', 'percent']);
 
+        $section('Choosing');
         $define('search', 'choosing_heading', 'Choosing — heading', 'Always');
         $define('search', 'choosing_1', 'Choosing — read the offer count first', 'Always');
         $define('search', 'choosing_2', 'Choosing — stock and price history', 'Always');
         $define('search', 'choosing_3', 'Choosing — brands present', 'Only when the results carry a brand', ['brands']);
 
+        $section('Questions');
         $define('search', 'faq_price_q', 'FAQ — "how much does it cost" question', 'Only when at least one product has a price', ['low', 'high']);
         $define('search', 'faq_price_a', 'FAQ — price answer', 'Only when at least one product has a price', ['low', 'high']);
         $define('search', 'faq_where_q', 'FAQ — "where can I buy" question', 'Always');
@@ -120,6 +132,7 @@ final class CopySlots
          * where having several variants matters most: it is the first sentence of
          * every brand page on the site.
          */
+        $section('Opening');
         $define('brand_intro', 'lead', 'Opening line', 'Always — every brand page starts here');
         $define('brand_intro', 'shops_named', 'Which shop stocks the most', 'Only when we know the leading shop and more than one carries the brand', ['shop']);
         $define('brand_intro', 'shops_count', 'How many shops carry it', 'When the leading shop is unknown, or only one carries the brand');
@@ -133,21 +146,25 @@ final class CopySlots
         /*
          * Brand page — long copy.
          */
+        $section('Comparing');
         $define('brand', 'compare_heading', 'Comparing — heading', 'Always');
         $define('brand', 'compare_1', 'Comparing — one card per product', 'Always');
         $define('brand', 'compare_2', 'Comparing — how many are comparable', 'Only when at least one product is sold by more than one shop', ['comparable']);
         $define('brand', 'compare_3', 'Comparing — the leading shop', 'Only when we know the leading shop', ['shop']);
 
+        $section('Prices');
         $define('brand', 'prices_heading', 'Prices — heading', 'Always');
         $define('brand', 'prices_1', 'Prices — the range', 'Only when at least one product has a price', ['low', 'high']);
         $define('brand', 'prices_2', 'Prices — what "reduced" means here', 'Always');
         $define('brand', 'prices_3', 'Prices — how many are reduced', 'Only when at least one product is below its 30-day median', ['reduced', 'percent']);
 
+        $section('Choosing');
         $define('brand', 'choosing_heading', 'Choosing — heading', 'Always');
         $define('brand', 'choosing_1', 'Choosing — the brand\'s main category', 'Only when we know the leading category', ['category']);
         $define('brand', 'choosing_2', 'Choosing — offer count before price', 'Always');
         $define('brand', 'choosing_3', 'Choosing — the product page', 'Always');
 
+        $section('Questions');
         $define('brand', 'faq_price_q', 'FAQ — "how much" question', 'Only when at least one product has a price', ['low', 'high']);
         $define('brand', 'faq_price_a', 'FAQ — price answer', 'Only when at least one product has a price', ['low', 'high']);
         $define('brand', 'faq_where_q', 'FAQ — "which shops" question', 'Always');

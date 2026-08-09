@@ -62,9 +62,24 @@ class CopyTemplateResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Content';
 
-    protected static ?string $navigationLabel = 'Page copy';
+    protected static ?string $navigationLabel = 'Page copy — all variants';
 
     protected static ?string $modelLabel = 'copy variant';
+
+    /**
+     * Not in the navigation.
+     *
+     * `EditPageCopy` is the way to write copy: a page's sentences in reading
+     * order, every variant under the sentence it varies. This flat table is the
+     * second thing you want — searching every language at once, spotting an
+     * orphaned slot, deleting in bulk — and two "Page copy" entries in the
+     * sidebar would make the first one ambiguous. Reachable from that page's
+     * header instead.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 
     public static function form(Schema $schema): Schema
     {

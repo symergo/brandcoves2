@@ -114,7 +114,10 @@ class AdminPanelTest extends TestCase
             '/admin/daily-editions',
             '/admin/mode-profiles',
             '/admin/cove-plans',
+            '/admin/guide-topics',
             '/admin/ai-usage',
+            '/admin/edit-page-copy',
+            '/admin/copy-templates',
         ] as $path) {
             // Named, so a failure says which page rather than which loop
             // iteration — the whole value of a smoke test is being able to act

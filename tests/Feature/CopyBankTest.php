@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Market;
+use App\Filament\Pages\EditPageCopy;
 use App\Models\CopyTemplate;
+use App\Models\User;
 use App\Services\Seo\CopyBank;
 use App\Services\Seo\CopySlots;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -343,6 +346,107 @@ class CopyBankTest extends TestCase
          * cache is hit thirty times instead of once.
          */
         $this->assertSame(app(CopyBank::class), app(CopyBank::class));
+    }
+
+    #[Test]
+    public function the_editor_saves_a_whole_page_at_once(): void
+    {
+        $admin = User::create(['email' => 'copy@example.test', 'password' => 'password-for-testing']);
+        $admin->forceFill(['is_admin' => true])->save();
+
+        $existing = $this->variant('Bestaande zin over :brand.');
+
+        Livewire::actingAs($admin)
+            ->test(EditPageCopy::class)
+            ->set('surface', 'brand_intro')
+            ->set('language', 'nl')
+            ->call('loadCopy')
+            ->set('data.slots.lead', [
+                // An edit to the existing row, identified by its id.
+                ['id' => $existing->id, 'body' => 'Herschreven zin over :brand.', 'weight' => 2, 'enabled' => true],
+                // And a brand new variant in the same save.
+                ['id' => null, 'body' => 'Een tweede zin over :brand.', 'weight' => 1, 'enabled' => true],
+            ])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $rows = CopyTemplate::query()->where('slot', 'lead')->where('language', 'nl')->get();
+
+        $this->assertCount(2, $rows);
+        // The edited row kept its id, so its author and created_at survive
+        // rather than the table being rewritten on every save.
+        $this->assertSame('Herschreven zin over :brand.', $rows->firstWhere('id', $existing->id)?->body);
+        $this->assertSame(2, $rows->firstWhere('id', $existing->id)?->weight);
+    }
+
+    #[Test]
+    public function removing_a_variant_in_the_editor_deletes_it(): void
+    {
+        $admin = User::create(['email' => 'copy2@example.test', 'password' => 'password-for-testing']);
+        $admin->forceFill(['is_admin' => true])->save();
+
+        $keep = $this->variant('Blijft staan :brand.');
+        $drop = $this->variant('Gaat weg :brand.');
+
+        Livewire::actingAs($admin)
+            ->test(EditPageCopy::class)
+            ->call('loadCopy')
+            ->set('data.slots.lead', [
+                ['id' => $keep->id, 'body' => 'Blijft staan :brand.', 'weight' => 1, 'enabled' => true],
+            ])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertNotNull($keep->fresh());
+        $this->assertNull($drop->fresh());
+    }
+
+    #[Test]
+    public function the_editor_cannot_save_a_page_outside_the_one_on_screen(): void
+    {
+        /*
+         * The delete pass removes anything the form no longer holds. Scoped to
+         * the surface and language on screen — without that scope, saving the
+         * brand page would wipe every search-page variant, which is the kind of
+         * bug you discover from a support ticket.
+         */
+        $admin = User::create(['email' => 'copy3@example.test', 'password' => 'password-for-testing']);
+        $admin->forceFill(['is_admin' => true])->save();
+
+        $otherSurface = $this->variant('Zoekpagina zin.', overrides: ['surface' => 'search', 'slot' => 'compare_1']);
+        $otherLanguage = $this->variant('French line about :brand.', overrides: ['language' => 'fr']);
+
+        Livewire::actingAs($admin)
+            ->test(EditPageCopy::class)
+            ->set('surface', 'brand_intro')
+            ->set('language', 'nl')
+            ->call('loadCopy')
+            ->set('data.slots.lead', [['id' => null, 'body' => 'Nieuw :brand.', 'weight' => 1, 'enabled' => true]])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertNotNull($otherSurface->fresh(), 'saving the brand page deleted search copy');
+        $this->assertNotNull($otherLanguage->fresh(), 'saving Dutch deleted French copy');
+    }
+
+    #[Test]
+    public function the_editor_refuses_a_placeholder_the_slot_cannot_supply(): void
+    {
+        $admin = User::create(['email' => 'copy4@example.test', 'password' => 'password-for-testing']);
+        $admin->forceFill(['is_admin' => true])->save();
+
+        Livewire::actingAs($admin)
+            ->test(EditPageCopy::class)
+            ->call('loadCopy')
+            ->set('data.slots.lead', [
+                ['id' => null, 'body' => ':brand, tot :percent% korting.', 'weight' => 1, 'enabled' => true],
+            ])
+            ->call('save')
+            ->assertHasErrors();
+
+        // Nothing written: a page that renders on every brand must not claim a
+        // discount percentage.
+        $this->assertSame(0, CopyTemplate::query()->count());
     }
 
     #[Test]
