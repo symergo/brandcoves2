@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\ListKind;
+use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistCollaborator;
 use App\Support\CurrentMarket;
@@ -55,20 +56,41 @@ class HandoverController extends Controller
 
         $recipient = $wishlist->recipient;
 
-        /*
-         * There has to be somebody to hand it to.
-         *
-         * A stub recipient is a name the giver typed; handing a list to a name
-         * gives it to nobody and loses it. They claim their `/for/{token}` link
-         * first, which is what turns the name into an account.
-         */
-        abort_if($recipient?->user_id === null, 422, __('site.handover.not_linked'));
+        $validated = $request->validate([
+            'email' => ['nullable', 'email:rfc', 'max:254'],
+        ]);
 
-        DB::transaction(function () use ($wishlist, $recipient): void {
+        /*
+         * Who is receiving it.
+         *
+         * The typed address wins, falling back to the account already linked to
+         * this recipient. Handing a list to a *name* would give it to nobody and
+         * lose it, so there has to be a real account at the end of this.
+         */
+        $email = filled($validated['email'] ?? null)
+            ? mb_strtolower(trim((string) $validated['email']))
+            : $recipient?->person?->email;
+
+        $newOwner = $email === null
+            ? null
+            : User::query()->whereRaw('lower(email) = ?', [mb_strtolower($email)])->first();
+
+        /*
+         * Deliberately explicit, unlike the collaborator invite.
+         *
+         * That form must not reveal whether an address has an account, because
+         * anybody could type addresses into it. This one is different: the owner
+         * is giving away something of theirs and has to know whether it landed,
+         * and silence would leave them believing a list had moved when it had
+         * not.
+         */
+        abort_if($newOwner === null, 422, __('site.handover.no_account'));
+
+        DB::transaction(function () use ($wishlist, $newOwner): void {
             WishlistCollaborator::query()->where('wishlist_id', $wishlist->id)->delete();
 
             $wishlist->update([
-                'owner_user_id' => $recipient->user_id,
+                'owner_user_id' => $newOwner->id,
                 'owner_anon_id' => null,
                 'recipient_id' => null,
                 'kind' => ListKind::Mine,
@@ -82,6 +104,8 @@ class HandoverController extends Controller
 
         return redirect()
             ->to($current->url('lists'))
-            ->with('success', __('site.handover.done', ['name' => $recipient->name]));
+            ->with('success', __('site.handover.done', [
+                'name' => $recipient?->name ?? $newOwner->displayName(),
+            ]));
     }
 }

@@ -279,6 +279,7 @@ return [
         'already' => 'Esta lista ya se ha cedido.',
         'only_gift_lists' => 'Solo se puede ceder una lista para otra persona.',
         'not_linked' => 'Primero tienen que reclamar su enlace, para que haya una cuenta a la que dársela.',
+        'no_account' => 'Nadie con ese correo tiene cuenta todavia. Enviale primero el enlace para que cuente lo que quiere.',
     ],
 
     'pledges' => [

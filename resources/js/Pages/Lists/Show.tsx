@@ -58,6 +58,7 @@ interface Props {
     access: { isOwner: boolean; canEdit: boolean }
     suggestions: Suggestion[]
     canHandOver: boolean
+    handoverEmail: string | null
     registryOptions: { value: string; label: string }[]
     deliveryAddress: string | null
     collaborators: Collaborator[]
@@ -91,6 +92,7 @@ export default function ListShow({
     collaborators,
     suggestions,
     canHandOver,
+    handoverEmail,
     registryOptions,
     deliveryAddress,
     quizUrl,
@@ -101,6 +103,7 @@ export default function ListShow({
     const { t } = useTranslations()
     const [invite, setInvite] = useState('')
     const [role, setRole] = useState('viewer')
+    const [handTo, setHandTo] = useState(handoverEmail ?? '')
     const base = `/${market.key}`
 
     const shared = list.visibility !== 'private'
@@ -420,17 +423,31 @@ export default function ListShow({
                     <p className="mt-1 text-xs text-ink-soft">
                         {t('handover.hint', { name: list.recipient?.name ?? '' })}
                     </p>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (confirm(t('handover.confirm', { name: list.recipient?.name ?? '' }))) {
-                                router.post(`${base}/lists/${list.id}/handover`)
+                    <form
+                        className="mt-3 flex flex-wrap gap-2"
+                        onSubmit={(e) => {
+                            e.preventDefault()
+
+                            if (confirm(t('handover.confirm', { name: handTo }))) {
+                                router.post(`${base}/lists/${list.id}/handover`, { email: handTo })
                             }
                         }}
-                        className="mt-3 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
                     >
-                        {t('handover.action')}
-                    </button>
+                        <input
+                            type="email"
+                            required
+                            value={handTo}
+                            onChange={(e) => setHandTo(e.target.value)}
+                            placeholder="name@example.com"
+                            className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+                        />
+                        <button
+                            type="submit"
+                            className="rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
+                        >
+                            {t('handover.action')}
+                        </button>
+                    </form>
                 </section>
             )}
 

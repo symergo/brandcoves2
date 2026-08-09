@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * Passwordless sign-in.
@@ -105,7 +104,19 @@ class MagicLinkController extends Controller
                 market: $current->get(),
                 requestedFrom: $request->ip(),
             ));
-        } catch (TransportExceptionInterface $e) {
+        } catch (\Throwable $e) {
+            /*
+             * Any failure to send, not only a transport one.
+             *
+             * Caught in the act on staging: an unset MAIL_FROM_ADDRESS throws
+             * `Symfony\Component\Mime\Exception\LogicException`, which is not a
+             * transport exception at all — so a narrower catch left the one form
+             * whose job is to be the way in returning a 500 for a missing
+             * environment variable.
+             *
+             * Scoped tightly to the send: a database or validation problem
+             * elsewhere in this action still surfaces as itself.
+             */
             report($e);
 
             throw ValidationException::withMessages([

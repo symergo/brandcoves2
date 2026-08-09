@@ -172,10 +172,21 @@ class WishlistController extends Controller
                 : [],
 
             // Only offered once there is somebody to hand it to.
+            /*
+             * No longer conditional on the recipient having a linked account.
+             *
+             * It used to be, and the account could only be linked by them
+             * opening their `/for/{token}` link and pressing "This is me" —
+             * which nobody had done, so the button never appeared and a working
+             * feature read as a broken one. The address is asked for at the
+             * point of handing over instead.
+             */
             'canHandOver' => ListAccess::isOwner($wishlist, $owner)
                 && $wishlist->kind === ListKind::ForSomeone
-                && $wishlist->handed_over_at === null
-                && $wishlist->recipient?->user_id !== null,
+                && $wishlist->handed_over_at === null,
+
+            // Prefilled when we already know it, so the common case is one tap.
+            'handoverEmail' => $wishlist->recipient?->person?->email,
 
             'registryOptions' => array_map(
                 fn (EventType $type) => ['value' => $type->value, 'label' => $type->label()],

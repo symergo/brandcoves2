@@ -279,6 +279,7 @@ return [
         'already' => 'Cette liste a déjà été transmise.',
         'only_gift_lists' => "Seule une liste pour quelqu'un d'autre peut être transmise.",
         'not_linked' => "Cette personne doit d'abord réclamer son lien, pour qu'il y ait un compte à qui la donner.",
+        'no_account' => "Personne avec cette adresse n'a encore de compte ici. Envoyez-lui d'abord le lien pour indiquer ses envies.",
     ],
 
     'pledges' => [

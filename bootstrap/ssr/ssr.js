@@ -36558,11 +36558,12 @@ function ShareRow({ url, text, label, hint }) {
 //#endregion
 //#region resources/js/Pages/Lists/Show.tsx
 var Show_exports = /* @__PURE__ */ __exportAll({ default: () => ListShow });
-function ListShow({ list, items, target, asked, access, collaborators, suggestions, canHandOver, registryOptions, deliveryAddress, quizUrl, quizPlays, santaMemberships }) {
+function ListShow({ list, items, target, asked, access, collaborators, suggestions, canHandOver, handoverEmail, registryOptions, deliveryAddress, quizUrl, quizPlays, santaMemberships }) {
 	const { market } = usePage().props;
 	const { t } = useTranslations();
 	const [invite, setInvite] = (0, import_react.useState)("");
 	const [role, setRole] = (0, import_react.useState)("viewer");
+	const [handTo, setHandTo] = (0, import_react.useState)(handoverEmail ?? "");
 	const base = `/${market.key}`;
 	const shared = list.visibility !== "private";
 	function toggleSharing() {
@@ -36815,13 +36816,24 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 					className: "mt-1 text-xs text-ink-soft",
 					children: t("handover.hint", { name: list.recipient?.name ?? "" })
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => {
-						if (confirm(t("handover.confirm", { name: list.recipient?.name ?? "" }))) router.post(`${base}/lists/${list.id}/handover`);
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+					className: "mt-3 flex flex-wrap gap-2",
+					onSubmit: (e) => {
+						e.preventDefault();
+						if (confirm(t("handover.confirm", { name: handTo }))) router.post(`${base}/lists/${list.id}/handover`, { email: handTo });
 					},
-					className: "mt-3 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
-					children: t("handover.action")
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						type: "email",
+						required: true,
+						value: handTo,
+						onChange: (e) => setHandTo(e.target.value),
+						placeholder: "name@example.com",
+						className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+						children: t("handover.action")
+					})]
 				})
 			]
 		}),

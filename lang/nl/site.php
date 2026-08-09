@@ -283,6 +283,7 @@ return [
         'already' => 'Deze lijst is al doorgegeven.',
         'only_gift_lists' => 'Alleen een lijst voor iemand anders kan worden doorgegeven.',
         'not_linked' => 'Ze moeten eerst hun link claimen, zodat er een account is om aan te geven.',
+        'no_account' => 'Er is nog geen account met dat e-mailadres. Stuur ze eerst de link om hun voorkeuren in te vullen.',
     ],
 
     'pledges' => [

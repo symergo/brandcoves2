@@ -161,6 +161,54 @@ class GiftingMechanismsTest extends TestCase
     }
 
     #[Test]
+    public function a_list_can_be_handed_over_by_email(): void
+    {
+        $giver = User::factory()->create();
+        $person = User::factory()->create(['email' => 'sarah@example.test']);
+
+        $recipient = Recipient::factory()->create(['owner_user_id' => $giver->id, 'name' => 'Sarah']);
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $giver->id,
+            'recipient_id' => $recipient->id,
+            'kind' => ListKind::ForSomeone,
+            'market' => Market::BeNl,
+        ]);
+
+        /*
+         * No prior linking. Handover used to require the recipient to have
+         * claimed their /for/{token} link, which nobody had done — so the button
+         * never appeared and a working feature read as a broken one.
+         */
+        $this->actingAs($giver)
+            ->post("/be-nl/lists/{$list->id}/handover", ['email' => 'SARAH@example.test'])
+            ->assertRedirect();
+
+        $this->assertSame($person->id, $list->fresh()->owner_user_id);
+    }
+
+    #[Test]
+    public function handing_over_to_an_address_with_no_account_says_so(): void
+    {
+        $giver = User::factory()->create();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $giver->id,
+            'recipient_id' => Recipient::factory()->create(['owner_user_id' => $giver->id])->id,
+            'kind' => ListKind::ForSomeone,
+            'market' => Market::BeNl,
+        ]);
+
+        // Unlike the collaborator invite, this one tells you: the owner is
+        // giving something away and has to know whether it landed.
+        $this->actingAs($giver)
+            ->post("/be-nl/lists/{$list->id}/handover", ['email' => 'nobody@example.test'])
+            ->assertStatus(422);
+
+        $this->assertNull($list->fresh()->handed_over_at);
+    }
+
+    #[Test]
     public function a_list_cannot_be_handed_to_a_name(): void
     {
         $giver = User::factory()->create();

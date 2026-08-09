@@ -311,6 +311,7 @@ return [
         'already' => 'This list has already been handed over.',
         'only_gift_lists' => 'Only a list for someone else can be handed over.',
         'not_linked' => 'They need to claim their link first, so there is an account to hand it to.',
+        'no_account' => 'Nobody with that email has an account here yet. Send them the "ask them what they want" link first.',
     ],
 
     'pledges' => [
