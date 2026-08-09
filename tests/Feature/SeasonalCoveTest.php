@@ -38,11 +38,13 @@ class SeasonalCoveTest extends TestCase
      * Titles contain the head noun the seasonal matcher looks for, because that
      * is how a real feed reads — "Weber gasbarbecue", not "barbecue".
      */
-    private function seedProducts(string $noun, int $count = 6): void
+    private function seedProducts(string $noun, int $count = 6, ?Market $market = null): void
     {
+        $market ??= Market::BeNl;
+
         for ($i = 0; $i < $count; $i++) {
             ProductGroup::create([
-                'market' => Market::BeNl->value,
+                'market' => $market->value,
                 'identity_key' => "seasonal-{$noun}-{$i}",
                 'identity_kind' => 'title',
                 'title' => "Merk {$noun} model {$i}",
@@ -213,6 +215,28 @@ class SeasonalCoveTest extends TestCase
 
         $this->assertNotNull(GuideTopic::query()->where('topic', 'barbecue')->first());
         $this->assertNotSame('barbecue', app(SeasonalTopics::class)->ripest(Market::BeNl, CarbonImmutable::create(2027, 4, 15))?->topic);
+    }
+
+    #[Test]
+    public function queries_are_resolved_in_the_market_language(): void
+    {
+        /*
+         * The failure this prevents: left in Dutch, "tent" and "slaapzak" match
+         * nothing in a French catalogue, so every seasonal topic in be-fr
+         * reported zero products and the feature was silently inert outside the
+         * Dutch markets. In admin that reads as "no demand" rather than "wrong
+         * words" — the worst kind of failure, because it is plausible.
+         */
+        $this->seedProducts('tente', market: Market::BeFr);
+        app(SeasonalTopics::class)->seed(Market::BeFr, CarbonImmutable::create(2027, 5, 1));
+
+        $queries = GuideTopic::query()
+            ->where('market', Market::BeFr->value)
+            ->where('topic', 'kamperen')
+            ->value('member_queries');
+
+        $this->assertContains('tente', $queries);
+        $this->assertNotContains('slaapzak', $queries);
     }
 
     #[Test]

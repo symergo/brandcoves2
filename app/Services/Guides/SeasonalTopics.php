@@ -68,7 +68,7 @@ class SeasonalTopics
 
             $window = (array) ($entry['window'] ?? []);
             $topic = (string) $entry['topic'];
-            $queries = array_values(array_map('strval', (array) ($entry['queries'] ?? [])));
+            $queries = $this->queriesFor($entry, $market);
 
             $existing = GuideTopic::query()
                 ->where('market', $market->value)
@@ -139,6 +139,46 @@ class SeasonalTopics
             ->sortBy(fn (GuideTopic $topic) => $this->daysLeft($today, (string) $topic->season_to));
 
         return $open->first();
+    }
+
+    /**
+     * The topic's product words, in the market's language.
+     *
+     * ## Why these have to be translated at all
+     *
+     * A query here is matched against product titles, and a title is written in
+     * the market's language. "tent" and "slaapzak" find nothing in a French
+     * catalogue, so every seasonal topic in be-fr reported zero products and the
+     * whole feature was silently inert outside the Dutch markets — visible in
+     * admin as 23 topics that never ripen, which reads as "no demand" rather than
+     * "wrong words".
+     *
+     * `queries` may be a flat list (all markets, the original shape) or a map of
+     * language => list. A market with no entry falls back to English rather than
+     * to nothing: an English word in a French catalogue matches the loan words
+     * ("barbecue", "camping") and misses the rest, which is a thinner topic
+     * rather than an absent one.
+     *
+     * @param  array<string, mixed>  $entry
+     * @return list<string>
+     */
+    private function queriesFor(array $entry, Market $market): array
+    {
+        $queries = $entry['queries'] ?? [];
+
+        if (! is_array($queries) || $queries === []) {
+            return [];
+        }
+
+        // A flat list — every value is a string, so there is nothing to resolve.
+        if (array_is_list($queries)) {
+            return array_values(array_map('strval', $queries));
+        }
+
+        $language = $market->language();
+        $chosen = $queries[$language] ?? $queries['en'] ?? [];
+
+        return array_values(array_map('strval', (array) $chosen));
     }
 
     /**
