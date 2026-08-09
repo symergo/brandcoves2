@@ -906,6 +906,7 @@ return [
     ],
 
     'og' => [
+        'daily' => 'El Daily Cove',
         'default_title' => 'Descubre productos y marcas',
         'default_footnote' => 'brandcoves.com',
         'product' => 'Producto',

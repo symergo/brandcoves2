@@ -6,9 +6,11 @@ namespace Tests\Feature;
 
 use App\Enums\Market;
 use App\Enums\PublishStatus;
+use App\Models\DailyPickSet;
 use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Services\Seo\OgImage;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -105,6 +107,72 @@ class OgImageTest extends TestCase
         ]);
 
         $this->get("/be-nl/og/guide/{$guide->slug}.png")->assertNotFound();
+    }
+
+    #[Test]
+    public function a_daily_edition_card_is_addressed_by_date(): void
+    {
+        /*
+         * Not "today". A platform caches the card it fetched when the link was
+         * posted, and /daily is a different edition every morning — an undated
+         * card would silently turn yesterday's shared post into today's theme.
+         */
+        $edition = $this->edition('2026-08-08');
+
+        $this->get('/be-nl/og/daily/2026-08-08.png')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
+
+        $this->get('/be-nl/og/daily/2026-08-09.png')->assertNotFound();
+
+        // And the page points at the dated card even at its undated URL, which
+        // is the half that makes the dating worth anything.
+        $this->travelTo($edition->drop_date->addHours(12), function (): void {
+            $this->get('/be-nl/daily')->assertSee('/be-nl/og/daily/2026-08-08.png', false);
+        });
+    }
+
+    #[Test]
+    public function tomorrows_edition_has_no_card_yet(): void
+    {
+        /*
+         * The page refuses a future date because guessing tomorrow's puzzle by
+         * URL would be an obvious hole in a daily game. A card is a URL that
+         * renders the theme in 60pt type, so it has to refuse the same thing —
+         * an image endpoint that skips a page's rules is the page's rules with
+         * an extension on the end.
+         */
+        $this->edition(now()->addDay()->toDateString(), alreadyLive: true);
+        $this->edition(now()->toDateString(), published: false);
+
+        $this->get('/be-nl/og/daily/'.now()->addDay()->toDateString().'.png')->assertNotFound();
+        $this->get('/be-nl/og/daily/'.now()->toDateString().'.png')->assertNotFound();
+    }
+
+    /**
+     * @param  bool  $published  a draft edition, as one is between build and drop
+     * @param  bool  $alreadyLive  publish it in the past even if it drops tomorrow,
+     *                             so the future-date guard is what rejects it and
+     *                             not the published_at check standing in for it
+     */
+    private function edition(string $date, bool $published = true, bool $alreadyLive = false): DailyPickSet
+    {
+        return DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'drop_date' => $date,
+            'theme_title' => 'Alles voor de barbecue',
+            'theme_slug' => 'barbecue-'.$date,
+            'theme_source' => 'theme',
+            'status' => $published ? PublishStatus::Published->value : PublishStatus::Draft->value,
+            // Editions drop in the morning of their own date. Anchored there
+            // rather than to "an hour ago", so a test that travels to the drop
+            // date does not find the edition published in its own future.
+            'published_at' => match (true) {
+                ! $published => null,
+                $alreadyLive => now()->subHour(),
+                default => CarbonImmutable::parse($date)->setTime(6, 0),
+            },
+        ]);
     }
 
     #[Test]

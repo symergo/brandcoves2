@@ -12,7 +12,7 @@ cannot be recovered from a diff.
 | [search.md](search.md) | Search | Active |
 | [seo.md](seo.md) | SEO / Frontend | Active |
 | [brand-mark.md](brand-mark.md) | Brand / Frontend | Active |
-| [social-cards.md](social-cards.md) | SEO / Brand | Active — no Daily Cove card yet |
+| [social-cards.md](social-cards.md) | SEO / Brand | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect waits on the connector |

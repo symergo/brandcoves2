@@ -963,6 +963,7 @@ return [
      * one line of substance.
      */
     'og' => [
+        'daily' => 'The Daily Cove',
         'default_title' => 'Discover products and brands',
         'default_footnote' => 'brandcoves.com',
         'product' => 'Product',

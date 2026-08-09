@@ -94,12 +94,20 @@ class OgImageController extends Controller
      * `/daily` is a different edition every morning. Keying the image on the
      * date means yesterday's shared post keeps showing yesterday's theme instead
      * of quietly becoming today's.
+     *
+     * **Published editions only.** The page already refuses a future date,
+     * because guessing tomorrow's puzzle by URL would be an obvious hole in a
+     * daily game — and a card is a URL that renders the theme in 60pt type. An
+     * image endpoint that skips a page's access rules is the page's access rules
+     * with an extension on the end.
      */
     public function daily(CurrentMarket $current, OgImage $og, string $market, string $date): Response
     {
         $edition = DailyPickSet::query()
-            ->where('market', $current->value())
+            ->forMarket($current->get())
+            ->published()
             ->whereDate('drop_date', $date)
+            ->where('drop_date', '<=', now()->toDateString())
             ->firstOrFail();
 
         $language = $current->get()->language();

@@ -909,6 +909,7 @@ return [
     ],
 
     'og' => [
+        'daily' => 'De Daily Cove',
         'default_title' => 'Ontdek producten en merken',
         'default_footnote' => 'brandcoves.com',
         'product' => 'Product',

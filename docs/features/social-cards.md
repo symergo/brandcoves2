@@ -82,12 +82,20 @@ which enables FreeType, so the guard is insurance against a future edit to that 
 | Product | Product | The product title | "14 shops · from € 279,00", or as much as is true |
 | Guide | Buying guide | The guide title | How many products it covers |
 | Brand | Brand | The brand name | Products and shops |
+| Daily Cove | The Daily Cove | The edition's theme | The edition's date |
 | Everything else | — | "Discover products and brands" | brandcoves.com |
 
 A product carried by one shop is not "1 shops" and one with no price is not "from €0"; both are
 common enough in a feed that a card built from the happy path would be visibly wrong in public.
 
-## Not done
+## Two things the Daily Cove card does differently
 
-The Daily Cove has no card of its own yet, so an edition falls back to the generic one. It is the
-most shareable page on the site and should carry its theme and date.
+**It is addressed by date, never by "today".** A platform caches the card it fetched when a link was
+first posted, and `/daily` is a different edition every morning. The page therefore points at the
+dated image even at its own undated URL, so a post from last Tuesday keeps showing last Tuesday's
+theme.
+
+**It applies the page's rules.** The Daily Cove refuses a future date because guessing tomorrow's
+puzzle by URL would be an obvious hole in a daily game, and it refuses an unpublished edition. A card
+is a URL that renders the theme in 60pt type, so it refuses both as well. An image endpoint that
+skips a page's access rules is that page's access rules with an extension on the end.
