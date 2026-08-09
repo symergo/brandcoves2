@@ -457,6 +457,8 @@ return [
         'share_heading' => 'Share this list',
         'share_text' => 'Here is my list: :title',
         'someones_wishlist' => ":name's wishlist",
+        'share_native' => 'More apps…',
+        'share_instagram' => 'Instagram cannot take links from a browser — copy it and paste it there.',
     ],
 
     /*

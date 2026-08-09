@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Wishlist;
 
 use App\Enums\ListKind;
+use App\Enums\ListVisibility;
 use App\Models\Wishlist;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -100,6 +101,15 @@ class DefaultList
             'market' => $current->get(),
             'kind' => ListKind::Mine,
             'is_default' => true,
+            /*
+             * Stated, not inherited from the column default.
+             *
+             * `create()` returns the model it built in memory, so a value only
+             * Postgres knows about is null on the instance handed back — and
+             * the caller reading `$list->visibility->isShareable()` on a list
+             * it had just made got a null dereference on the first ever visit.
+             */
+            'visibility' => ListVisibility::Private,
         ]);
     }
 }

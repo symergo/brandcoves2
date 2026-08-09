@@ -101,7 +101,7 @@
   "resources/js/Components/PageNarrative.tsx": [],
   "resources/js/Components/ProductCard.tsx": [],
   "resources/js/Components/SaveToList.tsx": [],
-  "resources/js/Components/ShareLink.tsx": [],
+  "resources/js/Components/ShareMenu.tsx": [],
   "resources/js/Components/ShareRow.tsx": [],
   "resources/js/Layouts/SiteLayout.tsx": [],
   "resources/js/Pages/Auth/Login.tsx": [],

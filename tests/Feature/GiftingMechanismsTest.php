@@ -88,6 +88,30 @@ class GiftingMechanismsTest extends TestCase
         $this->assertTrue($existing->fresh()->is_default);
     }
 
+    #[Test]
+    public function the_gift_cove_renders_on_a_first_ever_visit(): void
+    {
+        /*
+         * The case that broke it: the page creates the default list and then
+         * reads it back. `create()` returns the model it built in memory, so a
+         * value only the database knows about — `visibility`, which has a column
+         * default — was null on that instance and took the page down with a 500
+         * for every brand new account.
+         */
+        $this->actingAs(User::factory()->create())
+            ->get('/be-nl/gift-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('mine.shared', false));
+    }
+
+    #[Test]
+    public function the_gift_cove_works_signed_out(): void
+    {
+        // Somebody has to be able to read what this offers before deciding to
+        // sign up for it.
+        $this->get('/be-nl/gift-cove')->assertOk();
+    }
+
     // --- Handover ------------------------------------------------------------
 
     #[Test]

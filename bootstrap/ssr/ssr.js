@@ -36328,49 +36328,140 @@ function SharedList({ list, isOwner, items }) {
 	] });
 }
 //#endregion
-//#region resources/js/Components/ShareLink.tsx
+//#region resources/js/Components/ShareMenu.tsx
 /**
-* Send a link to people.
+* Share a link, or a score, through the channels people actually use.
 *
-* One button, sitting next to the link it shares. It used to be three — a share
-* button plus standalone WhatsApp and email links — which put a row of channel
-* buttons on the page for a decision most people make in the share sheet
-* anyway, and made a simple "here is your link" area look like a toolbar.
+* ## Why this is a menu and not just the native sheet
 *
-* The native sheet already offers WhatsApp, mail, Messages and everything else
-* the device has, so the separate links were duplicating it on the one platform
-* where it works best. Where there is no sheet — most desktop browsers — this
-* falls back to copying, which is what the person was going to do anyway.
+* `navigator.share` is the best option where it exists — it offers every app on
+* the device — but it does not exist on most desktop browsers, and desktop is
+* where lists get built. The previous version fell back to silently copying, so
+* anyone on a laptop pressed "Share", saw "Copied", and never found WhatsApp at
+* all. Native first when available, explicit channels always.
 *
-* This is also the reason no friend graph is imported: Facebook's friend list is
-* unavailable to a new app and Google's contacts are a restricted scope, while
-* WhatsApp has been one tap away the whole time.
+* ## What each channel can actually accept
+*
+* These are not interchangeable, and pretending they are is how a share button
+* posts an empty message:
+*
+* - **WhatsApp** and **Telegram** take arbitrary text, so the link rides along
+*   inside it. This is the one that matters — a gift list lives in a group chat.
+* - **Facebook** takes a URL and nothing else. It removed support for
+*   prefilled text years ago and silently drops it, so passing a score to it
+*   would post a bare link and lose the point.
+* - **Email** takes a subject and a body.
+* - **Instagram has no web sharing at all.** There is no URL scheme that
+*   accepts a link or a caption; the only honest option is copying, so it is
+*   offered as "copy for Instagram" rather than as a button that quietly does
+*   nothing.
 */
-function ShareLink({ url, text }) {
+function ShareMenu({ url, text, label }) {
 	const { t } = useTranslations();
+	const [open, setOpen] = (0, import_react.useState)(false);
 	const [copied, setCopied] = (0, import_react.useState)(false);
 	const [native, setNative] = (0, import_react.useState)(false);
+	const box = (0, import_react.useRef)(null);
 	(0, import_react.useEffect)(() => {
 		setNative(typeof navigator !== "undefined" && typeof navigator.share === "function");
 	}, []);
-	const message = text ? `${text} ${url}` : url;
-	async function share() {
-		if (native) {
-			await navigator.share({
-				text: message,
-				url
-			}).catch(() => void 0);
-			return;
-		}
+	(0, import_react.useEffect)(() => {
+		if (!open) return;
+		const away = (e) => {
+			if (!box.current?.contains(e.target)) setOpen(false);
+		};
+		const escape = (e) => e.key === "Escape" && setOpen(false);
+		document.addEventListener("mousedown", away);
+		document.addEventListener("keydown", escape);
+		return () => {
+			document.removeEventListener("mousedown", away);
+			document.removeEventListener("keydown", escape);
+		};
+	}, [open]);
+	const message = text ? `${text}\n${url}` : url;
+	async function copy() {
 		await navigator.clipboard.writeText(message);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 2e3);
+		setOpen(false);
 	}
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-		type: "button",
-		onClick: share,
-		className: "rounded-lg border border-line px-3 py-2 text-sm whitespace-nowrap hover:border-ink",
-		children: copied ? t("lists.copied") : t("lists.share")
+	async function shareNatively() {
+		setOpen(false);
+		await navigator.share({
+			text: message,
+			url
+		}).catch(() => void 0);
+	}
+	const channels = [
+		{
+			key: "whatsapp",
+			label: "WhatsApp",
+			href: `https://wa.me/?text=${encodeURIComponent(message)}`
+		},
+		{
+			key: "facebook",
+			label: "Facebook",
+			href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+		},
+		{
+			key: "telegram",
+			label: "Telegram",
+			href: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text ?? "")}`
+		},
+		{
+			key: "x",
+			label: "X",
+			href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text ?? "")}&url=${encodeURIComponent(url)}`
+		},
+		{
+			key: "email",
+			label: t("lists.share_email"),
+			href: `mailto:?subject=${encodeURIComponent(text ?? "")}&body=${encodeURIComponent(message)}`
+		}
+	];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		ref: box,
+		className: "relative inline-block",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			onClick: () => setOpen((v) => !v),
+			"aria-expanded": open,
+			"aria-haspopup": "menu",
+			className: "rounded-lg border border-line px-3 py-2 text-sm whitespace-nowrap hover:border-ink",
+			children: copied ? t("lists.copied") : label ?? t("lists.share")
+		}), open && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			role: "menu",
+			className: "absolute right-0 z-50 mt-1 w-56 rounded-card border border-line bg-card p-1 shadow-xl",
+			children: [
+				native && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					role: "menuitem",
+					onClick: shareNatively,
+					className: "block w-full rounded px-3 py-2 text-left text-sm hover:bg-line/40",
+					children: t("lists.share_native")
+				}),
+				channels.map((channel) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					role: "menuitem",
+					href: channel.href,
+					target: "_blank",
+					rel: "noopener noreferrer",
+					onClick: () => setOpen(false),
+					className: "block rounded px-3 py-2 text-sm hover:bg-line/40",
+					children: channel.label
+				}, channel.key)),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					role: "menuitem",
+					onClick: copy,
+					className: "block w-full rounded px-3 py-2 text-left text-sm hover:bg-line/40",
+					children: t("lists.copy_link")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "px-3 py-2 text-xs text-ink-soft",
+					children: t("lists.share_instagram")
+				})
+			]
+		})]
 	});
 }
 //#endregion
@@ -36412,7 +36503,7 @@ function ShareRow({ url, text, label, hint }) {
 					className: "min-w-0 flex-1 truncate rounded border border-line px-3 py-2 text-xs",
 					children: url
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareLink, {
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareMenu, {
 					url,
 					text
 				}),
@@ -37265,20 +37356,8 @@ function QuizPlay({ quiz, isOwner, result, stats }) {
 	const { market } = usePage().props;
 	const { t } = useTranslations();
 	const [answers, setAnswers] = (0, import_react.useState)({});
-	const [copied, setCopied] = (0, import_react.useState)(false);
 	const token = window.location.pathname.split("/").filter(Boolean).pop();
 	const answered = Object.keys(answers).length;
-	async function share() {
-		if (!result) return;
-		const text = `${t("quiz.title")} ${result.score}/${result.total}\n${result.grid}\n${window.location.href}`;
-		if (navigator.share) {
-			await navigator.share({ text }).catch(() => void 0);
-			return;
-		}
-		await navigator.clipboard.writeText(text);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2e3);
-	}
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
 			title: t("quiz.title"),
@@ -37322,11 +37401,14 @@ function QuizPlay({ quiz, isOwner, result, stats }) {
 					"aria-label": result.grid,
 					children: result.grid
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: share,
-					className: "mt-6 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
-					children: copied ? t("quiz.copied") : t("quiz.share")
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-6",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareMenu, {
+						url: window.location.href,
+						text: `${t("quiz.title")} ${result.score}/${result.total}
+${result.grid}`,
+						label: t("quiz.share")
+					})
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 					className: "mt-8 text-sm text-ink-soft",

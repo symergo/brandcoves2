@@ -59,7 +59,7 @@ class GiftCoveController extends Controller
                 'id' => $mine->id,
                 'title' => $mine->title,
                 'items' => $mine->items()->count(),
-                'shared' => $mine->visibility->isShareable(),
+                'shared' => $mine->visibility?->isShareable() ?? false,
                 'url' => $current->url("lists/{$mine->id}"),
             ],
 

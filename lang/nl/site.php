@@ -429,6 +429,8 @@ return [
         'share_heading' => 'Deel dit lijstje',
         'share_text' => 'Dit is mijn lijstje: :title',
         'someones_wishlist' => 'Wenslijst van :name',
+        'share_native' => 'Meer apps…',
+        'share_instagram' => 'Instagram kan geen links uit een browser aannemen — kopieer hem en plak hem daar.',
     ],
 
     'recipients' => [

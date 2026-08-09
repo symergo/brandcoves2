@@ -425,6 +425,8 @@ return [
         'share_heading' => 'Comparte esta lista',
         'share_text' => 'Esta es mi lista: :title',
         'someones_wishlist' => 'La lista de :name',
+        'share_native' => 'Mas aplicaciones…',
+        'share_instagram' => 'Instagram no acepta enlaces desde el navegador: copialo y pegalo alli.',
     ],
 
     'recipients' => [

@@ -1,5 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import ShareMenu from '../../Components/ShareMenu'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
@@ -33,28 +34,9 @@ export default function QuizPlay({ quiz, isOwner, result, stats }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const [answers, setAnswers] = useState<Record<number, number>>({})
-    const [copied, setCopied] = useState(false)
 
     const token = window.location.pathname.split('/').filter(Boolean).pop()
     const answered = Object.keys(answers).length
-
-    async function share() {
-        if (!result) return
-
-        const text = `${t('quiz.title')} ${result.score}/${result.total}\n${result.grid}\n${window.location.href}`
-
-        // The native sheet where it exists — a gift list's job is to travel
-        // through a group chat, and that is where the sheet sends it.
-        if (navigator.share) {
-            await navigator.share({ text }).catch(() => undefined)
-
-            return
-        }
-
-        await navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-    }
 
     return (
         <>
@@ -101,13 +83,21 @@ export default function QuizPlay({ quiz, isOwner, result, stats }: Props) {
                         {result.grid}
                     </p>
 
-                    <button
-                        type="button"
-                        onClick={share}
-                        className="mt-6 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-                    >
-                        {copied ? t('quiz.copied') : t('quiz.share')}
-                    </button>
+                    {/*
+                      The same share menu as everywhere else. This used to be a
+                      bespoke copy of the logic that fell back to the clipboard,
+                      so on a laptop "share your score" silently copied and
+                      WhatsApp was nowhere to be found — on the one screen whose
+                      entire purpose is posting a result to friends.
+                    */}
+                    <div className="mt-6">
+                        <ShareMenu
+                            url={window.location.href}
+                            text={`${t('quiz.title')} ${result.score}/${result.total}
+${result.grid}`}
+                            label={t('quiz.share')}
+                        />
+                    </div>
 
                     {/*
                       The result screen ends on the list. Every wrong answer is a

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import ShareLink from './ShareLink'
+import ShareMenu from './ShareMenu'
 import { useTranslations } from '../useTranslations'
 
 /**
@@ -44,7 +44,7 @@ export default function ShareRow({
                 <code className="min-w-0 flex-1 truncate rounded border border-line px-3 py-2 text-xs">
                     {url}
                 </code>
-                <ShareLink url={url} text={text} />
+                <ShareMenu url={url} text={text} />
                 <button
                     type="button"
                     onClick={copy}
