@@ -27,7 +27,22 @@ use Illuminate\Support\Facades\DB;
  */
 class SitemapController extends Controller
 {
-    private const CHUNK = 20_000;
+    /**
+     * URLs per sitemap file.
+     *
+     * The protocol allows 50,000 and 50 MB uncompressed, so 20,000 looked
+     * comfortable. It was not: every entry carries five `<xhtml:link>`
+     * alternates, one per market, which makes a URL roughly 550 bytes rather
+     * than the ~90 a bare `<loc>` costs. 20,000 of those is **11 MB**, and
+     * building that string, holding the Eloquent collection behind it and
+     * writing the result to Redis all inside one request exceeded the web
+     * process's memory limit — a 500 on a file that generated perfectly from the
+     * CLI, where memory_limit is different. The 500 is what a crawler sees.
+     *
+     * 5,000 keeps a file near 3 MB and costs four times as many files, which is
+     * free: the index lists them and a crawler fetches them independently.
+     */
+    private const CHUNK = 5_000;
 
     public function index(): Response
     {
