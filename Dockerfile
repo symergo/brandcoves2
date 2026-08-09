@@ -13,6 +13,10 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY vite.config.js ./
+# tsconfig.json is not optional here: `npm run build` typechecks before it
+# bundles, and tsc without a config finds no inputs and fails the stage. Left
+# out, the image simply never builds — which is how it was found.
+COPY tsconfig.json ./
 COPY resources ./resources
 # VITE_* is inlined into the client bundle HERE. If it is missing at this point
 # it is missing in the browser forever — which is why these are Build Variables
