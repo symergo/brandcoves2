@@ -8,6 +8,21 @@
     $meta = $pageMeta->toArray();
     $canonical = $meta['canonical'] ?? url(request()->path());
     $indexable = config('brandcoves.robots_allow') && $meta['robots'] === null;
+
+    /*
+     * Staging gets its own mark: the same cove on an amber tile with a folded
+     * corner, meaning "this build is a proof, not final".
+     *
+     * Keyed on robots_allow rather than APP_ENV because staging runs with
+     * APP_ENV=production — it is a production build, that is the point of it.
+     * ROBOTS_ALLOW is the one flag that is already true on exactly one
+     * environment, and "not indexable" and "not the real site" are the same
+     * fact. The payoff is a tab strip where the staging tab is unmistakable,
+     * which is what stops a screenshot of staging being reported as a bug in
+     * production.
+     */
+    $staging = ! config('brandcoves.robots_allow');
+    $icon = $staging ? 'brandcoves-staging' : 'brandcoves';
 @endphp
 <!DOCTYPE html>
 {{-- lang comes from the market, not the app locale: nl-BE and nl-NL are the same
@@ -17,6 +32,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {{-- Icons. The SVG is what modern browsers take, and it is the one that
+         stays sharp on a high-density tab strip; the .ico is the fallback every
+         browser asks for by name whether or not it is declared. --}}
+    <link rel="icon" href="{{ asset($staging ? 'icons/favicon-staging.ico' : 'favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/svg+xml" href="{{ asset("icons/{$icon}.svg") }}">
+    <link rel="apple-touch-icon" href="{{ asset($staging ? 'icons/brandcoves-staging-apple-touch-180.png' : 'icons/brandcoves-512.png') }}">
+    <meta name="theme-color" content="{{ $staging ? '#F2A93B' : '#12232B' }}">
 
     @if ($indexable)
         <meta name="robots" content="index, follow, max-image-preview:large">
@@ -69,7 +92,13 @@
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:image" content="{{ $meta['image'] }}">
     @else
+        {{-- The logo rather than nothing. A shared link with no image renders as
+             a bare grey rectangle in every chat app, which reads as a broken
+             page; the mark at least says whose page it is. Square, so it pairs
+             with the small `summary` card and not the wide one. --}}
+        <meta property="og:image" content="{{ asset("icons/{$icon}-512.png") }}">
         <meta name="twitter:card" content="summary">
+        <meta name="twitter:image" content="{{ asset("icons/{$icon}-512.png") }}">
     @endisset
 
     {{-- The highest-leverage SEO on the site: a Product with an AggregateOffer

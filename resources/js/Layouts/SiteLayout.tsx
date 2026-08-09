@@ -30,7 +30,24 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
             <header className="border-b border-line">
                 <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4">
-                    <Link href={base} className="text-lg font-semibold tracking-tight">
+                    <Link href={base} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                        {/*
+                          Decorative, so it is hidden from screen readers: the
+                          word next to it already names the link, and a reader
+                          announcing "Brandcoves Brandcoves" is worse than no
+                          image at all.
+
+                          Fixed width and height rather than CSS alone, so the
+                          header does not reflow while the mark loads.
+                        */}
+                        <img
+                            src="/icons/brandcoves.svg"
+                            alt=""
+                            aria-hidden="true"
+                            width={28}
+                            height={28}
+                            className="h-7 w-7 rounded-md"
+                        />
                         Brandcoves
                     </Link>
 
