@@ -53,9 +53,10 @@ link. One click to leave, permanently.
 Most shopping sites show a row per listing, so eleven shops selling one pair of
 headphones become eleven results and you do the untangling.
 
-Here they collapse into a single card for the actual product. It is the least
-glamorous thing on this list and it is what makes the rest work: discovery is only
-enjoyable when the catalogue knows what things really are.
+Here they collapse into a single card for the actual product, with links to the
+shops that sell it. It is the least glamorous thing on this list and it is what
+makes the rest work: discovery is only enjoyable when the catalogue knows what
+things really are.
 
 ## Some of the writing is AI-assisted
 
@@ -88,7 +89,7 @@ The [terms](terms) set out what that means in practice.
   that your email is used to send you the thing you asked for, and nothing else.
 - **Take payment for position.** No shop pays to rank higher or to appear in a
   Cove. The [terms](terms) set out exactly what decides the order, because EU law
-  requires a comparison service to say so and because it is worth knowing.
+  requires a service like this to say so and because it is worth knowing.
 
 ## Who runs it
 

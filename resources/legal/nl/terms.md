@@ -23,9 +23,10 @@ er dan geen gebruik van.
 
 ## 2. Wat Brandcoves is, en niet is
 
-Brandcoves is een **ontdekkings- en vergelijkingsdienst**. We verzamelen product-
-en prijsinformatie bij verkopers en affiliatenetwerken en presenteren die zodat je
-ze kunt bekijken en naast elkaar leggen.
+Brandcoves is een **ontdekkingsdienst voor producten en merken**. We verzamelen
+productinformatie bij verkopers en affiliatenetwerken en presenteren die zodat je
+producten en de merken erachter kunt ontdekken, met links naar de winkels die ze
+verkopen.
 
 **Wij zijn geen winkel en geen marktplaats.** We houden geen voorraad, we
 ontvangen geen betaling, geen enkele verkoper biedt via ons iets aan, en we zijn
@@ -43,7 +44,7 @@ van je bestelling bij.
 
 ## 3. Hoe resultaten gerangschikt worden
 
-Europese regelgeving verplicht een vergelijkingsdienst om uit te leggen welke
+Europese regelgeving verplicht een dienst als deze om uit te leggen welke
 belangrijkste parameters de volgorde bepalen, en hoe zwaar die wegen. De onze, in
 volgorde van gewicht:
 
@@ -52,11 +53,10 @@ volgorde van gewicht:
    vindt.
 2. **Of het effectief te koop is.** Aanbiedingen op voorraad staan boven
    onbeschikbare. Een prijs die je niet kunt kopen is geen aanbieding.
-3. **Prijs**, wanneer je daarop sorteert, en als doorslaggevend criterium binnen
-   één product tussen de winkels die het verkopen. De goedkoopste aanbieding staat
-   altijd bovenaan op een kaart.
-4. **Hoeveel winkels het voeren**, wat een product licht doet stijgen, want een
-   product dat meerdere winkels verkopen is er een waar vergelijken iets oplevert.
+3. **Prijs**, wanneer je daarop sorteert, en als doorslaggevend criterium tussen
+   de winkels die hetzelfde product aanbieden.
+4. **Hoeveel winkels het voeren**, wat een product licht doet stijgen, want iets
+   dat meerdere winkels voeren kun je doorgaans ook echt krijgen.
 5. **Redactionele keuze**, uitsluitend in de Coves en de Daily Cove. Dat zijn
    geschreven selecties, gekozen omdat ze interessant zijn.
 
@@ -70,7 +70,7 @@ Commissietarieven spelen geen rol in de rangschikking, in welke aanbieding als
 goedkoopste getoond wordt, of in wat in een Cove verschijnt. Verandert dat ooit,
 dan verandert dit punt mee en wordt de wijziging vermeld.
 
-## 4. Prijzen en beschikbaarheid
+## 4. Productinformatie, prijzen en beschikbaarheid
 
 We doen ons best voor juistheid en kunnen die niet garanderen.
 
@@ -109,13 +109,12 @@ Als Amazon Associate verdienen we aan in aanmerking komende aankopen.
 
 ## 6. Gebruik van de site
 
-Je mag Brandcoves gebruiken om producten te ontdekken en te vergelijken. Je mag
-niet:
+Je mag Brandcoves gebruiken om producten en merken te ontdekken. Je mag niet:
 
 - de catalogus scrapen, crawlen of in bulk kopiëren, of met geautomatiseerde
   middelen gegevens onttrekken die verder gaan dan gewoon browsen;
 - onze inhoud doorverkopen, herpubliceren of verspreiden, met inbegrip van onze
-  redactionele teksten en onze prijsvergelijkingen;
+  redactionele teksten en onze productgegevens;
 - de site verstoren, onbevoegd toegang proberen te krijgen of de beveiliging
   ervan onderzoeken;
 - de site gebruiken op een manier die de wet overtreedt of rechten van anderen
@@ -156,7 +155,8 @@ Het ontwerp, de software, de redactionele teksten en de manier waarop de catalog
 geordend is, behoren ons of onze licentiegevers toe.
 
 Productnamen, beschrijvingen, afbeeldingen, logo's en merken behoren hun
-respectieve eigenaars toe en staan hier om te tonen wát er vergeleken wordt, wat
+respectieve eigenaars toe en staan hier om te tonen welke producten en merken
+getoond worden, wat
 voor dat doel toegelaten is. Niets op deze site maakt aanspraak op enig recht
 daarop, en hun aanwezigheid impliceert in geen van beide richtingen een
 goedkeuring.

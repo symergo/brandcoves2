@@ -20,6 +20,7 @@ cannot be recovered from a diff.
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
+| [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
 | [cutover.md](cutover.md) | Operations | Ready — not yet executed |
 
 ## Closed in Phase 2

@@ -23,9 +23,10 @@ it.
 
 ## 2. What Brandcoves is, and is not
 
-Brandcoves is a **discovery and comparison service**. We collect product and price
-information from retailers and affiliate networks and present it so that it can be
-explored and compared.
+Brandcoves is a **product and brand discovery service**. We collect product
+information from retailers and affiliate networks and present it so that products
+and the brands behind them can be explored, alongside links to the shops that sell
+them.
 
 **We are not a shop and we are not a marketplace.** We hold no stock, we take no
 payment, no seller offers anything through us, and we are not a party to any
@@ -40,7 +41,7 @@ anything, because we never received your money and hold no record of your order.
 
 ## 3. How results are ranked
 
-EU law requires a comparison service to explain the main parameters that determine
+EU law requires a service like ours to explain the main parameters that determine
 how it ranks what you see, and their relative importance. Ours, in order of
 weight:
 
@@ -48,10 +49,10 @@ weight:
    title, brand and category, with fuzzy matching so a typo still finds things.
 2. **Whether it can actually be bought.** In-stock offers rank above unavailable
    ones. An unbuyable price is not an offer.
-3. **Price**, when you sort by it, and as the tiebreaker within a product between
-   the shops selling it. The cheapest offer is always shown first on a card.
-4. **How many shops carry it**, which raises a product slightly, because a product
-   several shops sell is one where the comparison is worth something.
+3. **Price**, when you choose to sort by it, and as the tiebreaker between the
+   shops listing the same product.
+4. **How many shops list it**, which raises a product slightly, because something
+   several shops carry is something you are more likely to be able to get.
 5. **Editorial judgement**, in the Coves and the Daily Cove only. Those are
    written selections, chosen for being interesting.
 
@@ -60,17 +61,16 @@ rank *away* from popularity, toward products that are unusual for their category
 That is the purpose of those pages rather than an accident of the ranking.
 
 **No retailer pays for placement, position, or inclusion.** Commission rates play
-no part in ranking, in which offer is presented as cheapest, or in what appears in
-a Cove. If that ever changes, this section changes with it and the change will be
-marked.
+no part in ranking, in which shop is listed first, or in what appears in a Cove.
+If that ever changes, this section changes with it and the change will be marked.
 
-## 4. Prices and availability
+## 4. Product information, prices and availability
 
 We work hard on accuracy and cannot guarantee it.
 
-Prices and stock come from retailer feeds refreshed twice a day, and from live
-queries made while you search. Between our reading a price and your reaching the
-shop, it can change. Feeds contain errors. Promotions end.
+Product details, prices and stock come from retailer feeds refreshed twice a day,
+and from live queries made while you search. Between our reading a price and your
+reaching the shop, it can change. Feeds contain errors. Promotions end.
 
 **The retailer's own page is authoritative.** Check the price there before you
 buy. A price shown here is an invitation to look, never an offer capable of
@@ -87,8 +87,8 @@ price.
 We are not the seller, so we are not the trader announcing a price reduction for
 the purposes of Article 6a of Directive 98/6/EC. A retailer's own obligation to
 state its prior lowest price is theirs and is discharged on their site. Our badge
-is our assessment of the market, honestly made, and it is not a guarantee that you
-cannot find the item cheaper elsewhere.
+is our own reading of what a product has cost recently, honestly made, and it is
+not a promise about what any other shop charges.
 
 ## 5. Affiliate relationships
 
@@ -102,12 +102,12 @@ As an Amazon Associate we earn from qualifying purchases.
 
 ## 6. Using the site
 
-You may use Brandcoves to discover and compare products. You may not:
+You may use Brandcoves to discover products and brands. You may not:
 
 - scrape, crawl or bulk-copy the catalogue, or use automated means to extract
   data beyond ordinary browsing;
 - resell, republish or redistribute our content, including our editorial text and
-  our price comparisons;
+  our product data;
 - interfere with the site, attempt to gain unauthorised access, or probe its
   security;
 - use it in a way that breaks the law or infringes anyone's rights.
@@ -146,7 +146,8 @@ The design, the software, the editorial text and the way the catalogue is arrang
 belong to us or our licensors.
 
 Product names, descriptions, images, logos and trade marks belong to their
-respective owners and appear here to identify what is being compared, which is
+respective owners and appear here to identify the products and brands shown,
+which is
 permitted for that purpose. Nothing on this site claims any right in them, and
 their appearance implies no endorsement in either direction.
 

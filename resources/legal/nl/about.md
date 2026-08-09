@@ -54,9 +54,10 @@ link. Met één klik weer weg, definitief.
 De meeste winkelsites tonen een rij per aanbieding, dus elf winkels die dezelfde
 koptelefoon verkopen worden elf resultaten en jij mag het uitzoeken.
 
-Hier klappen die samen tot één kaart voor het werkelijke product. Het is het minst
-spannende punt in dit lijstje en het is precies wat de rest laat werken:
-ontdekken is pas leuk als de catalogus weet wát dingen zijn.
+Hier klappen die samen tot één kaart voor het werkelijke product, met links naar
+de winkels die het verkopen. Het is het minst spannende punt in dit lijstje en het
+is precies wat de rest laat werken: ontdekken is pas leuk als de catalogus weet
+wát dingen zijn.
 
 ## Een deel van de teksten is met AI gemaakt
 
@@ -91,8 +92,8 @@ betekent.
   niets anders.
 - **Betaling aannemen voor een plaats.** Geen enkele winkel betaalt om hoger te
   staan of in een Cove te verschijnen. De [algemene voorwaarden](terms) leggen uit
-  wat de volgorde wél bepaalt, omdat Europese regelgeving een vergelijkingsdienst
-  dat verplicht en omdat het de moeite is om te weten.
+  wat de volgorde wél bepaalt, omdat Europese regelgeving een dienst als deze dat
+  verplicht en omdat het de moeite is om te weten.
 
 ## Wie het maakt
 
