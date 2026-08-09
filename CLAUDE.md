@@ -45,6 +45,7 @@ php artisan bc:seed-copy              # import shipped page copy into the editab
 php artisan bc:prune-personal-data   # enforce the published GDPR retention windows
 php artisan bc:awin-feeds             # discover Awin advertiser feeds, register them per market
 php artisan bc:ingest                 # run feed ingestion now
+php artisan bc:refresh-guide-copy     # re-write guides that have no editorial, then stale ones
 php artisan bc:scrub --force          # MANDATORY after restoring a production dump
 ```
 

@@ -113,6 +113,78 @@ class GuideBuilder
     }
 
     /**
+     * Re-attempt the editorial copy of a guide that is already published.
+     *
+     * Two jobs, one method. A guide built while AI was unavailable is stuck with
+     * template copy for good, because nothing re-visits a published guide; and
+     * the monthly freshness pass has to be able to rewrite prose that has aged.
+     *
+     * **The shortlist is not re-chosen.** Only the words change. Re-picking
+     * products would silently reorder a page Google has already indexed, and the
+     * copy would then describe a different guide than the one that was ranked.
+     *
+     * Returns false and touches nothing when the model is unavailable, capped or
+     * fails: existing copy is never traded for the template.
+     */
+    public function refreshCopy(Guide $guide): bool
+    {
+        $market = $guide->market instanceof Market ? $guide->market : Market::from($guide->market);
+
+        $shortlist = $guide->items()
+            ->with('group')
+            ->orderBy('rank')
+            ->get()
+            ->map(fn (GuideItem $item) => $item->group)
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($shortlist === []) {
+            return false;
+        }
+
+        $topic = $guide->focus_keyphrase ?? $guide->title;
+        $copy = $this->copy($market, $topic, $shortlist);
+
+        if ($copy['source'] !== 'ai') {
+            Log::info('Guide copy refresh produced no AI copy, leaving the guide as it was', [
+                'guide' => $guide->slug,
+                'market' => $market->value,
+            ]);
+
+            return false;
+        }
+
+        DB::transaction(function () use ($guide, $copy, $shortlist): void {
+            $guide->forceFill([
+                'title' => $copy['title'],
+                'intro' => $copy['intro'],
+                'body_md' => $copy['body'],
+                'meta_description' => Str::limit($copy['intro'], 155, ''),
+                'faq' => $copy['faq'],
+                'last_checked_at' => now(),
+            ])->save();
+
+            /*
+             * Updated in place by rank rather than deleted and rebuilt. The rows
+             * are unchanged products; dropping them would churn ids, and any
+             * reader mid-page would see an empty guide for the length of the
+             * transaction.
+             */
+            foreach ($shortlist as $index => $group) {
+                $guide->items()
+                    ->where('rank', $index + 1)
+                    ->update([
+                        'editorial_copy' => $copy['items'][$index]['copy'] ?? null,
+                        'verdict' => $copy['items'][$index]['verdict'] ?? null,
+                    ]);
+            }
+        });
+
+        return true;
+    }
+
+    /**
      * The shortlist.
      *
      * Chosen for usefulness, not for score: a guide that lists seven versions of
@@ -192,8 +264,12 @@ class GuideBuilder
     /**
      * Editorial copy, or a template fallback.
      *
+     * `source` says which of the two came back. A caller refreshing an existing
+     * guide has to know: replacing real editorial with the template because a
+     * model was briefly unreachable is a downgrade nobody asked for.
+     *
      * @param  list<ProductGroup>  $shortlist
-     * @return array{title: string, intro: string, body: string|null, faq: array|null, items: list<array{copy: string|null, verdict: string|null}>}
+     * @return array{title: string, intro: string, body: string|null, faq: array|null, items: list<array{copy: string|null, verdict: string|null}>, source: string}
      */
     private function copy(Market $market, string $topic, array $shortlist): array
     {
@@ -237,13 +313,15 @@ class GuideBuilder
             'body' => $this->clean($response['how_to_choose'] ?? null, 3000),
             'faq' => $this->faq($response['faq'] ?? null),
             'items' => $items,
+            'source' => 'ai',
         ];
     }
 
     private function system(Market $market): string
     {
         return <<<'TXT'
-        You write the prose for a buying guide on a price-comparison site.
+        You write the prose for a buying guide on a product and brand discovery
+        site, which links out to the shops selling what it shows.
 
         You are given a shortlist that has already been chosen. Your job is the
         words, not the products.
@@ -297,6 +375,7 @@ class GuideBuilder
             // No copy at all rather than filler. An empty line under a product
             // is honest; a generated sentence that says nothing is not.
             'items' => array_map(fn () => ['copy' => null, 'verdict' => null], $shortlist),
+            'source' => 'template',
         ];
     }
 

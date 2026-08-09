@@ -163,6 +163,35 @@ build job under the `daily_picks` and `guide_copy` caps. The edition builds and 
 `AI_ENABLED=false` — themes fall back to a curated rotation, guides to template copy. The game, the
 scoring and the picks involve no model at all. See [ai-invariant.md](ai-invariant.md).
 
+### Getting the prose back: `bc:refresh-guide-copy`
+
+An edition is rebuilt every day, so a theme written during an AI outage is replaced by the next
+morning's run. **A guide is not.** It is written once at publication and nothing revisited it, so a
+guide built while the model was unreachable kept its template copy permanently, and no symptom on the
+page said so: it renders, it simply has no editorial in it.
+
+That was not hypothetical. Until `AiClient` stopped reading the answer out of `content[0]` — a
+`thinking` block on any prompt long enough to warrant one — every guide fell back to the template
+while the usage table showed successful calls, real token counts and zero errors.
+
+`bc:refresh-guide-copy` re-attempts the prose. Daily at 04:40, eight guides a run, which clears a
+backlog inside a fortnight without competing with the 06:00 editions for the day's budget. It also
+serves as the monthly freshness pass the build plan calls for, since that is the same operation on a
+different trigger.
+
+Three rules it holds to:
+
+- **The shortlist is never re-chosen.** Only the words change. Re-picking products would reorder a
+  page Google has already indexed, and the new copy would describe a guide nobody ranked.
+- **Existing copy is never traded for the template.** `GuideBuilder::copy()` reports whether the
+  answer came from a model, and a run that could not reach one leaves the guide exactly as it was.
+  Without that, every capped run would quietly strip prose from good guides.
+- **The cap is checked per guide, not once up front.** Other features share the day's budget. Running
+  on past it makes one failed call per remaining guide, each logged as if the model had let us down.
+
+Guides with no editorial at all are served before stale ones. A stale but real paragraph is in far
+better shape than none, and the cap means a run usually cannot have both.
+
 ## Planned schema
 
 Expanding the tables Phase 0 already created:

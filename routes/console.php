@@ -11,6 +11,7 @@ use App\Jobs\RefreshBrandStats;
 use App\Jobs\RefreshWishlistedProducts;
 use App\Jobs\ScoreSerendipity;
 use App\Jobs\SendCoveDigest;
+use App\Jobs\SendOccasionReminders;
 use App\Jobs\WidenGiftAngles;
 use App\Models\Feed;
 use Illuminate\Support\Facades\Schedule;
@@ -196,6 +197,23 @@ Schedule::job(new RefreshWishlistedProducts)
     ->onOneServer();
 
 /*
+ * Occasion reminders.
+ *
+ * Once a day, in the morning: a reminder that a birthday is a fortnight away is
+ * something to read over coffee, not at 3am. `recipients.birthday` was written
+ * and never read until this job existed.
+ *
+ * The job dedupes per occurrence itself rather than relying on the schedule
+ * running exactly once — a redeploy can replay a window, and a duplicated
+ * reminder is how a notification channel gets muted.
+ */
+Schedule::job(new SendOccasionReminders)
+    ->name('occasion-reminders')
+    ->dailyAt('08:10')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
  * Keep the editorial calendar stocked, 120 days ahead.
  *
  * Weekly rather than daily: it drafts a plan for every day in the window, so a
@@ -209,6 +227,24 @@ Schedule::job(new RefreshWishlistedProducts)
 Schedule::command('bc:plan-coves')
     ->name('plan-coves')
     ->weeklyOn(1, '03:50')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Give published guides their prose back, and keep it current.
+ *
+ * Nothing else revisits a published guide, so one built while the model was
+ * unreachable kept template copy for good. That is not hypothetical: every guide
+ * generated before the response parser was fixed is in exactly that state.
+ *
+ * Daily and small. The per-feature cap is the real limiter, and a run that walks
+ * a handful of guides a night clears the backlog inside a fortnight without ever
+ * competing with the morning editions for the day's budget. 04:40 is after the
+ * prunes and well before the 06:00 Cove builds.
+ */
+Schedule::command('bc:refresh-guide-copy --limit=8')
+    ->name('refresh-guide-copy')
+    ->dailyAt('04:40')
     ->withoutOverlapping()
     ->onOneServer();
 
