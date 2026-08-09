@@ -89,6 +89,10 @@ betekent.
 - **Je gegevens verkopen.** Zie het [privacybeleid](privacy). Kort samengevat:
   je e-mailadres wordt gebruikt om je te sturen waar je om gevraagd hebt, en voor
   niets anders.
+- **Betaling aannemen voor een plaats.** Geen enkele winkel betaalt om hoger te
+  staan of in een Cove te verschijnen. De [algemene voorwaarden](terms) leggen uit
+  wat de volgorde wél bepaalt, omdat Europese regelgeving een vergelijkingsdienst
+  dat verplicht en omdat het de moeite is om te weten.
 
 ## Wie het maakt
 

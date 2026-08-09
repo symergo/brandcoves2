@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Console\Commands\PrunePersonalDataCommand;
 use App\Enums\Market;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -125,6 +126,91 @@ class LegalPagesTest extends TestCase
             ->assertSee('/be-nl/about', escape: false)
             ->assertSee('/be-nl/privacy', escape: false)
             ->assertSee('/be-nl/terms', escape: false);
+    }
+
+    #[Test]
+    public function the_published_retention_windows_are_the_ones_the_code_enforces(): void
+    {
+        /*
+         * GDPR Article 5(1)(e). A retention period published in a privacy notice
+         * and not enforced anywhere is not a retention period, it is a sentence.
+         * These two lists drifting apart makes the published policy false, which
+         * is the kind of wrong that only surfaces during a complaint.
+         */
+        $windows = PrunePersonalDataCommand::RETENTION;
+
+        foreach (['en' => 'privacy', 'nl' => 'privacy'] as $language => $page) {
+            $text = file_get_contents(resource_path("legal/{$language}/{$page}.md"));
+
+            $this->assertStringContainsString(
+                $windows['events'].' days',
+                $language === 'en' ? $text : str_replace(' dagen', ' days', $text),
+                "the {$language} policy does not state the interaction-log window the pruner uses",
+            );
+
+            $this->assertStringContainsString(
+                (string) $windows['unconfirmed_subscribers'],
+                $text,
+                "the {$language} policy does not state the unconfirmed-subscriber window",
+            );
+        }
+    }
+
+    #[Test]
+    public function the_privacy_policy_names_a_legal_basis_for_every_category(): void
+    {
+        // Article 13(1)(c): a privacy notice has to state the basis, not just the
+        // purpose. A table of purposes with no bases is the most common gap in a
+        // notice that otherwise looks complete.
+        $text = file_get_contents(resource_path('legal/en/privacy.md'));
+
+        foreach (['Art. 6(1)(a)', 'Art. 6(1)(b)', 'Art. 6(1)(f)'] as $basis) {
+            $this->assertStringContainsString($basis, $text);
+        }
+
+        // And the right to object, which only means anything where legitimate
+        // interests are relied on.
+        $this->assertStringContainsString('Art. 21', $text);
+    }
+
+    #[Test]
+    public function the_terms_disclose_how_results_are_ranked(): void
+    {
+        /*
+         * Required of a comparison service in the EU: the main parameters
+         * determining ranking and their relative importance, plus whether anyone
+         * pays for placement. Omnibus Directive (EU) 2019/2161.
+         */
+        foreach (['en', 'nl'] as $language) {
+            $text = file_get_contents(resource_path("legal/{$language}/terms.md"));
+
+            $this->assertMatchesRegularExpression(
+                '/rank|gerangschikt/i',
+                $text,
+                "the {$language} terms do not explain ranking",
+            );
+
+            $this->assertMatchesRegularExpression(
+                '/pays for placement|betaalt voor plaatsing/i',
+                $text,
+                "the {$language} terms do not address paid placement",
+            );
+        }
+    }
+
+    #[Test]
+    public function no_page_links_the_discontinued_odr_platform(): void
+    {
+        // The European Commission's ODR platform stopped operating on 20 July
+        // 2025. Plenty of sites still link it, and a dead dispute-resolution
+        // route in a terms page is worse than none.
+        foreach (glob(resource_path('legal/*/*.md')) as $path) {
+            $this->assertStringNotContainsString(
+                'ec.europa.eu/consumers/odr',
+                file_get_contents($path),
+                basename(dirname($path)).'/'.basename($path).' links the dead ODR platform',
+            );
+        }
     }
 
     #[Test]

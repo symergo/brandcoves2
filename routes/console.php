@@ -212,6 +212,18 @@ Schedule::command('bc:plan-coves')
     ->withoutOverlapping()
     ->onOneServer();
 
+/*
+ * Enforce the retention windows the privacy policy publishes.
+ *
+ * GDPR Article 5(1)(e). A retention period stated in a privacy notice and not
+ * enforced anywhere in the code is not a retention period, it is a sentence.
+ * Nightly, before the price-history prune, because both are cheap and quiet.
+ */
+Schedule::command('bc:prune-personal-data')
+    ->name('prune-personal-data')
+    ->dailyAt('03:20')
+    ->onOneServer();
+
 // Trim price history to the retention window. Without this the table grows
 // without bound to support a 30-day median and a sparkline.
 Schedule::command('bc:prune-price-history')

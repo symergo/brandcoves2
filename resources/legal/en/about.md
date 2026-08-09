@@ -84,8 +84,11 @@ The [terms](terms) set out what that means in practice.
 - **Fake urgency.** No countdown timers, no "3 people are viewing this", no
   invented scarcity.
 - **Fake reviews.** We do not have ratings, so we do not show any.
-- **Sell your data.** See the [privacy policy](privacy). The short version is that
-  your email is used to send you the thing you asked for, and nothing else.
+- **Sell your data.** See the [privacy policy](privacy). The short version is
+  that your email is used to send you the thing you asked for, and nothing else.
+- **Take payment for position.** No shop pays to rank higher or to appear in a
+  Cove. The [terms](terms) set out exactly what decides the order, because EU law
+  requires a comparison service to say so and because it is worth knowing.
 
 ## Who runs it
 
