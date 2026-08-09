@@ -12,7 +12,7 @@ export default function Login({ googleEnabled }: Props) {
     const { t } = useTranslations()
     const base = `/${market.key}`
 
-    const form = useForm({ email: '' })
+    const form = useForm({ email: '', name: '' })
 
     function submit(e: FormEvent) {
         e.preventDefault()
@@ -42,6 +42,25 @@ export default function Login({ googleEnabled }: Props) {
                 )}
 
                 <form onSubmit={submit} className="mt-6 space-y-3">
+                    {/*
+                      Optional, and only used when the account is created.
+                      A magic link is the whole of registration here, so this is
+                      the one moment there is to ask — and without a name a
+                      shared wishlist cannot say whose it is.
+                    */}
+                    <label htmlFor="name" className="block text-sm font-medium">
+                        {t('auth.name')}
+                    </label>
+                    <input
+                        id="name"
+                        type="text"
+                        autoComplete="name"
+                        maxLength={80}
+                        value={form.data.name}
+                        onChange={(e) => form.setData('name', e.target.value)}
+                        className="mt-1 mb-4 w-full rounded-lg border border-line px-3 py-2"
+                    />
+
                     <label htmlFor="email" className="block text-sm font-medium">
                         {t('auth.email')}
                     </label>

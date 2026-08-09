@@ -18,6 +18,7 @@ return [
         'skip' => 'Ir al contenido',
         'choose_market' => 'Elige tu región',
         'santa' => 'Amigo invisible',
+        'cove' => 'Gift Cove',
     ],
 
     'home' => [
@@ -240,6 +241,58 @@ return [
         'confirm_invalid' => 'Ese enlace ha caducado o ya se ha usado. Vuelve a suscribirte para recibir uno nuevo.',
         'unsubscribed' => 'Te has dado de baja. Sin rencores.',
     ],
+    'suggestions' => [
+        'heading' => 'Sugerido para ti',
+        'hint' => 'No aparece nada en tu lista hasta que lo aceptes.',
+        'from' => 'De :name',
+        'accept' => 'Añadir',
+        'dismiss' => 'No, gracias',
+        'sent' => 'Enviado. Ellos deciden si entra en la lista.',
+        'accepted' => 'Añadido a tu lista.',
+        'dismissed' => 'Descartado.',
+        'suggest' => 'Sugerir algo',
+    ],
+
+    'registry' => [
+        'heading' => 'Convertir en lista de regalos',
+        'hint' => 'Añade una ocasión y una fecha, y una dirección si te tienen que enviar algo.',
+        'occasion' => 'Ocasión',
+        'none' => 'No es una lista de regalos',
+        'date' => 'Fecha',
+        'address' => 'Dirección de envío',
+        'address_hint' => 'Guardada cifrada, y visible solo para quien haya reservado algo.',
+        'types' => [
+            'wedding' => 'Boda',
+            'baby' => 'Nacimiento',
+            'housewarming' => 'Casa nueva',
+            'birthday' => 'Cumpleaños',
+            'other' => 'Otra cosa',
+        ],
+    ],
+
+    'handover' => [
+        'heading' => 'Ceder esta lista',
+        'hint' => 'Dale la lista a :name. Pasa a ser su propia lista, que puede compartir y de la que pueden comprarle.',
+        'action' => 'Cederla',
+        'confirm' => 'Dar esta lista a :name? Dejará de ser tuya.',
+        'done' => 'Cedida a :name.',
+        'already' => 'Esta lista ya se ha cedido.',
+        'only_gift_lists' => 'Solo se puede ceder una lista para otra persona.',
+        'not_linked' => 'Primero tienen que reclamar su enlace, para que haya una cuenta a la que dársela.',
+    ],
+
+    'pledges' => [
+        'heading' => 'Poner entre varios',
+        'hint' => 'Di cuánto pones. Una persona lo compra y el resto se lo arregláis entre vosotros.',
+        'amount' => 'Tu parte',
+        'your_name' => 'Tu nombre',
+        'added' => 'Estás dentro.',
+        'removed' => 'Te has salido.',
+        'pledged' => ':total de :price',
+        'who' => ':name puso :amount',
+        'join' => 'Me apunto',
+        'leave' => 'Mejor no',
+    ],
 
     'cove_mail' => [
         'confirm_subject' => 'Confirma tu suscripción a la Daily Cove',
@@ -290,12 +343,13 @@ return [
         'mail_requested_from' => 'Solicitado desde :ip',
         'mail_ignore' => 'Si no has sido tú, puedes ignorar este correo, nadie puede entrar sin el enlace.',
         'mail_fallback' => 'Si el botón no funciona, pega esto en tu navegador:',
+        'name' => 'Tu nombre (opcional)',
     ],
 
     'lists' => [
         'title' => 'Mis listas',
         'subtitle' => 'Lo que guardas, para ti y para otros.',
-        'default_title' => 'Guardados',
+        'default_title' => 'Mi lista de deseos',
         'new_list' => 'Nueva lista',
         'list_name' => 'Nombre de la lista',
         'create' => 'Crear lista',
@@ -370,6 +424,7 @@ return [
         'cancel' => 'Cancelar',
         'share_heading' => 'Comparte esta lista',
         'share_text' => 'Esta es mi lista: :title',
+        'someones_wishlist' => 'La lista de :name',
     ],
 
     'recipients' => [
@@ -436,6 +491,7 @@ return [
         'attach_list' => 'Usar esta lista',
         'list_attached' => 'Ese grupo ya ve esta lista.',
         'list_attached_short' => 'En uso',
+        'invite_text' => 'Unete a nuestro amigo invisible: :title',
     ],
     'quiz' => [
         'title' => 'Cuanto los conoces?',
@@ -458,7 +514,45 @@ return [
         'share_text' => 'Cuanto me conoces?',
         'own_title' => '¡Descubre cuánto te conocen tus amigos!',
         'open' => 'Abrir el quiz',
+        'intro_anon' => 'Cuatro cosas. Una está de verdad en su lista. Elige cuál.',
     ],
+    'cove' => [
+        'title' => 'La Gift Cove',
+        'intro' => 'Todo para regalar a los demás, y para contar lo que te gustaría a ti. Nadie ve nunca quién ha comprado qué.',
+        'tools' => 'Lo que puedes hacer aquí',
+        'items_count' => ':count cosas guardadas',
+        'open_list' => 'Abrir mi lista',
+        'start_list' => 'Empezar mi lista',
+        'privacy' => 'Una regla lo atraviesa todo: la persona para la que es una lista nunca sabe qué se ha reservado. Ni quién, ni cuánto, ni que haya algo.',
+
+        'wishlist_title' => 'Mi lista de deseos',
+        'wishlist_body' => 'Cosas que de verdad te gustarían. Compártela y cada uno marca lo que regala, sin que tú veas nunca quién cogió qué.',
+
+        'giftlist_title' => 'Una lista para otra persona',
+        'giftlist_body' => 'Un sitio donde reunir ideas para alguien. Privada, y nunca reservable: es trabajo previo, no una lista de deseos.',
+
+        'collab_title' => 'Comprar entre varios',
+        'collab_body' => 'Invita a otros a una lista para elegir juntos, o poned dinero para un regalo mayor que compre uno de vosotros.',
+
+        'handover_title' => 'Ceder una lista',
+        'handover_body' => 'Empezaste una lista para alguien antes de que estuviera aquí? Dásela cuando se una y pasa a ser su propia lista.',
+
+        'santa_title' => 'Amigo invisible',
+        'santa_body' => 'Un grupo, un sorteo, nadie sabe a quién le ha tocado quién. Cada uno puede enlazar su lista para que no vayan a ciegas.',
+
+        'registry_title' => 'Una lista de regalos',
+        'registry_body' => 'Una lista con una ocasión y una fecha: boda, bebé o casa nueva. Añade una dirección y solo la ve quien haya reservado algo.',
+
+        'quiz_title' => 'Cuánto te conocen?',
+        'quiz_body' => 'Convierte tu lista en un quiz: cuatro cosas, una está de verdad en ella. Se comparte la puntuación, no las respuestas.',
+
+        'suggestions_title' => 'Sugerencias',
+        'suggestions_body' => 'Quien te conoce puede proponer cosas para tu lista. No aparece nada hasta que tú digas que sí.',
+
+        'whisperer_title' => 'Gift Whisperer',
+        'whisperer_body' => 'Describe a alguien y recibe cuatro ideas, cada una con su motivo. Para cuando sabes para quién es, pero no qué.',
+    ],
+
     'reminders' => [
         'birthday_title' => 'El cumpleanos de :name se acerca',
         'exchange_title' => ':title se acerca',

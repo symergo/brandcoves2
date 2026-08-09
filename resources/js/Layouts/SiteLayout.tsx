@@ -12,8 +12,9 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
     const nav = [
         { href: `${base}/search`, label: t('nav.search') },
-        { href: `${base}/gift`, label: t('nav.gift') },
-        { href: `${base}/santa`, label: t('nav.santa') },
+        // One entry, not three. The wizard, Secret Santa and every list tool
+        // live behind the Gift Cove, which is the page that explains them.
+        { href: `${base}/gift-cove`, label: t('nav.cove') },
         { href: `${base}/daily`, label: t('nav.daily') },
         { href: `${base}/surprise`, label: t('nav.surprise') },
         { href: `${base}/scan`, label: t('nav.scan') },

@@ -66,7 +66,13 @@ export default function QuizPlay({ quiz, isOwner, result, stats }: Props) {
             <header className="max-w-2xl">
                 <h1 className="text-2xl font-semibold">{t('quiz.title')}</h1>
                 <p className="mt-2 text-ink-soft">
-                    {t('quiz.intro', { name: quiz.owner ?? quiz.title })}
+                    {/*
+                      Name a person, or say nothing about a person. Falling back
+                      to the list title told players that one of these was on
+                      "the list of Saved" — the list has a name, and it is not
+                      anybody's.
+                    */}
+                    {quiz.owner ? t('quiz.intro', { name: quiz.owner }) : t('quiz.intro_anon')}
                 </p>
 
                 {stats.played > 0 && (

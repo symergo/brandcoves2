@@ -24,6 +24,7 @@ interface Props {
         claimable: boolean
         recipient: string | null
         for: string | null
+        heading: string
     }
     isOwner: boolean
     items: Item[]
@@ -39,12 +40,13 @@ export default function SharedList({ list, isOwner, items }: Props) {
         <>
             {/* A shared gift list must never be indexed: it is a private URL
                 that happens to be unauthenticated. */}
-            <Head title={list.title}>
+            <Head title={list.heading}>
                 <meta name="robots" content="noindex, nofollow" />
             </Head>
 
             <header>
-                <h1 className="text-2xl font-semibold">{list.title}</h1>
+                {/* Whose list it is, not what they filed it under. */}
+                <h1 className="text-2xl font-semibold">{list.heading}</h1>
                 {list.description && <p className="mt-2 text-ink-soft">{list.description}</p>}
 
                 {list.claimable && !isOwner && (

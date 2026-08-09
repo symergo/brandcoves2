@@ -49,9 +49,20 @@ class MagicLinkController extends Controller
             // hides its MX, and it makes sign-in fail for reasons the visitor
             // cannot understand or fix. A wrong address simply never arrives.
             'email' => ['required', 'email:rfc', 'max:254'],
+
+            /*
+             * Optional, and only ever used when the account is created.
+             *
+             * Asked here because a magic link is the whole of registration —
+             * there is no other moment. Without it every account starts
+             * nameless, and a wishlist shared with friends cannot say whose it
+             * is.
+             */
+            'name' => ['nullable', 'string', 'max:80'],
         ]);
 
         $email = mb_strtolower(trim($validated['email']));
+        $name = filled($validated['name'] ?? null) ? trim((string) $validated['name']) : null;
 
         // Two limits, because they stop different things: per-address stops
         // mailbox flooding of one victim, per-IP stops an attacker walking a
@@ -70,7 +81,7 @@ class MagicLinkController extends Controller
             RateLimiter::hit($key, 900);
         }
 
-        ['token' => $token] = LoginToken::issue($email, $request->ip());
+        ['token' => $token] = LoginToken::issue($email, $request->ip(), $name);
 
         Mail::to($email)->send(new MagicLinkMail(
             token: $token,
@@ -103,8 +114,14 @@ class MagicLinkController extends Controller
 
         $user ??= User::create([
             'email' => $loginToken->email,
-            'name' => null,
+            'name' => $loginToken->name,
         ]);
+
+        // An account that never got a name takes the one just typed. Never
+        // overwrites: a name already set is theirs, not the login form's.
+        if (blank($user->name) && filled($loginToken->name)) {
+            $user->forceFill(['name' => $loginToken->name])->save();
+        }
 
         // Proof of mailbox control is exactly what a magic link establishes.
         if ($user->email_verified_at === null) {

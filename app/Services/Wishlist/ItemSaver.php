@@ -38,6 +38,9 @@ class ItemSaver
                 'snapshot_price' => $group->min_price,
                 'snapshot_url' => $current->url("p/{$group->id}/{$group->slug}"),
                 'note' => $note,
+                // Put there by somebody entitled to. A suggestion is written by
+                // SuggestionController, which nulls this afterwards.
+                'accepted_at' => now(),
             ],
         );
 
@@ -91,6 +94,7 @@ class ItemSaver
                 'snapshot_price' => $storable ? ($snapshot['price'] ?? null) : null,
                 'snapshot_url' => $storable ? ($snapshot['url'] ?? null) : null,
                 'note' => $note,
+                'accepted_at' => now(),
             ],
         );
 

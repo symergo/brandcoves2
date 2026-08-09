@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\Market;
@@ -47,13 +48,51 @@ class Wishlist extends Model
             'market' => Market::class,
             'visibility' => ListVisibility::class,
             'kind' => ListKind::class,
+            'event_type' => EventType::class,
+            'event_date' => 'date',
+            'is_default' => 'boolean',
+            'handed_over_at' => 'datetime',
+
+            /*
+             * A home address is the most sensitive thing this application
+             * holds, and unlike an email it cannot be rotated. Encrypted at
+             * rest so a database copy — a backup, a laptop, a support session —
+             * is not a list of where people live.
+             */
+            'delivery_address' => 'encrypted',
         ];
     }
 
-    /** @return HasMany<WishlistItem, $this> */
+    /** A registry is an ordinary list with an occasion attached. */
+    public function isRegistry(): bool
+    {
+        return $this->event_type !== null;
+    }
+
+    /**
+     * The list proper.
+     *
+     * Accepted items only. A pending suggestion is a message to the owner, not
+     * something on their list, and every surface that renders "the list" —
+     * shared views, the quiz, Secret Santa, claiming — must not see it.
+     *
+     * @return HasMany<WishlistItem, $this>
+     */
     public function items(): HasMany
     {
+        return $this->hasMany(WishlistItem::class)->whereNotNull('accepted_at');
+    }
+
+    /** Everything, including suggestions awaiting a decision. */
+    public function allItems(): HasMany
+    {
         return $this->hasMany(WishlistItem::class);
+    }
+
+    /** @return HasMany<WishlistItem, $this> */
+    public function suggestions(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class)->whereNull('accepted_at');
     }
 
     /** @return BelongsTo<Recipient, $this> */

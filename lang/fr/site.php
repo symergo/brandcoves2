@@ -18,6 +18,7 @@ return [
         'skip' => 'Aller au contenu',
         'choose_market' => 'Choisissez votre région',
         'santa' => 'Secret Santa',
+        'cove' => 'Gift Cove',
     ],
 
     'home' => [
@@ -240,6 +241,58 @@ return [
         'confirm_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Réinscrivez-vous pour en recevoir un nouveau.',
         'unsubscribed' => 'Vous êtes désinscrit. Sans rancune.',
     ],
+    'suggestions' => [
+        'heading' => 'Proposé pour vous',
+        'hint' => "Rien n'apparaît sur votre liste tant que vous n'avez pas accepté.",
+        'from' => 'De :name',
+        'accept' => 'Ajouter',
+        'dismiss' => 'Non merci',
+        'sent' => 'Envoyé. À eux de décider si cela rejoint la liste.',
+        'accepted' => 'Ajouté à votre liste.',
+        'dismissed' => 'Écarté.',
+        'suggest' => 'Proposer quelque chose',
+    ],
+
+    'registry' => [
+        'heading' => 'En faire une liste de cadeaux',
+        'hint' => 'Ajoutez une occasion et une date, et une adresse si on doit vous envoyer quelque chose.',
+        'occasion' => 'Occasion',
+        'none' => 'Pas une liste de cadeaux',
+        'date' => 'Date',
+        'address' => 'Adresse de livraison',
+        'address_hint' => "Stockée chiffrée, et visible uniquement par quelqu'un qui a réservé un article.",
+        'types' => [
+            'wedding' => 'Mariage',
+            'baby' => 'Naissance',
+            'housewarming' => 'Nouveau logement',
+            'birthday' => 'Anniversaire',
+            'other' => 'Autre chose',
+        ],
+    ],
+
+    'handover' => [
+        'heading' => 'Transmettre cette liste',
+        'hint' => "Donnez la liste à :name. Elle devient sa propre liste de souhaits, qu'il peut partager.",
+        'action' => 'La transmettre',
+        'confirm' => 'Donner cette liste à :name ? Elle ne sera plus la vôtre.',
+        'done' => 'Transmise à :name.',
+        'already' => 'Cette liste a déjà été transmise.',
+        'only_gift_lists' => "Seule une liste pour quelqu'un d'autre peut être transmise.",
+        'not_linked' => "Cette personne doit d'abord réclamer son lien, pour qu'il y ait un compte à qui la donner.",
+    ],
+
+    'pledges' => [
+        'heading' => 'Participer ensemble',
+        'hint' => 'Indiquez votre part. Une personne achète et vous vous arrangez entre vous.',
+        'amount' => 'Votre part',
+        'your_name' => 'Votre nom',
+        'added' => 'Vous en êtes.',
+        'removed' => 'Retiré.',
+        'pledged' => ':total réunis sur :price',
+        'who' => ':name a mis :amount',
+        'join' => "J'en suis",
+        'leave' => 'Finalement non',
+    ],
 
     'cove_mail' => [
         'confirm_subject' => 'Confirmez votre abonnement à la Daily Cove',
@@ -290,12 +343,13 @@ return [
         'mail_requested_from' => 'Demandé depuis :ip',
         'mail_ignore' => 'Si vous n\'êtes pas à l\'origine de cette demande, ignorez cet e-mail, personne ne peut se connecter sans le lien.',
         'mail_fallback' => 'Si le bouton ne fonctionne pas, collez ceci dans votre navigateur :',
+        'name' => 'Votre nom (facultatif)',
     ],
 
     'lists' => [
         'title' => 'Mes listes',
         'subtitle' => 'Ce que vous gardez, pour vous et pour les autres.',
-        'default_title' => 'Enregistrés',
+        'default_title' => 'Ma liste de souhaits',
         'new_list' => 'Nouvelle liste',
         'list_name' => 'Nom de la liste',
         'create' => 'Créer la liste',
@@ -370,6 +424,7 @@ return [
         'cancel' => 'Annuler',
         'share_heading' => 'Partager cette liste',
         'share_text' => 'Voici ma liste : :title',
+        'someones_wishlist' => 'La liste de :name',
     ],
 
     'recipients' => [
@@ -436,6 +491,7 @@ return [
         'attach_list' => 'Utiliser cette liste',
         'list_attached' => 'Ce groupe voit maintenant cette liste.',
         'list_attached_short' => 'Utilisee',
+        'invite_text' => 'Rejoignez notre Secret Santa : :title',
     ],
     'quiz' => [
         'title' => 'Les connaissez-vous vraiment ?',
@@ -458,7 +514,45 @@ return [
         'share_text' => 'Me connaissez-vous vraiment ?',
         'own_title' => 'Découvrez si vos amis vous connaissent vraiment !',
         'open' => 'Ouvrir le quiz',
+        'intro_anon' => "Quatre objets. L'un d'eux figure vraiment sur leur liste. Trouvez lequel.",
     ],
+    'cove' => [
+        'title' => 'La Gift Cove',
+        'intro' => 'Tout pour offrir aux autres, et pour dire ce qui vous ferait plaisir. Personne ne voit jamais qui a acheté quoi.',
+        'tools' => 'Ce que vous pouvez faire ici',
+        'items_count' => ':count articles enregistrés',
+        'open_list' => 'Ouvrir ma liste',
+        'start_list' => 'Commencer ma liste',
+        'privacy' => "Une règle traverse tout : la personne concernée par une liste n'apprend jamais ce qui a été réservé. Ni qui, ni combien, ni même qu'il y a quelque chose.",
+
+        'wishlist_title' => 'Ma liste de souhaits',
+        'wishlist_body' => "Ce qui vous ferait vraiment plaisir. Partagez-la et chacun peut indiquer ce qu'il offre, sans que vous voyiez jamais qui a pris quoi.",
+
+        'giftlist_title' => "Une liste pour quelqu'un d'autre",
+        'giftlist_body' => "De quoi rassembler des idées pour une personne. Privée, et jamais réservable : c'est un travail de recherche, pas une liste de souhaits.",
+
+        'collab_title' => 'Acheter à plusieurs',
+        'collab_body' => "Invitez d'autres personnes sur une liste pour choisir ensemble, ou participez à un cadeau plus important que l'un de vous achètera.",
+
+        'handover_title' => 'Transmettre une liste',
+        'handover_body' => "Vous avez commencé une liste pour quelqu'un avant son arrivée ? Donnez-la-lui une fois inscrit : elle devient sa propre liste.",
+
+        'santa_title' => 'Secret Santa',
+        'santa_body' => 'Un groupe, un tirage, personne ne sait qui a qui. Chacun peut rattacher sa liste pour que son Santa ne devine pas.',
+
+        'registry_title' => 'Une liste de cadeaux',
+        'registry_body' => 'Une liste avec une occasion et une date : mariage, naissance, nouveau logement. Ajoutez une adresse : seuls ceux qui ont réservé la voient.',
+
+        'quiz_title' => 'Vous connaissent-ils vraiment ?',
+        'quiz_body' => 'Transformez votre liste en quiz : quatre objets, un seul y figure. On partage le score, pas les réponses.',
+
+        'suggestions_title' => 'Suggestions',
+        'suggestions_body' => "Ceux qui vous connaissent peuvent proposer des idées pour votre liste. Rien n'y apparaît tant que vous n'avez pas accepté.",
+
+        'whisperer_title' => 'Gift Whisperer',
+        'whisperer_body' => 'Décrivez une personne et recevez quatre idées, chacune avec sa raison. Pour quand vous savez pour qui, mais pas quoi.',
+    ],
+
     'reminders' => [
         'birthday_title' => "L'anniversaire de :name approche",
         'exchange_title' => ':title approche',

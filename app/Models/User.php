@@ -96,6 +96,29 @@ class User extends Authenticatable implements FilamentUser, HasName
      * Identity used for wishlist claims — hashed, never stored in the clear.
      * Keyed on the immutable id rather than the email, which can change.
      */
+    /**
+     * Something to call this person on screen.
+     *
+     * `name` is nullable: the magic-link flow only ever needed an address, so
+     * most accounts have none — and every surface that showed a name fell back
+     * to whatever was nearest, which is how a shared wishlist ended up telling
+     * visitors it belonged to "Saved items".
+     *
+     * The fallback is the local part of the address, **not** the address. A
+     * share link travels through group chats and lands with strangers; printing
+     * somebody's full email on it hands their address to everyone who ever sees
+     * the page, which is a leak they never agreed to and cannot undo. "ann" is
+     * a name; "ann@gmail.com" is a target for spam.
+     */
+    public function displayName(): string
+    {
+        if (filled($this->name)) {
+            return $this->name;
+        }
+
+        return (string) str($this->email)->before('@');
+    }
+
     public function claimIdentity(): string
     {
         return 'user:'.$this->getKey();

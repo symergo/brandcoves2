@@ -62,9 +62,22 @@ class SharedListController extends Controller
                  * Null for an anonymous owner, who has no name to give. The UI
                  * has copy for that case rather than inventing one.
                  */
-                'for' => $list->isForSomeoneElse()
+                'for' => $for = $list->isForSomeoneElse()
                     ? $list->recipient?->name
-                    : $list->owner?->name,
+                    : $list->owner?->displayName(),
+
+                /*
+                 * What a visitor should call this.
+                 *
+                 * "My wishlist" is the right name for the owner and a useless
+                 * one for everybody else — a link that arrives in a group chat
+                 * saying "My wishlist" belongs to nobody. A title the owner
+                 * actually chose ("Wedding", "Books") is kept, because they
+                 * meant something by it; only our own default name is replaced.
+                 */
+                'heading' => $for !== null && $list->title === __('site.lists.default_title')
+                    ? __('site.lists.someones_wishlist', ['name' => $for])
+                    : $list->title,
             ],
             'isOwner' => $isOwner,
 

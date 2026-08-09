@@ -84,7 +84,7 @@ class ListQuizController extends Controller
         return Inertia::render('Quiz/Play', [
             'quiz' => [
                 'title' => $quiz->wishlist->title,
-                'owner' => $quiz->wishlist->owner?->name,
+                'owner' => $quiz->wishlist->owner?->displayName(),
                 // Questions only. The payload a player receives must not carry
                 // the thing they are being asked to guess.
                 'rounds' => $quiz->questions(),

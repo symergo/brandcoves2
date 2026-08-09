@@ -26,6 +26,10 @@ class WishlistItemFactory extends Factory
             'snapshot_image_url' => 'https://img.test/item.jpg',
             'snapshot_price' => fake()->numberBetween(1000, 40000),
             'priority' => 0,
+            // On the list, not awaiting approval. A null `accepted_at` means a
+            // pending suggestion, and a fixture that is one by accident simply
+            // disappears from every surface under test.
+            'accepted_at' => now(),
         ];
     }
 

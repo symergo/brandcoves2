@@ -10,6 +10,7 @@ use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ItemSaver;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
@@ -233,21 +234,14 @@ class WishlistItemController extends Controller
         ]);
     }
 
-    /** The list a save lands in when the visitor has not chosen one. */
+    /**
+     * The list a save lands in when the visitor has not chosen one.
+     *
+     * Always "My wishlist" — one row per owner, so "where did my save go?" has
+     * exactly one answer. See {@see DefaultList}.
+     */
     private function defaultList(Owner $owner, CurrentMarket $current): Wishlist
     {
-        $existing = $owner->scope(Wishlist::query())
-            ->where('market', $current->value())
-            // Never land a stray save inside research about another person.
-            ->where('kind', ListKind::Mine->value)
-            ->oldest()
-            ->first();
-
-        return $existing ?? Wishlist::create([
-            ...$owner->attributes(),
-            'title' => __('site.lists.default_title'),
-            'market' => $current->get(),
-            'kind' => ListKind::Mine,
-        ]);
+        return app(DefaultList::class)->for($owner, $current);
     }
 }

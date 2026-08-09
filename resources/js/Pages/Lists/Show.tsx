@@ -2,7 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
-import ShareLink from '../../Components/ShareLink'
+import ShareRow from '../../Components/ShareRow'
 import { useTranslations } from '../../useTranslations'
 
 interface Item {
@@ -45,8 +45,21 @@ interface Membership {
     attached: boolean
 }
 
+interface Suggestion {
+    id: number
+    title: string
+    image: string | null
+    price: number | null
+    note: string | null
+    from: string | null
+}
+
 interface Props {
     access: { isOwner: boolean; canEdit: boolean }
+    suggestions: Suggestion[]
+    canHandOver: boolean
+    registryOptions: { value: string; label: string }[]
+    deliveryAddress: string | null
     collaborators: Collaborator[]
     quizUrl: string | null
     quizPlays: number
@@ -61,6 +74,10 @@ interface Props {
         visibility: string
         shareUrl: string | null
         recipient: { name: string } | null
+        isDefault: boolean
+        handedOver: boolean
+        eventType: string | null
+        eventDate: string | null
     }
     items: Item[]
 }
@@ -72,13 +89,16 @@ export default function ListShow({
     asked,
     access,
     collaborators,
+    suggestions,
+    canHandOver,
+    registryOptions,
+    deliveryAddress,
     quizUrl,
     quizPlays,
     santaMemberships,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
-    const [copied, setCopied] = useState(false)
     const [invite, setInvite] = useState('')
     const [role, setRole] = useState('viewer')
     const base = `/${market.key}`
@@ -89,13 +109,6 @@ export default function ListShow({
         router.patch(`${base}/lists/${list.id}`, {
             visibility: shared ? 'private' : 'link',
         }, { preserveScroll: true })
-    }
-
-    async function copyLink() {
-        if (!list.shareUrl) return
-        await navigator.clipboard.writeText(list.shareUrl)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
     }
 
     return (
@@ -142,23 +155,16 @@ export default function ListShow({
                     <h2 className="text-sm font-medium">{t('lists.share_heading')}</h2>
 
                     {/*
-                      Share sits with the link, not under it. A list has to
-                      travel through a group chat, and the native sheet is what
-                      puts it there — it already offers WhatsApp and mail, so a
-                      separate button for each only made this area look like a
-                      toolbar.
+                      One share row, used identically everywhere a link is
+                      handed to somebody. The native sheet already offers
+                      WhatsApp and mail, so a button per channel only made this
+                      area look like a toolbar.
                     */}
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <code className="min-w-0 flex-1 truncate rounded border border-line px-3 py-2 text-xs">
-                            {list.shareUrl}
-                        </code>
-                        <ShareLink url={list.shareUrl} text={t('lists.share_text', { title: list.title })} />
-                        <button
-                            onClick={copyLink}
-                            className="rounded-lg bg-ink px-3 py-2 text-sm whitespace-nowrap text-cream"
-                        >
-                            {copied ? t('lists.copied') : t('lists.copy_link')}
-                        </button>
+                    <div className="mt-2">
+                        <ShareRow
+                            url={list.shareUrl}
+                            text={t('lists.share_text', { title: list.title })}
+                        />
                     </div>
 
                     {/*
@@ -195,23 +201,21 @@ export default function ListShow({
                                       work, because from where they are sitting
                                       there is no link at all.
                                     */}
-                                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                                        <code className="min-w-0 flex-1 truncate rounded border border-line px-3 py-2 text-xs">
-                                            {quizUrl}
-                                        </code>
-                                        <ShareLink url={quizUrl} text={t('quiz.share_text')} />
-                                        {/* The owner cannot play their own quiz,
-                                            but they should be able to look at
-                                            the thing they are about to send. */}
-                                        <a
-                                            href={quizUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="rounded-lg border border-line px-3 py-2 text-sm whitespace-nowrap hover:border-ink"
-                                        >
-                                            {t('quiz.open')}
-                                        </a>
+                                    <div className="mt-2">
+                                        <ShareRow url={quizUrl} text={t('quiz.share_text')} />
                                     </div>
+
+                                    {/* The owner cannot play their own quiz, but
+                                        they should be able to look at the thing
+                                        they are about to send. */}
+                                    <a
+                                        href={quizUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-2 inline-block text-sm underline"
+                                    >
+                                        {t('quiz.open')}
+                                    </a>
                                 </>
                             ) : (
                                 <>
@@ -267,6 +271,166 @@ export default function ListShow({
                             </li>
                         ))}
                     </ul>
+                </section>
+            )}
+
+            {/*
+              Suggestions waiting on a decision.
+
+              Visible to the owner, unusually for this feature, because a
+              suggestion is a message addressed to them. It is not on the list
+              until they accept it — so nobody can claim it, and claiming a
+              pending one would announce its existence by making it unavailable.
+            */}
+            {access.isOwner && suggestions.length > 0 && (
+                <section className="mt-4 rounded-card border border-accent/40 bg-accent/5 p-4">
+                    <h2 className="text-sm font-medium">{t('suggestions.heading')}</h2>
+                    <p className="mt-1 text-xs text-ink-soft">{t('suggestions.hint')}</p>
+
+                    <ul className="mt-3 space-y-3">
+                        {suggestions.map((s) => (
+                            <li key={s.id} className="flex items-center gap-3">
+                                {s.image && (
+                                    <img src={s.image} alt="" loading="lazy" className="h-12 w-12 object-contain" />
+                                )}
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium">{s.title}</p>
+                                    {s.from && (
+                                        <p className="text-xs text-ink-soft">
+                                            {t('suggestions.from', { name: s.from })}
+                                        </p>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        router.post(`${base}/suggestions/${s.id}/accept`, {}, { preserveScroll: true })
+                                    }
+                                    className="rounded-lg border border-sage px-3 py-1.5 text-xs text-sage"
+                                >
+                                    {t('suggestions.accept')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        router.delete(`${base}/suggestions/${s.id}`, { preserveScroll: true })
+                                    }
+                                    className="text-xs text-ink-soft hover:text-ink"
+                                >
+                                    {t('suggestions.dismiss')}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
+            {/*
+              Registry: an occasion, a date, and somewhere to send it.
+
+              Only on your own list, because a registry is a thing you publish
+              about yourself. The address is stored encrypted and shown only to
+              somebody who has claimed an item — a registry is public, and
+              publishing a home address to everyone holding the link is a
+              different act from giving it to the person posting the parcel.
+            */}
+            {access.isOwner && list.kind === 'mine' && (
+                <details className="mt-4 rounded-card border border-line bg-card p-4">
+                    <summary className="cursor-pointer text-sm font-medium">
+                        {t('registry.heading')}
+                    </summary>
+                    <p className="mt-1 text-xs text-ink-soft">{t('registry.hint')}</p>
+
+                    <form
+                        className="mt-3 grid gap-3 sm:grid-cols-2"
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            const data = new FormData(e.currentTarget)
+                            router.patch(
+                                `${base}/lists/${list.id}`,
+                                {
+                                    event_type: String(data.get('event_type') || ''),
+                                    event_date: String(data.get('event_date') || ''),
+                                    delivery_address: String(data.get('delivery_address') || ''),
+                                },
+                                { preserveScroll: true },
+                            )
+                        }}
+                    >
+                        <label className="block text-sm">
+                            {t('registry.occasion')}
+                            <select
+                                name="event_type"
+                                defaultValue={list.eventType ?? ''}
+                                className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                            >
+                                <option value="">{t('registry.none')}</option>
+                                {registryOptions.map((o) => (
+                                    <option key={o.value} value={o.value}>
+                                        {o.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        <label className="block text-sm">
+                            {t('registry.date')}
+                            <input
+                                type="date"
+                                name="event_date"
+                                defaultValue={list.eventDate ?? ''}
+                                className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                            />
+                        </label>
+
+                        <label className="block text-sm sm:col-span-2">
+                            {t('registry.address')}
+                            <textarea
+                                name="delivery_address"
+                                rows={3}
+                                defaultValue={deliveryAddress ?? ''}
+                                className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                            />
+                            <span className="mt-1 block text-xs text-ink-soft">
+                                {t('registry.address_hint')}
+                            </span>
+                        </label>
+
+                        <button
+                            type="submit"
+                            className="justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2"
+                        >
+                            {t('lists.save')}
+                        </button>
+                    </form>
+                </details>
+            )}
+
+            {/*
+              Hand it over.
+
+              A list about somebody is research while you are choosing and
+              becomes a burden once they are here and could simply be told. Only
+              offered when there is an account to hand it to — handing a list to
+              a name gives it to nobody.
+            */}
+            {canHandOver && (
+                <section className="mt-4 rounded-card border border-line bg-card p-4">
+                    <h2 className="text-sm font-medium">{t('handover.heading')}</h2>
+                    <p className="mt-1 text-xs text-ink-soft">
+                        {t('handover.hint', { name: list.recipient?.name ?? '' })}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            if (confirm(t('handover.confirm', { name: list.recipient?.name ?? '' }))) {
+                                router.post(`${base}/lists/${list.id}/handover`)
+                            }
+                        }}
+                        className="mt-3 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
+                    >
+                        {t('handover.action')}
+                    </button>
                 </section>
             )}
 
@@ -371,16 +535,14 @@ export default function ListShow({
                     </h2>
 
                     {!target.isLinked ? (
-                        <div className="mt-3 rounded-card border border-line bg-card p-4 text-sm">
-                            <p className="text-ink-soft">{t('recipients.ask_them_hint')}</p>
+                        <div className="mt-3 rounded-card border border-line bg-card p-4">
                             {target.askUrl && (
-                                <button
-                                    type="button"
-                                    onClick={() => navigator.clipboard.writeText(target.askUrl!)}
-                                    className="mt-3 rounded-lg border border-line px-4 py-2 text-sm"
-                                >
-                                    {t('recipients.ask_them')}
-                                </button>
+                                <ShareRow
+                                    url={target.askUrl}
+                                    text={t('recipients.ask_them')}
+                                    label={t('recipients.ask_them')}
+                                    hint={t('recipients.ask_them_hint')}
+                                />
                             )}
                         </div>
                     ) : asked.length === 0 ? (

@@ -18,6 +18,7 @@ return [
         'skip' => 'Naar de inhoud',
         'choose_market' => 'Kies je regio',
         'santa' => 'Secret Santa',
+        'cove' => 'Gift Cove',
     ],
 
     'home' => [
@@ -244,6 +245,58 @@ return [
         'confirm_invalid' => 'Die link is verlopen of al gebruikt. Schrijf je opnieuw in voor een nieuwe.',
         'unsubscribed' => 'Je bent uitgeschreven. Geen harde gevoelens.',
     ],
+    'suggestions' => [
+        'heading' => 'Voorgesteld voor jou',
+        'hint' => 'Er komt niets op je lijst tot jij het accepteert.',
+        'from' => 'Van :name',
+        'accept' => 'Zet erop',
+        'dismiss' => 'Liever niet',
+        'sent' => 'Verstuurd. Zij beslissen of het op de lijst komt.',
+        'accepted' => 'Op je lijst gezet.',
+        'dismissed' => 'Afgewezen.',
+        'suggest' => 'Stel iets voor',
+    ],
+
+    'registry' => [
+        'heading' => 'Maak hier een geschenkenlijst van',
+        'hint' => 'Voeg een gelegenheid en een datum toe, en een adres als mensen je iets moeten opsturen.',
+        'occasion' => 'Gelegenheid',
+        'none' => 'Geen geschenkenlijst',
+        'date' => 'Datum',
+        'address' => 'Bezorgadres',
+        'address_hint' => 'Versleuteld opgeslagen, en alleen zichtbaar voor wie iets geclaimd heeft.',
+        'types' => [
+            'wedding' => 'Huwelijk',
+            'baby' => 'Geboorte',
+            'housewarming' => 'Nieuwe woning',
+            'birthday' => 'Verjaardag',
+            'other' => 'Iets anders',
+        ],
+    ],
+
+    'handover' => [
+        'heading' => 'Geef deze lijst door',
+        'hint' => 'Geef de lijst aan :name. Het wordt hun eigen wenslijst, die ze kunnen delen en waaruit gekocht kan worden.',
+        'action' => 'Geef hem door',
+        'confirm' => 'Deze lijst aan :name geven? Hij is dan niet meer van jou.',
+        'done' => 'Doorgegeven aan :name.',
+        'already' => 'Deze lijst is al doorgegeven.',
+        'only_gift_lists' => 'Alleen een lijst voor iemand anders kan worden doorgegeven.',
+        'not_linked' => 'Ze moeten eerst hun link claimen, zodat er een account is om aan te geven.',
+    ],
+
+    'pledges' => [
+        'heading' => 'Samen inleggen',
+        'hint' => 'Zeg wat jij inlegt. Een iemand koopt het, de rest rekent onderling af.',
+        'amount' => 'Jouw deel',
+        'your_name' => 'Je naam',
+        'added' => 'Je doet mee.',
+        'removed' => 'Weer uitgestapt.',
+        'pledged' => ':total ingelegd van :price',
+        'who' => ':name legde :amount in',
+        'join' => 'Ik doe mee',
+        'leave' => 'Toch niet',
+    ],
 
     'cove_mail' => [
         'confirm_subject' => 'Bevestig je abonnement op de Daily Cove',
@@ -294,12 +347,13 @@ return [
         'mail_requested_from' => 'Aangevraagd vanaf :ip',
         'mail_ignore' => 'Heb je dit niet aangevraagd? Dan kun je deze e-mail gerust negeren, zonder de link kan niemand inloggen.',
         'mail_fallback' => 'Werkt de knop niet? Plak dit in je browser:',
+        'name' => 'Je naam (optioneel)',
     ],
 
     'lists' => [
         'title' => 'Mijn lijstjes',
         'subtitle' => 'Wat je bewaart, voor jezelf en voor anderen.',
-        'default_title' => 'Bewaard',
+        'default_title' => 'Mijn wenslijst',
         'new_list' => 'Nieuw lijstje',
         'list_name' => 'Naam van het lijstje',
         'create' => 'Lijstje maken',
@@ -374,6 +428,7 @@ return [
         'cancel' => 'Annuleren',
         'share_heading' => 'Deel dit lijstje',
         'share_text' => 'Dit is mijn lijstje: :title',
+        'someones_wishlist' => 'Wenslijst van :name',
     ],
 
     'recipients' => [
@@ -440,6 +495,7 @@ return [
         'attach_list' => 'Gebruik dit lijstje',
         'list_attached' => 'Die groep ziet dit lijstje nu.',
         'list_attached_short' => 'In gebruik',
+        'invite_text' => 'Doe mee met onze Secret Santa: :title',
     ],
     'quiz' => [
         'title' => 'Hoe goed ken je ze?',
@@ -462,7 +518,45 @@ return [
         'share_text' => 'Hoe goed ken je mij?',
         'own_title' => 'Kom te weten hoe goed je vrienden je kennen!',
         'open' => 'Open de quiz',
+        'intro_anon' => 'Vier dingen. Een ervan staat echt op hun lijstje. Kies welke.',
     ],
+    'cove' => [
+        'title' => 'De Gift Cove',
+        'intro' => 'Alles om voor anderen te kopen, en om te vertellen wat je zelf leuk zou vinden. Niemand ziet ooit wie wat gekocht heeft.',
+        'tools' => 'Wat je hier kunt doen',
+        'items_count' => ':count dingen bewaard',
+        'open_list' => 'Open mijn wenslijst',
+        'start_list' => 'Begin mijn wenslijst',
+        'privacy' => 'Een regel loopt overal doorheen: degene voor wie een lijst is, komt nooit te weten wat er geclaimd is. Niet wie, niet hoeveel, en niet dat er iets is.',
+
+        'wishlist_title' => 'Mijn wenslijst',
+        'wishlist_body' => 'Dingen die je echt leuk zou vinden. Deel hem en mensen kunnen aangeven wat zij kopen, zonder dat jij ooit ziet wie wat nam.',
+
+        'giftlist_title' => 'Een lijst voor iemand anders',
+        'giftlist_body' => 'Een plek om ideeen te verzamelen voor een persoon. Prive voor jou, en nooit claimbaar, want het is voorwerk en geen verlanglijst.',
+
+        'collab_title' => 'Samen kopen',
+        'collab_body' => 'Nodig anderen uit op een cadeaulijst zodat jullie samen kunnen kiezen, of leg samen in voor een groter cadeau dat een van jullie koopt.',
+
+        'handover_title' => 'Geef een lijst door',
+        'handover_body' => 'Een lijst begonnen voor iemand die er nog niet was? Geef hem door zodra ze meedoen, dan wordt het hun eigen wenslijst.',
+
+        'santa_title' => 'Secret Santa',
+        'santa_body' => 'Een groep, een trekking, niemand weet wie wie heeft. Iedereen kan zijn eigen wenslijst koppelen, zodat hun Santa niet hoeft te gokken.',
+
+        'registry_title' => 'Een geschenkenlijst',
+        'registry_body' => 'Een wenslijst met een gelegenheid en een datum, voor een huwelijk, een baby of een nieuwe woning. Zet er een adres bij: alleen wie iets geclaimd heeft, ziet het.',
+
+        'quiz_title' => 'Hoe goed kennen ze je?',
+        'quiz_body' => 'Maak van je wenslijst een quiz: vier dingen, een ervan staat er echt op. Je deelt de score, niet de antwoorden.',
+
+        'suggestions_title' => 'Suggesties',
+        'suggestions_body' => 'Mensen die je kennen kunnen dingen voorstellen voor je lijst. Er komt niets op te staan tot jij ja zegt.',
+
+        'whisperer_title' => 'Gift Whisperer',
+        'whisperer_body' => 'Beschrijf iemand en krijg vier ideeen, elk met de reden waarom. Voor als je weet voor wie het is, maar niet wat.',
+    ],
+
     'reminders' => [
         'birthday_title' => 'De verjaardag van :name komt eraan',
         'exchange_title' => ':title komt eraan',

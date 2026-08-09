@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Models\ListQuiz;
@@ -12,6 +13,7 @@ use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
+use App\Services\Wishlist\DefaultList;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -26,6 +28,13 @@ class WishlistController extends Controller
     public function index(Request $request, CurrentMarket $current): Response
     {
         $owner = Owner::fromRequest($request);
+
+        // Everybody has one, and it is created on the first visit rather than
+        // on the first save — an empty lists page with nothing on it does not
+        // tell you what the page is for.
+        if ($owner->exists()) {
+            app(DefaultList::class)->for($owner, $current);
+        }
 
         $lists = $owner->scope(Wishlist::query())
             ->with('recipient')
@@ -112,6 +121,9 @@ class WishlistController extends Controller
             'collaborators' => ListAccess::isOwner($wishlist, $owner)
                 ? $wishlist->collaborators->map(fn ($c) => [
                     'id' => $c->id,
+                    // The owner typed this address to invite them, so showing
+                    // it back is not a disclosure — and it is how they
+                    // recognise who they invited.
                     'name' => $c->user?->name ?? $c->user?->email,
                     'role' => $c->role->value,
                 ])->all()
@@ -139,6 +151,41 @@ class WishlistController extends Controller
              * that must never happen is a second claim mechanism growing here.
              */
             'asked' => $target === null ? [] : $this->asked($target, $owner, $current),
+
+            /*
+             * Suggestions waiting on a decision.
+             *
+             * Visible to the owner, unusually for this feature — a suggestion is
+             * a message addressed to them. It is not on the list until they
+             * accept it, which is why `Wishlist::items()` filters them out.
+             */
+            'suggestions' => ListAccess::isOwner($wishlist, $owner)
+                ? $wishlist->suggestions()->with(['group', 'suggestedBy'])->get()
+                    ->map(fn (WishlistItem $item) => [
+                        'id' => $item->id,
+                        'title' => $item->snapshot_title,
+                        'image' => $item->snapshot_image_url,
+                        'price' => $item->snapshot_price,
+                        'note' => $item->note,
+                        'from' => $item->suggestedBy?->name,
+                    ])->all()
+                : [],
+
+            // Only offered once there is somebody to hand it to.
+            'canHandOver' => ListAccess::isOwner($wishlist, $owner)
+                && $wishlist->kind === ListKind::ForSomeone
+                && $wishlist->handed_over_at === null
+                && $wishlist->recipient?->user_id !== null,
+
+            'registryOptions' => array_map(
+                fn (EventType $type) => ['value' => $type->value, 'label' => $type->label()],
+                EventType::cases(),
+            ),
+
+            // The owner's own address, shown back to them so they can change it.
+            'deliveryAddress' => ListAccess::isOwner($wishlist, $owner)
+                ? $wishlist->delivery_address
+                : null,
 
             /*
              * Sharing a list *as a quiz* rather than as a list.
@@ -216,6 +263,15 @@ class WishlistController extends Controller
             'title' => ['sometimes', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:2000'],
             'visibility' => ['sometimes', 'string', 'in:private,link,public'],
+
+            /*
+             * Registry. An ordinary list with an occasion, a date and somewhere
+             * to send the parcel — not a fourth kind of list, because it is
+             * still yours, still claimable and still shared the same way.
+             */
+            'event_type' => ['nullable', 'string', 'in:'.implode(',', EventType::values())],
+            'event_date' => ['nullable', 'date'],
+            'delivery_address' => ['nullable', 'string', 'max:500'],
         ]);
 
         $wishlist->update($validated);
@@ -288,6 +344,10 @@ class WishlistController extends Controller
             'description' => $list->description,
             'kind' => $list->kind->value,
             'claimable' => $list->allowsClaiming(),
+            'isDefault' => (bool) $list->is_default,
+            'handedOver' => $list->handed_over_at !== null,
+            'eventType' => $list->event_type?->value,
+            'eventDate' => $list->event_date?->toDateString(),
             'visibility' => $list->visibility->value,
             'itemCount' => $list->items_count ?? $list->items()->count(),
             'recipient' => $list->recipient === null ? null : [

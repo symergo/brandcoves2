@@ -9,6 +9,7 @@ use Database\Factories\WishlistItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class WishlistItem extends Model
 {
@@ -33,6 +34,7 @@ class WishlistItem extends Model
             'claimed_at' => 'datetime',
             'marked_sent_at' => 'datetime',
             'source' => Source::class,
+            'accepted_at' => 'datetime',
         ];
     }
 
@@ -46,6 +48,22 @@ class WishlistItem extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(ProductGroup::class, 'group_id');
+    }
+
+    /**
+     * Who proposed this, when it was somebody other than the owner.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function suggestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'suggested_by_user_id');
+    }
+
+    /** @return HasMany<GiftPledge, $this> */
+    public function pledges(): HasMany
+    {
+        return $this->hasMany(GiftPledge::class, 'item_id');
     }
 
     /**

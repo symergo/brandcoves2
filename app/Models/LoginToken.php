@@ -30,7 +30,7 @@ class LoginToken extends Model
      *
      * @return array{token: string, model: self}
      */
-    public static function issue(string $email, ?string $ip = null): array
+    public static function issue(string $email, ?string $ip = null, ?string $name = null): array
     {
         $email = mb_strtolower(trim($email));
 
@@ -43,6 +43,7 @@ class LoginToken extends Model
 
         $model = static::create([
             'email' => $email,
+            'name' => $name,
             'token_hash' => hash('sha256', $plaintext),
             // Short: long enough to switch to an email client, not long enough
             // to sit in an inbox as a standing key to the account.

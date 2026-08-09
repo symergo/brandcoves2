@@ -1,5 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import ShareRow from '../../Components/ShareRow'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
@@ -45,15 +45,7 @@ interface Props {
 export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
-    const [copied, setCopied] = useState(false)
-
     const done = members.filter((m) => m.done).length
-
-    async function copyInvite() {
-        await navigator.clipboard.writeText(group.inviteUrl)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-    }
 
     return (
         <>
@@ -70,16 +62,20 @@ export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
                     {group.theme && ` · ${group.theme}`}
                 </p>
 
+                {/*
+                  The invite is the whole point of this screen, and it used to be
+                  a lone "copy" button with the URL nowhere in sight — while a
+                  wishlist showed the link and offered the share sheet. Same row
+                  as everywhere else now.
+                */}
                 {!group.drawn && (
                     <div className="mt-4 rounded-card border border-line bg-card p-4">
-                        <p className="text-sm text-ink-soft">{t('santa.invite_hint')}</p>
-                        <button
-                            type="button"
-                            onClick={copyInvite}
-                            className="mt-3 rounded-lg border border-line px-4 py-2 text-sm"
-                        >
-                            {copied ? t('lists.copied') : t('santa.invite')}
-                        </button>
+                        <ShareRow
+                            url={group.inviteUrl}
+                            text={t('santa.invite_text', { title: group.title })}
+                            label={t('santa.invite')}
+                            hint={t('santa.invite_hint')}
+                        />
                     </div>
                 )}
             </header>

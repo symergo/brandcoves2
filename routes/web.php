@@ -14,7 +14,10 @@ use App\Http\Controllers\CoveSubscriptionController;
 use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\GiftController;
+use App\Http\Controllers\GiftCoveController;
+use App\Http\Controllers\GiftPledgeController;
 use App\Http\Controllers\GuideController;
+use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LegalController;
@@ -31,6 +34,7 @@ use App\Http\Controllers\SecretSantaController;
 use App\Http\Controllers\SerendipityController;
 use App\Http\Controllers\SharedListController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\SuggestionController;
 use App\Http\Controllers\WishlistCollaboratorController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
@@ -167,6 +171,18 @@ Route::prefix('{market}')->group(function () {
     Route::patch('/recipients/{recipient}', [RecipientController::class, 'update'])->name('recipients.update');
     Route::delete('/recipients/{recipient}', [RecipientController::class, 'destroy'])->name('recipients.destroy');
 
+    /*
+     * Hand a list to the person it was built for.
+     *
+     * It stops being research and becomes theirs — which is what makes it
+     * claimable, and therefore useful to everybody else.
+     */
+    Route::post('/lists/{list}/handover', [HandoverController::class, 'store'])->name('lists.handover');
+
+    // Suggestions the owner has not decided on yet.
+    Route::post('/suggestions/{item}/accept', [SuggestionController::class, 'accept'])->name('suggestions.accept');
+    Route::delete('/suggestions/{item}', [SuggestionController::class, 'destroy'])->name('suggestions.destroy');
+
     // The shared, claimable view. Rate-limited because it is unauthenticated
     // and the token is the only thing guarding it.
     Route::middleware('throttle:60,1')->group(function () {
@@ -174,6 +190,11 @@ Route::prefix('{market}')->group(function () {
         Route::post('/l/{token}/claim/{item}', [SharedListController::class, 'claim'])->name('lists.claim');
         Route::delete('/l/{token}/claim/{item}', [SharedListController::class, 'unclaim'])->name('lists.unclaim');
         Route::post('/l/{token}/sent/{item}', [SharedListController::class, 'markSent'])->name('lists.sent');
+
+        // Group gift: pledges against one item, and a suggestion for the owner.
+        Route::post('/l/{token}/pledge/{item}', [GiftPledgeController::class, 'store'])->name('lists.pledge');
+        Route::delete('/l/{token}/pledge/{item}', [GiftPledgeController::class, 'destroy'])->name('lists.pledge.destroy');
+        Route::post('/l/{token}/suggest', [SuggestionController::class, 'store'])->name('lists.suggest');
     });
 
     /*
@@ -268,6 +289,17 @@ Route::prefix('{market}')->group(function () {
     | Throttled because scoring touches a few hundred rows — cheap, but not
     | free, and the endpoint is unauthenticated.
     */
+    /*
+     * The Gift Cove: one page that explains every gifting tool and shows what
+     * you already have. These features arrived one at a time and were each
+     * reachable from somewhere different — individually findable, collectively
+     * invisible.
+     *
+     * `/gift-cove`, not `/cove`: a Cove is already a buying guide here, and one
+     * word meaning two things in the same URL space is a trap.
+     */
+    Route::get('/gift-cove', GiftCoveController::class)->name('gift-cove');
+
     Route::get('/gift', [GiftController::class, 'show'])->name('gift');
     Route::middleware('throttle:60,1')->group(function () {
         Route::post('/gift', [GiftController::class, 'suggest'])->name('gift.suggest');

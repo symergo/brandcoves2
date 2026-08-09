@@ -149,7 +149,7 @@ class SecretSantaController extends Controller
             'group_id' => $santa->id,
             'user_id' => $user->id,
             'email' => $user->email,
-            'display_name' => $user->name ?? $user->email,
+            'display_name' => $user->displayName(),
             'joined_at' => now(),
         ]);
 

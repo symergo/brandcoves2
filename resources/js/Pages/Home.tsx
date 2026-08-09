@@ -43,13 +43,21 @@ export default function Home({ stats, today, gifting, coves }: Props) {
         <>
             <Head title={t('home.title')} />
 
-            <section className="max-w-2xl">
-                <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+            {/*
+              Wider than the body copy that follows it.
+
+              Each headline line is a whole sentence, and at 5xl in a 2xl column
+              both of them wrapped — which breaks the rhythm the two lines exist
+              to create. The paragraph keeps its own narrower measure, because
+              prose at this width is genuinely harder to read.
+            */}
+            <section className="max-w-5xl">
+                <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
                     {t('home.headline_1')}
                     <br />
                     {t('home.headline_2')}
                 </h1>
-                <p className="mt-5 text-lg text-ink-soft">{t('home.intro')}</p>
+                <p className="mt-5 max-w-2xl text-lg text-ink-soft">{t('home.intro')}</p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
                     <Link

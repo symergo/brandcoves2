@@ -24,6 +24,7 @@ return [
         'skip' => 'Skip to content',
         'choose_market' => 'Choose your market',
         'santa' => 'Secret Santa',
+        'cove' => 'Gift Cove',
     ],
 
     'home' => [
@@ -272,6 +273,58 @@ return [
         'confirm_invalid' => 'That link has expired or has already been used. Sign up again to get a new one.',
         'unsubscribed' => "You're unsubscribed. No hard feelings.",
     ],
+    'suggestions' => [
+        'heading' => 'Suggested for you',
+        'hint' => 'Nothing appears on your list until you accept it.',
+        'from' => 'From :name',
+        'accept' => 'Add it',
+        'dismiss' => 'No thanks',
+        'sent' => 'Sent. They decide whether it goes on the list.',
+        'accepted' => 'Added to your list.',
+        'dismissed' => 'Dismissed.',
+        'suggest' => 'Suggest something',
+    ],
+
+    'registry' => [
+        'heading' => 'Make this a registry',
+        'hint' => 'Add an occasion and a date, and a delivery address if people should post things to you.',
+        'occasion' => 'Occasion',
+        'none' => 'Not a registry',
+        'date' => 'Date',
+        'address' => 'Delivery address',
+        'address_hint' => 'Stored encrypted, and shown only to someone who has claimed something.',
+        'types' => [
+            'wedding' => 'Wedding',
+            'baby' => 'New baby',
+            'housewarming' => 'New home',
+            'birthday' => 'Birthday',
+            'other' => 'Something else',
+        ],
+    ],
+
+    'handover' => [
+        'heading' => 'Hand this list over',
+        'hint' => 'Give the list to :name. It becomes their own wishlist, and they can share it and be bought from.',
+        'action' => 'Hand it over',
+        'confirm' => 'Give this list to :name? You will no longer own it.',
+        'done' => 'Handed over to :name.',
+        'already' => 'This list has already been handed over.',
+        'only_gift_lists' => 'Only a list for someone else can be handed over.',
+        'not_linked' => 'They need to claim their link first, so there is an account to hand it to.',
+    ],
+
+    'pledges' => [
+        'heading' => 'Chip in together',
+        'hint' => 'Say what you are putting in. One person buys it and the rest settle up between you.',
+        'amount' => 'Your share',
+        'your_name' => 'Your name',
+        'added' => 'You are in.',
+        'removed' => 'Taken back out.',
+        'pledged' => ':total pledged of :price',
+        'who' => ':name put in :amount',
+        'join' => 'I am in',
+        'leave' => 'Actually, no',
+    ],
 
     'cove_mail' => [
         'confirm_subject' => 'Confirm your Daily Cove subscription',
@@ -322,12 +375,13 @@ return [
         'mail_requested_from' => 'Requested from :ip',
         'mail_ignore' => 'If you did not request this, you can safely ignore this email, nobody can sign in without the link.',
         'mail_fallback' => 'If the button does not work, paste this into your browser:',
+        'name' => 'Your name (optional)',
     ],
 
     'lists' => [
         'title' => 'My lists',
         'subtitle' => 'Things you are saving, for yourself and for other people.',
-        'default_title' => 'Saved items',
+        'default_title' => 'My wishlist',
         'new_list' => 'New list',
         'list_name' => 'List name',
         'create' => 'Create list',
@@ -402,6 +456,7 @@ return [
         'cancel' => 'Cancel',
         'share_heading' => 'Share this list',
         'share_text' => 'Here is my list: :title',
+        'someones_wishlist' => ":name's wishlist",
     ],
 
     /*
@@ -485,6 +540,7 @@ return [
         'attach_list' => 'Use this list',
         'list_attached' => 'That group now sees this list.',
         'list_attached_short' => 'In use',
+        'invite_text' => 'Join our Secret Santa: :title',
     ],
     'quiz' => [
         'title' => 'How well do you know them?',
@@ -507,7 +563,54 @@ return [
         'share_text' => 'How well do you know me?',
         'own_title' => 'Find out how well your friends know you!',
         'open' => 'Open the quiz',
+        'intro_anon' => 'Four things. One of them is really on their list. Pick it.',
     ],
+    /*
+    |--------------------------------------------------------------------------
+    | The Gift Cove
+    |--------------------------------------------------------------------------
+    |
+    | Each tool gets a sentence saying what it is *for*. "Secret Santa" explains
+    | itself; "a list you build for somebody and then hand over" does not, and a
+    | tool nobody understands is a tool nobody opens.
+    */
+    'cove' => [
+        'title' => 'The Gift Cove',
+        'intro' => 'Everything for buying for other people, and for telling them what you would like. Nobody ever sees who bought what.',
+        'tools' => 'What you can do here',
+        'items_count' => ':count things saved',
+        'open_list' => 'Open my wishlist',
+        'start_list' => 'Start my wishlist',
+        'privacy' => 'One rule runs through all of it: the person a list is for never learns what has been claimed. Not who, not how many, not that anything has.',
+
+        'wishlist_title' => 'My wishlist',
+        'wishlist_body' => 'Things you would actually like. Share it and people can mark what they are getting, without you ever seeing who took what.',
+
+        'giftlist_title' => 'A list for someone else',
+        'giftlist_body' => 'Somewhere to gather ideas for one person. Private to you, and never claimable, because it is research rather than a registry.',
+
+        'collab_title' => 'Buy together',
+        'collab_body' => 'Invite other people onto a gift list so several of you can choose together, or pledge towards one bigger present and let one person buy it.',
+
+        'handover_title' => 'Hand a list over',
+        'handover_body' => 'Started a list for someone before they were here? Give it to them once they join, and it becomes their own wishlist.',
+
+        'santa_title' => 'Secret Santa',
+        'santa_body' => 'One group, one draw, nobody knows who has who. Everyone can attach their own wishlist so their Santa is not guessing.',
+
+        'registry_title' => 'A registry',
+        'registry_body' => 'A wishlist with an occasion and a date on it, for a wedding, a baby or a new home. Add a delivery address and only people who have claimed something can see it.',
+
+        'quiz_title' => 'How well do they know you?',
+        'quiz_body' => 'Turn your wishlist into a quiz: four things, one of them really on it. Share the score, not the answers.',
+
+        'suggestions_title' => 'Suggestions',
+        'suggestions_body' => 'People who know you can put things forward for your list. Nothing appears on it until you say yes.',
+
+        'whisperer_title' => 'Gift Whisperer',
+        'whisperer_body' => 'Describe a person and get four ideas, each with the reason it was chosen. For when you know who it is for and not what to buy.',
+    ],
+
     'reminders' => [
         'birthday_title' => ":name's birthday is coming up",
         'exchange_title' => ':title is coming up',
