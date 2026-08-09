@@ -65,7 +65,7 @@ export default function SantaMe({ group, me }: Props) {
 
                 <p className="mt-2 text-sm text-ink-soft">
                     {group.budgetMax !== null &&
-                        formatPrice(group.budgetMax, market.currency) + ' · '}
+                        formatPrice(group.budgetMax, market) + ' · '}
                     {group.exchangeDate}
                 </p>
             </header>
@@ -122,7 +122,7 @@ export default function SantaMe({ group, me }: Props) {
                                         <p className="truncate text-sm font-medium">{wish.title}</p>
                                         {wish.price !== null && !wish.live && (
                                             <p className="text-sm text-ink-soft">
-                                                {formatPrice(wish.price, market.currency)}
+                                                {formatPrice(wish.price, market)}
                                             </p>
                                         )}
                                     </div>

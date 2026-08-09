@@ -403,7 +403,7 @@ export default function ListShow({
                                         <p className="truncate text-sm font-medium">{entry.title}</p>
                                         {entry.price !== null && !entry.live && (
                                             <p className="text-sm text-ink-soft">
-                                                {formatPrice(entry.price, market.currency)}
+                                                {formatPrice(entry.price, market)}
                                             </p>
                                         )}
                                     </div>

@@ -34091,10 +34091,14 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 //#endregion
 //#region resources/js/types.ts
 function formatPrice(cents, market) {
-	return new Intl.NumberFormat(market.hrefLang, {
-		style: "currency",
-		currency: market.currency
-	}).format(cents / 100);
+	try {
+		return new Intl.NumberFormat(market.hrefLang, {
+			style: "currency",
+			currency: market.currency
+		}).format(cents / 100);
+	} catch {
+		return (cents / 100).toFixed(2);
+	}
 }
 //#endregion
 //#region resources/js/Components/ProductCard.tsx
@@ -36446,7 +36450,7 @@ function ListShow({ list, items, target, asked, access, collaborators, quizUrl, 
 								children: entry.title
 							}), entry.price !== null && !entry.live && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "text-sm text-ink-soft",
-								children: formatPrice(entry.price, market.currency)
+								children: formatPrice(entry.price, market)
 							})]
 						}),
 						entry.claimedByMe ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -37191,7 +37195,7 @@ function SelfDescribe({ person, options, canClaim, items, listId, suggestions = 
 							}),
 							suggestion.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "mt-1 text-sm text-ink-soft",
-								children: formatPrice(suggestion.price, market.currency)
+								children: formatPrice(suggestion.price, market)
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 								type: "button",
@@ -37226,7 +37230,7 @@ function SelfDescribe({ person, options, canClaim, items, listId, suggestions = 
 									children: item.title
 								}), item.price !== null && !item.live && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 									className: "text-sm text-ink-soft",
-									children: formatPrice(item.price, market.currency)
+									children: formatPrice(item.price, market)
 								})]
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -37281,7 +37285,7 @@ function SantaGroup({ group, isOrganiser, members, me }) {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 					className: "mt-2 text-sm text-ink-soft",
 					children: [
-						group.budgetMax !== null && `${t("santa.budget")}: ${formatPrice(group.budgetMax, market.currency)}`,
+						group.budgetMax !== null && `${t("santa.budget")}: ${formatPrice(group.budgetMax, market)}`,
 						group.exchangeDate && ` · ${group.exchangeDate}`,
 						group.theme && ` · ${group.theme}`
 					]
@@ -37538,7 +37542,7 @@ function SantaMe({ group, me }) {
 				}) : null,
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 					className: "mt-2 text-sm text-ink-soft",
-					children: [group.budgetMax !== null && formatPrice(group.budgetMax, market.currency) + " · ", group.exchangeDate]
+					children: [group.budgetMax !== null && formatPrice(group.budgetMax, market) + " · ", group.exchangeDate]
 				})
 			]
 		}),
@@ -37592,7 +37596,7 @@ function SantaMe({ group, me }) {
 									children: wish.title
 								}), wish.price !== null && !wish.live && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 									className: "text-sm text-ink-soft",
-									children: formatPrice(wish.price, market.currency)
+									children: formatPrice(wish.price, market)
 								})]
 							}),
 							wish.claimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {

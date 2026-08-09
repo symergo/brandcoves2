@@ -255,7 +255,7 @@ export default function SelfDescribe({
                                 <p className="mt-3 text-sm font-medium">{suggestion.title}</p>
                                 {suggestion.price !== null && (
                                     <p className="mt-1 text-sm text-ink-soft">
-                                        {formatPrice(suggestion.price, market.currency)}
+                                        {formatPrice(suggestion.price, market)}
                                     </p>
                                 )}
                                 <button
@@ -296,7 +296,7 @@ export default function SelfDescribe({
                                     <p className="truncate text-sm font-medium">{item.title}</p>
                                     {item.price !== null && !item.live && (
                                         <p className="text-sm text-ink-soft">
-                                            {formatPrice(item.price, market.currency)}
+                                            {formatPrice(item.price, market)}
                                         </p>
                                     )}
                                 </div>

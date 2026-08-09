@@ -65,7 +65,7 @@ export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
                 <h1 className="text-2xl font-semibold">{group.title}</h1>
                 <p className="mt-2 text-sm text-ink-soft">
                     {group.budgetMax !== null &&
-                        `${t('santa.budget')}: ${formatPrice(group.budgetMax, market.currency)}`}
+                        `${t('santa.budget')}: ${formatPrice(group.budgetMax, market)}`}
                     {group.exchangeDate && ` · ${group.exchangeDate}`}
                     {group.theme && ` · ${group.theme}`}
                 </p>
