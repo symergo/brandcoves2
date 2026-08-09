@@ -17,6 +17,7 @@ use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\ProductController;
@@ -303,6 +304,23 @@ Route::prefix('{market}')->group(function () {
     | The index exists so this URL space is not orphaned: a crawler that has not
     | seen a search result still finds every brand from one page.
     */
+    /*
+    |----------------------------------------------------------------------
+    | About, privacy, terms
+    |----------------------------------------------------------------------
+    |
+    | Market-prefixed like everything else, because the language differs and
+    | because Belgian law wants an imprint reachable from every page — which the
+    | footer link is.
+    |
+    | One route rather than three: they are the same controller reading a
+    | different markdown file, and the page name is validated against an
+    | allowlist rather than concatenated into a path.
+    */
+    Route::get('/{page}', LegalController::class)
+        ->whereIn('page', ['about', 'privacy', 'terms'])
+        ->name('legal');
+
     Route::get('/brands', [BrandController::class, 'index'])->name('brands');
     Route::get('/brand/{slug}', [BrandController::class, 'show'])
         // Slugs are what Str::slug() produces, so anything else is a probe

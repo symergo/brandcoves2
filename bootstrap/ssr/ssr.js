@@ -34967,7 +34967,7 @@ function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
 									children: [
 										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 											className: "font-semibold",
-											children: item.price === null ? "—" : formatPrice(item.price, market)
+											children: item.price === null ? "-" : formatPrice(item.price, market)
 										}),
 										activeLayout === "deals" && item.discountPercent !== null && item.discountPercent > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 											className: "rounded bg-accent px-2 py-0.5 text-xs font-semibold text-white",
@@ -35623,6 +35623,48 @@ function Stat({ label, value, hint }) {
 	});
 }
 //#endregion
+//#region resources/js/Pages/Legal.tsx
+var Legal_exports = /* @__PURE__ */ __exportAll({ default: () => Legal });
+/**
+* About, privacy and terms.
+*
+* `dangerouslySetInnerHTML` is safe here in the one case where that is true: the
+* HTML comes from markdown files in this repository, rendered server-side. There
+* is no user input anywhere in the path. The alternative — a markdown renderer in
+* the bundle — would ship a parser to every visitor to render three static pages.
+*
+* The prose styles are declared here rather than pulled from a typography plugin,
+* so these pages inherit the site's own type scale instead of a second one.
+*/
+function Legal({ title, summary, html, updated, untranslated }) {
+	const { t } = useTranslations();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+		className: "mx-auto max-w-2xl",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-3xl font-semibold tracking-tight sm:text-4xl",
+				children: title
+			}),
+			summary && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-lg text-ink-soft",
+				children: summary
+			}),
+			updated && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-sm text-ink-soft",
+				children: t("legal.updated", { date: updated })
+			}),
+			untranslated && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-5 rounded-card border border-line bg-card p-4 text-sm text-ink-soft",
+				children: t("legal.untranslated")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "\n                        mt-8 leading-relaxed\n                        [&_h2]:mt-10 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight\n                        [&_h3]:mt-6 [&_h3]:font-semibold\n                        [&_p]:mt-4\n                        [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5\n                        [&_li>p]:mt-0\n                        [&_a]:text-accent [&_a]:underline\n                        [&_strong]:font-semibold\n                        [&_table]:mt-4 [&_table]:w-full [&_table]:text-sm\n                        [&_td]:border-t [&_td]:border-line [&_td]:py-2 [&_td]:pr-4\n                        [&_th]:hidden\n                        [&_em]:italic\n                    ",
+				dangerouslySetInnerHTML: { __html: html }
+			})
+		]
+	})] });
+}
+//#endregion
 //#region resources/js/Pages/Lists/Index.tsx
 var Index_exports = /* @__PURE__ */ __exportAll({ default: () => ListsIndex });
 function ListsIndex({ lists, recipients, isSignedIn }) {
@@ -36008,8 +36050,8 @@ function Notifications({ notifications, watching }) {
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "text-ink-soft",
 								children: notice.kind === "restock" ? t("notifications.back_in_stock") : t("notifications.dropped_to", {
-									price: notice.price === null ? "—" : formatPrice(notice.price, market),
-									was: notice.baseline === null ? "—" : formatPrice(notice.baseline, market)
+									price: notice.price === null ? "-" : formatPrice(notice.price, market),
+									was: notice.baseline === null ? "-" : formatPrice(notice.baseline, market)
 								})
 							})]
 						}),
@@ -36508,7 +36550,7 @@ function BarcodeScanner({ autoStart = false, onFound }) {
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "mt-1 text-lg font-semibold",
-						children: hit.price == null ? "—" : formatPrice(hit.price, market)
+						children: hit.price == null ? "-" : formatPrice(hit.price, market)
 					}),
 					(hit.merchantCount ?? 0) > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "text-sm text-ink-soft",
@@ -36852,7 +36894,7 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 											children: g.title
 										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 											className: "mt-1 block text-sm font-semibold",
-											children: g.minPrice === null ? "—" : formatPrice(g.minPrice, market)
+											children: g.minPrice === null ? "-" : formatPrice(g.minPrice, market)
 										})]
 									})]
 								}) }, g.id))
@@ -37000,7 +37042,7 @@ function Surprise({ finds, seen }) {
 						className: "mt-auto flex items-center justify-between pt-4",
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 							className: "font-semibold",
-							children: find.price === null ? "—" : formatPrice(find.price, market)
+							children: find.price === null ? "-" : formatPrice(find.price, market)
 						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.id })]
 					})
 				]
@@ -57049,6 +57091,21 @@ function SiteLayout({ children }) {
 								href: `/${market.key}/surprise`,
 								className: "hover:text-accent",
 								children: t("nav.surprise")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: `/${market.key}/about`,
+								className: "hover:text-accent",
+								children: t("legal.about")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: `/${market.key}/privacy`,
+								className: "hover:text-accent",
+								children: t("legal.privacy")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: `/${market.key}/terms`,
+								className: "hover:text-accent",
+								children: t("legal.terms")
 							})
 						]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: t("footer.affiliate") })]
@@ -57087,6 +57144,7 @@ server_default((page) => createInertiaApp({
 			"./Pages/Guides/Index.tsx": Index_exports$1,
 			"./Pages/Guides/Show.tsx": Show_exports$1,
 			"./Pages/Home.tsx": Home_exports,
+			"./Pages/Legal.tsx": Legal_exports,
 			"./Pages/Lists/Index.tsx": Index_exports,
 			"./Pages/Lists/Shared.tsx": Shared_exports,
 			"./Pages/Lists/Show.tsx": Show_exports,

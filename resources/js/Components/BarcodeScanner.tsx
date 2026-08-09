@@ -365,7 +365,7 @@ export default function BarcodeScanner({ autoStart = false, onFound }: Props) {
                             <div className="min-w-0">
                                 <p className="font-medium">{hit.title}</p>
                                 <p className="mt-1 text-lg font-semibold">
-                                    {hit.price == null ? '—' : formatPrice(hit.price, market)}
+                                    {hit.price == null ? '-' : formatPrice(hit.price, market)}
                                 </p>
                                 {(hit.merchantCount ?? 0) > 1 && (
                                     <p className="text-sm text-ink-soft">

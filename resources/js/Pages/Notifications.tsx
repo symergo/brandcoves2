@@ -92,11 +92,11 @@ export default function Notifications({ notifications, watching }: Props) {
                                             : t('notifications.dropped_to', {
                                                   price:
                                                       notice.price === null
-                                                          ? '—'
+                                                          ? '-'
                                                           : formatPrice(notice.price, market),
                                                   was:
                                                       notice.baseline === null
-                                                          ? '—'
+                                                          ? '-'
                                                           : formatPrice(notice.baseline, market),
                                               })}
                                     </p>

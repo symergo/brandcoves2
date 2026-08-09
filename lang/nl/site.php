@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Dutch — serves both the be-nl and nl-nl markets. */
+/** Dutch, serves both the be-nl and nl-nl markets. */
 return [
     'nav' => [
         'search' => 'Zoeken',
@@ -77,7 +77,7 @@ return [
         /*
          * On-page copy above the results.
          *
-         * Every clause is a fact this page can back up — the counts, the range
+         * Every clause is a fact this page can back up, the counts, the range
          * and the brands are all read off the results themselves.
          */
         'intro_lead' => 'We vonden :count producten voor “:term”, samen goed voor :shops winkelaanbiedingen.',
@@ -91,7 +91,7 @@ return [
 
     /*
      * Merkpagina's. Elke regel wordt alleen getoond als het bijbehorende getal
-     * bestaat — zie App\Services\Seo\BrandCopy.
+     * bestaat, zie App\Services\Seo\BrandCopy.
      */
     'brand' => [
         'title' => ':brand',
@@ -110,27 +110,27 @@ return [
 
         'lead' => 'Op zoek naar :brand? We volgen :count producten van :brand en vergelijken wat elke winkel ervoor rekent.',
         'lead_2' => 'Er staan nu :count producten van :brand in de catalogus, met alle aanbiedingen per product naast elkaar.',
-        'lead_3' => 'Dit is elk product van :brand waarvoor we een actuele prijs vinden — :count in totaal, bij de winkels die het merk echt verkopen.',
+        'lead_3' => 'Dit is elk product van :brand waarvoor we een actuele prijs vinden, :count in totaal, bij de winkels die het merk echt verkopen.',
         'lead_4' => ':count producten van :brand, één pagina, de prijs van elke winkel erbij.',
 
-        'shops_named' => ':shop heeft meer van :brand dan elke andere winkel die we volgen, en in totaal verkopen :count winkels het merk — precies daarom is het vergelijken hieronder de moeite waard.',
+        'shops_named' => ':shop heeft meer van :brand dan elke andere winkel die we volgen, en in totaal verkopen :count winkels het merk, precies daarom is het vergelijken hieronder de moeite waard.',
         'shops_count' => ':count winkel verkoopt :brand op dit moment.',
 
         'price_from' => ':brand begint hier bij :low.',
         'price_range' => 'De prijzen van :brand lopen op deze pagina van :low tot :high.',
         'price_range_category' => 'De prijzen van :brand lopen van :low tot :high, en het meeste dat we hebben valt onder :category.',
 
-        'discount_named' => ':shop heeft momenteel kortingen op :brand — :count producten staan onder hun gebruikelijke prijs, de grootste met :percent%. Gemeten tegen onze eigen 30-daagse mediaan, niet tegen een doorgestreepte winkelprijs.',
+        'discount_named' => ':shop heeft momenteel kortingen op :brand: :count producten staan onder hun gebruikelijke prijs, de grootste met :percent%. Gemeten tegen onze eigen 30-daagse mediaan, niet tegen een doorgestreepte winkelprijs.',
         'discount_count' => ':count producten van :brand staan nu onder hun 30-daagse medianprijs.',
 
-        'comparison' => 'Omdat hetzelfde product van :brand vaak bij meerdere winkels voor verschillende prijzen te koop is, is de goedkoopste aanbieding het interessante — en die staat op elke kaart hieronder bovenaan.',
+        'comparison' => 'Omdat hetzelfde product van :brand vaak bij meerdere winkels voor verschillende prijzen te koop is, is de goedkoopste aanbieding het interessante, en die staat op elke kaart hieronder bovenaan.',
     ],
     /*
      * Lange tekst onder een resultatenraster.
      *
      * Elke regel is óf een feit dat van de pagina zelf is afgelezen, óf een
      * kloppende uitleg van hoe de site werkt. Geen van beide laat zich met het
-     * zoekwoord opvullen — zie App\Services\Seo\PageNarrative.
+     * zoekwoord opvullen, zie App\Services\Seo\PageNarrative.
      */
     'narrative' => [
         'faq_heading' => 'Vragen over :term',
@@ -139,23 +139,23 @@ return [
 
         'compare_heading' => ':term vergelijken tussen winkels',
         'compare_1' => 'Deze pagina verzamelt elke :term waarvoor we een actuele prijs vinden en toont één kaart per fysiek product, niet één kaart per aanbieding. Dat onderscheid is de hele reden dat deze pagina bestaat: een winkel die dezelfde :term verkoopt als drie andere biedt hetzelfde voorwerp aan tegen een ander getal, en de enige interessante vraag is welk getal vandaag het laagst is.',
-        'compare_2' => ':comparable van de :shown getoonde producten worden door meer dan één winkel verkocht, dus elk van die kaarten is op zich al een vergelijking — de goedkoopste aanbieding bovenaan, de rest één klik verder, met op elke kaart de naam van de winkel. Wordt iets maar door één winkel verkocht, dan zeggen we dat, in plaats van een keuze te suggereren die er niet is.',
+        'compare_2' => ':comparable van de :shown getoonde producten worden door meer dan één winkel verkocht, dus elk van die kaarten is op zich al een vergelijking, de goedkoopste aanbieding bovenaan, de rest één klik verder, met op elke kaart de naam van de winkel. Wordt iets maar door één winkel verkocht, dan zeggen we dat, in plaats van een keuze te suggereren die er niet is.',
         'compare_3' => 'Aanbiedingen komen uit winkelfeeds en uit live opvragingen op het moment dat je de pagina laadt; daarom kan een prijs hier verschillen van wat je vanochtend zag. Elke link gaat naar de winkel die de aanbieding doet. Wij verkopen zelf niets en hebben geen voorraad.',
 
         'prices_heading' => 'Wat de prijzen voor :term betekenen',
-        'prices_1' => 'De prijzen op deze pagina lopen van :low tot :high, en die spreiding is meestal een spreiding van producten en niet van winkels — de goedkoopste :term en de duurste zijn zelden hetzelfde ding met een andere sticker. Sorteren op prijs is de snelste manier om te zien waar het bruikbare midden van dat bereik ligt.',
+        'prices_1' => 'De prijzen op deze pagina lopen van :low tot :high, en die spreiding is meestal een spreiding van producten en niet van winkels, de goedkoopste :term en de duurste zijn zelden hetzelfde ding met een andere sticker. Sorteren op prijs is de snelste manier om te zien waar het bruikbare midden van dat bereik ligt.',
         'prices_2' => 'Een kortingslabel hier wordt gemeten tegen onze eigen 30-daagse medianprijs voor precies dat product, nooit tegen een doorgestreepte winkelprijs. Die twee verschillen vaker dan je zou denken: een "van"-prijs is een marketingbeslissing, een mediaan is wat het ding een maand lang echt heeft gekost bij iedereen die het verkoopt. Beweegt er niets echt, dan verschijnt er geen label.',
         'prices_3' => ':reduced producten op deze pagina staan nu onder die mediaan, de grootste met :percent%. Prijzen en voorraad worden twee keer per dag opnieuw gecontroleerd en live bronnen worden bij elke zoekopdracht bevraagd, dus dit is geen momentopname van vorige week.',
 
         'choosing_heading' => 'Kiezen tussen :term',
-        'choosing_1' => 'Begin bij het aantal aanbiedingen, niet bij de prijs. Een product dat vier winkels verkopen heeft een echte marktprijs en een bodem waar je op kunt vertrouwen; een product bij één winkel heeft een prijs en geen enkele manier om die te toetsen — en dat is het waard om te weten voordat je besluit dat het een goede deal is.',
-        'choosing_2' => 'Kijk daarna naar de voorraad. Alles op deze pagina is standaard op voorraad, want een prijs die je niet kunt kopen is geen aanbieding — je kunt dat filter uitzetten om het volledige aanbod te zien, inclusief wat tijdelijk uitverkocht is. De prijsgeschiedenis op elke productpagina laat zien of vandaag echt een goed moment is of gewoon een gemiddelde dag.',
+        'choosing_1' => 'Begin bij het aantal aanbiedingen, niet bij de prijs. Een product dat vier winkels verkopen heeft een echte marktprijs en een bodem waar je op kunt vertrouwen; een product bij één winkel heeft een prijs en geen enkele manier om die te toetsen, en dat is het waard om te weten voordat je besluit dat het een goede deal is.',
+        'choosing_2' => 'Kijk daarna naar de voorraad. Alles op deze pagina is standaard op voorraad, want een prijs die je niet kunt kopen is geen aanbieding, je kunt dat filter uitzetten om het volledige aanbod te zien, inclusief wat tijdelijk uitverkocht is. De prijsgeschiedenis op elke productpagina laat zien of vandaag echt een goed moment is of gewoon een gemiddelde dag.',
         'choosing_3' => 'Merken in deze resultaten zijn onder meer :brands. Elk merk heeft een eigen pagina met alles wat we ervan voeren, met dezelfde vergelijking tussen winkels.',
 
         'faq_price_q' => 'Wat kost :term?',
         'faq_price_a' => 'Op deze pagina loopt :term van :low tot :high. Dat bereik omvat :count producten bij de winkels die we volgen, dus de onderkant en de bovenkant zijn meestal verschillende soorten producten en niet hetzelfde product tegen twee prijzen.',
         'faq_where_q' => 'Waar kan ik :term kopen?',
-        'faq_where_a' => 'Bij de winkels die op elke kaart staan — deze pagina bundelt :shops winkelaanbiedingen over de getoonde producten. Wij zijn een vergelijkingssite, geen winkel: elke link gaat naar de winkel die de aanbieding doet, en je koopt bij hen onder hun voorwaarden.',
+        'faq_where_a' => 'Bij de winkels die op elke kaart staan. Deze pagina bundelt :shops winkelaanbiedingen over de getoonde producten. Wij zijn een vergelijkingssite, geen winkel: elke link gaat naar de winkel die de aanbieding doet, en je koopt bij hen onder hun voorwaarden.',
         'faq_fresh_q' => 'Hoe actueel zijn deze prijzen voor :term?',
         'faq_fresh_a' => 'Feedprijzen worden twee keer per dag ververst en live bronnen worden bij het zoeken bevraagd, dus deze pagina laat vandaag zien en niet vorige week. Een prijs kan alsnog veranderen tussen het laden van de pagina en de winkel; de pagina van de winkel zelf is altijd doorslaggevend.',
     ],
@@ -170,26 +170,26 @@ return [
         'related_intro' => 'Wat mensen hier rond :brand zochten.',
 
         'compare_heading' => ':brand-prijzen vergelijken tussen winkels',
-        'compare_1' => 'Deze pagina verzamelt elk :brand-product waarvoor we een actuele prijs vinden en toont één kaart per product in plaats van één per aanbieding. Twee winkels die hetzelfde :brand-artikel verkopen leveren één kaart met beide prijzen, goedkoopste eerst — precies de vergelijking die een :brand-pagina van een winkel per definitie niet kan tonen.',
+        'compare_1' => 'Deze pagina verzamelt elk :brand-product waarvoor we een actuele prijs vinden en toont één kaart per product in plaats van één per aanbieding. Twee winkels die hetzelfde :brand-artikel verkopen leveren één kaart met beide prijzen, goedkoopste eerst, precies de vergelijking die een :brand-pagina van een winkel per definitie niet kan tonen.',
         'compare_2' => ':comparable van de :shown getoonde :brand-producten worden door meer dan één winkel verkocht. Daar loont vergelijken echt: hetzelfde :brand-model, dezelfde garantie, een ander bedrag aan de kassa. Verkoopt maar één winkel iets, dan zeggen we dat.',
         'compare_3' => ':shop heeft meer van :brand dan elke andere winkel die we volgen, wat het een verstandig beginpunt maakt en een slecht eindpunt. De goedkoopste aanbieding voor een bepaald :brand-product zit vaak ergens anders, en staat hoe dan ook op de kaart.',
 
         'prices_heading' => 'Wat :brand hier kost',
-        'prices_1' => 'De prijzen van :brand lopen op deze pagina van :low tot :high. Dat is een bereik van producten, niet van marges — het goedkoopste en het duurste :brand-artikel zijn verschillende dingen, en sorteren op prijs laat het snelst zien waar het bereik zich verzamelt.',
+        'prices_1' => 'De prijzen van :brand lopen op deze pagina van :low tot :high. Dat is een bereik van producten, niet van marges, het goedkoopste en het duurste :brand-artikel zijn verschillende dingen, en sorteren op prijs laat het snelst zien waar het bereik zich verzamelt.',
         'prices_2' => 'Als we een :brand-product als verlaagd markeren, is dat gemeten tegen onze eigen 30-daagse mediaan voor precies dat product, niet tegen een doorgestreepte "van"-prijs van een winkel. Dat verschil telt: het ene is een marketingbeslissing, het andere is wat het product een maand lang echt heeft gekost bij iedereen die het verkoopt.',
         'prices_3' => ':reduced :brand-producten staan nu onder die mediaan, met een grootste korting van :percent%. Feedprijzen worden twee keer per dag opnieuw gecontroleerd, dus deze pagina is actueel en geen archief.',
 
         'choosing_heading' => 'Een :brand-product kiezen',
         'choosing_1' => 'Het meeste dat we van :brand voeren valt onder :category, en dat is nuttig om te weten voor je gaat scrollen: het zegt waar dit merk in deze markt echt voor is, in plaats van wat de catalogus wereldwijd beweert.',
-        'choosing_2' => 'Kijk eerst naar het aantal aanbiedingen, dan naar de prijs. Een :brand-product bij vier winkels heeft een marktprijs waar je op kunt bouwen; een product bij één winkel heeft een prijs en niets om die aan te toetsen. Alles hier is standaard op voorraad — een prijs die je niet kunt kopen is geen aanbieding — en dat filter kun je uitzetten.',
+        'choosing_2' => 'Kijk eerst naar het aantal aanbiedingen, dan naar de prijs. Een :brand-product bij vier winkels heeft een marktprijs waar je op kunt bouwen; een product bij één winkel heeft een prijs en niets om die aan te toetsen. Alles hier is standaard op voorraad, een prijs die je niet kunt kopen is geen aanbieding, en dat filter kun je uitzetten.',
         'choosing_3' => 'Elke productpagina toont de volledige aanbiedingentabel en 90 dagen prijsgeschiedenis, zodat je ziet of vandaag echt een goed moment is voor dit :brand-product of gewoon een gemiddelde dag.',
 
         'faq_price_q' => 'Wat kosten :brand-producten?',
         'faq_price_a' => ':brand-producten lopen op deze pagina van :low tot :high, over :count producten bij de winkels die we volgen. De onderkant en de bovenkant zijn meestal verschillende producten, niet hetzelfde product tegen twee prijzen.',
         'faq_where_q' => 'Welke winkels verkopen :brand?',
-        'faq_where_a' => 'De winkels die op elke kaart staan — deze pagina bundelt :shops winkelaanbiedingen over de getoonde :brand-producten. Wij vergelijken en verkopen niet: elke link gaat naar de winkel die de aanbieding doet.',
+        'faq_where_a' => 'De winkels die op elke kaart staan. Deze pagina bundelt :shops winkelaanbiedingen over de getoonde :brand-producten. Wij vergelijken en verkopen niet: elke link gaat naar de winkel die de aanbieding doet.',
         'faq_discount_q' => 'Is :brand nu in de aanbieding?',
-        'faq_discount_a' => 'Ja — :reduced :brand-producten staan nu onder hun 30-daagse medianprijs, de grootste met :percent%. Dat is gemeten tegen onze eigen prijsgeschiedenis en niet tegen een doorgestreepte winkelprijs, dus het gaat om een echte beweging.',
+        'faq_discount_a' => 'Ja, :reduced :brand-producten staan nu onder hun 30-daagse medianprijs, de grootste met :percent%. Dat is gemeten tegen onze eigen prijsgeschiedenis en niet tegen een doorgestreepte winkelprijs, dus het gaat om een echte beweging.',
     ],
 
     'product' => [
@@ -210,20 +210,20 @@ return [
         'price_as_of' => 'Prijs en beschikbaarheid gelden op het getoonde moment en kunnen wijzigen.',
         'disclosure' => 'We verdienen mogelijk commissie als je via deze link koopt. Wat jij betaalt verandert niet.',
         'unavailable' => 'Dit product is nu bij geen enkele winkel die we volgen verkrijgbaar.',
-        'seo_compare' => ':title vanaf :price — vergelijk aanbiedingen van :count winkels en vind de goedkoopste.',
+        'seo_compare' => ':title vanaf :price, vergelijk aanbiedingen van :count winkels en vind de goedkoopste.',
         'seo_single' => ':title vanaf :price. Vergelijk aanbiedingen en bekijk de prijsgeschiedenis voor je koopt.',
     ],
 
     /*
      * Cove-abonnementen. Elk antwoord op het formulier is identiek, wat er ook
-     * gebeurd is — anders kun je ermee achterhalen wie deze site leest.
+     * gebeurd is, anders kun je ermee achterhalen wie deze site leest.
      */
     'cove' => [
         'subscribe_heading' => 'De Cove, elke ochtend',
         'subscribe_intro' => 'Eén korte mail per dag: het thema, een paar vondsten en het raadsel. Geen productspam, en met één klik weer weg.',
         'subscribe_placeholder' => 'jij@voorbeeld.be',
         'subscribe_button' => 'Stuur maar',
-        'subscribe_thanks' => 'Kijk in je inbox — als dat adres nieuw voor ons is, is er een bevestigingslink onderweg.',
+        'subscribe_thanks' => 'Kijk in je inbox, als dat adres nieuw voor ons is, is er een bevestigingslink onderweg.',
         'subscribe_privacy' => 'We gebruiken je adres alleen voor deze mail.',
         'confirm_done' => 'Je staat op de lijst. De volgende Cove komt morgenochtend.',
         'confirm_invalid' => 'Die link is verlopen of al gebruikt. Schrijf je opnieuw in voor een nieuwe.',
@@ -237,7 +237,7 @@ return [
         'confirm_button' => 'Bevestig mijn abonnement',
         'confirm_expiry' => 'De link werkt 48 uur.',
         'confirm_requested_from' => 'Aangevraagd vanaf :ip',
-        'confirm_ignore' => 'Was jij dit niet? Negeer deze mail — zonder klik gebeurt er niets en schrijven we je niet nog eens.',
+        'confirm_ignore' => 'Was jij dit niet? Negeer deze mail, zonder klik gebeurt er niets en schrijven we je niet nog eens.',
 
         'digest_subject' => 'De Cove van vandaag: :theme',
         'digest_button' => 'Open de Cove van vandaag',
@@ -247,8 +247,16 @@ return [
         'why_receiving' => 'Je krijgt deze mail omdat je een abonnement op de Daily Cove hebt bevestigd.',
         'unsubscribe' => 'Uitschrijven',
     ],
+    'legal' => [
+        'about' => 'Over ons',
+        'privacy' => 'Privacy',
+        'terms' => 'Voorwaarden',
+        'updated' => 'Laatst bijgewerkt op :date',
+        'untranslated' => 'Deze pagina is nog niet vertaald, dus je leest de Engelse versie. De Engelse tekst is de geldende.',
+    ],
+
     'footer' => [
-        'affiliate' => 'Brandcoves vergelijkt aanbiedingen van verschillende winkels. We verdienen mogelijk commissie op aankopen via onze links — dat verandert nooit wat jij betaalt.',
+        'affiliate' => 'Brandcoves vergelijkt aanbiedingen van verschillende winkels. We verdienen mogelijk commissie op aankopen via onze links, dat verandert nooit wat jij betaalt.',
         'explore' => 'Ontdekken',
     ],
 
@@ -257,7 +265,7 @@ return [
         'intro' => 'Vul je e-mailadres in en we sturen je een link. Geen wachtwoord om te onthouden.',
         'email' => 'E-mailadres',
         'send' => 'Stuur me een link',
-        'link_sent' => 'Kijk in je inbox — als er een account bij dat adres hoort, is de inloglink onderweg.',
+        'link_sent' => 'Kijk in je inbox, als er een account bij dat adres hoort, is de inloglink onderweg.',
         'link_invalid' => 'Die link is verlopen of al gebruikt. Vraag een nieuwe aan.',
         'too_many' => 'Te veel aanvragen. Probeer het over :seconds seconden opnieuw.',
         'or' => 'of',
@@ -269,7 +277,7 @@ return [
         'mail_button' => 'Inloggen',
         'mail_expiry' => 'De link verloopt over 15 minuten.',
         'mail_requested_from' => 'Aangevraagd vanaf :ip',
-        'mail_ignore' => 'Heb je dit niet aangevraagd? Dan kun je deze e-mail gerust negeren — zonder de link kan niemand inloggen.',
+        'mail_ignore' => 'Heb je dit niet aangevraagd? Dan kun je deze e-mail gerust negeren, zonder de link kan niemand inloggen.',
         'mail_fallback' => 'Werkt de knop niet? Plak dit in je browser:',
     ],
 
@@ -311,7 +319,7 @@ return [
         'already_claimed' => 'Iemand anders was je net voor.',
         'cannot_unclaim' => 'Je kunt alleen je eigen keuze terugdraaien, en alleen binnen een dag.',
         'shared_intro' => 'Tik op een item om aan te geven dat jij het koopt. :name ziet niet wie wat koopt.',
-        'owner_view_note' => 'Dit is je eigen lijstje, dus je ziet niet wat er gekocht is — dat is de bedoeling.',
+        'owner_view_note' => 'Dit is je eigen lijstje, dus je ziet niet wat er gekocht is, dat is de bedoeling.',
         'recipient_added' => 'Persoon toegevoegd.',
         'recipient_removed' => 'Persoon verwijderd.',
         'add_person' => 'Iemand toevoegen',
@@ -429,7 +437,7 @@ return [
         'close' => 'Sluiten',
         'shops' => 'bij :count winkels',
         'preparing' => 'Even klaarzetten…',
-        'unsupported' => 'De scanner kon niet starten. Tik het nummer hieronder in — het staat onder de streepjes.',
+        'unsupported' => 'De scanner kon niet starten. Tik het nummer hieronder in, het staat onder de streepjes.',
         'no_camera' => 'Geen camera beschikbaar, of toestemming geweigerd. Tik het nummer hieronder in.',
         'invalid' => 'Dat is geen geldige barcode. Controleer de cijfers onder de streepjes.',
         'not_found' => 'Die hebben we nog niet.',
@@ -439,7 +447,7 @@ return [
     'surprise' => [
         'title' => 'Dingen waarvan je niet wist dat ze bestonden',
         'subtitle' => 'Zeldzaam, op voorraad, en door bijna niemand verkocht.',
-        'seo_description' => 'Ongewone producten die op geen enkele bestsellerlijst staan — beoordeeld op hoe zeldzaam ze zijn en gecontroleerd of ze het bekijken waard zijn.',
+        'seo_description' => 'Ongewone producten die op geen enkele bestsellerlijst staan, beoordeeld op hoe zeldzaam ze zijn en gecontroleerd of ze het bekijken waard zijn.',
         'reroll' => 'Laat meer zien',
         'empty' => 'Nog niets beoordeeld. Kom terug na de volgende catalogusronde.',
 
@@ -506,7 +514,7 @@ return [
             'pokemon' => ['title' => 'Pokémondag', 'blurb' => 'Dertig jaar en nog altijd bezig.'],
 
             // Maart.
-            'wildlife' => ['title' => 'Om dieren te bekijken', 'blurb' => 'Wereld Natuurdag — spullen om dieren van dichtbij te bekijken die daar niet om vroegen.'],
+            'wildlife' => ['title' => 'Om dieren te bekijken', 'blurb' => 'Wereld Natuurdag, spullen om dieren van dichtbij te bekijken die daar niet om vroegen.'],
             'womens_day' => ['title' => 'Internationale Vrouwendag', 'blurb' => 'Gereedschap, geen snuisterijen.'],
             'mario_day' => ['title' => 'MAR10-dag', 'blurb' => 'Opgeschreven zegt de datum zijn naam.'],
             'pi_day' => ['title' => 'Pi-dag', 'blurb' => '3,14, dus: ronde dingen om in te bakken.'],
@@ -522,8 +530,8 @@ return [
             'childrens_books' => ['title' => 'Internationale Kinderboekendag', 'blurb' => 'De verjaardag van Andersen, en de lamp om ze bij te lezen.'],
             'health' => ['title' => 'Stilletjes goed voor je', 'blurb' => 'Wereldgezondheidsdag, zonder het preken.'],
             'pets' => ['title' => 'Voor het dier dat je huis bestuurt', 'blurb' => 'Dag van het Huisdier. Ze vroegen er niet om, maar hier zijn we.'],
-            'space' => ['title' => 'Yuri’s Night', 'blurb' => 'De eerste mens in een baan om de aarde, vandaag ruim zestig jaar geleden.'],
-            'earth' => ['title' => 'Dingen die meegaan', 'blurb' => 'Dag van de Aarde — spullen die je twee keer kunt bezitten.'],
+            'space' => ['title' => 'Yuri\x27s Night', 'blurb' => 'De eerste mens in een baan om de aarde, vandaag ruim zestig jaar geleden.'],
+            'earth' => ['title' => 'Dingen die meegaan', 'blurb' => 'Dag van de Aarde, spullen die je twee keer kunt bezitten.'],
             'books' => ['title' => 'Voor lezers', 'blurb' => 'Wereldboekendag, en alles eromheen behalve de boeken.'],
             'kingsday' => ['title' => 'Koningsdag', 'blurb' => 'Oranje is optioneel. Een koelbox niet.'],
             'record_store_day' => ['title' => 'Record Store Day', 'blurb' => 'Waar je het op afspeelt, want kopen doe je toch.'],
@@ -543,7 +551,7 @@ return [
 
             // Juni.
             'bicycle' => ['title' => 'Twee wielen', 'blurb' => 'Wereldfietsdag. Sommige hiervan zijn echt slim bedacht.'],
-            'environment' => ['title' => 'Minder rommel', 'blurb' => 'Wereldmilieudag — dingen die iets wegwerpbaars vervangen.'],
+            'environment' => ['title' => 'Minder rommel', 'blurb' => 'Wereldmilieudag, dingen die iets wegwerpbaars vervangen.'],
             'oceans' => ['title' => 'Wereldoceanendag', 'blurb' => 'Om erin te gaan, of er in elk geval dichtbij.'],
             'sushi' => ['title' => 'Internationale Sushidag', 'blurb' => 'Het gaat vooral om de rijst en het mes.'],
             'music' => ['title' => 'Maak wat lawaai', 'blurb' => 'Wereldmuziekdag, instrumenten inbegrepen.'],
@@ -562,7 +570,7 @@ return [
             'cats' => ['title' => 'Kattendag', 'blurb' => 'Internationale Kattendag. Ze weten het.'],
             'book_lovers' => ['title' => 'Dag van de boekenliefhebber', 'blurb' => 'Alles behalve de boeken.'],
             'lefthanders' => ['title' => 'Internationale Linkshandigendag', 'blurb' => 'Spullen ontworpen door mensen die opletten.'],
-            'photography' => ['title' => 'Om goed te kijken', 'blurb' => 'Wereldfotografiedag — de accessoires waar niemand je over vertelt.'],
+            'photography' => ['title' => 'Om goed te kijken', 'blurb' => 'Wereldfotografiedag, de accessoires waar niemand je over vertelt.'],
             'dogs' => ['title' => 'Internationale Hondendag', 'blurb' => 'Hij staat al bij de deur.'],
             'back_to_school' => ['title' => 'De laatste vakantiedag', 'blurb' => 'Alles wat je in juli van plan was te kopen.'],
 
@@ -690,7 +698,7 @@ return [
 
     'guides' => [
         'title' => 'Koopgidsen',
-        'subtitle' => 'Geschreven op basis van wat mensen hier zoeken — niet van een zoekwoordtool.',
+        'subtitle' => 'Geschreven op basis van wat mensen hier zoeken, niet van een zoekwoordtool.',
         'seo_description' => 'Koopgidsen gebouwd op echte zoekvraag, met live prijzen vergeleken over elke winkel die het product heeft.',
         'empty' => 'Nog geen gidsen. Ze worden geschreven zodra een onderwerp genoeg vraag opbouwt.',
         'how_to_choose' => 'Hoe kies je',
@@ -735,7 +743,7 @@ return [
             ],
             'guides' => [
                 'title' => 'Gidsen',
-                'description' => 'Iemand deed het denkwerk al — shortlists op basis van wat mensen hier zoeken.',
+                'description' => 'Iemand deed het denkwerk al, shortlists op basis van wat mensen hier zoeken.',
             ],
             'compare' => [
                 'title' => 'Vergelijken',
@@ -743,7 +751,7 @@ return [
             ],
             'deals' => [
                 'title' => 'Koopjes',
-                'description' => 'Echte kortingen, gemeten tegen onze eigen prijsgeschiedenis en tegen de andere winkels — nooit tegen een “van”-prijs van de winkel zelf.',
+                'description' => 'Echte kortingen, gemeten tegen onze eigen prijsgeschiedenis en tegen de andere winkels, nooit tegen een “van”-prijs van de winkel zelf.',
             ],
             'projects' => [
                 'title' => 'Projecten',

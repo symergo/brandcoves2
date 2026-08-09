@@ -364,7 +364,7 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                                         >
                                             <span className="font-semibold">
                                                 {item.price === null
-                                                    ? '—'
+                                                    ? '-'
                                                     : formatPrice(item.price, market)}
                                             </span>
 

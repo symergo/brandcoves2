@@ -110,6 +110,7 @@
   "resources/js/Pages/Guides/Index.tsx": [],
   "resources/js/Pages/Guides/Show.tsx": [],
   "resources/js/Pages/Home.tsx": [],
+  "resources/js/Pages/Legal.tsx": [],
   "resources/js/Pages/Lists/Index.tsx": [],
   "resources/js/Pages/Lists/Shared.tsx": [],
   "resources/js/Pages/Lists/Show.tsx": [],

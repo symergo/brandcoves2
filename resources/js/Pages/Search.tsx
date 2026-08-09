@@ -415,7 +415,7 @@ export default function Search({
                                                         </span>
                                                         <span className="mt-1 block text-sm font-semibold">
                                                             {g.minPrice === null
-                                                                ? '—'
+                                                                ? '-'
                                                                 : formatPrice(g.minPrice, market)}
                                                         </span>
                                                     </span>

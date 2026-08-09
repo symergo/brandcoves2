@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Site copy, per language.
  *
- * Keyed by LANGUAGE (nl, fr, en, es), not by market — be-nl and nl-nl are two
+ * Keyed by LANGUAGE (nl, fr, en, es), not by market, be-nl and nl-nl are two
  * markets sharing one language, so they share this file. What differs between
  * them is the catalogue, currency formatting and merchants, not the words.
  */
@@ -83,7 +83,7 @@ return [
         /*
          * On-page copy above the results.
          *
-         * Every clause is a fact this page can back up — the counts, the range
+         * Every clause is a fact this page can back up, the counts, the range
          * and the brands are all read off the results themselves. Keyword-
          * stuffed filler would rank for a fortnight and then not at all.
          */
@@ -99,13 +99,13 @@ return [
     /*
      * Brand pages.
      *
-     * Every one of these is emitted only when the number behind it exists — see
+     * Every one of these is emitted only when the number behind it exists, see
      * App\Services\Seo\BrandCopy. Rewriting one of them into a claim the
      * catalogue cannot back up is a bug, not a copy tweak.
      *
      * THIS FILE IS THE FALLBACK, NOT THE SOURCE. These lines are what a page
      * renders when the `copy_templates` table has no enabled variant for the
-     * slot — which is what makes that table safe to hand to an editor: deleting
+     * slot: which is what makes that table safe to hand to an editor: deleting
      * every row restores exactly this. `bc:seed-copy` imports them as the first
      * variant of each slot.
      *
@@ -130,27 +130,27 @@ return [
 
         'lead' => 'Looking for :brand? We are tracking :count :brand products and comparing what every shop charges for them.',
         'lead_2' => 'There are :count :brand products in the catalogue right now, with every offer for each one priced side by side.',
-        'lead_3' => 'This is every :brand product we can find a live price for — :count of them, across the shops that actually stock the brand.',
+        'lead_3' => 'This is every :brand product we can find a live price for, :count of them, across the shops that actually stock the brand.',
         'lead_4' => ':count :brand products, one page, every shop\'s price on each of them.',
 
-        'shops_named' => ':shop stocks more :brand than anyone else we track, and :count shops in total carry the brand — which is what makes the prices below worth comparing.',
+        'shops_named' => ':shop stocks more :brand than anyone else we track, and :count shops in total carry the brand: which is what makes the prices below worth comparing.',
         'shops_count' => ':count shop carries :brand at the moment.',
 
         'price_from' => ':brand starts at :low here.',
         'price_range' => ':brand prices run from :low to :high on this page.',
         'price_range_category' => ':brand prices run from :low to :high, and most of what we carry is :category.',
 
-        'discount_named' => ':shop currently has discounts on :brand — :count products are below their usual price, the largest by :percent%. Measured against our own 30-day median, not a shop\'s crossed-out figure.',
+        'discount_named' => ':shop currently has discounts on :brand: :count products are below their usual price, the largest by :percent%. Measured against our own 30-day median, not a shop\'s crossed-out figure.',
         'discount_count' => ':count :brand products are below their 30-day median price right now.',
 
-        'comparison' => 'Because the same :brand product is often sold by several shops at different prices, the cheapest offer is the thing worth finding — and it is the first one shown on every card below.',
+        'comparison' => 'Because the same :brand product is often sold by several shops at different prices, the cheapest offer is the thing worth finding, and it is the first one shown on every card below.',
     ],
     /*
      * Long-form copy below a results grid.
      *
      * Every line is either a fact read off the page (counts, ranges, brands) or a
      * true explanation of how the site works. Neither can be padded with the
-     * keyword, which is the point — see App\Services\Seo\PageNarrative.
+     * keyword, which is the point, see App\Services\Seo\PageNarrative.
      *
      * Placeholders available everywhere: :term :count :shown :shops :comparable
      * :reduced :percent :low :high
@@ -162,25 +162,25 @@ return [
 
         'compare_heading' => 'Comparing :term across shops',
         'compare_1' => 'This page collects every :term we can find a live price for and puts one card per physical product, not one card per listing. That distinction is the whole reason the page exists: a shop that stocks the same :term as three others is offering the same object at a different number, and the only interesting question is which number is lowest today.',
-        'compare_2' => ':comparable of the :shown products shown here are stocked by more than one shop, so each of those cards is a small comparison in itself — the cheapest offer first, the rest a click away, and the shop names on every one of them. Where a product is sold by a single shop we say so rather than implying a choice that does not exist.',
+        'compare_2' => ':comparable of the :shown products shown here are stocked by more than one shop, so each of those cards is a small comparison in itself, the cheapest offer first, the rest a click away, and the shop names on every one of them. Where a product is sold by a single shop we say so rather than implying a choice that does not exist.',
         'compare_3' => 'Offers come from retailer feeds and from live queries at the moment you load the page, which is why a price here can differ from one you saw this morning. Every link goes to the shop that made the offer; we do not sell anything ourselves and we hold no stock.',
 
         'prices_heading' => 'What the prices for :term mean',
-        'prices_1' => 'Prices on this page run from :low to :high, and that spread is usually a spread of products rather than of shops — the cheapest :term and the most expensive one are rarely the same thing with a different sticker. Sorting by price is the fastest way to see where the useful middle of that range sits.',
-        'prices_2' => 'A discount badge here is measured against our own 30-day median price for that exact product, never against a shop’s crossed-out figure. The two disagree more often than you would expect: a "was" price is a marketing decision, while a median is what the thing has actually cost over a month across everyone selling it. If nothing genuinely moved, no badge appears.',
+        'prices_1' => 'Prices on this page run from :low to :high, and that spread is usually a spread of products rather than of shops, the cheapest :term and the most expensive one are rarely the same thing with a different sticker. Sorting by price is the fastest way to see where the useful middle of that range sits.',
+        'prices_2' => 'A discount badge here is measured against our own 30-day median price for that exact product, never against a shop\x27s crossed-out figure. The two disagree more often than you would expect: a "was" price is a marketing decision, while a median is what the thing has actually cost over a month across everyone selling it. If nothing genuinely moved, no badge appears.',
         'prices_3' => ':reduced of the products on this page are currently below that median, the largest by :percent%. Prices and stock are re-checked twice a day and live sources are queried on every search, so this page is not a snapshot of last week.',
 
         'choosing_heading' => 'Choosing between :term',
         'choosing_1' => 'Start with the offer count rather than the price. A product carried by four shops has a real market price and a floor you can trust; one carried by a single shop has a price and no way to test it, which is worth knowing before you decide the deal is good.',
-        'choosing_2' => 'Then check stock. Everything on this page is in stock by default, because an unbuyable price is not an offer — you can turn that filter off if you want to see the full range, including things that are only temporarily unavailable. The price history on each product page shows whether today is genuinely a good moment or an ordinary one.',
+        'choosing_2' => 'Then check stock. Everything on this page is in stock by default, because an unbuyable price is not an offer, you can turn that filter off if you want to see the full range, including things that are only temporarily unavailable. The price history on each product page shows whether today is genuinely a good moment or an ordinary one.',
         'choosing_3' => 'Brands appearing in these results include :brands. Each has a page of its own listing everything we carry from it, with the same comparison across shops.',
 
         'faq_price_q' => 'How much does :term cost?',
         'faq_price_a' => 'On this page, :term ranges from :low to :high. That range covers :count products across the shops we track, so the low end and the high end are usually different kinds of product rather than the same one at two prices.',
         'faq_where_q' => 'Where can I buy :term?',
-        'faq_where_a' => 'From the shops listed on each card — this page draws :shops shop listings across the products shown. We are a comparison site, not a retailer: every link goes to the shop making the offer, and you buy from them on their own terms.',
+        'faq_where_a' => 'From the shops listed on each card. This page draws :shops shop listings across the products shown. We are a comparison site, not a retailer: every link goes to the shop making the offer, and you buy from them on their own terms.',
         'faq_fresh_q' => 'How current are these :term prices?',
-        'faq_fresh_a' => 'Feed prices are refreshed twice a day and live sources are queried when you search, so this page reflects today rather than last week. A price can still change between loading the page and reaching the shop, and the shop’s own page is always the final word.',
+        'faq_fresh_a' => 'Feed prices are refreshed twice a day and live sources are queried when you search, so this page reflects today rather than last week. A price can still change between loading the page and reaching the shop, and the shop\x27s own page is always the final word.',
     ],
 
     /*
@@ -197,25 +197,25 @@ return [
 
         'compare_heading' => 'Comparing :brand prices across shops',
         'compare_2' => ':comparable of the :shown :brand products shown here are carried by more than one shop. Those are the ones where comparing actually pays: the same :brand model, the same warranty, a different number at the till. Where only one shop stocks something we say so, rather than implying a choice you do not have.',
-        'compare_1' => 'This page gathers every :brand product we can find a live price for and shows one card per product rather than one per listing. Two shops selling the same :brand item produce one card with both prices on it, cheapest first — which is the comparison a shop’s own :brand page structurally cannot show you.',
+        'compare_1' => 'This page gathers every :brand product we can find a live price for and shows one card per product rather than one per listing. Two shops selling the same :brand item produce one card with both prices on it, cheapest first: which is the comparison a shop\x27s own :brand page structurally cannot show you.',
         'compare_3' => ':shop carries more :brand than any other shop we track, which makes it a sensible place to start and a poor place to stop. The cheapest offer on a given :brand product is frequently somewhere else, and it is on the card either way.',
 
         'prices_heading' => 'What :brand costs here',
-        'prices_1' => ':brand prices on this page run from :low to :high. That is a range of products rather than a range of margins — the cheapest :brand thing and the most expensive one are different objects, and sorting by price is the quickest way to see where the range actually clusters.',
-        'prices_2' => 'When we mark a :brand product as reduced, that is measured against our own 30-day median for that exact product, not against a shop’s crossed-out "was" price. The difference matters: one is a marketing decision, the other is what the product has genuinely cost over a month across everyone selling it.',
+        'prices_1' => ':brand prices on this page run from :low to :high. That is a range of products rather than a range of margins, the cheapest :brand thing and the most expensive one are different objects, and sorting by price is the quickest way to see where the range actually clusters.',
+        'prices_2' => 'When we mark a :brand product as reduced, that is measured against our own 30-day median for that exact product, not against a shop\x27s crossed-out "was" price. The difference matters: one is a marketing decision, the other is what the product has genuinely cost over a month across everyone selling it.',
         'prices_3' => ':reduced :brand products are below that median right now, the biggest saving being :percent%. Feed prices are re-checked twice a day, so this page is current rather than archived.',
 
         'choosing_heading' => 'Choosing a :brand product',
         'choosing_1' => 'Most of what we carry from :brand falls under :category, which is a useful thing to know before you scroll: it tells you what this brand is actually for in this market, as opposed to what its catalogue claims worldwide.',
-        'choosing_2' => 'Look at the offer count before the price. A :brand product stocked by four shops has a market price you can trust; one stocked by a single shop has a price and nothing to check it against. Everything here is in stock by default — an unbuyable price is not an offer — and you can turn that filter off to see the full catalogue.',
+        'choosing_2' => 'Look at the offer count before the price. A :brand product stocked by four shops has a market price you can trust; one stocked by a single shop has a price and nothing to check it against. Everything here is in stock by default, an unbuyable price is not an offer, and you can turn that filter off to see the full catalogue.',
         'choosing_3' => 'Each product page carries the full offer table and 90 days of price history, so you can see whether today is a genuinely good moment to buy this :brand product or an ordinary one.',
 
         'faq_price_q' => 'How much do :brand products cost?',
         'faq_price_a' => ':brand products on this page range from :low to :high, across :count products from the shops we track. The low and the high are usually different products rather than the same one at two prices.',
         'faq_where_q' => 'Which shops sell :brand?',
-        'faq_where_a' => 'The shops named on each card — this page draws :shops shop listings across the :brand products shown. We compare rather than sell: every link goes to the shop making the offer.',
+        'faq_where_a' => 'The shops named on each card. This page draws :shops shop listings across the :brand products shown. We compare rather than sell: every link goes to the shop making the offer.',
         'faq_discount_q' => 'Is :brand on offer right now?',
-        'faq_discount_a' => 'Yes — :reduced :brand products are currently below their 30-day median price, the largest by :percent%. That is measured against our own price history rather than a shop’s crossed-out figure, so it reflects a real movement rather than a claimed one.',
+        'faq_discount_a' => 'Yes, :reduced :brand products are currently below their 30-day median price, the largest by :percent%. That is measured against our own price history rather than a shop\x27s crossed-out figure, so it reflects a real movement rather than a claimed one.',
     ],
 
     'product' => [
@@ -236,7 +236,7 @@ return [
         'price_as_of' => 'Price and availability as of the time shown and may change.',
         'disclosure' => 'We may earn a commission if you buy through this link. The price you pay is unchanged.',
         'unavailable' => 'This product is not currently available from any shop we track.',
-        'seo_compare' => ':title from :price — compare offers from :count shops and find the cheapest.',
+        'seo_compare' => ':title from :price, compare offers from :count shops and find the cheapest.',
         'seo_single' => ':title from :price. Compare offers and check the price history before you buy.',
     ],
 
@@ -251,7 +251,7 @@ return [
         'subscribe_intro' => 'One short email a day: the theme, a few of the finds, and the puzzle. No product spam, and one click to leave.',
         'subscribe_placeholder' => 'you@example.com',
         'subscribe_button' => 'Send it to me',
-        'subscribe_thanks' => 'Check your inbox — if that address is new to us, a confirmation link is on its way.',
+        'subscribe_thanks' => 'Check your inbox, if that address is new to us, a confirmation link is on its way.',
         'subscribe_privacy' => 'We use your address for this email and nothing else.',
         'confirm_done' => "You're on the list. The next Cove arrives tomorrow morning.",
         'confirm_invalid' => 'That link has expired or has already been used. Sign up again to get a new one.',
@@ -265,7 +265,7 @@ return [
         'confirm_button' => 'Confirm my subscription',
         'confirm_expiry' => 'The link works for 48 hours.',
         'confirm_requested_from' => 'Requested from :ip',
-        'confirm_ignore' => 'If this was not you, ignore this email — nothing happens without the click, and we will not write again.',
+        'confirm_ignore' => 'If this was not you, ignore this email, nothing happens without the click, and we will not write again.',
 
         'digest_subject' => "Today's Cove: :theme",
         'digest_button' => "Open today's Cove",
@@ -275,8 +275,16 @@ return [
         'why_receiving' => 'You are receiving this because you confirmed a subscription to the Daily Cove.',
         'unsubscribe' => 'Unsubscribe',
     ],
+    'legal' => [
+        'about' => 'About',
+        'privacy' => 'Privacy',
+        'terms' => 'Terms',
+        'updated' => 'Last updated :date',
+        'untranslated' => 'This page has not been translated yet, so you are reading the English version. The English text is the one that applies.',
+    ],
+
     'footer' => [
-        'affiliate' => 'Brandcoves compares offers across shops. We may earn a commission on purchases made through our links — it never changes what you pay.',
+        'affiliate' => 'Brandcoves compares offers across shops. We may earn a commission on purchases made through our links, it never changes what you pay.',
         'explore' => 'Explore',
     ],
 
@@ -285,7 +293,7 @@ return [
         'intro' => 'Enter your email and we will send you a link. No password to remember.',
         'email' => 'Email address',
         'send' => 'Send me a link',
-        'link_sent' => 'Check your inbox — if that address has an account, a sign-in link is on its way.',
+        'link_sent' => 'Check your inbox, if that address has an account, a sign-in link is on its way.',
         'link_invalid' => 'That link has expired or has already been used. Request a new one.',
         'too_many' => 'Too many requests. Try again in :seconds seconds.',
         'or' => 'or',
@@ -297,7 +305,7 @@ return [
         'mail_button' => 'Sign in',
         'mail_expiry' => 'The link expires in 15 minutes.',
         'mail_requested_from' => 'Requested from :ip',
-        'mail_ignore' => 'If you did not request this, you can safely ignore this email — nobody can sign in without the link.',
+        'mail_ignore' => 'If you did not request this, you can safely ignore this email, nobody can sign in without the link.',
         'mail_fallback' => 'If the button does not work, paste this into your browser:',
     ],
 
@@ -339,7 +347,7 @@ return [
         'already_claimed' => 'Someone else just claimed that one.',
         'cannot_unclaim' => 'You can only undo your own claim, and only within a day.',
         'shared_intro' => 'Tap an item to mark that you are getting it. :name will not see who claimed what.',
-        'owner_view_note' => 'This is your own list, so claims are hidden from you — that is the point.',
+        'owner_view_note' => 'This is your own list, so claims are hidden from you, that is the point.',
         'recipient_added' => 'Person added.',
         'recipient_removed' => 'Person removed.',
         'add_person' => 'Add a person',
@@ -457,7 +465,7 @@ return [
         'close' => 'Close',
         'shops' => 'at :count shops',
         'preparing' => 'Getting ready…',
-        'unsupported' => 'The scanner could not start. Type the number below instead — it is on the label under the bars.',
+        'unsupported' => 'The scanner could not start. Type the number below instead, it is on the label under the bars.',
         'no_camera' => 'No camera available, or permission was declined. Type the number below instead.',
         'invalid' => 'That is not a valid barcode. Check the digits under the bars.',
         'not_found' => 'We do not have that one yet.',
@@ -467,7 +475,7 @@ return [
     'surprise' => [
         'title' => 'Things you did not know existed',
         'subtitle' => 'Rare, in stock, and sold by almost nobody.',
-        'seo_description' => 'Unusual products you will not find on a bestseller list — scored for how rare they are and checked for whether they are worth seeing.',
+        'seo_description' => 'Unusual products you will not find on a bestseller list, scored for how rare they are and checked for whether they are worth seeing.',
         'reroll' => 'Show me more',
         'empty' => 'Nothing scored yet. Come back after the next catalogue run.',
 
@@ -534,7 +542,7 @@ return [
             'pokemon' => ['title' => 'Pokémon Day', 'blurb' => 'Thirty years and still going.'],
 
             // March.
-            'wildlife' => ['title' => 'For watching wildlife', 'blurb' => 'World Wildlife Day — things for looking closely at animals that have not agreed to it.'],
+            'wildlife' => ['title' => 'For watching wildlife', 'blurb' => 'World Wildlife Day, things for looking closely at animals that have not agreed to it.'],
             'womens_day' => ['title' => "International Women's Day", 'blurb' => 'Tools, not trinkets.'],
             'mario_day' => ['title' => 'MAR10 Day', 'blurb' => 'Written down, the date says his name.'],
             'pi_day' => ['title' => 'Pi Day', 'blurb' => '3.14, so: round things you bake in.'],
@@ -550,8 +558,8 @@ return [
             'childrens_books' => ['title' => "International Children's Book Day", 'blurb' => "Andersen's birthday, and the lamp to read them by."],
             'health' => ['title' => 'Quietly good for you', 'blurb' => 'World Health Day, without the lecture.'],
             'pets' => ['title' => 'For the animal that runs your house', 'blurb' => 'National Pet Day. They did not ask, but here we are.'],
-            'space' => ['title' => 'Yuri’s Night', 'blurb' => 'The first human in orbit, sixty-odd years ago today.'],
-            'earth' => ['title' => 'Things that last', 'blurb' => 'Earth Day — objects built to be owned twice.'],
+            'space' => ['title' => 'Yuri\x27s Night', 'blurb' => 'The first human in orbit, sixty-odd years ago today.'],
+            'earth' => ['title' => 'Things that last', 'blurb' => 'Earth Day, objects built to be owned twice.'],
             'books' => ['title' => 'For readers', 'blurb' => 'World Book Day, and everything around the reading rather than the books.'],
             'kingsday' => ['title' => 'Koningsdag', 'blurb' => 'Orange optional. A cool box is not.'],
             'record_store_day' => ['title' => 'Record Store Day', 'blurb' => 'What to play it on, since you are buying it anyway.'],
@@ -571,7 +579,7 @@ return [
 
             // June.
             'bicycle' => ['title' => 'Two wheels', 'blurb' => 'World Bicycle Day. Some of this is genuinely clever.'],
-            'environment' => ['title' => 'Less rubbish', 'blurb' => 'World Environment Day — things that replace something disposable.'],
+            'environment' => ['title' => 'Less rubbish', 'blurb' => 'World Environment Day, things that replace something disposable.'],
             'oceans' => ['title' => 'World Oceans Day', 'blurb' => 'For getting into it, or at least near it.'],
             'sushi' => ['title' => 'International Sushi Day', 'blurb' => 'It is mostly about the rice and the knife.'],
             'music' => ['title' => 'Make some noise', 'blurb' => 'World Music Day, instruments included.'],
@@ -590,7 +598,7 @@ return [
             'cats' => ['title' => 'Cat day', 'blurb' => 'International Cat Day. They are aware.'],
             'book_lovers' => ['title' => 'Book Lovers Day', 'blurb' => 'Everything except the books.'],
             'lefthanders' => ['title' => 'International Lefthanders Day', 'blurb' => 'Objects designed by people who were paying attention.'],
-            'photography' => ['title' => 'For looking properly', 'blurb' => 'World Photography Day — the accessories nobody tells you about.'],
+            'photography' => ['title' => 'For looking properly', 'blurb' => 'World Photography Day, the accessories nobody tells you about.'],
             'dogs' => ['title' => 'International Dog Day', 'blurb' => 'They are already at the door.'],
             'back_to_school' => ['title' => 'The last day of the holidays', 'blurb' => 'Everything you meant to buy in July.'],
 
@@ -719,7 +727,7 @@ return [
 
     'guides' => [
         'title' => 'Buying guides',
-        'subtitle' => 'Written from what people search for here — not from a keyword tool.',
+        'subtitle' => 'Written from what people search for here, not from a keyword tool.',
         'seo_description' => 'Buying guides built from real search demand, with live prices compared across every shop that stocks each product.',
         'empty' => 'No guides yet. They are written as topics build up enough demand.',
         'how_to_choose' => 'How to choose',
@@ -730,7 +738,7 @@ return [
         'unavailable' => 'Out of stock',
         'slug_prefix' => 'best',
         'template_title' => 'The best :topic',
-        'template_intro' => ':count options for :topic, with every shop’s price compared side by side.',
+        'template_intro' => ':count options for :topic, with every shop\x27s price compared side by side.',
     ],
 
     'discover' => [
@@ -751,7 +759,7 @@ return [
 
         // Required of every mode: the dominant scoring factor, in words. A
         // surface that reorganises as a dial moves is incomprehensible without
-        // it — the same product has to be able to say it is here for a
+        // it, the same product has to be able to say it is here for a
         // different reason than it was a moment ago.
         'why' => [
             'relevance' => 'Closest to what you asked for',
@@ -763,11 +771,11 @@ return [
         'modes' => [
             'search' => [
                 'title' => 'Search',
-                'description' => 'You know what you want. Every shop’s price, one card per product.',
+                'description' => 'You know what you want. Every shop\x27s price, one card per product.',
             ],
             'guides' => [
                 'title' => 'Guides',
-                'description' => 'Someone already did the thinking — shortlists built from what people search for here.',
+                'description' => 'Someone already did the thinking, shortlists built from what people search for here.',
             ],
             'compare' => [
                 'title' => 'Compare',
@@ -775,7 +783,7 @@ return [
             ],
             'deals' => [
                 'title' => 'Deals',
-                'description' => 'Real savings, measured against our own price history and against the other shops — never against a merchant’s “was” price.',
+                'description' => 'Real savings, measured against our own price history and against the other shops, never against a merchant\x27s “was” price.',
             ],
             'projects' => [
                 'title' => 'Projects',

@@ -203,6 +203,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Who operates this site
+    |--------------------------------------------------------------------------
+    |
+    | The legal identity behind Brandcoves, in one place because it appears in
+    | three documents in four languages and a company number that disagrees with
+    | itself across twelve files is a real problem rather than a typo.
+    |
+    | The legal pages interpolate these. Anything left empty is rendered as a
+    | visible gap rather than silently omitted — an address that quietly vanishes
+    | from an imprint is worse than one that says it is missing, because Belgian
+    | law requires it to be there and only the visible version gets fixed.
+    |
+    | `company_number` is the Belgian enterprise number, which doubles as the VAT
+    | number prefixed with BE.
+    */
+    'company' => [
+        'name' => env('COMPANY_NAME', ''),
+        'number' => env('COMPANY_NUMBER', 'BE0566975391'),
+        'address' => env('COMPANY_ADDRESS', ''),
+        'email' => env('COMPANY_EMAIL', 'hello@brandcoves.com'),
+        'privacy_email' => env('PRIVACY_EMAIL', 'privacy@brandcoves.com'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Editable page copy
     |--------------------------------------------------------------------------
     |

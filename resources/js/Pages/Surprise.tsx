@@ -77,7 +77,7 @@ export default function Surprise({ finds, seen }: Props) {
 
                             <div className="mt-auto flex items-center justify-between pt-4">
                                 <span className="font-semibold">
-                                    {find.price === null ? '—' : formatPrice(find.price, market)}
+                                    {find.price === null ? '-' : formatPrice(find.price, market)}
                                 </span>
                                 <SaveToList groupId={find.id} />
                             </div>

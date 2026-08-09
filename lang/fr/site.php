@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** French — serves the be-fr market. */
+/** French, serves the be-fr market. */
 return [
     'nav' => [
         'search' => 'Rechercher',
@@ -77,7 +77,7 @@ return [
         /*
          * On-page copy above the results.
          *
-         * Every clause is a fact this page can back up — the counts, the range
+         * Every clause is a fact this page can back up, the counts, the range
          * and the brands are all read off the results themselves.
          */
         'intro_lead' => 'Nous avons trouvé :count produits pour « :term », représentant :shops offres en boutique.',
@@ -91,7 +91,7 @@ return [
 
     /*
      * Pages de marque. Chaque phrase n'apparaît que si le chiffre correspondant
-     * existe — voir App\Services\Seo\BrandCopy.
+     * existe, voir App\Services\Seo\BrandCopy.
      */
     'brand' => [
         'title' => ':brand',
@@ -110,20 +110,20 @@ return [
 
         'lead' => 'Vous cherchez :brand ? Nous suivons :count produits :brand et comparons ce que chaque boutique en demande.',
         'lead_2' => 'Le catalogue compte actuellement :count produits :brand, avec toutes les offres de chacun côte à côte.',
-        'lead_3' => 'Voici tous les produits :brand pour lesquels nous trouvons un prix en direct — :count au total, chez les boutiques qui vendent réellement la marque.',
+        'lead_3' => 'Voici tous les produits :brand pour lesquels nous trouvons un prix en direct, :count au total, chez les boutiques qui vendent réellement la marque.',
         'lead_4' => ':count produits :brand, une page, le prix de chaque boutique sur chacun d\'eux.',
 
-        'shops_named' => ':shop propose plus de :brand que toute autre boutique que nous suivons, et :count boutiques au total distribuent la marque — c\'est précisément ce qui rend la comparaison ci-dessous utile.',
+        'shops_named' => ':shop propose plus de :brand que toute autre boutique que nous suivons, et :count boutiques au total distribuent la marque, c\'est précisément ce qui rend la comparaison ci-dessous utile.',
         'shops_count' => ':count boutique propose :brand en ce moment.',
 
         'price_from' => ':brand commence ici à :low.',
         'price_range' => 'Les prix :brand vont de :low à :high sur cette page.',
         'price_range_category' => 'Les prix :brand vont de :low à :high, et l\'essentiel de ce que nous référençons relève de :category.',
 
-        'discount_named' => ':shop propose actuellement des remises sur :brand — :count produits sont sous leur prix habituel, le plus fort de :percent%. Mesuré sur notre propre médiane à 30 jours, pas sur un prix barré.',
+        'discount_named' => ':shop propose actuellement des remises sur :brand, :count produits sont sous leur prix habituel, le plus fort de :percent%. Mesuré sur notre propre médiane à 30 jours, pas sur un prix barré.',
         'discount_count' => ':count produits :brand sont actuellement sous leur prix médian sur 30 jours.',
 
-        'comparison' => 'Comme le même produit :brand est souvent vendu par plusieurs boutiques à des prix différents, c\'est l\'offre la moins chère qui compte — et elle apparaît en premier sur chaque fiche ci-dessous.',
+        'comparison' => 'Comme le même produit :brand est souvent vendu par plusieurs boutiques à des prix différents, c\'est l\'offre la moins chère qui compte, et elle apparaît en premier sur chaque fiche ci-dessous.',
     ],
     /*
      * Texte long sous une grille de résultats. Chaque ligne est soit un fait lu
@@ -136,23 +136,23 @@ return [
 
         'compare_heading' => 'Comparer :term entre boutiques',
         'compare_1' => 'Cette page rassemble chaque :term pour lequel nous trouvons un prix en direct et affiche une fiche par produit physique, pas une fiche par annonce. Cette distinction justifie à elle seule la page : une boutique qui vend le même :term que trois autres propose le même objet à un chiffre différent, et la seule question intéressante est de savoir lequel est le plus bas aujourd’hui.',
-        'compare_2' => ':comparable des :shown produits affichés sont vendus par plus d’une boutique : chacune de ces fiches est donc déjà une comparaison — l’offre la moins chère en premier, le reste à un clic, et le nom de la boutique sur chacune. Lorsqu’un produit n’est vendu que par une boutique, nous le disons plutôt que de laisser croire à un choix inexistant.',
+        'compare_2' => ':comparable des :shown produits affichés sont vendus par plus d’une boutique : chacune de ces fiches est donc déjà une comparaison, l’offre la moins chère en premier, le reste à un clic, et le nom de la boutique sur chacune. Lorsqu’un produit n’est vendu que par une boutique, nous le disons plutôt que de laisser croire à un choix inexistant.',
         'compare_3' => 'Les offres viennent des flux des marchands et de requêtes en direct au moment où vous chargez la page, d’où l’écart possible avec un prix vu ce matin. Chaque lien mène à la boutique qui fait l’offre : nous ne vendons rien nous-mêmes et ne détenons aucun stock.',
 
         'prices_heading' => 'Ce que signifient les prix pour :term',
-        'prices_1' => 'Les prix de cette page vont de :low à :high, et cet écart est le plus souvent un écart de produits, pas de boutiques — le :term le moins cher et le plus cher sont rarement la même chose avec une autre étiquette. Trier par prix reste le moyen le plus rapide de voir où se situe le milieu utile de cette fourchette.',
+        'prices_1' => 'Les prix de cette page vont de :low à :high, et cet écart est le plus souvent un écart de produits, pas de boutiques, le :term le moins cher et le plus cher sont rarement la même chose avec une autre étiquette. Trier par prix reste le moyen le plus rapide de voir où se situe le milieu utile de cette fourchette.',
         'prices_2' => 'Une étiquette de remise est mesurée sur notre propre prix médian à 30 jours pour ce produit précis, jamais sur un prix barré affiché par une boutique. Les deux divergent plus souvent qu’on ne le croit : un prix « avant » est une décision marketing, une médiane est ce que la chose a réellement coûté pendant un mois chez tous ceux qui la vendent. Si rien n’a bougé, aucune étiquette n’apparaît.',
         'prices_3' => ':reduced produits de cette page sont actuellement sous cette médiane, le plus fort écart étant de :percent%. Prix et stocks sont revérifiés deux fois par jour et les sources en direct sont interrogées à chaque recherche : ce n’est pas un instantané de la semaine dernière.',
 
         'choosing_heading' => 'Choisir entre :term',
-        'choosing_1' => 'Commencez par le nombre d’offres plutôt que par le prix. Un produit référencé chez quatre boutiques a un vrai prix de marché et un plancher fiable ; un produit vendu par une seule boutique a un prix et aucun moyen de le vérifier — ce qu’il vaut mieux savoir avant de conclure à la bonne affaire.',
-        'choosing_2' => 'Vérifiez ensuite la disponibilité. Tout est en stock par défaut sur cette page, car un prix qu’on ne peut pas payer n’est pas une offre — désactivez le filtre pour voir l’ensemble, y compris ce qui est temporairement indisponible. L’historique de prix sur chaque fiche produit indique si aujourd’hui est réellement un bon moment ou un jour ordinaire.',
+        'choosing_1' => 'Commencez par le nombre d’offres plutôt que par le prix. Un produit référencé chez quatre boutiques a un vrai prix de marché et un plancher fiable ; un produit vendu par une seule boutique a un prix et aucun moyen de le vérifier, ce qu’il vaut mieux savoir avant de conclure à la bonne affaire.',
+        'choosing_2' => 'Vérifiez ensuite la disponibilité. Tout est en stock par défaut sur cette page, car un prix qu’on ne peut pas payer n’est pas une offre, désactivez le filtre pour voir l’ensemble, y compris ce qui est temporairement indisponible. L’historique de prix sur chaque fiche produit indique si aujourd’hui est réellement un bon moment ou un jour ordinaire.',
         'choosing_3' => 'Parmi les marques présentes dans ces résultats : :brands. Chacune dispose de sa propre page listant tout ce que nous référençons, avec la même comparaison entre boutiques.',
 
         'faq_price_q' => 'Combien coûte :term ?',
         'faq_price_a' => 'Sur cette page, :term va de :low à :high. Cette fourchette couvre :count produits chez les boutiques que nous suivons : le bas et le haut correspondent généralement à des produits différents, pas au même produit à deux prix.',
         'faq_where_q' => 'Où acheter :term ?',
-        'faq_where_a' => 'Chez les boutiques indiquées sur chaque fiche — cette page réunit :shops annonces de boutiques sur les produits affichés. Nous sommes un comparateur, pas un marchand : chaque lien mène à la boutique qui fait l’offre, et vous achetez chez elle, à ses conditions.',
+        'faq_where_a' => 'Chez les boutiques indiquées sur chaque fiche, cette page réunit :shops annonces de boutiques sur les produits affichés. Nous sommes un comparateur, pas un marchand : chaque lien mène à la boutique qui fait l’offre, et vous achetez chez elle, à ses conditions.',
         'faq_fresh_q' => 'Ces prix pour :term sont-ils à jour ?',
         'faq_fresh_a' => 'Les prix des flux sont rafraîchis deux fois par jour et les sources en direct sont interrogées lors de la recherche : cette page reflète aujourd’hui, pas la semaine dernière. Un prix peut encore changer entre le chargement de la page et l’arrivée en boutique ; la page du marchand fait toujours foi.',
     ],
@@ -166,26 +166,26 @@ return [
         'related_intro' => 'Ce que les gens ont cherché ici autour de :brand.',
 
         'compare_heading' => 'Comparer les prix :brand entre boutiques',
-        'compare_1' => 'Cette page rassemble chaque produit :brand pour lequel nous trouvons un prix en direct et affiche une fiche par produit plutôt qu’une par annonce. Deux boutiques vendant le même article :brand donnent une seule fiche portant les deux prix, le moins cher d’abord — exactement la comparaison que la page :brand d’une boutique ne peut structurellement pas montrer.',
+        'compare_1' => 'Cette page rassemble chaque produit :brand pour lequel nous trouvons un prix en direct et affiche une fiche par produit plutôt qu’une par annonce. Deux boutiques vendant le même article :brand donnent une seule fiche portant les deux prix, le moins cher d’abord, exactement la comparaison que la page :brand d’une boutique ne peut structurellement pas montrer.',
         'compare_2' => ':comparable des :shown produits :brand affichés sont vendus par plus d’une boutique. C’est là que comparer paie vraiment : même modèle :brand, même garantie, un autre montant en caisse. Quand une seule boutique le référence, nous le disons.',
         'compare_3' => ':shop propose plus de :brand que toute autre boutique que nous suivons, ce qui en fait un bon point de départ et un mauvais point d’arrivée : l’offre la moins chère sur un produit :brand donné se trouve souvent ailleurs, et elle figure de toute façon sur la fiche.',
 
         'prices_heading' => 'Ce que coûte :brand ici',
-        'prices_1' => 'Les prix :brand de cette page vont de :low à :high. C’est une fourchette de produits, pas de marges — l’article :brand le moins cher et le plus cher sont deux objets différents, et trier par prix montre le plus vite où la fourchette se concentre réellement.',
+        'prices_1' => 'Les prix :brand de cette page vont de :low à :high. C’est une fourchette de produits, pas de marges, l’article :brand le moins cher et le plus cher sont deux objets différents, et trier par prix montre le plus vite où la fourchette se concentre réellement.',
         'prices_2' => 'Quand nous signalons un produit :brand comme réduit, c’est mesuré sur notre propre médiane à 30 jours pour ce produit précis, pas sur un prix barré. La différence compte : l’un est une décision marketing, l’autre est ce que le produit a réellement coûté pendant un mois chez tous ceux qui le vendent.',
         'prices_3' => ':reduced produits :brand sont actuellement sous cette médiane, la plus forte remise étant de :percent%. Les prix des flux sont revérifiés deux fois par jour : cette page est actuelle, pas archivée.',
 
         'choosing_heading' => 'Choisir un produit :brand',
         'choosing_1' => 'L’essentiel de ce que nous référençons chez :brand relève de :category, et c’est utile à savoir avant de faire défiler : cela dit à quoi sert vraiment cette marque sur ce marché, par opposition à ce que son catalogue mondial affirme.',
-        'choosing_2' => 'Regardez le nombre d’offres avant le prix. Un produit :brand référencé chez quatre boutiques a un prix de marché fiable ; chez une seule, il a un prix et rien pour le vérifier. Tout est en stock par défaut — un prix qu’on ne peut pas payer n’est pas une offre — et ce filtre se désactive.',
+        'choosing_2' => 'Regardez le nombre d’offres avant le prix. Un produit :brand référencé chez quatre boutiques a un prix de marché fiable ; chez une seule, il a un prix et rien pour le vérifier. Tout est en stock par défaut, un prix qu’on ne peut pas payer n’est pas une offre, et ce filtre se désactive.',
         'choosing_3' => 'Chaque fiche produit affiche le tableau complet des offres et 90 jours d’historique de prix : vous voyez si aujourd’hui est réellement un bon moment pour ce produit :brand ou un jour ordinaire.',
 
         'faq_price_q' => 'Combien coûtent les produits :brand ?',
         'faq_price_a' => 'Les produits :brand de cette page vont de :low à :high, sur :count produits chez les boutiques que nous suivons. Le bas et le haut correspondent généralement à des produits différents, pas au même à deux prix.',
         'faq_where_q' => 'Quelles boutiques vendent :brand ?',
-        'faq_where_a' => 'Celles nommées sur chaque fiche — cette page réunit :shops annonces de boutiques sur les produits :brand affichés. Nous comparons, nous ne vendons pas : chaque lien mène à la boutique qui fait l’offre.',
+        'faq_where_a' => 'Celles nommées sur chaque fiche, cette page réunit :shops annonces de boutiques sur les produits :brand affichés. Nous comparons, nous ne vendons pas : chaque lien mène à la boutique qui fait l’offre.',
         'faq_discount_q' => ':brand est-il en promotion en ce moment ?',
-        'faq_discount_a' => 'Oui — :reduced produits :brand sont actuellement sous leur prix médian à 30 jours, le plus fort écart étant de :percent%. C’est mesuré sur notre propre historique de prix et non sur un prix barré : il s’agit donc d’un mouvement réel.',
+        'faq_discount_a' => 'Oui, :reduced produits :brand sont actuellement sous leur prix médian à 30 jours, le plus fort écart étant de :percent%. C’est mesuré sur notre propre historique de prix et non sur un prix barré : il s’agit donc d’un mouvement réel.',
     ],
 
     'product' => [
@@ -206,7 +206,7 @@ return [
         'price_as_of' => 'Prix et disponibilité au moment indiqué, susceptibles de changer.',
         'disclosure' => 'Nous pouvons percevoir une commission si vous achetez via ce lien. Le prix que vous payez ne change pas.',
         'unavailable' => "Ce produit n'est actuellement disponible dans aucune boutique que nous suivons.",
-        'seo_compare' => ':title à partir de :price — comparez les offres de :count boutiques et trouvez la moins chère.',
+        'seo_compare' => ':title à partir de :price, comparez les offres de :count boutiques et trouvez la moins chère.',
         'seo_single' => ":title à partir de :price. Comparez les offres et consultez l'historique des prix avant d'acheter.",
     ],
 
@@ -219,7 +219,7 @@ return [
         'subscribe_intro' => "Un court e-mail par jour : le thème, quelques trouvailles et l'énigme. Pas de spam produit, et un clic pour partir.",
         'subscribe_placeholder' => 'vous@exemple.be',
         'subscribe_button' => 'Envoyez-la-moi',
-        'subscribe_thanks' => 'Regardez votre boîte — si cette adresse nous est inconnue, un lien de confirmation est en route.',
+        'subscribe_thanks' => 'Regardez votre boîte, si cette adresse nous est inconnue, un lien de confirmation est en route.',
         'subscribe_privacy' => "Nous utilisons votre adresse pour cet e-mail et rien d'autre.",
         'confirm_done' => 'Vous êtes inscrit. La prochaine Cove arrive demain matin.',
         'confirm_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Réinscrivez-vous pour en recevoir un nouveau.',
@@ -233,7 +233,7 @@ return [
         'confirm_button' => 'Confirmer mon abonnement',
         'confirm_expiry' => 'Le lien fonctionne pendant 48 heures.',
         'confirm_requested_from' => 'Demandé depuis :ip',
-        'confirm_ignore' => "Si ce n'était pas vous, ignorez cet e-mail — rien ne se passe sans le clic et nous ne réécrirons pas.",
+        'confirm_ignore' => "Si ce n'était pas vous, ignorez cet e-mail, rien ne se passe sans le clic et nous ne réécrirons pas.",
 
         'digest_subject' => 'La Cove du jour : :theme',
         'digest_button' => 'Ouvrir la Cove du jour',
@@ -243,8 +243,16 @@ return [
         'why_receiving' => 'Vous recevez ceci parce que vous avez confirmé un abonnement à la Daily Cove.',
         'unsubscribe' => 'Se désabonner',
     ],
+    'legal' => [
+        'about' => 'À propos',
+        'privacy' => 'Confidentialité',
+        'terms' => 'Conditions',
+        'updated' => 'Dernière mise à jour le :date',
+        'untranslated' => "Cette page n'est pas encore traduite : vous lisez la version anglaise, qui fait foi.",
+    ],
+
     'footer' => [
-        'affiliate' => 'Brandcoves compare les offres de différentes boutiques. Nous pouvons percevoir une commission sur les achats effectués via nos liens — cela ne change jamais le prix que vous payez.',
+        'affiliate' => 'Brandcoves compare les offres de différentes boutiques. Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
         'explore' => 'Explorer',
     ],
 
@@ -253,7 +261,7 @@ return [
         'intro' => 'Indiquez votre adresse e-mail et nous vous enverrons un lien. Aucun mot de passe à retenir.',
         'email' => 'Adresse e-mail',
         'send' => 'Envoyez-moi un lien',
-        'link_sent' => 'Consultez votre boîte de réception — si un compte existe pour cette adresse, le lien est en route.',
+        'link_sent' => 'Consultez votre boîte de réception, si un compte existe pour cette adresse, le lien est en route.',
         'link_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.',
         'too_many' => 'Trop de demandes. Réessayez dans :seconds secondes.',
         'or' => 'ou',
@@ -265,7 +273,7 @@ return [
         'mail_button' => 'Se connecter',
         'mail_expiry' => 'Le lien expire dans 15 minutes.',
         'mail_requested_from' => 'Demandé depuis :ip',
-        'mail_ignore' => 'Si vous n\'êtes pas à l\'origine de cette demande, ignorez cet e-mail — personne ne peut se connecter sans le lien.',
+        'mail_ignore' => 'Si vous n\'êtes pas à l\'origine de cette demande, ignorez cet e-mail, personne ne peut se connecter sans le lien.',
         'mail_fallback' => 'Si le bouton ne fonctionne pas, collez ceci dans votre navigateur :',
     ],
 
@@ -307,7 +315,7 @@ return [
         'already_claimed' => 'Quelqu\'un vient de le prendre.',
         'cannot_unclaim' => 'Vous ne pouvez annuler que votre propre choix, et seulement sous 24 heures.',
         'shared_intro' => 'Touchez un article pour indiquer que vous l\'offrez. :name ne verra pas qui offre quoi.',
-        'owner_view_note' => 'C\'est votre liste, donc les réservations vous sont cachées — c\'est le principe.',
+        'owner_view_note' => 'C\'est votre liste, donc les réservations vous sont cachées, c\'est le principe.',
         'recipient_added' => 'Personne ajoutée.',
         'recipient_removed' => 'Personne retirée.',
         'add_person' => 'Ajouter une personne',
@@ -425,7 +433,7 @@ return [
         'close' => 'Fermer',
         'shops' => 'dans :count boutiques',
         'preparing' => 'Préparation…',
-        'unsupported' => 'Le scanner n’a pas pu démarrer. Saisissez le numéro ci-dessous — il figure sous les barres.',
+        'unsupported' => 'Le scanner n’a pas pu démarrer. Saisissez le numéro ci-dessous, il figure sous les barres.',
         'no_camera' => 'Pas de caméra disponible, ou autorisation refusée. Saisissez le numéro ci-dessous.',
         'invalid' => 'Ce n’est pas un code-barres valide. Vérifiez les chiffres sous les barres.',
         'not_found' => 'Nous ne l’avons pas encore.',
@@ -435,7 +443,7 @@ return [
     'surprise' => [
         'title' => 'Des choses dont vous ignoriez l’existence',
         'subtitle' => 'Rares, en stock, et vendues par presque personne.',
-        'seo_description' => 'Des produits inhabituels absents de toute liste des meilleures ventes — notés selon leur rareté et vérifiés pour valoir le coup d’œil.',
+        'seo_description' => 'Des produits inhabituels absents de toute liste des meilleures ventes, notés selon leur rareté et vérifiés pour valoir le coup d’œil.',
         'reroll' => 'Montrez-m’en d’autres',
         'empty' => 'Rien n’a encore été évalué. Revenez après le prochain passage du catalogue.',
 
@@ -688,7 +696,7 @@ return [
 
     'guides' => [
         'title' => 'Guides d’achat',
-        'subtitle' => 'Écrits à partir de ce que les gens cherchent ici — pas d’un outil de mots-clés.',
+        'subtitle' => 'Écrits à partir de ce que les gens cherchent ici, pas d’un outil de mots-clés.',
         'seo_description' => 'Des guides d’achat bâtis sur une demande réelle, avec les prix en direct comparés dans toutes les boutiques qui vendent chaque produit.',
         'empty' => 'Pas encore de guides. Ils s’écrivent dès qu’un sujet accumule assez de demande.',
         'how_to_choose' => 'Comment choisir',
@@ -733,7 +741,7 @@ return [
             ],
             'guides' => [
                 'title' => 'Guides',
-                'description' => 'Quelqu’un a déjà réfléchi — des sélections bâties sur ce que les gens cherchent ici.',
+                'description' => 'Quelqu’un a déjà réfléchi, des sélections bâties sur ce que les gens cherchent ici.',
             ],
             'compare' => [
                 'title' => 'Comparer',
@@ -741,7 +749,7 @@ return [
             ],
             'deals' => [
                 'title' => 'Bonnes affaires',
-                'description' => 'De vraies remises, mesurées sur notre propre historique et sur les autres boutiques — jamais sur un prix « avant » annoncé par le marchand.',
+                'description' => 'De vraies remises, mesurées sur notre propre historique et sur les autres boutiques, jamais sur un prix « avant » annoncé par le marchand.',
             ],
             'projects' => [
                 'title' => 'Projets',

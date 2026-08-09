@@ -211,6 +211,18 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                         <Link href={`/${market.key}/surprise`} className="hover:text-accent">
                             {t('nav.surprise')}
                         </Link>
+
+                        {/* Belgian law wants the operator's details reachable
+                            from every page. The footer is that. */}
+                        <Link href={`/${market.key}/about`} className="hover:text-accent">
+                            {t('legal.about')}
+                        </Link>
+                        <Link href={`/${market.key}/privacy`} className="hover:text-accent">
+                            {t('legal.privacy')}
+                        </Link>
+                        <Link href={`/${market.key}/terms`} className="hover:text-accent">
+                            {t('legal.terms')}
+                        </Link>
                     </nav>
 
                     <p>{t('footer.affiliate')}</p>

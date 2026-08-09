@@ -87,6 +87,15 @@ class SitemapController extends Controller
                 ['loc' => url("/{$resolved->value}/daily"), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/brands"), 'priority' => '0.6', 'changefreq' => 'weekly'],
+
+                /*
+                 * An about page is a trust signal a search engine looks for, and
+                 * a privacy policy nobody can find is a privacy policy nobody
+                 * believes. Low priority, rarely changing, and listed.
+                 */
+                ['loc' => url("/{$resolved->value}/about"), 'priority' => '0.4', 'changefreq' => 'yearly'],
+                ['loc' => url("/{$resolved->value}/privacy"), 'priority' => '0.3', 'changefreq' => 'yearly'],
+                ['loc' => url("/{$resolved->value}/terms"), 'priority' => '0.3', 'changefreq' => 'yearly'],
                 ['loc' => url("/{$resolved->value}/gift"), 'priority' => '0.8', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/surprise"), 'priority' => '0.6', 'changefreq' => 'daily'],
             ];
