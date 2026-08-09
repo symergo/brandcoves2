@@ -176,9 +176,26 @@ return [
 
         // Every AI caller must register a key here, otherwise its spend is
         // invisible in the admin usage table.
+        /*
+         * Calls per feature per day. Measured against what the callers actually
+         * do, not guessed — a cap set from a stale comment is a cap nobody can
+         * reason about.
+         *
+         *   daily_picks  EditionBuilder, once per market per day: one call for
+         *                the theme, one for the editorial. 5 markets × 2 = 10,
+         *                doubled by the job's single retry. 30 is 3× headroom.
+         *                (Was 60, from a comment claiming "1 theme + 7 blurbs" —
+         *                there is no per-pick blurb call and there never was.)
+         *
+         *   guide_copy   GuideBuilder, one call per Cove. An edition builds at
+         *                most one per market per day, and only when a topic is
+         *                ripe: 0–5.
+         *
+         *   gift_angles  WidenGiftAngles, one call per market per night: 5. Also
+         *                carries the credential test from the settings page.
+         */
         'caps' => [
-            // 1 theme + 7 blurbs per market per day, plus headroom for retries.
-            'daily_picks' => 60,
+            'daily_picks' => 30,
             'guide_copy' => 30,
             'gift_angles' => 20,
         ],

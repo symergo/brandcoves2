@@ -7,6 +7,45 @@
         </div>
     </form>
 
+    @php($test = $this->lastTest())
+
+    @if ($test)
+        {{--
+          Polled only while a test is in flight. A page that re-renders every few
+          seconds forever is a page that fights anyone typing into it.
+        --}}
+        <div @if ($this->testPending()) wire:poll.3s @endif>
+            <x-filament::section :heading="'Last credential test'">
+                <div class="flex flex-wrap items-start gap-3">
+                    <x-filament::badge :color="match ($test['status']) {
+                        'ok' => 'success',
+                        'failed' => 'danger',
+                        default => 'warning',
+                    }">
+                        {{ $test['status'] }}
+                    </x-filament::badge>
+
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm">{{ $test['message'] }}</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            {{ \Illuminate\Support\Carbon::parse($test['at'])->diffForHumans() }}
+                        </p>
+                    </div>
+                </div>
+
+                @if ($this->testPending())
+                    <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                        Waiting for a queue worker. The test runs on the queue
+                        because that is where generation runs — a test that
+                        reached the model from this page would be testing a path
+                        production never takes. If this does not resolve, the
+                        worker is down, and nothing is being generated either.
+                    </p>
+                @endif
+            </x-filament::section>
+        </div>
+    @endif
+
     {{--
       Today's spend, next to the caps that bound it.
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Filament\Pages\AiSettings;
+use App\Jobs\TestAiCredential;
 use App\Models\ConnectorSetting;
 use App\Models\User;
 use App\Services\Ai\AiClient;
@@ -12,6 +13,8 @@ use App\Services\Ai\AiUnavailable;
 use App\Services\Settings\AiSettingsStore;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -209,6 +212,84 @@ class AiSettingsTest extends TestCase
 
         $this->assertSame([], $this->store()->stored());
         $this->store()->apply();
+    }
+
+    #[Test]
+    public function the_credential_test_runs_on_the_queue_rather_than_in_the_request(): void
+    {
+        /*
+         * The first version of this button called AiClient directly and always
+         * failed with "AI may only be called from a queued job" — the invariant
+         * working. A test that reaches the model from a request handler is the
+         * exact thing the guard forbids, so the button dispatches instead.
+         */
+        Queue::fake();
+
+        $this->store()->put(['enabled' => true, 'api_key' => 'sk-ant-test']);
+        $this->store()->apply();
+
+        Livewire::actingAs($this->admin())
+            ->test(AiSettings::class)
+            ->callAction('test');
+
+        Queue::assertPushed(TestAiCredential::class);
+
+        // And the page can say it is waiting, rather than looking untested.
+        $this->assertSame('pending', TestAiCredential::lastResult()['status']);
+    }
+
+    #[Test]
+    public function the_credential_test_does_nothing_when_generation_is_off(): void
+    {
+        Queue::fake();
+
+        // No key, so there is nothing to test and no point spending a job slot.
+        $this->store()->put(['enabled' => false, 'api_key' => null]);
+        config(['brandcoves.ai.api_key' => null]);
+        $this->store()->apply();
+
+        Livewire::actingAs($this->admin())
+            ->test(AiSettings::class)
+            ->callAction('test');
+
+        Queue::assertNothingPushed();
+    }
+
+    #[Test]
+    public function a_failed_credential_test_never_echoes_the_key(): void
+    {
+        /*
+         * An exception from an HTTP client is exactly the kind of thing that
+         * repeats back what it was sent, and this string is rendered in an admin
+         * page. Redaction is on the write, not the read, so it cannot be
+         * forgotten by a second caller.
+         */
+        config(['brandcoves.ai.enabled' => true, 'brandcoves.ai.api_key' => 'sk-ant-super-secret']);
+
+        Http::fake([
+            'api.anthropic.com/*' => Http::response('rejected key sk-ant-super-secret', 401),
+        ]);
+
+        // dispatchSync puts it in a queued-job context, which is what the client
+        // requires — the same reason the button dispatches rather than calls.
+        TestAiCredential::dispatchSync();
+
+        $result = TestAiCredential::lastResult();
+
+        $this->assertSame('failed', $result['status']);
+
+        /*
+         * The property, not the mechanism.
+         *
+         * An earlier version of this asserted that "[redacted]" appears — and it
+         * does not, because AiClient already reduces a failure to "HTTP 401"
+         * without the response body. That is the better outcome and asserting on
+         * the marker would have made this test fail the day the client got safer.
+         *
+         * The job's own redaction stays as a second layer: it costs a str_replace
+         * and covers any exception that does carry the request back.
+         */
+        $this->assertStringNotContainsString('sk-ant-super-secret', $result['message']);
     }
 
     #[Test]

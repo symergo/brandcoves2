@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Jobs\TestAiCredential;
 use App\Models\AiUsage;
 use App\Services\Ai\AiClient;
 use App\Services\Settings\AiSettingsStore;
@@ -134,15 +135,17 @@ class AiSettings extends Page implements HasForms
                         TextInput::make('cap_daily_picks')
                             ->label('Daily Cove')
                             ->numeric()->minValue(0)->maxValue(10000)->required()
-                            ->helperText('One theme plus seven blurbs per market per day, plus retries.'),
+                            ->helperText('Two calls per market per day — the theme and the editorial. Ten in total, twenty if every job retries.'),
 
                         TextInput::make('cap_guide_copy')
                             ->label('Cove editorial')
-                            ->numeric()->minValue(0)->maxValue(10000)->required(),
+                            ->numeric()->minValue(0)->maxValue(10000)->required()
+                            ->helperText('One call per Cove written. At most one per market per day, and only when a topic is ripe.'),
 
                         TextInput::make('cap_gift_angles')
                             ->label('Gift angles')
-                            ->numeric()->minValue(0)->maxValue(10000)->required(),
+                            ->numeric()->minValue(0)->maxValue(10000)->required()
+                            ->helperText('One call per market per night. The credential test above also counts here.'),
 
                         TextInput::make('default_daily_cap')
                             ->label('Anything else')
@@ -189,6 +192,27 @@ class AiSettings extends Page implements HasForms
     }
 
     /**
+     * The last credential test, for the view.
+     *
+     * @return array{status: string, message: string, at: string}|null
+     */
+    public function lastTest(): ?array
+    {
+        return TestAiCredential::lastResult();
+    }
+
+    /**
+     * Whether to keep refreshing while a test is in flight.
+     *
+     * Polling only while pending: a page that re-renders every few seconds
+     * forever is a page that fights anyone typing into it.
+     */
+    public function testPending(): bool
+    {
+        return ($this->lastTest()['status'] ?? null) === 'pending';
+    }
+
+    /**
      * Today's spend against the caps.
      *
      * On the same page as the caps, because a number you can change and a number
@@ -225,57 +249,42 @@ class AiSettings extends Page implements HasForms
                 ->action('save'),
 
             /*
-             * Proves the credential without generating anything.
+             * Dispatched, not called.
              *
-             * The alternative is finding out at 06:00 from a job that failed
-             * silently — and "is the key right" is the only question this screen
-             * cannot answer from stored state.
+             * The first version of this button called AiClient here and always
+             * failed with "AI may only be called from a queued job" — the
+             * invariant doing exactly what it exists for. A test that reached the
+             * model from a request handler is the precise thing the guard
+             * forbids, and carving an admin-only exception into it would mean
+             * there is an exception.
+             *
+             * Running it on the queue is also the better test: it proves the
+             * worker, its environment, the credential, the model name and the cap
+             * together, which is the combination that has to work at 06:00.
              */
             Action::make('test')
                 ->label('Test the key')
                 ->icon(Heroicon::OutlinedBolt)
                 ->color('gray')
                 ->action(function (): void {
-                    $client = app(AiClient::class);
-
-                    if (! $client->isEnabled()) {
+                    if (! app(AiClient::class)->isEnabled()) {
                         Notification::make()
                             ->title('Not enabled')
-                            ->body('Turn generation on and set a key first.')
+                            ->body('Turn generation on and set a key first — the test uses the same path the nightly jobs do.')
                             ->warning()
                             ->send();
 
                         return;
                     }
 
-                    try {
-                        // A real call, and a trivially small one. It counts
-                        // against the cap like anything else — a test that
-                        // bypassed the cap would not be testing the thing that
-                        // runs in production.
-                        $client->json(
-                            featureKey: 'gift_angles',
-                            system: 'You reply with JSON and nothing else.',
-                            prompt: 'Reply with {"ok":true}.',
-                            schemaHint: ['ok' => 'boolean'],
-                            maxTokens: 16,
-                        );
+                    TestAiCredential::markPending();
+                    TestAiCredential::dispatch();
 
-                        Notification::make()->title('The key works')->success()->send();
-                    } catch (\Throwable $e) {
-                        Notification::make()
-                            ->title('The call failed')
-                            // The message, never the key — an exception from an
-                            // HTTP client is exactly the kind of thing that
-                            // echoes back what it was sent.
-                            ->body(class_basename($e).': '.str_replace(
-                                (string) config('brandcoves.ai.api_key'),
-                                '[redacted]',
-                                $e->getMessage(),
-                            ))
-                            ->danger()
-                            ->send();
-                    }
+                    Notification::make()
+                        ->title('Test queued')
+                        ->body('The result appears below within a few seconds. If it stays queued, no worker is running — which would also mean nothing is being generated.')
+                        ->success()
+                        ->send();
                 }),
         ];
     }
