@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react'
+import FlashMessage from '../Components/FlashMessage'
 import { type PropsWithChildren, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -215,6 +216,12 @@ export default function SiteLayout({ children }: PropsWithChildren) {
             </header>
 
             <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+                {/*
+                  Above the page, not inside it: a controller reports an outcome
+                  by redirecting back, and the page it lands on should not have
+                  to know that happened.
+                */}
+                <FlashMessage />
                 {children}
             </main>
 

@@ -503,8 +503,10 @@ return [
         'missed' => 'What you missed',
         'missed_hint' => 'Every one of these is something they actually want.',
         'play_again' => 'You have already played. One go each, otherwise the score means nothing.',
-        'intro_own' => 'Turn this list into a game. Four things, one of them really on it.',
+        'intro_own' => 'Share this list as a quiz: four things, one of them really on your list.',
         'share_text' => 'How well do you know me?',
+        'own_title' => 'Find out how well your friends know you!',
+        'open' => 'Open the quiz',
     ],
     'reminders' => [
         'birthday_title' => ":name's birthday is coming up",

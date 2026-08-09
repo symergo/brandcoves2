@@ -23,7 +23,7 @@ return [
     'home' => [
         'title' => 'Vinden, verlieven, cadeau doen',
         'headline_1' => 'Je weet niet wát je zoekt.',
-        'headline_2' => 'Je weet vóór wie het is.',
+        'headline_2' => 'Je weet voor wie het is.',
         'intro' => 'Doorzoek bol, Amazon en honderden winkels tegelijk, volg een merk waar het ook opduikt, en laat de Cadeauzoeker een omschrijving van iemand omzetten in een cadeau dat klopt.',
         'cta_gift' => 'Vind een cadeau',
         'cta_search' => 'Producten zoeken',
@@ -458,8 +458,10 @@ return [
         'missed' => 'Wat je miste',
         'missed_hint' => 'Elk hiervan willen ze echt hebben.',
         'play_again' => 'Je hebt al gespeeld. Een keer per persoon, anders zegt de score niets.',
-        'intro_own' => 'Maak van dit lijstje een spel. Vier dingen, een ervan staat er echt op.',
+        'intro_own' => 'Deel dit lijstje als een quiz: vier dingen, één ervan staat echt op je lijst.',
         'share_text' => 'Hoe goed ken je mij?',
+        'own_title' => 'Kom te weten hoe goed je vrienden je kennen!',
+        'open' => 'Open de quiz',
     ],
     'reminders' => [
         'birthday_title' => 'De verjaardag van :name komt eraan',

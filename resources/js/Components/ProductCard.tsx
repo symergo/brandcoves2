@@ -76,6 +76,20 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                         {t('product.out_of_stock')}
                     </span>
                 )}
+
+                {/*
+                  Saving from the results grid.
+
+                  The only Save button used to live on the product page, so the
+                  commonest path — search, scan the grid, spot the thing — had no
+                  way to keep it without a detour into a page the shopper did not
+                  want. Bottom right of the image: clear of the discount badge at
+                  top left and the stock badge at top right, and never over the
+                  product title.
+                */}
+                <div className="absolute right-2 bottom-2">
+                    <SaveToList groupId={group.id} compact />
+                </div>
             </div>
 
             <div className="flex flex-1 flex-col p-4">
@@ -117,18 +131,6 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                             </span>
                         </div>
                     )}
-
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                        {/*
-                          Saving from the results grid.
-
-                          Until now the only Save button lived on the product
-                          page, so the most common path — search, scan the grid,
-                          spot the thing — had no way to keep it without an extra
-                          click into a page the shopper did not want.
-                        */}
-                        <SaveToList groupId={group.id} compact />
-                    </div>
 
                     <div className={`mt-1 text-xs ${comparable ? 'font-medium text-sage' : 'text-ink-soft'}`}>
                         {group.offerCount === 1

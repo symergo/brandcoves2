@@ -454,8 +454,10 @@ return [
         'missed' => 'Lo que has fallado',
         'missed_hint' => 'Cada una de estas cosas les gustaria de verdad.',
         'play_again' => 'Ya has jugado. Una vez cada uno, si no la puntuacion no significa nada.',
-        'intro_own' => 'Convierte esta lista en un juego. Cuatro cosas, una esta de verdad en ella.',
+        'intro_own' => 'Comparte esta lista como un quiz: cuatro cosas, una está de verdad en tu lista.',
         'share_text' => 'Cuanto me conoces?',
+        'own_title' => '¡Descubre cuánto te conocen tus amigos!',
+        'open' => 'Abrir el quiz',
     ],
     'reminders' => [
         'birthday_title' => 'El cumpleanos de :name se acerca',

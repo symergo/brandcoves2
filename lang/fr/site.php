@@ -454,8 +454,10 @@ return [
         'missed' => 'Ce que vous avez rate',
         'missed_hint' => 'Chacun de ces objets leur ferait vraiment plaisir.',
         'play_again' => 'Vous avez deja joue. Une fois chacun, sinon le score ne veut rien dire.',
-        'intro_own' => 'Transformez cette liste en jeu. Quatre objets, dont un y figure vraiment.',
+        'intro_own' => 'Partagez cette liste sous forme de quiz : quatre objets, un seul figure vraiment sur votre liste.',
         'share_text' => 'Me connaissez-vous vraiment ?',
+        'own_title' => 'Découvrez si vos amis vous connaissent vraiment !',
+        'open' => 'Ouvrir le quiz',
     ],
     'reminders' => [
         'birthday_title' => "L'anniversaire de :name approche",

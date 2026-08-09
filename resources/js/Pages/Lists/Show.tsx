@@ -141,22 +141,24 @@ export default function ListShow({
                 <div className="mt-4 rounded-card border border-line bg-card p-4">
                     <h2 className="text-sm font-medium">{t('lists.share_heading')}</h2>
 
+                    {/*
+                      Share sits with the link, not under it. A list has to
+                      travel through a group chat, and the native sheet is what
+                      puts it there — it already offers WhatsApp and mail, so a
+                      separate button for each only made this area look like a
+                      toolbar.
+                    */}
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                         <code className="min-w-0 flex-1 truncate rounded border border-line px-3 py-2 text-xs">
                             {list.shareUrl}
                         </code>
-                        <button onClick={copyLink} className="rounded-lg bg-ink px-3 py-2 text-sm text-cream">
+                        <ShareLink url={list.shareUrl} text={t('lists.share_text', { title: list.title })} />
+                        <button
+                            onClick={copyLink}
+                            className="rounded-lg bg-ink px-3 py-2 text-sm whitespace-nowrap text-cream"
+                        >
                             {copied ? t('lists.copied') : t('lists.copy_link')}
                         </button>
-                    </div>
-
-                    {/*
-                      A list has to travel through a group chat. The native sheet
-                      is what puts it there on a phone; the explicit links are for
-                      desktop, where most lists are actually built.
-                    */}
-                    <div className="mt-3">
-                        <ShareLink url={list.shareUrl} text={t('lists.share_text', { title: list.title })} />
                     </div>
 
                     {/*
@@ -168,7 +170,14 @@ export default function ListShow({
                     */}
                     {list.claimable && (
                         <div className="mt-4 border-t border-line pt-3">
-                            <h3 className="text-sm font-medium">{t('quiz.title')}</h3>
+                            {/*
+                              `quiz.own_title`, not `quiz.title`. The latter is
+                              the *player's* question — "how well do you know
+                              them?" — which is right on the play page and on a
+                              shared score, and on your own list page asked you
+                              how well you knew yourself.
+                            */}
+                            <h3 className="text-sm font-medium">{t('quiz.own_title')}</h3>
 
                             {quizUrl ? (
                                 <>
@@ -177,8 +186,31 @@ export default function ListShow({
                                             ? t('quiz.played', { count: String(quizPlays) })
                                             : t('quiz.created')}
                                     </p>
-                                    <div className="mt-2">
+                                    {/*
+                                      The link itself, visible and clickable.
+
+                                      Share buttons alone left the owner unable
+                                      to open the thing they had just created —
+                                      which reads as a quiz link that does not
+                                      work, because from where they are sitting
+                                      there is no link at all.
+                                    */}
+                                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                                        <code className="min-w-0 flex-1 truncate rounded border border-line px-3 py-2 text-xs">
+                                            {quizUrl}
+                                        </code>
                                         <ShareLink url={quizUrl} text={t('quiz.share_text')} />
+                                        {/* The owner cannot play their own quiz,
+                                            but they should be able to look at
+                                            the thing they are about to send. */}
+                                        <a
+                                            href={quizUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="rounded-lg border border-line px-3 py-2 text-sm whitespace-nowrap hover:border-ink"
+                                        >
+                                            {t('quiz.open')}
+                                        </a>
                                     </div>
                                 </>
                             ) : (
