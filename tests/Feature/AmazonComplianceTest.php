@@ -13,6 +13,7 @@ use App\Models\ProductGroup;
 use App\Services\Alerts\AlertEligibility;
 use App\Services\Connectors\Offer;
 use App\Services\Ingestion\OfferUpserter;
+use App\Services\Ingestion\ProductGrouper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
@@ -66,9 +67,26 @@ class AmazonComplianceTest extends TestCase
     }
 
     #[Test]
-    public function amazon_prices_never_appear_in_the_price_chart(): void
+    public function amazon_prices_never_reach_the_thirty_day_median(): void
     {
+        /*
+         * This used to test the 90-day chart on the product page. That chart has
+         * been removed, and the rule it enforced has not: the median it was a
+         * sibling of drives the discount badge, and "12% off" is a claim about a
+         * price over time — a visitor-facing price-tracking feature by any
+         * reading.
+         *
+         * The gate moved from the chart's read query to
+         * ProductGrouper::recomputeAggregates(), which is strictly better: one
+         * filter covering every reader of the median, rather than one covering
+         * a single surface while the denormalised column stayed contaminated.
+         */
         $group = $this->groupWith([Source::Awin, Source::Amazon]);
+
+        // Amazon far cheaper, so a median that included it would be visibly
+        // dragged down — and the assertion could not pass by coincidence.
+        DB::table('products')->where('source', Source::Amazon->value)->update(['price' => 10000]);
+        DB::table('products')->where('source', Source::Awin->value)->update(['price' => 34900]);
 
         foreach (Product::query()->get() as $product) {
             DB::table('price_history')->insert([
@@ -80,18 +98,30 @@ class AmazonComplianceTest extends TestCase
             ]);
         }
 
-        $history = $this->get("/be-nl/p/{$group->id}/{$group->slug}")
-            ->assertOk()
-            ->viewData('page')['props']['history'];
+        app(ProductGrouper::class)->run(Market::BeNl);
 
-        // Both sources have a stored sample, but the visitor-facing chart is
-        // built from the Awin one alone.
+        // Both samples are stored — storage is permitted, and the pruning job
+        // and alerts both rely on it.
         $this->assertSame(2, DB::table('price_history')->count());
-        $this->assertCount(1, $history);
-        $this->assertSame(
-            Product::query()->where('source', Source::Awin)->value('price'),
-            $history[0]['price'],
-        );
+
+        // The median is the Awin price alone.
+        $this->assertSame(34900, $group->fresh()->median_price);
+    }
+
+    #[Test]
+    public function the_product_page_no_longer_ships_a_price_history(): void
+    {
+        // Removed on request. Asserted rather than assumed, because the prop was
+        // ninety rows fetched on every render of the most-crawled page type, and
+        // a re-added chart would quietly restore both the query and a compliance
+        // surface that now has no gate of its own.
+        $group = $this->groupWith([Source::Awin]);
+
+        $props = $this->get("/be-nl/p/{$group->id}/{$group->slug}")
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        $this->assertArrayNotHasKey('history', $props);
     }
 
     #[Test]

@@ -21,6 +21,7 @@ use App\Services\Discover\Retrievers\ValueRetriever;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\CopyBank;
 use App\Services\Seo\PageMeta;
+use App\Services\Settings\AiSettingsStore;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -111,5 +112,20 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }
+
+        /*
+         * Admin-editable AI settings, written over the config.
+         *
+         * Here rather than behind a new API because AiClient, AiUsage and the
+         * usage table all read config('brandcoves.ai.*') already. Overlaying
+         * means every existing caller keeps working and there is only ever one
+         * way to ask whether AI is on — a second way is a way to get a stale
+         * answer.
+         *
+         * Database wins over environment, which is the only order that makes the
+         * settings screen mean anything. Untouched settings have no row and the
+         * env value stands.
+         */
+        app(AiSettingsStore::class)->apply();
     }
 }

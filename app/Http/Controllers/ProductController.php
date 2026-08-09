@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\Market;
 use App\Enums\ProductStatus;
-use App\Enums\Source;
 use App\Models\PriceAlert;
 use App\Models\Product;
 use App\Models\ProductGroup;
@@ -17,7 +16,6 @@ use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Number;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -76,7 +74,6 @@ class ProductController extends Controller
                 'ean' => $productGroup->identity_kind?->value === 'ean' ? $productGroup->identity_key : null,
             ],
             'offers' => $this->presentOffers($offers),
-            'history' => $this->priceHistory($productGroup),
             'alert' => $this->alertState($productGroup),
         ]);
     }
@@ -199,37 +196,20 @@ class ProductController extends Controller
             ->all();
     }
 
-    /**
-     * Daily low across all offers, for the sparkline.
+    /*
+     * The 90-day price chart used to be built here.
      *
-     * The minimum rather than any single shop's price: the line answers "what
-     * would this have cost me", which is the question a price chart is for.
+     * Removed from the product page on request. `price_history` itself stays —
+     * it is what the 30-day median is computed from, and the median drives the
+     * discount badge and the alert thresholds — so the table, the ingest write
+     * and the pruning job are all unchanged. What is gone is the chart and the
+     * per-page query behind it, which fetched ninety rows for every render of
+     * the most-crawled page type on the site.
      *
-     * COMPLIANCE: sources that disallow price tracking are excluded from the
-     * chart. Their prices are still recorded — storage is permitted — but they
-     * may not appear in a user-facing price-tracking feature. Filtering on the
-     * read side keeps that distinction exactly where the policy draws it.
+     * The compliance rule the chart carried has not gone anywhere. Sources that
+     * disallow price tracking are now filtered where the median is computed, in
+     * `ProductGrouper::recomputeAggregates()` — one gate covering every reader of
+     * the median instead of one covering the chart alone.
      * See docs/features/amazon-compliance.md.
-     *
-     * @return list<array{date: string, price: int}>
      */
-    private function priceHistory(ProductGroup $group): array
-    {
-        $trackable = array_values(array_filter(
-            Source::values(),
-            fn (string $s) => Source::from($s)->allowsPriceTracking(),
-        ));
-
-        return DB::table('price_history as h')
-            ->join('products as p', 'p.id', '=', 'h.product_id')
-            ->where('p.group_id', $group->id)
-            ->whereIn('p.source', $trackable)
-            ->where('h.captured_on', '>=', now()->subDays(90)->toDateString())
-            ->groupBy('h.captured_on')
-            ->orderBy('h.captured_on')
-            ->select('h.captured_on as date', DB::raw('min(h.price) as price'))
-            ->get()
-            ->map(fn ($r) => ['date' => (string) $r->date, 'price' => (int) $r->price])
-            ->all();
-    }
 }

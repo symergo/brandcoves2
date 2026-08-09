@@ -6,6 +6,7 @@ namespace App\Services\Ingestion;
 
 use App\Enums\Market;
 use App\Enums\ProductStatus;
+use App\Enums\Source;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -94,6 +95,18 @@ class ProductGrouper
     }
 
     /**
+     * Sources whose stored history may drive a visitor-facing price feature.
+     *
+     * Quoted for direct interpolation into an IN list.
+     */
+    private function trackableSources(): string
+    {
+        $allowed = array_filter(Source::cases(), fn (Source $s) => $s->allowsPriceTracking());
+
+        return implode(', ', array_map(fn (Source $s) => "'{$s->value}'", $allowed));
+    }
+
+    /**
      * Recompute the denormalised aggregates a results page reads.
      *
      * These live on the group so rendering a page of results is one query
@@ -107,7 +120,7 @@ class ProductGrouper
      */
     private function recomputeAggregates(Market $market): void
     {
-        DB::statement(<<<'SQL'
+        $sql = <<<'SQL'
             WITH stats AS (
                 SELECT
                     p.group_id,
@@ -145,6 +158,14 @@ class ProductGrouper
                 -- The reference for discount badges. Our own 30-day median,
                 -- never a merchant-supplied "was" price, which is frequently
                 -- fiction.
+                --
+                -- COMPLIANCE: sources that disallow price tracking are excluded.
+                -- Storing their history is permitted; building a visitor-facing
+                -- price-tracking feature on it is not, and the discount badge is
+                -- exactly that — "12% off" is a claim about a price over time.
+                -- Filtered here rather than at read time because the median is
+                -- denormalised onto product_groups and read from a dozen places.
+                -- See docs/features/amazon-compliance.md.
                 SELECT
                     p.group_id,
                     percentile_cont(0.5) WITHIN GROUP (ORDER BY h.price)::int AS median_price
@@ -152,6 +173,7 @@ class ProductGrouper
                 JOIN products p ON p.id = h.product_id
                 WHERE p.group_id IS NOT NULL
                   AND p.market = ?
+                  AND p.source IN (%TRACKABLE_SOURCES%)
                   AND h.captured_on >= current_date - interval '30 days'
                 GROUP BY p.group_id
             )
@@ -172,7 +194,16 @@ class ProductGrouper
             JOIN best ON best.group_id = stats.group_id
             LEFT JOIN median ON median.group_id = stats.group_id
             WHERE g.id = stats.group_id
-        SQL, [$market->value, $market->value, $market->value]);
+        SQL;
+
+        /*
+         * Interpolated, not bound: PDO cannot bind a list, and these values come
+         * from an enum in this codebase rather than from a request. The same
+         * reason the migrations build their CHECK constraints this way.
+         */
+        $sql = str_replace('%TRACKABLE_SOURCES%', $this->trackableSources(), $sql);
+
+        DB::statement($sql, [$market->value, $market->value, $market->value]);
 
         // Groups whose every offer vanished from the feeds. Zeroed rather than
         // deleted: a wishlist item or a published guide may still point here,

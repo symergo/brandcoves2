@@ -36065,61 +36065,6 @@ function Notifications({ notifications, watching }) {
 	] });
 }
 //#endregion
-//#region resources/js/Components/Sparkline.tsx
-/**
-* Daily low across all shops, over 90 days.
-*
-* Inline SVG rather than a charting library: this is one path and two labels,
-* and pulling in 40 KB of chart code for it would cost more than it renders.
-*
-* The line is the *minimum* across offers, because the question a price chart
-* answers is "what would this have cost me", not "what did one particular shop
-* charge".
-*/
-function Sparkline({ points, market }) {
-	if (points.length < 2) return null;
-	const width = 480;
-	const height = 90;
-	const pad = 4;
-	const prices = points.map((p) => p.price);
-	const lo = Math.min(...prices);
-	const hi = Math.max(...prices);
-	const span = hi - lo || 1;
-	const coords = points.map((p, i) => {
-		const x = pad + i / (points.length - 1) * 472;
-		const y = pad + (1 - (p.price - lo) / span) * 82;
-		return `${x.toFixed(1)},${y.toFixed(1)}`;
-	});
-	const first = points[0];
-	const fell = points[points.length - 1].price < first.price;
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figure", {
-		className: "rounded-card border border-line bg-card p-4",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
-			viewBox: `0 0 ${width} ${height}`,
-			className: "h-24 w-full",
-			role: "img",
-			"aria-label": `${formatPrice(lo, market)} – ${formatPrice(hi, market)}`,
-			preserveAspectRatio: "none",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("polygon", {
-				points: `${pad},86 ${coords.join(" ")} 476,86`,
-				fill: fell ? "var(--color-sage)" : "var(--color-accent)",
-				opacity: "0.08"
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("polyline", {
-				points: coords.join(" "),
-				fill: "none",
-				stroke: fell ? "var(--color-sage)" : "var(--color-accent)",
-				strokeWidth: "2",
-				strokeLinejoin: "round",
-				strokeLinecap: "round",
-				vectorEffect: "non-scaling-stroke"
-			})]
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figcaption", {
-			className: "mt-2 flex justify-between text-xs text-ink-soft",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: formatPrice(lo, market) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: formatPrice(hi, market) })]
-		})]
-	});
-}
-//#endregion
 //#region resources/js/Components/AlertButton.tsx
 /**
 * Watch a product for a price drop, or for it coming back in stock.
@@ -36235,7 +36180,7 @@ function reportClick(offer) {
 		navigator.sendBeacon?.(offer.beacon, new Blob([JSON.stringify({ offer: offer.id })], { type: "application/json" }));
 	} catch {}
 }
-function Product({ product, offers, history, alert }) {
+function Product({ product, offers, alert }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const cheapestId = offers.filter((o) => o.isBuyable)[0]?.id;
@@ -36283,16 +36228,6 @@ function Product({ product, offers, history, alert }) {
 						alert,
 						currentPrice: product.minPrice,
 						inStock: product.inStock
-					})]
-				}),
-				history.length > 2 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "mt-8",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-						className: "mb-2 text-sm font-medium",
-						children: t("product.price_history")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Sparkline, {
-						points: history,
-						market
 					})]
 				}),
 				product.ean && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {

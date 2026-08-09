@@ -54,3 +54,46 @@ more when a test protects it than when a document asserts it.
 - `config/brandcoves.php` (`ai.*`)
 - `app/Models/AiUsage.php`
 - `app/Services/Ai/` (Phase 5)
+
+## Settings in admin
+
+`/admin/ai-settings` holds the enable switch, the API key, the model and the
+per-feature daily caps. Everything there was an environment variable, which meant
+every change was a redeploy — turning generation off during an incident should
+not require a build.
+
+**The invariant is untouched.** Enabling AI here makes the *nightly jobs* able to
+call a model. It does not make a request able to: `AiClient` checks the queue
+context before anything else, and an architecture test asserts no controller can
+reach the client. `AiSettingsTest` restates that as a test on this feature.
+
+### How it reaches the rest of the code
+
+`AiSettingsStore::apply()` runs in `AppServiceProvider::boot()` and writes the
+stored values **over** the config. `AiClient`, `AiUsage` and the usage table all
+read `config('brandcoves.ai.*')` already, so nothing downstream changed — and
+there is still only one way to ask whether AI is on. A second way is a way to get
+a stale answer.
+
+Precedence is **database over environment**. A setting nobody has touched has no
+row and the env value stands; clearing a field deletes the row and falls back,
+which is the only undo available on a machine where you cannot edit the env.
+
+An **allowlist** maps setting names to config paths. Without it a row in that
+table could overwrite any config value in the application — a privilege
+escalation dressed as a settings screen.
+
+### The credential
+
+Stored encrypted with `APP_KEY` in `connector_settings`, whose `source` CHECK was
+widened to accept subsystems as well as connectors.
+
+The field is **always empty on load** and an empty submit means "leave it alone",
+so a save that only changes a cap cannot silently blank the key — and the key
+never enters an HTML response, a browser's form cache, or a screenshot. What is
+shown instead is a fingerprint: last four characters and a length, which answers
+the only question anyone has. The "Test the key" action makes one real, tiny call
+that counts against the cap like any other, because a test that bypassed the cap
+would not be testing what runs in production.
+
+Rotating `APP_KEY` orphans the stored key. The fix is to paste it again here.

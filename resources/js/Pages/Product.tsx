@@ -2,7 +2,6 @@ import { Head, usePage } from '@inertiajs/react'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
-import Sparkline from '../Components/Sparkline'
 import SaveToList from '../Components/SaveToList'
 import AlertButton from '../Components/AlertButton'
 import type { AlertState } from '../Components/AlertButton'
@@ -41,7 +40,6 @@ interface Props {
         ean: string | null
     }
     offers: Offer[]
-    history: { date: string; price: number }[]
     alert: AlertState
 }
 
@@ -70,7 +68,7 @@ function reportClick(offer: Offer): void {
     }
 }
 
-export default function Product({ product, offers, history, alert }: Props) {
+export default function Product({ product, offers, alert }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -137,13 +135,6 @@ export default function Product({ product, offers, history, alert }: Props) {
                             inStock={product.inStock}
                         />
                     </div>
-
-                    {history.length > 2 && (
-                        <div className="mt-8">
-                            <h2 className="mb-2 text-sm font-medium">{t('product.price_history')}</h2>
-                            <Sparkline points={history} market={market} />
-                        </div>
-                    )}
 
                     {product.ean && (
                         <p className="mt-6 text-xs text-ink-soft">

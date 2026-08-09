@@ -205,8 +205,6 @@ return [
         'all_offers' => 'Alle aanbiedingen',
         'go_to_shop' => 'Naar de winkel',
         'cheapest' => 'Goedkoopst',
-        'price_history' => 'Prijs van de afgelopen 90 dagen',
-        'no_history' => 'Nog niet genoeg prijsgeschiedenis.',
         'typical_price' => 'Gebruikelijke prijs :price',
         'barcode' => 'Streepjescode',
         'price_as_of' => 'Prijs en beschikbaarheid gelden op het getoonde moment en kunnen wijzigen.',

@@ -231,8 +231,6 @@ return [
         'all_offers' => 'All offers',
         'go_to_shop' => 'Go to shop',
         'cheapest' => 'Cheapest',
-        'price_history' => 'Price over the last 90 days',
-        'no_history' => 'Not enough price history yet.',
         'typical_price' => 'Typical price :price',
         'barcode' => 'Barcode',
         'price_as_of' => 'Price and availability as of the time shown and may change.',

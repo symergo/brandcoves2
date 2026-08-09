@@ -201,8 +201,6 @@ return [
         'all_offers' => 'Toutes les offres',
         'go_to_shop' => 'Voir la boutique',
         'cheapest' => 'Le moins cher',
-        'price_history' => 'Prix sur les 90 derniers jours',
-        'no_history' => "Pas encore assez d'historique de prix.",
         'typical_price' => 'Prix habituel :price',
         'barcode' => 'Code-barres',
         'price_as_of' => 'Prix et disponibilité au moment indiqué, susceptibles de changer.',
