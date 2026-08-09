@@ -250,6 +250,15 @@ class DailyCoveController extends Controller
         $meta->set(
             title: $edition->theme_title,
             description: $edition->theme_blurb ?? __('site.daily.seo_description'),
+            /*
+             * Always the dated card, even on /daily.
+             *
+             * The card a platform cached yesterday is the one it shows for the
+             * link somebody posts today, and /daily is a different edition every
+             * morning. Pointing at the dated image means a shared post keeps
+             * showing the edition it was actually about.
+             */
+            image: url($current->url('og/daily/'.$edition->drop_date->toDateString().'.png')),
             canonical: $url,
         );
 

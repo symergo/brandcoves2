@@ -33853,42 +33853,183 @@ function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) 
 //#endregion
 //#region resources/js/Components/SaveToList.tsx
 /**
-* Save a product to a list, from anywhere.
+* Save a product — to a list for yourself, or to one about somebody else.
 *
-* No account required and no list required: the controller creates a default
-* list on first save. Asking someone to sign in or to name a list before they
-* can keep a product is how you lose the save.
+* The two are different acts and the previous version could only do the first:
+* every save landed in a default `mine` list with no way to choose, so "keep
+* this idea for my sister" had no path at all through the interface.
+*
+* Still one tap for the common case. The picker opens on the caret, never on
+* the main button — asking someone to make a filing decision before they can
+* keep a product is how you lose the save, which is the same reason no account
+* is required.
 */
-function SaveToList({ groupId, compact = false }) {
+function SaveToList({ groupId, source, externalId, title, imageUrl, price, compact = false }) {
 	const { market } = usePage().props;
 	const { t } = useTranslations();
 	const [saved, setSaved] = (0, import_react.useState)(false);
 	const [busy, setBusy] = (0, import_react.useState)(false);
-	function save() {
-		if (saved || busy) return;
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const [options, setOptions] = (0, import_react.useState)(null);
+	const [creating, setCreating] = (0, import_react.useState)(null);
+	const [name, setName] = (0, import_react.useState)("");
+	const panel = (0, import_react.useRef)(null);
+	const payload = groupId ? { group_id: groupId } : {
+		source,
+		external_id: externalId,
+		title,
+		image_url: imageUrl,
+		price
+	};
+	(0, import_react.useEffect)(() => {
+		if (!open || options) return;
+		fetch(`/${market.key}/list-options`, { headers: { Accept: "application/json" } }).then((r) => r.json()).then(setOptions).catch(() => setOptions({
+			lists: [],
+			recipients: []
+		}));
+	}, [
+		open,
+		options,
+		market.key
+	]);
+	(0, import_react.useEffect)(() => {
+		if (!open) return;
+		const away = (e) => {
+			if (panel.current && !panel.current.contains(e.target)) setOpen(false);
+		};
+		const escape = (e) => e.key === "Escape" && setOpen(false);
+		document.addEventListener("mousedown", away);
+		document.addEventListener("keydown", escape);
+		return () => {
+			document.removeEventListener("mousedown", away);
+			document.removeEventListener("keydown", escape);
+		};
+	}, [open]);
+	function save(extra = {}) {
+		if (busy) return;
 		setBusy(true);
-		router.post(`/${market.key}/list-items`, { group_id: groupId }, {
+		router.post(`/${market.key}/list-items`, {
+			...payload,
+			...extra
+		}, {
 			preserveScroll: true,
 			preserveState: true,
-			onSuccess: () => setSaved(true),
+			onSuccess: () => {
+				setSaved(true);
+				setOpen(false);
+				setCreating(null);
+				setName("");
+				setOptions(null);
+			},
 			onFinish: () => setBusy(false)
 		});
 	}
-	if (compact) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-		onClick: save,
-		disabled: busy,
-		"aria-pressed": saved,
-		"aria-label": saved ? t("lists.saved") : t("lists.save_to_list"),
-		title: saved ? t("lists.saved") : t("lists.save_to_list"),
-		className: `relative z-20 rounded-full border px-2.5 py-1 text-xs transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line bg-card hover:border-ink disabled:opacity-60"}`,
-		children: saved ? `✓ ${t("lists.saved")}` : `+ ${t("lists.save")}`
-	});
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-		onClick: save,
-		disabled: busy,
-		"aria-pressed": saved,
-		className: `rounded-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink disabled:opacity-60"}`,
-		children: saved ? `✓ ${t("lists.saved")}` : t("lists.save")
+	const mine = options?.lists.filter((l) => l.kind === "mine") ?? [];
+	const forOthers = options?.lists.filter((l) => l.kind === "for_someone") ?? [];
+	const buttonClass = compact ? `relative z-20 rounded-l-full border px-2.5 py-1 text-xs transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line bg-card hover:border-ink"}` : `rounded-l-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink"}`;
+	const caretClass = compact ? "relative z-20 -ml-px rounded-r-full border border-line bg-card px-2 py-1 text-xs hover:border-ink" : "-ml-px rounded-r-lg border border-line px-2.5 py-2 text-sm hover:border-ink";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		ref: panel,
+		className: "relative z-20 inline-flex items-stretch",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: () => save(),
+				disabled: busy,
+				"aria-pressed": saved,
+				className: buttonClass,
+				children: saved ? `✓ ${t("lists.saved")}` : t("lists.save")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: () => setOpen((v) => !v),
+				"aria-expanded": open,
+				"aria-haspopup": "menu",
+				"aria-label": t("lists.save_to_list"),
+				className: caretClass,
+				children: "▾"
+			}),
+			open && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				role: "menu",
+				className: "absolute top-full right-0 z-30 mt-1 w-72 rounded-card border border-line bg-card p-2 text-left shadow-lg",
+				children: options === null ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "px-2 py-3 text-sm text-ink-soft",
+					children: [t("lists.save_to_list"), "…"]
+				}) : creating ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+					className: "p-2",
+					onSubmit: (e) => {
+						e.preventDefault();
+						save(creating === "mine" ? { new_list: name } : {
+							new_list: t("lists.for_person", { name }),
+							new_recipient: name
+						});
+					},
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+							className: "block text-xs font-medium",
+							children: creating === "mine" ? t("lists.list_name") : t("lists.person_name")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							autoFocus: true,
+							value: name,
+							onChange: (e) => setName(e.target.value),
+							required: true,
+							maxLength: 80,
+							className: "mt-1 w-full rounded border border-line px-2 py-1.5 text-sm"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-2 flex gap-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "submit",
+								disabled: busy,
+								className: "rounded bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60",
+								children: t("lists.save")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => setCreating(null),
+								className: "rounded border border-line px-3 py-1.5 text-xs",
+								children: t("lists.cancel")
+							})]
+						})
+					]
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "px-2 pt-1 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
+						children: t("lists.for_me")
+					}),
+					mine.map((l) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						role: "menuitem",
+						onClick: () => save({ wishlist_id: l.id }),
+						className: "block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-line/40",
+						children: l.title
+					}, l.id)),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => setCreating("mine"),
+						className: "block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40",
+						children: ["+ ", t("lists.new_list")]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
+						children: t("lists.for_someone_else")
+					}),
+					forOthers.map((l) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						role: "menuitem",
+						onClick: () => save({ wishlist_id: l.id }),
+						className: "block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-line/40",
+						children: l.recipient ?? l.title
+					}, l.id)),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => setCreating("for_someone"),
+						className: "block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40",
+						children: ["+ ", t("lists.add_person")]
+					})
+				] })
+			})
+		]
 	});
 }
 //#endregion
@@ -35949,12 +36090,68 @@ function SharedList({ list, isOwner, items }) {
 	] });
 }
 //#endregion
+//#region resources/js/Components/ShareLink.tsx
+/**
+* Send a link to people.
+*
+* The single highest-value thing in the social phase, and the reason no friend
+* graph is imported: a gift list's job is to travel through a group chat, and
+* the native share sheet is what puts it there. Facebook's friend list is
+* unavailable to a new app and Google's contacts are a restricted scope — but
+* WhatsApp has been one tap away the whole time.
+*
+* Explicit fallbacks below the sheet, because `navigator.share` is absent on
+* most desktop browsers and that is where lists are usually built.
+*/
+function ShareLink({ url, text }) {
+	const { t } = useTranslations();
+	const [copied, setCopied] = (0, import_react.useState)(false);
+	const message = text ? `${text} ${url}` : url;
+	async function share() {
+		if (navigator.share) {
+			await navigator.share({
+				text: message,
+				url
+			}).catch(() => void 0);
+			return;
+		}
+		await navigator.clipboard.writeText(message);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2e3);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "flex flex-wrap items-center gap-2",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: share,
+				className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+				children: copied ? t("lists.copied") : t("lists.share")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+				href: `https://wa.me/?text=${encodeURIComponent(message)}`,
+				target: "_blank",
+				rel: "noopener noreferrer",
+				className: "rounded-lg border border-line px-3 py-2 text-sm hover:border-ink",
+				children: "WhatsApp"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+				href: `mailto:?body=${encodeURIComponent(message)}`,
+				className: "rounded-lg border border-line px-3 py-2 text-sm hover:border-ink",
+				children: t("lists.share_email")
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Pages/Lists/Show.tsx
 var Show_exports = /* @__PURE__ */ __exportAll({ default: () => ListShow });
-function ListShow({ list, items, target, asked }) {
+function ListShow({ list, items, target, asked, access, collaborators, quizUrl, quizPlays, santaMemberships }) {
 	const { market } = usePage().props;
 	const { t } = useTranslations();
 	const [copied, setCopied] = (0, import_react.useState)(false);
+	const [invite, setInvite] = (0, import_react.useState)("");
+	const [role, setRole] = (0, import_react.useState)("viewer");
 	const base = `/${market.key}`;
 	const shared = list.visibility !== "private";
 	function toggleSharing() {
@@ -36004,15 +36201,151 @@ function ListShow({ list, items, target, asked }) {
 			children: shared ? t("lists.sharing_on") : t("lists.sharing_off")
 		}),
 		shared && list.shareUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "mt-3 flex flex-wrap items-center gap-2",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
-				className: "flex-1 truncate rounded border border-line bg-card px-3 py-2 text-xs",
-				children: list.shareUrl
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				onClick: copyLink,
-				className: "rounded-lg bg-ink px-3 py-2 text-sm text-cream",
-				children: copied ? t("lists.copied") : t("lists.copy_link")
-			})]
+			className: "mt-4 rounded-card border border-line bg-card p-4",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-sm font-medium",
+					children: t("lists.share_heading")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-2 flex flex-wrap items-center gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", {
+						className: "min-w-0 flex-1 truncate rounded border border-line px-3 py-2 text-xs",
+						children: list.shareUrl
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						onClick: copyLink,
+						className: "rounded-lg bg-ink px-3 py-2 text-sm text-cream",
+						children: copied ? t("lists.copied") : t("lists.copy_link")
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-3",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareLink, {
+						url: list.shareUrl,
+						text: t("lists.share_text", { title: list.title })
+					})
+				}),
+				list.claimable && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 border-t border-line pt-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+						className: "text-sm font-medium",
+						children: t("quiz.title")
+					}), quizUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 text-xs text-ink-soft",
+						children: quizPlays > 0 ? t("quiz.played", { count: String(quizPlays) }) : t("quiz.created")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "mt-2",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareLink, {
+							url: quizUrl,
+							text: t("quiz.share_text")
+						})
+					})] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 text-xs text-ink-soft",
+						children: t("quiz.intro_own")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => router.post(`${base}/lists/${list.id}/quiz`, {}, { preserveScroll: true }),
+						className: "mt-2 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+						children: t("quiz.create")
+					})] })]
+				})
+			]
+		}),
+		santaMemberships.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-4 rounded-card border border-line bg-card p-4",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-sm font-medium",
+					children: t("santa.title")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-xs text-ink-soft",
+					children: t("santa.attach_hint")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-3 space-y-2",
+					children: santaMemberships.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex items-center justify-between gap-3",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-sm",
+							children: m.title
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: () => router.post(`${base}/santa/${m.groupId}/list`, { wishlist_id: m.attached ? null : list.id }, { preserveScroll: true }),
+							className: `rounded-lg border px-3 py-1.5 text-xs ${m.attached ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink"}`,
+							children: m.attached ? t("santa.list_attached_short") : t("santa.attach_list")
+						})]
+					}, m.groupId))
+				})
+			]
+		}),
+		list.kind === "for_someone" && access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-4 rounded-card border border-line bg-card p-4",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-sm font-medium",
+					children: t("lists.collaborators")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-xs text-ink-soft",
+					children: t("lists.invite_hint")
+				}),
+				collaborators.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-3 space-y-2",
+					children: collaborators.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex items-center justify-between gap-3 text-sm",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [c.name, /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "ml-2 text-xs text-ink-soft",
+							children: c.role === "editor" ? t("lists.role_editor") : t("lists.role_viewer")
+						})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: () => router.delete(`${base}/lists/${list.id}/collaborators/${c.id}`, { preserveScroll: true }),
+							className: "text-xs text-ink-soft hover:text-ink",
+							children: t("lists.remove")
+						})]
+					}, c.id))
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+					className: "mt-3 flex flex-wrap gap-2",
+					onSubmit: (e) => {
+						e.preventDefault();
+						router.post(`${base}/lists/${list.id}/collaborators`, {
+							email: invite,
+							role
+						}, {
+							preserveScroll: true,
+							onSuccess: () => setInvite("")
+						});
+					},
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "email",
+							required: true,
+							value: invite,
+							onChange: (e) => setInvite(e.target.value),
+							placeholder: "name@example.com",
+							className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+							value: role,
+							onChange: (e) => setRole(e.target.value),
+							className: "rounded-lg border border-line px-2 py-2 text-sm",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "viewer",
+								children: t("lists.role_viewer")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+								value: "editor",
+								children: t("lists.role_editor")
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "submit",
+							className: "rounded-lg border border-line px-4 py-2 text-sm",
+							children: t("lists.invite_collaborator")
+						})
+					]
+				})
+			]
 		}),
 		list.claimable && shared && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft",
@@ -57813,10 +58146,17 @@ function SiteLayout({ children }) {
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "mx-auto flex max-w-6xl items-center gap-6 px-4 py-4",
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 							href: base,
-							className: "text-lg font-semibold tracking-tight",
-							children: "Brandcoves"
+							className: "flex items-center gap-2 text-lg font-semibold tracking-tight",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: "/icons/brandcoves.svg",
+								alt: "",
+								"aria-hidden": "true",
+								width: 28,
+								height: 28,
+								className: "h-7 w-7 rounded-md"
+							}), "Brandcoves"]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
 							className: "hidden gap-5 text-sm text-ink-soft sm:flex",

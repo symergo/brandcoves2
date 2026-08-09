@@ -6,11 +6,16 @@ namespace Tests\Feature;
 
 use App\Enums\Market;
 use App\Enums\Source;
+use App\Filament\Resources\ApiTokens\Pages\ListApiTokens;
 use App\Filament\Resources\IngestionJobs\IngestionJobResource;
 use App\Filament\Resources\Products\ProductResource;
+use App\Models\ApiToken;
 use App\Models\Feed;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Features\SupportTesting\Testable;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -118,6 +123,7 @@ class AdminPanelTest extends TestCase
             '/admin/ai-usage',
             '/admin/edit-page-copy',
             '/admin/copy-templates',
+            '/admin/api-tokens',
         ] as $path) {
             // Named, so a failure says which page rather than which loop
             // iteration — the whole value of a smoke test is being able to act
@@ -147,6 +153,92 @@ class AdminPanelTest extends TestCase
         // Recognisably them, rather than every nameless admin sharing one
         // placeholder.
         $this->assertSame('nameless', $user->fresh()->getFilamentName());
+    }
+
+    #[Test]
+    public function minting_a_key_in_the_panel_produces_a_working_credential(): void
+    {
+        $admin = $this->user(admin: true);
+
+        $component = Livewire::actingAs($admin)
+            ->test(ListApiTokens::class)
+            ->callAction('mint', [
+                'name' => 'Claude, daily Coves',
+                'abilities' => [ApiToken::READ, ApiToken::WRITE],
+                'expires_at' => null,
+            ])
+            // The mint does not close on success — it swaps itself for the
+            // reveal, because the plaintext exists exactly once and a toast
+            // that a stray click dismisses is the wrong container for it.
+            ->assertActionMounted('revealToken');
+
+        $token = ApiToken::query()->firstOrFail();
+
+        $this->assertSame('Claude, daily Coves', $token->name);
+        $this->assertSame([ApiToken::READ, ApiToken::WRITE], $token->abilities);
+        $this->assertSame($admin->id, $token->created_by);
+
+        // The whole point of the reveal: the plaintext has to reach the admin,
+        // because nothing can recover it afterwards.
+        $plaintext = $this->mountedRevealToken($component);
+        $this->assertNotNull($plaintext, 'the reveal modal was not handed the plaintext');
+        $this->assertSame(hash('sha256', $plaintext), $token->token_hash);
+
+        /*
+         * And the modal body renders.
+         *
+         * Rendered directly rather than asserted against the page HTML: Filament
+         * fills action modals into a `wire:partial` on demand, so the mounted
+         * modal is genuinely absent from the initial response. Which leaves the
+         * view itself untested by anything else — and a mistyped Blade component
+         * in it would blow up at the exact moment the key is shown, the one
+         * moment there is no second chance.
+         */
+        // `canPublish: true` because that branch carries the extra components;
+        // the other one is a strict subset of it.
+        $modal = view('filament.api-token-reveal', [
+            'token' => $plaintext,
+            'name' => $token->name,
+            'canPublish' => true,
+        ])->render();
+
+        $this->assertStringContainsString($plaintext, $modal);
+        $this->assertStringContainsString('This key can publish', $modal);
+
+        // And it has to actually authenticate. A key minted through the panel
+        // and a key minted through the command are the same thing or the panel
+        // is decorative.
+        $this->withToken($plaintext)
+            ->getJson('/api/editorial')
+            ->assertOk()
+            ->assertJsonPath('token.name', 'Claude, daily Coves');
+    }
+
+    #[Test]
+    public function revoking_a_key_in_the_panel_kills_it_immediately(): void
+    {
+        ['token' => $plaintext, 'model' => $token] = ApiToken::issue('doomed', [ApiToken::READ]);
+
+        $this->withToken($plaintext)->getJson('/api/editorial')->assertOk();
+
+        Livewire::actingAs($this->user(admin: true))
+            ->test(ListApiTokens::class)
+            ->callAction(TestAction::make('revoke')->table($token));
+
+        $this->withToken($plaintext)->getJson('/api/editorial')->assertStatus(401);
+        $this->assertNotNull($token->refresh()->revoked_at);
+    }
+
+    /** The plaintext the reveal modal was handed, if one is mounted. */
+    private function mountedRevealToken(Testable $component): ?string
+    {
+        foreach ($component->instance()->mountedActions as $action) {
+            if (($action['name'] ?? null) === 'revealToken') {
+                return $action['arguments']['token'] ?? null;
+            }
+        }
+
+        return null;
     }
 
     #[Test]

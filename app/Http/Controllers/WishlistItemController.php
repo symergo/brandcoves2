@@ -7,18 +7,66 @@ namespace App\Http\Controllers;
 use App\Enums\ListKind;
 use App\Enums\Source;
 use App\Models\ProductGroup;
+use App\Models\Recipient;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Wishlist\ItemSaver;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class WishlistItemController extends Controller
 {
+    /**
+     * Where a save could go.
+     *
+     * A plain JSON endpoint rather than an Inertia page, because the save
+     * control lives on every product card on every surface — search, brand,
+     * guides, the wizard, the daily edition — and sharing this through page
+     * props would put a query on all of them for a control most visitors never
+     * open. Fetched once, when somebody first opens the picker.
+     *
+     * Anonymous-first, like everything else about lists: the visitor may have
+     * built all of these before signing up.
+     */
+    public function options(Request $request, CurrentMarket $current): JsonResponse
+    {
+        $owner = Owner::fromRequest($request);
+
+        if (! $owner->exists()) {
+            return response()->json(['lists' => [], 'recipients' => []]);
+        }
+
+        $lists = $owner->scope(Wishlist::query())
+            ->where('market', $current->value())
+            ->with('recipient')
+            ->withCount('items')
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (Wishlist $list) => [
+                'id' => $list->id,
+                'title' => $list->title,
+                // The distinction the picker is built around: a list for me and
+                // a list about somebody else are different acts, and burying
+                // both under "save" is what made this unusable.
+                'kind' => $list->kind->value,
+                'recipient' => $list->recipient?->name,
+                'items' => $list->items_count,
+            ]);
+
+        return response()->json([
+            'lists' => $lists->values(),
+            'recipients' => $owner->scope(Recipient::query())
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->values(),
+        ]);
+    }
+
     /**
      * Add a product to a list.
      *
@@ -43,11 +91,24 @@ class WishlistItemController extends Controller
             'price' => ['nullable', 'integer', 'min:0'],
             'wishlist_id' => ['nullable', 'uuid'],
             'note' => ['nullable', 'string', 'max:500'],
+
+            /*
+             * Create-and-save in one step.
+             *
+             * "Save this to a new list for my sister" is one intention, and
+             * making somebody leave the product, create a list, come back and
+             * find the product again is how the second list never gets made.
+             */
+            'new_list' => ['nullable', 'string', 'max:120'],
+            'recipient_id' => ['nullable', 'uuid'],
+            'new_recipient' => ['nullable', 'string', 'max:80'],
         ]);
 
-        $list = isset($validated['wishlist_id'])
-            ? ListAccess::scope(Wishlist::query(), $owner)->find($validated['wishlist_id'])
-            : $this->defaultList($owner, $current);
+        $list = match (true) {
+            filled($validated['new_list'] ?? null) => $this->createList($owner, $current, $validated),
+            isset($validated['wishlist_id']) => ListAccess::scope(Wishlist::query(), $owner)->find($validated['wishlist_id']),
+            default => $this->defaultList($owner, $current),
+        };
 
         if ($list === null) {
             throw new NotFoundHttpException;
@@ -133,6 +194,43 @@ class WishlistItemController extends Controller
         abort_unless(ListAccess::canEdit($wishlistItem->wishlist, $owner), 403);
 
         return $wishlistItem;
+    }
+
+    /**
+     * A new list, made from the picker, with the product going straight into it.
+     *
+     * The recipient decides the kind, exactly as in `WishlistController::store()`
+     * — there is no separate switch that could contradict it. A name typed here
+     * mints the person too, because "for someone new" is the common case and
+     * sending them to a different screen to create a contact first is the step
+     * where people give up.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function createList(Owner $owner, CurrentMarket $current, array $validated): Wishlist
+    {
+        $recipientId = $validated['recipient_id'] ?? null;
+
+        if ($recipientId !== null) {
+            // A guessed uuid must not attach somebody else's person to my list.
+            abort_unless(
+                $owner->scope(Recipient::query())->whereKey($recipientId)->exists(),
+                403,
+            );
+        } elseif (filled($validated['new_recipient'] ?? null)) {
+            $recipientId = Recipient::create([
+                ...$owner->attributes(),
+                'name' => $validated['new_recipient'],
+            ])->id;
+        }
+
+        return Wishlist::create([
+            ...$owner->attributes(),
+            'title' => $validated['new_list'],
+            'market' => $current->get(),
+            'recipient_id' => $recipientId,
+            'kind' => $recipientId === null ? ListKind::Mine : ListKind::ForSomeone,
+        ]);
     }
 
     /** The list a save lands in when the visitor has not chosen one. */

@@ -282,6 +282,41 @@ class SecretSantaController extends Controller
         ]);
     }
 
+    /**
+     * Point a group at the list you have already built.
+     *
+     * The join between the two halves of this feature. Without it a member's
+     * own wishlist and their Secret Santa membership are two unrelated things,
+     * and whoever drew them still has nothing to go on — which is the state
+     * that makes a gift exchange a guessing game.
+     */
+    public function attachList(Request $request, CurrentMarket $current, string $market, string $group): RedirectResponse
+    {
+        $santa = $this->find($group);
+        $member = $this->membership($request, $santa);
+
+        // Only your own membership, and only a list you actually own.
+        abort_if($member === null, 403);
+
+        $validated = $request->validate(['wishlist_id' => ['nullable', 'uuid']]);
+
+        $listId = $validated['wishlist_id'] ?? null;
+
+        if ($listId !== null) {
+            $owned = Owner::fromRequest($request)
+                ->scope(Wishlist::query())
+                ->whereKey($listId)
+                ->where('kind', ListKind::Mine->value)
+                ->exists();
+
+            abort_unless($owned, 403);
+        }
+
+        $member->update(['wishlist_id' => $listId]);
+
+        return back()->with('success', __('site.santa.list_attached'));
+    }
+
     public function markDone(Request $request, CurrentMarket $current, string $market, string $group, string $token): RedirectResponse
     {
         $santa = $this->find($group);

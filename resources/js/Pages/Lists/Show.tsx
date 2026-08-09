@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
+import ShareLink from '../../Components/ShareLink'
 import { useTranslations } from '../../useTranslations'
 
 interface Item {
@@ -32,7 +33,24 @@ interface Asked {
     sent: boolean | null
 }
 
+interface Collaborator {
+    id: number
+    name: string | null
+    role: string
+}
+
+interface Membership {
+    groupId: string
+    title: string
+    attached: boolean
+}
+
 interface Props {
+    access: { isOwner: boolean; canEdit: boolean }
+    collaborators: Collaborator[]
+    quizUrl: string | null
+    quizPlays: number
+    santaMemberships: Membership[]
     target: { name: string; isLinked: boolean; askUrl: string | null } | null
     asked: Asked[]
     list: {
@@ -47,10 +65,22 @@ interface Props {
     items: Item[]
 }
 
-export default function ListShow({ list, items, target, asked }: Props) {
+export default function ListShow({
+    list,
+    items,
+    target,
+    asked,
+    access,
+    collaborators,
+    quizUrl,
+    quizPlays,
+    santaMemberships,
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const [copied, setCopied] = useState(false)
+    const [invite, setInvite] = useState('')
+    const [role, setRole] = useState('viewer')
     const base = `/${market.key}`
 
     const shared = list.visibility !== 'private'
@@ -108,14 +138,179 @@ export default function ListShow({ list, items, target, asked }: Props) {
             </p>
 
             {shared && list.shareUrl && (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <code className="flex-1 truncate rounded border border-line bg-card px-3 py-2 text-xs">
-                        {list.shareUrl}
-                    </code>
-                    <button onClick={copyLink} className="rounded-lg bg-ink px-3 py-2 text-sm text-cream">
-                        {copied ? t('lists.copied') : t('lists.copy_link')}
-                    </button>
+                <div className="mt-4 rounded-card border border-line bg-card p-4">
+                    <h2 className="text-sm font-medium">{t('lists.share_heading')}</h2>
+
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <code className="min-w-0 flex-1 truncate rounded border border-line px-3 py-2 text-xs">
+                            {list.shareUrl}
+                        </code>
+                        <button onClick={copyLink} className="rounded-lg bg-ink px-3 py-2 text-sm text-cream">
+                            {copied ? t('lists.copied') : t('lists.copy_link')}
+                        </button>
+                    </div>
+
+                    {/*
+                      A list has to travel through a group chat. The native sheet
+                      is what puts it there on a phone; the explicit links are for
+                      desktop, where most lists are actually built.
+                    */}
+                    <div className="mt-3">
+                        <ShareLink url={list.shareUrl} text={t('lists.share_text', { title: list.title })} />
+                    </div>
+
+                    {/*
+                      The same list, as a quiz.
+
+                      This is the half that gets a list built at all: a list that
+                      only helps other people is a chore, and one your friends
+                      compete on is a reason to make one.
+                    */}
+                    {list.claimable && (
+                        <div className="mt-4 border-t border-line pt-3">
+                            <h3 className="text-sm font-medium">{t('quiz.title')}</h3>
+
+                            {quizUrl ? (
+                                <>
+                                    <p className="mt-1 text-xs text-ink-soft">
+                                        {quizPlays > 0
+                                            ? t('quiz.played', { count: String(quizPlays) })
+                                            : t('quiz.created')}
+                                    </p>
+                                    <div className="mt-2">
+                                        <ShareLink url={quizUrl} text={t('quiz.share_text')} />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="mt-1 text-xs text-ink-soft">{t('quiz.intro_own')}</p>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(`${base}/lists/${list.id}/quiz`, {}, { preserveScroll: true })
+                                        }
+                                        className="mt-2 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
+                                    >
+                                        {t('quiz.create')}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
+            )}
+
+            {/*
+              Answer a Secret Santa with a list you already have.
+
+              Without this join a member's wishlist and their membership are two
+              unrelated things, and whoever drew them is still guessing.
+            */}
+            {santaMemberships.length > 0 && (
+                <section className="mt-4 rounded-card border border-line bg-card p-4">
+                    <h2 className="text-sm font-medium">{t('santa.title')}</h2>
+                    <p className="mt-1 text-xs text-ink-soft">{t('santa.attach_hint')}</p>
+
+                    <ul className="mt-3 space-y-2">
+                        {santaMemberships.map((m) => (
+                            <li key={m.groupId} className="flex items-center justify-between gap-3">
+                                <span className="text-sm">{m.title}</span>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        router.post(
+                                            `${base}/santa/${m.groupId}/list`,
+                                            { wishlist_id: m.attached ? null : list.id },
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                    className={`rounded-lg border px-3 py-1.5 text-xs ${
+                                        m.attached
+                                            ? 'border-sage bg-sage/10 text-sage'
+                                            : 'border-line hover:border-ink'
+                                    }`}
+                                >
+                                    {m.attached ? t('santa.list_attached_short') : t('santa.attach_list')}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
+            {/*
+              Co-givers, on a list about somebody else.
+
+              Buying for one person is usually done by several, and the
+              coordination problem is the one claiming already solves — except
+              here everyone involved is a giver.
+            */}
+            {list.kind === 'for_someone' && access.isOwner && (
+                <section className="mt-4 rounded-card border border-line bg-card p-4">
+                    <h2 className="text-sm font-medium">{t('lists.collaborators')}</h2>
+                    <p className="mt-1 text-xs text-ink-soft">{t('lists.invite_hint')}</p>
+
+                    {collaborators.length > 0 && (
+                        <ul className="mt-3 space-y-2">
+                            {collaborators.map((c) => (
+                                <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
+                                    <span>
+                                        {c.name}
+                                        <span className="ml-2 text-xs text-ink-soft">
+                                            {c.role === 'editor'
+                                                ? t('lists.role_editor')
+                                                : t('lists.role_viewer')}
+                                        </span>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            router.delete(
+                                                `${base}/lists/${list.id}/collaborators/${c.id}`,
+                                                { preserveScroll: true },
+                                            )
+                                        }
+                                        className="text-xs text-ink-soft hover:text-ink"
+                                    >
+                                        {t('lists.remove')}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    <form
+                        className="mt-3 flex flex-wrap gap-2"
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            router.post(
+                                `${base}/lists/${list.id}/collaborators`,
+                                { email: invite, role },
+                                { preserveScroll: true, onSuccess: () => setInvite('') },
+                            )
+                        }}
+                    >
+                        <input
+                            type="email"
+                            required
+                            value={invite}
+                            onChange={(e) => setInvite(e.target.value)}
+                            placeholder="name@example.com"
+                            className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+                        />
+                        <select
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            className="rounded-lg border border-line px-2 py-2 text-sm"
+                        >
+                            <option value="viewer">{t('lists.role_viewer')}</option>
+                            <option value="editor">{t('lists.role_editor')}</option>
+                        </select>
+                        <button type="submit" className="rounded-lg border border-line px-4 py-2 text-sm">
+                            {t('lists.invite_collaborator')}
+                        </button>
+                    </form>
+                </section>
             )}
 
             {/*

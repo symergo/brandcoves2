@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\BrandStat;
+use App\Models\DailyPickSet;
 use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Services\Seo\OgImage;
@@ -82,6 +83,33 @@ class OgImageController extends Controller
                 $guide->title,
                 __('site.og.guide', [], $current->get()->language()),
                 __('site.og.guide_footnote', ['count' => $guide->items()->count()], $current->get()->language()),
+            ),
+        );
+    }
+
+    /**
+     * The Daily Cove, addressed by date rather than by "today".
+     *
+     * A platform caches the card it fetched when the link was first posted, and
+     * `/daily` is a different edition every morning. Keying the image on the
+     * date means yesterday's shared post keeps showing yesterday's theme instead
+     * of quietly becoming today's.
+     */
+    public function daily(CurrentMarket $current, OgImage $og, string $market, string $date): Response
+    {
+        $edition = DailyPickSet::query()
+            ->where('market', $current->value())
+            ->whereDate('drop_date', $date)
+            ->firstOrFail();
+
+        $language = $current->get()->language();
+
+        return $this->send(
+            'daily:'.$edition->id.':'.$edition->updated_at?->timestamp,
+            fn () => $og->render(
+                $edition->theme_title,
+                __('site.og.daily', [], $language),
+                $edition->drop_date->translatedFormat('j F Y'),
             ),
         );
     }

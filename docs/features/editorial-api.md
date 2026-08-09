@@ -37,12 +37,33 @@ A role called "editor" would collapse write and publish the first time anyone ne
 variant. The interesting configuration — an automated writer that drafts, a human who approves — is
 only expressible because they are two strings.
 
+### Getting a key
+
+**In the admin panel** — *Operations → API keys → Mint a key*. Two modals: the first collects the
+name, abilities and expiry, the second reveals the plaintext with a copy button.
+
+They have to be two modals rather than a form and a success toast. The secret exists exactly once,
+and a notification that any stray click dismisses is the wrong container for something
+unrecoverable — so the reveal refuses to close on a click-away or an Escape, and
+`replaceMountedAction` swaps the mint for it rather than closing.
+
+Minting is the only special case. Everything after it is ordinary: change a key's abilities without
+rotating the secret (the realistic path is a key that drafted for a fortnight and has earned
+publish — and rotating it to say so means editing it wherever it is deployed), revoke, and delete
+only once revoked.
+
+**On the command line**, which is what you want in a deploy script or when the panel is not up yet:
+
 ```bash
 php artisan bc:api-token "claude editorial"            # read + write. Drafts only.
 php artisan bc:api-token "claude" --abilities=editorial.read,editorial.write,editorial.publish
 php artisan bc:api-token --list
 php artisan bc:api-token --revoke=3
 ```
+
+Both paths call `ApiToken::issue()`, so a panel key and a command key are the same thing. A test
+asserts that, because "the panel is decorative" is a failure that would otherwise show up only when
+someone tried to use what it produced.
 
 The plaintext is printed once. Only its SHA-256 is stored, for the same reason as `login_tokens`: a
 database leak should yield a list of names and timestamps, not working keys. Revocation is a

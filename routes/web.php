@@ -435,6 +435,10 @@ Route::prefix('{market}')->group(function () {
             ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
             ->name('og.guide');
 
+        Route::get('/og/daily/{date}.png', [OgImageController::class, 'daily'])
+            ->where('date', '[0-9]{4}-[0-9]{2}-[0-9]{2}')
+            ->name('og.daily');
+
         Route::get('/og/brand/{slug}.png', [OgImageController::class, 'brand'])
             ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
             ->name('og.brand');

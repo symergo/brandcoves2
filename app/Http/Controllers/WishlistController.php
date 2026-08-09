@@ -6,7 +6,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
+use App\Models\ListQuiz;
 use App\Models\Recipient;
+use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
@@ -137,6 +139,40 @@ class WishlistController extends Controller
              * that must never happen is a second claim mechanism growing here.
              */
             'asked' => $target === null ? [] : $this->asked($target, $owner, $current),
+
+            /*
+             * Sharing a list *as a quiz* rather than as a list.
+             *
+             * The same list, two artefacts: one asks people to claim something,
+             * the other asks how well they know you. The second is the one that
+             * gets built in the first place, because a list nobody has a reason
+             * to fill in stays empty.
+             */
+            'quizUrl' => ($quiz = ListQuiz::query()->where('wishlist_id', $wishlist->id)->first())
+                ? url($current->url("q/{$quiz->share_token}"))
+                : null,
+            'quizPlays' => $quiz?->attempts()->count() ?? 0,
+
+            /*
+             * Groups this list could answer for.
+             *
+             * Only `mine` lists: a Secret Santa giftee is told what *you* want,
+             * never what you are plotting for somebody else.
+             */
+            'santaMemberships' => $wishlist->kind === ListKind::Mine && $owner->isSignedIn()
+                ? SecretSantaMember::query()
+                    ->where('user_id', $owner->user->id)
+                    ->with('group')
+                    ->get()
+                    ->filter(fn (SecretSantaMember $m) => $m->group !== null)
+                    ->map(fn (SecretSantaMember $m) => [
+                        'groupId' => $m->group->id,
+                        'title' => $m->group->title,
+                        'attached' => $m->wishlist_id === $wishlist->id,
+                    ])
+                    ->values()
+                    ->all()
+                : [],
 
             // Lane two: what I found. The existing items, unchanged.
             'items' => $wishlist->items
