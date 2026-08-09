@@ -167,6 +167,11 @@ class BrandStats
         $out = [];
 
         foreach ($bySlug as $slug => $variants) {
+            // PHP turns a numeric-string array key into an int, so a brand named
+            // "3M" is fine and one named "2024" would arrive here as an integer
+            // and be written to a varchar column as one.
+            $slug = (string) $slug;
+
             // The most-stocked spelling becomes the display name. Ties broken
             // alphabetically so the choice is stable across runs rather than
             // depending on row order — an unstable display name would rewrite

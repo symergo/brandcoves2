@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Enums\Market;
 use App\Models\GuideTopic;
 use App\Models\ProductGroup;
+use App\Models\SearchLog;
 use App\Services\Guides\SeasonalTopics;
 use App\Services\Guides\TopicMiner;
 use Carbon\CarbonImmutable;
@@ -212,6 +213,32 @@ class SeasonalCoveTest extends TestCase
 
         $this->assertNotNull(GuideTopic::query()->where('topic', 'barbecue')->first());
         $this->assertNotSame('barbecue', app(SeasonalTopics::class)->ripest(Market::BeNl, CarbonImmutable::create(2027, 4, 15))?->topic);
+    }
+
+    #[Test]
+    public function a_numeric_search_term_does_not_break_the_miner(): void
+    {
+        /*
+         * The first run against a live search log died here: PHP converts a
+         * numeric-string array key to an int, so a real search for "4090" or
+         * "2024" reaches `availableProducts()` as an integer and fails its string
+         * type hint. Every fixture query was a word, so nothing caught it.
+         */
+        foreach (['4090', '2024', 'koptelefoon'] as $query) {
+            SearchLog::create([
+                'query' => $query,
+                'query_hash' => hash('sha256', $query.'be-nl'),
+                'market' => Market::BeNl->value,
+                'hour_bucket' => now()->startOfHour(),
+                'search_count' => 9,
+                'result_count' => 4,
+            ]);
+        }
+
+        $written = app(TopicMiner::class)->mine(Market::BeNl);
+
+        $this->assertGreaterThan(0, $written);
+        $this->assertNotNull(GuideTopic::query()->where('topic', '4090')->first());
     }
 
     #[Test]

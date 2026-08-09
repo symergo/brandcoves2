@@ -66,6 +66,15 @@ class TopicMiner
         $written = 0;
 
         foreach ($clusters as $topic => $cluster) {
+            /*
+             * Cast, because PHP silently converts a numeric-string array key to
+             * an int. A real search for "4090" or "2024" therefore arrives here
+             * as an integer and blows up on the string type hint — which is what
+             * happened on the first run against a live search log, and never
+             * happened in tests because every fixture query is a word.
+             */
+            $topic = (string) $topic;
+
             $available = $this->availableProducts($market, $topic);
 
             /*
