@@ -258,6 +258,74 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
+    public function a_shared_list_names_its_owner_and_not_its_title(): void
+    {
+        $owner = User::create(['email' => 'ann@example.test', 'name' => 'Ann']);
+
+        $list = Wishlist::create([
+            'owner_user_id' => $owner->id,
+            // The title an auto-created list gets. It is a label for a list,
+            // never a name for a person.
+            'title' => 'Saved items',
+            'market' => Market::BeNl,
+            'kind' => ListKind::Mine,
+            'visibility' => 'link',
+        ]);
+
+        /*
+         * The payload carried no owner at all, so the copy that names a person
+         * fell back to the list title — and a visitor to somebody's own wishlist
+         * was told that "Saved items" would not see who claimed what.
+         */
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('list.for', 'Ann'));
+    }
+
+    #[Test]
+    public function a_list_owned_by_nobody_named_offers_no_name_at_all(): void
+    {
+        $identity = AnonymousIdentity::create(['last_seen_at' => now()]);
+
+        $list = Wishlist::create([
+            'owner_anon_id' => $identity->getKey(),
+            'title' => 'Saved items',
+            'market' => Market::BeNl,
+            'kind' => ListKind::Mine,
+            'visibility' => 'link',
+        ]);
+
+        // An anonymous owner genuinely has no name. Null, so the UI can say
+        // "whoever made this list" rather than invent one.
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('list.for', null));
+    }
+
+    #[Test]
+    public function a_list_for_someone_else_names_the_recipient(): void
+    {
+        $owner = $this->user();
+
+        $recipient = Recipient::create([
+            'owner_user_id' => $owner->id,
+            'name' => 'Mum',
+        ]);
+
+        $list = Wishlist::create([
+            'owner_user_id' => $owner->id,
+            'recipient_id' => $recipient->id,
+            'title' => 'Ideas',
+            'market' => Market::BeNl,
+            'kind' => ListKind::ForSomeone,
+            'visibility' => 'link',
+        ]);
+
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertInertia(fn ($page) => $page->where('list.for', 'Mum'));
+    }
+
+    #[Test]
     public function the_owner_cannot_claim_on_their_own_list(): void
     {
         [$list, $item] = $this->sharedGiftList();

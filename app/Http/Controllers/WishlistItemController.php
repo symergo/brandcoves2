@@ -11,6 +11,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Wishlist\ItemSaver;
 use App\Support\CurrentMarket;
+use App\Support\ListAccess;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,12 +46,15 @@ class WishlistItemController extends Controller
         ]);
 
         $list = isset($validated['wishlist_id'])
-            ? $owner->scope(Wishlist::query())->find($validated['wishlist_id'])
+            ? ListAccess::scope(Wishlist::query(), $owner)->find($validated['wishlist_id'])
             : $this->defaultList($owner, $current);
 
         if ($list === null) {
             throw new NotFoundHttpException;
         }
+
+        // A viewer was brought in to coordinate, not to curate.
+        abort_unless(ListAccess::canEdit($list, $owner), 403);
 
         if (! empty($validated['group_id'])) {
             $group = ProductGroup::query()
@@ -118,12 +122,15 @@ class WishlistItemController extends Controller
             ->whereKey($item)
             // Ownership is on the list, not the item, so it has to be joined
             // through — otherwise any guessed item id would be editable.
-            ->whereHas('wishlist', fn ($q) => $owner->scope($q))
+            ->whereHas('wishlist', fn ($q) => ListAccess::scope($q, $owner))
+            ->with('wishlist')
             ->first();
 
         if ($wishlistItem === null) {
             throw new NotFoundHttpException;
         }
+
+        abort_unless(ListAccess::canEdit($wishlistItem->wishlist, $owner), 403);
 
         return $wishlistItem;
     }

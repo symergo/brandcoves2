@@ -23,6 +23,7 @@ interface Props {
         kind: string
         claimable: boolean
         recipient: string | null
+        for: string | null
     }
     isOwner: boolean
     items: Item[]
@@ -48,7 +49,15 @@ export default function SharedList({ list, isOwner, items }: Props) {
 
                 {list.claimable && !isOwner && (
                     <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm">
-                        {t('lists.shared_intro', { name: list.recipient ?? list.title })}
+                        {/*
+                          Name the person, or say nothing about a person at all.
+                          Falling back to the list *title* told visitors that
+                          "Saved items" would not see who claimed what — and an
+                          anonymous owner genuinely has no name to give.
+                        */}
+                        {list.for
+                            ? t('lists.shared_intro', { name: list.for })
+                            : t('lists.shared_intro_anon')}
                     </p>
                 )}
 

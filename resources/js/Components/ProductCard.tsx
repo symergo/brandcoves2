@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react'
+import SaveToList from './SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -117,7 +118,19 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                         </div>
                     )}
 
-                    <div className={`mt-0.5 text-xs ${comparable ? 'font-medium text-sage' : 'text-ink-soft'}`}>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                        {/*
+                          Saving from the results grid.
+
+                          Until now the only Save button lived on the product
+                          page, so the most common path — search, scan the grid,
+                          spot the thing — had no way to keep it without an extra
+                          click into a page the shopper did not want.
+                        */}
+                        <SaveToList groupId={group.id} compact />
+                    </div>
+
+                    <div className={`mt-1 text-xs ${comparable ? 'font-medium text-sage' : 'text-ink-soft'}`}>
                         {group.offerCount === 1
                             ? t('product.one_offer')
                             : t('product.offers', { count: n(group.offerCount) })}

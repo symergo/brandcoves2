@@ -8,13 +8,18 @@ use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Guide;
 use App\Models\ProductGroup;
+use App\Models\Recipient;
+use App\Models\SecretSantaGroup;
+use App\Models\Wishlist;
 use App\Support\CurrentMarket;
+use App\Support\Owner;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
-    public function __invoke(CurrentMarket $current): Response
+    public function __invoke(Request $request, CurrentMarket $current): Response
     {
         $market = $current->get();
 
@@ -37,11 +42,67 @@ class HomeController extends Controller
              */
             'today' => $this->today($current),
 
+            /*
+             * The gifting band.
+             *
+             * The homepage said "you don't know what you want, you know who it's
+             * for" and then offered exactly one way to act on it. Everything
+             * else gifting can do — a list somebody else fills in, a Secret
+             * Santa, a quiz over a list — was reachable only by already knowing
+             * the URL, which is how v1 shipped its gift finder unlinked and
+             * unreachable for two months.
+             *
+             * Counts rather than prose where the visitor already has something:
+             * "3 lists" is a reason to click and "Make a list" is not, once the
+             * lists exist.
+             */
+            'gifting' => $this->gifting($request, $current),
+
             // The evergreen half. Coves earn their traffic over years, so the
             // front page is where a first-time visitor discovers the archive
             // exists at all.
             'coves' => $this->coves($current),
         ]);
+    }
+
+    /**
+     * The four ways in, and what this visitor already has.
+     *
+     * @return array<string, mixed>
+     */
+    private function gifting(Request $request, CurrentMarket $current): array
+    {
+        $owner = Owner::fromRequest($request);
+        $user = $request->user();
+
+        return [
+            // Anonymous-first, exactly like the lists themselves: someone who
+            // saved a product before signing up should see it here.
+            'lists' => $owner->exists()
+                ? $owner->scope(Wishlist::query())
+                    ->where('market', $current->value())
+                    ->count()
+                : 0,
+
+            'people' => $owner->exists()
+                ? $owner->scope(Recipient::query())->count()
+                : 0,
+
+            // Signed-in only: a group has to belong to somebody who can be
+            // reached when the draw happens.
+            'santaGroups' => $user === null
+                ? 0
+                : SecretSantaGroup::query()
+                    ->where('market', $current->value())
+                    ->where('owner_user_id', $user->id)
+                    ->count(),
+
+            'urls' => [
+                'gift' => $current->url('gift'),
+                'lists' => $current->url('lists'),
+                'santa' => $current->url('santa'),
+            ],
+        ];
     }
 
     /** @return array<string, mixed>|null */

@@ -24,6 +24,26 @@ because one of them will eventually be edited by someone who does not know the r
 the owner rather than the truth. Tested in
 [`WishlistTest::the_owner_never_sees_claim_state`](../../tests/Feature/WishlistTest.php).
 
+### A bug this rule had, for a year
+
+`shouldHideClaimsFrom()` took a `?User` and answered `false` for null — and
+`SharedListController` passed `$owner->user`, which **is** null for an anonymous
+owner. Since lists are anonymous-first by design, the ordinary case was the
+broken one: build a list signed-out, share it, reopen your own link, see exactly
+what has been claimed.
+
+It now takes an `Owner` and compares both owner columns. Worth recording because
+the signature looked right, the tests passed, and the failing case was the
+common one rather than an exotic one.
+
+### Claiming is gated on what a list is *for*
+
+`is_gift_list` sat beside a nullable `recipient_id`, answering an overlapping
+question and able to disagree with it — so claiming ended up gated on
+*visibility*, and every shared list was claimable, including private research
+about the person it was about. Replaced by `kind` (`mine` | `for_someone`); see
+[gifting-lenses.md](gifting-lenses.md).
+
 ## Anonymous first
 
 Saving a product does not require an account. `App\Support\Owner` unifies the two identities:

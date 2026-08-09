@@ -23,6 +23,7 @@ return [
         'main' => 'Main',
         'skip' => 'Skip to content',
         'choose_market' => 'Choose your market',
+        'santa' => 'Secret Santa',
     ],
 
     'home' => [
@@ -394,6 +395,7 @@ return [
         'follow' => 'Follow',
         'unfollow' => 'Unfollow',
         'followed' => 'Following them now.',
+        'shared_intro_anon' => 'Tap an item to mark that you are getting it. Whoever made this list will not see who claimed what.',
     ],
 
     /*

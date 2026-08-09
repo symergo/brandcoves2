@@ -48,6 +48,23 @@ class SharedListController extends Controller
                 'kind' => $list->kind->value,
                 'claimable' => $claimable,
                 'recipient' => $list->recipient?->name,
+
+                /*
+                 * Whose list this is, for the copy that names a person.
+                 *
+                 * A `for_someone` list is about its recipient. A `mine` list is
+                 * about its owner — and until this existed the payload carried
+                 * no owner at all, so the sentence "…will not see who claimed
+                 * what" fell back to the *list title* and a visitor to somebody's
+                 * own wishlist was told that "Saved items" would not see who
+                 * claimed what.
+                 *
+                 * Null for an anonymous owner, who has no name to give. The UI
+                 * has copy for that case rather than inventing one.
+                 */
+                'for' => $list->isForSomeoneElse()
+                    ? $list->recipient?->name
+                    : $list->owner?->name,
             ],
             'isOwner' => $isOwner,
 
@@ -189,7 +206,7 @@ class SharedListController extends Controller
     private function findShared(string $token): Wishlist
     {
         $list = Wishlist::query()
-            ->with('recipient')
+            ->with(['recipient', 'owner'])
             ->where('share_token', $token)
             // A private list is not reachable by token even if the token leaks:
             // turning sharing off has to actually turn it off.

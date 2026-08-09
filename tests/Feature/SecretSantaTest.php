@@ -18,11 +18,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use Tests\Unit\SecretSantaDrawTest;
 
 /**
  * Secret Santa end to end.
  *
- * The draw itself is unit-tested in {@see \Tests\Unit\SecretSantaDrawTest}. What
+ * The draw itself is unit-tested in {@see SecretSantaDrawTest}. What
  * matters here is that the pairing stays secret and that the feature reuses the
  * list machinery rather than growing its own.
  */
@@ -43,6 +44,15 @@ class SecretSantaTest extends TestCase
 
     private function join(SecretSantaGroup $group, string $name, string $email, array $exclusions = []): SecretSantaMember
     {
+        /*
+         * As a guest, which is the realistic flow: the organiser sends a link
+         * and somebody else opens it. Without this the organiser's session
+         * carries into the request and every member is silently created with
+         * their user id — so "you can join without an account" would be testing
+         * the opposite of what it claims.
+         */
+        auth()->logout();
+
         $this->post("/be-nl/santa/{$group->id}/join/{$group->invite_token}", [
             'display_name' => $name,
             'email' => $email,

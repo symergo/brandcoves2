@@ -17,6 +17,7 @@ return [
         'main' => 'Hoofdmenu',
         'skip' => 'Naar de inhoud',
         'choose_market' => 'Kies je regio',
+        'santa' => 'Secret Santa',
     ],
 
     'home' => [
@@ -366,6 +367,7 @@ return [
         'follow' => 'Volgen',
         'unfollow' => 'Ontvolgen',
         'followed' => 'Je volgt ze nu.',
+        'shared_intro_anon' => 'Tik op iets om aan te geven dat jij het koopt. Wie dit lijstje maakte, ziet niet wie wat geclaimd heeft.',
     ],
 
     'recipients' => [

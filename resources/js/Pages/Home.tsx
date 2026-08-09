@@ -25,10 +25,16 @@ interface Props {
         hasPuzzle: boolean
         finds: { id: number; title: string; image: string | null; price: number | null; url: string }[]
     } | null
+    gifting: {
+        lists: number
+        people: number
+        santaGroups: number
+        urls: { gift: string; lists: string; santa: string }
+    }
     coves: Cove[]
 }
 
-export default function Home({ stats, today, coves }: Props) {
+export default function Home({ stats, today, gifting, coves }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
@@ -57,6 +63,62 @@ export default function Home({ stats, today, coves }: Props) {
                         className="rounded-lg border border-line px-5 py-3 font-medium transition hover:border-ink"
                     >
                         {t('home.cta_search')}
+                    </Link>
+                </div>
+            </section>
+
+            {/*
+              The gifting band.
+
+              The headline claims the site is about buying for other people, and
+              until now the only way to act on that was one button. A gift list
+              somebody else fills in, a Secret Santa and the quiz were all
+              reachable only by knowing the URL — which is exactly how v1 shipped
+              its gift finder unlinked and unreachable.
+            */}
+            <section className="mt-14" aria-labelledby="gifting-heading">
+                <h2 id="gifting-heading" className="text-2xl font-semibold tracking-tight">
+                    {t('home.gifting_heading')}
+                </h2>
+                <p className="mt-2 max-w-2xl text-ink-soft">{t('home.gifting_intro')}</p>
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <Link
+                        href={gifting.urls.gift}
+                        className="rounded-card border border-line bg-card p-6 transition hover:border-ink"
+                    >
+                        <h3 className="font-medium">{t('home.gifting_whisperer')}</h3>
+                        <p className="mt-2 text-sm text-ink-soft">
+                            {gifting.people > 0
+                                ? t('home.gifting_people_count', { count: n(gifting.people) })
+                                : t('home.gifting_whisperer_hint')}
+                        </p>
+                    </Link>
+
+                    <Link
+                        href={gifting.urls.lists}
+                        className="rounded-card border border-line bg-card p-6 transition hover:border-ink"
+                    >
+                        <h3 className="font-medium">{t('home.gifting_lists')}</h3>
+                        <p className="mt-2 text-sm text-ink-soft">
+                            {/* A count is a reason to click; "make a list" stops
+                                being one the moment lists exist. */}
+                            {gifting.lists > 0
+                                ? t('home.gifting_lists_count', { count: n(gifting.lists) })
+                                : t('home.gifting_lists_hint')}
+                        </p>
+                    </Link>
+
+                    <Link
+                        href={gifting.urls.santa}
+                        className="rounded-card border border-line bg-card p-6 transition hover:border-ink"
+                    >
+                        <h3 className="font-medium">{t('home.gifting_santa')}</h3>
+                        <p className="mt-2 text-sm text-ink-soft">
+                            {gifting.santaGroups > 0
+                                ? t('home.gifting_santa_count', { count: n(gifting.santaGroups) })
+                                : t('home.gifting_santa_hint')}
+                        </p>
                     </Link>
                 </div>
             </section>

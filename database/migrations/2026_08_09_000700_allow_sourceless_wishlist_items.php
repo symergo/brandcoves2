@@ -39,6 +39,9 @@ return new class extends Migration
          * An item must be *something*: either a group we hold, or an external
          * product we can identify well enough to re-fetch. A row that is neither
          * is an entry nobody can render and nobody can remove on purpose.
+         *
+         * Widened one case in 2026_08_09_001000 to also allow a free-text wish —
+         * see that migration for why this version was too strict.
          */
         DB::statement('ALTER TABLE wishlist_items ADD CONSTRAINT wishlist_items_identifiable CHECK (group_id IS NOT NULL OR (source IS NOT NULL AND external_id IS NOT NULL))');
     }

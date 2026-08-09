@@ -185,6 +185,7 @@ class SuggestionEngine
             'surprise' => $this->surprise($group) * $profile->weight('surprise', 20),
             'vibe' => $this->vibeFit($haystack, $brief) * $profile->weight('vibe', 10),
             'values' => $this->valuesFit($haystack, $brief) * $profile->weight('values', 10),
+            'occasion' => $this->occasionFit($haystack, $brief) * $profile->weight('occasion', 0),
         ];
 
         return new Suggestion(
@@ -274,6 +275,64 @@ class SuggestionEngine
         }
 
         return 0.3;
+    }
+
+    /**
+     * Words a product carries when it suits a particular occasion.
+     *
+     * Occasions are free text — the wizard offers a few and accepts anything —
+     * so this is keyed on the ones people actually type, matched as substrings
+     * for the same reason the giftability classifier is: Dutch and German write
+     * compounds closed, and `\bkerst\b` matches none of `kerstcadeau`,
+     * `kerstpakket` or `Weihnachtsgeschenk`.
+     *
+     * @var array<string, list<string>>
+     */
+    private const OCCASION_MARKERS = [
+        'birthday' => ['verjaardag', 'birthday', 'anniversaire', 'cumpleanos'],
+        'christmas' => ['kerst', 'christmas', 'noel', 'navidad', 'weihnacht', 'sinterklaas'],
+        'wedding' => ['bruiloft', 'huwelijk', 'wedding', 'mariage', 'boda'],
+        'newborn' => ['baby', 'geboorte', 'newborn', 'naissance', 'kraamcadeau'],
+        'housewarming' => ['housewarming', 'nieuwe woning', 'inhuizing', 'hogar'],
+        'anniversary' => ['jubileum', 'anniversary', 'aniversario'],
+        'thanks' => ['bedankt', 'thank', 'merci', 'gracias'],
+    ];
+
+    /**
+     * Does this product suit the occasion?
+     *
+     * Weighted at **zero by default**, and that is the point rather than an
+     * oversight. `occasion` was collected by the wizard, carried through the
+     * brief and read by nothing for the whole of Phase 4 — a field that looks
+     * like an input and does nothing is worse than an absent one, because the
+     * person answering believes it changed the result.
+     *
+     * So it is scored, and given a weight only where it earns one. A profile can
+     * raise it; the catalogue is currently too thin in seasonal goods for it to
+     * carry real weight without becoming noise, and claiming otherwise would be
+     * the "plausible wrong answer" failure the discovery docs warn about.
+     */
+    private function occasionFit(string $haystack, TasteBrief $brief): float
+    {
+        if ($brief->occasion === null || $brief->occasion === '') {
+            // An unanswered question scores 0.5, not 0 — "does not apply" is not
+            // "scores badly", and every step after the first is skippable.
+            return 0.5;
+        }
+
+        $occasion = mb_strtolower($brief->occasion);
+        $markers = self::OCCASION_MARKERS[$occasion] ?? [$occasion];
+
+        foreach ($markers as $marker) {
+            if (str_contains($haystack, $marker)) {
+                return 1.0;
+            }
+        }
+
+        // Absence is weak evidence: most good presents are not labelled with the
+        // occasion they suit, and a real penalty would rank the whole catalogue
+        // below a handful of novelty items with "kerst" in the title.
+        return 0.45;
     }
 
     /** @var array<string, list<string>> */

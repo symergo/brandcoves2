@@ -12,6 +12,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
     const nav = [
         { href: `${base}/search`, label: t('nav.search') },
         { href: `${base}/gift`, label: t('nav.gift') },
+        { href: `${base}/santa`, label: t('nav.santa') },
         { href: `${base}/daily`, label: t('nav.daily') },
         { href: `${base}/surprise`, label: t('nav.surprise') },
         { href: `${base}/scan`, label: t('nav.scan') },
@@ -102,15 +103,23 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                                         </span>
                                     )}
                                 </Link>
-                                <Link href={`${base}/lists`} className="text-sm hover:text-ink">
-                                    {t('nav.lists')}
-                                </Link>
                             </>
                         ) : (
-                            <Link href="/login" className="text-sm hover:text-ink">
+                            <Link href={`${base}/login`} className="text-sm hover:text-ink">
                                 {t('nav.sign_in')}
                             </Link>
                         )}
+
+                        {/*
+                          Lists are anonymous-first — that is the whole design:
+                          save a product, build a list, share it, all before
+                          signing up. Hiding this link behind `auth.user` meant a
+                          visitor who had done exactly that had no way back to
+                          their own list, and the feature looked absent.
+                        */}
+                        <Link href={`${base}/lists`} className="text-sm hover:text-ink">
+                            {t('nav.lists')}
+                        </Link>
                     </div>
                 </div>
 
@@ -150,15 +159,20 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                                             {t('nav.notifications')}
                                             {unreadCount > 0 && ` (${unreadCount})`}
                                         </Link>
-                                        <Link href={`${base}/lists`} onClick={() => setMenuOpen(false)}>
-                                            {t('nav.lists')}
-                                        </Link>
                                     </span>
                                 ) : (
-                                    <Link href="/login" onClick={() => setMenuOpen(false)}>
+                                    <Link href={`${base}/login`} onClick={() => setMenuOpen(false)}>
                                         {t('nav.sign_in')}
                                     </Link>
                                 )}
+
+                                <Link
+                                    href={`${base}/lists`}
+                                    className="mt-3 block"
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    {t('nav.lists')}
+                                </Link>
                             </span>
                         </nav>
 

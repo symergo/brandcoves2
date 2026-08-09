@@ -17,6 +17,7 @@ return [
         'main' => 'Menu principal',
         'skip' => 'Aller au contenu',
         'choose_market' => 'Choisissez votre région',
+        'santa' => 'Secret Santa',
     ],
 
     'home' => [
@@ -362,6 +363,7 @@ return [
         'follow' => 'Suivre',
         'unfollow' => 'Ne plus suivre',
         'followed' => 'Vous les suivez maintenant.',
+        'shared_intro_anon' => "Touchez un article pour indiquer que vous l'offrez. La personne qui a fait cette liste ne verra pas qui a reserve quoi.",
     ],
 
     'recipients' => [

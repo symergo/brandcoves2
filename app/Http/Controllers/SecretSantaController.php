@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\ListKind;
 use App\Enums\SantaStatus;
+use App\Mail\SecretSantaAssignmentMail;
 use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
@@ -14,10 +14,12 @@ use App\Services\Gift\DrawImpossible;
 use App\Services\Gift\GiftTarget;
 use App\Services\Gift\SecretSantaDraw;
 use App\Support\CurrentMarket;
-use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Number;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -36,6 +38,46 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class SecretSantaController extends Controller
 {
+    /**
+     * Your groups, and the form to start one.
+     *
+     * Both the ones you organise and the ones you merely joined — from a
+     * member's point of view those are the same thing, and separating them
+     * would be organising the page around our schema rather than around what
+     * they came to do.
+     */
+    public function index(Request $request, CurrentMarket $current): Response
+    {
+        $user = $request->user();
+
+        $groups = $user === null
+            ? collect()
+            : SecretSantaGroup::query()
+                ->where('market', $current->value())
+                ->where(fn ($q) => $q
+                    ->where('owner_user_id', $user->id)
+                    ->orWhereExists(fn ($sub) => $sub
+                        ->selectRaw('1')
+                        ->from('secret_santa_members')
+                        ->whereColumn('secret_santa_members.group_id', 'secret_santa_groups.id')
+                        ->where('secret_santa_members.user_id', $user->id)))
+                ->withCount('members')
+                ->latest()
+                ->get();
+
+        return Inertia::render('Santa/Index', [
+            'groups' => $groups->map(fn (SecretSantaGroup $group) => [
+                'id' => $group->id,
+                'title' => $group->title,
+                'members' => $group->members_count,
+                'drawn' => $group->status->isDrawn(),
+                'exchangeDate' => $group->exchange_date?->toDateString(),
+                'url' => $current->url("santa/{$group->id}"),
+            ])->all(),
+            'isSignedIn' => $user !== null,
+        ]);
+    }
+
     public function show(Request $request, CurrentMarket $current, string $market, string $group): Response
     {
         $santa = $this->find($group);
@@ -185,6 +227,14 @@ class SecretSantaController extends Controller
                 : $e->getMessage().' ('.$blocked->display_name.')');
         }
 
+        /*
+         * All or nothing.
+         *
+         * A half-finished draw is the worst state this feature can reach: some
+         * people know who they have, the rest do not, and re-running it would
+         * change assignments that have already been emailed — and an email
+         * cannot be unsent.
+         */
         DB::transaction(function () use ($santa, $members, $assignments): void {
             foreach ($members as $member) {
                 $member->update(['assigned_member_id' => (string) $assignments[$member->id]]);
@@ -192,6 +242,10 @@ class SecretSantaController extends Controller
 
             $santa->update(['status' => SantaStatus::Drawn, 'drawn_at' => now()]);
         });
+
+        // Only after the transaction commits. Mail queued inside it would go out
+        // even if the write rolled back.
+        $this->notify($santa, $members->fresh(), $current);
 
         unset($byEmail);
 
@@ -236,6 +290,41 @@ class SecretSantaController extends Controller
         $member->update(['marked_done_at' => now()]);
 
         return back()->with('success', __('site.santa.marked_done'));
+    }
+
+    /**
+     * Tell each member, and only that member, who they drew.
+     *
+     * One email per person, each naming exactly one pairing. This is the single
+     * channel through which the game can be spoiled, which is why the group page
+     * is aggregate-only and why nothing here is ever sent to the organiser as a
+     * summary.
+     *
+     * @param  Collection<int, SecretSantaMember>  $members
+     */
+    private function notify(SecretSantaGroup $santa, $members, CurrentMarket $current): void
+    {
+        $byId = $members->keyBy('id');
+
+        foreach ($members as $member) {
+            $giftee = $byId->get((int) $member->assigned_member_id);
+
+            if ($giftee === null) {
+                continue;
+            }
+
+            Mail::to($member->email)->queue(new SecretSantaAssignmentMail(
+                gifteeName: $giftee->display_name,
+                groupTitle: $santa->title,
+                market: $santa->market,
+                meUrl: url($current->url("santa/{$santa->id}/me/{$member->join_token}")),
+                budget: $santa->budget_max === null
+                    ? null
+                    : Number::currency($santa->budget_max / 100, $santa->market->currency()),
+                exchangeDate: $santa->exchange_date?->toFormattedDateString(),
+                gifteeHasList: $giftee->wishlist_id !== null,
+            ));
+        }
     }
 
     /**

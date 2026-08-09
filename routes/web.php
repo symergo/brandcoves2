@@ -18,6 +18,7 @@ use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\ListQuizController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\ProductController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\SecretSantaController;
 use App\Http\Controllers\SerendipityController;
 use App\Http\Controllers\SharedListController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\WishlistCollaboratorController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
 use Illuminate\Support\Facades\Route;
@@ -146,6 +148,18 @@ Route::prefix('{market}')->group(function () {
     Route::patch('/list-items/{item}', [WishlistItemController::class, 'update'])->name('items.update');
     Route::delete('/list-items/{item}', [WishlistItemController::class, 'destroy'])->name('items.destroy');
 
+    /*
+     * Co-givers. Only the owner manages the roster: a collaborator who could
+     * invite more collaborators is a list that quietly grows an audience, and
+     * the whole point of a `for_someone` list is that its subject never sees it.
+     */
+    Route::post('/lists/{list}/collaborators', [WishlistCollaboratorController::class, 'store'])
+        ->middleware('auth')
+        ->name('lists.collaborators.store');
+    Route::delete('/lists/{list}/collaborators/{collaborator}', [WishlistCollaboratorController::class, 'destroy'])
+        ->middleware('auth')
+        ->name('lists.collaborators.destroy');
+
     Route::post('/recipients', [RecipientController::class, 'store'])->name('recipients.store');
     Route::patch('/recipients/{recipient}', [RecipientController::class, 'update'])->name('recipients.update');
     Route::delete('/recipients/{recipient}', [RecipientController::class, 'destroy'])->name('recipients.destroy');
@@ -178,6 +192,21 @@ Route::prefix('{market}')->group(function () {
 
     /*
     |----------------------------------------------------------------------
+    | "How well do you know them?"
+    |----------------------------------------------------------------------
+    |
+    | A quiz over somebody's list. Playable signed-out, because asking for a
+    | signup before the first guess loses the player — and the share artefact is
+    | a score, which is worthless if nobody ever gets one.
+    */
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::post('/lists/{list}/quiz', [ListQuizController::class, 'store'])->name('quiz.store');
+        Route::get('/q/{token}', [ListQuizController::class, 'show'])->name('quiz.show');
+        Route::post('/q/{token}', [ListQuizController::class, 'submit'])->name('quiz.submit');
+    });
+
+    /*
+    |----------------------------------------------------------------------
     | Secret Santa
     |----------------------------------------------------------------------
     |
@@ -194,6 +223,9 @@ Route::prefix('{market}')->group(function () {
     });
 
     Route::middleware('throttle:60,1')->group(function () {
+        // The hub and the create form. Public so the page can explain itself
+        // before asking for an account.
+        Route::get('/santa', [SecretSantaController::class, 'index'])->name('santa');
         Route::get('/santa/{group}', [SecretSantaController::class, 'show'])->name('santa.show');
         Route::post('/santa/{group}/join/{token}', [SecretSantaController::class, 'join'])->name('santa.join');
         Route::get('/santa/{group}/me/{token}', [SecretSantaController::class, 'me'])->name('santa.me');

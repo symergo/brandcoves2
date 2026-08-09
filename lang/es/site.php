@@ -17,6 +17,7 @@ return [
         'main' => 'Menú principal',
         'skip' => 'Ir al contenido',
         'choose_market' => 'Elige tu región',
+        'santa' => 'Amigo invisible',
     ],
 
     'home' => [
@@ -362,6 +363,7 @@ return [
         'follow' => 'Seguir',
         'unfollow' => 'Dejar de seguir',
         'followed' => 'Ya los sigues.',
+        'shared_intro_anon' => 'Toca algo para indicar que lo regalas tu. Quien hizo esta lista no vera quien ha reservado que.',
     ],
 
     'recipients' => [

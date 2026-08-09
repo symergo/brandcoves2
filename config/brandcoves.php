@@ -203,6 +203,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Editorial API
+    |--------------------------------------------------------------------------
+    |
+    | Machine access to the writing surfaces. See docs/features/editorial-api.md.
+    |
+    */
+    'editorial_api' => [
+        // Matches the cap EditionBuilder applies to model-written prose, so a
+        // Cove reads the same length whoever wrote it — and so an author is
+        // told at the door rather than having their last paragraph silently
+        // truncated on the way into the edition.
+        'max_editorial_chars' => 4000,
+
+        // Reads are generous on purpose: researching a Cove means looking at a
+        // lot of products, and an author who finds lookup expensive starts
+        // guessing product ids instead, which is the failure the lookup exists
+        // to prevent.
+        'reads_per_minute' => 120,
+
+        // Writes are tighter. Each one rewrites rows, and a writer stuck in a
+        // retry loop is the realistic way this gets hammered.
+        'writes_per_minute' => 20,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Wishlists
     |--------------------------------------------------------------------------
     */

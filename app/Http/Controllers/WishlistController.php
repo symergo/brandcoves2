@@ -11,6 +11,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
 use App\Support\CurrentMarket;
+use App\Support\ListAccess;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -83,8 +84,10 @@ class WishlistController extends Controller
     {
         $owner = Owner::fromRequest($request);
 
-        $wishlist = $owner->scope(Wishlist::query())
-            ->with(['recipient', 'items.group'])
+        // Collaborators see it too — a co-giver invited to help choose has to
+        // be able to open the thing they were invited to.
+        $wishlist = ListAccess::scope(Wishlist::query(), $owner)
+            ->with(['recipient', 'items.group', 'collaborators.user'])
             ->find($list);
 
         if ($wishlist === null) {
@@ -97,6 +100,20 @@ class WishlistController extends Controller
 
         return Inertia::render('Lists/Show', [
             'list' => $this->summarise($wishlist, $current),
+
+            'access' => [
+                'isOwner' => ListAccess::isOwner($wishlist, $owner),
+                'canEdit' => ListAccess::canEdit($wishlist, $owner),
+            ],
+
+            // Only the owner manages the roster, so only the owner is shown it.
+            'collaborators' => ListAccess::isOwner($wishlist, $owner)
+                ? $wishlist->collaborators->map(fn ($c) => [
+                    'id' => $c->id,
+                    'name' => $c->user?->name ?? $c->user?->email,
+                    'role' => $c->role->value,
+                ])->all()
+                : [],
 
             /*
              * Who this list is about, and whether they can speak for themselves

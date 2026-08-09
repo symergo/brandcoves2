@@ -22,6 +22,7 @@ cannot be recovered from a diff.
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | In progress |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
+| [editorial-api.md](editorial-api.md) | Content / Operations | Active |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |

@@ -64,6 +64,26 @@ class ScrubDatabase extends Command
 
             DB::statement('UPDATE wishlist_items SET note = NULL');
 
+            /*
+             * Secret Santa members: real names and email addresses, typed in by
+             * people who never made an account here.
+             *
+             * The assignment goes too. It is encrypted with the production key,
+             * which is not on this machine, so it is undecryptable noise —
+             * and a pairing is exactly the kind of thing that should not survive
+             * a copy onto a laptop in a synced folder.
+             */
+            DB::statement(<<<'SQL'
+                UPDATE secret_santa_members
+                SET email = 'santa-' || id || '@scrubbed.invalid',
+                    display_name = 'Member ' || id,
+                    assigned_member_id = NULL,
+                    exclusions = '[]'::jsonb,
+                    join_token = gen_random_uuid()
+            SQL);
+
+            DB::statement('UPDATE secret_santa_groups SET invite_token = gen_random_uuid()');
+
             // Raw email addresses for logged-out alert subscribers.
             DB::statement('UPDATE price_alerts   SET email = NULL WHERE email IS NOT NULL');
             DB::statement('UPDATE restock_alerts SET email = NULL WHERE email IS NOT NULL');
@@ -85,6 +105,17 @@ class ScrubDatabase extends Command
             // Encrypted with the production key, which is not on this machine —
             // undecryptable noise here, and a liability if the key ever leaks.
             DB::statement('DELETE FROM connector_settings');
+
+            /*
+             * Editorial API keys.
+             *
+             * Only hashes, so a copy is not a usable credential — but the row is
+             * what makes a key work, and leaving production's rows in a laptop
+             * database means a production key authenticates against local data
+             * and a local key does not exist. Both directions are confusing and
+             * neither is useful. Mint a local one with `bc:api-token`.
+             */
+            DB::statement('DELETE FROM api_tokens');
         });
 
         $this->info(sprintf(
