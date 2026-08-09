@@ -108,7 +108,7 @@ return [
         'empty' => 'Rien de :brand n\'est en stock pour le moment.',
         'empty_hint' => 'Les prix et les stocks sont revérifiés deux fois par jour : cette page change.',
 
-        'lead_1' => 'Vous cherchez :brand ? Nous suivons :count produits :brand et comparons ce que chaque boutique en demande.',
+        'lead' => 'Vous cherchez :brand ? Nous suivons :count produits :brand et comparons ce que chaque boutique en demande.',
         'lead_2' => 'Le catalogue compte actuellement :count produits :brand, avec toutes les offres de chacun côte à côte.',
         'lead_3' => 'Voici tous les produits :brand pour lesquels nous trouvons un prix en direct — :count au total, chez les boutiques qui vendent réellement la marque.',
         'lead_4' => ':count produits :brand, une page, le prix de chaque boutique sur chacun d\'eux.',

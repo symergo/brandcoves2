@@ -46,14 +46,6 @@ use Illuminate\Support\Number;
 class BrandCopy
 {
     /**
-     * How many opening variants exist per language.
-     *
-     * Must match the number of `brand.lead_*` keys. A mismatch shows a raw
-     * translation key to a reader, so `BrandCopyTest` asserts the count.
-     */
-    public const LEAD_VARIANTS = 4;
-
-    /**
      * @return array{lead: string, paragraphs: list<string>}
      */
     public function forBrand(BrandStat $stat, Market $market): array
@@ -75,15 +67,17 @@ class BrandCopy
      * The opening line.
      *
      * Deliberately the only sentence that does not depend on a fact beyond the
-     * product count, because it is the one sentence that must always exist.
+     * product count, because it is the one sentence that must always exist — and
+     * therefore the slot where having several variants matters most.
+     *
+     * The variant used to be picked here by `hash(brand) % 4` against four
+     * hard-coded `lead_N` keys. `CopyBank` does the same job with an arbitrary
+     * number of variants, weights, and an editor able to add a fifth without a
+     * deploy — so the constant and the modulo are gone.
      */
     private function lead(BrandStat $stat, Market $market): string
     {
-        // Stable variant per brand: a page that reworded itself between crawls
-        // would read as instability rather than variety.
-        $variant = (hexdec(substr(hash('sha256', $stat->brand), 0, 8)) % self::LEAD_VARIANTS) + 1;
-
-        return $this->line("lead_{$variant}", $market, [
+        return $this->line('lead', $market, [
             'brand' => $stat->brand,
             'count' => Number::format($stat->product_count, locale: $market->hrefLang()),
         ]);
@@ -193,10 +187,22 @@ class BrandCopy
         return $this->line('comparison', $market, ['brand' => $stat->brand]);
     }
 
-    /** @param array<string, mixed> $replace */
+    /**
+     * One line, drawn from its editable variants.
+     *
+     * @param  array<string, mixed>  $replace
+     */
     private function line(string $key, Market $market, array $replace): string
     {
-        return __("site.brand.{$key}", array_filter($replace, fn ($v) => $v !== null), $market->language());
+        return app(CopyBank::class)->line(
+            'brand_intro',
+            $key,
+            $market,
+            $replace,
+            // The brand is the page, so it is the rotation key. Two brands
+            // drawing from the same variants reliably get different ones.
+            (string) ($replace['brand'] ?? ''),
+        );
     }
 
     private function money(int $cents, Market $market): string

@@ -108,7 +108,7 @@ return [
         'empty' => 'Er is momenteel niets van :brand op voorraad.',
         'empty_hint' => 'Prijzen en voorraad worden twee keer per dag opnieuw gecontroleerd, dus deze pagina verandert.',
 
-        'lead_1' => 'Op zoek naar :brand? We volgen :count producten van :brand en vergelijken wat elke winkel ervoor rekent.',
+        'lead' => 'Op zoek naar :brand? We volgen :count producten van :brand en vergelijken wat elke winkel ervoor rekent.',
         'lead_2' => 'Er staan nu :count producten van :brand in de catalogus, met alle aanbiedingen per product naast elkaar.',
         'lead_3' => 'Dit is elk product van :brand waarvoor we een actuele prijs vinden — :count in totaal, bij de winkels die het merk echt verkopen.',
         'lead_4' => ':count producten van :brand, één pagina, de prijs van elke winkel erbij.',

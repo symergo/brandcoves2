@@ -186,6 +186,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Editable page copy
+    |--------------------------------------------------------------------------
+    |
+    | The templated prose on search and brand pages is editable in admin, with
+    | several variants per slot. This decides how often a given page swaps to a
+    | different one.
+    |
+    | Not per request, deliberately. A page whose wording changes on every load
+    | cannot be cached, flickers for anyone who hits back, and shows a crawler a
+    | different document each fetch — which reads as an unstable page rather than
+    | a fresh one. The draw is deterministic given the page and the period, and
+    | the period is what moves.
+    |
+    |   weekly   default. Stable through any crawl window, visibly different a
+    |            month later. ISO weeks, so the boundary is a Monday.
+    |   daily    faster churn. Fine, and it costs edge-cache hit rate.
+    |   monthly  slower.
+    |   static   one variant per page, forever — the setting for comparing two
+    |            rewrites rather than churning through them.
+    |
+    | Variety ACROSS pages is always on and is not affected by this: the page's
+    | own identity is in the seed, so two brands never share a draw by default.
+    */
+    'copy' => [
+        'rotation' => env('COPY_ROTATION', 'weekly'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Connectors
     |--------------------------------------------------------------------------
     */

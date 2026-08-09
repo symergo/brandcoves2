@@ -108,7 +108,7 @@ return [
         'empty' => 'Ahora mismo no hay nada de :brand en stock.',
         'empty_hint' => 'Los precios y el stock se revisan dos veces al día, así que esta página cambia.',
 
-        'lead_1' => '¿Buscas :brand? Seguimos :count productos de :brand y comparamos lo que cobra cada tienda por ellos.',
+        'lead' => '¿Buscas :brand? Seguimos :count productos de :brand y comparamos lo que cobra cada tienda por ellos.',
         'lead_2' => 'Ahora mismo hay :count productos de :brand en el catálogo, con todas las ofertas de cada uno una al lado de otra.',
         'lead_3' => 'Estos son todos los productos de :brand para los que encontramos un precio en vivo — :count en total, en las tiendas que realmente venden la marca.',
         'lead_4' => ':count productos de :brand, una página, el precio de cada tienda en cada uno.',

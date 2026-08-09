@@ -236,6 +236,46 @@ From `search_log`, matched with the `<%` word-similarity operator — never `%`,
 with real results, which is the demand signal no competitor has, and the outbound links that stop a
 results page being a leaf a crawler reaches and then stops at.
 
+### Editable, and rotating
+
+The copy is not in the language files any more — or rather, it is, but only as the fallback.
+`copy_templates` holds **variants** of each **slot**, editable at `/admin` under *Page copy*, and
+`CopyBank` draws one per page.
+
+A slot is a position in the page's argument ("the second sentence about comparing"), and the code
+only ever asks for the slot. Add a fifth opening line for brand pages and a fifth of them start using
+it, immediately, with no deploy.
+
+**Two axes of rotation.** *Across pages*, always: the page's own identity — the brand slug, the search
+term — is in the seed, so two pages drawing from the same three variants reliably get different ones.
+*Over time*, on a cadence: `COPY_ROTATION` is `weekly` by default, with `daily`, `monthly` and
+`static` available.
+
+**Not per request**, and that is the one decision worth defending. It is the obvious reading of
+"rotate constantly" and the only version that would hurt: a page whose wording changes on every load
+cannot be cached at the edge, flickers for anyone who hits back or opens two tabs, and shows a
+crawler a different document on every fetch — which reads as an *unstable* page rather than a fresh
+one. A search engine's judgement of "this content changes" is about substance, not about which of
+three synonyms for "compare" is in paragraph two. So the draw is deterministic given (slot, page,
+period) and the period is what moves.
+
+The slot is in the seed as well as the page, or every slot on a page would draw the same index and a
+site with six variants each would have six documents rather than many.
+
+**The fallback is load-bearing.** A slot with no enabled variant renders from the language file. That
+means `copy_templates` can be empty, half-filled or wrong and every page still shows the copy the
+site shipped with — which is what makes the table safe to hand to an editor. The worst they can do is
+make a page ordinary again. `bc:seed-copy` imports the shipped lines as the first variant of each
+slot, so the admin opens populated rather than blank; it never touches a slot that already has a row.
+
+**Placeholders are validated per slot.** `CopySlots` declares which each may contain and the form
+refuses the rest. A typo'd `:cont` renders literally, and a placeholder the slot cannot supply is
+worse: `:percent` in a sentence that renders even when nothing is discounted asserts a 0% saving.
+Two tests hold the shipped copy to the same rule.
+
+This also retired `BrandCopy::LEAD_VARIANTS` — the four hard-coded openings picked by
+`hash(brand) % 4` are now four rows anyone can edit, reweight, or add a fifth to.
+
 ### Where it does not appear
 
 Null on any page that is `noindex` anyway: page 2+, a filtered search, a sorted brand page. Repeating

@@ -19,6 +19,7 @@ use App\Services\Discover\Retrievers\SpectrumRetriever;
 use App\Services\Discover\Retrievers\TwoTowerRetriever;
 use App\Services\Discover\Retrievers\ValueRetriever;
 use App\Services\Seo\BrandLinker;
+use App\Services\Seo\CopyBank;
 use App\Services\Seo\PageMeta;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\URL;
@@ -39,6 +40,16 @@ class AppServiceProvider extends ServiceProvider
         // would serve yesterday's answer until the process restarted, quietly
         // linking to brand pages that no longer exist.
         $this->app->scoped(BrandLinker::class);
+
+        /*
+         * Scoped for the same reason, and it matters more here: PageNarrative
+         * asks for around thirty slots on one render, each through app(). Without
+         * a shared instance every one of those is a fresh object with an empty
+         * memo, so the two-minute cache is hit thirty times per page instead of
+         * once. Scoped rather than singleton so an editor's save is visible on
+         * the next request rather than after an Octane worker restarts.
+         */
+        $this->app->scoped(CopyBank::class);
 
         // The single place that knows which connectors exist. Adding a source
         // is a registration here plus a config entry — the ingestion pipeline

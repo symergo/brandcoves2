@@ -103,9 +103,15 @@ return [
      * App\Services\Seo\BrandCopy. Rewriting one of them into a claim the
      * catalogue cannot back up is a bug, not a copy tweak.
      *
-     * The four `lead_*` variants exist because thousands of pages opening with
-     * one identical sentence is a pattern a crawler sees in a single sample.
-     * BrandCopy::LEAD_VARIANTS must match how many there are.
+     * THIS FILE IS THE FALLBACK, NOT THE SOURCE. These lines are what a page
+     * renders when the `copy_templates` table has no enabled variant for the
+     * slot — which is what makes that table safe to hand to an editor: deleting
+     * every row restores exactly this. `bc:seed-copy` imports them as the first
+     * variant of each slot.
+     *
+     * `lead_2` … `lead_4` are seed material only. Nothing reads them directly:
+     * the `lead` slot falls back to `lead`, and the alternatives exist so an
+     * editor opens the admin with four opening lines rather than one.
      */
     'brand' => [
         'title' => ':brand',
@@ -122,7 +128,7 @@ return [
         'empty' => 'Nothing from :brand is in stock right now.',
         'empty_hint' => 'Prices and stock are re-checked twice a day, so this page changes.',
 
-        'lead_1' => 'Looking for :brand? We are tracking :count :brand products and comparing what every shop charges for them.',
+        'lead' => 'Looking for :brand? We are tracking :count :brand products and comparing what every shop charges for them.',
         'lead_2' => 'There are :count :brand products in the catalogue right now, with every offer for each one priced side by side.',
         'lead_3' => 'This is every :brand product we can find a live price for — :count of them, across the shops that actually stock the brand.',
         'lead_4' => ':count :brand products, one page, every shop\'s price on each of them.',

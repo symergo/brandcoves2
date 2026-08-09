@@ -307,10 +307,29 @@ class PageNarrative
             ->all();
     }
 
-    /** @param array<string, string|int> $replace */
+    /**
+     * One line, drawn from its editable variants.
+     *
+     * `$key` is still `namespace.slot` so the three dozen call sites did not have
+     * to change; the namespace maps to a surface and the rotation is `CopyBank`'s
+     * business.
+     *
+     * The rotation key is read out of `$replace` rather than threaded through as
+     * a parameter, because it is already there: the page's identity is `:term` on
+     * a search page and `:brand` on a brand page, and those are exactly the
+     * values the copy interpolates. Passing it separately would create a second
+     * source of truth that could disagree with the first.
+     *
+     * @param  array<string, string|int|null>  $replace
+     */
     private function line(string $key, Market $market, array $replace): string
     {
-        return __("site.{$key}", $replace, $market->language());
+        [$namespace, $slot] = explode('.', $key, 2);
+
+        $surface = $namespace === 'brand_narrative' ? 'brand' : 'search';
+        $rotationKey = (string) ($replace['brand'] ?? $replace['term'] ?? '');
+
+        return app(CopyBank::class)->line($surface, $slot, $market, $replace, $rotationKey);
     }
 
     private function money(int $cents, Market $market): string

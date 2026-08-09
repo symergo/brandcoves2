@@ -41,6 +41,7 @@ php artisan bc:refresh-discovery      # giftability → serendipity → brand st
 php artisan bc:plan-coves             # draft the editorial calendar 120 days ahead
 php artisan bc:make-admin             # create an admin; refuses a password in argv (visible in ps)
 php artisan bc:check-bol              # prove the bol credentials; prints lengths, never values
+php artisan bc:seed-copy              # import shipped page copy into the editable copy bank
 php artisan bc:awin-feeds             # discover Awin advertiser feeds, register them per market
 php artisan bc:ingest                 # run feed ingestion now
 php artisan bc:scrub --force          # MANDATORY after restoring a production dump
