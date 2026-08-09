@@ -79,6 +79,8 @@ class SitemapController extends Controller
         abort_if($resolved === null, 404);
 
         $xml = Cache::remember("bc:sitemap:{$market}:{$page}", 3600, function () use ($resolved, $page): string {
+            $alternates = app(Alternates::class);
+
             $urls = [
                 ['loc' => url("/{$resolved->value}"), 'priority' => '1.0', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/search"), 'priority' => '0.5', 'changefreq' => 'weekly'],
@@ -163,25 +165,37 @@ class SitemapController extends Controller
                     ];
                 });
 
-            ProductGroup::query()
+            $groups = ProductGroup::query()
                 ->forMarket($resolved)
                 ->presentable()
                 ->orderBy('id')
                 ->forPage($page, self::CHUNK)
-                ->get(['id', 'slug', 'updated_at', 'merchant_count'])
-                ->each(function (ProductGroup $group) use (&$urls, $resolved): void {
-                    $urls[] = [
-                        'loc' => url("/{$resolved->value}/p/{$group->id}/{$group->slug}"),
-                        'lastmod' => $group->updated_at?->toAtomString(),
-                        // A product several shops carry is a better landing page
-                        // than one with a single offer — that is the comparison
-                        // this site exists to show.
-                        'priority' => $group->merchant_count > 1 ? '0.8' : '0.6',
-                        'changefreq' => 'daily',
-                    ];
-                });
+                ->get(['id', 'slug', 'updated_at', 'merchant_count', 'identity_key']);
 
-            $alternates = app(Alternates::class);
+            /*
+             * Product alternates, batched.
+             *
+             * Resolved per URL this cost two queries each — ten thousand for one
+             * file, fifty seconds to build, and a 500 for every crawler because
+             * the proxy gives up at thirty. Precomputed here they are one query
+             * and the alternates travel with the URL.
+             */
+            $productAlternates = $alternates->forProducts(
+                $groups->pluck('identity_key', 'id')->all(),
+            );
+
+            $groups->each(function (ProductGroup $group) use (&$urls, $resolved, $productAlternates): void {
+                $urls[] = [
+                    'loc' => url("/{$resolved->value}/p/{$group->id}/{$group->slug}"),
+                    'lastmod' => $group->updated_at?->toAtomString(),
+                    'alternates' => $productAlternates[$group->id] ?? [],
+                    // A product several shops carry is a better landing page
+                    // than one with a single offer — that is the comparison
+                    // this site exists to show.
+                    'priority' => $group->merchant_count > 1 ? '0.8' : '0.6',
+                    'changefreq' => 'daily',
+                ];
+            });
 
             $body = implode('', array_map(function (array $url) use ($alternates, $resolved): string {
                 $xml = '<url><loc>'.e($url['loc']).'</loc>';
@@ -200,7 +214,10 @@ class SitemapController extends Controller
                  * never disagree. They used to be computed separately, and a
                  * product's alternates were four links to 404s in both places.
                  */
-                foreach ($alternates->for(parse_url($url['loc'], PHP_URL_PATH) ?? '/', $resolved) as $hrefLang => $href) {
+                $links = $url['alternates']
+                    ?? $alternates->for(parse_url($url['loc'], PHP_URL_PATH) ?? '/', $resolved);
+
+                foreach ($links as $hrefLang => $href) {
                     $xml .= '<xhtml:link rel="alternate" hreflang="'.$hrefLang.'" href="'.e($href).'"/>';
                 }
 

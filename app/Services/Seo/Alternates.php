@@ -53,6 +53,54 @@ class Alternates
     }
 
     /**
+     * Product alternates for a whole page of groups, in one query.
+     *
+     * `for()` is the right shape for a page rendering one product and the wrong
+     * shape for a sitemap: it costs two queries per URL, so a 5,000-URL sitemap
+     * file ran ten thousand of them and took fifty seconds to build — past the
+     * proxy's thirty-second timeout, so every crawler that asked for it got a
+     * 500. The file generated perfectly from the CLI, which is why it looked
+     * fine.
+     *
+     * One query here, keyed by identity — which is what "the same product"
+     * means across markets. The id differs per market and is meaningless
+     * across one.
+     *
+     * @param  array<int, string>  $identityByGroupId  group id => identity_key
+     * @return array<int, array<string, string>> group id => (hreflang => URL)
+     */
+    public function forProducts(array $identityByGroupId): array
+    {
+        if ($identityByGroupId === []) {
+            return [];
+        }
+
+        $byIdentity = [];
+
+        ProductGroup::query()
+            ->whereIn('identity_key', array_values(array_unique($identityByGroupId)))
+            ->presentable()
+            ->get(['id', 'market', 'slug', 'identity_key'])
+            ->each(function (ProductGroup $sibling) use (&$byIdentity): void {
+                $byIdentity[$sibling->identity_key][$sibling->market->hrefLang()] =
+                    url("/{$sibling->market->value}/p/{$sibling->id}/{$sibling->slug}");
+            });
+
+        $out = [];
+
+        foreach ($identityByGroupId as $groupId => $identity) {
+            $alternates = $byIdentity[$identity] ?? [];
+
+            // Same rule as the per-page path: a product with no sibling anywhere
+            // is a single-market page, and a self-referential annotation alone is
+            // pointless noise.
+            $out[$groupId] = count($alternates) > 1 ? $alternates : [];
+        }
+
+        return $out;
+    }
+
+    /**
      * The same physical product in other markets.
      *
      * Joined on `identity_key`, which is what "the same product" means here —
