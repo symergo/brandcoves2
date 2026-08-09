@@ -61,12 +61,19 @@ export default function SelfDescribe({
     listId,
     suggestions = [],
 }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const { market, auth } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const token = window.location.pathname.split('/').filter(Boolean).pop()
     const base = `/${market.key}/for/${token}`
 
     const [query, setQuery] = useState('')
+
+    /*
+     * Describing yourself needs only the link; keeping products needs an
+     * account, like every other list. "This is me" above is the short path —
+     * it signs them in and binds this person to the account in one go.
+     */
+    const canSave = Boolean(auth.user)
 
     const form = useForm({
         interests: person.interests,
@@ -261,15 +268,17 @@ export default function SelfDescribe({
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        router.post(
-                                            `/${market.key}/list-items`,
-                                            { group_id: suggestion.id, wishlist_id: listId },
-                                            { preserveScroll: true },
-                                        )
+                                        canSave
+                                            ? router.post(
+                                                  `/${market.key}/list-items`,
+                                                  { group_id: suggestion.id, wishlist_id: listId },
+                                                  { preserveScroll: true },
+                                              )
+                                            : router.get(`/${market.key}/login`)
                                     }
                                     className="mt-3 w-full rounded-lg border border-line px-3 py-1.5 text-sm"
                                 >
-                                    {t('lists.save')}
+                                    {canSave ? t('lists.save') : t('nav.sign_in')}
                                 </button>
                             </li>
                         ))}

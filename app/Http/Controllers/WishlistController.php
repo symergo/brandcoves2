@@ -32,7 +32,7 @@ class WishlistController extends Controller
         // Everybody has one, and it is created on the first visit rather than
         // on the first save — an empty lists page with nothing on it does not
         // tell you what the page is for.
-        if ($owner->exists()) {
+        if ($owner->isSignedIn()) {
             app(DefaultList::class)->for($owner, $current);
         }
 

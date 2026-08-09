@@ -44,7 +44,31 @@ question and able to disagree with it — so claiming ended up gated on
 about the person it was about. Replaced by `kind` (`mine` | `for_someone`); see
 [gifting-lenses.md](gifting-lenses.md).
 
-## Anonymous first
+## Keeping a list requires an account
+
+**Reversed deliberately.** This feature began anonymous-first, and the argument
+below is a real one — a save is the moment somebody is most willing to act and
+least willing to fill in a form. What it cost was the thing that matters more:
+a list belonging to a cookie cannot be opened on a second device, does not
+survive clearing the browser, and has no address a reminder could ever reach.
+It looked like a feature and behaved like a draft.
+
+Two things stay open to anonymous visitors, because requiring a login there
+breaks the feature rather than improving it:
+
+- **Claiming on a shared list.** That person followed a link once. Making them
+  register to say "I'll get this" is how a gift list stops working as a
+  coordination tool.
+- **`/for/{token}`.** The token *is* the credential; describing yourself needs
+  no account. Adding products does, and "This is me" is the short path.
+
+`Owner`, `AnonymousIdentity` and `IdentityMerger` all remain — claiming, quiz
+attempts and pick reactions still hang off a cookie identity, and a list built
+before the rule changed still merges into an account at sign-in.
+
+### The original reasoning, kept for the record
+
+
 
 Saving a product does not require an account. `App\Support\Owner` unifies the two identities:
 

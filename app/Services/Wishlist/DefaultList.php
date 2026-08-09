@@ -60,6 +60,11 @@ class DefaultList
      */
     public function for(Owner $owner, CurrentMarket $current): Wishlist
     {
+        // Signed in by the time this is reached: keeping a list requires an
+        // account, so a default list for a cookie identity would be an orphan
+        // nobody could reach from anywhere else.
+        abort_if($owner->user === null, 403);
+
         $existing = $owner->scope(Wishlist::query())
             ->where('is_default', true)
             ->first();

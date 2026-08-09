@@ -43,7 +43,7 @@ class GiftCoveController extends Controller
         // Everyone gets "My wishlist", created here on the first visit rather
         // than on the first save — a page describing lists should not describe
         // one you do not have yet.
-        $mine = $owner->exists() ? app(DefaultList::class)->for($owner, $current) : null;
+        $mine = $owner->isSignedIn() ? app(DefaultList::class)->for($owner, $current) : null;
 
         $lists = $owner->exists()
             ? $owner->scope(Wishlist::query())

@@ -33888,7 +33888,7 @@ function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) 
 * picker directly rather than saving somewhere unstated and making them undo it.
 */
 function SaveToList({ groupId, source, externalId, title, imageUrl, price, compact = false }) {
-	const { market } = usePage().props;
+	const { market, auth } = usePage().props;
 	const { t } = useTranslations();
 	const [saved, setSaved] = (0, import_react.useState)(false);
 	const [busy, setBusy] = (0, import_react.useState)(false);
@@ -33950,8 +33950,16 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 			window.removeEventListener("resize", place);
 		};
 	}, [open, place]);
+	function requireAccount() {
+		if (auth.user) return true;
+		router.get(`/${market.key}/login`);
+		return false;
+	}
+	function openPicker() {
+		if (requireAccount()) setOpen((v) => !v);
+	}
 	function save(extra = {}) {
-		if (busy) return;
+		if (busy || !requireAccount()) return;
 		setBusy(true);
 		router.post(`/${market.key}/list-items`, {
 			...payload,
@@ -34061,7 +34069,7 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 	if (compact) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 		ref: trigger,
 		type: "button",
-		onClick: () => setOpen((v) => !v),
+		onClick: openPicker,
 		"aria-expanded": open,
 		"aria-haspopup": "menu",
 		"aria-label": saved ? t("lists.saved") : t("lists.save_to_list"),
@@ -34094,7 +34102,7 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 				ref: trigger,
 				type: "button",
-				onClick: () => setOpen((v) => !v),
+				onClick: openPicker,
 				"aria-expanded": open,
 				"aria-haspopup": "menu",
 				"aria-label": t("lists.save_to_list"),
@@ -37472,11 +37480,12 @@ var SelfDescribe_exports = /* @__PURE__ */ __exportAll({ default: () => SelfDesc
 * this pan" ends the conversation.
 */
 function SelfDescribe({ person, options, canClaim, items, listId, suggestions = [] }) {
-	const { market } = usePage().props;
+	const { market, auth } = usePage().props;
 	const { t } = useTranslations();
 	const token = window.location.pathname.split("/").filter(Boolean).pop();
 	const base = `/${market.key}/for/${token}`;
 	const [query, setQuery] = (0, import_react.useState)("");
+	const canSave = Boolean(auth.user);
 	const form = useForm({
 		interests: person.interests,
 		vibe: person.vibe ?? "",
@@ -37633,12 +37642,12 @@ function SelfDescribe({ person, options, canClaim, items, listId, suggestions = 
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 								type: "button",
-								onClick: () => router.post(`/${market.key}/list-items`, {
+								onClick: () => canSave ? router.post(`/${market.key}/list-items`, {
 									group_id: suggestion.id,
 									wishlist_id: listId
-								}, { preserveScroll: true }),
+								}, { preserveScroll: true }) : router.get(`/${market.key}/login`),
 								className: "mt-3 w-full rounded-lg border border-line px-3 py-1.5 text-sm",
-								children: t("lists.save")
+								children: canSave ? t("lists.save") : t("nav.sign_in")
 							})
 						]
 					}, suggestion.id))

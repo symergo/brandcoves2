@@ -139,21 +139,30 @@ Route::prefix('{market}')->group(function () {
     | Wishlists
     |----------------------------------------------------------------------
     |
-    | No auth middleware: lists work before signup, keyed on the anonymous
-    | cookie identity, and merge into the account at sign-in. Requiring a login
-    | to save a product is how you lose the visit.
+    | Keeping a list requires an account. A list belonging to a cookie cannot
+    | be reached from a second device, does not survive clearing the browser,
+    | and has no address a reminder could ever be sent to — so it looks like a
+    | feature and behaves like a draft.
+    |
+    | Reading stays open, and so does claiming on somebody else's shared list:
+    | the person claiming followed a link once, and making them register to say
+    | "I will get this" is how a gift list stops working as a coordination tool.
     */
     Route::get('/lists', [WishlistController::class, 'index'])->name('lists');
-    Route::post('/lists', [WishlistController::class, 'store'])->name('lists.store');
     Route::get('/lists/{list}', [WishlistController::class, 'show'])->name('lists.show');
-    Route::patch('/lists/{list}', [WishlistController::class, 'update'])->name('lists.update');
-    Route::delete('/lists/{list}', [WishlistController::class, 'destroy'])->name('lists.destroy');
 
     // Where a save could go. JSON, fetched by the save picker on first open.
     Route::get('/list-options', [WishlistItemController::class, 'options'])->name('items.options');
-    Route::post('/list-items', [WishlistItemController::class, 'store'])->name('items.store');
-    Route::patch('/list-items/{item}', [WishlistItemController::class, 'update'])->name('items.update');
-    Route::delete('/list-items/{item}', [WishlistItemController::class, 'destroy'])->name('items.destroy');
+
+    Route::middleware('auth')->group(function () {
+        Route::post('/lists', [WishlistController::class, 'store'])->name('lists.store');
+        Route::patch('/lists/{list}', [WishlistController::class, 'update'])->name('lists.update');
+        Route::delete('/lists/{list}', [WishlistController::class, 'destroy'])->name('lists.destroy');
+
+        Route::post('/list-items', [WishlistItemController::class, 'store'])->name('items.store');
+        Route::patch('/list-items/{item}', [WishlistItemController::class, 'update'])->name('items.update');
+        Route::delete('/list-items/{item}', [WishlistItemController::class, 'destroy'])->name('items.destroy');
+    });
 
     /*
      * Co-givers. Only the owner manages the roster: a collaborator who could

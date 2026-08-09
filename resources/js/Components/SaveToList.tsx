@@ -52,7 +52,7 @@ export default function SaveToList({
     price?: number | null
     compact?: boolean
 }) {
-    const { market } = usePage<SharedProps>().props
+    const { market, auth } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
     const [saved, setSaved] = useState(false)
@@ -123,8 +123,31 @@ export default function SaveToList({
         }
     }, [open, place])
 
+    /*
+     * Sign in first.
+     *
+     * Enforced on the route too; done here as well so the visitor gets the
+     * login page rather than a silent 302 swallowed by an Inertia POST.
+     */
+    function requireAccount(): boolean {
+        if (auth.user) {
+            return true
+        }
+
+        router.get(`/${market.key}/login`)
+
+        return false
+    }
+
+    function openPicker() {
+        if (requireAccount()) {
+            setOpen((v) => !v)
+        }
+    }
+
     function save(extra: Record<string, unknown> = {}) {
-        if (busy) return
+        if (busy || !requireAccount()) return
+
         setBusy(true)
 
         router.post(
@@ -266,7 +289,7 @@ export default function SaveToList({
                 <button
                     ref={trigger}
                     type="button"
-                    onClick={() => setOpen((v) => !v)}
+                    onClick={openPicker}
                     aria-expanded={open}
                     aria-haspopup="menu"
                     aria-label={saved ? t('lists.saved') : t('lists.save_to_list')}
@@ -312,7 +335,7 @@ export default function SaveToList({
             <button
                 ref={trigger}
                 type="button"
-                onClick={() => setOpen((v) => !v)}
+                onClick={openPicker}
                 aria-expanded={open}
                 aria-haspopup="menu"
                 aria-label={t('lists.save_to_list')}

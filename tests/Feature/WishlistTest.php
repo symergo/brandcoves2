@@ -50,16 +50,35 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
-    public function saving_a_product_without_an_account_creates_a_list(): void
+    public function saving_a_product_without_an_account_is_refused(): void
     {
         $group = $this->group();
 
-        // The common path: someone presses Save having never made a list and
-        // having never signed up. Asking them to do either first loses them.
+        /*
+         * Keeping a list requires an account.
+         *
+         * The reverse of how this started, and deliberately: a list belonging
+         * to a cookie cannot be reached from a second device, does not survive
+         * clearing the browser, and has no address a reminder could be sent to.
+         * It looked like a feature and behaved like a draft.
+         */
         $this->get('/be-nl');
-        $this->post('/be-nl/list-items', ['group_id' => $group->id])->assertRedirect();
+        $this->post('/be-nl/list-items', ['group_id' => $group->id])
+            ->assertRedirect('/be-nl/login');
 
-        $this->assertSame(1, Wishlist::query()->count());
+        $this->assertSame(0, Wishlist::query()->count());
+        $this->assertSame(0, WishlistItem::query()->count());
+    }
+
+    #[Test]
+    public function signing_in_makes_the_same_save_work(): void
+    {
+        $group = $this->group();
+
+        $this->actingAs($this->user())
+            ->post('/be-nl/list-items', ['group_id' => $group->id])
+            ->assertRedirect();
+
         $item = WishlistItem::query()->firstOrFail();
 
         // A snapshot, not just a reference: the feed can drop or rename this
