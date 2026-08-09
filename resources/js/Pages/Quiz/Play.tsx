@@ -16,6 +16,7 @@ interface Props {
         owner: string | null
         /* Questions only — the answer is never in the payload. */
         rounds: { title: null; options: Option[] }[]
+        shareUrl: string
     }
     isOwner: boolean
     result: { score: number; total: number; grid: string } | null
@@ -31,11 +32,14 @@ interface Props {
  * result a conversation rather than a broadcast.
  */
 export default function QuizPlay({ quiz, isOwner, result, stats }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const page = usePage<SharedProps>()
+    const { market } = page.props
     const { t } = useTranslations()
     const [answers, setAnswers] = useState<Record<number, number>>({})
 
-    const token = window.location.pathname.split('/').filter(Boolean).pop()
+    // See the note in Lists/Shared: `window` is absent on the server, and this
+    // page is reached by link from somebody else.
+    const token = page.url.split('?')[0].split('/').filter(Boolean).pop()
     const answered = Object.keys(answers).length
 
     return (
@@ -92,7 +96,7 @@ export default function QuizPlay({ quiz, isOwner, result, stats }: Props) {
                     */}
                     <div className="mt-6">
                         <ShareMenu
-                            url={window.location.href}
+                            url={quiz.shareUrl}
                             text={`${t('quiz.title')} ${result.score}/${result.total}
 ${result.grid}`}
                             label={t('quiz.share')}

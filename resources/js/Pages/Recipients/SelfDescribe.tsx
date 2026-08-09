@@ -61,9 +61,11 @@ export default function SelfDescribe({
     listId,
     suggestions = [],
 }: Props) {
-    const { market, auth } = usePage<SharedProps>().props
+    const page = usePage<SharedProps>()
+    const { market, auth } = page.props
     const { t } = useTranslations()
-    const token = window.location.pathname.split('/').filter(Boolean).pop()
+    // See the note in Lists/Shared: `window` is absent on the server.
+    const token = page.url.split('?')[0].split('/').filter(Boolean).pop()
     const base = `/${market.key}/for/${token}`
 
     const [query, setQuery] = useState('')

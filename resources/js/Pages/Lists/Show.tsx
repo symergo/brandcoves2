@@ -1,7 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
+import { useState } from 'react'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
-import ListTools from '../../Components/ListTools'
+import ListTools, { type Panel } from '../../Components/ListTools'
 import ShareRow from '../../Components/ShareRow'
 import { markRemoved } from '../../savedItems'
 import { useTranslations } from '../../useTranslations'
@@ -105,11 +106,28 @@ export default function ListShow({
     const base = `/${market.key}`
 
     const shared = list.visibility !== 'private'
+    const [panel, setPanel] = useState<Panel | null>(null)
 
-    function toggleSharing() {
-        router.patch(`${base}/lists/${list.id}`, {
-            visibility: shared ? 'private' : 'link',
-        }, { preserveScroll: true })
+    /**
+     * Share, in one press.
+     *
+     * It used to take two, in two places: a header toggle that minted the link
+     * and a tab below that displayed it — and the tab did not exist until the
+     * toggle had been used, so nothing on the screen suggested the second step
+     * was there. People turned sharing on and left without the link.
+     */
+    function share() {
+        if (shared) {
+            setPanel('share')
+
+            return
+        }
+
+        router.patch(
+            `${base}/lists/${list.id}`,
+            { visibility: 'link' },
+            { preserveScroll: true, onSuccess: () => setPanel('share') },
+        )
     }
 
     return (
@@ -125,33 +143,56 @@ export default function ListShow({
                     {list.recipient && (
                         <p className="mt-1 text-ink-soft">{list.recipient.name}</p>
                     )}
+                    {/* A badge, not a sentence. The state matters; the
+                        explanation of the state does not need a paragraph every
+                        time. Beside the title, where it describes the thing it
+                        is true of. */}
+                    <p className="mt-1 text-xs text-ink-soft">
+                        {shared ? t('lists.shared_badge') : t('lists.private_badge')}
+                    </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        onClick={toggleSharing}
-                        className="rounded-lg border border-line px-3 py-2 text-sm hover:border-ink"
-                    >
-                        {shared ? t('lists.disable_sharing') : t('lists.enable_sharing')}
-                    </button>
-                    <button
-                        onClick={() => {
-                            if (confirm(t('lists.delete_confirm'))) {
-                                router.delete(`${base}/lists/${list.id}`)
-                            }
-                        }}
-                        className="rounded-lg border border-line px-3 py-2 text-sm text-accent hover:border-accent"
-                    >
-                        {t('lists.delete_list')}
-                    </button>
+                    {/*
+                      Adding is what a list is for, and there was no way to do it
+                      from one: every save starts at a product, and this page
+                      pointed at no products. A dead end at the exact moment
+                      somebody has decided to fill it.
+                    */}
+                    {access.canEdit && (
+                        <Link
+                            href={`${base}/search`}
+                            className="rounded-lg border border-line px-3 py-2 text-sm hover:border-ink"
+                        >
+                            + {t('lists.find_things')}
+                        </Link>
+                    )}
+
+                    {access.isOwner && (
+                        <button
+                            onClick={share}
+                            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                        >
+                            {t('lists.share')}
+                        </button>
+                    )}
+
+                    {access.isOwner && (
+                        <button
+                            onClick={() => {
+                                if (confirm(t('lists.delete_confirm'))) {
+                                    router.delete(`${base}/lists/${list.id}`)
+                                }
+                            }}
+                            aria-label={t('lists.delete_list')}
+                            title={t('lists.delete_list')}
+                            className="rounded-lg border border-line px-3 py-2 text-sm text-ink-soft hover:border-accent hover:text-accent"
+                        >
+                            {t('lists.delete_list')}
+                        </button>
+                    )}
                 </div>
             </header>
-
-            {/* A badge, not a sentence. The state matters; the explanation of
-                the state does not need a paragraph every time. */}
-            <p className="mt-2 text-xs text-ink-soft">
-                {shared ? t('lists.shared_badge') : t('lists.private_badge')}
-            </p>
 
             <ListTools
                 base={base}
@@ -166,6 +207,8 @@ export default function ListShow({
                 quizUrl={quizUrl}
                 quizPlays={quizPlays}
                 santaMemberships={santaMemberships}
+                panel={panel}
+                onPanel={setPanel}
             />
 
             {/*
@@ -282,9 +325,17 @@ export default function ListShow({
             )}
 
             {items.length === 0 ? (
-                <p className="mt-10 rounded-card border border-line bg-card p-8 text-center text-ink-soft">
-                    {t('lists.empty_list')}
-                </p>
+                <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
+                    <p className="text-ink-soft">{t('lists.empty_list')}</p>
+                    {access.canEdit && (
+                        <Link
+                            href={`${base}/search`}
+                            className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                        >
+                            {t('lists.find_things')}
+                        </Link>
+                    )}
+                </div>
             ) : (
                 <ul className="mt-8 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
                     {items.map((item) => (

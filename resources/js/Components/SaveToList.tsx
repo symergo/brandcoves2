@@ -1,7 +1,7 @@
 import { router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
-import { load, markSaved, snapshot, serverSnapshot, subscribe } from '../savedItems'
+import { load, markRemoved, markSaved, snapshot, serverSnapshot, subscribe } from '../savedItems'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -11,6 +11,8 @@ interface ListOption {
     kind: 'mine' | 'for_someone'
     recipient: string | null
     items: number
+    /** The row this product already occupies on that list, if it is on it. */
+    itemId: number | null
 }
 
 interface Options {
@@ -104,14 +106,31 @@ export default function SaveToList({
         load(market.key, Boolean(auth.user))
     }, [market.key, auth.user])
 
+    /*
+     * Asked for with the product, so each row can say whether it already holds
+     * it. Without that the picker is a one-way door: every list looks equally
+     * empty, and saving to the wrong one — they are a line apart — can only be
+     * undone by going and finding that list.
+     */
+    const refresh = useCallback(async (): Promise<Options> => {
+        const query = groupId === undefined ? '' : `?group_id=${groupId}`
+
+        const fresh: Options = await fetch(`/${market.key}/list-options${query}`, {
+            headers: { Accept: 'application/json' },
+        })
+            .then((r) => r.json())
+            .catch(() => ({ lists: [], recipients: [] }))
+
+        setOptions(fresh)
+
+        return fresh
+    }, [groupId, market.key])
+
     useEffect(() => {
         if (!open || options) return
 
-        fetch(`/${market.key}/list-options`, { headers: { Accept: 'application/json' } })
-            .then((r) => r.json())
-            .then(setOptions)
-            .catch(() => setOptions({ lists: [], recipients: [] }))
-    }, [open, options, market.key])
+        void refresh()
+    }, [open, options, refresh])
 
     useEffect(() => {
         if (!open) return
@@ -160,7 +179,12 @@ export default function SaveToList({
         }
     }
 
-    function save(extra: Record<string, unknown> = {}) {
+    /**
+     * @param close Whether to dismiss the picker afterwards. A row is a toggle,
+     *              so it stays open and shows the tick it just earned; naming a
+     *              new list is a completed errand, so that one closes.
+     */
+    function save(extra: Record<string, unknown> = {}, close = true) {
         if (busy || !requireAccount()) return
 
         setBusy(true)
@@ -176,19 +200,85 @@ export default function SaveToList({
                         markSaved(groupId)
                     }
 
-                    setOpen(false)
                     setCreating(null)
                     setName('')
-                    // The list set may have changed, so the next open refetches.
-                    setOptions(null)
+
+                    if (close) {
+                        setOpen(false)
+                        // The list set may have changed, so the next open refetches.
+                        setOptions(null)
+                    } else {
+                        void refresh()
+                    }
                 },
                 onFinish: () => setBusy(false),
             },
         )
     }
 
+    /**
+     * Take it off a list, from the same row that put it there.
+     *
+     * The menu stays open: removing from the wrong list is the mistake this
+     * whole path exists to make recoverable, and closing the menu would make it
+     * unrecoverable in the same click. The bookmark only goes hollow once no
+     * list holds the product any more — it is on your lists or it is not, and
+     * one of three lists letting go does not change that answer.
+     */
+    function remove(itemId: number) {
+        if (busy) return
+
+        setBusy(true)
+
+        router.delete(`/${market.key}/list-items/${itemId}`, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: async () => {
+                const fresh = await refresh()
+
+                if (groupId !== undefined && !fresh.lists.some((l) => l.itemId !== null)) {
+                    markRemoved(groupId)
+                }
+            },
+            onFinish: () => setBusy(false),
+        })
+    }
+
     const mine = options?.lists.filter((l) => l.kind === 'mine') ?? []
     const forOthers = options?.lists.filter((l) => l.kind === 'for_someone') ?? []
+
+    /*
+     * One row, both directions. A tick means it is on that list and pressing it
+     * takes it off — the same control reporting the state and changing it, which
+     * is the only arrangement where "which lists is this on?" can be answered by
+     * looking rather than by remembering.
+     */
+    function row(list: ListOption, label: string) {
+        const on = list.itemId !== null
+
+        return (
+            <button
+                key={list.id}
+                type="button"
+                role="menuitemcheckbox"
+                aria-checked={on}
+                disabled={busy}
+                onClick={() => (on ? remove(list.itemId as number) : save({ wishlist_id: list.id }, false))}
+                title={on ? t('lists.remove_from', { list: label }) : t('lists.save_to', { list: label })}
+                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-line/40 disabled:opacity-60"
+            >
+                <span
+                    aria-hidden
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
+                        on ? 'border-sage bg-sage text-white' : 'border-line'
+                    }`}
+                >
+                    {on ? '✓' : ''}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{label}</span>
+            </button>
+        )
+    }
 
     const panel =
         open && rect
@@ -249,17 +339,7 @@ export default function SaveToList({
                               <p className="px-2 pt-1 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
                                   {t('lists.for_me')}
                               </p>
-                              {mine.map((l) => (
-                                  <button
-                                      key={l.id}
-                                      type="button"
-                                      role="menuitem"
-                                      onClick={() => save({ wishlist_id: l.id })}
-                                      className="block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-line/40"
-                                  >
-                                      {l.title}
-                                  </button>
-                              ))}
+                              {mine.map((l) => row(l, l.title))}
                               <button
                                   type="button"
                                   onClick={() => setCreating('mine')}
@@ -271,17 +351,7 @@ export default function SaveToList({
                               <p className="mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
                                   {t('lists.for_someone_else')}
                               </p>
-                              {forOthers.map((l) => (
-                                  <button
-                                      key={l.id}
-                                      type="button"
-                                      role="menuitem"
-                                      onClick={() => save({ wishlist_id: l.id })}
-                                      className="block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-line/40"
-                                  >
-                                      {l.recipient ?? l.title}
-                                  </button>
-                              ))}
+                              {forOthers.map((l) => row(l, l.recipient ?? l.title))}
                               <button
                                   type="button"
                                   onClick={() => setCreating('for_someone')}
@@ -340,7 +410,10 @@ export default function SaveToList({
         <div className="relative inline-flex items-stretch">
             <button
                 type="button"
-                onClick={() => save()}
+                // Already saved? Then the useful action is not saving it twice
+                // but seeing where it went — and that is the only screen with a
+                // way to take it off again.
+                onClick={() => (saved ? openPicker() : save())}
                 disabled={busy}
                 aria-pressed={saved}
                 className={`rounded-l-lg border px-4 py-2 text-sm font-medium transition ${

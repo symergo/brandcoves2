@@ -37,11 +37,31 @@ class WishlistController extends Controller
         }
 
         $lists = $owner->scope(Wishlist::query())
-            ->with('recipient')
+            ->with([
+                'recipient',
+                /*
+                 * Enough of each list to recognise it at a glance.
+                 *
+                 * The index rendered a title and a count, so five lists looked
+                 * like five identical cards and you opened them one by one to
+                 * find the right one. Four covers is what turns that into
+                 * recognition.
+                 *
+                 * Only items that carry a stored image, which quietly excludes
+                 * Amazon — nothing about it may be mirrored (invariant #6), and
+                 * a cover strip is not worth a live fetch per list.
+                 */
+                'items' => fn ($q) => $q->whereNotNull('snapshot_image_url')
+                    ->latest('created_at')
+                    ->limit(4),
+            ])
             ->withCount('items')
             ->latest('updated_at')
             ->get()
-            ->map(fn (Wishlist $list) => $this->summarise($list, $current));
+            ->map(fn (Wishlist $list) => [
+                ...$this->summarise($list, $current),
+                'covers' => $list->items->pluck('snapshot_image_url')->all(),
+            ]);
 
         return Inertia::render('Lists/Index', [
             'lists' => $lists,

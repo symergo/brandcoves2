@@ -88,6 +88,14 @@ class ListQuizController extends Controller
                 // Questions only. The payload a player receives must not carry
                 // the thing they are being asked to guess.
                 'rounds' => $quiz->questions(),
+
+                /*
+                 * The absolute link to this quiz, minted here rather than read
+                 * off `window.location` in the browser. Sharing a score is the
+                 * whole point of the page, and a component that reaches for
+                 * `window` cannot be server-rendered at all.
+                 */
+                'shareUrl' => url($current->url("q/{$quiz->share_token}")),
             ],
 
             // Meaningless for them, and it must never tell them anything.

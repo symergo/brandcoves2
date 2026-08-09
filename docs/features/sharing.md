@@ -68,6 +68,34 @@ client disagree about whether the native option is there — a hydration mismatc
 only job is to be pressed. The capability check therefore runs in a `useEffect`, so the first paint
 shows the channel list and the native item appears when the client confirms it exists.
 
+## The pages a link lands on must be server-renderable
+
+`ShareMenu` was careful about `navigator`; the pages around it were not careful about `window`.
+
+`Lists/Shared`, `Quiz/Play` and `Recipients/SelfDescribe` each read the token straight out of
+`window.location.pathname` **in the component body**. `window` does not exist while the server
+renders, so all three threw `ReferenceError` and Inertia did what it is designed to do — fell back
+to client-side rendering, silently. The pages worked, and worked *badly*: they arrived as an empty
+shell that had to download and boot React before showing anything, on precisely the three URLs a
+stranger opens from a link they were sent, usually on a phone, always without a warm cache.
+
+Nothing failed loudly, which is why it survived. The proof is a `POST` of a page object to the SSR
+bundle:
+
+```bash
+node bootstrap/ssr/ssr.js &
+curl -s -X POST http://127.0.0.1:13714/render -H 'Content-Type: application/json' --data @page.json
+# before: {"error":"window is not defined","component":"Lists/Shared", …}
+# after:  {"head":[…],"body":"<script data-page=…"}
+```
+
+The token comes from `usePage().url`, which Inertia hands to both renderers. The quiz's share URL is
+now minted server-side as `quiz.shareUrl` rather than read from `window.location.href` — a component
+that reaches for `window` to build a link cannot be server-rendered at all.
+
+`window` inside an event handler or a `useEffect` is fine, and stays: those run only in a browser.
+The rule is about the render path.
+
 ## What sharing does not do
 
 **It does not decide who may see the thing.** Visibility lives on the record; see

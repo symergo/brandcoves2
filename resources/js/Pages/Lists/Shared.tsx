@@ -31,9 +31,19 @@ interface Props {
 }
 
 export default function SharedList({ list, isOwner, items }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const page = usePage<SharedProps>()
+    const { market } = page.props
     const { t } = useTranslations()
-    const token = window.location.pathname.split('/').pop()
+    /*
+     * From the page, not from `window`.
+     *
+     * `window` does not exist while the server renders, so reading it here
+     * threw and Inertia fell back to client-side rendering — silently, and on
+     * precisely the three pages a stranger opens from a link they were sent:
+     * this one, the quiz and the self-describe page. They arrived as an empty
+     * shell that had to boot React before showing anything.
+     */
+    const token = page.url.split('?')[0].split('/').filter(Boolean).pop()
     const base = `/${market.key}`
 
     return (

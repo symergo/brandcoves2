@@ -94,6 +94,27 @@ both "you saved it at €329" and "it is €279 now".
 
 `group_id` is `nullOnDelete` for the same reason: losing the product must not lose the entry.
 
+## The save control is a toggle, not a one-way door
+
+`GET /{market}/list-options` takes an optional `group_id` and returns, per list, the `itemId` of the
+row that product already occupies — `null` when it is not on that list. The picker draws a tick from
+it, and pressing a ticked row deletes that item through the existing `destroy()` rather than a second
+delete path with its own ownership check.
+
+Before this the picker could only add. The two groups of lists sit a line apart in the menu, so
+saving to the wrong one is easy, and undoing it meant leaving the product, finding the list, opening
+it and deleting the row — at which point the product is gone from the screen. A control that reports
+which lists hold something is also the only way to answer "did I already save this?" by looking
+instead of by remembering.
+
+The bookmark goes hollow only when **no** list holds the product. It is on your lists or it is not;
+one of three lists letting go does not change that answer.
+
+Saving names its destination — `lists.added_to`, "Saved to Camping". A save can land in the default
+list, in one chosen from the menu, or in a list created in the same click, and "Saved to your list"
+is equally true of all three, so it confirms nothing. Naming it is what makes the default worth
+accepting without opening the menu.
+
 ## Claiming is a conditional UPDATE
 
 ```sql

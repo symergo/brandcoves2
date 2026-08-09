@@ -78,8 +78,30 @@ class WishlistItemController extends Controller
             ->with('recipient')
             ->withCount('items')
             ->latest('updated_at')
-            ->get()
-            ->map(fn (Wishlist $list) => [
+            ->get();
+
+        /*
+         * Where this product already is.
+         *
+         * The picker could only ever add. Saving to the wrong list — easy,
+         * since the rows are one line apart — left no way back except finding
+         * the list, opening it and deleting the row there. Carrying the item id
+         * lets the same row that put it there take it off again, and reuses
+         * `destroy()` rather than growing a second delete path with its own
+         * ownership check.
+         */
+        $group = $request->integer('group_id');
+
+        $existing = $group === 0
+            ? collect()
+            : WishlistItem::query()
+                ->whereIn('wishlist_id', $lists->pluck('id'))
+                ->where('group_id', $group)
+                ->whereNotNull('accepted_at')
+                ->pluck('id', 'wishlist_id');
+
+        return response()->json([
+            'lists' => $lists->map(fn (Wishlist $list) => [
                 'id' => $list->id,
                 'title' => $list->title,
                 // The distinction the picker is built around: a list for me and
@@ -88,10 +110,8 @@ class WishlistItemController extends Controller
                 'kind' => $list->kind->value,
                 'recipient' => $list->recipient?->name,
                 'items' => $list->items_count,
-            ]);
-
-        return response()->json([
-            'lists' => $lists->values(),
+                'itemId' => $existing[$list->id] ?? null,
+            ])->values(),
             'recipients' => $owner->scope(Recipient::query())
                 ->orderBy('name')
                 ->get(['id', 'name'])
@@ -160,7 +180,7 @@ class WishlistItemController extends Controller
 
             $saver->saveGroup($list, $group, $current, $validated['note'] ?? null);
 
-            return back()->with('success', __('site.lists.added'));
+            return back()->with('success', $this->confirm($list));
         }
 
         /*
@@ -183,7 +203,21 @@ class WishlistItemController extends Controller
             note: $validated['note'] ?? null,
         );
 
-        return back()->with('success', __('site.lists.added'));
+        return back()->with('success', $this->confirm($list));
+    }
+
+    /**
+     * Say which list it went into.
+     *
+     * "Saved to your list" is true of every save and therefore answers nothing.
+     * A save can land in the default list, in one chosen from the picker, or in
+     * a list created in the same click — three destinations behind one word.
+     * Naming the list is what makes the picker's default trustworthy enough to
+     * accept without opening it.
+     */
+    private function confirm(Wishlist $list): string
+    {
+        return __('site.lists.added_to', ['list' => $list->title]);
     }
 
     public function update(Request $request, CurrentMarket $current, string $market, string $item): RedirectResponse

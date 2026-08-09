@@ -152,6 +152,94 @@ class SaveToListTest extends TestCase
     }
 
     #[Test]
+    public function the_picker_says_which_lists_already_hold_the_product(): void
+    {
+        $user = User::factory()->create();
+        $group = $this->group();
+
+        $holding = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Has it',
+            'market' => Market::BeNl,
+        ]);
+
+        $empty = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Does not',
+            'market' => Market::BeNl,
+        ]);
+
+        $this->actingAs($user)->post('/be-nl/list-items', [
+            'group_id' => $group->id,
+            'wishlist_id' => $holding->id,
+        ]);
+
+        /*
+         * Without this the picker is a one-way door: every row looks the same,
+         * so a save into the wrong list can only be undone by going and finding
+         * that list. The item id is what lets the row that put it there take it
+         * off again, through the existing `destroy()` and its ownership check.
+         */
+        $rows = array_column(
+            $this->actingAs($user)
+                ->getJson("/be-nl/list-options?group_id={$group->id}")
+                ->assertOk()
+                ->json('lists'),
+            null,
+            'title',
+        );
+
+        $this->assertNotNull($rows['Has it']['itemId']);
+        $this->assertNull($rows['Does not']['itemId']);
+        $this->assertSame(
+            $holding->items()->firstOrFail()->id,
+            $rows['Has it']['itemId'],
+        );
+    }
+
+    #[Test]
+    public function asking_without_a_product_reports_no_membership(): void
+    {
+        $user = User::factory()->create();
+
+        Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        // The picker is also opened from surfaces with no stored group at all —
+        // a live bol result, an Amazon product — and must not claim membership
+        // it has not been asked about.
+        $this->actingAs($user)
+            ->getJson('/be-nl/list-options')
+            ->assertOk()
+            ->assertJsonPath('lists.0.itemId', null);
+    }
+
+    #[Test]
+    public function saving_says_which_list_it_went_into(): void
+    {
+        $user = User::factory()->create();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Camping',
+            'market' => Market::BeNl,
+        ]);
+
+        // "Saved to your list" is true of every save and so answers nothing —
+        // a save can land in the default list, one picked from the menu, or one
+        // created in the same click.
+        $this->actingAs($user)
+            ->post('/be-nl/list-items', ['group_id' => $this->group()->id, 'wishlist_id' => $list->id])
+            ->assertSessionHas('success', fn (string $flash) => str_contains($flash, 'Camping'));
+    }
+
+    #[Test]
     public function you_cannot_attach_someone_elses_person_to_your_list(): void
     {
         $stranger = Recipient::factory()->create([

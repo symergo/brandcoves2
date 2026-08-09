@@ -1,14 +1,28 @@
-import { Link, usePage } from '@inertiajs/react'
+import { Link, router, usePage } from '@inertiajs/react'
+import AccountMenu from '../Components/AccountMenu'
 import FlashMessage from '../Components/FlashMessage'
 import { type PropsWithChildren, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 export default function SiteLayout({ children }: PropsWithChildren) {
-    const { market, markets, auth, unreadCount } = usePage<SharedProps>().props
+    const page = usePage<SharedProps>()
+    const { market, markets, auth, unreadCount } = page.props
     const { t } = useTranslations()
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
+
+    /*
+     * Which section you are in.
+     *
+     * Six nav entries all rendered identically, so the header said nothing
+     * about where you had arrived — and on a site whose sections overlap
+     * (Search, the Cove, Daily Picks all end in products) that is the
+     * difference between exploring and being lost. Prefix match, so a product
+     * opened from Search still reads as Search.
+     */
+    const path = (page.url ?? '').split('?')[0]
+    const isCurrent = (href: string) => path === href || path.startsWith(`${href}/`)
 
     const nav = [
         { href: `${base}/search`, label: t('nav.search') },
@@ -55,7 +69,16 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
                     <nav className="hidden gap-5 text-sm text-ink-soft sm:flex" aria-label={t('nav.main')}>
                         {nav.map((item) => (
-                            <Link key={item.href} href={item.href} className="hover:text-ink">
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                aria-current={isCurrent(item.href) ? 'page' : undefined}
+                                className={
+                                    isCurrent(item.href)
+                                        ? 'font-medium text-ink underline decoration-accent decoration-2 underline-offset-8'
+                                        : 'hover:text-ink'
+                                }
+                            >
                                 {item.label}
                             </Link>
                         ))}
@@ -104,28 +127,16 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                             ))}
                         </select>
 
-                        {auth.user ? (
-                            <>
-                                <Link
-                                    href={`${base}/notifications`}
-                                    className="relative text-sm hover:text-ink"
-                                    aria-label={
-                                        unreadCount > 0
-                                            ? `${t('nav.notifications')} (${unreadCount})`
-                                            : t('nav.notifications')
-                                    }
-                                >
-                                    <span aria-hidden>🔔</span>
-                                    {unreadCount > 0 && (
-                                        <span className="absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-[11px] leading-4 font-semibold text-white">
-                                            {unreadCount > 9 ? '9+' : unreadCount}
-                                        </span>
-                                    )}
-                                </Link>
-                            </>
-                        ) : (
-                            <Link href={`${base}/login`} className="text-sm hover:text-ink">
-                                {t('nav.sign_in')}
+                        {auth.user && unreadCount > 0 && (
+                            <Link
+                                href={`${base}/notifications`}
+                                className="relative text-sm hover:text-ink"
+                                aria-label={`${t('nav.notifications')} (${unreadCount})`}
+                            >
+                                <span aria-hidden>🔔</span>
+                                <span className="absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-[11px] leading-4 font-semibold text-white">
+                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                </span>
                             </Link>
                         )}
 
@@ -136,9 +147,15 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                           visitor who had done exactly that had no way back to
                           their own list, and the feature looked absent.
                         */}
-                        <Link href={`${base}/lists`} className="text-sm hover:text-ink">
+                        <Link
+                            href={`${base}/lists`}
+                            aria-current={isCurrent(`${base}/lists`) ? 'page' : undefined}
+                            className={`text-sm ${isCurrent(`${base}/lists`) ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}`}
+                        >
                             {t('nav.lists')}
                         </Link>
+
+                        <AccountMenu />
                     </div>
                 </div>
 
@@ -168,9 +185,16 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                                 </Link>
                             ))}
 
-                            <span className="border-t border-line pt-3">
+                            <span className="flex flex-col gap-3 border-t border-line pt-3">
+                                <Link
+                                    href={`${base}/lists`}
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    {t('nav.lists')}
+                                </Link>
+
                                 {auth.user ? (
-                                    <span className="flex flex-col gap-3">
+                                    <>
                                         <Link
                                             href={`${base}/notifications`}
                                             onClick={() => setMenuOpen(false)}
@@ -178,20 +202,30 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                                             {t('nav.notifications')}
                                             {unreadCount > 0 && ` (${unreadCount})`}
                                         </Link>
-                                    </span>
+
+                                        {/* The same reachability problem as the
+                                            wide header had, and worse on a phone,
+                                            which is the device most likely to be
+                                            handed to someone else. */}
+                                        <span className="text-xs text-ink-soft">
+                                            {auth.user.name?.trim() || auth.user.email}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setMenuOpen(false)
+                                                router.post(`${base}/logout`)
+                                            }}
+                                            className="text-left"
+                                        >
+                                            {t('nav.sign_out')}
+                                        </button>
+                                    </>
                                 ) : (
                                     <Link href={`${base}/login`} onClick={() => setMenuOpen(false)}>
                                         {t('nav.sign_in')}
                                     </Link>
                                 )}
-
-                                <Link
-                                    href={`${base}/lists`}
-                                    className="mt-3 block"
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    {t('nav.lists')}
-                                </Link>
                             </span>
                         </nav>
 

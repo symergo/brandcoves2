@@ -94,6 +94,7 @@
     "/build/assets/zxing_reader-WcExx7Sk.js",
     "/build/assets/zxing_reader-DHMvH2D8.wasm"
   ],
+  "resources/js/Components/AccountMenu.tsx": [],
   "resources/js/Components/AlertButton.tsx": [],
   "resources/js/Components/BarcodeScanner.tsx": [],
   "resources/js/Components/CoveSubscribe.tsx": [],

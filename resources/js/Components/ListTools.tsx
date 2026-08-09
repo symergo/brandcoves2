@@ -47,9 +47,21 @@ interface Props {
     quizUrl: string | null
     quizPlays: number
     santaMemberships: Membership[]
+    /*
+     * Which panel is open is owned by the page, not by this row.
+     *
+     * Sharing was two controls in two places: a toggle in the header that
+     * created the link, and a tab down here that showed it — and the tab only
+     * appeared *after* the toggle had been used, so the first half of the job
+     * gave no sign that the second half existed. One "Share" button can now
+     * turn sharing on and open the panel that shows the link, which needs the
+     * page to be able to say which panel that is.
+     */
+    panel: Panel | null
+    onPanel: (panel: Panel | null) => void
 }
 
-type Panel = 'share' | 'quiz' | 'registry' | 'people' | 'handover' | 'santa'
+export type Panel = 'share' | 'quiz' | 'registry' | 'people' | 'handover' | 'santa'
 
 /**
  * Everything you can do with a list, behind one row of buttons.
@@ -79,9 +91,10 @@ export default function ListTools({
     quizUrl,
     quizPlays,
     santaMemberships,
+    panel: open,
+    onPanel,
 }: Props) {
     const { t } = useTranslations()
-    const [open, setOpen] = useState<Panel | null>(null)
     const [invite, setInvite] = useState('')
     const [role, setRole] = useState('viewer')
     const [handTo, setHandTo] = useState(handoverEmail ?? '')
@@ -104,7 +117,7 @@ export default function ListTools({
     const visible = tabs.filter((tab) => tab.show)
 
     function toggle(panel: Panel) {
-        setOpen((current) => (current === panel ? null : panel))
+        onPanel(open === panel ? null : panel)
     }
 
     return (
@@ -176,11 +189,32 @@ export default function ListTools({
             {open !== null && (
                 <div className="mt-3 rounded-card border border-line bg-card p-4">
                     {open === 'share' && list.shareUrl && (
-                        <ShareRow
-                            url={list.shareUrl}
-                            text={t('lists.share_text', { title: list.title })}
-                            hint={t('lists.sharing_on')}
-                        />
+                        <div>
+                            <ShareRow
+                                url={list.shareUrl}
+                                text={t('lists.share_text', { title: list.title })}
+                                hint={t('lists.sharing_on')}
+                            />
+
+                            {/* Next to the link it revokes. In the header it was
+                                a standing offer to break a link nobody was
+                                looking at. */}
+                            {access.isOwner && (
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        router.patch(
+                                            `${base}/lists/${list.id}`,
+                                            { visibility: 'private' },
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                    className="mt-3 text-xs text-ink-soft underline hover:text-ink"
+                                >
+                                    {t('lists.disable_sharing')}
+                                </button>
+                            )}
+                        </div>
                     )}
 
                     {open === 'quiz' && (

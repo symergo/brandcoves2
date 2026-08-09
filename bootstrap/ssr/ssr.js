@@ -33986,16 +33986,22 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 	(0, import_react.useEffect)(() => {
 		load(market.key, Boolean(auth.user));
 	}, [market.key, auth.user]);
-	(0, import_react.useEffect)(() => {
-		if (!open || options) return;
-		fetch(`/${market.key}/list-options`, { headers: { Accept: "application/json" } }).then((r) => r.json()).then(setOptions).catch(() => setOptions({
+	const refresh = (0, import_react.useCallback)(async () => {
+		const query = groupId === void 0 ? "" : `?group_id=${groupId}`;
+		const fresh = await fetch(`/${market.key}/list-options${query}`, { headers: { Accept: "application/json" } }).then((r) => r.json()).catch(() => ({
 			lists: [],
 			recipients: []
 		}));
+		setOptions(fresh);
+		return fresh;
+	}, [groupId, market.key]);
+	(0, import_react.useEffect)(() => {
+		if (!open || options) return;
+		refresh();
 	}, [
 		open,
 		options,
-		market.key
+		refresh
 	]);
 	(0, import_react.useEffect)(() => {
 		if (!open) return;
@@ -34024,7 +34030,12 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 	function openPicker() {
 		if (requireAccount()) setOpen((v) => !v);
 	}
-	function save(extra = {}) {
+	/**
+	* @param close Whether to dismiss the picker afterwards. A row is a toggle,
+	*              so it stays open and shows the tick it just earned; naming a
+	*              new list is a completed errand, so that one closes.
+	*/
+	function save(extra = {}, close = true) {
 		if (busy || !requireAccount()) return;
 		setBusy(true);
 		router.post(`/${market.key}/list-items`, {
@@ -34035,16 +34046,60 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 			preserveState: true,
 			onSuccess: () => {
 				if (groupId !== void 0) markSaved(groupId);
-				setOpen(false);
 				setCreating(null);
 				setName("");
-				setOptions(null);
+				if (close) {
+					setOpen(false);
+					setOptions(null);
+				} else refresh();
+			},
+			onFinish: () => setBusy(false)
+		});
+	}
+	/**
+	* Take it off a list, from the same row that put it there.
+	*
+	* The menu stays open: removing from the wrong list is the mistake this
+	* whole path exists to make recoverable, and closing the menu would make it
+	* unrecoverable in the same click. The bookmark only goes hollow once no
+	* list holds the product any more — it is on your lists or it is not, and
+	* one of three lists letting go does not change that answer.
+	*/
+	function remove(itemId) {
+		if (busy) return;
+		setBusy(true);
+		router.delete(`/${market.key}/list-items/${itemId}`, {
+			preserveScroll: true,
+			preserveState: true,
+			onSuccess: async () => {
+				const fresh = await refresh();
+				if (groupId !== void 0 && !fresh.lists.some((l) => l.itemId !== null)) markRemoved(groupId);
 			},
 			onFinish: () => setBusy(false)
 		});
 	}
 	const mine = options?.lists.filter((l) => l.kind === "mine") ?? [];
 	const forOthers = options?.lists.filter((l) => l.kind === "for_someone") ?? [];
+	function row(list, label) {
+		const on = list.itemId !== null;
+		return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			role: "menuitemcheckbox",
+			"aria-checked": on,
+			disabled: busy,
+			onClick: () => on ? remove(list.itemId) : save({ wishlist_id: list.id }, false),
+			title: on ? t("lists.remove_from", { list: label }) : t("lists.save_to", { list: label }),
+			className: "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-line/40 disabled:opacity-60",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				"aria-hidden": true,
+				className: `flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${on ? "border-sage bg-sage text-white" : "border-line"}`,
+				children: on ? "✓" : ""
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "min-w-0 flex-1 truncate",
+				children: label
+			})]
+		}, list.id);
+	}
 	const panel = open && rect ? (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 		ref: menu,
 		role: "menu",
@@ -34100,13 +34155,7 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 				className: "px-2 pt-1 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
 				children: t("lists.for_me")
 			}),
-			mine.map((l) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				role: "menuitem",
-				onClick: () => save({ wishlist_id: l.id }),
-				className: "block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-line/40",
-				children: l.title
-			}, l.id)),
+			mine.map((l) => row(l, l.title)),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 				type: "button",
 				onClick: () => setCreating("mine"),
@@ -34117,13 +34166,7 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 				className: "mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
 				children: t("lists.for_someone_else")
 			}),
-			forOthers.map((l) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				role: "menuitem",
-				onClick: () => save({ wishlist_id: l.id }),
-				className: "block w-full truncate rounded px-2 py-1.5 text-left text-sm hover:bg-line/40",
-				children: l.recipient ?? l.title
-			}, l.id)),
+			forOthers.map((l) => row(l, l.recipient ?? l.title)),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 				type: "button",
 				onClick: () => setCreating("for_someone"),
@@ -34159,7 +34202,7 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 				type: "button",
-				onClick: () => save(),
+				onClick: () => saved ? openPicker() : save(),
 				disabled: busy,
 				"aria-pressed": saved,
 				className: `rounded-l-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink"}`,
@@ -36222,14 +36265,80 @@ function Legal({ title, summary, html, updated, untranslated }) {
 //#endregion
 //#region resources/js/Pages/Lists/Index.tsx
 var Index_exports$1 = /* @__PURE__ */ __exportAll({ default: () => ListsIndex });
+/**
+* One card per list, in two groups.
+*
+* Every list rendered the same way — a title and an item count — even though
+* `kind` was already in the payload. So a wishlist for yourself and private
+* research about your sister were indistinguishable, and the only way to tell
+* them apart was to open them. The save picker has always sorted them into "for
+* me" and "for someone else"; this page now uses the same two words, so the
+* place you save to and the place you look for it agree.
+*/
+function ListCard({ list }) {
+	const { t, n } = useTranslations();
+	const shared = list.visibility !== "private";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+		href: list.url,
+		className: "flex h-full flex-col rounded-card border border-line bg-card transition hover:border-ink/30",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "flex gap-1 overflow-hidden rounded-t-card border-b border-line bg-cream p-2",
+			children: list.covers.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "flex h-16 w-full items-center justify-center text-xs text-ink-soft",
+				children: t("lists.empty_list")
+			}) : list.covers.map((src, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+				src,
+				alt: "",
+				loading: "lazy",
+				className: "h-16 min-w-0 flex-1 object-contain",
+				onError: (e) => {
+					e.currentTarget.style.visibility = "hidden";
+				}
+			}, i))
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "flex flex-1 flex-col p-4",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+					className: "font-medium",
+					children: list.title
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-1 text-sm text-ink-soft",
+					children: [list.itemCount === 1 ? t("lists.one_item") : t("lists.items", { count: n(list.itemCount) }), list.recipient && ` · ${list.recipient.name}`]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-3 flex flex-wrap gap-1.5 text-[11px]",
+					children: [list.isDefault && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "rounded-full bg-line/60 px-2 py-0.5",
+						children: t("lists.default_badge")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: shared ? "rounded-full bg-sage/15 px-2 py-0.5 text-sage" : "rounded-full bg-line/60 px-2 py-0.5 text-ink-soft",
+						children: shared ? t("lists.shared_short") : t("lists.private_short")
+					})]
+				})
+			]
+		})]
+	});
+}
 function ListsIndex({ lists, recipients, isSignedIn }) {
 	const { market } = usePage().props;
-	const { t, n } = useTranslations();
+	const { t } = useTranslations();
 	const [creating, setCreating] = (0, import_react.useState)(false);
 	const form = useForm({
 		title: "",
 		recipient_id: ""
 	});
+	const mine = lists.filter((l) => l.kind === "mine");
+	const forOthers = lists.filter((l) => l.kind !== "mine");
+	const groups = [{
+		key: "mine",
+		label: t("lists.for_me"),
+		lists: mine
+	}, {
+		key: "others",
+		label: t("lists.for_someone_else"),
+		lists: forOthers
+	}].filter((g) => g.lists.length > 0);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("lists.title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
@@ -36240,10 +36349,17 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-1 text-ink-soft",
 				children: t("lists.subtitle")
-			})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				onClick: () => setCreating((v) => !v),
-				className: "rounded-lg bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark",
-				children: t("lists.new_list")
+			})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-wrap gap-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/search`,
+					className: "rounded-lg bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark",
+					children: t("lists.find_things")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					onClick: () => setCreating((v) => !v),
+					className: "rounded-lg border border-line px-4 py-2 font-medium hover:border-ink",
+					children: t("lists.new_list")
+				})]
 			})]
 		}),
 		!isSignedIn && lists.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -36279,6 +36395,7 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
 					id: "title",
 					required: true,
+					autoFocus: true,
 					value: form.data.title,
 					onChange: (e) => form.setData("title", e.target.value),
 					className: "w-full rounded-lg border border-line bg-cream px-3 py-2"
@@ -36300,10 +36417,18 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 						children: r.name
 					}, r.id))]
 				})] }),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					disabled: form.processing,
-					className: "rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-60",
-					children: t("lists.create")
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						disabled: form.processing,
+						className: "rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-60",
+						children: t("lists.create")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => setCreating(false),
+						className: "rounded-lg border border-line px-4 py-2 text-sm",
+						children: t("lists.cancel")
+					})]
 				})
 			]
 		}),
@@ -36320,33 +36445,30 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 					href: `/${market.key}/search`,
-					className: "mt-3 inline-block text-accent underline",
-					children: t("nav.search")
+					className: "mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
+					children: t("lists.find_things")
 				})
 			]
-		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-			className: "mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
-			children: lists.map((list) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-				href: list.url,
-				className: "block rounded-card border border-line bg-card p-5 transition hover:border-ink/30",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "font-medium",
-					children: list.title
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-					className: "mt-1 text-sm text-ink-soft",
-					children: [list.itemCount === 1 ? t("lists.one_item") : t("lists.items", { count: n(list.itemCount) }), list.recipient && ` · ${list.recipient.name}`]
-				})]
-			}) }, list.id))
-		})
+		}) : groups.map((group) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-8",
+			children: [groups.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-xs font-medium tracking-wide text-ink-soft uppercase",
+				children: group.label
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+				children: group.lists.map((list) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListCard, { list }) }, list.id))
+			})]
+		}, group.key))
 	] });
 }
 //#endregion
 //#region resources/js/Pages/Lists/Shared.tsx
 var Shared_exports = /* @__PURE__ */ __exportAll({ default: () => SharedList });
 function SharedList({ list, isOwner, items }) {
-	const { market } = usePage().props;
+	const page = usePage();
+	const { market } = page.props;
 	const { t } = useTranslations();
-	const token = window.location.pathname.split("/").pop();
+	const token = page.url.split("?")[0].split("/").filter(Boolean).pop();
 	const base = `/${market.key}`;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
@@ -36638,9 +36760,8 @@ function ShareRow({ url, text, label, hint }) {
 * Suggestions are the exception and stay visible: a pending suggestion is a
 * message somebody sent, and a message behind a button is a message missed.
 */
-function ListTools({ base, list, access, collaborators, suggestions, canHandOver, handoverEmail, registryOptions, deliveryAddress, quizUrl, quizPlays, santaMemberships }) {
+function ListTools({ base, list, access, collaborators, suggestions, canHandOver, handoverEmail, registryOptions, deliveryAddress, quizUrl, quizPlays, santaMemberships, panel: open, onPanel }) {
 	const { t } = useTranslations();
-	const [open, setOpen] = (0, import_react.useState)(null);
 	const [invite, setInvite] = (0, import_react.useState)("");
 	const [role, setRole] = (0, import_react.useState)("viewer");
 	const [handTo, setHandTo] = (0, import_react.useState)(handoverEmail ?? "");
@@ -36678,7 +36799,7 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 		}
 	].filter((tab) => tab.show);
 	function toggle(panel) {
-		setOpen((current) => current === panel ? null : panel);
+		onPanel(open === panel ? null : panel);
 	}
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "mt-6",
@@ -36738,11 +36859,16 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 			open !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mt-3 rounded-card border border-line bg-card p-4",
 				children: [
-					open === "share" && list.shareUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow, {
+					open === "share" && list.shareUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow, {
 						url: list.shareUrl,
 						text: t("lists.share_text", { title: list.title }),
 						hint: t("lists.sharing_on")
-					}),
+					}), access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => router.patch(`${base}/lists/${list.id}`, { visibility: "private" }, { preserveScroll: true }),
+						className: "mt-3 text-xs text-ink-soft underline hover:text-ink",
+						children: t("lists.disable_sharing")
+					})] }),
 					open === "quiz" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
 						className: "text-sm font-medium",
 						children: t("quiz.own_title")
@@ -36955,8 +37081,24 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 	const { t } = useTranslations();
 	const base = `/${market.key}`;
 	const shared = list.visibility !== "private";
-	function toggleSharing() {
-		router.patch(`${base}/lists/${list.id}`, { visibility: shared ? "private" : "link" }, { preserveScroll: true });
+	const [panel, setPanel] = (0, import_react.useState)(null);
+	/**
+	* Share, in one press.
+	*
+	* It used to take two, in two places: a header toggle that minted the link
+	* and a tab below that displayed it — and the tab did not exist until the
+	* toggle had been used, so nothing on the screen suggested the second step
+	* was there. People turned sharing on and left without the link.
+	*/
+	function share() {
+		if (shared) {
+			setPanel("share");
+			return;
+		}
+		router.patch(`${base}/lists/${list.id}`, { visibility: "link" }, {
+			preserveScroll: true,
+			onSuccess: () => setPanel("share")
+		});
 	}
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: list.title }),
@@ -36975,25 +37117,35 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 				list.recipient && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 					className: "mt-1 text-ink-soft",
 					children: list.recipient.name
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-xs text-ink-soft",
+					children: shared ? t("lists.shared_badge") : t("lists.private_badge")
 				})
 			] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "flex flex-wrap items-center gap-2",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					onClick: toggleSharing,
-					className: "rounded-lg border border-line px-3 py-2 text-sm hover:border-ink",
-					children: shared ? t("lists.disable_sharing") : t("lists.enable_sharing")
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					onClick: () => {
-						if (confirm(t("lists.delete_confirm"))) router.delete(`${base}/lists/${list.id}`);
-					},
-					className: "rounded-lg border border-line px-3 py-2 text-sm text-accent hover:border-accent",
-					children: t("lists.delete_list")
-				})]
+				children: [
+					access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: `${base}/search`,
+						className: "rounded-lg border border-line px-3 py-2 text-sm hover:border-ink",
+						children: ["+ ", t("lists.find_things")]
+					}),
+					access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						onClick: share,
+						className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark",
+						children: t("lists.share")
+					}),
+					access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						onClick: () => {
+							if (confirm(t("lists.delete_confirm"))) router.delete(`${base}/lists/${list.id}`);
+						},
+						"aria-label": t("lists.delete_list"),
+						title: t("lists.delete_list"),
+						className: "rounded-lg border border-line px-3 py-2 text-sm text-ink-soft hover:border-accent hover:text-accent",
+						children: t("lists.delete_list")
+					})
+				]
 			})]
-		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-			className: "mt-2 text-xs text-ink-soft",
-			children: shared ? t("lists.shared_badge") : t("lists.private_badge")
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListTools, {
 			base,
@@ -37007,7 +37159,9 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 			deliveryAddress,
 			quizUrl,
 			quizPlays,
-			santaMemberships
+			santaMemberships,
+			panel,
+			onPanel: setPanel
 		}),
 		list.claimable && shared && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft",
@@ -37085,9 +37239,16 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 			className: "mt-10 text-lg font-medium",
 			children: t("lists.my_finds")
 		}),
-		items.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-			className: "mt-10 rounded-card border border-line bg-card p-8 text-center text-ink-soft",
-			children: t("lists.empty_list")
+		items.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mt-10 rounded-card border border-line bg-card p-8 text-center",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-ink-soft",
+				children: t("lists.empty_list")
+			}), access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+				href: `${base}/search`,
+				className: "mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
+				children: t("lists.find_things")
+			})]
 		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 			className: "mt-8 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
 			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
@@ -37510,10 +37671,11 @@ var Play_exports = /* @__PURE__ */ __exportAll({ default: () => QuizPlay });
 * result a conversation rather than a broadcast.
 */
 function QuizPlay({ quiz, isOwner, result, stats }) {
-	const { market } = usePage().props;
+	const page = usePage();
+	const { market } = page.props;
 	const { t } = useTranslations();
 	const [answers, setAnswers] = (0, import_react.useState)({});
-	const token = window.location.pathname.split("/").filter(Boolean).pop();
+	const token = page.url.split("?")[0].split("/").filter(Boolean).pop();
 	const answered = Object.keys(answers).length;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
@@ -37561,7 +37723,7 @@ function QuizPlay({ quiz, isOwner, result, stats }) {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "mt-6",
 					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareMenu, {
-						url: window.location.href,
+						url: quiz.shareUrl,
 						text: `${t("quiz.title")} ${result.score}/${result.total}
 ${result.grid}`,
 						label: t("quiz.share")
@@ -37629,9 +37791,10 @@ var SelfDescribe_exports = /* @__PURE__ */ __exportAll({ default: () => SelfDesc
 * this pan" ends the conversation.
 */
 function SelfDescribe({ person, options, canClaim, items, listId, suggestions = [] }) {
-	const { market, auth } = usePage().props;
+	const page = usePage();
+	const { market, auth } = page.props;
 	const { t } = useTranslations();
-	const token = window.location.pathname.split("/").filter(Boolean).pop();
+	const token = page.url.split("?")[0].split("/").filter(Boolean).pop();
 	const base = `/${market.key}/for/${token}`;
 	const [query, setQuery] = (0, import_react.useState)("");
 	const canSave = Boolean(auth.user);
@@ -58735,7 +58898,7 @@ var require_react_dom_server_node_development = /* @__PURE__ */ __commonJSMin(((
 	})();
 }));
 //#endregion
-//#region resources/js/Components/FlashMessage.tsx
+//#region resources/js/Components/AccountMenu.tsx
 var import_server_node = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports) => {
 	var l;
 	var s;
@@ -58754,6 +58917,108 @@ var import_server_node = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(
 	exports.resumeToPipeableStream = s.resumeToPipeableStream;
 	exports.resume = s.resume;
 })))(), 1);
+/**
+* Who you are signed in as, and how to stop being them.
+*
+* The `logout` route has existed since magic links went in and nothing on the
+* site ever linked to it — so signing out was impossible without clearing
+* cookies by hand. On a site that holds gift lists and Secret Santa pairings,
+* a shared laptop with no way out is not a missing convenience, it is a leak.
+*
+* It also answers "am I signed in?", which the header could not previously be
+* asked: the only difference between the two states was whether a bell was
+* there, and a visitor does not read the absence of an icon.
+*/
+function AccountMenu() {
+	const { auth, market } = usePage().props;
+	const { t } = useTranslations();
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const wrap = (0, import_react.useRef)(null);
+	(0, import_react.useEffect)(() => {
+		if (!open) return;
+		const away = (e) => {
+			if (!wrap.current?.contains(e.target)) setOpen(false);
+		};
+		const escape = (e) => e.key === "Escape" && setOpen(false);
+		document.addEventListener("mousedown", away);
+		document.addEventListener("keydown", escape);
+		return () => {
+			document.removeEventListener("mousedown", away);
+			document.removeEventListener("keydown", escape);
+		};
+	}, [open]);
+	if (auth.user === null) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+		href: `/${market.key}/login`,
+		className: "rounded-lg border border-line px-3 py-1.5 text-sm font-medium hover:border-ink",
+		children: t("nav.sign_in")
+	});
+	const label = auth.user.name?.trim() || auth.user.email.split("@")[0];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "relative",
+		ref: wrap,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			onClick: () => setOpen((v) => !v),
+			"aria-expanded": open,
+			"aria-haspopup": "menu",
+			className: "flex items-center gap-2 rounded-lg border border-line px-2 py-1.5 text-sm hover:border-ink",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				"aria-hidden": true,
+				className: "flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white",
+				children: label.slice(0, 1).toUpperCase()
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "max-w-[9rem] truncate",
+				children: label
+			})]
+		}), open && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			role: "menu",
+			className: "absolute right-0 z-50 mt-2 w-60 rounded-card border border-line bg-card p-1 shadow-xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "truncate px-3 py-2 text-xs text-ink-soft",
+					title: auth.user.email,
+					children: auth.user.email
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/lists`,
+					role: "menuitem",
+					onClick: () => setOpen(false),
+					className: "block rounded px-3 py-2 text-sm hover:bg-line/40",
+					children: t("nav.lists")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/gift-cove`,
+					role: "menuitem",
+					onClick: () => setOpen(false),
+					className: "block rounded px-3 py-2 text-sm hover:bg-line/40",
+					children: t("nav.cove")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/notifications`,
+					role: "menuitem",
+					onClick: () => setOpen(false),
+					className: "block rounded px-3 py-2 text-sm hover:bg-line/40",
+					children: t("nav.notifications")
+				}),
+				auth.user.isAdmin && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					href: "/admin",
+					role: "menuitem",
+					className: "block rounded px-3 py-2 text-sm hover:bg-line/40",
+					children: t("nav.admin")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					role: "menuitem",
+					onClick: () => router.post(`/${market.key}/logout`),
+					className: "mt-1 block w-full rounded border-t border-line px-3 py-2 text-left text-sm hover:bg-line/40",
+					children: t("nav.sign_out")
+				})
+			]
+		})]
+	});
+}
+//#endregion
+//#region resources/js/Components/FlashMessage.tsx
 /**
 * What the server just said.
 *
@@ -58793,10 +59058,13 @@ function FlashMessage() {
 //#endregion
 //#region resources/js/Layouts/SiteLayout.tsx
 function SiteLayout({ children }) {
-	const { market, markets, auth, unreadCount } = usePage().props;
+	const page = usePage();
+	const { market, markets, auth, unreadCount } = page.props;
 	const { t } = useTranslations();
 	const base = `/${market.key}`;
 	const [menuOpen, setMenuOpen] = (0, import_react.useState)(false);
+	const path = (page.url ?? "").split("?")[0];
+	const isCurrent = (href) => path === href || path.startsWith(`${href}/`);
 	const nav = [
 		{
 			href: `${base}/search`,
@@ -58853,7 +59121,8 @@ function SiteLayout({ children }) {
 							"aria-label": t("nav.main"),
 							children: nav.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 								href: item.href,
-								className: "hover:text-ink",
+								"aria-current": isCurrent(item.href) ? "page" : void 0,
+								className: isCurrent(item.href) ? "font-medium text-ink underline decoration-accent decoration-2 underline-offset-8" : "hover:text-ink",
 								children: item.label
 							}, item.href))
 						}),
@@ -58891,27 +59160,25 @@ function SiteLayout({ children }) {
 										children: m.label
 									}, m.key))
 								}),
-								auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+								auth.user && unreadCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 									href: `${base}/notifications`,
 									className: "relative text-sm hover:text-ink",
-									"aria-label": unreadCount > 0 ? `${t("nav.notifications")} (${unreadCount})` : t("nav.notifications"),
+									"aria-label": `${t("nav.notifications")} (${unreadCount})`,
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 										"aria-hidden": true,
 										children: "🔔"
-									}), unreadCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 										className: "absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-[11px] leading-4 font-semibold text-white",
 										children: unreadCount > 9 ? "9+" : unreadCount
 									})]
-								}) }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: `${base}/login`,
-									className: "text-sm hover:text-ink",
-									children: t("nav.sign_in")
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 									href: `${base}/lists`,
-									className: "text-sm hover:text-ink",
+									"aria-current": isCurrent(`${base}/lists`) ? "page" : void 0,
+									className: `text-sm ${isCurrent(`${base}/lists`) ? "font-medium text-ink" : "text-ink-soft hover:text-ink"}`,
 									children: t("nav.lists")
-								})
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AccountMenu, {})
 							]
 						})
 					]
@@ -58928,23 +59195,34 @@ function SiteLayout({ children }) {
 								onClick: () => setMenuOpen(false),
 								children: item.label
 							}, item.href)), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-								className: "border-t border-line pt-3",
-								children: [auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "flex flex-col gap-3",
-									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+								className: "flex flex-col gap-3 border-t border-line pt-3",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+									href: `${base}/lists`,
+									onClick: () => setMenuOpen(false),
+									children: t("nav.lists")
+								}), auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 										href: `${base}/notifications`,
 										onClick: () => setMenuOpen(false),
 										children: [t("nav.notifications"), unreadCount > 0 && ` (${unreadCount})`]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "text-xs text-ink-soft",
+										children: auth.user.name?.trim() || auth.user.email
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => {
+											setMenuOpen(false);
+											router.post(`${base}/logout`);
+										},
+										className: "text-left",
+										children: t("nav.sign_out")
 									})
-								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 									href: `${base}/login`,
 									onClick: () => setMenuOpen(false),
 									children: t("nav.sign_in")
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: `${base}/lists`,
-									className: "mt-3 block",
-									onClick: () => setMenuOpen(false),
-									children: t("nav.lists")
 								})]
 							})]
 						}),
