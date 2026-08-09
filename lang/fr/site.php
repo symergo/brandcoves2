@@ -403,6 +403,7 @@ return [
         'recipient_removed' => 'Personne retirée.',
         'add_person' => 'Ajouter une personne',
         'person_name' => 'Son nom',
+        'someone_new' => 'Une nouvelle personne',
         'relationship' => 'Relation',
         'occasion' => 'Occasion',
         'price_now' => 'Maintenant :price',

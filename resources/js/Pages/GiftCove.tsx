@@ -33,17 +33,29 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
     const { t, n } = useTranslations()
     const base = `/${market.key}`
 
+    /*
+     * Each card starts its tool, rather than describing it and then dropping
+     * you on an index.
+     *
+     * Six of the nine used to point at `urls.lists`, so reading "a list you
+     * build for somebody and then hand over to them" and pressing it got you a
+     * page of your existing lists and no clue which button began that. The three
+     * that begin with a list *for someone* now open the create form on that
+     * shape; the ones that act on a list you already have open that list.
+     */
+    const forSomeone = `${urls.lists}?new=for_someone`
+
     const tools = [
         {
             key: 'wishlist',
             href: mine?.url ?? urls.lists,
             badge: mine ? t('cove.items_count', { count: n(mine.items) }) : null,
         },
-        { key: 'giftlist', href: urls.lists, badge: counts.giftLists ? n(counts.giftLists) : null },
-        { key: 'collab', href: urls.lists, badge: null },
-        { key: 'handover', href: urls.lists, badge: null },
+        { key: 'giftlist', href: forSomeone, badge: counts.giftLists ? n(counts.giftLists) : null },
+        { key: 'collab', href: forSomeone, badge: null },
+        { key: 'handover', href: forSomeone, badge: null },
         { key: 'santa', href: urls.santa, badge: counts.santa ? n(counts.santa) : null },
-        { key: 'registry', href: urls.lists, badge: counts.registries ? n(counts.registries) : null },
+        { key: 'registry', href: mine?.url ?? urls.lists, badge: counts.registries ? n(counts.registries) : null },
         { key: 'quiz', href: mine?.url ?? urls.lists, badge: null },
         { key: 'suggestions', href: urls.lists, badge: counts.suggestions ? n(counts.suggestions) : null },
         { key: 'whisperer', href: urls.gift, badge: counts.people ? n(counts.people) : null },

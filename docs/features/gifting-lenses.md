@@ -187,6 +187,21 @@ rendering a remote image and title from it turns a list into an open-redirect an
 SSRF surface. The `manual` source is the seam when that is wanted; it needs a
 fetch-and-sanitise design, not a `nullable|url` rule.
 
+## The Gift Cove starts the tool it describes
+
+The hub explains nine tools, and six of its cards pointed at `/{market}/lists`. Reading "a list you
+build for somebody and then hand over to them" and pressing it got you an index of your existing
+lists and no indication which button began that — a card that teaches the vocabulary and then
+withholds the verb.
+
+The three that begin with a list *about someone* (gift list, co-giving, handover) now open the
+create form already on that shape, via `?new=for_someone`. The ones that act on a list you already
+have (registry, quiz) open that list, where their panel lives. Suggestions is a thing other people
+send you, so the index — where you see which list received one — remains the honest destination.
+
+`?new=for_someone` is read from `usePage().url`, not `window.location`; see
+[sharing.md](sharing.md) for why that distinction is load-bearing.
+
 ---
 
 ## Files

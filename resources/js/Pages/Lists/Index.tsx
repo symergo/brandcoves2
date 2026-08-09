@@ -101,12 +101,22 @@ function ListCard({ list }: { list: ListSummary }) {
 }
 
 export default function ListsIndex({ lists, recipients, isSignedIn }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const page = usePage<SharedProps>()
+    const { market } = page.props
     const { t } = useTranslations()
-    const [creating, setCreating] = useState(false)
+
+    /*
+     * The Gift Cove describes nine tools and six of its cards used to land here,
+     * on an index, leaving the reader to work out which button started the thing
+     * they had just read about. `?new=for_someone` opens this form on the right
+     * shape instead.
+     */
+    const intent = new URLSearchParams(page.url.split('?')[1] ?? '').get('new')
+    const [creating, setCreating] = useState(intent !== null)
+    const [forSomeone, setForSomeone] = useState(intent === 'for_someone')
 
     // The recipient decides the kind; there is no separate switch to disagree with it.
-    const form = useForm({ title: '', recipient_id: '' })
+    const form = useForm({ title: '', recipient_id: '', new_recipient: '' })
 
     const mine = lists.filter((l) => l.kind === 'mine')
     const forOthers = lists.filter((l) => l.kind !== 'mine')
@@ -181,22 +191,75 @@ export default function ListsIndex({ lists, recipients, isSignedIn }: Props) {
                         className="w-full rounded-lg border border-line bg-cream px-3 py-2"
                     />
 
-                    {recipients.length > 0 && (
+                    {/*
+                      Who it is for, asked as a choice rather than left implied
+                      by a dropdown that only appears once you already have
+                      people in it. Before this the form could only make a list
+                      for yourself: the sole place to name a new person was the
+                      picker on a product card.
+                    */}
+                    <fieldset>
+                        <legend className="text-sm font-medium">{t('lists.for_whom')}</legend>
+                        <div className="mt-2 flex gap-2">
+                            {[
+                                { value: false, label: t('lists.for_me') },
+                                { value: true, label: t('lists.for_someone_else') },
+                            ].map((choice) => (
+                                <button
+                                    key={String(choice.value)}
+                                    type="button"
+                                    aria-pressed={forSomeone === choice.value}
+                                    onClick={() => {
+                                        setForSomeone(choice.value)
+
+                                        if (!choice.value) {
+                                            form.setData('recipient_id', '')
+                                            form.setData('new_recipient', '')
+                                        }
+                                    }}
+                                    className={`rounded-full border px-3 py-1.5 text-sm ${
+                                        forSomeone === choice.value
+                                            ? 'border-accent bg-accent/10 text-accent'
+                                            : 'border-line hover:border-ink'
+                                    }`}
+                                >
+                                    {choice.label}
+                                </button>
+                            ))}
+                        </div>
+                    </fieldset>
+
+                    {forSomeone && (
                         <>
-                            <label className="block text-sm font-medium" htmlFor="recipient">
-                                {t('lists.for_whom')}
-                            </label>
-                            <select
-                                id="recipient"
-                                value={form.data.recipient_id}
-                                onChange={(e) => form.setData('recipient_id', e.target.value)}
-                                className="w-full rounded-lg border border-line bg-cream px-3 py-2"
-                            >
-                                <option value="">{t('lists.no_recipient')}</option>
-                                {recipients.map((r) => (
-                                    <option key={r.id} value={r.id}>{r.name}</option>
-                                ))}
-                            </select>
+                            {recipients.length > 0 && (
+                                <select
+                                    aria-label={t('lists.for_whom')}
+                                    value={form.data.recipient_id}
+                                    onChange={(e) => form.setData('recipient_id', e.target.value)}
+                                    className="w-full rounded-lg border border-line bg-cream px-3 py-2"
+                                >
+                                    <option value="">{t('lists.someone_new')}</option>
+                                    {recipients.map((r) => (
+                                        <option key={r.id} value={r.id}>{r.name}</option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {form.data.recipient_id === '' && (
+                                <>
+                                    <label className="block text-sm font-medium" htmlFor="new-recipient">
+                                        {t('lists.person_name')}
+                                    </label>
+                                    <input
+                                        id="new-recipient"
+                                        required
+                                        maxLength={80}
+                                        value={form.data.new_recipient}
+                                        onChange={(e) => form.setData('new_recipient', e.target.value)}
+                                        className="w-full rounded-lg border border-line bg-cream px-3 py-2"
+                                    />
+                                </>
+                            )}
                         </>
                     )}
 

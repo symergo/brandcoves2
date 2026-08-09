@@ -256,6 +256,27 @@ class SaveToListTest extends TestCase
     }
 
     #[Test]
+    public function a_list_for_a_new_person_can_be_made_from_the_lists_page(): void
+    {
+        $user = User::factory()->create();
+
+        /*
+         * The recipient dropdown on that form is drawn from people you already
+         * have, and the only place to mint one was the picker on a product
+         * card — so "a list for my sister" was reachable from a search result
+         * and not from the page called My lists.
+         */
+        $this->actingAs($user)
+            ->post('/be-nl/lists', ['title' => 'For Robin', 'new_recipient' => 'Robin'])
+            ->assertRedirect();
+
+        $list = Wishlist::query()->where('title', 'For Robin')->firstOrFail();
+
+        $this->assertSame(ListKind::ForSomeone, $list->kind);
+        $this->assertSame('Robin', $list->recipient->name);
+    }
+
+    #[Test]
     public function you_cannot_save_into_a_list_you_have_no_part_in(): void
     {
         $other = Wishlist::factory()->create([

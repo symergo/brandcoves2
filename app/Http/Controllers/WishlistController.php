@@ -80,6 +80,17 @@ class WishlistController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:120'],
             'recipient_id' => ['nullable', 'uuid'],
+
+            /*
+             * Naming a new person here, as the save picker has always allowed.
+             *
+             * Without it this form could only ever make a list for yourself:
+             * the recipient dropdown is drawn from people you already have, and
+             * the only place to mint one was the picker on a product card. So
+             * "make a list for my sister" was reachable from a search result and
+             * not from the page called My lists.
+             */
+            'new_recipient' => ['nullable', 'string', 'max:80'],
         ]);
 
         // A recipient must belong to the same owner, or a guessed uuid would
@@ -90,6 +101,11 @@ class WishlistController extends Controller
                 ->exists();
 
             abort_unless($owned, 403);
+        } elseif (filled($validated['new_recipient'] ?? null)) {
+            $validated['recipient_id'] = Recipient::create([
+                ...$owner->attributes(),
+                'name' => $validated['new_recipient'],
+            ])->id;
         }
 
         $list = Wishlist::create([

@@ -35679,6 +35679,7 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const base = `/${market.key}`;
+	const forSomeone = `${urls.lists}?new=for_someone`;
 	const tools = [
 		{
 			key: "wishlist",
@@ -35687,17 +35688,17 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 		},
 		{
 			key: "giftlist",
-			href: urls.lists,
+			href: forSomeone,
 			badge: counts.giftLists ? n(counts.giftLists) : null
 		},
 		{
 			key: "collab",
-			href: urls.lists,
+			href: forSomeone,
 			badge: null
 		},
 		{
 			key: "handover",
-			href: urls.lists,
+			href: forSomeone,
 			badge: null
 		},
 		{
@@ -35707,7 +35708,7 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 		},
 		{
 			key: "registry",
-			href: urls.lists,
+			href: mine?.url ?? urls.lists,
 			badge: counts.registries ? n(counts.registries) : null
 		},
 		{
@@ -36321,12 +36322,16 @@ function ListCard({ list }) {
 	});
 }
 function ListsIndex({ lists, recipients, isSignedIn }) {
-	const { market } = usePage().props;
+	const page = usePage();
+	const { market } = page.props;
 	const { t } = useTranslations();
-	const [creating, setCreating] = (0, import_react.useState)(false);
+	const intent = new URLSearchParams(page.url.split("?")[1] ?? "").get("new");
+	const [creating, setCreating] = (0, import_react.useState)(intent !== null);
+	const [forSomeone, setForSomeone] = (0, import_react.useState)(intent === "for_someone");
 	const form = useForm({
 		title: "",
-		recipient_id: ""
+		recipient_id: "",
+		new_recipient: ""
 	});
 	const mine = lists.filter((l) => l.kind === "mine");
 	const forOthers = lists.filter((l) => l.kind !== "mine");
@@ -36400,23 +36405,55 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 					onChange: (e) => form.setData("title", e.target.value),
 					className: "w-full rounded-lg border border-line bg-cream px-3 py-2"
 				}),
-				recipients.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-					className: "block text-sm font-medium",
-					htmlFor: "recipient",
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("legend", {
+					className: "text-sm font-medium",
 					children: t("lists.for_whom")
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
-					id: "recipient",
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-2 flex gap-2",
+					children: [{
+						value: false,
+						label: t("lists.for_me")
+					}, {
+						value: true,
+						label: t("lists.for_someone_else")
+					}].map((choice) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						"aria-pressed": forSomeone === choice.value,
+						onClick: () => {
+							setForSomeone(choice.value);
+							if (!choice.value) {
+								form.setData("recipient_id", "");
+								form.setData("new_recipient", "");
+							}
+						},
+						className: `rounded-full border px-3 py-1.5 text-sm ${forSomeone === choice.value ? "border-accent bg-accent/10 text-accent" : "border-line hover:border-ink"}`,
+						children: choice.label
+					}, String(choice.value)))
+				})] }),
+				forSomeone && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [recipients.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+					"aria-label": t("lists.for_whom"),
 					value: form.data.recipient_id,
 					onChange: (e) => form.setData("recipient_id", e.target.value),
 					className: "w-full rounded-lg border border-line bg-cream px-3 py-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
 						value: "",
-						children: t("lists.no_recipient")
+						children: t("lists.someone_new")
 					}), recipients.map((r) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
 						value: r.id,
 						children: r.name
 					}, r.id))]
-				})] }),
+				}), form.data.recipient_id === "" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+					className: "block text-sm font-medium",
+					htmlFor: "new-recipient",
+					children: t("lists.person_name")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					id: "new-recipient",
+					required: true,
+					maxLength: 80,
+					value: form.data.new_recipient,
+					onChange: (e) => form.setData("new_recipient", e.target.value),
+					className: "w-full rounded-lg border border-line bg-cream px-3 py-2"
+				})] })] }),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "flex gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
@@ -36464,7 +36501,7 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 //#endregion
 //#region resources/js/Pages/Lists/Shared.tsx
 var Shared_exports = /* @__PURE__ */ __exportAll({ default: () => SharedList });
-function SharedList({ list, isOwner, items }) {
+function SharedList({ list, isOwner, progress, items }) {
 	const page = usePage();
 	const { market } = page.props;
 	const { t } = useTranslations();
@@ -36494,6 +36531,13 @@ function SharedList({ list, isOwner, items }) {
 			isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-4 rounded-card border border-amber/40 bg-amber/10 p-4 text-sm",
 				children: t("lists.owner_view_note")
+			}),
+			progress !== null && progress.total > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-4 text-sm text-ink-soft",
+				children: t("lists.progress", {
+					claimed: String(progress.claimed),
+					total: String(progress.total)
+				})
 			})
 		] }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
@@ -36532,14 +36576,20 @@ function SharedList({ list, isOwner, items }) {
 					})]
 				}), !isOwner && item.claimed !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "mt-4",
-					children: item.claimedByMe ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-						onClick: () => router.delete(`${base}/l/${token}/claim/${item.id}`, { preserveScroll: true }),
-						className: "w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-sm font-medium text-sage",
-						children: [
-							t("lists.claimed"),
-							" · ",
-							t("lists.unclaim")
-						]
+					children: item.claimedByMe ? item.sent ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-center text-sm font-medium text-sage",
+						children: t("lists.sent")
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-col gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							onClick: () => router.post(`${base}/l/${token}/sent/${item.id}`, {}, { preserveScroll: true }),
+							className: "w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-sm font-medium text-sage",
+							children: t("lists.mark_sent")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							onClick: () => router.delete(`${base}/l/${token}/claim/${item.id}`, { preserveScroll: true }),
+							className: "text-xs text-ink-soft underline hover:text-ink",
+							children: t("lists.unclaim")
+						})]
 					}) : item.claimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "w-full rounded-lg border border-line px-4 py-2 text-center text-sm text-ink-soft",
 						children: t("lists.claimed_by_someone")

@@ -14,6 +14,8 @@ interface Item {
     /** null for the list owner — they must never learn what is taken. */
     claimed: boolean | null
     claimedByMe: boolean
+    /** Only ever non-null for the person who claimed it. */
+    sent: boolean | null
 }
 
 interface Props {
@@ -27,10 +29,12 @@ interface Props {
         heading: string
     }
     isOwner: boolean
+    /** null for the owner — a count is claim state too. */
+    progress: { claimed: number; total: number } | null
     items: Item[]
 }
 
-export default function SharedList({ list, isOwner, items }: Props) {
+export default function SharedList({ list, isOwner, progress, items }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -78,6 +82,25 @@ export default function SharedList({ list, isOwner, items }: Props) {
                         {t('lists.owner_view_note')}
                     </p>
                 )}
+
+                {/*
+                  "3 of 11 claimed". The server has sent this since the strip
+                  was specced and the page never drew it, so a visitor arriving
+                  late had no way to tell a list that was mostly spoken for from
+                  one nobody had touched — which is the difference between
+                  choosing carefully and choosing quickly.
+
+                  Null for the owner, never zero: the moment a zero stops being
+                  zero they have learnt something.
+                */}
+                {progress !== null && progress.total > 0 && (
+                    <p className="mt-4 text-sm text-ink-soft">
+                        {t('lists.progress', {
+                            claimed: String(progress.claimed),
+                            total: String(progress.total),
+                        })}
+                    </p>
+                )}
             </header>
 
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -121,14 +144,43 @@ export default function SharedList({ list, isOwner, items }: Props) {
                         {!isOwner && item.claimed !== null && (
                             <div className="mt-4">
                                 {item.claimedByMe ? (
-                                    <button
-                                        onClick={() =>
-                                            router.delete(`${base}/l/${token}/claim/${item.id}`, { preserveScroll: true })
-                                        }
-                                        className="w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-sm font-medium text-sage"
-                                    >
-                                        {t('lists.claimed')} · {t('lists.unclaim')}
-                                    </button>
+                                    /*
+                                      Claiming was a dead end: you said you would
+                                      get it and then had nowhere to say you had.
+                                      The endpoint and the `sent` flag both
+                                      existed; only the button was missing, so
+                                      the strip above could never finish.
+                                    */
+                                    item.sent ? (
+                                        <p className="w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-center text-sm font-medium text-sage">
+                                            {t('lists.sent')}
+                                        </p>
+                                    ) : (
+                                        <div className="flex flex-col gap-2">
+                                            <button
+                                                onClick={() =>
+                                                    router.post(
+                                                        `${base}/l/${token}/sent/${item.id}`,
+                                                        {},
+                                                        { preserveScroll: true },
+                                                    )
+                                                }
+                                                className="w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-sm font-medium text-sage"
+                                            >
+                                                {t('lists.mark_sent')}
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    router.delete(`${base}/l/${token}/claim/${item.id}`, {
+                                                        preserveScroll: true,
+                                                    })
+                                                }
+                                                className="text-xs text-ink-soft underline hover:text-ink"
+                                            >
+                                                {t('lists.unclaim')}
+                                            </button>
+                                        </div>
+                                    )
                                 ) : item.claimed ? (
                                     <p className="w-full rounded-lg border border-line px-4 py-2 text-center text-sm text-ink-soft">
                                         {t('lists.claimed_by_someone')}

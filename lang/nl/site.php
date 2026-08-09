@@ -407,6 +407,7 @@ return [
         'recipient_removed' => 'Persoon verwijderd.',
         'add_person' => 'Iemand toevoegen',
         'person_name' => 'Hun naam',
+        'someone_new' => 'Iemand nieuw',
         'relationship' => 'Relatie',
         'occasion' => 'Gelegenheid',
         'price_now' => 'Nu :price',

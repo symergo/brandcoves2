@@ -133,6 +133,33 @@ nobody buys the thing and nobody knows.
 identifies a claimer to *us* for the undo check without being reversible. Rotating that secret
 orphans every existing claim — it is permanent in practice.
 
+## The shared page renders what the controller sends
+
+`SharedListController::show()` had been sending `progress` and a per-item `sent` since the strip was
+specced, and `Lists/Shared` drew neither. Two consequences, both invisible from the server side:
+
+- **Claiming was a dead end.** You said you would get it and then had nowhere to say you had. The
+  endpoint (`POST /l/{token}/sent/{item}`) and the `marked_sent_at` column both existed; only the
+  button was missing, so the progress strip could never finish.
+- **No visitor could tell a list that was mostly spoken for from one nobody had touched**, which is
+  the difference between choosing carefully and choosing quickly.
+
+`progress` stays `null` for the owner rather than `0`. A count *is* claim state: the moment a zero
+stops being zero they have learnt something. Absent, not zero — the same discipline as `claimed`.
+
+`sent` is non-null only for the person holding the claim. Everybody else needs to know the item is
+spoken for and nothing more.
+
+## A list for a new person, from the lists page
+
+`WishlistController::store()` accepts `new_recipient` and mints the person, exactly as
+`WishlistItemController::store()` already did.
+
+Without it the create form could only ever make a list for yourself. The recipient dropdown is drawn
+from people you already have, and the only place to name a new one was the save picker on a product
+card — so "a list for my sister" was reachable from a search result and not from the page called My
+lists. The kind still follows from the recipient; there is no second switch that could disagree.
+
 ## Share links
 
 `share_token` is a UUID, and `visibility` gates it independently. Turning sharing off has to actually

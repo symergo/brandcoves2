@@ -435,6 +435,7 @@ return [
         'recipient_removed' => 'Person removed.',
         'add_person' => 'Add a person',
         'person_name' => 'Their name',
+        'someone_new' => 'Someone new',
         'relationship' => 'Relationship',
         'occasion' => 'Occasion',
         'price_now' => 'Now :price',

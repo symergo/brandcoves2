@@ -150,6 +150,58 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
+    public function a_claimer_can_say_they_have_bought_it(): void
+    {
+        [$list, $item] = $this->sharedGiftList();
+
+        // A signed-in visitor, so the same identity carries across all three
+        // requests. An anonymous one is issued a fresh cookie per test request,
+        // which would make this measure the harness rather than the feature.
+        $claimer = User::factory()->create();
+
+        $this->actingAs($claimer)
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+            ->assertRedirect();
+
+        $this->actingAs($claimer)
+            ->post("/be-nl/l/{$list->share_token}/sent/{$item->id}")
+            ->assertSessionHas('success');
+
+        /*
+         * Claiming used to be a dead end in the interface: you said you would
+         * get it and then had nowhere to say you had. Both the endpoint and the
+         * flag existed — only the button was missing — so the progress strip
+         * could never finish.
+         */
+        $this->actingAs($claimer)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertInertia(fn ($page) => $page->where('items.0.sent', true));
+    }
+
+    #[Test]
+    public function the_progress_strip_counts_for_visitors_and_is_absent_for_the_owner(): void
+    {
+        [$list, $item] = $this->sharedGiftList();
+
+        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+        $item->claim(WishlistItem::identityHash('anon:someone'));
+
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertInertia(fn ($page) => $page
+                ->where('progress.claimed', 1)
+                ->where('progress.total', 2));
+
+        /*
+         * Absent for the owner, not zero. A count is claim state: the moment a
+         * zero stops being zero they have learnt something, which is the whole
+         * thing a gift list exists to prevent.
+         */
+        $this->actingAs($list->owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertInertia(fn ($page) => $page->where('progress', null));
+    }
+
+    #[Test]
     public function the_owner_never_sees_claim_state(): void
     {
         [$list, $item] = $this->sharedGiftList();
