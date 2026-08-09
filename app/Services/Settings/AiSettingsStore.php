@@ -84,23 +84,35 @@ class AiSettingsStore
      */
     public function stored(): array
     {
-        return Cache::remember(self::CACHE_KEY, 3600, function (): array {
-            try {
+        /*
+         * The try wraps the CACHE CALL, not just the query inside it.
+         *
+         * That distinction broke a deploy. `php artisan package:discover` runs
+         * during the Docker build, which boots the application — and with no
+         * Postgres and no Redis at build time the cache store falls back to the
+         * database driver, so `Cache::remember` queries a sqlite file that does
+         * not exist. The exception came from the cache lookup, several frames
+         * before the query this method was guarding, and the build died on:
+         *
+         *   Database file at path [/app/database/database.sqlite] does not exist
+         *
+         * There are three ways this runs without a reachable database — a build,
+         * `migrate` against a fresh schema, and a test that has not migrated —
+         * and in all three the right answer is the same: no overrides, the env
+         * defaults stand, and boot completes. A provider that throws here takes
+         * out the one command that would fix it.
+         */
+        try {
+            return Cache::remember(self::CACHE_KEY, 3600, function (): array {
                 return ConnectorSetting::query()
                     ->where('source', self::SOURCE)
                     ->get()
                     ->mapWithKeys(fn (ConnectorSetting $s) => [$s->key => $s->encrypted_value])
                     ->all();
-            } catch (Throwable) {
-                /*
-                 * No table yet — a fresh database mid-`migrate`, or a test that
-                 * has not run migrations. Returning nothing means the env
-                 * defaults stand, which is the correct behaviour and, more
-                 * importantly, lets `migrate` finish.
-                 */
-                return [];
-            }
-        });
+            });
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     /**

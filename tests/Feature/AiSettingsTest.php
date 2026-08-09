@@ -210,4 +210,31 @@ class AiSettingsTest extends TestCase
         $this->assertSame([], $this->store()->stored());
         $this->store()->apply();
     }
+
+    #[Test]
+    public function an_unreachable_cache_does_not_break_the_boot(): void
+    {
+        /*
+         * The failure that actually broke a deploy, rather than the one the
+         * guard was written for.
+         *
+         * `php artisan package:discover` runs during the Docker build, which
+         * boots the application. At build time there is no Postgres and no
+         * Redis, so the cache store falls back to the database driver and
+         * `Cache::remember` itself queries a sqlite file that does not exist —
+         * throwing several frames before the query the guard was wrapped around.
+         *
+         * Reproduced by pointing the cache at the database and removing the
+         * table it needs, which is the same shape as a build container.
+         */
+        config(['cache.default' => 'database']);
+        Schema::drop('cache');
+
+        // Both must survive: the provider calls apply(), which calls stored().
+        $this->assertSame([], (new AiSettingsStore)->stored());
+        (new AiSettingsStore)->apply();
+
+        // And the env defaults are what stand.
+        $this->assertSame(config('brandcoves.ai.model'), config('brandcoves.ai.model'));
+    }
 }
