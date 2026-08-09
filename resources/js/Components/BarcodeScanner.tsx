@@ -27,7 +27,23 @@ declare global {
     }
 }
 
-const FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'code_128']
+/*
+ * Literal, not `string[]`, and not `as const` either.
+ *
+ * Widened to `string[]` these stop satisfying the polyfill's union of known
+ * format names — which is the only thing that would tell us a typo here detects
+ * nothing at all. `as const` fixes that and then fails the other way, because
+ * both detectors want a mutable array. A literal tuple type gives the checking
+ * without the readonly.
+ */
+const FORMATS: ('ean_13' | 'ean_8' | 'upc_a' | 'upc_e' | 'itf' | 'code_128')[] = [
+    'ean_13',
+    'ean_8',
+    'upc_a',
+    'upc_e',
+    'itf',
+    'code_128',
+]
 
 /**
  * A detector that works in every browser, not just the lucky ones.

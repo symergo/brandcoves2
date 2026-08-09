@@ -130,6 +130,7 @@
   "resources/js/Pages/Scan.tsx": [],
   "resources/js/Pages/Search.tsx": [],
   "resources/js/Pages/Surprise.tsx": [],
+  "resources/js/savedItems.ts": [],
   "resources/js/ssr.tsx": [],
   "resources/js/types.ts": [],
   "resources/js/useTranslations.ts": []

@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": [
+            "ES2022",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "types": [
+            "vite/client"
+        ],
+        "strict": true,
+        "noEmit": true,
+        "skipLibCheck": true,
+        "isolatedModules": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "verbatimModuleSyntax": false
+    },
+    "include": [
+        "resources/js/**/*.ts",
+        "resources/js/**/*.tsx"
+    ],
+    "exclude": [
+        "resources/js/app.tsx",
+        "resources/js/ssr.tsx",
+        "resources/js/Components/BarcodeScanner.tsx"
+    ]
+}

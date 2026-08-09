@@ -2,6 +2,8 @@ import { Head, Link, router, usePage } from '@inertiajs/react'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import ListTools from '../../Components/ListTools'
+import ShareRow from '../../Components/ShareRow'
+import { markRemoved } from '../../savedItems'
 import { useTranslations } from '../../useTranslations'
 
 interface Item {
@@ -324,7 +326,16 @@ export default function ListShow({
                             </div>
 
                             <button
-                                onClick={() => router.delete(`${base}/list-items/${item.id}`, { preserveScroll: true })}
+                                onClick={() =>
+                                    router.delete(`${base}/list-items/${item.id}`, {
+                                        preserveScroll: true,
+                                        // Otherwise the bookmark on the product
+                                        // page still reads as saved after the
+                                        // item has gone.
+                                        onSuccess: () =>
+                                            item.groupId !== null && markRemoved(item.groupId),
+                                    })
+                                }
                                 aria-label={t('lists.remove')}
                                 className="rounded p-2 text-ink-soft hover:text-accent"
                             >

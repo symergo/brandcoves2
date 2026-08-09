@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
+import { load, markSaved, snapshot, serverSnapshot, subscribe } from '../savedItems'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -55,8 +56,17 @@ export default function SaveToList({
     const { market, auth } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
-    const [saved, setSaved] = useState(false)
     const [busy, setBusy] = useState(false)
+
+    /*
+     * Shared across every card on the page.
+     *
+     * Local state only knew about its own clicks, so anything saved on a
+     * previous visit rendered as unsaved — the control lied about the one thing
+     * it exists to report.
+     */
+    const savedIds = useSyncExternalStore(subscribe, snapshot, serverSnapshot)
+    const saved = groupId !== undefined && savedIds !== null && savedIds.has(groupId)
     const [open, setOpen] = useState(false)
     const [options, setOptions] = useState<Options | null>(null)
     const [creating, setCreating] = useState<null | 'mine' | 'for_someone'>(null)
@@ -88,6 +98,11 @@ export default function SaveToList({
     useLayoutEffect(() => {
         if (open) place()
     }, [open, place])
+
+    // Lazily, and never for a visitor who cannot save anything.
+    useEffect(() => {
+        load(market.key, Boolean(auth.user))
+    }, [market.key, auth.user])
 
     useEffect(() => {
         if (!open || options) return
@@ -157,7 +172,10 @@ export default function SaveToList({
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {
-                    setSaved(true)
+                    if (groupId !== undefined) {
+                        markSaved(groupId)
+                    }
+
                     setOpen(false)
                     setCreating(null)
                     setName('')

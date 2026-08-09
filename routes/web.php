@@ -154,6 +154,9 @@ Route::prefix('{market}')->group(function () {
     // Where a save could go. JSON, fetched by the save picker on first open.
     Route::get('/list-options', [WishlistItemController::class, 'options'])->name('items.options');
 
+    // Which products are already saved, so a card can show it without asking.
+    Route::get('/saved-items', [WishlistItemController::class, 'saved'])->name('items.saved');
+
     Route::middleware('auth')->group(function () {
         Route::post('/lists', [WishlistController::class, 'store'])->name('lists.store');
         Route::patch('/lists/{list}', [WishlistController::class, 'update'])->name('lists.update');

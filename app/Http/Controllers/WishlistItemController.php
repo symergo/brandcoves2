@@ -23,6 +23,37 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class WishlistItemController extends Controller
 {
     /**
+     * Which products are already on one of your lists.
+     *
+     * The save control is on every product card on every surface, and it knew
+     * nothing until you clicked it — so something already on your wishlist
+     * showed an empty bookmark, and the only way to find out was to save it
+     * again.
+     *
+     * Ids only, and only for this market, so the payload stays small enough to
+     * fetch once and hold. Any list of yours counts: a thing on your research
+     * list for your mother is still a thing you have already found.
+     */
+    public function saved(Request $request, CurrentMarket $current): JsonResponse
+    {
+        $owner = Owner::fromRequest($request);
+
+        if (! $owner->isSignedIn()) {
+            return response()->json(['groupIds' => []]);
+        }
+
+        $ids = WishlistItem::query()
+            ->whereNotNull('group_id')
+            ->whereNotNull('accepted_at')
+            ->whereHas('wishlist', fn ($q) => $owner->scope($q)->where('market', $current->value()))
+            ->pluck('group_id')
+            ->unique()
+            ->values();
+
+        return response()->json(['groupIds' => $ids]);
+    }
+
+    /**
      * Where a save could go.
      *
      * A plain JSON endpoint rather than an Inertia page, because the save

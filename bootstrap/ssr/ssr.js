@@ -33868,6 +33868,68 @@ function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) 
 	});
 }
 //#endregion
+//#region resources/js/savedItems.ts
+/**
+* What is already on one of your lists.
+*
+* The save control appears on every product card on every surface — search,
+* brand pages, guides, the daily edition, the wizard — and each instance used
+* to know only about its own clicks. So a product you saved last week showed an
+* empty bookmark, and the only way to discover it was already there was to save
+* it again.
+*
+* A module-level store rather than page props, for two reasons. Passing the ids
+* through every page would mean touching seven controllers and putting a query
+* on pages that render no cards at all. And a store lets every bookmark on a
+* grid of forty update the moment one of them is clicked, which per-component
+* state cannot do.
+*
+* Fetched once per page load, lazily: nothing happens until a card actually
+* mounts, and nothing happens at all for signed-out visitors, who cannot save.
+*/
+var saved = null;
+var inflight = null;
+var listeners = /* @__PURE__ */ new Set();
+function notify() {
+	saved = saved === null ? null : new Set(saved);
+	listeners.forEach((fn) => fn());
+}
+function subscribe(listener) {
+	listeners.add(listener);
+	return () => {
+		listeners.delete(listener);
+	};
+}
+function snapshot() {
+	return saved;
+}
+/** Server-rendered markup shows the unsaved state; the client corrects it. */
+function serverSnapshot() {
+	return null;
+}
+function load(marketKey, signedIn) {
+	if (!signedIn || saved !== null || inflight !== null) return;
+	inflight = fetch(`/${marketKey}/saved-items`, { headers: { Accept: "application/json" } }).then((r) => r.json()).then((data) => {
+		saved = new Set(data.groupIds ?? []);
+		notify();
+	}).catch(() => {
+		saved = /* @__PURE__ */ new Set();
+		notify();
+	}).finally(() => {
+		inflight = null;
+	});
+}
+function markSaved(groupId) {
+	saved ??= /* @__PURE__ */ new Set();
+	saved.add(groupId);
+	notify();
+}
+function markRemoved(groupId) {
+	if (saved === null) return;
+	saved.delete(groupId);
+	notify();
+}
+//#endregion
 //#region resources/js/Components/SaveToList.tsx
 /**
 * Save a product — to a list for yourself, or to one about somebody else.
@@ -33890,8 +33952,9 @@ function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) 
 function SaveToList({ groupId, source, externalId, title, imageUrl, price, compact = false }) {
 	const { market, auth } = usePage().props;
 	const { t } = useTranslations();
-	const [saved, setSaved] = (0, import_react.useState)(false);
 	const [busy, setBusy] = (0, import_react.useState)(false);
+	const savedIds = (0, import_react.useSyncExternalStore)(subscribe, snapshot, serverSnapshot);
+	const saved = groupId !== void 0 && savedIds !== null && savedIds.has(groupId);
 	const [open, setOpen] = (0, import_react.useState)(false);
 	const [options, setOptions] = (0, import_react.useState)(null);
 	const [creating, setCreating] = (0, import_react.useState)(null);
@@ -33920,6 +33983,9 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 	(0, import_react.useLayoutEffect)(() => {
 		if (open) place();
 	}, [open, place]);
+	(0, import_react.useEffect)(() => {
+		load(market.key, Boolean(auth.user));
+	}, [market.key, auth.user]);
 	(0, import_react.useEffect)(() => {
 		if (!open || options) return;
 		fetch(`/${market.key}/list-options`, { headers: { Accept: "application/json" } }).then((r) => r.json()).then(setOptions).catch(() => setOptions({
@@ -33968,7 +34034,7 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 			preserveScroll: true,
 			preserveState: true,
 			onSuccess: () => {
-				setSaved(true);
+				if (groupId !== void 0) markSaved(groupId);
 				setOpen(false);
 				setCreating(null);
 				setName("");
@@ -36517,7 +36583,7 @@ function ShareMenu({ url, text, label }) {
 * into a group chat, and a button that claims to have copied something is worth
 * less than the thing itself.
 */
-function ShareRow$1({ url, text, label, hint }) {
+function ShareRow({ url, text, label, hint }) {
 	const { t } = useTranslations();
 	const [copied, setCopied] = (0, import_react.useState)(false);
 	async function copy() {
@@ -36672,7 +36738,7 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 			open !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "mt-3 rounded-card border border-line bg-card p-4",
 				children: [
-					open === "share" && list.shareUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow$1, {
+					open === "share" && list.shareUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow, {
 						url: list.shareUrl,
 						text: t("lists.share_text", { title: list.title }),
 						hint: t("lists.sharing_on")
@@ -36687,7 +36753,7 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							className: "mt-2",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow$1, {
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow, {
 								url: quizUrl,
 								text: t("quiz.share_text")
 							})
@@ -37060,7 +37126,10 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 						})]
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						onClick: () => router.delete(`${base}/list-items/${item.id}`, { preserveScroll: true }),
+						onClick: () => router.delete(`${base}/list-items/${item.id}`, {
+							preserveScroll: true,
+							onSuccess: () => item.groupId !== null && markRemoved(item.groupId)
+						}),
 						"aria-label": t("lists.remove"),
 						className: "rounded p-2 text-ink-soft hover:text-accent",
 						children: "✕"
@@ -37809,7 +37878,7 @@ function SantaGroup({ group, isOrganiser, members, me }) {
 				}),
 				!group.drawn && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "mt-4 rounded-card border border-line bg-card p-4",
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow$1, {
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow, {
 						url: group.inviteUrl,
 						text: t("santa.invite_text", { title: group.title }),
 						label: t("santa.invite"),
