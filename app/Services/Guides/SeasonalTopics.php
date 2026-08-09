@@ -129,6 +129,7 @@ class SeasonalTopics
             ->whereNull('guide_id')
             ->where('available_products', '>=', self::MIN_PRODUCTS)
             ->whereNotNull('season_from')
+            ->notRecentlyAttempted()
             ->get();
 
         $open = $candidates

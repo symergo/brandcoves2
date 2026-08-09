@@ -135,6 +135,9 @@ class TopicMiner
             ->whereNull('guide_id')
             ->where('search_volume', '>=', self::MIN_VOLUME)
             ->where('available_products', '>=', self::MIN_PRODUCTS)
+            // A topic the builder has just failed on would otherwise sit at the
+            // head of the queue forever, and everything behind it is unreachable.
+            ->notRecentlyAttempted()
             ->orderByDesc('score')
             ->first();
     }

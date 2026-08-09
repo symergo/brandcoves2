@@ -218,6 +218,57 @@ class SeasonalCoveTest extends TestCase
     }
 
     #[Test]
+    public function a_topic_the_builder_cannot_build_stops_blocking_the_queue(): void
+    {
+        /*
+         * The bug this pins, found on staging: `ripest()` returned "kamperen"
+         * every single time. The builder found four products where it needs five,
+         * logged a skip and returned null — and nothing recorded the attempt, so
+         * the next run got the same topic. 123 topics in the queue, five Coves
+         * published, and every topic behind the first one unreachable.
+         *
+         * Invisible in tests because each one either seeds enough products or
+         * asserts the skip. Nothing asserted what happens the *next* day.
+         */
+        $this->seedProducts('gasbarbecue');
+
+        // Enough for the seasonal matcher's ILIKE, too few for the builder's
+        // stricter shortlist — which is exactly the real-world shape.
+        $this->seedProducts('tent', count: 2);
+
+        $on = CarbonImmutable::create(2027, 4, 15);
+        app(SeasonalTopics::class)->seed(Market::BeNl, $on);
+        $this->travelTo($on);
+
+        $first = app(TopicMiner::class)->ripest(Market::BeNl);
+        $this->assertNotNull($first);
+
+        // Fail it the way the builder does.
+        $first->forceFill(['last_attempt_at' => now(), 'attempts' => 1])->save();
+
+        $second = app(TopicMiner::class)->ripest(Market::BeNl);
+
+        $this->assertNotSame($first->topic, $second?->topic, 'the queue is head-blocked');
+    }
+
+    #[Test]
+    public function a_failed_topic_comes_back_once_the_catalogue_has_had_time_to_change(): void
+    {
+        // Not banned, just parked: a category that is thin today may have an
+        // advertiser next month, and permanently rejecting it means never
+        // noticing.
+        $this->seedProducts('gasbarbecue');
+        $on = CarbonImmutable::create(2027, 4, 15);
+        app(SeasonalTopics::class)->seed(Market::BeNl, $on);
+        $this->travelTo($on);
+
+        $topic = app(TopicMiner::class)->ripest(Market::BeNl);
+        $topic->forceFill(['last_attempt_at' => now()->subDays(20), 'attempts' => 1])->save();
+
+        $this->assertSame($topic->topic, app(TopicMiner::class)->ripest(Market::BeNl)?->topic);
+    }
+
+    #[Test]
     public function queries_are_resolved_in_the_market_language(): void
     {
         /*

@@ -47,9 +47,26 @@ class GuideBuilder
         );
 
         if (count($shortlist) < 5) {
-            // The topic looked ripe when it was mined and is not now — stock
-            // moves. Better to skip than to publish a three-item "best of".
-            Log::info('Guide skipped: too few products', ['topic' => $topic->topic]);
+            /*
+             * The topic looked ripe when it was mined and is not now — stock
+             * moves. Better to skip than to publish a three-item "best of".
+             *
+             * Recorded, not just logged. Without the timestamp `ripest()` returns
+             * this same topic tomorrow and every day after, and the whole queue
+             * stays head-blocked behind one topic that can never be built —
+             * which is exactly what happened on staging: 123 topics, five Coves.
+             */
+            $topic->forceFill([
+                'last_attempt_at' => now(),
+                'attempts' => (int) $topic->attempts + 1,
+                'available_products' => count($shortlist),
+            ])->save();
+
+            Log::info('Guide skipped: too few products', [
+                'topic' => $topic->topic,
+                'found' => count($shortlist),
+                'attempts' => $topic->attempts,
+            ]);
 
             return null;
         }

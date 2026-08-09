@@ -152,6 +152,23 @@ class GuideTopicResource extends Resource
 
                 TextColumn::make('score')->numeric(decimalPlaces: 1)->sortable()->toggleable(),
 
+                /*
+                 * Failed build attempts.
+                 *
+                 * The number that makes a permanent gap legible: a topic on its
+                 * ninth attempt is not waiting for stock, it is a topic whose
+                 * products we do not sell — which is a reason to go and find an
+                 * advertiser, not to keep retrying.
+                 */
+                TextColumn::make('attempts')
+                    ->label('Tried')
+                    ->state(fn (GuideTopic $r) => $r->attempts > 0
+                        ? $r->attempts.'× · '.($r->last_attempt_at?->diffForHumans() ?? '')
+                        : '—')
+                    ->color(fn (GuideTopic $r) => $r->attempts >= 3 ? 'danger' : null)
+                    ->tooltip('A failed build parks a topic for '.GuideTopic::RETRY_AFTER_DAYS.' days rather than banning it — thin today is not thin forever.')
+                    ->toggleable(),
+
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
