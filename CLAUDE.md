@@ -34,6 +34,21 @@ composer lint                 # Pint
 composer test
 ```
 
+Operational commands, all idempotent and safe to re-run:
+
+```bash
+php artisan bc:refresh-discovery      # giftability → serendipity → brand stats → today's edition
+php artisan bc:plan-coves             # draft the editorial calendar 120 days ahead
+php artisan bc:make-admin             # create an admin; refuses a password in argv (visible in ps)
+php artisan bc:check-bol              # prove the bol credentials; prints lengths, never values
+php artisan bc:awin-feeds             # discover Awin advertiser feeds, register them per market
+php artisan bc:ingest                 # run feed ingestion now
+php artisan bc:scrub --force          # MANDATORY after restoring a production dump
+```
+
+A fresh deploy has empty discovery surfaces until the next scheduled window, so
+`bc:refresh-discovery` is the first thing to run against a new environment.
+
 PHP, Composer and Node run on the **Windows host** — bind-mounting a PHP project into a Linux
 container on Windows makes every request stat hundreds of autoloaded files across the filesystem
 boundary. Only the infrastructure is containerised locally.

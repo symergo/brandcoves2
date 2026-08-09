@@ -40,7 +40,11 @@ class GuideBuilder
     public function build(GuideTopic $topic): ?Guide
     {
         $market = $topic->market instanceof Market ? $topic->market : Market::from($topic->market);
-        $shortlist = $this->shortlist($market, $topic->topic);
+        $shortlist = $this->shortlist(
+            $market,
+            $topic->topic,
+            array_values(array_filter((array) $topic->member_queries, 'is_string')),
+        );
 
         if (count($shortlist) < 5) {
             // The topic looked ripe when it was mined and is not now — stock
@@ -101,8 +105,29 @@ class GuideBuilder
      *
      * @return list<ProductGroup>
      */
-    private function shortlist(Market $market, string $topic): array
+    /**
+     * @param  list<string>  $queries  the topic's member queries, if it has any
+     * @return list<ProductGroup>
+     */
+    private function shortlist(Market $market, string $topic, array $queries = []): array
     {
+        /*
+         * The topic word OR any of its member queries.
+         *
+         * The topic alone is not enough, and a seasonal Cove is where that shows
+         * up hardest: "kamperen" is a theme, and no product title contains it —
+         * the products are tents and sleeping bags. Shortlisting on the topic
+         * alone found nothing and the guide was silently skipped as "too few
+         * products", which is indistinguishable from a genuinely thin catalogue.
+         *
+         * The member queries are the phrases the topic is *made of*: what people
+         * actually typed for a mined topic, and the product words the calendar
+         * supplies for a seasonal one. Either way they are what the shelf is
+         * described with.
+         */
+        $terms = array_values(array_unique(array_filter([$topic, ...$queries])));
+        $tsquery = implode(' OR ', array_map('trim', $terms));
+
         $candidates = ProductGroup::query()
             ->forMarket($market)
             ->presentable()
@@ -113,7 +138,7 @@ class GuideBuilder
                 ->where('products.status', 'active')
                 ->whereRaw(
                     'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
-                    [$topic]
+                    [$tsquery]
                 ))
             // Comparable first: the reason to read this guide here rather than
             // anywhere else is that every entry carries several shops' prices.
