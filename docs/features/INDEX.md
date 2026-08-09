@@ -20,6 +20,7 @@ cannot be recovered from a diff.
 | [gifting-lenses.md](gifting-lenses.md) | Gifting / Core | Active |
 | [secret-santa.md](secret-santa.md) | Gifting / Social | Active |
 | [list-quiz.md](list-quiz.md) | Gifting / Growth | Active |
+| [sharing.md](sharing.md) | Gifting / Growth | Active |
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | In progress |

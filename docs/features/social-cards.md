@@ -54,10 +54,11 @@ that adding `?title=` changes nothing about the bytes.
 Product cards are market-scoped like everything else: a card served under `/be-nl/` that describes a
 Dutch product would put a price nobody can pay into a Belgian timeline.
 
-## Caching, and the thing it got wrong first
+## Caching, and the two things it got wrong first
 
-Keyed on the record's `updated_at` **and the commit that rendered it**. The response carries a week
-of `max-age` for platforms that respect it and an ETag for those that revalidate.
+Cached for a month, keyed on **the exact text the card will draw** and **the commit that rendered
+it**. The response carries a week of `max-age` for platforms that respect it and an ETag for those
+that revalidate.
 
 The commit half was learned the hard way, in public, within an hour of shipping. A card's content
 comes from the row *and* from the code and language files that lay it out, and only the first of
@@ -67,6 +68,22 @@ with no way to clear it short of shell access to the box.
 
 Keying on the commit costs one re-render per card per deploy, which nothing but a scraper will ever
 notice, and makes a bad card impossible to inherit across a deploy.
+
+The other half **was** the record's `updated_at`, which was the obvious choice and wrong twice over.
+
+*Too coarse.* Laravel's `timestamps()` is `timestamp(0)` in Postgres — whole seconds, confirmed on
+the column rather than assumed. Two edits inside one second are one value, so the second edit served
+the first edit's card for the full month. This surfaced as a test that failed on a fast machine and
+passed on a slow one, which is the worst way for a real bug to announce itself.
+
+*Too narrow.* Half of what a card draws is not on the record at all. `merchant_count` and `min_price`
+are aggregates, and a guide's footnote counts its items; ingestion writes those in bulk without
+touching the parent row. A product that went from five shops to fourteen went on announcing five to
+everyone it was shared with, for thirty days.
+
+Hashing the drawn strings is exact in both directions: the key moves when the card would look
+different, and never otherwise. An edit that touches only a column the card never shows — a
+recategorisation, say — correctly re-serves the cached bytes instead of redrawing the catalogue.
 
 Throttled at 60/minute despite the cache: a flood of requests for products nobody has shared is a
 flood of cache *misses*, and each miss rasterises type at 1200×630.

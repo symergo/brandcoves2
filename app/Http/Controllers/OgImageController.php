@@ -29,8 +29,8 @@ use Illuminate\Support\Number;
  * also completely stable between changes to the row behind it, and the only
  * clients are scrapers.
  *
- * So the bytes are cached under a key built from two things: the record's
- * `updated_at`, and **the commit that rendered them**.
+ * So the bytes are cached under a key built from two things: **the exact text
+ * the card will draw**, and **the commit that rendered it**.
  *
  * The commit half is not belt and braces. A card's content comes from the row
  * *and* from the code and language files that lay it out, and only the first of
@@ -40,6 +40,9 @@ use Illuminate\Support\Number;
  * short of shell access to the box. Keying on the commit costs one re-render per
  * card per deploy, which nothing but a scraper will ever notice, and it makes a
  * bad card impossible to inherit across a deploy.
+ *
+ * The other half used to be the record's `updated_at`. See {@see self::fingerprint()}
+ * for the two ways that was wrong and why the drawn text replaced it.
  *
  * The response carries a long `max-age` for the platforms that respect it and an
  * ETag for the ones that revalidate instead.
@@ -51,13 +54,14 @@ class OgImageController extends Controller
 
     public function default(CurrentMarket $current, OgImage $og): Response
     {
-        return $this->send(
+        $language = $current->get()->language();
+
+        return $this->card(
             'default:'.$current->value(),
-            fn () => $og->render(
-                __('site.og.default_title', [], $current->get()->language()),
-                null,
-                __('site.og.default_footnote', [], $current->get()->language()),
-            ),
+            $og,
+            __('site.og.default_title', [], $language),
+            null,
+            __('site.og.default_footnote', [], $language),
         );
     }
 
@@ -69,13 +73,12 @@ class OgImageController extends Controller
 
         $language = $current->get()->language();
 
-        return $this->send(
-            'product:'.$product->id.':'.$product->updated_at?->timestamp,
-            fn () => $og->render(
-                $product->title,
-                __('site.og.product', [], $language),
-                $this->offerLine($product, $language),
-            ),
+        return $this->card(
+            'product:'.$product->id,
+            $og,
+            $product->title,
+            __('site.og.product', [], $language),
+            $this->offerLine($product, $language),
         );
     }
 
@@ -87,13 +90,14 @@ class OgImageController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
-        return $this->send(
-            'guide:'.$guide->id.':'.$guide->updated_at?->timestamp,
-            fn () => $og->render(
-                $guide->title,
-                __('site.og.guide', [], $current->get()->language()),
-                __('site.og.guide_footnote', ['count' => $guide->items()->count()], $current->get()->language()),
-            ),
+        $language = $current->get()->language();
+
+        return $this->card(
+            'guide:'.$guide->id,
+            $og,
+            $guide->title,
+            __('site.og.guide', [], $language),
+            __('site.og.guide_footnote', ['count' => $guide->items()->count()], $language),
         );
     }
 
@@ -122,13 +126,12 @@ class OgImageController extends Controller
 
         $language = $current->get()->language();
 
-        return $this->send(
-            'daily:'.$edition->id.':'.$edition->updated_at?->timestamp,
-            fn () => $og->render(
-                $edition->theme_title,
-                __('site.og.daily', [], $language),
-                $edition->drop_date->translatedFormat('j F Y'),
-            ),
+        return $this->card(
+            'daily:'.$edition->id,
+            $og,
+            $edition->theme_title,
+            __('site.og.daily', [], $language),
+            $edition->drop_date->translatedFormat('j F Y'),
         );
     }
 
@@ -141,16 +144,15 @@ class OgImageController extends Controller
 
         $language = $current->get()->language();
 
-        return $this->send(
-            'brand:'.$brand->id.':'.$brand->updated_at?->timestamp,
-            fn () => $og->render(
-                $brand->brand,
-                __('site.og.brand', [], $language),
-                __('site.og.brand_footnote', [
-                    'products' => Number::format($brand->product_count, locale: $language),
-                    'shops' => $brand->merchant_count,
-                ], $language),
-            ),
+        return $this->card(
+            'brand:'.$brand->id,
+            $og,
+            $brand->brand,
+            __('site.og.brand', [], $language),
+            __('site.og.brand_footnote', [
+                'products' => Number::format($brand->product_count, locale: $language),
+                'shops' => $brand->merchant_count,
+            ], $language),
         );
     }
 
@@ -178,13 +180,15 @@ class OgImageController extends Controller
         return $parts === [] ? null : implode(' · ', $parts);
     }
 
-    /** @param callable(): string $render */
-    private function send(string $key, callable $render): Response
+    /**
+     * @param  string  $scope  which record this is, so two of them never share an entry
+     */
+    private function card(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null): Response
     {
         $png = Cache::remember(
-            'og:'.config('brandcoves.commit_sha').':'.$key,
+            'og:'.config('brandcoves.commit_sha').':'.$scope.':'.self::fingerprint($title, $kicker, $footnote),
             self::TTL,
-            $render,
+            fn (): string => $og->render($title, $kicker, $footnote),
         );
 
         return response($png, 200, [
@@ -194,5 +198,36 @@ class OgImageController extends Controller
             'Cache-Control' => 'public, max-age=604800',
             'ETag' => '"'.md5($png).'"',
         ]);
+    }
+
+    /**
+     * The exact text the card will draw, hashed.
+     *
+     * This was `updated_at`, which was the obvious choice and wrong twice over.
+     *
+     * **It is too coarse.** Laravel's `timestamps()` is `timestamp(0)` in
+     * Postgres — whole seconds, verified on the column, not assumed. Two edits
+     * inside one second are indistinguishable, so the second one kept serving
+     * the first one's card for the full month.
+     *
+     * **It is also too narrow.** Half of what a card draws is not on the record
+     * at all: `merchant_count` and `min_price` are aggregates, and a guide's
+     * footnote counts its items. Ingestion writes those without touching the
+     * parent row, so a product that went from five shops to fourteen went on
+     * announcing five.
+     *
+     * Hashing the drawn strings is exact in both directions — the key moves when
+     * the card would look different, and never otherwise. An edit that changes
+     * only a description correctly re-serves the cached bytes.
+     */
+    private static function fingerprint(?string ...$parts): string
+    {
+        // NUL-separated because it cannot occur in any of these strings, so
+        // ['ab', 'c'] and ['a', 'bc'] cannot collide onto one key. Truncated to
+        // 64 bits, which is far more than enough inside a single record's scope.
+        return substr(hash('sha256', implode("\0", array_map(
+            static fn (?string $part): string => $part ?? '',
+            $parts,
+        ))), 0, 16);
     }
 }
