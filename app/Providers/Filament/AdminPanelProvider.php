@@ -31,22 +31,11 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            /*
-             * The same mark the site wears, and the same staging variant.
-             *
-             * Worth the two lines: an editor with the live admin and the staging
-             * admin open in adjacent tabs has otherwise nothing to tell them
-             * apart, and publishing to the wrong one is a mistake that only
-             * shows up when someone asks why the change is not on the site.
-             */
-            ->brandName('Brandcoves'.(config('brandcoves.robots_allow') ? '' : ' staging'))
-            ->brandLogo(fn () => asset(config('brandcoves.robots_allow')
-                ? 'icons/brandcoves.svg'
-                : 'icons/brandcoves-staging.svg'))
+            // The same mark the site wears.
+            ->brandName('Brandcoves')
+            ->brandLogo(fn () => asset('icons/brandcoves.svg'))
             ->brandLogoHeight('2rem')
-            ->favicon(asset(config('brandcoves.robots_allow')
-                ? 'favicon.ico'
-                : 'icons/favicon-staging.ico'))
+            ->favicon(asset('favicon.ico'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

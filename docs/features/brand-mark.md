@@ -11,32 +11,22 @@ A cove: a headland wrapping a sheltered bay, with a buoy in its mouth. Deep teal
 `#EFE6D6`, amber `#F2A93B`.
 
 Source artwork lives in [bc_logo/files](../../bc_logo/files). What the site serves is copied into
-`public/icons/`, with the production `.ico` at `public/favicon.ico` because that is the path every
-browser requests by name whether or not a page declares it.
+`public/icons/`, with the `.ico` at `public/favicon.ico` because that is the path every browser
+requests by name whether or not a page declares it. Before this, that file was zero bytes: every tab
+showed a blank page icon and every shared link rendered as a grey rectangle.
 
-## Two marks, and why
-
-Staging wears a different one: the same cove, inverted onto an amber tile with a folded top-right
-corner. It reads as "this build is a proof, not final".
-
-That is not decoration. Staging and production are the same site at two addresses, and the tab strip
-is where they are told apart — an editor with both admins open has otherwise nothing to distinguish
-them, and a screenshot of staging gets reported as a bug in production. The favicon is the cheapest
-possible fix and it is always in view.
-
-**Keyed on `ROBOTS_ALLOW`, not `APP_ENV`.** Staging runs with `APP_ENV=production`, deliberately: it
-is a production build, which is the whole point of it. `ROBOTS_ALLOW` is the one flag that is true on
-exactly one environment, and "must not be indexed" and "is not the real site" are the same fact
-wearing two hats. Set `ROBOTS_ALLOW=true` and the production mark follows automatically.
+**One mark, every environment.** The artwork set includes a staging variant (amber tile, folded
+corner) and it is deliberately not wired up — staging should look like the site, because that is what
+it is there to show.
 
 ## Where it appears
 
 | Surface | What it uses |
 |---|---|
-| Browser tab | SVG first, `.ico` fallback, both environment-aware ([app.blade.php](../../resources/views/app.blade.php)) |
-| Home screen | `apple-touch-icon`, 180px on staging and the 512 on production |
+| Browser tab | `brandcoves.svg` first, `favicon.ico` as the fallback ([app.blade.php](../../resources/views/app.blade.php)) |
+| Home screen | `apple-touch-icon`, the 512 PNG |
 | Site header | The SVG next to the wordmark ([SiteLayout.tsx](../../resources/js/Layouts/SiteLayout.tsx)) |
-| Admin | Filament `brandLogo` and `favicon`, plus " staging" appended to the brand name |
+| Admin | Filament `brandLogo` and `favicon` |
 | Social cards | The 512 PNG as the `og:image` fallback |
 
 Two small decisions inside those:
