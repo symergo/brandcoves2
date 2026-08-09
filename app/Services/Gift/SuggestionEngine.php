@@ -11,6 +11,17 @@ use Illuminate\Support\Facades\DB;
 /**
  * Retrieve → filter → score → diversify → explain.
  *
+ * One pipeline, two audiences. The brief may describe another person (the Gift
+ * Whisperer) or the person holding the keyboard (building your own list), and
+ * everything here is identical for both except the weights — which live in a
+ * {@see SuggestionProfile} rather than in this class for that reason.
+ *
+ * The brief may also carry a typed query, in which case this is a *search
+ * driven by a brief*: the angle queries and the person's own words retrieve
+ * together, and the budget and `avoid` filters bind to both. That is what stops
+ * "no alcohol" holding on the suggestions page and quietly not holding the
+ * moment somebody uses the search box.
+ *
  * Four suggestions out of a catalogue of tens of thousands, in under 100 ms, on
  * a request that must never cost an AI call. Everything expensive or
  * non-deterministic happened earlier: giftability was classified after the last
@@ -26,7 +37,7 @@ use Illuminate\Support\Facades\DB;
  * Maximal Marginal Relevance is what turns a ranked list into a set of
  * suggestions. See {@see diversify()}.
  */
-class GiftEngine
+class SuggestionEngine
 {
     /**
      * How many candidates to score.
@@ -43,11 +54,13 @@ class GiftEngine
 
     public function __construct(private readonly AngleMap $angles) {}
 
-    /** @return list<GiftPick> */
-    public function suggest(GiftBrief $brief): array
+    /** @return list<Suggestion> */
+    public function suggest(TasteBrief $brief): array
     {
+        $profile = $brief->profile();
+
         $queries = array_slice(
-            $this->angles->queriesFor($brief->market, $brief->interests, $brief->vibe),
+            $this->queries($brief),
             0,
             self::MAX_QUERIES,
         );
@@ -62,11 +75,31 @@ class GiftEngine
         }
 
         $scored = $candidates
-            ->map(fn (ProductGroup $group) => $this->score($group, $brief, $queries))
-            ->sortByDesc(fn (GiftPick $pick) => $pick->score)
+            ->map(fn (ProductGroup $group) => $this->score($group, $brief, $queries, $profile))
+            ->sortByDesc(fn (Suggestion $pick) => $pick->score)
             ->values();
 
-        return $this->diversify($scored, $brief->limit);
+        return $this->diversify($scored, $brief->limit, $profile);
+    }
+
+    /**
+     * What to retrieve on.
+     *
+     * A typed query goes **first**, ahead of every derived angle. Someone who
+     * wrote "espresso tamper" has told us precisely what they want, and burying
+     * that under a guess derived from "coffee" is the fastest way to make a
+     * search box feel broken. Interest position already drives `interestFit()`,
+     * so first place here is also the strongest scoring position.
+     *
+     * @return list<string>
+     */
+    private function queries(TasteBrief $brief): array
+    {
+        $angles = $this->angles->queriesFor($brief->market, $brief->interests, $brief->vibe);
+
+        return $brief->query === null
+            ? $angles
+            : array_values(array_unique([$brief->query, ...$angles]));
     }
 
     /**
@@ -79,7 +112,7 @@ class GiftEngine
      * @param  list<string>  $queries
      * @return Collection<int, ProductGroup>
      */
-    private function retrieve(GiftBrief $brief, array $queries): Collection
+    private function retrieve(TasteBrief $brief, array $queries): Collection
     {
         $groups = ProductGroup::query()
             ->forMarket($brief->market)
@@ -137,9 +170,8 @@ class GiftEngine
      *
      * @param  list<string>  $queries
      */
-    private function score(ProductGroup $group, GiftBrief $brief, array $queries): GiftPick
+    private function score(ProductGroup $group, TasteBrief $brief, array $queries, SuggestionProfile $profile): Suggestion
     {
-        $weights = (array) config('brandcoves.gift.weights');
         $haystack = mb_strtolower($group->title.' '.($group->category ?? ''));
 
         $matched = array_values(array_filter(
@@ -148,14 +180,14 @@ class GiftEngine
         ));
 
         $breakdown = [
-            'interest_fit' => $this->interestFit($matched, $queries) * (float) ($weights['interest_fit'] ?? 40),
-            'budget_fit' => $this->budgetFit($group, $brief) * (float) ($weights['budget_fit'] ?? 20),
-            'surprise' => $this->surprise($group) * (float) ($weights['surprise'] ?? 20),
-            'vibe' => $this->vibeFit($haystack, $brief) * (float) ($weights['vibe'] ?? 10),
-            'values' => $this->valuesFit($haystack, $brief) * (float) ($weights['values'] ?? 10),
+            'interest_fit' => $this->interestFit($matched, $queries) * $profile->weight('interest_fit', 40),
+            'budget_fit' => $profile->budgetFit($group->min_price, $brief->ceiling()) * $profile->weight('budget_fit', 20),
+            'surprise' => $this->surprise($group) * $profile->weight('surprise', 20),
+            'vibe' => $this->vibeFit($haystack, $brief) * $profile->weight('vibe', 10),
+            'values' => $this->valuesFit($haystack, $brief) * $profile->weight('values', 10),
         ];
 
-        return new GiftPick(
+        return new Suggestion(
             group: $group,
             score: array_sum($breakdown),
             breakdown: $breakdown,
@@ -197,32 +229,6 @@ class GiftEngine
     }
 
     /**
-     * Budget fit peaks below the ceiling, not at the cheapest option.
-     *
-     * A €12 gift against a €100 budget reads as thoughtless rather than
-     * thrifty. The sweet spot sits at 85% of the stated maximum, and the score
-     * falls away on both sides — so the engine spends the budget without
-     * exceeding it.
-     */
-    private function budgetFit(ProductGroup $group, GiftBrief $brief): float
-    {
-        $price = $group->min_price;
-
-        if ($price === null) {
-            return 0.0;
-        }
-
-        $ceiling = max(1, $brief->ceiling());
-        $sweetSpot = $ceiling * (float) config('brandcoves.gift.budget_sweet_spot');
-        $ratio = $price / $sweetSpot;
-
-        // Symmetric falloff around 1.0, clamped. Distance of 1.0 in either
-        // direction scores zero, which puts a €10 item against a €100 budget at
-        // roughly 0.12 — present, but not competitive.
-        return max(0.0, 1.0 - abs(1.0 - $ratio));
-    }
-
-    /**
      * How unlikely the person is to have seen this already.
      *
      * Uses the precomputed `surprise_score` when Phase 5 has filled it in. Until
@@ -252,7 +258,7 @@ class GiftEngine
      * Someone who said "playful" still wants the good headphones if headphones
      * are the right answer; the vibe decides between two equally good ones.
      */
-    private function vibeFit(string $haystack, GiftBrief $brief): float
+    private function vibeFit(string $haystack, TasteBrief $brief): float
     {
         if ($brief->vibe === null) {
             // No stated vibe is not a zero — it is "this signal does not
@@ -277,7 +283,7 @@ class GiftEngine
         'handmade' => ['handgemaakt', 'handmade', 'artisanaal', 'ambachtelijk', 'fait main'],
     ];
 
-    private function valuesFit(string $haystack, GiftBrief $brief): float
+    private function valuesFit(string $haystack, TasteBrief $brief): float
     {
         if ($brief->values === []) {
             return 0.5;
@@ -308,12 +314,12 @@ class GiftEngine
      * not *with* it, because a diversifier that quietly stops working looks
      * exactly like one that works.
      *
-     * @param  Collection<int, GiftPick>  $scored
-     * @return list<GiftPick>
+     * @param  Collection<int, Suggestion>  $scored
+     * @return list<Suggestion>
      */
-    private function diversify(Collection $scored, int $limit): array
+    private function diversify(Collection $scored, int $limit, SuggestionProfile $profile): array
     {
-        $lambda = (float) config('brandcoves.gift.mmr_lambda');
+        $lambda = $profile->mmrLambda;
         $pool = $scored->all();
         $picked = [];
 
@@ -357,7 +363,7 @@ class GiftEngine
      * me headphones twice". Title overlap catches the rest, and matters most
      * where the feed's category field is empty, which is often.
      */
-    private function similarity(GiftPick $a, GiftPick $b): float
+    private function similarity(Suggestion $a, Suggestion $b): float
     {
         $score = 0.0;
 

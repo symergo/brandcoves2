@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ListKind;
+use App\Enums\Source;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Wishlist\ItemSaver;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -22,24 +25,24 @@ class WishlistItemController extends Controller
      * is someone pressing "save" on a product page having never made a list —
      * asking them to create one first loses most of them.
      */
-    public function store(Request $request, CurrentMarket $current): RedirectResponse
+    public function store(Request $request, CurrentMarket $current, ItemSaver $saver): RedirectResponse
     {
         $owner = Owner::fromRequest($request);
         abort_unless($owner->exists(), 403);
 
         $validated = $request->validate([
-            'group_id' => ['required', 'integer'],
+            // Either a group we hold, or a source + id we can re-fetch. A live
+            // bol result and an Amazon product have neither a group nor a
+            // stored price, and both are reachable from search.
+            'group_id' => ['nullable', 'integer', 'required_without:source'],
+            'source' => ['nullable', 'string', 'in:'.implode(',', Source::values()), 'required_without:group_id'],
+            'external_id' => ['nullable', 'string', 'max:190', 'required_with:source'],
+            'title' => ['nullable', 'string', 'max:500'],
+            'image_url' => ['nullable', 'url', 'max:1024'],
+            'price' => ['nullable', 'integer', 'min:0'],
             'wishlist_id' => ['nullable', 'uuid'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
-
-        $group = ProductGroup::query()
-            ->forMarket($current->get())
-            ->find($validated['group_id']);
-
-        if ($group === null) {
-            throw new NotFoundHttpException;
-        }
 
         $list = isset($validated['wishlist_id'])
             ? $owner->scope(Wishlist::query())->find($validated['wishlist_id'])
@@ -49,26 +52,39 @@ class WishlistItemController extends Controller
             throw new NotFoundHttpException;
         }
 
-        /*
-         * A snapshot, not just a reference.
-         *
-         * A feed can drop this product tomorrow, or rename it. The list must
-         * still show what the person actually chose, at the price they saw —
-         * that is the record of their decision, and it should not silently
-         * rewrite itself.
-         */
-        WishlistItem::updateOrCreate(
-            ['wishlist_id' => $list->id, 'group_id' => $group->id],
-            [
-                'snapshot_title' => $group->title,
-                'snapshot_image_url' => $group->image_url,
-                'snapshot_price' => $group->min_price,
-                'snapshot_url' => $current->url("p/{$group->id}/{$group->slug}"),
-                'note' => $validated['note'] ?? null,
-            ],
-        );
+        if (! empty($validated['group_id'])) {
+            $group = ProductGroup::query()
+                ->forMarket($current->get())
+                ->find($validated['group_id']);
 
-        $list->touch();
+            if ($group === null) {
+                throw new NotFoundHttpException;
+            }
+
+            $saver->saveGroup($list, $group, $current, $validated['note'] ?? null);
+
+            return back()->with('success', __('site.lists.added'));
+        }
+
+        /*
+         * The snapshot fields are hints, not instructions.
+         *
+         * They arrive from the client, which means they arrive from whoever
+         * chooses to POST here. `ItemSaver` decides per source whether any of
+         * them may be stored at all — so a hand-built request naming Amazon
+         * cannot smuggle a mirrored title and price into the catalogue.
+         */
+        $saver->saveExternal(
+            list: $list,
+            source: Source::from($validated['source']),
+            externalId: $validated['external_id'],
+            snapshot: [
+                'title' => $validated['title'] ?? null,
+                'image_url' => $validated['image_url'] ?? null,
+                'price' => $validated['price'] ?? null,
+            ],
+            note: $validated['note'] ?? null,
+        );
 
         return back()->with('success', __('site.lists.added'));
     }
@@ -117,7 +133,8 @@ class WishlistItemController extends Controller
     {
         $existing = $owner->scope(Wishlist::query())
             ->where('market', $current->value())
-            ->where('is_gift_list', false)
+            // Never land a stray save inside research about another person.
+            ->where('kind', ListKind::Mine->value)
             ->oldest()
             ->first();
 
@@ -125,7 +142,7 @@ class WishlistItemController extends Controller
             ...$owner->attributes(),
             'title' => __('site.lists.default_title'),
             'market' => $current->get(),
-            'is_gift_list' => false,
+            'kind' => ListKind::Mine,
         ]);
     }
 }

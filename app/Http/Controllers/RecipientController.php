@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\TasteSource;
+use App\Http\Requests\RecipientTasteRequest;
 use App\Models\Recipient;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -14,40 +16,47 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 /**
  * People you might buy for.
  *
- * Deliberately thin here: a recipient is created with little more than a name,
- * and everything else is filled in by the Gift Whisperer wizard, which is where
- * asking about someone's interests actually makes sense.
+ * A recipient can be created with little more than a name — the wizard fills in
+ * the rest, which is where asking about someone's interests actually makes
+ * sense. But the fields must all be *writable* from here, because for a long
+ * time they were not: only name, relationship, occasion and birthday could be
+ * set, while the engine reads interests, vibe, values, avoid and budget. The
+ * "use what we know about Mum" shortcut therefore restored an empty brief every
+ * time, and looked for all the world like a working feature.
  */
 class RecipientController extends Controller
 {
-    public function store(Request $request, CurrentMarket $current): RedirectResponse
+    public function store(RecipientTasteRequest $request, CurrentMarket $current): RedirectResponse
     {
         $owner = Owner::fromRequest($request);
         abort_unless($owner->exists(), 403);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:80'],
-            'relationship' => ['nullable', 'string', 'max:40'],
-            'occasion' => ['nullable', 'string', 'max:40'],
-            'birthday' => ['nullable', 'date'],
+        $request->validate(['name' => ['required', 'string', 'max:80']]);
+
+        $recipient = Recipient::create([
+            ...$owner->attributes(),
+            ...$request->context(),
         ]);
 
-        Recipient::create([...$owner->attributes(), ...$validated]);
+        // Anything the creator already knows is a guess, however confident.
+        $recipient->describeTaste($request->taste(), TasteSource::Suggested);
 
         return back()->with('success', __('site.lists.recipient_added'));
     }
 
-    public function update(Request $request, CurrentMarket $current, string $market, string $recipient): RedirectResponse
+    public function update(RecipientTasteRequest $request, CurrentMarket $current, string $market, string $recipient): RedirectResponse
     {
         $model = $this->findOwned($request, $recipient);
 
-        $model->update($request->validate([
-            'name' => ['sometimes', 'string', 'max:80'],
-            'relationship' => ['nullable', 'string', 'max:40'],
-            'occasion' => ['nullable', 'string', 'max:40'],
-            'birthday' => ['nullable', 'date'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-        ]));
+        $model->update($request->context());
+
+        /*
+         * Silently ignored once the person has answered for themselves, rather
+         * than rejected. The owner is not doing anything wrong by having an
+         * older opinion — it is simply no longer the best evidence, and an
+         * error message here would be scolding them for it.
+         */
+        $model->describeTaste($request->taste(), TasteSource::Suggested);
 
         return back();
     }

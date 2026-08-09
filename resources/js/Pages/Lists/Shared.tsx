@@ -20,7 +20,8 @@ interface Props {
     list: {
         title: string
         description: string | null
-        isGiftList: boolean
+        kind: string
+        claimable: boolean
         recipient: string | null
     }
     isOwner: boolean
@@ -45,7 +46,7 @@ export default function SharedList({ list, isOwner, items }: Props) {
                 <h1 className="text-2xl font-semibold">{list.title}</h1>
                 {list.description && <p className="mt-2 text-ink-soft">{list.description}</p>}
 
-                {list.isGiftList && !isOwner && (
+                {list.claimable && !isOwner && (
                     <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm">
                         {t('lists.shared_intro', { name: list.recipient ?? list.title })}
                     </p>

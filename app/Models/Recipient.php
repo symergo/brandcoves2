@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\RecipientStatus;
+use App\Enums\TasteSource;
 use Database\Factories\RecipientFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -47,6 +49,8 @@ class Recipient extends Model
             'values' => 'array',
             'avoid' => 'array',
             'birthday' => 'date',
+            'status' => RecipientStatus::class,
+            'taste_source' => TasteSource::class,
         ];
     }
 
@@ -60,5 +64,44 @@ class Recipient extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_user_id');
+    }
+
+    /**
+     * The account this recipient *is*, once somebody claimed the link.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function isLinked(): bool
+    {
+        return $this->user_id !== null && $this->status->isLinked();
+    }
+
+    /**
+     * Write taste, refusing to let a guess overwrite the person's own answer.
+     *
+     * The destructive direction is always the wrong one: if they have told us
+     * what they like, my guess is simply worse evidence, and silently replacing
+     * theirs with mine is the one outcome nobody would choose deliberately.
+     *
+     * @param  array<string, mixed>  $taste
+     */
+    public function describeTaste(array $taste, TasteSource $source): bool
+    {
+        if ($taste === []) {
+            return false;
+        }
+
+        if ($this->taste_source instanceof TasteSource && $this->taste_source->outranks($source)) {
+            return false;
+        }
+
+        $this->fill([...$taste, 'taste_source' => $source])->save();
+
+        return true;
     }
 }

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Models\Recipient;
 use App\Models\Wishlist;
+use App\Models\WishlistItem;
+use App\Services\Gift\GiftTarget;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -45,7 +48,6 @@ class WishlistController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:120'],
             'recipient_id' => ['nullable', 'uuid'],
-            'is_gift_list' => ['boolean'],
         ]);
 
         // A recipient must belong to the same owner, or a guessed uuid would
@@ -63,9 +65,15 @@ class WishlistController extends Controller
             'title' => $validated['title'],
             'market' => $current->get(),
             'recipient_id' => $validated['recipient_id'] ?? null,
-            // A list for someone else is a gift list by default: that is the
-            // whole reason to attach a recipient.
-            'is_gift_list' => $validated['is_gift_list'] ?? ! empty($validated['recipient_id']),
+            /*
+             * The recipient decides the kind; there is no separate switch.
+             * Letting the two be set independently is what allowed a list to
+             * claim it was a registry while being private research about a
+             * person — the ambiguity `kind` exists to remove.
+             */
+            'kind' => empty($validated['recipient_id'])
+                ? ListKind::Mine
+                : ListKind::ForSomeone,
         ]);
 
         return redirect()->to($current->url("lists/{$list->id}"));
@@ -83,8 +91,37 @@ class WishlistController extends Controller
             throw new NotFoundHttpException;
         }
 
+        $target = $wishlist->recipient === null
+            ? null
+            : GiftTarget::fromRecipient($wishlist->recipient, $current->get());
+
         return Inertia::render('Lists/Show', [
             'list' => $this->summarise($wishlist, $current),
+
+            /*
+             * Who this list is about, and whether they can speak for themselves
+             * yet. A `GiftTarget` rather than the recipient, because the same
+             * page has to render for a Secret Santa assignment — where no
+             * recipient row exists and the pairing lives in one encrypted column.
+             */
+            'target' => $target === null ? null : [
+                'name' => $target->name,
+                'isLinked' => $target->isLinked(),
+                'askUrl' => $wishlist->recipient === null
+                    ? null
+                    : url($current->url("for/{$wishlist->recipient->share_token}")),
+            ],
+
+            /*
+             * Lane one: what they actually asked for.
+             *
+             * Claim state here is computed exactly as it is on the shared list —
+             * these are *their* items, and I am a visitor to them. The one thing
+             * that must never happen is a second claim mechanism growing here.
+             */
+            'asked' => $target === null ? [] : $this->asked($target, $owner, $current),
+
+            // Lane two: what I found. The existing items, unchanged.
             'items' => $wishlist->items
                 ->sortByDesc('priority')
                 ->values()
@@ -147,6 +184,48 @@ class WishlistController extends Controller
         return redirect()->to($current->url('lists'));
     }
 
+    /**
+     * The "what they asked for" lane.
+     *
+     * The payoff of linking a recipient to an account: instead of guessing, the
+     * page shows what the person put on their own list, and lets me claim from
+     * it right here. Claiming routes through the same `WishlistItem::claim()`
+     * as the shared-list page — one claim mechanism, one place the privacy rule
+     * is enforced.
+     *
+     * They never see any of this. It is their list, so `shouldHideClaimsFrom()`
+     * suppresses claim state for them wherever they read it.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function asked(GiftTarget $target, Owner $viewer, CurrentMarket $current): array
+    {
+        $identity = $viewer->claimIdentity();
+        $hash = $identity === null ? null : WishlistItem::identityHash($identity);
+
+        return $target->statedWishes()
+            ->flatMap(fn (Wishlist $list) => $list->items->map(fn (WishlistItem $item) => [
+                'id' => $item->id,
+                'token' => $list->share_token,
+                'listTitle' => $list->title,
+                'title' => $item->snapshot_title,
+                'image' => $item->snapshot_image_url,
+                'price' => $item->group?->min_price ?? $item->snapshot_price,
+                'note' => $item->note,
+                'live' => $item->rendersLive(),
+                'url' => $item->group === null
+                    ? null
+                    : $current->url("p/{$item->group_id}/{$item->group->slug}"),
+                'claimed' => $item->isClaimed(),
+                'claimedByMe' => $hash !== null && $item->claimed_by_hash === $hash,
+                'sent' => $hash !== null && $item->claimed_by_hash === $hash
+                    ? $item->marked_sent_at !== null
+                    : null,
+            ]))
+            ->values()
+            ->all();
+    }
+
     /** @return array<string, mixed> */
     private function summarise(Wishlist $list, CurrentMarket $current): array
     {
@@ -154,7 +233,8 @@ class WishlistController extends Controller
             'id' => $list->id,
             'title' => $list->title,
             'description' => $list->description,
-            'isGiftList' => $list->is_gift_list,
+            'kind' => $list->kind->value,
+            'claimable' => $list->allowsClaiming(),
             'visibility' => $list->visibility->value,
             'itemCount' => $list->items_count ?? $list->items()->count(),
             'recipient' => $list->recipient === null ? null : [

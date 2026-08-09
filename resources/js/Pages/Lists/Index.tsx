@@ -6,7 +6,7 @@ import { useTranslations } from '../../useTranslations'
 interface ListSummary {
     id: string
     title: string
-    isGiftList: boolean
+    kind: string
     itemCount: number
     url: string
     recipient: { id: string; name: string } | null
@@ -23,7 +23,8 @@ export default function ListsIndex({ lists, recipients, isSignedIn }: Props) {
     const { t, n } = useTranslations()
     const [creating, setCreating] = useState(false)
 
-    const form = useForm({ title: '', recipient_id: '', is_gift_list: false })
+    // The recipient decides the kind; there is no separate switch to disagree with it.
+    const form = useForm({ title: '', recipient_id: '' })
 
     return (
         <>

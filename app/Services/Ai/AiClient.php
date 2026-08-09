@@ -155,13 +155,55 @@ class AiClient
             (int) ($body['usage']['output_tokens'] ?? 0),
         );
 
-        $text = $body['content'][0]['text'] ?? null;
+        $text = $this->textFrom($body);
 
-        if (! is_string($text) || trim($text) === '') {
-            throw AiUnavailable::failed('empty response');
+        if ($text === '') {
+            throw AiUnavailable::failed(
+                'no text block in response (blocks: '
+                .implode(',', array_map(fn (array $b) => $b['type'] ?? '?', (array) ($body['content'] ?? [])))
+                .')'
+            );
         }
 
         return $text;
+    }
+
+    /**
+     * The assistant's text, from a response that may contain other block types.
+     *
+     * ## Why this is not `content[0]['text']`
+     *
+     * It was, and it silently broke every real generation on this site.
+     *
+     * A response is a LIST of content blocks, and text is not guaranteed to be
+     * the first. Current models emit a `thinking` block ahead of the answer once
+     * a request is long enough to warrant it, so `content[0]` is
+     * `{"type":"thinking"}` with no `text` key at all.
+     *
+     * The failure mode was the expensive kind. Short prompts produce no thinking
+     * block, so a smoke test passes and the credential looks fine. Every actual
+     * Cove and every daily editorial hit the other path: the call succeeded, the
+     * tokens were spent and recorded, the extraction returned null, and each
+     * caller quietly used its template fallback. AI had been "on" and producing
+     * nothing, while the usage table showed healthy traffic and zero errors.
+     *
+     * So: take every text block and join them, and ignore block types that are
+     * not text. That is stable against a model adding a block type later, which
+     * is exactly what happened here.
+     *
+     * @param  array<string, mixed>  $body
+     */
+    private function textFrom(array $body): string
+    {
+        $parts = [];
+
+        foreach ((array) ($body['content'] ?? []) as $block) {
+            if (($block['type'] ?? null) === 'text' && is_string($block['text'] ?? null)) {
+                $parts[] = $block['text'];
+            }
+        }
+
+        return trim(implode('', $parts));
     }
 
     private function key(): ?string

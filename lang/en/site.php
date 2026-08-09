@@ -358,6 +358,94 @@ return [
         'price_was' => 'Was :price',
         'sign_in_to_keep' => 'Sign in to keep these lists safe',
         'sign_in_hint' => 'Your lists live in this browser right now. Sign in and they move to your account.',
+        'marked_sent' => 'Marked as bought.',
+        'cannot_mark_sent' => 'You can only do that for something you claimed.',
+        'mark_sent' => 'I have bought it',
+        'sent' => 'Bought',
+        'progress' => ':claimed of :total claimed',
+        'not_claimable' => 'This is a shortlist, not a wish list, so nothing here can be claimed.',
+        'asked_for' => 'What :name asked for',
+        'asked_none' => ':name has not put anything on a list yet.',
+        'my_finds' => 'What I found',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | The other end of a recipient
+    |--------------------------------------------------------------------------
+    |
+    | Read by the person being bought for. Every string here has to be written
+    | as if they will read it, because they will - nothing may hint at what has
+    | been picked for them.
+    */
+    'recipients' => [
+        'self_title' => 'Tell them what you would actually like',
+        'self_intro' => 'Someone is shopping for you, :name. Answer as much or as little as you like, and add anything you actually want.',
+        'saved' => 'Saved. They will see it next time they look.',
+        'linked' => 'This is you now.',
+        'claim_this_is_me' => 'This is me',
+        'claim_hint' => 'Link this to your account and your own lists show up when they shop for you.',
+        'my_list' => 'What :name would like',
+        'about_you' => 'About you',
+        'your_list' => 'Things you would like',
+        'add_something' => 'Add something',
+        'search_placeholder' => 'Search for something you want',
+        'suggest' => 'Show me ideas',
+        'suggest_hint' => 'Not sure? Answer the questions above and we will suggest things.',
+        'nothing_yet' => 'Nothing here yet. Add the first thing.',
+        'privacy_note' => 'You will never see who is getting what. That is the whole idea.',
+        'ask_them' => 'Ask them what they want',
+        'ask_them_hint' => 'Send this link. They fill in their own tastes and never see what you picked.',
+    ],
+    /*
+    |--------------------------------------------------------------------------
+    | Secret Santa
+    |--------------------------------------------------------------------------
+    |
+    | An assignment layer over ordinary lists: the draw decides who you are
+    | shopping for, and the rest is the gift page you already know.
+    */
+    'santa' => [
+        'title' => 'Secret Santa',
+        'subtitle' => 'One group, one draw, nobody knows who has who.',
+        'create' => 'Start a group',
+        'group_name' => 'What is this group called?',
+        'budget' => 'Budget',
+        'budget_hint' => 'Roughly what everyone should spend.',
+        'exchange_date' => 'When are you exchanging?',
+        'theme' => 'Theme (optional)',
+        'invite' => 'Invite link',
+        'invite_hint' => 'Send this to everyone. They join with a name and an email.',
+        'join' => 'Join this group',
+        'your_name' => 'Your name',
+        'your_email' => 'Your email',
+        'exclusions' => 'Anyone you should not draw?',
+        'exclusions_hint' => 'Names or emails, one per line. Partners, or whoever you had last year.',
+        'joined' => 'You are in. We will email you when the draw happens.',
+        'members' => 'Who is in',
+        'draw' => 'Do the draw',
+        'drawn' => 'Drawn. Everyone has been emailed.',
+        'redraw' => 'Redraw this person',
+        'redrawn' => 'Redrawn. Both people have been emailed.',
+        'you_have' => 'You are buying for :name',
+        'their_list' => 'What :name asked for',
+        'no_list' => ':name has not made a list. You are on your own, but we can help.',
+        'build_yours' => 'Make your own list first',
+        'build_yours_hint' => 'Whoever drew you has nothing to go on until you do.',
+        'mark_done' => 'I have bought mine',
+        'marked_done' => 'Nice. That is you finished.',
+        'done_count' => ':done of :total have finished shopping',
+        'too_few' => 'You need at least two people to draw.',
+        'impossible' => 'Nobody can be matched with those exclusions.',
+        'already_drawn' => 'This group has already been drawn.',
+        'not_drawn' => 'The draw has not happened yet.',
+        'organiser_only' => 'Only the organiser can do that.',
+        'email_subject' => 'You have drawn :name',
+        'email_intro' => 'The draw is done. You are buying for :name.',
+        'email_budget' => 'The budget is around :budget.',
+        'email_date' => 'You are exchanging on :date.',
+        'email_list' => 'They have made a list. Have a look:',
+        'email_no_list' => 'They have not made a list yet, so you are going in blind. We can help with that:',
     ],
 
     'alerts' => [

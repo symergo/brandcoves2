@@ -22,8 +22,10 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
+use App\Http\Controllers\RecipientProfileController;
 use App\Http\Controllers\ScanController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SecretSantaController;
 use App\Http\Controllers\SerendipityController;
 use App\Http\Controllers\SharedListController;
 use App\Http\Controllers\SitemapController;
@@ -154,6 +156,48 @@ Route::prefix('{market}')->group(function () {
         Route::get('/l/{token}', [SharedListController::class, 'show'])->name('lists.shared');
         Route::post('/l/{token}/claim/{item}', [SharedListController::class, 'claim'])->name('lists.claim');
         Route::delete('/l/{token}/claim/{item}', [SharedListController::class, 'unclaim'])->name('lists.unclaim');
+        Route::post('/l/{token}/sent/{item}', [SharedListController::class, 'markSent'])->name('lists.sent');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | "Tell them what you'd actually like"
+    |----------------------------------------------------------------------
+    |
+    | The other end of a recipient. The token is a capability, exactly as with
+    | /l/{token} — it grants describing yourself and curating your own list, and
+    | nothing else. Same rate limit for the same reason: it is unauthenticated
+    | and the token is the only thing guarding it.
+    */
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::get('/for/{token}', [RecipientProfileController::class, 'show'])->name('recipients.self');
+        Route::post('/for/{token}', [RecipientProfileController::class, 'update'])->name('recipients.self.update');
+        Route::post('/for/{token}/claim', [RecipientProfileController::class, 'claim'])->name('recipients.self.claim');
+        Route::get('/for/{token}/suggest', [RecipientProfileController::class, 'suggest'])->name('recipients.self.suggest');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Secret Santa
+    |----------------------------------------------------------------------
+    |
+    | An assignment layer over ordinary lists. Creating a group needs an
+    | account (somebody has to own it); joining and reading your own assignment
+    | do not, because requiring a login to be in an office Secret Santa is how
+    | most of the office does not join.
+    |
+    | Throttled: every member-facing route is guarded by a token alone.
+    */
+    Route::middleware('auth')->group(function () {
+        Route::post('/santa', [SecretSantaController::class, 'store'])->name('santa.store');
+        Route::post('/santa/{group}/draw', [SecretSantaController::class, 'draw'])->name('santa.draw');
+    });
+
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::get('/santa/{group}', [SecretSantaController::class, 'show'])->name('santa.show');
+        Route::post('/santa/{group}/join/{token}', [SecretSantaController::class, 'join'])->name('santa.join');
+        Route::get('/santa/{group}/me/{token}', [SecretSantaController::class, 'me'])->name('santa.me');
+        Route::post('/santa/{group}/me/{token}/done', [SecretSantaController::class, 'markDone'])->name('santa.done');
     });
 
     /*

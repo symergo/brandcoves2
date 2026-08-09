@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Source;
 use Database\Factories\WishlistItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,15 +18,21 @@ class WishlistItem extends Model
     protected $guarded = [];
 
     /**
-     * Never serialise the claim hash. Even though it is one-way, its mere
-     * presence tells the list owner that an item has been claimed.
+     * Never serialise either claim field.
+     *
+     * `claimed_by_hash` is one-way, but its mere presence tells the list owner
+     * that an item has been claimed — and `marked_sent_at` leaks exactly the
+     * same secret one step further along. Both belong here for the same reason,
+     * and the second was the easy one to forget.
      */
-    protected $hidden = ['claimed_by_hash'];
+    protected $hidden = ['claimed_by_hash', 'marked_sent_at'];
 
     protected function casts(): array
     {
         return [
             'claimed_at' => 'datetime',
+            'marked_sent_at' => 'datetime',
+            'source' => Source::class,
         ];
     }
 
@@ -41,9 +48,40 @@ class WishlistItem extends Model
         return $this->belongsTo(ProductGroup::class, 'group_id');
     }
 
+    /**
+     * Must this item's title, image and price be fetched at render time?
+     *
+     * Amazon may not be mirrored (invariant #6), so its rows deliberately carry
+     * no snapshot at all — which puts them in direct tension with the rule that
+     * every *other* item snapshots on purpose, so a dropped feed product still
+     * shows what the person chose. Both rules are right; the source decides
+     * which one applies.
+     *
+     * A failed fetch hides the item rather than showing stale data.
+     */
+    public function rendersLive(): bool
+    {
+        return $this->source !== null && ! $this->source->allowsCatalogueStorage();
+    }
+
     public function isClaimed(): bool
     {
         return $this->claimed_by_hash !== null;
+    }
+
+    /**
+     * Mark a claimed item as bought and on its way.
+     *
+     * Restricted to the person holding the claim: "someone bought it" is the
+     * claimer's fact to report, and anyone else asserting it would strand a gift
+     * that nobody has actually sent.
+     */
+    public function markSent(string $identityHash): bool
+    {
+        return static::query()
+            ->whereKey($this->getKey())
+            ->where('claimed_by_hash', $identityHash)
+            ->update(['marked_sent_at' => now(), 'updated_at' => now()]) === 1;
     }
 
     /**

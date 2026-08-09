@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\ListKind;
 use App\Enums\Market;
+use App\Http\Middleware\TrackAnonymousIdentity;
+use App\Models\AnonymousIdentity;
 use App\Models\ProductGroup;
+use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
@@ -154,6 +158,106 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
+    public function an_anonymous_owner_never_sees_claim_state(): void
+    {
+        $identity = AnonymousIdentity::create(['last_seen_at' => now()]);
+
+        $list = Wishlist::create([
+            'owner_anon_id' => $identity->getKey(),
+            'title' => 'Birthday',
+            'market' => Market::BeNl,
+            'kind' => ListKind::Mine,
+            'visibility' => 'link',
+        ]);
+
+        $item = WishlistItem::create([
+            'wishlist_id' => $list->id,
+            'group_id' => $this->group()->id,
+            'snapshot_title' => 'Sony WH-1000XM5',
+            'snapshot_price' => 32999,
+        ]);
+
+        $item->claim(WishlistItem::identityHash('anon:someone'));
+
+        /*
+         * Lists work before signup, so the *common* owner is an anonymous one.
+         * A check that only knows how to recognise a signed-in owner tells the
+         * person who built the list exactly what has been bought for them —
+         * invariant #4 failing in the ordinary case rather than an exotic one.
+         */
+        $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $identity->getKey())
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('isOwner', true)
+                ->where('items.0.claimed', null));
+    }
+
+    #[Test]
+    public function an_anonymous_owner_cannot_claim_on_their_own_list(): void
+    {
+        $identity = AnonymousIdentity::create(['last_seen_at' => now()]);
+
+        $list = Wishlist::create([
+            'owner_anon_id' => $identity->getKey(),
+            'title' => 'Birthday',
+            'market' => Market::BeNl,
+            'kind' => ListKind::Mine,
+            'visibility' => 'link',
+        ]);
+
+        $item = WishlistItem::create([
+            'wishlist_id' => $list->id,
+            'group_id' => $this->group()->id,
+            'snapshot_title' => 'Sony WH-1000XM5',
+            'snapshot_price' => 32999,
+        ]);
+
+        // The response itself would otherwise tell them whether it was taken.
+        $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $identity->getKey())
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function a_list_for_someone_else_is_never_claimable(): void
+    {
+        $owner = $this->user();
+
+        $recipient = Recipient::create([
+            'owner_user_id' => $owner->id,
+            'name' => 'Mum',
+        ]);
+
+        $list = Wishlist::create([
+            'owner_user_id' => $owner->id,
+            'recipient_id' => $recipient->id,
+            'title' => 'Gifts for Mum',
+            'market' => Market::BeNl,
+            'kind' => ListKind::ForSomeone,
+            'visibility' => 'link',
+        ]);
+
+        $item = WishlistItem::create([
+            'wishlist_id' => $list->id,
+            'group_id' => $this->group()->id,
+            'snapshot_title' => 'Sony WH-1000XM5',
+            'snapshot_price' => 32999,
+        ]);
+
+        /*
+         * Sharing private research with a co-giver is coordination, not a
+         * registry. Gating on visibility alone made every shared list
+         * claimable, including one whose subject is a person who never asked
+         * for any of it.
+         */
+        $this->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+            ->assertForbidden();
+
+        $this->assertNull($item->fresh()->claimed_by_hash);
+    }
+
+    #[Test]
     public function the_owner_cannot_claim_on_their_own_list(): void
     {
         [$list, $item] = $this->sharedGiftList();
@@ -226,7 +330,7 @@ class WishlistTest extends TestCase
             'owner_user_id' => $this->user()->id,
             'title' => 'Birthday',
             'market' => Market::BeNl,
-            'is_gift_list' => true,
+            'kind' => ListKind::Mine,
             'visibility' => 'link',
         ]);
 

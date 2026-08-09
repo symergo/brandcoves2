@@ -30,9 +30,13 @@ class SharedListController extends Controller
         $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
 
-        // If the owner opens their own share link, send them to the private
-        // view rather than showing them claim state.
-        $isOwner = $list->shouldHideClaimsFrom($owner->user);
+        // If the owner opens their own share link, suppress claim state rather
+        // than showing it. Anonymous owners count: most lists are built before
+        // signup.
+        $isOwner = $list->shouldHideClaimsFrom($owner);
+
+        // A list *about* someone is co-giver coordination, not a registry.
+        $claimable = $list->allowsClaiming();
 
         $identity = $owner->claimIdentity();
         $hash = $identity === null ? null : WishlistItem::identityHash($identity);
@@ -41,10 +45,23 @@ class SharedListController extends Controller
             'list' => [
                 'title' => $list->title,
                 'description' => $list->description,
-                'isGiftList' => $list->is_gift_list,
+                'kind' => $list->kind->value,
+                'claimable' => $claimable,
                 'recipient' => $list->recipient?->name,
             ],
             'isOwner' => $isOwner,
+
+            /*
+             * "3 of 11 claimed" — for visitors only, and null for the owner.
+             *
+             * A count is claim state. Sending 0 to the owner would be just as
+             * fatal as sending the truth, because the moment it stops being 0
+             * they know. Absent, not zero.
+             */
+            'progress' => $isOwner || ! $claimable ? null : [
+                'claimed' => $list->items()->whereNotNull('claimed_by_hash')->count(),
+                'total' => $list->items()->count(),
+            ],
             'items' => $list->items()->with('group')->get()->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
                 'title' => $item->snapshot_title,
@@ -65,10 +82,19 @@ class SharedListController extends Controller
                  * The owner sees neither — not even the boolean — because a
                  * single leaked flag defeats the whole point of a gift list.
                  */
-                'claimed' => $isOwner ? null : $item->isClaimed(),
-                'claimedByMe' => $isOwner || $hash === null
+                'claimed' => $isOwner || ! $claimable ? null : $item->isClaimed(),
+                'claimedByMe' => $isOwner || ! $claimable || $hash === null
                     ? false
                     : $item->claimed_by_hash === $hash,
+
+                /*
+                 * Only ever shown to the person who claimed it. "Bought" is a
+                 * fact about their own errand — everyone else needs to know the
+                 * item is spoken for, and nothing more.
+                 */
+                'sent' => ! $isOwner && $claimable && $hash !== null && $item->claimed_by_hash === $hash
+                    ? $item->marked_sent_at !== null
+                    : null,
             ]),
         ]);
     }
@@ -84,8 +110,12 @@ class SharedListController extends Controller
         // coordination tool.
         abort_if($identity === null, 403);
 
+        // Only a `mine` list is a registry. Hiding the button is not enough —
+        // a hand-built POST would otherwise claim on someone's private research.
+        abort_unless($list->allowsClaiming(), 403);
+
         // The owner claiming on their own list would tell them what is taken.
-        abort_if($list->shouldHideClaimsFrom($owner->user), 403);
+        abort_if($list->shouldHideClaimsFrom($owner), 403);
 
         $wishlistItem = $list->items()->whereKey($item)->first();
         if ($wishlistItem === null) {
@@ -119,6 +149,40 @@ class SharedListController extends Controller
         return back()->with(
             $released ? 'success' : 'error',
             __($released ? 'site.lists.unclaimed' : 'site.lists.cannot_unclaim'),
+        );
+    }
+
+    /**
+     * "I've bought it."
+     *
+     * A claim stops two people buying the same thing; this says the buying
+     * actually happened. The gap between them is the case that matters — an item
+     * claimed weeks ago by somebody who then forgot, which reads as covered and
+     * is not.
+     */
+    public function markSent(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse
+    {
+        $list = $this->findShared($token);
+        $owner = Owner::fromRequest($request);
+        $identity = $owner->claimIdentity();
+
+        abort_if($identity === null, 403);
+        abort_unless($list->allowsClaiming(), 403);
+        abort_if($list->shouldHideClaimsFrom($owner), 403);
+
+        $wishlistItem = $list->items()->whereKey($item)->first();
+
+        if ($wishlistItem === null) {
+            throw new NotFoundHttpException;
+        }
+
+        // Restricted to the claim holder inside the model, so a hand-built POST
+        // cannot mark somebody else's errand done.
+        $marked = $wishlistItem->markSent(WishlistItem::identityHash($identity));
+
+        return back()->with(
+            $marked ? 'success' : 'error',
+            __($marked ? 'site.lists.marked_sent' : 'site.lists.cannot_mark_sent'),
         );
     }
 

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\Interest;
+use App\Enums\TasteSource;
 use App\Enums\Vibe;
 use App\Models\Event;
 use App\Models\Recipient;
-use App\Services\Gift\GiftBrief;
-use App\Services\Gift\GiftEngine;
-use App\Services\Gift\GiftPick;
+use App\Services\Gift\Suggestion;
+use App\Services\Gift\SuggestionEngine;
+use App\Services\Gift\TasteBrief;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -52,12 +53,31 @@ class GiftController extends Controller
      * answers on screen next to the results — someone who dislikes a suggestion
      * wants to adjust one answer, not start again.
      */
-    public function suggest(Request $request, CurrentMarket $current, GiftEngine $engine): Response
+    public function suggest(Request $request, CurrentMarket $current, SuggestionEngine $engine): Response
     {
         $validated = $this->validateBrief($request);
-        $brief = $this->brief($validated, $current);
+        $recipient = $this->recipient($request, $validated);
+        $brief = $this->brief($validated, $current, $recipient);
 
         $picks = $engine->suggest($brief);
+
+        // Answering the same six questions about the same person twice is the
+        // kind of small indignity that stops people coming back. `remember`
+        // rather than always-on, because a brief for "something silly for the
+        // office" is not what you want restored next Christmas.
+        if ($recipient !== null && $request->boolean('remember')) {
+            $recipient->update(array_filter([
+                'occasion' => $validated['occasion'] ?? null,
+                'age_band' => $validated['age_band'] ?? null,
+            ], fn ($v) => $v !== null));
+
+            $recipient->describeTaste(array_filter([
+                'interests' => $validated['interests'] ?? null,
+                'vibe' => $validated['vibe'] ?? null,
+                'values' => $validated['values'] ?? null,
+                'avoid' => $validated['avoid'] ?? null,
+            ], fn ($v) => $v !== null), TasteSource::Suggested);
+        }
 
         // Append-only, no personal data: which interests and budget band
         // produced how many results. This is what tells us months from now that
@@ -85,30 +105,20 @@ class GiftController extends Controller
      * just rejected — which is the single fastest way to lose someone's trust
      * in a recommender.
      */
-    public function swap(Request $request, CurrentMarket $current, GiftEngine $engine): Response
+    public function swap(Request $request, CurrentMarket $current, SuggestionEngine $engine): Response
     {
         $validated = $this->validateBrief($request);
 
         $exclude = array_map('intval', (array) $request->input('exclude', []));
 
-        $brief = $this->brief($validated, $current)
-            ->excluding($exclude);
-
-        // One replacement, not a fresh set.
-        $replacement = $engine->suggest(new GiftBrief(
-            market: $brief->market,
-            interests: $brief->interests,
-            vibe: $brief->vibe,
-            budgetMin: $brief->budgetMin,
-            budgetMax: $brief->budgetMax,
-            avoid: $brief->avoid,
-            values: $brief->values,
-            relationship: $brief->relationship,
-            occasion: $brief->occasion,
-            ageBand: $brief->ageBand,
-            excludeGroupIds: $brief->excludeGroupIds,
-            limit: 1,
-        ));
+        // One replacement, not a fresh set. `withLimit` rather than rebuilding
+        // the brief by hand: the longhand copy silently dropped whichever field
+        // was added to the constructor most recently.
+        $replacement = $engine->suggest(
+            $this->brief($validated, $current, $this->recipient($request, $validated))
+                ->excluding($exclude)
+                ->withLimit(1)
+        );
 
         Event::record('gift.swap', [
             'market' => $current->value(),
@@ -142,13 +152,59 @@ class GiftController extends Controller
             'relationship' => ['nullable', 'string', 'max:40'],
             'occasion' => ['nullable', 'string', 'max:40'],
             'age_band' => ['nullable', 'string', 'max:20'],
+            'recipient_id' => ['nullable', 'uuid'],
         ]);
     }
 
-    /** @param array<string, mixed> $validated */
-    private function brief(array $validated, CurrentMarket $current): GiftBrief
+    /**
+     * The person this brief is about, when the visitor picked a saved one.
+     *
+     * Scoped to the owner: a guessed uuid must not attach somebody else's
+     * mother to this request.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function recipient(Request $request, array $validated): ?Recipient
     {
-        return new GiftBrief(
+        if (empty($validated['recipient_id'])) {
+            return null;
+        }
+
+        return Owner::fromRequest($request)
+            ->scope(Recipient::query())
+            ->find($validated['recipient_id']);
+    }
+
+    /**
+     * Build the brief, starting from what we already know about the person.
+     *
+     * `TasteBrief::fromRecipient()` existed from the beginning and had no
+     * callers, so the wizard's "use what we know about Mum" shortcut restored
+     * nothing at all. Posted answers overlay the stored ones rather than
+     * replacing them wholesale: the visitor is answering *this* time's
+     * questions, not re-describing her from scratch.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function brief(array $validated, CurrentMarket $current, ?Recipient $recipient = null): TasteBrief
+    {
+        if ($recipient !== null) {
+            $stored = TasteBrief::fromRecipient($recipient, $current->get(), (int) config('brandcoves.gift.results'));
+
+            $validated += array_filter([
+                'interests' => $stored->interests ?: null,
+                'vibe' => $stored->vibe?->value,
+                'budget_min' => $stored->budgetMin === null ? null : $stored->budgetMin / 100,
+                'budget_max' => $stored->budgetMax === null ? null : $stored->budgetMax / 100,
+                'avoid' => $stored->avoid ?: null,
+                'values' => $stored->values ?: null,
+                'relationship' => $stored->relationship,
+                'occasion' => $stored->occasion,
+                'age_band' => $stored->ageBand,
+            ], fn ($v) => $v !== null);
+        }
+
+        return new TasteBrief(
             market: $current->get(),
             interests: array_values((array) ($validated['interests'] ?? [])),
             vibe: isset($validated['vibe']) ? Vibe::tryFrom((string) $validated['vibe']) : null,
@@ -164,12 +220,12 @@ class GiftController extends Controller
     }
 
     /**
-     * @param  list<GiftPick>  $picks
+     * @param  list<Suggestion>  $picks
      * @return list<array<string, mixed>>
      */
     private function present(array $picks, CurrentMarket $current): array
     {
-        return array_map(fn (GiftPick $pick) => [
+        return array_map(fn (Suggestion $pick) => [
             'id' => $pick->group->id,
             'title' => $pick->group->title,
             'brand' => $pick->group->brand,

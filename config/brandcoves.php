@@ -93,6 +93,62 @@ return [
         // option: a €12 gift against a €100 budget reads as thoughtless, not
         // thrifty.
         'budget_sweet_spot' => 0.85,
+
+        /*
+        |----------------------------------------------------------------------
+        | Suggestion profiles
+        |----------------------------------------------------------------------
+        |
+        | The same engine answers two questions — "what should I buy them?" and
+        | "what do I want?" — and they are not the same question, even though
+        | the retrieval, the diversification and the explanation all are.
+        |
+        | `budget_shape` is the one that would silently go wrong if this were a
+        | single profile. The sweet-spot curve exists because a cheap *gift*
+        | reads as thoughtless, which is a fact about how a present is received
+        | by another person. Nobody thinks their own €12 wish is thoughtless, so
+        | applying that curve to your own list would quietly push every
+        | affordable thing to the bottom — and look exactly like a working
+        | feature while doing it.
+        |
+        | Keys mirror the shape of a Mode Profile in config/discovery.php on
+        | purpose, so folding these into the discovery dial later is a data
+        | change rather than a rewrite.
+        */
+        'profiles' => [
+            'for_someone' => [
+                'weights' => [
+                    'interest_fit' => 40,
+                    'budget_fit' => 20,
+                    'surprise' => 20,
+                    'vibe' => 10,
+                    'values' => 10,
+                ],
+                'mmr_lambda' => 0.65,
+                'budget_shape' => 'sweet_spot',
+            ],
+
+            'for_myself' => [
+                'weights' => [
+                    'interest_fit' => 45,
+                    // Any affordable price is equally fine, so the signal
+                    // carries less and discriminates less.
+                    'budget_fit' => 10,
+                    // Still present, and lower. You already know your own
+                    // taste, so the job is fewer blind spots rather than
+                    // novelty for its own sake — but at zero the list collapses
+                    // into whatever is best stocked.
+                    'surprise' => 15,
+                    'vibe' => 15,
+                    'values' => 15,
+                ],
+                // Slightly stronger diversification: a wishlist of four
+                // variations on one thing is less useful than a gift page of
+                // them, because you will actually be given all four.
+                'mmr_lambda' => 0.6,
+                'budget_shape' => 'in_range',
+            ],
+        ],
     ],
 
     /*
@@ -219,9 +275,30 @@ return [
     | number prefixed with BE.
     */
     'company' => [
-        'name' => env('COMPANY_NAME', ''),
+        /*
+         * Symergo CommV is the operating entity; Brandcoves is the site it runs.
+         *
+         * The legal form belongs in the name rather than being implied: a
+         * Belgian imprint has to identify the company as it is registered, and
+         * "Symergo" alone does not say who is liable for what. CommV is a
+         * commanditaire vennootschap.
+         */
+        'name' => env('COMPANY_NAME', 'Symergo CommV'),
         'number' => env('COMPANY_NUMBER', 'BE0566975391'),
-        'address' => env('COMPANY_ADDRESS', ''),
+        'address' => env('COMPANY_ADDRESS', 'Schoonzichtlaan 13A, 3012 Leuven, Belgium'),
+
+        /*
+         * These mailboxes do not exist yet.
+         *
+         * Both are published in the legal pages and `email` is also
+         * MAIL_FROM_ADDRESS, so until they are created a reply to any mail the
+         * site sends bounces, and the GDPR contact point the privacy policy
+         * commits to answering within a month is unreachable. That second one is
+         * itself a compliance problem, not a to-do.
+         *
+         * Overridable by env so a working address can be swapped in without a
+         * deploy.
+         */
         'email' => env('COMPANY_EMAIL', 'hello@brandcoves.com'),
         'privacy_email' => env('PRIVACY_EMAIL', 'privacy@brandcoves.com'),
     ],

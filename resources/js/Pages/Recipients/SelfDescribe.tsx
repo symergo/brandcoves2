@@ -1,0 +1,321 @@
+import { Head, router, useForm, usePage } from '@inertiajs/react'
+import { useState } from 'react'
+import { formatPrice, type Cents, type SharedProps } from '../../types'
+import { useTranslations } from '../../useTranslations'
+
+interface Option {
+    value: string
+    label: string
+}
+
+interface Item {
+    id: number
+    title: string
+    image: string | null
+    price: Cents | null
+    note: string | null
+    live: boolean
+    /*
+     * No `claimed`, no `claimedByMe`, no `sent`. Their absence is the feature:
+     * the person reading this page is exactly the person the surprise is being
+     * kept from. See RecipientProfileController.
+     */
+}
+
+interface Suggestion {
+    id: number
+    title: string
+    image: string | null
+    price: Cents | null
+    reason: string | null
+}
+
+interface Props {
+    person: {
+        name: string
+        interests: string[]
+        vibe: string | null
+        values: string[]
+        hasSpoken: boolean
+        isLinked: boolean
+    }
+    options: { interests: Option[]; vibes: Option[]; values: string[] }
+    canClaim: boolean
+    items: Item[]
+    listId: string | null
+    suggestions?: Suggestion[]
+}
+
+/**
+ * The other end of a recipient.
+ *
+ * Two jobs, and the second is the one that matters: say who you are, and put
+ * actual things on a list. "She likes cooking" moves the engine; "she wants
+ * this pan" ends the conversation.
+ */
+export default function SelfDescribe({
+    person,
+    options,
+    canClaim,
+    items,
+    listId,
+    suggestions = [],
+}: Props) {
+    const { market } = usePage<SharedProps>().props
+    const { t } = useTranslations()
+    const token = window.location.pathname.split('/').filter(Boolean).pop()
+    const base = `/${market.key}/for/${token}`
+
+    const [query, setQuery] = useState('')
+
+    const form = useForm({
+        interests: person.interests,
+        vibe: person.vibe ?? '',
+        values: person.values,
+    })
+
+    const toggle = (list: string[], key: 'interests' | 'values', value: string) =>
+        form.setData(
+            key,
+            list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
+        )
+
+    return (
+        <>
+            {/* A capability URL, not a public page. Never indexed. */}
+            <Head title={t('recipients.self_title')}>
+                <meta name="robots" content="noindex, nofollow" />
+            </Head>
+
+            <header className="max-w-2xl">
+                <h1 className="text-2xl font-semibold">{t('recipients.self_title')}</h1>
+                <p className="mt-2 text-ink-soft">
+                    {t('recipients.self_intro', { name: person.name })}
+                </p>
+                <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
+                    {t('recipients.privacy_note')}
+                </p>
+
+                {canClaim && (
+                    <div className="mt-4 rounded-card border border-accent/40 bg-accent/5 p-4">
+                        <p className="text-sm">{t('recipients.claim_hint')}</p>
+                        <button
+                            type="button"
+                            onClick={() => router.post(`${base}/claim`, {}, { preserveScroll: true })}
+                            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                        >
+                            {t('recipients.claim_this_is_me')}
+                        </button>
+                    </div>
+                )}
+            </header>
+
+            <section className="mt-10 max-w-2xl">
+                <h2 className="text-lg font-medium">{t('recipients.about_you')}</h2>
+
+                <form
+                    className="mt-4 space-y-6"
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        form.post(base, { preserveScroll: true })
+                    }}
+                >
+                    <fieldset>
+                        <legend className="text-sm font-medium">{t('gift.step_interests')}</legend>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {options.interests.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    aria-pressed={form.data.interests.includes(option.value)}
+                                    onClick={() => toggle(form.data.interests, 'interests', option.value)}
+                                    className={`rounded-full border px-3 py-1.5 text-sm ${
+                                        form.data.interests.includes(option.value)
+                                            ? 'border-accent bg-accent text-white'
+                                            : 'border-line hover:bg-card'
+                                    }`}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend className="text-sm font-medium">{t('gift.step_vibe')}</legend>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {options.vibes.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    aria-pressed={form.data.vibe === option.value}
+                                    onClick={() =>
+                                        form.setData(
+                                            'vibe',
+                                            form.data.vibe === option.value ? '' : option.value,
+                                        )
+                                    }
+                                    className={`rounded-full border px-3 py-1.5 text-sm ${
+                                        form.data.vibe === option.value
+                                            ? 'border-accent bg-accent text-white'
+                                            : 'border-line hover:bg-card'
+                                    }`}
+                                >
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend className="text-sm font-medium">{t('gift.step_values')}</legend>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {options.values.map((value) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    aria-pressed={form.data.values.includes(value)}
+                                    onClick={() => toggle(form.data.values, 'values', value)}
+                                    className={`rounded-full border px-3 py-1.5 text-sm ${
+                                        form.data.values.includes(value)
+                                            ? 'border-accent bg-accent text-white'
+                                            : 'border-line hover:bg-card'
+                                    }`}
+                                >
+                                    {t(`gift.values.${value}`)}
+                                </button>
+                            ))}
+                        </div>
+                    </fieldset>
+
+                    <button
+                        type="submit"
+                        disabled={form.processing}
+                        className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                    >
+                        {t('lists.save')}
+                    </button>
+                </form>
+            </section>
+
+            <section className="mt-12">
+                <h2 className="text-lg font-medium">{t('recipients.your_list')}</h2>
+
+                {/*
+                  Two ways in, side by side. Typing assumes you already know what
+                  you want, which is exactly what somebody staring at an empty
+                  list does not.
+                */}
+                <div className="mt-4 flex flex-wrap gap-3">
+                    <form
+                        className="flex flex-1 gap-2"
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            router.get(`${base}/suggest`, { q: query }, { preserveState: true })
+                        }}
+                    >
+                        <input
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={t('recipients.search_placeholder')}
+                            className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+                        />
+                        <button
+                            type="submit"
+                            className="rounded-lg border border-line px-4 py-2 text-sm"
+                        >
+                            {t('recipients.add_something')}
+                        </button>
+                    </form>
+
+                    <button
+                        type="button"
+                        onClick={() => router.get(`${base}/suggest`, {}, { preserveState: true })}
+                        className="rounded-lg border border-line px-4 py-2 text-sm"
+                    >
+                        {t('recipients.suggest')}
+                    </button>
+                </div>
+
+                {suggestions.length > 0 && (
+                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {suggestions.map((suggestion) => (
+                            <li
+                                key={suggestion.id}
+                                className="rounded-card border border-line bg-card p-4"
+                            >
+                                {suggestion.image && (
+                                    <img
+                                        src={suggestion.image}
+                                        alt=""
+                                        loading="lazy"
+                                        className="mx-auto h-32 w-auto max-w-full object-contain"
+                                    />
+                                )}
+                                <p className="mt-3 text-sm font-medium">{suggestion.title}</p>
+                                {suggestion.price !== null && (
+                                    <p className="mt-1 text-sm text-ink-soft">
+                                        {formatPrice(suggestion.price, market.currency)}
+                                    </p>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        router.post(
+                                            `/${market.key}/list-items`,
+                                            { group_id: suggestion.id, wishlist_id: listId },
+                                            { preserveScroll: true },
+                                        )
+                                    }
+                                    className="mt-3 w-full rounded-lg border border-line px-3 py-1.5 text-sm"
+                                >
+                                    {t('lists.save')}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+
+                {items.length === 0 ? (
+                    <p className="mt-6 rounded-card border border-line bg-card p-8 text-center text-ink-soft">
+                        {t('recipients.nothing_yet')}
+                    </p>
+                ) : (
+                    <ul className="mt-6 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
+                        {items.map((item) => (
+                            <li key={item.id} className="flex items-center gap-4 p-4">
+                                {item.image && (
+                                    <img
+                                        src={item.image}
+                                        alt=""
+                                        loading="lazy"
+                                        className="h-14 w-14 shrink-0 object-contain"
+                                    />
+                                )}
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium">{item.title}</p>
+                                    {item.price !== null && !item.live && (
+                                        <p className="text-sm text-ink-soft">
+                                            {formatPrice(item.price, market.currency)}
+                                        </p>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        router.delete(`/${market.key}/list-items/${item.id}`, {
+                                            preserveScroll: true,
+                                        })
+                                    }
+                                    className="text-sm text-ink-soft hover:text-ink"
+                                >
+                                    {t('lists.remove')}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+        </>
+    )
+}

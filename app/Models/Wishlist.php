@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\Market;
+use App\Support\Owner;
 use Database\Factories\WishlistFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,6 +20,7 @@ use Illuminate\Support\Str;
  * A list, either for yourself or for a specific recipient.
  *
  * @property ListVisibility $visibility
+ * @property ListKind $kind
  */
 class Wishlist extends Model
 {
@@ -43,7 +46,7 @@ class Wishlist extends Model
         return [
             'market' => Market::class,
             'visibility' => ListVisibility::class,
-            'is_gift_list' => 'boolean',
+            'kind' => ListKind::class,
         ];
     }
 
@@ -73,7 +76,19 @@ class Wishlist extends Model
 
     public function isForSomeoneElse(): bool
     {
-        return $this->recipient_id !== null;
+        return $this->kind === ListKind::ForSomeone;
+    }
+
+    /**
+     * Can anyone holding the link say "I'll get this"?
+     *
+     * A property of what the list is for, not of how widely it is shared. The
+     * model answers it so no surface has to re-decide — and every new lens on a
+     * list is a chance to re-decide it wrongly.
+     */
+    public function allowsClaiming(): bool
+    {
+        return $this->kind->allowsClaiming();
     }
 
     /**
@@ -82,13 +97,24 @@ class Wishlist extends Model
      * The whole value of a gift list is that the owner does not know what has
      * been bought. This is the single rule the wishlist feature exists to
      * protect, so it lives on the model rather than in one controller.
+     *
+     * Takes an `Owner`, not a `User`, because lists work before signup and the
+     * *typical* owner is therefore an anonymous identity. The earlier signature
+     * accepted `?User` and answered `false` for null — so an anonymous owner
+     * opening their own share link was shown exactly what had been claimed,
+     * which is the invariant failing in the ordinary case rather than an
+     * exotic one.
      */
-    public function shouldHideClaimsFrom(?User $viewer): bool
+    public function shouldHideClaimsFrom(Owner $viewer): bool
     {
-        if ($viewer === null) {
-            return false;
+        if ($viewer->user !== null) {
+            return $this->owner_user_id === $viewer->user->id;
         }
 
-        return $this->owner_user_id === $viewer->id;
+        if ($viewer->anonymous !== null) {
+            return $this->owner_anon_id === $viewer->anonymous->getKey();
+        }
+
+        return false;
     }
 }

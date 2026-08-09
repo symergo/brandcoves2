@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Models\User;
 use App\Models\Wishlist;
@@ -32,7 +33,7 @@ class WishlistClaimTest extends TestCase
             'owner_user_id' => $owner->id,
             'title' => 'Birthday',
             'market' => Market::BeNl,
-            'is_gift_list' => true,
+            'kind' => ListKind::Mine,
         ]);
 
         return WishlistItem::create([

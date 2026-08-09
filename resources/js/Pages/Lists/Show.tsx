@@ -17,11 +17,29 @@ interface Item {
     inStock: boolean
 }
 
+interface Asked {
+    id: number
+    token: string
+    listTitle: string
+    title: string
+    image: string | null
+    price: number | null
+    note: string | null
+    live: boolean
+    url: string | null
+    claimed: boolean
+    claimedByMe: boolean
+    sent: boolean | null
+}
+
 interface Props {
+    target: { name: string; isLinked: boolean; askUrl: string | null } | null
+    asked: Asked[]
     list: {
         id: string
         title: string
-        isGiftList: boolean
+        kind: string
+        claimable: boolean
         visibility: string
         shareUrl: string | null
         recipient: { name: string } | null
@@ -29,7 +47,7 @@ interface Props {
     items: Item[]
 }
 
-export default function ListShow({ list, items }: Props) {
+export default function ListShow({ list, items, target, asked }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const [copied, setCopied] = useState(false)
@@ -105,10 +123,114 @@ export default function ListShow({ list, items }: Props) {
               and a gift list exists so the owner does not learn what has been
               bought — not even how many things.
             */}
-            {list.isGiftList && shared && (
+            {list.claimable && shared && (
                 <p className="mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft">
                     {t('lists.owner_view_note')}
                 </p>
+            )}
+
+            {/*
+              Lane one: what they actually asked for.
+
+              The payoff of linking a recipient to an account. Claiming here
+              hits the same endpoint as the shared-list page — one claim
+              mechanism, so the privacy rule is enforced in one place. They
+              never see any of this on their own list.
+            */}
+            {target !== null && (
+                <section className="mt-10">
+                    <h2 className="text-lg font-medium">
+                        {t('lists.asked_for', { name: target.name })}
+                    </h2>
+
+                    {!target.isLinked ? (
+                        <div className="mt-3 rounded-card border border-line bg-card p-4 text-sm">
+                            <p className="text-ink-soft">{t('recipients.ask_them_hint')}</p>
+                            {target.askUrl && (
+                                <button
+                                    type="button"
+                                    onClick={() => navigator.clipboard.writeText(target.askUrl!)}
+                                    className="mt-3 rounded-lg border border-line px-4 py-2 text-sm"
+                                >
+                                    {t('recipients.ask_them')}
+                                </button>
+                            )}
+                        </div>
+                    ) : asked.length === 0 ? (
+                        <p className="mt-3 rounded-card border border-line bg-card p-6 text-center text-sm text-ink-soft">
+                            {t('lists.asked_none', { name: target.name })}
+                        </p>
+                    ) : (
+                        <ul className="mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
+                            {asked.map((entry) => (
+                                <li key={entry.id} className="flex items-center gap-4 p-4">
+                                    {entry.image && (
+                                        <img
+                                            src={entry.image}
+                                            alt=""
+                                            loading="lazy"
+                                            className="h-14 w-14 shrink-0 object-contain"
+                                        />
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium">{entry.title}</p>
+                                        {entry.price !== null && !entry.live && (
+                                            <p className="text-sm text-ink-soft">
+                                                {formatPrice(entry.price, market.currency)}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {entry.claimedByMe ? (
+                                        <div className="flex shrink-0 items-center gap-2">
+                                            <span className="text-sm text-sage">{t('lists.claimed')}</span>
+                                            {entry.sent === false && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        router.post(
+                                                            `${base}/l/${entry.token}/sent/${entry.id}`,
+                                                            {},
+                                                            { preserveScroll: true },
+                                                        )
+                                                    }
+                                                    className="rounded-lg border border-line px-3 py-1.5 text-sm"
+                                                >
+                                                    {t('lists.mark_sent')}
+                                                </button>
+                                            )}
+                                            {entry.sent && (
+                                                <span className="text-sm text-ink-soft">{t('lists.sent')}</span>
+                                            )}
+                                        </div>
+                                    ) : entry.claimed ? (
+                                        <span className="shrink-0 text-sm text-ink-soft">
+                                            {t('lists.claimed_by_someone')}
+                                        </span>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.post(
+                                                    `${base}/l/${entry.token}/claim/${entry.id}`,
+                                                    {},
+                                                    { preserveScroll: true },
+                                                )
+                                            }
+                                            className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm"
+                                        >
+                                            {t('lists.claim')}
+                                        </button>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
+            )}
+
+            {target !== null && (
+                <h2 className="mt-10 text-lg font-medium">{t('lists.my_finds')}</h2>
             )}
 
             {items.length === 0 ? (

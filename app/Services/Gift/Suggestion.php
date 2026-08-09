@@ -14,7 +14,7 @@ use App\Models\ProductGroup;
  * tuning the weights six months from now. A recommender you cannot interrogate
  * is one you cannot fix.
  */
-final readonly class GiftPick
+final readonly class Suggestion
 {
     /**
      * @param  array<string, float>  $breakdown  signal name => points contributed

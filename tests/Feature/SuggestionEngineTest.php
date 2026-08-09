@@ -12,8 +12,9 @@ use App\Enums\Vibe;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
-use App\Services\Gift\GiftBrief;
-use App\Services\Gift\GiftEngine;
+use App\Services\Gift\SuggestionEngine;
+use App\Services\Gift\SuggestionProfile;
+use App\Services\Gift\TasteBrief;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -25,7 +26,7 @@ use Tests\TestCase;
  * MMR stage quietly stops working looks exactly like one that works, right up
  * until every result page shows four of the same thing.
  */
-class GiftEngineTest extends TestCase
+class SuggestionEngineTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -92,9 +93,9 @@ class GiftEngineTest extends TestCase
         return $group;
     }
 
-    private function engine(): GiftEngine
+    private function engine(): SuggestionEngine
     {
-        return app(GiftEngine::class);
+        return app(SuggestionEngine::class);
     }
 
     #[Test]
@@ -103,7 +104,7 @@ class GiftEngineTest extends TestCase
         $this->giftable('Manfrotto statief voor camera', 8999, 'Foto');
         $this->giftable('Wasmachine 8kg', 39999, 'Witgoed');
 
-        $picks = $this->engine()->suggest(new GiftBrief(
+        $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['photography'],
         ));
@@ -118,7 +119,7 @@ class GiftEngineTest extends TestCase
         $tripod = $this->giftable('Manfrotto statief voor camera', 8999, 'Foto');
         $tripod->update(['giftable' => false]);
 
-        $picks = $this->engine()->suggest(new GiftBrief(
+        $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['photography'],
         ));
@@ -134,7 +135,7 @@ class GiftEngineTest extends TestCase
         $this->giftable('Whisky cadeauset met glazen', 4999, 'Drank');
         $this->giftable('Koffiemolen handmatig', 4999, 'Keuken');
 
-        $picks = $this->engine()->suggest(new GiftBrief(
+        $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['coffee'],
             avoid: ['whisky'],
@@ -153,7 +154,7 @@ class GiftEngineTest extends TestCase
         $this->giftable('Espressomachine De Longhi', 89900, 'Keuken');
         $this->giftable('Koffiemolen handmatig', 4999, 'Keuken');
 
-        $picks = $this->engine()->suggest(new GiftBrief(
+        $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['coffee'],
             budgetMax: 6000,
@@ -174,7 +175,7 @@ class GiftEngineTest extends TestCase
         $cheap = $this->giftable('Koffiemolen model A', 800, 'Keuken');
         $wellJudged = $this->giftable('Koffiemolen model B', 8500, 'Keuken');
 
-        $picks = $this->engine()->suggest(new GiftBrief(
+        $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['coffee'],
             budgetMax: 10000,
@@ -208,7 +209,7 @@ class GiftEngineTest extends TestCase
         $this->giftable('Platenspeler met ingebouwde voorversterker', 7500, 'Muziek', 'Audio-Technica');
         $this->giftable('Ukelele sopraan mahonie', 6500, 'Instrumenten', 'Fender');
 
-        $picks = $this->engine()->suggest(new GiftBrief(
+        $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['music'],
             budgetMax: 10000,
@@ -239,7 +240,7 @@ class GiftEngineTest extends TestCase
         $first = $this->giftable('Koffiemolen handmatig', 4999, 'Keuken');
         $this->giftable('French press glazen kan', 3499, 'Keuken');
 
-        $brief = new GiftBrief(market: Market::BeNl, interests: ['coffee'], limit: 1);
+        $brief = new TasteBrief(market: Market::BeNl, interests: ['coffee'], limit: 1);
 
         $replacement = $this->engine()->suggest($brief->excluding([$first->id]));
 
@@ -255,7 +256,7 @@ class GiftEngineTest extends TestCase
         // occasion — a fallback browse is a worse answer, not no answer.
         $this->giftable('Koffiemolen handmatig', 4999, 'Keuken');
 
-        $picks = $this->engine()->suggest(new GiftBrief(
+        $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['gardening'],
         ));
@@ -268,7 +269,7 @@ class GiftEngineTest extends TestCase
     {
         $this->giftable('Manfrotto statief voor camera', 8999, 'Foto');
 
-        $pick = $this->engine()->suggest(new GiftBrief(
+        $pick = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['photography'],
             vibe: Vibe::Practical,
@@ -287,7 +288,7 @@ class GiftEngineTest extends TestCase
     {
         $this->giftable('Manfrotto statief voor camera', 8999, 'Foto');
 
-        $picks = $this->engine()->suggest(new GiftBrief(
+        $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::Es,
             interests: ['photography'],
         ));
@@ -299,6 +300,79 @@ class GiftEngineTest extends TestCase
     }
 
     #[Test]
+    public function the_self_profile_does_not_penalise_a_cheap_item(): void
+    {
+        // Same product, same interest. Only the price differs.
+        $this->giftable('Koffiemolen handmatig klein', 1200, 'Keuken', 'Hario');
+        $this->giftable('Koffiemolen elektrisch groot', 8500, 'Keuken', 'Baratza');
+
+        $brief = new TasteBrief(
+            market: Market::BeNl,
+            interests: ['coffee'],
+            budgetMax: 10000,
+        );
+
+        $forSomeone = $this->engine()->suggest($brief->rankedAs(SuggestionProfile::forSomeone()));
+        $forMyself = $this->engine()->suggest($brief->rankedAs(SuggestionProfile::forMyself()));
+
+        /*
+         * The sweet-spot curve is a rule about how a *present* is received: a
+         * €12 gift against a €100 budget reads as thoughtless. Nobody thinks
+         * their own €12 wish is thoughtless, so on a self-brief the two prices
+         * must score the same on budget — otherwise every affordable thing
+         * quietly sinks to the bottom of your own wishlist, which is both wrong
+         * and completely invisible.
+         */
+        $giftBudget = array_map(fn ($p) => $p->breakdown['budget_fit'], $forSomeone);
+        $selfBudget = array_map(fn ($p) => $p->breakdown['budget_fit'], $forMyself);
+
+        $this->assertGreaterThan(0.01, max($giftBudget) - min($giftBudget));
+        $this->assertEqualsWithDelta(0.0, max($selfBudget) - min($selfBudget), 0.001);
+    }
+
+    #[Test]
+    public function a_search_inside_a_brief_still_honours_avoid(): void
+    {
+        $this->giftable('Whisky cadeauset met glazen', 4999, 'Drank');
+        $this->giftable('Koffiemolen handmatig', 4999, 'Keuken');
+
+        $picks = $this->engine()->suggest(
+            (new TasteBrief(market: Market::BeNl, avoid: ['whisky']))
+                ->searching('cadeauset')
+        );
+
+        /*
+         * The point of folding the typed query into the brief: "no alcohol"
+         * used to hold on the suggestions page and stop holding the moment
+         * somebody used the search box. A hard filter that applies on one
+         * surface and not the neighbouring one is not a hard filter.
+         */
+        $titles = array_map(fn ($p) => $p->group->title, $picks);
+
+        foreach ($titles as $title) {
+            $this->assertStringNotContainsStringIgnoringCase('whisky', $title);
+        }
+    }
+
+    #[Test]
+    public function a_typed_query_outranks_a_derived_angle(): void
+    {
+        $this->giftable('Espresso tamper RVS 58mm', 3500, 'Keuken');
+        $this->giftable('Koffiemolen handmatig', 3500, 'Keuken');
+
+        $picks = $this->engine()->suggest(
+            (new TasteBrief(market: Market::BeNl, interests: ['coffee'], limit: 2))
+                ->searching('tamper')
+        );
+
+        // Someone who typed the words has told us exactly what they want.
+        // Burying that under a guess derived from "coffee" is how a search box
+        // starts to feel broken.
+        $this->assertNotEmpty($picks);
+        $this->assertStringContainsStringIgnoringCase('tamper', $picks[0]->group->title);
+    }
+
+    #[Test]
     public function it_answers_fast_enough_to_sit_in_a_request(): void
     {
         for ($i = 0; $i < 250; $i++) {
@@ -306,7 +380,7 @@ class GiftEngineTest extends TestCase
         }
 
         $start = microtime(true);
-        $this->engine()->suggest(new GiftBrief(market: Market::BeNl, interests: ['coffee']));
+        $this->engine()->suggest(new TasteBrief(market: Market::BeNl, interests: ['coffee']));
         $elapsed = (microtime(true) - $start) * 1000;
 
         // Generous against the 100 ms target: this runs on a laptop against a
