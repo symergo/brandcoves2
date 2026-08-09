@@ -272,6 +272,7 @@ return [
             'birthday' => 'Verjaardag',
             'other' => 'Iets anders',
         ],
+        'badge' => 'Geschenkenlijst',
     ],
 
     'handover' => [
@@ -284,6 +285,7 @@ return [
         'only_gift_lists' => 'Alleen een lijst voor iemand anders kan worden doorgegeven.',
         'not_linked' => 'Ze moeten eerst hun link claimen, zodat er een account is om aan te geven.',
         'no_account' => 'Er is nog geen account met dat e-mailadres. Stuur ze eerst de link om hun voorkeuren in te vullen.',
+        'badge' => 'Doorgeven',
     ],
 
     'pledges' => [
@@ -433,6 +435,8 @@ return [
         'someones_wishlist' => 'Wenslijst van :name',
         'share_native' => 'Meer apps…',
         'share_instagram' => 'Instagram kan geen links uit een browser aannemen — kopieer hem en plak hem daar.',
+        'shared_badge' => 'Gedeeld — iedereen met de link ziet het',
+        'private_badge' => 'Alleen voor jou',
     ],
 
     'recipients' => [
@@ -523,6 +527,7 @@ return [
         'own_title' => 'Kom te weten hoe goed je vrienden je kennen!',
         'open' => 'Open de quiz',
         'intro_anon' => 'Vier dingen. Een ervan staat echt op hun lijstje. Kies welke.',
+        'badge' => 'Quiz',
     ],
     'preview' => [
         'badge' => 'Voorbeeld',

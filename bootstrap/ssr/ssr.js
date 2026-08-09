@@ -36517,7 +36517,7 @@ function ShareMenu({ url, text, label }) {
 * into a group chat, and a button that claims to have copied something is worth
 * less than the thing itself.
 */
-function ShareRow({ url, text, label, hint }) {
+function ShareRow$1({ url, text, label, hint }) {
 	const { t } = useTranslations();
 	const [copied, setCopied] = (0, import_react.useState)(false);
 	async function copy() {
@@ -36556,14 +36556,337 @@ function ShareRow({ url, text, label, hint }) {
 	] });
 }
 //#endregion
+//#region resources/js/Components/ListTools.tsx
+/**
+* Everything you can do with a list, behind one row of buttons.
+*
+* The page had grown a panel per feature — share, quiz, Secret Santa,
+* suggestions, registry, handover, co-givers — each permanently open, each with
+* a heading *and* a paragraph explaining itself. Nine tools' worth of prose sat
+* above the one thing the page is for, which is the list.
+*
+* The explanations are not gone; they moved inside the panel they belong to,
+* where the person who opened it is asking the question they answer. One panel
+* is open at a time, because these are alternatives rather than a checklist.
+*
+* Suggestions are the exception and stay visible: a pending suggestion is a
+* message somebody sent, and a message behind a button is a message missed.
+*/
+function ListTools({ base, list, access, collaborators, suggestions, canHandOver, handoverEmail, registryOptions, deliveryAddress, quizUrl, quizPlays, santaMemberships }) {
+	const { t } = useTranslations();
+	const [open, setOpen] = (0, import_react.useState)(null);
+	const [invite, setInvite] = (0, import_react.useState)("");
+	const [role, setRole] = (0, import_react.useState)("viewer");
+	const [handTo, setHandTo] = (0, import_react.useState)(handoverEmail ?? "");
+	const shared = list.visibility !== "private";
+	const visible = [
+		{
+			key: "share",
+			label: t("lists.share"),
+			show: shared && Boolean(list.shareUrl)
+		},
+		{
+			key: "quiz",
+			label: t("quiz.badge"),
+			show: shared && list.claimable
+		},
+		{
+			key: "registry",
+			label: t("registry.badge"),
+			show: access.isOwner && list.kind === "mine"
+		},
+		{
+			key: "people",
+			label: t("lists.collaborators"),
+			show: access.isOwner && list.kind === "for_someone"
+		},
+		{
+			key: "handover",
+			label: t("handover.badge"),
+			show: canHandOver
+		},
+		{
+			key: "santa",
+			label: t("santa.title"),
+			show: santaMemberships.length > 0
+		}
+	].filter((tab) => tab.show);
+	function toggle(panel) {
+		setOpen((current) => current === panel ? null : panel);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mt-6",
+		children: [
+			access.isOwner && suggestions.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "mb-4 rounded-card border border-accent/40 bg-accent/5 p-4",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-sm font-medium",
+					children: t("suggestions.heading")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-3 space-y-3",
+					children: suggestions.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex items-center gap-3",
+						children: [
+							s.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: s.image,
+								alt: "",
+								loading: "lazy",
+								className: "h-12 w-12 object-contain"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "min-w-0 flex-1",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "truncate text-sm font-medium",
+									children: s.title
+								}), s.from && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-xs text-ink-soft",
+									children: t("suggestions.from", { name: s.from })
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => router.post(`${base}/suggestions/${s.id}/accept`, {}, { preserveScroll: true }),
+								className: "rounded-lg border border-sage px-3 py-1.5 text-xs text-sage",
+								children: t("suggestions.accept")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => router.delete(`${base}/suggestions/${s.id}`, { preserveScroll: true }),
+								className: "text-xs text-ink-soft hover:text-ink",
+								children: t("suggestions.dismiss")
+							})
+						]
+					}, s.id))
+				})]
+			}),
+			visible.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex flex-wrap gap-2",
+				children: visible.map((tab) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => toggle(tab.key),
+					"aria-expanded": open === tab.key,
+					className: `rounded-full border px-3 py-1.5 text-sm transition ${open === tab.key ? "border-accent bg-accent/10 text-accent" : "border-line hover:border-ink"}`,
+					children: tab.label
+				}, tab.key))
+			}),
+			open !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-3 rounded-card border border-line bg-card p-4",
+				children: [
+					open === "share" && list.shareUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow$1, {
+						url: list.shareUrl,
+						text: t("lists.share_text", { title: list.title }),
+						hint: t("lists.sharing_on")
+					}),
+					open === "quiz" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+						className: "text-sm font-medium",
+						children: t("quiz.own_title")
+					}), quizUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-xs text-ink-soft",
+							children: quizPlays > 0 ? t("quiz.played", { count: String(quizPlays) }) : t("quiz.created")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "mt-2",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow$1, {
+								url: quizUrl,
+								text: t("quiz.share_text")
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+							href: quizUrl,
+							target: "_blank",
+							rel: "noopener noreferrer",
+							className: "mt-2 inline-block text-sm underline",
+							children: t("quiz.open")
+						})
+					] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 text-xs text-ink-soft",
+						children: t("quiz.intro_own")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => router.post(`${base}/lists/${list.id}/quiz`, {}, { preserveScroll: true }),
+						className: "mt-2 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+						children: t("quiz.create")
+					})] })] }),
+					open === "registry" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+						className: "grid gap-3 sm:grid-cols-2",
+						onSubmit: (e) => {
+							e.preventDefault();
+							const data = new FormData(e.currentTarget);
+							router.patch(`${base}/lists/${list.id}`, {
+								event_type: String(data.get("event_type") || ""),
+								event_date: String(data.get("event_date") || ""),
+								delivery_address: String(data.get("delivery_address") || "")
+							}, { preserveScroll: true });
+						},
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-xs text-ink-soft sm:col-span-2",
+								children: t("registry.hint")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "block text-sm",
+								children: [t("registry.occasion"), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+									name: "event_type",
+									defaultValue: list.eventType ?? "",
+									className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "",
+										children: t("registry.none")
+									}), registryOptions.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: o.value,
+										children: o.label
+									}, o.value))]
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "block text-sm",
+								children: [t("registry.date"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									type: "date",
+									name: "event_date",
+									defaultValue: list.eventDate ?? "",
+									className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "block text-sm sm:col-span-2",
+								children: [
+									t("registry.address"),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+										name: "delivery_address",
+										rows: 2,
+										defaultValue: deliveryAddress ?? "",
+										className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mt-1 block text-xs text-ink-soft",
+										children: t("registry.address_hint")
+									})
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "submit",
+								className: "justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2",
+								children: t("lists.save")
+							})
+						]
+					}),
+					open === "people" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "text-xs text-ink-soft",
+							children: t("lists.invite_hint")
+						}),
+						collaborators.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "mt-3 space-y-2",
+							children: collaborators.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+								className: "flex items-center justify-between gap-3 text-sm",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [c.name, /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "ml-2 text-xs text-ink-soft",
+									children: c.role === "editor" ? t("lists.role_editor") : t("lists.role_viewer")
+								})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									onClick: () => router.delete(`${base}/lists/${list.id}/collaborators/${c.id}`, { preserveScroll: true }),
+									className: "text-xs text-ink-soft hover:text-ink",
+									children: t("lists.remove")
+								})]
+							}, c.id))
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+							className: "mt-3 flex flex-wrap gap-2",
+							onSubmit: (e) => {
+								e.preventDefault();
+								router.post(`${base}/lists/${list.id}/collaborators`, {
+									email: invite,
+									role
+								}, {
+									preserveScroll: true,
+									onSuccess: () => setInvite("")
+								});
+							},
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									type: "email",
+									required: true,
+									value: invite,
+									onChange: (e) => setInvite(e.target.value),
+									placeholder: "name@example.com",
+									className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+									value: role,
+									onChange: (e) => setRole(e.target.value),
+									className: "rounded-lg border border-line px-2 py-2 text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "viewer",
+										children: t("lists.role_viewer")
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "editor",
+										children: t("lists.role_editor")
+									})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "submit",
+									className: "rounded-lg border border-line px-4 py-2 text-sm",
+									children: t("lists.invite_collaborator")
+								})
+							]
+						})
+					] }),
+					open === "handover" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+						className: "flex flex-wrap gap-2",
+						onSubmit: (e) => {
+							e.preventDefault();
+							if (confirm(t("handover.confirm", { name: handTo }))) router.post(`${base}/lists/${list.id}/handover`, { email: handTo });
+						},
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "w-full text-xs text-ink-soft",
+								children: t("handover.hint", { name: list.recipient?.name ?? "" })
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "email",
+								required: true,
+								value: handTo,
+								onChange: (e) => setHandTo(e.target.value),
+								placeholder: "name@example.com",
+								className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "submit",
+								className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+								children: t("handover.action")
+							})
+						]
+					}),
+					open === "santa" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs text-ink-soft",
+						children: t("santa.attach_hint")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-3 space-y-2",
+						children: santaMemberships.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "flex items-center justify-between gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-sm",
+								children: m.title
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => router.post(`${base}/santa/${m.groupId}/list`, { wishlist_id: m.attached ? null : list.id }, { preserveScroll: true }),
+								className: `rounded-lg border px-3 py-1.5 text-xs ${m.attached ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink"}`,
+								children: m.attached ? t("santa.list_attached_short") : t("santa.attach_list")
+							})]
+						}, m.groupId))
+					})] })
+				]
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Pages/Lists/Show.tsx
 var Show_exports = /* @__PURE__ */ __exportAll({ default: () => ListShow });
 function ListShow({ list, items, target, asked, access, collaborators, suggestions, canHandOver, handoverEmail, registryOptions, deliveryAddress, quizUrl, quizPlays, santaMemberships }) {
 	const { market } = usePage().props;
 	const { t } = useTranslations();
-	const [invite, setInvite] = (0, import_react.useState)("");
-	const [role, setRole] = (0, import_react.useState)("viewer");
-	const [handTo, setHandTo] = (0, import_react.useState)(handoverEmail ?? "");
 	const base = `/${market.key}`;
 	const shared = list.visibility !== "private";
 	function toggleSharing() {
@@ -36603,307 +36926,22 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 			})]
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-			className: "mt-3 text-sm text-ink-soft",
-			children: shared ? t("lists.sharing_on") : t("lists.sharing_off")
+			className: "mt-2 text-xs text-ink-soft",
+			children: shared ? t("lists.shared_badge") : t("lists.private_badge")
 		}),
-		shared && list.shareUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "mt-4 rounded-card border border-line bg-card p-4",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "text-sm font-medium",
-					children: t("lists.share_heading")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "mt-2",
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow, {
-						url: list.shareUrl,
-						text: t("lists.share_text", { title: list.title })
-					})
-				}),
-				list.claimable && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "mt-4 border-t border-line pt-3",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-						className: "text-sm font-medium",
-						children: t("quiz.own_title")
-					}), quizUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-1 text-xs text-ink-soft",
-							children: quizPlays > 0 ? t("quiz.played", { count: String(quizPlays) }) : t("quiz.created")
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-							className: "mt-2",
-							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow, {
-								url: quizUrl,
-								text: t("quiz.share_text")
-							})
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-							href: quizUrl,
-							target: "_blank",
-							rel: "noopener noreferrer",
-							className: "mt-2 inline-block text-sm underline",
-							children: t("quiz.open")
-						})
-					] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-1 text-xs text-ink-soft",
-						children: t("quiz.intro_own")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						onClick: () => router.post(`${base}/lists/${list.id}/quiz`, {}, { preserveScroll: true }),
-						className: "mt-2 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
-						children: t("quiz.create")
-					})] })]
-				})
-			]
-		}),
-		santaMemberships.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-			className: "mt-4 rounded-card border border-line bg-card p-4",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "text-sm font-medium",
-					children: t("santa.title")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-1 text-xs text-ink-soft",
-					children: t("santa.attach_hint")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-					className: "mt-3 space-y-2",
-					children: santaMemberships.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-						className: "flex items-center justify-between gap-3",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "text-sm",
-							children: m.title
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							type: "button",
-							onClick: () => router.post(`${base}/santa/${m.groupId}/list`, { wishlist_id: m.attached ? null : list.id }, { preserveScroll: true }),
-							className: `rounded-lg border px-3 py-1.5 text-xs ${m.attached ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink"}`,
-							children: m.attached ? t("santa.list_attached_short") : t("santa.attach_list")
-						})]
-					}, m.groupId))
-				})
-			]
-		}),
-		access.isOwner && suggestions.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-			className: "mt-4 rounded-card border border-accent/40 bg-accent/5 p-4",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "text-sm font-medium",
-					children: t("suggestions.heading")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-1 text-xs text-ink-soft",
-					children: t("suggestions.hint")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-					className: "mt-3 space-y-3",
-					children: suggestions.map((s) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-						className: "flex items-center gap-3",
-						children: [
-							s.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-								src: s.image,
-								alt: "",
-								loading: "lazy",
-								className: "h-12 w-12 object-contain"
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "min-w-0 flex-1",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "truncate text-sm font-medium",
-									children: s.title
-								}), s.from && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "text-xs text-ink-soft",
-									children: t("suggestions.from", { name: s.from })
-								})]
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => router.post(`${base}/suggestions/${s.id}/accept`, {}, { preserveScroll: true }),
-								className: "rounded-lg border border-sage px-3 py-1.5 text-xs text-sage",
-								children: t("suggestions.accept")
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => router.delete(`${base}/suggestions/${s.id}`, { preserveScroll: true }),
-								className: "text-xs text-ink-soft hover:text-ink",
-								children: t("suggestions.dismiss")
-							})
-						]
-					}, s.id))
-				})
-			]
-		}),
-		access.isOwner && list.kind === "mine" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("details", {
-			className: "mt-4 rounded-card border border-line bg-card p-4",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("summary", {
-					className: "cursor-pointer text-sm font-medium",
-					children: t("registry.heading")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-1 text-xs text-ink-soft",
-					children: t("registry.hint")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-					className: "mt-3 grid gap-3 sm:grid-cols-2",
-					onSubmit: (e) => {
-						e.preventDefault();
-						const data = new FormData(e.currentTarget);
-						router.patch(`${base}/lists/${list.id}`, {
-							event_type: String(data.get("event_type") || ""),
-							event_date: String(data.get("event_date") || ""),
-							delivery_address: String(data.get("delivery_address") || "")
-						}, { preserveScroll: true });
-					},
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-							className: "block text-sm",
-							children: [t("registry.occasion"), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
-								name: "event_type",
-								defaultValue: list.eventType ?? "",
-								className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-									value: "",
-									children: t("registry.none")
-								}), registryOptions.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-									value: o.value,
-									children: o.label
-								}, o.value))]
-							})]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-							className: "block text-sm",
-							children: [t("registry.date"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-								type: "date",
-								name: "event_date",
-								defaultValue: list.eventDate ?? "",
-								className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-							})]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-							className: "block text-sm sm:col-span-2",
-							children: [
-								t("registry.address"),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-									name: "delivery_address",
-									rows: 3,
-									defaultValue: deliveryAddress ?? "",
-									className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "mt-1 block text-xs text-ink-soft",
-									children: t("registry.address_hint")
-								})
-							]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							type: "submit",
-							className: "justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2",
-							children: t("lists.save")
-						})
-					]
-				})
-			]
-		}),
-		canHandOver && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-			className: "mt-4 rounded-card border border-line bg-card p-4",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "text-sm font-medium",
-					children: t("handover.heading")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-1 text-xs text-ink-soft",
-					children: t("handover.hint", { name: list.recipient?.name ?? "" })
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-					className: "mt-3 flex flex-wrap gap-2",
-					onSubmit: (e) => {
-						e.preventDefault();
-						if (confirm(t("handover.confirm", { name: handTo }))) router.post(`${base}/lists/${list.id}/handover`, { email: handTo });
-					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						type: "email",
-						required: true,
-						value: handTo,
-						onChange: (e) => setHandTo(e.target.value),
-						placeholder: "name@example.com",
-						className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "submit",
-						className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
-						children: t("handover.action")
-					})]
-				})
-			]
-		}),
-		list.kind === "for_someone" && access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-			className: "mt-4 rounded-card border border-line bg-card p-4",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "text-sm font-medium",
-					children: t("lists.collaborators")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-1 text-xs text-ink-soft",
-					children: t("lists.invite_hint")
-				}),
-				collaborators.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-					className: "mt-3 space-y-2",
-					children: collaborators.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-						className: "flex items-center justify-between gap-3 text-sm",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [c.name, /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "ml-2 text-xs text-ink-soft",
-							children: c.role === "editor" ? t("lists.role_editor") : t("lists.role_viewer")
-						})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							type: "button",
-							onClick: () => router.delete(`${base}/lists/${list.id}/collaborators/${c.id}`, { preserveScroll: true }),
-							className: "text-xs text-ink-soft hover:text-ink",
-							children: t("lists.remove")
-						})]
-					}, c.id))
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-					className: "mt-3 flex flex-wrap gap-2",
-					onSubmit: (e) => {
-						e.preventDefault();
-						router.post(`${base}/lists/${list.id}/collaborators`, {
-							email: invite,
-							role
-						}, {
-							preserveScroll: true,
-							onSuccess: () => setInvite("")
-						});
-					},
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-							type: "email",
-							required: true,
-							value: invite,
-							onChange: (e) => setInvite(e.target.value),
-							placeholder: "name@example.com",
-							className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
-							value: role,
-							onChange: (e) => setRole(e.target.value),
-							className: "rounded-lg border border-line px-2 py-2 text-sm",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-								value: "viewer",
-								children: t("lists.role_viewer")
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-								value: "editor",
-								children: t("lists.role_editor")
-							})]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							type: "submit",
-							className: "rounded-lg border border-line px-4 py-2 text-sm",
-							children: t("lists.invite_collaborator")
-						})
-					]
-				})
-			]
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListTools, {
+			base,
+			list,
+			access,
+			collaborators,
+			suggestions,
+			canHandOver,
+			handoverEmail,
+			registryOptions,
+			deliveryAddress,
+			quizUrl,
+			quizPlays,
+			santaMemberships
 		}),
 		list.claimable && shared && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft",
@@ -37771,7 +37809,7 @@ function SantaGroup({ group, isOrganiser, members, me }) {
 				}),
 				!group.drawn && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "mt-4 rounded-card border border-line bg-card p-4",
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow, {
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ShareRow$1, {
 						url: group.inviteUrl,
 						text: t("santa.invite_text", { title: group.title }),
 						label: t("santa.invite"),

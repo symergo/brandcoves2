@@ -268,6 +268,7 @@ return [
             'birthday' => 'Anniversaire',
             'other' => 'Autre chose',
         ],
+        'badge' => 'Liste de cadeaux',
     ],
 
     'handover' => [
@@ -280,6 +281,7 @@ return [
         'only_gift_lists' => "Seule une liste pour quelqu'un d'autre peut être transmise.",
         'not_linked' => "Cette personne doit d'abord réclamer son lien, pour qu'il y ait un compte à qui la donner.",
         'no_account' => "Personne avec cette adresse n'a encore de compte ici. Envoyez-lui d'abord le lien pour indiquer ses envies.",
+        'badge' => 'Transmettre',
     ],
 
     'pledges' => [
@@ -429,6 +431,8 @@ return [
         'someones_wishlist' => 'La liste de :name',
         'share_native' => 'Plus d applications…',
         'share_instagram' => 'Instagram n accepte pas de liens depuis un navigateur — copiez-le et collez-le la-bas.',
+        'shared_badge' => 'Partagee — visible avec le lien',
+        'private_badge' => 'Privee',
     ],
 
     'recipients' => [
@@ -519,6 +523,7 @@ return [
         'own_title' => 'Découvrez si vos amis vous connaissent vraiment !',
         'open' => 'Ouvrir le quiz',
         'intro_anon' => "Quatre objets. L'un d'eux figure vraiment sur leur liste. Trouvez lequel.",
+        'badge' => 'Quiz',
     ],
     'preview' => [
         'badge' => 'Aperçu',

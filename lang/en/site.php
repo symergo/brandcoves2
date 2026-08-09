@@ -300,6 +300,7 @@ return [
             'birthday' => 'Birthday',
             'other' => 'Something else',
         ],
+        'badge' => 'Registry',
     ],
 
     'handover' => [
@@ -312,6 +313,7 @@ return [
         'only_gift_lists' => 'Only a list for someone else can be handed over.',
         'not_linked' => 'They need to claim their link first, so there is an account to hand it to.',
         'no_account' => 'Nobody with that email has an account here yet. Send them the "ask them what they want" link first.',
+        'badge' => 'Hand over',
     ],
 
     'pledges' => [
@@ -461,6 +463,8 @@ return [
         'someones_wishlist' => ":name's wishlist",
         'share_native' => 'More apps…',
         'share_instagram' => 'Instagram cannot take links from a browser — copy it and paste it there.',
+        'shared_badge' => 'Shared — anyone with the link can see it',
+        'private_badge' => 'Private to you',
     ],
 
     /*
@@ -568,6 +572,7 @@ return [
         'own_title' => 'Find out how well your friends know you!',
         'open' => 'Open the quiz',
         'intro_anon' => 'Four things. One of them is really on their list. Pick it.',
+        'badge' => 'Quiz',
     ],
     'preview' => [
         'badge' => 'Preview',

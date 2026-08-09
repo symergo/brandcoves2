@@ -268,6 +268,7 @@ return [
             'birthday' => 'Cumpleaños',
             'other' => 'Otra cosa',
         ],
+        'badge' => 'Lista de regalos',
     ],
 
     'handover' => [
@@ -280,6 +281,7 @@ return [
         'only_gift_lists' => 'Solo se puede ceder una lista para otra persona.',
         'not_linked' => 'Primero tienen que reclamar su enlace, para que haya una cuenta a la que dársela.',
         'no_account' => 'Nadie con ese correo tiene cuenta todavia. Enviale primero el enlace para que cuente lo que quiere.',
+        'badge' => 'Ceder',
     ],
 
     'pledges' => [
@@ -429,6 +431,8 @@ return [
         'someones_wishlist' => 'La lista de :name',
         'share_native' => 'Mas aplicaciones…',
         'share_instagram' => 'Instagram no acepta enlaces desde el navegador: copialo y pegalo alli.',
+        'shared_badge' => 'Compartida: la ve quien tenga el enlace',
+        'private_badge' => 'Solo para ti',
     ],
 
     'recipients' => [
@@ -519,6 +523,7 @@ return [
         'own_title' => '¡Descubre cuánto te conocen tus amigos!',
         'open' => 'Abrir el quiz',
         'intro_anon' => 'Cuatro cosas. Una está de verdad en su lista. Elige cuál.',
+        'badge' => 'Quiz',
     ],
     'preview' => [
         'badge' => 'Vista previa',
