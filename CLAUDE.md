@@ -99,6 +99,11 @@ Two mechanisms, because they fail differently:
 - `products.search_vector` is a **stored generated column** built by `bc_search_vector()`, weighted
   title A / brand B / category C, stemmed per market via `bc_text_config()`. Changing that function
   does **not** rewrite existing rows — that needs an explicit backfill migration.
+- **A brand's identity is its slug, not its name.** Feeds disagree about punctuation —
+  "Audio-Technica" and "Audio Technica" are one brand — so `brand_stats` holds one row per
+  `(market, slug)` with the spellings in `aliases`, and a brand page filters on all of them. The
+  folding is done in PHP with `Str::slug()`, never in SQL: Postgres cannot reproduce it, because it
+  transliterates ("Kärcher" → "karcher") where `lower(replace(...))` does not.
 - Trigram fuzzy matching: **query with the `<%` (word_similarity) operator, not `%`.** `%` uses
   `similarity()`, which compares whole strings — measured, `"blutooth koptelefon"` against
   `"Draadloze Bluetooth Koptelefoon met ruisonderdrukking"` scores **0.298**, just under the 0.3
