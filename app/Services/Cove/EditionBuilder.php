@@ -117,9 +117,9 @@ class EditionBuilder
             default => $this->theme($market, $finds),
         };
 
-        $editorial = $this->editorial($market, $finds, $observance, $theme['title']);
+        $editorial = $this->editorial($market, $finds, $observance, $theme['title'], $plan);
 
-        return DB::transaction(function () use ($market, $date, $finds, $challenge, $theme, $editorial): DailyPickSet {
+        return DB::transaction(function () use ($market, $date, $finds, $challenge, $theme, $editorial, $plan): DailyPickSet {
             $edition = DailyPickSet::updateOrCreate(
                 ['market' => $market->value, 'drop_date' => $date->toDateString()],
                 [
@@ -153,6 +153,21 @@ class EditionBuilder
                     'discount_percent' => $group->discountPercent(),
                 ]);
             }
+
+            /*
+             * Link the plan to what it became, and leave its status alone.
+             *
+             * The tempting move is `status = 'used'`, which is what the column
+             * comment describes. It would be a bug: `approvedFor()` matches
+             * 'approved' only, so the next rebuild of this date would not find
+             * the plan and would quietly replace the author's title and prose
+             * with generated ones. Rebuilding is routine — the scheduler
+             * retries, a redeploy interrupts, an editor presses the button —
+             * so an edition has to survive it unchanged.
+             *
+             * `edition_id` is the fact worth recording, and it is idempotent.
+             */
+            $plan?->forceFill(['edition_id' => $edition->id])->save();
 
             DB::table('used_themes')->insertOrIgnore([
                 'market' => $market->value,
@@ -259,8 +274,33 @@ class EditionBuilder
      * @param  list<ProductGroup>  $finds
      * @return array{text: string|null, source: string}
      */
-    private function editorial(Market $market, array $finds, ?Observance $observance, string $title): array
-    {
+    private function editorial(
+        Market $market,
+        array $finds,
+        ?Observance $observance,
+        string $title,
+        ?CovePlan $plan = null,
+    ): array {
+        /*
+         * Prose an author wrote wins outright, and skips the model entirely.
+         *
+         * Not a fallback and not a seed for the model to rewrite: a person (or
+         * Claude, through the editorial API) who wrote this day's copy meant
+         * those words, and a rebuild that quietly replaced them with generated
+         * ones would make every rebuild a gamble on whether the article
+         * survives. The plan is the source of truth precisely because the
+         * edition is rebuilt routinely.
+         *
+         * It also means an authored Cove costs nothing in AI spend, which is
+         * the invariant working in the direction it was meant to.
+         */
+        if ($plan !== null && filled($plan->editorial)) {
+            return [
+                'text' => Str::limit(trim((string) $plan->editorial), 4000, ''),
+                'source' => 'planned',
+            ];
+        }
+
         if (! $this->ai->isEnabled()) {
             /*
              * No filler.

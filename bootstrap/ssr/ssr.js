@@ -33851,6 +33851,47 @@ function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) 
 	});
 }
 //#endregion
+//#region resources/js/Components/SaveToList.tsx
+/**
+* Save a product to a list, from anywhere.
+*
+* No account required and no list required: the controller creates a default
+* list on first save. Asking someone to sign in or to name a list before they
+* can keep a product is how you lose the save.
+*/
+function SaveToList({ groupId, compact = false }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [saved, setSaved] = (0, import_react.useState)(false);
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	function save() {
+		if (saved || busy) return;
+		setBusy(true);
+		router.post(`/${market.key}/list-items`, { group_id: groupId }, {
+			preserveScroll: true,
+			preserveState: true,
+			onSuccess: () => setSaved(true),
+			onFinish: () => setBusy(false)
+		});
+	}
+	if (compact) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		onClick: save,
+		disabled: busy,
+		"aria-pressed": saved,
+		"aria-label": saved ? t("lists.saved") : t("lists.save_to_list"),
+		title: saved ? t("lists.saved") : t("lists.save_to_list"),
+		className: `relative z-20 rounded-full border px-2.5 py-1 text-xs transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line bg-card hover:border-ink disabled:opacity-60"}`,
+		children: saved ? `✓ ${t("lists.saved")}` : `+ ${t("lists.save")}`
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		onClick: save,
+		disabled: busy,
+		"aria-pressed": saved,
+		className: `rounded-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink disabled:opacity-60"}`,
+		children: saved ? `✓ ${t("lists.saved")}` : t("lists.save")
+	});
+}
+//#endregion
 //#region resources/js/types.ts
 function formatPrice(cents, market) {
 	return new Intl.NumberFormat(market.hrefLang, {
@@ -33934,23 +33975,33 @@ function ProductCard({ group, brandUrl }) {
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "mt-auto pt-3",
-					children: [group.minPrice !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "flex items-baseline gap-1.5",
-						children: [comparable && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "text-xs text-ink-soft",
-							children: t("product.from")
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "text-lg font-semibold",
-							children: formatPrice(group.minPrice, market)
-						})]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: `mt-0.5 text-xs ${comparable ? "font-medium text-sage" : "text-ink-soft"}`,
-						children: [
-							group.offerCount === 1 ? t("product.one_offer") : t("product.offers", { count: n(group.offerCount) }),
-							" · ",
-							comparable ? t("product.across_shops", { count: n(group.merchantCount) }) : t("product.one_shop")
-						]
-					})]
+					children: [
+						group.minPrice !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex items-baseline gap-1.5",
+							children: [comparable && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xs text-ink-soft",
+								children: t("product.from")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-lg font-semibold",
+								children: formatPrice(group.minPrice, market)
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "mt-2 flex items-center justify-between gap-2",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+								groupId: group.id,
+								compact: true
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: `mt-1 text-xs ${comparable ? "font-medium text-sage" : "text-ink-soft"}`,
+							children: [
+								group.offerCount === 1 ? t("product.one_offer") : t("product.offers", { count: n(group.offerCount) }),
+								" · ",
+								comparable ? t("product.across_shops", { count: n(group.merchantCount) }) : t("product.one_shop")
+							]
+						})
+					]
 				})
 			]
 		})]
@@ -34389,38 +34440,6 @@ function CoveSubscribe({ source = "daily" }) {
 				]
 			})
 		]
-	});
-}
-//#endregion
-//#region resources/js/Components/SaveToList.tsx
-/**
-* Save a product to a list, from anywhere.
-*
-* No account required and no list required: the controller creates a default
-* list on first save. Asking someone to sign in or to name a list before they
-* can keep a product is how you lose the save.
-*/
-function SaveToList({ groupId }) {
-	const { market } = usePage().props;
-	const { t } = useTranslations();
-	const [saved, setSaved] = (0, import_react.useState)(false);
-	const [busy, setBusy] = (0, import_react.useState)(false);
-	function save() {
-		if (saved || busy) return;
-		setBusy(true);
-		router.post(`/${market.key}/list-items`, { group_id: groupId }, {
-			preserveScroll: true,
-			preserveState: true,
-			onSuccess: () => setSaved(true),
-			onFinish: () => setBusy(false)
-		});
-	}
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-		onClick: save,
-		disabled: busy,
-		"aria-pressed": saved,
-		className: `rounded-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink disabled:opacity-60"}`,
-		children: saved ? `✓ ${t("lists.saved")}` : t("lists.save")
 	});
 }
 //#endregion
@@ -35282,7 +35301,7 @@ function GiftWizard({ options, recipients, picks, brief }) {
 }
 //#endregion
 //#region resources/js/Pages/Guides/Index.tsx
-var Index_exports$1 = /* @__PURE__ */ __exportAll({ default: () => GuidesIndex });
+var Index_exports$2 = /* @__PURE__ */ __exportAll({ default: () => GuidesIndex });
 function GuidesIndex({ guides }) {
 	const { t } = useTranslations();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
@@ -35418,7 +35437,7 @@ function GuideShow({ guide, items }) {
 //#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
-function Home({ stats, today, coves }) {
+function Home({ stats, today, gifting, coves }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const base = `/${market.key}`;
@@ -35450,6 +35469,59 @@ function Home({ stats, today, coves }) {
 						className: "rounded-lg border border-line px-5 py-3 font-medium transition hover:border-ink",
 						children: t("home.cta_search")
 					})]
+				})
+			]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-14",
+			"aria-labelledby": "gifting-heading",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					id: "gifting-heading",
+					className: "text-2xl font-semibold tracking-tight",
+					children: t("home.gifting_heading")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-2xl text-ink-soft",
+					children: t("home.gifting_intro")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+							href: gifting.urls.gift,
+							className: "rounded-card border border-line bg-card p-6 transition hover:border-ink",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "font-medium",
+								children: t("home.gifting_whisperer")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 text-sm text-ink-soft",
+								children: gifting.people > 0 ? t("home.gifting_people_count", { count: n(gifting.people) }) : t("home.gifting_whisperer_hint")
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+							href: gifting.urls.lists,
+							className: "rounded-card border border-line bg-card p-6 transition hover:border-ink",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "font-medium",
+								children: t("home.gifting_lists")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 text-sm text-ink-soft",
+								children: gifting.lists > 0 ? t("home.gifting_lists_count", { count: n(gifting.lists) }) : t("home.gifting_lists_hint")
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+							href: gifting.urls.santa,
+							className: "rounded-card border border-line bg-card p-6 transition hover:border-ink",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "font-medium",
+								children: t("home.gifting_santa")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 text-sm text-ink-soft",
+								children: gifting.santaGroups > 0 ? t("home.gifting_santa_count", { count: n(gifting.santaGroups) }) : t("home.gifting_santa_hint")
+							})]
+						})
+					]
 				})
 			]
 		}),
@@ -35666,15 +35738,14 @@ function Legal({ title, summary, html, updated, untranslated }) {
 }
 //#endregion
 //#region resources/js/Pages/Lists/Index.tsx
-var Index_exports = /* @__PURE__ */ __exportAll({ default: () => ListsIndex });
+var Index_exports$1 = /* @__PURE__ */ __exportAll({ default: () => ListsIndex });
 function ListsIndex({ lists, recipients, isSignedIn }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [creating, setCreating] = (0, import_react.useState)(false);
 	const form = useForm({
 		title: "",
-		recipient_id: "",
-		is_gift_list: false
+		recipient_id: ""
 	});
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("lists.title") }),
@@ -35811,9 +35882,9 @@ function SharedList({ list, isOwner, items }) {
 				className: "mt-2 text-ink-soft",
 				children: list.description
 			}),
-			list.isGiftList && !isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			list.claimable && !isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-4 rounded-card border border-line bg-card p-4 text-sm",
-				children: t("lists.shared_intro", { name: list.recipient ?? list.title })
+				children: list.for ? t("lists.shared_intro", { name: list.for }) : t("lists.shared_intro_anon")
 			}),
 			isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-4 rounded-card border border-amber/40 bg-amber/10 p-4 text-sm",
@@ -35880,7 +35951,7 @@ function SharedList({ list, isOwner, items }) {
 //#endregion
 //#region resources/js/Pages/Lists/Show.tsx
 var Show_exports = /* @__PURE__ */ __exportAll({ default: () => ListShow });
-function ListShow({ list, items }) {
+function ListShow({ list, items, target, asked }) {
 	const { market } = usePage().props;
 	const { t } = useTranslations();
 	const [copied, setCopied] = (0, import_react.useState)(false);
@@ -35943,9 +36014,84 @@ function ListShow({ list, items }) {
 				children: copied ? t("lists.copied") : t("lists.copy_link")
 			})]
 		}),
-		list.isGiftList && shared && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		list.claimable && shared && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft",
 			children: t("lists.owner_view_note")
+		}),
+		target !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-lg font-medium",
+				children: t("lists.asked_for", { name: target.name })
+			}), !target.isLinked ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-3 rounded-card border border-line bg-card p-4 text-sm",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-ink-soft",
+					children: t("recipients.ask_them_hint")
+				}), target.askUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => navigator.clipboard.writeText(target.askUrl),
+					className: "mt-3 rounded-lg border border-line px-4 py-2 text-sm",
+					children: t("recipients.ask_them")
+				})]
+			}) : asked.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 rounded-card border border-line bg-card p-6 text-center text-sm text-ink-soft",
+				children: t("lists.asked_none", { name: target.name })
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
+				children: asked.map((entry) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex items-center gap-4 p-4",
+					children: [
+						entry.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: entry.image,
+							alt: "",
+							loading: "lazy",
+							className: "h-14 w-14 shrink-0 object-contain"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "min-w-0 flex-1",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "truncate text-sm font-medium",
+								children: entry.title
+							}), entry.price !== null && !entry.live && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-sm text-ink-soft",
+								children: formatPrice(entry.price, market.currency)
+							})]
+						}),
+						entry.claimedByMe ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex shrink-0 items-center gap-2",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "text-sm text-sage",
+									children: t("lists.claimed")
+								}),
+								entry.sent === false && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									onClick: () => router.post(`${base}/l/${entry.token}/sent/${entry.id}`, {}, { preserveScroll: true }),
+									className: "rounded-lg border border-line px-3 py-1.5 text-sm",
+									children: t("lists.mark_sent")
+								}),
+								entry.sent && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "text-sm text-ink-soft",
+									children: t("lists.sent")
+								})
+							]
+						}) : entry.claimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "shrink-0 text-sm text-ink-soft",
+							children: t("lists.claimed_by_someone")
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: () => router.post(`${base}/l/${entry.token}/claim/${entry.id}`, {}, { preserveScroll: true }),
+							className: "shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm",
+							children: t("lists.claim")
+						})
+					]
+				}, entry.id))
+			})]
+		}),
+		target !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+			className: "mt-10 text-lg font-medium",
+			children: t("lists.my_finds")
 		}),
 		items.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-10 rounded-card border border-line bg-card p-8 text-center text-ink-soft",
@@ -36358,6 +36504,729 @@ function Product({ product, offers, alert }) {
 	] });
 }
 //#endregion
+//#region resources/js/Pages/Quiz/Play.tsx
+var Play_exports = /* @__PURE__ */ __exportAll({ default: () => QuizPlay });
+/**
+* "How well do you know them?"
+*
+* The share artefact is a row of squares and a score. It works because it says
+* how the round went without spoiling what the answers were — so posting it
+* costs the poster nothing, and everyone playing the same quiz makes a posted
+* result a conversation rather than a broadcast.
+*/
+function QuizPlay({ quiz, isOwner, result, stats }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [answers, setAnswers] = (0, import_react.useState)({});
+	const [copied, setCopied] = (0, import_react.useState)(false);
+	const token = window.location.pathname.split("/").filter(Boolean).pop();
+	const answered = Object.keys(answers).length;
+	async function share() {
+		if (!result) return;
+		const text = `${t("quiz.title")} ${result.score}/${result.total}\n${result.grid}\n${window.location.href}`;
+		if (navigator.share) {
+			await navigator.share({ text }).catch(() => void 0);
+			return;
+		}
+		await navigator.clipboard.writeText(text);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2e3);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
+			title: t("quiz.title"),
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meta", {
+				name: "robots",
+				content: "noindex, nofollow"
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "text-2xl font-semibold",
+					children: t("quiz.title")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-ink-soft",
+					children: t("quiz.intro", { name: quiz.owner ?? quiz.title })
+				}),
+				stats.played > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-3 text-sm text-ink-soft",
+					children: [t("quiz.played", { count: String(stats.played) }), stats.average !== null && ` · ${t("quiz.average", { score: String(stats.average) })}`]
+				})
+			]
+		}),
+		isOwner ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-8 max-w-2xl rounded-card border border-amber/40 bg-amber/10 p-4 text-sm",
+			children: t("quiz.owner_note")
+		}) : result ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-8 max-w-2xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-3xl font-semibold",
+					children: t("quiz.score", {
+						score: String(result.score),
+						total: String(result.total)
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 text-2xl tracking-widest",
+					"aria-label": result.grid,
+					children: result.grid
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: share,
+					className: "mt-6 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
+					children: copied ? t("quiz.copied") : t("quiz.share")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-8 text-sm text-ink-soft",
+					children: t("quiz.missed_hint")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					href: `/${market.key}/l/${token}`,
+					className: "mt-2 inline-block rounded-lg border border-line px-4 py-2 text-sm",
+					children: t("lists.share")
+				})
+			]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+			className: "mt-8 space-y-10",
+			onSubmit: (e) => {
+				e.preventDefault();
+				router.post(`/${market.key}/q/${token}`, { answers: quiz.rounds.map((_, i) => answers[i] ?? null) });
+			},
+			children: [quiz.rounds.map((round, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("legend", {
+				className: "text-sm text-ink-soft",
+				children: t("quiz.round", {
+					current: String(index + 1),
+					total: String(quiz.rounds.length)
+				})
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
+				children: round.options.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+					type: "button",
+					"aria-pressed": answers[index] === option.id,
+					onClick: () => setAnswers((prev) => ({
+						...prev,
+						[index]: option.id
+					})),
+					className: `rounded-card border p-4 text-left transition ${answers[index] === option.id ? "border-accent bg-accent/5" : "border-line hover:border-ink"}`,
+					children: [option.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: option.image,
+						alt: "",
+						loading: "lazy",
+						className: "mx-auto h-28 w-auto max-w-full object-contain"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "mt-3 block text-sm",
+						children: option.title
+					})]
+				}, option.id))
+			})] }, index)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "submit",
+				disabled: answered < quiz.rounds.length,
+				className: "rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50",
+				children: t("quiz.share")
+			})]
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/Recipients/SelfDescribe.tsx
+var SelfDescribe_exports = /* @__PURE__ */ __exportAll({ default: () => SelfDescribe });
+/**
+* The other end of a recipient.
+*
+* Two jobs, and the second is the one that matters: say who you are, and put
+* actual things on a list. "She likes cooking" moves the engine; "she wants
+* this pan" ends the conversation.
+*/
+function SelfDescribe({ person, options, canClaim, items, listId, suggestions = [] }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const token = window.location.pathname.split("/").filter(Boolean).pop();
+	const base = `/${market.key}/for/${token}`;
+	const [query, setQuery] = (0, import_react.useState)("");
+	const form = useForm({
+		interests: person.interests,
+		vibe: person.vibe ?? "",
+		values: person.values
+	});
+	const toggle = (list, key, value) => form.setData(key, list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
+			title: t("recipients.self_title"),
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meta", {
+				name: "robots",
+				content: "noindex, nofollow"
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "text-2xl font-semibold",
+					children: t("recipients.self_title")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-ink-soft",
+					children: t("recipients.self_intro", { name: person.name })
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 rounded-card border border-line bg-card p-4 text-sm text-ink-soft",
+					children: t("recipients.privacy_note")
+				}),
+				canClaim && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 rounded-card border border-accent/40 bg-accent/5 p-4",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm",
+						children: t("recipients.claim_hint")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => router.post(`${base}/claim`, {}, { preserveScroll: true }),
+						className: "mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
+						children: t("recipients.claim_this_is_me")
+					})]
+				})
+			]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10 max-w-2xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-lg font-medium",
+				children: t("recipients.about_you")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "mt-4 space-y-6",
+				onSubmit: (e) => {
+					e.preventDefault();
+					form.post(base, { preserveScroll: true });
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("legend", {
+						className: "text-sm font-medium",
+						children: t("gift.step_interests")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "mt-2 flex flex-wrap gap-2",
+						children: options.interests.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							"aria-pressed": form.data.interests.includes(option.value),
+							onClick: () => toggle(form.data.interests, "interests", option.value),
+							className: `rounded-full border px-3 py-1.5 text-sm ${form.data.interests.includes(option.value) ? "border-accent bg-accent text-white" : "border-line hover:bg-card"}`,
+							children: option.label
+						}, option.value))
+					})] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("legend", {
+						className: "text-sm font-medium",
+						children: t("gift.step_vibe")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "mt-2 flex flex-wrap gap-2",
+						children: options.vibes.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							"aria-pressed": form.data.vibe === option.value,
+							onClick: () => form.setData("vibe", form.data.vibe === option.value ? "" : option.value),
+							className: `rounded-full border px-3 py-1.5 text-sm ${form.data.vibe === option.value ? "border-accent bg-accent text-white" : "border-line hover:bg-card"}`,
+							children: option.label
+						}, option.value))
+					})] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("legend", {
+						className: "text-sm font-medium",
+						children: t("gift.step_values")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "mt-2 flex flex-wrap gap-2",
+						children: options.values.map((value) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							"aria-pressed": form.data.values.includes(value),
+							onClick: () => toggle(form.data.values, "values", value),
+							className: `rounded-full border px-3 py-1.5 text-sm ${form.data.values.includes(value) ? "border-accent bg-accent text-white" : "border-line hover:bg-card"}`,
+							children: t(`gift.values.${value}`)
+						}, value))
+					})] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						disabled: form.processing,
+						className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60",
+						children: t("lists.save")
+					})
+				]
+			})]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-12",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-lg font-medium",
+					children: t("recipients.your_list")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 flex flex-wrap gap-3",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+						className: "flex flex-1 gap-2",
+						onSubmit: (e) => {
+							e.preventDefault();
+							router.get(`${base}/suggest`, { q: query }, { preserveState: true });
+						},
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							value: query,
+							onChange: (e) => setQuery(e.target.value),
+							placeholder: t("recipients.search_placeholder"),
+							className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "submit",
+							className: "rounded-lg border border-line px-4 py-2 text-sm",
+							children: t("recipients.add_something")
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => router.get(`${base}/suggest`, {}, { preserveState: true }),
+						className: "rounded-lg border border-line px-4 py-2 text-sm",
+						children: t("recipients.suggest")
+					})]
+				}),
+				suggestions.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
+					children: suggestions.map((suggestion) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "rounded-card border border-line bg-card p-4",
+						children: [
+							suggestion.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: suggestion.image,
+								alt: "",
+								loading: "lazy",
+								className: "mx-auto h-32 w-auto max-w-full object-contain"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-3 text-sm font-medium",
+								children: suggestion.title
+							}),
+							suggestion.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 text-sm text-ink-soft",
+								children: formatPrice(suggestion.price, market.currency)
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => router.post(`/${market.key}/list-items`, {
+									group_id: suggestion.id,
+									wishlist_id: listId
+								}, { preserveScroll: true }),
+								className: "mt-3 w-full rounded-lg border border-line px-3 py-1.5 text-sm",
+								children: t("lists.save")
+							})
+						]
+					}, suggestion.id))
+				}),
+				items.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-6 rounded-card border border-line bg-card p-8 text-center text-ink-soft",
+					children: t("recipients.nothing_yet")
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-6 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
+					children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex items-center gap-4 p-4",
+						children: [
+							item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: item.image,
+								alt: "",
+								loading: "lazy",
+								className: "h-14 w-14 shrink-0 object-contain"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "min-w-0 flex-1",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "truncate text-sm font-medium",
+									children: item.title
+								}), item.price !== null && !item.live && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-sm text-ink-soft",
+									children: formatPrice(item.price, market.currency)
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => router.delete(`/${market.key}/list-items/${item.id}`, { preserveScroll: true }),
+								className: "text-sm text-ink-soft hover:text-ink",
+								children: t("lists.remove")
+							})
+						]
+					}, item.id))
+				})
+			]
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/Santa/Group.tsx
+var Group_exports = /* @__PURE__ */ __exportAll({ default: () => SantaGroup });
+/**
+* The group.
+*
+* Deliberately aggregate. The organiser sees who is in and how many have
+* finished shopping, and never who drew whom — v1 let the organiser read the
+* pairings outright, which quietly makes one player a spectator of everyone
+* else's game.
+*/
+function SantaGroup({ group, isOrganiser, members, me }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [copied, setCopied] = (0, import_react.useState)(false);
+	const done = members.filter((m) => m.done).length;
+	async function copyInvite() {
+		await navigator.clipboard.writeText(group.inviteUrl);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2e3);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
+			title: group.title,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meta", {
+				name: "robots",
+				content: "noindex, nofollow"
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "text-2xl font-semibold",
+					children: group.title
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-2 text-sm text-ink-soft",
+					children: [
+						group.budgetMax !== null && `${t("santa.budget")}: ${formatPrice(group.budgetMax, market.currency)}`,
+						group.exchangeDate && ` · ${group.exchangeDate}`,
+						group.theme && ` · ${group.theme}`
+					]
+				}),
+				!group.drawn && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 rounded-card border border-line bg-card p-4",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-ink-soft",
+						children: t("santa.invite_hint")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: copyInvite,
+						className: "mt-3 rounded-lg border border-line px-4 py-2 text-sm",
+						children: copied ? t("lists.copied") : t("santa.invite")
+					})]
+				})
+			]
+		}),
+		me && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-6 max-w-2xl rounded-card border border-line bg-card p-4 text-sm",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+				href: `/${market.key}/santa/${group.id}/me/${me.joinToken}`,
+				className: "underline",
+				children: group.drawn && me.giftee ? t("santa.you_have", { name: me.giftee.name }) : t("santa.not_drawn")
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-lg font-medium",
+					children: t("santa.members")
+				}),
+				group.drawn && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-sm text-ink-soft",
+					children: t("santa.done_count", {
+						done: String(done),
+						total: String(members.length)
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
+					children: members.map((member) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex items-center gap-4 p-4",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "flex-1 text-sm font-medium",
+								children: member.name
+							}),
+							!member.hasList && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xs text-ink-soft",
+								children: t("santa.build_yours")
+							}),
+							member.done && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-xs text-sage",
+								children: t("lists.sent")
+							})
+						]
+					}, member.id))
+				}),
+				isOrganiser && !group.drawn && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => router.post(`/${market.key}/santa/${group.id}/draw`),
+					disabled: members.length < 2,
+					className: "mt-6 rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50",
+					children: t("santa.draw")
+				})
+			]
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/Santa/Index.tsx
+var Index_exports = /* @__PURE__ */ __exportAll({ default: () => SantaIndex });
+/**
+* The hub, and the form to start a group.
+*
+* Public, so the page can explain what this is before asking for an account.
+* Creating a group needs one — somebody has to own it and be reachable when the
+* draw happens — but *joining* deliberately does not.
+*/
+function SantaIndex({ groups, isSignedIn }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [creating, setCreating] = (0, import_react.useState)(false);
+	const form = useForm({
+		title: "",
+		budget_max: "",
+		exchange_date: "",
+		theme: ""
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("santa.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-3xl font-semibold tracking-tight",
+				children: t("santa.title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-lg text-ink-soft",
+				children: t("santa.subtitle")
+			})]
+		}),
+		!isSignedIn ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+			className: "mt-8 max-w-2xl rounded-card border border-line bg-card p-6",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/login`,
+					className: "font-medium underline",
+					children: t("nav.sign_in")
+				}),
+				" ",
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "text-ink-soft",
+					children: t("santa.create")
+				})
+			]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mt-8",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: () => setCreating((v) => !v),
+				className: "rounded-lg bg-accent px-5 py-2.5 font-medium text-white hover:bg-accent-dark",
+				children: t("santa.create")
+			}), creating && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "mt-6 max-w-lg space-y-4 rounded-card border border-line bg-card p-6",
+				onSubmit: (e) => {
+					e.preventDefault();
+					form.post(`/${market.key}/santa`);
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-sm font-medium",
+							children: t("santa.group_name")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							value: form.data.title,
+							onChange: (e) => form.setData("title", e.target.value),
+							required: true,
+							maxLength: 120,
+							className: "mt-1 w-full rounded-lg border border-line px-3 py-2"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "text-sm font-medium",
+								children: t("santa.budget")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "number",
+								min: 0,
+								step: "1",
+								value: form.data.budget_max,
+								onChange: (e) => form.setData("budget_max", e.target.value),
+								className: "mt-1 w-full rounded-lg border border-line px-3 py-2"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "mt-1 block text-xs text-ink-soft",
+								children: t("santa.budget_hint")
+							})
+						]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-sm font-medium",
+							children: t("santa.exchange_date")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "date",
+							value: form.data.exchange_date,
+							onChange: (e) => form.setData("exchange_date", e.target.value),
+							className: "mt-1 w-full rounded-lg border border-line px-3 py-2"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-sm font-medium",
+							children: t("santa.theme")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							value: form.data.theme,
+							onChange: (e) => form.setData("theme", e.target.value),
+							maxLength: 120,
+							className: "mt-1 w-full rounded-lg border border-line px-3 py-2"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						disabled: form.processing,
+						className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60",
+						children: t("santa.create")
+					})
+				]
+			})]
+		}),
+		groups.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-10 grid gap-4 sm:grid-cols-2",
+			children: groups.map((group) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+				href: group.url,
+				className: "block rounded-card border border-line bg-card p-6 transition hover:border-ink",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-medium",
+					children: group.title
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-1 text-sm text-ink-soft",
+					children: [
+						group.members,
+						" · ",
+						group.exchangeDate,
+						group.drawn && ` · ${t("santa.drawn")}`
+					]
+				})]
+			}) }, group.id))
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/Santa/Me.tsx
+var Me_exports = /* @__PURE__ */ __exportAll({ default: () => SantaMe });
+/**
+* One member's view: who they drew, and that person's list.
+*
+* Reached by join token so it works without an account — requiring a login to
+* be in an office Secret Santa is how most of the office does not join.
+*/
+function SantaMe({ group, me }) {
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const base = `/${market.key}`;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
+			title: group.title,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meta", {
+				name: "robots",
+				content: "noindex, nofollow"
+			})
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "text-2xl font-semibold",
+					children: group.title
+				}),
+				!group.drawn ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 rounded-card border border-line bg-card p-4 text-sm",
+					children: t("santa.not_drawn")
+				}) : me.giftee ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-3 text-lg",
+					children: t("santa.you_have", { name: me.giftee.name })
+				}) : null,
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "mt-2 text-sm text-ink-soft",
+					children: [group.budgetMax !== null && formatPrice(group.budgetMax, market.currency) + " · ", group.exchangeDate]
+				})
+			]
+		}),
+		!me.hasList && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-8 max-w-2xl rounded-card border border-accent/40 bg-accent/5 p-4",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-medium",
+					children: t("santa.build_yours")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-sm text-ink-soft",
+					children: t("santa.build_yours_hint")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					href: `${base}/lists`,
+					className: "mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
+					children: t("lists.new_list")
+				})
+			]
+		}),
+		group.drawn && me.giftee && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-lg font-medium",
+					children: t("santa.their_list", { name: me.giftee.name })
+				}),
+				me.giftee.wishes.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-3 rounded-card border border-line bg-card p-6 text-sm",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: t("santa.no_list", { name: me.giftee.name }) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+						href: `${base}/gift`,
+						className: "mt-3 inline-block rounded-lg border border-line px-4 py-2",
+						children: t("gift.title")
+					})]
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-4 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
+					children: me.giftee.wishes.map((wish) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex items-center gap-4 p-4",
+						children: [
+							wish.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: wish.image,
+								alt: "",
+								loading: "lazy",
+								className: "h-14 w-14 shrink-0 object-contain"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "min-w-0 flex-1",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "truncate text-sm font-medium",
+									children: wish.title
+								}), wish.price !== null && !wish.live && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-sm text-ink-soft",
+									children: formatPrice(wish.price, market.currency)
+								})]
+							}),
+							wish.claimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "shrink-0 text-sm text-ink-soft",
+								children: t("lists.claimed_by_someone")
+							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => router.post(`${base}/l/${wish.token}/claim/${wish.id}`, {}, { preserveScroll: true }),
+								className: "shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm",
+								children: t("lists.claim")
+							})
+						]
+					}, wish.id))
+				}),
+				!me.done && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => router.post(`${base}/santa/${group.id}/me/${me.joinToken}/done`, {}, { preserveScroll: true }),
+					className: "mt-6 rounded-lg border border-line px-4 py-2 text-sm",
+					children: t("santa.mark_done")
+				})
+			]
+		})
+	] });
+}
+//#endregion
 //#region resources/js/Components/BarcodeScanner.tsx
 var FORMATS = [
 	"ean_13",
@@ -36604,7 +37473,7 @@ function Scan() {
 //#endregion
 //#region resources/js/Pages/Search.tsx
 var Search_exports = /* @__PURE__ */ __exportAll({ default: () => Search });
-function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, intro, brandLinks, narrative }) {
+function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, pastedLink, intro, brandLinks, narrative }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
@@ -36677,6 +37546,10 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 					children: t("search.submit")
 				})
 			]
+		}),
+		pastedLink && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-3 rounded-lg border border-line bg-cream px-4 py-3 text-sm text-ink-soft",
+			children: pastedLink.shortlink ? t("search.pasted_shortlink") : pastedLink.usable ? t("search.pasted_searched", { terms: pastedLink.terms }) : t("search.pasted_unreadable")
 		}),
 		scannerOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 			className: "fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center",
@@ -56907,6 +57780,10 @@ function SiteLayout({ children }) {
 			label: t("nav.gift")
 		},
 		{
+			href: `${base}/santa`,
+			label: t("nav.santa")
+		},
+		{
 			href: `${base}/daily`,
 			label: t("nav.daily")
 		},
@@ -56984,7 +57861,7 @@ function SiteLayout({ children }) {
 										children: m.label
 									}, m.key))
 								}),
-								auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+								auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 									href: `${base}/notifications`,
 									className: "relative text-sm hover:text-ink",
 									"aria-label": unreadCount > 0 ? `${t("nav.notifications")} (${unreadCount})` : t("nav.notifications"),
@@ -56995,14 +57872,15 @@ function SiteLayout({ children }) {
 										className: "absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-[11px] leading-4 font-semibold text-white",
 										children: unreadCount > 9 ? "9+" : unreadCount
 									})]
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								}) }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+									href: `${base}/login`,
+									className: "text-sm hover:text-ink",
+									children: t("nav.sign_in")
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 									href: `${base}/lists`,
 									className: "text-sm hover:text-ink",
 									children: t("nav.lists")
-								})] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: "/login",
-									className: "text-sm hover:text-ink",
-									children: t("nav.sign_in")
 								})
 							]
 						})
@@ -57019,24 +57897,25 @@ function SiteLayout({ children }) {
 								className: "hover:text-ink",
 								onClick: () => setMenuOpen(false),
 								children: item.label
-							}, item.href)), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							}, item.href)), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 								className: "border-t border-line pt-3",
-								children: auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+								children: [auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 									className: "flex flex-col gap-3",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 										href: `${base}/notifications`,
 										onClick: () => setMenuOpen(false),
 										children: [t("nav.notifications"), unreadCount > 0 && ` (${unreadCount})`]
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-										href: `${base}/lists`,
-										onClick: () => setMenuOpen(false),
-										children: t("nav.lists")
-									})]
+									})
 								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: "/login",
+									href: `${base}/login`,
 									onClick: () => setMenuOpen(false),
 									children: t("nav.sign_in")
-								})
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+									href: `${base}/lists`,
+									className: "mt-3 block",
+									onClick: () => setMenuOpen(false),
+									children: t("nav.lists")
+								})]
 							})]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
@@ -57141,15 +58020,20 @@ server_default((page) => createInertiaApp({
 			"./Pages/Daily/Edition.tsx": Edition_exports,
 			"./Pages/Discover.tsx": Discover_exports,
 			"./Pages/Gift/Wizard.tsx": Wizard_exports,
-			"./Pages/Guides/Index.tsx": Index_exports$1,
+			"./Pages/Guides/Index.tsx": Index_exports$2,
 			"./Pages/Guides/Show.tsx": Show_exports$1,
 			"./Pages/Home.tsx": Home_exports,
 			"./Pages/Legal.tsx": Legal_exports,
-			"./Pages/Lists/Index.tsx": Index_exports,
+			"./Pages/Lists/Index.tsx": Index_exports$1,
 			"./Pages/Lists/Shared.tsx": Shared_exports,
 			"./Pages/Lists/Show.tsx": Show_exports,
 			"./Pages/Notifications.tsx": Notifications_exports,
 			"./Pages/Product.tsx": Product_exports,
+			"./Pages/Quiz/Play.tsx": Play_exports,
+			"./Pages/Recipients/SelfDescribe.tsx": SelfDescribe_exports,
+			"./Pages/Santa/Group.tsx": Group_exports,
+			"./Pages/Santa/Index.tsx": Index_exports,
+			"./Pages/Santa/Me.tsx": Me_exports,
 			"./Pages/Scan.tsx": Scan_exports,
 			"./Pages/Search.tsx": Search_exports,
 			"./Pages/Surprise.tsx": Surprise_exports

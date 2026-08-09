@@ -41,6 +41,23 @@ class CoveMarkup
     private const TOKEN = '/\[\[(brand|search|product):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u';
 
     /**
+     * Whether a piece of text carries link tokens at all.
+     *
+     * Exists so callers that render prose *without* this class can reject
+     * tokens rather than print them. A guide is such a place: its page links
+     * every item to its own product page already, so tokens were never needed
+     * there — and text written with them would show `[[product:12]]` to a
+     * reader, which is the one outcome this whole contract exists to avoid.
+     *
+     * Public here rather than a second regex at the call site, for the reason
+     * given above about the prompt and the parser drifting apart.
+     */
+    public static function containsTokens(?string $text): bool
+    {
+        return $text !== null && preg_match(self::TOKEN, $text) === 1;
+    }
+
+    /**
      * @param  array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>}  $allowed
      * @return array{html: string, links: int, rejected: list<string>}
      */

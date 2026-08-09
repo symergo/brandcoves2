@@ -77,6 +77,22 @@ class CovePlanResource extends Resource
                     TextInput::make('title')->required()->maxLength(120),
                     Textarea::make('blurb')->rows(2)
                         ->helperText('One line, shown under the title and used as the meta description.'),
+
+                    /*
+                     * The article itself, when someone wrote one.
+                     *
+                     * Usually arrives through the editorial API rather than
+                     * being typed here — but it has to be visible and editable
+                     * in the panel, because reviewing what an automated writer
+                     * produced before approving it is the entire point of the
+                     * draft/approve split. See docs/features/editorial-api.md.
+                     */
+                    Textarea::make('editorial')
+                        ->label('Editorial')
+                        ->rows(10)
+                        ->columnSpanFull()
+                        ->maxLength((int) config('brandcoves.editorial_api.max_editorial_chars'))
+                        ->helperText('Two or three paragraphs, blank line between them. Link with tokens, never URLs: [[product:1234|label]], [[brand:Sony]], [[search:phrase]] — anything outside the edition\'s own products is rendered as plain text. Written here, it replaces the AI pass entirely and survives every rebuild.'),
                 ])
                 ->columns(2),
 
@@ -194,7 +210,11 @@ class CovePlanResource extends Resource
                     ->requiresConfirmation()
                     ->modalDescription('Builds the edition for that date immediately so you can see it before the morning. Rebuilding is idempotent — it updates in place rather than creating a second edition.')
                     ->action(function (CovePlan $record): void {
-                        BuildDailyEdition::dispatch($record->market);
+                        // The plan's date, not today. Dispatching without one
+                        // built today's edition from a plan written for next
+                        // Tuesday — the plan for today would not match, so the
+                        // button appeared to do nothing.
+                        BuildDailyEdition::dispatch($record->market, $record->drop_date->toDateString());
 
                         Notification::make()
                             ->title('Build queued')

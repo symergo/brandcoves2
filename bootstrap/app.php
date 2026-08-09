@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use App\Enums\Market;
+use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RequireApiAbility;
 use App\Http\Middleware\SetMarket;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Services\Seo\LegacyRedirects;
@@ -18,6 +20,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        // The editorial API. A separate file and a separate middleware stack:
+        // no session, no CSRF, no market prefix and no Inertia — the caller is a
+        // program with a key, not a browser with a login.
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -43,6 +49,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'api.token' => AuthenticateApiToken::class,
+            'api.ability' => RequireApiAbility::class,
         ]);
 
         /*

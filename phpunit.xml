@@ -18,6 +18,19 @@
         </include>
     </source>
     <php>
+        <!--
+            The whole suite runs in one PHP process, so memory is cumulative:
+            every test boots the app and the peak only ever rises. At PHP's
+            128M default the suite died mid-run with "allowed memory size
+            exhausted" — on a *different* test each time, which is what makes
+            it look like a flaky test rather than a ceiling. The tests that
+            assert a 404 render Symfony's HTML error page, which is the
+            expensive part, and there are dozens of them.
+
+            Raised rather than trimmed: the run is a fixed cost that grows with
+            the test count, and the next test file would hit this again.
+        -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>

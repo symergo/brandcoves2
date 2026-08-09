@@ -163,6 +163,12 @@ build job under the `daily_picks` and `guide_copy` caps. The edition builds and 
 `AI_ENABLED=false` — themes fall back to a curated rotation, guides to template copy. The game, the
 scoring and the picks involve no model at all. See [ai-invariant.md](ai-invariant.md).
 
+**Prose written by an author beats all of it.** A `cove_plans` row may carry the edition's editorial,
+and when it does the builder uses it verbatim and skips the model entirely — not as a seed to
+rewrite, not as a fallback. It lives on the plan rather than the edition because the edition's copy
+is an output that every rebuild overwrites, and an author's words have to survive that. Written
+through [the editorial API](editorial-api.md), a Cove therefore costs nothing in AI spend at all.
+
 ### Getting the prose back: `bc:refresh-guide-copy`
 
 An edition is rebuilt every day, so a theme written during an AI outage is replaced by the next

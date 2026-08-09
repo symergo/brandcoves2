@@ -9,6 +9,7 @@ use App\Models\AmazonProduct;
 use App\Models\Event;
 use App\Models\ProductGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -23,7 +24,7 @@ class AmazonPasteSearchTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function search(string $q): \Illuminate\Testing\TestResponse
+    private function search(string $q): TestResponse
     {
         return $this->get('/be-nl/search?q='.urlencode($q));
     }

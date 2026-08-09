@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Middleware\AuthenticateApiToken;
 use App\Services\Connectors\Awin\AwinConnector;
 use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
@@ -22,7 +23,10 @@ use App\Services\Seo\BrandLinker;
 use App\Services\Seo\CopyBank;
 use App\Services\Seo\PageMeta;
 use App\Services\Settings\AiSettingsStore;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -127,5 +131,35 @@ class AppServiceProvider extends ServiceProvider
          * env value stands.
          */
         app(AiSettingsStore::class)->apply();
+
+        $this->editorialApiLimits();
+    }
+
+    /**
+     * Rate limits for the editorial API, keyed by token rather than by IP.
+     *
+     * By IP is wrong in both directions here. Two keys behind one CI runner
+     * would share a budget and throttle each other; one key used from a
+     * rotating address would never be limited at all. The token is the actor,
+     * so the token is the key — and an unauthenticated caller has no token, so
+     * it falls back to the address, which is the only thing it has.
+     */
+    private function editorialApiLimits(): void
+    {
+        $key = fn (Request $request): string => (string) (
+            AuthenticateApiToken::from($request)?->id ?? $request->ip()
+        );
+
+        // Reads. Generous: a writer researching a Cove looks at a lot of
+        // products, and making that expensive pushes it toward guessing instead.
+        RateLimiter::for('editorial', fn (Request $request) => Limit::perMinute(
+            (int) config('brandcoves.editorial_api.reads_per_minute')
+        )->by($key($request)));
+
+        // Writes. Tighter, because a writer stuck in a loop is the realistic
+        // failure mode and each call rewrites rows.
+        RateLimiter::for('editorial-writes', fn (Request $request) => Limit::perMinute(
+            (int) config('brandcoves.editorial_api.writes_per_minute')
+        )->by($key($request)));
     }
 }

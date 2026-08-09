@@ -8,6 +8,7 @@ use App\Enums\Market;
 use App\Services\Cove\EditionBuilder;
 use App\Services\Guides\SeasonalTopics;
 use App\Services\Guides\TopicMiner;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +30,15 @@ class BuildDailyEdition implements ShouldQueue
 
     public int $tries = 2;
 
-    public function __construct(public Market $market) {}
+    /**
+     * @param  string|null  $date  `Y-m-d`, or null for today.
+     *
+     * A plain string rather than a Carbon instance: this is serialised into
+     * Redis and back, and a date that survives the round trip unchanged is
+     * worth more here than a typed constructor. Null is today, which is what
+     * the nightly schedule wants and what every existing caller passed.
+     */
+    public function __construct(public Market $market, public ?string $date = null) {}
 
     public function handle(TopicMiner $miner, SeasonalTopics $seasonal, EditionBuilder $builder): void
     {
@@ -42,10 +51,14 @@ class BuildDailyEdition implements ShouldQueue
         // barbecue Cove in July.
         $inSeason = $seasonal->seed($this->market);
 
-        $edition = $builder->build($this->market);
+        $edition = $builder->build(
+            $this->market,
+            $this->date === null ? null : CarbonImmutable::parse($this->date),
+        );
 
         Log::info('Daily Cove built', [
             'market' => $this->market->value,
+            'date' => $this->date ?? 'today',
             'topic_candidates' => $candidates,
             'topics_in_season' => $inSeason,
             'edition' => $edition?->id,
