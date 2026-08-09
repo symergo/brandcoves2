@@ -110,9 +110,26 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Global "From" Address
+    |--------------------------------------------------------------------------
+    |
+    | `?:` rather than a second argument to env(), and that is the whole point.
+    |
+    | A default only applies when the variable is *absent*. A variable present
+    | and empty — which is what a blank field in Coolify produces — returns an
+    | empty string, and Symfony refuses to build a message without a From
+    | header: "An email must have a From or a Sender header." That surfaced as a
+    | 500 on the sign-in form, which is the one page that has to work, for a
+    | reason no error message ever mentioned.
+    |
+    | Falling back on empty as well as missing means a misconfigured environment
+    | sends from the right address instead of not sending at all.
+    */
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+        'address' => env('MAIL_FROM_ADDRESS') ?: 'info@symergo.com',
+        'name' => env('MAIL_FROM_NAME') ?: env('APP_NAME', 'Brandcoves'),
     ],
 
 ];
