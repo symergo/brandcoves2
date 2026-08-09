@@ -319,6 +319,38 @@ class SecretSantaController extends Controller
         return back()->with('success', __('site.santa.list_attached'));
     }
 
+    /**
+     * Call the whole thing off.
+     *
+     * The organiser's alone. A member who wants out is a different act with a
+     * different consequence — the remaining draw has to be repaired around them
+     * — and giving one person a button that ends everybody else's exchange is
+     * not that.
+     *
+     * Members go with the group, by the cascade the schema already declares.
+     * Two things deliberately survive it:
+     *
+     * - **Wishlists.** A member attached a list they own; the group borrowed it
+     *   and does not get to take it. The foreign key nulls rather than cascades
+     *   for exactly this reason.
+     * - **Claims.** Somebody genuinely said they would buy a thing, and may well
+     *   already have. Deleting the group they arranged it through does not
+     *   unbuy it, and quietly freeing those items would send a second person to
+     *   the shops.
+     */
+    public function destroy(Request $request, CurrentMarket $current, string $market, string $group): RedirectResponse
+    {
+        $santa = $this->find($group);
+
+        abort_unless($santa->isOrganiser($request->user()), 403, __('site.santa.organiser_only'));
+
+        $santa->delete();
+
+        return redirect()
+            ->to($current->url('santa'))
+            ->with('success', __('site.santa.deleted'));
+    }
+
     public function markDone(Request $request, CurrentMarket $current, string $market, string $group, string $token): RedirectResponse
     {
         $santa = $this->find($group);

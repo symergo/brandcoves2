@@ -256,6 +256,7 @@ Route::prefix('{market}')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::post('/santa', [SecretSantaController::class, 'store'])->name('santa.store');
         Route::post('/santa/{group}/draw', [SecretSantaController::class, 'draw'])->name('santa.draw');
+        Route::delete('/santa/{group}', [SecretSantaController::class, 'destroy'])->name('santa.destroy');
     });
 
     Route::middleware('throttle:60,1')->group(function () {

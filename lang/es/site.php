@@ -500,6 +500,10 @@ return [
         'list_attached' => 'Ese grupo ya ve esta lista.',
         'list_attached_short' => 'En uso',
         'invite_text' => 'Unete a nuestro amigo invisible: :title',
+        'delete' => 'Eliminar este grupo',
+        'delete_confirm' => 'Eliminar :title? Todos los que se unieron lo perderan.',
+        'delete_confirm_drawn' => 'Eliminar :title? Ya se ha sorteado, asi que todos pierden a quien le regalaban, y nadie recibira aviso. Diselo tu antes.',
+        'deleted' => 'Grupo eliminado.',
     ],
     'quiz' => [
         'title' => 'Cuanto los conoces?',

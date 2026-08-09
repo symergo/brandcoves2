@@ -295,6 +295,92 @@ class SecretSantaTest extends TestCase
     }
 
     #[Test]
+    public function the_organiser_can_delete_the_group(): void
+    {
+        $group = $this->group();
+        $this->join($group, 'Sam', 'sam@example.test');
+
+        $this->actingAs($group->organiser)
+            ->delete("/be-nl/santa/{$group->id}")
+            ->assertRedirect();
+
+        $this->assertSame(0, SecretSantaGroup::query()->count());
+        // Members go with it, by the cascade the schema already declares.
+        $this->assertSame(0, SecretSantaMember::query()->count());
+    }
+
+    #[Test]
+    public function a_member_cannot_delete_the_group(): void
+    {
+        $group = $this->group();
+        $member = User::factory()->create();
+        $this->join($group, 'Sam', 'sam@example.test');
+        $group->members()->where('email', 'sam@example.test')->update(['user_id' => $member->id]);
+
+        /*
+         * A member who wants out is a different act with a different
+         * consequence — the draw has to be repaired around them — and giving one
+         * person a button that ends everybody else's exchange is not that.
+         */
+        $this->actingAs($member)
+            ->delete("/be-nl/santa/{$group->id}")
+            ->assertForbidden();
+
+        $this->assertSame(1, SecretSantaGroup::query()->count());
+    }
+
+    #[Test]
+    public function deleting_a_group_leaves_the_members_own_lists_alone(): void
+    {
+        $group = $this->group();
+        $person = User::factory()->create();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $person->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        $sam = $this->join($group, 'Sam', 'sam@example.test');
+        $sam->update(['user_id' => $person->id, 'wishlist_id' => $list->id]);
+
+        $this->actingAs($group->organiser)->delete("/be-nl/santa/{$group->id}");
+
+        // The member attached a list they own. The group borrowed it and does
+        // not get to take it.
+        $this->assertNotNull($list->fresh());
+    }
+
+    #[Test]
+    public function deleting_a_drawn_group_does_not_release_claims(): void
+    {
+        $group = $this->group();
+        $this->join($group, 'Sam', 'sam@example.test');
+        $this->join($group, 'Ash', 'ash@example.test');
+
+        $this->actingAs($group->organiser)->post("/be-nl/santa/{$group->id}/draw");
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => User::factory()->create()->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+            'visibility' => ListVisibility::Link,
+        ]);
+
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+        $item->claim(WishlistItem::identityHash('anon:someone'));
+
+        $this->actingAs($group->organiser)->delete("/be-nl/santa/{$group->id}");
+
+        /*
+         * Somebody said they would buy that, and may already have. Deleting the
+         * group they arranged it through does not unbuy it, and freeing the item
+         * would send a second person to the shops.
+         */
+        $this->assertNotNull($item->fresh()->claimed_by_hash);
+    }
+
+    #[Test]
     public function only_the_organiser_can_draw(): void
     {
         $group = $this->group();

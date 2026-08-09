@@ -504,6 +504,10 @@ return [
         'list_attached' => 'Die groep ziet dit lijstje nu.',
         'list_attached_short' => 'In gebruik',
         'invite_text' => 'Doe mee met onze Secret Santa: :title',
+        'delete' => 'Verwijder deze groep',
+        'delete_confirm' => ':title verwijderen? Iedereen die meedeed raakt hem kwijt.',
+        'delete_confirm_drawn' => ':title verwijderen? Er is al getrokken, dus iedereen verliest voor wie hij koopt — en niemand krijgt bericht. Zeg het ze eerst zelf.',
+        'deleted' => 'Groep verwijderd.',
     ],
     'quiz' => [
         'title' => 'Hoe goed ken je ze?',

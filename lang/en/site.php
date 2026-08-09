@@ -549,6 +549,10 @@ return [
         'list_attached' => 'That group now sees this list.',
         'list_attached_short' => 'In use',
         'invite_text' => 'Join our Secret Santa: :title',
+        'delete' => 'Delete this group',
+        'delete_confirm' => 'Delete :title? Everyone who joined will lose it.',
+        'delete_confirm_drawn' => 'Delete :title? It has already been drawn, so everyone loses who they were buying for — and nobody will be told. Tell them yourself first.',
+        'deleted' => 'Group deleted.',
     ],
     'quiz' => [
         'title' => 'How well do you know them?',

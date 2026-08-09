@@ -123,15 +123,41 @@ export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
                     ))}
                 </ul>
 
-                {isOrganiser && !group.drawn && (
-                    <button
-                        type="button"
-                        onClick={() => router.post(`/${market.key}/santa/${group.id}/draw`)}
-                        disabled={members.length < 2}
-                        className="mt-6 rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50"
-                    >
-                        {t('santa.draw')}
-                    </button>
+                {isOrganiser && (
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                        {!group.drawn && (
+                            <button
+                                type="button"
+                                onClick={() => router.post(`/${market.key}/santa/${group.id}/draw`)}
+                                disabled={members.length < 2}
+                                className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50"
+                            >
+                                {t('santa.draw')}
+                            </button>
+                        )}
+
+                        {/*
+                          Calling it off. The confirmation is worded differently
+                          once a draw has happened, because by then people are
+                          holding an assignment and may already have shopped —
+                          and nothing here can tell them it is off.
+                        */}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const warning = group.drawn
+                                    ? t('santa.delete_confirm_drawn', { title: group.title })
+                                    : t('santa.delete_confirm', { title: group.title })
+
+                                if (confirm(warning)) {
+                                    router.delete(`/${market.key}/santa/${group.id}`)
+                                }
+                            }}
+                            className="rounded-lg border border-line px-4 py-2 text-sm text-accent hover:border-accent"
+                        >
+                            {t('santa.delete')}
+                        </button>
+                    </div>
                 )}
             </section>
         </>

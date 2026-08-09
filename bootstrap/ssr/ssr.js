@@ -37929,12 +37929,23 @@ function SantaGroup({ group, isOrganiser, members, me }) {
 						]
 					}, member.id))
 				}),
-				isOrganiser && !group.drawn && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => router.post(`/${market.key}/santa/${group.id}/draw`),
-					disabled: members.length < 2,
-					className: "mt-6 rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50",
-					children: t("santa.draw")
+				isOrganiser && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-6 flex flex-wrap items-center gap-3",
+					children: [!group.drawn && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => router.post(`/${market.key}/santa/${group.id}/draw`),
+						disabled: members.length < 2,
+						className: "rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50",
+						children: t("santa.draw")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => {
+							const warning = group.drawn ? t("santa.delete_confirm_drawn", { title: group.title }) : t("santa.delete_confirm", { title: group.title });
+							if (confirm(warning)) router.delete(`/${market.key}/santa/${group.id}`);
+						},
+						className: "rounded-lg border border-line px-4 py-2 text-sm text-accent hover:border-accent",
+						children: t("santa.delete")
+					})]
 				})
 			]
 		})

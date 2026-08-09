@@ -106,6 +106,24 @@ as [cove-subscriptions.md](cove-subscriptions.md).
 Queued only after the draw transaction commits. Mail queued inside it would go
 out even if the write rolled back, and a sent email cannot be unsent.
 
+## Deleting a group
+
+Only the organiser. A member who wants out is a different act with a different
+consequence — the draw has to be repaired around them — and giving one person a
+button that ends everyone else's exchange is not that.
+
+Deletion takes the group and its members, and stops there:
+
+- **Wishlists survive.** A member attached a list they already owned; the group
+  borrowed it and does not get to take it. The FK is `nullOnDelete` on the
+  member side for exactly this reason.
+- **Claims survive.** Somebody said they would buy that, and may already have.
+  Releasing the item would send a second person to the shops.
+
+Nobody is emailed. There is no un-delete and no notification, so the confirm
+prompt says which group it is by name, and says something stronger once the draw
+has happened — at that point people are already shopping.
+
 ## Money
 
 `budget_min` / `budget_max` are **integer cents** (invariant #7). v1 used

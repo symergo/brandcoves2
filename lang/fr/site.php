@@ -500,6 +500,10 @@ return [
         'list_attached' => 'Ce groupe voit maintenant cette liste.',
         'list_attached_short' => 'Utilisee',
         'invite_text' => 'Rejoignez notre Secret Santa : :title',
+        'delete' => 'Supprimer ce groupe',
+        'delete_confirm' => 'Supprimer :title ? Tous ceux qui ont rejoint le perdront.',
+        'delete_confirm_drawn' => 'Supprimer :title ? Le tirage a eu lieu : chacun perd la personne a qui il offrait, et personne ne sera prevenu. Dites-le-leur avant.',
+        'deleted' => 'Groupe supprime.',
     ],
     'quiz' => [
         'title' => 'Les connaissez-vous vraiment ?',
