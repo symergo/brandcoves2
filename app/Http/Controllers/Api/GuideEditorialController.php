@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\GuideKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Guide;
 use App\Models\GuideItem;
 use App\Models\ProductGroup;
+use App\Services\Editorial\LinkCheck;
 use App\Services\Editorial\ProductLookup;
 use App\Services\Guides\CoveMarkup;
 use Illuminate\Http\JsonResponse;
@@ -20,34 +22,39 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Buying guides, written from outside.
+ * Guides and advice articles, written from outside.
  *
  * The evergreen half of the product-inspiration surface: a Cove is read on the
  * day and a guide is read for years, which is why they publish on separate
  * clocks. `/{market}/guides/{slug}` is a permanent, indexable URL, so this is
  * the endpoint that grows the corpus.
  *
- * The shortlist is the substance and the prose is presentation — the same
- * principle GuideBuilder works to. Which is why `items` is required and the
- * copy is not: a guide with seven real, in-stock, comparable products and no
- * commentary is still useful, and a guide with commentary and no products is
- * not a guide.
+ * ## Two kinds, one endpoint
+ *
+ * For a **buying** guide the shortlist is the substance and the prose is
+ * presentation — the same principle GuideBuilder works to. Seven real, in-stock,
+ * comparable products with no commentary is still useful; commentary with no
+ * products is not a buying guide.
+ *
+ * An **advice** article inverts that. "How to tell a paid review from a real
+ * one" has no shortlist and demanding one would either block the piece or pad it
+ * with products the writing is not about. See {@see GuideKind}.
+ *
+ * ## Prose carries links
+ *
+ * Both kinds render through CoveMarkup, so copy may link to products, brands,
+ * searches, **other guides** and the site's own pages by token. That last pair
+ * is what stops an article being a leaf: advice earns its place by pointing at
+ * the guide for the thing the reader was about to buy.
  */
 class GuideEditorialController extends Controller
 {
-    /**
-     * Long enough to be a real comparison.
-     *
-     * GuideBuilder refuses to publish under five and targets seven. Three is
-     * the floor here because a hand-written "the two worth buying" is a
-     * legitimate piece and an automated shortlist of two is a thin page — the
-     * difference being that a human chose it.
-     */
-    private const MIN_ITEMS = 3;
-
     private const MAX_ITEMS = 12;
 
-    public function __construct(private readonly ProductLookup $lookup) {}
+    public function __construct(
+        private readonly ProductLookup $lookup,
+        private readonly LinkCheck $links,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -72,6 +79,7 @@ class GuideEditorialController extends Controller
                 'market' => $g->market->value,
                 'slug' => $g->slug,
                 'title' => $g->title,
+                'kind' => $g->kind->value,
                 'status' => $g->status->value,
                 'itemCount' => $g->items_count,
                 'publishedAt' => $g->published_at?->toIso8601String(),
@@ -109,7 +117,17 @@ class GuideEditorialController extends Controller
             ]);
         }
 
-        $groupIds = array_map(fn (array $item) => (int) $item['groupId'], $data['items']);
+        $kind = GuideKind::from($data['kind'] ?? GuideKind::Buying->value);
+        $items = $data['items'] ?? [];
+
+        if (count($items) < $kind->minimumItems()) {
+            throw ValidationException::withMessages([
+                'items' => "A {$kind->value} guide needs at least {$kind->minimumItems()} products. ".
+                    'Writing about how to shop rather than about what to buy? Send kind: "advice", which needs none.',
+            ]);
+        }
+
+        $groupIds = array_map(fn (array $item) => (int) $item['groupId'], $items);
 
         if (count(array_unique($groupIds)) !== count($groupIds)) {
             throw ValidationException::withMessages([
@@ -125,8 +143,6 @@ class GuideEditorialController extends Controller
                     '. Every item must exist in this market, be in stock, priced and have an image.',
             ]);
         }
-
-        $this->assertNoLinkTokens($data);
 
         $existing = Guide::query()
             ->where('market', $market->value)
@@ -144,19 +160,30 @@ class GuideEditorialController extends Controller
             $status = PublishStatus::Draft;
         }
 
-        $guide = DB::transaction(function () use ($market, $slug, $data, $status): Guide {
+        $guide = DB::transaction(function () use ($market, $slug, $data, $status, $kind, $items): Guide {
             $guide = Guide::updateOrCreate(
                 ['market' => $market->value, 'slug' => $slug],
                 [
                     'title' => $data['title'],
+                    'kind' => $kind->value,
                     'intro' => $data['intro'] ?? null,
                     'body_md' => $data['bodyMd'] ?? null,
                     'source_queries' => $data['sourceQueries'] ?? [],
                     'source_volume' => (int) ($data['sourceVolume'] ?? 0),
-                    // Falls back to the intro, trimmed to a length a search
-                    // result will actually show rather than truncate mid-word.
+                    /*
+                     * Falls back to the intro, trimmed to a length a search
+                     * result will actually show rather than truncate mid-word.
+                     *
+                     * Through plain() first: the intro carries link tokens, and
+                     * a description reading "see [[page:search]]" is what a
+                     * searcher would be shown in the result.
+                     */
                     'meta_description' => $data['metaDescription']
-                        ?? Str::limit((string) ($data['intro'] ?? ''), 155, '') ?: null,
+                        ?? Str::limit(
+                            app(CoveMarkup::class)->plain($data['intro'] ?? ''),
+                            155,
+                            '',
+                        ) ?: null,
                     'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
                     'faq' => $this->faq($data['faq'] ?? []),
                     'status' => $status->value,
@@ -168,7 +195,7 @@ class GuideEditorialController extends Controller
 
             $guide->items()->delete();
 
-            foreach ($data['items'] as $rank => $item) {
+            foreach ($items as $rank => $item) {
                 GuideItem::create([
                     'guide_id' => $guide->id,
                     'group_id' => (int) $item['groupId'],
@@ -187,7 +214,29 @@ class GuideEditorialController extends Controller
         $guide->load('items.group');
 
         return response()->json(
-            ['data' => $this->payload($guide)],
+            [
+                'data' => $this->payload($guide),
+                /*
+                 * Every field that carries prose, checked in one pass against
+                 * the guide's real allowlist.
+                 *
+                 * Unlike a Cove plan this is authoritative: a guide's items are
+                 * exactly what the author supplied, so nothing gets added later
+                 * that could rescue a token reported here as unresolved.
+                 */
+                'linkCheck' => $this->links->all(
+                    [
+                        $guide->intro,
+                        $guide->body_md,
+                        ...array_map(fn (array $pair) => $pair['a'] ?? null, (array) $guide->faq),
+                        ...$guide->items->pluck('editorial_copy')->all(),
+                    ],
+                    $market,
+                    $guide->items->map(fn (GuideItem $item) => $item->group)->filter(),
+                    excludeGuideId: $guide->id,
+                    extraSearches: (array) $guide->source_queries,
+                ),
+            ],
             $existing === null ? 201 : 200,
         );
     }
@@ -197,9 +246,11 @@ class GuideEditorialController extends Controller
     {
         $publish = ! $request->boolean('unpublish');
 
-        if ($publish && $guide->items()->count() < self::MIN_ITEMS) {
+        $minimum = $guide->kind->minimumItems();
+
+        if ($publish && $guide->items()->count() < $minimum) {
             throw ValidationException::withMessages([
-                'guide' => 'A guide needs at least '.self::MIN_ITEMS.' items before it is worth a reader\'s time.',
+                'guide' => "A {$guide->kind->value} guide needs at least {$minimum} items before it is worth a reader's time.",
             ]);
         }
 
@@ -222,6 +273,15 @@ class GuideEditorialController extends Controller
         return $request->validate([
             'market' => ['required', Rule::in(Market::values())],
             'title' => ['required', 'string', 'max:160'],
+
+            /*
+             * `buying` needs a shortlist; `advice` needs none.
+             *
+             * Defaulted rather than required, because every guide that existed
+             * before this column was a buying guide and a caller written
+             * against the old shape should keep working.
+             */
+            'kind' => ['nullable', Rule::in(GuideKind::values())],
 
             // Derived from the title when absent. Explicit when the title is
             // long or seasonal and the URL should outlive it.
@@ -248,44 +308,16 @@ class GuideEditorialController extends Controller
             'faq.*.question' => ['required', 'string', 'max:300'],
             'faq.*.answer' => ['required', 'string', 'max:1200'],
 
-            'items' => ['required', 'array', 'min:'.self::MIN_ITEMS, 'max:'.self::MAX_ITEMS],
+            // The per-kind floor is enforced in store(), where the kind is
+            // known; a rule here would have to be `required` for one kind and
+            // absent for the other, which `Rule::requiredIf` can express and
+            // cannot explain.
+            'items' => ['nullable', 'array', 'max:'.self::MAX_ITEMS],
             'items.*.groupId' => ['required', 'integer'],
             // A short "best for X" label. The most-read words on the page.
             'items.*.verdict' => ['nullable', 'string', 'max:120'],
             'items.*.copy' => ['nullable', 'string', 'max:1200'],
         ]);
-    }
-
-    /**
-     * Guides render as plain text, so a link token would be printed, not linked.
-     *
-     * Rejected rather than stripped: an author who wrote `[[product:12]]` meant
-     * to link, and silently deleting it produces a sentence with a hole in it
-     * that nobody will notice until it is indexed. Every item already links to
-     * its own product page, which is what the tokens would have been for.
-     *
-     * @param  array<string, mixed>  $data
-     */
-    private function assertNoLinkTokens(array $data): void
-    {
-        $fields = ['intro' => $data['intro'] ?? null, 'bodyMd' => $data['bodyMd'] ?? null];
-
-        foreach ($data['items'] as $i => $item) {
-            $fields["items.{$i}.copy"] = $item['copy'] ?? null;
-        }
-
-        $offenders = array_keys(array_filter(
-            $fields,
-            fn (?string $text) => CoveMarkup::containsTokens($text),
-        ));
-
-        if ($offenders !== []) {
-            throw ValidationException::withMessages([
-                'items' => 'Link tokens are not rendered in guides and would be printed literally: '.
-                    implode(', ', $offenders).'. Guide items already link to their product pages; '.
-                    'write plain prose here. Tokens belong in a Cove editorial.',
-            ]);
-        }
     }
 
     /**
@@ -311,6 +343,7 @@ class GuideEditorialController extends Controller
             'market' => $guide->market->value,
             'slug' => $guide->slug,
             'title' => $guide->title,
+            'kind' => $guide->kind->value,
             'intro' => $guide->intro,
             'bodyMd' => $guide->body_md,
             'metaDescription' => $guide->meta_description,

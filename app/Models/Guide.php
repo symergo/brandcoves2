@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\GuideKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use Database\Factories\GuideFactory;
@@ -29,6 +30,7 @@ class Guide extends Model
     {
         return [
             'market' => Market::class,
+            'kind' => GuideKind::class,
             'status' => PublishStatus::class,
             'source_queries' => 'array',
             'faq' => 'array',

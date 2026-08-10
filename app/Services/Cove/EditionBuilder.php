@@ -14,6 +14,7 @@ use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
+use App\Services\Editorial\Allowlist;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Guides\GuideBuilder;
 use App\Services\Guides\TopicMiner;
@@ -338,7 +339,7 @@ class EditionBuilder
      * is an unlinked phrase.
      *
      * @param  list<ProductGroup>  $finds
-     * @return array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>}
+     * @return array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>, guides: list<string>}
      */
     private function linkAllowlist(Market $market, array $finds, ?Observance $observance = null): array
     {
@@ -362,6 +363,11 @@ class EditionBuilder
             'brands' => array_values(array_unique($brands)),
             'searches' => $searches,
             'products' => $products,
+            // The guides this market has published. Offered to the model for
+            // the same reason the page resolves them: an edition that can send
+            // a reader to the guide for what it just showed them is the link
+            // between the daily half of the site and the evergreen half.
+            'guides' => app(Allowlist::class)->guideSlugs($market),
         ];
     }
 

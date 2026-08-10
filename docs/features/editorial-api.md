@@ -90,6 +90,40 @@ silently skipped pick at build time.
 typed into this site. A guide written against one of those has an audience before it is published,
 which is the entire reason guides rank.
 
+### Where products come from
+
+`/products` reads the catalogue, which is the Awin feeds. That was a silent limit: an author writing
+"the four best kitchen scales" was writing "the four best kitchen scales **that happen to be in an
+Awin feed**", and nothing in the response said so.
+
+`includeLive=1` also asks the live sources — bol today. It does not return a second class of result.
+The live offers go through the path a shopper's search already uses: `SearchService` pulls them,
+ingests them via the ordinary `OfferUpserter`, and groups the new arrivals so an incoming bol offer
+joins an existing card as another shop. What comes back is an ordinary product group with an ordinary
+id, comparable, linkable, and reachable through `/go/` — **carrying bol's partner affiliate URL**,
+because it came in through the same door as every other offer.
+
+Reused rather than reimplemented for the reason that matters most: a second path into the catalogue
+would be a second implementation of the identity rules, and that is exactly where a wrong merge would
+come from.
+
+Off by default because it costs an upstream call and most lookups are answered by the catalogue. Each
+product reports its `sources`, so "also on bol" is a fact an author can check rather than assume.
+
+### Amazon is not connected
+
+Stated here because the alternative is a writer trying, getting nothing, and quietly writing about
+something else.
+
+There is no Amazon connector in this codebase — only the config keys, the `AmazonProduct` decision
+table and the compliance rules in `Source`. The blocker is not the editorial side. Amazon forbids
+mirroring title, price, image and availability, so an Amazon product cannot be *displayed* at all
+until something re-fetches those live at render, and that needs verified PA-API credentials.
+
+`GET /api/editorial` reports this in its `sources` block, so a client learns it from the server rather
+than from this file. What an author *can* write today is advice **about** shopping on Amazon, which
+needs no product data at all — see below.
+
 ## Links: tokens, never URLs
 
 Prose written through this API uses the same contract the AI path uses, and for the same reason —
@@ -111,11 +145,54 @@ at build time, which do not exist when the plan is written. A token naming an un
 still resolve later. It is reported as unresolved anyway, because that is what is known now, and
 telling an author a link is fine when it might not be is the failure that matters.
 
-### Guides are the exception
+### Linking to the rest of the site
 
-Guide prose renders as plain text — the page already links every item to its own product page — so a
-token there would be **printed to the reader**. The write is refused rather than the token stripped:
-the author meant to link, and a silently deleted link is a hole nobody notices until it is indexed.
+Two token kinds exist for destinations that are ours rather than a feed's, and they are what stop an
+article being a leaf:
+
+    [[guide:beste-koptelefoons]]   → /{market}/guides/beste-koptelefoons
+    [[page:gift-whisperer]]        → /{market}/gift
+
+`guide` is allowlisted like everything else, from **published guides in this market, excluding the
+one being rendered** — a link to a draft is a 404 for a reader and an indexed dead end for a crawler,
+a slug that exists in `be-nl` need not exist in `es`, and an article linking to itself is a loop.
+
+`page` is not allowlisted per article. Those destinations are enumerated in
+`brandcoves.linkable_pages`, they are identical in every market, and the config *is* the allowlist —
+a per-article copy would be the same list every time. Adding a page there is the only step needed to
+make it linkable; `EditorialLinkTest` resolves every entry against the router so a renamed route
+fails the build rather than the page.
+
+Guides used to reject tokens outright, because the page rendered plain text and a token would have
+been *printed* at the reader. Both halves are fixed: guide prose now renders through `CoveMarkup`
+like a Cove's, and `CoveMarkup::plain()` flattens tokens to their labels for the places that are not
+HTML — a `<meta>` description, a FAQPage answer in JSON-LD, a card blurb in the listing. A crawler
+reads an `acceptedAnswer` literally, so an anchor tag in one is markup in a field that expects prose.
+
+## Two kinds of article
+
+`guides.kind` is `buying` or `advice`, and it decides one thing: whether a product shortlist is
+required.
+
+A **buying** guide is a ranked shortlist — "the five best X, and the one actually worth it". The
+products are the substance and the prose is presentation, which is why it needs at least three.
+
+An **advice** article has no shortlist. "How to tell a paid review from a real one", "what a good
+returns policy looks like", "how to shop safely on Amazon". The prose *is* the substance, and
+demanding products would either block the piece or pad it with things the writing is not about.
+
+One table rather than two, because everything else is identical — slug, market, status, meta, FAQ,
+freshness, the same URL space, the same sitemap entry. A separate table would duplicate a dozen
+columns to express one integer.
+
+Two rules follow the kind rather than the item count, and both would be bugs the other way round:
+
+- **`noindex` on an empty shortlist applies to buying guides only.** A buying guide whose products
+  all went out of stock is a thin page. An advice article has none by design and is the most
+  indexable thing the site publishes — the same rule would `noindex` exactly the pages written to
+  rank.
+- **No `ItemList` JSON-LD without items.** An empty one asserts that the page ranks nothing, which is
+  worse than staying quiet.
 
 ## Writing a Cove
 

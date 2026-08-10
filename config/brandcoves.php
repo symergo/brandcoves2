@@ -231,6 +231,41 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Pages an article may link to
+    |--------------------------------------------------------------------------
+    |
+    | The destinations behind `[[page:key]]`. A curated map rather than a free
+    | path, for the same reason every other link token is checked: a writer
+    | asked for a link to "the gift finder" will invent `/gifts`, `/gift-finder`
+    | and `/tools/gifts` with equal confidence, and each one is a 404 in the
+    | middle of an article.
+    |
+    | Unlike products and brands this list is ours rather than a feed's, so it
+    | needs no per-article allowlist — every key here is valid in every market.
+    | The value is the path after `/{market}/`; an empty string is the market
+    | home page.
+    |
+    | Adding a page here is the only step needed to make it linkable. Renaming a
+    | route without updating this is caught by EditorialLinkTest, which resolves
+    | every entry against the router.
+    */
+    'linkable_pages' => [
+        'home' => '',
+        'search' => 'search',
+        'discover' => 'discover',
+        'daily' => 'daily',
+        'guides' => 'guides',
+        'brands' => 'brands',
+        'gift-whisperer' => 'gift',
+        'gift-cove' => 'gift-cove',
+        'wishlists' => 'lists',
+        'scanner' => 'scan',
+        'secret-santa' => 'santa',
+        'surprise' => 'surprise',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Editorial API
     |--------------------------------------------------------------------------
     |

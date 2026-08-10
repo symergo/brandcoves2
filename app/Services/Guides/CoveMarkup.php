@@ -26,6 +26,14 @@ use App\Support\CurrentMarket;
  *     [[search:draadloze koptelefoon]]
  *                                 → /{market}/search?q=draadloze+koptelefoon
  *     [[product:1234|Sony XM5]]   → /{market}/p/1234/slug
+ *     [[guide:beste-koptelefoons]] → /{market}/guides/beste-koptelefoons
+ *     [[page:gift-whisperer]]     → /{market}/gift
+ *
+ * The last two are what make an article part of a site rather than a leaf.
+ * `guide` is allowlisted like everything else — it points at a row that has to
+ * exist and be published in this market. `page` is not: those destinations are
+ * ours, enumerated in `brandcoves.linkable_pages`, and identical in every
+ * market, so an allowlist per article would be the same list every time.
  *
  * Anything outside the allowlist is **stripped back to its label**, not
  * rendered as a link and not left as a visible token. A hallucinated brand
@@ -38,27 +46,10 @@ use App\Support\CurrentMarket;
 class CoveMarkup
 {
     /** `[[kind:value]]` or `[[kind:value|label]]` */
-    private const TOKEN = '/\[\[(brand|search|product):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u';
+    private const TOKEN = '/\[\[(brand|search|product|guide|page):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u';
 
     /**
-     * Whether a piece of text carries link tokens at all.
-     *
-     * Exists so callers that render prose *without* this class can reject
-     * tokens rather than print them. A guide is such a place: its page links
-     * every item to its own product page already, so tokens were never needed
-     * there — and text written with them would show `[[product:12]]` to a
-     * reader, which is the one outcome this whole contract exists to avoid.
-     *
-     * Public here rather than a second regex at the call site, for the reason
-     * given above about the prompt and the parser drifting apart.
-     */
-    public static function containsTokens(?string $text): bool
-    {
-        return $text !== null && preg_match(self::TOKEN, $text) === 1;
-    }
-
-    /**
-     * @param  array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>}  $allowed
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
      * @return array{html: string, links: int, rejected: list<string>}
      */
     public function render(string $text, Market $market, array $allowed): array
@@ -89,6 +80,8 @@ class CoveMarkup
                     'brand' => $this->brand($value, $allowed['brands'] ?? [], $base, $brandUrls),
                     'search' => $this->search($value, $allowed['searches'] ?? [], $base),
                     'product' => $this->product($value, $allowed['products'] ?? [], $base),
+                    'guide' => $this->guide($value, $allowed['guides'] ?? [], $base),
+                    'page' => $this->page($value, $base),
                     default => null,
                 };
 
@@ -110,9 +103,36 @@ class CoveMarkup
     }
 
     /**
+     * The same text with its tokens reduced to their labels, and no links.
+     *
+     * For the places that take text and are not HTML: a `<meta>` description, a
+     * FAQPage answer in JSON-LD, an email, a card blurb in a listing. Every one
+     * of those would otherwise print `[[page:search]]` at a reader — or worse,
+     * at a crawler reading the structured data literally.
+     *
+     * Not escaped, deliberately: the callers here are handing the string to
+     * something that will escape it (Inertia, json_encode, a Blade `{{ }}`), and
+     * escaping twice turns an apostrophe into `&#039;` on the page.
+     */
+    public function plain(?string $text): string
+    {
+        if ($text === null) {
+            return '';
+        }
+
+        return (string) preg_replace_callback(
+            self::TOKEN,
+            // The label if one was given, the value otherwise — the same
+            // fallback render() uses for a token it cannot resolve.
+            fn (array $m): string => $m[3] ?? $m[2],
+            $text,
+        );
+    }
+
+    /**
      * Paragraphs, with tokens resolved.
      *
-     * @param  array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>}  $allowed
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
      * @return array{html: list<string>, links: int, rejected: list<string>}
      */
     public function paragraphs(string $text, Market $market, array $allowed): array
@@ -193,6 +213,57 @@ class CoveMarkup
     }
 
     /**
+     * Another guide on this site.
+     *
+     * Allowlisted by slug, and the caller is expected to have resolved that
+     * list from *published* guides in this market. Both halves matter: a link
+     * to a draft is a 404 for a reader and an indexed dead end for a crawler,
+     * and a slug that exists in `be-nl` need not exist in `es`.
+     *
+     * This is the token that turns a pile of articles into a site — internal
+     * links between them are how a reader gets from a tip to the thing it is
+     * about, and how a crawler discovers the archive at all.
+     *
+     * @param  list<string>  $guides
+     */
+    private function guide(string $value, array $guides, string $base): ?string
+    {
+        $slug = mb_strtolower(trim($value));
+
+        foreach ($guides as $candidate) {
+            if (mb_strtolower($candidate) === $slug) {
+                return $base.'/guides/'.$candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * One of our own pages.
+     *
+     * No per-article allowlist: the set is the same in every market and is
+     * enumerated in config rather than coming from a feed, so the config *is*
+     * the allowlist. An unknown key still degrades to plain text — a writer
+     * inventing `[[page:deals]]` gets an unlinked phrase, not a 404.
+     */
+    private function page(string $value, string $base): ?string
+    {
+        $pages = (array) config('brandcoves.linkable_pages');
+        $key = mb_strtolower(trim($value));
+
+        if (! array_key_exists($key, $pages)) {
+            return null;
+        }
+
+        $path = trim((string) $pages[$key], '/');
+
+        // The market home page is the base with nothing after it, and
+        // `/be-nl/` with a trailing slash is a different URL to `/be-nl`.
+        return $path === '' ? $base : $base.'/'.$path;
+    }
+
+    /**
      * The instruction block handed to the model.
      *
      * Kept next to the parser on purpose: a prompt that describes a syntax the
@@ -200,7 +271,7 @@ class CoveMarkup
      * rots, and the two drifting apart is silent — the tokens simply stop
      * becoming links.
      *
-     * @param  array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>}  $allowed
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
      */
     public function promptContract(array $allowed): string
     {
@@ -213,11 +284,19 @@ class CoveMarkup
         return implode("\n", array_filter([
             'Link by writing tokens. Never write a URL, a markdown link or an HTML tag.',
             '  [[brand:NAME]]        [[search:PHRASE]]        [[product:ID|label]]',
+            '  [[guide:SLUG]]        [[page:KEY]]',
             '',
             'You may ONLY use these. Anything else is deleted:',
             'Brands: '.implode(', ', array_slice($allowed['brands'] ?? [], 0, 40)),
             'Searches: '.implode(', ', array_slice($allowed['searches'] ?? [], 0, 40)),
             $products === [] ? null : 'Products: '.implode(' | ', $products),
+            ($allowed['guides'] ?? []) === []
+                ? null
+                : 'Guides: '.implode(', ', array_slice($allowed['guides'], 0, 40)),
+            // Not sliced and not conditional: the page list is short, fixed and
+            // the same everywhere, and it is the one set a writer can rely on
+            // without being told what today's article happens to contain.
+            'Pages: '.implode(', ', array_keys((array) config('brandcoves.linkable_pages'))),
         ]));
     }
 

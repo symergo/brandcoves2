@@ -11,6 +11,7 @@ use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Jobs\BuildDailyEdition;
 use App\Models\ApiToken;
+use App\Models\BrandStat;
 use App\Models\CovePlan;
 use App\Models\Guide;
 use App\Models\Merchant;
@@ -20,6 +21,7 @@ use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -206,6 +208,90 @@ class EditorialApiTest extends TestCase
             ->getJson('/api/editorial/products?market='.Market::BeNl->value)
             ->assertOk()
             ->assertJsonPath('count', 0);
+    }
+
+    #[Test]
+    public function a_live_bol_product_becomes_writable_through_the_lookup(): void
+    {
+        /*
+         * The catalogue is Awin feeds. bol is queried live and never crawled, so
+         * without this an author writing "the four best koptelefoons" was
+         * silently writing "the four best koptelefoons that happen to be in an
+         * Awin feed" — a limit the article would never admit to.
+         *
+         * `includeLive` runs the same path a shopper's search does: the offer is
+         * ingested and grouped, so what comes back is an ordinary group with an
+         * ordinary id, an affiliate URL and a `/go/` redirect.
+         */
+        /*
+         * The suite blanks bol's credentials globally so no test can reach the
+         * real API by accident. Turned on here, and only here, against a faked
+         * transport — the alternative is a test that proves the connector is
+         * disabled.
+         */
+        config()->set('brandcoves.connectors.bol.enabled', true);
+        config()->set('brandcoves.connectors.bol.client_id', 'test-id');
+        config()->set('brandcoves.connectors.bol.client_secret', 'test-secret');
+
+        Http::fake([
+            'login.bol.com/*' => Http::response(['access_token' => 'tok', 'expires_in' => 300]),
+            'api.bol.com/*' => Http::response(['results' => [[
+                'bolProductId' => '9200000123456',
+                'ean' => '4006381333931',
+                'title' => 'Sony WH-1000XM5 Koptelefoon',
+                'url' => 'https://www.bol.com/nl/p/sony/9200000123456/',
+                'image' => ['url' => 'https://media.bol.com/1.jpg'],
+                'offer' => ['price' => 329.99],
+            ]]]),
+        ]);
+
+        $token = $this->key([ApiToken::READ, ApiToken::WRITE]);
+
+        // Without it, the catalogue has nothing to say.
+        $this->withToken($token)
+            ->getJson('/api/editorial/products?market='.Market::BeNl->value.'&q=koptelefoon')
+            ->assertOk()
+            ->assertJsonPath('count', 0);
+
+        $response = $this->withToken($token)
+            ->getJson('/api/editorial/products?market='.Market::BeNl->value.'&q=koptelefoon&includeLive=1')
+            ->assertOk();
+
+        $this->assertSame(1, $response->json('count'));
+        $this->assertSame('Sony WH-1000XM5 Koptelefoon', $response->json('data.0.title'));
+
+        // The part that matters: a real id, so it can be pinned and linked like
+        // anything else.
+        $id = $response->json('data.0.id');
+        $this->assertIsInt($id);
+
+        $this->withToken($token)
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'title' => 'Koptelefoons',
+                'editorial' => "Zie [[product:{$id}|deze]].",
+                'pinnedGroupIds' => [$id],
+            ])
+            ->assertStatus(201)
+            ->assertJsonPath('linkCheck.links', 1);
+
+        /*
+         * And the stored offer carries the *affiliate* URL, not the plain
+         * product one — the connector wraps it in the partner click tracker on
+         * the way in.
+         *
+         * This is the whole reason pulling a live product into the catalogue is
+         * worth doing: an author linking to it earns on the click, through the
+         * same `/go/` redirector as every Awin offer, without knowing any of
+         * that.
+         */
+        $offer = Product::query()
+            ->where('source', Source::Bol->value)
+            ->where('external_id', '9200000123456')
+            ->firstOrFail();
+
+        $this->assertStringContainsString('partner.bol.com', $offer->affiliate_url);
+        $this->assertStringContainsString('9200000123456', $offer->affiliate_url);
     }
 
     #[Test]
@@ -444,22 +530,162 @@ class EditorialApiTest extends TestCase
     }
 
     #[Test]
-    public function link_tokens_are_refused_in_guide_copy(): void
+    public function guide_copy_carries_links_and_reports_the_ones_that_will_not_resolve(): void
     {
         $items = collect(range(1, 3))->map(fn (int $i) => $this->find("Ding {$i}", 5000));
+        $first = $items->first();
 
-        // Guides render as plain text, so a token would be *printed* to the
-        // reader. Refused rather than stripped: the author meant to link, and a
-        // silently deleted link is a hole nobody notices until it is indexed.
+        $existing = Guide::create([
+            'market' => Market::BeNl->value,
+            'slug' => 'beste-koptelefoons',
+            'title' => 'De beste koptelefoons',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        $response = $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
+            ->postJson('/api/editorial/guides', [
+                'market' => Market::BeNl->value,
+                'title' => 'Met links',
+                'intro' => "Zie ook [[guide:{$existing->slug}|onze koptelefoongids]] en [[page:search]].",
+                'bodyMd' => "Begin bij [[product:{$first->id}|dit ding]].\n\n".
+                    'Niet bij [[guide:bestaat-niet]] of [[page:verzonnen]].',
+                'items' => $items->map(fn (ProductGroup $g) => ['groupId' => $g->id])->all(),
+            ])
+            ->assertStatus(201);
+
+        // Three real destinations: another guide, a site page, and a product.
+        // The pair that make an article part of a site rather than a leaf are
+        // the first two.
+        $this->assertSame(3, $response->json('linkCheck.links'));
+
+        $unresolved = $response->json('linkCheck.unresolved');
+        $this->assertContains('guide:bestaat-niet', $unresolved);
+        $this->assertContains('page:verzonnen', $unresolved);
+    }
+
+    #[Test]
+    public function an_advice_article_needs_no_products_at_all(): void
+    {
+        $token = $this->key(ApiToken::abilities());
+
+        $response = $this->withToken($token)
+            ->postJson('/api/editorial/guides', [
+                'market' => Market::BeNl->value,
+                'kind' => 'advice',
+                'title' => 'Veilig kopen op Amazon',
+                'intro' => 'Waar je op let voordat je klikt.',
+                'bodyMd' => "Kijk eerst wie de verkoper is.\n\nEn vergelijk via [[page:search]].",
+            ])
+            ->assertStatus(201)
+            ->assertJsonPath('data.kind', 'advice')
+            ->assertJsonPath('data.items', []);
+
+        $slug = $response->json('data.slug');
+
+        $this->withToken($token)
+            ->postJson('/api/editorial/guides/'.$response->json('data.id').'/publish')
+            ->assertOk();
+
+        // And it is a real page. An advice article is the most indexable thing
+        // the site publishes, so "no products" must not mean "no page".
+        $this->get('/'.Market::BeNl->value.'/guides/'.$slug)->assertOk();
+    }
+
+    #[Test]
+    public function an_advice_article_with_no_products_can_still_link_to_a_brand_and_a_search(): void
+    {
+        /*
+         * The allowlist used to be derived from the article's own products, so
+         * an advice piece — which has none — could link to nothing at all. "How
+         * to shop for headphones" that cannot point at the headphone search or
+         * at Sony is an article with nowhere to send anyone, which is the one
+         * job advice has.
+         */
+        BrandStat::create([
+            'market' => Market::BeNl->value,
+            'brand' => 'Sony',
+            'slug' => 'sony',
+            'aliases' => ['Sony'],
+            'product_count' => 12,
+        ]);
+
+        $response = $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
+            ->postJson('/api/editorial/guides', [
+                'market' => Market::BeNl->value,
+                'kind' => 'advice',
+                'title' => 'Hoe je een koptelefoon kiest',
+                // The queries that say what the piece is about are also the
+                // searches it may link to — no extra field to learn.
+                'sourceQueries' => ['koptelefoon'],
+                'bodyMd' => 'Begin bij [[search:koptelefoon|onze koptelefoons]] en kijk naar '.
+                    '[[brand:Sony]]. Niet naar [[brand:Verzonnen BV]].',
+            ])
+            ->assertStatus(201);
+
+        $this->assertSame(2, $response->json('linkCheck.links'));
+        // A brand with no page in this market is still refused — the allowlist
+        // widened to real brand pages, not to every string.
+        $this->assertSame(['brand:Verzonnen BV'], $response->json('linkCheck.unresolved'));
+    }
+
+    #[Test]
+    public function a_buying_guide_still_needs_a_shortlist(): void
+    {
+        // The floor is per kind, not global. Dropping it for everything would
+        // let a two-item "best of" through, which is the thin page the rule
+        // exists to prevent.
         $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
             ->postJson('/api/editorial/guides', [
                 'market' => Market::BeNl->value,
-                'title' => 'Met tokens',
-                'intro' => 'Zie [[brand:Sony]].',
-                'items' => $items->map(fn (ProductGroup $g) => ['groupId' => $g->id])->all(),
+                'kind' => 'buying',
+                'title' => 'De beste van niets',
+                'items' => [],
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('items');
+    }
+
+    #[Test]
+    public function a_published_guide_renders_its_links_as_anchors(): void
+    {
+        $items = collect(range(1, 3))->map(fn (int $i) => $this->find("Ding {$i}", 5000));
+
+        $target = Guide::create([
+            'market' => Market::BeNl->value,
+            'slug' => 'doelgids',
+            'title' => 'De doelgids',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        $token = $this->key(ApiToken::abilities());
+
+        $created = $this->withToken($token)
+            ->postJson('/api/editorial/guides', [
+                'market' => Market::BeNl->value,
+                'title' => 'Met echte ankers',
+                'intro' => "Lees ook [[guide:{$target->slug}|de doelgids]], of ga naar [[page:gift-whisperer|de cadeauzoeker]].",
+                'items' => $items->map(fn (ProductGroup $g) => ['groupId' => $g->id])->all(),
+            ])
+            ->assertStatus(201);
+
+        $this->withToken($token)
+            ->postJson('/api/editorial/guides/'.$created->json('data.id').'/publish')
+            ->assertOk();
+
+        // The end of the loop the write-time linkCheck only predicts: the
+        // anchors have to exist in what a reader is actually served.
+        $this->get('/'.Market::BeNl->value.'/guides/'.$created->json('data.slug'))
+            ->assertOk()
+            ->assertInertia(function ($page) {
+                $intro = implode(' ', $page->toArray()['props']['guide']['intro']);
+
+                $this->assertStringContainsString('<a href="/be-nl/guides/doelgids">de doelgids</a>', $intro);
+                // From config('brandcoves.linkable_pages'), never a path the
+                // writer invented.
+                $this->assertStringContainsString('<a href="/be-nl/gift">de cadeauzoeker</a>', $intro);
+            });
     }
 
     #[Test]

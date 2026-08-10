@@ -39,6 +39,20 @@ class CatalogueController extends Controller
             'q' => ['nullable', 'string', 'max:120'],
             'category' => ['nullable', 'string', 'max:120'],
             'brand' => ['nullable', 'string', 'max:120'],
+            /*
+             * Also ask the live sources — bol today.
+             *
+             * Off by default because it costs an upstream call and most lookups
+             * are answered by the catalogue. On, it is the difference between
+             * "the four best kitchen scales" and "the four best kitchen scales
+             * that happen to be in an Awin feed", which is a limit the article
+             * would never admit to.
+             *
+             * What comes back is not a second class of result: the live offers
+             * are ingested and grouped before the query runs, so they arrive as
+             * ordinary product groups with ordinary ids. See ProductLookup.
+             */
+            'includeLive' => ['nullable', 'boolean'],
             // Cents, like everything else. A "max price" of 50 means fifty
             // cents, and saying so in the field name is cheaper than a support
             // question about why the results are empty.
@@ -57,6 +71,7 @@ class CatalogueController extends Controller
             minPrice: isset($data['minPriceCents']) ? (int) $data['minPriceCents'] : null,
             maxPrice: isset($data['maxPriceCents']) ? (int) $data['maxPriceCents'] : null,
             limit: (int) ($data['limit'] ?? 24),
+            includeLive: $request->boolean('includeLive'),
         );
 
         return response()->json([

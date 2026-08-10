@@ -8,8 +8,11 @@ use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Models\ProductGroup;
+use App\Services\Search\SearchQuery;
+use App\Services\Search\SearchService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * The catalogue, as an author needs to see it.
@@ -35,6 +38,8 @@ class ProductLookup
     /** A page of results. Enough to choose from, small enough to read. */
     private const PER_PAGE = 24;
 
+    public function __construct(private readonly SearchService $search) {}
+
     /**
      * Presentable groups in a market, optionally matching a phrase.
      *
@@ -48,7 +53,12 @@ class ProductLookup
         ?int $minPrice = null,
         ?int $maxPrice = null,
         int $limit = self::PER_PAGE,
+        bool $includeLive = false,
     ): Collection {
+        if ($includeLive && filled($term)) {
+            $this->pullLive($market, (string) $term);
+        }
+
         $query = ProductGroup::query()
             ->forMarket($market)
             // In stock, priced and pictured. An author choosing a product with
@@ -109,6 +119,47 @@ class ProductLookup
     }
 
     /**
+     * Ask the live sources, so their offers exist before the query runs.
+     *
+     * ## Why this delegates to SearchService rather than doing it here
+     *
+     * The catalogue is built from Awin feeds. bol is a *live* connector, queried
+     * per search and never crawled — so an author restricted to stored rows was
+     * silently writing "the four best kitchen scales **that happen to be in an
+     * Awin feed**", a limit the article would never admit to.
+     *
+     * SearchService already solves exactly this for shoppers: it pulls the live
+     * offers, upserts them through the ordinary {@see OfferUpserter}, and groups
+     * the new arrivals narrowly so an incoming bol offer joins an existing card
+     * as another shop in the same request. Which means after this call a bol
+     * product **is** an ordinary `product_groups` row — same id, same offer
+     * comparison, same `/go/` affiliate redirect as anything a feed brought in.
+     *
+     * Reused rather than reimplemented for the reason it matters most: a second
+     * path into the catalogue would be a second implementation of the identity
+     * rules, and that is precisely where a wrong merge would come from.
+     *
+     * Best-effort. A live source that is down, cooling off after a 429 or simply
+     * slow must cost the author fewer results, never a failed call — the stored
+     * catalogue is still there and is still the bulk of the answer.
+     */
+    private function pullLive(Market $market, string $term): void
+    {
+        try {
+            $this->search->search(new SearchQuery(
+                market: $market,
+                term: $term,
+                // An author choosing what to write about wants to see what
+                // exists, not only what is on offer this week — the shopper
+                // default would hide every full-price product.
+                discountedOnly: false,
+            ));
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
      * Everything an author needs to decide whether to use this product.
      *
      * The compliance flags are the load-bearing part. `priceGuessEligible`
@@ -140,7 +191,34 @@ class ProductLookup
             'surpriseScore' => $group->surprise_score,
             'url' => '/'.$group->market->value.'/p/'.$group->id.'/'.$group->slug,
             'priceGuessEligible' => $this->priceGuessEligible($group),
+
+            /*
+             * Which programmes back this product.
+             *
+             * An author writing "also on bol" needs to know it is true, and an
+             * author writing about an Amazon-only product needs to know the
+             * rules are different there — direct anchor, no email, no price
+             * history. Stating the sources is cheaper than every caller
+             * inferring them from a price.
+             */
+            'sources' => $this->sources($group),
         ];
+    }
+
+    /**
+     * The distinct sources with an active offer on this group.
+     *
+     * @return list<string>
+     */
+    private function sources(ProductGroup $group): array
+    {
+        return DB::table('products')
+            ->where('group_id', $group->id)
+            ->where('status', ProductStatus::Active->value)
+            ->distinct()
+            ->orderBy('source')
+            ->pluck('source')
+            ->all();
     }
 
     /**

@@ -135,7 +135,15 @@ class CovePlanController extends Controller
 
         return response()->json([
             'data' => $this->payload($plan),
-            'linkCheck' => $this->links->against($plan->editorial, $market, $pinned),
+            // The plan's own queries count as linkable searches: an author who
+            // wrote `queries: ["espressomachine"]` has already said what the day
+            // is about, and `[[search:espressomachine]]` should follow from it.
+            'linkCheck' => $this->links->against(
+                $plan->editorial,
+                $market,
+                $pinned,
+                extraSearches: (array) $plan->queries,
+            ),
         ], $existing === null ? 201 : 200);
     }
 

@@ -14,7 +14,8 @@ interface Item {
     price: Cents | null
     merchantCount: number
     inStock: boolean
-    copy: string | null
+    /* Paragraphs of safe HTML — see Prose below for why that is not alarming. */
+    copy: string[]
     verdict: string | null
     unavailable: boolean
     url: string
@@ -25,13 +26,37 @@ interface Props {
 
     guide: {
         title: string
-        intro: string | null
-        body: string | null
-        faq: { q: string; a: string }[] | null
+        kind: 'buying' | 'advice'
+        intro: string[]
+        body: string[]
+        faq: { q: string; a: string[] }[] | null
         updatedAt: string | null
         searchVolume: number
     }
     items: Item[]
+}
+
+/**
+ * Copy with its links already resolved.
+ *
+ * dangerouslySetInnerHTML, deliberately and narrowly: this HTML is built by
+ * CoveMarkup, which escapes the author's text FIRST and then emits only its own
+ * <a> tags pointing at allowlisted destinations. The writer cannot introduce a
+ * tag or a URL — CoveMarkupTest asserts both. Same contract as the Cove's
+ * editorial.
+ */
+function Prose({ blocks, className = '' }: { blocks: string[]; className?: string }) {
+    return (
+        <>
+            {blocks.map((html, i) => (
+                <p
+                    key={i}
+                    className={`${className} [&_a]:underline`}
+                    dangerouslySetInnerHTML={{ __html: html }}
+                />
+            ))}
+        </>
+    )
 }
 
 export default function GuideShow({ preview = false, guide, items }: Props) {
@@ -46,7 +71,7 @@ export default function GuideShow({ preview = false, guide, items }: Props) {
             <article className="max-w-3xl">
                 <h1 className="text-2xl font-semibold sm:text-3xl">{guide.title}</h1>
 
-                {guide.intro && <p className="mt-3 text-lg text-ink-soft">{guide.intro}</p>}
+                <Prose blocks={guide.intro} className="mt-3 text-lg text-ink-soft" />
 
                 <p className="mt-3 text-xs text-ink-soft">
                     {guide.updatedAt && t('guides.updated', { date: guide.updatedAt })}
@@ -55,24 +80,26 @@ export default function GuideShow({ preview = false, guide, items }: Props) {
                     )}
                 </p>
 
-                {guide.body && (
+                {guide.body.length > 0 && (
                     <section className="mt-8">
-                        <h2 className="text-lg font-medium">{t('guides.how_to_choose')}</h2>
                         {/*
-                          Plain text, split on blank lines. Not a Markdown
-                          renderer: the copy comes from a language model, and
-                          the one thing you never do with model output is hand
-                          it to something that interprets markup.
+                          An advice article's body IS the article, so labelling
+                          it "how to choose" would be a heading about a
+                          shortlist that is not there.
                         */}
-                        {guide.body.split(/\n{2,}/).map((paragraph, i) => (
-                            <p key={i} className="mt-3 leading-relaxed">
-                                {paragraph}
-                            </p>
-                        ))}
+                        {guide.kind === 'buying' && (
+                            <h2 className="text-lg font-medium">{t('guides.how_to_choose')}</h2>
+                        )}
+                        <Prose blocks={guide.body} className="mt-3 leading-relaxed" />
                     </section>
                 )}
             </article>
 
+            {/*
+              No shortlist, no list markup. An advice article renders as an
+              article; an empty <ol> under one reads as a buying guide whose
+              products failed to load.
+            */}
             <ol className="mt-10 space-y-5">
                 {items.map((item) => (
                     <li
@@ -103,7 +130,7 @@ export default function GuideShow({ preview = false, guide, items }: Props) {
                                 </Link>
                             </h2>
 
-                            {item.copy && <p className="mt-2 text-sm text-ink-soft">{item.copy}</p>}
+                            <Prose blocks={item.copy} className="mt-2 text-sm text-ink-soft" />
 
                             <div className="mt-3 flex flex-wrap items-center gap-4">
                                 {/*
@@ -140,7 +167,9 @@ export default function GuideShow({ preview = false, guide, items }: Props) {
                         {guide.faq.map((pair, i) => (
                             <div key={i}>
                                 <dt className="font-medium">{pair.q}</dt>
-                                <dd className="mt-1 text-ink-soft">{pair.a}</dd>
+                                <dd className="mt-1 text-ink-soft">
+                                    <Prose blocks={pair.a} />
+                                </dd>
                             </div>
                         ))}
                     </dl>

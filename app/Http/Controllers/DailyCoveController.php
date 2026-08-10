@@ -8,6 +8,7 @@ use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Guide;
 use App\Models\ProductGroup;
+use App\Services\Editorial\Allowlist;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
@@ -230,13 +231,10 @@ class DailyCoveController extends Controller
             ->filter()
             ->values();
 
-        $allowed = [
-            'brands' => $groups->pluck('brand')->filter()->unique()->values()->all(),
-            'searches' => $groups->pluck('category')->filter()->unique()->values()->all(),
-            'products' => $groups
-                ->mapWithKeys(fn ($g) => [$g->id => ['slug' => $g->slug, 'title' => $g->title]])
-                ->all(),
-        ];
+        // Today's finds, plus the guides this market has published — a Cove
+        // that can point at the guide for the thing it just showed you is the
+        // whole reason the two live on one page.
+        $allowed = app(Allowlist::class)->full($groups, $current->get());
 
         $markup = app(CoveMarkup::class);
         $paragraphs = preg_split('/\R{2,}/u', trim((string) $edition->editorial)) ?: [];
