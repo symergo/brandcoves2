@@ -21,6 +21,80 @@ class LocalisationTest extends TestCase
 {
     use RefreshDatabase;
 
+    /**
+     * Words that only exist in French or Spanish with a diacritic or an
+     * apostrophe. Their bare forms are not spellings — they are typos.
+     *
+     * @var array<string, list<string>>
+     */
+    private const UNACCENTED = [
+        'fr' => [
+            'quelquun', 'cest', 'jai', 'dabord', 'damis', 'dautre', 'lavez', 'quon',
+            'idees', 'deja', 'apres', 'etre', 'ecrirons', 'recu', 'prevenues',
+            'repondez', 'decrivez', 'preparez', 'selection', 'apparaitront',
+            'hesitez', 'gouts', 'sappelle', 'depenser', 'dinvitation', 'denviron',
+            'lorganisateur', 'oeil', 'nont', 'laveugle', 'reponses', 'premiere',
+            'privee', 'creer', 'partagee', 'theme', 'echangez',
+        ],
+        'es' => [
+            'describela', 'todavia', 'intentalo', 'preseleccion', 'anadir', 'anade',
+            'publica', 'copialo', 'pegalo', 'alli', 'gustaria', 'gustarian',
+            'apareceran', 'preguntaselo', 'invitacion', 'enviaselo', 'unete',
+            'perderan', 'recibira', 'diselo', 'puntuacion', 'ensena', 'echale',
+            'cumpleanos', 'proxima', 'veran', 'hareis',
+        ],
+    ];
+
+    #[Test]
+    public function no_french_or_spanish_copy_ships_without_its_accents(): void
+    {
+        /*
+         * A whole phase of gifting copy was written in plain ASCII — "Offrir a
+         * quelquun", "Cest bon", "Cuanto los conoces?" — and shipped. Nothing
+         * caught it, because every key existed and every placeholder resolved:
+         * the strings were present, correct in structure, and wrong in the only
+         * way a reader notices.
+         *
+         * A word list rather than a spell check, so it stays deterministic and
+         * cannot start failing when a dictionary is updated.
+         */
+        foreach (self::UNACCENTED as $language => $words) {
+            $lines = $this->flatten(require base_path("lang/{$language}/site.php"));
+
+            foreach ($lines as $key => $value) {
+                // Placeholders are not prose. `:theme` is a variable name, and
+                // what it is called in French is nobody's business.
+                $prose = (string) preg_replace('/:[a-z_]+/', ' ', $value);
+
+                foreach ($words as $word) {
+                    $this->assertDoesNotMatchRegularExpression(
+                        '/\b'.preg_quote($word, '/').'\b/iu',
+                        $prose,
+                        "lang/{$language}/site.php: {$key} contains \"{$word}\" — it is missing an accent or an apostrophe.",
+                    );
+                }
+            }
+        }
+    }
+
+    #[Test]
+    public function every_spanish_question_opens_with_an_inverted_mark(): void
+    {
+        // Spanish opens a question as well as closing it. A bare "?" at the end
+        // reads as copy translated by somebody who does not speak it.
+        foreach ($this->flatten(require base_path('lang/es/site.php')) as $key => $value) {
+            if (! str_ends_with(rtrim($value), '?')) {
+                continue;
+            }
+
+            $this->assertStringContainsString(
+                '¿',
+                $value,
+                "lang/es/site.php: {$key} ends in '?' without an opening '¿'.",
+            );
+        }
+    }
+
     #[Test]
     public function each_market_is_served_in_its_own_language(): void
     {

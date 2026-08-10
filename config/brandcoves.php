@@ -412,10 +412,27 @@ return [
              * overlapping electronics retailers produce far more comparable
              * products than one enormous marketplace.
              *
+             * Two entries here are NOT on comparison grounds, and that is
+             * deliberate — the site has to answer "what should I buy for this
+             * person", not only "who is cheapest", and electronics alone is a
+             * narrow answer to the first question:
+             *
+             * - dreamland: 31k toys in be-nl, 23k in be-fr. Toys are the most
+             *   gift-shaped category on the network and nothing else here sells
+             *   them. FNAC's toy catalogue (CatalogJouetsAll, 23k NL / 69k FR)
+             *   would be its natural comparison partner and stays excluded — the
+             *   rest of FNAC is 1.2M rows of music, books and DVDs, and the
+             *   allowlist matches on advertiser, so there is no way to take the
+             *   toys without the marketplace.
+             * - action: only 188 rows, be-nl only. Kept because it is the sole
+             *   low-price general retailer available, which is the price band
+             *   gift discovery is otherwise blind to. Small enough that the
+             *   download costs nothing; drop it if the rows prove to be junk.
+             *
              * Empty array means "no filter", which is how you explore what else
              * is available: bc:awin-feeds --all --dry-run
              */
-            'advertisers' => ['krefel', 'coolblue', 'vandenborre'],
+            'advertisers' => ['krefel', 'coolblue', 'vandenborre', 'dreamland', 'action'],
         ],
 
         'bol' => [
