@@ -57,7 +57,7 @@ volgorde van gewicht:
    de winkels die hetzelfde product aanbieden.
 4. **Hoeveel winkels het voeren**, wat een product licht doet stijgen, want iets
    dat meerdere winkels voeren kun je doorgaans ook echt krijgen.
-5. **Redactionele keuze**, uitsluitend in de Coves en de Daily Cove. Dat zijn
+5. **Redactionele keuze**, uitsluitend in de Coves en de Dagelijkse Cove. Dat zijn
    geschreven selecties, gekozen omdat ze interessant zijn.
 
 Ontdekkingspagina's zoals "verras me" draaien de gebruikelijke volgorde bewust om

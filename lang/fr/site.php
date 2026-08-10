@@ -20,7 +20,7 @@ return [
         'skip' => 'Aller au contenu',
         'choose_market' => 'Choisissez votre région',
         'santa' => 'Secret Santa',
-        'cove' => 'Gift Cove',
+        'cove' => 'Cove Cadeau',
     ],
 
     'home' => [
@@ -301,9 +301,9 @@ return [
     ],
 
     'cove_mail' => [
-        'confirm_subject' => 'Confirmez votre abonnement à la Daily Cove',
+        'confirm_subject' => 'Confirmez votre abonnement à la Cove Quotidienne',
         'confirm_heading' => 'Un clic et c’est fait',
-        'confirm_body' => "Cliquez ci-dessous pour confirmer que vous voulez la Daily Cove. D'ici là, nous ne vous enverrons rien d'autre.",
+        'confirm_body' => "Cliquez ci-dessous pour confirmer que vous voulez la Cove Quotidienne. D'ici là, nous ne vous enverrons rien d'autre.",
         'confirm_button' => 'Confirmer mon abonnement',
         'confirm_expiry' => 'Le lien fonctionne pendant 48 heures.',
         'confirm_requested_from' => 'Demandé depuis :ip',
@@ -313,7 +313,7 @@ return [
         'digest_button' => 'Ouvrir la Cove du jour',
         'across_shops' => 'dans :count boutiques',
         'more_on_page' => 'Il y a :count autres trouvailles sur la page, dont certaines que nous ne pouvons montrer que là.',
-        'why_receiving' => 'Vous recevez ceci parce que vous avez confirmé un abonnement à la Daily Cove.',
+        'why_receiving' => 'Vous recevez ceci parce que vous avez confirmé un abonnement à la Cove Quotidienne.',
         'unsubscribe' => 'Se désabonner',
     ],
     'legal' => [
@@ -547,7 +547,7 @@ return [
     ],
 
     'gift_cove' => [
-        'title' => 'La Gift Cove',
+        'title' => 'La Cove Cadeau',
         'intro' => 'Tout pour offrir aux autres, et pour dire ce qui vous ferait plaisir. Personne ne voit jamais qui a acheté quoi.',
         'tools' => 'Ce que vous pouvez faire ici',
         'items_count' => ':count articles enregistrés',
@@ -719,7 +719,7 @@ return [
     ],
 
     'daily' => [
-        'title' => 'La Crique du jour',
+        'title' => 'La Cove Quotidienne',
         'seo_description' => 'Une poignée de choses dont vous ignoriez l’existence, et un guide d’achat bâti sur ce que les gens ont réellement cherché ici.',
         'see_offers' => 'Voir les offres',
         'finds_title' => 'Les trouvailles du jour',
@@ -946,7 +946,7 @@ return [
         'deals_title' => 'Les plus fortes baisses',
         'deals_hint' => 'Mesuré sur notre propre médiane à 30 jours, pas sur un prix barré.',
         'gift_cove_hint' => 'Tout ce qu’il faut pour acheter à quelqu’un d’autre, au même endroit.',
-        'gift_cove_cta' => 'Ouvrir la Gift Cove',
+        'gift_cove_cta' => 'Ouvrir la Cove Cadeau',
     ],
 
     'guides' => [
@@ -1026,7 +1026,7 @@ return [
     ],
 
     'og' => [
-        'daily' => 'Le Daily Cove',
+        'daily' => 'La Cove Quotidienne',
         'default_title' => 'Découvrez des produits et des marques',
         'default_footnote' => 'brandcoves.com',
         'product' => 'Produit',

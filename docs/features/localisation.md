@@ -44,6 +44,35 @@ shows raw translation keys.
 visible key is an obvious bug; a blank button is one you ship without noticing.
 In dev it also logs a console warning.
 
+## "Cove" is a brand word; everything around it is not
+
+The three named surfaces — the **Gift Cove**, the **Daily Cove**, and **Coves**
+(the editorials index) — are translated on one rule: *`Cove` stays, the
+qualifier goes into the language*.
+
+| | en | nl | fr | es |
+|---|---|---|---|---|
+| Gift Cove | Gift Cove | Geschenk Cove | Cove Cadeau | Cove de Regalos |
+| Daily Cove | Daily Cove | Dagelijkse Cove | Cove Quotidienne | Cove Diaria |
+| Editorials index | Coves | Coves | Coves | Coves |
+
+`Cove` is half the company name and the URL segment (`/coves`, `/daily`), so
+translating it strands the reader: `nl` had `De Dagelijkse Cove` as the page
+title and `De Daily Cove` in the OG card and the subscription email, and `fr`
+and `es` had gone further still — `La Crique du jour` and `La Cala del día`
+translated the noun itself, which reads as an ordinary word for an inlet and
+connects to nothing else on the site. Leaving the qualifier in English does the
+opposite damage: `La Gift Cove` in a French sentence is a foreign object the
+reader has to parse before they can use the nav.
+
+The gender is fixed feminine wherever the language has one — `la Cove` in fr and
+es — because both files already said `La Cove du jour` / `La Cove de hoy` while
+their OG strings said `Le Daily Cove` / `El Daily Cove`.
+
+Prose that says "the Cove" or "today's Cove" is unaffected: those are the noun
+in ordinary use, not the product name, and every language already handled them
+consistently.
+
 ## hreflang
 
 Every page emits an `alternate` link for all five markets plus `x-default`

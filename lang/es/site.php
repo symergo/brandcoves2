@@ -20,7 +20,7 @@ return [
         'skip' => 'Ir al contenido',
         'choose_market' => 'Elige tu región',
         'santa' => 'Amigo invisible',
-        'cove' => 'Gift Cove',
+        'cove' => 'Cove de Regalos',
     ],
 
     'home' => [
@@ -298,9 +298,9 @@ return [
     ],
 
     'cove_mail' => [
-        'confirm_subject' => 'Confirma tu suscripción a la Daily Cove',
+        'confirm_subject' => 'Confirma tu suscripción a la Cove Diaria',
         'confirm_heading' => 'Un clic y estás dentro',
-        'confirm_body' => 'Pulsa abajo para confirmar que quieres la Daily Cove. Hasta entonces no te enviaremos nada más.',
+        'confirm_body' => 'Pulsa abajo para confirmar que quieres la Cove Diaria. Hasta entonces no te enviaremos nada más.',
         'confirm_button' => 'Confirmar mi suscripción',
         'confirm_expiry' => 'El enlace funciona durante 48 horas.',
         'confirm_requested_from' => 'Solicitado desde :ip',
@@ -310,7 +310,7 @@ return [
         'digest_button' => 'Abrir la Cove de hoy',
         'across_shops' => 'en :count tiendas',
         'more_on_page' => 'Hay :count hallazgos más en la página, incluidos algunos que solo podemos mostrar allí.',
-        'why_receiving' => 'Recibes esto porque confirmaste una suscripción a la Daily Cove.',
+        'why_receiving' => 'Recibes esto porque confirmaste una suscripción a la Cove Diaria.',
         'unsubscribe' => 'Darse de baja',
     ],
     'legal' => [
@@ -544,7 +544,7 @@ return [
     ],
 
     'gift_cove' => [
-        'title' => 'La Gift Cove',
+        'title' => 'La Cove de Regalos',
         'intro' => 'Todo para regalar a los demás, y para contar lo que te gustaría a ti. Nadie ve nunca quién ha comprado qué.',
         'tools' => 'Lo que puedes hacer aquí',
         'items_count' => ':count cosas guardadas',
@@ -716,7 +716,7 @@ return [
     ],
 
     'daily' => [
-        'title' => 'La Cala del día',
+        'title' => 'La Cove Diaria',
         'seo_description' => 'Un puñado de cosas que no sabías que existían y una guía de compra construida con lo que la gente buscó aquí de verdad.',
         'see_offers' => 'Ver las ofertas',
         'finds_title' => 'Los hallazgos de hoy',
@@ -942,7 +942,7 @@ return [
         'deals_title' => 'Las mayores bajadas',
         'deals_hint' => 'Medido contra nuestra propia mediana de 30 días, no contra un precio tachado.',
         'gift_cove_hint' => 'Todo lo que necesitas para comprarle algo a otra persona, en un sitio.',
-        'gift_cove_cta' => 'Abrir la Gift Cove',
+        'gift_cove_cta' => 'Abrir la Cove de Regalos',
     ],
 
     'guides' => [
@@ -1022,7 +1022,7 @@ return [
     ],
 
     'og' => [
-        'daily' => 'El Daily Cove',
+        'daily' => 'La Cove Diaria',
         'default_title' => 'Descubre productos y marcas',
         'default_footnote' => 'brandcoves.com',
         'product' => 'Producto',

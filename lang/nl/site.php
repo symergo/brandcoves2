@@ -20,7 +20,7 @@ return [
         'skip' => 'Naar de inhoud',
         'choose_market' => 'Kies je regio',
         'santa' => 'Secret Santa',
-        'cove' => 'Gift Cove',
+        'cove' => 'Geschenk Cove',
     ],
 
     'home' => [
@@ -302,9 +302,9 @@ return [
     ],
 
     'cove_mail' => [
-        'confirm_subject' => 'Bevestig je abonnement op de Daily Cove',
+        'confirm_subject' => 'Bevestig je abonnement op de Dagelijkse Cove',
         'confirm_heading' => 'Eén klik en je bent binnen',
-        'confirm_body' => 'Klik hieronder om te bevestigen dat je de Daily Cove wilt. Tot dan sturen we je niets anders.',
+        'confirm_body' => 'Klik hieronder om te bevestigen dat je de Dagelijkse Cove wilt. Tot dan sturen we je niets anders.',
         'confirm_button' => 'Bevestig mijn abonnement',
         'confirm_expiry' => 'De link werkt 48 uur.',
         'confirm_requested_from' => 'Aangevraagd vanaf :ip',
@@ -314,7 +314,7 @@ return [
         'digest_button' => 'Open de Cove van vandaag',
         'across_shops' => 'bij :count winkels',
         'more_on_page' => 'Op de pagina staan nog :count vondsten, waaronder een paar die we alleen daar kunnen tonen.',
-        'why_receiving' => 'Je krijgt deze mail omdat je een abonnement op de Daily Cove hebt bevestigd.',
+        'why_receiving' => 'Je krijgt deze mail omdat je een abonnement op de Dagelijkse Cove hebt bevestigd.',
         'unsubscribe' => 'Uitschrijven',
     ],
     'legal' => [
@@ -548,7 +548,7 @@ return [
     ],
 
     'gift_cove' => [
-        'title' => 'De Gift Cove',
+        'title' => 'De Geschenk Cove',
         'intro' => 'Alles om voor anderen te kopen, en om te vertellen wat je zelf leuk zou vinden. Niemand ziet ooit wie wat gekocht heeft.',
         'tools' => 'Wat je hier kunt doen',
         'items_count' => ':count dingen bewaard',
@@ -945,7 +945,7 @@ return [
         'deals_title' => 'Grootste dalers van nu',
         'deals_hint' => 'Gemeten tegen onze eigen mediaan over 30 dagen, niet tegen een doorgestreepte winkelprijs.',
         'gift_cove_hint' => 'Alles wat je nodig hebt om voor iemand anders te kopen, op één plek.',
-        'gift_cove_cta' => 'Open de Gift Cove',
+        'gift_cove_cta' => 'Open de Geschenk Cove',
     ],
 
     'guides' => [
@@ -1025,7 +1025,7 @@ return [
     ],
 
     'og' => [
-        'daily' => 'De Daily Cove',
+        'daily' => 'De Dagelijkse Cove',
         'default_title' => 'Ontdek producten en merken',
         'default_footnote' => 'brandcoves.com',
         'product' => 'Product',
