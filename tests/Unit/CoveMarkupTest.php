@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use App\Enums\Market;
 use App\Services\Guides\CoveMarkup;
+use App\Services\Seo\BrandLinker;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -29,9 +30,33 @@ class CoveMarkupTest extends TestCase
         ];
     }
 
+    /**
+     * A brand linker that answers from memory.
+     *
+     * This test is about token parsing and destination allowlisting, neither of
+     * which needs a database. `CoveMarkup` used to resolve `BrandLinker` from
+     * the container mid-render, which made every case here depend on a
+     * `brand_stats` table — so the file passed on its own and errored on all 11
+     * cases in a full run, depending on what an earlier test had left behind.
+     *
+     * Empty is the honest answer for a class with no brand pages: `brand()`
+     * falls back to a filtered search link, which is exactly what these tests
+     * assert. Whether a brand *has* a page belongs to BrandPageTest.
+     */
+    private function markup(): CoveMarkup
+    {
+        return new CoveMarkup(new class extends BrandLinker
+        {
+            public function urls(array $brands, Market $market): array
+            {
+                return [];
+            }
+        });
+    }
+
     private function render(string $text): array
     {
-        return (new CoveMarkup)->render($text, Market::BeNl, $this->allowed());
+        return $this->markup()->render($text, Market::BeNl, $this->allowed());
     }
 
     #[Test]
@@ -139,7 +164,7 @@ class CoveMarkupTest extends TestCase
     #[Test]
     public function paragraphs_are_split_on_blank_lines(): void
     {
-        $result = (new CoveMarkup)->paragraphs(
+        $result = $this->markup()->paragraphs(
             "First, about [[brand:Sony]].\n\nSecond, about [[brand:JBL]].",
             Market::BeNl,
             $this->allowed(),
@@ -152,7 +177,7 @@ class CoveMarkupTest extends TestCase
     #[Test]
     public function the_prompt_contract_lists_only_what_the_renderer_accepts(): void
     {
-        $contract = (new CoveMarkup)->promptContract($this->allowed());
+        $contract = $this->markup()->promptContract($this->allowed());
 
         /*
          * The prompt lives next to the parser because the two drifting apart is

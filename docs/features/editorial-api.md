@@ -279,12 +279,11 @@ likely reason is that nobody approved it.
 
 ## Briefing an automated writer
 
-The block below is what you hand to Claude — as a `CLAUDE.md` in whatever directory it works from, as
-a scheduled-agent prompt, or pasted into a conversation. It is deliberately short: the API root is
-self-describing, so the brief tells it where to look rather than duplicating the endpoint list, which
-would drift.
+The full brief lives in **[../publishing-guide.md](../publishing-guide.md)** — the block to hand to
+Claude, covering all three article types, the link vocabulary and the publishing flow.
 
-Kept here so the two change together. If you edit the API's contract, edit this.
+The short version below is the orientation half of it, kept here because it is the part that has to
+change when this file does.
 
 ```markdown
 # Writing for Brandcoves

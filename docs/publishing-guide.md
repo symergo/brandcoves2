@@ -111,13 +111,23 @@ dead end — see links, below.
 Never write a URL, a markdown link or an HTML tag. Link by token:
 
     [[product:1234|the odd one]]        a product in this article
-    [[brand:Sony]]                      a brand it contains
-    [[search:draadloze koptelefoon]]    a category it covers
+    [[brand:Sony]]                      any brand with a page in this market
+    [[search:draadloze koptelefoon]]    a category this article covers, or one of its own queries
     [[guide:beste-koptelefoons]]        another published guide in this market
     [[page:gift-whisperer]]             one of our own pages
 
 `page` keys: `home`, `search`, `discover`, `daily`, `guides`, `brands`, `gift-whisperer`,
 `gift-cove`, `wishlists`, `scanner`, `secret-santa`, `surprise`.
+
+Link generously. An article that sends the reader nowhere is a dead end, and internal links are how
+someone gets from a tip to the thing it is about. Advice articles especially: they have no product
+shortlist, so links are the only route out of them.
+
+**Your `queries` / `sourceQueries` become linkable searches.** Declaring
+`sourceQueries: ["koptelefoon"]` is what makes `[[search:koptelefoon]]` resolve — which is how an
+advice article with no products links to anything at all. Brands resolve if the brand has a page
+here, which needs three products; there is no separate list to fetch, so write the brand and check
+`linkCheck`.
 
 Anything outside what the article is allowed to link to is **silently rendered as plain text** — not
 a broken link, not a visible token. So a bad token costs you an unlinked phrase you will never notice

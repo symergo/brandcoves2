@@ -49,6 +49,22 @@ class CoveMarkup
     private const TOKEN = '/\[\[(brand|search|product|guide|page):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u';
 
     /**
+     * Injected rather than resolved inside `render()`.
+     *
+     * Reaching for the container mid-render made a **database query a hidden
+     * dependency of turning a string into HTML** — which is not obvious from
+     * either the signature or the name, and it turned the unit test for this
+     * class into one that only passed when some earlier test happened to leave
+     * a `brand_stats` table behind. It errored on 32 cases in a full run and
+     * passed 11 of 11 on its own, which is the least useful pair of results a
+     * test can produce.
+     *
+     * A constructor parameter says the dependency out loud and lets a caller
+     * that already knows its brand URLs supply them.
+     */
+    public function __construct(private readonly BrandLinker $brands) {}
+
+    /**
      * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
      * @return array{html: string, links: int, rejected: list<string>}
      */
@@ -61,7 +77,7 @@ class CoveMarkup
         // One query for every brand the article is allowed to mention, resolved
         // before the walk rather than inside it — the callback runs once per
         // token and would otherwise be an N+1 on a page of prose.
-        $brandUrls = app(BrandLinker::class)->urls($allowed['brands'] ?? [], $market);
+        $brandUrls = $this->brands->urls($allowed['brands'] ?? [], $market);
 
         // Escape first, resolve second. The prose is model output and is
         // rendered as HTML, so anything that arrives already looking like
