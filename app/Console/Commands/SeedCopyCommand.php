@@ -9,6 +9,7 @@ use App\Models\CopyTemplate;
 use App\Services\Seo\CopyBank;
 use App\Services\Seo\CopySlots;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Import the shipped language strings as the first variant of each copy slot.
@@ -21,11 +22,28 @@ use Illuminate\Console\Command;
  * Idempotent and non-destructive: a slot that already has any row is left
  * completely alone, whatever state it is in. Re-running after someone has edited
  * their copy must not put the shipped version back.
+ *
+ * ## `--replace`, and why it has to exist
+ *
+ * That guarantee has a consequence nobody notices until it bites: **once a slot
+ * is in the bank, rewriting its language file changes nothing anywhere it has
+ * been seeded.** The brand pages were rewritten to describe the brand rather
+ * than the pricing, the tests passed, staging deployed — and staging kept
+ * serving the old sentences out of the database.
+ *
+ * `--replace` deletes the chosen slots' rows and re-imports them. It is
+ * destructive by definition and therefore opt-in, narrowed with `--surface`, and
+ * `--dry-run` reports what it would remove. Losing an editor's work silently
+ * would be worse than the problem it solves, so it says how many rows it is
+ * about to delete and requires confirmation outside a dry run.
  */
 class SeedCopyCommand extends Command
 {
     protected $signature = 'bc:seed-copy
         {--language= : One language (nl, fr, en, es). Omit for all of them.}
+        {--surface= : One surface (search, brand_intro, brand). Omit for all of them.}
+        {--replace : DESTRUCTIVE. Replace existing rows for the chosen slots.}
+        {--force : Skip the confirmation. For a deploy shell with no tty.}
         {--dry-run : Report what would be written and write nothing.}';
 
     protected $description = 'Import the shipped page copy into the editable copy bank.';
@@ -53,8 +71,21 @@ class SeedCopyCommand extends Command
             return self::FAILURE;
         }
 
+        $only = $this->option('surface');
+
+        if ($only !== null && ! array_key_exists($only, CopySlots::surfaces())) {
+            $this->error('Unknown surface. Valid: '.implode(', ', array_keys(CopySlots::surfaces())));
+
+            return self::FAILURE;
+        }
+
+        if ($this->option('replace') && ! $this->option('dry-run') && ! $this->confirmReplacement($only)) {
+            return self::FAILURE;
+        }
+
         $written = 0;
         $skipped = 0;
+        $removed = 0;
         $missing = [];
 
         foreach ($languages as $language) {
@@ -62,18 +93,28 @@ class SeedCopyCommand extends Command
                 $surface = $definition['surface'];
                 $slot = $definition['slot'];
 
+                if ($only !== null && $surface !== $only) {
+                    continue;
+                }
+
                 $exists = CopyTemplate::query()
                     ->where('surface', $surface)
                     ->where('slot', $slot)
                     ->where('language', $language)
                     ->exists();
 
-                if ($exists) {
+                if ($exists && ! $this->option('replace')) {
                     // Somebody may have edited this. Re-running must never put
                     // the shipped version back on top of their work.
                     $skipped++;
 
                     continue;
+                }
+
+                if ($exists) {
+                    $removed += $this->option('dry-run')
+                        ? $this->rowsFor($surface, $slot, $language)->count()
+                        : $this->rowsFor($surface, $slot, $language)->delete();
                 }
 
                 $bodies = $this->bodiesFor($surface, $slot, $language, $key);
@@ -112,9 +153,11 @@ class SeedCopyCommand extends Command
         }
 
         $this->components->info(sprintf(
-            '%s %d variant(s); left %d existing slot(s) alone.',
+            '%s %d variant(s); %s %d row(s); left %d existing slot(s) alone.',
             $this->option('dry-run') ? 'Would write' : 'Wrote',
             $written,
+            $this->option('dry-run') ? 'would remove' : 'removed',
+            $removed,
             $skipped,
         ));
 
@@ -128,6 +171,39 @@ class SeedCopyCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /** @return Builder<CopyTemplate> */
+    private function rowsFor(string $surface, string $slot, string $language)
+    {
+        return CopyTemplate::query()
+            ->where('surface', $surface)
+            ->where('slot', $slot)
+            ->where('language', $language);
+    }
+
+    /**
+     * Say how much is about to be lost, then ask.
+     *
+     * An editor's rewrite is not recoverable from this command, so the count is
+     * the number that matters and it is shown before the question rather than
+     * after the damage.
+     */
+    private function confirmReplacement(?string $surface): bool
+    {
+        $count = CopyTemplate::query()
+            ->when($surface !== null, fn ($q) => $q->where('surface', $surface))
+            ->when($this->option('language') !== null, fn ($q) => $q->where('language', $this->option('language')))
+            ->count();
+
+        if ($count === 0 || $this->option('force')) {
+            return true;
+        }
+
+        return $this->confirm(
+            "This deletes {$count} existing copy row(s), including any edits made in the admin. Continue?",
+            false,
+        );
     }
 
     /**

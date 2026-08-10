@@ -310,6 +310,34 @@ Two tests hold the shipped copy to the same rule.
 This also retired `BrandCopy::LEAD_VARIANTS` — the four hard-coded openings picked by
 `hash(brand) % 4` are now four rows anyone can edit, reweight, or add a fifth to.
 
+### The trap: seeded copy shadows a rewritten language file
+
+The guarantee above — *never overwrite an editor's work* — has a consequence that stays invisible
+until it bites. **Once a slot has a row, rewriting its language file changes nothing on any
+environment where `bc:seed-copy` has run.** Local development, where the table is usually empty,
+shows the new words immediately; staging and production keep serving the old ones out of the
+database.
+
+Caught exactly that way. The brand copy was rewritten to describe the brand rather than the pricing,
+the tests passed, staging deployed — and staging carried on with the old sentences. The three *new*
+slots appeared straight away, because a slot with no row falls back to the file; the *changed* ones
+did not. A page half in the new voice and half in the old is a worse symptom than none of it landing,
+because it looks like the deploy worked.
+
+`bc:seed-copy --replace` deletes the chosen slots' rows and re-imports them. Destructive by
+definition, so: opt-in, narrowed with `--surface`, `--dry-run` reports what it would remove, and
+outside a dry run it names the number of rows and asks. `--force` skips the question for a deploy
+shell with no tty.
+
+```bash
+php artisan bc:seed-copy --surface=brand_intro --replace --dry-run   # look first
+php artisan bc:seed-copy --surface=brand_intro --replace             # then do it
+```
+
+**Rewriting shipped copy is therefore a two-part change**: the language files, and a `--replace` run
+wherever the bank has been seeded. A row for a slot that no longer exists is left behind and is
+harmless — the admin lists slots from `CopySlots`, so an orphan is not rendered and not shown.
+
 ### Where it does not appear
 
 Null on any page that is `noindex` anyway: page 2+, a filtered search, a sorted brand page. Repeating

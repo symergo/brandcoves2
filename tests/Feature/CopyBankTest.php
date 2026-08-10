@@ -56,6 +56,85 @@ class CopyBankTest extends TestCase
     }
 
     #[Test]
+    public function a_seeded_slot_shadows_a_rewritten_language_file(): void
+    {
+        $this->variant('The old sentence about :brand.');
+
+        /*
+         * The property `bc:seed-copy` is built around — never overwrite an
+         * editor's work — has a consequence that is invisible until it bites:
+         * once a slot is in the bank, rewriting its language file changes
+         * nothing anywhere it has been seeded.
+         *
+         * The brand copy was rewritten, the tests passed and staging deployed,
+         * and staging carried on serving the old sentences out of the database.
+         */
+        $this->artisan('bc:seed-copy', ['--language' => 'nl'])->assertSuccessful();
+
+        $line = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony'], 'sony');
+
+        $this->assertSame('The old sentence about Sony.', $line);
+    }
+
+    #[Test]
+    public function replace_puts_the_shipped_copy_back(): void
+    {
+        $this->variant('The old sentence about :brand.');
+
+        $this->artisan('bc:seed-copy', [
+            '--language' => 'nl',
+            '--surface' => 'brand_intro',
+            '--replace' => true,
+            '--force' => true,
+        ])->assertSuccessful();
+
+        $line = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
+
+        $this->assertStringNotContainsString('The old sentence', $line);
+        $this->assertStringContainsString('Sony', $line);
+    }
+
+    #[Test]
+    public function replace_leaves_other_surfaces_alone(): void
+    {
+        $this->variant('Kept.', 1, ['surface' => 'search', 'slot' => 'lead']);
+
+        $this->artisan('bc:seed-copy', [
+            '--language' => 'nl',
+            '--surface' => 'brand_intro',
+            '--replace' => true,
+            '--force' => true,
+        ])->assertSuccessful();
+
+        // Destructive by definition, so it is narrowed on purpose: a rewrite of
+        // the brand pages must not take the search copy with it.
+        $this->assertSame(
+            'Kept.',
+            $this->bank()->line('search', 'lead', Market::BeNl, [], 'x'),
+        );
+    }
+
+    #[Test]
+    public function a_dry_run_replaces_nothing(): void
+    {
+        $this->variant('The old sentence about :brand.');
+
+        $this->artisan('bc:seed-copy', [
+            '--language' => 'nl',
+            '--surface' => 'brand_intro',
+            '--replace' => true,
+            '--dry-run' => true,
+        ])->assertSuccessful();
+
+        CopyBank::flush();
+
+        $this->assertSame(
+            'The old sentence about Sony.',
+            $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony'], 'sony'),
+        );
+    }
+
+    #[Test]
     public function an_empty_table_renders_the_shipped_copy(): void
     {
         $line = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
