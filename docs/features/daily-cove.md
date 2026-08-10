@@ -1,13 +1,13 @@
 ---
 name: The Daily Cove
 area: Discovery / Content
-status: In progress (Phase 5)
+status: Active
 date_added: 2026-08-08
 ---
 
 # The Daily Cove
 
-**Daily Picks and buying guides, merged into one daily edition with a game at the front of it.**
+**Daily Picks and buying guides, merged into one daily edition written as an article.**
 
 Supersedes the separate Phase 5 (Daily Picks) and Phase 6 (buying guides).
 
@@ -24,56 +24,63 @@ Kept apart, each has a hole the other fills:
 Together: the guide gets a daily audience the day it drops and evergreen traffic forever after; the
 picks get a permanent, indexable home instead of scrolling into nothing.
 
-And there is a third thing neither has on its own — a **reason to share**.
+## The shape: one article a day
 
-## The shape: one page a day, three beats
+### The editorial, with the products inside it
 
-### Beat 1 — The Guess (the loop)
+A theme, then prose, and each product where the prose is about it.
 
-One product from the [Serendipity Engine](serendipity.md), image and description shown, **price
-hidden**. Guess what it costs. Feedback in bands (way under / close / way over), a small number of
-tries, then the reveal with a link to the actual offers.
+The page used to be an article followed by a grid: everything the writing was *about* sat below
+everything the writing *said*, so a paragraph discussing a kettle pointed at a card three screens
+down. That is a catalogue with an introduction.
 
-The result is a **shareable emoji grid** — the Wordle artefact, and the single best-proven organic
-loop of the last five years. It works because:
+The pairing was already in the copy and unused. `[[product:12]]` is the writer — a model, or an
+author through [the editorial API](editorial-api.md) — saying "this paragraph is about that thing";
+`CoveMarkup` resolved it to a link and threw the association away. `DailyCoveController::editorial()`
+now reads the ids back out per paragraph, so the product renders under the paragraph that names it.
 
-- The share is a **score**, not a link-beg. Nobody feels marketed to by a row of squares.
-- It is **the same puzzle for everyone that day**, so a posted result is a conversation rather than a
-  broadcast.
-- It carries **no spoiler**, so posting it costs the poster nothing.
+Three rules, each one a way the naive version goes wrong:
 
-Streaks give the return reason. **Derived from attempt dates, not stored as a counter** — a stored
-streak drifts, gets corrupted by a timezone bug, and has to be repaired by hand; a `SELECT DISTINCT
-played_on` cannot.
+- **Only ids the article was allowed to mention.** A token naming a product outside today's edition
+  already renders as plain text rather than a broken link; it must not conjure a card either.
+- **First mention only.** Copy that names the same kettle three times would otherwise stutter it
+  three times down the page.
+- **Whatever the article did not name keeps the grid below.** An edition can carry more finds than
+  the copy gets to, and silently dropping them would lose products the builder deliberately chose.
 
-Playable without an account (anonymous cookie identity, as with lists), because asking someone to
-sign up before their first guess loses them.
-
-### Beat 2 — The Finds
-
-The rest of today's serendipity picks, under a theme. This is Daily Picks, unchanged in substance:
-scored by the engine, deduplicated against a 90-day memory so nothing repeats, themed so the set
-reads as edited rather than generated.
-
-### Beat 3 — The Guide
+### The guide
 
 Today's buying guide, built from **what people actually searched on the site this week** — the
 `search_log` clustering that was Phase 6. "The five best X, and the one actually worth it."
 
-This is where the SEO value lives. Every edition has a permanent URL
-(`/{market}/daily/{date}`), so the archive is a growing corpus of indexed pages, each one a guide
-plus a set of products plus a puzzle. Ninety days in, that is ninety pages per market that did not
-exist before, each answering a question someone demonstrably asked.
+This is where the SEO value lives. Every edition has a permanent URL (`/{market}/daily/{date}`), so
+the archive is a growing corpus of indexed pages, each one a guide plus a set of products plus the
+writing that connects them. Ninety days in, that is ninety pages per market that did not exist
+before, each answering a question someone demonstrably asked.
 
-## Why this is a defensible loop and not a gimmick
+## The price guess, and its removal
 
-The game is not bolted on. **It is powered by the thing that makes the site worth existing**: we can
-run the price-guessing game because we hold real, current, multi-shop prices. A content site cannot
-run it. A single retailer running it would be advertising. The puzzle is a demonstration of the
-product's actual asset.
+The edition opened with a game: one product with its price hidden, a few tries, feedback in bands,
+then a shareable emoji grid. Removed in August 2026 at the owner's request.
 
-And the guess is *interesting* precisely because the product is unusual — which is the Serendipity
-Engine's output. The three beats are one machine.
+Recorded because the removal cost two specific things, and anything proposed to replace it should be
+measured against them rather than against a blank page:
+
+- **The return reason.** Streaks were the only mechanism that made yesterday's visit predict today's.
+  Novelty alone wears off in about a week; a daily product feed is something people visit twice.
+- **The share artefact.** A row of squares is a *score*, not a link-beg — no spoiler, so posting it
+  costs the poster nothing, and the same puzzle for everyone that day makes a posted result a
+  conversation. The subscription email and the archive now carry the whole return loop by themselves.
+
+Gone with it: `ChallengeController`, `PriceHunt`, `GuessBand`, `ChallengeAttempt`, the
+`POST /{market}/daily/{date}/guess` route, the builder's compliance-gated subject selection, the
+`challenge` key on the editorial API, the puzzle flag on the home page and in the digest email, and
+the `daily.hunt_*` copy in four languages.
+
+**The schema is still there, deliberately.** `challenge_attempts`, and `daily_pick_sets.challenge_*`.
+Migrations here are forward-only and non-backwards-compatible changes go through expand/contract, so
+dropping the tables in the same deploy that removed the code would leave a rollback facing a schema
+the previous image cannot read. The drop is a separate, later migration; nothing writes to them now.
 
 ## The calendar: a theme for every day
 
@@ -150,18 +157,20 @@ An evergreen theme is passed to the model as "today's angle … this is NOT a na
 
 ## Compliance
 
-The guessed price must come from a source that permits price storage and display in this context.
-Sources that require live re-fetch and prohibit retained pricing (Amazon) **cannot be the subject of
-the daily guess** — the answer would have to be re-fetched at reveal time and could differ from the
-one the game was scored against. `Source::allowsPriceTracking()` gates candidate selection, the same
-way it gates alerts. See [amazon-compliance.md](amazon-compliance.md).
+Prices shown in an edition follow the ordinary rules: a source that requires a live re-fetch and
+prohibits retained pricing is never displayed from storage. See
+[amazon-compliance.md](amazon-compliance.md).
+
+The game used to add a stricter constraint — its subject had to be a product whose price could be
+*frozen* for twelve hours and then scored against — and `Source::allowsPriceTracking()` gated
+selection for it. That gate is gone with the game; the general rule is unchanged.
 
 ## AI
 
 Theme lines and the guide's editorial copy are the only AI-touched parts, and they run in the nightly
 build job under the `daily_picks` and `guide_copy` caps. The edition builds and publishes with
-`AI_ENABLED=false` — themes fall back to a curated rotation, guides to template copy. The game, the
-scoring and the picks involve no model at all. See [ai-invariant.md](ai-invariant.md).
+`AI_ENABLED=false` — themes fall back to a curated rotation, guides to template copy. Choosing the
+picks involves no model at all. See [ai-invariant.md](ai-invariant.md).
 
 **Prose written by an author beats all of it.** A `cove_plans` row may carry the edition's editorial,
 and when it does the builder uses it verbatim and skips the model entirely — not as a seed to
@@ -198,17 +207,13 @@ Three rules it holds to:
 Guides with no editorial at all are served before stale ones. A stale but real paragraph is in far
 better shape than none, and the cap means a run usually cannot have both.
 
-## Planned schema
+## Schema
 
-Expanding the tables Phase 0 already created:
-
-- `daily_pick_sets` → gains `guide_id`, `challenge_group_id`, `challenge_price`
-- `daily_picks` — unchanged
-- `challenge_attempts` — edition, identity, guess, band, solved, `played_on`
-- `guides` / `guide_items` / `guide_topics` — unchanged, now linked from an edition
-
-Streaks are a query over `challenge_attempts.played_on`, not a table.
+- `daily_pick_sets` — theme, editorial, `guide_id`, and the disused `challenge_*` columns above
+- `daily_picks` — the finds, with their reaction counts
+- `challenge_attempts` — disused; awaiting the contract migration
+- `guides` / `guide_items` / `guide_topics` — linked from an edition
 
 ## Status
 
-Designed. Building next.
+Active. Editions build nightly and publish at the configured drop time.

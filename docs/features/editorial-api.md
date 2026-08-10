@@ -192,7 +192,7 @@ realistic way this gets hammered. Both in `config/brandcoves.php`.
 ## Reading back
 
 `GET /api/editorial/editions/{market}/{date}` shows future and unpublished editions, unlike the
-public page. The reason the public route hides them — guessing tomorrow's puzzle by URL — does not
+public page. The reason the public route hides them — tomorrow's theme and finds leaking by URL — does not
 apply to a holder of an editorial key, and an author building tomorrow's Cove needs to read it today.
 It is also the only place the challenge answer is exposed.
 

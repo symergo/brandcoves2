@@ -57,18 +57,6 @@ class DailyPickSet extends Model
         return $this->belongsTo(Guide::class);
     }
 
-    /** @return BelongsTo<ProductGroup, $this> */
-    public function challengeGroup(): BelongsTo
-    {
-        return $this->belongsTo(ProductGroup::class, 'challenge_group_id');
-    }
-
-    /** @return HasMany<ChallengeAttempt, $this> */
-    public function attempts(): HasMany
-    {
-        return $this->hasMany(ChallengeAttempt::class, 'set_id');
-    }
-
     /**
      * Is this edition live yet?
      *

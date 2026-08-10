@@ -22,7 +22,6 @@ interface Props {
         date: string
         label: string
         url: string
-        hasPuzzle: boolean
         finds: { id: number; title: string; image: string | null; price: number | null; url: string }[]
     } | null
     gifting: {
@@ -141,9 +140,6 @@ export default function Home({ stats, today, gifting, coves }: Props) {
                             <time dateTime={today.date} className="text-sm text-ink-soft">
                                 {today.label}
                             </time>
-                            {today.hasPuzzle && (
-                                <span className="text-sm text-ink-soft">· {t('home.today_puzzle')}</span>
-                            )}
                         </div>
 
                         <h2 id="today-heading" className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">

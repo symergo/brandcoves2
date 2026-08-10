@@ -169,7 +169,7 @@ than just links.
 It pushes strongly toward **a teaser that links to the edition**, not the
 edition rendered into an email:
 
-- our own editorial line, the observance, a tease of the puzzle, a few
+- our own editorial line, the observance, a few
   non-Amazon finds
 - one link: *see today's Cove*
 

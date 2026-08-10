@@ -63,7 +63,6 @@ class BuildDailyEdition implements ShouldQueue
             'topics_in_season' => $inSeason,
             'edition' => $edition?->id,
             'picks' => $edition?->picks()->count() ?? 0,
-            'has_challenge' => $edition?->challenge_group_id !== null,
             'has_guide' => $edition?->guide_id !== null,
         ]);
     }

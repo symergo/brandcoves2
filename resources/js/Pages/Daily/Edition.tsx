@@ -7,31 +7,6 @@ import { useTranslations } from '../../useTranslations'
 import CoveSubscribe from '../../Components/CoveSubscribe'
 import SaveToList from '../../Components/SaveToList'
 
-interface BandEntry {
-    band: 'exact' | 'warm' | 'cool' | 'cold'
-    over: boolean
-}
-
-interface Challenge {
-    title: string
-    brand: string | null
-    image: string | null
-    category: string | null
-    merchantCount: number
-    maxAttempts: number
-    band: string | null
-    over: boolean
-    solved: boolean
-    attemptsLeft: number
-    finished: boolean
-    /** Absent until the round is over — see the controller. */
-    answer: Cents | null
-    bands: BandEntry[]
-    productUrl: string | null
-    community: { players: number; solvedPercent: number | null } | null
-    shareLabel: string
-}
-
 interface Find {
     id: number
     groupId: number
@@ -56,10 +31,12 @@ interface Props {
         theme: string
         blurb: string | null
         isToday: boolean
-        /** Paragraphs of HTML, links already resolved server-side. */
-        editorial: string[]
+        /**
+         * Paragraphs of HTML, links already resolved server-side, each
+         * carrying the ids of the products that paragraph names.
+         */
+        editorial: { html: string; groupIds: number[] }[]
     }
-    challenge: Challenge | null
     finds: Find[]
     guide: {
         title: string
@@ -68,28 +45,13 @@ interface Props {
         itemCount: number
         searchVolume: number
     } | null
-    streak: { current: number; longest: number }
     archive: { date: string; label: string; theme: string; url: string }[]
 }
 
-const EMOJI: Record<string, [string, string]> = {
-    // [under, over] — arrows rather than colours, because a grid has to survive
-    // being pasted as plain text and ~8% of men cannot tell red from green.
-    exact: ['🎯', '🎯'],
-    warm: ['🟩', '🟩'],
-    cool: ['🔼', '🔽'],
-    cold: ['⬆️', '⬇️'],
-}
-
-export default function Edition({ preview = false, edition, challenge, finds, guide, streak, archive }: Props) {
+export default function Edition({ preview = false, edition, finds, guide, archive }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
-    const [state, setState] = useState<Challenge | null>(challenge)
-    const [guess, setGuess] = useState('')
-    const [busy, setBusy] = useState(false)
-    const [copied, setCopied] = useState(false)
-    const [streakState, setStreakState] = useState(streak)
     const [reactions, setReactions] = useState<Record<number, string>>({})
     const [counts, setCounts] = useState<Record<number, { mindblown: number; meh: number }>>(
         Object.fromEntries(finds.map((f) => [f.id, { mindblown: f.mindblown, meh: f.meh }])),
@@ -97,39 +59,6 @@ export default function Edition({ preview = false, edition, challenge, finds, gu
 
     const csrf = () =>
         (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ?? ''
-
-    /*
-     * A fetch rather than an Inertia visit.
-     *
-     * The round is a small stateful exchange inside one page. A full page
-     * response per guess would lose the input focus and the scroll position
-     * four times a round, which is four chances to make the game feel clumsy.
-     */
-    const submitGuess = async () => {
-        if (guess === '' || busy || state?.finished) return
-
-        setBusy(true)
-        try {
-            const response = await fetch(`/${market.key}/daily/${edition.date}/guess`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf(),
-                    Accept: 'application/json',
-                },
-                body: JSON.stringify({ guess: Number(guess) }),
-            })
-
-            if (!response.ok) return
-
-            const data = await response.json()
-            setState({ ...(state as Challenge), ...data })
-            setStreakState(data.streak ?? streakState)
-            setGuess('')
-        } finally {
-            setBusy(false)
-        }
-    }
 
     const react = async (pickId: number, reaction: 'mindblown' | 'meh') => {
         const response = await fetch(`/${market.key}/picks/${pickId}/react`, {
@@ -150,41 +79,28 @@ export default function Edition({ preview = false, edition, challenge, finds, gu
     }
 
     /*
-     * The share artefact: a score, not a link-beg.
-     *
-     * Nobody feels marketed to by a row of squares, and the grid carries no
-     * spoiler — so posting it costs the poster nothing. That is the whole
-     * reason this works where a "share this deal!" button does not.
+     * One lookup, so a paragraph naming a product can find it without scanning
+     * the list per token.
      */
-    const shareText = () => {
-        const row = (state?.bands ?? [])
-            .map((entry) => (EMOJI[entry.band] ?? EMOJI.cold)[entry.over ? 1 : 0])
-            .join('')
-        const score = state?.solved
-            ? `${(state?.bands ?? []).length}/${state?.maxAttempts}`
-            : `X/${state?.maxAttempts}`
+    const byGroup: Record<number, Find> = Object.fromEntries(finds.map((f) => [f.groupId, f]))
 
-        return `Brandcoves ${state?.shareLabel} ${score}\n${row}`
-    }
+    const named = new Set(edition.editorial.flatMap((block) => block.groupIds))
+    const rest = finds.filter((find) => !named.has(find.groupId))
 
-    const share = async () => {
-        const text = shareText()
-
-        if (navigator.share) {
-            try {
-                await navigator.share({ text })
-
-                return
-            } catch {
-                // The user dismissed the sheet. Fall through to the clipboard
-                // so the button still does something.
-            }
-        }
-
-        await navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-    }
+    const reactionButtons = (find: Find) =>
+        (['mindblown', 'meh'] as const).map((kind) => (
+            <button
+                key={kind}
+                type="button"
+                aria-pressed={reactions[find.id] === kind}
+                className={`rounded-full border px-3 py-1 text-sm ${
+                    reactions[find.id] === kind ? 'border-accent' : 'border-line'
+                }`}
+                onClick={() => react(find.id, kind)}
+            >
+                {kind === 'mindblown' ? '🤯' : '😐'} {n(counts[find.id]?.[kind] ?? 0)}
+            </button>
+        ))
 
     return (
         <>
@@ -209,125 +125,85 @@ export default function Edition({ preview = false, edition, challenge, finds, gu
               which asserts both.
             */}
             {edition.editorial.length > 0 && (
-                <div className="mt-6 max-w-2xl space-y-3 leading-relaxed text-ink [&_a]:underline">
-                    {edition.editorial.map((paragraph, i) => (
-                        <p key={i} dangerouslySetInnerHTML={{ __html: paragraph }} />
+                <div className="mt-6 max-w-2xl leading-relaxed text-ink">
+                    {edition.editorial.map((block, i) => (
+                        <div key={i}>
+                            <p
+                                className="mt-3 [&_a]:underline"
+                                dangerouslySetInnerHTML={{ __html: block.html }}
+                            />
+
+                            {/*
+                              The products this paragraph is about, right under
+                              it. The token in the copy is the writer saying
+                              which those are.
+                            */}
+                            {block.groupIds
+                                .map((id) => byGroup[id])
+                                .filter(Boolean)
+                                .map((find) => (
+                                    <figure
+                                        key={find.id}
+                                        className="my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row"
+                                    >
+                                        <a href={find.url} className="shrink-0">
+                                            {find.image && (
+                                                <img
+                                                    src={find.image}
+                                                    alt=""
+                                                    loading="lazy"
+                                                    className="mx-auto h-32 w-32 object-contain"
+                                                />
+                                            )}
+                                        </a>
+
+                                        <figcaption className="min-w-0 flex-1">
+                                            <a href={find.url} className="font-medium hover:underline">
+                                                {find.title}
+                                            </a>
+
+                                            {find.blurb && (
+                                                <p className="mt-1 text-sm text-ink-soft">{find.blurb}</p>
+                                            )}
+
+                                            <div className="mt-3 flex flex-wrap items-center gap-3">
+                                                <span className="font-semibold">
+                                                    {find.price === null
+                                                        ? '—'
+                                                        : formatPrice(find.price, market)}
+                                                </span>
+                                                <a
+                                                    href={find.url}
+                                                    className="text-sm text-accent underline"
+                                                >
+                                                    {t('daily.see_offers')}
+                                                </a>
+                                                <span className="ml-auto flex items-center gap-2">
+                                                    {reactionButtons(find)}
+                                                    <SaveToList groupId={find.groupId} />
+                                                </span>
+                                            </div>
+                                        </figcaption>
+                                    </figure>
+                                ))}
+                        </div>
                     ))}
                 </div>
             )}
 
-            {/* ── Beat 1: the guess ─────────────────────────────────────── */}
-            {state && (
-                <section className="mt-8 rounded-lg border border-line bg-card p-5">
-                    <div className="flex items-baseline justify-between gap-3">
-                        <h2 className="font-medium">{t('daily.hunt_title')}</h2>
-                        {streakState.current > 0 && (
-                            <span className="text-sm text-ink-soft">
-                                🔥 {t('daily.streak', { days: n(streakState.current) })}
-                            </span>
-                        )}
-                    </div>
+            {/*
+              Whatever the article did not get to.
 
-                    <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-                        {state.image && (
-                            <img
-                                src={state.image}
-                                alt=""
-                                className="h-40 w-40 shrink-0 self-center object-contain"
-                            />
-                        )}
-
-                        <div className="min-w-0 flex-1">
-                            <p className="font-medium">{state.title}</p>
-                            <p className="mt-1 text-sm text-ink-soft">{t('daily.hunt_prompt')}</p>
-
-                            {state.bands.length > 0 && (
-                                <p className="mt-3 text-2xl" aria-label={t('daily.your_guesses')}>
-                                    {state.bands.map((entry, i) => (
-                                        <span key={i}>
-                                            {(EMOJI[entry.band] ?? EMOJI.cold)[entry.over ? 1 : 0]}
-                                        </span>
-                                    ))}
-                                </p>
-                            )}
-
-                            {!state.finished ? (
-                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                    <label className="sr-only" htmlFor="guess">
-                                        {t('daily.hunt_prompt')}
-                                    </label>
-                                    <input
-                                        id="guess"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        inputMode="decimal"
-                                        className="w-32 rounded border border-line px-3 py-2"
-                                        value={guess}
-                                        onChange={(e) => setGuess(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && submitGuess()}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="rounded bg-accent px-4 py-2 font-medium text-white disabled:opacity-50"
-                                        onClick={submitGuess}
-                                        disabled={busy || guess === ''}
-                                    >
-                                        {t('daily.guess')}
-                                    </button>
-                                    <span className="text-sm text-ink-soft">
-                                        {t('daily.tries_left', { count: n(state.attemptsLeft) })}
-                                    </span>
-                                </div>
-                            ) : (
-                                <div className="mt-4 space-y-2">
-                                    <p className="text-lg font-semibold">
-                                        {state.solved ? t('daily.solved') : t('daily.missed')}
-                                        {state.answer !== null && (
-                                            <> — {formatPrice(state.answer, market)}</>
-                                        )}
-                                    </p>
-
-                                    {state.community?.solvedPercent !== null &&
-                                        state.community !== null && (
-                                            <p className="text-sm text-ink-soft">
-                                                {t('daily.community', {
-                                                    percent: n(state.community.solvedPercent ?? 0),
-                                                    players: n(state.community.players),
-                                                })}
-                                            </p>
-                                        )}
-
-                                    <div className="flex flex-wrap gap-3 pt-1">
-                                        <button
-                                            type="button"
-                                            className="rounded border border-line px-4 py-2 text-sm"
-                                            onClick={share}
-                                        >
-                                            {copied ? t('daily.copied') : t('daily.share')}
-                                        </button>
-                                        {state.productUrl && (
-                                            <Link
-                                                href={state.productUrl}
-                                                className="rounded bg-accent px-4 py-2 text-sm font-medium text-white"
-                                            >
-                                                {t('daily.see_offers')}
-                                            </Link>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            {/* ── Beat 2: the finds ─────────────────────────────────────── */}
+              An edition can carry more finds than the copy names, and dropping
+              them would quietly lose products the builder chose. They keep the
+              grid; the ones the writing is about no longer need it.
+            */}
+            {rest.length > 0 && (
             <section className="mt-10">
                 <h2 className="text-sm font-medium text-ink-soft">{t('daily.finds_title')}</h2>
 
                 <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {finds.map((find) => (
+                    {rest.map((find) => (
                         <li
                             key={find.id}
                             className="flex flex-col rounded-lg border border-line bg-card p-4"
@@ -354,31 +230,15 @@ export default function Edition({ preview = false, edition, challenge, finds, gu
                                     <SaveToList groupId={find.groupId} />
                                 </div>
 
-                                <div className="flex gap-2 text-sm">
-                                    {(['mindblown', 'meh'] as const).map((kind) => (
-                                        <button
-                                            key={kind}
-                                            type="button"
-                                            aria-pressed={reactions[find.id] === kind}
-                                            className={`rounded-full border px-3 py-1 ${
-                                                reactions[find.id] === kind
-                                                    ? 'border-accent'
-                                                    : 'border-line'
-                                            }`}
-                                            onClick={() => react(find.id, kind)}
-                                        >
-                                            {kind === 'mindblown' ? '🤯' : '😐'}{' '}
-                                            {n(counts[find.id]?.[kind] ?? 0)}
-                                        </button>
-                                    ))}
-                                </div>
+                                <div className="flex gap-2">{reactionButtons(find)}</div>
                             </div>
                         </li>
                     ))}
                 </ul>
             </section>
+            )}
 
-            {/* ── Beat 3: the guide ─────────────────────────────────────── */}
+            {/* ── The guide ─────────────────────────────────────────────── */}
             {guide && (
                 <section className="mt-10 rounded-lg border border-line p-5">
                     <h2 className="text-sm font-medium text-ink-soft">{t('daily.guide_title')}</h2>

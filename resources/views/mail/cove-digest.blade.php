@@ -38,10 +38,6 @@
 {{ __('site.cove_mail.more_on_page', ['count' => $digest['omitted']]) }}
 @endif
 
-@if ($digest['hasPuzzle'])
-{{ __('site.cove_mail.puzzle_tease') }}
-@endif
-
 <x-mail::button :url="$editionUrl">
 {{ __('site.cove_mail.digest_button') }}
 </x-mail::button>

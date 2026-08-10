@@ -125,7 +125,6 @@ class HomeController extends Controller
             'date' => $edition->drop_date->toDateString(),
             'label' => $edition->drop_date->format('j M'),
             'url' => $current->url('daily'),
-            'hasPuzzle' => $edition->challenge_group_id !== null,
             // A few, not all: the front page is an invitation to the edition,
             // not a copy of it.
             'finds' => $edition->picks

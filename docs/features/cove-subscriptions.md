@@ -22,7 +22,7 @@ Two separate Amazon rules apply to email, and dropping the affiliate link clears
 So an email carrying an Amazon product's title breaches the second rule even when every link points at
 brandcoves.com. See [amazon-compliance.md](amazon-compliance.md).
 
-The email therefore carries our own words, up to four non-Amazon finds, a tease of the puzzle and one
+The email therefore carries our own words, up to four non-Amazon finds and one
 link. **A digest with nothing to filter cannot be got wrong later** — the alternative, a full edition
 with Amazon items stripped, makes every future template inherit a filter someone has to remember.
 
@@ -103,7 +103,7 @@ Three guards, each closing a way this could embarrass us:
 - **No published edition, no email.** A digest linking to a page that does not exist is worse than
   silence.
 - **No sendable content, no email.** `DigestBuilder` returns null when every find is Amazon-sourced and
-  there is no puzzle. A mail that only says "a page exists" teaches people the digest is not worth
+  A mail that only says "a page exists" teaches people the digest is not worth
   opening — the one irreversible thing a daily email can do.
 - **`last_sent_on` per subscriber.** A retried job that already mailed half the list must not mail that
   half again. Written immediately after each send, so a crash costs one duplicate rather than two

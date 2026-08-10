@@ -48,7 +48,7 @@ class EditionController extends Controller
         $edition = DailyPickSet::query()
             ->where('market', $resolved->value)
             ->whereDate('drop_date', $day->toDateString())
-            ->with(['picks.group', 'guide', 'challengeGroup'])
+            ->with(['picks.group', 'guide'])
             ->first();
 
         if ($edition === null) {
@@ -99,21 +99,6 @@ class EditionController extends Controller
                     ])
                     ->values()
                     ->all(),
-
-                /*
-                 * The answer is present here and nowhere else.
-                 *
-                 * On the public page it is absent from the payload until the
-                 * round is over, because a price sent "for later" is a price
-                 * anyone can read in DevTools. An editorial key is not a
-                 * player, and knowing which product carries the puzzle is part
-                 * of knowing what the page says.
-                 */
-                'challenge' => $edition->challenge_group_id === null ? null : [
-                    'groupId' => $edition->challenge_group_id,
-                    'title' => $edition->challengeGroup?->title,
-                    'priceCents' => $edition->challenge_price,
-                ],
 
                 'guide' => $edition->guide === null ? null : [
                     'id' => $edition->guide->id,

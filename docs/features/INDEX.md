@@ -24,7 +24,7 @@ cannot be recovered from a diff.
 | [sharing.md](sharing.md) | Gifting / Growth | Active |
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
-| [daily-cove.md](daily-cove.md) | Discovery / Content | In progress |
+| [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [editorial-api.md](editorial-api.md) | Content / Operations | Active |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |

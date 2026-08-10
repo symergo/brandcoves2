@@ -75,11 +75,6 @@ class DailyEditionResource extends Resource
 
                 TextColumn::make('picks_count')->counts('picks')->label('Finds'),
 
-                IconColumn::make('challenge_group_id')
-                    ->boolean()
-                    ->label('Puzzle')
-                    ->tooltip('An edition with no puzzle found no product whose price may be frozen — see the compliance note in EditionBuilder.'),
-
                 IconColumn::make('guide_id')->boolean()->label('Guide'),
                 TextColumn::make('published_at')->dateTime()->sortable(),
             ])

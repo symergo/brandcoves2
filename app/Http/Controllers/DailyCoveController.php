@@ -7,12 +7,10 @@ namespace App\Http\Controllers;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Guide;
-use App\Services\Cove\PriceHunt;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
-use App\Support\Owner;
 use App\Support\PreviewAccess;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -37,7 +35,6 @@ class DailyCoveController extends Controller
     public function __invoke(
         Request $request,
         CurrentMarket $current,
-        PriceHunt $hunt,
         string $market,
         ?string $date = null,
     ): Response {
@@ -50,9 +47,6 @@ class DailyCoveController extends Controller
         if ($edition === null) {
             throw new NotFoundHttpException;
         }
-
-        $owner = Owner::fromRequest($request);
-        $attempt = $hunt->existingAttempt($edition, $owner);
 
         $this->seo($edition, $current, $date !== null, $preview && ! $edition->isPublished());
 
@@ -78,17 +72,8 @@ class DailyCoveController extends Controller
                 'editorial' => $this->editorial($edition, $current),
             ],
 
-            /*
-             * Beat 1. The answer is absent from this payload until the round is
-             * over — not hidden in the UI, absent. A price sent "for later" is
-             * a price anyone can read in DevTools, and one person doing that
-             * ruins the shared-puzzle premise for everyone they post to.
-             */
-            'challenge' => $this->challenge($edition, $hunt, $attempt),
-
             'finds' => $this->finds($edition, $current),
             'guide' => $this->guide($edition, $current),
-            'streak' => $hunt->streak($owner),
             'archive' => $this->archive($current, $edition),
         ]);
     }
@@ -136,6 +121,21 @@ class DailyCoveController extends Controller
      *
      * @return list<string>
      */
+    /**
+     * The article, paragraph by paragraph, each carrying the products it names.
+     *
+     * The page used to be prose and then a grid: everything the writing was
+     * about sat below everything the writing said, so a paragraph discussing a
+     * kettle pointed at a card three screens down and the reader had to hold the
+     * name in their head to find it. That is a catalogue with an introduction,
+     * not an editorial.
+     *
+     * The pairing is already in the copy. A `[[product:12]]` token is the writer
+     * saying "this paragraph is about that thing"; reading the ids back out per
+     * paragraph is what lets the product appear where it is being discussed.
+     *
+     * @return list<array{html: string, groupIds: list<int>}>
+     */
     private function editorial(DailyPickSet $edition, CurrentMarket $current): array
     {
         if (blank($edition->editorial)) {
@@ -155,37 +155,44 @@ class DailyCoveController extends Controller
                 ->all(),
         ];
 
-        return app(CoveMarkup::class)
-            ->paragraphs((string) $edition->editorial, $current->get(), $allowed)['html'];
-    }
+        $markup = app(CoveMarkup::class);
+        $paragraphs = preg_split('/\R{2,}/u', trim((string) $edition->editorial)) ?: [];
 
-    /** @return array<string, mixed>|null */
-    private function challenge(DailyPickSet $edition, PriceHunt $hunt, $attempt): ?array
-    {
-        $group = $edition->challengeGroup;
+        $out = [];
+        $used = [];
 
-        if ($group === null || $edition->challenge_price === null) {
-            return null;
+        foreach ($paragraphs as $paragraph) {
+            if (trim($paragraph) === '') {
+                continue;
+            }
+
+            preg_match_all('/\[\[product:(\d+)/u', $paragraph, $matches);
+
+            /*
+             * Only ids the article was allowed to mention, and only the first
+             * time each appears. A token naming a product that is not in today's
+             * edition renders as plain text (see `CoveMarkup::render()`), and
+             * repeating the same card because the copy repeats the name would
+             * read as a stutter.
+             */
+            $ids = [];
+
+            foreach ($matches[1] as $id) {
+                $id = (int) $id;
+
+                if (isset($allowed['products'][$id]) && ! isset($used[$id])) {
+                    $used[$id] = true;
+                    $ids[] = $id;
+                }
+            }
+
+            $out[] = [
+                'html' => $markup->render($paragraph, $current->get(), $allowed)['html'],
+                'groupIds' => $ids,
+            ];
         }
 
-        $state = $hunt->state($attempt, (int) $edition->challenge_price);
-
-        return [
-            'title' => $group->title,
-            'brand' => $group->brand,
-            'image' => $group->image_url,
-            'category' => $group->category,
-            'merchantCount' => $group->merchant_count,
-            'maxAttempts' => PriceHunt::MAX_ATTEMPTS,
-            ...$state,
-            // Only once the round is over, so the link cannot be used to look
-            // the answer up mid-round.
-            'productUrl' => $state['finished']
-                ? "/{$edition->market->value}/p/{$group->id}/{$group->slug}"
-                : null,
-            'community' => $state['finished'] ? $hunt->communityResult($edition) : null,
-            'shareLabel' => $edition->drop_date->format('j M'),
-        ];
+        return $out;
     }
 
     /** @return list<array<string, mixed>> */

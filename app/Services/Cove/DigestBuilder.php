@@ -110,11 +110,11 @@ class DigestBuilder
         }
 
         /*
-         * An email with no finds and no puzzle is a notification that a page
-         * exists. Sending one teaches people the digest is not worth opening,
-         * which is the only irreversible thing a daily email can do.
+         * An email with no finds is a notification that a page exists. Sending
+         * one teaches people the digest is not worth opening, which is the only
+         * irreversible thing a daily email can do.
          */
-        if ($eligible === [] && $edition->challenge_group_id === null) {
+        if ($eligible === []) {
             return null;
         }
 
@@ -126,7 +126,6 @@ class DigestBuilder
             'lead' => $this->lead($edition),
             'date' => $edition->drop_date->toDateString(),
             'url' => $base.'/daily/'.$edition->drop_date->toDateString(),
-            'hasPuzzle' => $edition->challenge_group_id !== null,
             'finds' => $eligible,
             'omitted' => $omitted,
         ];

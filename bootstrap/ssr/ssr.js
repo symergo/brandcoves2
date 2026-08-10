@@ -34805,51 +34805,15 @@ function CoveSubscribe({ source = "daily" }) {
 //#endregion
 //#region resources/js/Pages/Daily/Edition.tsx
 var Edition_exports = /* @__PURE__ */ __exportAll({ default: () => Edition });
-var EMOJI = {
-	exact: ["🎯", "🎯"],
-	warm: ["🟩", "🟩"],
-	cool: ["🔼", "🔽"],
-	cold: ["⬆️", "⬇️"]
-};
-function Edition({ preview = false, edition, challenge, finds, guide, streak, archive }) {
+function Edition({ preview = false, edition, finds, guide, archive }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
-	const [state, setState] = (0, import_react.useState)(challenge);
-	const [guess, setGuess] = (0, import_react.useState)("");
-	const [busy, setBusy] = (0, import_react.useState)(false);
-	const [copied, setCopied] = (0, import_react.useState)(false);
-	const [streakState, setStreakState] = (0, import_react.useState)(streak);
 	const [reactions, setReactions] = (0, import_react.useState)({});
 	const [counts, setCounts] = (0, import_react.useState)(Object.fromEntries(finds.map((f) => [f.id, {
 		mindblown: f.mindblown,
 		meh: f.meh
 	}])));
 	const csrf = () => document.querySelector("meta[name=\"csrf-token\"]")?.content ?? "";
-	const submitGuess = async () => {
-		if (guess === "" || busy || state?.finished) return;
-		setBusy(true);
-		try {
-			const response = await fetch(`/${market.key}/daily/${edition.date}/guess`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"X-CSRF-TOKEN": csrf(),
-					Accept: "application/json"
-				},
-				body: JSON.stringify({ guess: Number(guess) })
-			});
-			if (!response.ok) return;
-			const data = await response.json();
-			setState({
-				...state,
-				...data
-			});
-			setStreakState(data.streak ?? streakState);
-			setGuess("");
-		} finally {
-			setBusy(false);
-		}
-	};
 	const react = async (pickId, reaction) => {
 		const response = await fetch(`/${market.key}/picks/${pickId}/react`, {
 			method: "POST",
@@ -34874,21 +34838,20 @@ function Edition({ preview = false, edition, challenge, finds, guide, streak, ar
 			}
 		});
 	};
-	const shareText = () => {
-		const row = (state?.bands ?? []).map((entry) => (EMOJI[entry.band] ?? EMOJI.cold)[entry.over ? 1 : 0]).join("");
-		const score = state?.solved ? `${(state?.bands ?? []).length}/${state?.maxAttempts}` : `X/${state?.maxAttempts}`;
-		return `Brandcoves ${state?.shareLabel} ${score}\n${row}`;
-	};
-	const share = async () => {
-		const text = shareText();
-		if (navigator.share) try {
-			await navigator.share({ text });
-			return;
-		} catch {}
-		await navigator.clipboard.writeText(text);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2e3);
-	};
+	const byGroup = Object.fromEntries(finds.map((f) => [f.groupId, f]));
+	const named = new Set(edition.editorial.flatMap((block) => block.groupIds));
+	const rest = finds.filter((find) => !named.has(find.groupId));
+	const reactionButtons = (find) => ["mindblown", "meh"].map((kind) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+		type: "button",
+		"aria-pressed": reactions[find.id] === kind,
+		className: `rounded-full border px-3 py-1 text-sm ${reactions[find.id] === kind ? "border-accent" : "border-line"}`,
+		onClick: () => react(find.id, kind),
+		children: [
+			kind === "mindblown" ? "🤯" : "😐",
+			" ",
+			n(counts[find.id]?.[kind] ?? 0)
+		]
+	}, kind));
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		preview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PreviewBanner, {}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: edition.theme }),
@@ -34914,114 +34877,63 @@ function Edition({ preview = false, edition, challenge, finds, guide, streak, ar
 			]
 		}),
 		edition.editorial.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "mt-6 max-w-2xl space-y-3 leading-relaxed text-ink [&_a]:underline",
-			children: edition.editorial.map((paragraph, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { dangerouslySetInnerHTML: { __html: paragraph } }, i))
-		}),
-		state && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-			className: "mt-8 rounded-lg border border-line bg-card p-5",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "flex items-baseline justify-between gap-3",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "font-medium",
-					children: t("daily.hunt_title")
-				}), streakState.current > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-					className: "text-sm text-ink-soft",
-					children: ["🔥 ", t("daily.streak", { days: n(streakState.current) })]
-				})]
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "mt-4 flex flex-col gap-4 sm:flex-row",
-				children: [state.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-					src: state.image,
-					alt: "",
-					className: "h-40 w-40 shrink-0 self-center object-contain"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mt-6 max-w-2xl leading-relaxed text-ink",
+			children: edition.editorial.map((block, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 [&_a]:underline",
+				dangerouslySetInnerHTML: { __html: block.html }
+			}), block.groupIds.map((id) => byGroup[id]).filter(Boolean).map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figure", {
+				className: "my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					href: find.url,
+					className: "shrink-0",
+					children: find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: find.image,
+						alt: "",
+						loading: "lazy",
+						className: "mx-auto h-32 w-32 object-contain"
+					})
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figcaption", {
 					className: "min-w-0 flex-1",
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "font-medium",
-							children: state.title
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+							href: find.url,
+							className: "font-medium hover:underline",
+							children: find.title
 						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						find.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 							className: "mt-1 text-sm text-ink-soft",
-							children: t("daily.hunt_prompt")
+							children: find.blurb
 						}),
-						state.bands.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-3 text-2xl",
-							"aria-label": t("daily.your_guesses"),
-							children: state.bands.map((entry, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: (EMOJI[entry.band] ?? EMOJI.cold)[entry.over ? 1 : 0] }, i))
-						}),
-						!state.finished ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "mt-3 flex flex-wrap items-center gap-2",
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-3 flex flex-wrap items-center gap-3",
 							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-									className: "sr-only",
-									htmlFor: "guess",
-									children: t("daily.hunt_prompt")
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									id: "guess",
-									type: "number",
-									min: "0",
-									step: "0.01",
-									inputMode: "decimal",
-									className: "w-32 rounded border border-line px-3 py-2",
-									value: guess,
-									onChange: (e) => setGuess(e.target.value),
-									onKeyDown: (e) => e.key === "Enter" && submitGuess()
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									className: "rounded bg-accent px-4 py-2 font-medium text-white disabled:opacity-50",
-									onClick: submitGuess,
-									disabled: busy || guess === "",
-									children: t("daily.guess")
-								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "text-sm text-ink-soft",
-									children: t("daily.tries_left", { count: n(state.attemptsLeft) })
-								})
-							]
-						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "mt-4 space-y-2",
-							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-									className: "text-lg font-semibold",
-									children: [state.solved ? t("daily.solved") : t("daily.missed"), state.answer !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [" — ", formatPrice(state.answer, market)] })]
+									className: "font-semibold",
+									children: find.price === null ? "—" : formatPrice(find.price, market)
 								}),
-								state.community?.solvedPercent !== null && state.community !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "text-sm text-ink-soft",
-									children: t("daily.community", {
-										percent: n(state.community.solvedPercent ?? 0),
-										players: n(state.community.players)
-									})
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+									href: find.url,
+									className: "text-sm text-accent underline",
+									children: t("daily.see_offers")
 								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-									className: "flex flex-wrap gap-3 pt-1",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-										type: "button",
-										className: "rounded border border-line px-4 py-2 text-sm",
-										onClick: share,
-										children: copied ? t("daily.copied") : t("daily.share")
-									}), state.productUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-										href: state.productUrl,
-										className: "rounded bg-accent px-4 py-2 text-sm font-medium text-white",
-										children: t("daily.see_offers")
-									})]
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+									className: "ml-auto flex items-center gap-2",
+									children: [reactionButtons(find), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.groupId })]
 								})
 							]
 						})
 					]
 				})]
-			})]
+			}, find.id))] }, i))
 		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+		rest.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-10",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 				className: "text-sm font-medium text-ink-soft",
 				children: t("daily.finds_title")
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 				className: "mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3",
-				children: finds.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				children: rest.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 					className: "flex flex-col rounded-lg border border-line bg-card p-4",
 					children: [
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
@@ -35049,18 +34961,8 @@ function Edition({ preview = false, edition, challenge, finds, guide, streak, ar
 									children: find.price === null ? "—" : formatPrice(find.price, market)
 								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.groupId })]
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-								className: "flex gap-2 text-sm",
-								children: ["mindblown", "meh"].map((kind) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-									type: "button",
-									"aria-pressed": reactions[find.id] === kind,
-									className: `rounded-full border px-3 py-1 ${reactions[find.id] === kind ? "border-accent" : "border-line"}`,
-									onClick: () => react(find.id, kind),
-									children: [
-										kind === "mindblown" ? "🤯" : "😐",
-										" ",
-										n(counts[find.id]?.[kind] ?? 0)
-									]
-								}, kind))
+								className: "flex gap-2",
+								children: reactionButtons(find)
 							})]
 						})
 					]
@@ -36060,21 +35962,14 @@ function Home({ stats, today, gifting, coves }) {
 				children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "flex flex-wrap items-baseline gap-x-3 gap-y-1",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent",
-								children: t("home.today_badge")
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("time", {
-								dateTime: today.date,
-								className: "text-sm text-ink-soft",
-								children: today.label
-							}),
-							today.hasPuzzle && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-								className: "text-sm text-ink-soft",
-								children: ["· ", t("home.today_puzzle")]
-							})
-						]
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent",
+							children: t("home.today_badge")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("time", {
+							dateTime: today.date,
+							className: "text-sm text-ink-soft",
+							children: today.label
+						})]
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						id: "today-heading",

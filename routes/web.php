@@ -7,7 +7,6 @@ use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BrandController;
-use App\Http\Controllers\ChallengeController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
 use App\Http\Controllers\CoveSubscriptionController;
@@ -366,13 +365,6 @@ Route::prefix('{market}')->group(function () {
     Route::get('/daily/{date}', DailyCoveController::class)
         ->where('date', '\d{4}-\d{2}-\d{2}')
         ->name('daily.edition');
-
-    // Throttled per minute: four guesses is a whole round, so anything much
-    // above that is someone probing for the answer.
-    Route::post('/daily/{date}/guess', ChallengeController::class)
-        ->where('date', '\d{4}-\d{2}-\d{2}')
-        ->middleware('throttle:20,1')
-        ->name('daily.guess');
 
     /*
     |----------------------------------------------------------------------

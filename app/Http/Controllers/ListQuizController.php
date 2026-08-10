@@ -165,8 +165,9 @@ class ListQuizController extends Controller
      * spoiler so posting it costs the poster nothing, and everyone playing the
      * same quiz makes a posted result a conversation.
      *
-     * Readable without colour, per `GuessBand::emoji()` — a row of squares has to
-     * survive being pasted into a plain-text message.
+     * Readable without colour — a row of squares has to survive being pasted
+     * into a plain-text message, and roughly 8% of men cannot tell red from
+     * green.
      */
     private function grid(ListQuizAttempt $attempt, ListQuiz $quiz): string
     {

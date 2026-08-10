@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Cove;
 
 use App\Enums\Market;
-use App\Enums\ProductStatus;
 use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Models\CovePlan;
@@ -89,8 +88,6 @@ class EditionBuilder
             return null;
         }
 
-        $challenge = $this->challenge($market, $finds);
-
         /*
          * An observance names the day; otherwise the model (or the curated
          * rotation) names it.
@@ -119,7 +116,7 @@ class EditionBuilder
 
         $editorial = $this->editorial($market, $finds, $observance, $theme['title'], $plan);
 
-        return DB::transaction(function () use ($market, $date, $finds, $challenge, $theme, $editorial, $plan): DailyPickSet {
+        return DB::transaction(function () use ($market, $date, $finds, $theme, $editorial, $plan): DailyPickSet {
             $edition = DailyPickSet::updateOrCreate(
                 ['market' => $market->value, 'drop_date' => $date->toDateString()],
                 [
@@ -129,9 +126,6 @@ class EditionBuilder
                     'theme_source' => $theme['source'],
                     'editorial' => $editorial['text'],
                     'editorial_source' => $editorial['source'],
-                    'challenge_group_id' => $challenge?->id,
-                    'challenge_price' => $challenge?->min_price,
-                    'challenge_reveal' => null,
                     'guide_id' => $this->guide($market)?->id,
                     'status' => PublishStatus::Published->value,
                     'published_at' => $date->setTimeFromTimeString(
@@ -499,49 +493,6 @@ class EditionBuilder
         }
 
         return $picked;
-    }
-
-    /**
-     * The product whose price gets guessed.
-     *
-     * Picked from the finds so the puzzle and the set are the same story, and
-     * the frozen answer is the group's cheapest price at build time.
-     *
-     * COMPLIANCE: only a group with at least one offer from a source that
-     * permits retained pricing can be the subject. A source that requires a live
-     * re-fetch cannot have its price frozen for twelve hours and then scored
-     * against — the answer might no longer be the answer.
-     * See docs/features/amazon-compliance.md.
-     *
-     * @param  list<ProductGroup>  $finds
-     */
-    private function challenge(Market $market, array $finds): ?ProductGroup
-    {
-        $storable = array_values(array_filter(
-            Source::values(),
-            fn (string $s) => Source::from($s)->allowsPriceTracking(),
-        ));
-
-        foreach ($finds as $group) {
-            if ($group->min_price === null || $group->min_price < 1000) {
-                // Under €10 the bands are meaninglessly wide and the guess is
-                // not interesting.
-                continue;
-            }
-
-            $eligible = DB::table('products')
-                ->where('group_id', $group->id)
-                ->where('status', ProductStatus::Active->value)
-                ->whereIn('source', $storable)
-                ->where('price', $group->min_price)
-                ->exists();
-
-            if ($eligible) {
-                return $group;
-            }
-        }
-
-        return null;
     }
 
     /**

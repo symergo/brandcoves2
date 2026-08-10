@@ -121,6 +121,6 @@ dated image even at its own undated URL, so a post from last Tuesday keeps showi
 theme.
 
 **It applies the page's rules.** The Daily Cove refuses a future date because guessing tomorrow's
-puzzle by URL would be an obvious hole in a daily game, and it refuses an unpublished edition. A card
+tomorrow's edition by URL would leak a draft, and it refuses an unpublished edition. A card
 is a URL that renders the theme in 60pt type, so it refuses both as well. An image endpoint that
 skips a page's access rules is that page's access rules with an extension on the end.
