@@ -38208,6 +38208,164 @@ function SantaIndex({ groups, isSignedIn }) {
 	] });
 }
 //#endregion
+//#region resources/js/Pages/Santa/Join.tsx
+var Join_exports = /* @__PURE__ */ __exportAll({ default: () => SantaJoin });
+/**
+* The page an invite link opens.
+*
+* There was none. `join` was a POST-only route and the invite the organiser
+* shares is that exact URL, so every link sent through a group chat answered
+* with 405 Method Not Allowed — and since no join form existed anywhere either,
+* nobody but the organiser had ever been in a group.
+*
+* No account asked for. Requiring a login before somebody can be in an office
+* Secret Santa is how most of the office does not join; the email is what the
+* draw needs to reach them, and the join token is what gets them back in.
+*/
+function SantaJoin({ group, members, you }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	const form = useForm({
+		display_name: you.name ?? "",
+		email: you.email ?? "",
+		exclusions: ""
+	});
+	const budget = group.budgetMax === null ? null : group.budgetMin === null || group.budgetMin === group.budgetMax ? formatPrice(group.budgetMax, market) : `${formatPrice(group.budgetMin, market)} – ${formatPrice(group.budgetMax, market)}`;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
+		title: group.title,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("meta", {
+			name: "robots",
+			content: "noindex, nofollow"
+		})
+	}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mx-auto max-w-xl",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-xs tracking-wide text-ink-soft uppercase",
+				children: t("santa.title")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "mt-1 text-2xl font-semibold",
+				children: group.title
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
+				className: "mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink-soft",
+				children: [
+					budget && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dt", {
+						className: "inline",
+						children: [t("santa.budget"), ": "]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+						className: "inline font-medium text-ink",
+						children: budget
+					})] }),
+					group.exchangeDate && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dt", {
+						className: "inline",
+						children: [t("santa.exchange_date"), ": "]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+						className: "inline font-medium text-ink",
+						children: group.exchangeDate
+					})] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dt", {
+						className: "inline",
+						children: [t("santa.members"), ": "]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+						className: "inline font-medium text-ink",
+						children: n(group.members)
+					})] })
+				]
+			}),
+			group.theme && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-ink-soft",
+				children: group.theme
+			}),
+			members.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-4 text-sm text-ink-soft",
+				children: members.join(", ")
+			}),
+			group.drawn ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-8 rounded-card border border-amber/40 bg-amber/10 p-4",
+				children: t("santa.already_drawn")
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "mt-8 space-y-4 rounded-card border border-line bg-card p-5",
+				onSubmit: (e) => {
+					e.preventDefault();
+					form.transform((data) => ({
+						...data,
+						exclusions: data.exclusions.split(",").map((value) => value.trim()).filter(Boolean)
+					}));
+					form.post(`/${market.key}/santa/${group.id}/join/${group.token}`);
+				},
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+							className: "block text-sm font-medium",
+							htmlFor: "display_name",
+							children: t("santa.your_name")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							id: "display_name",
+							required: true,
+							maxLength: 80,
+							value: form.data.display_name,
+							onChange: (e) => form.setData("display_name", e.target.value),
+							className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
+						}),
+						form.errors.display_name && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-sm text-accent",
+							children: form.errors.display_name
+						})
+					] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+							className: "block text-sm font-medium",
+							htmlFor: "email",
+							children: t("santa.your_email")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							id: "email",
+							type: "email",
+							required: true,
+							value: form.data.email,
+							onChange: (e) => form.setData("email", e.target.value),
+							className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-xs text-ink-soft",
+							children: t("santa.email_hint")
+						}),
+						form.errors.email && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-sm text-accent",
+							children: form.errors.email
+						})
+					] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+							className: "block text-sm font-medium",
+							htmlFor: "exclusions",
+							children: t("santa.exclusions")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							id: "exclusions",
+							value: form.data.exclusions,
+							onChange: (e) => form.setData("exclusions", e.target.value),
+							className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-xs text-ink-soft",
+							children: t("santa.exclusions_hint")
+						})
+					] }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						disabled: form.processing,
+						className: "rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-60",
+						children: t("santa.join")
+					})
+				]
+			})
+		]
+	})] });
+}
+//#endregion
 //#region resources/js/Pages/Santa/Me.tsx
 var Me_exports = /* @__PURE__ */ __exportAll({ default: () => SantaMe });
 /**
@@ -59287,6 +59445,7 @@ server_default((page) => createInertiaApp({
 			"./Pages/Recipients/SelfDescribe.tsx": SelfDescribe_exports,
 			"./Pages/Santa/Group.tsx": Group_exports,
 			"./Pages/Santa/Index.tsx": Index_exports,
+			"./Pages/Santa/Join.tsx": Join_exports,
 			"./Pages/Santa/Me.tsx": Me_exports,
 			"./Pages/Scan.tsx": Scan_exports,
 			"./Pages/Search.tsx": Search_exports,

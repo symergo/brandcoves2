@@ -102,46 +102,56 @@ class PageNarrative
     /**
      * Sections for a brand page.
      *
-     * Same structure, different framing: a brand page's reader has already
-     * decided on the brand and is choosing between its products and between the
-     * shops that sell them.
+     * The reader typed a brand name, so the first section is about the brand:
+     * what it makes here, and what that says about it in this market. The
+     * comparison mechanics that used to open the page are true and were never
+     * the question — they now come after, where they answer "how do I choose
+     * one" rather than standing in for "what is this".
      *
      * @param  list<ProductGroup>  $items
+     * @param  list<string>  $categories  what the brand makes here, most first
      * @return array{sections: list<array{heading: string, body: list<string>}>, faq: list<array{q: string, a: string}>, related: list<array{term: string, url: string}>}
      */
-    public function forBrand(string $brand, array $items, Market $market, int $total, ?string $topMerchant, ?string $category): array
-    {
+    public function forBrand(
+        string $brand,
+        array $items,
+        Market $market,
+        int $total,
+        ?string $topMerchant,
+        ?string $category,
+        array $categories = [],
+    ): array {
         $facts = $this->facts($items, $market);
         $replace = [
             'brand' => $brand,
             'shop' => $topMerchant ?? '',
             'category' => $category ?? '',
+            'categories' => $this->list(array_slice($categories, 0, 3), $market),
             'count' => Number::format($total, locale: $market->hrefLang()),
             ...$facts['replace'],
         ];
 
         $sections = [
             [
-                'heading' => $this->line('brand_narrative.compare_heading', $market, $replace),
+                'heading' => $this->line('brand_narrative.about_heading', $market, $replace),
                 'body' => array_values(array_filter([
-                    $this->line('brand_narrative.compare_1', $market, $replace),
-                    $facts['comparable'] > 0 ? $this->line('brand_narrative.compare_2', $market, $replace) : null,
-                    $topMerchant !== null ? $this->line('brand_narrative.compare_3', $market, $replace) : null,
+                    $categories !== [] ? $this->line('brand_narrative.about_1', $market, $replace) : null,
+                    $category !== null ? $this->line('brand_narrative.about_2', $market, $replace) : null,
+                    $this->line('brand_narrative.about_3', $market, $replace),
                 ])),
             ],
             [
-                'heading' => $this->line('brand_narrative.prices_heading', $market, $replace),
+                'heading' => $this->line('brand_narrative.stocked_heading', $market, $replace),
                 'body' => array_values(array_filter([
-                    $facts['hasPrices'] ? $this->line('brand_narrative.prices_1', $market, $replace) : null,
-                    $this->line('brand_narrative.prices_2', $market, $replace),
-                    $facts['reduced'] > 0 ? $this->line('brand_narrative.prices_3', $market, $replace) : null,
+                    $topMerchant !== null ? $this->line('brand_narrative.stocked_1', $market, $replace) : null,
+                    $facts['comparable'] > 0 ? $this->line('brand_narrative.stocked_2', $market, $replace) : null,
                 ])),
             ],
             [
                 'heading' => $this->line('brand_narrative.choosing_heading', $market, $replace),
                 'body' => array_values(array_filter([
-                    $category !== null ? $this->line('brand_narrative.choosing_1', $market, $replace) : null,
-                    $this->line('brand_narrative.choosing_2', $market, $replace),
+                    $this->line('brand_narrative.choosing_1', $market, $replace),
+                    $facts['hasPrices'] ? $this->line('brand_narrative.choosing_2', $market, $replace) : null,
                     $this->line('brand_narrative.choosing_3', $market, $replace),
                 ])),
             ],
@@ -152,6 +162,22 @@ class PageNarrative
             'faq' => $this->brandFaq($market, $replace, $facts),
             'related' => $this->related($brand, $market),
         ];
+    }
+
+    /**
+     * "a, b and c", in the market's language.
+     *
+     * @param  list<string>  $items
+     */
+    private function list(array $items, Market $market): string
+    {
+        if (count($items) < 2) {
+            return implode('', $items);
+        }
+
+        $last = array_pop($items);
+
+        return implode(', ', $items).' '.__('site.brand.and', [], $market->language()).' '.$last;
     }
 
     /**

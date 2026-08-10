@@ -142,6 +142,10 @@ class BrandController extends Controller
             $result->groups->total(),
             $stat->topMerchant?->name,
             $stat->top_category,
+            array_values(array_filter(array_map(
+                fn ($row) => is_array($row) ? ($row['category'] ?? null) : null,
+                (array) $stat->categories,
+            ))),
         );
 
         if ($narrative['faq'] !== []) {

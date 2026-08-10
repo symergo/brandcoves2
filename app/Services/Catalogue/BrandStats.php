@@ -58,6 +58,7 @@ class BrandStats
                     'best_discount_percent' => $row['best_discount_percent'],
                     'top_merchant_id' => $row['top_merchant_id'],
                     'top_category' => $row['top_category'],
+                    'categories' => json_encode($row['categories']),
                     'computed_at' => $now,
                 ];
             }
@@ -69,7 +70,8 @@ class BrandStats
             BrandStat::query()->upsert($payload, ['market', 'slug'], [
                 'brand', 'aliases', 'product_count', 'merchant_count', 'share',
                 'min_price', 'max_price', 'discounted_count', 'in_stock_count',
-                'best_discount_percent', 'top_merchant_id', 'top_category', 'computed_at',
+                'best_discount_percent', 'top_merchant_id', 'top_category', 'categories',
+                'computed_at',
             ]);
         }
 
@@ -203,6 +205,9 @@ class BrandStats
                 'in_stock_count' => array_sum(array_column($variants, 'in_stock_count')),
                 'best_discount_percent' => $discounts === [] ? null : max($discounts),
                 'top_merchant_id' => $this->topMerchant($market, $aliases),
+                'categories' => $this->categories($market, $aliases),
+                // Kept as its own column: it is the one the page's heading and
+                // the related-brands query read, and both want a plain string.
                 'top_category' => $this->topCategory($market, $aliases),
             ];
         }
@@ -232,6 +237,35 @@ class BrandStats
             ->first();
 
         return $row === null ? null : (int) $row->merchant_id;
+    }
+
+    /**
+     * What the brand makes here, most first.
+     *
+     * Four at most. A brand spread across nine categories is a distributor's
+     * catalogue rather than a description, and a sentence listing nine of
+     * anything stops being read at the third.
+     *
+     * @param  list<string>  $brands
+     * @return list<array{category: string, count: int}>
+     */
+    private function categories(Market $market, array $brands): array
+    {
+        return DB::table('product_groups')
+            ->where('market', $market->value)
+            ->whereIn('brand', $brands)
+            ->whereNotNull('category')
+            ->where('category', '<>', '')
+            ->selectRaw('category, count(*) AS n')
+            ->groupBy('category')
+            // Then by name, so a tie does not reshuffle the sentence between two
+            // nightly runs and read as a page that keeps changing its mind.
+            ->orderByDesc('n')
+            ->orderBy('category')
+            ->limit(4)
+            ->get()
+            ->map(fn ($row) => ['category' => (string) $row->category, 'count' => (int) $row->n])
+            ->all();
     }
 
     /** @param list<string> $brands */

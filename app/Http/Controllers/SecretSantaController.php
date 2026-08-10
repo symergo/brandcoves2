@@ -158,6 +158,64 @@ class SecretSantaController extends Controller
         return redirect()->to($current->url("santa/{$santa->id}"));
     }
 
+    /**
+     * The invite link, opened.
+     *
+     * This route was `POST` only. The URL the organiser shares — the one that
+     * goes into a WhatsApp group and is the entire point of the feature — is
+     * exactly this URL, so every invite ever sent answered a browser with 405
+     * Method Not Allowed. There was no join form anywhere either: the only way
+     * into a group was a hand-built POST, which means nobody but the organiser
+     * (auto-joined at creation) had ever been in one.
+     *
+     * No account required, deliberately. Asking someone to sign up before they
+     * can be in an office Secret Santa is how most of the office does not join.
+     */
+    public function invite(Request $request, CurrentMarket $current, string $market, string $group, string $token): Response|RedirectResponse
+    {
+        $santa = $this->find($group);
+
+        abort_unless(hash_equals($santa->invite_token, $token), 404);
+
+        // Somebody following their own invite a second time should land on their
+        // own page rather than be asked to join again.
+        $existing = $this->membership($request, $santa);
+
+        if ($existing !== null) {
+            return redirect()->to($current->url("santa/{$santa->id}/me/{$existing->join_token}"));
+        }
+
+        $user = $request->user();
+
+        return Inertia::render('Santa/Join', [
+            'group' => [
+                'id' => $santa->id,
+                'title' => $santa->title,
+                'token' => $token,
+                'budgetMin' => $santa->budget_min,
+                'budgetMax' => $santa->budget_max,
+                'exchangeDate' => $santa->exchange_date?->toDateString(),
+                'theme' => $santa->theme,
+                /*
+                 * Joining closes at the draw: a member added afterwards has
+                 * nobody to buy for and nobody buying for them. Said on the page
+                 * rather than left to a 403 after they have typed their name in.
+                 */
+                'drawn' => $santa->status->isDrawn(),
+                'members' => $santa->members()->count(),
+            ],
+
+            // Names only — who else is in is not a secret, and it is what tells
+            // somebody they are joining the right group.
+            'members' => $santa->members()->orderBy('display_name')->pluck('display_name'),
+
+            'you' => [
+                'name' => $user?->name,
+                'email' => $user?->email,
+            ],
+        ]);
+    }
+
     public function join(Request $request, CurrentMarket $current, string $market, string $group, string $token): RedirectResponse
     {
         $santa = $this->find($group);

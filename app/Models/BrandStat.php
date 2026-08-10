@@ -40,6 +40,7 @@ class BrandStat extends Model
         return [
             'market' => Market::class,
             'aliases' => 'array',
+            'categories' => 'array',
             'share' => 'float',
             'computed_at' => 'datetime',
         ];

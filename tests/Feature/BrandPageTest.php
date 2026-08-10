@@ -65,7 +65,7 @@ class BrandPageTest extends TestCase
      * the thing under test and a fixture that happens to satisfy it tests
      * nothing.
      */
-    private function seedBrand(string $brand, int $count = 4, array $overrides = []): void
+    private function seedBrand(string $brand, int $count = 4, array $overrides = [], int $offset = 0): void
     {
         // A group with no offers behind it is not searchable — `products` is what
         // carries the search vector — and `top_merchant_id` would stay null, so
@@ -77,9 +77,11 @@ class BrandPageTest extends TestCase
             ['name' => 'Testshop BE'],
         );
 
-        for ($i = 0; $i < $count; $i++) {
+        for ($i = $offset; $i < $offset + $count; $i++) {
             $group = ProductGroup::create(array_merge([
                 'market' => Market::BeNl->value,
+                // Offset, so a brand can be seeded twice — once per category —
+                // without the second call colliding on (market, identity_key).
                 'identity_key' => "test-{$brand}-{$i}",
                 'identity_kind' => 'title',
                 'title' => "{$brand} draadloze koptelefoon model {$i}",
@@ -167,6 +169,66 @@ class BrandPageTest extends TestCase
                 $paragraphs = implode(' ', $page->toArray()['props']['copy']['paragraphs']);
                 $this->assertStringNotContainsString('%', $paragraphs, 'claimed a discount with nothing reduced');
             });
+    }
+
+    #[Test]
+    public function the_copy_says_what_the_brand_makes(): void
+    {
+        $this->seedBrand('Denon');
+
+        // A second category, so the brand has a spread rather than one word.
+        $this->seedBrand('Denon', 2, ['category' => 'Televisies'], 10);
+
+        $stat = BrandStat::query()->where('brand', 'Denon')->firstOrFail();
+
+        /*
+         * `top_category` answered "mostly what?" and nothing else, so every
+         * sentence a brand page could write about the brand itself came out as
+         * one word — and the copy filled the gap with prices, medians and shop
+         * counts. Someone who arrived wanting to know what Denon is got three
+         * paragraphs about how we measure discounts.
+         */
+        $categories = array_column($stat->categories, 'category');
+
+        $this->assertContains('Audio', $categories);
+        $this->assertContains('Televisies', $categories);
+
+        $body = $this->get('/be-nl/brand/denon')->assertOk()->viewData('page')['props'];
+        $prose = json_encode($body['copy'], JSON_UNESCAPED_UNICODE);
+
+        // Named in the copy, not merely present in the payload.
+        $this->assertStringContainsString('Audio', (string) $prose);
+        $this->assertStringContainsString('Televisies', (string) $prose);
+    }
+
+    #[Test]
+    public function the_brand_is_described_before_the_price_is(): void
+    {
+        $this->seedBrand('Marantz');
+        $this->seedBrand('Marantz', 2, ['category' => 'Versterkers'], 10);
+
+        $copy = $this->get('/be-nl/brand/marantz')->assertOk()->viewData('page')['props']['copy'];
+
+        // The reader typed a brand name. The first paragraph after the lead
+        // should answer "what is this", not "how do we compute a discount".
+        $this->assertNotSame([], $copy['paragraphs']);
+        $this->assertStringContainsString('Versterkers', $copy['paragraphs'][0]);
+    }
+
+    #[Test]
+    public function a_brand_in_one_category_does_not_claim_a_range(): void
+    {
+        $this->seedBrand('Sennheiser');
+
+        $copy = $this->get('/be-nl/brand/sennheiser')->assertOk()->viewData('page')['props']['copy'];
+
+        /*
+         * The list joiner would render a single-item list as a bare word, which
+         * reads as a truncated sentence — and claiming a spread from one
+         * category would be the invented sentence this copy exists to avoid.
+         */
+        $this->assertStringContainsString('Audio', $copy['paragraphs'][0]);
+        $this->assertStringNotContainsString(', ', $copy['paragraphs'][0]);
     }
 
     #[Test]

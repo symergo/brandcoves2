@@ -46,21 +46,90 @@ use Illuminate\Support\Number;
 class BrandCopy
 {
     /**
+     * The page opened with price mechanics, which is not what the reader came for.
+     *
+     * Someone landing on `/brand/karcher` has typed a brand name. The first
+     * thing they want is what this brand is — and every sentence here was about
+     * ranges, 30-day medians and how many shops we track, so the answer to
+     * "what is Kärcher" was three paragraphs about how we measure discounts.
+     *
+     * The order now follows the question: what they make, how widely it is
+     * stocked, then what it costs. Price is still here and still true; it has
+     * stopped being the subject.
+     *
      * @return array{lead: string, paragraphs: list<string>}
      */
     public function forBrand(BrandStat $stat, Market $market): array
     {
-        $brand = $stat->brand;
-
         return [
             'lead' => $this->lead($stat, $market),
             'paragraphs' => array_values(array_filter([
+                $this->range($stat, $market),
                 $this->availability($stat, $market),
                 $this->prices($stat, $market),
                 $this->discounts($stat, $market),
-                $this->comparison($stat, $market),
             ])),
         ];
+    }
+
+    /**
+     * What the brand makes, in this market.
+     *
+     * The one genuinely descriptive fact the catalogue holds. Three categories
+     * say more about a brand than any number does: "pressure washers, vacuums
+     * and garden tools" is a description, and "€39 to €1,299" is not.
+     *
+     * Market-scoped and stated as such. A brand's worldwide catalogue and the
+     * part of it sold in Belgium are different things, and claiming the first
+     * from evidence of the second is the invented sentence this class exists to
+     * avoid.
+     */
+    private function range(BrandStat $stat, Market $market): ?string
+    {
+        $categories = array_values(array_filter(array_map(
+            fn ($row) => is_array($row) ? ($row['category'] ?? null) : null,
+            (array) $stat->categories,
+        )));
+
+        if ($categories === []) {
+            return null;
+        }
+
+        // One category is not a range, and "Sony makes headphones" said of a
+        // brand that also makes televisions would be wrong the moment the
+        // catalogue grew.
+        if (count($categories) === 1) {
+            return $this->line('range_single', $market, [
+                'brand' => $stat->brand,
+                'category' => $categories[0],
+            ]);
+        }
+
+        return $this->line('range_multi', $market, [
+            'brand' => $stat->brand,
+            'categories' => $this->list(array_slice($categories, 0, 3), $market),
+            'category' => $categories[0],
+        ]);
+    }
+
+    /**
+     * "a, b and c" — in the market's language.
+     *
+     * `Number::format`-style joining rather than `implode(', ')`, because a list
+     * ending in a comma reads as truncated and the conjunction differs per
+     * language.
+     *
+     * @param  list<string>  $items
+     */
+    private function list(array $items, Market $market): string
+    {
+        if (count($items) < 2) {
+            return implode('', $items);
+        }
+
+        $last = array_pop($items);
+
+        return implode(', ', $items).' '.__('site.brand.and', [], $market->language()).' '.$last;
     }
 
     /**
@@ -169,22 +238,6 @@ class BrandCopy
             'brand' => $stat->brand,
             'count' => $stat->discounted_count,
         ]);
-    }
-
-    /**
-     * What the page is actually for.
-     *
-     * Worth saying explicitly on every brand page, because it is the one claim
-     * that distinguishes this from a shop's own brand listing: the prices here
-     * come from several shops at once.
-     */
-    private function comparison(BrandStat $stat, Market $market): ?string
-    {
-        if ($stat->merchant_count < 2) {
-            return null;
-        }
-
-        return $this->line('comparison', $market, ['brand' => $stat->brand]);
     }
 
     /**

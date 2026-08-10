@@ -125,22 +125,24 @@ return [
         'empty' => 'Ahora mismo no hay nada de :brand en stock.',
         'empty_hint' => 'Los precios y el stock se revisan dos veces al día, así que esta página cambia.',
 
-        'lead' => '¿Buscas :brand? Seguimos :count productos de :brand y comparamos lo que cobra cada tienda por ellos.',
-        'lead_2' => 'Ahora mismo hay :count productos de :brand en el catálogo, con todas las ofertas de cada uno una al lado de otra.',
-        'lead_3' => 'Estos son todos los productos de :brand para los que encontramos un precio en vivo, :count en total, en las tiendas que realmente venden la marca.',
-        'lead_4' => ':count productos de :brand, una página, el precio de cada tienda en cada uno.',
+        'lead' => 'Hay :count productos de :brand en este mercado, y esta página reúne lo que sabemos de cada uno.',
+        'lead_2' => ':brand, tal como se vende aquí: :count productos, recogidos de todas las tiendas que seguimos.',
+        'lead_3' => 'Esto es :brand en este mercado: :count productos, una ficha por producto y no una por anuncio.',
+        'lead_4' => ':count productos de :brand, todo lo que tenemos sobre la marca en un sitio.',
 
-        'shops_named' => ':shop tiene más :brand que cualquier otra tienda que sigamos, y :count tiendas en total venden la marca, que es justo lo que hace que valga la pena comparar aquí abajo.',
-        'shops_count' => ':count tienda vende :brand en este momento.',
+        'shops_named' => ':shop tiene más :brand que cualquier otra tienda que sigamos, y :count tiendas en total venden la marca. Una marca que venden varias tiendas tiene un precio de mercado; la que vende una sola tiene un precio y nada con qué contrastarlo.',
+        'shops_count' => ':count tienda vende :brand ahora mismo, así que todavía no hay nada que comparar.',
 
-        'price_from' => ':brand empieza aquí en :low.',
-        'price_range' => 'Los precios de :brand van de :low a :high en esta página.',
-        'price_range_category' => 'Los precios de :brand van de :low a :high, y la mayoría de lo que tenemos es :category.',
+        'price_from' => 'Lo más barato de :brand aquí son :low.',
+        'price_range' => ':brand va aquí de :low a :high: una gama de productos, no una gama de márgenes.',
+        'price_range_category' => ':brand va aquí de :low a :high, y la mayor parte es :category. Lo más barato y lo más caro son objetos distintos, no el mismo a dos precios.',
 
-        'discount_named' => ':shop tiene descuentos en :brand ahora mismo, :count productos están por debajo de su precio habitual, el mayor un :percent%. Medido contra nuestra propia mediana de 30 días, no contra un precio tachado.',
+        'discount_named' => ':count productos de :brand están por debajo de su precio habitual ahora mismo, el mayor por un :percent%, y :shop tiene la mayoría. Medido contra nuestra propia mediana de 30 días, no contra un precio tachado de tienda.',
         'discount_count' => ':count productos de :brand están por debajo de su precio mediano de 30 días.',
+        'and' => 'y',
+        'range_single' => 'Todo lo que vemos de :brand aquí es :category. Su catálogo puede ser más amplio en otros sitios; esto es lo que de verdad se vende en este mercado.',
+        'range_multi' => ':brand aparece aquí en :categories. La mayor parte es :category, y eso dice más de una marca que cualquier cifra: es lo que el nombre significa en este mercado, y no lo que declara el catálogo mundial.',
 
-        'comparison' => 'Como el mismo producto de :brand lo venden a menudo varias tiendas a precios distintos, la oferta más barata es lo que importa, y es la primera que aparece en cada ficha de abajo.',
     ],
     /*
      * Texto largo bajo una parrilla de resultados. Cada línea es o un dato leído
@@ -182,20 +184,10 @@ return [
         'related_heading' => 'Búsquedas relacionadas',
         'related_intro' => 'Lo que la gente buscó aquí en torno a :brand.',
 
-        'compare_heading' => 'Comparar precios de :brand entre tiendas',
-        'compare_1' => 'Esta página reúne cada producto de :brand del que encontramos un precio en vivo y muestra una ficha por producto en lugar de una por anuncio. Dos tiendas que venden el mismo artículo de :brand producen una sola ficha con ambos precios, el más barato primero, justo la comparación que la página de :brand de una tienda no puede mostrar por definición.',
-        'compare_2' => ':comparable de los :shown productos de :brand mostrados los venden más de una tienda. Ahí es donde comparar sale a cuenta de verdad: el mismo modelo de :brand, la misma garantía, otra cifra en caja. Cuando solo una tienda lo tiene, lo decimos.',
-        'compare_3' => ':shop tiene más :brand que cualquier otra tienda que sigamos, lo que la convierte en un buen punto de partida y en un mal punto final: la oferta más barata de un producto concreto de :brand suele estar en otro sitio, y en cualquier caso aparece en la ficha.',
-
-        'prices_heading' => 'Cuánto cuesta :brand aquí',
-        'prices_1' => 'Los precios de :brand en esta página van de :low a :high. Es un rango de productos, no de márgenes, el artículo de :brand más barato y el más caro son objetos distintos, y ordenar por precio muestra antes que nada dónde se concentra el rango.',
-        'prices_2' => 'Cuando marcamos un producto de :brand como rebajado, se mide contra nuestra propia mediana de 30 días para ese producto exacto, no contra un precio tachado de la tienda. La diferencia importa: uno es una decisión de marketing y el otro es lo que el producto ha costado realmente durante un mes entre todos los que lo venden.',
-        'prices_3' => ':reduced productos de :brand están ahora por debajo de esa mediana, con un descuento máximo del :percent%. Los precios de los feeds se revisan dos veces al día, así que esta página está al día y no archivada.',
-
         'choosing_heading' => 'Elegir un producto de :brand',
-        'choosing_1' => 'La mayor parte de lo que llevamos de :brand cae en :category, y conviene saberlo antes de desplazarse: dice para qué sirve realmente esta marca en este mercado, frente a lo que afirma su catálogo mundial.',
-        'choosing_2' => 'Mira el número de ofertas antes que el precio. Un producto de :brand en cuatro tiendas tiene un precio de mercado fiable; en una sola tiene un precio y nada con que contrastarlo. Todo está disponible por defecto, un precio que no puedes pagar no es una oferta, y ese filtro se puede desactivar.',
-        'choosing_3' => 'Cada ficha de producto lleva la tabla completa de ofertas y 90 días de histórico de precios, así que puedes ver si hoy es realmente un buen momento para ese producto de :brand o uno cualquiera.',
+        'choosing_1' => 'Mira el número de ofertas antes que el precio. Un producto de :brand que venden cuatro tiendas tiene un precio fiable; el que vende una sola tiene un precio y nada con qué contrastarlo. Todo está en stock por defecto, porque un precio que no puedes pagar no es una oferta.',
+        'choosing_2' => 'Los precios van aquí de :low a :high. Es una gama de productos, no una gama de márgenes, así que ordenar por precio enseña dónde está la gama de :brand, no quién es más barato.',
+        'choosing_3' => 'Cada ficha de producto lleva la tabla completa de ofertas y 90 días de histórico de precios, para ver si hoy es un momento realmente bueno para comprar un producto concreto de :brand o uno corriente.',
 
         'faq_price_q' => '¿Cuánto cuestan los productos de :brand?',
         'faq_price_a' => 'Los productos de :brand en esta página van de :low a :high, sobre :count productos en las tiendas que seguimos. El extremo bajo y el alto suelen ser productos distintos, no el mismo a dos precios.',
@@ -203,6 +195,13 @@ return [
         'faq_where_a' => 'Las que aparecen en cada ficha, esta página reúne :shops anuncios de tiendas sobre los productos de :brand mostrados. Mostramos, no vendemos: cada enlace lleva a la tienda que hace la oferta.',
         'faq_discount_q' => '¿Hay ofertas de :brand ahora mismo?',
         'faq_discount_a' => 'Sí, :reduced productos de :brand están por debajo de su precio mediano de 30 días, el mayor un :percent%. Se mide contra nuestro propio histórico y no contra un precio tachado, así que refleja un movimiento real.',
+        'about_heading' => 'Sobre :brand',
+        'about_1' => 'En este mercado :brand aparece en :categories. Eso es lo que la marca significa aquí, que no siempre coincide con lo que sugiere su catálogo mundial: un nombre puede ser un referente en una categoría que apenas vende en un país concreto.',
+        'about_2' => 'La mayor parte es :category, y ahí es donde más compensa comparar: es donde varias tiendas venden el mismo modelo de :brand y no se ponen de acuerdo en el precio.',
+        'about_3' => 'Todo lo que hay en esta página es un producto que :brand vende de verdad aquí, recogido de las tiendas que seguimos y no de la web de :brand. Una ficha por producto y no por anuncio, así que dos tiendas con el mismo artículo son un producto con dos precios, no dos resultados.',
+        'stocked_heading' => 'Dónde se vende :brand',
+        'stocked_1' => ':shop tiene más :brand que cualquier otra tienda que sigamos, lo que la convierte en un buen punto de partida y en un mal punto final: la oferta más barata de un producto concreto suele estar en otra parte, y aparece en la ficha de todos modos.',
+        'stocked_2' => ':comparable de los :shown productos de :brand que se muestran aquí los venden más de una tienda. En esos el precio es un precio de mercado y no la opinión de una sola tienda. Cuando algo lo vende una única tienda lo decimos, en vez de insinuar una elección que no existe.',
     ],
 
     'product' => [
@@ -478,7 +477,7 @@ return [
         'your_name' => 'Tu nombre',
         'your_email' => 'Tu correo',
         'exclusions' => 'A quien no deberias sacar?',
-        'exclusions_hint' => 'Nombres o correos, uno por linea. Parejas, o a quien te toco el ano pasado.',
+        'exclusions_hint' => 'Nombres o correos, separados por comas. Parejas, o a quien te tocara el año pasado.',
         'joined' => 'Ya estas dentro. Te escribiremos cuando se haga el sorteo.',
         'members' => 'Quien participa',
         'draw' => 'Hacer el sorteo',
@@ -513,6 +512,7 @@ return [
         'delete_confirm' => 'Eliminar :title? Todos los que se unieron lo perderan.',
         'delete_confirm_drawn' => 'Eliminar :title? Ya se ha sorteado, asi que todos pierden a quien le regalaban, y nadie recibira aviso. Diselo tu antes.',
         'deleted' => 'Grupo eliminado.',
+        'email_hint' => 'Para que a tu Amigo Invisible se le diga a quién le ha tocado. Nadie más lo ve.',
     ],
     'quiz' => [
         'title' => 'Cuanto los conoces?',

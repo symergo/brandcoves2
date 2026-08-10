@@ -16,6 +16,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use Tests\Unit\SecretSantaDrawTest;
@@ -60,6 +61,74 @@ class SecretSantaTest extends TestCase
         ])->assertRedirect();
 
         return $group->members()->where('email', $email)->firstOrFail();
+    }
+
+    #[Test]
+    public function the_invite_link_opens_in_a_browser(): void
+    {
+        $group = $this->group();
+
+        /*
+         * It answered 405.
+         *
+         * `join` was a POST-only route and the URL the organiser shares is that
+         * exact URL, so every invite ever pasted into a group chat was dead on
+         * arrival — and with no join form anywhere, nobody but the organiser
+         * had ever been in a group.
+         */
+        auth()->logout();
+
+        $this->get("/be-nl/santa/{$group->id}/join/{$group->invite_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Santa/Join')
+                ->where('group.title', 'Office 2026'));
+    }
+
+    #[Test]
+    public function a_wrong_invite_token_is_not_found(): void
+    {
+        $group = $this->group();
+        auth()->logout();
+
+        // The token is the credential. A guessed one must not reveal that the
+        // group exists, let alone who is in it.
+        $this->get("/be-nl/santa/{$group->id}/join/".Str::uuid()->toString())
+            ->assertNotFound();
+    }
+
+    #[Test]
+    public function following_your_own_invite_again_lands_on_your_page(): void
+    {
+        $organiser = User::factory()->create();
+        $group = $this->group($organiser);
+
+        // The organiser is already a player, so the invite has nothing to ask
+        // them and everything to show them.
+        $this->actingAs($organiser)
+            ->get("/be-nl/santa/{$group->id}/join/{$group->invite_token}")
+            ->assertRedirect();
+    }
+
+    #[Test]
+    public function the_invite_says_so_rather_than_403ing_after_the_draw(): void
+    {
+        $group = $this->group();
+        $this->join($group, 'Sam', 'sam@example.test');
+        $this->join($group, 'Ash', 'ash@example.test');
+
+        $this->actingAs($group->organiser)->post("/be-nl/santa/{$group->id}/draw");
+
+        auth()->logout();
+
+        /*
+         * Joining closes at the draw — a member added afterwards has nobody to
+         * buy for and nobody buying for them. Learning that from a 403 after
+         * typing your name in is the worst version of it.
+         */
+        $this->get("/be-nl/santa/{$group->id}/join/{$group->invite_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('group.drawn', true));
     }
 
     #[Test]

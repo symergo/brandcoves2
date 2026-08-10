@@ -134,6 +134,8 @@ final class CopySlots
          */
         $section('Opening');
         $define('brand_intro', 'lead', 'Opening line', 'Always — every brand page starts here');
+        $define('brand_intro', 'range_single', 'What the brand makes — one category', 'Only when everything we hold from the brand is in one category', ['category']);
+        $define('brand_intro', 'range_multi', 'What the brand makes — several categories', 'Only when the brand appears in more than one category', ['categories', 'category']);
         $define('brand_intro', 'shops_named', 'Which shop stocks the most', 'Only when we know the leading shop and more than one carries the brand', ['shop']);
         $define('brand_intro', 'shops_count', 'How many shops carry it', 'When the leading shop is unknown, or only one carries the brand');
         $define('brand_intro', 'price_from', 'Starting price', 'Only when every price is the same', ['low']);
@@ -141,27 +143,25 @@ final class CopySlots
         $define('brand_intro', 'price_range_category', 'Price range with category', 'Only when prices vary and we know the leading category', ['low', 'high', 'category']);
         $define('brand_intro', 'discount_named', 'Discounts, naming the shop', 'Only when something is genuinely reduced AND the leading shop is known', ['shop', 'reduced', 'percent']);
         $define('brand_intro', 'discount_count', 'Discounts, without a shop', 'Only when something is genuinely reduced', ['reduced']);
-        $define('brand_intro', 'comparison', 'Why comparing matters here', 'Only when more than one shop carries the brand');
 
         /*
          * Brand page — long copy.
          */
         $section('Comparing');
-        $define('brand', 'compare_heading', 'Comparing — heading', 'Always');
-        $define('brand', 'compare_1', 'Comparing — one card per product', 'Always');
-        $define('brand', 'compare_2', 'Comparing — how many are comparable', 'Only when at least one product is sold by more than one shop', ['comparable']);
-        $define('brand', 'compare_3', 'Comparing — the leading shop', 'Only when we know the leading shop', ['shop']);
+        $define('brand', 'about_heading', 'About the brand — heading', 'Always');
+        $define('brand', 'about_1', 'About — what it makes here', 'Only when we know which categories the brand appears in', ['categories']);
+        $define('brand', 'about_2', 'About — its main category', 'Only when we know the leading category', ['category']);
+        $define('brand', 'about_3', 'About — where this page comes from', 'Always');
 
         $section('Prices');
-        $define('brand', 'prices_heading', 'Prices — heading', 'Always');
-        $define('brand', 'prices_1', 'Prices — the range', 'Only when at least one product has a price', ['low', 'high']);
-        $define('brand', 'prices_2', 'Prices — what "reduced" means here', 'Always');
-        $define('brand', 'prices_3', 'Prices — how many are reduced', 'Only when at least one product is below its 30-day median', ['reduced', 'percent']);
+        $define('brand', 'stocked_heading', 'Where it is sold — heading', 'Always');
+        $define('brand', 'stocked_1', 'Where — the leading shop', 'Only when we know the leading shop', ['shop']);
+        $define('brand', 'stocked_2', 'Where — how many are comparable', 'Only when at least one product is sold by more than one shop', ['comparable']);
 
         $section('Choosing');
         $define('brand', 'choosing_heading', 'Choosing — heading', 'Always');
-        $define('brand', 'choosing_1', 'Choosing — the brand\'s main category', 'Only when we know the leading category', ['category']);
-        $define('brand', 'choosing_2', 'Choosing — offer count before price', 'Always');
+        $define('brand', 'choosing_1', 'Choosing — offer count before price', 'Always');
+        $define('brand', 'choosing_2', 'Choosing — where the range sits', 'Only when at least one product has a price', ['low', 'high']);
         $define('brand', 'choosing_3', 'Choosing — the product page', 'Always');
 
         $section('Questions');

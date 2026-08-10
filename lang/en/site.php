@@ -145,22 +145,26 @@ return [
         'empty' => 'Nothing from :brand is in stock right now.',
         'empty_hint' => 'Prices and stock are re-checked twice a day, so this page changes.',
 
-        'lead' => 'Looking for :brand? We are tracking :count :brand products and comparing what every shop charges for them.',
-        'lead_2' => 'There are :count :brand products in the catalogue right now, with every offer for each one priced side by side.',
-        'lead_3' => 'This is every :brand product we can find a live price for, :count of them, across the shops that actually stock the brand.',
+        'lead' => 'There are :count :brand products in this market, and this page carries what we know about each of them.',
+        'lead_2' => ':brand, as it is sold here: :count products, gathered from every shop we track.',
+        'lead_3' => 'This is :brand in this market — :count products, one page per product rather than one per listing.',
         'lead_4' => ':count :brand products, one page, every shop\'s price on each of them.',
 
-        'shops_named' => ':shop stocks more :brand than anyone else we track, and :count shops in total carry the brand: which is what makes the prices below worth comparing.',
-        'shops_count' => ':count shop carries :brand at the moment.',
+        'shops_named' => ':shop stocks more :brand than anyone else we track, and :count shops carry the brand in total. A brand carried by several shops has a market price; one carried by a single shop has a price and nothing to check it against.',
+        'shops_count' => ':count shop carries :brand at the moment, so there is nothing here to compare its prices against yet.',
 
-        'price_from' => ':brand starts at :low here.',
-        'price_range' => ':brand prices run from :low to :high on this page.',
-        'price_range_category' => ':brand prices run from :low to :high, and most of what we carry is :category.',
+        'price_from' => 'The cheapest :brand thing here is :low.',
+        'price_range' => ':brand runs from :low to :high here — a range of products rather than a range of margins.',
+        'price_range_category' => ':brand runs from :low to :high here, and most of that is :category. The cheapest and the dearest are different objects, not the same one at two prices.',
 
         'discount_named' => ':shop currently has discounts on :brand: :count products are below their usual price, the largest by :percent%. Measured against our own 30-day median, not a shop\'s crossed-out figure.',
         'discount_count' => ':count :brand products are below their 30-day median price right now.',
+        'and' => 'and',
+        'lead_4' => ':count :brand products, everything we hold on the brand in one place.',
+        'range_single' => 'Everything we see from :brand here is :category. Its catalogue elsewhere may be wider; this is the part that is actually sold in this market.',
+        'range_multi' => ':brand shows up here in :categories. Most of it is :category, which is a more useful thing to know about a brand than any headline figure: it is what the name is for in this market, as opposed to what the worldwide catalogue claims.',
+        'discount_named' => ":count :brand products are below their usual price right now, the largest by :percent%, and :shop has the most of them. Measured against our own 30-day median rather than a shop's crossed-out figure.",
 
-        'comparison' => 'Because the same :brand product is often sold by several shops at different prices, the cheapest offer is the thing worth finding, and it is the first one shown on every card below.',
     ],
     /*
      * Long-form copy below a results grid.
@@ -212,20 +216,10 @@ return [
         'related_heading' => 'Related searches',
         'related_intro' => 'What people looked for here around :brand.',
 
-        'compare_heading' => 'Comparing :brand prices across shops',
-        'compare_2' => ':comparable of the :shown :brand products shown here are carried by more than one shop. Those are the ones where comparing actually pays: the same :brand model, the same warranty, a different number at the till. Where only one shop stocks something we say so, rather than implying a choice you do not have.',
-        'compare_1' => 'This page gathers every :brand product we can find a live price for and shows one card per product rather than one per listing. Two shops selling the same :brand item produce one card with both prices on it, cheapest first: which is the comparison a shop\x27s own :brand page structurally cannot show you.',
-        'compare_3' => ':shop carries more :brand than any other shop we track, which makes it a sensible place to start and a poor place to stop. The cheapest offer on a given :brand product is frequently somewhere else, and it is on the card either way.',
-
-        'prices_heading' => 'What :brand costs here',
-        'prices_1' => ':brand prices on this page run from :low to :high. That is a range of products rather than a range of margins, the cheapest :brand thing and the most expensive one are different objects, and sorting by price is the quickest way to see where the range actually clusters.',
-        'prices_2' => 'When we mark a :brand product as reduced, that is measured against our own 30-day median for that exact product, not against a shop\x27s crossed-out "was" price. The difference matters: one is a marketing decision, the other is what the product has genuinely cost over a month across everyone selling it.',
-        'prices_3' => ':reduced :brand products are below that median right now, the biggest saving being :percent%. Feed prices are re-checked twice a day, so this page is current rather than archived.',
-
         'choosing_heading' => 'Choosing a :brand product',
-        'choosing_1' => 'Most of what we carry from :brand falls under :category, which is a useful thing to know before you scroll: it tells you what this brand is actually for in this market, as opposed to what its catalogue claims worldwide.',
-        'choosing_2' => 'Look at the offer count before the price. A :brand product stocked by four shops has a market price you can trust; one stocked by a single shop has a price and nothing to check it against. Everything here is in stock by default, an unbuyable price is not an offer, and you can turn that filter off to see the full catalogue.',
-        'choosing_3' => 'Each product page carries the full offer table and 90 days of price history, so you can see whether today is a genuinely good moment to buy this :brand product or an ordinary one.',
+        'choosing_1' => 'Look at the offer count before the price. A :brand product stocked by four shops has a price you can trust; one stocked by a single shop has a price and nothing to check it against. Everything here is in stock by default, because an unbuyable price is not an offer.',
+        'choosing_2' => "Prices here run from :low to :high. That is a range of products, not a range of margins, so sorting by price tells you where :brand's range actually sits rather than who is cheapest.",
+        'choosing_3' => 'Each product page carries the full offer table and 90 days of price history, so you can see whether today is a genuinely good moment to buy a particular :brand product or an ordinary one.',
 
         'faq_price_q' => 'How much do :brand products cost?',
         'faq_price_a' => ':brand products on this page range from :low to :high, across :count products from the shops we track. The low and the high are usually different products rather than the same one at two prices.',
@@ -233,6 +227,13 @@ return [
         'faq_where_a' => 'The shops named on each card. This page draws :shops shop listings across the :brand products shown. We list rather than sell: every link goes to the shop making the offer.',
         'faq_discount_q' => 'Is :brand on offer right now?',
         'faq_discount_a' => 'Yes, :reduced :brand products are currently below their 30-day median price, the largest by :percent%. That is measured against our own price history rather than a shop\x27s crossed-out figure, so it reflects a real movement rather than a claimed one.',
+        'about_heading' => 'About :brand',
+        'about_1' => 'In this market :brand appears in :categories. That is what the brand is for here, which is not always what its worldwide catalogue suggests: a name can be a household one in a category it barely sells in a given country.',
+        'about_2' => 'The bulk of it is :category, and that is where comparing is most worth your time, because it is where several shops carry the same :brand model and disagree about the price.',
+        'about_3' => "Everything on this page is a product :brand actually sells here, gathered from the shops we track rather than from :brand's own site. One card per product, not one per listing, so two shops selling the same thing appear as one product with two prices rather than as two results.",
+        'stocked_heading' => 'Where :brand is sold',
+        'stocked_1' => ':shop carries more :brand than any other shop we track, which makes it a sensible place to start and a poor place to stop: the cheapest offer on a given product is frequently somewhere else, and it is on the card either way.',
+        'stocked_2' => ":comparable of the :shown :brand products shown here are carried by more than one shop. Those are the ones where the price is a market price rather than one shop's opinion. Where only one shop stocks something we say so, rather than implying a choice you do not have.",
     ],
 
     'product' => [
@@ -527,7 +528,7 @@ return [
         'your_name' => 'Your name',
         'your_email' => 'Your email',
         'exclusions' => 'Anyone you should not draw?',
-        'exclusions_hint' => 'Names or emails, one per line. Partners, or whoever you had last year.',
+        'exclusions_hint' => 'Names or emails, separated by commas. Partners, or whoever you had last year.',
         'joined' => 'You are in. We will email you when the draw happens.',
         'members' => 'Who is in',
         'draw' => 'Do the draw',
@@ -562,6 +563,7 @@ return [
         'delete_confirm' => 'Delete :title? Everyone who joined will lose it.',
         'delete_confirm_drawn' => 'Delete :title? It has already been drawn, so everyone loses who they were buying for — and nobody will be told. Tell them yourself first.',
         'deleted' => 'Group deleted.',
+        'email_hint' => 'So your Santa can be told who they have. It is not shown to anyone else.',
     ],
     'quiz' => [
         'title' => 'How well do you know them?',

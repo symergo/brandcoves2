@@ -75,6 +75,30 @@ not join, and the organiser runs it in a spreadsheet instead.
 `wishlist_collaborators` is **not** reused for membership: its `user_id` is
 `NOT NULL`, and the semantics differ anyway.
 
+## The invite link answered 405
+
+`join` was registered as `POST` only, and the URL the organiser shares — the one that goes into a
+WhatsApp group and is the entire point of the feature — is that exact URL. So every invite ever sent
+met a browser with **405 Method Not Allowed**. There was no join form anywhere either: the only way
+into a group was a hand-built POST, which means nobody but the organiser, auto-joined at creation,
+had ever been in one. Reported from a pasted link in Edge.
+
+The same URL now serves both verbs: `GET` renders the invite, `POST` is the form on it. Four things
+the page has to get right, each one a way the obvious version is worse:
+
+- **No account.** Requiring a login before somebody can be in an office Secret Santa is how most of
+  the office does not join. The email is what the draw needs to reach them; the join token is what
+  gets them back in.
+- **`noindex`.** An invite is a private URL that happens to be unauthenticated, exactly like
+  `/l/{token}`.
+- **A wrong token is a 404**, not a page saying the group exists.
+- **A drawn group says so before the form**, rather than after. Joining closes at the draw — a member
+  added afterwards has nobody to buy for and nobody buying for them — and learning that from a 403
+  once you have typed your name in is the worst version of it.
+
+Following your own invite a second time redirects to your own page rather than asking you to join
+again.
+
 ## The organiser is a player, and not a spectator
 
 They are added as a member on create, because running one without being in it is
@@ -136,7 +160,7 @@ rounding difference gets into a budget comparison.
 - `app/Models/SecretSantaGroup.php`, `SecretSantaMember.php`, `app/Enums/SantaStatus.php`
 - `app/Http/Controllers/SecretSantaController.php`
 - `app/Mail/SecretSantaAssignmentMail.php`, `resources/views/mail/santa-assignment.blade.php`
-- `resources/js/Pages/Santa/Group.tsx`, `Me.tsx`
+- `resources/js/Pages/Santa/Group.tsx`, `Join.tsx`, `Me.tsx`
 - `tests/Unit/SecretSantaDrawTest.php`, `tests/Feature/SecretSantaTest.php`
 
 ## Not built

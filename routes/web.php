@@ -263,6 +263,14 @@ Route::prefix('{market}')->group(function () {
         // before asking for an account.
         Route::get('/santa', [SecretSantaController::class, 'index'])->name('santa');
         Route::get('/santa/{group}', [SecretSantaController::class, 'show'])->name('santa.show');
+        /*
+         * The same URL, both verbs.
+         *
+         * This was POST only, and it is the URL the organiser shares — so every
+         * invite ever sent answered a browser with 405. The GET is the invite
+         * page; the POST is the form on it.
+         */
+        Route::get('/santa/{group}/join/{token}', [SecretSantaController::class, 'invite'])->name('santa.invite');
         Route::post('/santa/{group}/join/{token}', [SecretSantaController::class, 'join'])->name('santa.join');
         Route::get('/santa/{group}/me/{token}', [SecretSantaController::class, 'me'])->name('santa.me');
         Route::post('/santa/{group}/me/{token}/done', [SecretSantaController::class, 'markDone'])->name('santa.done');

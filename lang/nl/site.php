@@ -125,22 +125,24 @@ return [
         'empty' => 'Er is momenteel niets van :brand op voorraad.',
         'empty_hint' => 'Prijzen en voorraad worden twee keer per dag opnieuw gecontroleerd, dus deze pagina verandert.',
 
-        'lead' => 'Op zoek naar :brand? We volgen :count producten van :brand en vergelijken wat elke winkel ervoor rekent.',
-        'lead_2' => 'Er staan nu :count producten van :brand in de catalogus, met alle aanbiedingen per product naast elkaar.',
-        'lead_3' => 'Dit is elk product van :brand waarvoor we een actuele prijs vinden, :count in totaal, bij de winkels die het merk echt verkopen.',
-        'lead_4' => ':count producten van :brand, één pagina, de prijs van elke winkel erbij.',
+        'lead' => 'Er zijn :count producten van :brand in deze markt, en deze pagina verzamelt wat we van elk ervan weten.',
+        'lead_2' => ':brand, zoals het hier verkocht wordt: :count producten, uit elke winkel die we volgen.',
+        'lead_3' => 'Dit is :brand in deze markt — :count producten, één kaart per product in plaats van één per aanbieding.',
+        'lead_4' => ':count producten van :brand, alles wat we over het merk hebben op één plek.',
 
-        'shops_named' => ':shop heeft meer van :brand dan elke andere winkel die we volgen, en in totaal verkopen :count winkels het merk, precies daarom is het vergelijken hieronder de moeite waard.',
-        'shops_count' => ':count winkel verkoopt :brand op dit moment.',
+        'shops_named' => ':shop heeft meer :brand dan elke andere winkel die we volgen, en in totaal verkopen :count winkels het merk. Een merk dat bij meerdere winkels ligt heeft een marktprijs; bij één winkel is er een prijs en niets om die tegen af te zetten.',
+        'shops_count' => 'Op dit moment verkoopt :count winkel :brand, dus er valt hier nog niets te vergelijken.',
 
-        'price_from' => ':brand begint hier bij :low.',
-        'price_range' => 'De prijzen van :brand lopen op deze pagina van :low tot :high.',
-        'price_range_category' => 'De prijzen van :brand lopen van :low tot :high, en het meeste dat we hebben valt onder :category.',
+        'price_from' => 'Het goedkoopste van :brand is hier :low.',
+        'price_range' => ':brand loopt hier van :low tot :high — een reeks producten, geen reeks marges.',
+        'price_range_category' => ':brand loopt hier van :low tot :high, en het meeste daarvan is :category. Het goedkoopste en het duurste zijn andere dingen, niet hetzelfde ding met twee prijzen.',
 
-        'discount_named' => ':shop heeft momenteel kortingen op :brand: :count producten staan onder hun gebruikelijke prijs, de grootste met :percent%. Gemeten tegen onze eigen 30-daagse mediaan, niet tegen een doorgestreepte winkelprijs.',
-        'discount_count' => ':count producten van :brand staan nu onder hun 30-daagse medianprijs.',
+        'discount_named' => ':count producten van :brand staan nu onder hun gebruikelijke prijs, het grootste verschil is :percent%, en :shop heeft er de meeste. Gemeten tegen onze eigen mediaan over 30 dagen, niet tegen een doorgestreepte winkelprijs.',
+        'discount_count' => ':count producten van :brand staan nu onder hun mediaanprijs over 30 dagen.',
+        'and' => 'en',
+        'range_single' => 'Alles wat we hier van :brand zien is :category. Elders is het assortiment misschien breder; dit is het deel dat in deze markt echt verkocht wordt.',
+        'range_multi' => ':brand duikt hier op in :categories. Het meeste is :category, en dat zegt meer over een merk dan welk cijfer ook: het is waar de naam in deze markt voor staat, en niet wat de wereldwijde catalogus beweert.',
 
-        'comparison' => 'Omdat hetzelfde product van :brand vaak bij meerdere winkels voor verschillende prijzen te koop is, is de goedkoopste aanbieding het interessante, en die staat op elke kaart hieronder bovenaan.',
     ],
     /*
      * Lange tekst onder een resultatenraster.
@@ -186,20 +188,10 @@ return [
         'related_heading' => 'Verwante zoekopdrachten',
         'related_intro' => 'Wat mensen hier rond :brand zochten.',
 
-        'compare_heading' => ':brand-prijzen vergelijken tussen winkels',
-        'compare_1' => 'Deze pagina verzamelt elk :brand-product waarvoor we een actuele prijs vinden en toont één kaart per product in plaats van één per aanbieding. Twee winkels die hetzelfde :brand-artikel verkopen leveren één kaart met beide prijzen, goedkoopste eerst, precies de vergelijking die een :brand-pagina van een winkel per definitie niet kan tonen.',
-        'compare_2' => ':comparable van de :shown getoonde :brand-producten worden door meer dan één winkel verkocht. Daar loont vergelijken echt: hetzelfde :brand-model, dezelfde garantie, een ander bedrag aan de kassa. Verkoopt maar één winkel iets, dan zeggen we dat.',
-        'compare_3' => ':shop heeft meer van :brand dan elke andere winkel die we volgen, wat het een verstandig beginpunt maakt en een slecht eindpunt. De goedkoopste aanbieding voor een bepaald :brand-product zit vaak ergens anders, en staat hoe dan ook op de kaart.',
-
-        'prices_heading' => 'Wat :brand hier kost',
-        'prices_1' => 'De prijzen van :brand lopen op deze pagina van :low tot :high. Dat is een bereik van producten, niet van marges, het goedkoopste en het duurste :brand-artikel zijn verschillende dingen, en sorteren op prijs laat het snelst zien waar het bereik zich verzamelt.',
-        'prices_2' => 'Als we een :brand-product als verlaagd markeren, is dat gemeten tegen onze eigen 30-daagse mediaan voor precies dat product, niet tegen een doorgestreepte "van"-prijs van een winkel. Dat verschil telt: het ene is een marketingbeslissing, het andere is wat het product een maand lang echt heeft gekost bij iedereen die het verkoopt.',
-        'prices_3' => ':reduced :brand-producten staan nu onder die mediaan, met een grootste korting van :percent%. Feedprijzen worden twee keer per dag opnieuw gecontroleerd, dus deze pagina is actueel en geen archief.',
-
-        'choosing_heading' => 'Een :brand-product kiezen',
-        'choosing_1' => 'Het meeste dat we van :brand voeren valt onder :category, en dat is nuttig om te weten voor je gaat scrollen: het zegt waar dit merk in deze markt echt voor is, in plaats van wat de catalogus wereldwijd beweert.',
-        'choosing_2' => 'Kijk eerst naar het aantal aanbiedingen, dan naar de prijs. Een :brand-product bij vier winkels heeft een marktprijs waar je op kunt bouwen; een product bij één winkel heeft een prijs en niets om die aan te toetsen. Alles hier is standaard op voorraad, een prijs die je niet kunt kopen is geen aanbieding, en dat filter kun je uitzetten.',
-        'choosing_3' => 'Elke productpagina toont de volledige aanbiedingentabel en 90 dagen prijsgeschiedenis, zodat je ziet of vandaag echt een goed moment is voor dit :brand-product of gewoon een gemiddelde dag.',
+        'choosing_heading' => 'Een product van :brand kiezen',
+        'choosing_1' => 'Kijk eerst naar het aantal aanbiedingen, dan pas naar de prijs. Een product van :brand dat bij vier winkels ligt heeft een prijs die je kunt vertrouwen; bij één winkel is er een prijs en niets om die tegen af te zetten. Alles hier is standaard op voorraad, want een prijs die je niet kunt afrekenen is geen aanbieding.',
+        'choosing_2' => 'De prijzen lopen hier van :low tot :high. Dat is een reeks producten, geen reeks marges, dus sorteren op prijs laat zien waar het assortiment van :brand ligt, niet wie het goedkoopst is.',
+        'choosing_3' => 'Elke productpagina heeft de volledige aanbiedingstabel en 90 dagen prijsgeschiedenis, zodat je ziet of vandaag een echt goed moment is om een bepaald product van :brand te kopen of gewoon een doordeweeks moment.',
 
         'faq_price_q' => 'Wat kosten :brand-producten?',
         'faq_price_a' => ':brand-producten lopen op deze pagina van :low tot :high, over :count producten bij de winkels die we volgen. De onderkant en de bovenkant zijn meestal verschillende producten, niet hetzelfde product tegen twee prijzen.',
@@ -207,6 +199,13 @@ return [
         'faq_where_a' => 'De winkels die op elke kaart staan. Deze pagina bundelt :shops winkelaanbiedingen over de getoonde :brand-producten. Wij tonen en verkopen niet: elke link gaat naar de winkel die de aanbieding doet.',
         'faq_discount_q' => 'Is :brand nu in de aanbieding?',
         'faq_discount_a' => 'Ja, :reduced :brand-producten staan nu onder hun 30-daagse medianprijs, de grootste met :percent%. Dat is gemeten tegen onze eigen prijsgeschiedenis en niet tegen een doorgestreepte winkelprijs, dus het gaat om een echte beweging.',
+        'about_heading' => 'Over :brand',
+        'about_1' => 'In deze markt duikt :brand op in :categories. Dat is waar het merk hier voor staat, en dat is niet altijd wat de wereldwijde catalogus suggereert: een naam kan een begrip zijn in een categorie die het in een bepaald land nauwelijks verkoopt.',
+        'about_2' => 'Het grootste deel is :category, en daar levert vergelijken het meeste op, want daar verkopen meerdere winkels hetzelfde model van :brand en zijn ze het oneens over de prijs.',
+        'about_3' => 'Alles op deze pagina is een product dat :brand hier echt verkoopt, verzameld uit de winkels die we volgen en niet van de site van :brand zelf. Eén kaart per product, niet per aanbieding, dus twee winkels met hetzelfde artikel worden één product met twee prijzen in plaats van twee resultaten.',
+        'stocked_heading' => 'Waar :brand verkocht wordt',
+        'stocked_1' => ':shop heeft meer :brand dan elke andere winkel die we volgen, wat het een logisch beginpunt maakt en een slecht eindpunt: de goedkoopste aanbieding voor een bepaald product zit vaak ergens anders, en die staat hoe dan ook op de kaart.',
+        'stocked_2' => ':comparable van de :shown getoonde producten van :brand liggen bij meer dan één winkel. Daar is de prijs een marktprijs en niet de mening van één winkel. Ligt iets maar bij één winkel, dan zeggen we dat, in plaats van een keuze te suggereren die er niet is.',
     ],
 
     'product' => [
@@ -482,7 +481,7 @@ return [
         'your_name' => 'Je naam',
         'your_email' => 'Je e-mailadres',
         'exclusions' => 'Wie mag je niet trekken?',
-        'exclusions_hint' => 'Namen of e-mailadressen, een per regel. Partners, of wie je vorig jaar had.',
+        'exclusions_hint' => 'Namen of e-mailadressen, gescheiden door komma’s. Partners, of wie je vorig jaar had.',
         'joined' => 'Je doet mee. We mailen je zodra er getrokken is.',
         'members' => 'Wie er meedoen',
         'draw' => 'Trekken',
@@ -517,6 +516,7 @@ return [
         'delete_confirm' => ':title verwijderen? Iedereen die meedeed raakt hem kwijt.',
         'delete_confirm_drawn' => ':title verwijderen? Er is al getrokken, dus iedereen verliest voor wie hij koopt — en niemand krijgt bericht. Zeg het ze eerst zelf.',
         'deleted' => 'Groep verwijderd.',
+        'email_hint' => 'Zodat je Sinterklaas te horen krijgt wie hij heeft. Niemand anders ziet het.',
     ],
     'quiz' => [
         'title' => 'Hoe goed ken je ze?',

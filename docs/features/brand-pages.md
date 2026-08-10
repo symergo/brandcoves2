@@ -84,6 +84,40 @@ identical sentence is a pattern a crawler sees in a single sample. The variant i
 random draw so the page does not reword itself between two crawls, which reads as instability rather
 than variety.
 
+## The copy is about the brand, not about the pricing
+
+Every sentence on a brand page used to be about price: ranges, 30-day medians, how many shops we
+track, why comparing matters. All true, all backed by a number — and none of it an answer to the
+question the reader asked by typing a brand name into a URL. Someone landing on `/brand/karcher`
+wants to know what Kärcher is; they were given three paragraphs on how we measure discounts.
+
+The order now follows the question. **What they make**, then **where it is sold**, then **what it
+costs**. Price did not go anywhere and is still every bit as checkable; it stopped being the subject.
+
+### The fact that made it possible
+
+`top_category` answers "mostly what?" and nothing else, so the only descriptive sentence the page
+could write was one word long. `brand_stats.categories` stores the spread instead — up to four
+categories with their counts, most first — and three of them describe a brand in a way no number
+does: *pressure washers, vacuums and garden tools* is a description; *€39 to €1,299* is not.
+
+Ordered by count and then by name, so a tie does not reshuffle the sentence between two nightly runs
+and read as a page that keeps changing its mind.
+
+### What it still refuses to say
+
+The rule is unchanged and is the whole reason these pages are worth having: **every clause is a fact
+the catalogue can back up.** So the copy says what a brand sells *in this market*, and says so
+explicitly — a name can be a household one in a category it barely sells in a given country, and
+claiming the worldwide catalogue from evidence of the local one would be exactly the invented
+sentence this class exists to avoid.
+
+A brand in a single category gets a different line from one with a range, because a list joiner given
+one item renders a bare word and reads as a truncated sentence.
+
+Still no AI. These pages number in the thousands and their facts change nightly; see the reasoning in
+`BrandCopy`'s docblock, which the new sections do not alter.
+
 ## `brand_stats` is the whole page
 
 One row per (market, brand), refreshed nightly by `RefreshBrandStats` after grouping — grouping is what
@@ -201,8 +235,8 @@ The intro above the results states the page's facts in four sentences. That is n
 search engine to treat the page as a document, and a results grid has nothing else on it — strip the
 prices and titles and only markup remains.
 
-`PageNarrative` adds ~350–450 words **below** the products: three sections, an FAQ, and a strip of
-related searches. Below, not above — a shopper came for products, and several hundred words between
+`PageNarrative` adds ~350–450 words **below** the products: three sections — about the brand, where
+it is sold, how to choose one — plus an FAQ and a strip of related searches. Below, not above — a shopper came for products, and several hundred words between
 them and the first card is a worse page for a human, which Google has been explicit about for years.
 
 Every line is one of exactly two things:

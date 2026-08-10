@@ -127,6 +127,7 @@
   "resources/js/Pages/Recipients/SelfDescribe.tsx": [],
   "resources/js/Pages/Santa/Group.tsx": [],
   "resources/js/Pages/Santa/Index.tsx": [],
+  "resources/js/Pages/Santa/Join.tsx": [],
   "resources/js/Pages/Santa/Me.tsx": [],
   "resources/js/Pages/Scan.tsx": [],
   "resources/js/Pages/Search.tsx": [],
