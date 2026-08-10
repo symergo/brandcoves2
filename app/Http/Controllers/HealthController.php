@@ -70,7 +70,12 @@ class HealthController extends Controller
             'mail' => filled(config('services.resend.key')),
             'awin' => filled(config('brandcoves.connectors.awin.api_token')),
             'awinAccounts' => count((array) config('brandcoves.connectors.awin.accounts', [])),
-            'bol' => filled(config('brandcoves.connectors.sources.bol.client_id')),
+            // `connectors.sources` does not exist — the key is `connectors.bol`.
+            // The wrong path resolved to null, so this reported "bol: false" on
+            // every environment including ones where bol works, which is worse
+            // than not reporting it: a config check that always says "missing"
+            // sends somebody chasing a credential that was never absent.
+            'bol' => filled(config('brandcoves.connectors.bol.client_id')),
             'ai' => filled(config('brandcoves.ai.api_key')),
             'robotsAllow' => (bool) config('brandcoves.robots_allow'),
         ];

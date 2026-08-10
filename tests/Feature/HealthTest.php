@@ -13,6 +13,40 @@ class HealthTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function the_config_flags_read_the_paths_the_app_actually_uses(): void
+    {
+        /*
+         * `bol` pointed at `connectors.sources.bol.client_id`, and there is no
+         * `sources` key — so it resolved to null and reported false on every
+         * environment, including ones where bol demonstrably works.
+         *
+         * A config check that is always "missing" is worse than none: it gets
+         * ignored, or it sends somebody chasing a credential that was never
+         * absent. Asserting both directions is the only way this stays honest,
+         * since a wrong path passes any test that only checks the false case.
+         */
+        config([
+            'brandcoves.connectors.bol.client_id' => null,
+            'services.resend.key' => null,
+        ]);
+
+        $off = $this->getJson('/health')->json('config');
+
+        $this->assertFalse($off['bol']);
+        $this->assertFalse($off['mail']);
+
+        config([
+            'brandcoves.connectors.bol.client_id' => 'a-client-id',
+            'services.resend.key' => 'a-key',
+        ]);
+
+        $on = $this->getJson('/health')->json('config');
+
+        $this->assertTrue($on['bol'], 'bol is configured and the flag still says it is not');
+        $this->assertTrue($on['mail']);
+    }
+
+    #[Test]
     public function it_reports_what_is_actually_running(): void
     {
         $response = $this->getJson('/health');
