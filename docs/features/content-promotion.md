@@ -88,6 +88,38 @@ undecryptable there. **Connector credentials must be set on each environment dir
 property of the design rather than a bug, and it is written down here so nobody loses an afternoon
 to it.
 
+## In the admin
+
+**Operations → Migration** does the same three things without a shell: shows what is running here,
+moves content, and redeploys.
+
+It is a face on `ContentEnvelope`, deliberately — one set of rules rather than two, so the screen
+cannot drift from the commands.
+
+**Content moves as a file, not a push.** Download an envelope on one side, upload it on the other.
+A one-click push would need this environment to hold a credential for the other one and to be able to
+write to it over the network — a standing capability, always live, existing on the day somebody clicks
+it by mistake. A file passes through a person, and the dry run makes that person read the drop list
+first. **Apply is hidden until something has been checked**, for the same reason.
+
+The page also shows what this environment holds — guides, editions, plans, products — because a
+production catalogue smaller than staging's is exactly why picks get dropped, and seeing both counts
+explains a drop list before it appears.
+
+### Deploy
+
+A **per-application Coolify deploy webhook**, stored encrypted with `APP_KEY`, deliberately not an
+API token. A token can rename domains, read every environment variable of every application on the
+box, and delete things; the worst this secret can do if it leaks is redeploy the current commit.
+
+It cannot choose a commit — the webhook deploys whatever the tracked branch points at. A button that
+can put any commit on production is a deploy pipeline with no review step, and that belongs in
+Coolify where the audit trail is.
+
+Today this is a convenience rather than a gate: both applications have auto-deploy on, so a push to
+`main` already ships within the minute. It becomes the gate under the one-branch model in
+[../deployment.md](../deployment.md), which turns auto-deploy off on production.
+
 ## Usage
 
 ```bash

@@ -79,6 +79,18 @@ Coolify restarts anything reporting unhealthy.
 `awinAccounts` is a **count**, not a flag, because the failure it exists to catch was *fewer accounts
 than expected*, not zero. The catalogue still built — from one publisher instead of two.
 
+### 4. The admin screen
+
+**Operations → Migration** renders the same report in the browser, so the answer does not require a
+shell at all. The rules live in `App\Services\Ops\ConfigReport`, shared with the command — two
+implementations of "is the config right" would drift, and the one that drifts is always the one
+somebody is reading at the time.
+
+Same rule, harder: presence and lengths only. The screen renders straight into HTML, so a value that
+reached it would also reach a screenshot, a browser cache, and anyone standing behind the person
+reading it. A test asserts the page never contains `APP_KEY`, the claim-hash secret, or the database
+password while still showing that each is set.
+
 ## Declared vs configured
 
 `config/brandcoves.php` now carries `connectors.awin.declared_accounts` beside the filtered
