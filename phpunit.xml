@@ -54,6 +54,27 @@
         <env name="DB_USERNAME" value="brandcoves"/>
         <env name="DB_PASSWORD" value="brandcoves"/>
         <env name="DB_URL" value=""/>
+        <!--
+            No live connector credentials in the test run.
+
+            `.env` holds real bol credentials, and nothing here overrode them, so
+            `BolConnector::supports()` returned true and every search test folded
+            in **live results from the real bol API**. The suite passed or failed
+            on what a third party happened to be selling: SearchTest asserts "one
+            card for this product" and got twenty-five, and the test proving a
+            nonsense query returns nothing got twenty-three.
+
+            It had been passing only because the token bucket was empty at the
+            time. That is not a passing test, it is a coin toss — and it makes the
+            catalogue assertions untestable on any machine with a populated .env.
+
+            `BolConnectorTest` sets these itself and fakes the HTTP, which is how
+            a connector test should work anyway.
+        -->
+        <env name="BOL_CLIENT_ID" value=""/>
+        <env name="BOL_CLIENT_SECRET" value=""/>
+        <env name="AWIN_API_TOKEN" value=""/>
+        <env name="AWIN_VDB_API_TOKEN" value=""/>
         <env name="CLAIM_HASH_SECRET" value="testing-claim-secret"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

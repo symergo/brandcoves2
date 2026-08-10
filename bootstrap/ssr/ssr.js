@@ -34805,7 +34805,7 @@ function CoveSubscribe({ source = "daily" }) {
 //#endregion
 //#region resources/js/Pages/Daily/Edition.tsx
 var Edition_exports = /* @__PURE__ */ __exportAll({ default: () => Edition });
-function Edition({ preview = false, edition, finds, guide, archive }) {
+function Edition({ preview = false, edition, finds, guide, deals, archive }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [reactions, setReactions] = (0, import_react.useState)({});
@@ -34855,76 +34855,171 @@ function Edition({ preview = false, edition, finds, guide, archive }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		preview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PreviewBanner, {}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: edition.theme }),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-			className: "max-w-2xl",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-					className: "text-xs tracking-wide text-ink-soft uppercase",
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "min-w-0",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+					className: "max-w-2xl",
 					children: [
-						t("daily.title"),
-						" · ",
-						edition.label
-					]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "mt-1 text-2xl font-semibold sm:text-3xl",
-					children: edition.theme
-				}),
-				edition.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-2 text-ink-soft",
-					children: edition.blurb
-				})
-			]
-		}),
-		edition.editorial.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "mt-6 max-w-2xl leading-relaxed text-ink",
-			children: edition.editorial.map((block, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-3 [&_a]:underline",
-				dangerouslySetInnerHTML: { __html: block.html }
-			}), block.groupIds.map((id) => byGroup[id]).filter(Boolean).map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figure", {
-				className: "my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-					href: find.url,
-					className: "shrink-0",
-					children: find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-						src: find.image,
-						alt: "",
-						loading: "lazy",
-						className: "mx-auto h-32 w-32 object-contain"
-					})
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figcaption", {
-					className: "min-w-0 flex-1",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-							href: find.url,
-							className: "font-medium hover:underline",
-							children: find.title
-						}),
-						find.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-1 text-sm text-ink-soft",
-							children: find.blurb
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "mt-3 flex flex-wrap items-center gap-3",
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+							className: "text-xs tracking-wide text-ink-soft uppercase",
 							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "font-semibold",
-									children: find.price === null ? "—" : formatPrice(find.price, market)
-								}),
+								t("daily.title"),
+								" · ",
+								edition.label
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+							className: "mt-1 text-2xl font-semibold sm:text-3xl",
+							children: edition.theme
+						}),
+						edition.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 text-ink-soft",
+							children: edition.blurb
+						})
+					]
+				}), edition.editorial.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-6 max-w-2xl leading-relaxed text-ink",
+					children: edition.editorial.map((block, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-3 [&_a]:underline",
+						dangerouslySetInnerHTML: { __html: block.html }
+					}), block.groupIds.map((id) => byGroup[id]).filter(Boolean).map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figure", {
+						className: "my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+							href: find.url,
+							className: "shrink-0",
+							children: find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: find.image,
+								alt: "",
+								loading: "lazy",
+								className: "mx-auto h-32 w-32 object-contain"
+							})
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figcaption", {
+							className: "min-w-0 flex-1",
+							children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
 									href: find.url,
-									className: "text-sm text-accent underline",
-									children: t("daily.see_offers")
+									className: "font-medium hover:underline",
+									children: find.title
 								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-									className: "ml-auto flex items-center gap-2",
-									children: [reactionButtons(find), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.groupId })]
+								find.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 text-sm text-ink-soft",
+									children: find.blurb
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "mt-3 flex flex-wrap items-center gap-3",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "font-semibold",
+											children: find.price === null ? "—" : formatPrice(find.price, market)
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+											href: find.url,
+											className: "text-sm text-accent underline",
+											children: t("daily.see_offers")
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "ml-auto flex items-center gap-2",
+											children: [reactionButtons(find), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.groupId })]
+										})
+									]
 								})
 							]
+						})]
+					}, find.id))] }, i))
+				})]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
+				className: "mt-10 space-y-6 lg:sticky lg:top-6 lg:mt-0",
+				children: [deals.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+					className: "rounded-lg border border-line bg-card p-4",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "text-sm font-medium text-ink-soft",
+							children: t("daily.deals_title")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-xs text-ink-soft",
+							children: t("daily.deals_hint")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "mt-3 divide-y divide-line",
+							children: deals.map((deal) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
+								className: "py-3 first:pt-0 last:pb-0",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+									href: deal.url,
+									className: "flex items-center gap-3 group",
+									children: [
+										deal.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+											src: deal.image,
+											alt: "",
+											loading: "lazy",
+											className: "h-12 w-12 shrink-0 object-contain"
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "min-w-0 flex-1",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "line-clamp-2 text-sm group-hover:underline",
+												children: deal.title
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+												className: "mt-1 flex items-baseline gap-2",
+												children: [deal.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-sm font-semibold",
+													children: formatPrice(deal.price, market)
+												}), deal.was !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+													className: "text-xs text-ink-soft line-through",
+													children: formatPrice(deal.was, market)
+												})]
+											})]
+										}),
+										deal.discountPercent !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent",
+											children: [
+												"−",
+												n(deal.discountPercent),
+												"%"
+											]
+										})
+									]
+								})
+							}, deal.id))
+						})
+					]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+					className: "rounded-lg border border-accent/40 bg-accent/5 p-4",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "font-medium",
+							children: t("gift_cove.title")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-sm text-ink-soft",
+							children: t("daily.gift_cove_hint")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "mt-3 space-y-1.5 text-sm",
+							children: [
+								"wishlist",
+								"giftlist",
+								"santa",
+								"quiz"
+							].map((tool) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+								className: "flex gap-2",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									"aria-hidden": true,
+									className: "text-accent",
+									children: "·"
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t(`gift_cove.${tool}_title`) })]
+							}, tool))
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							href: `/${market.key}/gift-cove`,
+							className: "mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
+							children: t("daily.gift_cove_cta")
 						})
 					]
 				})]
-			}, find.id))] }, i))
+			})]
 		}),
 		rest.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-10",
@@ -35586,7 +35681,7 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 		{
 			key: "wishlist",
 			href: mine?.url ?? urls.lists,
-			badge: mine ? t("cove.items_count", { count: n(mine.items) }) : null
+			badge: mine ? t("gift_cove.items_count", { count: n(mine.items) }) : null
 		},
 		{
 			key: "giftlist",
@@ -35630,15 +35725,15 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 		}
 	];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("cove.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("gift_cove.title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "max-w-2xl",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
 				className: "text-3xl font-semibold tracking-tight",
-				children: t("cove.title")
+				children: t("gift_cove.title")
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-3 text-lg text-ink-soft",
-				children: t("cove.intro")
+				children: t("gift_cove.intro")
 			})]
 		}),
 		mine && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
@@ -35651,7 +35746,7 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 					className: "mt-1 text-sm text-ink-soft",
 					children: [
-						t("cove.items_count", { count: n(mine.items) }),
+						t("gift_cove.items_count", { count: n(mine.items) }),
 						" · ",
 						mine.shared ? t("lists.sharing_on") : t("lists.sharing_off")
 					]
@@ -35659,7 +35754,7 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 					href: mine.url,
 					className: "mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
-					children: mine.items === 0 ? t("cove.start_list") : t("cove.open_list")
+					children: mine.items === 0 ? t("gift_cove.start_list") : t("gift_cove.open_list")
 				})
 			]
 		}),
@@ -35679,7 +35774,7 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 			className: "mt-12",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 				className: "text-lg font-medium",
-				children: t("cove.tools")
+				children: t("gift_cove.tools")
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 				className: "mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
 				children: tools.map((tool) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
@@ -35689,14 +35784,14 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 						className: "flex items-start justify-between gap-3",
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
 							className: "font-medium",
-							children: t(`cove.${tool.key}_title`)
+							children: t(`gift_cove.${tool.key}_title`)
 						}), tool.badge && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 							className: "shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent",
 							children: tool.badge
 						})]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "mt-2 text-sm text-ink-soft",
-						children: t(`cove.${tool.key}_body`)
+						children: t(`gift_cove.${tool.key}_body`)
 					})]
 				}) }, tool.key))
 			})]
@@ -35723,7 +35818,7 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-12 max-w-2xl rounded-card border border-line bg-card p-4 text-sm text-ink-soft",
-			children: t("cove.privacy")
+			children: t("gift_cove.privacy")
 		})
 	] });
 }

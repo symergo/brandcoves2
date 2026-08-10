@@ -45,10 +45,19 @@ interface Props {
         itemCount: number
         searchVolume: number
     } | null
+    deals: {
+        id: number
+        title: string
+        image: string | null
+        price: Cents | null
+        was: Cents | null
+        discountPercent: number | null
+        url: string
+    }[]
     archive: { date: string; label: string; theme: string; url: string }[]
 }
 
-export default function Edition({ preview = false, edition, finds, guide, archive }: Props) {
+export default function Edition({ preview = false, edition, finds, guide, deals, archive }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -107,6 +116,16 @@ export default function Edition({ preview = false, edition, finds, guide, archiv
             {preview && <PreviewBanner />}
             <Head title={edition.theme} />
 
+            {/*
+              Two columns from `lg` up, one below it.
+
+              The article keeps its measure — prose past about 70 characters a
+              line is harder to read, which is why it was capped at `max-w-2xl`
+              in the first place — and the column beside it uses the space that
+              cap was already leaving empty on a wide screen.
+            */}
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10">
+            <div className="min-w-0">
             <header className="max-w-2xl">
                 <p className="text-xs tracking-wide text-ink-soft uppercase">
                     {t('daily.title')} · {edition.label}
@@ -190,6 +209,93 @@ export default function Edition({ preview = false, edition, finds, guide, archiv
                     ))}
                 </div>
             )}
+
+            </div>
+
+            <aside className="mt-10 space-y-6 lg:sticky lg:top-6 lg:mt-0">
+                {/*
+                  The sharpest drops we have seen lately.
+
+                  "Newest highest" is two orderings that fight — the deepest
+                  discount may be a month old — so it is sorted by discount
+                  inside a recency window. Every figure is against our own
+                  30-day median, never a shop's crossed-out price.
+                */}
+                {deals.length > 0 && (
+                    <section className="rounded-lg border border-line bg-card p-4">
+                        <h2 className="text-sm font-medium text-ink-soft">{t('daily.deals_title')}</h2>
+                        <p className="mt-1 text-xs text-ink-soft">{t('daily.deals_hint')}</p>
+
+                        <ul className="mt-3 divide-y divide-line">
+                            {deals.map((deal) => (
+                                <li key={deal.id} className="py-3 first:pt-0 last:pb-0">
+                                    <Link href={deal.url} className="flex items-center gap-3 group">
+                                        {deal.image && (
+                                            <img
+                                                src={deal.image}
+                                                alt=""
+                                                loading="lazy"
+                                                className="h-12 w-12 shrink-0 object-contain"
+                                            />
+                                        )}
+                                        <span className="min-w-0 flex-1">
+                                            <span className="line-clamp-2 text-sm group-hover:underline">
+                                                {deal.title}
+                                            </span>
+                                            <span className="mt-1 flex items-baseline gap-2">
+                                                {deal.price !== null && (
+                                                    <span className="text-sm font-semibold">
+                                                        {formatPrice(deal.price, market)}
+                                                    </span>
+                                                )}
+                                                {deal.was !== null && (
+                                                    <span className="text-xs text-ink-soft line-through">
+                                                        {formatPrice(deal.was, market)}
+                                                    </span>
+                                                )}
+                                            </span>
+                                        </span>
+                                        {deal.discountPercent !== null && (
+                                            <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+                                                −{n(deal.discountPercent)}%
+                                            </span>
+                                        )}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
+
+                {/*
+                  The Gift Cove, next to the thing people are already reading.
+
+                  It is the one part of the site a reader here has no reason to
+                  have found: the nav names it and nothing explains it. Three
+                  lines and a link do more than a nav entry ever did.
+                */}
+                <section className="rounded-lg border border-accent/40 bg-accent/5 p-4">
+                    <h2 className="font-medium">{t('gift_cove.title')}</h2>
+                    <p className="mt-1 text-sm text-ink-soft">{t('daily.gift_cove_hint')}</p>
+
+                    <ul className="mt-3 space-y-1.5 text-sm">
+                        {['wishlist', 'giftlist', 'santa', 'quiz'].map((tool) => (
+                            <li key={tool} className="flex gap-2">
+                                <span aria-hidden className="text-accent">·</span>
+                                <span>{t(`gift_cove.${tool}_title`)}</span>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <Link
+                        href={`/${market.key}/gift-cove`}
+                        className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                    >
+                        {t('daily.gift_cove_cta')}
+                    </Link>
+                </section>
+            </aside>
+            </div>
 
             {/*
               Whatever the article did not get to.

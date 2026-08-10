@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Guide;
+use App\Models\ProductGroup;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
@@ -19,16 +20,17 @@ use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * The Daily Cove: one page a day, three beats.
+ * The Daily Cove: one article a day.
  *
- * A guess, a themed set of finds, and a buying guide. Merged rather than kept
- * apart because each covers the other's hole — picks alone give no reason to
- * return once the novelty fades, and guides alone have no audience on the day
- * they publish. See docs/features/daily-cove.md.
+ * A themed set of finds written up as prose, with each product under the
+ * paragraph that names it, and a buying guide. Merged rather than kept apart
+ * because each covers the other's hole — picks alone give no reason to return
+ * once the novelty fades, and guides alone have no audience on the day they
+ * publish. See docs/features/daily-cove.md.
  *
  * Every edition keeps a permanent URL. The archive is the SEO asset: ninety days
  * in, that is ninety indexed pages per market, each one a guide plus a set of
- * products plus a puzzle.
+ * products plus the writing that connects them.
  */
 class DailyCoveController extends Controller
 {
@@ -74,8 +76,52 @@ class DailyCoveController extends Controller
 
             'finds' => $this->finds($edition, $current),
             'guide' => $this->guide($edition, $current),
+            'deals' => $this->deals($current),
             'archive' => $this->archive($current, $edition),
         ]);
+    }
+
+    /**
+     * The biggest discounts we have seen most recently, for the sidebar.
+     *
+     * "Newest highest" is two orderings and they fight: the deepest discount in
+     * the catalogue may be a month old, and the newest may be 4% off. Sorted by
+     * discount within a recency window, so the column is both fresh and worth
+     * looking at rather than a stale hall of fame.
+     *
+     * Measured against our own 30-day median, never a merchant's crossed-out
+     * "was" price — the same rule the badges and the brand pages hold to, and
+     * the reason a saving shown here can be defended.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function deals(CurrentMarket $current): array
+    {
+        $discount = '((median_price - min_price)::numeric / median_price) * 100';
+
+        return ProductGroup::query()
+            ->forMarket($current->get())
+            ->presentable()
+            ->whereNotNull('median_price')
+            ->where('median_price', '>', 0)
+            ->whereColumn('min_price', '<', 'median_price')
+            // Seen in the last fortnight. A "deal" nobody has re-checked since
+            // last month is a price we cannot stand behind.
+            ->where('updated_at', '>=', now()->subDays(14))
+            ->orderByRaw("{$discount} DESC")
+            ->limit(6)
+            ->get()
+            ->map(fn (ProductGroup $group) => [
+                'id' => $group->id,
+                'title' => $group->title,
+                'image' => $group->image_url,
+                'price' => $group->min_price,
+                'was' => $group->median_price,
+                'discountPercent' => $group->discountPercent(),
+                'url' => $current->url("p/{$group->id}/{$group->slug}"),
+            ])
+            ->values()
+            ->all();
     }
 
     private function findEdition(CurrentMarket $current, ?string $date, bool $preview = false): ?DailyPickSet
@@ -98,8 +144,8 @@ class DailyCoveController extends Controller
         }
 
         /*
-         * A future date is a 404, not an empty page: guessing tomorrow's puzzle
-         * by URL would be an obvious hole in a daily game.
+         * A future date is a 404, not an empty page: tomorrow's edition is a
+         * draft, and reaching it by URL would leak the theme and the finds.
          *
          * Unless this is a preview, where tomorrow's edition is precisely the
          * thing being checked — and the reader is an editor rather than a
@@ -112,15 +158,6 @@ class DailyCoveController extends Controller
         return $query->where('drop_date', $parsed->toDateString())->first();
     }
 
-    /**
-     * The edition's prose, as paragraphs of safe HTML.
-     *
-     * Every destination comes from the allowlist the builder supplied; a token
-     * naming anything else was stripped to plain text before it ever reached
-     * the database's neighbours here. See CoveMarkup.
-     *
-     * @return list<string>
-     */
     /**
      * The article, paragraph by paragraph, each carrying the products it names.
      *

@@ -603,7 +603,7 @@ return [
     | itself; "a list you build for somebody and then hand over" does not, and a
     | tool nobody understands is a tool nobody opens.
     */
-    'cove' => [
+    'gift_cove' => [
         'title' => 'The Gift Cove',
         'intro' => 'Everything for buying for other people, and for telling them what you would like. Nobody ever sees who bought what.',
         'tools' => 'What you can do here',
@@ -999,6 +999,10 @@ return [
             'Found in the back of the catalogue',
             'You did not know you needed this',
         ],
+        'deals_title' => 'Biggest drops right now',
+        'deals_hint' => 'Against our own 30-day median, not a shop’s crossed-out price.',
+        'gift_cove_hint' => 'Everything here for buying for somebody else, in one place.',
+        'gift_cove_cta' => 'Open the Gift Cove',
     ],
 
     'guides' => [

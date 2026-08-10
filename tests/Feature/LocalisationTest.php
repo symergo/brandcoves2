@@ -46,6 +46,35 @@ class LocalisationTest extends TestCase
     ];
 
     #[Test]
+    public function no_language_file_declares_a_top_level_key_twice(): void
+    {
+        /*
+         * PHP takes the last value for a duplicate array key and says nothing.
+         *
+         * A second `'cove' => [...]` block, added months after the first,
+         * replaced the Daily Cove subscription copy outright — so every
+         * `cove.subscribe_*` lookup resolved to nothing, in all four languages,
+         * English included, and the signup card rendered blank labels. Nothing
+         * failed: the file parsed, the keys "existed", and only the eye caught it.
+         */
+        foreach (['en', 'nl', 'fr', 'es'] as $language) {
+            $source = (string) file_get_contents(base_path("lang/{$language}/site.php"));
+
+            preg_match_all("/^    '([a-z0-9_]+)' => \[$/m", $source, $matches);
+
+            $counts = array_count_values($matches[1]);
+            $duplicates = array_keys(array_filter($counts, fn (int $n) => $n > 1));
+
+            $this->assertSame(
+                [],
+                $duplicates,
+                "lang/{$language}/site.php declares these top-level keys more than once: "
+                .implode(', ', $duplicates).'. The later block silently replaces the earlier one.',
+            );
+        }
+    }
+
+    #[Test]
     public function no_french_or_spanish_copy_ships_without_its_accents(): void
     {
         /*

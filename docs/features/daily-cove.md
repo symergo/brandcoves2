@@ -58,6 +58,34 @@ the archive is a growing corpus of indexed pages, each one a guide plus a set of
 writing that connects them. Ninety days in, that is ninety pages per market that did not exist
 before, each answering a question someone demonstrably asked.
 
+## The column beside the article
+
+Two cards, from `lg` up, stacking under the article below it. The article keeps
+its `max-w-2xl` measure — prose past roughly 70 characters a line is harder to
+read — and the column uses the space that cap was already leaving empty.
+
+**Biggest drops right now.** "Newest highest discounts" is two orderings that
+fight: the deepest discount in the catalogue may be a month old, and the newest
+may be 4% off. Sorted by discount *within* a fortnight's recency window, so the
+column is both fresh and worth looking at rather than a stale hall of fame. Every
+figure is against our own 30-day median, never a shop's crossed-out price — the
+same rule the badges and the brand pages hold to, and the reason a saving shown
+here can be defended.
+
+**The Gift Cove.** The one part of the site a reader here has no reason to have
+found: the nav names it and nothing explains it. Four tool names and a link do
+more than a nav entry ever did, and it sits beside what they are already reading
+rather than interrupting it.
+
+### The subscription card had no copy at all
+
+`cove.subscribe_*` resolved to nothing, in all four languages, because a second
+`'cove' => [...]` block — the Gift Cove, added months later — silently replaced
+the first. PHP takes the last value for a duplicate array key and says nothing.
+The Gift Cove block is now `gift_cove`, and
+`no_language_file_declares_a_top_level_key_twice` fails the build if it happens
+again.
+
 ## The price guess, and its removal
 
 The edition opened with a game: one product with its price hidden, a few tries, feedback in bands,

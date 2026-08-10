@@ -547,7 +547,7 @@ return [
         'note' => 'Dit is nog niet gepubliceerd. Niemand anders ziet het, en zoekmachines wordt gevraagd het te negeren.',
     ],
 
-    'cove' => [
+    'gift_cove' => [
         'title' => 'De Gift Cove',
         'intro' => 'Alles om voor anderen te kopen, en om te vertellen wat je zelf leuk zou vinden. Niemand ziet ooit wie wat gekocht heeft.',
         'tools' => 'Wat je hier kunt doen',
@@ -942,6 +942,10 @@ return [
             'Achteraan in de catalogus gevonden',
             'Je wist niet dat je dit nodig had',
         ],
+        'deals_title' => 'Grootste dalers van nu',
+        'deals_hint' => 'Gemeten tegen onze eigen mediaan over 30 dagen, niet tegen een doorgestreepte winkelprijs.',
+        'gift_cove_hint' => 'Alles wat je nodig hebt om voor iemand anders te kopen, op één plek.',
+        'gift_cove_cta' => 'Open de Gift Cove',
     ],
 
     'guides' => [

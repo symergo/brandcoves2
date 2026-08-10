@@ -543,7 +543,7 @@ return [
         'note' => 'Esto no está publicado. Nadie más lo ve, y a los buscadores se les pide que lo ignoren.',
     ],
 
-    'cove' => [
+    'gift_cove' => [
         'title' => 'La Gift Cove',
         'intro' => 'Todo para regalar a los demás, y para contar lo que te gustaría a ti. Nadie ve nunca quién ha comprado qué.',
         'tools' => 'Lo que puedes hacer aquí',
@@ -939,6 +939,10 @@ return [
             'Encontrado al fondo del catálogo',
             'No sabías que lo necesitabas',
         ],
+        'deals_title' => 'Las mayores bajadas',
+        'deals_hint' => 'Medido contra nuestra propia mediana de 30 días, no contra un precio tachado.',
+        'gift_cove_hint' => 'Todo lo que necesitas para comprarle algo a otra persona, en un sitio.',
+        'gift_cove_cta' => 'Abrir la Gift Cove',
     ],
 
     'guides' => [

@@ -49,7 +49,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
         {
             key: 'wishlist',
             href: mine?.url ?? urls.lists,
-            badge: mine ? t('cove.items_count', { count: n(mine.items) }) : null,
+            badge: mine ? t('gift_cove.items_count', { count: n(mine.items) }) : null,
         },
         { key: 'giftlist', href: forSomeone, badge: counts.giftLists ? n(counts.giftLists) : null },
         { key: 'collab', href: forSomeone, badge: null },
@@ -63,11 +63,11 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
 
     return (
         <>
-            <Head title={t('cove.title')} />
+            <Head title={t('gift_cove.title')} />
 
             <header className="max-w-2xl">
-                <h1 className="text-3xl font-semibold tracking-tight">{t('cove.title')}</h1>
-                <p className="mt-3 text-lg text-ink-soft">{t('cove.intro')}</p>
+                <h1 className="text-3xl font-semibold tracking-tight">{t('gift_cove.title')}</h1>
+                <p className="mt-3 text-lg text-ink-soft">{t('gift_cove.intro')}</p>
             </header>
 
             {/*
@@ -79,7 +79,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
                 <section className="mt-8 max-w-2xl rounded-card border border-accent/40 bg-accent/5 p-6">
                     <h2 className="text-lg font-medium">{mine.title}</h2>
                     <p className="mt-1 text-sm text-ink-soft">
-                        {t('cove.items_count', { count: n(mine.items) })}
+                        {t('gift_cove.items_count', { count: n(mine.items) })}
                         {' · '}
                         {mine.shared ? t('lists.sharing_on') : t('lists.sharing_off')}
                     </p>
@@ -87,7 +87,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
                         href={mine.url}
                         className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
                     >
-                        {mine.items === 0 ? t('cove.start_list') : t('cove.open_list')}
+                        {mine.items === 0 ? t('gift_cove.start_list') : t('gift_cove.open_list')}
                     </Link>
                 </section>
             )}
@@ -102,7 +102,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
             )}
 
             <section className="mt-12">
-                <h2 className="text-lg font-medium">{t('cove.tools')}</h2>
+                <h2 className="text-lg font-medium">{t('gift_cove.tools')}</h2>
 
                 <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {tools.map((tool) => (
@@ -112,7 +112,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
                                 className="flex h-full flex-col rounded-card border border-line bg-card p-6 transition hover:border-ink"
                             >
                                 <div className="flex items-start justify-between gap-3">
-                                    <h3 className="font-medium">{t(`cove.${tool.key}_title`)}</h3>
+                                    <h3 className="font-medium">{t(`gift_cove.${tool.key}_title`)}</h3>
                                     {tool.badge && (
                                         <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
                                             {tool.badge}
@@ -120,7 +120,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
                                     )}
                                 </div>
                                 <p className="mt-2 text-sm text-ink-soft">
-                                    {t(`cove.${tool.key}_body`)}
+                                    {t(`gift_cove.${tool.key}_body`)}
                                 </p>
                             </Link>
                         </li>
@@ -150,7 +150,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
             )}
 
             <p className="mt-12 max-w-2xl rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
-                {t('cove.privacy')}
+                {t('gift_cove.privacy')}
             </p>
         </>
     )
