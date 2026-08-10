@@ -219,6 +219,33 @@ class SeoTest extends TestCase
     }
 
     #[Test]
+    public function no_static_file_shadows_a_generated_route(): void
+    {
+        /*
+         * Found in production, on the apex, minutes after cutover.
+         *
+         * Laravel ships a default `public/robots.txt` reading "Disallow:" —
+         * allow everything. FrankenPHP serves `public/` as static files before
+         * a request reaches PHP, so that file answered `/robots.txt` and
+         * `SitemapController::robots()` had never once run: not on staging,
+         * where it should have served a blanket noindex, and not on production,
+         * where it should have kept crawlers out of `/*\/go/` and `/admin` and
+         * pointed them at the sitemap.
+         *
+         * Every existing robots test passed throughout, because PHPUnit calls
+         * the router directly and never touches the web server's static
+         * handling. No feature test can catch this — the assertion has to be
+         * about the filesystem.
+         */
+        foreach (['robots.txt', 'sitemap.xml'] as $generated) {
+            $this->assertFileDoesNotExist(
+                public_path($generated),
+                "public/{$generated} would be served by the web server before the route that generates it",
+            );
+        }
+    }
+
+    #[Test]
     public function the_sitemap_index_covers_every_published_market(): void
     {
         $xml = (string) $this->get('/sitemap.xml')->assertOk()->getContent();
