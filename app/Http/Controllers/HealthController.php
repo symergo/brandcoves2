@@ -36,8 +36,44 @@ class HealthController extends Controller
             'branch' => env('COOLIFY_BRANCH', 'local'),
             'migration' => $this->lastMigration(),
             'environment' => app()->environment(),
+            'config' => $this->config(),
             'checks' => $checks,
         ], $healthy ? 200 : 503);
+    }
+
+    /**
+     * Whether the settings that must travel actually arrived.
+     *
+     * **Booleans only, and never a value or a length.** This endpoint is
+     * unauthenticated, so it may say that a key is present and nothing more —
+     * `bc:check-config` gives the fuller picture to whoever already has a shell.
+     *
+     * The point is that "did the config carry over?" becomes a `curl` rather
+     * than an SSH session, so it can be answered in the same breath as `built`
+     * and `migration` after every deploy. It is deliberately not part of the
+     * `status` calculation: a missing Amazon key must not take the site down,
+     * and Coolify restarts a container that reports unhealthy.
+     *
+     * `awinAccounts` is a count rather than a flag because the failure it
+     * exists to catch was *fewer accounts than expected*, not zero — the
+     * catalogue still built, from one publisher instead of two, and nothing
+     * anywhere said so.
+     *
+     * @return array<string, bool|int>
+     */
+    private function config(): array
+    {
+        return [
+            'appKey' => filled(config('app.key')),
+            'credentialsKey' => filled(config('brandcoves.credentials_key')),
+            'claimHashSecret' => filled(config('brandcoves.wishlist.claim_hash_secret')),
+            'mail' => filled(config('services.resend.key')),
+            'awin' => filled(config('brandcoves.connectors.awin.api_token')),
+            'awinAccounts' => count((array) config('brandcoves.connectors.awin.accounts', [])),
+            'bol' => filled(config('brandcoves.connectors.sources.bol.client_id')),
+            'ai' => filled(config('brandcoves.ai.api_key')),
+            'robotsAllow' => (bool) config('brandcoves.robots_allow'),
+        ];
     }
 
     /** @param callable():mixed $probe */

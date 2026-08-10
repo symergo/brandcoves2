@@ -27,6 +27,8 @@ cannot be recovered from a diff.
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [editorial-api.md](editorial-api.md) | Content / Operations | Active |
+| [content-promotion.md](content-promotion.md) | Content / Operations | Active |
+| [config-contract.md](config-contract.md) | Core / Operations | Active |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |

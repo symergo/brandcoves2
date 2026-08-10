@@ -41,6 +41,9 @@ php artisan bc:refresh-discovery      # giftability → serendipity → brand st
 php artisan bc:plan-coves             # draft the editorial calendar 120 days ahead
 php artisan bc:make-admin             # create an admin; refuses a password in argv (visible in ps)
 php artisan bc:check-bol              # prove the bol credentials; prints lengths, never values
+php artisan bc:check-config           # did this environment's config arrive? lengths, never values
+php artisan bc:export-content         # editorial (feeds, coves, guides, copy) as a portable envelope
+php artisan bc:import-content --in=-  # apply one here. Dry run unless --write
 php artisan bc:api-token              # mint/list/revoke an editorial API key; plaintext shown once
 php artisan bc:seed-copy              # import shipped page copy into the editable copy bank
 php artisan bc:seed-copy --replace --surface=brand_intro   # after REWRITING shipped copy: a seeded
@@ -132,7 +135,12 @@ Two mechanisms, because they fail differently:
 
 ## Deployment
 
-`git push origin staging` → `staging.brandcoves.com`. Verify, then fast-forward `main`.
+**One branch, two apps.** Both Coolify applications track `main`. Staging auto-deploys every push;
+production deploys only when triggered. `git push origin main` → `staging.brandcoves.com`, verify,
+then trigger production.
+
+This replaced a `staging` → `main` fast-forward that drifted seven commits behind while production
+served real traffic. The gate survives; the drift cannot, because there is only one branch.
 
 - **`VITE_*` is baked into the client bundle at build time.** In Coolify these must be ticked
   **Build Variable**. Left as runtime vars they are `undefined` in the browser: server-rendered pages

@@ -10,16 +10,36 @@ laptop ──git push──▶ GitHub ──webhook──▶ Coolify ──▶ b
 
 ## Two applications, one repo
 
-| Coolify app | Branch | Domain | Notes |
-|---|---|---|---|
-| `brandcoves2-staging` | `staging` | `staging.brandcoves.com` | `ROBOTS_ALLOW=false`, own database, low AI caps |
-| `brandcoves2-prod` | `main` | `brandcoves.com` (from cutover) | `ROBOTS_ALLOW=true` |
+| Coolify app | Branch | Auto deploy | Domain | Notes |
+|---|---|---|---|---|
+| `brandcoves2-staging` | `main` | **on** | `staging.brandcoves.com` | `ROBOTS_ALLOW=false`, own database, low AI caps |
+| `brandcoves2-prod` | `main` | **off** | `brandcoves.com` | `ROBOTS_ALLOW=true` |
 
 Both: **Build Pack = Docker Compose**, **Compose Location = `/docker-compose.coolify.yml`**, domain
-assigned to the **`app`** service, Auto Deploy on, Scheduled Backups on **`postgres`**.
+assigned to the **`app`** service, Scheduled Backups on **`postgres`**.
 
-Everything lands on staging first. `main` only ever fast-forwards from a `staging` commit seen
-working on real infrastructure.
+## One branch, two apps
+
+Both applications track **`main`**. Staging deploys every push; production deploys when someone
+triggers it.
+
+This replaced a `staging` → `main` fast-forward, which was bookkeeping that encoded what a deploy
+already records — and which drifted. `main` sat **seven commits** behind `staging` at one point,
+including four bug fixes, while production served real traffic. Worse, the drift was invisible:
+nothing about production looked wrong, it was simply old, and the narrower advertiser allowlist in
+those unshipped commits was quietly costing catalogue.
+
+The gate survives — production still only moves when a person says so — but branch drift cannot
+happen, because there is only one branch. **What is on production is a deploy decision, not a branch
+state somebody has to remember to advance.**
+
+```bash
+git push origin main          # staging builds automatically
+# verify staging, then trigger the production deploy in Coolify
+```
+
+Keep both environments. Since v1 was deleted there is no fallback, so staging is the only place a bad
+migration surfaces before real visitors meet it — and the whole stack idles at ~390 MiB.
 
 ## Services
 
@@ -91,6 +111,30 @@ and six gift guides. v2's routes all live under `/{market}/`, so replacing the s
 redirect map discards that ranking equity. Phase 7 builds the map, serves **301s** from middleware,
 and verifies by crawling the old sitemap — every published v1 URL must return a 301 to a 200, not a
 404 and not a redirect chain.
+
+## Moving content between environments
+
+Editorial does not regenerate the way the catalogue does, so it is promoted rather than rewritten:
+
+```bash
+docker exec <staging-app> php artisan bc:export-content \
+  | docker exec -i <prod-app> php artisan bc:import-content --in=-   # dry run
+```
+
+Product references travel as `(market, identity_key)` because integer ids differ per environment.
+Dry run is the default and the drop list is the point. See
+[content-promotion.md](features/content-promotion.md).
+
+## Checking the config arrived
+
+```bash
+docker exec <app> php artisan bc:check-config
+curl -s https://brandcoves.com/health | jq .config
+```
+
+A setting has to survive `config/`, `.env.example`, the compose file and Coolify to do anything, and
+every way that fails is silent. `tests/Unit/ConfigContractTest.php` fails the build when a key cannot
+reach a container at all. See [config-contract.md](features/config-contract.md).
 
 ## Getting production data onto the laptop
 

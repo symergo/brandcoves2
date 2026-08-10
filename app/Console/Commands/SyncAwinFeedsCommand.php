@@ -28,11 +28,15 @@ class SyncAwinFeedsCommand extends Command
 
     public function handle(AwinFeedDiscovery $discovery): int
     {
-        if ((array) config('brandcoves.connectors.awin.accounts', []) === []) {
+        $accounts = (array) config('brandcoves.connectors.awin.accounts', []);
+
+        if ($accounts === []) {
             $this->error('No Awin account has an API token configured.');
 
             return self::FAILURE;
         }
+
+        $this->reportAccounts($accounts);
 
         $this->line('Fetching the feed lists…');
 
@@ -118,5 +122,44 @@ class SyncAwinFeedsCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Say which accounts are in play before spending a minute discovering feeds.
+     *
+     * An advertiser is only reachable through the account joined to them, so a
+     * missing account does not produce an error — it produces a shorter feed
+     * list, which looks exactly like an advertiser having no feeds. That is how
+     * `AWIN_VDB_*` went unnoticed: set locally, never passed through the compose
+     * file, so every deployed run quietly discovered one account's merchants and
+     * reported complete success.
+     *
+     * Printing this first means the discrepancy is visible above the results
+     * rather than inferred from them.
+     *
+     * @param  array<string, array{label?: string}>  $accounts
+     */
+    private function reportAccounts(array $accounts): void
+    {
+        /** @var array<string, array{label: string, env: string}> $declared */
+        $declared = (array) config('brandcoves.connectors.awin.declared_accounts', []);
+
+        foreach ($declared as $key => $meta) {
+            if (array_key_exists($key, $accounts)) {
+                $this->line("  <info>✓</info> {$meta['label']} ({$key})");
+
+                continue;
+            }
+
+            $this->warn("  ✗ {$meta['label']} ({$key}) — {$meta['env']} is unset here, so its advertisers will be absent from everything below.");
+        }
+
+        // Accounts configured but never declared: possible after a rename, and
+        // worth saying rather than quietly including.
+        foreach (array_diff(array_keys($accounts), array_keys($declared)) as $undeclared) {
+            $this->warn("  ? {$undeclared} has a token but is not in declared_accounts.");
+        }
+
+        $this->newLine();
     }
 }
