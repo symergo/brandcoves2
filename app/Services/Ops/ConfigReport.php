@@ -31,7 +31,20 @@ class ConfigReport
     public function groups(): array
     {
         $aiOn = (bool) config('brandcoves.ai.enabled');
-        $amazonOn = (bool) config('brandcoves.connectors.sources.amazon.enabled');
+
+        /*
+         * `connectors.amazon`, not `connectors.sources.amazon` — there is no
+         * `sources` level.
+         *
+         * The wrong path resolved to null, so this read as "Amazon is off" on
+         * every environment, which quietly downgraded its credentials from
+         * required to optional. The bol rows had the same fault and reported
+         * MISSING everywhere, including where bol demonstrably works. A config
+         * check that is always wrong in the safe direction is worse than none:
+         * it gets ignored, or it sends somebody chasing a credential that was
+         * never absent.
+         */
+        $amazonOn = (bool) config('brandcoves.connectors.amazon.enabled');
 
         $definition = [
             'Application' => [
@@ -61,10 +74,10 @@ class ConfigReport
             'Connectors' => [
                 ['AWIN_API_TOKEN', config('brandcoves.connectors.awin.api_token'), true, 'The catalogue comes from here.'],
                 ['AWIN_PUBLISHER_ID', config('brandcoves.connectors.awin.publisher_id'), true, null],
-                ['BOL_CLIENT_ID', config('brandcoves.connectors.sources.bol.client_id'), true, 'bol is the only supply the en market has.'],
-                ['BOL_CLIENT_SECRET', config('brandcoves.connectors.sources.bol.client_secret'), true, null],
-                ['AMAZON_ACCESS_KEY', config('brandcoves.connectors.sources.amazon.access_key'), $amazonOn, $amazonOn ? 'Required while Amazon is on.' : 'Not needed while Amazon is off.'],
-                ['AMAZON_SECRET_KEY', config('brandcoves.connectors.sources.amazon.secret_key'), $amazonOn, null],
+                ['BOL_CLIENT_ID', config('brandcoves.connectors.bol.client_id'), true, 'bol is the only supply the en market has.'],
+                ['BOL_CLIENT_SECRET', config('brandcoves.connectors.bol.client_secret'), true, null],
+                ['AMAZON_ACCESS_KEY', config('brandcoves.connectors.amazon.access_key'), $amazonOn, $amazonOn ? 'Required while Amazon is on.' : 'Not needed while Amazon is off.'],
+                ['AMAZON_SECRET_KEY', config('brandcoves.connectors.amazon.secret_key'), $amazonOn, null],
             ],
         ];
 

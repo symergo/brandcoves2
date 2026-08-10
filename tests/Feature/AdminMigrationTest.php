@@ -9,6 +9,7 @@ use App\Filament\Pages\Migration;
 use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Models\User;
+use App\Services\Ops\ConfigReport;
 use App\Services\Ops\DeployTrigger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -118,6 +119,49 @@ class AdminMigrationTest extends TestCase
         foreach (array_filter($secrets) as $secret) {
             $component->assertDontSee($secret);
         }
+    }
+
+    #[Test]
+    public function the_report_reads_the_config_paths_the_app_actually_uses(): void
+    {
+        /*
+         * These pointed at `connectors.sources.bol` and `connectors.sources.amazon`,
+         * and there is no `sources` level. The wrong paths resolved to null, so
+         * bol reported MISSING on every environment including ones where it
+         * demonstrably works, and Amazon read as "off" everywhere — which
+         * quietly downgraded its credentials from required to optional.
+         *
+         * Both directions are asserted, because a wrong path passes any test
+         * that only checks the unset case: null is indistinguishable from
+         * "genuinely not configured" until you set it and it still says null.
+         */
+        $report = app(ConfigReport::class);
+
+        config([
+            'brandcoves.connectors.bol.client_id' => null,
+            'brandcoves.connectors.bol.client_secret' => null,
+            'brandcoves.connectors.amazon.access_key' => null,
+        ]);
+
+        $this->assertContains('BOL_CLIENT_ID', $report->failures());
+
+        config([
+            'brandcoves.connectors.bol.client_id' => 'a-client-id',
+            'brandcoves.connectors.bol.client_secret' => 'a-secret',
+        ]);
+
+        $this->assertNotContains(
+            'BOL_CLIENT_ID',
+            $report->failures(),
+            'bol is configured and the report still calls it missing',
+        );
+
+        // Amazon's credentials are only required while Amazon is on, so the
+        // enabled flag has to resolve too — a null there makes them optional
+        // forever and hides a genuinely missing key.
+        config(['brandcoves.connectors.amazon.enabled' => true]);
+
+        $this->assertContains('AMAZON_ACCESS_KEY', $report->failures());
     }
 
     #[Test]
