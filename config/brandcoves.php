@@ -156,6 +156,34 @@ return [
     | Daily Picks
     |--------------------------------------------------------------------------
     */
+    /*
+     * The "biggest drops" column beside the Daily Cove.
+     *
+     * A percentage on a cheap thing is noise: a phone case whose median is
+     * €25 and which is now €4.70 is an 81% drop and not a find. Left on
+     * percentage alone the column filled with silicone covers, which is
+     * accurate, useless, and makes the whole page look like a bargain bin.
+     */
+    'deals' => [
+        // Seen recently enough that we would stand behind the price.
+        'window_days' => 14,
+
+        // Below this a percentage swing says more about the price point than
+        // about the offer.
+        'min_price' => 2000,
+
+        // And the saving has to be worth crossing the room for, in money and
+        // not only in percent.
+        'min_saving' => 1000,
+
+        // One product per brand: six covers from one maker is one fact
+        // repeated, the same reason feed discovery takes one feed per
+        // advertiser.
+        'per_brand' => 1,
+
+        'limit' => 6,
+    ],
+
     'picks' => [
         'per_day' => 7,
 
@@ -379,8 +407,20 @@ return [
              *
              * Each feed records which account it came from, so the connector
              * downloads it with the right key. Accounts with no token are
-             * skipped silently, which is what lets this ship before the second
-             * set of credentials exists.
+             * skipped, which is what lets this ship before the second set of
+             * credentials exists.
+             *
+             * Skipping them *silently* was a mistake, and it cost a publisher's
+             * worth of catalogue. `AWIN_VDB_*` was set in `.env` and never
+             * passed through `docker-compose.coolify.yml`, so a laptop ingested
+             * from two accounts and every deployed environment ingested from
+             * one — with no error, because "no token" and "token that cannot
+             * reach me" look identical from here.
+             *
+             * `declared` is the fix: the filter still decides what runs, but
+             * the full list survives so a diagnostic can say *which* account is
+             * absent and *which* variable to go and set. See `bc:check-config`
+             * and the top of `bc:awin-feeds`.
              */
             'accounts' => array_filter([
                 'default' => [
@@ -394,6 +434,12 @@ return [
                     'publisher_id' => env('AWIN_VDB_PUBLISHER_ID'),
                 ],
             ], fn (array $account) => filled($account['api_token'])),
+
+            /** Every account this build knows about, and the variable each needs. */
+            'declared_accounts' => [
+                'default' => ['label' => 'Brandcoves', 'env' => 'AWIN_API_TOKEN'],
+                'vandenborre' => ['label' => 'Vanden Borre', 'env' => 'AWIN_VDB_API_TOKEN'],
+            ],
 
             // Kept for anything still reading the single-token form.
             'api_token' => env('AWIN_API_TOKEN'),

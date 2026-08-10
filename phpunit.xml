@@ -71,6 +71,21 @@
             `BolConnectorTest` sets these itself and fakes the HTTP, which is how
             a connector test should work anyway.
         -->
+        <!--
+            No server-side rendering in tests.
+
+            Inertia SSRs whenever something is listening on the SSR port, so the
+            suite quietly rendered through whatever Node process happened to be
+            running — including a stale bundle left over from a debugging
+            session, which produced a French page carrying Dutch copy and a
+            product page carrying the previous one's GTIN. Two "failures" that
+            were entirely about the machine they ran on.
+
+            Tests assert on the Inertia payload, which is the same either way.
+            SSR itself is exercised by posting a page object to the bundle
+            directly; see docs/features/sharing.md.
+        -->
+        <env name="INERTIA_SSR_ENABLED" value="false"/>
         <env name="BOL_CLIENT_ID" value=""/>
         <env name="BOL_CLIENT_SECRET" value=""/>
         <env name="AWIN_API_TOKEN" value=""/>

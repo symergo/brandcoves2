@@ -97,20 +97,66 @@ class DailyCoveController extends Controller
      */
     private function deals(CurrentMarket $current): array
     {
+        $config = (array) config('brandcoves.deals');
         $discount = '((median_price - min_price)::numeric / median_price) * 100';
 
-        return ProductGroup::query()
+        $candidates = ProductGroup::query()
             ->forMarket($current->get())
             ->presentable()
+            /*
+             * Four filters, each removing a specific kind of junk.
+             *
+             * On percentage alone this column filled with silicone phone cases:
+             * accurate, useless, and enough to make the page look like a bargain
+             * bin. The percentage was never the problem — what it was applied to
+             * was.
+             */
+            // A median drawn from one shop is that shop's opinion, and a
+            // "discount" against it is that shop's marketing.
+            ->comparable()
+            // It sits beside gift writing on a gift site.
+            ->where('giftable', true)
             ->whereNotNull('median_price')
             ->where('median_price', '>', 0)
             ->whereColumn('min_price', '<', 'median_price')
+            // Below the floor a percentage says more about the price point than
+            // about the offer.
+            ->where('min_price', '>=', (int) $config['min_price'])
+            // And the saving has to be real money, not only a big number.
+            ->whereRaw('(median_price - min_price) >= ?', [(int) $config['min_saving']])
             // Seen in the last fortnight. A "deal" nobody has re-checked since
             // last month is a price we cannot stand behind.
-            ->where('updated_at', '>=', now()->subDays(14))
+            ->where('updated_at', '>=', now()->subDays((int) $config['window_days']))
             ->orderByRaw("{$discount} DESC")
-            ->limit(6)
-            ->get()
+            // Deliberately over-fetched: the per-brand cap below thins this out,
+            // and asking for exactly six would leave the column short.
+            ->limit((int) $config['limit'] * 10)
+            ->get();
+
+        /*
+         * One product per brand.
+         *
+         * Six covers from one maker is one fact repeated six times — the same
+         * reasoning as taking one feed per advertiser rather than the six
+         * largest feeds. Breadth is what makes a short list worth reading.
+         */
+        $seen = [];
+
+        return $candidates
+            ->filter(function (ProductGroup $group) use (&$seen, $config): bool {
+                $brand = mb_strtolower(trim((string) $group->brand));
+
+                // No brand at all is not a brand they share; those compete on
+                // their own merits rather than being collapsed together.
+                if ($brand === '') {
+                    return true;
+                }
+
+                $seen[$brand] = ($seen[$brand] ?? 0) + 1;
+
+                return $seen[$brand] <= (int) $config['per_brand'];
+            })
+            ->take((int) $config['limit'])
             ->map(fn (ProductGroup $group) => [
                 'id' => $group->id,
                 'title' => $group->title,
