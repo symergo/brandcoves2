@@ -10,33 +10,53 @@ laptop ──git push──▶ GitHub ──webhook──▶ Coolify ──▶ b
 
 ## Two applications, one repo
 
+Read from the Coolify database on 2026-08-10, not from memory:
+
 | Coolify app | Branch | Auto deploy | Domain | Notes |
 |---|---|---|---|---|
-| `brandcoves2-staging` | `main` | **on** | `staging.brandcoves.com` | `ROBOTS_ALLOW=false`, own database, low AI caps |
-| `brandcoves2-prod` | `main` | **off** | `brandcoves.com` | `ROBOTS_ALLOW=true` |
+| `brandcoves2-staging` | `staging` | **on** | `staging.brandcoves.com` | `ROBOTS_ALLOW=false`, own database, low AI caps |
+| `brandcoves2-prod` | `main` | **on** | `brandcoves.com` | `ROBOTS_ALLOW=true` |
 
 Both: **Build Pack = Docker Compose**, **Compose Location = `/docker-compose.coolify.yml`**, domain
 assigned to the **`app`** service, Scheduled Backups on **`postgres`**.
 
-## One branch, two apps
+## How it deploys today
 
-Both applications track **`main`**. Staging deploys every push; production deploys when someone
-triggers it.
+```bash
+git push origin staging       # staging.brandcoves.com builds automatically
+# verify staging, then:
+git push origin main          # production builds automatically, at once
+```
 
-This replaced a `staging` → `main` fast-forward, which was bookkeeping that encoded what a deploy
-already records — and which drifted. `main` sat **seven commits** behind `staging` at one point,
+**There is no human gate on production.** Both apps have auto-deploy enabled, so the fast-forward to
+`main` *is* the deploy — nobody confirms anything, and nothing waits. Anyone advancing `main`
+believing a person still has to press a button in Coolify will ship to real traffic by accident. That
+is not hypothetical: `main` moved to `2140f25` at 07:24 on 2026-08-10 and production rebuilt within
+the minute.
+
+## Planned: one branch, two apps — NOT yet in effect
+
+The intended model is that both applications track **`main`**, staging deploying every push and
+production only when someone triggers it.
+
+It would replace the `staging` → `main` fast-forward, which is bookkeeping that encodes what a deploy
+already records — and which drifts. `main` sat **seven commits** behind `staging` at one point,
 including four bug fixes, while production served real traffic. Worse, the drift was invisible:
 nothing about production looked wrong, it was simply old, and the narrower advertiser allowlist in
 those unshipped commits was quietly costing catalogue.
 
-The gate survives — production still only moves when a person says so — but branch drift cannot
-happen, because there is only one branch. **What is on production is a deploy decision, not a branch
-state somebody has to remember to advance.**
+Under it, branch drift cannot happen because there is only one branch. **What is on production would
+be a deploy decision, not a branch state somebody has to remember to advance.**
 
-```bash
-git push origin main          # staging builds automatically
-# verify staging, then trigger the production deploy in Coolify
-```
+**Two changes in Coolify make it real, and the order matters:**
+
+1. Turn **off** auto-deploy on `brandcoves2-prod`. This is the gate the model assumes and the system
+   does not currently have.
+2. Repoint `brandcoves2-staging` from `staging` to `main`.
+
+Doing (2) first, or alone, points both apps at one branch while production still auto-deploys — every
+commit would reach real visitors with no staging pass at all, which is strictly worse than the
+two-branch model it replaces. Until both are done, follow *How it deploys today* above.
 
 Keep both environments. Since v1 was deleted there is no fallback, so staging is the only place a bad
 migration surfaces before real visitors meet it — and the whole stack idles at ~390 MiB.

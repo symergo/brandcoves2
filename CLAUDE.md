@@ -135,12 +135,23 @@ Two mechanisms, because they fail differently:
 
 ## Deployment
 
-**One branch, two apps.** Both Coolify applications track `main`. Staging auto-deploys every push;
-production deploys only when triggered. `git push origin main` → `staging.brandcoves.com`, verify,
-then trigger production.
+**Two branches, two apps, and both auto-deploy.** Read from Coolify on 2026-08-10:
 
-This replaced a `staging` → `main` fast-forward that drifted seven commits behind while production
-served real traffic. The gate survives; the drift cannot, because there is only one branch.
+| App | Tracks | Auto-deploy | Domain |
+|---|---|---|---|
+| `brandcoves2-staging` | `staging` | **on** | `staging.brandcoves.com` |
+| `brandcoves2-prod` | `main` | **on** | `brandcoves.com` |
+
+`git push origin staging` → `staging.brandcoves.com`. Verify, then fast-forward `main` — **which
+ships to production immediately**. There is no confirmation step and no human gate: the
+fast-forward *is* the deploy.
+
+> **Planned, and not in effect.** A one-branch model — both apps on `main`, production behind a
+> manual trigger — is designed in [docs/deployment.md](docs/deployment.md), to end the drift that
+> once left `main` seven commits behind `staging`. It needs two changes in Coolify that have not been
+> made: repoint `brandcoves2-staging` to `main`, and turn **off** auto-deploy on `brandcoves2-prod`.
+> Until both are done, follow the table above. Doing only the first would auto-deploy every commit
+> straight to production.
 
 - **`VITE_*` is baked into the client bundle at build time.** In Coolify these must be ticked
   **Build Variable**. Left as runtime vars they are `undefined` in the browser: server-rendered pages
