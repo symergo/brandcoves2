@@ -75,6 +75,78 @@ class MarketRoutingTest extends TestCase
         $this->get('/nl-nl')->assertSee('<html lang="nl-NL">', false);
     }
 
+    /*
+     * An unpublished market: routable, never advertised.
+     *
+     * `es` has no supply — Awin reports no advertiser coverage for Spain and bol
+     * does not operate there — so it would be an empty shop in the switcher and
+     * a fifth market sitemap leading nowhere. Hidden rather than deleted, so the
+     * copy bank and Cove plans can be built before it opens.
+     */
+
+    #[Test]
+    public function an_unpublished_market_still_routes(): void
+    {
+        // Deliberate: hiding it must not break the URLs, or preparing content
+        // for it becomes impossible and reopening it becomes a migration.
+        $this->assertFalse(Market::Es->isPublished());
+        $this->get('/es')->assertOk();
+    }
+
+    #[Test]
+    public function an_unpublished_market_is_not_offered_in_the_switcher(): void
+    {
+        // nativeName appears only in the switcher payload, so its absence is
+        // the switcher's absence.
+        $this->get('/be-nl')
+            ->assertDontSee(Market::Es->nativeName(), false)
+            ->assertSee(Market::BeFr->nativeName(), false);
+    }
+
+    #[Test]
+    public function an_unpublished_market_is_never_negotiated(): void
+    {
+        // Sending a Spanish speaker to an empty catalogue is worse than sending
+        // them to the default, which at least has products.
+        $this->withHeader('Accept-Language', 'es-ES,es;q=0.9')
+            ->get('/')
+            ->assertRedirect('/'.Market::default()->value);
+
+        $this->assertSame(Market::default(), Market::fromAcceptLanguage('es-ES,es;q=0.9'));
+    }
+
+    #[Test]
+    public function an_unpublished_market_is_absent_from_hreflang(): void
+    {
+        // Declaring it tells a crawler there is a Spanish equivalent worth
+        // indexing, which is the opposite of hiding it.
+        $response = $this->get('/be-nl');
+
+        $response->assertDontSee('hreflang="es-ES"', false);
+        $response->assertSee('hreflang="nl-BE"', false);
+    }
+
+    #[Test]
+    public function an_unpublished_market_is_absent_from_the_sitemap_index(): void
+    {
+        $this->get('/sitemap.xml')
+            ->assertOk()
+            ->assertDontSee('/sitemap/es/', false)
+            ->assertSee('/sitemap/be-nl/', false);
+    }
+
+    #[Test]
+    public function an_unpublished_market_is_disallowed_in_robots(): void
+    {
+        // It still routes and nothing links to it, but a URL remembered from
+        // elsewhere would still be crawled.
+        config(['brandcoves.robots_allow' => true]);
+
+        $this->get('/robots.txt')
+            ->assertOk()
+            ->assertSee('Disallow: /es/', false);
+    }
+
     #[Test]
     public function staging_is_kept_out_of_the_index(): void
     {

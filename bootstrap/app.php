@@ -63,13 +63,24 @@ return Application::configure(basePath: dirname(__DIR__))
          * intended behaviour, and returns the visitor to the market they were
          * already browsing.
          */
-        $middleware->redirectGuestsTo(function (Request $request) {
-            $segment = $request->segment(1);
-            $market = Market::tryFrom((string) $segment)
-                ?? Market::fromAcceptLanguage($request->header('Accept-Language'));
+        $market = fn (Request $request): Market => Market::tryFrom((string) $request->segment(1))
+            ?? Market::fromAcceptLanguage($request->header('Accept-Language'));
 
-            return '/'.$market->value.'/login';
-        });
+        $middleware->redirectGuestsTo(fn (Request $request) => '/'.$market($request)->value.'/login');
+
+        /*
+         * And the mirror: where somebody already signed in is sent when they
+         * open a guest-only route.
+         *
+         * The same defect, the other way round, and it survived the first fix.
+         * Laravel's default calls `route('home')`, which is `/{market}` here and
+         * cannot be generated without one — so opening `/be-nl/login` while
+         * signed in threw `UrlGenerationException` and returned a 500 rather
+         * than the home page. Easy to reach: a bookmarked login page, a stale
+         * "Sign in" link, or a magic-link email opened after signing in on
+         * another tab.
+         */
+        $middleware->redirectUsersTo(fn (Request $request) => '/'.$market($request)->value);
 
         // navigator.sendBeacon cannot set headers, so the click beacon cannot
         // carry a CSRF token. Exempt deliberately: it writes an analytics row

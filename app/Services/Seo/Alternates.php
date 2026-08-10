@@ -209,7 +209,9 @@ class Alternates
         foreach ($rows as $value) {
             $market = Market::tryFrom((string) $value);
 
-            if ($market !== null) {
+            // A row can exist for a market that is not open yet — editions are
+            // planned ahead of the market being published.
+            if ($market !== null && $market->isPublished()) {
                 $alternates[$market->hrefLang()] = url("/{$market->value}/daily/{$date}");
             }
         }
@@ -222,7 +224,10 @@ class Alternates
     {
         $alternates = [];
 
-        foreach (Market::cases() as $market) {
+        // An unpublished market must not appear in hreflang. Declaring it tells
+        // a crawler the page has a Spanish equivalent worth indexing, which is
+        // the opposite of hiding it.
+        foreach (Market::published() as $market) {
             $alternates[$market->hrefLang()] = url(CurrentMarket::swapMarketInPath($path, $market));
         }
 

@@ -49,7 +49,10 @@ class SitemapController extends Controller
         $xml = Cache::remember('bc:sitemap:index', 3600, function (): string {
             $entries = [];
 
-            foreach (Market::cases() as $market) {
+            // Published only. Advertising a market sitemap that resolves to an
+            // empty catalogue spends crawl budget to prove there is nothing
+            // there.
+            foreach (Market::published() as $market) {
                 $count = ProductGroup::query()
                     ->forMarket($market)
                     ->presentable()
@@ -245,10 +248,26 @@ class SitemapController extends Controller
     {
         $allow = (bool) config('brandcoves.robots_allow');
 
+        /*
+         * An unpublished market still routes, so it still needs keeping out of
+         * the index. It is absent from the sitemap and from every hreflang set,
+         * which means nothing links to it — but a URL guessed or remembered
+         * from elsewhere would still be crawled, and an empty market is exactly
+         * the page we do not want representing the site.
+         */
+        $unpublished = array_map(
+            fn (Market $market): string => 'Disallow: /'.$market->value.'/',
+            array_values(array_filter(
+                Market::cases(),
+                fn (Market $market): bool => ! $market->isPublished(),
+            )),
+        );
+
         $lines = $allow
             ? [
                 'User-agent: *',
                 'Allow: /',
+                ...$unpublished,
                 // The click-out redirector must never be crawled: it is an
                 // outbound affiliate hop, and crawling it burns budget on
                 // redirects while looking like link-selling to a search engine.

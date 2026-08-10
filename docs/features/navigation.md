@@ -39,6 +39,27 @@ a mark, moving between them feels like being moved rather than moving.
 `aria-current="page"` plus an underline, matched on prefix so a product opened from Search still
 reads as Search.
 
+## The login page 500'd for anyone already signed in
+
+Laravel's `guest` middleware sends an authenticated visitor to `route('home')`. Every route here is
+prefixed with `{market}`, so that call cannot be generated without one — `UrlGenerationException`,
+served as a 500.
+
+The mirror case was fixed long ago: `redirectGuestsTo` resolves the market from the request, and the
+comment above it explains exactly this hazard. `redirectUsersTo` was never given the same treatment,
+and nothing ever opened the login page while signed in, so it sat there. Both now share one market
+resolver.
+
+Reaching it takes no ingenuity: a bookmarked login page, a stale "Sign in" link, or a magic-link
+email opened after signing in on another tab.
+
+Found by `tests/Feature/PageSmokeTest.php`, which opens every reachable page twice — once signed
+out, once signed in — and asserts only that the response is not a 5xx. A redirect is an answer, and
+so is a 404 from a surface with no content generated yet; a server error never is. It is a low bar,
+and it is the bar the last several regressions here failed to clear: a component used but not
+imported, a helper called with the wrong argument, a class an autofix had dropped from the imports.
+Each shipped green, because every unit beneath the page was tested and nothing opened the page.
+
 ## What stays out of the menu
 
 **"My lists" keeps its own place in the header.** Lists work before signup — that is the whole
@@ -53,6 +74,8 @@ teaches people to ignore it, and then the one that matters is ignored too.
 - `resources/js/Components/AccountMenu.tsx`
 - `resources/js/Layouts/SiteLayout.tsx`
 - `app/Http/Controllers/Auth/MagicLinkController.php` — `logout()`
+- `bootstrap/app.php` — `redirectGuestsTo` / `redirectUsersTo`, both market-aware
+- `tests/Feature/PageSmokeTest.php` — every page, opened signed out and signed in
 - `lang/*/site.php` — `nav.sign_out`, `nav.admin`
 
 ## See also

@@ -64,13 +64,15 @@ class HandleInertiaRequests extends Middleware
                 'currency' => $market->currency(),
             ],
 
-            // The switcher needs every market, and it is a fixed five — cheaper
-            // to ship than to fetch.
+            // The switcher needs every *published* market, and it is a short
+            // fixed list — cheaper to ship than to fetch. An unpublished market
+            // is left out rather than disabled: a greyed-out country reads as a
+            // fault, and there is nothing the visitor can do about it.
             'markets' => array_map(fn (Market $m) => [
                 'key' => $m->value,
                 'label' => $m->label(),
                 'nativeName' => $m->nativeName(),
-            ], Market::cases()),
+            ], Market::published()),
 
             /*
              * Site copy for the current market's language.

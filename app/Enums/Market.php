@@ -28,6 +28,47 @@ enum Market: string
         return self::BeNl;
     }
 
+    /**
+     * Whether this market is offered to the public.
+     *
+     * A market is a promise of somewhere to buy, and `es` cannot keep it: Awin
+     * reports no advertiser coverage for Spain, and bol does not operate there
+     * either (see {@see self::bolCountry()}), so it has no supply at all rather
+     * than a thin catalogue. Shipping it anyway would put an empty shop in the
+     * switcher and five market sitemaps in front of a crawler, one of which
+     * leads to nothing.
+     *
+     * Unpublished is *unadvertised*, not removed. `/es/` still routes, so the
+     * copy bank, guides and Cove plans can be prepared before it opens and the
+     * whole thing reverses by flipping this one arm. What it does not do is
+     * appear in the switcher, the sitemap, the hreflang set, or language
+     * negotiation.
+     */
+    public function isPublished(): bool
+    {
+        return match ($this) {
+            self::Es => false,
+            default => true,
+        };
+    }
+
+    /**
+     * Markets a visitor may be shown or sent to.
+     *
+     * Use this for anything public-facing. Admin and console keep {@see
+     * self::cases()}: an editor still needs to build the market that has not
+     * opened yet.
+     *
+     * @return list<self>
+     */
+    public static function published(): array
+    {
+        return array_values(array_filter(
+            self::cases(),
+            fn (self $market): bool => $market->isPublished(),
+        ));
+    }
+
     /** Short label for the market switcher. */
     public function label(): string
     {
@@ -169,16 +210,18 @@ enum Market: string
         // the next one. Doing all the exact matches first looks equivalent but
         // is not: "fr,en;q=0.5" would then match `en` exactly and return the
         // English market, ignoring that the visitor asked for French first.
+        // Published only. Sending a Spanish speaker to a market with nothing in
+        // it is a worse answer than the default, which at least has a catalogue.
         foreach ($tags as $t) {
             // Exact tag wins: nl-BE is a better answer than "some Dutch market".
-            foreach (self::cases() as $market) {
+            foreach (self::published() as $market) {
                 if (strtolower($market->hrefLang()) === $t['tag']) {
                     return $market;
                 }
             }
 
             $language = explode('-', $t['tag'])[0];
-            foreach (self::cases() as $market) {
+            foreach (self::published() as $market) {
                 if ($market->language() === $language) {
                     return $market;
                 }

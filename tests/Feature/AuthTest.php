@@ -242,4 +242,36 @@ class AuthTest extends TestCase
         // And the route itself is gone, not just the button.
         $this->get('/be-nl/auth/google')->assertNotFound();
     }
+
+    #[Test]
+    public function opening_the_login_page_while_signed_in_goes_home(): void
+    {
+        /*
+         * It used to 500.
+         *
+         * Laravel's guest middleware sends an authenticated visitor to
+         * `route('home')`, which is `/{market}` here and cannot be generated
+         * without a market — `UrlGenerationException`, straight out as a server
+         * error. The mirror case, a guest hitting an auth-only route, was fixed
+         * long ago; this direction was not, and nothing opened the page while
+         * signed in to notice.
+         *
+         * Easy to reach: a bookmarked login page, a stale "Sign in" link, or a
+         * magic-link email opened after signing in on another tab.
+         */
+        $this->actingAs(User::factory()->create())
+            ->get('/be-nl/login')
+            ->assertRedirect('/be-nl');
+    }
+
+    #[Test]
+    public function signing_out_returns_to_the_market_you_were_in(): void
+    {
+        $user = User::factory()->create();
+
+        // Nothing linked to this route until the account menu existed, so it
+        // had never been exercised from the interface at all.
+        $this->actingAs($user)->post('/be-nl/logout')->assertRedirect();
+        $this->assertGuest();
+    }
 }

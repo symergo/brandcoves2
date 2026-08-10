@@ -117,13 +117,21 @@ class LocalisationTest extends TestCase
     #[Test]
     public function every_page_declares_its_alternates(): void
     {
-        // Without hreflang the five market versions of a page compete with each
+        // Without hreflang the market versions of a page compete with each
         // other, and the wrong language can rank in the wrong country.
+        //
+        // Published markets only: declaring an unpublished one tells a crawler
+        // there is an equivalent worth indexing, which is the opposite of
+        // hiding it.
         $response = $this->get('/be-nl')->assertOk();
 
-        foreach (Market::cases() as $market) {
+        foreach (Market::published() as $market) {
             $response->assertSee('hreflang="'.$market->hrefLang().'"', escape: false);
             $response->assertSee('/'.$market->value.'"', escape: false);
+        }
+
+        foreach (array_diff(Market::cases(), Market::published()) as $hidden) {
+            $response->assertDontSee('hreflang="'.$hidden->hrefLang().'"', escape: false);
         }
 
         // For everyone we do not serve directly.
