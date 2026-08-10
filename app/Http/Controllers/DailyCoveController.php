@@ -279,10 +279,25 @@ class DailyCoveController extends Controller
     }
 
     /** @return list<array<string, mixed>> */
+    /**
+     * Today's finds, minus anything you cannot actually buy.
+     *
+     * An edition is built once and then served all day, and forever after in
+     * the archive. Nothing re-checked stock at render, so a pick that sold out
+     * at eleven carried on being presented as an ordinary buyable product —
+     * with a price, a shop count and a save button — for the rest of its life.
+     *
+     * Hidden rather than dimmed, which is the opposite of what
+     * {@see GuideController} does, and deliberately: a guide is a ranked list
+     * whose copy names each entry, so removing number three breaks the writing.
+     * A Cove's finds are a set. The prose keeps its link either way — a product
+     * page for something out of stock is a real page, with the price history
+     * and the restock alert on it.
+     */
     private function finds(DailyPickSet $edition, CurrentMarket $current): array
     {
         return $edition->picks
-            ->filter(fn (DailyPick $pick) => $pick->group !== null)
+            ->filter(fn (DailyPick $pick) => $pick->group !== null && $pick->group->in_stock)
             ->map(fn (DailyPick $pick) => [
                 'id' => $pick->id,
                 'groupId' => $pick->group->id,

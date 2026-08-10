@@ -72,6 +72,22 @@ figure is against our own 30-day median, never a shop's crossed-out price — th
 same rule the badges and the brand pages hold to, and the reason a saving shown
 here can be defended.
 
+### Only what you can buy
+
+An edition is built once and served all day, and forever after in the archive.
+Nothing re-checked stock at render, so a pick that sold out at eleven carried on
+being presented as an ordinary buyable product — price, shop count and a save
+button — for the rest of its life. The finds are now filtered on `in_stock` at
+render, on the Cove, on the front page's four, and in the digest email, where an
+out-of-stock pick is counted into "and more on the page" rather than named.
+
+**Hidden here, dimmed in a guide** — the opposite treatment, deliberately. A
+guide is a ranked list whose copy names each entry, so removing number three
+breaks the writing; `GuideController` marks it unavailable instead. A Cove's
+finds are a set, and one fewer card costs nothing. The prose keeps its link
+either way: a product page for something out of stock is a real page, with the
+price history and the restock alert on it.
+
 ### Why percentage alone is the wrong ranking
 
 Shipped on percentage alone, the column filled with silicone phone cases. A €25

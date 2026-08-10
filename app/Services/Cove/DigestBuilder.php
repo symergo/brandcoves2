@@ -85,6 +85,18 @@ class DigestBuilder
                 continue;
             }
 
+            if (! $group->in_stock) {
+                /*
+                 * Counted, not named. An email is written once and read hours
+                 * later, so it is the surface most likely to send somebody to a
+                 * product that has since sold out — and the one where they
+                 * cannot see the page has moved on.
+                 */
+                $omitted++;
+
+                continue;
+            }
+
             if (! $this->mayName($group)) {
                 // Counted, not silently dropped: "and three more on the page" is
                 // both true and a reason to click, and it means an edition that

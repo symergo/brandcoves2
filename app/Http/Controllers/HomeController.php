@@ -128,7 +128,10 @@ class HomeController extends Controller
             // A few, not all: the front page is an invitation to the edition,
             // not a copy of it.
             'finds' => $edition->picks
-                ->filter(fn (DailyPick $pick) => $pick->group !== null)
+                // In stock, like everywhere else: the front page is the first
+                // thing a visitor sees, and an unbuyable product is a worse
+                // first impression than one fewer card.
+                ->filter(fn (DailyPick $pick) => $pick->group !== null && $pick->group->in_stock)
                 ->take(4)
                 ->map(fn (DailyPick $pick) => [
                     'id' => $pick->group->id,

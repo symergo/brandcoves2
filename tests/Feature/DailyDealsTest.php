@@ -154,6 +154,60 @@ class DailyDealsTest extends TestCase
     }
 
     #[Test]
+    public function a_sold_out_find_disappears_from_the_edition(): void
+    {
+        $edition = DailyPickSet::query()->firstOrFail();
+
+        $here = $this->group(['title' => 'Still here']);
+        $gone = $this->group(['title' => 'Sold out']);
+
+        foreach ([$here, $gone] as $i => $group) {
+            $edition->picks()->create([
+                'group_id' => $group->id,
+                'rank' => $i + 1,
+                'slug' => 'pick-'.$group->id,
+            ]);
+        }
+
+        $gone->forceFill(['in_stock' => false])->saveQuietly();
+
+        /*
+         * An edition is built once and served all day, and forever after in the
+         * archive. Nothing re-checked stock at render, so a pick that sold out
+         * at eleven carried on being presented as an ordinary buyable product —
+         * price, shop count and a save button — for the rest of its life.
+         */
+        $props = $this->get('/be-nl/daily')->assertOk()->viewData('page')['props'];
+
+        $this->assertSame(['Still here'], array_column($props['finds'], 'title'));
+    }
+
+    #[Test]
+    public function a_sold_out_find_disappears_from_the_front_page(): void
+    {
+        $edition = DailyPickSet::query()->firstOrFail();
+
+        $here = $this->group(['title' => 'Buyable']);
+        $gone = $this->group(['title' => 'Sold out']);
+
+        foreach ([$here, $gone] as $i => $group) {
+            $edition->picks()->create([
+                'group_id' => $group->id,
+                'rank' => $i + 1,
+                'slug' => 'pick-'.$group->id,
+            ]);
+        }
+
+        $gone->forceFill(['in_stock' => false])->saveQuietly();
+
+        // The first thing a visitor sees. One fewer card beats one they cannot
+        // buy.
+        $props = $this->get('/be-nl')->assertOk()->viewData('page')['props'];
+
+        $this->assertSame(['Buyable'], array_column($props['today']['finds'], 'title'));
+    }
+
+    #[Test]
     public function the_column_is_capped(): void
     {
         foreach (range(1, 12) as $i) {
