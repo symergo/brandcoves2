@@ -219,12 +219,20 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function the_sitemap_index_covers_every_market(): void
+    public function the_sitemap_index_covers_every_published_market(): void
     {
         $xml = (string) $this->get('/sitemap.xml')->assertOk()->getContent();
 
-        foreach (Market::cases() as $market) {
+        foreach (Market::published() as $market) {
             $this->assertStringContainsString("/sitemap/{$market->value}/1.xml", $xml);
+        }
+
+        // An unpublished market has no supply, so its sitemap would spend crawl
+        // budget proving there is nothing there.
+        $hidden = array_filter(Market::cases(), fn (Market $m) => ! $m->isPublished());
+
+        foreach ($hidden as $market) {
+            $this->assertStringNotContainsString("/sitemap/{$market->value}/", $xml);
         }
     }
 

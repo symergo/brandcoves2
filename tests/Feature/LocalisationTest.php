@@ -130,8 +130,10 @@ class LocalisationTest extends TestCase
             $response->assertSee('/'.$market->value.'"', escape: false);
         }
 
-        foreach (array_diff(Market::cases(), Market::published()) as $hidden) {
-            $response->assertDontSee('hreflang="'.$hidden->hrefLang().'"', escape: false);
+        $hidden = array_filter(Market::cases(), fn (Market $m) => ! $m->isPublished());
+
+        foreach ($hidden as $market) {
+            $response->assertDontSee('hreflang="'.$market->hrefLang().'"', escape: false);
         }
 
         // For everyone we do not serve directly.

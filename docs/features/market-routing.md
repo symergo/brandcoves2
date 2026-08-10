@@ -45,6 +45,36 @@ Matching is deliberately conservative — exact BCP 47 tag first (`nl-BE` → `b
 language-only (`fr` → `be-fr`), then the default. A wrong guess shows the wrong currency and the
 wrong merchants, so anything unrecognised falls back rather than being approximated.
 
+Negotiation only ever selects a **published** market. A Spanish `Accept-Language` resolves to the
+default, not to `es`.
+
+## Published markets
+
+A market is a promise that there is somewhere to buy. `es` cannot keep it: `bc:awin-feeds` reports
+*"no Awin coverage for this market"* for Spain, and bol does not operate there either
+(`Market::bolCountry()` is null). It has **no supply at all**, not a thin catalogue — so it ships
+hidden.
+
+`Market::isPublished()` decides, and `Market::published()` is what public-facing code iterates.
+
+**Hidden means unadvertised, not removed.** `/es/` still routes and still returns 200. The copy bank,
+guides and Cove plans can all be built before the market opens, and opening it is flipping one arm of
+one `match`. Admin and console keep using `Market::cases()` for exactly that reason — an editor has
+to be able to work on the market that has not opened yet.
+
+What an unpublished market is kept out of:
+
+| Surface | Why |
+|---|---|
+| The switcher (`HandleInertiaRequests`) | Left out rather than greyed out — a disabled country reads as a fault, and there is nothing the visitor can do about it |
+| `sitemap.xml` | A market sitemap that resolves to an empty catalogue spends crawl budget proving there is nothing there |
+| `hreflang` (`Alternates`) | Declaring it tells a crawler there is a Spanish equivalent worth indexing, which is the opposite of hiding it |
+| `Accept-Language` negotiation | An empty catalogue is a worse answer than the default, which at least has products |
+| `robots.txt` | It still routes and nothing links to it, but a URL remembered from elsewhere would still be crawled |
+
+The `Route::pattern` constraint deliberately still accepts it: hiding a market must not turn its URLs
+into 404s, or reopening it becomes a migration instead of a config change.
+
 ## Anonymous identity
 
 `TrackAnonymousIdentity` runs alongside, giving every visitor a durable encrypted cookie id. The gift
@@ -56,8 +86,10 @@ page view would be a needless load on the primary.
 
 ## Files
 
-- `app/Enums/Market.php`
+- `app/Enums/Market.php` — including `isPublished()` / `published()`
 - `app/Http/Middleware/SetMarket.php`
+- `app/Services/Seo/Alternates.php` — hreflang, published only
+- `app/Http/Controllers/SitemapController.php` — sitemap index and `robots.txt`
 - `app/Http/Middleware/TrackAnonymousIdentity.php`
 - `app/Support/CurrentMarket.php`
 - `routes/web.php`
@@ -74,4 +106,13 @@ curl -s -D - -o /dev/null http://localhost:8000/be-fr | grep -i content-language
 
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8000/nope
 # 404
+
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8000/es
+# 200 — hidden, but still routes
+
+curl -s http://localhost:8000/sitemap.xml | grep -c '/sitemap/es/'
+# 0
+
+curl -s http://localhost:8000/robots.txt | grep 'Disallow: /es/'
+# Disallow: /es/   (when ROBOTS_ALLOW=true)
 ```

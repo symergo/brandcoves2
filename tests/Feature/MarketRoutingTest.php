@@ -96,11 +96,19 @@ class MarketRoutingTest extends TestCase
     #[Test]
     public function an_unpublished_market_is_not_offered_in_the_switcher(): void
     {
-        // nativeName appears only in the switcher payload, so its absence is
-        // the switcher's absence.
-        $this->get('/be-nl')
-            ->assertDontSee(Market::Es->nativeName(), false)
-            ->assertSee(Market::BeFr->nativeName(), false);
+        // Read the props rather than the HTML: the payload is JSON-encoded, so
+        // "España" and "Français" arrive as \u escapes and a string match on
+        // the document would pass for the wrong reason.
+        $markets = collect($this->get('/be-nl')->viewData('page')['props']['markets'])
+            ->pluck('key')
+            ->all();
+
+        $this->assertNotContains('es', $markets);
+        $this->assertContains('be-fr', $markets);
+        $this->assertSame(Market::published(), array_map(
+            fn (string $key): Market => Market::from($key),
+            $markets,
+        ));
     }
 
     #[Test]

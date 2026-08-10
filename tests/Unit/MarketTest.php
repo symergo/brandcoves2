@@ -25,7 +25,11 @@ class MarketTest extends TestCase
             'exact tag, Dutch NL' => ['nl-NL,nl;q=0.9', Market::NlNl],
             'exact tag, French BE' => ['fr-BE,fr;q=0.8', Market::BeFr],
             'language-only French' => ['fr,en;q=0.5', Market::BeFr],
-            'language-only Spanish' => ['es', Market::Es],
+            // Spanish resolves to the default, not to `es`. That market is
+            // unpublished — no Awin coverage for Spain and bol does not operate
+            // there — so negotiating a visitor into it would land them on an
+            // empty catalogue. The default at least has products.
+            'language-only Spanish' => ['es', Market::default()],
             'English' => ['en-GB,en;q=0.9', Market::En],
             // Anything unrecognised falls back rather than being approximated —
             // a wrong guess shows the wrong currency and the wrong merchants.
