@@ -7,6 +7,7 @@ use App\Jobs\BuildDailyEdition;
 use App\Jobs\ClassifyGiftability;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
+use App\Jobs\PullPopularCharts;
 use App\Jobs\RefreshBrandStats;
 use App\Jobs\RefreshWishlistedProducts;
 use App\Jobs\ScoreSerendipity;
@@ -67,6 +68,30 @@ Schedule::call(function (): void {
 })
     ->name('group-products')
     ->twiceDailyAt(5, 17, 0)
+    ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * Bestseller charts — the demand signal.
+ *
+ * Once a day. A retailer's chart does not turn over hourly, and a second pull
+ * would only overwrite the same day's snapshot; what makes the history useful is
+ * one honest sample per day over months, not a fine-grained one over a week.
+ *
+ * 03:40, deliberately ahead of feed ingestion (04:10) and grouping (05:00). The
+ * chart's products are upserted into the catalogue, so pulling first means they
+ * are grouped in the same overnight cycle rather than waiting a day to become
+ * suggestable. See docs/features/popularity-charts.md.
+ */
+Schedule::call(function (): void {
+    foreach (Market::cases() as $market) {
+        PullPopularCharts::dispatch($market);
+    }
+})
+    ->name('pull-popular-charts')
+    ->dailyAt('03:40')
+    // Two crawls would fight over the same cursor and the same per-run budget.
+    // name() must come first — the mutex is keyed on it.
     ->withoutOverlapping()
     ->onOneServer();
 

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\Availability;
 use App\Enums\Market;
+use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Models\Feed;
+use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
@@ -86,6 +89,130 @@ class SearchTest extends TestCase
     }
 
     #[Test]
+    public function a_word_only_in_the_description_finds_the_product(): void
+    {
+        /*
+         * "bridge" appears in the fixture's description of the Philips Hue
+         * starter kit and in no title anywhere. Before descriptions entered the
+         * search vector this query returned nothing at all — every fact a
+         * merchant stated about a product but left out of the title was
+         * unfindable.
+         */
+        $this->search(['q' => 'bridge'])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('results.total', 1)
+                ->where('results.items.0.brand', 'Philips')
+            );
+    }
+
+    #[Test]
+    public function a_title_match_outranks_a_description_match(): void
+    {
+        /*
+         * The whole reason description sits at weight D.
+         *
+         * Two different products, one word: the dishwasher has it in its title,
+         * the detergent only in its description. Both are legitimate results and
+         * the order between them is the entire point — a description mention is
+         * weak evidence, so it belongs behind a title that leads with the word.
+         *
+         * Worth knowing WHY this passes, because it is not the tsvector weights
+         * doing it. Ranking never reads them: orderByRelevance() sorts on
+         * word_similarity() against the group title, and a product matched only
+         * through its description scores near zero there. The weights and the
+         * sort happen to agree, which is lucky rather than designed — if the
+         * sort ever moves to ts_rank(), this test is what proves the ordering
+         * survived the move.
+         */
+        $this->describedProduct('dishwasher', 'Bosch Serie 6 Vaatwasser', 'Zuinig en stil apparaat.');
+        $this->describedProduct('detergent', 'Bosch Finish Reinigingstabletten', 'Geschikt voor elke vaatwasser.');
+
+        $items = $this->search(['q' => 'vaatwasser'])
+            ->assertOk()
+            ->viewData('page')['props']['results']['items'];
+
+        $this->assertSame(
+            ['Bosch Serie 6 Vaatwasser', 'Bosch Finish Reinigingstabletten'],
+            array_column($items, 'title'),
+        );
+    }
+
+    #[Test]
+    public function only_the_first_2000_characters_of_a_description_are_indexed(): void
+    {
+        /*
+         * The cap is real, not decorative. It matches the one BolConnector
+         * already applies at its own boundary, so a single verbose Awin
+         * advertiser cannot contribute ten times more index than bol does for
+         * the same product.
+         *
+         * The marker word sits past character 2000 in one description and at the
+         * front of the other, so the pair fails in opposite directions if the
+         * truncation is ever dropped or applied too aggressively.
+         */
+        $this->describedProduct(
+            'buried',
+            'Tefal Koekenpan 24 cm',
+            str_repeat('vulling ', 300).'kwartelei',
+        );
+        $this->describedProduct('upfront', 'Tefal Steelpan 16 cm', 'kwartelei en meer.');
+
+        $items = $this->search(['q' => 'kwartelei'])
+            ->assertOk()
+            ->viewData('page')['props']['results']['items'];
+
+        $this->assertSame(['Tefal Steelpan 16 cm'], array_column($items, 'title'));
+    }
+
+    /**
+     * One product, one offer, its own group — built directly rather than through
+     * the fixture feed so that adding a case here cannot shift the counts the
+     * other tests in this file assert on.
+     */
+    private function describedProduct(string $key, string $title, string $description): void
+    {
+        $merchant = Merchant::firstOrCreate(
+            ['source' => Source::Awin->value, 'external_id' => 'descshop'],
+            ['name' => 'Descshop BE'],
+        );
+
+        $group = ProductGroup::create([
+            'market' => Market::BeNl->value,
+            'identity_key' => "desc-{$key}",
+            'identity_kind' => 'title',
+            'title' => $title,
+            'slug' => "desc-{$key}",
+            'brand' => 'Testmerk',
+            'category' => 'Keuken',
+            // Not decoration: storedQuery() requires an image, on the grounds
+            // that a card without one is not worth showing.
+            'image_url' => "https://example.test/desc-{$key}.jpg",
+            'min_price' => 4900,
+            'max_price' => 4900,
+            'offer_count' => 1,
+            'merchant_count' => 1,
+            'in_stock' => true,
+        ]);
+
+        Product::create([
+            'source' => Source::Awin->value,
+            'external_id' => "desc-{$key}",
+            'market' => Market::BeNl->value,
+            'merchant_id' => $merchant->id,
+            'group_id' => $group->id,
+            'title' => $title,
+            'description' => $description,
+            'brand' => 'Testmerk',
+            'merchant_category' => 'Keuken',
+            'price' => 4900,
+            'affiliate_url' => "https://example.test/desc-{$key}",
+            'availability' => Availability::InStock->value,
+            'status' => ProductStatus::Active->value,
+        ]);
+    }
+
+    #[Test]
     public function a_barcode_is_treated_as_an_exact_identity(): void
     {
         // Scanned or pasted. Not a text query — an exact unique-index hit,
@@ -153,6 +280,75 @@ class SearchTest extends TestCase
 
         $this->assertContains('Sony', $brands);
         $this->assertContains('Philips', $brands, 'other brands must remain selectable');
+    }
+
+    #[Test]
+    public function the_results_offer_their_own_vocabulary_as_further_searches(): void
+    {
+        /*
+         * What sits above the grid now that the statistics are gone. Two
+         * products sharing a word, because ResultTerms ignores anything
+         * appearing once — and the fixture holds one product per phrase, which
+         * is exactly the case that floor exists to reject.
+         */
+        $merchant = Merchant::firstOrCreate(
+            ['source' => Source::Awin->value, 'external_id' => 'termshop'],
+            ['name' => 'Termshop BE'],
+        );
+
+        foreach ([
+            'Draadloze ruisonderdrukkende oordopjes',
+            'Draadloze ruisonderdrukkende koptelefoon',
+        ] as $i => $title) {
+            $group = ProductGroup::create([
+                'market' => Market::BeNl->value,
+                'identity_key' => "terms-{$i}",
+                'identity_kind' => 'title',
+                'title' => $title,
+                'slug' => "terms-{$i}",
+                'brand' => 'Testmerk',
+                'category' => 'Audio',
+                'image_url' => "https://example.test/terms-{$i}.jpg",
+                'min_price' => 4900,
+                'max_price' => 4900,
+                'offer_count' => 1,
+                'merchant_count' => 1,
+                'in_stock' => true,
+            ]);
+
+            Product::create([
+                'source' => Source::Awin->value,
+                'external_id' => "terms-{$i}",
+                'market' => Market::BeNl->value,
+                'merchant_id' => $merchant->id,
+                'group_id' => $group->id,
+                'title' => $title,
+                'brand' => 'Testmerk',
+                'merchant_category' => 'Audio',
+                'price' => 4900,
+                'affiliate_url' => "https://example.test/terms-{$i}",
+                'availability' => Availability::InStock->value,
+                'status' => ProductStatus::Active->value,
+            ]);
+        }
+
+        $terms = array_column(
+            $this->search(['q' => 'ruisonderdrukkende'])->assertOk()->viewData('page')['props']['terms'],
+            'url',
+            'term',
+        );
+
+        // Each word is a search for that word: the long-tail vocabulary of the
+        // category as navigation, rather than a comma-separated sentence.
+        $this->assertSame('/be-nl/search?q=Draadloze', $terms['Draadloze'] ?? null);
+
+        // The query's own word is not offered back — the reader has just typed it.
+        $this->assertArrayNotHasKey('ruisonderdrukkende', $terms);
+
+        // Nothing on a filtered variant. It is noindex anyway, and one block of
+        // links repeated across every facet combination is a doorway page.
+        $this->assertSame([], $this->search(['q' => 'ruisonderdrukkende', 'brand' => ['Testmerk']])
+            ->viewData('page')['props']['terms']);
     }
 
     #[Test]

@@ -19,7 +19,6 @@ use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Number;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -66,7 +65,11 @@ class SearchController extends Controller
             'lanes' => $query->view === 'store'
                 ? $this->presentLanes($search->storeLanes($query))
                 : null,
-            'intro' => $this->intro($query, $result, $current),
+            /*
+             * The words that come up across these results, each a search of its
+             * own. What used to sit here was four paragraphs of statistics.
+             */
+            'terms' => $this->terms($query, $result, $current),
             'emptyBecauseOfFilters' => $result->emptyBecauseOfFilters(),
 
             /*
@@ -267,162 +270,54 @@ class SearchController extends Controller
     }
 
     /**
-     * Indexable prose above the results, built from what the query actually found.
+     * The words that come up across these results, each linking to its own search.
      *
-     * A results grid is almost pure markup — product titles, prices, a filter
-     * rail. There is nothing on it for a crawler to understand the page *about*,
-     * which is why comparison sites rank for their guides and not for their
-     * search pages.
+     * ## What this replaced
      *
-     * The copy states real, page-specific facts: how many products, how many
-     * shops, the price range, the leading brands. Not filler with the keyword
-     * stuffed in — every clause here is a number the page can back up, which is
-     * both the only version worth writing and the only version that survives a
-     * helpful-content update.
+     * Four paragraphs of statistics: how many products, how many shop listings,
+     * the price range, how many were below their 30-day median, how many were
+     * comparable. Every clause was true and checkable — and all of it counted
+     * things the reader could already see. A block of numbers describing the
+     * grid directly beneath it is not a reason to stop scrolling, and it pushed
+     * the first product row down by most of a screen.
      *
-     * Null on thin pages. A paginated or filtered variant is `noindex` anyway,
-     * and repeating this text across them would be the doorway-page pattern.
+     * ## Why the vocabulary survived the cut
      *
-     * @return array{lead: string, paragraphs: list<string>, brands: list<array{name: string, url: string|null}>, terms: list<string>}|null
+     * It was the one part that was not a restatement of the grid. "noise
+     * cancelling", "over-ear", "bluetooth" tell a reader what *kind* of thing
+     * this page holds, which the titles only imply. As links they do a second
+     * job the prose never could: each one is a real query into the same index,
+     * so the long-tail vocabulary of a category becomes navigation instead of a
+     * comma-separated sentence. Extracted from the titles on the page, never
+     * generated — see ResultTerms.
+     *
+     * ## Why the same guard as the narrative
+     *
+     * Empty on thin pages. A filtered or paginated variant is `noindex` anyway,
+     * and repeating one block of internal links across dozens of near-identical
+     * URLs is the doorway-page pattern with fewer words.
+     *
+     * @return list<array{term: string, url: string}>
      */
-    private function intro(SearchQuery $query, SearchResult $result, CurrentMarket $current): ?array
+    private function terms(SearchQuery $query, SearchResult $result, CurrentMarket $current): array
     {
         if (! $query->hasTerm() || $result->isEmpty() || $query->page > 1 || $query->hasFilters()) {
-            return null;
+            return [];
         }
 
-        $total = $result->groups->total();
-        $items = $result->groups->items();
-
-        $prices = array_values(array_filter(array_map(fn (ProductGroup $g) => $g->min_price, $items)));
-        $merchants = array_sum(array_map(fn (ProductGroup $g) => max(1, (int) $g->merchant_count), $items));
-
-        $paragraphs = [];
-
-        if ($prices !== []) {
-            $paragraphs[] = __('site.search.intro_prices', [
-                'term' => $query->term,
-                'low' => $this->money(min($prices), $query),
-                'high' => $this->money(max($prices), $query),
-            ]);
-        }
-
-        /*
-         * How many of these are actually reduced.
-         *
-         * Counted over this page rather than the whole result set, because that
-         * is what a reader can verify by looking down the page — a claim about
-         * 400 results nobody can see is a claim nobody can check.
-         */
-        $reduced = array_values(array_filter(array_map(
-            fn (ProductGroup $g) => $g->discountPercent(),
-            $items,
-        )));
-
-        if ($reduced !== []) {
-            $paragraphs[] = __('site.search.intro_discounts', [
-                'count' => count($reduced),
-                'percent' => max($reduced),
-            ]);
-        }
-
-        // How many of these can be compared at all. The site's whole premise, so
-        // worth stating on the page where it is true.
-        $comparable = count(array_filter($items, fn (ProductGroup $g) => $g->merchant_count > 1));
-
-        if ($comparable > 0) {
-            $paragraphs[] = __('site.search.intro_comparable', [
-                'count' => $comparable,
-                'term' => $query->term,
-            ]);
-        }
-
-        /*
-         * The vocabulary of the results.
-         *
-         * The one clause here that is about words rather than numbers, and the
-         * one that gives a crawler something to understand the page's subject
-         * from. Extracted from the titles on the page, never generated — see
-         * ResultTerms.
-         */
-        $terms = app(ResultTerms::class)->extract($items, $query->market, $query->term);
-
-        if ($terms !== []) {
-            $paragraphs[] = __('site.search.intro_terms', [
-                'term' => $query->term,
-                'terms' => implode(', ', $terms),
-            ]);
-        }
-
-        return [
-            'lead' => __('site.search.intro_lead', [
-                'term' => $query->term,
-                'count' => $total,
-                'shops' => $merchants,
-            ]),
-            'paragraphs' => $paragraphs,
-
-            /*
-             * Brands as links, not as a comma-separated string.
-             *
-             * This sentence used to read "Brands on this page include Sony,
-             * Philips, JBL" as plain text, which is the least useful form of a
-             * genuinely useful fact: those are the three most valuable internal
-             * links the page can offer, and it was rendering them as prose.
-             */
-            'brands' => $this->introBrands($items, $current),
-            'terms' => $terms,
-        ];
-    }
-
-    /**
-     * The leading brands on this page, each with its brand page if it has one.
-     *
-     * A brand with no page still appears, unlinked. Dropping it would make the
-     * sentence quietly untrue — the brand *is* on the page — and linking it
-     * anyway would be a 404 in the first paragraph.
-     *
-     * @param  list<ProductGroup>  $items
-     * @return list<array{name: string, url: string|null}>
-     */
-    private function introBrands(array $items, CurrentMarket $current): array
-    {
-        $counts = [];
-        $display = [];
-
-        foreach ($items as $group) {
-            if ($group->brand === null || trim($group->brand) === '') {
-                continue;
-            }
-
-            $key = mb_strtolower($group->brand);
-            $counts[$key] = ($counts[$key] ?? 0) + 1;
-            $display[$key] ??= $group->brand;
-        }
-
-        // Most-represented first: the brand with eight products on the page is a
-        // more useful link than the one with a single listing.
-        arsort($counts);
-
-        $top = array_slice(array_keys($counts), 0, 5);
-        $links = app(BrandLinker::class)->urls(
-            array_map(fn (string $key) => $display[$key], $top),
-            $current->get(),
+        $terms = app(ResultTerms::class)->extract(
+            $result->groups->items(),
+            $query->market,
+            $query->term,
         );
 
-        return array_values(array_map(fn (string $key) => [
-            'name' => $display[$key],
-            'url' => $links[$key] ?? null,
-        ], $top));
-    }
-
-    private function money(int $cents, SearchQuery $query): string
-    {
-        return Number::currency(
-            $cents / 100,
-            $query->market->currency(),
-            $query->market->hrefLang(),
-        );
+        return array_map(fn (string $term) => [
+            'term' => $term,
+            // The bare term, not the term plus the query that found it. These
+            // are meant to widen the search — "over-ear" on its own is the whole
+            // category, where "koptelefoon over-ear" is the page already open.
+            'url' => $current->url('search').'?q='.urlencode($term),
+        ], $terms);
     }
 
     /** @return array<string, mixed> */

@@ -280,6 +280,19 @@ class WishlistController extends Controller
                     'note' => $item->note,
                     'groupId' => $item->group_id,
                     'slug' => $item->group?->slug,
+
+                    /*
+                     * Where a hand-written item says you can buy it.
+                     *
+                     * Separate from the product-page link rather than folded
+                     * into one `url`, because they are different kinds of link:
+                     * one is an internal route an Inertia visit can take, the
+                     * other leaves the site and has to be an ordinary anchor.
+                     * Null unless the stored value is `https:` — the model
+                     * refuses to hand back anything else.
+                     */
+                    'externalUrl' => $item->externalUrl(),
+
                     // Current cheapest, so the owner sees whether it moved
                     // since they added it.
                     'currentPrice' => $item->group?->min_price,

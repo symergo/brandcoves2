@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Rules\SafeExternalUrl;
 use App\Services\Wishlist\ItemSaver;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
@@ -51,10 +52,36 @@ class SuggestionController extends Controller
         // and suggesting into it would tell a stranger it exists.
         abort_unless($list->allowsClaiming(), 403);
 
+        /*
+         * Two shapes, one endpoint: a product we stock, or something typed in.
+         *
+         * The thing somebody most wants to put forward is often the thing we do
+         * not sell — a voucher, a local shop, a book in one particular edition.
+         * Sending them away empty because the search box found nothing wastes
+         * the one moment they were willing to help.
+         *
+         * Same saver, same pending state, same accept/dismiss row for the owner.
+         * A suggestion is a suggestion whichever way it was written.
+         */
         $validated = $request->validate([
-            'group_id' => ['required', 'integer'],
+            'group_id' => ['nullable', 'integer', 'required_without:title'],
+            'title' => ['nullable', 'string', 'max:500', 'required_without:group_id'],
+            'url' => ['nullable', 'string', 'max:2048', new SafeExternalUrl],
+            'price' => ['nullable', 'integer', 'min:0'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
+
+        if (empty($validated['group_id'])) {
+            $item = $saver->saveManual(
+                list: $list,
+                title: $validated['title'],
+                url: $validated['url'] ?? null,
+                price: $validated['price'] ?? null,
+                note: $validated['note'] ?? null,
+            );
+
+            return $this->pending($request, $item);
+        }
 
         $group = ProductGroup::query()
             ->forMarket($current->get())
@@ -64,17 +91,50 @@ class SuggestionController extends Controller
             throw new NotFoundHttpException;
         }
 
-        $item = $saver->saveGroup($list, $group, $current, $validated['note'] ?? null);
-
         /*
-         * Explicitly pending.
+         * Something already on the list is not a suggestion.
          *
-         * The column defaults to accepted, so this is the one place that has to
-         * say otherwise — which is the right way round: forgetting it here
-         * makes a suggestion appear immediately, while the old arrangement made
-         * forgetting it anywhere else silently hide a real item.
+         * `ItemSaver::saveGroup()` is an `updateOrCreate` on
+         * `(wishlist_id, group_id)`, and this method nulls `accepted_at`
+         * immediately afterwards — so suggesting a product the owner already
+         * has would take a real item *off* their list and turn it back into a
+         * pending suggestion, carrying its claim with it. The owner watches a
+         * thing they chose disappear; whoever claimed it is still on the hook
+         * for a row nobody can see.
+         *
+         * Invisible until this endpoint had a UI: every test posts a group that
+         * is not on the list, because that is what the feature is for. The
+         * duplicate is the ordinary case the moment a visitor can search — the
+         * obvious thing to suggest is the obvious thing to already own.
+         *
+         * Not treated as an error state worth hiding: the item is on the page
+         * in front of them, so saying so reveals nothing.
          */
-        $item->forceFill(['suggested_by_user_id' => $request->user()?->id, 'accepted_at' => null])->save();
+        if ($list->items()->where('group_id', $group->id)->exists()) {
+            return back()->with('error', __('site.suggestions.already_on_list'));
+        }
+
+        return $this->pending($request, $saver->saveGroup($list, $group, $current, $validated['note'] ?? null));
+    }
+
+    /**
+     * Explicitly pending.
+     *
+     * The column defaults to accepted, so this is the one place that has to say
+     * otherwise — which is the right way round: forgetting it here makes a
+     * suggestion appear immediately, while the old arrangement made forgetting
+     * it anywhere else silently hide a real item.
+     *
+     * One method rather than one per shape, because both saver calls hand back
+     * an accepted row and only this turns it into a message. A second copy is
+     * how the manual path would eventually stop being pending.
+     */
+    private function pending(Request $request, WishlistItem $item): RedirectResponse
+    {
+        $item->forceFill([
+            'suggested_by_user_id' => $request->user()?->id,
+            'accepted_at' => null,
+        ])->save();
 
         return back()->with('success', __('site.suggestions.sent'));
     }

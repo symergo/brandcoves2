@@ -50,6 +50,68 @@ class ItemSaver
     }
 
     /**
+     * Save something we do not sell, typed in by hand.
+     *
+     * A list has always been able to hold a wish that is not a catalogue product
+     * — `wishlist_items_identifiable` was widened for exactly that — and this is
+     * the path that finally writes one.
+     *
+     * ## Why nothing is fetched
+     *
+     * Pasting a product URL was deliberately deferred, and the reason was never
+     * the URL itself: it was that the obvious implementation *fetches* it to
+     * pull out a title and an image. That turns a wishlist into an SSRF probe
+     * anybody can point at anything, plus a renderer of arbitrary remote
+     * content.
+     *
+     * So the person types what it is, and we never make a request to the link.
+     * That removes the whole class of problem instead of trying to filter it,
+     * and the cost is one more field for somebody who is already typing.
+     *
+     * ## And no image
+     *
+     * An image URL would be rendered on a **shared** page, which means every
+     * visitor's browser fetches whatever host the list owner chose — an
+     * on-by-default tracking pixel that reports who opened the list and when.
+     * On a gift list, where the owner is specifically not supposed to learn
+     * about activity, that is the wrong default to hand anyone. A manual item
+     * shows no picture, deliberately.
+     *
+     * ## No `external_id`
+     *
+     * There is nothing to re-fetch and no upstream identity to collide with, so
+     * this is a plain insert rather than an `updateOrCreate`. Two entries called
+     * "a nice scarf, dark green" are two wishes, not a double-tap — and the
+     * partial unique index only binds when `external_id` is present.
+     */
+    public function saveManual(
+        Wishlist $list,
+        string $title,
+        ?string $url = null,
+        ?int $price = null,
+        ?string $note = null,
+    ): WishlistItem {
+        $item = $list->allItems()->create([
+            'source' => Source::Manual->value,
+            'external_id' => null,
+            'snapshot_title' => trim($title),
+            'snapshot_image_url' => null,
+            'snapshot_price' => $price,
+            // Re-checked here rather than trusted from the request. The rule is
+            // the model's, and this is the only place a manual URL is written.
+            'snapshot_url' => WishlistItem::isSafeExternalUrl($url) ? trim((string) $url) : null,
+            'note' => $note,
+            // Suggestions null this immediately afterwards, exactly as they do
+            // for a catalogue save.
+            'accepted_at' => now(),
+        ]);
+
+        $list->touch();
+
+        return $item;
+    }
+
+    /**
      * Save a product from a source we do not mirror.
      *
      * Live bol results and Amazon products are both reachable from search and

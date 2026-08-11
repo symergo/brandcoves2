@@ -1,4 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
+import { useState } from 'react'
+import ManualItem from '../../Components/ManualItem'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -10,12 +12,21 @@ interface Item {
     price: number | null
     note: string | null
     url: string | null
+    /** Off-site, for a hand-written item. Never an Inertia visit. */
+    externalUrl: string | null
     inStock: boolean
     /** null for the list owner — they must never learn what is taken. */
     claimed: boolean | null
     claimedByMe: boolean
     /** Only ever non-null for the person who claimed it. */
     sent: boolean | null
+}
+
+interface Result {
+    id: number
+    title: string
+    image: string | null
+    price: number | null
 }
 
 interface Props {
@@ -32,9 +43,21 @@ interface Props {
     /** null for the owner — a count is claim state too. */
     progress: { claimed: number; total: number } | null
     items: Item[]
+    canSuggest: boolean
+    suggestTerm: string
+    /** null before a search is run; `[]` once one found nothing. */
+    results: Result[] | null
 }
 
-export default function SharedList({ list, isOwner, progress, items }: Props) {
+export default function SharedList({
+    list,
+    isOwner,
+    progress,
+    items,
+    canSuggest,
+    suggestTerm,
+    results,
+}: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -49,6 +72,7 @@ export default function SharedList({ list, isOwner, progress, items }: Props) {
      */
     const token = page.url.split('?')[0].split('/').filter(Boolean).pop()
     const base = `/${market.key}`
+    const [query, setQuery] = useState(suggestTerm)
 
     return (
         <>
@@ -126,6 +150,24 @@ export default function SharedList({ list, isOwner, progress, items }: Props) {
                                     <Link href={item.url} className="font-medium hover:underline">
                                         {item.title}
                                     </Link>
+                                ) : item.externalUrl ? (
+                                    /*
+                                      Somebody else's link, on a page strangers
+                                      open. `noopener` so the destination cannot
+                                      reach back through `window.opener`,
+                                      `noreferrer` so it is not told which list
+                                      sent the visitor, and `nofollow` because
+                                      we are not vouching for it. The scheme was
+                                      settled server-side; this is the rest.
+                                    */
+                                    <a
+                                        href={item.externalUrl}
+                                        target="_blank"
+                                        rel="nofollow noopener noreferrer"
+                                        className="font-medium hover:underline"
+                                    >
+                                        {item.title}
+                                    </a>
                                 ) : (
                                     <span className="font-medium">{item.title}</span>
                                 )}
@@ -200,6 +242,112 @@ export default function SharedList({ list, isOwner, progress, items }: Props) {
                     </li>
                 ))}
             </ul>
+
+            {/*
+              "I think you would like this."
+
+              The other half of a feature that shipped with only one: the
+              endpoint, its guards and the owner's accept/dismiss row all
+              existed, and nothing on any page could send one — so the copy
+              below ("Suggest something") sat in four language files, rendered
+              nowhere, for as long as the feature has been live. Its tests
+              passed throughout, because they POST to the endpoint directly.
+
+              Below the list, never above it. Somebody arrived to see what this
+              person wants; putting a search box first answers a question they
+              have not asked yet, and the empty list is exactly the case where
+              they scroll far enough to reach this anyway.
+            */}
+            {canSuggest && (
+                <section className="mt-12 rounded-card border border-line bg-card p-6">
+                    <h2 className="font-medium">{t('suggestions.invite')}</h2>
+                    <p className="mt-1 text-sm text-ink-soft">{t('suggestions.invite_hint')}</p>
+
+                    <form
+                        className="mt-4 flex flex-wrap gap-2"
+                        onSubmit={(e) => {
+                            e.preventDefault()
+
+                            /*
+                              A GET back to this same URL, which re-renders the
+                              page with `results`. One route, one token check —
+                              a second endpoint would be a second place the
+                              share token has to be resolved and gated.
+                            */
+                            router.get(
+                                `${base}/l/${token}`,
+                                { q: query },
+                                { preserveState: true, preserveScroll: true },
+                            )
+                        }}
+                    >
+                        <input
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={t('suggestions.search_placeholder')}
+                            aria-label={t('suggestions.search_placeholder')}
+                            className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                        />
+                        <button type="submit" className="rounded-lg border border-line px-4 py-2 text-sm hover:border-ink">
+                            {t('search.submit')}
+                        </button>
+                    </form>
+
+                    {results !== null && results.length === 0 && (
+                        <p className="mt-4 text-sm text-ink-soft">{t('suggestions.none_found')}</p>
+                    )}
+
+                    {/*
+                      The thing somebody most wants to put forward is often the
+                      thing we do not sell — a voucher, the local bike shop, one
+                      particular edition of a book. Ending the search with "no
+                      results" wastes the one moment they were willing to help.
+                    */}
+                    <div className="mt-4">
+                        <ManualItem
+                            action={`${base}/l/${token}/suggest`}
+                            hint={t('suggestions.manual_hint')}
+                        />
+                    </div>
+
+                    {results !== null && results.length > 0 && (
+                        <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            {results.map((result) => (
+                                <li key={result.id} className="flex flex-col rounded-card border border-line p-4">
+                                    {result.image && (
+                                        <img
+                                            src={result.image}
+                                            alt=""
+                                            loading="lazy"
+                                            className="mx-auto h-28 w-auto max-w-full object-contain"
+                                            onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
+                                        />
+                                    )}
+                                    <p className="mt-3 line-clamp-2 text-sm font-medium">{result.title}</p>
+                                    {result.price !== null && (
+                                        <p className="mt-1 text-sm text-ink-soft">
+                                            {formatPrice(result.price, market)}
+                                        </p>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(
+                                                `${base}/l/${token}/suggest`,
+                                                { group_id: result.id },
+                                                { preserveScroll: true },
+                                            )
+                                        }
+                                        className="mt-3 w-full rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-dark"
+                                    >
+                                        {t('suggestions.suggest')}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
+            )}
         </>
     )
 }

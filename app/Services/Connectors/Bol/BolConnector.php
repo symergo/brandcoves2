@@ -7,8 +7,12 @@ namespace App\Services\Connectors\Bol;
 use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\Source;
+use App\Services\Connectors\ChartCategory;
+use App\Services\Connectors\ChartEntry;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
+use App\Services\Connectors\PopularChart;
+use App\Services\Connectors\PopularityConnector;
 use App\Services\Connectors\RateLimiter;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
@@ -23,7 +27,7 @@ use Throwable;
  * must mean a smaller result set, never a broken search page — the stored Awin
  * index still has plenty to show.
  */
-class BolConnector implements LiveConnector
+class BolConnector implements LiveConnector, PopularityConnector
 {
     private const TOKEN_URL = 'https://login.bol.com/token';
 
@@ -139,6 +143,248 @@ class BolConnector implements LiveConnector
         $product = $response->json('product') ?? $response->json();
 
         return is_array($product) ? $this->normalise($product, $market) : null;
+    }
+
+    public function isChartCoolingDown(): bool
+    {
+        return $this->limiter('popular')->isCoolingDown();
+    }
+
+    /**
+     * bol's popular-products chart, optionally for one category.
+     *
+     * A browse endpoint: no search term, which is exactly what makes it a demand
+     * signal rather than a relevance one. Nobody typed anything — these are the
+     * things bol actually sells the most of.
+     *
+     * Not cached. Unlike search, this is called from a scheduled job a couple of
+     * times a day per chart, so a cache would only ever be written and never
+     * read; the freshness of the snapshot is the whole point, and `popular_ranks`
+     * is the durable copy.
+     */
+    public function popular(Market $market, ?string $categoryId, int $limit): PopularChart
+    {
+        if (! $this->supportsCharts($market)) {
+            return PopularChart::empty();
+        }
+
+        $pageSize = min(50, max(1, (int) config('brandcoves.connectors.bol.popular.page_size', 50)));
+        $maxPages = max(1, (int) config('brandcoves.connectors.bol.popular.pages', 2));
+
+        $entries = [];
+        $categories = [];
+        $rank = 0;
+        /** @var array<string, true> $seen */
+        $seen = [];
+
+        for ($page = 1; $page <= $maxPages && count($entries) < $limit; $page++) {
+            if (! $this->limiter('popular')->attempt()) {
+                // Degrade to a partial chart rather than waiting on a limit that
+                // is already refusing. A short snapshot is still a usable one:
+                // rank order is preserved, and tomorrow's run fills the tail.
+                Log::info('bol popular list truncated: rate limited', [
+                    'market' => $market->value,
+                    'category' => $categoryId,
+                    'collected' => count($entries),
+                ]);
+
+                break;
+            }
+
+            $response = $this->request('/products/lists/popular', $market, 'popular', array_filter([
+                'country-code' => $market->bolCountry(),
+                'category-id' => $categoryId,
+                'page' => $page,
+                'page-size' => $pageSize,
+                // Without these bol returns the catalogue entry alone — no offer
+                // and no image — so every entry would arrive unpriced and
+                // unrenderable, and OfferUpserter would reject the lot.
+                'include-offer' => 'true',
+                'include-image' => 'true',
+                // The only way to discover a category id. See ChartCategory.
+                'include-relevant-categories' => 'true',
+            ], fn ($value) => $value !== null));
+
+            if ($response === null) {
+                break;
+            }
+
+            $products = $this->chartProducts($response, $market, $categoryId, $page);
+
+            // Categories ride back on every page; the first page is enough, but
+            // merging is cheap and a later page occasionally carries more.
+            $categories = [...$categories, ...$this->chartCategories($response)];
+
+            if ($products === []) {
+                // A genuinely short chart, not an error. Stop paging rather than
+                // asking for page 3 of a two-page list.
+                break;
+            }
+
+            foreach ($products as $product) {
+                $offer = $this->normalise($product, $market);
+                $rank++;
+
+                // Rank counts every row bol returned, including ones we cannot
+                // store. Skipping the increment would silently promote the next
+                // product into a position it never held, and rank movement is
+                // the signal this whole table exists to measure.
+                if (! $offer?->isValid() || count($entries) >= $limit) {
+                    continue;
+                }
+
+                /*
+                 * bol repeats products across pages.
+                 *
+                 * The "popular" list is the whole catalogue in popularity order
+                 * — 300,000 results — and that ordering is not stable between
+                 * requests, so paging through it returns some products twice.
+                 * Found on the first live run: the daily rank upsert died with
+                 * "ON CONFLICT DO UPDATE command cannot affect row a second
+                 * time", because one statement carried the same product twice.
+                 *
+                 * The FIRST sighting wins. A product listed at #5 and again at
+                 * #37 is at #5; keeping the later one would report a fall that
+                 * never happened.
+                 */
+                if (isset($seen[$offer->externalId])) {
+                    continue;
+                }
+
+                $seen[$offer->externalId] = true;
+                $entries[] = new ChartEntry($offer, $rank);
+            }
+
+            if (count($products) < $pageSize) {
+                break;
+            }
+        }
+
+        return new PopularChart(
+            entries: $entries,
+            categories: array_values($this->uniqueCategories($categories)),
+        );
+    }
+
+    /** Charts are separately switchable: they cost requests on a schedule, search does not. */
+    private function supportsCharts(Market $market): bool
+    {
+        return $this->supports($market)
+            && (bool) config('brandcoves.connectors.bol.popular.enabled');
+    }
+
+    /**
+     * The product rows out of a chart response.
+     *
+     * The envelope key is NOT documented for this endpoint. `/products/search`
+     * uses `results`, so that is tried first — but a wrong key here fails
+     * silently, and an empty array is indistinguishable from "bol charts nothing
+     * in this category". Hence the warning: this is precisely the shape of bug
+     * that survives a green test suite for months.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function chartProducts(Response $response, Market $market, ?string $categoryId, int $page): array
+    {
+        foreach (['results', 'products'] as $key) {
+            $rows = $response->json($key);
+
+            if (is_array($rows)) {
+                return array_values(array_filter($rows, 'is_array'));
+            }
+        }
+
+        Log::warning('bol popular list returned an unrecognised envelope', [
+            'market' => $market->value,
+            'category' => $categoryId,
+            'page' => $page,
+            // Keys only. The payload is large and contains nothing secret, but
+            // logging it wholesale turns one bad response into a megabyte of log.
+            'keys' => array_keys((array) $response->json()),
+        ]);
+
+        return [];
+    }
+
+    /**
+     * Categories bol says are relevant to this chart.
+     *
+     * Field names read off a live response, not from the docs — the same rule
+     * the search normaliser follows, and for the same reason. The block is
+     * `allRelevantCategories`, and its rows carry `categoryId`, `categoryName`,
+     * `productCount` and a nested `subcategories` array. An earlier version
+     * guessed `categories` / `id` / `name` / `count`, matched nothing, and
+     * returned an empty list — which looks exactly like "bol named no
+     * categories" and would have quietly pinned the crawl to the market-wide
+     * chart forever.
+     *
+     * @return list<ChartCategory>
+     */
+    private function chartCategories(Response $response): array
+    {
+        $rows = $response->json('allRelevantCategories')
+            ?? $response->json('categories')
+            ?? [];
+
+        return is_array($rows) ? $this->flattenCategories($rows, null) : [];
+    }
+
+    /**
+     * One level of nesting is worth taking: `subcategories` hands us children
+     * and their parent for free, on a request we have already paid for.
+     *
+     * @param  array<int|string, mixed>  $rows
+     * @return list<ChartCategory>
+     */
+    private function flattenCategories(array $rows, ?string $parentId): array
+    {
+        $categories = [];
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $id = (string) ($row['categoryId'] ?? $row['id'] ?? '');
+
+            $category = new ChartCategory(
+                externalId: $id,
+                name: trim((string) ($row['categoryName'] ?? $row['name'] ?? '')),
+                parentExternalId: $parentId,
+                // Zero here means "bol did not count", not "empty category" —
+                // the field comes back 0 on every row of the market-wide chart.
+                productCount: ((int) ($row['productCount'] ?? 0)) ?: null,
+            );
+
+            if (! $category->isValid()) {
+                continue;
+            }
+
+            $categories[] = $category;
+
+            $children = $row['subcategories'] ?? [];
+
+            if (is_array($children) && $children !== []) {
+                $categories = [...$categories, ...$this->flattenCategories($children, $id)];
+            }
+        }
+
+        return $categories;
+    }
+
+    /**
+     * @param  list<ChartCategory>  $categories
+     * @return array<string, ChartCategory>
+     */
+    private function uniqueCategories(array $categories): array
+    {
+        $unique = [];
+
+        foreach ($categories as $category) {
+            $unique[$category->externalId] ??= $category;
+        }
+
+        return $unique;
     }
 
     /**
@@ -440,13 +686,25 @@ class BolConnector implements LiveConnector
      * One bucket per endpoint. bol's limits are documented per endpoint and the
      * endpoints do not share a budget, so a single global bucket would either
      * over-restrict search or under-restrict everything else.
+     *
+     * A bucket may override the rate, and `popular` does. Because the buckets
+     * share no budget, every additional bucket at the default 8/s raises the
+     * ceiling on what this connector can emit in a second — and the chart puller
+     * runs on a schedule, in a worker, while visitors are searching. Background
+     * work loses that race by construction rather than by luck.
      */
     private function limiter(string $endpoint): RateLimiter
     {
         return new RateLimiter(
             bucket: "bol:{$endpoint}",
-            rate: (float) config('brandcoves.connectors.bol.rate'),
-            capacity: (int) config('brandcoves.connectors.bol.burst'),
+            rate: (float) config(
+                "brandcoves.connectors.bol.{$endpoint}.rate",
+                config('brandcoves.connectors.bol.rate'),
+            ),
+            capacity: (int) config(
+                "brandcoves.connectors.bol.{$endpoint}.burst",
+                config('brandcoves.connectors.bol.burst'),
+            ),
         );
     }
 

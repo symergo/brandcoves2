@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Middleware\AuthenticateApiToken;
+use App\Services\Charts\ChartDemand;
 use App\Services\Connectors\Awin\AwinConnector;
 use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
@@ -15,6 +16,7 @@ use App\Services\Discover\Retrievers\CuratedRetriever;
 use App\Services\Discover\Retrievers\FreshRetriever;
 use App\Services\Discover\Retrievers\KeywordRetriever;
 use App\Services\Discover\Retrievers\OutlierRetriever;
+use App\Services\Discover\Retrievers\PopularRetriever;
 use App\Services\Discover\Retrievers\SlotsRetriever;
 use App\Services\Discover\Retrievers\SpectrumRetriever;
 use App\Services\Discover\Retrievers\TwoTowerRetriever;
@@ -56,14 +58,29 @@ class AppServiceProvider extends ServiceProvider
          */
         $this->app->scoped(CopyBank::class);
 
+        /*
+         * Scoped for the same reason again: the gift engine asks for a group's
+         * demand once per candidate, and the pool is three hundred of them. A
+         * fresh instance per resolution would rebuild the per-market map each
+         * time instead of memoising it for the request.
+         */
+        $this->app->scoped(ChartDemand::class);
+
         // The single place that knows which connectors exist. Adding a source
         // is a registration here plus a config entry — the ingestion pipeline
         // and search service only ever see the interfaces.
         $this->app->singleton(ConnectorRegistry::class, function (): ConnectorRegistry {
             $registry = new ConnectorRegistry;
 
+            $bol = new BolConnector;
+
             $registry->registerFeed(new AwinConnector);
-            $registry->registerLive(new BolConnector);
+            $registry->registerLive($bol);
+            // The same object under a second capability: bol answers live
+            // searches *and* publishes a bestseller chart. Two registrations
+            // rather than one because a source may do either without the other
+            // — which is how Amazon will arrive.
+            $registry->registerPopularity($bol);
 
             // Amazon is written but stays config-disabled until its credentials
             // are verified (Phase 8). Registering it here is what makes that a
@@ -96,6 +113,7 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(OutlierRetriever::class),
                 $app->make(CuratedRetriever::class),
                 $app->make(FreshRetriever::class),
+                $app->make(PopularRetriever::class),
                 $app->make(ValueRetriever::class),
                 $app->make(SpectrumRetriever::class),
                 $app->make(SlotsRetriever::class),

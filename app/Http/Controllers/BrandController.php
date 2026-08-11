@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Availability;
 use App\Enums\Market;
 use App\Models\BrandStat;
 use App\Models\Guide;
 use App\Models\ProductGroup;
+use App\Services\Connectors\Offer;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
-use App\Services\Seo\BrandCopy;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\PageNarrative;
+use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
@@ -35,8 +37,28 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * What the brand page adds is what a bare filtered search cannot have —
  * **indexability and prose**. `?brand[]=Sony` is `noindex` because facet URLs
  * are a crawl-budget trap; `/brand/sony` is one canonical URL per brand per
- * market, with paragraphs of checkable copy above the results and links out to
+ * market, with paragraphs of checkable copy below the results and links out to
  * the Coves that mention the brand.
+ *
+ * Above the results there is now only the brand's own vocabulary, as links. The
+ * templated statistics that used to open the page said nothing a reader could
+ * not see by looking at the grid under them.
+ *
+ * ## The live sources are asked too
+ *
+ * A brand page used to show the stored index and nothing else, because the live
+ * half of `SearchService` fires on a search *term* and a brand page has none. So
+ * every brand page was Awin-only, and bol — which stocks a great deal that no
+ * Awin advertiser carries — was invisible on the one page dedicated to the brand.
+ *
+ * It now sends the brand's name as the live query. See `liveTerm()` for why a
+ * keyword search is the only question these APIs answer, and `BrandAttribution`
+ * for how the answers are tied back to the brand.
+ *
+ * Amazon joins the moment its connector is registered, without a change here: the
+ * registry decides which sources exist, and the one thing that differs about
+ * Amazon — that it may not be mirrored — is handled in `SearchService`, which
+ * hands those offers back to be rendered live instead of stored.
  *
  * ## Why the slug is looked up rather than computed
  *
@@ -81,7 +103,9 @@ class BrandController extends Controller
 
         // The brand comes from the resolved row, never from the URL, so the
         // filter can only ever be a brand that exists in this market.
-        $query = SearchQuery::fromRequest($request, $market)->withBrands($stat->brandSpellings());
+        $query = SearchQuery::fromRequest($request, $market);
+        $query = $query->withBrands($stat->brandSpellings(), liveTerm: $this->liveTerm($stat, $query));
+
         $result = $search->search($query);
 
         $this->seo($stat, $result->groups->total(), $current, $query);
@@ -98,7 +122,12 @@ class BrandController extends Controller
                 'category' => $stat->top_category,
                 'topMerchant' => $stat->topMerchant?->name,
             ],
-            'copy' => app(BrandCopy::class)->forBrand($stat, $market),
+            /*
+             * The words that come up across this brand's products, each linking
+             * to a search of its own. What used to sit here was four paragraphs
+             * of templated statistics — see terms() below.
+             */
+            'terms' => $this->terms($stat, $result, $query, $market, $current),
             'filters' => $query->toArray(),
             'sort' => $query->sort,
             'view' => $query->view,
@@ -109,9 +138,18 @@ class BrandController extends Controller
                 'lastPage' => $result->groups->lastPage(),
                 'items' => array_map($this->card(...), $result->groups->items()),
             ],
+            /*
+             * Live sources that may not be mirrored — Amazon. Everything bol
+             * returned is already in `results` above, folded into the grid as
+             * extra offers on existing cards or as cards of its own; these are
+             * the ones nothing is allowed to write down, so they are rendered
+             * from this request's own fetch and are gone when it ends.
+             */
+            'liveOffers' => array_map($this->liveCard(...), $result->liveOffers),
+
             // Editorial, written by the AI pass, that happens to mention this
-            // brand. The templated copy above carries the facts; this is where
-            // any personality on the page comes from.
+            // brand. The narrative below carries the facts; this is where any
+            // personality on the page comes from.
             'coves' => $this->coves($stat, $current),
             'related' => $this->related($stat, $current),
 
@@ -121,6 +159,91 @@ class BrandController extends Controller
             // three hundred words to reach a product.
             'narrative' => $this->narrative($stat, $result, $query, $market),
         ]);
+    }
+
+    /**
+     * What bol and Amazon get asked about this brand.
+     *
+     * ## Why the brand's name and not a filter
+     *
+     * The stored half of this page is a brand filter: `whereIn('brand', ...)`
+     * across every spelling, which is exact. The live sources have no equivalent
+     * — bol's catalogue API and Amazon's PA-API both take a search term and
+     * neither takes a brand — so the only way to ask them about Kärcher is to
+     * search for the word. That is the whole mechanism: **a brand page is a
+     * keyword search upstream and a filter downstream.**
+     *
+     * What comes back is therefore approximate, and two things narrow it again.
+     * `BrandAttribution` decides which results actually belong to the brand, and
+     * offers that are stored then meet the same SQL filter as everything else.
+     *
+     * ## Only on page one, and the visitor's words come too
+     *
+     * Page two of a brand's catalogue is `noindex` and is being read by someone
+     * who has already scrolled past everything a live source could add — asking
+     * again costs a request per page per crawl and changes nothing. An empty
+     * string is "ask nobody", which is distinct from null: null would fall back
+     * to the term and start querying again the moment somebody typed one.
+     *
+     * A term typed into the box on a brand page is prepended to the brand, not
+     * dropped: "Kärcher" plus "hogedrukreiniger" is a better question for bol
+     * than either word alone, and it is the question the visitor asked.
+     */
+    private function liveTerm(BrandStat $stat, SearchQuery $query): string
+    {
+        return $query->page > 1 ? '' : trim($stat->brand.' '.$query->term);
+    }
+
+    /**
+     * The vocabulary of this brand's products, each word linking to its own search.
+     *
+     * ## What this replaced
+     *
+     * `BrandCopy` — four templated paragraphs above the grid stating the product
+     * count, the categories, the shop count, the price range and how many items
+     * were below their 30-day median. Every clause was a number the catalogue
+     * could back up, and that rule still stands where the prose survives: the
+     * long copy below the grid, and the brand's Coves.
+     *
+     * Above the grid it had stopped earning its space. Someone who has typed a
+     * brand name wants to see the brand's products, and the statistics were a
+     * screen of arithmetic about the grid immediately beneath them.
+     *
+     * ## Why words instead
+     *
+     * "pressure washer", "cordless", "window vac" say what a brand actually
+     * makes in a way a price range cannot, and each one is a live query rather
+     * than a sentence. The words come off the titles on the page — never
+     * generated, see ResultTerms — and the brand's own name is passed in as the
+     * query so it is excluded: a Kärcher page listing "kärcher" as a related
+     * term is a link back to itself.
+     *
+     * Empty beyond page one, which is `noindex, follow` anyway. Repeating one
+     * block of internal links across every page of a brand's catalogue is the
+     * doorway-page pattern with fewer words.
+     *
+     * @return list<array{term: string, url: string}>
+     */
+    private function terms(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market, CurrentMarket $current): array
+    {
+        if ($query->page > 1 || $result->isEmpty()) {
+            return [];
+        }
+
+        $terms = app(ResultTerms::class)->extract(
+            $result->groups->items(),
+            $market,
+            $stat->brand,
+        );
+
+        return array_map(fn (string $term) => [
+            'term' => $term,
+            // The bare term, without the brand. These widen the search on
+            // purpose: "steelstofzuiger" is every brand that makes one, which is
+            // the comparison the site exists for. Narrowing back to this brand
+            // is a link to the page already open.
+            'url' => $current->url('search').'?q='.urlencode($term),
+        ], $terms);
     }
 
     /**
@@ -305,6 +428,36 @@ class BrandController extends Controller
                 $stat->brand,
                 url($current->url("brand/{$stat->slug}")),
             ));
+    }
+
+    /**
+     * An offer we may show but not store.
+     *
+     * Deliberately not a `GroupCard`: it has no group, no id, no offer count and
+     * no discount, because all four of those are things the catalogue computes
+     * for rows it holds. Rendering it through the same component would mean
+     * inventing them.
+     *
+     * `needsPriceTimestamp` and `directLink` carry the programme's own
+     * conditions to the page — an Amazon price must say when it was read, and an
+     * Associates link must be an unobscured anchor rather than a trip through
+     * `/go/`. Read off `Source` rather than hard-coded, so a second such source
+     * inherits its own answer.
+     *
+     * @return array<string, mixed>
+     */
+    private function liveCard(Offer $offer): array
+    {
+        return [
+            'title' => $offer->title,
+            'url' => $offer->affiliateUrl,
+            'image' => $offer->imageUrl,
+            'price' => $offer->price,
+            'merchant' => $offer->merchantName ?? $offer->source->label(),
+            'inStock' => $offer->availability === Availability::InStock,
+            'needsPriceTimestamp' => $offer->source->requiresPriceTimestamp(),
+            'directLink' => $offer->source->requiresDirectLink(),
+        ];
     }
 
     /** @return array<string, mixed> */

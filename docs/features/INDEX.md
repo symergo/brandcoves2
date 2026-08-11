@@ -8,7 +8,9 @@ cannot be recovered from a diff.
 | [market-routing.md](market-routing.md) | Core | Active |
 | [localisation.md](localisation.md) | Core / Frontend | Active |
 | [navigation.md](navigation.md) | Core / Frontend | Active |
+| [homepage.md](homepage.md) | Core / Frontend | Active |
 | [ingestion.md](ingestion.md) | Catalogue | Active |
+| [popularity-charts.md](popularity-charts.md) | Catalogue / Discovery | Active — bol; Amazon on the same seam |
 | [product-identity.md](product-identity.md) | Catalogue | Active |
 | [search.md](search.md) | Search | Active |
 | [seo.md](seo.md) | SEO / Frontend | Active |

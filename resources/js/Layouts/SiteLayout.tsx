@@ -15,7 +15,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
     /*
      * Which section you are in.
      *
-     * Six nav entries all rendered identically, so the header said nothing
+     * Five nav entries all rendered identically, so the header said nothing
      * about where you had arrived — and on a site whose sections overlap
      * (Search, the Cove, Daily Picks all end in products) that is the
      * difference between exploring and being lost. Prefix match, so a product
@@ -24,15 +24,34 @@ export default function SiteLayout({ children }: PropsWithChildren) {
     const path = (page.url ?? '').split('?')[0]
     const isCurrent = (href: string) => path === href || path.startsWith(`${href}/`)
 
+    /*
+     * Editorial first, tools second.
+     *
+     * The two Cove surfaces lead, because they are the only things here that
+     * are *ours* — everything else is a way of querying a catalogue that any
+     * competitor also has. Search, gifting and Surprise follow as the three
+     * things you can do.
+     *
+     * The labels say "Cove", not "Guides" or "Daily Picks". That is the name
+     * the homepage, the subscription mails and the page titles already use;
+     * the header was the last surface still calling them something else.
+     */
     const nav = [
+        { href: `${base}/daily`, label: t('nav.daily') },
+        { href: `${base}/guides`, label: t('nav.coves') },
         { href: `${base}/search`, label: t('nav.search') },
         // One entry, not three. The wizard, Secret Santa and every list tool
         // live behind the Gift Cove, which is the page that explains them.
-        { href: `${base}/gift-cove`, label: t('nav.cove') },
-        { href: `${base}/daily`, label: t('nav.daily') },
+        // Labelled with the verb, not the surface name: next to "Search" and
+        // "Surprise me" it reads as a thing you do, which is how someone
+        // buying for another person arrives.
+        { href: `${base}/gift-cove`, label: t('nav.give') },
         { href: `${base}/surprise`, label: t('nav.surprise') },
-        { href: `${base}/scan`, label: t('nav.scan') },
-        { href: `${base}/guides`, label: t('nav.guides') },
+        // Scan is deliberately not here. It is a way of *entering a query*, not
+        // a section of the site, and it already lives where a query is typed:
+        // the scan button in the search field opens the same scanner. A top-level
+        // entry sold it as a destination, which it is not. `/scan` still exists
+        // and still works for anyone who has the URL.
     ]
 
     return (
@@ -275,8 +294,11 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                         <Link href={`/${market.key}/brands`} className="hover:text-accent">
                             {t('brand.index_title')}
                         </Link>
+                        {/* Same name as the header uses. Two links to one page
+                            under two different words is the exact confusion the
+                            Cove naming pass set out to remove. */}
                         <Link href={`/${market.key}/guides`} className="hover:text-accent">
-                            {t('nav.guides')}
+                            {t('nav.coves')}
                         </Link>
                         <Link href={`/${market.key}/daily`} className="hover:text-accent">
                             {t('nav.daily')}

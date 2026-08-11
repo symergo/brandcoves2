@@ -40,6 +40,42 @@ final readonly class Offer
     ) {}
 
     /**
+     * The same offer, with a brand attributed to it.
+     *
+     * A connector leaves `brand` null when its source does not return one — bol's
+     * catalogue API never does — and deliberately refuses to infer it from the
+     * title, because a wrong brand is worse than none: grouping and the brand
+     * facet both key on it.
+     *
+     * It stops being an inference when the *query* was a brand name and the title
+     * carries that name. `App\Services\Search\BrandAttribution` is the only
+     * caller, and the reasoning lives there.
+     */
+    public function withBrand(string $brand): self
+    {
+        return new self(
+            source: $this->source,
+            externalId: $this->externalId,
+            market: $this->market,
+            title: $this->title,
+            affiliateUrl: $this->affiliateUrl,
+            price: $this->price,
+            description: $this->description,
+            brand: $brand,
+            merchantName: $this->merchantName,
+            merchantExternalId: $this->merchantExternalId,
+            merchantDeepLink: $this->merchantDeepLink,
+            merchantCategory: $this->merchantCategory,
+            imageUrl: $this->imageUrl,
+            ean: $this->ean,
+            referencePrice: $this->referencePrice,
+            currency: $this->currency,
+            availability: $this->availability,
+            commissionRate: $this->commissionRate,
+        );
+    }
+
+    /**
      * Whether this row is worth storing at all.
      *
      * A row without a usable affiliate URL cannot earn anything and cannot be

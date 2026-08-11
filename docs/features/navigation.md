@@ -30,9 +30,42 @@ It was a text link between the market switcher and "My lists", reading as footer
 in is the one thing we want from a visitor who has built lists in a cookie — the lists are
 anonymous-first and live in that browser until they do.
 
+## What the header offers, and in what order
+
+Changed 2026-08-10. The nav is five entries:
+
+| Label (nl) | Route | |
+|---|---|---|
+| Cove van de dag | `/{market}/daily` | the editorial that changes every day |
+| Alle Coves | `/{market}/guides` | the editorial index |
+| Zoeken | `/{market}/search` | |
+| Geven | `/{market}/gift-cove` | |
+| Verras me | `/{market}/surprise` | |
+
+**Editorial leads, tools follow.** The two Cove surfaces are the only things in the header that are
+*ours*; search, gifting and Surprise are ways of querying a catalogue that every competitor also
+has. Putting Search first made the site look like a search box with some extras attached, which is
+the version of it that has no reason to be visited twice.
+
+**The header now uses the Cove names.** It was the last surface still calling `/guides` "Guides"
+(`nav.guides`, "Koopgidsen") and `/daily` "Daily Picks" ("Dagtips"), while the homepage, the
+subscription mails, the OG cards and the page titles all said Cove. Two names for one page is the
+exact confusion the naming pass in `localisation.md` set out to remove, so the footer link to
+`/guides` moved to the same key. Per that rule the noun stays and the qualifier translates:
+Daily Cove / Cove van de dag / Cove Quotidienne / Cove Diaria, and All Coves / Alle Coves /
+Toutes les Coves / Todas las Coves.
+
+**Gifting is labelled with the verb, not the surface.** `nav.give` — Geven, Gifting, Offrir,
+Regalar — rather than `nav.cove` ("Geschenk Cove"). Between "Zoeken" and "Verras me" it reads as a
+thing you do, which is the state someone buying for another person is actually in. The surface keeps
+its name everywhere it is named, including the account menu.
+
+**Scan is not in the header.** It is a way of entering a query, not a section — see
+[barcode-scanner.md](barcode-scanner.md).
+
 ## The header says where you are
 
-Six entries rendered identically, so the nav said nothing about which page you had arrived at. The
+Entries render identically, so the nav said nothing about which page you had arrived at. The
 sections overlap by design — Search, the Gift Cove and Daily Picks all end in products — so without
 a mark, moving between them feels like being moved rather than moving.
 
@@ -76,7 +109,7 @@ teaches people to ignore it, and then the one that matters is ignored too.
 - `app/Http/Controllers/Auth/MagicLinkController.php` — `logout()`
 - `bootstrap/app.php` — `redirectGuestsTo` / `redirectUsersTo`, both market-aware
 - `tests/Feature/PageSmokeTest.php` — every page, opened signed out and signed in
-- `lang/*/site.php` — `nav.sign_out`, `nav.admin`
+- `lang/*/site.php` — `nav.daily`, `nav.coves`, `nav.give`, `nav.sign_out`, `nav.admin`
 
 ## See also
 

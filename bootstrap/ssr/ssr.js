@@ -34350,7 +34350,7 @@ var Brand_exports = /* @__PURE__ */ __exportAll({ default: () => Brand });
 * discounted, comparable, sort, pagination) is the same as search, because it is
 * the same query object underneath.
 */
-function Brand({ brand, copy, filters, sort, facets, results, coves, related, narrative }) {
+function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves, related, narrative }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
@@ -34391,20 +34391,24 @@ function Brand({ brand, copy, filters, sort, facets, results, coves, related, na
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "mt-3 max-w-3xl",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "text-3xl font-semibold tracking-tight sm:text-4xl",
-					children: t("brand.heading", { brand: brand.name })
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-4 leading-relaxed",
-					children: copy.lead
-				}),
-				copy.paragraphs.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "mt-3 space-y-2 text-sm leading-relaxed text-ink-soft",
-					children: copy.paragraphs.map((p) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: p }, p))
-				})
-			]
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-3xl font-semibold tracking-tight sm:text-4xl",
+				children: t("brand.heading", { brand: brand.name })
+			}), terms.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
+				className: "mt-4",
+				"aria-label": t("search.terms_heading"),
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "mb-2 text-sm text-ink-soft",
+					children: t("search.terms_heading")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "flex flex-wrap gap-2",
+					children: terms.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+						href: item.url,
+						className: "inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink",
+						children: item.term
+					}) }, item.term))
+				})]
+			})]
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]",
@@ -34576,6 +34580,74 @@ function Brand({ brand, copy, filters, sort, facets, results, coves, related, na
 								onClick: () => go({ page: results.currentPage + 1 }),
 								className: "rounded border border-line px-3 py-1.5 disabled:opacity-40",
 								children: t("search.next")
+							})
+						]
+					}),
+					liveOffers.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+						className: "mt-12",
+						"aria-labelledby": "brand-live",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+								id: "brand-live",
+								className: "text-xl font-semibold tracking-tight",
+								children: t("brand.live_heading", { brand: brand.name })
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 text-sm text-ink-soft",
+								children: t("brand.live_note")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+								className: "mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4",
+								children: liveOffers.map((offer) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+									className: "flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "aspect-square overflow-hidden bg-cream",
+										children: offer.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+											src: offer.image,
+											alt: "",
+											loading: "lazy",
+											className: "h-full w-full object-contain p-4",
+											onError: (e) => {
+												e.currentTarget.style.visibility = "hidden";
+											}
+										})
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "flex flex-1 flex-col p-4",
+										children: [
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+												className: "text-xs tracking-wide text-ink-soft uppercase",
+												children: offer.merchant
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+												className: "mt-1 line-clamp-2 text-sm font-medium",
+												children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+													href: offer.url,
+													rel: "sponsored noopener nofollow",
+													target: "_blank",
+													className: "hover:text-accent",
+													children: offer.title
+												})
+											}),
+											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+												className: "mt-auto pt-3",
+												children: [
+													offer.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "text-lg font-semibold",
+														children: formatPrice(offer.price, market)
+													}),
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: `mt-1 text-xs ${offer.inStock ? "text-sage" : "text-ink-soft"}`,
+														children: offer.inStock ? t("product.in_stock") : t("product.out_of_stock")
+													}),
+													offer.needsPriceTimestamp && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+														className: "mt-0.5 text-[11px] text-ink-soft/70",
+														children: t("product.price_as_of")
+													})
+												]
+											})
+										]
+									})]
+								}, offer.url))
 							})
 						]
 					}),
@@ -35658,6 +35730,116 @@ function GiftWizard({ options, recipients, picks, brief }) {
 	] });
 }
 //#endregion
+//#region resources/js/Components/ToolIcon.tsx
+/**
+* The nine Gift Cove tools, drawn.
+*
+* Line art rather than emoji, for three reasons that all bite at once. An emoji
+* is rendered by the reader's operating system, so 🎁 is a different picture on
+* Windows, Android and iOS and none of them is ours. It arrives with its own
+* colours into a palette that has exactly one accent. And half of these tools
+* have no emoji at all — there is no glyph for "a list you hand over to
+* somebody" or "invite a co-giver", so the set would have ended up part
+* pictogram and part shrug.
+*
+* One stroke weight, one 24px grid, `currentColor` throughout. Inheriting the
+* text colour is what lets the same icon sit on a tinted card, in a hover state
+* and inside the manual without a second copy of it existing.
+*
+* Every icon is `aria-hidden`: the tool's name is in words immediately beside
+* it in both places these are used, and announcing "clipboard" before "a list
+* for someone else" adds a puzzle rather than information.
+*/
+var paths = {
+	wishlist: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" }),
+	giftlist: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "9",
+			y: "2",
+			width: "6",
+			height: "4",
+			rx: "1"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M9 11h6M9 15h4" })
+	] }),
+	collab: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "9.5",
+			cy: "7.5",
+			r: "3.2"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M16 3.6a4 4 0 0 1 0 7.8" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M21 20v-1.5a4 4 0 0 0-3-3.87" })
+	] }),
+	handover: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M4 14v4.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V14" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 15V4" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m8 8 4-4 4 4" })
+	] }),
+	santa: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M16 3h5v5" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M4 20 21 3" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M21 16v5h-5" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m15 15 6 6" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m4 4 5 5" })
+	] }),
+	registry: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+		x: "3.5",
+		y: "5",
+		width: "17",
+		height: "15",
+		rx: "2"
+	}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M8 3v4M16 3v4M3.5 10h17" })] }),
+	quiz: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "3.5",
+			y: "3.5",
+			width: "7.5",
+			height: "7.5",
+			rx: "1.5"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "13",
+			y: "3.5",
+			width: "7.5",
+			height: "7.5",
+			rx: "1.5"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "3.5",
+			y: "13",
+			width: "7.5",
+			height: "7.5",
+			rx: "1.5"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "13",
+			y: "13",
+			width: "7.5",
+			height: "7.5",
+			rx: "1.5"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m15 16.7 1.6 1.6 3.2-3.5" })
+	] }),
+	suggestions: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M20 14.5a2.5 2.5 0 0 1-2.5 2.5H9l-4.5 3.5V6.5A2.5 2.5 0 0 1 7 4h10.5A2.5 2.5 0 0 1 20 6.5z" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12.2 7.5v6M9.2 10.5h6" })] }),
+	whisperer: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M11 4.5C11 8 13.1 10 16.5 10.6 13.1 11.2 11 13.3 11 16.7 11 13.3 8.9 11.2 5.5 10.6 8.9 10 11 8 11 4.5z" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M18.5 15.2C18.5 16.9 19.5 17.9 21.2 18.2 19.5 18.5 18.5 19.5 18.5 21.2 18.5 19.5 17.5 18.5 15.8 18.2 17.5 17.9 18.5 16.9 18.5 15.2z" })] })
+};
+function ToolIcon({ name, className = "h-5 w-5" }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		viewBox: "0 0 24 24",
+		className,
+		fill: "none",
+		stroke: "currentColor",
+		strokeWidth: 1.6,
+		strokeLinecap: "round",
+		strokeLinejoin: "round",
+		"aria-hidden": true,
+		children: paths[name]
+	});
+}
+//#endregion
 //#region resources/js/Pages/GiftCove.tsx
 var GiftCove_exports = /* @__PURE__ */ __exportAll({ default: () => GiftCove });
 /**
@@ -35671,6 +35853,29 @@ var GiftCove_exports = /* @__PURE__ */ __exportAll({ default: () => GiftCove });
 * The explanations are the point. "Secret Santa" needs none; "a list you build
 * for somebody and then hand over to them" needs one, and a tool nobody
 * understands is a tool nobody opens.
+*
+* ## Two layers, and why the second one exists
+*
+* A card answers *what is this for*, in one sentence, because that is the
+* question somebody scanning nine cards is asking. The manual below answers
+* *how do I do it*, which is a different question asked by a different person —
+* one who has already decided and now needs to know which button starts it.
+*
+* Answering both on the card was tried and is worse: nine tools each with four
+* lines of instructions is a wall, and the reader who wanted the one-line
+* version has to read past all of it. So the sentence stays on the card, the
+* steps go below, and the icon is the join — the same drawing in both places is
+* what tells you the manual entry you scrolled to is the card you pressed.
+*
+* Three steps each, and nothing else. Caveats, exceptions and the privacy rules
+* were drafted in beside them and taken back out: a manual entry that runs past
+* the point where the reader could have started is one they stop reading. The
+* rules the tools enforce are enforced whether or not this page explains them.
+*
+* The steps name what is actually on the screen ("press Share", "press
+* People"), never a paraphrase. A manual that describes a button by its purpose
+* rather than its label sends people hunting for a control they are looking
+* straight at.
 */
 function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 	const { market } = usePage().props;
@@ -35772,29 +35977,94 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-12",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-				className: "text-lg font-medium",
-				children: t("gift_cove.tools")
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-wrap items-baseline justify-between gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-lg font-medium",
+					children: t("gift_cove.tools")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					href: "#manual",
+					className: "text-sm text-ink-soft underline hover:text-ink",
+					children: t("gift_cove.manual_link")
+				})]
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 				className: "mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
 				children: tools.map((tool) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 					href: tool.href,
-					className: "flex h-full flex-col rounded-card border border-line bg-card p-6 transition hover:border-ink",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "flex items-start justify-between gap-3",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-							className: "font-medium",
+					className: "group flex h-full flex-col rounded-card border border-line bg-card p-6 transition hover:border-ink",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex items-start justify-between gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ToolIcon, {
+									name: tool.key,
+									className: "h-5 w-5"
+								})
+							}), tool.badge && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent",
+								children: tool.badge
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+							className: "mt-4 font-medium",
 							children: t(`gift_cove.${tool.key}_title`)
-						}), tool.badge && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-							className: "shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent",
-							children: tool.badge
-						})]
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-2 text-sm text-ink-soft",
-						children: t(`gift_cove.${tool.key}_body`)
-					})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 text-sm text-ink-soft",
+							children: t(`gift_cove.${tool.key}_body`)
+						})
+					]
 				}) }, tool.key))
 			})]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			id: "manual",
+			className: "mt-16 scroll-mt-8 border-t border-line pt-10",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-xl font-semibold tracking-tight",
+					children: t("gift_cove.manual")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 max-w-2xl text-ink-soft",
+					children: t("gift_cove.manual_intro")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-8 grid gap-x-10 gap-y-10 md:grid-cols-2",
+					children: tools.map((tool) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("article", {
+						id: `how-${tool.key}`,
+						className: "scroll-mt-8",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "flex items-center gap-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ToolIcon, {
+									name: tool.key,
+									className: "h-5 w-5"
+								})
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "font-medium",
+								children: t(`gift_cove.${tool.key}_title`)
+							})]
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
+							className: "mt-4 space-y-3",
+							children: [
+								1,
+								2,
+								3
+							].map((step) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+								className: "flex gap-3 text-sm leading-relaxed text-ink-soft",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									"aria-hidden": true,
+									className: "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-[11px] font-medium text-ink",
+									children: n(step)
+								}), t(`gift_cove.${tool.key}_step${step}`)]
+							}, step))
+						})]
+					}, tool.key))
+				})
+			]
 		}),
 		santaGroups.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-12",
@@ -35861,6 +36131,21 @@ function GuidesIndex({ guides }) {
 //#endregion
 //#region resources/js/Pages/Guides/Show.tsx
 var Show_exports$1 = /* @__PURE__ */ __exportAll({ default: () => GuideShow });
+/**
+* Copy with its links already resolved.
+*
+* dangerouslySetInnerHTML, deliberately and narrowly: this HTML is built by
+* CoveMarkup, which escapes the author's text FIRST and then emits only its own
+* <a> tags pointing at allowlisted destinations. The writer cannot introduce a
+* tag or a URL — CoveMarkupTest asserts both. Same contract as the Cove's
+* editorial.
+*/
+function Prose({ blocks, className = "" }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: blocks.map((html, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		className: `${className} [&_a]:underline`,
+		dangerouslySetInnerHTML: { __html: html }
+	}, i)) });
+}
 function GuideShow({ preview = false, guide, items }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
@@ -35874,23 +36159,23 @@ function GuideShow({ preview = false, guide, items }) {
 					className: "text-2xl font-semibold sm:text-3xl",
 					children: guide.title
 				}),
-				guide.intro && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-3 text-lg text-ink-soft",
-					children: guide.intro
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Prose, {
+					blocks: guide.intro,
+					className: "mt-3 text-lg text-ink-soft"
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 					className: "mt-3 text-xs text-ink-soft",
 					children: [guide.updatedAt && t("guides.updated", { date: guide.updatedAt }), guide.searchVolume > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [" · ", t("guides.why", { count: n(guide.searchVolume) })] })]
 				}),
-				guide.body && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				guide.body.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 					className: "mt-8",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					children: [guide.kind === "buying" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						className: "text-lg font-medium",
 						children: t("guides.how_to_choose")
-					}), guide.body.split(/\n{2,}/).map((paragraph, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-3 leading-relaxed",
-						children: paragraph
-					}, i))]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Prose, {
+						blocks: guide.body,
+						className: "mt-3 leading-relaxed"
+					})]
 				})
 			]
 		}),
@@ -35918,9 +36203,9 @@ function GuideShow({ preview = false, guide, items }) {
 								children: item.title
 							})
 						}),
-						item.copy && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-2 text-sm text-ink-soft",
-							children: item.copy
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Prose, {
+							blocks: item.copy,
+							className: "mt-2 text-sm text-ink-soft"
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "mt-3 flex flex-wrap items-center gap-4",
@@ -35952,7 +36237,7 @@ function GuideShow({ preview = false, guide, items }) {
 					children: pair.q
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
 					className: "mt-1 text-ink-soft",
-					children: pair.a
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Prose, { blocks: pair.a })
 				})] }, i))
 			})]
 		})
@@ -35961,7 +36246,7 @@ function GuideShow({ preview = false, guide, items }) {
 //#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
-function Home({ stats, today, gifting, coves }) {
+function Home({ today, gifting, coves }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const base = `/${market.key}`;
@@ -36159,57 +36444,8 @@ function Home({ stats, today, gifting, coves }) {
 					}) }, cove.url))
 				})
 			]
-		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-			className: "mt-16 grid gap-4 sm:grid-cols-3",
-			"aria-label": t("home.stats_label"),
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
-					label: t("home.stat_products"),
-					value: n(stats.products)
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
-					label: t("home.stat_comparable"),
-					value: n(stats.comparable),
-					hint: t("home.stat_comparable_hint")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
-					label: t("home.stat_guides"),
-					value: n(stats.guides)
-				})
-			]
-		}),
-		stats.products === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-			className: "mt-6 rounded-card border border-line bg-card p-4 text-sm text-ink-soft",
-			children: [
-				t("home.empty_catalogue"),
-				" ",
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("code", {
-					className: "rounded bg-cream px-1.5 py-0.5",
-					children: ["php artisan bc:ingest --market=", market.key]
-				})
-			]
 		})
 	] });
-}
-function Stat({ label, value, hint }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "rounded-card border border-line bg-card p-5",
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "text-3xl font-semibold tabular-nums",
-				children: value
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "mt-1 text-sm text-ink-soft",
-				children: label
-			}),
-			hint && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "mt-0.5 text-xs text-ink-soft/70",
-				children: hint
-			})
-		]
-	});
 }
 //#endregion
 //#region resources/js/Pages/Legal.tsx
@@ -36489,14 +36725,132 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 	] });
 }
 //#endregion
+//#region resources/js/Components/ManualItem.tsx
+/**
+* "It is not in the shops you cover."
+*
+* The same form, on the two pages where somebody wants to put something on a
+* list: the owner adding to their own, and a visitor suggesting into somebody
+* else's. One component because it is one act — the endpoints differ, the
+* fields and the rules do not — and two copies would drift the moment one of
+* them gained a field.
+*
+* The caller supplies `action` and any extra payload. What comes back differs
+* by design: the owner's post lands on the list, the visitor's lands as a
+* pending suggestion, and neither page has to know how the other behaves.
+*
+* Collapsed behind a button. Every list starts from a product search, and a
+* form standing permanently open beside it reads as the main way in, which it
+* is not.
+*/
+function ManualItem({ action, data = {}, hint }) {
+	const { t } = useTranslations();
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const [title, setTitle] = (0, import_react.useState)("");
+	const [url, setUrl] = (0, import_react.useState)("");
+	const [price, setPrice] = (0, import_react.useState)("");
+	const [error, setError] = (0, import_react.useState)(null);
+	function submit(event) {
+		event.preventDefault();
+		setError(null);
+		router.post(action, {
+			...data,
+			title,
+			url: url.trim() || null,
+			price: price.trim() === "" ? null : Math.round(Number(price.replace(",", ".")) * 100)
+		}, {
+			preserveScroll: true,
+			onSuccess: () => {
+				setTitle("");
+				setUrl("");
+				setPrice("");
+				setOpen(false);
+			},
+			onError: (errors) => setError(Object.values(errors)[0] ?? null)
+		});
+	}
+	if (!open) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		type: "button",
+		onClick: () => setOpen(true),
+		className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+		children: t("lists.manual_add")
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+		onSubmit: submit,
+		className: "w-full space-y-3 rounded-card border border-line bg-card p-4",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-sm text-ink-soft",
+				children: hint
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+				className: "block text-sm font-medium",
+				children: [t("lists.manual_title"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					required: true,
+					autoFocus: true,
+					maxLength: 500,
+					value: title,
+					onChange: (e) => setTitle(e.target.value),
+					className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "grid gap-3 sm:grid-cols-[2fr_1fr]",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+					className: "block text-sm font-medium",
+					children: [t("lists.manual_url"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						type: "url",
+						inputMode: "url",
+						maxLength: 2048,
+						placeholder: "https://",
+						value: url,
+						onChange: (e) => setUrl(e.target.value),
+						className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+					})]
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+					className: "block text-sm font-medium",
+					children: [t("lists.manual_price"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						inputMode: "decimal",
+						value: price,
+						onChange: (e) => setPrice(e.target.value),
+						className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+					})]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-xs text-ink-soft",
+				children: t("lists.manual_no_preview")
+			}),
+			error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "text-sm text-accent",
+				children: error
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex gap-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "submit",
+					className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
+					children: t("lists.manual_save")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => setOpen(false),
+					className: "rounded-lg border border-line px-4 py-2 text-sm",
+					children: t("lists.cancel")
+				})]
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Pages/Lists/Shared.tsx
 var Shared_exports = /* @__PURE__ */ __exportAll({ default: () => SharedList });
-function SharedList({ list, isOwner, progress, items }) {
+function SharedList({ list, isOwner, progress, items, canSuggest, suggestTerm, results }) {
 	const page = usePage();
 	const { market } = page.props;
 	const { t } = useTranslations();
 	const token = page.url.split("?")[0].split("/").filter(Boolean).pop();
 	const base = `/${market.key}`;
+	const [query, setQuery] = (0, import_react.useState)(suggestTerm);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, {
 			title: list.heading,
@@ -36550,6 +36904,12 @@ function SharedList({ list, isOwner, progress, items }) {
 								href: item.url,
 								className: "font-medium hover:underline",
 								children: item.title
+							}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+								href: item.externalUrl,
+								target: "_blank",
+								rel: "nofollow noopener noreferrer",
+								className: "font-medium hover:underline",
+								children: item.title
 							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 								className: "font-medium",
 								children: item.title
@@ -36590,6 +36950,82 @@ function SharedList({ list, isOwner, progress, items }) {
 					})
 				})]
 			}, item.id))
+		}),
+		canSuggest && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-12 rounded-card border border-line bg-card p-6",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-medium",
+					children: t("suggestions.invite")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 text-sm text-ink-soft",
+					children: t("suggestions.invite_hint")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+					className: "mt-4 flex flex-wrap gap-2",
+					onSubmit: (e) => {
+						e.preventDefault();
+						router.get(`${base}/l/${token}`, { q: query }, {
+							preserveState: true,
+							preserveScroll: true
+						});
+					},
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						value: query,
+						onChange: (e) => setQuery(e.target.value),
+						placeholder: t("suggestions.search_placeholder"),
+						"aria-label": t("suggestions.search_placeholder"),
+						className: "min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+						children: t("search.submit")
+					})]
+				}),
+				results !== null && results.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 text-sm text-ink-soft",
+					children: t("suggestions.none_found")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-4",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ManualItem, {
+						action: `${base}/l/${token}/suggest`,
+						hint: t("suggestions.manual_hint")
+					})
+				}),
+				results !== null && results.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
+					children: results.map((result) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "flex flex-col rounded-card border border-line p-4",
+						children: [
+							result.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: result.image,
+								alt: "",
+								loading: "lazy",
+								className: "mx-auto h-28 w-auto max-w-full object-contain",
+								onError: (e) => {
+									e.currentTarget.style.visibility = "hidden";
+								}
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-3 line-clamp-2 text-sm font-medium",
+								children: result.title
+							}),
+							result.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-1 text-sm text-ink-soft",
+								children: formatPrice(result.price, market)
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => router.post(`${base}/l/${token}/suggest`, { group_id: result.id }, { preserveScroll: true }),
+								className: "mt-3 w-full rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-dark",
+								children: t("suggestions.suggest")
+							})
+						]
+					}, result.id))
+				})
+			]
 		})
 	] });
 }
@@ -37284,10 +37720,20 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "text-ink-soft",
 				children: t("lists.empty_list")
-			}), access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-				href: `${base}/search`,
-				className: "mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
-				children: t("lists.find_things")
+			}), access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-4 flex flex-wrap items-start justify-center gap-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `${base}/search`,
+					className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
+					children: t("lists.find_things")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ManualItem, {
+					action: `${base}/list-items`,
+					data: {
+						source: "manual",
+						wishlist_id: list.id
+					},
+					hint: t("lists.manual_hint")
+				})]
 			})]
 		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 			className: "mt-8 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
@@ -37306,6 +37752,12 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 						className: "min-w-0 flex-1",
 						children: [item.groupId && item.slug ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 							href: `${base}/p/${item.groupId}/${item.slug}`,
+							className: "font-medium hover:underline",
+							children: item.title
+						}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+							href: item.externalUrl,
+							target: "_blank",
+							rel: "nofollow noopener noreferrer",
 							className: "font-medium hover:underline",
 							children: item.title
 						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
@@ -37337,6 +37789,17 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 					})
 				]
 			}, item.id))
+		}),
+		items.length > 0 && access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-4",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ManualItem, {
+				action: `${base}/list-items`,
+				data: {
+					source: "manual",
+					wishlist_id: list.id
+				},
+				hint: t("lists.manual_hint")
+			})
 		})
 	] });
 }
@@ -38823,12 +39286,13 @@ function Scan() {
 //#endregion
 //#region resources/js/Pages/Search.tsx
 var Search_exports = /* @__PURE__ */ __exportAll({ default: () => Search });
-function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, pastedLink, intro, brandLinks, narrative }) {
+function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, pastedLink, terms, brandLinks, narrative }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
 	const [scannerOpen, setScannerOpen] = (0, import_react.useState)(false);
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
+	const [searching, setSearching] = (0, import_react.useState)(false);
 	const base = `/${market.key}/search`;
 	const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
 		if ([
@@ -38859,7 +39323,9 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 		});
 		router.get(base, next, {
 			preserveScroll: true,
-			preserveState: true
+			preserveState: true,
+			onStart: () => setSearching(true),
+			onFinish: () => setSearching(false)
 		});
 	}
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
@@ -38872,13 +39338,21 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 			className: "flex gap-2",
 			role: "search",
 			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-					type: "search",
-					value: term,
-					onChange: (e) => setTerm(e.target.value),
-					placeholder: t("search.placeholder"),
-					"aria-label": t("search.title"),
-					className: "flex-1 rounded-lg border border-line bg-card px-4 py-3"
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "relative flex-1",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						type: "search",
+						value: term,
+						onChange: (e) => setTerm(e.target.value),
+						placeholder: t("search.placeholder"),
+						"aria-label": t("search.title"),
+						"aria-busy": searching,
+						className: "w-full rounded-lg border border-line bg-card px-4 py-3"
+					}), searching && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "pointer-events-none absolute inset-x-px bottom-px h-0.5 overflow-hidden rounded-b-lg",
+						"aria-hidden": true,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "animate-scan absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-accent to-transparent" })
+					})]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 					type: "button",
@@ -38892,10 +39366,16 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 					})
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					className: "rounded-lg bg-accent px-5 py-3 font-medium text-white hover:bg-accent-dark",
+					"aria-busy": searching,
+					className: `rounded-lg bg-accent px-5 py-3 font-medium text-white transition-opacity hover:bg-accent-dark ${searching ? "opacity-70" : ""}`,
 					children: t("search.submit")
 				})
 			]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			role: "status",
+			className: "sr-only",
+			children: searching ? t("search.searching") : ""
 		}),
 		pastedLink && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-3 rounded-lg border border-line bg-cream px-4 py-3 text-sm text-ink-soft",
@@ -38994,29 +39474,20 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 					]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [
-					intro && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "mb-5 max-w-3xl space-y-1.5 text-sm leading-relaxed text-ink-soft",
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-								className: "sr-only",
-								children: t("search.results_for", { term: q })
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "text-ink",
-								children: intro.lead
-							}),
-							intro.paragraphs.map((p) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: p }, p)),
-							intro.brands.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", { children: [
-								t("search.intro_brands"),
-								" ",
-								intro.brands.map((brand, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [i > 0 && ", ", brand.url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: brand.url,
-									className: "text-accent hover:underline",
-									children: brand.name
-								}) : brand.name] }, brand.name)),
-								"."
-							] })
-						]
+					terms.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
+						className: "mb-5",
+						"aria-label": t("search.terms_heading"),
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "mb-2 text-sm text-ink-soft",
+							children: t("search.terms_heading")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+							className: "flex flex-wrap gap-2",
+							children: terms.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: item.url,
+								className: "inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink",
+								children: item.term
+							}) }, item.term))
+						})]
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "mb-4 flex flex-wrap items-center gap-3",
@@ -39257,9 +39728,12 @@ function Surprise({ finds, seen }) {
 							children: find.title
 						})]
 					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					find.blurb !== null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-2 line-clamp-3 text-sm text-ink-soft",
+						children: find.blurb
+					}) : find.brand !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 						className: "mt-2 text-sm text-ink-soft",
-						children: t(`surprise.why.${find.why}`)
+						children: t("surprise.by_brand", { brand: find.brand })
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "mt-auto flex items-center justify-between pt-4",
@@ -59265,28 +59739,24 @@ function SiteLayout({ children }) {
 	const isCurrent = (href) => path === href || path.startsWith(`${href}/`);
 	const nav = [
 		{
+			href: `${base}/daily`,
+			label: t("nav.daily")
+		},
+		{
+			href: `${base}/guides`,
+			label: t("nav.coves")
+		},
+		{
 			href: `${base}/search`,
 			label: t("nav.search")
 		},
 		{
 			href: `${base}/gift-cove`,
-			label: t("nav.cove")
-		},
-		{
-			href: `${base}/daily`,
-			label: t("nav.daily")
+			label: t("nav.give")
 		},
 		{
 			href: `${base}/surprise`,
 			label: t("nav.surprise")
-		},
-		{
-			href: `${base}/scan`,
-			label: t("nav.scan")
-		},
-		{
-			href: `${base}/guides`,
-			label: t("nav.guides")
 		}
 	];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -59465,7 +59935,7 @@ function SiteLayout({ children }) {
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 								href: `/${market.key}/guides`,
 								className: "hover:text-accent",
-								children: t("nav.guides")
+								children: t("nav.coves")
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 								href: `/${market.key}/daily`,

@@ -181,11 +181,37 @@ The snapshot fields in the request are **hints, not instructions** — `ItemSave
 decides per source whether any may be stored, so a hand-built POST naming Amazon
 cannot smuggle a mirrored title into the catalogue.
 
-**Deliberately deferred: pasting an arbitrary product URL.** Feed affiliate URLs
-are already hostile input (invariant #5); a user-pasted URL is worse, and
-rendering a remote image and title from it turns a list into an open-redirect and
-SSRF surface. The `manual` source is the seam when that is wanted; it needs a
-fetch-and-sanitise design, not a `nullable|url` rule.
+**Was deferred, now built — by removing the fetch rather than sanitising it.**
+The original note said: feed affiliate URLs are already hostile input (invariant
+#5), a user-pasted URL is worse, and rendering a remote image and title from it
+turns a list into an open-redirect and SSRF surface. All true, and every word of
+it is about *fetching* the URL.
+
+So `ItemSaver::saveManual()` does not. The person types the title and the price;
+we store the link and never request it. That deletes the SSRF surface instead of
+filtering it, and costs one more field to somebody who is already typing.
+
+Three rules make the rest safe:
+
+- **`https:` only, decided in one place.** `WishlistItem::isSafeExternalUrl()` is
+  the same test `Product::hasSafeAffiliateUrl()` applies to feed URLs. The
+  validator uses it to produce a sentence a human can act on, the saver re-checks
+  it on write, and `externalUrl()` re-checks it on read — so a row that predates
+  the rule, or arrives through a future import, still cannot reach an `href`.
+  Escaping is not a defence here: `javascript:alert(1)` survives HTML escaping
+  intact and runs on click.
+- **No image, at all.** An image URL would be fetched by every visitor's browser
+  from a host the list owner chose — an on-by-default tracking pixel reporting
+  who opened the list and when, on the one page in the product whose purpose is
+  that the owner learns nothing. Manual items show no picture.
+- **`nofollow noopener noreferrer`, and not through `/go/`.** The redirector is
+  for affiliate links, where the scheme check and click logging live; laundering
+  a stranger's link through our own domain is not what it is for.
+
+`externalUrl()` is scoped to `manual` rows, because every other item's
+`snapshot_url` is our own product page stored as a root-relative path with no
+scheme — running those through the check would unlink the entire catalogue half
+of the list.
 
 ## The Gift Cove starts the tool it describes
 
@@ -202,6 +228,56 @@ send you, so the index — where you see which list received one — remains the
 `?new=for_someone` is read from `usePage().url`, not `window.location`; see
 [sharing.md](sharing.md) for why that distinction is load-bearing.
 
+### And then says how to work it
+
+Landing on the right form is not the same as knowing what to do with it. A card answers *what is
+this for* in one sentence — the question somebody scanning nine cards is asking — and stops there,
+which leaves "invite other people onto a gift list so several of you can choose together" as a true
+sentence that names no control.
+
+So the page has a second layer: a manual below the grid, one entry per tool, **three steps and
+nothing else**. The two are written for different readers, which is why they are not merged. Putting
+the steps on the cards makes nine tools into a wall of instructions and buries the one-line version
+the scanner came for.
+
+Three rules hold it together:
+
+- **A step quotes the label that is really on the screen** — "press Share", "press People", "press
+  Do the draw". Describing a control by its purpose instead of its name sends somebody hunting for a
+  button they are looking straight at. The corollary: renaming a control silently invalidates the
+  step that names it, and only a human reading the page will notice.
+- **Three steps, no fourth line.** Caveats were drafted beside them and taken back out — the
+  permanence of a handover, the draw closing the group, an address only a claimer sees. Every one is
+  true and each is enforced by the tool whether or not this page mentions it, and an entry that runs
+  past the point where the reader could have started is one they stop reading.
+- **Not an accordion.** Collapsed steps are steps nobody reads, and hiding the longer answer behind
+  a second press reproduces exactly the problem the manual was written to solve.
+
+`every_tool_on_the_gift_cove_has_its_three_steps` guards the shape from the direction
+`LocalisationTest` cannot see: that test catches a language falling behind English, this one catches
+a tenth tool added to the page with no steps written for it. A missing string renders as its own key
+— `gift_cove.quiz_step2`, in the middle of a numbered list.
+
+### The icons are drawn, not typed
+
+`resources/js/Components/ToolIcon.tsx` — nine line icons on one 24px grid, `currentColor`, one
+stroke weight, `aria-hidden` because the tool's name sits in words beside every one of them.
+
+Emoji were the obvious cheaper answer and fail three ways at once: the glyph is rendered by the
+reader's operating system, so it is a different picture on Windows, Android and iOS; it arrives with
+its own colours into a palette that has one accent; and **half of these tools have no emoji at all**
+— there is no glyph for "a list you hand over" or "invite a co-giver", so the set would have come
+out part pictogram and part shrug.
+
+What each one depicts is a decision, not decoration. A gift list gets a *clipboard*, because it is
+research you keep about somebody rather than a present — a gift box would promise the wrong thing.
+Secret Santa gets *crossing arrows*, because what the feature is is the draw; a hat would be a
+picture of the season instead of the mechanism.
+
+The same drawing appears on the card and on the manual entry, and that repetition is load-bearing:
+it is what tells a reader who scrolled down that the entry they are reading belongs to the card they
+pressed.
+
 ---
 
 ## Files
@@ -211,6 +287,7 @@ send you, so the index — where you see which list received one — remains the
   `Suggestion`, `GiftTarget`, `SecretSantaDraw`, `DrawImpossible`, `QuizBuilder`
 - `app/Services/Wishlist/ItemSaver.php`, `app/Support/ListAccess.php`
 - `app/Services/Social/FollowGraph.php`
+- `resources/js/Pages/GiftCove.tsx`, `resources/js/Components/ToolIcon.tsx`
 - `app/Http/Controllers/` — `RecipientProfileController`, `SecretSantaController`,
   `ListQuizController`, `WishlistCollaboratorController`
 - `app/Jobs/SendOccasionReminders.php`

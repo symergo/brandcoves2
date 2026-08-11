@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\ListVisibility;
+use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Search\SearchQuery;
+use App\Services\Search\SearchService;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +28,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class SharedListController extends Controller
 {
-    public function show(Request $request, CurrentMarket $current, string $market, string $token): Response
+    public function show(Request $request, CurrentMarket $current, string $market, string $token, SearchService $search): Response
     {
         $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
@@ -40,6 +43,22 @@ class SharedListController extends Controller
 
         $identity = $owner->claimIdentity();
         $hash = $identity === null ? null : WishlistItem::identityHash($identity);
+
+        /*
+         * "I think you would like this."
+         *
+         * The same three conditions `SuggestionController::store()` enforces,
+         * asked here so the control is absent when the POST would be refused.
+         * Mirrored, never trusted: the endpoint re-checks all of it, because
+         * hiding a button stops nobody hand-building the request.
+         *
+         * No account needed — an anonymous cookie identity is an owner. Somebody
+         * followed a link once; requiring a signup before they can say "she'd
+         * love this" is how the feature does not get used.
+         */
+        $canSuggest = ! $isOwner && $claimable && $owner->exists();
+
+        $term = $canSuggest ? trim((string) $request->query('q', '')) : '';
 
         return Inertia::render('Lists/Shared', [
             'list' => [
@@ -80,6 +99,43 @@ class SharedListController extends Controller
                     : $list->title,
             ],
             'isOwner' => $isOwner,
+            'canSuggest' => $canSuggest,
+            'suggestTerm' => $term,
+
+            /*
+             * Null means "no search has been run", `[]` means "searched and
+             * found nothing". They are different sentences on the page and
+             * collapsing them into an empty array makes the first visit look
+             * like a failed search.
+             */
+            'results' => $term === '' ? null : array_map(
+                fn (ProductGroup $group) => [
+                    'id' => $group->id,
+                    'title' => $group->title,
+                    'image' => $group->image_url,
+                    // Cents on the wire, as everywhere: the client formats.
+                    'price' => $group->min_price,
+                ],
+                /*
+                 * Eight, not a page.
+                 *
+                 * This is a picker inside somebody else's list, not the search
+                 * page — a paginated grid here would bury the list it is meant
+                 * to be adding to. `discountedOnly` is passed explicitly
+                 * because the value object defaults it to *true*, which would
+                 * quietly restrict a suggestion to whatever happens to be on
+                 * offer today.
+                 */
+                array_slice($search->search(new SearchQuery(
+                    market: $current->get(),
+                    term: $term,
+                    discountedOnly: false,
+                    // Not public demand. `search_log` feeds the related-search
+                    // chips and the guide topic queue, and a term typed inside
+                    // one named person's gift list does not belong there.
+                    logged: false,
+                ))->groups->items(), 0, 8),
+            ),
 
             /*
              * "3 of 11 claimed" — for visitors only, and null for the owner.
@@ -101,6 +157,12 @@ class SharedListController extends Controller
                 'url' => $item->group === null
                     ? null
                     : $current->url("p/{$item->group_id}/{$item->group->slug}"),
+
+                // A hand-written item points somewhere off the site, so it is
+                // not the same link as the one above and must not be rendered
+                // as one. `https:` only, decided by the model.
+                'externalUrl' => $item->externalUrl(),
+
                 'inStock' => $item->group?->in_stock ?? false,
 
                 /*

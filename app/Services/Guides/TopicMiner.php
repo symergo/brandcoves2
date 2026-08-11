@@ -6,6 +6,7 @@ namespace App\Services\Guides;
 
 use App\Enums\Market;
 use App\Models\GuideTopic;
+use App\Models\PopularRank;
 use App\Models\ProductGroup;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -63,6 +64,12 @@ class TopicMiner
     {
         $queries = $this->recentQueries($market);
         $clusters = $this->cluster($queries);
+
+        // Merged before scoring, not after, so a topic that both charts and gets
+        // searched for is one candidate with both pieces of evidence rather than
+        // two rows competing for the same slot.
+        $clusters = $this->withChartTopics($market, $clusters);
+
         $written = 0;
 
         foreach ($clusters as $topic => $cluster) {
@@ -76,6 +83,7 @@ class TopicMiner
             $topic = (string) $topic;
 
             $available = $this->availableProducts($market, $topic);
+            $charting = $cluster['charting'] ?? 0;
 
             /*
              * A high-volume topic with no products is not a guide, it is a gap
@@ -83,15 +91,21 @@ class TopicMiner
              * count rather than dropped, so admin can see "180 searches, 0
              * products" and go and find an advertiser who sells them.
              */
-            $score = $this->score($cluster['volume'], $cluster['zero'], $available);
+            $score = $this->score($cluster['volume'], $cluster['zero'], $available, $charting);
 
             GuideTopic::updateOrCreate(
                 ['market' => $market->value, 'topic' => $topic],
                 [
                     'member_queries' => array_slice($cluster['queries'], 0, 25),
                     'search_volume' => $cluster['volume'],
+                    'chart_entries' => $charting,
                     'available_products' => $available,
                     'score' => $score,
+                    // Only claimed when the chart is the *only* evidence. A
+                    // topic people are searching for here is a search topic
+                    // however many products chart, and mislabelling it would
+                    // hide the fact that we have real first-party demand.
+                    ...($cluster['volume'] > 0 ? [] : ['origin' => 'chart']),
                     // Never overwrite a decision a human already made.
                     ...(GuideTopic::query()
                         ->where('market', $market->value)
@@ -133,7 +147,13 @@ class TopicMiner
             ->where('market', $market->value)
             ->whereIn('status', ['candidate', 'queued'])
             ->whereNull('guide_id')
-            ->where('search_volume', '>=', self::MIN_VOLUME)
+            // Either kind of demand evidence qualifies. A market with no search
+            // log yet still has a queue, which is the point of mining charts at
+            // all — but a chart-only topic still ranks below a searched-for one,
+            // because score() weights them that way.
+            ->where(fn ($q) => $q
+                ->where('search_volume', '>=', self::MIN_VOLUME)
+                ->orWhere('chart_entries', '>=', self::MIN_PRODUCTS))
             ->where('available_products', '>=', self::MIN_PRODUCTS)
             // A topic the builder has just failed on would otherwise sit at the
             // head of the queue forever, and everything behind it is unreachable.
@@ -198,6 +218,70 @@ class TopicMiner
     }
 
     /**
+     * Fold in topics a bestseller chart is shouting about.
+     *
+     * The miner's premise — write about what people demonstrably ask for *here* —
+     * has one structural hole: a new market has no search log, so the queue is
+     * empty exactly when guides would do the most good. A retailer's chart
+     * categories are somebody else's demand measurement, available on day one.
+     *
+     * Merged into the existing clusters rather than written separately, so a
+     * topic with both kinds of evidence stays one candidate. Nothing here
+     * publishes: these land in the same reviewable queue as everything else,
+     * which is the property that keeps this a topic queue rather than a content
+     * farm.
+     *
+     * @param  array<string, array{queries: list<string>, volume: int, zero: int, charting?: int}>  $clusters
+     * @return array<string, array{queries: list<string>, volume: int, zero: int, charting?: int}>
+     */
+    private function withChartTopics(Market $market, array $clusters): array
+    {
+        $latest = PopularRank::latestCapturedOn($market);
+
+        if ($latest === null) {
+            return $clusters;
+        }
+
+        $rows = DB::table('popular_ranks as r')
+            ->join('chart_categories as c', function ($join) use ($market): void {
+                $join->on('c.source', '=', 'r.source')
+                    ->on('c.external_id', '=', 'r.category_external_id')
+                    ->where('c.market', '=', $market->value);
+            })
+            ->where('r.market', $market->value)
+            ->where('r.captured_on', $latest)
+            // The market-wide chart is not a topic. "Everything bol sells" has
+            // no head noun and would cluster onto whichever long word it
+            // happened to be named after.
+            ->where('r.category_external_id', '!=', PopularRank::OVERALL)
+            ->groupBy('c.name')
+            ->havingRaw('count(DISTINCT r.external_id) >= ?', [self::MIN_PRODUCTS])
+            ->select('c.name', DB::raw('count(DISTINCT r.external_id)::int as charting'))
+            ->orderByDesc(DB::raw('count(DISTINCT r.external_id)'))
+            ->limit(200)
+            ->get();
+
+        foreach ($rows as $row) {
+            // Through the same head-noun reduction as a search query, so
+            // "Koptelefoons" and a search for "beste koptelefoon" land on one
+            // topic instead of two near-identical guides.
+            $topic = $this->headNoun((string) $row->name);
+
+            if ($topic === null) {
+                continue;
+            }
+
+            $clusters[$topic] ??= ['queries' => [], 'volume' => 0, 'zero' => 0];
+            $clusters[$topic]['charting'] = max(
+                $clusters[$topic]['charting'] ?? 0,
+                (int) $row->charting,
+            );
+        }
+
+        return $clusters;
+    }
+
+    /**
      * The longest non-stopword token.
      *
      * Longest rather than first, because in Dutch the compound *is* the noun:
@@ -251,20 +335,36 @@ class TopicMiner
      * scores near zero, correctly, and sits in admin as a to-do rather than a
      * to-write.
      */
-    private function score(int $volume, int $zeroResults, int $available): float
+    private function score(int $volume, int $zeroResults, int $available, int $charting = 0): float
     {
         if ($available < self::MIN_PRODUCTS) {
             return 0.0;
         }
 
-        // log, so one runaway query cannot dominate the queue forever.
-        $demand = log10(max(1, $volume) + 1) * 40;
+        // log, so one runaway query cannot dominate the queue forever. Zero
+        // searches scores zero rather than log10(2)·40 — a chart-only topic must
+        // not collect twelve points of first-party demand it does not have.
+        $demand = $volume > 0 ? log10($volume + 1) * 40 : 0.0;
         $gap = log10(max(1, $zeroResults) + 1) * 15;
         // Saturates: 30 products is not three times better than 10, it is the
         // same guide with a longer shortlist.
         $supply = min(1.0, $available / 30) * 25;
 
-        return round($demand + $gap + $supply, 2);
+        /*
+         * Chart evidence, weighted below our own searches on purpose.
+         *
+         * A bestseller chart is one retailer's customers, in one country,
+         * shopping in a shape that retailer's own merchandising decided. Our
+         * search log is the people who actually came here. So this fills the
+         * queue when the log cannot — on a new market, or for a category nobody
+         * has thought to search for yet — without ever outranking a topic the
+         * audience has asked for directly.
+         *
+         * Capped at 20 against demand's 40 for exactly that reason.
+         */
+        $external = min(1.0, $charting / 40) * 20;
+
+        return round($demand + $gap + $supply + $external, 2);
     }
 
     public static function slugFor(string $topic, string $prefix): string

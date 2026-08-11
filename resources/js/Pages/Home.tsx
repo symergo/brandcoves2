@@ -11,11 +11,6 @@ interface Cove {
 }
 
 interface Props {
-    stats: {
-        products: number
-        comparable: number
-        guides: number
-    }
     today: {
         theme: string
         blurb: string | null
@@ -33,7 +28,7 @@ interface Props {
     coves: Cove[]
 }
 
-export default function Home({ stats, today, gifting, coves }: Props) {
+export default function Home({ today, gifting, coves }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
@@ -233,38 +228,21 @@ export default function Home({ stats, today, gifting, coves }: Props) {
             )}
 
             {/*
-              Real counts, not placeholders. An empty catalogue should say so —
-              a scaffold that fakes data hides exactly the thing you need to see
-              while building ingestion.
+              The catalogue counters and the `bc:ingest` hint that used to close
+              this page are gone.
+
+              They were scaffolding: honest numbers, shown while ingestion was
+              being built, to prove the pipeline was real. To a visitor they are
+              a boast about our warehouse — "412,908 products" says nothing
+              about whether we have the one they want, and a page that ends on
+              inventory size ends on us instead of on them. The empty state was
+              worse: an artisan command, on the front page, telling a shopper to
+              run something on a server they do not have.
+
+              The numbers that survive here are the ones that belong to the
+              visitor (their lists, their people) or to a Cove (its monthly
+              search volume) — those are reasons to click.
             */}
-            <section className="mt-16 grid gap-4 sm:grid-cols-3" aria-label={t('home.stats_label')}>
-                <Stat label={t('home.stat_products')} value={n(stats.products)} />
-                <Stat
-                    label={t('home.stat_comparable')}
-                    value={n(stats.comparable)}
-                    hint={t('home.stat_comparable_hint')}
-                />
-                <Stat label={t('home.stat_guides')} value={n(stats.guides)} />
-            </section>
-
-            {stats.products === 0 && (
-                <p className="mt-6 rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
-                    {t('home.empty_catalogue')}{' '}
-                    <code className="rounded bg-cream px-1.5 py-0.5">
-                        php artisan bc:ingest --market={market.key}
-                    </code>
-                </p>
-            )}
         </>
-    )
-}
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-    return (
-        <div className="rounded-card border border-line bg-card p-5">
-            <div className="text-3xl font-semibold tabular-nums">{value}</div>
-            <div className="mt-1 text-sm text-ink-soft">{label}</div>
-            {hint && <div className="mt-0.5 text-xs text-ink-soft/70">{hint}</div>}
-        </div>
     )
 }

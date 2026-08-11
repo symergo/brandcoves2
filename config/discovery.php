@@ -151,12 +151,20 @@ return [
             'enabled' => false,
         ],
 
-        /* "What's current." */
+        /*
+         * "What's current."
+         *
+         * `popular` leads because it is the only retriever measuring actual
+         * demand — a retailer's bestseller chart, and specifically movement
+         * within it. `fresh` keeps a real share rather than being replaced: the
+         * chart is one retailer's view, and the whole Awin catalogue is
+         * invisible to it. Two partial answers beat one.
+         */
         'trends' => [
             'intent' => 'current',
             'position' => 0.7,
             'required_input' => [],
-            'retrievers' => ['fresh' => 1.0],
+            'retrievers' => ['popular' => 0.6, 'fresh' => 0.4],
             'scoring' => ['alpha' => 0.3, 'beta' => 0.0, 'gamma' => 0.7, 'lambda' => 0.5, 'epsilon' => 0.05],
             'layout' => 'feed',
             'enabled' => true,

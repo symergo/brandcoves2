@@ -1,4 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react'
+import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -27,6 +28,29 @@ interface Props {
  * The explanations are the point. "Secret Santa" needs none; "a list you build
  * for somebody and then hand over to them" needs one, and a tool nobody
  * understands is a tool nobody opens.
+ *
+ * ## Two layers, and why the second one exists
+ *
+ * A card answers *what is this for*, in one sentence, because that is the
+ * question somebody scanning nine cards is asking. The manual below answers
+ * *how do I do it*, which is a different question asked by a different person —
+ * one who has already decided and now needs to know which button starts it.
+ *
+ * Answering both on the card was tried and is worse: nine tools each with four
+ * lines of instructions is a wall, and the reader who wanted the one-line
+ * version has to read past all of it. So the sentence stays on the card, the
+ * steps go below, and the icon is the join — the same drawing in both places is
+ * what tells you the manual entry you scrolled to is the card you pressed.
+ *
+ * Three steps each, and nothing else. Caveats, exceptions and the privacy rules
+ * were drafted in beside them and taken back out: a manual entry that runs past
+ * the point where the reader could have started is one they stop reading. The
+ * rules the tools enforce are enforced whether or not this page explains them.
+ *
+ * The steps name what is actually on the screen ("press Share", "press
+ * People"), never a paraphrase. A manual that describes a button by its purpose
+ * rather than its label sends people hunting for a control they are looking
+ * straight at.
  */
 export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: Props) {
     const { market } = usePage<SharedProps>().props
@@ -45,7 +69,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
      */
     const forSomeone = `${urls.lists}?new=for_someone`
 
-    const tools = [
+    const tools: { key: ToolKey; href: string; badge: string | null }[] = [
         {
             key: 'wishlist',
             href: mine?.url ?? urls.lists,
@@ -102,23 +126,36 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
             )}
 
             <section className="mt-12">
-                <h2 className="text-lg font-medium">{t('gift_cove.tools')}</h2>
+                <div className="flex flex-wrap items-baseline justify-between gap-3">
+                    <h2 className="text-lg font-medium">{t('gift_cove.tools')}</h2>
+                    {/*
+                      A plain anchor, not an Inertia Link: this goes to a place
+                      on the page that is already loaded, and routing a visit to
+                      fetch it again would scroll to the top on the way.
+                    */}
+                    <a href="#manual" className="text-sm text-ink-soft underline hover:text-ink">
+                        {t('gift_cove.manual_link')}
+                    </a>
+                </div>
 
                 <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {tools.map((tool) => (
                         <li key={tool.key}>
                             <Link
                                 href={tool.href}
-                                className="flex h-full flex-col rounded-card border border-line bg-card p-6 transition hover:border-ink"
+                                className="group flex h-full flex-col rounded-card border border-line bg-card p-6 transition hover:border-ink"
                             >
                                 <div className="flex items-start justify-between gap-3">
-                                    <h3 className="font-medium">{t(`gift_cove.${tool.key}_title`)}</h3>
+                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white">
+                                        <ToolIcon name={tool.key} className="h-5 w-5" />
+                                    </span>
                                     {tool.badge && (
                                         <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
                                             {tool.badge}
                                         </span>
                                     )}
                                 </div>
+                                <h3 className="mt-4 font-medium">{t(`gift_cove.${tool.key}_title`)}</h3>
                                 <p className="mt-2 text-sm text-ink-soft">
                                     {t(`gift_cove.${tool.key}_body`)}
                                 </p>
@@ -126,6 +163,55 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
                         </li>
                     ))}
                 </ul>
+            </section>
+
+            {/*
+              The manual.
+
+              Not an accordion. Collapsed steps are steps nobody reads, and the
+              whole reason this section exists is that the one-line description
+              above was not enough — hiding the longer answer behind a second
+              press reproduces the problem it was written to solve.
+            */}
+            <section id="manual" className="mt-16 scroll-mt-8 border-t border-line pt-10">
+                <h2 className="text-xl font-semibold tracking-tight">{t('gift_cove.manual')}</h2>
+                <p className="mt-2 max-w-2xl text-ink-soft">{t('gift_cove.manual_intro')}</p>
+
+                <div className="mt-8 grid gap-x-10 gap-y-10 md:grid-cols-2">
+                    {tools.map((tool) => (
+                        <article key={tool.key} id={`how-${tool.key}`} className="scroll-mt-8">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                                    <ToolIcon name={tool.key} className="h-5 w-5" />
+                                </span>
+                                <h3 className="font-medium">{t(`gift_cove.${tool.key}_title`)}</h3>
+                            </div>
+
+                            {/*
+                              An `ol` with its own drawn markers rather than a
+                              list-style disc. The order *is* the instruction,
+                              so it has to survive as an ordered list for a
+                              screen reader, and a reader who has done step two
+                              has to find step three without re-reading step
+                              one.
+                            */}
+                            <ol className="mt-4 space-y-3">
+                                {[1, 2, 3].map((step) => (
+                                    <li key={step} className="flex gap-3 text-sm leading-relaxed text-ink-soft">
+                                        <span
+                                            aria-hidden
+                                            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-[11px] font-medium text-ink"
+                                        >
+                                            {n(step)}
+                                        </span>
+                                        {t(`gift_cove.${tool.key}_step${step}`)}
+                                    </li>
+                                ))}
+                            </ol>
+
+                        </article>
+                    ))}
+                </div>
             </section>
 
             {santaGroups.length > 0 && (

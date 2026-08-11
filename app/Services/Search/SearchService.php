@@ -11,6 +11,7 @@ use App\Services\Connectors\Offer;
 use App\Services\Identity\Gtin;
 use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -26,6 +27,7 @@ class SearchService
     public function __construct(
         private readonly ConnectorRegistry $registry,
         private readonly OfferUpserter $upserter,
+        private readonly BrandAttribution $attribution,
     ) {}
 
     public function search(SearchQuery $query): SearchResult
@@ -33,14 +35,20 @@ class SearchService
         // Live sources first: an offer that arrives now can join an existing
         // group and appear as an extra shop on a card in the same request.
         // Doing it after the SQL query would show a stale offer count.
-        $liveCount = $query->hasTerm() ? $this->pullLiveResults($query) : 0;
+        //
+        // The live half is driven by `liveTerm()`, not by the term. A brand page
+        // has no search term and still has something to ask bol and Amazon: the
+        // brand's name, because neither takes a brand filter.
+        $live = $query->hasLiveTerm()
+            ? $this->pullLiveResults($query)
+            : ['written' => 0, 'unstored' => []];
 
         $groups = $this->storedQuery($query)->paginate(
             perPage: (int) config('brandcoves.search.per_page'),
             page: $query->page,
         );
 
-        if ($query->hasTerm() && $query->page === 1) {
+        if ($query->logged && $query->hasTerm() && $query->page === 1) {
             // Logged after the count is known, because zero-result queries are
             // the most valuable rows in the table — they are content gaps.
             SearchLog::record($query->term, $query->market, $groups->total());
@@ -49,8 +57,9 @@ class SearchService
         return new SearchResult(
             groups: $groups,
             query: $query,
-            liveOffersAdded: $liveCount,
+            liveOffersAdded: $live['written'],
             facets: $this->facets($query),
+            liveOffers: $live['unstored'],
         );
     }
 
@@ -185,29 +194,98 @@ class SearchService
     }
 
     /**
-     * Query the live sources and fold their offers into the stored graph.
+     * Query the live sources and fold what may be stored into the graph.
      *
      * This is what makes a bol result comparable rather than a separate list: an
-     * incoming offer whose EAN matches an existing group becomes another shop
-     * on the same card, immediately.
+     * incoming offer whose identity matches an existing group becomes another
+     * shop on the same card, immediately.
+     *
+     * ## Two kinds of live source
+     *
+     * Most may be mirrored into `products` and are, which is what puts them in
+     * the same grid as everything else. Amazon may not — the Associates terms
+     * permit storing the *decision* and require title, price, image and
+     * availability to be re-fetched at render — so its offers are handed back
+     * untouched for the page to render live, and never written.
+     * `Source::allowsCatalogueStorage()` is the gate, and this is the call site
+     * docs/features/amazon-compliance.md names for search.
+     *
+     * ## Why the fold is throttled and the live-only half is not
+     *
+     * Folding is a write. Brand pages number in the thousands, are the crawl
+     * target for the whole site, and would otherwise each run an upsert and three
+     * grouping statements on every hit, for a payload the connector is already
+     * serving from its own cache. `liveCacheKey()` is the marker: one fold per
+     * (market, live term) per cache window, and the offers stay folded in the
+     * database long after it expires, so a throttled request renders exactly the
+     * same page a folded one would.
+     *
+     * A source that may not be stored gets no such marker, because for it there
+     * is nothing durable to show — freshness at render is the condition of being
+     * allowed to display it at all.
+     *
+     * @return array{written: int, unstored: list<Offer>}
      */
-    private function pullLiveResults(SearchQuery $query): int
+    private function pullLiveResults(SearchQuery $query): array
     {
         $connectors = $this->registry->liveFor($query->market);
         if ($connectors === []) {
-            return 0;
+            return ['written' => 0, 'unstored' => []];
         }
 
-        $offers = [];
+        $term = $query->liveTerm();
+        $foldable = Cache::add(
+            $query->liveCacheKey(),
+            true,
+            (int) config('brandcoves.search.live_cache_ttl'),
+        );
+
+        /** @var list<Offer> $storable */
+        $storable = [];
+        /** @var list<Offer> $unstored */
+        $unstored = [];
+
         foreach ($connectors as $connector) {
+            $mirrorable = $connector->source()->allowsCatalogueStorage();
+
+            // Already folded recently. Skipping the call as well as the write is
+            // the point: the connector would answer from cache, and this saves
+            // the request outright on the ones where it would not.
+            if ($mirrorable && ! $foldable) {
+                continue;
+            }
+
             try {
                 // Connectors degrade rather than throw, but a bug in one must
                 // not take down search for the others either.
-                $offers = [...$offers, ...$connector->search($query->term, $query->market)];
+                $offers = $connector->search($term, $query->market);
             } catch (Throwable $e) {
                 report($e);
+
+                continue;
+            }
+
+            if ($mirrorable) {
+                $storable = [...$storable, ...$offers];
+            } else {
+                $unstored = [...$unstored, ...$offers];
             }
         }
+
+        return [
+            'written' => $this->fold($query, $storable),
+            'unstored' => $this->liveOnly($query, $unstored),
+        ];
+    }
+
+    /**
+     * Write the storable half and attach it to its groups.
+     *
+     * @param  list<Offer>  $offers
+     */
+    private function fold(SearchQuery $query, array $offers): int
+    {
+        $offers = $this->attributeBrands($query, $offers);
 
         if ($offers === []) {
             return 0;
@@ -220,6 +298,65 @@ class SearchService
         $this->groupIncoming($query, $offers);
 
         return $written;
+    }
+
+    /**
+     * The half that is rendered live and never stored.
+     *
+     * On a brand-scoped query these are narrowed to the brand. A stored offer
+     * meets the brand filter in SQL; this one never passes through it, so
+     * without the narrowing an Amazon lane on a Sony page would show whatever a
+     * keyword search for "Sony" returned — third-party cases included — under a
+     * heading promising Sony products.
+     *
+     * @param  list<Offer>  $offers
+     * @return list<Offer>
+     */
+    private function liveOnly(SearchQuery $query, array $offers): array
+    {
+        $offers = $this->attributeBrands($query, $offers);
+
+        return $query->brands === []
+            ? $offers
+            : $this->attribution->matching($offers, $query->brands);
+    }
+
+    /**
+     * Give the offers a brand, where their source did not.
+     *
+     * bol returns none at all, and a brand page filters on exactly that column —
+     * see BrandAttribution for why this is a lookup rather than a guess.
+     *
+     * It buys a second thing on every search, not only on a brand page: an offer
+     * with no usable barcode has no identity at all without a brand, because
+     * `IdentityResolver`'s fallback key is brand + normalised title. Filling the
+     * brand in before the upsert is what lets those rows group with the same
+     * product from another shop instead of sitting alone.
+     *
+     * @param  list<Offer>  $offers
+     * @return list<Offer>
+     */
+    private function attributeBrands(SearchQuery $query, array $offers): array
+    {
+        if ($offers === []) {
+            return [];
+        }
+
+        $offers = $this->attribution->fromCatalogue($offers);
+
+        if ($query->brands === []) {
+            return $offers;
+        }
+
+        /*
+         * The first spelling is the display name — `BrandStats` sorts the
+         * variants by product count before writing `aliases`, so `aliases[0]` is
+         * the same string `brand_stats.brand` holds and the same one the page's
+         * heading uses. Stamping any other spelling would still satisfy the
+         * brand filter, which matches on all of them, and would print a
+         * punctuation the rest of the page does not use.
+         */
+        return $this->attribution->attribute($offers, $query->brands, $query->brands[0]);
     }
 
     /**

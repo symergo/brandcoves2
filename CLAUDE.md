@@ -51,12 +51,25 @@ php artisan bc:seed-copy --replace --surface=brand_intro   # after REWRITING shi
 php artisan bc:prune-personal-data   # enforce the published GDPR retention windows
 php artisan bc:awin-feeds             # discover Awin advertiser feeds, register them per market
 php artisan bc:ingest                 # run feed ingestion now
+php artisan bc:pull-charts            # pull bestseller charts — the demand signal, never a page
+php artisan bc:pull-charts --market=be-nl --discover   # prove the endpoint and the response
+                                      # envelope in one request. Writes nothing
 php artisan bc:refresh-guide-copy     # re-write guides that have no editorial, then stale ones
 php artisan bc:scrub --force          # MANDATORY after restoring a production dump
 ```
 
 A fresh deploy has empty discovery surfaces until the next scheduled window, so
-`bc:refresh-discovery` is the first thing to run against a new environment.
+`bc:refresh-discovery` is the first thing to run against a new environment — and `bc:pull-charts`
+second, because the demand signal it collects has no other source and the guide-topic queue is empty
+without it on a market with no search traffic yet.
+
+> **`--env=testing` needs `.env.testing` to exist, and it is gitignored.** Laravel falls back to
+> `.env` when the named environment file is missing, and it does so silently — so on a fresh clone
+> `php artisan migrate:fresh --env=testing` reads `.env`, resolves to the **development** database and
+> drops it. That happened on 2026-08-10. `.env.testing` is checked in as `.env.example`'s sibling in
+> spirit only: recreate it locally, pinned to `DB_DATABASE=brandcoves_test`. The suite itself never
+> needs it — `phpunit.xml` sets its own env vars, and `RefreshDatabase` migrates the test database on
+> its own. There is no reason to run `migrate:fresh` by hand between test runs at all.
 
 PHP, Composer and Node run on the **Windows host** — bind-mounting a PHP project into a Linux
 container on Windows makes every request stat hundreds of autoloaded files across the filesystem
@@ -121,8 +134,10 @@ These are the rules the product depends on. Breaking one is a bug even when test
 Two mechanisms, because they fail differently:
 
 - `products.search_vector` is a **stored generated column** built by `bc_search_vector()`, weighted
-  title A / brand B / category C, stemmed per market via `bc_text_config()`. Changing that function
-  does **not** rewrite existing rows — that needs an explicit backfill migration.
+  title A / brand B / category C / description D, stemmed per market via `bc_text_config()`. Changing
+  that function does **not** rewrite existing rows — that needs an explicit backfill migration. In
+  PG16 the only way to change a generated column's expression is to drop and re-add it, and that
+  re-add *is* the backfill; see `2026_08_10_000500_add_description_to_the_search_vector`.
 - **A brand's identity is its slug, not its name.** Feeds disagree about punctuation —
   "Audio-Technica" and "Audio Technica" are one brand — so `brand_stats` holds one row per
   `(market, slug)` with the spellings in `aliases`, and a brand page filters on all of them. The

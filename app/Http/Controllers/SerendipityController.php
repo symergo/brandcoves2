@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Source;
 use App\Jobs\ScoreSerendipity;
 use App\Models\Event;
+use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Services\Catalogue\Excerpt;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
@@ -91,6 +94,7 @@ class SerendipityController extends Controller
         $ids = $pool->shuffle()->take(6);
 
         $groups = ProductGroup::query()->whereIn('id', $ids)->get();
+        $blurbs = $this->blurbs($ids->all());
 
         return $groups->map(fn (ProductGroup $group) => [
             'id' => $group->id,
@@ -100,30 +104,63 @@ class SerendipityController extends Controller
             'price' => $group->min_price,
             'merchantCount' => $group->merchant_count,
             'url' => $current->url("p/{$group->id}/{$group->slug}"),
-            // The strongest contributing signal, so the card can say *why* this
-            // is unusual rather than merely asserting that it is.
-            'why' => $this->why($group),
+            // What the thing IS. Null when no offer carries a usable
+            // description, which the card handles rather than papering over.
+            'blurb' => $blurbs[$group->id] ?? null,
         ])->all();
     }
 
     /**
-     * The single loudest reason, as a translation key.
+     * One line of description per group, from the offers beneath it.
      *
-     * "Only one shop sells it" is a claim a reader can check; "surprising!" is
-     * a claim they have to take on faith, and they will not.
+     * The card used to carry the scoring reason instead — "a corner of the
+     * catalogue nobody browses", "a brand you probably have not heard of".
+     * Read six at a time down a grid, every one of those is a sentence about
+     * *our ranking*, and none of them says what the object on the card is. A
+     * visitor looking at an unfamiliar product does not need to be told it is
+     * unfamiliar; that is the one thing they already know.
+     *
+     * The description lives on `products` (the offer), not on the group, so it
+     * is fetched for all six at once — six lazy `bestOffer` loads is the N+1
+     * this page would otherwise ship.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, string>
      */
-    private function why(ProductGroup $group): string
+    private function blurbs(array $ids): array
     {
-        $breakdown = (array) ($group->surprise_breakdown ?? []);
-        unset($breakdown['quality'], $breakdown['gated']);
-
-        if ($breakdown === []) {
-            return 'lexical';
+        if ($ids === []) {
+            return [];
         }
 
-        arsort($breakdown);
+        $storable = array_values(array_filter(
+            Source::cases(),
+            fn (Source $source) => $source->allowsCatalogueStorage(),
+        ));
 
-        return (string) array_key_first($breakdown);
+        return Product::query()
+            ->whereIn('group_id', $ids)
+            // Invariant 6. An Amazon-sourced row may not have its copy
+            // reproduced from our own store, and this is exactly the kind of
+            // convenience read that would quietly do it.
+            ->whereIn('source', array_column($storable, 'value'))
+            ->whereNotNull('description')
+            /*
+             * Longest first, and take the first per group.
+             *
+             * Merchants selling the same product supply wildly uneven copy —
+             * one gives a paragraph, the next gives "Zwart". Length is a crude
+             * proxy for informativeness, but on this field it is a reliable
+             * one, and it beats the arbitrary order a plain `whereIn` returns.
+             */
+            ->orderByRaw('length(description) desc')
+            ->get(['group_id', 'description'])
+            ->groupBy('group_id')
+            ->map(fn ($offers) => $offers
+                ->map(fn (Product $offer) => Excerpt::make($offer->description))
+                ->first(fn (?string $blurb) => $blurb !== null))
+            ->filter()
+            ->all();
     }
 
     private function seo(CurrentMarket $current): void

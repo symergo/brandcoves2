@@ -33,6 +33,41 @@ final readonly class SearchQuery
         public string $sort = 'relevance',
         public int $page = 1,
         public string $view = 'grid',
+
+        /**
+         * Whether this search counts as public demand.
+         *
+         * `search_log` is not a debugging record — it feeds the related-search
+         * chips on every narrative page and the demand signal that decides which
+         * buying guides get written. So a term typed there comes back out in
+         * front of strangers.
+         *
+         * That is right for the search box and wrong for a search run inside
+         * somebody's shared gift list, which is an unauthenticated private URL
+         * where the terms are about one named person. "engagement ring" typed
+         * into a friend's list should not surface as a suggested search on a
+         * public page.
+         *
+         * Defaults to true so the ordinary path keeps logging by forgetting
+         * about this; the private callers opt out, and there are few of them.
+         */
+        public bool $logged = true,
+
+        /**
+         * What the live sources are asked for, when that is not `$term`.
+         *
+         * bol and Amazon have no brand filter on the endpoints we use, so the
+         * only way to ask them about a brand is to search for its name. A brand
+         * page therefore has a query it runs against Postgres — the brand filter,
+         * on every spelling — and a *different* one it runs against the live
+         * sources, which is the brand's name as words.
+         *
+         * Null means "the same as `$term`", which is the ordinary search page and
+         * the reason this defaults to null rather than to the term. An empty
+         * string means "ask nobody", which is how a page turns the live half off
+         * for a variant where it would only cost requests.
+         */
+        public ?string $liveTerm = null,
     ) {}
 
     public static function fromRequest(Request $request, Market $market): self
@@ -88,9 +123,12 @@ final readonly class SearchQuery
      * "Audio-Technica" and "Audio Technica" are one brand with one page, and
      * filtering on a single spelling would hide half its offers.
      *
+     * `$liveTerm` is what the live sources get asked instead, because none of
+     * them takes a brand filter — see the property.
+     *
      * @param  list<string>  $brands
      */
-    public function withBrands(array $brands): self
+    public function withBrands(array $brands, ?string $liveTerm = null): self
     {
         return new self(
             market: $this->market,
@@ -105,6 +143,10 @@ final readonly class SearchQuery
             sort: $this->sort,
             page: $this->page,
             view: $this->view,
+            // Carried, not re-defaulted: a derived query is the same search and
+            // must not start logging because it was narrowed or rewritten.
+            logged: $this->logged,
+            liveTerm: $liveTerm ?? $this->liveTerm,
         );
     }
 
@@ -131,12 +173,26 @@ final readonly class SearchQuery
             sort: $this->sort,
             page: $this->page,
             view: $this->view,
+            // Carried, not re-defaulted: a derived query is the same search and
+            // must not start logging because it was narrowed or rewritten.
+            logged: $this->logged,
         );
     }
 
     public function hasTerm(): bool
     {
         return $this->term !== '';
+    }
+
+    /** What the live sources are asked for. See the property. */
+    public function liveTerm(): string
+    {
+        return trim($this->liveTerm ?? $this->term);
+    }
+
+    public function hasLiveTerm(): bool
+    {
+        return $this->liveTerm() !== '';
     }
 
     public function hasFilters(): bool
@@ -149,10 +205,16 @@ final readonly class SearchQuery
             || $this->comparableOnly;
     }
 
-    /** Stable key for caching the live-source half of a search. */
+    /**
+     * Stable key for the live-source half of a search.
+     *
+     * Keyed on what the live sources are actually asked — a brand page and a
+     * typed search for the same brand are one question upstream, and giving them
+     * two keys would fold the same offers twice.
+     */
     public function liveCacheKey(): string
     {
-        return 'bc:search:live:'.$this->market->value.':'.sha1(mb_strtolower($this->term));
+        return 'bc:search:live:'.$this->market->value.':'.sha1(mb_strtolower($this->liveTerm()));
     }
 
     /** @return array<string, mixed> Query string for building filter links. */

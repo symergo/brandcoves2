@@ -150,6 +150,83 @@ stops being zero they have learnt something. Absent, not zero — the same disci
 `sent` is non-null only for the person holding the claim. Everybody else needs to know the item is
 spoken for and nothing more.
 
+### The same bug again: suggestions had no sender
+
+"I think you would like this" is the empty-list problem attacked from the opposite side to the quiz —
+rather than persuading you to fill in your own list, the people who know you fill it in for you.
+`POST /l/{token}/suggest` shipped complete, with its guards and three passing tests. The owner's side
+shipped complete: pending suggestions sit at the top of `ListTools`, with **Add it** and **No
+thanks**.
+
+**Nothing on any page could send one.** No component posted to that route, and
+`suggestions.suggest` — "Suggest something" — sat translated into four languages, rendered nowhere.
+The tests passed throughout because they `POST` to the endpoint directly, which proves the endpoint
+is right and says nothing about whether a human can reach it. Same shape as the Santa invite
+answering 405 and the progress strip above.
+
+`Lists/Shared` now carries a search box and a result grid below the list. Three decisions:
+
+- **Below the items, never above.** Somebody arrived to see what this person wants. A search box
+  first answers a question they have not asked, and a thin list — the case the feature exists for —
+  is exactly the one where they scroll far enough to reach it anyway.
+- **A `GET` back to the same URL with `?q=`,** re-rendering the page with `results`, rather than a
+  second endpoint. One route means one place the share token is resolved and gated.
+- **`results` is `null` before a search and `[]` after one that found nothing.** Collapsing them
+  makes the first visit look like a failed search.
+
+`canSuggest` mirrors the three conditions the endpoint enforces — not the owner, a claimable list, an
+identity that exists — so the control is absent wherever the POST would be refused. Mirrored, never
+trusted: hiding a button stops nobody hand-building the request. No account is needed, for the same
+reason claiming needs none.
+
+**Two things this surfaced, both invisible while the endpoint was unreachable:**
+
+`ItemSaver::saveGroup()` is an `updateOrCreate` on `(wishlist_id, group_id)` and
+`SuggestionController` nulls `accepted_at` immediately afterwards — so suggesting a product the owner
+**already had** would take a real item off their list and turn it back into a pending suggestion,
+carrying its claim with it. The owner watches something they chose disappear; whoever claimed it is
+still on the hook for a row nobody can see. Every existing test posts a group that is not on the
+list, because that is what the feature is *for* — and a duplicate becomes the ordinary case the
+moment a visitor can search, since the obvious thing to suggest is the obvious thing to already own.
+Now refused with "That one is already on the list", which reveals nothing: the item is on the page in
+front of them.
+
+`search_log` feeds the related-search chips on public narrative pages and the demand signal behind
+the guide queue. Running the shared-list search through `SearchService` unchanged would push terms
+typed inside one named person's gift list into public content — "engagement ring" resurfacing as a
+suggested search somewhere else. `SearchQuery::$logged` defaults to true and this one caller opts
+out; `withBrands()` and `withTerm()` carry the flag rather than re-defaulting it, so a narrowed or
+rewritten query cannot start logging behind you.
+
+Deliberately not built yet: the optional `note` the endpoint already accepts. It is a free-text field
+on an unauthenticated page, which is a moderation surface, and it wants that thought through rather
+than a text input.
+
+## Something we do not sell
+
+The catalogue is not the world. A voucher for the climbing gym, the local bike shop, one particular
+edition of a book — a list that cannot hold those is a list with the real present missing, and the
+honest workaround was to leave it off.
+
+`ItemSaver::saveManual()` writes a row with `source = manual`, no `external_id` and no `group_id`.
+The schema already allowed it: `wishlist_items_identifiable` was widened in
+`2026_08_09_001000` to accept "something a person wrote down", and this is the path that finally
+writes one. No `updateOrCreate` — there is no upstream identity to collide with, and two entries
+called "a nice scarf, dark green" are two wishes rather than a double-tap.
+
+**One form, two endpoints, because it is one act.** `Components/ManualItem` is used by the owner on
+`Lists/Show` and by a visitor on `Lists/Shared`. The owner's post lands on the list; the visitor's
+goes through `SuggestionController` and lands pending, with the same accept/dismiss row as any other
+suggestion. Neither page needs to know how the other behaves, and a second copy of the form would
+drift the moment one of them gained a field.
+
+Euros in the box, cents on the wire (invariant #7), converted in the component — and a comma is
+accepted, because half our markets write €12,50 and typing it the way you say it should not be a
+validation error.
+
+See [gifting-lenses.md](gifting-lenses.md) for why nothing is fetched from the link, why there is no
+image, and where the `https:`-only rule is enforced — three times, on purpose.
+
 ## A list for a new person, from the lists page
 
 `WishlistController::store()` accepts `new_recipient` and mints the person, exactly as

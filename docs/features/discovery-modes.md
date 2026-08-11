@@ -91,6 +91,7 @@ optional per mode — a printer cartridge is wrong in every mode), degrade rathe
 | `outlier` | **built** | reads `surprise_score`; lexical-rarity surrogate until pgvector |
 | `curated` | **built** | daily editions + published guide shortlists |
 | `fresh` | **built** | new arrivals *and* velocity — see below |
+| `popular` | **built** | a retailer's bestseller chart. Rank sets `relevance`, week-on-week *movement* sets `novelty` — see [popularity-charts.md](popularity-charts.md) |
 | `value` | **built** | measured against our own history and against other shops, never a merchant's "was" price |
 | `spectrum` | **built** | an even sample across the price range, dupes marked |
 | `slots` | **built** | curated goal→slots map; no AI in the request path |
@@ -103,6 +104,13 @@ optional per mode — a printer cartridge is wrong in every mode), degrade rathe
 arrived in the last fortnight. Newness alone would make this a feed-ingest changelog — one big
 advertiser's first import floods it with ten thousand products that are new to *us* and years old in
 the world.
+
+**`popular` scores movement, not position.** A permanent number one is popular and is not *news*; a
+product that went from #40 to #6 in a week is what "what's current" means. Rank feeds `relevance` and
+week-on-week movement feeds `novelty`, so at Trends' γ = 0.7 against α = 0.3 the climber wins — which
+is the entire reason a rank *history* is stored rather than a snapshot overwritten. `fresh` keeps 0.4
+of the mix beside it, because a chart is one retailer's view and the whole Awin catalogue is invisible
+to it.
 
 **`value` never reads a merchant's reference price.** A large share of feed rows carry a "was" price
 that was never charged. Ranking on it produces a page of 60%-off badges that are all fiction, and a

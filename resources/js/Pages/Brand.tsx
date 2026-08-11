@@ -18,8 +18,8 @@ interface Props {
         category: string | null
         topMerchant: string | null
     }
-    /** Templated prose, every clause backed by a number. See App\Services\Seo\BrandCopy. */
-    copy: { lead: string; paragraphs: string[] }
+    /** Words that recur across this brand's products, each a search of its own. */
+    terms: { term: string; url: string }[]
     filters: Record<string, unknown>
     sort: string
     view: 'grid' | 'store'
@@ -34,6 +34,25 @@ interface Props {
         lastPage: number
         items: GroupCard[]
     }
+    /**
+     * Offers from a source we may show but not store — Amazon.
+     *
+     * Fetched during this request and never written down, so they are absent
+     * from `results` by construction and cannot be a ProductCard: there is no
+     * group behind them, and therefore no offer count, no shop count and no
+     * discount measured against a 30-day median. Empty until the Amazon
+     * connector is enabled; everything bol returns is already in the grid.
+     */
+    liveOffers: {
+        title: string
+        url: string
+        image: string | null
+        price: number | null
+        merchant: string
+        inStock: boolean
+        needsPriceTimestamp: boolean
+        directLink: boolean
+    }[]
     coves: { title: string; intro: string | null; url: string }[]
     related: { name: string; url: string; count: number }[]
     /** Long-form copy below the grid. Null on sorted or paginated variants. */
@@ -48,7 +67,18 @@ interface Props {
  * discounted, comparable, sort, pagination) is the same as search, because it is
  * the same query object underneath.
  */
-export default function Brand({ brand, copy, filters, sort, facets, results, coves, related, narrative }: Props) {
+export default function Brand({
+    brand,
+    terms,
+    filters,
+    sort,
+    facets,
+    results,
+    liveOffers,
+    coves,
+    related,
+    narrative,
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [filtersOpen, setFiltersOpen] = useState(false)
@@ -86,23 +116,37 @@ export default function Brand({ brand, copy, filters, sort, facets, results, cov
                 </h1>
 
                 {/*
-                  The prose, above the products.
+                  What this brand makes, in its own words.
 
-                  Every sentence is a number this page can back up — product
-                  count, shop count, price range, how many are genuinely below
-                  their 30-day median. That constraint is what separates this
-                  from the generated brand pages every affiliate site has had
-                  since 2009, which rank for a fortnight and then drag the domain
-                  down with them.
+                  Four paragraphs of statistics used to open the page — product
+                  count, shop count, price range, how many were below their
+                  30-day median. All true, all checkable, and all of it counting
+                  the grid immediately beneath it. Someone who has typed a brand
+                  name came to see the brand's products, not a screen of
+                  arithmetic about them, and the facts still exist in the long
+                  copy below the grid where a reader can go looking for them.
+
+                  These links go to a plain search, without the brand attached:
+                  "cordless vacuum" is every brand that makes one, which is the
+                  comparison the site is for. Narrowing back to this brand would
+                  link to the page already open.
                 */}
-                <p className="mt-4 leading-relaxed">{copy.lead}</p>
-
-                {copy.paragraphs.length > 0 && (
-                    <div className="mt-3 space-y-2 text-sm leading-relaxed text-ink-soft">
-                        {copy.paragraphs.map((p) => (
-                            <p key={p}>{p}</p>
-                        ))}
-                    </div>
+                {terms.length > 0 && (
+                    <nav className="mt-4" aria-label={t('search.terms_heading')}>
+                        <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>
+                        <ul className="flex flex-wrap gap-2">
+                            {terms.map((item) => (
+                                <li key={item.term}>
+                                    <Link
+                                        href={item.url}
+                                        className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink"
+                                    >
+                                        {item.term}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
                 )}
             </header>
 
@@ -268,6 +312,97 @@ export default function Brand({ brand, copy, filters, sort, facets, results, cov
                                 {t('search.next')}
                             </button>
                         </nav>
+                    )}
+
+                    {/*
+                      Offers we may show but not keep.
+
+                      Their own section rather than mixed into the grid above,
+                      and that separation is the honest one: every card up there
+                      is a physical product with every shop's price under it,
+                      because those offers are stored and grouped. These are not
+                      grouped with anything — nothing wrote them down — so
+                      showing them as comparison cards would promise a comparison
+                      that was never made.
+
+                      The price note is a condition of display, not a nicety: a
+                      price fetched a moment ago may already have moved, and the
+                      programme requires saying so. Same reason the link is a
+                      plain anchor and skips the /go/ redirector every other
+                      outbound link on the site uses.
+                    */}
+                    {liveOffers.length > 0 && (
+                        <section className="mt-12" aria-labelledby="brand-live">
+                            <h2 id="brand-live" className="text-xl font-semibold tracking-tight">
+                                {t('brand.live_heading', { brand: brand.name })}
+                            </h2>
+                            <p className="mt-1 text-sm text-ink-soft">{t('brand.live_note')}</p>
+
+                            <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+                                {liveOffers.map((offer) => (
+                                    <li
+                                        key={offer.url}
+                                        className="flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30"
+                                    >
+                                        <div className="aspect-square overflow-hidden bg-cream">
+                                            {offer.image && (
+                                                <img
+                                                    src={offer.image}
+                                                    alt=""
+                                                    loading="lazy"
+                                                    className="h-full w-full object-contain p-4"
+                                                    onError={(e) => {
+                                                        e.currentTarget.style.visibility = 'hidden'
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-1 flex-col p-4">
+                                            <div className="text-xs tracking-wide text-ink-soft uppercase">
+                                                {offer.merchant}
+                                            </div>
+
+                                            <h3 className="mt-1 line-clamp-2 text-sm font-medium">
+                                                <a
+                                                    href={offer.url}
+                                                    // Unobscured, as the
+                                                    // programme requires — and
+                                                    // sponsored + noopener, as
+                                                    // any outbound affiliate
+                                                    // link needs.
+                                                    rel="sponsored noopener nofollow"
+                                                    target="_blank"
+                                                    className="hover:text-accent"
+                                                >
+                                                    {offer.title}
+                                                </a>
+                                            </h3>
+
+                                            <div className="mt-auto pt-3">
+                                                {offer.price !== null && (
+                                                    <div className="text-lg font-semibold">
+                                                        {formatPrice(offer.price, market)}
+                                                    </div>
+                                                )}
+                                                <div
+                                                    className={`mt-1 text-xs ${offer.inStock ? 'text-sage' : 'text-ink-soft'}`}
+                                                >
+                                                    {offer.inStock
+                                                        ? t('product.in_stock')
+                                                        : t('product.out_of_stock')}
+                                                </div>
+                                                {offer.needsPriceTimestamp && (
+                                                    <div className="mt-0.5 text-[11px] text-ink-soft/70">
+                                                        {t('product.price_as_of')}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
                     )}
 
                     {/*

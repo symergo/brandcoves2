@@ -34,13 +34,8 @@ interface Props {
         shortlink: boolean
         usable: boolean
     } | null
-    /** Indexable prose built from what this query actually found. Null on thin pages. */
-    intro: {
-        lead: string
-        paragraphs: string[]
-        brands: { name: string; url: string | null }[]
-        terms: string[]
-    } | null
+    /** Words that recur in these results, each a search of its own. Empty on thin pages. */
+    terms: { term: string; url: string }[]
     /** Lowercase brand name → brand page URL, for brands that have one. */
     brandLinks: Record<string, string>
     /** Long-form copy below the grid. Null on pages that are noindex anyway. */
@@ -57,7 +52,7 @@ export default function Search({
     lanes,
     emptyBecauseOfFilters,
     pastedLink,
-    intro,
+    terms,
     brandLinks,
     narrative,
 }: Props) {
@@ -66,6 +61,7 @@ export default function Search({
     const [term, setTerm] = useState(q)
     const [scannerOpen, setScannerOpen] = useState(false)
     const [filtersOpen, setFiltersOpen] = useState(false)
+    const [searching, setSearching] = useState(false)
     const base = `/${market.key}/search`
 
     /*
@@ -98,7 +94,23 @@ export default function Search({
             const v = next[k]
             if (v === null || v === undefined || v === '' || v === false) delete next[k]
         })
-        router.get(base, next as Record<string, string>, { preserveScroll: true, preserveState: true })
+
+        /*
+         * Every visit through here raises the scanner: a submitted query, a
+         * filter, a sort, a page. All four replace the grid while the previous
+         * results stay on screen, so all four have the same problem — with no
+         * signal, a slow one reads as a control that did nothing and gets
+         * clicked a second time.
+         *
+         * `preserveState` keeps this component mounted across the visit, which
+         * is what lets the same instance that raised the flag lower it.
+         */
+        router.get(base, next as Record<string, string>, {
+            preserveScroll: true,
+            preserveState: true,
+            onStart: () => setSearching(true),
+            onFinish: () => setSearching(false),
+        })
     }
 
     return (
@@ -113,14 +125,48 @@ export default function Search({
                 className="flex gap-2"
                 role="search"
             >
-                <input
-                    type="search"
-                    value={term}
-                    onChange={(e) => setTerm(e.target.value)}
-                    placeholder={t('search.placeholder')}
-                    aria-label={t('search.title')}
-                    className="flex-1 rounded-lg border border-line bg-card px-4 py-3"
-                />
+                {/*
+                  A scanner beam sweeping the bottom edge of the field, inside
+                  the border, rather than a bar above or below the row.
+
+                  Absolutely positioned so that appearing and disappearing moves
+                  nothing: a 2px strip that pushed the whole results grid down on
+                  every search would be more disruptive than the thing it is
+                  reporting. It is also the reason it is *here* and not the
+                  page-wide Inertia bar at the top of the window — the answer
+                  being replaced is on this screen, so the signal belongs on it.
+                */}
+                <div className="relative flex-1">
+                    <input
+                        type="search"
+                        value={term}
+                        onChange={(e) => setTerm(e.target.value)}
+                        placeholder={t('search.placeholder')}
+                        aria-label={t('search.title')}
+                        aria-busy={searching}
+                        className="w-full rounded-lg border border-line bg-card px-4 py-3"
+                    />
+                    {searching && (
+                        <span
+                            className="pointer-events-none absolute inset-x-px bottom-px h-0.5 overflow-hidden rounded-b-lg"
+                            aria-hidden
+                        >
+                            {/*
+                              Faded at both ends rather than a hard-edged block.
+                              A solid rectangle sliding back and forth reads as an
+                              object being dragged; a beam has no edges, which is
+                              what makes the same motion read as light passing
+                              over the field.
+
+                              `w-1/4` is paired with the 300% travel in the `scan`
+                              keyframes — together they put the turn exactly at
+                              each edge. Changing one without the other either
+                              overshoots or leaves a dead margin.
+                            */}
+                            <span className="animate-scan absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-accent to-transparent" />
+                        </span>
+                    )}
+                </div>
                 {/*
                   Next to the search box, not buried in the nav.
 
@@ -139,10 +185,29 @@ export default function Search({
                     <span aria-hidden>▚</span>
                 </button>
 
-                <button className="rounded-lg bg-accent px-5 py-3 font-medium text-white hover:bg-accent-dark">
+                {/*
+                  Dimmed, not disabled. A disabled button loses focus mid-search
+                  and stops answering to a keyboard, and the click it would
+                  swallow is harmless anyway — Inertia cancels the in-flight
+                  visit and starts the new one.
+                */}
+                <button
+                    aria-busy={searching}
+                    className={`rounded-lg bg-accent px-5 py-3 font-medium text-white transition-opacity hover:bg-accent-dark ${searching ? 'opacity-70' : ''}`}
+                >
                     {t('search.submit')}
                 </button>
             </form>
+
+            {/*
+              The bar is decoration and hidden from the accessibility tree, so
+              the same news is given in words. Rendered empty rather than
+              unmounted: a live region has to exist before its content changes
+              for a screen reader to announce it.
+            */}
+            <p role="status" className="sr-only">
+                {searching ? t('search.searching') : ''}
+            </p>
 
             {/*
               What we made of a pasted Amazon link.
@@ -288,52 +353,36 @@ export default function Search({
 
                 <section>
                     {/*
-                      Above the grid, not buried under it.
+                      The vocabulary of the results, above the grid.
 
-                      A results page is otherwise almost pure markup — titles,
-                      prices, a filter rail — with nothing for a crawler to
-                      understand the page as being *about*. This is the only
-                      prose on it, so it goes where prose goes. Server-rendered
-                      via SSR, so it is in the HTML a crawler receives.
+                      One row of links where four paragraphs of statistics used
+                      to be. The numbers described the grid directly beneath
+                      them, which is a paragraph nobody reads and most of a phone
+                      screen between a shopper and the first product.
+
+                      The words survived because they are the part that is not a
+                      restatement: they say what kind of thing this page holds,
+                      and each one is a real query. That also makes them the
+                      page's internal links — server-rendered via SSR, so a
+                      crawler receives them as anchors, not as a comma-separated
+                      sentence.
                     */}
-                    {intro && (
-                        <div className="mb-5 max-w-3xl space-y-1.5 text-sm leading-relaxed text-ink-soft">
-                            <h2 className="sr-only">{t('search.results_for', { term: q })}</h2>
-                            <p className="text-ink">{intro.lead}</p>
-                            {intro.paragraphs.map((p) => (
-                                <p key={p}>{p}</p>
-                            ))}
-
-                            {/*
-                              The brands are links, not prose.
-
-                              These are the most valuable internal links the page
-                              can offer — a brand page is indexable where
-                              `?brand[]=Sony` is not — so rendering them as a
-                              comma-separated string was throwing away the useful
-                              half of a useful sentence. A brand without a page
-                              still appears, unlinked: dropping it would make the
-                              sentence untrue.
-                            */}
-                            {intro.brands.length > 0 && (
-                                <p>
-                                    {t('search.intro_brands')}{' '}
-                                    {intro.brands.map((brand, i) => (
-                                        <span key={brand.name}>
-                                            {i > 0 && ', '}
-                                            {brand.url ? (
-                                                <Link href={brand.url} className="text-accent hover:underline">
-                                                    {brand.name}
-                                                </Link>
-                                            ) : (
-                                                brand.name
-                                            )}
-                                        </span>
-                                    ))}
-                                    .
-                                </p>
-                            )}
-                        </div>
+                    {terms.length > 0 && (
+                        <nav className="mb-5" aria-label={t('search.terms_heading')}>
+                            <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>
+                            <ul className="flex flex-wrap gap-2">
+                                {terms.map((item) => (
+                                    <li key={item.term}>
+                                        <Link
+                                            href={item.url}
+                                            className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink"
+                                        >
+                                            {item.term}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
                     )}
 
                     <div className="mb-4 flex flex-wrap items-center gap-3">

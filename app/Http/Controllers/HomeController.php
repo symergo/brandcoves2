@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Guide;
-use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\SecretSantaGroup;
 use App\Models\Wishlist;
@@ -21,17 +20,15 @@ class HomeController extends Controller
 {
     public function __invoke(Request $request, CurrentMarket $current): Response
     {
-        $market = $current->get();
-
+        /*
+         * No catalogue counters.
+         *
+         * They were scaffolding — three COUNT(*) queries per homepage request,
+         * on the largest table we have, to render a stat row that told a
+         * shopper how big our warehouse is. Removed with the section that
+         * displayed them; see the note in `Home.tsx`.
+         */
         return Inertia::render('Home', [
-            'stats' => [
-                // Real counts, so the scaffold tells the truth about how empty
-                // the catalogue currently is rather than showing placeholders.
-                'products' => ProductGroup::query()->forMarket($market)->count(),
-                'comparable' => ProductGroup::query()->forMarket($market)->comparable()->count(),
-                'guides' => Guide::query()->forMarket($market)->published()->count(),
-            ],
-
             /*
              * Today's Cove, on the front page.
              *

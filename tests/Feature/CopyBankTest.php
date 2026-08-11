@@ -46,8 +46,8 @@ class CopyBankTest extends TestCase
         CopyBank::flush();
 
         return CopyTemplate::create(array_merge([
-            'surface' => 'brand_intro',
-            'slot' => 'lead',
+            'surface' => 'brand',
+            'slot' => 'about_3',
             'language' => 'nl',
             'body' => $body,
             'weight' => $weight,
@@ -71,7 +71,7 @@ class CopyBankTest extends TestCase
          */
         $this->artisan('bc:seed-copy', ['--language' => 'nl'])->assertSuccessful();
 
-        $line = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony'], 'sony');
+        $line = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony');
 
         $this->assertSame('The old sentence about Sony.', $line);
     }
@@ -83,12 +83,12 @@ class CopyBankTest extends TestCase
 
         $this->artisan('bc:seed-copy', [
             '--language' => 'nl',
-            '--surface' => 'brand_intro',
+            '--surface' => 'brand',
             '--replace' => true,
             '--force' => true,
         ])->assertSuccessful();
 
-        $line = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
+        $line = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
 
         $this->assertStringNotContainsString('The old sentence', $line);
         $this->assertStringContainsString('Sony', $line);
@@ -97,11 +97,11 @@ class CopyBankTest extends TestCase
     #[Test]
     public function replace_leaves_other_surfaces_alone(): void
     {
-        $this->variant('Kept.', 1, ['surface' => 'search', 'slot' => 'lead']);
+        $this->variant('Kept.', 1, ['surface' => 'search', 'slot' => 'compare_1']);
 
         $this->artisan('bc:seed-copy', [
             '--language' => 'nl',
-            '--surface' => 'brand_intro',
+            '--surface' => 'brand',
             '--replace' => true,
             '--force' => true,
         ])->assertSuccessful();
@@ -110,7 +110,7 @@ class CopyBankTest extends TestCase
         // the brand pages must not take the search copy with it.
         $this->assertSame(
             'Kept.',
-            $this->bank()->line('search', 'lead', Market::BeNl, [], 'x'),
+            $this->bank()->line('search', 'compare_1', Market::BeNl, [], 'x'),
         );
     }
 
@@ -121,7 +121,7 @@ class CopyBankTest extends TestCase
 
         $this->artisan('bc:seed-copy', [
             '--language' => 'nl',
-            '--surface' => 'brand_intro',
+            '--surface' => 'brand',
             '--replace' => true,
             '--dry-run' => true,
         ])->assertSuccessful();
@@ -130,14 +130,14 @@ class CopyBankTest extends TestCase
 
         $this->assertSame(
             'The old sentence about Sony.',
-            $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony'], 'sony'),
+            $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony'),
         );
     }
 
     #[Test]
     public function an_empty_table_renders_the_shipped_copy(): void
     {
-        $line = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
+        $line = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
 
         // Whatever the Dutch file says, with the placeholders filled — and
         // crucially not an empty string or a dotted key.
@@ -151,7 +151,7 @@ class CopyBankTest extends TestCase
     {
         $this->variant('Alles van :brand, :count stuks.');
 
-        $line = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
+        $line = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
 
         $this->assertSame('Alles van Sony, 12 stuks.', $line);
     }
@@ -164,7 +164,7 @@ class CopyBankTest extends TestCase
         $this->variant('Alles van :brand.', overrides: ['enabled' => false]);
         $this->variant('Nog iets van :brand.', weight: 0);
 
-        $line = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
+        $line = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony', 'count' => '12'], 'sony');
 
         $this->assertNotSame('', $line);
         $this->assertStringNotContainsString('Alles van', $line);
@@ -184,8 +184,8 @@ class CopyBankTest extends TestCase
             $this->variant("Variant {$i} van :brand.");
         }
 
-        $first = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony'], 'sony');
-        $second = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony'], 'sony');
+        $first = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony');
+        $second = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony');
 
         $this->assertSame($first, $second);
     }
@@ -203,7 +203,7 @@ class CopyBankTest extends TestCase
         $seen = [];
 
         foreach (['sony', 'philips', 'bosch', 'jbl', 'samsung', 'lg', 'apple', 'asus'] as $brand) {
-            $seen[] = $bank->line('brand_intro', 'lead', Market::BeNl, ['brand' => $brand], $brand);
+            $seen[] = $bank->line('brand', 'about_3', Market::BeNl, ['brand' => $brand], $brand);
         }
 
         $this->assertGreaterThan(2, count(array_unique($seen)), 'the rotation is not spreading across pages');
@@ -219,15 +219,15 @@ class CopyBankTest extends TestCase
          */
         foreach (range(1, 4) as $i) {
             $this->variant("Lead {$i} :brand.");
-            $this->variant("Comparison {$i} :brand.", overrides: ['slot' => 'comparison']);
+            $this->variant("Comparison {$i} :brand.", overrides: ['slot' => 'about_1']);
         }
 
         $bank = $this->bank();
         $pairs = [];
 
         foreach (['sony', 'philips', 'bosch', 'jbl', 'lg', 'asus'] as $brand) {
-            $lead = $bank->line('brand_intro', 'lead', Market::BeNl, ['brand' => $brand], $brand);
-            $comparison = $bank->line('brand_intro', 'comparison', Market::BeNl, ['brand' => $brand], $brand);
+            $lead = $bank->line('brand', 'about_3', Market::BeNl, ['brand' => $brand], $brand);
+            $comparison = $bank->line('brand', 'about_1', Market::BeNl, ['brand' => $brand], $brand);
 
             preg_match('/Lead (\d)/', $lead, $a);
             preg_match('/Comparison (\d)/', $comparison, $b);
@@ -252,7 +252,7 @@ class CopyBankTest extends TestCase
         // Twelve weeks. Over that span a page must not be showing one sentence.
         foreach (range(0, 11) as $week) {
             $this->travelTo(CarbonImmutable::create(2027, 1, 4)->addWeeks($week));
-            $seen[] = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony'], 'sony');
+            $seen[] = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony');
         }
 
         $this->assertGreaterThan(2, count(array_unique($seen)), 'the copy never rotated over time');
@@ -272,7 +272,7 @@ class CopyBankTest extends TestCase
 
         foreach (range(0, 11) as $week) {
             $this->travelTo(CarbonImmutable::create(2027, 1, 4)->addWeeks($week));
-            $seen[] = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony'], 'sony');
+            $seen[] = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony');
         }
 
         $this->assertCount(1, array_unique($seen));
@@ -288,7 +288,7 @@ class CopyBankTest extends TestCase
         $common = 0;
 
         foreach (range(1, 200) as $i) {
-            if (str_starts_with($bank->line('brand_intro', 'lead', Market::BeNl, ['brand' => "b{$i}"], "b{$i}"), 'Common')) {
+            if (str_starts_with($bank->line('brand', 'about_3', Market::BeNl, ['brand' => "b{$i}"], "b{$i}"), 'Common')) {
                 $common++;
             }
         }
@@ -303,8 +303,8 @@ class CopyBankTest extends TestCase
     {
         $this->variant('Nederlandse zin over :brand.', overrides: ['language' => 'nl']);
 
-        $nl = $this->bank()->line('brand_intro', 'lead', Market::BeNl, ['brand' => 'Sony', 'count' => '5'], 'sony');
-        $fr = $this->bank()->line('brand_intro', 'lead', Market::BeFr, ['brand' => 'Sony', 'count' => '5'], 'sony');
+        $nl = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony', 'count' => '5'], 'sony');
+        $fr = $this->bank()->line('brand', 'about_3', Market::BeFr, ['brand' => 'Sony', 'count' => '5'], 'sony');
 
         $this->assertStringContainsString('Nederlandse zin', $nl);
         // French has no variant, so it falls back to the French file — never to
@@ -319,7 +319,7 @@ class CopyBankTest extends TestCase
         // leaving a dangling "_shops" in the sentence.
         $this->variant(':count and :count_shops.', overrides: ['slot' => 'shops_count']);
 
-        $line = $this->bank()->line('brand_intro', 'shops_count', Market::BeNl, [
+        $line = $this->bank()->line('brand', 'shops_count', Market::BeNl, [
             'count' => '3',
             'count_shops' => '9',
         ], 'sony');
@@ -390,7 +390,7 @@ class CopyBankTest extends TestCase
         // type, and nothing throws. The admin form refuses the save on this.
         $this->assertSame(
             ['cont'],
-            CopySlots::disallowedIn('brand_intro', 'lead', 'Zoek je :brand? Wij volgen :cont producten.'),
+            CopySlots::disallowedIn('brand', 'about_3', 'Zoek je :brand? Wij volgen :cont producten.'),
         );
     }
 
@@ -398,22 +398,22 @@ class CopyBankTest extends TestCase
     public function a_placeholder_the_slot_cannot_supply_is_caught(): void
     {
         /*
-         * The worse case. `lead` renders on every brand page including those
+         * The worse case. `about_3` renders on every brand page including those
          * where nothing is discounted, so a `:percent` in it would assert a 0%
          * saving — a false claim rather than a cosmetic bug.
          */
-        $this->assertSame(['percent'], CopySlots::disallowedIn('brand_intro', 'lead', ':brand, tot :percent% korting.'));
+        $this->assertSame(['percent'], CopySlots::disallowedIn('brand', 'about_3', ':brand, tot :percent% korting.'));
 
         // The same placeholder is fine in a slot that only renders when
         // something actually is reduced.
-        $this->assertSame([], CopySlots::disallowedIn('brand_intro', 'discount_count', ':reduced producten van :brand.'));
+        $this->assertSame([], CopySlots::disallowedIn('brand', 'faq_discount_a', ':reduced producten van :brand.'));
     }
 
     #[Test]
     public function a_time_is_not_mistaken_for_a_placeholder(): void
     {
         // A false positive here is a validation error an editor cannot explain.
-        $this->assertSame([], CopySlots::disallowedIn('brand_intro', 'lead', 'Bijgewerkt om 09:15 vandaag, :brand.'));
+        $this->assertSame([], CopySlots::disallowedIn('brand', 'about_3', 'Bijgewerkt om 09:15 vandaag, :brand.'));
     }
 
     #[Test]
@@ -437,10 +437,10 @@ class CopyBankTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(EditPageCopy::class)
-            ->set('surface', 'brand_intro')
+            ->set('surface', 'brand')
             ->set('language', 'nl')
             ->call('loadCopy')
-            ->set('data.slots.lead', [
+            ->set('data.slots.about_3', [
                 // An edit to the existing row, identified by its id.
                 ['id' => $existing->id, 'body' => 'Herschreven zin over :brand.', 'weight' => 2, 'enabled' => true],
                 // And a brand new variant in the same save.
@@ -449,7 +449,7 @@ class CopyBankTest extends TestCase
             ->call('save')
             ->assertHasNoErrors();
 
-        $rows = CopyTemplate::query()->where('slot', 'lead')->where('language', 'nl')->get();
+        $rows = CopyTemplate::query()->where('slot', 'about_3')->where('language', 'nl')->get();
 
         $this->assertCount(2, $rows);
         // The edited row kept its id, so its author and created_at survive
@@ -469,8 +469,11 @@ class CopyBankTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(EditPageCopy::class)
+            // The editor opens on the search surface; these slots are the brand
+            // page's, so it has to be switched before the form is loaded.
+            ->set('surface', 'brand')
             ->call('loadCopy')
-            ->set('data.slots.lead', [
+            ->set('data.slots.about_3', [
                 ['id' => $keep->id, 'body' => 'Blijft staan :brand.', 'weight' => 1, 'enabled' => true],
             ])
             ->call('save')
@@ -497,10 +500,10 @@ class CopyBankTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(EditPageCopy::class)
-            ->set('surface', 'brand_intro')
+            ->set('surface', 'brand')
             ->set('language', 'nl')
             ->call('loadCopy')
-            ->set('data.slots.lead', [['id' => null, 'body' => 'Nieuw :brand.', 'weight' => 1, 'enabled' => true]])
+            ->set('data.slots.about_3', [['id' => null, 'body' => 'Nieuw :brand.', 'weight' => 1, 'enabled' => true]])
             ->call('save')
             ->assertHasNoErrors();
 
@@ -516,8 +519,9 @@ class CopyBankTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(EditPageCopy::class)
+            ->set('surface', 'brand')
             ->call('loadCopy')
-            ->set('data.slots.lead', [
+            ->set('data.slots.about_3', [
                 ['id' => null, 'body' => ':brand, tot :percent% korting.', 'weight' => 1, 'enabled' => true],
             ])
             ->call('save')
@@ -536,13 +540,18 @@ class CopyBankTest extends TestCase
         $imported = CopyTemplate::query()->count();
         $this->assertGreaterThan(100, $imported);
 
-        // Four openings for brand pages, from the lead_1..4 the site shipped
-        // with — so an editor opens the admin with something to compare.
-        $this->assertSame(4, CopyTemplate::query()
-            ->where('surface', 'brand_intro')->where('slot', 'lead')->where('language', 'nl')
+        /*
+         * One variant per slot, per language. It used to be four for the brand
+         * pages' opening line: the retired `brand_intro.lead` shipped with four
+         * alternatives that a hash picked between, and seeding turned each into a
+         * row. Nothing ships alternatives now — see SeedCopyCommand::bodiesFor —
+         * so the count an editor opens on is one, with a button to add more.
+         */
+        $this->assertSame(1, CopyTemplate::query()
+            ->where('surface', 'brand')->where('slot', 'about_3')->where('language', 'nl')
             ->count());
 
-        CopyTemplate::query()->where('slot', 'lead')->where('language', 'nl')->update(['body' => 'EDITED :brand']);
+        CopyTemplate::query()->where('slot', 'about_3')->where('language', 'nl')->update(['body' => 'EDITED :brand']);
 
         $this->artisan('bc:seed-copy')->assertSuccessful();
 
@@ -550,8 +559,8 @@ class CopyBankTest extends TestCase
         // of someone's work would make it unusable.
         $this->assertSame($imported, CopyTemplate::query()->count());
         $this->assertSame(
-            4,
-            CopyTemplate::query()->where('slot', 'lead')->where('language', 'nl')->where('body', 'EDITED :brand')->count(),
+            1,
+            CopyTemplate::query()->where('slot', 'about_3')->where('language', 'nl')->where('body', 'EDITED :brand')->count(),
         );
     }
 }

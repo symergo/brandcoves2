@@ -80,7 +80,9 @@ return [
         // reasons. 0.65 favours relevance while still breaking up clusters.
         'mmr_lambda' => 0.65,
 
-        // Score weights, summing to 100.
+        // Score weights, summing to 100. The fallback when a profile names none;
+        // `demand` is absent here so an unweighted profile leaves the bestseller
+        // signal switched off rather than silently on.
         'weights' => [
             'interest_fit' => 40,
             'budget_fit' => 20,
@@ -123,6 +125,21 @@ return [
                     'surprise' => 20,
                     'vibe' => 10,
                     'values' => 10,
+                    /*
+                     * Zero, deliberately, and the zero is the decision.
+                     *
+                     * A bestseller chart is a demand signal we now hold, and
+                     * this is the one place it must not be spent. `surprise`
+                     * exists to stop the best-stocked product winning every
+                     * tie; paying for demand alongside it would cancel that out
+                     * and turn the Whisperer into a chart, while looking like a
+                     * working feature. Chart products still reach the candidate
+                     * pool — see SuggestionEngine::withDemandCoverage() — they
+                     * just earn their place on the same terms as everything
+                     * else. Raising this is a product decision, not a tuning
+                     * one.
+                     */
+                    'demand' => 0,
                 ],
                 'mmr_lambda' => 0.65,
                 'budget_shape' => 'sweet_spot',
@@ -130,7 +147,7 @@ return [
 
             'for_myself' => [
                 'weights' => [
-                    'interest_fit' => 45,
+                    'interest_fit' => 40,
                     // Any affordable price is equally fine, so the signal
                     // carries less and discriminates less.
                     'budget_fit' => 10,
@@ -141,6 +158,12 @@ return [
                     'surprise' => 15,
                     'vibe' => 15,
                     'values' => 15,
+                    // Small, and the opposite sign to the gift case. Nobody
+                    // wants a surprising kettle on their own list; they want the
+                    // one that turns out to be good, and "lots of people bought
+                    // it" is the cheapest available evidence of that. Kept low
+                    // so it breaks ties rather than choosing.
+                    'demand' => 5,
                 ],
                 // Slightly stronger diversification: a wishlist of four
                 // variations on one thing is less useful than a gift page of
@@ -550,6 +573,57 @@ return [
             // On a 429, drain the bucket and stop trying for this long. Degrade
             // to the remaining sources rather than retrying into the wall.
             'cooldown_seconds' => 60,
+
+            /*
+             * Bestseller charts — an internal demand signal, never a page.
+             *
+             * bol's /products/lists/popular is a browse endpoint: no search
+             * term, so what comes back is what bol actually sells the most of.
+             * It feeds product suggestions and market-trend identification. Its
+             * ranking is never republished as visible content — see
+             * docs/features/popularity-charts.md.
+             */
+            'popular' => [
+                'enabled' => true,
+
+                // bol caps page-size at 50.
+                'page_size' => 50,
+
+                // 100 entries per chart. Past the first hundred a bestseller
+                // list stops being a bestseller list — the tail is ordinary
+                // catalogue, and it costs a request per page to collect.
+                'pages' => 2,
+
+                /*
+                 * Categories pulled per run, and the crawl's depth.
+                 *
+                 * bol publishes no category-id list, so categories are
+                 * discovered from the charts themselves. Bounded per run
+                 * because the alternative is an unbounded breadth-first crawl
+                 * against a rate-limited API on the first night. Coverage
+                 * widens over days instead; what a run defers is logged.
+                 */
+                'max_categories' => 40,
+                'max_depth' => 2,
+
+                /*
+                 * NOT the connector's 8.0.
+                 *
+                 * RateLimiter buckets are per endpoint and share no budget, so
+                 * each additional bucket raises what this connector can emit in
+                 * one second. `bol:search` and `bol:product` are 8/2 each
+                 * already, against a documented 10/s. This runs in a worker
+                 * while visitors are searching, and background work has to lose
+                 * that race by construction rather than by luck.
+                 */
+                'rate' => 2.0,
+                'burst' => 1,
+
+                // Rank history retention. Long enough for one year-over-year
+                // comparison — "was this rising last August too?" is the
+                // question a seasonal catalogue needs answered.
+                'history_days' => 400,
+            ],
         ],
 
         // Deferred to Phase 8. The connector is written and registered but

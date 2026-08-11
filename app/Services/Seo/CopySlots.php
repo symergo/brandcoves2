@@ -42,10 +42,6 @@ final class CopySlots
                 'label' => 'Search results — long copy',
                 'namespace' => 'site.narrative',
             ],
-            'brand_intro' => [
-                'label' => 'Brand page — opening paragraphs',
-                'namespace' => 'site.brand',
-            ],
             'brand' => [
                 'label' => 'Brand page — long copy',
                 'namespace' => 'site.brand_narrative',
@@ -126,26 +122,14 @@ final class CopySlots
         $define('search', 'faq_fresh_a', 'FAQ — freshness answer', 'Always');
 
         /*
-         * Brand page — opening paragraphs.
-         *
-         * `lead` is the one slot that must always resolve, so it is also the one
-         * where having several variants matters most: it is the first sentence of
-         * every brand page on the site.
-         */
-        $section('Opening');
-        $define('brand_intro', 'lead', 'Opening line', 'Always — every brand page starts here');
-        $define('brand_intro', 'range_single', 'What the brand makes — one category', 'Only when everything we hold from the brand is in one category', ['category']);
-        $define('brand_intro', 'range_multi', 'What the brand makes — several categories', 'Only when the brand appears in more than one category', ['categories', 'category']);
-        $define('brand_intro', 'shops_named', 'Which shop stocks the most', 'Only when we know the leading shop and more than one carries the brand', ['shop']);
-        $define('brand_intro', 'shops_count', 'How many shops carry it', 'When the leading shop is unknown, or only one carries the brand');
-        $define('brand_intro', 'price_from', 'Starting price', 'Only when every price is the same', ['low']);
-        $define('brand_intro', 'price_range', 'Price range', 'Only when prices vary and the category is unknown', ['low', 'high']);
-        $define('brand_intro', 'price_range_category', 'Price range with category', 'Only when prices vary and we know the leading category', ['low', 'high', 'category']);
-        $define('brand_intro', 'discount_named', 'Discounts, naming the shop', 'Only when something is genuinely reduced AND the leading shop is known', ['shop', 'reduced', 'percent']);
-        $define('brand_intro', 'discount_count', 'Discounts, without a shop', 'Only when something is genuinely reduced', ['reduced']);
-
-        /*
          * Brand page — long copy.
+         *
+         * There was a third surface here, `brand_intro`: ten slots of templated
+         * statistics that opened every brand page, plus four rotating variants of
+         * its lead sentence. The page stopped rendering them on 2026-08-10 — the
+         * term links replaced them — and a surface an editor can rewrite with no
+         * effect anywhere is worse than no surface at all, so it is gone rather
+         * than left listed. See docs/features/brand-pages.md.
          */
         $section('Comparing');
         $define('brand', 'about_heading', 'About the brand — heading', 'Always');

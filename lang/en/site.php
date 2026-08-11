@@ -13,7 +13,9 @@ return [
     'nav' => [
         'search' => 'Search',
         'gift' => 'Gift Finder',
-        'daily' => 'Daily Picks',
+        'daily' => 'Daily Cove',
+        'coves' => 'All Coves',
+        'give' => 'Gifting',
         'guides' => 'Guides',
         'surprise' => 'Surprise me',
         'scan' => 'Scan',
@@ -36,12 +38,6 @@ return [
         'intro' => 'Search bol, Amazon and hundreds of shops at once, follow a brand wherever it turns up, and let the Gift Whisperer turn a description of a person into something worth wrapping.',
         'cta_gift' => 'Find a gift',
         'cta_search' => 'Search products',
-        'stats_label' => 'Catalogue status',
-        'stat_products' => 'Products indexed',
-        'stat_comparable' => 'With more than one offer',
-        'stat_comparable_hint' => 'Comparable across shops',
-        'stat_guides' => 'Buying guides published',
-        'empty_catalogue' => 'The catalogue is empty. Run a feed ingestion to populate it:',
         'today_badge' => "Today's Cove",
         'today_cta' => "See today's finds",
         'coves_heading' => 'Coves',
@@ -68,6 +64,7 @@ return [
         'pasted_unreadable' => 'That is an Amazon link, but it carries no product name we can read, only its Amazon code. Copy the longer link with the product title in it, or search for the product by name.',
         'pasted_shortlink' => 'That is a shortened Amazon link, and we do not open links to find out where they go. Open it yourself and paste the full address, or search for the product by name.',
         'submit' => 'Search',
+        'searching' => 'Searching…',
         'results_for' => 'Results for ":term"',
         'count' => ':count products',
         'browse' => 'Browse the catalogue',
@@ -98,37 +95,28 @@ return [
         'seo_term' => 'Compare :count products matching :term across bol, Amazon and hundreds of shops. Find the cheapest offer in seconds.',
 
         /*
-         * On-page copy above the results.
+         * The vocabulary of the results, above the grid.
          *
-         * Every clause is a fact this page can back up, the counts, the range
-         * and the brands are all read off the results themselves. Keyword-
-         * stuffed filler would rank for a fortnight and then not at all.
+         * What replaced four paragraphs of statistics — counts, price ranges,
+         * how many were reduced. Those numbers were true and nobody read them:
+         * a shopper can see the grid, and a sentence counting what is already on
+         * screen is not a reason to stop scrolling. The words are the half that
+         * was doing work, and as links they are also navigation.
          */
-        'intro_lead' => 'We found :count products for “:term”, with :shops shop listings between them.',
-        'intro_prices' => 'Prices for :term here run from :low to :high.',
-        'intro_brands' => 'Brands on this page:',
-        'intro_discounts' => ':count of the products on this page are below their 30-day median price, the largest saving being :percent%.',
-        'intro_comparable' => ':count of these :term are sold by more than one shop, so there is a cheapest offer to find rather than a single price to accept.',
-        'intro_terms' => 'Words that come up across these :term listings: :terms.',
+        'terms_heading' => 'Often in these results',
         'seo_default' => 'Discover products and brands across bol, Amazon and hundreds of shops at once, with a link to every shop that sells them.',
     ],
 
     /*
-     * Brand pages.
+     * Brand pages — the chrome. Headings, breadcrumbs, empty states.
      *
-     * Every one of these is emitted only when the number behind it exists, see
-     * App\Services\Seo\BrandCopy. Rewriting one of them into a claim the
-     * catalogue cannot back up is a bug, not a copy tweak.
+     * The templated paragraphs that used to live here — the opening line and its
+     * three alternatives, the shop counts, the price ranges, the discount claims
+     * — were the `brand_intro` copy surface, and they were removed with it when
+     * the brand page stopped opening with statistics. The prose a brand page
+     * still carries is `brand_narrative`, further down this file.
      *
-     * THIS FILE IS THE FALLBACK, NOT THE SOURCE. These lines are what a page
-     * renders when the `copy_templates` table has no enabled variant for the
-     * slot: which is what makes that table safe to hand to an editor: deleting
-     * every row restores exactly this. `bc:seed-copy` imports them as the first
-     * variant of each slot.
-     *
-     * `lead_2` … `lead_4` are seed material only. Nothing reads them directly:
-     * the `lead` slot falls back to `lead`, and the alternatives exist so an
-     * editor opens the admin with four opening lines rather than one.
+     * `and` stays: `PageNarrative` joins its category lists with it.
      */
     'brand' => [
         'title' => ':brand',
@@ -144,27 +132,15 @@ return [
         'related_heading' => 'Other brands people compare',
         'empty' => 'Nothing from :brand is in stock right now.',
         'empty_hint' => 'Prices and stock are re-checked twice a day, so this page changes.',
-
-        'lead' => 'There are :count :brand products in this market, and this page carries what we know about each of them.',
-        'lead_2' => ':brand, as it is sold here: :count products, gathered from every shop we track.',
-        'lead_3' => 'This is :brand in this market — :count products, one page per product rather than one per listing.',
-        'lead_4' => ':count :brand products, one page, every shop\'s price on each of them.',
-
-        'shops_named' => ':shop stocks more :brand than anyone else we track, and :count shops carry the brand in total. A brand carried by several shops has a market price; one carried by a single shop has a price and nothing to check it against.',
-        'shops_count' => ':count shop carries :brand at the moment, so there is nothing here to compare its prices against yet.',
-
-        'price_from' => 'The cheapest :brand thing here is :low.',
-        'price_range' => ':brand runs from :low to :high here — a range of products rather than a range of margins.',
-        'price_range_category' => ':brand runs from :low to :high here, and most of that is :category. The cheapest and the dearest are different objects, not the same one at two prices.',
-
-        'discount_named' => ':shop currently has discounts on :brand: :count products are below their usual price, the largest by :percent%. Measured against our own 30-day median, not a shop\'s crossed-out figure.',
-        'discount_count' => ':count :brand products are below their 30-day median price right now.',
         'and' => 'and',
-        'lead_4' => ':count :brand products, everything we hold on the brand in one place.',
-        'range_single' => 'Everything we see from :brand here is :category. Its catalogue elsewhere may be wider; this is the part that is actually sold in this market.',
-        'range_multi' => ':brand shows up here in :categories. Most of it is :category, which is a more useful thing to know about a brand than any headline figure: it is what the name is for in this market, as opposed to what the worldwide catalogue claims.',
-        'discount_named' => ":count :brand products are below their usual price right now, the largest by :percent%, and :shop has the most of them. Measured against our own 30-day median rather than a shop's crossed-out figure.",
-
+        /*
+         * Offers from a source we may show but not store. The note says why they
+         * sit apart from the grid instead of leaving a reader to wonder — they
+         * are single listings rather than compared products, and saying so is
+         * more honest than a heading that implies otherwise.
+         */
+        'live_heading' => 'More :brand, fetched just now',
+        'live_note' => 'Listed live from a shop whose prices we are not allowed to keep, so these are single offers rather than compared products.',
     ],
     /*
      * Long-form copy below a results grid.
@@ -285,6 +261,12 @@ return [
         'accepted' => 'Added to your list.',
         'dismissed' => 'Dismissed.',
         'suggest' => 'Suggest something',
+        'invite' => 'Know something they would like?',
+        'invite_hint' => 'Put it forward and they decide. It joins the list only if they accept it.',
+        'search_placeholder' => 'Search for something they would like',
+        'none_found' => 'Nothing matched that. Try another word.',
+        'already_on_list' => 'That one is already on the list.',
+        'manual_hint' => 'Not in the shops we cover? Put it forward anyway — they still decide.',
     ],
 
     'registry' => [
@@ -391,6 +373,14 @@ return [
         'shared_short' => 'Shared',
         'private_short' => 'Private',
         'find_things' => 'Find things to add',
+        'manual_add' => 'Add something yourself',
+        'manual_hint' => 'Not in the shops we cover? Type it in, with a link if you have one.',
+        'manual_title' => 'What is it?',
+        'manual_url' => 'Link (optional)',
+        'manual_price' => 'Price (optional)',
+        'manual_save' => 'Add it',
+        'manual_no_preview' => 'We do not open the link, so it shows exactly what you type here.',
+        'manual_url_invalid' => 'A link has to start with https://',
         'added_to' => 'Saved to :list',
         'view_list' => 'View list',
         'new_list' => 'New list',
@@ -602,6 +592,16 @@ return [
     | Each tool gets a sentence saying what it is *for*. "Secret Santa" explains
     | itself; "a list you build for somebody and then hand over" does not, and a
     | tool nobody understands is a tool nobody opens.
+    |
+    | `_body` answers "what is this"; `_step1..3` answers "how do I do it", and
+    | the two are written for different readers — one scanning nine cards, one
+    | who has already chosen and needs the button's name. So a step quotes the
+    | label that is really on the screen ("press Share", "press People"). Rename
+    | a control and the step that names it is now wrong.
+    |
+    | Three steps, and no fourth line. Caveats were written and removed: this is
+    | how to start, not the full behaviour of the tool, and every rule it drops
+    | is enforced by the tool itself regardless.
     */
     'gift_cove' => [
         'title' => 'The Gift Cove',
@@ -612,32 +612,63 @@ return [
         'start_list' => 'Start my wishlist',
         'privacy' => 'One rule runs through all of it: the person a list is for never learns what has been claimed. Not who, not how many, not that anything has.',
 
+        'manual' => 'How each one works',
+        'manual_link' => 'How each one works',
+        'manual_intro' => 'Nine tools and the steps for each. Every button named below is a button on the page it sends you to.',
+
         'wishlist_title' => 'My wishlist',
         'wishlist_body' => 'Things you would actually like. Share it and people can mark what they are getting, without you ever seeing who took what.',
+        'wishlist_step1' => 'Find something you want and press the bookmark on it. The picker asks which list; choose your own.',
+        'wishlist_step2' => 'Open the list and press Share. That turns the link on and shows it, ready to send to whoever is asking what you want.',
+        'wishlist_step3' => 'They open the link and mark what they are getting. You are never shown that anything has been marked.',
 
         'giftlist_title' => 'A list for someone else',
         'giftlist_body' => 'Somewhere to gather ideas for one person. Private to you, and never claimable, because it is research rather than a registry.',
+        'giftlist_step1' => 'Press New list, choose "For someone else" and name the person. This card opens that form already on that setting.',
+        'giftlist_step2' => 'Save things to it as you come across them, exactly as you would to any other list.',
+        'giftlist_step3' => 'Nothing on it can be claimed and nobody else can see it, so change your mind as often as you like.',
 
         'collab_title' => 'Buy together',
         'collab_body' => 'Invite other people onto a gift list so several of you can choose together, or pledge towards one bigger present and let one person buy it.',
+        'collab_step1' => 'Open a list you made for someone else and press People.',
+        'collab_step2' => 'Add each co-giver by email. A viewer can look; an editor can add and remove things.',
+        'collab_step3' => 'Choose together. If the person has a wishlist of their own, that is where you say what you are getting, so two of you never buy the same thing.',
 
         'handover_title' => 'Hand a list over',
         'handover_body' => 'Started a list for someone before they were here? Give it to them once they join, and it becomes their own wishlist.',
+        'handover_step1' => 'Open the list and send them the "Ask them what they want" link, so there is an account the list can go to.',
+        'handover_step2' => 'Once they have used it, press Hand over and type the email they signed up with.',
+        'handover_step3' => 'Confirm, and the list is theirs: they can share it, and other people can claim from it.',
 
         'santa_title' => 'Secret Santa',
         'santa_body' => 'One group, one draw, nobody knows who has who. Everyone can attach their own wishlist so their Santa is not guessing.',
+        'santa_step1' => 'Press Start a group and give it a name, roughly what everyone should spend, and the date you are exchanging.',
+        'santa_step2' => 'Send the invite link to everyone. They join with a name and an email, no account needed, and can name anyone they should not draw.',
+        'santa_step3' => 'Once everybody is in, press Do the draw. Each person gets one email naming one person: theirs.',
 
         'registry_title' => 'A registry',
         'registry_body' => 'A wishlist with an occasion and a date on it, for a wedding, a baby or a new home. Add a delivery address and only people who have claimed something can see it.',
+        'registry_step1' => 'Open your own wishlist and press Registry.',
+        'registry_step2' => 'Pick the occasion and the date, and add a delivery address if people should be posting things to you.',
+        'registry_step3' => 'Share it as you would any list. It behaves like one: people claim, and you are never told what.',
 
         'quiz_title' => 'How well do they know you?',
         'quiz_body' => 'Turn your wishlist into a quiz: four things, one of them really on it. Share the score, not the answers.',
+        'quiz_step1' => 'Open your list and press Share.',
+        'quiz_step2' => 'Press Quiz, then "Make a quiz from this list".',
+        'quiz_step3' => 'Send the quiz link. Five rounds of four things, one go each.',
 
         'suggestions_title' => 'Suggestions',
         'suggestions_body' => 'People who know you can put things forward for your list. Nothing appears on it until you say yes.',
+        'suggestions_step1' => 'Share your wishlist. A suggestion can only come from somebody holding the link.',
+        'suggestions_step2' => 'When one arrives it waits at the top of the list, with the name of whoever sent it.',
+        'suggestions_step3' => 'Press "Add it" and it joins the list, or "No thanks" and it goes. Nothing lands on the list before you decide.',
 
         'whisperer_title' => 'Gift Whisperer',
         'whisperer_body' => 'Describe a person and get four ideas, each with the reason it was chosen. For when you know who it is for and not what to buy.',
+        'whisperer_step1' => 'Answer six short questions about them: who they are, what they are into, what you want to spend, anything to avoid.',
+        'whisperer_step2' => 'Four ideas come back, each with the reason it was chosen. Ask for something else and what you rejected is never offered again.',
+        'whisperer_step3' => 'Save the good ones straight onto a list for that person.',
     ],
 
     'reminders' => [
@@ -766,13 +797,10 @@ return [
         'reroll' => 'Show me more',
         'empty' => 'Nothing scored yet. Come back after the next catalogue run.',
 
-        'why' => [
-            'lexical' => 'Barely anything else is described like this',
-            'category' => 'A corner of the catalogue nobody browses',
-            'brand' => 'A brand you probably have not heard of',
-            'exclusivity' => 'Almost no shop stocks it',
-            'novelty' => 'New to us this month',
-        ],
+        // Shown only when no offer carries a description worth printing. The
+        // maker's name is the least we can say about an object, and it is more
+        // than an empty gap under the title.
+        'by_brand' => 'By :brand',
     ],
 
     'daily' => [

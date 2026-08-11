@@ -141,6 +141,23 @@ merchant onboarding — not "we should add homeware", but "47 people scanned
 things we do not carry from this category last month". Nothing else in the
 product produces a signal that specific.
 
+## It is reached from search, not from the top nav
+
+Changed 2026-08-10. Scan had a top-level header entry alongside Search, the Gift
+Cove, Daily Picks, Surprise and Guides. It has been removed.
+
+Scanning is not a *section* of the site — it is a way of **entering a query**,
+the same intent as typing one. A nav entry framed it as a destination, which
+made the header claim six places to go when there are five, and diluted the
+entries that really are separate parts of the product. The scan button in the
+search field opens the same `BarcodeScanner` component and sits exactly where
+the intent starts.
+
+The route, the controller and the page are unchanged: `/{market}/scan` still
+works for anyone holding the URL, which is what a bookmarked or home-screen
+shortcut needs. Only the header link is gone. `nav.scan` stays in the language
+files for that page's own use.
+
 ## Where it fits
 
 | | |

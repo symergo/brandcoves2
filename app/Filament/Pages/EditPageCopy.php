@@ -68,7 +68,14 @@ class EditPageCopy extends Page implements HasForms
     /** @var array<string, mixed> */
     public array $data = [];
 
-    public string $surface = 'brand_intro';
+    /**
+     * The surface the page opens on.
+     *
+     * `brand_intro` until it was retired — it was the default because it was the
+     * copy that rendered on the most pages. `search` inherits that for the same
+     * reason: every result page in every market draws from it.
+     */
+    public string $surface = 'search';
 
     public string $language = 'nl';
 

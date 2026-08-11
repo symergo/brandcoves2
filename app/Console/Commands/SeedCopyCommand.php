@@ -41,25 +41,12 @@ class SeedCopyCommand extends Command
 {
     protected $signature = 'bc:seed-copy
         {--language= : One language (nl, fr, en, es). Omit for all of them.}
-        {--surface= : One surface (search, brand_intro, brand). Omit for all of them.}
+        {--surface= : One surface (search, brand). Omit for all of them.}
         {--replace : DESTRUCTIVE. Replace existing rows for the chosen slots.}
         {--force : Skip the confirmation. For a deploy shell with no tty.}
         {--dry-run : Report what would be written and write nothing.}';
 
     protected $description = 'Import the shipped page copy into the editable copy bank.';
-
-    /**
-     * Slots whose language file holds several alternatives.
-     *
-     * `brand_intro.lead` is the only one: it renders on every brand page, so it
-     * shipped with four openings picked by a hash. Those four become four
-     * variants here and the hash goes away.
-     *
-     * @var array<string, list<string>>
-     */
-    private const EXTRA_KEYS = [
-        'brand_intro.lead' => ['lead_2', 'lead_3', 'lead_4'],
-    ];
 
     public function handle(): int
     {
@@ -117,7 +104,7 @@ class SeedCopyCommand extends Command
                         : $this->rowsFor($surface, $slot, $language)->delete();
                 }
 
-                $bodies = $this->bodiesFor($surface, $slot, $language, $key);
+                $bodies = $this->bodiesFor($surface, $slot, $language);
 
                 if ($bodies === []) {
                     $missing[] = "{$key} / {$language}";
@@ -207,27 +194,28 @@ class SeedCopyCommand extends Command
     }
 
     /**
-     * Every body the language file offers for this slot.
+     * The body the language file offers for this slot, if it has one.
+     *
+     * A list rather than a single string because it used to be one: the retired
+     * `brand_intro.lead` shipped with four openings that a hash picked between,
+     * and seeding turned those four into four variants. Nothing ships
+     * alternatives now, and the shape stays because it is what a caller wants —
+     * an empty list means "no line for this slot", which is the case worth
+     * reporting.
      *
      * @return list<string>
      */
-    private function bodiesFor(string $surface, string $slot, string $language, string $key): array
+    private function bodiesFor(string $surface, string $slot, string $language): array
     {
         $namespace = CopySlots::namespaceFor($surface);
-        $bodies = [];
+        $line = __("{$namespace}.{$slot}", [], $language);
 
-        foreach ([$slot, ...(self::EXTRA_KEYS[$key] ?? [])] as $langKey) {
-            $line = __("{$namespace}.{$langKey}", [], $language);
-
-            // A missing translation returns the key itself. Never store that:
-            // it would render a dotted path to a reader, and it would look like
-            // deliberate copy in the admin list.
-            if (is_string($line) && $line !== '' && ! str_contains($line, $namespace)) {
-                $bodies[] = $line;
-            }
-        }
-
-        return $bodies;
+        // A missing translation returns the key itself. Never store that: it
+        // would render a dotted path to a reader, and it would look like
+        // deliberate copy in the admin list.
+        return is_string($line) && $line !== '' && ! str_contains($line, (string) $namespace)
+            ? [$line]
+            : [];
     }
 
     /** @return list<string> */

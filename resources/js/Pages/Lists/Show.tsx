@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import ManualItem from '../../Components/ManualItem'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import ListTools, { type Panel } from '../../Components/ListTools'
@@ -15,6 +16,8 @@ interface Item {
     currentPrice: number | null
     note: string | null
     groupId: number | null
+    /** Off-site, for a hand-written item. Never an Inertia visit. */
+    externalUrl: string | null
     slug: string | null
     merchantCount: number
     inStock: boolean
@@ -328,12 +331,26 @@ export default function ListShow({
                 <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
                     <p className="text-ink-soft">{t('lists.empty_list')}</p>
                     {access.canEdit && (
-                        <Link
-                            href={`${base}/search`}
-                            className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-                        >
-                            {t('lists.find_things')}
-                        </Link>
+                        <div className="mt-4 flex flex-wrap items-start justify-center gap-2">
+                            <Link
+                                href={`${base}/search`}
+                                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                            >
+                                {t('lists.find_things')}
+                            </Link>
+                            {/*
+                              Beside the search, not instead of it. Most things
+                              are in the catalogue and searching is the better
+                              path; this is for the ones that are not, and an
+                              empty list is exactly where somebody discovers
+                              their present is one of them.
+                            */}
+                            <ManualItem
+                                action={`${base}/list-items`}
+                                data={{ source: 'manual', wishlist_id: list.id }}
+                                hint={t('lists.manual_hint')}
+                            />
+                        </div>
                     )}
                 </div>
             ) : (
@@ -354,6 +371,19 @@ export default function ListShow({
                                     <Link href={`${base}/p/${item.groupId}/${item.slug}`} className="font-medium hover:underline">
                                         {item.title}
                                     </Link>
+                                ) : item.externalUrl ? (
+                                    // A link the owner typed. Still `noopener
+                                    // noreferrer nofollow`: this list gets
+                                    // shared, and by then the link is being
+                                    // followed by people who did not type it.
+                                    <a
+                                        href={item.externalUrl}
+                                        target="_blank"
+                                        rel="nofollow noopener noreferrer"
+                                        className="font-medium hover:underline"
+                                    >
+                                        {item.title}
+                                    </a>
                                 ) : (
                                     <span className="font-medium">{item.title}</span>
                                 )}
@@ -395,6 +425,22 @@ export default function ListShow({
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {/*
+              After the list, not before it: this is the exception, and the
+              catalogue is still the ordinary way in. Present on a list that
+              already has things on it because "the last one is not in the
+              shops" is when it comes up.
+            */}
+            {items.length > 0 && access.canEdit && (
+                <div className="mt-4">
+                    <ManualItem
+                        action={`${base}/list-items`}
+                        data={{ source: 'manual', wishlist_id: list.id }}
+                        hint={t('lists.manual_hint')}
+                    />
+                </div>
             )}
         </>
     )

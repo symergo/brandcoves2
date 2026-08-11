@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Discovery;
 
 use App\Enums\Market;
+use App\Services\Charts\ChartDemand;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,12 +25,14 @@ final class CatalogueStats
      * @param  array<string, int>  $categoryCounts
      * @param  array<string, int>  $brandCounts
      * @param  array<string, int>  $tokenCounts  how many groups contain each title word
+     * @param  array<int, float>  $demand  group id => bestseller-chart strength, 0-1
      */
     private function __construct(
         public readonly int $total,
         private readonly array $categoryCounts,
         private readonly array $brandCounts,
         private readonly array $tokenCounts,
+        private readonly array $demand = [],
     ) {}
 
     public static function build(Market $market): self
@@ -85,7 +88,34 @@ final class CatalogueStats
             $tokenCounts[$row->word] = (int) $row->n;
         }
 
-        return new self(max(1, $total), $categories, $brands, $tokenCounts);
+        /*
+         * Which of these products a retailer's bestseller chart knows about.
+         *
+         * Loaded here rather than queried by the scorer so that SerendipityEngine
+         * keeps its contract: catalogue statistics in, a number out, no network
+         * and no clock. Demand is a statistic about this market's catalogue like
+         * the other three.
+         */
+        $demand = app(ChartDemand::class)->scores($market);
+
+        return new self(max(1, $total), $categories, $brands, $tokenCounts, $demand);
+    }
+
+    /**
+     * How strongly a retailer's bestseller chart vouches for this product, 0-1.
+     *
+     * Zero means "no evidence", not "nobody buys it" — most of a catalogue has
+     * never charted. Callers must treat it as an absence, never as a penalty.
+     */
+    public function demand(int $groupId): float
+    {
+        return $this->demand[$groupId] ?? 0.0;
+    }
+
+    /** Whether this market has any chart data at all to vouch with. */
+    public function hasDemandData(): bool
+    {
+        return $this->demand !== [];
     }
 
     /** Share of the catalogue this category occupies, 0-1. */

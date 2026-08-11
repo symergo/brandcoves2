@@ -63,7 +63,7 @@ email attached, so it collides with both.
 
 | Feature | Amazon | Awin / bol | How it is enforced |
 |---|---|---|---|
-| **Search & offer comparison** | ✅ live only | ✅ | `allowsCatalogueStorage()` — Amazon offers are never upserted into `products` |
+| **Search & offer comparison** | ✅ live only | ✅ | `allowsCatalogueStorage()`, in `SearchService::pullLiveResults()` — Amazon offers are never upserted into `products` |
 | **Cheapest-offer comparison** | ✅ at render | ✅ | Amazon prices come from a live fetch, never a stored aggregate |
 | **Price recording** | ✅ stored | ✅ | `allowsPriceStorage()` — true everywhere; storage is not the restricted act |
 | **Price history / sparkline** | ❌ not shown | ✅ | `allowsPriceTracking()` — filtered on read, so Amazon prices exist but never appear in the chart |

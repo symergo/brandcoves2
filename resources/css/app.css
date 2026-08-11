@@ -25,6 +25,54 @@
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
     --radius-card: 0.75rem;
+
+    /*
+     * The beam that sweeps the bottom edge of the search box while a query is in
+     * flight — a scanner head passing over the field, not a progress bar.
+     *
+     * Indeterminate on purpose: the server does not report how far along a
+     * search is, and a fake percentage that stalls at 90% is worse than no
+     * number at all. A sweep makes no claim about progress, only about work.
+     *
+     * `alternate` is what makes it a scanner rather than a conveyor belt — the
+     * beam comes back the way it went, instead of vanishing off one edge and
+     * reappearing at the other. `ease-in-out` decelerates into each turn, which
+     * is how a physical head with mass actually reverses.
+     */
+    --animate-scan: scan 1.15s ease-in-out infinite alternate;
+}
+
+/*
+ * 0 → 300% of the beam's OWN width. Paired with `w-1/4` in the markup that is
+ * exactly the width of the track, so the beam touches both edges and no
+ * further — a sweep that overshoots looks like it is escaping the field.
+ * Changing the beam's width means changing this number to match.
+ */
+@keyframes scan {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(300%);
+    }
+}
+
+/*
+ * Unlayered, so it beats the utility that sets the animation — Tailwind's
+ * utilities live in a cascade layer and unlayered rules win over layered ones
+ * regardless of specificity.
+ *
+ * A still bar rather than nothing: the point of the thing is to say "working",
+ * which the motion carries for everyone else and the mere presence has to carry
+ * here.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .animate-scan {
+        animation: none;
+        width: 100%;
+        transform: none;
+        opacity: 0.6;
+    }
 }
 
 /*

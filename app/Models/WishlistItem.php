@@ -82,6 +82,53 @@ class WishlistItem extends Model
         return $this->source !== null && ! $this->source->allowsCatalogueStorage();
     }
 
+    /**
+     * Is this a link we are willing to put in an `href`?
+     *
+     * `https:` and nothing else — the same test `Product::hasSafeAffiliateUrl()`
+     * applies to feed URLs, applied here because a manual item's link is worse
+     * input than a feed's: it is typed by a person, into a page other people
+     * open from a link they were sent.
+     *
+     * HTML escaping does not help. `javascript:alert(1)` survives it intact and
+     * runs on click, and `http:` is downgraded rather than dangerous but still
+     * has no business being offered as "where to buy it".
+     *
+     * A static so the write path, the read path and the validation message all
+     * ask the same question. Three copies of a scheme check is how two of them
+     * end up disagreeing.
+     */
+    public static function isSafeExternalUrl(?string $url): bool
+    {
+        if (! is_string($url) || trim($url) === '') {
+            return false;
+        }
+
+        $scheme = parse_url(trim($url), PHP_URL_SCHEME);
+
+        return is_string($scheme) && strtolower($scheme) === 'https';
+    }
+
+    /**
+     * Where a manually added item says you can buy it.
+     *
+     * Scoped to `manual` rows on purpose: every other item's `snapshot_url` is
+     * *our* product page, stored as a root-relative path with no scheme at all,
+     * so running those through the check above would reject every one of them
+     * and quietly unlink the entire catalogue half of the list.
+     *
+     * Null when the stored link is unsafe, so a caller cannot render a bad link
+     * even by accident — the same shape as `Product::outboundUrl()`.
+     */
+    public function externalUrl(): ?string
+    {
+        if ($this->source !== Source::Manual) {
+            return null;
+        }
+
+        return self::isSafeExternalUrl($this->snapshot_url) ? trim((string) $this->snapshot_url) : null;
+    }
+
     public function isClaimed(): bool
     {
         return $this->claimed_by_hash !== null;

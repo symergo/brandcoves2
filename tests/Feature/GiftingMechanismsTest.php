@@ -112,6 +112,27 @@ class GiftingMechanismsTest extends TestCase
         $this->get('/be-nl/gift-cove')->assertOk();
     }
 
+    #[Test]
+    public function every_tool_on_the_gift_cove_has_its_three_steps(): void
+    {
+        /*
+         * The manual is nine tools × three steps, and a missing string renders
+         * as its own key — `gift_cove.quiz_step2` in the middle of a numbered
+         * list, in whichever market lost it. `LocalisationTest` catches a
+         * language that falls behind English; this catches the other direction,
+         * a tenth tool added to the page with no steps written for it.
+         */
+        $tools = ['wishlist', 'giftlist', 'collab', 'handover', 'santa', 'registry', 'quiz', 'suggestions', 'whisperer'];
+
+        foreach ($tools as $tool) {
+            foreach ([1, 2, 3] as $step) {
+                $key = "site.gift_cove.{$tool}_step{$step}";
+
+                $this->assertNotSame($key, __($key), "The Gift Cove manual has no {$key}.");
+            }
+        }
+    }
+
     // --- Handover ------------------------------------------------------------
 
     #[Test]
@@ -442,6 +463,105 @@ class GiftingMechanismsTest extends TestCase
     }
 
     #[Test]
+    public function a_visitor_is_offered_the_suggest_control_and_the_owner_is_not(): void
+    {
+        /*
+         * The endpoint shipped without any way to reach it: no page ever posted
+         * to `/l/{token}/suggest`, while `suggestions.suggest` sat translated
+         * into four languages and rendered nowhere. Every test around it passed
+         * throughout, because they post to the endpoint directly — which is
+         * exactly why this one asserts on what the *page* is given.
+         */
+        $owner = User::factory()->create();
+        $list = $this->sharedList($owner);
+
+        $this->actingAs(User::factory()->create())
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('canSuggest', true)->where('results', null));
+
+        // Suggesting to yourself is just adding, and the list page does that
+        // without the round trip through approval.
+        $this->actingAs($owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('canSuggest', false));
+    }
+
+    #[Test]
+    public function a_research_list_offers_nobody_the_suggest_control(): void
+    {
+        // Suggesting into private research about a person would tell a stranger
+        // it exists. The endpoint refuses it; the control must not appear either.
+        $owner = User::factory()->create();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $owner->id,
+            'recipient_id' => Recipient::factory()->create(['owner_user_id' => $owner->id])->id,
+            'kind' => ListKind::ForSomeone,
+            'market' => Market::BeNl,
+            'visibility' => ListVisibility::Link,
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('canSuggest', false));
+    }
+
+    #[Test]
+    public function searching_inside_somebody_elses_list_is_not_public_demand(): void
+    {
+        /*
+         * `search_log` is not a debug record: it feeds the related-search chips
+         * on public narrative pages and the demand signal that picks which
+         * buying guides get written. A term typed into a friend's shared gift
+         * list is about one named person on an unauthenticated private URL, and
+         * "engagement ring" resurfacing as a suggested search elsewhere is the
+         * kind of leak nobody would connect back to this feature.
+         */
+        $list = $this->sharedList(User::factory()->create());
+
+        $this->actingAs(User::factory()->create())
+            ->get("/be-nl/l/{$list->share_token}?q=engagement+ring")
+            ->assertOk();
+
+        $this->assertSame(0, DB::table('search_log')->count());
+    }
+
+    #[Test]
+    public function suggesting_something_already_on_the_list_does_not_take_it_off(): void
+    {
+        /*
+         * `ItemSaver::saveGroup()` is an `updateOrCreate` on
+         * `(wishlist_id, group_id)` and `SuggestionController` nulls
+         * `accepted_at` straight afterwards — so a suggestion naming a product
+         * the owner already has would have moved a real item back to pending,
+         * claim and all.
+         *
+         * Unreachable while the feature had no UI, and the ordinary case the
+         * moment a visitor can search for something: the obvious thing to
+         * suggest is the obvious thing to already own.
+         */
+        $owner = User::factory()->create();
+        $list = $this->sharedList($owner);
+        $group = ProductGroup::factory()->create(['market' => Market::BeNl]);
+
+        WishlistItem::factory()->create([
+            'wishlist_id' => $list->id,
+            'group_id' => $group->id,
+            'accepted_at' => now(),
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/suggest", ['group_id' => $group->id])
+            ->assertRedirect();
+
+        $this->assertSame(1, $list->items()->count());
+        $this->assertSame(0, $list->suggestions()->count());
+    }
+
+    #[Test]
     public function nobody_can_suggest_into_private_research_about_a_person(): void
     {
         $owner = User::factory()->create();
@@ -459,6 +579,138 @@ class GiftingMechanismsTest extends TestCase
                 'group_id' => ProductGroup::factory()->create(['market' => Market::BeNl])->id,
             ])
             ->assertForbidden();
+    }
+
+    // --- Something we do not sell -------------------------------------------
+
+    #[Test]
+    public function a_list_can_hold_something_typed_in_by_hand(): void
+    {
+        // The catalogue is not the world. A voucher for the climbing gym, the
+        // local bike shop, one particular edition of a book — a list that
+        // cannot hold those is a list with the real present missing.
+        $user = User::factory()->create();
+        $list = $this->sharedList($user);
+
+        $this->actingAs($user)
+            ->post('/be-nl/list-items', [
+                'source' => 'manual',
+                'wishlist_id' => $list->id,
+                'title' => 'A voucher for the climbing gym',
+                'url' => 'https://example.test/vouchers/climbing',
+                'price' => 4000,
+            ])
+            ->assertRedirect();
+
+        $item = $list->items()->sole();
+
+        $this->assertSame('A voucher for the climbing gym', $item->snapshot_title);
+        $this->assertSame('https://example.test/vouchers/climbing', $item->externalUrl());
+        $this->assertSame(4000, $item->snapshot_price);
+
+        // No image, deliberately: it would be fetched by every visitor's
+        // browser from a host the owner chose, which is a view-tracking pixel
+        // on a page whose entire point is that the owner learns nothing.
+        $this->assertNull($item->snapshot_image_url);
+    }
+
+    #[Test]
+    public function a_hand_written_link_that_is_not_https_is_refused(): void
+    {
+        /*
+         * Invariant #5, at the point it bites hardest: this URL is typed by a
+         * person and rendered on a page other people open from a link they were
+         * sent. HTML escaping does not help — `javascript:` survives it intact
+         * and runs on click.
+         */
+        $user = User::factory()->create();
+        $list = $this->sharedList($user);
+
+        foreach (['javascript:alert(1)', 'data:text/html,<script>x</script>', 'http://example.test/x'] as $url) {
+            /*
+             * A redirect carrying errors, not a 422: this app renders JSON
+             * errors for `api/*` only (see bootstrap/app.php), so a rejected
+             * web form always comes back through the session — which is also
+             * where Inertia reads them from to put the message on the field.
+             */
+            $this->actingAs($user)
+                ->post('/be-nl/list-items', [
+                    'source' => 'manual',
+                    'wishlist_id' => $list->id,
+                    'title' => 'A thing',
+                    'url' => $url,
+                ])
+                ->assertRedirect()
+                ->assertSessionHasErrors('url');
+        }
+
+        $this->assertSame(0, $list->items()->count());
+    }
+
+    #[Test]
+    public function a_visitor_can_suggest_something_we_do_not_sell(): void
+    {
+        // The thing somebody most wants to put forward is often the thing we do
+        // not stock. Same saver, same pending state, same accept row.
+        $list = $this->sharedList(User::factory()->create());
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/suggest", [
+                'title' => 'That cookbook she mentioned',
+                'url' => 'https://example.test/cookbook',
+            ])
+            ->assertRedirect();
+
+        $suggestion = $list->suggestions()->sole();
+
+        $this->assertSame('That cookbook she mentioned', $suggestion->snapshot_title);
+        $this->assertNull($suggestion->accepted_at);
+        $this->assertSame(0, $list->items()->count());
+    }
+
+    #[Test]
+    public function an_unsafe_link_is_refused_from_the_suggest_endpoint_too(): void
+    {
+        // Two entry points, one rule. The visitor-facing one is the one a
+        // stranger can reach, so it is the one that must not be the lenient copy.
+        $list = $this->sharedList(User::factory()->create());
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/suggest", [
+                'title' => 'A thing',
+                'url' => 'javascript:alert(1)',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasErrors('url');
+
+        $this->assertSame(0, $list->allItems()->count());
+    }
+
+    #[Test]
+    public function a_stored_link_that_is_not_https_never_reaches_the_page(): void
+    {
+        /*
+         * Belt and braces, and not theatre: rows predating the rule, a future
+         * import, or a second write path added later would all bypass the
+         * validator. The render asks the model, and the model refuses.
+         */
+        $list = $this->sharedList(User::factory()->create());
+
+        $item = WishlistItem::factory()->create([
+            'wishlist_id' => $list->id,
+            'group_id' => null,
+            'source' => 'manual',
+            'external_id' => null,
+            'snapshot_title' => 'A thing',
+            'snapshot_url' => 'javascript:alert(1)',
+            'accepted_at' => now(),
+        ]);
+
+        $this->assertNull($item->externalUrl());
+
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('items.0.externalUrl', null));
     }
 
     // --- Display name --------------------------------------------------------

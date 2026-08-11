@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Gift;
 
 use App\Models\ProductGroup;
+use App\Services\Charts\ChartDemand;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -52,7 +54,24 @@ class SuggestionEngine
     /** Angle queries per retrieval. Beyond this the tsquery stops being selective. */
     private const MAX_QUERIES = 24;
 
-    public function __construct(private readonly AngleMap $angles) {}
+    /**
+     * Share of the candidate pool reserved for products that are actually
+     * selling.
+     *
+     * A correction, not a preference. The pool is ordered by `merchant_count`,
+     * and a bestseller pulled from a retailer's chart is sold by that retailer
+     * alone — so it sorts last and falls off the end of a 300-row pool, however
+     * well it answers the brief. The things people demonstrably buy would be
+     * systematically absent from gift suggestions, and nothing in the output
+     * would show it. A sixth is enough to guarantee presence without crowding
+     * out the comparable products the ordering exists to favour.
+     */
+    private const DEMAND_POOL_SHARE = 0.16;
+
+    public function __construct(
+        private readonly AngleMap $angles,
+        private readonly ChartDemand $demand,
+    ) {}
 
     /** @return list<Suggestion> */
     public function suggest(TasteBrief $brief): array
@@ -114,6 +133,27 @@ class SuggestionEngine
      */
     private function retrieve(TasteBrief $brief, array $queries): Collection
     {
+        $pool = $this->pool($brief, $queries)
+            ->orderByDesc('merchant_count')
+            ->orderByDesc('first_seen_at')
+            ->limit(self::CANDIDATE_POOL)
+            ->get();
+
+        return $this->withDemandCoverage($pool, $brief, $queries);
+    }
+
+    /**
+     * The filters every candidate must pass, whichever ordering finds it.
+     *
+     * Extracted so the demand slice runs through exactly the same gauntlet as
+     * the main pool. A second query with its own copy of these conditions is how
+     * "no alcohol" ends up holding on one path and not the other.
+     *
+     * @param  list<string>  $queries
+     * @return Builder<ProductGroup>
+     */
+    private function pool(TasteBrief $brief, array $queries)
+    {
         $groups = ProductGroup::query()
             ->forMarket($brief->market)
             ->giftable()
@@ -156,13 +196,53 @@ class SuggestionEngine
                 ));
         }
 
-        return $groups
-            // Comparable products first: a suggestion the shopper can price
-            // against a second shop is a suggestion they can act on.
-            ->orderByDesc('merchant_count')
-            ->orderByDesc('first_seen_at')
-            ->limit(self::CANDIDATE_POOL)
+        // Comparable products first: a suggestion the shopper can price against
+        // a second shop is a suggestion they can act on. Applied by the caller,
+        // because the demand slice orders itself differently.
+        return $groups;
+    }
+
+    /**
+     * Top up the pool with products that are actually selling.
+     *
+     * Runs only when the main pool is full — a short pool has already returned
+     * everything that matches, so there is nothing to have been crowded out. The
+     * slice passes the identical filters and is deduplicated against what is
+     * already there, so this can add candidates and can never replace or reorder
+     * them.
+     *
+     * Scoring is untouched by this. A chart product that reaches the pool still
+     * has to earn its place on interest, budget and vibe like everything else.
+     *
+     * @param  Collection<int, ProductGroup>  $pool
+     * @param  list<string>  $queries
+     * @return Collection<int, ProductGroup>
+     */
+    private function withDemandCoverage(Collection $pool, TasteBrief $brief, array $queries): Collection
+    {
+        if ($pool->count() < self::CANDIDATE_POOL) {
+            return $pool;
+        }
+
+        $slice = (int) round(self::CANDIDATE_POOL * self::DEMAND_POOL_SHARE);
+
+        $chartIds = $this->demand->topGroupIds($brief->market, self::CANDIDATE_POOL);
+
+        if ($chartIds === [] || $slice < 1) {
+            return $pool;
+        }
+
+        $missing = array_values(array_diff($chartIds, $pool->pluck('id')->all()));
+
+        if ($missing === []) {
+            return $pool;
+        }
+
+        $extra = $this->pool($brief, $queries)
+            ->whereIn('id', array_slice($missing, 0, $slice))
             ->get();
+
+        return $pool->concat($extra);
     }
 
     /**
@@ -186,6 +266,19 @@ class SuggestionEngine
             'vibe' => $this->vibeFit($haystack, $brief) * $profile->weight('vibe', 10),
             'values' => $this->valuesFit($haystack, $brief) * $profile->weight('values', 10),
             'occasion' => $this->occasionFit($haystack, $brief) * $profile->weight('occasion', 0),
+            /*
+             * Zero by default, and zero for `for_someone` on purpose.
+             *
+             * Buying for another person is the case `surprise()` exists for —
+             * "something stocked by every shop is something they have already
+             * been shown". Rewarding demand here would pull directly against
+             * that and turn the Whisperer into a chart. Your own wishlist is the
+             * opposite question: nobody wants a surprising kettle, they want the
+             * good one, so `for_myself` carries a small weight.
+             *
+             * This is the difference SuggestionProfile exists to hold.
+             */
+            'demand' => $this->demand->score($brief->market, $group->id) * $profile->weight('demand', 0),
         ];
 
         return new Suggestion(

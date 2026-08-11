@@ -110,6 +110,24 @@ person told us who they are shopping for; "we found nothing" throws that away.
 | `surprise` | 20 | From [the Serendipity Engine](serendipity.md). |
 | `vibe` | 10 | A nudge, never a filter — someone who said "playful" still wants the good headphones if headphones are the right answer. |
 | `values` | 10 | Sustainable / local / handmade. |
+| `demand` | **0** | Bestseller-chart strength. Zero here is the decision — see below. |
+
+**`demand` is weighted zero for `for_someone` on purpose.** We hold a real demand signal now (see
+[popularity-charts.md](popularity-charts.md)), and this is the one place it must not be spent.
+`surprise` exists to stop the best-stocked product winning every tie; paying for popularity alongside
+it cancels that out and turns the Whisperer into a chart — while looking like an improvement. The
+`for_myself` profile weights it 5, because that is the opposite question: nobody wants a surprising
+kettle on their own wishlist, they want the one that turns out to be good. This split is exactly what
+`SuggestionProfile` exists to hold, and
+`SuggestionEngineDemandTest::chart_data_does_not_move_a_gift_suggestion` asserts the gift output is
+byte-identical with and without chart data.
+
+Chart products still *reach* the scorer. The candidate pool is capped at 300 and ordered by
+`merchant_count`, and a bestseller pulled from one retailer's chart is sold by that retailer alone —
+so it sorted last and fell off the end, meaning the things people demonstrably buy were
+systematically absent with nothing in the output to show it. A sixth of the pool is now reserved for
+chart-backed groups, through the same query builder so `avoid` and the budget bind identically. It
+can add candidates; it cannot reorder them.
 
 **An unanswered question scores 0.5, not 0.** "Does not apply" is not "scores badly" — scoring a
 skipped question as zero would silently shrink the total for everyone who skipped it, and the wizard

@@ -10,6 +10,7 @@ use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Rules\SafeExternalUrl;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ItemSaver;
 use App\Support\CurrentMarket;
@@ -131,15 +132,27 @@ class WishlistItemController extends Controller
         $owner = Owner::fromRequest($request);
         abort_unless($owner->exists(), 403);
 
+        $manual = $request->input('source') === Source::Manual->value;
+
         $validated = $request->validate([
             // Either a group we hold, or a source + id we can re-fetch. A live
             // bol result and an Amazon product have neither a group nor a
             // stored price, and both are reachable from search.
             'group_id' => ['nullable', 'integer', 'required_without:source'],
             'source' => ['nullable', 'string', 'in:'.implode(',', Source::values()), 'required_without:group_id'],
-            'external_id' => ['nullable', 'string', 'max:190', 'required_with:source'],
-            'title' => ['nullable', 'string', 'max:500'],
+
+            /*
+             * `manual` is the one source with nothing to re-fetch: it is not a
+             * product we can look up anywhere, so demanding an id it cannot have
+             * would make the only hand-written entry impossible.
+             */
+            'external_id' => ['nullable', 'string', 'max:190', $manual ? 'prohibited' : 'required_with:source'],
+
+            // For every other source this is a hint the saver may ignore. Here
+            // it is the entire item, so it is required and it is what renders.
+            'title' => [$manual ? 'required' : 'nullable', 'string', 'max:500'],
             'image_url' => ['nullable', 'url', 'max:1024'],
+            'url' => ['nullable', 'string', 'max:2048', new SafeExternalUrl],
             'price' => ['nullable', 'integer', 'min:0'],
             'wishlist_id' => ['nullable', 'uuid'],
             'note' => ['nullable', 'string', 'max:500'],
@@ -179,6 +192,26 @@ class WishlistItemController extends Controller
             }
 
             $saver->saveGroup($list, $group, $current, $validated['note'] ?? null);
+
+            return back()->with('success', $this->confirm($list));
+        }
+
+        /*
+         * Something we do not sell.
+         *
+         * Before this, a list could only ever hold things we happen to stock —
+         * so the honest answer to "a voucher for the climbing gym" was to leave
+         * it off, and a list with the real present missing is a list that gets
+         * abandoned. Nothing is fetched from the link; see `ItemSaver`.
+         */
+        if ($validated['source'] === Source::Manual->value) {
+            $saver->saveManual(
+                list: $list,
+                title: $validated['title'],
+                url: $validated['url'] ?? null,
+                price: $validated['price'] ?? null,
+                note: $validated['note'] ?? null,
+            );
 
             return back()->with('success', $this->confirm($list));
         }

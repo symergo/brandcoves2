@@ -103,9 +103,39 @@ The exclusion list travels in the URL, not in the session: it makes "show me mor
 back-button-safe. It is truncated to 60 ids server-side so a hand-edited URL cannot become an
 unbounded `IN` clause.
 
-Each card states its loudest signal — "almost no shop stocks it" — rather than asserting that the
-product is surprising. A reader can check the first claim on the product page. They cannot check the
-second, and they will not take it on faith.
+### The card says what the thing is, not why we picked it
+
+Changed 2026-08-10. Each card used to carry its loudest scoring signal — "almost no shop stocks it",
+"a corner of the catalogue nobody browses", "a brand you probably have not heard of". The reasoning
+was that a checkable claim beats an assertion, which is true and was the wrong thing to put there.
+
+Read six at a time down a grid, every one of those lines is a sentence about *our ranking* and none
+of them is about the object in the photograph. A visitor looking at an unfamiliar product does not
+need to be told it is unfamiliar — that is the one thing they can already see. What they cannot see
+is what it **is**, and the title alone rarely says ("Kärcher SC 3 Upright EasyFix").
+
+So the line is now a description, taken from the merchant copy on the offers beneath the group, via
+`App\Services\Catalogue\Excerpt`. The scoring signals still exist and still rank the page; they
+simply no longer narrate it. `surprise.why.*` is gone from the language files.
+
+Three things this had to get right, all of them because feed descriptions are the least disciplined
+column in the catalogue:
+
+- **Tags become a space before they are stripped.** `strip_tags()` alone turns
+  `<li>Bluetooth</li><li>ANC</li>` into `BluetoothANC` — two real words welded into a nonsense one,
+  which is worse than either the markup or nothing.
+- **A scrap is not a description.** "Zwart", "One size" and the brand name alone all arrive in this
+  field. Under a product title they read as a rendering bug, so anything under 30 characters is
+  dropped and the card falls back to `surprise.by_brand`, or to nothing when there is no brand
+  either.
+- **Amazon is excluded at the query.** Invariant 6 — the offers are filtered to sources where
+  `allowsCatalogueStorage()` is true. A convenience read of a description column is exactly the kind
+  of thing that would quietly reproduce Amazon copy from our own store.
+
+Fetched for all six groups in one query rather than through `bestOffer` per card, which is the N+1
+this page would otherwise have shipped. The longest description wins: merchants selling the same
+product supply wildly uneven copy, and on this field length is a crude but reliable proxy for
+informativeness.
 
 ## Files
 
@@ -113,8 +143,10 @@ second, and they will not take it on faith.
 - `app/Services/Discovery/CatalogueStats.php`
 - `app/Jobs/ScoreSerendipity.php`
 - `app/Http/Controllers/SerendipityController.php`
+- `app/Services/Catalogue/Excerpt.php` — merchant description → one printable line
 - `resources/js/Pages/Surprise.tsx`
 - `tests/Feature/SerendipityTest.php`
+- `tests/Unit/ExcerptTest.php` — every shape a real feed row has arrived in
 
 ## Deferred
 

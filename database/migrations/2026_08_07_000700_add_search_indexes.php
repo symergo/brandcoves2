@@ -56,6 +56,10 @@ return new class extends Migration
         // NOTE: this function is baked into a stored generated column. Changing
         // it later does NOT rewrite existing rows; that needs an explicit
         // backfill migration.
+        //
+        // SUPERSEDED by 2026_08_10_000500, which adds description at weight D.
+        // Left as written: this is what the schema looked like on 2026-08-07,
+        // and rewriting history in a migration only makes the sequence lie.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION bc_search_vector(
                 market text,

@@ -12,8 +12,14 @@ interface Find {
     price: Cents | null
     merchantCount: number
     url: string
-    /** Which signal scored loudest — the card explains itself with it. */
-    why: string
+    /**
+     * What the thing is, from the merchant's own description.
+     *
+     * Null when no offer beneath the group carries one worth printing — feeds
+     * supply plenty of rows whose description is "Zwart" — so the card falls
+     * back rather than reserving space for a line that is not there.
+     */
+    blurb: string | null
 }
 
 interface Props {
@@ -68,12 +74,31 @@ export default function Surprise({ finds, seen }: Props) {
                             </a>
 
                             {/*
-                              A checkable claim, not an assertion. "Almost no
-                              shop stocks it" is something a reader can verify
-                              on the product page; "surprising!" is something
-                              they have to take on faith, and they will not.
+                              What it is, not why we picked it.
+
+                              This line used to carry the loudest scoring signal
+                              — "a corner of the catalogue nobody browses", "a
+                              brand you probably have not heard of". Six of
+                              those down a grid is six sentences about our
+                              ranking and none about the objects, and a visitor
+                              looking at something unfamiliar does not need to
+                              be told it is unfamiliar. That is the one thing
+                              they already know.
+
+                              Clamped rather than trimmed shorter server-side:
+                              the excerpt is already cut at a word boundary, and
+                              a fixed clamp keeps the cards on one grid line
+                              whatever the merchant wrote.
                             */}
-                            <p className="mt-2 text-sm text-ink-soft">{t(`surprise.why.${find.why}`)}</p>
+                            {find.blurb !== null ? (
+                                <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{find.blurb}</p>
+                            ) : (
+                                find.brand !== null && (
+                                    <p className="mt-2 text-sm text-ink-soft">
+                                        {t('surprise.by_brand', { brand: find.brand })}
+                                    </p>
+                                )
+                            )}
 
                             <div className="mt-auto flex items-center justify-between pt-4">
                                 <span className="font-semibold">

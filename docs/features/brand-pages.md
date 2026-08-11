@@ -8,7 +8,8 @@ date_added: 2026-08-08
 # Brand pages and on-page editorial
 
 **Every brand with three or more products gets one canonical, indexable page: a search with the
-brand preselected, with prose above it built entirely from numbers the catalogue can back up.**
+brand preselected, with the brand's own vocabulary above the grid as links and prose below it built
+entirely from numbers the catalogue can back up.**
 
 ## The problem this solves
 
@@ -36,8 +37,111 @@ month.
 
 What it adds is what a filtered search cannot have: a canonical URL, prose, and links out to Coves.
 
+The prose lives **below** the grid. Above it there is one row of links — see
+[The statistics came off the top of the page](#the-statistics-came-off-the-top-of-the-page).
+
 The brand facet is absent from its filter rail, because filtering a Sony page by brand is a control
 with one option.
+
+## The live sources are asked too
+
+**Added 2026-08-11.** A brand page showed the stored Awin index and nothing else, because the live
+half of `SearchService` fires on a search **term** and a brand page has none. bol carries a great
+deal that no Awin advertiser does, and it was invisible on the one page dedicated to the brand.
+
+The fix is one line of intent and several of care: **a brand page is a keyword search upstream and a
+filter downstream.**
+
+### Why a keyword search and not a brand filter
+
+Neither bol's catalogue API nor Amazon's PA-API takes a brand parameter on the endpoints we use.
+Both take a search term. So the only question that can be asked about Kärcher is the word "Kärcher",
+and what comes back is approximate in a way the SQL half never is.
+
+`SearchQuery::$liveTerm` carries it. Null means "the same as the term", which is the ordinary search
+page; a string is what a brand page sets; the empty string is *ask nobody*, which is distinct from
+null because null would start querying again the moment a visitor typed something.
+
+A term typed into the box on a brand page is prepended rather than dropped — `Kärcher
+hogedrukreiniger` is a better question for bol than either word, and it is the question the visitor
+actually asked.
+
+### Only on page one
+
+Page two of a brand's catalogue is `noindex` and is read by someone who has already scrolled past
+everything a live source could add. Across thousands of brand pages, asking again is a request per
+page per crawl for nothing.
+
+### The fold runs once per cache window
+
+Writing is the expensive half: an upsert plus three grouping statements, on the pages that are the
+crawl target for the entire site. `SearchQuery::liveCacheKey()` — which existed and had no caller
+until now — is the marker: **one fold per (market, live term) per `live_cache_ttl`.**
+
+The offers stay folded in the database long after the marker expires, so a throttled request renders
+exactly the page a folded one would. This also covers the search page, where the connector was
+already serving a cached payload while the write ran every time.
+
+### `BrandAttribution`: the part that makes it work at all
+
+bol's catalogue API returns **no brand field**. `BolConnector::normalise()` sets it null on purpose —
+a wrong brand is worse than none, because grouping and the brand facet both key on it.
+
+Left null, a bol offer is fetched, stored, grouped, and then hidden by the brand page's own
+`whereIn('brand', ...)`. The request would be paid for and thrown away. So the brand is worked out
+from two kinds of evidence, in order:
+
+1. **Another source already named it.** The join is on `identity_key` where `identity_kind` is `ean`
+   — the normalised, checksum-validated GTIN — **not** on the raw `products.ean` column, which holds
+   whatever the feed wrote: a UPC-A, a GTIN-8, the same number with hyphens. Two shops listing one
+   product agree on the second and routinely disagree on the first. If a feed says the thing behind
+   4548736112513 is a Sony, then bol's unbranded listing of it is a Sony. That is a lookup, not an
+   inference, and it works on the ordinary search page too, where there is no brand to compare
+   against.
+
+   The lookup spans **every market**, deliberately. Market scoping exists because tax, shipping and
+   stock differ per market — a brand name is none of those, it is a property of the physical object.
+   The markets are enumerated rather than the column dropped, because `products_identity_idx` leads
+   on `market` and an unqualified query would sequentially scan the catalogue on a request path.
+
+2. **The title leads with the brand we asked for.** Only on a brand page, only for what step 1 could
+   not settle, and only at the **start** of the title. bol titles are written "Brand Model —
+   description"; the accessories that pollute a brand search are written the other way round, and
+   *"Hoesje voor Sony WH-1000XM5"* is a case made by somebody else. A contains-match would file it
+   under Sony. Anchoring at the start costs a few genuine matches whose title leads with the category
+   and refuses the entire class of third-party accessory a brand page must not claim.
+
+Folding is done on `Str::ascii()`-normalised text for the same reason `brand_stats.slug` is:
+"Kärcher" and "Karcher" are one brand and Postgres cannot fold them the way PHP does. Two characters
+is too short to anchor on, so a brand below three characters simply gets no live offers — the safe
+failure.
+
+An offer that already carries a brand is never touched by either step. The spelling stamped is
+`aliases[0]`, which `BrandStats` writes as the most-stocked variant, so it is the same string the
+page's own heading uses.
+
+### Amazon: shown, never stored
+
+Amazon joins the moment its connector is registered, with no change to `BrandController` — the
+registry decides which sources exist. The one thing that differs is handled in `SearchService`:
+`Source::allowsCatalogueStorage()` splits the live sources into the ones that may be mirrored and the
+ones that may not, and Amazon's offers are handed back on `SearchResult::$liveOffers` to be rendered
+from the request's own fetch.
+
+This is the call site [amazon-compliance.md](amazon-compliance.md) names for search, and it was not
+enforced anywhere before: `OfferUpserter` writes what it is given, and nothing was deciding what to
+give it.
+
+They render in their own section below the grid rather than mixed into it, and the separation is the
+honest one. Every card in the grid is a physical product with every shop's price beneath it, because
+those offers are stored and grouped. These are grouped with nothing — no offer count, no shop count,
+no discount against a 30-day median, because all four are things the catalogue computes for rows it
+holds. Rendering them through `ProductCard` would mean inventing them.
+
+The price note and the direct anchor are read off `Source::requiresPriceTimestamp()` and
+`requiresDirectLink()` rather than hard-coded, so a second such source inherits its own answers. The
+throttle does **not** apply to them: there is nothing durable to show, and freshness at render is the
+condition of being allowed to display them at all.
 
 ### `?brand[]=` cannot override the path
 
@@ -45,7 +149,78 @@ with one option.
 let `/brand/sony?brand[]=Philips` render a page whose copy talks about Sony and whose results are
 Philips — wrong in the specific way that is hard to notice and impossible to defend.
 
+## The statistics came off the top of the page
+
+**Updated 2026-08-10.** A brand page used to open with four templated paragraphs: the product count,
+the categories, how many shops carry the brand, the price range, how many items sat below their
+30-day median. The search page opened with the same block, phrased for a query instead of a brand.
+
+Both are gone from above the grid. Not because any of it was untrue — the whole point of
+[the copy rule](#the-copy-rule) is that none of it could be — but because a block of numbers
+describing the grid immediately beneath it is a paragraph nobody needs. Someone who typed a brand
+name came to see that brand's products, and on a phone the statistics were most of a screen between
+them and the first card.
+
+**The facts did not disappear.** They live in the long copy below the grid, which is where a reader
+who wants them goes looking, and which is what a crawler reads the page as a document from. The copy
+rule is unchanged and still governs every sentence there.
+
+### What replaced it: the vocabulary, as links
+
+`ResultTerms` extracts the words that recur across the titles on the page — `noise cancelling`,
+`over-ear`, `cordless` — and each one renders as a link to `/{market}/search?q=<word>`.
+
+It survived the cut because it was the one part that was *not* a restatement of the grid. A count of
+products describes what the reader can already see; the vocabulary says what **kind** of thing the
+page holds, which the titles only imply. And as links the words do a second job prose could not: each
+is a live query into the same index, so the long-tail vocabulary of a category becomes navigation
+instead of a comma-separated sentence.
+
+The link carries the bare word, deliberately — **not** the word plus the brand or the query that
+found it. On a Kärcher page, `pressure washer` should reach every brand that makes one, because that
+comparison is what the site is for; `Kärcher pressure washer` is the page already open. The brand's
+own name is passed to `ResultTerms` as the query, which makes it a stopword for that page, so a
+Kärcher page cannot list "kärcher" as one of its own related terms.
+
+Empty on any variant that is `noindex` — filtered, sorted, paginated. Repeating one block of internal
+links across dozens of near-identical URLs is the doorway-page pattern with fewer words.
+
+### `BrandCopy` is gone, and so is its copy-bank surface
+
+**Completed 2026-08-11.** The service, its `brand_intro` surface, the *Brand page — opening
+paragraphs* editor and the shipped `lead_1..4` variants are all removed. Nothing rendered them after
+the term links replaced the statistics, and the half-retired state was worse than either end of it.
+
+**Why it could not be left standing.** `CopySlots` still declared the surface, so `/admin` still
+listed it and its re-seed button imported the rows straight back — onto production, where they had
+never existed. An editor could then rewrite variants and see no change on any page: work silently
+discarded by a form that reported success.
+
+**The stored rows are gone.** `2026_08_10_000600_remove_the_retired_brand_intro_copy` deletes every
+`copy_templates` row on the surface. Read from the environments before writing it: staging held 56 of
+them — 14 per language, all from one `bc:seed-copy` run on 2026-08-09, none edited since — and
+production's `copy_templates` was empty, so it is a no-op there. No editor's work was discarded, which
+is the one thing in that table that cannot be regenerated.
+
+The `CHECK` constraint on `copy_templates.surface` still permits `brand_intro`, deliberately. It is
+the only part of this a rollback could not survive: an older `bc:seed-copy` writes those rows, and it
+would fail against a constraint that had stopped accepting them.
+
+**What moved in the tests.** `CopyBankTest` used `brand_intro.lead` as its worked example in 26
+places; those now use `brand.about_3`, which is the equivalent slot on the surviving surface — always
+rendered, common placeholders only, so the placeholder-validation cases still say what they said. One
+assertion genuinely changed rather than moving: seeding used to import **four** rows for that slot
+because `lead` shipped four alternatives, and nothing ships alternatives any more, so it imports one.
+
+The four `BrandPageTest` cases that pinned the copy rule now read the rendered `narrative` prop. That
+is the third home for them — page prop, then `BrandCopy`, now the page prop again — and it is the
+right one: the rule is about what a reader is shown, and asserting it against a service proves
+nothing once no page calls that service.
+
 ## The copy rule
+
+Still the rule for every sentence the site generates. It now governs the long copy below the grid
+rather than an intro above it.
 
 **Every sentence is a fact the page can back up.**
 
@@ -188,7 +363,6 @@ page. Used by:
 |---|---|
 | Product card | Brand links to its page; plain text otherwise |
 | Search facet | Checkbox filters this page, an arrow goes to the brand page |
-| Search intro prose | Brands render as links, unlinked when they have no page |
 | Cove prose (`[[brand:X]]`) | Brand page where one exists, filtered search otherwise |
 | Brand page itself | Sibling brands in the same category |
 | Sitemap, footer | Brand index at `/{market}/brands` |
@@ -208,32 +382,31 @@ browsers resolve it by discarding one, unpredictably. It now uses the stretched-
 product link carries an `absolute inset-0` overlay, the brand link sits above it on the z-axis, and
 both are real crawlable anchors with neither inside the other.
 
-## Search-page editorial
+## `ResultTerms`: extraction, not generation
 
-The same principle applied to search results. Above the grid, only on the bare indexable page — a
-filtered or paginated variant is `noindex` anyway, and repeating the text across them is the
-doorway-page pattern.
+The one thing that still sits above the grid, on both surfaces.
 
-Every clause is read off the results themselves:
+Asking a model for "related keywords" produces plausible words the page does not contain, which is
+keyword stuffing with extra steps *and* a lie about the page's contents. Counting the words genuinely
+there cannot do either, and costs one pass over 24 titles.
 
-- how many products, and how many shop listings between them
-- the price range for the term
-- how many are below their 30-day median, and the largest saving
-- how many are sold by more than one shop — the site's whole premise, stated where it is true
-- **the words that come up across the listings**
+Excluded, each for its own reason:
 
-That last one is `ResultTerms`, and it is extraction, not generation. Asking a model for "related
-keywords" produces plausible words the page does not contain, which is keyword stuffing with extra
-steps *and* a lie about the page's contents. Counting the words genuinely there cannot do that and
-costs one pass over 24 titles. Excluded: the query's own words (echoing "bluetooth" at someone who
-searched for "bluetooth" is filler), per-language stopwords, anything under three characters, pure
-numbers, and anything appearing in only one title.
+- **The query's own words**, or the brand on a brand page. Echoing "bluetooth" at someone who searched
+  for "bluetooth" is filler, and on a brand page it is a link back to the page you are on.
+- **Per-language stopwords.** Without them the list is "de, met, voor".
+- **Anything under three characters, and pure numbers.** Model numbers and capacities are not
+  vocabulary; they are what makes a list look machine-made.
+- **Anything appearing in only one title.** A word in one of 24 listings does not characterise the
+  page — it is how a page of headphones ends up described with the word "keukenmachine".
+
+Each title contributes a word at most once, or twelve near-identical listings for one product make
+that product's model name the page's defining vocabulary.
 
 ## The long copy below the grid
 
-The intro above the results states the page's facts in four sentences. That is not enough text for a
-search engine to treat the page as a document, and a results grid has nothing else on it — strip the
-prices and titles and only markup remains.
+A results grid has nothing on it for a search engine to treat the page as a document — strip the
+prices and titles and only markup remains, and the term links above it are three words each.
 
 `PageNarrative` adds ~350–450 words **below** the products: three sections — about the brand, where
 it is sold, how to choose one — plus an FAQ and a strip of related searches. Below, not above — a shopper came for products, and several hundred words between

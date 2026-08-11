@@ -7,7 +7,9 @@ return [
     'nav' => [
         'search' => 'Buscar',
         'gift' => 'Buscador de regalos',
-        'daily' => 'Hallazgos del día',
+        'daily' => 'Cove Diaria',
+        'coves' => 'Todas las Coves',
+        'give' => 'Regalar',
         'guides' => 'Guías de compra',
         'surprise' => 'Sorpréndeme',
         'scan' => 'Escanear',
@@ -30,12 +32,6 @@ return [
         'intro' => 'Busca en bol, Amazon y cientos de tiendas a la vez, sigue una marca allá donde aparezca, y deja que el buscador de regalos convierta la descripción de una persona en algo que merezca la pena envolver.',
         'cta_gift' => 'Buscar un regalo',
         'cta_search' => 'Buscar productos',
-        'stats_label' => 'Estado del catálogo',
-        'stat_products' => 'Productos indexados',
-        'stat_comparable' => 'Con más de una oferta',
-        'stat_comparable_hint' => 'Comparables entre tiendas',
-        'stat_guides' => 'Guías de compra publicadas',
-        'empty_catalogue' => 'El catálogo está vacío. Ejecuta una importación de feeds para llenarlo:',
         'today_badge' => 'La Cove de hoy',
         'today_cta' => 'Ver los hallazgos de hoy',
         'coves_heading' => 'Coves',
@@ -62,6 +58,7 @@ return [
         'pasted_unreadable' => 'Es un enlace de Amazon, pero no lleva ningún nombre de producto que podamos leer, solo su código de Amazon. Copia el enlace largo que incluye el título del producto, o busca el producto por su nombre.',
         'pasted_shortlink' => 'Es un enlace de Amazon acortado, y no abrimos enlaces para ver adónde llevan. Ábrelo tú y pega la dirección completa, o busca el producto por su nombre.',
         'submit' => 'Buscar',
+        'searching' => 'Buscando…',
         'results_for' => 'Resultados para «:term»',
         'count' => ':count productos',
         'browse' => 'Explorar el catálogo',
@@ -92,17 +89,12 @@ return [
         'seo_term' => 'Compara :count productos de :term en bol, Amazon y cientos de tiendas. Encuentra la oferta más barata en segundos.',
 
         /*
-         * On-page copy above the results.
-         *
-         * Every clause is a fact this page can back up, the counts, the range
-         * and the brands are all read off the results themselves.
+         * El vocabulario de los resultados, encima de la cuadrícula. Sustituyó a
+         * cuatro párrafos de estadísticas: esas cifras eran ciertas, pero
+         * contaban lo que ya estaba en pantalla. Las palabras son la parte útil
+         * y, como enlaces, también son navegación.
          */
-        'intro_lead' => 'Encontramos :count productos para «:term», con :shops ofertas de tiendas entre ellos.',
-        'intro_prices' => 'Aquí los precios de :term van de :low a :high.',
-        'intro_brands' => 'Marcas en esta página:',
-        'intro_discounts' => ':count de los productos de esta página están por debajo de su precio mediano de 30 días, con un descuento máximo del :percent%.',
-        'intro_comparable' => ':count de estos :term los venden más de una tienda, así que hay una oferta más barata que encontrar en lugar de un solo precio que aceptar.',
-        'intro_terms' => 'Palabras que se repiten en estos resultados de :term: :terms.',
+        'terms_heading' => 'Frecuente en estos resultados',
         'seo_default' => 'Descubre productos y marcas en bol, Amazon y cientos de tiendas a la vez, con un enlace a cada tienda que los vende.',
     ],
 
@@ -124,25 +116,10 @@ return [
         'related_heading' => 'Otras marcas que la gente compara',
         'empty' => 'Ahora mismo no hay nada de :brand en stock.',
         'empty_hint' => 'Los precios y el stock se revisan dos veces al día, así que esta página cambia.',
-
-        'lead' => 'Hay :count productos de :brand en este mercado, y esta página reúne lo que sabemos de cada uno.',
-        'lead_2' => ':brand, tal como se vende aquí: :count productos, recogidos de todas las tiendas que seguimos.',
-        'lead_3' => 'Esto es :brand en este mercado: :count productos, una ficha por producto y no una por anuncio.',
-        'lead_4' => ':count productos de :brand, todo lo que tenemos sobre la marca en un sitio.',
-
-        'shops_named' => ':shop tiene más :brand que cualquier otra tienda que sigamos, y :count tiendas en total venden la marca. Una marca que venden varias tiendas tiene un precio de mercado; la que vende una sola tiene un precio y nada con qué contrastarlo.',
-        'shops_count' => ':count tienda vende :brand ahora mismo, así que todavía no hay nada que comparar.',
-
-        'price_from' => 'Lo más barato de :brand aquí son :low.',
-        'price_range' => ':brand va aquí de :low a :high: una gama de productos, no una gama de márgenes.',
-        'price_range_category' => ':brand va aquí de :low a :high, y la mayor parte es :category. Lo más barato y lo más caro son objetos distintos, no el mismo a dos precios.',
-
-        'discount_named' => ':count productos de :brand están por debajo de su precio habitual ahora mismo, el mayor por un :percent%, y :shop tiene la mayoría. Medido contra nuestra propia mediana de 30 días, no contra un precio tachado de tienda.',
-        'discount_count' => ':count productos de :brand están por debajo de su precio mediano de 30 días.',
         'and' => 'y',
-        'range_single' => 'Todo lo que vemos de :brand aquí es :category. Su catálogo puede ser más amplio en otros sitios; esto es lo que de verdad se vende en este mercado.',
-        'range_multi' => ':brand aparece aquí en :categories. La mayor parte es :category, y eso dice más de una marca que cualquier cifra: es lo que el nombre significa en este mercado, y no lo que declara el catálogo mundial.',
-
+        // Ofertas de una fuente que podemos mostrar pero no almacenar.
+        'live_heading' => 'Más de :brand, recuperado ahora mismo',
+        'live_note' => 'Consultado en directo en una tienda cuyos precios no podemos conservar, así que son ofertas sueltas y no productos comparados.',
     ],
     /*
      * Texto largo bajo una parrilla de resultados. Cada línea es o un dato leído
@@ -251,6 +228,12 @@ return [
         'accepted' => 'Añadido a tu lista.',
         'dismissed' => 'Descartado.',
         'suggest' => 'Sugerir algo',
+        'invite' => '¿Sabes algo que le gustaría?',
+        'invite_hint' => 'Proponlo y que decida esa persona: solo entra en la lista si lo acepta.',
+        'search_placeholder' => 'Busca algo que le pueda gustar',
+        'none_found' => 'No hay nada que coincida. Prueba con otra palabra.',
+        'already_on_list' => 'Ese ya está en la lista.',
+        'manual_hint' => '¿No está en las tiendas que cubrimos? Proponlo igualmente, la decisión sigue siendo suya.',
     ],
 
     'registry' => [
@@ -357,6 +340,14 @@ return [
         'shared_short' => 'Compartida',
         'private_short' => 'Privada',
         'find_things' => 'Busca algo para añadir',
+        'manual_add' => 'Añádelo tú',
+        'manual_hint' => '¿No está en las tiendas que cubrimos? Escríbelo, con un enlace si lo tienes.',
+        'manual_title' => '¿Qué es?',
+        'manual_url' => 'Enlace (opcional)',
+        'manual_price' => 'Precio (opcional)',
+        'manual_save' => 'Añadir',
+        'manual_no_preview' => 'No abrimos el enlace, así que se mostrará justo lo que escribas aquí.',
+        'manual_url_invalid' => 'Un enlace tiene que empezar por https://',
         'added_to' => 'Guardado en :list',
         'view_list' => 'Ver lista',
         'new_list' => 'Nueva lista',
@@ -552,32 +543,63 @@ return [
         'start_list' => 'Empezar mi lista',
         'privacy' => 'Una regla lo atraviesa todo: la persona para la que es una lista nunca sabe qué se ha reservado. Ni quién, ni cuánto, ni que haya algo.',
 
+        'manual' => 'Cómo funciona cada uno',
+        'manual_link' => 'Cómo funciona cada uno',
+        'manual_intro' => 'Nueve herramientas y los pasos de cada una. Cada botón que se nombra abajo está en la página a la que te lleva.',
+
         'wishlist_title' => 'Mi lista de deseos',
         'wishlist_body' => 'Cosas que de verdad te gustarían. Compártela y cada uno marca lo que regala, sin que tú veas nunca quién cogió qué.',
+        'wishlist_step1' => 'Busca algo que te guste y pulsa el marcador que lleva encima. El selector pregunta a qué lista; elige la tuya.',
+        'wishlist_step2' => 'Abre la lista y pulsa Compartir. Así se activa el enlace y se te muestra, listo para enviárselo a quien te pregunte qué quieres.',
+        'wishlist_step3' => 'Ellos abren el enlace y marcan lo que van a regalar. A ti nunca se te muestra que se haya marcado nada.',
 
         'giftlist_title' => 'Una lista para otra persona',
         'giftlist_body' => 'Un sitio donde reunir ideas para alguien. Privada, y nunca reservable: es trabajo previo, no una lista de deseos.',
+        'giftlist_step1' => 'Pulsa Nueva lista, elige «Para otra persona» y ponle nombre. Esta tarjeta abre ese formulario ya en esa opción.',
+        'giftlist_step2' => 'Ve añadiendo cosas según las encuentres, igual que en cualquier otra lista.',
+        'giftlist_step3' => 'Nadie puede reservar nada ni verla, así que cambia de idea las veces que quieras.',
 
         'collab_title' => 'Comprar entre varios',
         'collab_body' => 'Invita a otros a una lista para elegir juntos, o poned dinero para un regalo mayor que compre uno de vosotros.',
+        'collab_step1' => 'Abre una lista que hayas hecho para otra persona y pulsa «Quién más ve esto».',
+        'collab_step2' => 'Añade a cada co-regalador por correo. Quien puede mirar solo mira; quien puede añadir y quitar trabaja contigo.',
+        'collab_step3' => 'Elegid juntos. Si la persona tiene lista propia, es ahí donde dices qué regalas, para que nadie compre lo mismo dos veces.',
 
         'handover_title' => 'Ceder una lista',
         'handover_body' => 'Empezaste una lista para alguien antes de que estuviera aquí? Dásela cuando se una y pasa a ser su propia lista.',
+        'handover_step1' => 'Abre la lista y envíales el enlace «Pregúntaselo a ellos», para que exista una cuenta a la que cederla.',
+        'handover_step2' => 'Cuando lo hayan usado, pulsa Ceder y escribe el correo con el que se registraron.',
+        'handover_step3' => 'Confirma y la lista pasa a ser suya: pueden compartirla y otros pueden reservar en ella.',
 
         'santa_title' => 'Amigo invisible',
         'santa_body' => 'Un grupo, un sorteo, nadie sabe a quién le ha tocado quién. Cada uno puede enlazar su lista para que no vayan a ciegas.',
+        'santa_step1' => 'Pulsa Crear un grupo y ponle nombre, un presupuesto aproximado y la fecha en la que os lo daréis.',
+        'santa_step2' => 'Envía el enlace de invitación a todos. Entran con un nombre y un correo, sin cuenta, y pueden decir a quién no deben sacar.',
+        'santa_step3' => 'Cuando estén todos, pulsa Hacer el sorteo. Cada uno recibe un correo con un solo nombre: el suyo.',
 
         'registry_title' => 'Una lista de regalos',
         'registry_body' => 'Una lista con una ocasión y una fecha: boda, bebé o casa nueva. Añade una dirección y solo la ve quien haya reservado algo.',
+        'registry_step1' => 'Abre tu propia lista de deseos y pulsa Lista de regalos.',
+        'registry_step2' => 'Elige la ocasión y la fecha, y añade una dirección de envío si te van a mandar las cosas.',
+        'registry_step3' => 'Compártela como cualquier lista. Se comporta igual: la gente reserva y a ti nunca se te dice qué.',
 
         'quiz_title' => '¿Cuánto te conocen?',
         'quiz_body' => 'Convierte tu lista en un quiz: cuatro cosas, una está de verdad en ella. Se comparte la puntuación, no las respuestas.',
+        'quiz_step1' => 'Abre tu lista y pulsa Compartir.',
+        'quiz_step2' => 'Pulsa Quiz y luego «Crear un quiz con esta lista».',
+        'quiz_step3' => 'Manda el enlace. Cinco rondas de cuatro productos, un intento por persona.',
 
         'suggestions_title' => 'Sugerencias',
         'suggestions_body' => 'Quien te conoce puede proponer cosas para tu lista. No aparece nada hasta que tú digas que sí.',
+        'suggestions_step1' => 'Comparte tu lista de deseos. Una sugerencia solo puede venir de alguien que tenga el enlace.',
+        'suggestions_step2' => 'Cuando llega una, espera arriba del todo con el nombre de quien la envió.',
+        'suggestions_step3' => 'Pulsa «Añadir» y pasa a la lista, o «No, gracias» y desaparece. No aparece nada hasta que tú decidas.',
 
         'whisperer_title' => 'Gift Whisperer',
         'whisperer_body' => 'Describe a alguien y recibe cuatro ideas, cada una con su motivo. Para cuando sabes para quién es, pero no qué.',
+        'whisperer_step1' => 'Responde seis preguntas cortas sobre esa persona: quién es, qué le gusta, cuánto quieres gastar y qué hay que evitar.',
+        'whisperer_step2' => 'Vuelven cuatro ideas, cada una con su motivo. Pide otra cosa y lo que descartaste no se ofrece nunca más.',
+        'whisperer_step3' => 'Guarda las buenas directamente en una lista para esa persona.',
     ],
 
     'reminders' => [
@@ -706,13 +728,7 @@ return [
         'reroll' => 'Enséñame más',
         'empty' => 'Aún no hay nada puntuado. Vuelve tras la próxima pasada del catálogo.',
 
-        'why' => [
-            'lexical' => 'Casi nada más se describe así',
-            'category' => 'Un rincón del catálogo por el que nadie pasa',
-            'brand' => 'Una marca de la que seguramente nunca has oído hablar',
-            'exclusivity' => 'Casi ninguna tienda lo tiene',
-            'novelty' => 'Nuevo para nosotros este mes',
-        ],
+        'by_brand' => 'De :brand',
     ],
 
     'daily' => [

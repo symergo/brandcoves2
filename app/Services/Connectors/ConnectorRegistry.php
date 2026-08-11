@@ -23,6 +23,9 @@ class ConnectorRegistry
     /** @var array<string, LiveConnector> */
     private array $live = [];
 
+    /** @var array<string, PopularityConnector> */
+    private array $popularity = [];
+
     public function registerFeed(FeedConnector $connector): void
     {
         $this->feed[$connector->source()->value] = $connector;
@@ -31,6 +34,18 @@ class ConnectorRegistry
     public function registerLive(LiveConnector $connector): void
     {
         $this->live[$connector->source()->value] = $connector;
+    }
+
+    /**
+     * A source that publishes a bestseller chart.
+     *
+     * Separate from registerLive() because the capabilities are separate: a
+     * source may do one, both or neither. bol does both from one class; Awin
+     * does neither.
+     */
+    public function registerPopularity(PopularityConnector $connector): void
+    {
+        $this->popularity[$connector->source()->value] = $connector;
     }
 
     public function feed(Source $source): FeedConnector
@@ -53,6 +68,25 @@ class ConnectorRegistry
         return array_values(array_filter(
             $this->live,
             fn (LiveConnector $c) => $c->supports($market) && ! $c->isCoolingDown(),
+        ));
+    }
+
+    /**
+     * Sources that can chart this market, cooling-down ones included.
+     *
+     * Deliberately unlike liveFor(), which filters out a backing-off connector
+     * so a *request* degrades. This one is called by a scheduled job that keeps
+     * a cursor and resumes: dropping a source here would silently skip its
+     * chart for the day and leave a hole in the rank history that nothing ever
+     * fills. The job checks the cooldown itself and stops, keeping its place.
+     *
+     * @return list<PopularityConnector>
+     */
+    public function popularityFor(Market $market): array
+    {
+        return array_values(array_filter(
+            $this->popularity,
+            fn (PopularityConnector $c) => $c->supports($market),
         ));
     }
 

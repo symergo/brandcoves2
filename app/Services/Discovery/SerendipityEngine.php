@@ -148,7 +148,40 @@ class SerendipityEngine
             $quality *= 0.8;
         }
 
-        return $quality;
+        /*
+         * Selling somewhere is evidence it is rare in the *good* way.
+         *
+         * This class opens by naming its own failure mode: "surprising" and
+         * "nobody stocks it because it is rubbish" are numerically identical if
+         * you only measure rarity. A bestseller chart is the one piece of
+         * outside evidence that separates them — someone with millions of
+         * transactions reports that people buy this.
+         *
+         * Applied to `worthSeeing` and NOWHERE ELSE. It must never reach a
+         * rarity weight, because a product's rarity is exactly what makes it
+         * worth showing and demand would argue the other way. `exclusivity`
+         * inverts merchant count on purpose; this does not touch it.
+         *
+         * A bonus with no matching penalty. Most of the catalogue has never
+         * charted, and reading that absence as "probably junk" would gate out
+         * the entire long tail — which is the only place a genuine find lives.
+         */
+        $demand = $this->stats->demand($group->id);
+
+        if ($demand > 0.0) {
+            $quality *= 1.0 + (0.25 * $demand);
+        }
+
+        /*
+         * Clamped, which is what makes the bonus above mean something specific:
+         * it can only ever undo one of the penalties, never lift a product past
+         * an unencumbered one. The case it exists for is the €6 curiosity
+         * discounted to 0.5 for being cheap — if a chart says people are
+         * actually buying it, it was cheap rather than junk, and it climbs back
+         * towards 0.6. A hard gate above (no image, ungiftable, meaningless
+         * title) is not reachable from here at all.
+         */
+        return min(1.0, $quality);
     }
 
     /**

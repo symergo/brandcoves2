@@ -7,7 +7,9 @@ return [
     'nav' => [
         'search' => 'Zoeken',
         'gift' => 'Cadeauzoeker',
-        'daily' => 'Dagtips',
+        'daily' => 'Cove van de dag',
+        'coves' => 'Alle Coves',
+        'give' => 'Geven',
         'guides' => 'Koopgidsen',
         'surprise' => 'Verras me',
         'scan' => 'Scannen',
@@ -30,12 +32,6 @@ return [
         'intro' => 'Doorzoek bol, Amazon en honderden winkels tegelijk, volg een merk waar het ook opduikt, en laat de Cadeauzoeker een omschrijving van iemand omzetten in een cadeau dat klopt.',
         'cta_gift' => 'Vind een cadeau',
         'cta_search' => 'Producten zoeken',
-        'stats_label' => 'Status van de catalogus',
-        'stat_products' => 'Producten geïndexeerd',
-        'stat_comparable' => 'Met meer dan één aanbod',
-        'stat_comparable_hint' => 'Te vergelijken tussen winkels',
-        'stat_guides' => 'Koopgidsen gepubliceerd',
-        'empty_catalogue' => 'De catalogus is leeg. Start een feed-import om hem te vullen:',
         'today_badge' => 'Cove van vandaag',
         'today_cta' => 'Bekijk de vondsten van vandaag',
         'coves_heading' => 'Coves',
@@ -62,6 +58,7 @@ return [
         'pasted_unreadable' => 'Dat is een Amazon-link, maar er staat geen productnaam in die we kunnen lezen, alleen de Amazon-code. Kopieer de langere link met de producttitel erin, of zoek het product op naam.',
         'pasted_shortlink' => 'Dat is een verkorte Amazon-link, en we openen geen links om te zien waar ze heen gaan. Open hem zelf en plak het volledige adres, of zoek het product op naam.',
         'submit' => 'Zoeken',
+        'searching' => 'Bezig met zoeken…',
         'results_for' => 'Resultaten voor ":term"',
         'count' => ':count producten',
         'browse' => 'Blader door de catalogus',
@@ -92,17 +89,12 @@ return [
         'seo_term' => 'Vergelijk :count producten voor :term op bol, Amazon en honderden winkels. Vind in seconden het goedkoopste aanbod.',
 
         /*
-         * On-page copy above the results.
-         *
-         * Every clause is a fact this page can back up, the counts, the range
-         * and the brands are all read off the results themselves.
+         * De woordenschat van de resultaten, boven het raster. Verving vier
+         * alinea's met statistiek: die getallen klopten, maar telden op wat al
+         * op het scherm stond. De woorden zijn hier het bruikbare deel, en als
+         * link zijn ze meteen navigatie.
          */
-        'intro_lead' => 'We vonden :count producten voor “:term”, samen goed voor :shops winkelaanbiedingen.',
-        'intro_prices' => 'De prijzen voor :term lopen hier van :low tot :high.',
-        'intro_brands' => 'Merken op deze pagina:',
-        'intro_discounts' => ':count van de producten op deze pagina staan onder hun 30-daagse medianprijs, met een maximale korting van :percent%.',
-        'intro_comparable' => ':count van deze :term worden door meer dan één winkel verkocht, dus er is een goedkoopste aanbieding te vinden in plaats van één prijs om te accepteren.',
-        'intro_terms' => 'Woorden die terugkomen in deze :term-resultaten: :terms.',
+        'terms_heading' => 'Komt vaak voor in deze resultaten',
         'seo_default' => 'Ontdek producten en merken op bol, Amazon en honderden winkels tegelijk, met een link naar elke winkel die ze verkoopt.',
     ],
 
@@ -124,25 +116,10 @@ return [
         'related_heading' => 'Andere merken die mensen vergelijken',
         'empty' => 'Er is momenteel niets van :brand op voorraad.',
         'empty_hint' => 'Prijzen en voorraad worden twee keer per dag opnieuw gecontroleerd, dus deze pagina verandert.',
-
-        'lead' => 'Er zijn :count producten van :brand in deze markt, en deze pagina verzamelt wat we van elk ervan weten.',
-        'lead_2' => ':brand, zoals het hier verkocht wordt: :count producten, uit elke winkel die we volgen.',
-        'lead_3' => 'Dit is :brand in deze markt — :count producten, één kaart per product in plaats van één per aanbieding.',
-        'lead_4' => ':count producten van :brand, alles wat we over het merk hebben op één plek.',
-
-        'shops_named' => ':shop heeft meer :brand dan elke andere winkel die we volgen, en in totaal verkopen :count winkels het merk. Een merk dat bij meerdere winkels ligt heeft een marktprijs; bij één winkel is er een prijs en niets om die tegen af te zetten.',
-        'shops_count' => 'Op dit moment verkoopt :count winkel :brand, dus er valt hier nog niets te vergelijken.',
-
-        'price_from' => 'Het goedkoopste van :brand is hier :low.',
-        'price_range' => ':brand loopt hier van :low tot :high — een reeks producten, geen reeks marges.',
-        'price_range_category' => ':brand loopt hier van :low tot :high, en het meeste daarvan is :category. Het goedkoopste en het duurste zijn andere dingen, niet hetzelfde ding met twee prijzen.',
-
-        'discount_named' => ':count producten van :brand staan nu onder hun gebruikelijke prijs, het grootste verschil is :percent%, en :shop heeft er de meeste. Gemeten tegen onze eigen mediaan over 30 dagen, niet tegen een doorgestreepte winkelprijs.',
-        'discount_count' => ':count producten van :brand staan nu onder hun mediaanprijs over 30 dagen.',
         'and' => 'en',
-        'range_single' => 'Alles wat we hier van :brand zien is :category. Elders is het assortiment misschien breder; dit is het deel dat in deze markt echt verkocht wordt.',
-        'range_multi' => ':brand duikt hier op in :categories. Het meeste is :category, en dat zegt meer over een merk dan welk cijfer ook: het is waar de naam in deze markt voor staat, en niet wat de wereldwijde catalogus beweert.',
-
+        // Aanbiedingen van een bron die we wel mogen tonen maar niet bewaren.
+        'live_heading' => 'Meer van :brand, zojuist opgehaald',
+        'live_note' => 'Live opgehaald bij een winkel waarvan we de prijzen niet mogen bewaren, dus dit zijn losse aanbiedingen en geen vergeleken producten.',
     ],
     /*
      * Lange tekst onder een resultatenraster.
@@ -255,6 +232,12 @@ return [
         'accepted' => 'Op je lijst gezet.',
         'dismissed' => 'Afgewezen.',
         'suggest' => 'Stel iets voor',
+        'invite' => 'Weet jij iets dat ze leuk zouden vinden?',
+        'invite_hint' => 'Draag het aan, zij beslissen. Het komt alleen op de lijst als ze het accepteren.',
+        'search_placeholder' => 'Zoek iets dat ze leuk zouden vinden',
+        'none_found' => 'Daar kwam niets uit. Probeer een ander woord.',
+        'already_on_list' => 'Die staat al op de lijst.',
+        'manual_hint' => 'Niet te vinden bij de winkels die we volgen? Draag het toch aan, zij beslissen nog steeds.',
     ],
 
     'registry' => [
@@ -361,6 +344,14 @@ return [
         'shared_short' => 'Gedeeld',
         'private_short' => 'Privé',
         'find_things' => 'Zoek iets om toe te voegen',
+        'manual_add' => 'Zet er zelf iets op',
+        'manual_hint' => 'Niet te vinden bij de winkels die we volgen? Typ het zelf in, met een link als je die hebt.',
+        'manual_title' => 'Wat is het?',
+        'manual_url' => 'Link (optioneel)',
+        'manual_price' => 'Prijs (optioneel)',
+        'manual_save' => 'Zet erop',
+        'manual_no_preview' => 'We openen de link niet, dus er komt precies te staan wat jij hier typt.',
+        'manual_url_invalid' => 'Een link moet met https:// beginnen',
         'added_to' => 'Bewaard in :list',
         'view_list' => 'Bekijk lijst',
         'new_list' => 'Nieuw lijstje',
@@ -556,32 +547,63 @@ return [
         'start_list' => 'Begin mijn wenslijst',
         'privacy' => 'Een regel loopt overal doorheen: degene voor wie een lijst is, komt nooit te weten wat er geclaimd is. Niet wie, niet hoeveel, en niet dat er iets is.',
 
+        'manual' => 'Hoe alles werkt',
+        'manual_link' => 'Hoe alles werkt',
+        'manual_intro' => 'Negen hulpmiddelen, met de stappen erbij. Elke knop die hieronder genoemd wordt, staat op de pagina waar je terechtkomt.',
+
         'wishlist_title' => 'Mijn wenslijst',
         'wishlist_body' => 'Dingen die je echt leuk zou vinden. Deel hem en mensen kunnen aangeven wat zij kopen, zonder dat jij ooit ziet wie wat nam.',
+        'wishlist_step1' => 'Zoek iets dat je leuk vindt en druk op de bladwijzer erop. De keuzelijst vraagt naar welk lijstje het moet; kies je eigen.',
+        'wishlist_step2' => 'Open het lijstje en druk op Delen. Daarmee gaat de link aan en zie je hem staan, klaar om te sturen naar wie ernaar vraagt.',
+        'wishlist_step3' => 'Zij openen de link en geven aan wat zij kopen. Jij krijgt nooit te zien dat er iets is aangegeven.',
 
         'giftlist_title' => 'Een lijst voor iemand anders',
         'giftlist_body' => 'Een plek om ideeen te verzamelen voor een persoon. Prive voor jou, en nooit claimbaar, want het is voorwerk en geen verlanglijst.',
+        'giftlist_step1' => 'Druk op Nieuw lijstje, kies "Voor iemand anders" en geef de persoon een naam. Deze kaart opent dat formulier meteen op die stand.',
+        'giftlist_step2' => 'Zet er dingen op zodra je ze tegenkomt, net als bij elk ander lijstje.',
+        'giftlist_step3' => 'Er kan niets geclaimd worden en niemand anders ziet het, dus je mag zo vaak van gedachten veranderen als je wilt.',
 
         'collab_title' => 'Samen kopen',
         'collab_body' => 'Nodig anderen uit op een cadeaulijst zodat jullie samen kunnen kiezen, of leg samen in voor een groter cadeau dat een van jullie koopt.',
+        'collab_step1' => 'Open een lijstje dat je voor iemand anders maakte en druk op "Wie dit nog meer ziet".',
+        'collab_step2' => 'Voeg elke mede-koper toe met een e-mailadres. Wie mag kijken kijkt alleen; wie mag toevoegen en verwijderen kan er ook in werken.',
+        'collab_step3' => 'Kies samen. Heeft de persoon een eigen wenslijst, dan geef je daar aan wat jij koopt, zodat niemand hetzelfde koopt.',
 
         'handover_title' => 'Geef een lijst door',
         'handover_body' => 'Een lijst begonnen voor iemand die er nog niet was? Geef hem door zodra ze meedoen, dan wordt het hun eigen wenslijst.',
+        'handover_step1' => 'Open het lijstje en stuur ze de link "Vraag het ze zelf", zodat er een account is om het aan te geven.',
+        'handover_step2' => 'Zodra ze die gebruikt hebben, druk je op Doorgeven en vul je het e-mailadres in waarmee ze zich aanmeldden.',
+        'handover_step3' => 'Bevestig, en het lijstje is van hen: zij kunnen het delen en anderen kunnen eruit claimen.',
 
         'santa_title' => 'Secret Santa',
         'santa_body' => 'Een groep, een trekking, niemand weet wie wie heeft. Iedereen kan zijn eigen wenslijst koppelen, zodat hun Santa niet hoeft te gokken.',
+        'santa_step1' => 'Druk op Start een groep en geef hem een naam, ongeveer wat iedereen uitgeeft, en de datum waarop jullie uitwisselen.',
+        'santa_step2' => 'Stuur de uitnodigingslink naar iedereen. Ze doen mee met een naam en een e-mailadres, zonder account, en kunnen zeggen wie ze niet mogen trekken.',
+        'santa_step3' => 'Zit iedereen erin, druk dan op Trekken. Iedereen krijgt een mail met daarin een naam: alleen die van henzelf.',
 
         'registry_title' => 'Een geschenkenlijst',
         'registry_body' => 'Een wenslijst met een gelegenheid en een datum, voor een huwelijk, een baby of een nieuwe woning. Zet er een adres bij: alleen wie iets geclaimd heeft, ziet het.',
+        'registry_step1' => 'Open je eigen wenslijst en druk op Geschenkenlijst.',
+        'registry_step2' => 'Kies de gelegenheid en de datum, en zet er een adres bij als mensen dingen moeten opsturen.',
+        'registry_step3' => 'Deel hem zoals elk ander lijstje. Hij gedraagt zich ook zo: mensen claimen, en jou wordt nooit verteld wat.',
 
         'quiz_title' => 'Hoe goed kennen ze je?',
         'quiz_body' => 'Maak van je wenslijst een quiz: vier dingen, een ervan staat er echt op. Je deelt de score, niet de antwoorden.',
+        'quiz_step1' => 'Open je lijstje en druk op Delen.',
+        'quiz_step2' => 'Druk op Quiz en dan op "Maak een quiz van dit lijstje".',
+        'quiz_step3' => 'Stuur de quizlink rond. Vijf rondes van vier dingen, een poging per persoon.',
 
         'suggestions_title' => 'Suggesties',
         'suggestions_body' => 'Mensen die je kennen kunnen dingen voorstellen voor je lijst. Er komt niets op te staan tot jij ja zegt.',
+        'suggestions_step1' => 'Deel je wenslijst. Een suggestie kan alleen komen van iemand die de link heeft.',
+        'suggestions_step2' => 'Komt er een binnen, dan wacht hij bovenaan het lijstje, met de naam van wie hem stuurde.',
+        'suggestions_step3' => 'Druk op "Zet erop" en hij komt op het lijstje, of op "Liever niet" en hij verdwijnt. Er komt niets op te staan voordat jij beslist.',
 
         'whisperer_title' => 'Gift Whisperer',
         'whisperer_body' => 'Beschrijf iemand en krijg vier ideeen, elk met de reden waarom. Voor als je weet voor wie het is, maar niet wat.',
+        'whisperer_step1' => 'Beantwoord zes korte vragen over die persoon: wie het is, waar diegene van houdt, wat je wilt uitgeven, en wat vooral niet.',
+        'whisperer_step2' => 'Je krijgt vier ideeen terug, elk met de reden waarom. Vraag om iets anders en wat je wegstuurde komt nooit meer terug.',
+        'whisperer_step3' => 'Zet de goede meteen op een lijstje voor die persoon.',
     ],
 
     'reminders' => [
@@ -710,13 +732,7 @@ return [
         'reroll' => 'Laat meer zien',
         'empty' => 'Nog niets beoordeeld. Kom terug na de volgende catalogusronde.',
 
-        'why' => [
-            'lexical' => 'Bijna niets anders wordt zo omschreven',
-            'category' => 'Een hoek van de catalogus waar niemand komt',
-            'brand' => 'Een merk waar je waarschijnlijk nooit van hoorde',
-            'exclusivity' => 'Bijna geen winkel heeft het',
-            'novelty' => 'Deze maand nieuw bij ons',
-        ],
+        'by_brand' => 'Van :brand',
     ],
 
     'daily' => [
