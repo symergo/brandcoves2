@@ -118,6 +118,7 @@ return [
         'empty_hint' => 'Los precios y el stock se revisan dos veces al día, así que esta página cambia.',
         'and' => 'y',
         // Ofertas de una fuente que podemos mostrar pero no almacenar.
+        'narrowed_to' => 'Acotado a',
         'live_heading' => 'Más de :brand, recuperado ahora mismo',
         'live_note' => 'Consultado en directo en una tienda cuyos precios no podemos conservar, así que son ofertas sueltas y no productos comparados.',
     ],

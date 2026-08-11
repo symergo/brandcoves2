@@ -338,11 +338,23 @@ class SearchTest extends TestCase
             'term',
         );
 
-        // Each word is a search for that word: the long-tail vocabulary of the
-        // category as navigation, rather than a comma-separated sentence.
-        $this->assertSame('/be-nl/search?q=Draadloze', $terms['Draadloze'] ?? null);
+        /*
+         * The word is ADDED to the query, not swapped in for it.
+         *
+         * These used to carry the bare word — `?q=Draadloze` — on the reasoning
+         * that the bare word is the whole category. That was wrong about what
+         * the click means: somebody reading "Draadloze" under a page of
+         * noise-cancelling results is refining, not restarting, and a fresh
+         * search throws away the word they typed. Widening is what the search
+         * box is for.
+         */
+        $this->assertSame(
+            '/be-nl/search?q='.urlencode('ruisonderdrukkende Draadloze'),
+            $terms['Draadloze'] ?? null,
+        );
 
-        // The query's own word is not offered back — the reader has just typed it.
+        // The query's own word is not offered back — the reader has just typed
+        // it, and adding it again would change nothing.
         $this->assertArrayNotHasKey('ruisonderdrukkende', $terms);
 
         // Nothing on a filtered variant. It is noindex anyway, and one block of

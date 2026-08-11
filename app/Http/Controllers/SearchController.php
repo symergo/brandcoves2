@@ -291,6 +291,22 @@ class SearchController extends Controller
      * comma-separated sentence. Extracted from the titles on the page, never
      * generated — see ResultTerms.
      *
+     * ## They narrow the search rather than replacing it
+     *
+     * **Changed 2026-08-11.** Each link used to carry the bare word — "over-ear"
+     * on its own rather than "koptelefoon over-ear" — on the reasoning that the
+     * bare word is the whole category and the pair is the page already open.
+     *
+     * That was wrong about what the click means. Somebody reading "over-ear"
+     * under a page of headphones is refining, not restarting: they want the
+     * over-ear ones *of these*. Sending them to a fresh search for "over-ear"
+     * discards the word they typed and answers a question they did not ask.
+     *
+     * So the word is **added**: `?q=koptelefoon over-ear`. The suggestions on the
+     * next page are extracted from the titles that survived, so every one of them
+     * is a word the current result set can still answer and the path cannot
+     * dead-end in zero results. Widening is what the search box is for.
+     *
      * ## Why the same guard as the narrative
      *
      * Empty on thin pages. A filtered or paginated variant is `noindex` anyway,
@@ -311,12 +327,11 @@ class SearchController extends Controller
             $query->term,
         );
 
+        $base = $current->url('search');
+
         return array_map(fn (string $term) => [
             'term' => $term,
-            // The bare term, not the term plus the query that found it. These
-            // are meant to widen the search — "over-ear" on its own is the whole
-            // category, where "koptelefoon over-ear" is the page already open.
-            'url' => $current->url('search').'?q='.urlencode($term),
+            'url' => $base.'?q='.urlencode(trim($query->term.' '.$term)),
         ], $terms);
     }
 

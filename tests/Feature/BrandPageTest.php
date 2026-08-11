@@ -307,13 +307,9 @@ class BrandPageTest extends TestCase
         $terms = array_column($props['terms'], 'url', 'term');
         $this->assertNotSame([], $terms, 'expected words extracted from the product titles');
 
-        /*
-         * A search for the word, not a filter on this brand. The point of the
-         * link is to leave: "koptelefoon" is every brand that makes one, which
-         * is the comparison the site exists for, where "Aurex koptelefoon" is
-         * the page already open.
-         */
-        $this->assertSame('/be-nl/search?q=koptelefoon', $terms['koptelefoon'] ?? null);
+        // Where the link goes is pinned by
+        // a_term_narrows_the_brand_page_instead_of_leaving_it.
+        $this->assertArrayHasKey('koptelefoon', $terms);
 
         // The brand's own name is excluded, or the page links to itself.
         $this->assertArrayNotHasKey('Aurex', $terms);
@@ -405,10 +401,10 @@ class BrandPageTest extends TestCase
                 // characteristic term of its own results.
                 $this->assertArrayNotHasKey('koptelefoon', $lowered);
 
-                // Every word is a link to a search for that word, which is what
-                // makes this navigation rather than a sentence.
+                // Every word narrows the search it came from rather than
+                // replacing it: the reader is refining, not restarting.
                 foreach ($terms as $term => $url) {
-                    $this->assertSame('/be-nl/search?q='.urlencode((string) $term), $url);
+                    $this->assertSame('/be-nl/search?q='.urlencode("koptelefoon {$term}"), $url);
                 }
             });
     }
@@ -653,31 +649,94 @@ class BrandPageTest extends TestCase
     }
 
     #[Test]
-    public function a_typed_term_is_asked_alongside_the_brand(): void
+    public function only_the_canonical_page_asks(): void
     {
         $this->seedBrand('Aurex');
+
+        // Page two is noindex and is read by someone who has already scrolled
+        // past everything a live source could add.
         $this->fakeBol([]);
+        $this->get('/be-nl/brand/aurex?page=2')->assertOk();
+        Http::assertNothingSent();
 
+        /*
+         * A sub-search is the one that matters. The term chips build `?q=` up a
+         * word at a time, which is a combinatorial URL space over the pages that
+         * are already the site's crawl target — one upstream search per URL
+         * would have background crawling and live visitors draining the same
+         * rate-limit bucket.
+         *
+         * Nothing is lost: the bare page's pull already folded bol's Aurex
+         * offers into the index, and the sub-search filters that index.
+         */
+        $this->fakeBol([]);
         $this->get('/be-nl/brand/aurex?q=koptelefoon')->assertOk();
-
-        // Not dropped and not used alone: "Aurex koptelefoon" is a better
-        // question for bol than either word, and it is the one asked.
-        Http::assertSent(fn (Request $request) => str_contains($request->url(), '/products/search')
-            && $request['search-term'] === 'Aurex koptelefoon');
+        Http::assertNothingSent();
     }
 
     #[Test]
-    public function page_two_asks_nobody(): void
+    public function a_term_narrows_the_brand_page_instead_of_leaving_it(): void
     {
         $this->seedBrand('Aurex');
-        $this->fakeBol([]);
 
-        // Page two is noindex and is being read by someone who has already
-        // scrolled past everything a live source could add. Asking again costs
-        // a request per page per crawl, across thousands of brand pages.
-        $this->get('/be-nl/brand/aurex?page=2')->assertOk();
+        $terms = array_column(
+            $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props']['terms'],
+            'url',
+            'term',
+        );
 
-        Http::assertNothingSent();
+        /*
+         * These used to point at `/search?q=koptelefoon` — the bare word, so it
+         * would reach every brand that makes one. Somebody standing on a Aurex
+         * page is not asking to be shown other brands; they are asking which
+         * Aurex products are the koptelefoons.
+         */
+        $this->assertSame('/be-nl/brand/aurex?q=koptelefoon', $terms['koptelefoon'] ?? null);
+    }
+
+    #[Test]
+    public function a_second_term_is_added_to_the_first(): void
+    {
+        $this->seedBrand('Aurex');
+
+        $props = $this->get('/be-nl/brand/aurex?q=koptelefoon')->assertOk()->viewData('page')['props'];
+
+        $terms = array_column($props['terms'], 'url', 'term');
+
+        // Every suggestion is read off the titles that survived the first click,
+        // so the path narrows and cannot dead-end in zero results.
+        $this->assertNotSame([], $terms);
+
+        foreach ($terms as $term => $url) {
+            $this->assertSame('/be-nl/brand/aurex?q='.urlencode("koptelefoon {$term}"), $url);
+        }
+
+        // And a word already active is never suggested again: clicking it would
+        // change nothing.
+        $this->assertArrayNotHasKey('koptelefoon', $terms);
+    }
+
+    #[Test]
+    public function a_sub_searched_brand_page_is_not_indexable(): void
+    {
+        $this->seedBrand('Aurex');
+
+        /*
+         * The cost of the chips narrowing rather than leaving. `?q=` is now the
+         * widest source of URL variants a brand page has, which is the exact
+         * crawl-budget trap `/search?brand[]=` is noindex for. `follow`, because
+         * the products underneath are real pages worth reaching.
+         */
+        $this->get('/be-nl/brand/aurex?q=koptelefoon')
+            ->assertOk()
+            ->assertSee('content="noindex, follow"', escape: false)
+            ->assertSee('rel="canonical" href="'.url('/be-nl/brand/aurex').'"', escape: false);
+
+        // And it carries no narrative: several hundred words repeated across a
+        // combinatorial URL space is the doorway-page pattern at scale.
+        $this->assertNull(
+            $this->get('/be-nl/brand/aurex?q=koptelefoon')->viewData('page')['props']['narrative'],
+        );
     }
 
     #[Test]

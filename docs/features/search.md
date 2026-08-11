@@ -134,19 +134,25 @@ a description of the grid printed directly above the grid. On a phone it was mos
 the shopper and the first card.
 
 What is there now is one row of links: the words that recur across the titles on the page, each
-pointing at `/{market}/search?q=<word>`.
+adding itself to the query — `?q=koptelefoon` plus `over-ear` becomes `?q=koptelefoon over-ear`.
 
 - **Extracted, never generated.** `App\Services\Seo\ResultTerms` counts words in the titles the page
   actually holds. Asking a model for "related keywords" invents plausible words the page does not
   contain — keyword stuffing *and* a lie about the contents. The reasoning, and every exclusion rule,
   is in [brand-pages.md](brand-pages.md#resultterms-extraction-not-generation).
-- **The bare word, not the word plus the query.** These links exist to *widen*: `over-ear` should
-  reach the whole category, where `koptelefoon over-ear` is the page already open.
+- **Added to the query, not swapped in for it.** *Changed 2026-08-11.* The link used to carry the
+  bare word, so that `over-ear` reached the whole category. That was wrong about what the click
+  means: somebody reading "over-ear" under a page of headphones is refining, not restarting, and a
+  fresh search discards the word they typed. Because the next page's suggestions are read off the
+  titles that survived, every one of them is a word the result set can still answer — the path
+  narrows and cannot dead-end. Widening is what the search box is for.
 - **Empty on any `noindex` variant** — filtered, sorted, paginated. One block of internal links
   repeated across dozens of near-identical URLs is the doorway-page pattern.
 
-The brand page carries the identical row, built the same way with the brand name as the query so it
-cannot list itself.
+The brand page carries the identical row, narrowing the brand page itself rather than leaving for a
+search, with the brand name passed as the query so it cannot list itself. It pays for the resulting
+URL space in two ways a search page does not have to — see
+[brand-pages.md](brand-pages.md#what-the-accumulation-costs-and-where-it-is-paid).
 
 The long copy *below* the grid is untouched and still carries the page's facts. Below, not above:
 several hundred words between a shopper and the first product is a worse page for them, and Google

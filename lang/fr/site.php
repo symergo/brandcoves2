@@ -118,6 +118,7 @@ return [
         'empty_hint' => 'Les prix et les stocks sont revérifiés deux fois par jour : cette page change.',
         'and' => 'et',
         // Offres d'une source que nous pouvons afficher mais pas conserver.
+        'narrowed_to' => 'Affiné sur',
         'live_heading' => 'Plus de :brand, récupéré à l\'instant',
         'live_note' => 'Récupéré en direct chez une boutique dont nous n\'avons pas le droit de conserver les prix : ce sont donc des offres isolées et non des produits comparés.',
     ],

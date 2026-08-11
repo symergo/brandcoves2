@@ -84,6 +84,13 @@ export default function Brand({
     const [filtersOpen, setFiltersOpen] = useState(false)
     const base = `/${market.key}/brand/${brand.slug}`
 
+    // The words currently narrowing this page. `q` on a brand page is not a
+    // search box — there is none here — it is the accumulated result of clicking
+    // the term chips, so it is shown back as chips that can be taken off again.
+    const narrowedTo = String(filters.q ?? '')
+        .split(' ')
+        .filter(Boolean)
+
     function go(changes: Record<string, unknown>) {
         const next = { ...filters, ...changes }
         // The brand is in the path, not the query string — sending it as a
@@ -126,11 +133,37 @@ export default function Brand({
                   arithmetic about them, and the facts still exist in the long
                   copy below the grid where a reader can go looking for them.
 
-                  These links go to a plain search, without the brand attached:
-                  "cordless vacuum" is every brand that makes one, which is the
-                  comparison the site is for. Narrowing back to this brand would
-                  link to the page already open.
+                  These links used to leave for a plain search on the bare word.
+                  They narrow this page instead: somebody on a Kärcher page
+                  reading "hogedrukreiniger" is asking which Kärchers those are,
+                  not to be shown Bosch. Each click adds its word to the ones
+                  already active, so the chips walk further in rather than
+                  swapping one filter for another.
                 */}
+                {narrowedTo.length > 0 && (
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <span className="text-sm text-ink-soft">{t('brand.narrowed_to')}</span>
+                        {/*
+                          Every active word is removable on its own, and the
+                          whole thing clears back to the brand. Without this the
+                          only way out of a sub-search is the browser's back
+                          button, which is not a control a page gets to rely on.
+                        */}
+                        {narrowedTo.map((word) => (
+                            <button
+                                key={word}
+                                type="button"
+                                onClick={() => go({ q: narrowedTo.filter((w) => w !== word).join(' ') })}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-ink bg-card px-3 py-1 text-sm transition hover:border-accent hover:text-accent"
+                            >
+                                {word}
+                                <span aria-hidden>×</span>
+                                <span className="sr-only">{t('search.clear_filters')}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {terms.length > 0 && (
                     <nav className="mt-4" aria-label={t('search.terms_heading')}>
                         <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>

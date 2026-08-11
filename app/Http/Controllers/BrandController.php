@@ -177,21 +177,28 @@ class BrandController extends Controller
      * `BrandAttribution` decides which results actually belong to the brand, and
      * offers that are stored then meet the same SQL filter as everything else.
      *
-     * ## Only on page one, and the visitor's words come too
+     * ## Only the canonical page asks
      *
-     * Page two of a brand's catalogue is `noindex` and is being read by someone
-     * who has already scrolled past everything a live source could add — asking
-     * again costs a request per page per crawl and changes nothing. An empty
-     * string is "ask nobody", which is distinct from null: null would fall back
-     * to the term and start querying again the moment somebody typed one.
+     * Page two is `noindex` and is being read by someone who has already
+     * scrolled past everything a live source could add. A sub-search — `?q=`,
+     * which the term chips now build up a word at a time — is worse: the chips
+     * are a combinatorial URL space over the pages that are already the site's
+     * crawl target, and a crawler walking it would fire one upstream search per
+     * URL. bol's rate limiter would clamp that, which means background crawling
+     * would be starving live visitors of the same bucket.
      *
-     * A term typed into the box on a brand page is prepended to the brand, not
-     * dropped: "Kärcher" plus "hogedrukreiniger" is a better question for bol
-     * than either word alone, and it is the question the visitor asked.
+     * It costs less than it looks. The bare page's pull has already folded bol's
+     * offers for this brand into the index, and a sub-search filters that index
+     * — so the narrowed page shows the live results, it just does not go and ask
+     * for them a second time under a longer query.
+     *
+     * An empty string is "ask nobody", and it is distinct from null: null falls
+     * back to `$term`, which would start querying again on exactly the URLs this
+     * is protecting.
      */
     private function liveTerm(BrandStat $stat, SearchQuery $query): string
     {
-        return $query->page > 1 ? '' : trim($stat->brand.' '.$query->term);
+        return $query->page > 1 || $query->hasTerm() ? '' : $stat->brand;
     }
 
     /**
@@ -218,9 +225,41 @@ class BrandController extends Controller
      * query so it is excluded: a Kärcher page listing "kärcher" as a related
      * term is a link back to itself.
      *
-     * Empty beyond page one, which is `noindex, follow` anyway. Repeating one
-     * block of internal links across every page of a brand's catalogue is the
-     * doorway-page pattern with fewer words.
+     * ## They narrow this page rather than leaving it
+     *
+     * **Changed 2026-08-11.** These used to link to `/search?q=<word>` — the bare
+     * word, without the brand, deliberately: "pressure washer" would reach every
+     * brand that makes one, which is the comparison the site is for.
+     *
+     * The trouble is where the reader is standing. Someone on a Kärcher page
+     * looking at the word "hogedrukreiniger" is not asking to be shown Bosch;
+     * they are asking *which Kärchers are the pressure washers*. The old link
+     * answered a question nobody on that page had asked, and it threw away the
+     * brand they had already chosen. A word under a brand heading reads as a
+     * filter, and it now behaves like one: `/brand/karcher?q=hogedrukreiniger`.
+     *
+     * The wider search did not disappear — it is what the search box, the
+     * related-search chips under the narrative, and every card's own title link
+     * are for.
+     *
+     * ## The word is added, not swapped in
+     *
+     * Each click **adds** its word to whatever is already being sub-searched, so
+     * the terms keep narrowing: `?q=hogedrukreiniger`, then
+     * `?q=hogedrukreiniger accu`. The words come off the titles that survived the
+     * previous click, so every suggestion is one the current result set can
+     * still answer — a narrowing path that cannot dead-end, which is exactly what
+     * a term that swapped the previous one out could not offer.
+     *
+     * The combinatorial URL space that follows is why every `?q=` variant of a
+     * brand page is `noindex, follow` and canonicalises to the bare page — see
+     * seo(). Those are the pages the crawler must not spend its budget on, and
+     * they are precisely the ones a shopper wants.
+     *
+     * Empty beyond page one. Repeating one block of internal links across every
+     * page of a brand's catalogue is the doorway-page pattern with fewer words.
+     * A sub-searched page keeps its terms, which is what makes the next
+     * narrowing step possible at all.
      *
      * @return list<array{term: string, url: string}>
      */
@@ -233,16 +272,17 @@ class BrandController extends Controller
         $terms = app(ResultTerms::class)->extract(
             $result->groups->items(),
             $market,
-            $stat->brand,
+            // The brand and whatever is already being sub-searched, so neither
+            // comes back as a suggestion: both are the page you are on, and a
+            // word already in `q` would add nothing when clicked.
+            trim($stat->brand.' '.$query->term),
         );
+
+        $base = $current->url("brand/{$stat->slug}");
 
         return array_map(fn (string $term) => [
             'term' => $term,
-            // The bare term, without the brand. These widen the search on
-            // purpose: "steelstofzuiger" is every brand that makes one, which is
-            // the comparison the site exists for. Narrowing back to this brand
-            // is a link to the page already open.
-            'url' => $current->url('search').'?q='.urlencode($term),
+            'url' => $base.'?q='.urlencode(trim($query->term.' '.$term)),
         ], $terms);
     }
 
@@ -251,10 +291,10 @@ class BrandController extends Controller
      */
     private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
     {
-        // Only on the canonical page. A sorted or paginated variant is noindex,
-        // and repeating several hundred words across them is the doorway-page
-        // pattern.
-        if ($query->page > 1 || $query->sort !== 'relevance' || $result->isEmpty()) {
+        // Only on the canonical page. A sorted, paginated or sub-searched variant
+        // is noindex, and repeating several hundred words across them is the
+        // doorway-page pattern.
+        if ($query->page > 1 || $query->sort !== 'relevance' || $query->hasTerm() || $result->isEmpty()) {
             return null;
         }
 
@@ -411,7 +451,15 @@ class BrandController extends Controller
             || $query->minPrice !== null
             || $query->maxPrice !== null
             || $query->merchantIds !== []
-            || $query->sort !== 'relevance';
+            || $query->sort !== 'relevance'
+            /*
+             * A sub-search. The term links narrow this page rather than leaving
+             * it, and each click adds a word, so `?q=` is now the widest source
+             * of URL variants a brand page has — the exact crawl-budget trap
+             * `/search?brand[]=` is noindex for. `follow`, because the results
+             * under it are real product pages worth reaching.
+             */
+            || $query->hasTerm();
 
         app(PageMeta::class)
             ->set(

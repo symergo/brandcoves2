@@ -34355,6 +34355,7 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 	const { t, n } = useTranslations();
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
 	const base = `/${market.key}/brand/${brand.slug}`;
+	const narrowedTo = String(filters.q ?? "").split(" ").filter(Boolean);
 	function go(changes) {
 		const next = {
 			...filters,
@@ -34391,24 +34392,49 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "mt-3 max-w-3xl",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "text-3xl font-semibold tracking-tight sm:text-4xl",
-				children: t("brand.heading", { brand: brand.name })
-			}), terms.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
-				className: "mt-4",
-				"aria-label": t("search.terms_heading"),
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "mb-2 text-sm text-ink-soft",
-					children: t("search.terms_heading")
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-					className: "flex flex-wrap gap-2",
-					children: terms.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-						href: item.url,
-						className: "inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink",
-						children: item.term
-					}) }, item.term))
-				})]
-			})]
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "text-3xl font-semibold tracking-tight sm:text-4xl",
+					children: t("brand.heading", { brand: brand.name })
+				}),
+				narrowedTo.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-4 flex flex-wrap items-center gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "text-sm text-ink-soft",
+						children: t("brand.narrowed_to")
+					}), narrowedTo.map((word) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+						type: "button",
+						onClick: () => go({ q: narrowedTo.filter((w) => w !== word).join(" ") }),
+						className: "inline-flex items-center gap-1.5 rounded-full border border-ink bg-card px-3 py-1 text-sm transition hover:border-accent hover:text-accent",
+						children: [
+							word,
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								"aria-hidden": true,
+								children: "×"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "sr-only",
+								children: t("search.clear_filters")
+							})
+						]
+					}, word))]
+				}),
+				terms.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
+					className: "mt-4",
+					"aria-label": t("search.terms_heading"),
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						className: "mb-2 text-sm text-ink-soft",
+						children: t("search.terms_heading")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "flex flex-wrap gap-2",
+						children: terms.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							href: item.url,
+							className: "inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink",
+							children: item.term
+						}) }, item.term))
+					})]
+				})
+			]
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]",

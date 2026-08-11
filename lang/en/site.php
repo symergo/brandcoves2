@@ -139,6 +139,7 @@ return [
          * are single listings rather than compared products, and saying so is
          * more honest than a heading that implies otherwise.
          */
+        'narrowed_to' => 'Narrowed to',
         'live_heading' => 'More :brand, fetched just now',
         'live_note' => 'Listed live from a shop whose prices we are not allowed to keep, so these are single offers rather than compared products.',
     ],

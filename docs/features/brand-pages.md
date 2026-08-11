@@ -176,14 +176,48 @@ page holds, which the titles only imply. And as links the words do a second job 
 is a live query into the same index, so the long-tail vocabulary of a category becomes navigation
 instead of a comma-separated sentence.
 
-The link carries the bare word, deliberately — **not** the word plus the brand or the query that
-found it. On a Kärcher page, `pressure washer` should reach every brand that makes one, because that
-comparison is what the site is for; `Kärcher pressure washer` is the page already open. The brand's
-own name is passed to `ResultTerms` as the query, which makes it a stopword for that page, so a
-Kärcher page cannot list "kärcher" as one of its own related terms.
+The brand's own name is passed to `ResultTerms` as the query, which makes it a stopword for that
+page, so a Kärcher page cannot list "kärcher" as one of its own related terms.
 
-Empty on any variant that is `noindex` — filtered, sorted, paginated. Repeating one block of internal
-links across dozens of near-identical URLs is the doorway-page pattern with fewer words.
+#### They narrow this page, and they accumulate
+
+**Changed 2026-08-11.** The link used to carry the **bare word** — `/search?q=pressure washer`, not
+the word plus the brand — on the reasoning that the bare word reaches every brand that makes one,
+which is the comparison the site is for.
+
+That was wrong about where the reader is standing. Somebody on a Kärcher page looking at the word
+"hogedrukreiniger" is not asking to be shown Bosch; they are asking **which Kärchers are the pressure
+washers**. The old link answered a question nobody on that page had, and threw away the brand they
+had already chosen. A word under a brand heading reads as a filter, so it now behaves like one:
+`/brand/karcher?q=hogedrukreiniger`.
+
+And each click **adds** its word rather than swapping the last one out — `?q=hogedrukreiniger`, then
+`?q=hogedrukreiniger accu`. The next page's suggestions come off the titles that survived the
+previous click, so every one of them is a word the current result set can still answer: the path
+narrows and cannot dead-end in zero results. Widening is what the search box, the related-search
+chips under the narrative, and every card's own links are for.
+
+The same change applies to the search page, where the base is the query instead of the brand:
+`?q=koptelefoon` plus `over-ear` becomes `?q=koptelefoon over-ear`.
+
+Because there is no search box on a brand page, the active words are shown back as removable chips
+above the grid. Without that the only way out of a sub-search is the browser's back button, which is
+not a control a page gets to rely on.
+
+#### What the accumulation costs, and where it is paid
+
+A combinatorial URL space, over the pages that are already the site's crawl target. Two guards:
+
+- **Every `?q=` variant of a brand page is `noindex, follow`** and canonicalises to the bare page.
+  This is the same trap `/search?brand[]=` is noindex for. It also carries no narrative, for the same
+  reason a paginated variant does not.
+- **Only the canonical brand page queries the live sources.** A crawler walking the chips would
+  otherwise fire one bol search per URL, and bol's rate limiter is a shared bucket — background
+  crawling would be starving live visitors of it. Little is lost: the bare page's pull has already
+  folded bol's offers for the brand into the index, and a sub-search filters that index.
+
+Term links are still empty beyond page one. Repeating one block of internal links across every page
+of a brand's catalogue is the doorway-page pattern with fewer words.
 
 ### `BrandCopy` is gone, and so is its copy-bank surface
 
@@ -567,6 +601,7 @@ because it is the half of the page a search engine reads literally.
 | `/{market}/brand/sony` | indexable | itself |
 | `/{market}/brand/sony?sort=price_asc` | `noindex, follow` | the bare page |
 | `/{market}/brand/sony?page=3` | `noindex, follow` | the bare page |
+| `/{market}/brand/sony?q=over-ear` | `noindex, follow` | the bare page |
 | `/{market}/search?brand[]=Sony` | `noindex, follow` | the bare term |
 | `/{market}/brands` | indexable | itself |
 

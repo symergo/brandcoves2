@@ -118,6 +118,7 @@ return [
         'empty_hint' => 'Prijzen en voorraad worden twee keer per dag opnieuw gecontroleerd, dus deze pagina verandert.',
         'and' => 'en',
         // Aanbiedingen van een bron die we wel mogen tonen maar niet bewaren.
+        'narrowed_to' => 'Beperkt tot',
         'live_heading' => 'Meer van :brand, zojuist opgehaald',
         'live_note' => 'Live opgehaald bij een winkel waarvan we de prijzen niet mogen bewaren, dus dit zijn losse aanbiedingen en geen vergeleken producten.',
     ],
