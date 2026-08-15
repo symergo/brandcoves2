@@ -70,7 +70,16 @@ rename onto the *old* domain would log everyone out on its own.
 
 ## The old domain 301s, path intact
 
-`App\Http\Middleware\RedirectLegacyHost`, registered **globally and first** in `bootstrap/app.php`.
+`App\Http\Middleware\RedirectLegacyHost`, registered **globally, and appended rather than
+prepended** in `bootstrap/app.php`.
+
+That ordering is load-bearing and got it wrong once. `prepend` puts the middleware ahead of Laravel's
+own `TrustProxies`, so `getScheme()` has not yet seen `X-Forwarded-Proto` and every redirect is
+issued as `http://`. Coolify terminates TLS and forwards plain HTTP, so the old domain sent every
+visitor to a plain-HTTP URL on a host that only speaks TLS — which the browser reports as a
+certificate error, not as a redirect problem, so it does not look like this middleware's fault.
+`the_redirect_keeps_the_scheme_the_visitor_arrived_on` is the guard; every other case in that file is
+an unproxied HTTP request, where `http://` is the correct answer.
 
 Not in the 404 handler where [`LegacyRedirects`](cutover.md) lives: that one catches v1 WordPress
 paths, which fail to route and therefore reach a 404. `brandcoves.com/be-nl/search` is a perfectly

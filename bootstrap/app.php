@@ -38,11 +38,20 @@ return Application::configure(basePath: dirname(__DIR__))
         // X-Forwarded-* header cannot originate outside the Docker network.
         $middleware->trustProxies(at: '*');
 
-        // Global and first: the old domain must be answered on every route,
-        // including the API and the sitemap, and before anything reads the host
-        // to build an absolute URL. Runs after trustProxies so the scheme it
-        // reflects back is the one the visitor actually used.
-        $middleware->prepend(RedirectLegacyHost::class);
+        /*
+         * Global, so the old domain is answered on every route — the API and
+         * the sitemap included — and before routing, because the old host is
+         * valid on every route and would otherwise answer 200 under the wrong
+         * domain rather than ever reaching a 404 handler.
+         *
+         * `append`, not `prepend`, and the difference is not cosmetic.
+         * `prepend` puts this ahead of Laravel's own TrustProxies in the global
+         * stack, so `getScheme()` has not yet seen `X-Forwarded-Proto` and
+         * every redirect is issued as `http://`. Behind Coolify that lands the
+         * visitor on a host that only speaks TLS. Appending puts it after
+         * TrustProxies and still well before routing.
+         */
+        $middleware->append(RedirectLegacyHost::class);
 
         $middleware->web(append: [
             // Order matters: the market must be resolved before Inertia shares

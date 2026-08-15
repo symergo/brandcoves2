@@ -51,6 +51,31 @@ class LegacyHostRedirectTest extends TestCase
     }
 
     #[Test]
+    public function the_redirect_keeps_the_scheme_the_visitor_arrived_on(): void
+    {
+        /*
+         * Shipped broken once, and this is the test that would have caught it.
+         *
+         * The middleware was registered with `prepend`, which puts it ahead of
+         * Laravel's TrustProxies in the global stack — so `getScheme()` had not
+         * yet seen `X-Forwarded-Proto` and every production redirect was issued
+         * as `http://`. Coolify terminates TLS and forwards plain HTTP, so the
+         * old domain sent every visitor to a plain-HTTP URL on a host that only
+         * speaks TLS, and the browser reported it as a certificate error rather
+         * than as a redirect problem.
+         *
+         * Nothing in the suite caught it because every other case here is an
+         * unproxied HTTP request, where http:// is the right answer.
+         */
+        $location = $this->withHeaders(['X-Forwarded-Proto' => 'https'])
+            ->get('http://brandcoves.com/be-nl/guides')
+            ->assertStatus(301)
+            ->headers->get('Location');
+
+        $this->assertSame('https://giftcoves.com/be-nl/guides', $location);
+    }
+
+    #[Test]
     public function a_www_variant_is_a_legacy_host_too(): void
     {
         $this->get('http://www.brandcoves.com/be-nl/guides')
