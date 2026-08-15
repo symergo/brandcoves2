@@ -24,7 +24,18 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <link rel="icon" type="image/svg+xml" href="{{ asset('icons/brandcoves.svg') }}">
     <link rel="apple-touch-icon" href="{{ asset('icons/brandcoves-512.png') }}">
-    <meta name="theme-color" content="#12232B">
+
+    {{-- The cream the page actually paints. It said #12232B, a dark teal that
+         appears nowhere in the palette, so the browser chrome on Android and the
+         iOS status bar were a colour the site does not contain. --}}
+    <meta name="theme-color" content="#f7f4ef">
+
+    {{-- When a theme switch is built it needs one more thing here: an inline
+         script, in <head>, that stamps the stored choice onto <html> before
+         anything paints. It cannot live in the React bundle — that runs after
+         first paint, so a visitor who chose dark would get a full frame of cream
+         on every navigation, which is the flash that makes a toggle feel broken.
+         The dark tokens it would switch on are already in app.css. --}}
 
     @if ($indexable)
         <meta name="robots" content="index, follow, max-image-preview:large">

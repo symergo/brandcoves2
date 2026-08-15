@@ -76,20 +76,37 @@
 }
 
 /*
- * Dark mode is a token swap, not a second stylesheet. Defined against the
- * `prefers-color-scheme` default only — an explicit in-app toggle comes later
- * and will set data-theme, which must win over the media query.
+ * The site is light. Dark is kept, and nothing turns it on yet.
+ *
+ * ## Why the OS preference stopped deciding
+ *
+ * Dark used to arrive from `prefers-color-scheme` alone, so roughly half of all
+ * visitors saw a version of the palette they had never asked this site for. The
+ * warm cream-and-terracotta scheme above is the product — it is what makes the
+ * pages read as a considered shop rather than a price-comparison spreadsheet —
+ * and a system-wide preference set for a text editor at midnight is weak
+ * evidence about how somebody wants to look at photographs of products.
+ *
+ * It is also the setting people least often know they have. It follows the OS,
+ * which follows a schedule on many phones, so the site changed appearance
+ * between two visits for a reason the visitor could not see and had no control
+ * over.
+ *
+ * ## Why the dark tokens are still here
+ *
+ * Because they are the expensive half and they are already correct. An in-app
+ * switch is undecided; when it is built, it stamps `data-theme="dark"` on
+ * `<html>` and this rule is the whole of dark mode. Deleting the tokens now
+ * would mean re-deriving five values that have already been checked against the
+ * palette, and re-deriving them is exactly where a dark mode ends up with grey
+ * cards on a black page.
+ *
+ * Nothing sets the attribute today, so this selector matches nothing today.
+ * That is intentional, and it is the cheapest possible way to keep the option.
+ *
+ * Only the surfaces move; accent, sage and amber are unchanged, because they are
+ * the brand rather than the background and they carry enough contrast on both.
  */
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme='light']) {
-        --color-cream: #17130f;
-        --color-ink: #f2ece4;
-        --color-ink-soft: #a89d93;
-        --color-line: #2f2822;
-        --color-card: #1f1a15;
-    }
-}
-
 :root[data-theme='dark'] {
     --color-cream: #17130f;
     --color-ink: #f2ece4;
