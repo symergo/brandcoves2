@@ -6,7 +6,18 @@ import Layout from './Layouts/SiteLayout'
 const appName = import.meta.env.VITE_APP_NAME ?? 'GiftCoves'
 
 createInertiaApp({
-    title: (title) => (title ? `${title} · ${appName}` : appName),
+    /*
+      The brand is appended, unless the page has already put it in its own
+      title. The Dutch homepage leads with "GiftCoves verlanglijstjes" on
+      purpose, and appending the name to that prints it twice in one tab.
+    */
+    title: (title) => {
+        if (!title) {
+            return appName
+        }
+
+        return title.includes(appName) ? title : `${title} · ${appName}`
+    },
 
     resolve: async (name) => {
         const pages = import.meta.glob('./Pages/**/*.tsx')

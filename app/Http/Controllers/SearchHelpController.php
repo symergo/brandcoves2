@@ -42,8 +42,8 @@ class SearchHelpController extends Controller
     public function __invoke(CurrentMarket $current): Response
     {
         app(PageMeta::class)->set(
-            title: __('site.search_help.title'),
-            description: __('site.search_help.intro'),
+            title: __('site.search_help.seo_title'),
+            description: __('site.search_help.seo_description'),
             canonical: url($current->url('search-help')),
             // Indexable. "How do I scan a barcode to compare prices" is a real
             // query with real intent, and this is the page that answers it.

@@ -34747,7 +34747,7 @@ function Brands({ brands }) {
 		return a.localeCompare(b);
 	});
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("brand.index_title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("brand.index_seo_title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
 			className: "text-3xl font-semibold tracking-tight sm:text-4xl",
 			children: t("brand.index_title")
@@ -35557,13 +35557,17 @@ var DiscoverCove_exports = /* @__PURE__ */ __exportAll({ default: () => Discover
 * for the same reason: "Surprise me" promises nothing a visitor can evaluate
 * in advance, so the page that sends them there has to say what arrives.
 *
-* No counts and no numbers. Everything worth counting belongs to a Cove and is
+* No counts and no totals. Everything worth counting belongs to a Cove and is
 * already on that Cove's page; a hub that totals things repeats the mistake
 * homepage.md removed from the front page.
+*
+* The Coves themselves are listed underneath, because the archive is the one
+* card here whose value is its contents rather than its promise. "Long reads
+* around a theme" cannot be evaluated; a dozen titles can.
 */
-function DiscoverCove({ urls }) {
-	const { t } = useTranslations();
-	const coves = [
+function DiscoverCove({ urls, coves }) {
+	const { t, n } = useTranslations();
+	const sections = [
 		{
 			key: "daily",
 			href: urls.daily,
@@ -35583,7 +35587,7 @@ function DiscoverCove({ urls }) {
 			what: t("discover_cove.idea_what")
 		}
 	];
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("discover_cove.title") }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("discover_cove.seo_title") }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "mx-auto max-w-4xl px-4 py-10",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
@@ -35596,27 +35600,70 @@ function DiscoverCove({ urls }) {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 				className: "mt-8 grid gap-4 sm:grid-cols-3",
-				children: coves.map((cove) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-					href: cove.href,
+				children: sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+					href: section.href,
 					className: "flex h-full flex-col gap-3 rounded-xl border border-line p-5 hover:border-accent",
 					children: [
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 							className: "text-accent",
 							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CoveIcon, {
-								name: cove.key,
+								name: section.key,
 								className: "h-8 w-8"
 							})
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 							className: "font-medium text-ink",
-							children: cove.name
+							children: section.name
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 							className: "text-sm text-ink-soft",
-							children: cove.what
+							children: section.what
 						})
 					]
-				}) }, cove.key))
+				}) }, section.key))
+			}),
+			coves.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "mt-12",
+				"aria-labelledby": "coves-heading",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-wrap items-baseline justify-between gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							id: "coves-heading",
+							className: "text-2xl font-semibold tracking-tight text-ink",
+							children: t("home.coves_heading")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+							href: urls.guides,
+							className: "text-sm font-medium text-accent hover:text-accent-dark",
+							children: [t("home.coves_all"), " →"]
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 max-w-2xl text-ink-soft",
+						children: t("home.coves_intro")
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+						children: coves.map((cove) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+							href: cove.url,
+							className: "flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+									className: "font-medium text-ink",
+									children: cove.title
+								}),
+								cove.intro && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-2 line-clamp-3 text-sm text-ink-soft",
+									children: cove.intro
+								}),
+								cove.searches > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "mt-auto pt-3 text-xs text-ink-soft/70",
+									children: t("home.coves_volume", { count: n(cove.searches) })
+								})
+							]
+						}) }, cove.url))
+					})
+				]
 			})
 		]
 	})] });
@@ -36104,7 +36151,7 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 		}
 	];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("gift_cove.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("gift_cove.seo_title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "max-w-2xl",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
@@ -36272,7 +36319,7 @@ var Index_exports$2 = /* @__PURE__ */ __exportAll({ default: () => GuidesIndex }
 function GuidesIndex({ guides }) {
 	const { t } = useTranslations();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("guides.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("guides.seo_title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "max-w-2xl",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
@@ -36562,6 +36609,109 @@ function CoveIllustration({ name, className }) {
 	});
 }
 //#endregion
+//#region resources/js/Components/HomeIllustration.tsx
+/**
+* The homepage hero drawing: the mark, at scene size.
+*
+* Same visual language as `CoveIllustration` and `ListIllustration` — one
+* stroke weight, `currentColor` for every line, the accent only ever as a
+* translucent wash — because this sits two bands above both of them and a
+* second illustration style on one page reads as two websites.
+*
+* What is different is that this one contains the actual logo. The card
+* drawings are scenes *about* a surface; this one is the brand's own shape
+* drawn large, so the headland arc here is the logo's arc — same 15:40.6
+* proportions, scaled from r=15 to r=60 — and the real mark, in its real
+* colours, is moored in the mouth of it where the buoy belongs.
+*
+* **The tile keeps the logo's palette and does not take `currentColor`.** A
+* recoloured logo is not the logo, so the three brand values are literal here
+* exactly as they are in `public/icons/giftcoves.svg`; if that file's geometry
+* changes, the arc below changes with it. Everything *around* the tile is
+* `currentColor`, which is what lets the drawing sit on any background and
+* still belong to the text beside it.
+*
+* The gift in the bay is the object the whole site is about, and it is drawn
+* inside the shelter rather than beside it — the arc is doing the sentence the
+* headline is making. One object, not three: at this size a crowd of small
+* shapes turns into texture, and the mark stops being the thing you see first.
+*
+* `aria-hidden`, like every other drawing on the site. The headline next to it
+* says what the page is; a description here would only repeat it.
+*/
+var TILE = "#12232B";
+var COVE = "#EFE6D6";
+var BUOY = "#F2A93B";
+function HomeIllustration({ className }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		viewBox: "0 0 200 176",
+		fill: "none",
+		stroke: "currentColor",
+		strokeWidth: 2,
+		strokeLinecap: "round",
+		strokeLinejoin: "round",
+		"aria-hidden": "true",
+		focusable: "false",
+		className: className ?? "h-auto w-full",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+				cx: "100",
+				cy: "88",
+				r: "50",
+				className: "fill-accent/10",
+				stroke: "none"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M134.4 38.85A60 60 0 1 0 134.4 137.15" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+				x: "66",
+				y: "84",
+				width: "44",
+				height: "34",
+				rx: "4"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+				x: "62",
+				y: "72",
+				width: "52",
+				height: "14",
+				rx: "3",
+				className: "fill-accent/20"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M88 86v32" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M87 72c-5-9-10-12-15-10a6 6 0 0 0 2 11" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M89 72c5-10 10-13 15-11a6 6 0 0 1-2 11" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("g", {
+				transform: "translate(116 66) scale(0.6875)",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+						x: "0",
+						y: "0",
+						width: "64",
+						height: "64",
+						rx: "14",
+						fill: TILE,
+						stroke: "none"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+						d: "M40.6,19.71 A15,15 0 1 0 40.6,44.29",
+						fill: "none",
+						stroke: COVE,
+						strokeWidth: "8.5",
+						strokeLinecap: "round"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+						cx: "44",
+						cy: "32",
+						r: "5",
+						fill: BUOY,
+						stroke: "none"
+					})
+				]
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Components/ListIllustration.tsx
 /**
 * The four Organise surfaces at card size, matched to `CoveIllustration`.
@@ -36683,40 +36833,89 @@ function ListIllustration({ name, className }) {
 //#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
-function Home({ today, gifting, coves }) {
+function Home({ today, gifting, coves, recentSearches }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const base = `/${market.key}`;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("home.title") }),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
 			className: "max-w-5xl",
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", {
-					className: "text-4xl font-semibold tracking-tight text-balance sm:text-5xl",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex flex-col gap-10 md:flex-row md:items-center md:gap-12",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "min-w-0 flex-1",
 					children: [
-						t("home.headline_1"),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
-						t("home.headline_2")
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", {
+							className: "text-4xl font-semibold tracking-tight text-balance sm:text-5xl",
+							children: [
+								t("home.headline_1"),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
+								t("home.headline_2")
+							]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-5 max-w-2xl text-lg text-ink-soft",
+							children: t("home.intro")
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+							action: `${base}/search`,
+							method: "get",
+							role: "search",
+							className: "mt-8 flex max-w-xl gap-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "search",
+								name: "q",
+								"aria-label": t("home.search_label"),
+								placeholder: t("home.search_placeholder"),
+								className: "min-w-0 flex-1 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "submit",
+								className: "rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark",
+								children: t("nav.search")
+							})]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-3 text-sm text-ink-soft",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: `${base}/search-help`,
+								className: "underline hover:text-accent",
+								children: t("search_help.link")
+							})
+						})
 					]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-5 max-w-2xl text-lg text-ink-soft",
-					children: t("home.intro")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "mt-8 flex flex-wrap gap-3",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-						href: `${base}/gift`,
-						className: "rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark",
-						children: t("home.cta_gift")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-						href: `${base}/search`,
-						className: "rounded-lg border border-line px-5 py-3 font-medium transition hover:border-ink",
-						children: t("home.cta_search")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(HomeIllustration, { className: "hidden w-72 shrink-0 text-ink-soft md:block lg:w-80" })]
+			})
+		}),
+		recentSearches.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-12",
+			"aria-labelledby": "recent-heading",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				id: "recent-heading",
+				className: "text-sm font-medium tracking-wide text-ink-soft uppercase",
+				children: t("home.recent_heading")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-4 grid gap-3 lg:grid-cols-3",
+				children: recentSearches.map((recent) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+					href: recent.url,
+					className: "flex items-center gap-3 rounded-card border border-line bg-card p-3 transition hover:border-ink",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "flex shrink-0 gap-1",
+						children: recent.images.map((image) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "h-10 w-10 overflow-hidden rounded bg-cream",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: image,
+								alt: "",
+								loading: "lazy",
+								className: "h-full w-full object-contain"
+							})
+						}, image))
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "min-w-0 flex-1 truncate text-sm text-ink",
+						children: recent.term
 					})]
-				})
-			]
+				}) }, recent.term))
+			})]
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-14",
@@ -36799,7 +36998,7 @@ function Home({ today, gifting, coves }) {
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 						href: `${base}/discover-cove`,
 						className: "text-sm font-medium text-accent hover:text-accent-dark",
-						children: [t("nav.discover"), " →"]
+						children: [t("nav.discover_cove"), " →"]
 					})]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -39900,6 +40099,14 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 			className: "sr-only",
 			children: searching ? t("search.searching") : ""
 		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-2 text-sm text-ink-soft",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+				href: `/${market.key}/search-help`,
+				className: "underline hover:text-accent",
+				children: t("search_help.link")
+			})
+		}),
 		pastedLink && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-3 rounded-lg border border-line bg-cream px-4 py-3 text-sm text-ink-soft",
 			children: pastedLink.shortlink ? t("search.pasted_shortlink") : pastedLink.usable ? t("search.pasted_searched", { terms: pastedLink.terms }) : t("search.pasted_unreadable")
@@ -40207,6 +40414,163 @@ function Facet({ title, items, onToggle, format }) {
 				})
 			})]
 		}, item.key))
+	})] });
+}
+//#endregion
+//#region resources/js/Pages/SearchHelp.tsx
+var SearchHelp_exports = /* @__PURE__ */ __exportAll({ default: () => SearchHelp });
+/**
+* How to search, and how the scanner works.
+*
+* Two halves, in the order a visitor meets them: the box first, because
+* everyone uses it, and the camera second, because it is the one that raises
+* questions — a page asking for a camera owes an answer about where the images
+* go before it asks.
+*
+* **Every claim here is checkable against the code.** That is the constraint
+* this page is written under, and it is why the scanner section says a miss is
+* expected rather than implying every product is findable: see
+* docs/features/barcode-scanner.md, where "only EAN-grouped products can ever
+* be found" is a designed limitation, not a bug to be papered over. A help page
+* that overpromises turns a working feature into a broken one.
+*
+* Definition lists rather than prose paragraphs. Someone reaching this page has
+* a specific question — "will it find it if I spell it wrong", "does it work on
+* my iPhone" — and is scanning for the line that answers it, not reading.
+*/
+function SearchHelp({ urls }) {
+	const { t } = useTranslations();
+	const searching = [
+		{
+			term: t("search_help.what_words_term"),
+			what: t("search_help.what_words")
+		},
+		{
+			term: t("search_help.what_typos_term"),
+			what: t("search_help.what_typos")
+		},
+		{
+			term: t("search_help.what_accents_term"),
+			what: t("search_help.what_accents")
+		},
+		{
+			term: t("search_help.what_language_term"),
+			what: t("search_help.what_language")
+		},
+		{
+			term: t("search_help.what_barcode_term"),
+			what: t("search_help.what_barcode")
+		},
+		{
+			term: t("search_help.what_amazon_term"),
+			what: t("search_help.what_amazon")
+		}
+	];
+	const narrowing = [
+		{
+			term: t("search_help.narrow_price_term"),
+			what: t("search_help.narrow_price")
+		},
+		{
+			term: t("search_help.narrow_brand_term"),
+			what: t("search_help.narrow_brand")
+		},
+		{
+			term: t("search_help.narrow_stock_term"),
+			what: t("search_help.narrow_stock")
+		},
+		{
+			term: t("search_help.narrow_comparable_term"),
+			what: t("search_help.narrow_comparable")
+		},
+		{
+			term: t("search_help.narrow_sort_term"),
+			what: t("search_help.narrow_sort")
+		},
+		{
+			term: t("search_help.narrow_terms_term"),
+			what: t("search_help.narrow_terms")
+		}
+	];
+	const scanning = [
+		{
+			term: t("search_help.scan_where_term"),
+			what: t("search_help.scan_where")
+		},
+		{
+			term: t("search_help.scan_privacy_term"),
+			what: t("search_help.scan_privacy")
+		},
+		{
+			term: t("search_help.scan_devices_term"),
+			what: t("search_help.scan_devices")
+		},
+		{
+			term: t("search_help.scan_misses_term"),
+			what: t("search_help.scan_misses")
+		},
+		{
+			term: t("search_help.scan_misread_term"),
+			what: t("search_help.scan_misread")
+		},
+		{
+			term: t("search_help.scan_manual_term"),
+			what: t("search_help.scan_manual")
+		}
+	];
+	const section = (heading, intro, rows) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+		className: "mt-10",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-xl font-semibold tracking-tight text-ink",
+				children: heading
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 max-w-2xl text-ink-soft",
+				children: intro
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
+				className: "mt-6 divide-y divide-line border-y border-line",
+				children: rows.map((row) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "py-4 sm:flex sm:gap-6",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", {
+						className: "font-medium text-ink sm:w-56 sm:shrink-0",
+						children: row.term
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+						className: "mt-1 text-ink-soft sm:mt-0",
+						children: row.what
+					})]
+				}, row.term))
+			})
+		]
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("search_help.seo_title") }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mx-auto max-w-4xl px-4 py-10",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-3xl font-semibold tracking-tight text-ink",
+				children: t("search_help.title")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 max-w-2xl text-lg text-ink-soft",
+				children: t("search_help.intro")
+			}),
+			section(t("search_help.searching_heading"), t("search_help.searching_intro"), searching),
+			section(t("search_help.narrowing_heading"), t("search_help.narrowing_intro"), narrowing),
+			section(t("search_help.scanning_heading"), t("search_help.scanning_intro"), scanning),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-10 flex flex-wrap gap-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: urls.search,
+					className: "rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark",
+					children: t("search_help.go_search")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: urls.scan,
+					className: "rounded-lg border border-line px-5 py-3 font-medium text-ink transition hover:border-ink",
+					children: t("search_help.go_scan")
+				})]
+			})
+		]
 	})] });
 }
 //#endregion
@@ -60251,6 +60615,259 @@ function FlashMessage() {
 	});
 }
 //#endregion
+//#region resources/js/Components/FlagIcon.tsx
+/**
+* The three flags on the market switcher, drawn rather than typed.
+*
+* **Not emoji.** 🇧🇪 is a regional-indicator pair, and Windows has never
+* shipped glyphs for those — Chrome and Edge on Windows render it as the
+* letters "BE", which is most desktop visitors seeing a broken control. Inline
+* SVG is the only version that looks the same everywhere, and these are three
+* rectangles and a ring of stars, so the cost is nothing.
+*
+* Deliberately unlike the rest of the site's icons: `CoveIcon` and the
+* illustrations take `currentColor` so a card can recolour them on hover, and a
+* flag cannot do that and stay a flag. These carry their own official colours
+* and are the only drawings on the site that ignore the palette.
+*
+* The hairline border is `currentColor` at low opacity rather than a fixed grey
+* so it survives on any background — without it the white band of the Dutch
+* flag dissolves into the page and the flag reads as two stripes.
+*
+* `aria-hidden`: the country's name is on the control itself, and a flag is a
+* famously bad label for a country anyway.
+*/
+/** A five-pointed star, upright, as a polygon centred on (cx, cy). */
+function star(cx, cy, outer) {
+	const points = [];
+	for (let i = 0; i < 10; i++) {
+		const angle = Math.PI / 5 * i - Math.PI / 2;
+		const radius = i % 2 === 0 ? outer : outer * .382;
+		points.push(`${(cx + radius * Math.cos(angle)).toFixed(2)},${(cy + radius * Math.sin(angle)).toFixed(2)}`);
+	}
+	return points.join(" ");
+}
+Array.from({ length: 12 }, (_, i) => {
+	const angle = Math.PI / 6 * i;
+	return star(12 + 6 * Math.sin(angle), 8 - 6 * Math.cos(angle), 1.25);
+});
+var flags = {
+	BE: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "0",
+			y: "0",
+			width: "8",
+			height: "16",
+			fill: "#000000"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "8",
+			y: "0",
+			width: "8",
+			height: "16",
+			fill: "#FAE042"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "16",
+			y: "0",
+			width: "8",
+			height: "16",
+			fill: "#ED2939"
+		})
+	] }),
+	NL: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "0",
+			y: "0",
+			width: "24",
+			height: "5.34",
+			fill: "#AE1C28"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "0",
+			y: "5.34",
+			width: "24",
+			height: "5.33",
+			fill: "#FFFFFF"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "0",
+			y: "10.67",
+			width: "24",
+			height: "5.33",
+			fill: "#21468B"
+		})
+	] }),
+	INT: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "0",
+			y: "0",
+			width: "24",
+			height: "16",
+			fill: "#12232B"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "12",
+			cy: "8",
+			r: "5.5",
+			fill: "none",
+			stroke: "#EFE6D6",
+			strokeWidth: "1.1"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ellipse", {
+			cx: "12",
+			cy: "8",
+			rx: "2.4",
+			ry: "5.5",
+			fill: "none",
+			stroke: "#EFE6D6",
+			strokeWidth: "1.1"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M6.5 8h11",
+			stroke: "#EFE6D6",
+			strokeWidth: "1.1"
+		})
+	] }),
+	ES: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+		x: "0",
+		y: "0",
+		width: "24",
+		height: "16",
+		fill: "#AA151B"
+	}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+		x: "0",
+		y: "4",
+		width: "24",
+		height: "8",
+		fill: "#F1BF00"
+	})] })
+};
+function FlagIcon({ country, className }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		viewBox: "0 0 24 16",
+		"aria-hidden": "true",
+		focusable: "false",
+		className: className ?? "h-4 w-6",
+		children: [flags[country], /* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "0.25",
+			y: "0.25",
+			width: "23.5",
+			height: "15.5",
+			fill: "none",
+			stroke: "currentColor",
+			strokeOpacity: "0.25",
+			strokeWidth: "0.5"
+		})]
+	});
+}
+//#endregion
+//#region resources/js/Components/MarketSwitcher.tsx
+/**
+* Two controls, because a visitor thinks in two things: where they buy, and
+* what they read.
+*
+* It replaced one dropdown listing "BE/NL, BE/FR, EU/EN, NL/NL". Those are
+* market keys with a slash in them — nobody has ever wanted "BE/FR", they have
+* wanted Belgium, in French — and the list grows multiplicatively with every
+* country added while saying less each time.
+*
+* **The country is flags, the language is a dropdown.** There are three
+* countries, so they all fit on one row and the current one can be *seen*
+* rather than opened; a language is a word, not a picture, and a `<select>`
+* cannot hold an SVG anyway, which settles which control gets the flags.
+*
+* **The dropdown appears only where there is a choice to make** — Belgium, and
+* nowhere else today. A select holding one option is a control that cannot be
+* operated. It is counted from the country's markets rather than hardcoded to
+* BE, so a second bilingual country would get its dropdown without anyone
+* remembering that this rule exists.
+*
+* **English is the European flag.** There is one English market and its country
+* is EU, so English is a market choice here and not a language choice; it is
+* always one click away because that flag is always on screen. Padding every
+* country's language list with it would have offered a language by quietly
+* moving the visitor to another catalogue.
+*
+* **Clicking a flag keeps your language where the country has it.** Belgium in
+* French → the Netherlands lands on Dutch, because there is no French market
+* there; Belgium in Dutch → the Netherlands stays Dutch.
+*
+* A full page load, both controls, exactly as the single dropdown did before.
+* Switching either changes the catalogue, the currency and the language, and a
+* client-side swap would leave the last market's prices on screen while the new
+* copy arrived.
+*/
+function MarketSwitcher({ id, withNames = false, className }) {
+	const { market, markets } = usePage().props;
+	const { t } = useTranslations();
+	const current = markets.find((c) => c.languages.some((l) => l.market === market.key)) ?? markets[0];
+	if (!current) return null;
+	const currentLanguage = current.languages.find((l) => l.market === market.key);
+	const go = (marketKey) => {
+		window.location.href = `/${marketKey}`;
+	};
+	const chooseCountry = (country) => {
+		const next = markets.find((c) => c.country === country);
+		if (!next) return;
+		const sameLanguage = next.languages.find((l) => l.language === currentLanguage?.language);
+		go((sameLanguage ?? next.languages[0]).market);
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: className ?? "flex items-center gap-3",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", {
+			className: "min-w-0",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("legend", {
+				className: "sr-only",
+				children: t("nav.choose_market")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "flex items-center gap-1.5",
+				children: markets.map((country) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+					title: country.name,
+					className: "flex cursor-pointer items-center gap-1.5",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "radio",
+							name: `${id}-country`,
+							value: country.country,
+							checked: country.country === current.country,
+							onChange: () => chooseCountry(country.country),
+							className: "peer sr-only"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "block rounded-[3px] opacity-50 ring-1 ring-line transition peer-checked:opacity-100 peer-checked:ring-2 peer-checked:ring-accent peer-focus-visible:ring-2 peer-focus-visible:ring-ink",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FlagIcon, {
+								country: country.country,
+								className: "block h-4 w-6 rounded-[2px]"
+							})
+						}),
+						withNames ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-sm text-ink-soft peer-checked:text-ink",
+							children: country.name
+						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "sr-only",
+							children: country.name
+						})
+					]
+				}, country.country))
+			})]
+		}), current.languages.length > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+			className: "sr-only",
+			htmlFor: `${id}-language`,
+			children: t("nav.choose_language")
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
+			id: `${id}-language`,
+			className: "min-w-0 rounded border border-line bg-card px-2 py-1 text-sm",
+			value: currentLanguage?.market ?? current.languages[0].market,
+			onChange: (e) => go(e.target.value),
+			children: current.languages.map((language) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+				value: language.market,
+				children: language.name
+			}, language.language))
+		})] })]
+	});
+}
+//#endregion
 //#region resources/js/Components/NavMenu.tsx
 /**
 * A header section that is both a destination and a menu.
@@ -60354,7 +60971,7 @@ function NavMenu({ href, label, items, current, isCurrent, submenuLabel }) {
 //#region resources/js/Layouts/SiteLayout.tsx
 function SiteLayout({ children }) {
 	const page = usePage();
-	const { market, markets, auth, unreadCount } = page.props;
+	const { market, auth, unreadCount } = page.props;
 	const { t } = useTranslations();
 	const base = `/${market.key}`;
 	const [menuOpen, setMenuOpen] = (0, import_react.useState)(false);
@@ -60493,23 +61110,7 @@ function SiteLayout({ children }) {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "ml-auto hidden items-center gap-3 sm:flex",
 							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-									className: "sr-only",
-									htmlFor: "market-switcher",
-									children: t("nav.choose_market")
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
-									id: "market-switcher",
-									className: "rounded border border-line bg-card px-2 py-1 text-sm",
-									value: market.key,
-									onChange: (e) => {
-										window.location.href = `/${e.target.value}`;
-									},
-									children: markets.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-										value: m.key,
-										children: m.label
-									}, m.key))
-								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarketSwitcher, { id: "header" }),
 								auth.user && unreadCount > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 									href: `${base}/notifications`,
 									className: "relative text-sm hover:text-ink",
@@ -60535,65 +61136,50 @@ function SiteLayout({ children }) {
 				}), menuOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					id: "mobile-menu",
 					className: "border-t border-line px-4 py-4 sm:hidden",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
-							className: "flex flex-col gap-3 text-sm",
-							"aria-label": t("nav.main"),
-							children: [mobileNav.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-								href: item.href,
-								className: "hover:text-ink",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
+						className: "flex flex-col gap-3 text-sm",
+						"aria-label": t("nav.main"),
+						children: [mobileNav.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							href: item.href,
+							className: "hover:text-ink",
+							onClick: () => setMenuOpen(false),
+							children: item.label
+						}, item.href)), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+							className: "flex flex-col gap-3 border-t border-line pt-3",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: `${base}/lists`,
 								onClick: () => setMenuOpen(false),
-								children: item.label
-							}, item.href)), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-								className: "flex flex-col gap-3 border-t border-line pt-3",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: `${base}/lists`,
+								children: t("nav.lists")
+							}), auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+									href: `${base}/notifications`,
 									onClick: () => setMenuOpen(false),
-									children: t("nav.lists")
-								}), auth.user ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-										href: `${base}/notifications`,
-										onClick: () => setMenuOpen(false),
-										children: [t("nav.notifications"), unreadCount > 0 && ` (${unreadCount})`]
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "text-xs text-ink-soft",
-										children: auth.user.name?.trim() || auth.user.email
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-										type: "button",
-										onClick: () => {
-											setMenuOpen(false);
-											router.post(`${base}/logout`);
-										},
-										className: "text-left",
-										children: t("nav.sign_out")
-									})
-								] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: `${base}/login`,
-									onClick: () => setMenuOpen(false),
-									children: t("nav.sign_in")
-								})]
+									children: [t("nav.notifications"), unreadCount > 0 && ` (${unreadCount})`]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "text-xs text-ink-soft",
+									children: auth.user.name?.trim() || auth.user.email
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									onClick: () => {
+										setMenuOpen(false);
+										router.post(`${base}/logout`);
+									},
+									className: "text-left",
+									children: t("nav.sign_out")
+								})
+							] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: `${base}/login`,
+								onClick: () => setMenuOpen(false),
+								children: t("nav.sign_in")
 							})]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-							className: "mt-4 block text-xs text-ink-soft",
-							htmlFor: "market-switcher-mobile",
-							children: t("nav.choose_market")
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("select", {
-							id: "market-switcher-mobile",
-							className: "mt-1 w-full rounded border border-line bg-card px-2 py-2 text-sm",
-							value: market.key,
-							onChange: (e) => {
-								window.location.href = `/${e.target.value}`;
-							},
-							children: markets.map((m) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-								value: m.key,
-								children: m.label
-							}, m.key))
-						})
-					]
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MarketSwitcher, {
+						id: "mobile",
+						withNames: true,
+						className: "mt-4 flex flex-col gap-3"
+					})]
 				})]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", {
@@ -60669,7 +61255,10 @@ function SiteLayout({ children }) {
 server_default((page) => createInertiaApp({
 	page,
 	render: import_server_node.renderToString,
-	title: (title) => title ? `${title} · GiftCoves` : "GiftCoves",
+	title: (title) => {
+		if (!title) return "GiftCoves";
+		return title.includes("GiftCoves") ? title : `${title} · GiftCoves`;
+	},
 	resolve: async (name) => {
 		const module = (/* @__PURE__ */ Object.assign({
 			"./Pages/Auth/Login.tsx": Login_exports,
@@ -60697,6 +61286,7 @@ server_default((page) => createInertiaApp({
 			"./Pages/Santa/Me.tsx": Me_exports,
 			"./Pages/Scan.tsx": Scan_exports,
 			"./Pages/Search.tsx": Search_exports,
+			"./Pages/SearchHelp.tsx": SearchHelp_exports,
 			"./Pages/Surprise.tsx": Surprise_exports
 		}))[`./Pages/${name}.tsx`];
 		if (!module) throw new Error(`Inertia page not found: ./Pages/${name}.tsx`);

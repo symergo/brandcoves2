@@ -44,6 +44,50 @@ shows raw translation keys.
 visible key is an obvious bug; a blank button is one you ship without noticing.
 In dev it also logs a console warning.
 
+## The switcher is two controls: a flag, and a language
+
+Changed 2026-08-15. It was one `<select>` listing `BE/NL, BE/FR, EU/EN, NL/NL` — market keys with a
+slash in them. Nobody has ever wanted "BE/FR"; they have wanted Belgium, in French. That list also
+grows multiplicatively with every country added while saying less each time.
+
+Now: **three flags for the country, and a language dropdown that appears only where there is a choice
+to make.**
+
+| Flag | Markets behind it | Dropdown |
+|---|---|---|
+| 🇧🇪 | `be-nl`, `be-fr` | Nederlands · Français |
+| 🇳🇱 | `nl-nl` | — |
+| 🇪🇺 | `en` | — |
+
+Decisions worth keeping:
+
+- **The matrix is sparse, so the country carries the languages.** Three countries and three
+  languages make nine pairs, of which four exist. Two free-running dropdowns would let anyone ask for
+  Dutch in Europe or French in the Netherlands, neither of which is a place. Each country offers its
+  own markets and no others, which makes an impossible pair *unaskable* rather than merely rejected.
+- **English is a flag, not an option repeated under every country.** There is one English market and
+  its country is `EU`, so English is a market choice here and not a language choice. It is always one
+  click away because that flag is always on screen. Listing it under the Dutch flag would have
+  offered a language by quietly moving the reader to another catalogue.
+- **No dropdown where it would hold one option.** A select with a single entry is a control that
+  cannot be operated. Counted from the country's own markets rather than hardcoded to `BE`, so a
+  second bilingual country gets its dropdown without anyone remembering the rule exists.
+- **Clicking a flag keeps your language where the country has it.** Belgium in French → the
+  Netherlands lands on Dutch; Belgium in Dutch → the Netherlands stays Dutch.
+- **Flags are inline SVG, never emoji.** 🇧🇪 is a regional-indicator pair and Windows has never
+  shipped glyphs for those — Chrome and Edge on Windows render it as the letters "BE", which is most
+  desktop visitors seeing a broken control. `FlagIcon` is the only drawing on the site that ignores
+  the palette and carries its own official colours: a recoloured flag is not a flag.
+- **Country names follow the reader; language names never do.** "Belgium / België / Belgique" is a
+  fact about our site and belongs in the language being read. "Dutch" is invisible to somebody who
+  only reads Dutch, so a language is always named in itself.
+- Still a full page load, exactly as the single dropdown was. Switching either control changes the
+  catalogue, the currency and the language, and a client-side swap would leave the last market's
+  prices on screen while the new copy arrived.
+
+`App\Support\MarketSwitcher` builds the payload and `MarketSwitcherTest` pins the two properties that
+fail silently: every published market is reachable, and nothing points at an unpublished one.
+
 ## "Cove" is a brand word; everything around it is not
 
 The three named surfaces — the **Gift Cove**, the **Daily Cove**, and **Coves**
@@ -72,6 +116,21 @@ their OG strings said `Le Daily Cove` / `El Daily Cove`.
 Prose that says "the Cove" or "today's Cove" is unaffected: those are the noun
 in ordinary use, not the product name, and every language already handled them
 consistently.
+
+### The nav labels now break that rule, deliberately
+
+Changed 2026-08-15, on instruction. `nav.cove` is **"Gift Cove" in all four languages**, and the
+front page's link to the discovery hub uses a new `nav.discover_cove` — **"Discover Cove"**, likewise
+untranslated. The argument above still describes the trade honestly; what changed is which side of it
+we take for the *names of the hubs*. A hub is a place with a name, like GiftCoves itself, and a
+translated name is a second name for the same place.
+
+> **This is currently half-applied, and the inconsistency is visible.** The rule above still governs
+> `gift_cove.title` (`De Geschenk Cove`, `La Cove Cadeau`, `La Cove de Regalos`), `nav.coves`
+> (`Idee Cove`, `Cove de Ideas`) and the Daily Cove everywhere. So the header and front page say
+> "Gift Cove" while the page they link to is headed "De Geschenk Cove". Either finish the change
+> across the table above or revert the two nav keys — the half-state is the one option that is wrong
+> in every language.
 
 ## hreflang
 

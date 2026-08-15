@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# Run the test suite before a push.
+#
+# Why here and not on every save: the suite is a 40-second parallel run against a
+# real Postgres, which is too slow to sit in an edit loop and too important to
+# skip. A push is the last moment the result is still cheap to act on — both
+# branches auto-deploy, so `git push origin staging` is a deploy and a
+# fast-forward of `main` ships to production with no further gate.
+#
+# Install (once per clone):  git config core.hooksPath .githooks
+# Bypass, deliberately:      git push --no-verify
+
+# Nothing to test when the push only deletes a remote branch.
+deleting_only=1
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+    if [ "$local_sha" != "0000000000000000000000000000000000000000" ]; then
+        deleting_only=0
+    fi
+done
+[ "$deleting_only" -eq 1 ] && exit 0
+
+printf '\033[0;34mpre-push:\033[0m running the test suite...\n'
+
+# Postgres is the one dependency the suite cannot fake — the schema uses partial
+# indexes, generated tsvector columns and pg_trgm. Say so plainly rather than
+# letting the failure arrive as 894 connection errors.
+if ! docker compose exec -T postgres pg_isready -U brandcoves >/dev/null 2>&1; then
+    printf '\033[0;31mpre-push: postgres is not reachable.\033[0m Run: docker compose up -d\n'
+    exit 1
+fi
+
+if ! php artisan test --parallel --processes=8; then
+    printf '\033[0;31mpre-push: tests failed — push aborted.\033[0m\n'
+    printf 'Fix them, or push with --no-verify if you know why this is fine.\n'
+    exit 1
+fi
+
+exit 0

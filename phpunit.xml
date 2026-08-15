@@ -32,6 +32,21 @@
         -->
         <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
+        <!--
+            Debug off, deliberately.
+
+            `APP_ENV=testing` above makes Laravel look for `.env.testing`, which is
+            gitignored — so on most machines it falls back to `.env`, where
+            `APP_DEBUG=true`. Every one of the ~39 tests that asserts a 404 then
+            renders Symfony's full debug error page: the expensive, memory-hungry
+            one the note above blames for exhausting the heap.
+
+            Off, the same tests render the plain error view. Failure diagnostics
+            are unaffected — Laravel captures the exception on the TestResponse
+            and prints it in the assertion message either way — and the run now
+            exercises the error path production actually serves.
+        -->
+        <env name="APP_DEBUG" value="false"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

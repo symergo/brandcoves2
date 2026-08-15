@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guide;
 use App\Services\Guides\CoveMarkup;
+use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -48,6 +49,12 @@ class DiscoverCoveController extends Controller
 
     public function __invoke(CurrentMarket $current): Response
     {
+        app(PageMeta::class)->set(
+            title: __('site.discover_cove.seo_title'),
+            description: __('site.discover_cove.seo_description'),
+            canonical: url($current->url('discover-cove')),
+        );
+
         return Inertia::render('DiscoverCove', [
             'urls' => [
                 'daily' => $current->url('daily'),

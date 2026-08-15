@@ -337,8 +337,8 @@ class BrandController extends Controller
             ->get(['brand', 'slug', 'product_count']);
 
         app(PageMeta::class)->set(
-            title: __('site.brand.index_title'),
-            description: __('site.brand.index_intro'),
+            title: __('site.brand.index_seo_title'),
+            description: __('site.brand.index_seo_description'),
             canonical: url($current->url('brands')),
         );
 

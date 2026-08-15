@@ -93,6 +93,45 @@ scraper and to any crawler that does not execute scripts.
 > container scoping alone only clears where something calls
 > `forgetScopedInstances()`.
 
+## A listing title is not a heading
+
+Most pages use one language key for three jobs: the `<h1>`, the browser tab, and
+the search listing. Those readers are not the same person. An `<h1>` sits above
+the page it names and can say "Brands"; a search result has to tell someone who
+has never heard of this site what they would be clicking.
+
+So indexable pages carry `seo_title` and `seo_description` next to `title`.
+`title` stays short and keeps the H1 and the nav label; `seo_*` is what
+`PageMeta` and the Inertia `<Head>` use, so the `<title>` and `og:title` are the
+same string rather than two that drift apart.
+
+Two exceptions, both deliberate:
+
+- **The home page has no `seo_title`.** Its `title` is not an H1 anywhere — the
+  hero uses `headline_1`/`headline_2` — so one key serves all three jobs.
+- **It also carries the brand name itself.** The title template in
+  [`app.tsx`](../../resources/js/app.tsx) appends `· GiftCoves` to every title
+  *except* one that already contains it, so the home listing reads
+  "GiftCoves verlanglijstjes: …" rather than printing the name twice.
+  `ssr.tsx` repeats the rule verbatim: a title that differs between the
+  server-rendered HTML and the hydrated client is a visible flicker.
+
+> **Three pages had no `PageMeta` call at all** — the home page, the Gift Cove
+> and the Discover Cove — so they shipped with no meta description and an empty
+> `og:title`. Nothing looks wrong in a browser: the page renders finished, and
+> only the search listing and the social card are blank. The home page, the one
+> most likely to be linked from outside, was the worst of the three.
+> `SeoTest::every_indexable_static_page_carries_a_title_and_a_description`
+> now walks every static indexable page so the gap cannot reopen quietly.
+
+Descriptions are written under 155 characters, because `PageMeta` truncates
+there on a word boundary. Titles are written under ~60 including the appended
+brand; over that, the brand is what Google drops.
+
+**All four language files move together.** `fallback_locale` is `en`, so a key
+added to `lang/en` and forgotten in `lang/nl` does not raise an error — it
+silently serves English copy into a Dutch market.
+
 ## hreflang and canonicals
 
 Every page emits alternates for all five markets plus `x-default`, in the head

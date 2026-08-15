@@ -22,7 +22,15 @@ createServer((page) =>
         page,
         render: ReactDOMServer.renderToString,
 
-        title: (title) => (title ? `${title} · GiftCoves` : 'GiftCoves'),
+        // Must match app.tsx exactly: a title that differs between the
+        // server-rendered HTML and the hydrated client is a visible flicker.
+        title: (title) => {
+            if (!title) {
+                return 'GiftCoves'
+            }
+
+            return title.includes('GiftCoves') ? title : `${title} · GiftCoves`
+        },
 
         resolve: async (name) => {
             const pages = import.meta.glob('./Pages/**/*.tsx', { eager: true })

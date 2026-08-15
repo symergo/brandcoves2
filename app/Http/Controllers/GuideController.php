@@ -48,7 +48,7 @@ class GuideController extends Controller
             ]);
 
         app(PageMeta::class)->set(
-            title: __('site.guides.title'),
+            title: __('site.guides.seo_title'),
             description: __('site.guides.seo_description'),
             canonical: url($current->url('guides')),
         );

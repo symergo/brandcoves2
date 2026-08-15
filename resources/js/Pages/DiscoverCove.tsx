@@ -33,7 +33,9 @@ interface Props {
 export default function DiscoverCove({ urls, coves }: Props) {
     const { t, n } = useTranslations()
 
-    const coves: { key: CoveKey; href: string; name: string; what: string }[] = [
+    // The three surfaces. Named `sections` rather than `coves` because `coves`
+    // is the archive's articles here, exactly as it is on the front page.
+    const sections: { key: CoveKey; href: string; name: string; what: string }[] = [
         { key: 'daily', href: urls.daily, name: t('nav.daily'), what: t('discover_cove.daily_what') },
         { key: 'surprise', href: urls.surprise, name: t('nav.surprise'), what: t('discover_cove.surprise_what') },
         { key: 'idea', href: urls.guides, name: t('nav.coves'), what: t('discover_cove.idea_what') },
@@ -41,24 +43,24 @@ export default function DiscoverCove({ urls, coves }: Props) {
 
     return (
         <>
-            <Head title={t('discover_cove.title')} />
+            <Head title={t('discover_cove.seo_title')} />
 
             <div className="mx-auto max-w-4xl px-4 py-10">
                 <h1 className="text-3xl font-semibold tracking-tight text-ink">{t('discover_cove.title')}</h1>
                 <p className="mt-3 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
 
                 <ul className="mt-8 grid gap-4 sm:grid-cols-3">
-                    {coves.map((cove) => (
-                        <li key={cove.key}>
+                    {sections.map((section) => (
+                        <li key={section.key}>
                             <Link
-                                href={cove.href}
+                                href={section.href}
                                 className="flex h-full flex-col gap-3 rounded-xl border border-line p-5 hover:border-accent"
                             >
                                 <span className="text-accent">
-                                    <CoveIcon name={cove.key} className="h-8 w-8" />
+                                    <CoveIcon name={section.key} className="h-8 w-8" />
                                 </span>
-                                <span className="font-medium text-ink">{cove.name}</span>
-                                <span className="text-sm text-ink-soft">{cove.what}</span>
+                                <span className="font-medium text-ink">{section.name}</span>
+                                <span className="text-sm text-ink-soft">{section.what}</span>
                             </Link>
                         </li>
                     ))}

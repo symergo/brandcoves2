@@ -31,8 +31,16 @@ docker compose up -d          # postgres :5432, redis :6379, mailpit :8025
 composer dev                  # serve + queue + vite + ssr, all at once
 php artisan migrate --force
 composer lint                 # Pint
-composer test
+composer test                 # parallel, 8 processes — 39s, against real Postgres
+composer test:serial          # one process — 150s. For when parallelism is the suspect
+git config core.hooksPath .githooks   # once per clone: run the suite on push
 ```
+
+> **The suite runs on push, not on save.** `.githooks/pre-push` aborts a push whose tests fail —
+> which matters here because `git push origin staging` *is* a deploy. It only works once
+> `core.hooksPath` is set, and that is per-clone local config, not something the repo can do for
+> you. See [docs/testing.md](../docs/testing.md) for why 8 processes and not 20, and why
+> `APP_DEBUG` is pinned false in the test run.
 
 > **`composer dev` does not run Pail, and must not.** Pail needs `pcntl`, which does not exist on
 > Windows — and `concurrently` runs with `--kill-others`, so Pail's immediate crash took `artisan

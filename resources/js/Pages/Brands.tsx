@@ -37,7 +37,7 @@ export default function Brands({ brands }: Props) {
 
     return (
         <>
-            <Head title={t('brand.index_title')} />
+            <Head title={t('brand.index_seo_title')} />
 
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{t('brand.index_title')}</h1>
             <p className="mt-3 max-w-2xl text-ink-soft">{t('brand.index_intro')}</p>

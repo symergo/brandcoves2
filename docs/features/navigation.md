@@ -55,6 +55,24 @@ names that were briefly the top-level labels:
 hides the one page written to explain the tools behind it, which is the page that exists *because*
 they are not self-evident.
 
+### The Discover hub lists the Coves themselves
+
+Added 2026-08-15. Under the three cards, `/discover-cove` now lists up to twelve published Coves for
+the market, newest first, with a link to the full archive.
+
+The hub still shows **no numbers** — a hub that totals things is the catalogue-counter mistake from
+[homepage.md](homepage.md) in a new place. Titles are a different matter. Two of the three cards
+describe something the visitor cannot see from here — today's edition and a Surprise both have to be
+opened — but the archive is the one whose value *is* its contents. "Long reads around a theme" sends
+a reader one click away to find out whether any of them is about anything they care about; a dozen
+titles answers that on the page.
+
+Twelve rather than sixty: enough that the range is obvious, then a link. A hub that lists everything
+is a second copy of `/guides`. The band reuses the front page's `home.coves_*` copy keys, so the two
+pages describing the same shelf cannot drift into describing it differently. `DiscoverCoveHubTest`
+covers the two failures that are invisible on a page that otherwise looks right — a draft appearing,
+and another market's Coves appearing.
+
 **The label is a link and the chevron is a separate button** (`NavMenu.tsx`). One control cannot do
 both without guessing, and the usual guess — navigate on click, open on hover — has no keyboard or
 touch equivalent at all. Escape closes and returns focus to the chevron rather than dropping it to

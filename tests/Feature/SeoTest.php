@@ -117,6 +117,45 @@ class SeoTest extends TestCase
         }
     }
 
+    /**
+     * The home page shipped with no `PageMeta` call at all, so the page most
+     * likely to be linked from outside had no meta description and an og:title
+     * of nothing — a shared link rendered as a bare card with the URL on it.
+     * The Gift Cove and the Discover Cove had the same gap.
+     *
+     * Every static page a crawler is allowed to index is listed here, because
+     * the gap is invisible in the browser: the page looks finished, and only the
+     * listing and the social card are empty.
+     */
+    #[Test]
+    public function every_indexable_static_page_carries_a_title_and_a_description(): void
+    {
+        foreach ([
+            '/be-nl',
+            '/be-nl/gift-cove',
+            '/be-nl/discover-cove',
+            '/be-nl/brands',
+            '/be-nl/guides',
+            '/be-nl/search-help',
+        ] as $path) {
+            $html = (string) $this->get($path)->getContent();
+
+            preg_match('/<meta name="description" content="([^"]*)"/', $html, $description);
+            preg_match('/<meta property="og:title" content="([^"]*)"/', $html, $title);
+
+            $this->assertNotEmpty($description[1] ?? '', "no meta description on {$path}");
+            $this->assertNotEmpty($title[1] ?? '', "no og:title on {$path}");
+
+            foreach ([$description[1], $title[1]] as $value) {
+                $this->assertDoesNotMatchRegularExpression(
+                    '/^(site\.)?[a-z_]+\.[a-z_]+$/',
+                    $value,
+                    "unresolved translation key on {$path}: {$value}",
+                );
+            }
+        }
+    }
+
     #[Test]
     public function metadata_never_leaks_between_requests(): void
     {

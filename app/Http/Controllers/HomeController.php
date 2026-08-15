@@ -11,6 +11,7 @@ use App\Models\Recipient;
 use App\Models\SecretSantaGroup;
 use App\Models\Wishlist;
 use App\Services\Search\RecentSearches;
+use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
@@ -29,6 +30,17 @@ class HomeController extends Controller
          * shopper how big our warehouse is. Removed with the section that
          * displayed them; see the note in `Home.tsx`.
          */
+        /*
+         * The home page had no PageMeta at all, so it shipped with no meta
+         * description and no og:title — the one page most likely to be linked
+         * from outside was the one whose social card had no words on it.
+         */
+        app(PageMeta::class)->set(
+            title: __('site.home.title'),
+            description: __('site.home.seo_description'),
+            canonical: url($current->url()),
+        );
+
         return Inertia::render('Home', [
             /*
              * Today's Cove, on the front page.

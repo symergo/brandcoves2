@@ -62,6 +62,23 @@ which is the largest table we have. The controller no longer computes them.
 - **The Coves archive last.** The evergreen half. It earns traffic over years, and the front page is
   where a first-time visitor learns the archive exists at all.
 
+## What people have been searching for: three, not six
+
+Changed 2026-08-15. The band under the pitch shows **three** terms, in one row at `lg` and stacked
+below it.
+
+Six wrapped to a second row and turned a glance at what other people are looking for into a block of
+the front page competing with the editorial under it. Three is a sample; six starts to read as a
+ranking, which is a claim this band does not make and cannot support — the terms are recent, not
+popular.
+
+No two-column step in the grid: with three cards it would always leave one orphan on its own row, and
+each card carries four 40px thumbnails with nowhere to shrink to in a narrow column.
+
+`RecentSearches::TERMS` is the single source and the read side slices to it as well as the write
+side. Without that, lowering the number would keep showing the old count for up to 75 minutes after a
+deploy, because the band is served from a cache the hourly job writes.
+
 ## The drawing beside the pitch
 
 Added 2026-08-15. The hero is a two-column band above `md`: the headline, the paragraph and the

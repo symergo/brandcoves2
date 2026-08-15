@@ -87,7 +87,7 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
 
     return (
         <>
-            <Head title={t('gift_cove.title')} />
+            <Head title={t('gift_cove.seo_title')} />
 
             <header className="max-w-2xl">
                 <h1 className="text-3xl font-semibold tracking-tight">{t('gift_cove.title')}</h1>

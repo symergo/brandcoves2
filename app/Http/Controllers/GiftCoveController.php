@@ -9,6 +9,7 @@ use App\Models\Recipient;
 use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
+use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\DefaultList;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -37,6 +38,12 @@ class GiftCoveController extends Controller
 {
     public function __invoke(Request $request, CurrentMarket $current): Response
     {
+        app(PageMeta::class)->set(
+            title: __('site.gift_cove.seo_title'),
+            description: __('site.gift_cove.seo_description'),
+            canonical: url($current->url('gift-cove')),
+        );
+
         $owner = Owner::fromRequest($request);
         $user = $request->user();
 

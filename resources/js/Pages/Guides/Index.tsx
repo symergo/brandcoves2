@@ -10,7 +10,7 @@ export default function GuidesIndex({ guides }: Props) {
 
     return (
         <>
-            <Head title={t('guides.title')} />
+            <Head title={t('guides.seo_title')} />
 
             <header className="max-w-2xl">
                 <h1 className="text-2xl font-semibold sm:text-3xl">{t('guides.title')}</h1>

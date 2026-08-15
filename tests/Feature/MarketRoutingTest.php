@@ -96,19 +96,30 @@ class MarketRoutingTest extends TestCase
     #[Test]
     public function an_unpublished_market_is_not_offered_in_the_switcher(): void
     {
-        // Read the props rather than the HTML: the payload is JSON-encoded, so
-        // "España" and "Français" arrive as \u escapes and a string match on
-        // the document would pass for the wrong reason.
+        /*
+         * Read the props rather than the HTML: the payload is JSON-encoded, so
+         * "España" and "Français" arrive as \u escapes and a string match on
+         * the document would pass for the wrong reason.
+         *
+         * The payload is grouped by country since the switcher was split into a
+         * flag and a language (see localisation.md), so the markets are one
+         * level down — every language entry under every flag.
+         */
         $markets = collect($this->get('/be-nl')->viewData('page')['props']['markets'])
-            ->pluck('key')
+            ->flatMap(fn (array $country): array => array_column($country['languages'], 'market'))
             ->all();
 
         $this->assertNotContains('es', $markets);
         $this->assertContains('be-fr', $markets);
-        $this->assertSame(Market::published(), array_map(
-            fn (string $key): Market => Market::from($key),
-            $markets,
-        ));
+
+        // Same set, and each exactly once — a market offered under two flags
+        // would be a market whose catalogue depends on how you got to it.
+        $expected = Market::published();
+        sort($expected);
+        $offered = array_map(fn (string $key): Market => Market::from($key), $markets);
+        sort($offered);
+
+        $this->assertSame($expected, $offered);
     }
 
     #[Test]
