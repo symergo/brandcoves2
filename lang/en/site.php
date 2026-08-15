@@ -12,12 +12,14 @@ declare(strict_types=1);
 return [
     'nav' => [
         'search' => 'Search',
+        'organise' => 'Organise',
+        'discover' => 'Discover',
+        'submenu' => 'What is in :section',
         'gift' => 'Gift Finder',
         'daily' => 'Daily Cove',
-        'coves' => 'All Coves',
-        'give' => 'Gifting',
+        'coves' => 'Idea Cove',
         'guides' => 'Guides',
-        'surprise' => 'Surprise me',
+        'surprise' => 'Surprise Cove',
         'scan' => 'Scan',
         'lists' => 'My lists',
         'notifications' => 'Notifications',
@@ -33,11 +35,11 @@ return [
 
     'home' => [
         'title' => 'Find it, love it, gift it',
-        'headline_1' => "You don't know what you want.",
-        'headline_2' => "You know who it's for.",
-        'intro' => 'Search bol, Amazon and hundreds of shops at once, follow a brand wherever it turns up, and let the Gift Whisperer turn a description of a person into something worth wrapping.',
+        'headline_1' => 'Something worth giving.',
+        'headline_2' => 'Yourself included.',
+        'intro' => 'GiftCoves searches bol, Amazon and hundreds of shops at once, and turns what it finds into ideas. Keep wish lists and gift lists, share them, club together on something bigger, run a Secret Santa, or quiz your friends on how well they really know you.',
         'cta_gift' => 'Find a gift',
-        'cta_search' => 'Search products',
+        'cta_search' => 'Something for yourself',
         'today_badge' => "Today's Cove",
         'today_cta' => "See today's finds",
         'coves_heading' => 'Coves',
@@ -241,6 +243,14 @@ return [
      * Every response to the signup form is identical whatever actually happened,
      * so the form cannot be used to discover whether an address reads this site.
      */
+    'discover_cove' => [
+        'title' => 'Discover',
+        'intro' => 'Three ways to find something you were not looking for. One changes every day, one is deliberately unpredictable, and one is worth sitting down with.',
+        'daily_what' => 'A new edition every day: a theme, a handful of finds and a price puzzle. Every past edition keeps its own page.',
+        'surprise_what' => 'Something you did not know existed, chosen for how rare it is rather than how well it sells.',
+        'idea_what' => 'Long reads built around one theme, with every brand and product linked straight into a live search.',
+    ],
+
     'cove' => [
         'subscribe_heading' => 'The Cove, every morning',
         'subscribe_intro' => 'One short email a day: the theme, a few of the finds, and why they are worth a look. No product spam, and one click to leave.',

@@ -34,7 +34,7 @@ cannot be recovered from a diff.
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
-| [cutover.md](cutover.md) | Operations | Ready — not yet executed |
+| [cutover.md](cutover.md) | Operations | ✅ Done 2026-08-10 |
 | [rebrand.md](rebrand.md) | Core / Operations | Code done — Coolify and third-party accounts outstanding |
 
 ## Closed in Phase 2
@@ -55,6 +55,6 @@ as its own Node container, so crawlers receive fully rendered HTML. See
 | 4 | Gift Whisperer + Serendipity Engine | ✅ Done |
 | 5 | The Daily Cove — Daily Picks and buying guides merged into one daily edition | Next |
 | 6 | *(folded into Phase 5)* | |
-| 7 | Admin, SEO, cutover from v1 | ✅ Built — cutover not yet executed |
+| 7 | Admin, SEO, cutover from v1 | ✅ Done — cutover executed 2026-08-10 |
 | 8 | Deferred: Amazon, catalogue breadth, embeddings | |
 | 9 | Gifting lenses: recipient linking, Secret Santa, co-givers, the quiz, occasion reminders | ✅ Done |

@@ -1,6 +1,8 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import AccountMenu from '../Components/AccountMenu'
+import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
+import NavMenu from '../Components/NavMenu'
 import { type PropsWithChildren, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -36,23 +38,57 @@ export default function SiteLayout({ children }: PropsWithChildren) {
      * the homepage, the subscription mails and the page titles already use;
      * the header was the last surface still calling them something else.
      */
-    const nav = [
-        { href: `${base}/daily`, label: t('nav.daily') },
-        { href: `${base}/guides`, label: t('nav.coves') },
-        { href: `${base}/search`, label: t('nav.search') },
-        // One entry, not three. The wizard, Secret Santa and every list tool
-        // live behind the Gift Cove, which is the page that explains them.
-        // Labelled with the verb, not the surface name: next to "Search" and
-        // "Surprise me" it reads as a thing you do, which is how someone
-        // buying for another person arrives.
-        { href: `${base}/gift-cove`, label: t('nav.give') },
-        { href: `${base}/surprise`, label: t('nav.surprise') },
-        // Scan is deliberately not here. It is a way of *entering a query*, not
-        // a section of the site, and it already lives where a query is typed:
-        // the scan button in the search field opens the same scanner. A top-level
-        // entry sold it as a destination, which it is not. `/scan` still exists
-        // and still works for anyone who has the URL.
-    ]
+    /*
+     * Three verbs, two of which open.
+     *
+     * Five flat entries described five surfaces and left nine gifting tools and
+     * the whole discovery half reachable only from inside a page you had to know
+     * to open. Grouping under what you came to *do* — organise, search,
+     * discover — means the header describes intents rather than URLs, and the
+     * dropdowns are where the surfaces live.
+     *
+     * Each verb still points at a hub that explains its section, so the label is
+     * a real destination and not just a menu handle. See NavMenu for why the
+     * chevron is a separate control.
+     *
+     * Scan is deliberately absent, unchanged: it is a way of *entering a query*,
+     * not a section, and the scan button in the search field already opens it.
+     */
+    const organise = {
+        href: `${base}/gift-cove`,
+        label: t('nav.organise'),
+        items: [
+            { href: `${base}/gift`, label: t('nav.gift') },
+            { href: `${base}/lists`, label: t('nav.lists') },
+            { href: `${base}/santa`, label: t('nav.santa') },
+        ],
+    }
+
+    const discover = {
+        href: `${base}/discover-cove`,
+        label: t('nav.discover'),
+        items: [
+            { href: `${base}/daily`, label: t('nav.daily'), icon: <CoveIcon name="daily" className="h-5 w-5" /> },
+            {
+                href: `${base}/surprise`,
+                label: t('nav.surprise'),
+                icon: <CoveIcon name="surprise" className="h-5 w-5" />,
+            },
+            { href: `${base}/guides`, label: t('nav.coves'), icon: <CoveIcon name="idea" className="h-5 w-5" /> },
+        ],
+    }
+
+    const nav = [{ href: `${base}/search`, label: t('nav.search') }]
+
+    /*
+     * The phone gets the same sections, flattened.
+     *
+     * A dropdown inside an already-expanded panel is a second thing to open to
+     * reach a link that would have fitted on screen anyway. The hub and its
+     * surfaces are simply listed, hubs first, in the order the wide header
+     * shows them.
+     */
+    const mobileNav = [organise, ...organise.items, ...nav, discover, ...discover.items]
 
     return (
         <div className="flex min-h-screen flex-col">
@@ -86,7 +122,19 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                         GiftCoves
                     </Link>
 
-                    <nav className="hidden gap-5 text-sm text-ink-soft sm:flex" aria-label={t('nav.main')}>
+                    <nav
+                        className="hidden items-center gap-5 text-sm text-ink-soft sm:flex"
+                        aria-label={t('nav.main')}
+                    >
+                        <NavMenu
+                            href={organise.href}
+                            label={organise.label}
+                            items={organise.items}
+                            current={isCurrent(organise.href)}
+                            isCurrent={isCurrent}
+                            submenuLabel={t('nav.submenu', { section: organise.label })}
+                        />
+
                         {nav.map((item) => (
                             <Link
                                 key={item.href}
@@ -101,6 +149,15 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                                 {item.label}
                             </Link>
                         ))}
+
+                        <NavMenu
+                            href={discover.href}
+                            label={discover.label}
+                            items={discover.items}
+                            current={isCurrent(discover.href)}
+                            isCurrent={isCurrent}
+                            submenuLabel={t('nav.submenu', { section: discover.label })}
+                        />
                     </nav>
 
                     {/*
@@ -190,7 +247,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                 {menuOpen && (
                     <div id="mobile-menu" className="border-t border-line px-4 py-4 sm:hidden">
                         <nav className="flex flex-col gap-3 text-sm" aria-label={t('nav.main')}>
-                            {nav.map((item) => (
+                            {mobileNav.map((item) => (
                                 <Link
                                     key={item.href}
                                     href={item.href}

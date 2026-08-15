@@ -5,13 +5,15 @@ declare(strict_types=1);
 /** Dutch, serves both the be-nl and nl-nl markets. */
 return [
     'nav' => [
-        'search' => 'Zoeken',
+        'search' => 'Zoek',
+        'organise' => 'Organiseer',
+        'discover' => 'Ontdek',
+        'submenu' => 'Wat zit er in :section',
         'gift' => 'Cadeauzoeker',
         'daily' => 'Cove van de dag',
-        'coves' => 'Alle Coves',
-        'give' => 'Geven',
+        'coves' => 'Idee Cove',
         'guides' => 'Koopgidsen',
-        'surprise' => 'Verras me',
+        'surprise' => 'Verrassingscove',
         'scan' => 'Scannen',
         'lists' => 'Mijn lijstjes',
         'notifications' => 'Meldingen',
@@ -22,16 +24,16 @@ return [
         'skip' => 'Naar de inhoud',
         'choose_market' => 'Kies je regio',
         'santa' => 'Secret Santa',
-        'cove' => 'Geschenk Cove',
+        'cove' => 'Cadeau Cove',
     ],
 
     'home' => [
         'title' => 'Vinden, verlieven, cadeau doen',
-        'headline_1' => 'Je weet niet wát je zoekt.',
-        'headline_2' => 'Je weet voor wie het is.',
-        'intro' => 'Doorzoek bol, Amazon en honderden winkels tegelijk, volg een merk waar het ook opduikt, en laat de Cadeauzoeker een omschrijving van iemand omzetten in een cadeau dat klopt.',
+        'headline_1' => 'Iets wat het geven waard is.',
+        'headline_2' => 'Jezelf inbegrepen.',
+        'intro' => 'GiftCoves doorzoekt bol, Amazon en honderden winkels tegelijk en maakt van wat het vindt een idee. Houd verlanglijstjes en cadeaulijsten bij, deel ze, leg samen in voor iets groters, organiseer een Secret Santa, of test je vrienden op hoe goed ze je echt kennen.',
         'cta_gift' => 'Vind een cadeau',
-        'cta_search' => 'Producten zoeken',
+        'cta_search' => 'Iets voor jezelf',
         'today_badge' => 'Cove van vandaag',
         'today_cta' => 'Bekijk de vondsten van vandaag',
         'coves_heading' => 'Coves',
@@ -212,6 +214,14 @@ return [
      * Cove-abonnementen. Elk antwoord op het formulier is identiek, wat er ook
      * gebeurd is, anders kun je ermee achterhalen wie deze site leest.
      */
+    'discover_cove' => [
+        'title' => 'Ontdek',
+        'intro' => 'Drie manieren om iets te vinden waar je niet naar zocht. Eén verandert elke dag, één is met opzet onvoorspelbaar, en één is om rustig te lezen.',
+        'daily_what' => 'Elke dag een nieuwe editie: een thema, een handvol vondsten en een prijsraadsel. Elke oude editie houdt zijn eigen pagina.',
+        'surprise_what' => 'Iets waarvan je niet wist dat het bestond, gekozen op hoe zeldzaam het is en niet op hoe goed het verkoopt.',
+        'idea_what' => 'Lange verhalen rond één thema, met elk merk en product meteen doorgelinkt naar een live zoekopdracht.',
+    ],
+
     'cove' => [
         'subscribe_heading' => 'De Cove, elke ochtend',
         'subscribe_intro' => 'Eén korte mail per dag: het thema, een paar vondsten en waarom ze de moeite waard zijn. Geen productspam, en met één klik weg.',

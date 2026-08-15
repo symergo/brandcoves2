@@ -6,12 +6,14 @@ declare(strict_types=1);
 return [
     'nav' => [
         'search' => 'Buscar',
+        'organise' => 'Organizar',
+        'discover' => 'Descubrir',
+        'submenu' => 'Qué hay en :section',
         'gift' => 'Buscador de regalos',
         'daily' => 'Cove Diaria',
-        'coves' => 'Todas las Coves',
-        'give' => 'Regalar',
+        'coves' => 'Cove de Ideas',
         'guides' => 'Guías de compra',
-        'surprise' => 'Sorpréndeme',
+        'surprise' => 'Cove Sorpresa',
         'scan' => 'Escanear',
         'lists' => 'Mis listas',
         'notifications' => 'Avisos',
@@ -27,11 +29,11 @@ return [
 
     'home' => [
         'title' => 'Encuentra, enamórate, regala',
-        'headline_1' => 'No sabes qué buscas.',
-        'headline_2' => 'Sabes para quién es.',
-        'intro' => 'Busca en bol, Amazon y cientos de tiendas a la vez, sigue una marca allá donde aparezca, y deja que el buscador de regalos convierta la descripción de una persona en algo que merezca la pena envolver.',
+        'headline_1' => 'Algo que merezca la pena regalar.',
+        'headline_2' => 'También para ti.',
+        'intro' => 'GiftCoves busca en bol, Amazon y cientos de tiendas a la vez, y convierte lo que encuentra en ideas. Guarda listas de deseos y listas de regalos, compártelas, poned dinero en común para algo más grande, organiza un Secret Santa, o pon a prueba a tus amigos para ver cuánto te conocen de verdad.',
         'cta_gift' => 'Buscar un regalo',
-        'cta_search' => 'Buscar productos',
+        'cta_search' => 'Algo para ti',
         'today_badge' => 'La Cove de hoy',
         'today_cta' => 'Ver los hallazgos de hoy',
         'coves_heading' => 'Coves',
@@ -208,6 +210,14 @@ return [
      * Suscripciones a las Coves. Todas las respuestas del formulario son
      * idénticas, pase lo que pase.
      */
+    'discover_cove' => [
+        'title' => 'Descubrir',
+        'intro' => 'Tres maneras de encontrar algo que no estabas buscando. Una cambia cada día, otra es deliberadamente impredecible, y la tercera se lee con calma.',
+        'daily_what' => 'Una edición nueva cada día: un tema, un puñado de hallazgos y un acertijo de precios. Cada edición pasada conserva su página.',
+        'surprise_what' => 'Algo que no sabías que existía, elegido por lo raro que es y no por lo bien que se vende.',
+        'idea_what' => 'Lecturas largas en torno a un tema, con cada marca y producto enlazados directamente a una búsqueda en vivo.',
+    ],
+
     'cove' => [
         'subscribe_heading' => 'La Cove, cada mañana',
         'subscribe_intro' => 'Un correo corto al día: el tema, algunos hallazgos y por qué merecen un vistazo. Sin spam de productos, y un clic para darte de baja.',

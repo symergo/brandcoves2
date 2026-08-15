@@ -32,15 +32,15 @@ anonymous-first and live in that browser until they do.
 
 ## What the header offers, and in what order
 
-Changed 2026-08-10. The nav is five entries:
+Changed 2026-08-15: every entry is now a **Cove**. The nav is five entries:
 
-| Label (nl) | Route | |
-|---|---|---|
-| Cove van de dag | `/{market}/daily` | the editorial that changes every day |
-| Alle Coves | `/{market}/guides` | the editorial index |
-| Zoeken | `/{market}/search` | |
-| Geven | `/{market}/gift-cove` | |
-| Verras me | `/{market}/surprise` | |
+| Route | en | nl | fr | es |
+|---|---|---|---|---|
+| `/{market}/gift-cove` | Gift Cove | Cadeau Cove | Cove Cadeau | Cove de Regalos |
+| `/{market}/search` | Search Cove | Zoek Cove | Cove Recherche | Cove Búsqueda |
+| `/{market}/daily` | Daily Cove | Cove van de dag | Cove Quotidienne | Cove Diaria |
+| `/{market}/surprise` | Surprise Cove | Verrassingscove | Cove Surprise | Cove Sorpresa |
+| `/{market}/guides` | Idea Cove | Idee Cove | Cove d'Idées | Cove de Ideas |
 
 **Editorial leads, tools follow.** The two Cove surfaces are the only things in the header that are
 *ours*; search, gifting and Surprise are ways of querying a catalogue that every competitor also
@@ -55,10 +55,27 @@ exact confusion the naming pass in `localisation.md` set out to remove, so the f
 Daily Cove / Cove van de dag / Cove Quotidienne / Cove Diaria, and All Coves / Alle Coves /
 Toutes les Coves / Todas las Coves.
 
-**Gifting is labelled with the verb, not the surface.** `nav.give` — Geven, Gifting, Offrir,
-Regalar — rather than `nav.cove` ("Geschenk Cove"). Between "Zoeken" and "Verras me" it reads as a
-thing you do, which is the state someone buying for another person is actually in. The surface keeps
-its name everywhere it is named, including the account menu.
+**Gifting was labelled with the verb, and no longer is.** `nav.give` — Geven, Gifting, Offrir,
+Regalar — read as a thing you do, which is the state someone buying for another person is actually
+in. That argument was right for Brandcoves and is wrong for GiftCoves: on a site whose *name* is the
+verb, every section is gifting, so the verb stops distinguishing anything and the label was carrying
+no information.
+
+**`nav.give` is deleted, not renamed.** It and `nav.cove` pointed at the same page,
+`/{market}/gift-cove` — the header said "Gifting" and the account menu said "Gift Cove". That is the
+same two-names-for-one-surface defect the naming pass in [localisation.md](localisation.md) was
+written to remove, and it had already begun to drift: Spanish read "Cove de Regalos" against
+French's "Cove Cadeau". One key now, used in both places.
+
+**The Dutch is "Cadeau Cove", not "Geschenk Cove".** The rejected form is still rejected — *geschenk*
+is the formal register and reads like a corporate hamper. *Cadeau* is the word people use, and it is
+what `home.cta_gift` has always said.
+
+**The cost of the system, stated plainly:** five labels ending in the same word are harder to scan
+than five different words, because the eye has to read past a repeated token to reach the one that
+distinguishes. That is a real loss, accepted for a real gain — "Cove" becomes the site's unit of
+meaning rather than a word used for two of five sections. `aria-current` and the underline carry
+more of the load now, which is why they are not optional.
 
 **Scan is not in the header.** It is a way of entering a query, not a section — see
 [barcode-scanner.md](barcode-scanner.md).

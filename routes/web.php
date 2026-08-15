@@ -12,6 +12,7 @@ use App\Http\Controllers\ClickOutController;
 use App\Http\Controllers\CoveSubscriptionController;
 use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\DiscoverController;
+use App\Http\Controllers\DiscoverCoveController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftCoveController;
 use App\Http\Controllers\GiftPledgeController;
@@ -319,6 +320,17 @@ Route::prefix('{market}')->group(function () {
      * word meaning two things in the same URL space is a trap.
      */
     Route::get('/gift-cove', GiftCoveController::class)->name('gift-cove');
+
+    /*
+     * And the same for the discovery half: one page explaining the Daily Cove,
+     * Surprise and the Coves archive, which were three header entries that read
+     * as three unrelated links.
+     *
+     * `/discover-cove`, not `/discover` — that one is the mode dial below, a
+     * surface you operate rather than a page that explains. Same reasoning as
+     * `/gift-cove` above.
+     */
+    Route::get('/discover-cove', DiscoverCoveController::class)->name('discover-cove');
 
     Route::get('/gift', [GiftController::class, 'show'])->name('gift');
     Route::middleware('throttle:60,1')->group(function () {

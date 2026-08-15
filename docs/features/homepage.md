@@ -9,6 +9,26 @@ date_added: 2026-08-10
 
 Four bands, in this order: the pitch, today's Cove, the gifting band, the Coves archive.
 
+## The pitch says who it is for, and that includes you
+
+Rewritten 2026-08-15 with the rename to GiftCoves. It read *"You don't know what you want. / You
+know who it's for."* — a good line for a site about finding things, and one that quietly says this
+place is for buying for **other** people. Half the product argues otherwise: `wishlists.kind` is
+`mine` or `for_someone`, `SuggestionProfile` carries a whole `for_myself` shape whose budget curve
+exists precisely because *"nobody thinks their own €12 wish is thoughtless"*
+([gifting-lenses.md](gifting-lenses.md)), and the receiver lens is the other half of the gifting
+model.
+
+So the headline names both — *"Something worth giving. / Yourself included."* — and the two CTAs
+split the same way: **Find a gift** next to **Something for yourself**. The second is the one that
+was missing; a visitor shopping for themselves previously had to read past a page telling them it
+was for somebody else.
+
+The intro names the tools rather than only the search, because the tools are what a visitor cannot
+guess is here: lists, sharing, group giving, Secret Santa, the quiz. It stops at naming them. The
+[Gift Cove](gifting-lenses.md) hub exists to explain them, and repeating that explanation on the
+front page is how both pages get longer and neither gets read.
+
 ## What it does not end on: catalogue counters
 
 Removed 2026-08-10. The page used to close with three stat tiles — products indexed, groups with

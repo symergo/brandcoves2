@@ -122,15 +122,15 @@ silently breaks — the same shape of failure v1 hit with an empty `SITE_DOMAIN`
 Generate the two secrets with `php artisan key:generate --show`.
 **`CLAIM_HASH_SECRET` is effectively permanent** — rotating it orphans every existing wishlist claim.
 
-## Cutover: v2 replaces v1 at brandcoves.com
+## Cutover: v2 replaced v1 at brandcoves.com — done 2026-08-10
 
-The domain here is `brandcoves.com` throughout, because that is where the v1 WordPress site is. This
-cutover comes **before** the rename to giftcoves.com — see [features/rebrand.md](features/rebrand.md)
-— so that a known-good v2 is what the rename moves, and a failure on the day can be attributed to
-one change rather than two.
+Kept as the record of how it was done. Verified again on 2026-08-15: `brandcoves.com/health` reports
+`branch: main`, built 2026-08-10T17:03:03Z, and the apex 302s to a market from FrankenPHP.
 
-v1 serves `brandcoves.com` from the same box, so this is a Coolify domain move rather than a DNS
-move — which makes rollback fast.
+The rename to giftcoves.com ([features/rebrand.md](features/rebrand.md)) is a second domain move on
+top of this one, and does not depend on it.
+
+It was a Coolify domain move rather than a DNS move — which is what made rollback fast.
 
 1. Back up v1 fully (`mysqldump` + the `wp_data` volume) and export its published URL list.
 2. Move v1's app to `v1.brandcoves.com`, still running, now `noindex`.

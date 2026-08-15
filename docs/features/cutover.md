@@ -1,7 +1,7 @@
 ---
 name: Cutover from v1
 area: Operations
-status: Ready — not yet executed
+status: Done — v2 has served brandcoves.com since 2026-08-10
 date_added: 2026-08-08
 ---
 
@@ -9,17 +9,18 @@ date_added: 2026-08-08
 
 Moving `brandcoves.com` from the v1 WordPress site to v2.
 
-> **Every domain in this document is `brandcoves.com`, and that is deliberate.** v1 WordPress is
-> served at `brandcoves.com`; that is the domain this cutover moves. The site was renamed to
-> GiftCoves on 2026-08-15 ([rebrand.md](rebrand.md)), but Coolify has not been changed, so nothing
-> here has moved yet.
+> **This happened, and the document is kept as the record of how.** Verified 2026-08-15:
+> `brandcoves.com/` answers 302 to `/be-nl` from FrankenPHP, and `/health` reports `branch: main`
+> with a build stamp of 2026-08-10T17:03:03Z. v2 owns the apex.
 >
-> **Do this cutover first, then the rename.** Both are domain moves, and running them together means
-> a failure cannot be attributed: if v2 comes up wrong on a brand-new domain, there is no way to tell
-> whether the release is broken or the DNS is. Taking `brandcoves.com` from v1 to v2 is reversible in
-> a minute — that is the whole argument below — and it leaves a known-good v2 in production for the
-> rename to move. Doing it the other way round hands the v1 WordPress site a domain nobody is
-> redirecting from.
+> Every domain below is `brandcoves.com` because that is the domain this cutover moved. The rename to
+> GiftCoves ([rebrand.md](rebrand.md)) is a *second* domain move, on top of a v2 that is already
+> live — so the two were never going to collide, and the ordering worry recorded here earlier was
+> based on this file's stale `not yet executed` status rather than on the running system.
+>
+> **The lesson worth keeping is about the status line, not the cutover.** A runbook that says "ready"
+> after it has been executed will be believed by the next person to read it, including a machine.
+> Check `/health` before trusting any claim in this directory about what production is doing.
 
 Both run on the same box under the same Coolify instance, which makes this a
 **domain move, not a DNS change** — the single most important fact in this
