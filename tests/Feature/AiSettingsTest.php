@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
 use App\Services\Settings\AiSettingsStore;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -311,11 +312,34 @@ class AiSettingsTest extends TestCase
         config(['cache.default' => 'database']);
         Schema::drop('cache');
 
-        // Both must survive: the provider calls apply(), which calls stored().
-        $this->assertSame([], (new AiSettingsStore)->stored());
-        (new AiSettingsStore)->apply();
+        try {
+            // Both must survive: the provider calls apply(), which calls stored().
+            $this->assertSame([], (new AiSettingsStore)->stored());
+            (new AiSettingsStore)->apply();
 
-        // And the env defaults are what stand.
-        $this->assertSame(config('giftcoves.ai.model'), config('giftcoves.ai.model'));
+            // And the env defaults are what stand.
+            $this->assertSame(config('giftcoves.ai.model'), config('giftcoves.ai.model'));
+        } finally {
+            /*
+             * Put it back, always.
+             *
+             * `RefreshDatabase` wraps each test in a transaction and Postgres
+             * has transactional DDL, so this *should* roll back on its own —
+             * but it demonstrably does not always, and the failure it produces
+             * is the worst kind to debug: a later, unrelated test 500s on a
+             * missing table, every one of them passes in isolation, and which
+             * test breaks depends on execution order. Three consecutive full
+             * runs failed on three different tests before this was tracked back
+             * here.
+             *
+             * `finally`, so a failed assertion above cannot leave the schema
+             * broken for everything that follows.
+             */
+            Schema::create('cache', function (Blueprint $table) {
+                $table->string('key')->primary();
+                $table->mediumText('value');
+                $table->integer('expiration');
+            });
+        }
     }
 }
