@@ -29,7 +29,7 @@ return [
         'countries' => [
             'be' => 'Bélgica',
             'nl' => 'Países Bajos',
-            'eu' => 'Europa',
+            'int' => 'Internacional',
             'es' => 'España',
         ],
         'santa' => 'Amigo invisible',
@@ -41,7 +41,9 @@ return [
     ],
 
     'home' => [
-        'title' => 'Encuentra, enamórate, regala',
+        // Consulta la explicación de estas claves en lang/en/site.php.
+        'seo_description' => 'Busca en bol, Amazon y cientos de tiendas a la vez. Guarda listas de deseos, compártelas, poned dinero en común y organiza un Amigo invisible.',
+        'title' => 'GiftCoves: listas de deseos, regalar y recibir al mejor precio',
         'headline_1' => 'Algo que merezca la pena regalar.',
         'headline_2' => 'También para ti.',
         'intro' => 'GiftCoves busca en bol, Amazon y cientos de tiendas a la vez, y convierte lo que encuentra en ideas. Guarda listas de deseos y listas de regalos, compártelas, poned dinero en común para algo más grande, organiza un amigo invisible, o pon a prueba a tus amigos para ver cuánto te conocen de verdad.',
@@ -128,6 +130,8 @@ return [
         'seo_description' => 'Compara :count productos de :brand en todas las tiendas que seguimos y encuentra la oferta más barata.',
         'crumb' => 'Marcas',
         'index_title' => 'Marcas',
+        'index_seo_title' => 'Todas las marcas, precios comparados',
+        'index_seo_description' => 'Todas las marcas del catálogo, con precios actuales comparados en bol, Amazon y cientos de tiendas que las venden.',
         'index_intro' => 'Todas las marcas del catálogo, con precios actuales comparados entre las tiendas que las venden.',
         'index_count' => ':count productos',
         'all_brands' => 'Todas las marcas',
@@ -229,6 +233,8 @@ return [
      * idénticas, pase lo que pase.
      */
     'discover_cove' => [
+        'seo_title' => 'Ideas de regalo y hallazgos, nuevos cada día',
+        'seo_description' => 'Tres maneras de encontrar algo que no buscabas: una edición nueva cada día, una sorpresa elegida por lo rara que es, y lecturas largas por tema.',
         'title' => 'Descubrir',
         'intro' => 'Tres maneras de encontrar algo que no estabas buscando. Una cambia cada día, otra es deliberadamente impredecible, y la tercera se lee con calma.',
         'daily_what' => 'Una edición nueva cada día: un tema, un puñado de hallazgos y un acertijo de precios. Cada edición pasada conserva su página.',
@@ -566,6 +572,8 @@ return [
     ],
 
     'gift_cove' => [
+        'seo_title' => 'Listas de deseos, de regalos y Amigo invisible',
+        'seo_description' => 'Nueve herramientas de regalo en un solo sitio: listas de deseos, una lista para otra persona, comprar entre varios, Amigo invisible y un quiz.',
         'title' => 'La Cove de Regalos',
         'intro' => 'Todo para regalar a los demás, y para contar lo que te gustaría a ti. Nadie ve nunca quién ha comprado qué.',
         'tools' => 'Lo que puedes hacer aquí',
@@ -735,6 +743,8 @@ return [
     ],
 
     'search_help' => [
+        'seo_title' => 'Cómo buscar: palabras, códigos de barras, Amazon',
+        'seo_description' => 'Qué entiende el buscador — nombres de productos, marcas, códigos de barras y enlaces de Amazon pegados — y cómo afinar hasta la oferta que quieres.',
         'title' => 'Buscar y escanear',
         'intro' => 'Qué entiende el buscador, cómo afinar una lista de resultados y qué ocurre cuando apuntas la cámara a un código de barras.',
         'link' => '¿Qué se puede buscar aquí?',
@@ -1047,6 +1057,7 @@ return [
     ],
 
     'guides' => [
+        'seo_title' => 'Guías de compra con precios comparados',
         'title' => 'Guías de compra',
         'subtitle' => 'Escritas a partir de lo que la gente busca aquí, no de una herramienta de palabras clave.',
         'seo_description' => 'Guías de compra construidas sobre demanda real, con precios en vivo comparados en todas las tiendas que venden cada producto.',

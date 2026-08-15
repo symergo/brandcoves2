@@ -29,7 +29,7 @@ return [
         'countries' => [
             'be' => 'België',
             'nl' => 'Nederland',
-            'eu' => 'Europa',
+            'int' => 'Internationaal',
             'es' => 'Spanje',
         ],
         'santa' => 'Geheime Vriend',
@@ -41,7 +41,9 @@ return [
     ],
 
     'home' => [
-        'title' => 'Vinden, verlieven, cadeau doen',
+        // Zie de toelichting bij deze sleutels in lang/en/site.php.
+        'seo_description' => 'Doorzoek bol, Amazon en honderden winkels tegelijk. Hou verlanglijstjes bij, deel ze, leg samen in voor één cadeau en organiseer een Geheime Vriend.',
+        'title' => 'GiftCoves verlanglijstjes: cadeaus geven en ontvangen aan de beste prijs',
         'headline_1' => 'Iets wat het geven waard is.',
         'headline_2' => 'Jezelf inbegrepen.',
         'intro' => 'GiftCoves doorzoekt bol, Amazon en honderden winkels tegelijk en maakt van wat het vindt een idee. Hou verlanglijstjes en cadeaulijsten bij, deel ze, leg samen in voor iets groters, organiseer een Geheime Vriend, of test je vrienden op hoe goed ze je echt kennen.',
@@ -128,6 +130,8 @@ return [
         'seo_description' => 'Vergelijk :count :brand-producten bij alle winkels die we volgen en vind de goedkoopste aanbieding.',
         'crumb' => 'Merken',
         'index_title' => 'Merken',
+        'index_seo_title' => 'Alle merken, prijzen vergeleken bij elke winkel',
+        'index_seo_description' => 'Elk merk in de catalogus, met actuele prijzen vergeleken bij bol, Amazon en honderden winkels die het verkopen.',
         'index_intro' => 'Alle merken in de catalogus, met actuele prijzen vergeleken tussen de winkels die ze verkopen.',
         'index_count' => ':count producten',
         'all_brands' => 'Alle merken',
@@ -233,6 +237,8 @@ return [
      * gebeurd is, anders kun je ermee achterhalen wie deze site leest.
      */
     'discover_cove' => [
+        'seo_title' => 'Cadeau-ideeën en vondsten, elke dag nieuw',
+        'seo_description' => 'Drie manieren om iets te vinden waar je niet naar zocht: elke dag een nieuwe editie, een verrassing gekozen op zeldzaamheid, en lange verhalen per thema.',
         'title' => 'Ontdek',
         'intro' => 'Drie manieren om iets te vinden waar je niet naar zocht. Eén verandert elke dag, één is met opzet onvoorspelbaar, en één is om rustig te lezen.',
         'daily_what' => 'Elke dag een nieuwe editie: een thema, een handvol vondsten en een prijsraadsel. Elke oude editie houdt zijn eigen pagina.',
@@ -570,6 +576,8 @@ return [
     ],
 
     'gift_cove' => [
+        'seo_title' => 'Verlanglijstjes, cadeaulijsten en Geheime Vriend',
+        'seo_description' => 'Negen cadeautools op één plek: verlanglijstjes, een lijst voor iemand anders, samen inleggen, Geheime Vriend en een quiz. Niemand ziet wie wat kocht.',
         'title' => 'De Geschenk Cove',
         'intro' => 'Alles om voor anderen te kopen, en om te vertellen wat je zelf leuk zou vinden. Niemand ziet ooit wie wat gekocht heeft.',
         'tools' => 'Wat je hier kunt doen',
@@ -739,6 +747,8 @@ return [
     ],
 
     'search_help' => [
+        'seo_title' => 'Zo zoek je: woorden, streepjescodes en Amazon-links',
+        'seo_description' => 'Wat het zoekvak begrijpt — productnamen, merken, streepjescodes en geplakte Amazon-links — en hoe je resultaten terugbrengt tot de juiste aanbieding.',
         'title' => 'Zoeken en scannen',
         'intro' => 'Wat het zoekveld begrijpt, hoe je een resultatenlijst versmalt, en wat er gebeurt als je een camera op een barcode richt.',
         'link' => 'Waarop kun je hier zoeken?',
@@ -1050,6 +1060,7 @@ return [
     ],
 
     'guides' => [
+        'seo_title' => 'Koopgidsen met per product de prijzen vergeleken',
         'title' => 'Koopgidsen',
         'subtitle' => 'Geschreven op basis van wat mensen hier zoeken, niet van een zoekwoordtool.',
         'seo_description' => 'Koopgidsen gebouwd op echte zoekvraag, met live prijzen vergeleken over elke winkel die het product heeft.',

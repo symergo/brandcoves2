@@ -148,7 +148,7 @@ class MarketSwitcherTest extends TestCase
         foreach (['en', 'nl', 'fr', 'es'] as $language) {
             $countries = (require lang_path("{$language}/site.php"))['nav']['countries'] ?? [];
 
-            foreach (['be', 'nl', 'eu'] as $key) {
+            foreach (['be', 'nl', 'int'] as $key) {
                 $this->assertArrayHasKey($key, $countries, "{$language} is missing the {$key} country name");
                 $this->assertNotSame('', trim((string) $countries[$key]));
             }

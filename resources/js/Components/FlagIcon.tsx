@@ -47,7 +47,7 @@ const EU_STARS = Array.from({ length: 12 }, (_, i) => {
     return star(12 + 6 * Math.sin(angle), 8 - 6 * Math.cos(angle), 1.25)
 })
 
-export type FlagCountry = 'BE' | 'NL' | 'EU' | 'ES'
+export type FlagCountry = 'BE' | 'NL' | 'INT' | 'ES'
 
 const flags: Record<FlagCountry, React.ReactNode> = {
     // Vertical thirds: black, yellow, red.
@@ -68,12 +68,25 @@ const flags: Record<FlagCountry, React.ReactNode> = {
         </>
     ),
 
-    EU: (
+    /*
+     * A globe, not the European flag.
+     *
+     * The English market is the one that is not a country: it is what a visitor
+     * outside Belgium, the Netherlands and Spain lands on. The EU flag said
+     * something specific and wrong — it is not the EU, it excludes the two EU
+     * countries sitting next to it in the same row, and it reads as a claim
+     * about jurisdiction on a site that has real ones.
+     *
+     * Drawn on the brand tile colour rather than a national palette, because
+     * there is no nation to be faithful to. Meridian and equator only; at
+     * 24×16 anything more becomes a smudge.
+     */
+    INT: (
         <>
-            <rect x="0" y="0" width="24" height="16" fill="#003399" />
-            {EU_STARS.map((points, i) => (
-                <polygon key={i} points={points} fill="#FFCC00" />
-            ))}
+            <rect x="0" y="0" width="24" height="16" fill="#12232B" />
+            <circle cx="12" cy="8" r="5.5" fill="none" stroke="#EFE6D6" strokeWidth="1.1" />
+            <ellipse cx="12" cy="8" rx="2.4" ry="5.5" fill="none" stroke="#EFE6D6" strokeWidth="1.1" />
+            <path d="M6.5 8h11" stroke="#EFE6D6" strokeWidth="1.1" />
         </>
     ),
 

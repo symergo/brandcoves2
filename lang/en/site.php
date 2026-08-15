@@ -41,7 +41,7 @@ return [
         'countries' => [
             'be' => 'Belgium',
             'nl' => 'Netherlands',
-            'eu' => 'Europe',
+            'int' => 'International',
             'es' => 'Spain',
         ],
         'santa' => 'Secret Friend',
@@ -53,7 +53,21 @@ return [
     ],
 
     'home' => [
-        'title' => 'Find it, love it, gift it',
+        /*
+         * `seo_title` and `seo_description` are what a search engine and a
+         * social card show; `title` is the browser tab and, on most pages, the
+         * H1 as well. They are separate keys because they are read in different
+         * places: a listing has to say what the site is to someone who has never
+         * heard of it, and an H1 sitting above the page it describes does not.
+         *
+         * The home page is the exception: its `title` is not an H1 anywhere —
+         * the hero uses `headline_1`/`headline_2` — so one key serves the tab,
+         * the listing and the social card. It carries the brand itself, and the
+         * title template in app.tsx skips its own suffix when the name is
+         * already there.
+         */
+        'seo_description' => 'Search bol, Amazon and hundreds of shops at once. Keep wish lists, share them, club together on one gift, and run a Secret Friend.',
+        'title' => 'GiftCoves wish lists: give and get gifts at the best price',
         'headline_1' => 'Something worth giving.',
         'headline_2' => 'Yourself included.',
         'intro' => 'GiftCoves searches bol, Amazon and hundreds of shops at once, and turns what it finds into ideas. Keep wish lists and gift lists, share them, club together on something bigger, run a Secret Friend, or quiz your friends on how well they really know you.',
@@ -150,6 +164,8 @@ return [
         'seo_description' => 'Compare :count :brand products across every shop we track, and find the cheapest offer.',
         'crumb' => 'Brands',
         'index_title' => 'Brands',
+        'index_seo_title' => 'All brands, prices compared across every shop',
+        'index_seo_description' => 'Every brand in the catalogue, with live prices compared across bol, Amazon and hundreds of shops that stock them.',
         'index_intro' => 'Every brand in the catalogue, with live prices compared across the shops that stock it.',
         'index_count' => ':count products',
         'all_brands' => 'All brands',
@@ -268,6 +284,8 @@ return [
      * so the form cannot be used to discover whether an address reads this site.
      */
     'discover_cove' => [
+        'seo_title' => 'Gift ideas and product finds, new every day',
+        'seo_description' => 'Three ways to find something you were not looking for: a new edition every day, a surprise chosen for how rare it is, and long reads around one theme.',
         'title' => 'Discover',
         'intro' => 'Three ways to find something you were not looking for. One changes every day, one is deliberately unpredictable, and one is worth sitting down with.',
         'daily_what' => 'A new edition every day: a theme, a handful of finds and a price puzzle. Every past edition keeps its own page.',
@@ -641,6 +659,8 @@ return [
     | is enforced by the tool itself regardless.
     */
     'gift_cove' => [
+        'seo_title' => 'Wish lists, gift lists and Secret Friend',
+        'seo_description' => 'Nine gifting tools in one place: wish lists, a list for someone else, buying together, Secret Friend and a gift quiz. Nobody sees who bought what.',
         'title' => 'The Gift Cove',
         'intro' => 'Everything for buying for other people, and for telling them what you would like. Nobody ever sees who bought what.',
         'tools' => 'What you can do here',
@@ -818,6 +838,8 @@ return [
      * feature into one that looks broken.
      */
     'search_help' => [
+        'seo_title' => 'How to search: words, barcodes and Amazon links',
+        'seo_description' => 'What the search box understands — product names, brands, barcodes and pasted Amazon links — and how to narrow results down to the offer you want.',
         'title' => 'Searching and scanning',
         'intro' => 'What the search box understands, how to narrow a set of results, and what happens when you point a camera at a barcode.',
         'link' => 'What can I search for?',
@@ -1133,6 +1155,7 @@ return [
     ],
 
     'guides' => [
+        'seo_title' => 'Buying guides with prices compared per product',
         'title' => 'Buying guides',
         'subtitle' => 'Written from what people search for here, not from a keyword tool.',
         'seo_description' => 'Buying guides built from real search demand, with live prices compared across every shop that stocks each product.',

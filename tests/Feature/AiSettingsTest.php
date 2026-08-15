@@ -335,11 +335,24 @@ class AiSettingsTest extends TestCase
              * `finally`, so a failed assertion above cannot leave the schema
              * broken for everything that follows.
              */
-            Schema::create('cache', function (Blueprint $table) {
-                $table->string('key')->primary();
-                $table->mediumText('value');
-                $table->integer('expiration');
-            });
+            try {
+                Schema::create('cache', function (Blueprint $table) {
+                    $table->string('key')->primary();
+                    $table->mediumText('value');
+                    $table->integer('expiration');
+                });
+            } catch (\Throwable) {
+                /*
+                 * Best effort, and it has to be.
+                 *
+                 * If an assertion above failed, the surrounding transaction is
+                 * already aborted and Postgres refuses every further statement
+                 * until it ends — so this CREATE cannot run, and throwing here
+                 * would replace the real assertion failure with a confusing
+                 * driver error. The rollback restores the table in that case
+                 * anyway; this exists for the path where it does not.
+                 */
+            }
         }
     }
 }

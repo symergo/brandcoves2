@@ -23,9 +23,22 @@ enum Market: string
     case Es = 'es';
     case NlNl = 'nl-nl';
 
+    /**
+     * Where a visitor lands when nothing tells us anything better.
+     *
+     * The international market, not Belgium. This is only ever reached after
+     * `fromAcceptLanguage()` has failed to match a language at all — so the one
+     * thing we know about this visitor is that they read neither Dutch, French
+     * nor Spanish. Sending them to `be-nl` answers that by guessing Dutch,
+     * which is the single worst guess available given what we just learned.
+     *
+     * It also changes what an unrecognised header costs: landing on `en` is a
+     * language they can probably read, on the Belgian catalogue, one flag click
+     * from anywhere else. Landing on `be-nl` is a page they cannot read at all.
+     */
     public static function default(): self
     {
-        return self::BeNl;
+        return self::En;
     }
 
     /**
@@ -111,7 +124,7 @@ enum Market: string
         return match ($this) {
             self::BeNl, self::BeFr => 'BE',
             self::NlNl => 'NL',
-            self::En => 'EU',
+            self::En => 'INT',
             self::Es => 'ES',
         };
     }
@@ -131,7 +144,7 @@ enum Market: string
         $published = array_map(fn (self $m): string => $m->country(), self::published());
 
         return array_values(array_filter(
-            ['BE', 'NL', 'EU', 'ES'],
+            ['BE', 'NL', 'INT', 'ES'],
             fn (string $country): bool => in_array($country, $published, true),
         ));
     }

@@ -29,7 +29,7 @@ return [
         'countries' => [
             'be' => 'Belgique',
             'nl' => 'Pays-Bas',
-            'eu' => 'Europe',
+            'int' => 'International',
             'es' => 'Espagne',
         ],
         'santa' => 'Ami Secret',
@@ -41,7 +41,9 @@ return [
     ],
 
     'home' => [
-        'title' => 'Trouvez, craquez, offrez',
+        // Voir l'explication de ces clés dans lang/en/site.php.
+        'seo_description' => "Cherchez sur bol, Amazon et des centaines de boutiques à la fois. Gardez vos listes d'envies, partagez-les, cotisez à plusieurs et organisez un Ami Secret.",
+        'title' => "GiftCoves : listes d'envies, offrir et recevoir au meilleur prix",
         'headline_1' => 'De quoi faire plaisir.',
         'headline_2' => 'À vous aussi.',
         'intro' => "GiftCoves cherche sur bol, Amazon et des centaines de boutiques à la fois, et transforme ce qu'il trouve en idées. Tenez vos listes d'envies et vos listes de cadeaux, partagez-les, cotisez à plusieurs pour un cadeau commun, organisez un Ami Secret, ou testez vos amis sur ce qu'ils savent vraiment de vous.",
@@ -128,6 +130,8 @@ return [
         'seo_description' => 'Comparez :count produits :brand dans toutes les boutiques que nous suivons et trouvez l\'offre la moins chère.',
         'crumb' => 'Marques',
         'index_title' => 'Marques',
+        'index_seo_title' => 'Toutes les marques, prix comparés',
+        'index_seo_description' => 'Toutes les marques du catalogue, avec les prix actuels comparés sur bol, Amazon et des centaines de boutiques qui les vendent.',
         'index_intro' => 'Toutes les marques du catalogue, avec les prix actuels comparés entre les boutiques qui les vendent.',
         'index_count' => ':count produits',
         'all_brands' => 'Toutes les marques',
@@ -229,6 +233,8 @@ return [
      * quoi qu'il se soit passé.
      */
     'discover_cove' => [
+        'seo_title' => 'Idées cadeaux et trouvailles, chaque jour',
+        'seo_description' => 'Trois façons de trouver ce que vous ne cherchiez pas : une nouvelle édition chaque jour, une surprise choisie pour sa rareté, et des lectures par thème.',
         'title' => 'Découvrir',
         'intro' => "Trois façons de trouver ce que vous ne cherchiez pas. L'une change chaque jour, l'autre est volontairement imprévisible, et la troisième se lit tranquillement.",
         'daily_what' => 'Une nouvelle édition chaque jour : un thème, quelques trouvailles et une énigme de prix. Chaque édition passée garde sa page.',
@@ -566,6 +572,8 @@ return [
     ],
 
     'gift_cove' => [
+        'seo_title' => "Listes d'envies, listes cadeaux et Ami Secret",
+        'seo_description' => "Neuf outils cadeaux au même endroit : listes d'envies, liste pour un proche, cagnotte commune, Ami Secret et un quiz. Personne ne voit qui achète quoi.",
         'title' => 'La Cove Cadeau',
         'intro' => 'Tout pour offrir aux autres, et pour dire ce qui vous ferait plaisir. Personne ne voit jamais qui a acheté quoi.',
         'tools' => 'Ce que vous pouvez faire ici',
@@ -735,6 +743,8 @@ return [
     ],
 
     'search_help' => [
+        'seo_title' => 'Comment chercher : mots, codes-barres, Amazon',
+        'seo_description' => "Ce que le champ de recherche comprend — noms de produits, marques, codes-barres et liens Amazon collés — et comment affiner jusqu'à la bonne offre.",
         'title' => 'Rechercher et scanner',
         'intro' => 'Ce que le champ de recherche comprend, comment affiner une liste de résultats, et ce qui se passe quand vous pointez une caméra sur un code-barres.',
         'link' => 'Que peut-on rechercher ici ?',
@@ -1048,6 +1058,7 @@ return [
     ],
 
     'guides' => [
+        'seo_title' => 'Guides d’achat avec les prix comparés par produit',
         'title' => 'Guides d’achat',
         'subtitle' => 'Écrits à partir de ce que les gens cherchent ici, pas d’un outil de mots-clés.',
         'seo_description' => 'Des guides d’achat bâtis sur une demande réelle, avec les prix en direct comparés dans toutes les boutiques qui vendent chaque produit.',
