@@ -2,8 +2,16 @@ import { Head, Link } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import { useTranslations } from '../useTranslations'
 
+interface Cove {
+    title: string
+    intro: string | null
+    url: string
+    searches: number
+}
+
 interface Props {
     urls: { daily: string; surprise: string; guides: string }
+    coves: Cove[]
 }
 
 /**
@@ -14,12 +22,16 @@ interface Props {
  * for the same reason: "Surprise me" promises nothing a visitor can evaluate
  * in advance, so the page that sends them there has to say what arrives.
  *
- * No counts and no numbers. Everything worth counting belongs to a Cove and is
+ * No counts and no totals. Everything worth counting belongs to a Cove and is
  * already on that Cove's page; a hub that totals things repeats the mistake
  * homepage.md removed from the front page.
+ *
+ * The Coves themselves are listed underneath, because the archive is the one
+ * card here whose value is its contents rather than its promise. "Long reads
+ * around a theme" cannot be evaluated; a dozen titles can.
  */
-export default function DiscoverCove({ urls }: Props) {
-    const { t } = useTranslations()
+export default function DiscoverCove({ urls, coves }: Props) {
+    const { t, n } = useTranslations()
 
     const coves: { key: CoveKey; href: string; name: string; what: string }[] = [
         { key: 'daily', href: urls.daily, name: t('nav.daily'), what: t('discover_cove.daily_what') },
@@ -51,6 +63,49 @@ export default function DiscoverCove({ urls }: Props) {
                         </li>
                     ))}
                 </ul>
+
+                {/*
+                  The archive, spelled out. Same copy keys as the front page's
+                  band — one source, so the two pages describing the same shelf
+                  cannot drift into describing it differently.
+                */}
+                {coves.length > 0 && (
+                    <section className="mt-12" aria-labelledby="coves-heading">
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight text-ink">
+                                {t('home.coves_heading')}
+                            </h2>
+                            <Link
+                                href={urls.guides}
+                                className="text-sm font-medium text-accent hover:text-accent-dark"
+                            >
+                                {t('home.coves_all')} →
+                            </Link>
+                        </div>
+                        <p className="mt-1 max-w-2xl text-ink-soft">{t('home.coves_intro')}</p>
+
+                        <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {coves.map((cove) => (
+                                <li key={cove.url}>
+                                    <Link
+                                        href={cove.url}
+                                        className="flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
+                                    >
+                                        <h3 className="font-medium text-ink">{cove.title}</h3>
+                                        {cove.intro && (
+                                            <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{cove.intro}</p>
+                                        )}
+                                        {cove.searches > 0 && (
+                                            <span className="mt-auto pt-3 text-xs text-ink-soft/70">
+                                                {t('home.coves_volume', { count: n(cove.searches) })}
+                                            </span>
+                                        )}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
             </div>
         </>
     )

@@ -31,8 +31,25 @@ return [
         'main' => 'Main',
         'skip' => 'Skip to content',
         'choose_market' => 'Choose your market',
+        'choose_language' => 'Choose your language',
+
+        /*
+         * The flags on the switcher. Europe is not a country and is not
+         * pretending to be one — it is where the English market lives, because
+         * that market exists for a language rather than for a place.
+         */
+        'countries' => [
+            'be' => 'Belgium',
+            'nl' => 'Netherlands',
+            'eu' => 'Europe',
+            'es' => 'Spain',
+        ],
         'santa' => 'Secret Friend',
+
+        // Names, not words: a Cove is called the same thing in every language,
+        // exactly like GiftCoves itself. A translated name is a second name.
         'cove' => 'Gift Cove',
+        'discover_cove' => 'Discover Cove',
     ],
 
     'home' => [
@@ -40,6 +57,9 @@ return [
         'headline_1' => 'Something worth giving.',
         'headline_2' => 'Yourself included.',
         'intro' => 'GiftCoves searches bol, Amazon and hundreds of shops at once, and turns what it finds into ideas. Keep wish lists and gift lists, share them, club together on something bigger, run a Secret Friend, or quiz your friends on how well they really know you.',
+        'search_label' => 'Search for a product or a brand',
+        'search_placeholder' => 'Headphones, a coffee grinder, a name…',
+        'recent_heading' => 'Recently searched',
         'cta_gift' => 'Find a gift',
         'cta_search' => 'Something for yourself',
         'today_badge' => "Today's Cove",
@@ -787,6 +807,68 @@ return [
             'vibe' => 'Fits the feeling you wanted',
             'values' => 'Matches what matters to you',
         ],
+    ],
+
+    /*
+     * The search box explains itself somewhere it can be linked to.
+     *
+     * Every line here is a claim about behaviour that exists in the code — the
+     * "not found is normal" line in particular is the designed limitation from
+     * docs/features/barcode-scanner.md, and softening it would turn a working
+     * feature into one that looks broken.
+     */
+    'search_help' => [
+        'title' => 'Searching and scanning',
+        'intro' => 'What the search box understands, how to narrow a set of results, and what happens when you point a camera at a barcode.',
+        'link' => 'What can I search for?',
+
+        'searching_heading' => 'What you can search for',
+        'searching_intro' => 'One box, four kinds of input. It looks like an ordinary search field and it accepts rather more than one.',
+        'what_words_term' => 'Words',
+        'what_words' => 'Product names, brands, categories, and words from a shop’s own description. A word in the title counts for more than the same word in a description, so the closest names come first.',
+        'what_typos_term' => 'Typos',
+        'what_typos' => 'Spelling is forgiven. "blutooth koptelefon" finds Bluetooth headphones — the match is made word by word, so one wrong letter does not cost you the rest of the query.',
+        'what_accents_term' => 'Accents',
+        'what_accents' => 'Optional in both directions. "creme" finds "crème" and the other way round, in every language we carry.',
+        'what_language_term' => 'Language',
+        'what_language' => 'Each market searches in its own language, plurals and word endings included. Searching in the language of the shops you are looking at gives the best results.',
+        'what_barcode_term' => 'A barcode',
+        'what_barcode' => 'Type or paste the digits under the bars — 8 to 14 of them — and you land on the product itself rather than on a list. It is the same lookup the camera does.',
+        'what_amazon_term' => 'An Amazon link',
+        'what_amazon' => 'Paste the address of an Amazon product page and we read the product name out of the link itself to search for it here. We never open the link, and a shortened amzn.to address has nothing in it to read — paste the full one.',
+
+        'narrowing_heading' => 'Narrowing a set of results',
+        'narrowing_intro' => 'The filters sit above the results. Everything you set stays in the address, so a filtered search is a link you can send or bookmark.',
+        'narrow_price_term' => 'Price',
+        'narrow_price' => 'A floor, a ceiling, or both. Prices are always the ones that apply in your market.',
+        'narrow_brand_term' => 'Brand and shop',
+        'narrow_brand' => 'Pick one or several of either. Brands are matched by identity rather than by spelling, so "Audio-Technica" and "Audio Technica" are one brand and not two.',
+        'narrow_stock_term' => 'In stock',
+        'narrow_stock' => 'On by default. Turn it off to include things no shop can send you today.',
+        'narrow_comparable_term' => 'Sold in more than one shop',
+        'narrow_comparable' => 'Only products carried by at least two shops — which are exactly the ones where a price comparison has something to compare.',
+        'narrow_sort_term' => 'Sorting',
+        'narrow_sort' => 'Best match, price up or down, biggest discount, or newest. There is also a by-shop view, which groups the same results under the shops selling them.',
+        'narrow_terms_term' => 'The words above the results',
+        'narrow_terms' => 'Words read off the products in front of you. Each one adds itself to what you typed rather than replacing it, so the search narrows and cannot dead-end.',
+
+        'scanning_heading' => 'Scanning a barcode',
+        'scanning_intro' => 'Point your phone at the barcode on a box in a shop and find out whether it is cheaper somewhere else, while you are still standing there.',
+        'scan_where_term' => 'Where to start',
+        'scan_where' => 'The camera button in the search field, on the search page. There is a page of its own as well, if you would rather keep a shortcut to it.',
+        'scan_privacy_term' => 'The camera image never leaves your phone',
+        'scan_privacy' => 'The barcode is read on the device itself and only the digits are sent to us. No picture is uploaded, stored or logged. The camera needs a secure connection and your permission, and it stays off until you press the button.',
+        'scan_devices_term' => 'Which phones can do it',
+        'scan_devices' => 'Chrome on Android reads barcodes itself. On iPhone, and in Safari and Firefox, a reader is downloaded when you open the scanner — the first scan takes a moment longer and the ones after it do not.',
+        'scan_misses_term' => 'Finding nothing is normal',
+        'scan_misses' => 'Only products identified by their barcode can be matched, and not every shop publishes one. We check our own catalogue first and then ask bol directly. Nothing found means we cannot compare that item yet — not that it does not exist.',
+        'scan_misread_term' => 'Misreads',
+        'scan_misread' => 'Every barcode carries a check digit, and a code that fails it is thrown away rather than looked up: one wrong digit is a different real product, not a near miss. If nothing happens, keep the camera on it.',
+        'scan_manual_term' => 'When the camera will not read it',
+        'scan_manual' => 'Curved, creased and shrink-wrapped barcodes are genuinely hard, and shop lighting does not help. Type the digits in instead — that always works.',
+
+        'go_search' => 'Go to search',
+        'go_scan' => 'Open the scanner',
     ],
 
     'scan' => [

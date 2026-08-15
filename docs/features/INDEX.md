@@ -18,6 +18,7 @@ cannot be recovered from a diff.
 | [social-cards.md](social-cards.md) | SEO / Brand | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
+| [search-help.md](search-help.md) | Search / Content | Active |
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect waits on the connector |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active |
 | [gifting-lenses.md](gifting-lenses.md) | Gifting / Core | Active |

@@ -62,9 +62,37 @@ which is the largest table we have. The controller no longer computes them.
 - **The Coves archive last.** The evergreen half. It earns traffic over years, and the front page is
   where a first-time visitor learns the archive exists at all.
 
+## The drawing beside the pitch
+
+Added 2026-08-15. The hero is a two-column band above `md`: the headline, the paragraph and the
+search box on the left, and one large drawing on the right.
+
+It is the **only** illustration on the site that contains the logo. `CoveIllustration` and
+`ListIllustration` are scenes *about* a surface, drawn in one stroke weight and `currentColor` with
+the accent used only as a translucent wash. `HomeIllustration` speaks that same language — it has to,
+sitting two bands above both of them, because two illustration styles on one page reads as two
+websites — and then puts the real mark inside it, in its real colours, moored in the mouth of a
+headland that is the logo's own arc scaled from r=15 to r=60. The tile does not take `currentColor`:
+a recoloured logo is not the logo.
+
+Two decisions worth keeping:
+
+- **Hidden below `md`, not stacked.** On a phone the drawing costs roughly a screen of height and
+  pushes the search field — the one thing this page wants pressed — under the fold, to say nothing
+  the headline directly above it has not already said in words.
+- **One object in the bay, not a group.** At this size a crowd of small shapes turns into texture and
+  the mark stops being the first thing the eye finds.
+
+A rejected version replaced all seven card illustrations with a `CoveMark` tile — the logo with one
+element swapped per section. It is a coherent system and it was the wrong trade here: the section
+cards want to show *what a surface does*, which a drawing can and a recoloured logo cannot, and seven
+near-identical tiles down one page is a pattern rather than a set of signposts. The mark earns its
+place once, at the top, at size.
+
 ## Files
 
 - `resources/js/Pages/Home.tsx`
+- `resources/js/Components/HomeIllustration.tsx` — the hero drawing, and the only one carrying the mark
 - `app/Http/Controllers/HomeController.php`
 - `lang/*/site.php` — the `home.*` block
 
@@ -72,3 +100,5 @@ which is the largest table we have. The controller no longer computes them.
 
 - [navigation.md](navigation.md) — the header, and why editorial leads it
 - [daily-cove.md](daily-cove.md) — the edition this page opens with
+- [brand-mark.md](brand-mark.md) — the mark, its palette, and everywhere else it appears
+- [search-help.md](search-help.md) — linked from under the hero search box

@@ -1,9 +1,17 @@
 /** Mirrors the payload in App\Http\Middleware\HandleInertiaRequests::share(). */
 
-export interface MarketSummary {
-    key: string
-    label: string
-    nativeName: string
+/** One language a country is read in, and the market that serves it. */
+export interface SwitcherLanguage {
+    language: string
+    name: string
+    market: string
+}
+
+/** One flag on the switcher: a country, and everything it can be read in. */
+export interface SwitcherCountry {
+    country: string
+    name: string
+    languages: SwitcherLanguage[]
 }
 
 export interface CurrentMarket {
@@ -27,7 +35,7 @@ export type Translations = { [key: string]: string | Translations }
 export interface SharedProps {
     auth: { user: AuthUser | null }
     market: CurrentMarket
-    markets: MarketSummary[]
+    markets: SwitcherCountry[]
     translations: Translations
     translationVersion: string
     unreadCount: number

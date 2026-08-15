@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react'
 import AccountMenu from '../Components/AccountMenu'
 import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
+import MarketSwitcher from '../Components/MarketSwitcher'
 import NavMenu from '../Components/NavMenu'
 import { type PropsWithChildren, useState } from 'react'
 import type { SharedProps } from '../types'
@@ -9,7 +10,7 @@ import { useTranslations } from '../useTranslations'
 
 export default function SiteLayout({ children }: PropsWithChildren) {
     const page = usePage<SharedProps>()
-    const { market, markets, auth, unreadCount } = page.props
+    const { market, auth, unreadCount } = page.props
     const { t } = useTranslations()
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
@@ -193,28 +194,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                     </button>
 
                     <div className="ml-auto hidden items-center gap-3 sm:flex">
-                        {/*
-                          A plain <select> with a full page load. Switching market
-                          changes the catalogue, the currency and the language —
-                          a client-side swap would leave stale prices on screen.
-                        */}
-                        <label className="sr-only" htmlFor="market-switcher">
-                            {t('nav.choose_market')}
-                        </label>
-                        <select
-                            id="market-switcher"
-                            className="rounded border border-line bg-card px-2 py-1 text-sm"
-                            value={market.key}
-                            onChange={(e) => {
-                                window.location.href = `/${e.target.value}`
-                            }}
-                        >
-                            {markets.map((m) => (
-                                <option key={m.key} value={m.key}>
-                                    {m.label}
-                                </option>
-                            ))}
-                        </select>
+                        <MarketSwitcher id="header" />
 
                         {auth.user && unreadCount > 0 && (
                             <Link
@@ -318,23 +298,17 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                             </span>
                         </nav>
 
-                        <label className="mt-4 block text-xs text-ink-soft" htmlFor="market-switcher-mobile">
-                            {t('nav.choose_market')}
-                        </label>
-                        <select
-                            id="market-switcher-mobile"
-                            className="mt-1 w-full rounded border border-line bg-card px-2 py-2 text-sm"
-                            value={market.key}
-                            onChange={(e) => {
-                                window.location.href = `/${e.target.value}`
-                            }}
-                        >
-                            {markets.map((m) => (
-                                <option key={m.key} value={m.key}>
-                                    {m.label}
-                                </option>
-                            ))}
-                        </select>
+                        {/*
+                          Country names spelled out here, unlike the header.
+                          There is room in an open menu, and a flag on its own is
+                          a guess — the tooltip that carries the name on a
+                          desktop does not exist on the device this menu is for.
+                        */}
+                        <MarketSwitcher
+                            id="mobile"
+                            withNames
+                            className="mt-4 flex flex-col gap-3"
+                        />
                     </div>
                 )}
             </header>

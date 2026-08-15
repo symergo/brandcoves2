@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react'
 import type { CoveKey } from '../Components/CoveIcon'
 import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
+import HomeIllustration from '../Components/HomeIllustration'
 import ListIllustration, { type ListSceneKey } from '../Components/ListIllustration'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -29,9 +30,10 @@ interface Props {
         urls: { gift: string; lists: string; santa: string }
     }
     coves: Cove[]
+    recentSearches: { term: string; url: string; images: string[] }[]
 }
 
-export default function Home({ today, gifting, coves }: Props) {
+export default function Home({ today, gifting, coves, recentSearches }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
@@ -49,28 +51,136 @@ export default function Home({ today, gifting, coves }: Props) {
               prose at this width is genuinely harder to read.
             */}
             <section className="max-w-5xl">
-                <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-                    {t('home.headline_1')}
-                    <br />
-                    {t('home.headline_2')}
-                </h1>
-                <p className="mt-5 max-w-2xl text-lg text-ink-soft">{t('home.intro')}</p>
+                {/*
+                  The drawing sits beside the whole pitch, not just the
+                  paragraph, so the headline and the search box stay on one
+                  optical column rather than being stepped around it.
 
-                <div className="mt-8 flex flex-wrap gap-3">
-                    <Link
-                        href={`${base}/gift`}
-                        className="rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark"
-                    >
-                        {t('home.cta_gift')}
-                    </Link>
-                    <Link
-                        href={`${base}/search`}
-                        className="rounded-lg border border-line px-5 py-3 font-medium transition hover:border-ink"
-                    >
-                        {t('home.cta_search')}
-                    </Link>
+                  Hidden below md, deliberately. Stacked on a phone it costs
+                  roughly a screen of height and pushes the search field — the
+                  one thing this page wants pressed — under the fold, to say
+                  nothing that a decorative drawing already says in words above
+                  it.
+                */}
+                <div className="flex flex-col gap-10 md:flex-row md:items-center md:gap-12">
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+                            {t('home.headline_1')}
+                            <br />
+                            {t('home.headline_2')}
+                        </h1>
+                        <p className="mt-5 max-w-2xl text-lg text-ink-soft">{t('home.intro')}</p>
+
+                        {/*
+                          A search field, where the Gift Finder button used to
+                          be.
+
+                          The Whisperer is not good enough to be the first thing
+                          the site asks you to trust — it is still reachable from
+                          the Gift Cove, and it comes back here when it earns the
+                          place.
+
+                          A real <form method="get"> rather than a controlled
+                          input and a router call: it submits without JavaScript,
+                          the browser offers previous searches, and Enter works
+                          the way it does in every other search box the visitor
+                          has ever used.
+                        */}
+                        <form
+                            action={`${base}/search`}
+                            method="get"
+                            role="search"
+                            className="mt-8 flex max-w-xl gap-2"
+                        >
+                            <input
+                                type="search"
+                                name="q"
+                                aria-label={t('home.search_label')}
+                                placeholder={t('home.search_placeholder')}
+                                className="min-w-0 flex-1 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none"
+                            />
+                            <button
+                                type="submit"
+                                className="rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark"
+                            >
+                                {t('nav.search')}
+                            </button>
+                        </form>
+
+                        <p className="mt-3 text-sm text-ink-soft">
+                            <Link href={`${base}/search-help`} className="underline hover:text-accent">
+                                {t('search_help.link')}
+                            </Link>
+                        </p>
+                    </div>
+
+                    <HomeIllustration className="hidden w-72 shrink-0 text-ink-soft md:block lg:w-80" />
                 </div>
             </section>
+
+            {/*
+              What other people have been looking for.
+
+              Pictures rather than a list of words: a row of terms reads as a
+              tag cloud, and a tag cloud is something visitors have learned to
+              skip. The images are the invitation and the term is the label.
+
+              Every card links to the **search**, not to a product. These are
+              not recommendations — nothing here has been chosen, ranked or
+              checked, and sending someone to one product implies it was. The
+              search results are the honest destination, and they are also where
+              the visitor can immediately do something else.
+
+              No prices, deliberately. A price on a picture that was resolved up
+              to an hour ago is a number that can be wrong, and a wrong price is
+              worse than no price. Prices belong on the product page, where they
+              are read live.
+
+              Precomputed hourly by RefreshRecentSearches; absent until the
+              first run, and absent on a market with no search history, which is
+              why the whole band is conditional.
+            */}
+            {recentSearches.length > 0 && (
+                <section className="mt-12" aria-labelledby="recent-heading">
+                    <h2 id="recent-heading" className="text-sm font-medium tracking-wide text-ink-soft uppercase">
+                        {t('home.recent_heading')}
+                    </h2>
+
+                    {/*
+                      Three across at lg, stacked below it. No two-column step:
+                      with three cards it would always leave one orphan on its
+                      own row, and each card carries four 40px thumbnails that
+                      have nowhere to shrink to in a narrow column.
+                    */}
+                    <ul className="mt-4 grid gap-3 lg:grid-cols-3">
+                        {recentSearches.map((recent) => (
+                            <li key={recent.term}>
+                                <Link
+                                    href={recent.url}
+                                    className="flex items-center gap-3 rounded-card border border-line bg-card p-3 transition hover:border-ink"
+                                >
+                                    <span className="flex shrink-0 gap-1">
+                                        {recent.images.map((image) => (
+                                            <span
+                                                key={image}
+                                                className="h-10 w-10 overflow-hidden rounded bg-cream"
+                                            >
+                                                <img
+                                                    src={image}
+                                                    alt=""
+                                                    loading="lazy"
+                                                    className="h-full w-full object-contain"
+                                                />
+                                            </span>
+                                        ))}
+                                    </span>
+                                    <span className="min-w-0 flex-1 truncate text-sm text-ink">{recent.term}</span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
 
             {/*
               The Organise band — the front-page half of the header's Organise
@@ -176,7 +286,7 @@ export default function Home({ today, gifting, coves }: Props) {
                         href={`${base}/discover-cove`}
                         className="text-sm font-medium text-accent hover:text-accent-dark"
                     >
-                        {t('nav.discover')} →
+                        {t('nav.discover_cove')} →
                     </Link>
                 </div>
                 <p className="mt-1 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>

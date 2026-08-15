@@ -81,7 +81,7 @@ enum Market: string
         };
     }
 
-    /** Name in its own language, for the switcher menu. */
+    /** Name in its own language. */
     public function nativeName(): string
     {
         return match ($this) {
@@ -90,6 +90,66 @@ enum Market: string
             self::En => 'Europe (English)',
             self::Es => 'España (Español)',
             self::NlNl => 'Nederland (Nederlands)',
+        };
+    }
+
+    /**
+     * The country or region whose catalogue this market sells from.
+     *
+     * The axis the switcher's flags are on. A market value already encodes this
+     * — `be-nl` is Belgium in Dutch — but the two halves have to be separable
+     * before a visitor can be offered one of them at a time, and `explode('-')`
+     * would call the English market's country "en".
+     *
+     * `EU` is not a country and is not pretending to be one. The English market
+     * has no single home: it exists so that somebody who reads neither Dutch nor
+     * French can still use the site, and it buys from the Belgian catalogue
+     * because that is where the supply is.
+     */
+    public function country(): string
+    {
+        return match ($this) {
+            self::BeNl, self::BeFr => 'BE',
+            self::NlNl => 'NL',
+            self::En => 'EU',
+            self::Es => 'ES',
+        };
+    }
+
+    /**
+     * Published countries, in the order the switcher shows them.
+     *
+     * Explicit rather than derived from `cases()`, because the order that
+     * matters here is editorial: the home market first, then the neighbour, then
+     * the catch-all — and EU last is the point, since it is where a visitor ends
+     * up when neither of the real countries fits.
+     *
+     * @return list<string>
+     */
+    public static function countries(): array
+    {
+        $published = array_map(fn (self $m): string => $m->country(), self::published());
+
+        return array_values(array_filter(
+            ['BE', 'NL', 'EU', 'ES'],
+            fn (string $country): bool => in_array($country, $published, true),
+        ));
+    }
+
+    /**
+     * This market's language, named in that language.
+     *
+     * Always in its own language, never translated: a visitor looking for their
+     * language scans for the word they would write, and "Dutch" is invisible to
+     * someone who only reads Dutch.
+     */
+    public function languageName(): string
+    {
+        return match ($this->language()) {
+            'nl' => 'Nederlands',
+            'fr' => 'Français',
+            'es' => 'Español',
+            default => 'English',
         };
     }
 

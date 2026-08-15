@@ -26,6 +26,7 @@ it is there to show.
 | Browser tab | `giftcoves.svg` first, `favicon.ico` as the fallback ([app.blade.php](../../resources/views/app.blade.php)) |
 | Home screen | `apple-touch-icon`, the 512 PNG |
 | Site header | The SVG next to the wordmark ([SiteLayout.tsx](../../resources/js/Layouts/SiteLayout.tsx)) |
+| Homepage hero | Drawn into the illustration beside the pitch, at 44 of its 64 units ([HomeIllustration.tsx](../../resources/js/Components/HomeIllustration.tsx)) — the arc around it is this file's arc at four times the radius, so a change to the geometry here changes both |
 | Admin | Filament `brandLogo` and `favicon` |
 | Social cards | A drawn 1200×630 card, see [social-cards.md](social-cards.md) |
 

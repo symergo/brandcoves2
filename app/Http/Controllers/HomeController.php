@@ -10,6 +10,7 @@ use App\Models\Guide;
 use App\Models\Recipient;
 use App\Models\SecretSantaGroup;
 use App\Models\Wishlist;
+use App\Services\Search\RecentSearches;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
@@ -59,6 +60,22 @@ class HomeController extends Controller
             // front page is where a first-time visitor discovers the archive
             // exists at all.
             'coves' => $this->coves($current),
+
+            /*
+             * What people have been searching for, with pictures.
+             *
+             * A cache read, never a computation. `search_log` stores queries
+             * and not the products they returned, so this band only exists
+             * because RefreshRecentSearches resolves those searches hourly and
+             * caches the result — putting six searches on the busiest page on
+             * the site is exactly the cost the catalogue counters were removed
+             * for.
+             *
+             * Empty until the first run of that job, and on any market with no
+             * search history. The band does not render at all in that case,
+             * rather than showing an empty shelf.
+             */
+            'recentSearches' => app(RecentSearches::class)->for($current->get()),
         ]);
     }
 

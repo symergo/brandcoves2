@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Enums\Market;
 use App\Models\Notification;
 use App\Support\CurrentMarket;
+use App\Support\MarketSwitcher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
 use Inertia\Middleware;
@@ -64,15 +64,17 @@ class HandleInertiaRequests extends Middleware
                 'currency' => $market->currency(),
             ],
 
-            // The switcher needs every *published* market, and it is a short
-            // fixed list — cheaper to ship than to fetch. An unpublished market
-            // is left out rather than disabled: a greyed-out country reads as a
-            // fault, and there is nothing the visitor can do about it.
-            'markets' => array_map(fn (Market $m) => [
-                'key' => $m->value,
-                'label' => $m->label(),
-                'nativeName' => $m->nativeName(),
-            ], Market::published()),
+            /*
+             * The switcher, as two axes rather than one list of pairs: a country
+             * with a flag, and the languages that country can be read in. The
+             * shape and the reasoning are in App\Support\MarketSwitcher.
+             *
+             * Still a short fixed list, cheaper to ship than to fetch. An
+             * unpublished market is left out rather than disabled: a greyed-out
+             * country reads as a fault, and there is nothing the visitor can do
+             * about it.
+             */
+            'markets' => app(MarketSwitcher::class)->payload(),
 
             /*
              * Site copy for the current market's language.

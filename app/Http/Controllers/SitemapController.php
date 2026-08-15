@@ -87,6 +87,15 @@ class SitemapController extends Controller
             $urls = [
                 ['loc' => url("/{$resolved->value}"), 'priority' => '1.0', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/search"), 'priority' => '0.5', 'changefreq' => 'weekly'],
+
+                /*
+                 * How the box and the camera work. "How do I scan a barcode to
+                 * compare prices" is a real query with real intent, and the
+                 * search page itself cannot answer it — it is a results page
+                 * with nothing on it until somebody types.
+                 */
+                ['loc' => url("/{$resolved->value}/search-help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
+
                 ['loc' => url("/{$resolved->value}/daily"), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/brands"), 'priority' => '0.6', 'changefreq' => 'weekly'],

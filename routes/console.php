@@ -9,6 +9,7 @@ use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\PullPopularCharts;
 use App\Jobs\RefreshBrandStats;
+use App\Jobs\RefreshRecentSearches;
 use App\Jobs\RefreshWishlistedProducts;
 use App\Jobs\ScoreSerendipity;
 use App\Jobs\SendCoveDigest;
@@ -290,3 +291,22 @@ Schedule::command('bc:prune-personal-data')
 Schedule::command('bc:prune-price-history')
     ->dailyAt('03:30')
     ->onOneServer();
+
+/*
+ * Turn the last hour of searches into pictures for the front page.
+ *
+ * `search_log` stores queries and never the products they returned, so this
+ * band can only exist by running those searches again — which is exactly why it
+ * happens here and not in the request. The homepage had three COUNT(*) queries
+ * removed for being too expensive; six searches per page view would be worse.
+ *
+ * Staggered by a minute per market so five markets do not run their searches in
+ * the same second, and published markets only: an unpublished market has no
+ * visitors and therefore no searches to resolve.
+ */
+foreach (Market::published() as $index => $market) {
+    Schedule::job(new RefreshRecentSearches($market))
+        ->name("refresh-recent-searches-{$market->value}")
+        ->hourlyAt($index * 2)
+        ->onOneServer();
+}

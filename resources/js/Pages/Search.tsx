@@ -210,6 +210,18 @@ export default function Search({
             </p>
 
             {/*
+              The box accepts a barcode and an Amazon URL as readily as it
+              accepts words, and nothing about it says so. One quiet link rather
+              than three lines of placeholder text: the field stays a field, and
+              the answer is somewhere it can be read properly.
+            */}
+            <p className="mt-2 text-sm text-ink-soft">
+                <Link href={`/${market.key}/search-help`} className="underline hover:text-accent">
+                    {t('search_help.link')}
+                </Link>
+            </p>
+
+            {/*
               What we made of a pasted Amazon link.
 
               Directly under the box, because the query that ran is not the text

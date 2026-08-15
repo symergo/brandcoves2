@@ -30,6 +30,7 @@ use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\RecipientProfileController;
 use App\Http\Controllers\ScanController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SearchHelpController;
 use App\Http\Controllers\SecretSantaController;
 use App\Http\Controllers\SerendipityController;
 use App\Http\Controllers\SharedListController;
@@ -83,6 +84,12 @@ Route::prefix('{market}')->group(function () {
     Route::get('/', HomeController::class)->name('home');
 
     Route::get('/search', SearchController::class)->name('search');
+
+    // What the box accepts and how the camera does it. Next to /search rather
+    // than with about/privacy/terms: it is documentation of a tool, not a
+    // document about the company, and the only pages that link to it are the
+    // ones with a search field on them.
+    Route::get('/search-help', SearchHelpController::class)->name('search-help');
 
     // The slug is decoration; the id is identity. A stale slug redirects rather
     // than 404s, so old shared links keep working after a retitle.
