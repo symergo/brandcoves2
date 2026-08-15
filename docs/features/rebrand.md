@@ -107,8 +107,31 @@ as `ERR_TOO_MANY_REDIRECTS`.
 
 ## The Coolify side
 
-**None of this is done.** The codebase is renamed; the infrastructure still serves the old domains.
-Both applications keep their `brandcoves2-*` names.
+**Staging is done and verified; production has domains only.** Both applications keep their
+`brandcoves2-*` names.
+
+| | `brandcoves2-staging` | `brandcoves2-prod` |
+|---|---|---|
+| Domains | ✅ both hosts | ✅ both hosts |
+| Env vars | ✅ set | ❌ **not set** |
+| Renamed code deployed | ✅ `0851fad` | ❌ `main` is pre-rename |
+
+**Production env vars are deliberately not set.** `main` still carries the old build, and `APP_NAME`
+renames the session cookie (`config/session.php` derives it) — setting it against the old image logs
+everyone out of a site that still says Brandcoves everywhere. Those variables belong in the same
+deploy as the code.
+
+Two Coolify API shapes, because neither is guessable and both cost a round of failed writes:
+
+- `docker_compose_domains` **reads back as a JSON string** but only accepts an array on write:
+  `[{"name":"app","domain":"https://a.com,https://b.com"}]`. Multiple domains are comma-separated
+  inside the one `domain` value. `{"app":{"domain":…}}` is rejected.
+- **`is_build_time` cannot be set through the API** at all — the envs endpoint rejects the field.
+  Build variables have to be ticked in the UI. This did not bite here only because
+  `docker-compose.coolify.yml` declares `VITE_APP_NAME: ${APP_NAME:-GiftCoves}`, so the fallback
+  already carries the right value. Verified by reading `og:site_name` out of the rendered HTML rather
+  than assumed — that is the only check that distinguishes "baked correctly" from "looks fine because
+  the server rendered it".
 
 Order matters — DNS first, then domains, then env, and the env vars must move *together*.
 
