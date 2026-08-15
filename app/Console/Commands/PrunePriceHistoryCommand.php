@@ -44,7 +44,7 @@ class PrunePriceHistoryCommand extends Command
          * extra year costs nothing worth counting.
          */
         $rankDays = (int) ($this->option('rank-days')
-            ?? config('brandcoves.connectors.bol.popular.history_days', 400));
+            ?? config('giftcoves.connectors.bol.popular.history_days', 400));
 
         $ranks = $this->prune('popular_ranks', now()->subDays($rankDays)->toDateString());
         $this->info("Pruned {$ranks} rank history rows older than {$rankDays} days.");

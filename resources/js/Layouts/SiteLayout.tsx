@@ -69,21 +69,21 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                         {/*
                           Decorative, so it is hidden from screen readers: the
                           word next to it already names the link, and a reader
-                          announcing "Brandcoves Brandcoves" is worse than no
+                          announcing "GiftCoves GiftCoves" is worse than no
                           image at all.
 
                           Fixed width and height rather than CSS alone, so the
                           header does not reflow while the mark loads.
                         */}
                         <img
-                            src="/icons/brandcoves.svg"
+                            src="/icons/giftcoves.svg"
                             alt=""
                             aria-hidden="true"
                             width={28}
                             height={28}
                             className="h-7 w-7 rounded-md"
                         />
-                        Brandcoves
+                        GiftCoves
                     </Link>
 
                     <nav className="hidden gap-5 text-sm text-ink-soft sm:flex" aria-label={t('nav.main')}>

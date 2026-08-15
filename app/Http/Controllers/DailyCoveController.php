@@ -98,7 +98,7 @@ class DailyCoveController extends Controller
      */
     private function deals(CurrentMarket $current): array
     {
-        $config = (array) config('brandcoves.deals');
+        $config = (array) config('giftcoves.deals');
         $discount = '((median_price - min_price)::numeric / median_price) * 100';
 
         $candidates = ProductGroup::query()
@@ -387,7 +387,7 @@ class DailyCoveController extends Controller
          * the same query.
          */
         $meta->addJsonLd(StructuredData::breadcrumbs([
-            ['name' => 'Brandcoves', 'url' => url($current->url())],
+            ['name' => 'GiftCoves', 'url' => url($current->url())],
             ['name' => __('site.daily.title'), 'url' => url($current->url('daily'))],
             ['name' => $edition->theme_title, 'url' => $url],
         ]));

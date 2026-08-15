@@ -44,7 +44,7 @@ class SearchService
             : ['written' => 0, 'unstored' => []];
 
         $groups = $this->storedQuery($query)->paginate(
-            perPage: (int) config('brandcoves.search.per_page'),
+            perPage: (int) config('giftcoves.search.per_page'),
             page: $query->page,
         );
 
@@ -138,7 +138,7 @@ class SearchService
             return;
         }
 
-        $threshold = (float) config('brandcoves.search.trigram_threshold');
+        $threshold = (float) config('giftcoves.search.trigram_threshold');
 
         $groups->where(function (Builder $q) use ($term, $threshold): void {
             // websearch_to_tsquery handles quoted phrases and OR from user
@@ -237,7 +237,7 @@ class SearchService
         $foldable = Cache::add(
             $query->liveCacheKey(),
             true,
-            (int) config('brandcoves.search.live_cache_ttl'),
+            (int) config('giftcoves.search.live_cache_ttl'),
         );
 
         /** @var list<Offer> $storable */
@@ -493,7 +493,7 @@ class SearchService
      */
     public function storeLanes(SearchQuery $query): array
     {
-        $cap = (int) config('brandcoves.search.store_lane_cap');
+        $cap = (int) config('giftcoves.search.store_lane_cap');
 
         $ids = $this->storedQuery($query)->limit(300)->pluck('id');
         if ($ids->isEmpty()) {

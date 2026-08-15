@@ -34,8 +34,8 @@ class AwinFeedDiscoveryTest extends TestCase
             'productdata.awin.com/*' => Http::response(implode("\n", [$header, ...$rows])),
         ]);
 
-        config()->set('brandcoves.connectors.awin.accounts', [
-            'default' => ['label' => 'Brandcoves', 'api_token' => 'tok', 'publisher_id' => '1'],
+        config()->set('giftcoves.connectors.awin.accounts', [
+            'default' => ['label' => 'GiftCoves', 'api_token' => 'tok', 'publisher_id' => '1'],
         ]);
     }
 
@@ -216,9 +216,9 @@ class AwinFeedDiscoveryTest extends TestCase
             'productdata.awin.com/*' => Http::response($header."\nCoolblue BE,111,active,BE,dutch,17100"),
         ]);
 
-        config()->set('brandcoves.connectors.awin.accounts', [
+        config()->set('giftcoves.connectors.awin.accounts', [
             'broken' => ['label' => 'Broken', 'api_token' => 'bad', 'publisher_id' => '1'],
-            'default' => ['label' => 'Brandcoves', 'api_token' => 'good', 'publisher_id' => '2'],
+            'default' => ['label' => 'GiftCoves', 'api_token' => 'good', 'publisher_id' => '2'],
         ]);
 
         $discovery = app(AwinFeedDiscovery::class);

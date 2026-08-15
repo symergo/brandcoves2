@@ -30,7 +30,7 @@ Three failure modes it prevents, all of which are cheap to create and expensive 
   natural LLM job. So the worker widens the angle map nightly and stores it; `GiftEngine` reads rows.
   Recommendation stays pure, fast and free.
 - **Per-feature daily caps.** Every AI caller registers a `feature_key` in
-  `config('brandcoves.ai.caps')` and goes through `AiUsage::withinCap()`. A feature with no key is
+  `config('giftcoves.ai.caps')` and goes through `AiUsage::withinCap()`. A feature with no key is
   invisible in the admin usage table, which is itself the incentive to register one.
 - **Failed calls still count.** `AiUsage::record()` increments on error too — otherwise a
   persistently failing feature retries forever at full cost.
@@ -51,7 +51,7 @@ more when a test protects it than when a document asserts it.
 
 ## Files
 
-- `config/brandcoves.php` (`ai.*`)
+- `config/giftcoves.php` (`ai.*`)
 - `app/Models/AiUsage.php`
 - `app/Services/Ai/` (Phase 5)
 
@@ -71,7 +71,7 @@ reach the client. `AiSettingsTest` restates that as a test on this feature.
 
 `AiSettingsStore::apply()` runs in `AppServiceProvider::boot()` and writes the
 stored values **over** the config. `AiClient`, `AiUsage` and the usage table all
-read `config('brandcoves.ai.*')` already, so nothing downstream changed — and
+read `config('giftcoves.ai.*')` already, so nothing downstream changed — and
 there is still only one way to ask whether AI is on. A second way is a way to get
 a stale answer.
 

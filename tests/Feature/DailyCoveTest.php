@@ -122,7 +122,7 @@ class DailyCoveTest extends TestCase
         // run this by hand. None of those may produce two Tuesdays.
         $this->assertSame(1, DailyPickSet::query()->count());
         $this->assertSame(
-            (int) config('brandcoves.picks.per_day'),
+            (int) config('giftcoves.picks.per_day'),
             DailyPickSet::query()->firstOrFail()->picks()->count(),
         );
     }

@@ -41,7 +41,7 @@ class GiftabilityClassifier
 {
     /**
      * Below this a gift reads as an afterthought, above it as an obligation.
-     * Cents. Defaults mirror config('brandcoves.gift'); injected so the
+     * Cents. Defaults mirror config('giftcoves.gift'); injected so the
      * classifier itself stays free of framework lookups.
      */
     public function __construct(

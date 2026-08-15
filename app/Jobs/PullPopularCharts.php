@@ -279,6 +279,6 @@ class PullPopularCharts implements ShouldQueue
 
     private function setting(string $key, mixed $default): mixed
     {
-        return config("brandcoves.connectors.{$this->source->value}.popular.{$key}", $default);
+        return config("giftcoves.connectors.{$this->source->value}.popular.{$key}", $default);
     }
 }

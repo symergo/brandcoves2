@@ -45,7 +45,7 @@ class AiClient
 
     public function isEnabled(): bool
     {
-        $enabled = $this->enabled ?? (bool) config('brandcoves.ai.enabled');
+        $enabled = $this->enabled ?? (bool) config('giftcoves.ai.enabled');
 
         return $enabled && $this->key() !== null && $this->key() !== '';
     }
@@ -53,7 +53,7 @@ class AiClient
     /**
      * Ask for a JSON object and get one back, or throw {@see AiUnavailable}.
      *
-     * @param  string  $featureKey  must exist in config('brandcoves.ai.caps')
+     * @param  string  $featureKey  must exist in config('giftcoves.ai.caps')
      * @param  array<string, mixed>  $schemaHint  shape the model is told to return
      * @return array<string, mixed>
      *
@@ -107,7 +107,7 @@ class AiClient
 
         // Registered features only. A caller with no cap entry would spend
         // invisibly, and the admin usage table is how spend gets noticed.
-        if (! array_key_exists($featureKey, (array) config('brandcoves.ai.caps'))) {
+        if (! array_key_exists($featureKey, (array) config('giftcoves.ai.caps'))) {
             throw AiUnavailable::failed("unregistered feature key [{$featureKey}]");
         }
 
@@ -122,7 +122,7 @@ class AiClient
             ])
                 ->timeout(60)
                 ->post(self::ENDPOINT, [
-                    'model' => $this->model ?? config('brandcoves.ai.model'),
+                    'model' => $this->model ?? config('giftcoves.ai.model'),
                     'max_tokens' => $maxTokens,
                     'system' => $system,
                     'messages' => [['role' => 'user', 'content' => $prompt]],
@@ -208,6 +208,6 @@ class AiClient
 
     private function key(): ?string
     {
-        return $this->apiKey ?? config('brandcoves.ai.api_key');
+        return $this->apiKey ?? config('giftcoves.ai.api_key');
     }
 }

@@ -38,12 +38,12 @@ class CheckBolCommand extends Command
             return self::FAILURE;
         }
 
-        $id = (string) config('brandcoves.connectors.bol.client_id');
-        $secret = (string) config('brandcoves.connectors.bol.client_secret');
+        $id = (string) config('giftcoves.connectors.bol.client_id');
+        $secret = (string) config('giftcoves.connectors.bol.client_secret');
 
         // Lengths, never values. A diagnostic that prints a secret is a
         // diagnostic nobody can paste into a ticket.
-        $this->components->twoColumnDetail('Enabled', config('brandcoves.connectors.bol.enabled') ? 'yes' : 'no');
+        $this->components->twoColumnDetail('Enabled', config('giftcoves.connectors.bol.enabled') ? 'yes' : 'no');
         $this->components->twoColumnDetail('Client id', $id === '' ? '<fg=red>missing</>' : 'set ('.strlen($id).' chars)');
         $this->components->twoColumnDetail('Client secret', $secret === '' ? '<fg=red>missing</>' : 'set ('.strlen($secret).' chars)');
         $this->components->twoColumnDetail('Country', $market->bolCountry() ?? '<fg=yellow>not served by bol</>');

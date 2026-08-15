@@ -17,13 +17,20 @@ Read from the Coolify database on 2026-08-10, not from memory:
 | `brandcoves2-staging` | `staging` | **on** | `staging.brandcoves.com` | `ROBOTS_ALLOW=false`, own database, low AI caps |
 | `brandcoves2-prod` | `main` | **on** | `brandcoves.com` | `ROBOTS_ALLOW=true` |
 
+> **The domains above are pre-rename and still current.** The codebase became GiftCoves on
+> 2026-08-15; Coolify has not been touched. Until the steps in
+> [rebrand.md](features/rebrand.md#the-coolify-side) are carried out, these are the live values —
+> and the two application names stay `brandcoves2-*` regardless, because renaming a Coolify
+> application changes nothing a visitor can see and would invalidate every deploy webhook already
+> issued against it.
+
 Both: **Build Pack = Docker Compose**, **Compose Location = `/docker-compose.coolify.yml`**, domain
 assigned to the **`app`** service, Scheduled Backups on **`postgres`**.
 
 ## How it deploys today
 
 ```bash
-git push origin staging       # staging.brandcoves.com builds automatically
+git push origin staging       # staging builds automatically
 # verify staging, then:
 git push origin main          # production builds automatically, at once
 ```
@@ -117,6 +124,11 @@ Generate the two secrets with `php artisan key:generate --show`.
 
 ## Cutover: v2 replaces v1 at brandcoves.com
 
+The domain here is `brandcoves.com` throughout, because that is where the v1 WordPress site is. This
+cutover comes **before** the rename to giftcoves.com — see [features/rebrand.md](features/rebrand.md)
+— so that a known-good v2 is what the rename moves, and a failure on the day can be attributed to
+one change rather than two.
+
 v1 serves `brandcoves.com` from the same box, so this is a Coolify domain move rather than a DNS
 move — which makes rollback fast.
 
@@ -149,7 +161,7 @@ Dry run is the default and the drop list is the point. See
 
 ```bash
 docker exec <app> php artisan bc:check-config
-curl -s https://brandcoves.com/health | jq .config
+curl -s https://giftcoves.com/health | jq .config
 ```
 
 A setting has to survive `config/`, `.env.example`, the compose file and Coolify to do anything, and

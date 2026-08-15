@@ -13,7 +13,7 @@ use Throwable;
  *
  * ## Why an overlay rather than a new API
  *
- * `AiClient`, `AiUsage` and the usage table all read `config('brandcoves.ai.*')`.
+ * `AiClient`, `AiUsage` and the usage table all read `config('giftcoves.ai.*')`.
  * Introducing `AiSettings::enabled()` would mean changing every one of them and
  * would leave two ways to ask the same question — with the certainty that
  * something added later asks the old one. Instead this writes the stored values
@@ -49,13 +49,13 @@ class AiSettingsStore
      * @var array<string, string>
      */
     private const KEYS = [
-        'enabled' => 'brandcoves.ai.enabled',
-        'api_key' => 'brandcoves.ai.api_key',
-        'model' => 'brandcoves.ai.model',
-        'default_daily_cap' => 'brandcoves.ai.default_daily_cap',
-        'cap_daily_picks' => 'brandcoves.ai.caps.daily_picks',
-        'cap_guide_copy' => 'brandcoves.ai.caps.guide_copy',
-        'cap_gift_angles' => 'brandcoves.ai.caps.gift_angles',
+        'enabled' => 'giftcoves.ai.enabled',
+        'api_key' => 'giftcoves.ai.api_key',
+        'model' => 'giftcoves.ai.model',
+        'default_daily_cap' => 'giftcoves.ai.default_daily_cap',
+        'cap_daily_picks' => 'giftcoves.ai.caps.daily_picks',
+        'cap_guide_copy' => 'giftcoves.ai.caps.guide_copy',
+        'cap_gift_angles' => 'giftcoves.ai.caps.gift_angles',
     ];
 
     /**
@@ -175,7 +175,7 @@ class AiSettingsStore
      */
     public function apiKeyFingerprint(): ?string
     {
-        $key = (string) (config('brandcoves.ai.api_key') ?? '');
+        $key = (string) (config('giftcoves.ai.api_key') ?? '');
 
         if ($key === '') {
             return null;

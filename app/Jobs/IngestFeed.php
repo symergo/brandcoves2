@@ -68,7 +68,7 @@ class IngestFeed implements ShouldQueue
 
         $tracker->markRunning();
 
-        $chunkSize = (int) config('brandcoves.connectors.awin.chunk_size');
+        $chunkSize = (int) config('giftcoves.connectors.awin.chunk_size');
         $buffer = [];
         $processed = (int) ($tracker->cursor['row'] ?? 0);
         $written = 0;

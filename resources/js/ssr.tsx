@@ -22,7 +22,7 @@ createServer((page) =>
         page,
         render: ReactDOMServer.renderToString,
 
-        title: (title) => (title ? `${title} · Brandcoves` : 'Brandcoves'),
+        title: (title) => (title ? `${title} · GiftCoves` : 'GiftCoves'),
 
         resolve: async (name) => {
             const pages = import.meta.glob('./Pages/**/*.tsx', { eager: true })

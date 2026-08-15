@@ -253,7 +253,7 @@ class GuideController extends Controller
         }
 
         $meta->addJsonLd(StructuredData::breadcrumbs([
-            ['name' => 'Brandcoves', 'url' => url($current->url())],
+            ['name' => 'GiftCoves', 'url' => url($current->url())],
             ['name' => __('site.guides.title'), 'url' => url($current->url('guides'))],
             ['name' => $guide->title, 'url' => $url],
         ]));

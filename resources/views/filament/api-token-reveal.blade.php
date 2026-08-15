@@ -28,7 +28,7 @@
     </div>
 
     <p class="text-sm text-gray-600 dark:text-gray-400">
-        Store it as an environment variable named <code class="font-mono">BRANDCOVES_API_KEY</code>
+        Store it as an environment variable named <code class="font-mono">GIFTCOVES_API_KEY</code>
         wherever it will be used. Not in a file in the repository — that folder is synced.
     </p>
 

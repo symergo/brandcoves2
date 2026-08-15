@@ -129,7 +129,7 @@ return [
     */
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS') ?: 'info@symergo.com',
-        'name' => env('MAIL_FROM_NAME') ?: env('APP_NAME', 'Brandcoves'),
+        'name' => env('MAIL_FROM_NAME') ?: env('APP_NAME', 'GiftCoves'),
     ],
 
 ];

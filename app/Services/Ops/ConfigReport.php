@@ -30,7 +30,7 @@ class ConfigReport
      */
     public function groups(): array
     {
-        $aiOn = (bool) config('brandcoves.ai.enabled');
+        $aiOn = (bool) config('giftcoves.ai.enabled');
 
         /*
          * `connectors.amazon`, not `connectors.sources.amazon` — there is no
@@ -44,15 +44,15 @@ class ConfigReport
          * it gets ignored, or it sends somebody chasing a credential that was
          * never absent.
          */
-        $amazonOn = (bool) config('brandcoves.connectors.amazon.enabled');
+        $amazonOn = (bool) config('giftcoves.connectors.amazon.enabled');
 
         $definition = [
             'Application' => [
                 ['APP_KEY', config('app.key'), true, 'Sessions and every encrypted cookie depend on it.'],
                 ['APP_URL', config('app.url'), true, 'Absolute URLs in mail, sitemaps and social cards.'],
-                ['CREDENTIALS_ENCRYPTION_KEY', config('brandcoves.credentials_key'), true, 'Seals connector_settings. Environment-specific: ciphertext does not travel.'],
-                ['CLAIM_HASH_SECRET', config('brandcoves.wishlist.claim_hash_secret'), true, 'Permanent — rotating it orphans every wishlist claim.'],
-                ['ROBOTS_ALLOW', config('brandcoves.robots_allow') ? 'true' : 'false', false, 'True in production, false everywhere else.'],
+                ['CREDENTIALS_ENCRYPTION_KEY', config('giftcoves.credentials_key'), true, 'Seals connector_settings. Environment-specific: ciphertext does not travel.'],
+                ['CLAIM_HASH_SECRET', config('giftcoves.wishlist.claim_hash_secret'), true, 'Permanent — rotating it orphans every wishlist claim.'],
+                ['ROBOTS_ALLOW', config('giftcoves.robots_allow') ? 'true' : 'false', false, 'True in production, false everywhere else.'],
             ],
             'Database' => [
                 ['DB_DATABASE', config('database.connections.pgsql.database'), true, null],
@@ -69,15 +69,15 @@ class ConfigReport
             ],
             'AI' => [
                 ['AI_ENABLED', $aiOn ? 'true' : 'false', false, 'With AI off the whole site still works, by invariant.'],
-                ['ANTHROPIC_API_KEY', config('brandcoves.ai.api_key'), $aiOn, $aiOn ? 'Required while AI is on.' : 'Not needed while AI is off.'],
+                ['ANTHROPIC_API_KEY', config('giftcoves.ai.api_key'), $aiOn, $aiOn ? 'Required while AI is on.' : 'Not needed while AI is off.'],
             ],
             'Connectors' => [
-                ['AWIN_API_TOKEN', config('brandcoves.connectors.awin.api_token'), true, 'The catalogue comes from here.'],
-                ['AWIN_PUBLISHER_ID', config('brandcoves.connectors.awin.publisher_id'), true, null],
-                ['BOL_CLIENT_ID', config('brandcoves.connectors.bol.client_id'), true, 'bol is the only supply the en market has.'],
-                ['BOL_CLIENT_SECRET', config('brandcoves.connectors.bol.client_secret'), true, null],
-                ['AMAZON_ACCESS_KEY', config('brandcoves.connectors.amazon.access_key'), $amazonOn, $amazonOn ? 'Required while Amazon is on.' : 'Not needed while Amazon is off.'],
-                ['AMAZON_SECRET_KEY', config('brandcoves.connectors.amazon.secret_key'), $amazonOn, null],
+                ['AWIN_API_TOKEN', config('giftcoves.connectors.awin.api_token'), true, 'The catalogue comes from here.'],
+                ['AWIN_PUBLISHER_ID', config('giftcoves.connectors.awin.publisher_id'), true, null],
+                ['BOL_CLIENT_ID', config('giftcoves.connectors.bol.client_id'), true, 'bol is the only supply the en market has.'],
+                ['BOL_CLIENT_SECRET', config('giftcoves.connectors.bol.client_secret'), true, null],
+                ['AMAZON_ACCESS_KEY', config('giftcoves.connectors.amazon.access_key'), $amazonOn, $amazonOn ? 'Required while Amazon is on.' : 'Not needed while Amazon is off.'],
+                ['AMAZON_SECRET_KEY', config('giftcoves.connectors.amazon.secret_key'), $amazonOn, null],
             ],
         ];
 
@@ -135,9 +135,9 @@ class ConfigReport
     public function awinAccounts(): array
     {
         /** @var array<string, array{label?: string}> $visible */
-        $visible = (array) config('brandcoves.connectors.awin.accounts', []);
+        $visible = (array) config('giftcoves.connectors.awin.accounts', []);
         /** @var array<string, array{label: string, env: string}> $declared */
-        $declared = (array) config('brandcoves.connectors.awin.declared_accounts', []);
+        $declared = (array) config('giftcoves.connectors.awin.declared_accounts', []);
 
         $rows = [];
 

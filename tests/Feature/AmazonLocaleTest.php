@@ -100,7 +100,7 @@ class AmazonLocaleTest extends TestCase
     #[Test]
     public function a_locale_can_be_hidden_per_market(): void
     {
-        config(['brandcoves.connectors.amazon.hidden_locales' => [
+        config(['giftcoves.connectors.amazon.hidden_locales' => [
             'be-nl' => [AmazonLocale::It->value, AmazonLocale::Uk->value],
         ]]);
 
@@ -118,7 +118,7 @@ class AmazonLocaleTest extends TestCase
     #[Test]
     public function the_primary_locale_can_never_be_hidden(): void
     {
-        config(['brandcoves.connectors.amazon.hidden_locales' => [
+        config(['giftcoves.connectors.amazon.hidden_locales' => [
             'be-fr' => [AmazonLocale::Fr->value],
         ]]);
 

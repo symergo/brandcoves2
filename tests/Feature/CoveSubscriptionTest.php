@@ -234,7 +234,7 @@ class CoveSubscriptionTest extends TestCase
         Mail::fake();
 
         // The PA-API licence restricts the *content*, so an Amazon title in an
-        // email is a breach even when every link points at brandcoves.com.
+        // email is a breach even when every link points at giftcoves.com.
         $this->seedEdition(source: Source::Amazon);
         $this->confirmedSubscriber();
 

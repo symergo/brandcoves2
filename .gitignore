@@ -50,3 +50,11 @@ Amazon-tags.txt
 
 # Written into the Docker image at build time, never committed.
 /BUILD_STAMP
+
+# Coolify API tokens. A Coolify token can redeploy, read every environment
+# variable and reassign domains on both applications, so it is closer to a
+# server credential than an API key. Ignored by extension rather than by name so
+# a second one cannot be added under a filename nobody thought to list.
+.claude/*.api
+.claude/*.token
+.claude/secrets*

@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "symergo/brandcoves2",
+    "name": "symergo/giftcoves2",
     "type": "project",
-    "description": "Brandcoves — multi-market product search, offer comparison, gift discovery and buying guides.",
+    "description": "GiftCoves — multi-market product search, offer comparison, gift discovery and buying guides.",
     "keywords": ["affiliate", "product-search", "price-comparison", "gifting"],
     "license": "proprietary",
     "require": {

@@ -139,7 +139,7 @@ class AppServiceProvider extends ServiceProvider
          * Admin-editable AI settings, written over the config.
          *
          * Here rather than behind a new API because AiClient, AiUsage and the
-         * usage table all read config('brandcoves.ai.*') already. Overlaying
+         * usage table all read config('giftcoves.ai.*') already. Overlaying
          * means every existing caller keeps working and there is only ever one
          * way to ask whether AI is on — a second way is a way to get a stale
          * answer.
@@ -171,13 +171,13 @@ class AppServiceProvider extends ServiceProvider
         // Reads. Generous: a writer researching a Cove looks at a lot of
         // products, and making that expensive pushes it toward guessing instead.
         RateLimiter::for('editorial', fn (Request $request) => Limit::perMinute(
-            (int) config('brandcoves.editorial_api.reads_per_minute')
+            (int) config('giftcoves.editorial_api.reads_per_minute')
         )->by($key($request)));
 
         // Writes. Tighter, because a writer stuck in a loop is the realistic
         // failure mode and each call rewrites rows.
         RateLimiter::for('editorial-writes', fn (Request $request) => Limit::perMinute(
-            (int) config('brandcoves.editorial_api.writes_per_minute')
+            (int) config('giftcoves.editorial_api.writes_per_minute')
         )->by($key($request)));
     }
 }

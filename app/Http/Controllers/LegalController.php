@@ -132,7 +132,7 @@ class LegalController extends Controller
      */
     private function interpolate(string $text): string
     {
-        $company = (array) config('brandcoves.company');
+        $company = (array) config('giftcoves.company');
 
         foreach ($company as $key => $value) {
             $text = str_replace(

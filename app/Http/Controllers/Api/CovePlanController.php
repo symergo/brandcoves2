@@ -230,7 +230,7 @@ class CovePlanController extends Controller
             'editorial' => [
                 'nullable',
                 'string',
-                'max:'.(int) config('brandcoves.editorial_api.max_editorial_chars'),
+                'max:'.(int) config('giftcoves.editorial_api.max_editorial_chars'),
             ],
 
             /*

@@ -43,11 +43,11 @@ class PopularChartPipelineTest extends TestCase
         parent::setUp();
 
         config([
-            'brandcoves.connectors.bol.popular.enabled' => true,
-            'brandcoves.connectors.bol.popular.page_size' => 50,
-            'brandcoves.connectors.bol.popular.pages' => 1,
-            'brandcoves.connectors.bol.popular.max_categories' => 40,
-            'brandcoves.connectors.bol.popular.max_depth' => 2,
+            'giftcoves.connectors.bol.popular.enabled' => true,
+            'giftcoves.connectors.bol.popular.page_size' => 50,
+            'giftcoves.connectors.bol.popular.pages' => 1,
+            'giftcoves.connectors.bol.popular.max_categories' => 40,
+            'giftcoves.connectors.bol.popular.max_depth' => 2,
         ]);
     }
 
@@ -248,7 +248,7 @@ class PopularChartPipelineTest extends TestCase
     {
         Log::spy();
 
-        config(['brandcoves.connectors.bol.popular.max_categories' => 1]);
+        config(['giftcoves.connectors.bol.popular.max_categories' => 1]);
 
         $charts = [
             '*' => $this->chart([['1', 'First']], [

@@ -51,13 +51,13 @@ class AiSettingsTest extends TestCase
     #[Test]
     public function a_stored_setting_wins_over_the_environment(): void
     {
-        config(['brandcoves.ai.enabled' => false]);
+        config(['giftcoves.ai.enabled' => false]);
 
         $this->store()->put(['enabled' => true]);
         $this->store()->apply();
 
         // The only order that makes the screen mean anything.
-        $this->assertTrue((bool) config('brandcoves.ai.enabled'));
+        $this->assertTrue((bool) config('giftcoves.ai.enabled'));
     }
 
     #[Test]
@@ -67,14 +67,14 @@ class AiSettingsTest extends TestCase
         // edit the env.
         $this->store()->put(['model' => 'claude-opus-5']);
         $this->store()->apply();
-        $this->assertSame('claude-opus-5', config('brandcoves.ai.model'));
+        $this->assertSame('claude-opus-5', config('giftcoves.ai.model'));
 
-        config(['brandcoves.ai.model' => 'claude-sonnet-5']);
+        config(['giftcoves.ai.model' => 'claude-sonnet-5']);
         $this->store()->put(['model' => null]);
 
         $this->assertSame([], ConnectorSetting::query()->where('key', 'model')->get()->all());
         $this->store()->apply();
-        $this->assertSame('claude-sonnet-5', config('brandcoves.ai.model'));
+        $this->assertSame('claude-sonnet-5', config('giftcoves.ai.model'));
     }
 
     #[Test]
@@ -130,8 +130,8 @@ class AiSettingsTest extends TestCase
 
         $this->store()->apply();
 
-        $this->assertSame('sk-ant-original', config('brandcoves.ai.api_key'));
-        $this->assertSame(42, (int) config('brandcoves.ai.caps.guide_copy'));
+        $this->assertSame('sk-ant-original', config('giftcoves.ai.api_key'));
+        $this->assertSame(42, (int) config('giftcoves.ai.caps.guide_copy'));
     }
 
     #[Test]
@@ -147,7 +147,7 @@ class AiSettingsTest extends TestCase
 
         $this->store()->apply();
 
-        $this->assertSame('sk-ant-replacement', config('brandcoves.ai.api_key'));
+        $this->assertSame('sk-ant-replacement', config('giftcoves.ai.api_key'));
     }
 
     #[Test]
@@ -172,7 +172,7 @@ class AiSettingsTest extends TestCase
         $this->store()->put(['cap_daily_picks' => 7]);
         $this->store()->apply();
 
-        $this->assertSame(7, (int) config('brandcoves.ai.caps.daily_picks'));
+        $this->assertSame(7, (int) config('giftcoves.ai.caps.daily_picks'));
     }
 
     #[Test]
@@ -245,7 +245,7 @@ class AiSettingsTest extends TestCase
 
         // No key, so there is nothing to test and no point spending a job slot.
         $this->store()->put(['enabled' => false, 'api_key' => null]);
-        config(['brandcoves.ai.api_key' => null]);
+        config(['giftcoves.ai.api_key' => null]);
         $this->store()->apply();
 
         Livewire::actingAs($this->admin())
@@ -264,7 +264,7 @@ class AiSettingsTest extends TestCase
          * page. Redaction is on the write, not the read, so it cannot be
          * forgotten by a second caller.
          */
-        config(['brandcoves.ai.enabled' => true, 'brandcoves.ai.api_key' => 'sk-ant-super-secret']);
+        config(['giftcoves.ai.enabled' => true, 'giftcoves.ai.api_key' => 'sk-ant-super-secret']);
 
         Http::fake([
             'api.anthropic.com/*' => Http::response('rejected key sk-ant-super-secret', 401),
@@ -316,6 +316,6 @@ class AiSettingsTest extends TestCase
         (new AiSettingsStore)->apply();
 
         // And the env defaults are what stand.
-        $this->assertSame(config('brandcoves.ai.model'), config('brandcoves.ai.model'));
+        $this->assertSame(config('giftcoves.ai.model'), config('giftcoves.ai.model'));
     }
 }

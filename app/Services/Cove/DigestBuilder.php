@@ -28,7 +28,7 @@ use App\Models\ProductGroup;
  * | PA-API licence | *Product Advertising Content* — titles, images, prices — displayed anywhere but your own site | **No.** The restriction is on the content, not the destination |
  *
  * So an email carrying an Amazon title breaches the second rule even when every
- * link points at brandcoves.com. A digest with **nothing to filter cannot be got
+ * link points at giftcoves.com. A digest with **nothing to filter cannot be got
  * wrong later** — the alternative, a full edition with Amazon items stripped,
  * makes every future template inherit a filter someone has to remember.
  *

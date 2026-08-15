@@ -88,7 +88,7 @@ and a perfectly reasonable typo returns nothing. `word_similarity()` asks the qu
 — does this query match some run of words *inside* the title — and the same `gin_trgm_ops` index
 serves both operators, so this is a query-side fix, not an indexing one.
 
-`config('brandcoves.search.trigram_threshold')` is **0.45**: below Postgres' 0.6 word-similarity
+`config('giftcoves.search.trigram_threshold')` is **0.45**: below Postgres' 0.6 word-similarity
 default so single misspelled words still match, but not so low that unrelated products leak in.
 Starting point only — it must be re-tuned against a real catalogue in Phase 2, because with two rows
 in the table false-positive testing is meaningless.
@@ -201,7 +201,7 @@ Decisions worth keeping:
 ## Files
 
 - `database/migrations/2026_08_07_000700_add_search_indexes.php`
-- `config/brandcoves.php` (`search.*`)
+- `config/giftcoves.php` (`search.*`)
 - `resources/js/Pages/Search.tsx` (the box, its scanner beam, the term links)
 - `app/Services/Seo/ResultTerms.php` (what the term links are built from)
 - `resources/css/app.css` (`--animate-scan`)

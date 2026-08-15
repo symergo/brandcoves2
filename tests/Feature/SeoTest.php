@@ -173,7 +173,7 @@ class SeoTest extends TestCase
     #[Test]
     public function robots_blocks_everything_on_staging(): void
     {
-        config(['brandcoves.robots_allow' => false]);
+        config(['giftcoves.robots_allow' => false]);
 
         $body = (string) $this->get('/robots.txt')->assertOk()->getContent();
 
@@ -186,7 +186,7 @@ class SeoTest extends TestCase
     #[Test]
     public function robots_protects_the_click_out_redirector_in_production(): void
     {
-        config(['brandcoves.robots_allow' => true]);
+        config(['giftcoves.robots_allow' => true]);
 
         $body = (string) $this->get('/robots.txt')->assertOk()->getContent();
 
@@ -200,7 +200,7 @@ class SeoTest extends TestCase
     #[Test]
     public function the_sitemap_lists_only_products_worth_landing_on(): void
     {
-        config(['brandcoves.robots_allow' => true]);
+        config(['giftcoves.robots_allow' => true]);
         $group = $this->seedCatalogue();
 
         $xml = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();

@@ -1,12 +1,12 @@
 ---
-title: Over Brandcoves
+title: Over GiftCoves
 summary: Een ontdekkingssite voor merken en producten, met een gecureerde blik en slimme matching, voor jezelf en voor anderen.
 updated: 2026-08-09
 ---
 
 ## Wat dit is
 
-Brandcoves is een **ontdekkingssite voor merken en producten**. Ze bestaat om het
+GiftCoves is een **ontdekkingssite voor merken en producten**. Ze bestaat om het
 vinden van dingen leuk te maken in plaats van een klus die je doorworstelt, of je
 nu voor jezelf koopt of voor iemand anders.
 
@@ -97,7 +97,7 @@ betekent.
 
 ## Wie het maakt
 
-Brandcoves wordt uitgebaat door {{name}}, ondernemingsnummer {{number}}, met zetel
+GiftCoves wordt uitgebaat door {{name}}, ondernemingsnummer {{number}}, met zetel
 te {{address}}.
 
 Contact via {{email}}. Klopt er iets niet, dan komt dat adres bij iemand terecht

@@ -7,7 +7,7 @@
     $pageMeta = app(PageMeta::class);
     $meta = $pageMeta->toArray();
     $canonical = $meta['canonical'] ?? url(request()->path());
-    $indexable = config('brandcoves.robots_allow') && $meta['robots'] === null;
+    $indexable = config('giftcoves.robots_allow') && $meta['robots'] === null;
 @endphp
 <!DOCTYPE html>
 {{-- lang comes from the market, not the app locale: nl-BE and nl-NL are the same
@@ -22,8 +22,8 @@
          stays sharp on a high-density tab strip; the .ico is the fallback every
          browser asks for by name whether or not it is declared. --}}
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
-    <link rel="icon" type="image/svg+xml" href="{{ asset('icons/brandcoves.svg') }}">
-    <link rel="apple-touch-icon" href="{{ asset('icons/brandcoves-512.png') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('icons/giftcoves.svg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icons/giftcoves-512.png') }}">
 
     {{-- The cream the page actually paints. It said #12232B, a dark teal that
          appears nowhere in the palette, so the browser chrome on Android and the
@@ -72,7 +72,7 @@
     {{-- Social cards. Scrapers do not execute JavaScript, so these have to be
          server-rendered — a React-set meta tag is invisible to every one of them. --}}
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Brandcoves">
+    <meta property="og:site_name" content="GiftCoves">
     <meta property="og:locale" content="{{ str_replace('-', '_', $market->hrefLang()) }}">
     <meta property="og:url" content="{{ $canonical }}">
     @isset($meta['title'])

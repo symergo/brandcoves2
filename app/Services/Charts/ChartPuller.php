@@ -251,8 +251,8 @@ class ChartPuller
     /** How many entries to collect per chart, per that source's own settings. */
     private function limit(Source $source): int
     {
-        $pageSize = (int) config("brandcoves.connectors.{$source->value}.popular.page_size", 50);
-        $pages = (int) config("brandcoves.connectors.{$source->value}.popular.pages", 2);
+        $pageSize = (int) config("giftcoves.connectors.{$source->value}.popular.page_size", 50);
+        $pages = (int) config("giftcoves.connectors.{$source->value}.popular.pages", 2);
 
         return max(1, $pageSize * $pages);
     }

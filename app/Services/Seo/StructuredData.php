@@ -181,7 +181,7 @@ class StructuredData
         return [
             '@context' => 'https://schema.org',
             '@type' => 'WebSite',
-            'name' => 'Brandcoves',
+            'name' => 'GiftCoves',
             'url' => $url,
             'inLanguage' => $market->hrefLang(),
             // Declares the search endpoint so a listing can offer a search box.

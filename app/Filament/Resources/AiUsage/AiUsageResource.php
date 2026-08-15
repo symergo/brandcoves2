@@ -57,14 +57,14 @@ class AiUsageResource extends Resource
                     ->numeric()
                     ->sortable()
                     ->description(fn (AiUsage $r) => 'cap '.(
-                        config("brandcoves.ai.caps.{$r->feature_key}")
-                            ?? config('brandcoves.ai.default_daily_cap')
+                        config("giftcoves.ai.caps.{$r->feature_key}")
+                            ?? config('giftcoves.ai.default_daily_cap')
                     ))
                     // At the cap is not necessarily wrong, but it means the
                     // feature stopped early today and used its fallback.
                     ->color(fn (AiUsage $r) => $r->calls >= (int) (
-                        config("brandcoves.ai.caps.{$r->feature_key}")
-                            ?? config('brandcoves.ai.default_daily_cap')
+                        config("giftcoves.ai.caps.{$r->feature_key}")
+                            ?? config('giftcoves.ai.default_daily_cap')
                     ) ? 'warning' : 'gray'),
 
                 TextColumn::make('errors')

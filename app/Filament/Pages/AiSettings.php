@@ -72,14 +72,14 @@ class AiSettings extends Page implements HasForms
         $store = app(AiSettingsStore::class);
 
         $this->form->fill([
-            'enabled' => (bool) config('brandcoves.ai.enabled'),
-            'model' => (string) config('brandcoves.ai.model'),
+            'enabled' => (bool) config('giftcoves.ai.enabled'),
+            'model' => (string) config('giftcoves.ai.model'),
             // Deliberately absent. See the class docblock.
             'api_key' => null,
-            'default_daily_cap' => (int) config('brandcoves.ai.default_daily_cap'),
-            'cap_daily_picks' => (int) config('brandcoves.ai.caps.daily_picks'),
-            'cap_guide_copy' => (int) config('brandcoves.ai.caps.guide_copy'),
-            'cap_gift_angles' => (int) config('brandcoves.ai.caps.gift_angles'),
+            'default_daily_cap' => (int) config('giftcoves.ai.default_daily_cap'),
+            'cap_daily_picks' => (int) config('giftcoves.ai.caps.daily_picks'),
+            'cap_guide_copy' => (int) config('giftcoves.ai.caps.guide_copy'),
+            'cap_gift_angles' => (int) config('giftcoves.ai.caps.gift_angles'),
         ]);
     }
 
@@ -224,8 +224,8 @@ class AiSettings extends Page implements HasForms
     {
         $rows = [];
 
-        foreach (array_keys((array) config('brandcoves.ai.caps')) as $feature) {
-            $cap = (int) (config("brandcoves.ai.caps.{$feature}") ?? config('brandcoves.ai.default_daily_cap'));
+        foreach (array_keys((array) config('giftcoves.ai.caps')) as $feature) {
+            $cap = (int) (config("giftcoves.ai.caps.{$feature}") ?? config('giftcoves.ai.default_daily_cap'));
 
             $rows[] = [
                 'feature' => $feature,

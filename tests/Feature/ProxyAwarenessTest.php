@@ -25,7 +25,7 @@ class ProxyAwarenessTest extends TestCase
     {
         $location = $this->withHeaders([
             'X-Forwarded-Proto' => 'https',
-            'X-Forwarded-Host' => 'staging.brandcoves.com',
+            'X-Forwarded-Host' => 'staging.giftcoves.com',
         ])->get('/')->headers->get('Location');
 
         $this->assertIsString($location);

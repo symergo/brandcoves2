@@ -148,7 +148,7 @@ class CopyBank
     {
         $now ??= CarbonImmutable::now();
 
-        return match ((string) config('brandcoves.copy.rotation', 'weekly')) {
+        return match ((string) config('giftcoves.copy.rotation', 'weekly')) {
             // One variant per page, forever. The setting to use when comparing
             // two rewrites rather than churning through them.
             'static' => 'fixed',

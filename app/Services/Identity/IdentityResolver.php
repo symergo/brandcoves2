@@ -37,7 +37,7 @@ final class IdentityResolver
             return new Identity($gtin, IdentityKind::Ean);
         }
 
-        if (! config('brandcoves.identity.allow_title_fallback')) {
+        if (! config('giftcoves.identity.allow_title_fallback')) {
             return null;
         }
 
@@ -67,7 +67,7 @@ final class IdentityResolver
         $titleKey = self::normaliseTitle($title);
 
         // Short titles collide trivially: "Cable", "Case", "Hoes".
-        if (mb_strlen($titleKey) < (int) config('brandcoves.identity.min_title_length')) {
+        if (mb_strlen($titleKey) < (int) config('giftcoves.identity.min_title_length')) {
             return null;
         }
 

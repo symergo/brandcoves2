@@ -1,4 +1,4 @@
-# CLAUDE.md — Brandcoves 2
+# CLAUDE.md — GiftCoves 2
 
 Multi-market product search, offer comparison, gift discovery and buying guides.
 A clean-room rebuild of the v1 WordPress site at `../brandcoves` (referenced for *scope and product
@@ -83,7 +83,7 @@ These are the rules the product depends on. Breaking one is a bug even when test
 
 1. **AI is only ever called from a queued job.** Never from a request handler, never from a Blade
    view or an Inertia controller. A visitor request must not be able to cause AI spend. Every AI
-   caller registers a `feature_key` in `config/brandcoves.php` and is capped per day via `AiUsage`.
+   caller registers a `feature_key` in `config/giftcoves.php` and is capped per day via `AiUsage`.
    With `AI_ENABLED=false` the whole site still works.
 
 2. **Product identity is scoped to the market.** `product_groups` is unique on `(market,
@@ -157,9 +157,16 @@ Two mechanisms, because they fail differently:
 | `brandcoves2-staging` | `staging` | **on** | `staging.brandcoves.com` |
 | `brandcoves2-prod` | `main` | **on** | `brandcoves.com` |
 
-`git push origin staging` → `staging.brandcoves.com`. Verify, then fast-forward `main` — **which
-ships to production immediately**. There is no confirmation step and no human gate: the
-fast-forward *is* the deploy.
+`git push origin staging` → staging. Verify, then fast-forward `main` — **which ships to production
+immediately**. There is no confirmation step and no human gate: the fast-forward *is* the deploy.
+
+> **The site is GiftCoves; the infrastructure is not, yet.** The rename landed in the codebase on
+> 2026-08-15 and Coolify still serves the old domains, so the table above is current. The domains,
+> `APP_NAME`, `APP_URL` and the Google OAuth callback all have to move together — a deploy that
+> changes `APP_NAME` without the rest logs every visitor out and breaks Google sign-in. See
+> [docs/features/rebrand.md](docs/features/rebrand.md). The Coolify **application** names stay
+> `brandcoves2-*`: renaming them invalidates every issued deploy webhook and changes nothing a
+> visitor sees.
 
 > **Planned, and not in effect.** A one-branch model — both apps on `main`, production behind a
 > manual trigger — is designed in [docs/deployment.md](docs/deployment.md), to end the drift that

@@ -94,7 +94,7 @@ Shipped on percentage alone, the column filled with silicone phone cases. A €2
 median down to €4.70 is an honest 81%, and a useless thing to put beside an
 article. The percentage was never the problem; what it was applied to was.
 
-Four filters, in `brandcoves.deals`, each removing one kind of junk:
+Four filters, in `giftcoves.deals`, each removing one kind of junk:
 
 | Rule | Removes |
 |---|---|

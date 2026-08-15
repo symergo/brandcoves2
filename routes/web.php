@@ -461,7 +461,7 @@ Route::prefix('{market}')->group(function () {
     | The 1200×630 image a shared link turns into, drawn per page from the
     | record behind it. Every route takes an id or a slug and reads its own
     | text: an endpoint that renders words from the query string would let
-    | anyone publish "Brandcoves says ..." on our own domain.
+    | anyone publish "GiftCoves says ..." on our own domain.
     |
     | Throttled despite being cached. The cache key includes the record's
     | updated_at, so a flood of requests for products nobody has shared is a

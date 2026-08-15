@@ -22,7 +22,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('feeds', function (Blueprint $table) {
-            // Keys into config('brandcoves.connectors.awin.accounts').
+            // Keys into config('giftcoves.connectors.awin.accounts').
             $table->string('account')->default('default')->after('source');
             $table->index(['source', 'account']);
         });

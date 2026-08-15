@@ -35,8 +35,8 @@ class AiUsage extends Model
 
     public static function withinCap(string $featureKey): bool
     {
-        $cap = config("brandcoves.ai.caps.{$featureKey}")
-            ?? config('brandcoves.ai.default_daily_cap');
+        $cap = config("giftcoves.ai.caps.{$featureKey}")
+            ?? config('giftcoves.ai.default_daily_cap');
 
         return self::callsToday($featureKey) < (int) $cap;
     }

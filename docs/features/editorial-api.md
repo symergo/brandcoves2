@@ -158,7 +158,7 @@ one being rendered** — a link to a draft is a 404 for a reader and an indexed 
 a slug that exists in `be-nl` need not exist in `es`, and an article linking to itself is a loop.
 
 `page` is not allowlisted per article. Those destinations are enumerated in
-`brandcoves.linkable_pages`, they are identical in every market, and the config *is* the allowlist —
+`giftcoves.linkable_pages`, they are identical in every market, and the config *is* the allowlist —
 a per-article copy would be the same list every time. Adding a page there is the only step needed to
 make it linkable; `EditorialLinkTest` resolves every entry against the router so a renamed route
 fails the build rather than the page.
@@ -264,7 +264,7 @@ callers have no token and fall back to the address, which is all they have.
 Reads are generous (120/min) on purpose — researching a Cove means looking at a lot of products, and
 an author who finds lookup expensive starts guessing ids instead, which is the failure the lookup
 exists to prevent. Writes are 20/min: each rewrites rows, and a writer stuck in a retry loop is the
-realistic way this gets hammered. Both in `config/brandcoves.php`.
+realistic way this gets hammered. Both in `config/giftcoves.php`.
 
 ## Reading back
 
@@ -286,13 +286,13 @@ The short version below is the orientation half of it, kept here because it is t
 change when this file does.
 
 ```markdown
-# Writing for Brandcoves
+# Writing for GiftCoves
 
-You write product-inspiration content for Brandcoves through its editorial API. You have no
+You write product-inspiration content for GiftCoves through its editorial API. You have no
 shell access and do not need one.
 
-    Base URL: https://brandcoves.com/api/editorial   (staging: https://staging.brandcoves.com)
-    Auth:     Authorization: Bearer $BRANDCOVES_API_KEY
+    Base URL: https://giftcoves.com/api/editorial   (staging: https://staging.giftcoves.com)
+    Auth:     Authorization: Bearer $GIFTCOVES_API_KEY
 
 Read the key from the environment. Never paste it into a file, a commit or a message.
 

@@ -1,4 +1,4 @@
-# Brandcoves 2
+# GiftCoves 2
 
 Multi-market product search with **offer comparison**, a **Gift Whisperer**, **Daily Picks** and
 **buying guides** generated from real search demand.
@@ -50,5 +50,5 @@ documentation.
 
 ## Deployment
 
-Coolify, from GitHub. `staging` branch → `staging.brandcoves.com`, `main` → production.
+Coolify, from GitHub. `staging` branch → `staging.giftcoves.com`, `main` → production.
 See [docs/deployment.md](docs/deployment.md).

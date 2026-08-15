@@ -180,13 +180,13 @@ class OgImageTest extends TestCase
     {
         /*
          * The reason every route takes an id or a slug. An endpoint that draws
-         * arbitrary words on a Brandcoves-branded card is an impersonation tool
+         * arbitrary words on a GiftCoves-branded card is an impersonation tool
          * with a URL, and our own domain would serve the screenshot.
          */
-        $this->get('/be-nl/og/default.png?title=Brandcoves+recommends+this+scam')
+        $this->get('/be-nl/og/default.png?title=GiftCoves+recommends+this+scam')
             ->assertOk();
 
-        $withText = $this->get('/be-nl/og/default.png?title=Brandcoves+recommends+this+scam')->getContent();
+        $withText = $this->get('/be-nl/og/default.png?title=GiftCoves+recommends+this+scam')->getContent();
         $without = $this->get('/be-nl/og/default.png')->getContent();
 
         $this->assertSame(md5($without), md5($withText));

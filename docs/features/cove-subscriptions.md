@@ -20,7 +20,7 @@ Two separate Amazon rules apply to email, and dropping the affiliate link clears
 | PA-API licence | *Product Advertising Content* — titles, images, prices — displayed anywhere but your own site | **No.** The restriction is on the content, not the destination |
 
 So an email carrying an Amazon product's title breaches the second rule even when every link points at
-brandcoves.com. See [amazon-compliance.md](amazon-compliance.md).
+giftcoves.com. See [amazon-compliance.md](amazon-compliance.md).
 
 The email therefore carries our own words, up to four non-Amazon finds and one
 link. **A digest with nothing to filter cannot be got wrong later** — the alternative, a full edition

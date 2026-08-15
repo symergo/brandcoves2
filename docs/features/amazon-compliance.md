@@ -160,7 +160,7 @@ link to Amazon, can we include the product?*
 | PA-API licence | *Product Advertising Content* — titles, images, prices, review data from Amazon's APIs — displayed anywhere but your site or app | **No.** The restriction is on the content, not the destination |
 
 So an email carrying an Amazon product's title, image and price breaches the
-second rule even when every link points at brandcoves.com. That is why
+second rule even when every link points at giftcoves.com. That is why
 `Source::allowsEmail()` is documented as *"product data **or** links"* rather
 than just links.
 

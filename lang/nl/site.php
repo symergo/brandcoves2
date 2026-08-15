@@ -310,7 +310,7 @@ return [
     ],
 
     'footer' => [
-        'affiliate' => 'Brandcoves vergelijkt aanbiedingen van verschillende winkels. We verdienen mogelijk commissie op aankopen via onze links, dat verandert nooit wat jij betaalt.',
+        'affiliate' => 'GiftCoves vergelijkt aanbiedingen van verschillende winkels. We verdienen mogelijk commissie op aankopen via onze links, dat verandert nooit wat jij betaalt.',
         'explore' => 'Ontdekken',
     ],
 
@@ -325,8 +325,8 @@ return [
         'or' => 'of',
         'google' => 'Doorgaan met Google',
         'sign_out' => 'Uitloggen',
-        'mail_subject' => 'Je inloglink voor Brandcoves',
-        'mail_heading' => 'Inloggen bij Brandcoves',
+        'mail_subject' => 'Je inloglink voor GiftCoves',
+        'mail_heading' => 'Inloggen bij GiftCoves',
         'mail_body' => 'Tik op de knop hieronder om in te loggen. De link werkt één keer en alleen vanuit deze e-mail.',
         'mail_button' => 'Inloggen',
         'mail_expiry' => 'De link verloopt over 15 minuten.',
@@ -1044,7 +1044,7 @@ return [
     'og' => [
         'daily' => 'De Dagelijkse Cove',
         'default_title' => 'Ontdek producten en merken',
-        'default_footnote' => 'brandcoves.com',
+        'default_footnote' => 'giftcoves.com',
         'product' => 'Product',
         'guide' => 'Koopgids',
         'guide_footnote' => ':count producten, uitgezocht en beschreven',

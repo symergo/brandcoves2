@@ -84,7 +84,7 @@ The percentage is **floored, never rounded** — a badge must not overstate a sa
 - `database/migrations/2026_08_07_000200_create_catalogue_tables.php`
 - `app/Models/ProductGroup.php`, `app/Models/Product.php`
 - `app/Services/Identity/` (Phase 1)
-- `config/brandcoves.php` (`identity.*`)
+- `config/giftcoves.php` (`identity.*`)
 
 ## Verification (Phase 1)
 

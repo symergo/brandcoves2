@@ -28,7 +28,7 @@ class SyncAwinFeedsCommand extends Command
 
     public function handle(AwinFeedDiscovery $discovery): int
     {
-        $accounts = (array) config('brandcoves.connectors.awin.accounts', []);
+        $accounts = (array) config('giftcoves.connectors.awin.accounts', []);
 
         if ($accounts === []) {
             $this->error('No Awin account has an API token configured.');
@@ -142,7 +142,7 @@ class SyncAwinFeedsCommand extends Command
     private function reportAccounts(array $accounts): void
     {
         /** @var array<string, array{label: string, env: string}> $declared */
-        $declared = (array) config('brandcoves.connectors.awin.declared_accounts', []);
+        $declared = (array) config('giftcoves.connectors.awin.declared_accounts', []);
 
         foreach ($declared as $key => $meta) {
             if (array_key_exists($key, $accounts)) {

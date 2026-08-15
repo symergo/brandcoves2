@@ -246,7 +246,7 @@ class SitemapController extends Controller
 
     public function robots(): Response
     {
-        $allow = (bool) config('brandcoves.robots_allow');
+        $allow = (bool) config('giftcoves.robots_allow');
 
         /*
          * An unpublished market still routes, so it still needs keeping out of

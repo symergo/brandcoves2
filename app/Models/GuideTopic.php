@@ -67,6 +67,6 @@ class GuideTopic extends Model
      */
     public function isViable(): bool
     {
-        return $this->available_products >= (int) config('brandcoves.guides.min_products');
+        return $this->available_products >= (int) config('giftcoves.guides.min_products');
     }
 }

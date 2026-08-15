@@ -229,9 +229,9 @@ class EditorialApiTest extends TestCase
          * transport — the alternative is a test that proves the connector is
          * disabled.
          */
-        config()->set('brandcoves.connectors.bol.enabled', true);
-        config()->set('brandcoves.connectors.bol.client_id', 'test-id');
-        config()->set('brandcoves.connectors.bol.client_secret', 'test-secret');
+        config()->set('giftcoves.connectors.bol.enabled', true);
+        config()->set('giftcoves.connectors.bol.client_id', 'test-id');
+        config()->set('giftcoves.connectors.bol.client_secret', 'test-secret');
 
         Http::fake([
             'login.bol.com/*' => Http::response(['access_token' => 'tok', 'expires_in' => 300]),
@@ -682,7 +682,7 @@ class EditorialApiTest extends TestCase
                 $intro = implode(' ', $page->toArray()['props']['guide']['intro']);
 
                 $this->assertStringContainsString('<a href="/be-nl/guides/doelgids">de doelgids</a>', $intro);
-                // From config('brandcoves.linkable_pages'), never a path the
+                // From config('giftcoves.linkable_pages'), never a path the
                 // writer invented.
                 $this->assertStringContainsString('<a href="/be-nl/gift">de cadeauzoeker</a>', $intro);
             });

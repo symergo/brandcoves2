@@ -147,7 +147,7 @@ enum Market: string
             return null;
         }
 
-        $id = config("brandcoves.connectors.bol.partner_site_id.{$country}");
+        $id = config("giftcoves.connectors.bol.partner_site_id.{$country}");
 
         return blank($id) ? null : (string) $id;
     }

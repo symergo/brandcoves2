@@ -19,7 +19,7 @@ use Illuminate\Support\Number;
  *
  * One endpoint per kind of page, each taking an id or a slug and reading its own
  * text out of the database. **Nothing here accepts text from the request.** An
- * endpoint that draws arbitrary words onto a Brandcoves-branded card is an
+ * endpoint that draws arbitrary words onto a GiftCoves-branded card is an
  * impersonation tool with a URL, and our own domain would be serving the
  * screenshot.
  *
@@ -186,7 +186,7 @@ class OgImageController extends Controller
     private function card(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null): Response
     {
         $png = Cache::remember(
-            'og:'.config('brandcoves.commit_sha').':'.$scope.':'.self::fingerprint($title, $kicker, $footnote),
+            'og:'.config('giftcoves.commit_sha').':'.$scope.':'.self::fingerprint($title, $kicker, $footnote),
             self::TTL,
             fn (): string => $og->render($title, $kicker, $footnote),
         );

@@ -31,8 +31,8 @@ class GuideCopyRefreshTest extends TestCase
         parent::setUp();
 
         config([
-            'brandcoves.ai.enabled' => true,
-            'brandcoves.ai.api_key' => 'sk-ant-test',
+            'giftcoves.ai.enabled' => true,
+            'giftcoves.ai.api_key' => 'sk-ant-test',
         ]);
     }
 
@@ -180,7 +180,7 @@ class GuideCopyRefreshTest extends TestCase
     {
         // Carrying on past the cap makes one failed call per remaining guide,
         // each logged as if the model had let us down.
-        config(['brandcoves.ai.caps.guide_copy' => 0]);
+        config(['giftcoves.ai.caps.guide_copy' => 0]);
 
         $this->guide();
         $this->fakeCopy();

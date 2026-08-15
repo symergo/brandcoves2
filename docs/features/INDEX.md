@@ -35,6 +35,7 @@ cannot be recovered from a diff.
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
 | [cutover.md](cutover.md) | Operations | Ready — not yet executed |
+| [rebrand.md](rebrand.md) | Core / Operations | Code done — Coolify and third-party accounts outstanding |
 
 ## Closed in Phase 2
 
@@ -47,7 +48,7 @@ as its own Node container, so crawlers receive fully rendered HTML. See
 | # | Phase | Status |
 |---|---|---|
 | 0 | Foundation: schema, market routing, admin shell, deploy pipeline | ✅ Done |
-| 0.5 | Staging deployed and verified at `staging.brandcoves.com` | ✅ Done 2026-08-07 |
+| 0.5 | Staging deployed and verified at `staging.giftcoves.com` | ✅ Done 2026-08-07 |
 | 1 | Ingestion & catalogue — Awin feeds, bol live, grouping, price history | ✅ Done |
 | 2 | Search & offer comparison | ✅ Done |
 | 3 | Accounts & wishlists, sharing, claiming, alerts, inbox | ✅ Done |

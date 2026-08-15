@@ -67,7 +67,7 @@ class Feed extends Model
      */
     public function account(): ?array
     {
-        $accounts = (array) config('brandcoves.connectors.awin.accounts', []);
+        $accounts = (array) config('giftcoves.connectors.awin.accounts', []);
 
         return $accounts[$this->account ?? 'default'] ?? null;
     }

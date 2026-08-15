@@ -117,7 +117,7 @@ final readonly class Owner
         return hash_hmac(
             'sha256',
             $purpose.'|'.$identity,
-            (string) config('brandcoves.wishlist.claim_hash_secret'),
+            (string) config('giftcoves.wishlist.claim_hash_secret'),
         );
     }
 }

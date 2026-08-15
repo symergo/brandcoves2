@@ -233,7 +233,7 @@ chart under storage rules that forbid mirroring. Adding it is:
 
 1. Implement `PopularityConnector` on the Amazon connector.
 2. `registerPopularity()` in `AppServiceProvider`.
-3. A `popular` block under `connectors.amazon` in `config/brandcoves.php`.
+3. A `popular` block under `connectors.amazon` in `config/giftcoves.php`.
 
 Nothing in `ChartPuller`, `PullPopularCharts`, `PopularRetriever` or `MarketTrends` changes.
 `allowsCatalogueStorage()` already routes Amazon down the decision-only path, and

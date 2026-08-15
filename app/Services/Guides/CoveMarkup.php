@@ -32,7 +32,7 @@ use App\Support\CurrentMarket;
  * The last two are what make an article part of a site rather than a leaf.
  * `guide` is allowlisted like everything else — it points at a row that has to
  * exist and be published in this market. `page` is not: those destinations are
- * ours, enumerated in `brandcoves.linkable_pages`, and identical in every
+ * ours, enumerated in `giftcoves.linkable_pages`, and identical in every
  * market, so an allowlist per article would be the same list every time.
  *
  * Anything outside the allowlist is **stripped back to its label**, not
@@ -265,7 +265,7 @@ class CoveMarkup
      */
     private function page(string $value, string $base): ?string
     {
-        $pages = (array) config('brandcoves.linkable_pages');
+        $pages = (array) config('giftcoves.linkable_pages');
         $key = mb_strtolower(trim($value));
 
         if (! array_key_exists($key, $pages)) {
@@ -312,7 +312,7 @@ class CoveMarkup
             // Not sliced and not conditional: the page list is short, fixed and
             // the same everywhere, and it is the one set a writer can rely on
             // without being told what today's article happens to contain.
-            'Pages: '.implode(', ', array_keys((array) config('brandcoves.linkable_pages'))),
+            'Pages: '.implode(', ', array_keys((array) config('giftcoves.linkable_pages'))),
         ]));
     }
 

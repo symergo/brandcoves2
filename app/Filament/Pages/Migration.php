@@ -246,7 +246,7 @@ class Migration extends Page implements HasForms
         }
 
         $json = (string) json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $name = 'brandcoves-content-'.app()->environment().'-'.now()->format('Y-m-d-His').'.json';
+        $name = 'giftcoves-content-'.app()->environment().'-'.now()->format('Y-m-d-His').'.json';
 
         return response()->streamDownload(fn () => print ($json), $name, [
             'Content-Type' => 'application/json',

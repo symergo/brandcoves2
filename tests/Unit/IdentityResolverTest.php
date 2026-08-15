@@ -115,7 +115,7 @@ class IdentityResolverTest extends TestCase
     #[Test]
     public function the_fallback_can_be_switched_off(): void
     {
-        config(['brandcoves.identity.allow_title_fallback' => false]);
+        config(['giftcoves.identity.allow_title_fallback' => false]);
 
         $this->assertNull(IdentityResolver::resolve(null, 'Sony', 'Sony WH-1000XM5 Koptelefoon'));
         // The EAN path is unaffected.

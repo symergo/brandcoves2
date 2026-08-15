@@ -66,7 +66,7 @@ class Guide extends Model
      */
     public function needsFreshnessCheck(): bool
     {
-        $days = (int) config('brandcoves.guides.freshness_check_days');
+        $days = (int) config('giftcoves.guides.freshness_check_days');
 
         return $this->last_checked_at === null
             || $this->last_checked_at->lt(now()->subDays($days));

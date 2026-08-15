@@ -47,7 +47,7 @@ So the card carries the mark, the type, and numbers we computed ourselves.
 ## Text comes from records, never from the request
 
 Every route takes an id or a slug and reads its own text. **Nothing renders a string from a query
-parameter.** An endpoint that draws arbitrary words onto a Brandcoves-branded card is an
+parameter.** An endpoint that draws arbitrary words onto a GiftCoves-branded card is an
 impersonation tool with a URL, and our own domain would be serving the screenshot. A test asserts
 that adding `?title=` changes nothing about the bytes.
 
@@ -108,7 +108,7 @@ which enables FreeType, so the guard is insurance against a future edit to that 
 | Guide | Buying guide | The guide title | How many products it covers |
 | Brand | Brand | The brand name | Products and shops |
 | Daily Cove | The Daily Cove | The edition's theme | The edition's date |
-| Everything else | — | "Discover products and brands" | brandcoves.com |
+| Everything else | — | "Discover products and brands" | giftcoves.com |
 
 A product carried by one shop is not "1 shops" and one with no price is not "from €0"; both are
 common enough in a feed that a card built from the happy path would be visibly wrong in public.

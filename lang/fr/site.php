@@ -306,7 +306,7 @@ return [
     ],
 
     'footer' => [
-        'affiliate' => 'Brandcoves compare les offres de différentes boutiques. Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
+        'affiliate' => 'GiftCoves compare les offres de différentes boutiques. Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
         'explore' => 'Explorer',
     ],
 
@@ -321,8 +321,8 @@ return [
         'or' => 'ou',
         'google' => 'Continuer avec Google',
         'sign_out' => 'Se déconnecter',
-        'mail_subject' => 'Votre lien de connexion Brandcoves',
-        'mail_heading' => 'Connexion à Brandcoves',
+        'mail_subject' => 'Votre lien de connexion GiftCoves',
+        'mail_heading' => 'Connexion à GiftCoves',
         'mail_body' => 'Appuyez sur le bouton ci-dessous pour vous connecter. Le lien fonctionne une seule fois et uniquement depuis cet e-mail.',
         'mail_button' => 'Se connecter',
         'mail_expiry' => 'Le lien expire dans 15 minutes.',
@@ -1042,7 +1042,7 @@ return [
     'og' => [
         'daily' => 'La Cove Quotidienne',
         'default_title' => 'Découvrez des produits et des marques',
-        'default_footnote' => 'brandcoves.com',
+        'default_footnote' => 'giftcoves.com',
         'product' => 'Produit',
         'guide' => 'Guide d\'achat',
         'guide_footnote' => ':count produits, choisis et commentés',

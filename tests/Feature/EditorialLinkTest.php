@@ -20,7 +20,7 @@ use Tests\TestCase;
  * The link tokens that point at our own pages.
  *
  * `[[page:...]]` is the one token kind with no per-article allowlist — the
- * config is the allowlist. That makes `config('brandcoves.linkable_pages')` a
+ * config is the allowlist. That makes `config('giftcoves.linkable_pages')` a
  * promise about the router, and a promise nothing else checks: renaming a route
  * would leave every article that linked to it pointing at a 404, silently,
  * forever, because the token still resolves and the URL it produces is only
@@ -35,7 +35,7 @@ class EditorialLinkTest extends TestCase
     {
         $markup = app(CoveMarkup::class);
 
-        foreach (array_keys((array) config('brandcoves.linkable_pages')) as $key) {
+        foreach (array_keys((array) config('giftcoves.linkable_pages')) as $key) {
             $html = $markup->render("[[page:{$key}]]", Market::BeNl, [])['html'];
 
             preg_match('/href="([^"]+)"/', $html, $m);

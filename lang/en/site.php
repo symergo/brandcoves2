@@ -339,7 +339,7 @@ return [
     ],
 
     'footer' => [
-        'affiliate' => 'Brandcoves compares offers across shops. We may earn a commission on purchases made through our links, it never changes what you pay.',
+        'affiliate' => 'GiftCoves compares offers across shops. We may earn a commission on purchases made through our links, it never changes what you pay.',
         'explore' => 'Explore',
     ],
 
@@ -354,8 +354,8 @@ return [
         'or' => 'or',
         'google' => 'Continue with Google',
         'sign_out' => 'Sign out',
-        'mail_subject' => 'Your Brandcoves sign-in link',
-        'mail_heading' => 'Sign in to Brandcoves',
+        'mail_subject' => 'Your GiftCoves sign-in link',
+        'mail_heading' => 'Sign in to GiftCoves',
         'mail_body' => 'Tap the button below to sign in. The link works once and only from this email.',
         'mail_button' => 'Sign in',
         'mail_expiry' => 'The link expires in 15 minutes.',
@@ -1121,7 +1121,7 @@ return [
     'og' => [
         'daily' => 'The Daily Cove',
         'default_title' => 'Discover products and brands',
-        'default_footnote' => 'brandcoves.com',
+        'default_footnote' => 'giftcoves.com',
         'product' => 'Product',
         'guide' => 'Buying guide',
         'guide_footnote' => ':count products, chosen and written up',

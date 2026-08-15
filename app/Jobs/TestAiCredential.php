@@ -76,7 +76,7 @@ class TestAiCredential implements ShouldQueue
              * client is exactly the kind of thing that echoes back what it was
              * sent, and this string is rendered in an admin page.
              */
-            $key = (string) config('brandcoves.ai.api_key');
+            $key = (string) config('giftcoves.ai.api_key');
 
             self::write('failed', class_basename($e).': '.($key === ''
                 ? $e->getMessage()

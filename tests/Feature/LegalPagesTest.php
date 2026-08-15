@@ -40,7 +40,7 @@ class LegalPagesTest extends TestCase
         foreach (['about', 'privacy', 'terms'] as $page) {
             $this->get("/be-nl/{$page}")
                 ->assertOk()
-                ->assertSee(config('brandcoves.company.number'), escape: false);
+                ->assertSee(config('giftcoves.company.number'), escape: false);
         }
     }
 
@@ -52,7 +52,7 @@ class LegalPagesTest extends TestCase
          * silently drops the registered address is a compliance gap nobody
          * notices; one that says the address is missing gets fixed.
          */
-        config(['brandcoves.company.address' => '']);
+        config(['giftcoves.company.address' => '']);
 
         // Asserted on the prop rather than the HTML: Inertia ships the page as
         // JSON in an attribute, where the em dash in the marker is escaped to
@@ -68,7 +68,7 @@ class LegalPagesTest extends TestCase
     #[Test]
     public function a_filled_detail_replaces_the_marker(): void
     {
-        config(['brandcoves.company.name' => 'Testbedrijf BV']);
+        config(['giftcoves.company.name' => 'Testbedrijf BV']);
 
         $this->get('/be-nl/about')
             ->assertOk()

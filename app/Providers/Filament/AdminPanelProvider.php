@@ -32,8 +32,8 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             // The same mark the site wears.
-            ->brandName('Brandcoves')
-            ->brandLogo(fn () => asset('icons/brandcoves.svg'))
+            ->brandName('GiftCoves')
+            ->brandLogo(fn () => asset('icons/giftcoves.svg'))
             ->brandLogoHeight('2rem')
             ->favicon(asset('favicon.ico'))
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')

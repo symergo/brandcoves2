@@ -30,7 +30,7 @@ class ConfigContractTest extends TestCase
 {
     /** Config files the app owns. Laravel's stock files are not our contract. */
     private const APP_CONFIG = [
-        'config/brandcoves.php',
+        'config/giftcoves.php',
         'config/services.php',
     ];
 

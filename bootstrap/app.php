@@ -6,6 +6,7 @@ use App\Enums\Market;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RedirectLegacyHost;
 use App\Http\Middleware\RequireApiAbility;
 use App\Http\Middleware\SetMarket;
 use App\Http\Middleware\TrackAnonymousIdentity;
@@ -36,6 +37,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // ports and is reachable only through Traefik, so a forged
         // X-Forwarded-* header cannot originate outside the Docker network.
         $middleware->trustProxies(at: '*');
+
+        // Global and first: the old domain must be answered on every route,
+        // including the API and the sitemap, and before anything reads the host
+        // to build an absolute URL. Runs after trustProxies so the scheme it
+        // reflects back is the one the visitor actually used.
+        $middleware->prepend(RedirectLegacyHost::class);
 
         $middleware->web(append: [
             // Order matters: the market must be resolved before Inertia shares

@@ -1,6 +1,6 @@
 ---
 title: Terms and conditions
-summary: The rules for using Brandcoves: how results are ranked, what we promise, what we do not, and who you are actually buying from.
+summary: The rules for using GiftCoves: how results are ranked, what we promise, what we do not, and who you are actually buying from.
 updated: 2026-08-09
 ---
 
@@ -21,9 +21,9 @@ Belgian law in Book XII of the Code of Economic Law.
 Using the site means accepting these terms. If you do not accept them, do not use
 it.
 
-## 2. What Brandcoves is, and is not
+## 2. What GiftCoves is, and is not
 
-Brandcoves is a **product and brand discovery service**. We collect product
+GiftCoves is a **product and brand discovery service**. We collect product
 information from retailers and affiliate networks and present it so that products
 and the brands behind them can be explored, alongside links to the shops that sell
 them.
@@ -102,7 +102,7 @@ As an Amazon Associate we earn from qualifying purchases.
 
 ## 6. Using the site
 
-You may use Brandcoves to discover products and brands. You may not:
+You may use GiftCoves to discover products and brands. You may not:
 
 - scrape, crawl or bulk-copy the catalogue, or use automated means to extract
   data beyond ordinary browsing;
@@ -158,7 +158,7 @@ enough detail to identify it and we will look at it promptly.
 
 Outbound links go to sites we do not control. We are not responsible for their
 content, their terms, their prices or their handling of your data. Following a
-link means leaving Brandcoves.
+link means leaving GiftCoves.
 
 ## 11. Availability
 

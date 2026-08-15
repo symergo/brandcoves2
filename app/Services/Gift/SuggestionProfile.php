@@ -46,17 +46,17 @@ final readonly class SuggestionProfile
     public static function named(string $key): self
     {
         /** @var array<string, mixed> $config */
-        $config = config('brandcoves.gift.profiles.'.$key)
-            ?? config('brandcoves.gift.profiles.'.self::FOR_SOMEONE)
+        $config = config('giftcoves.gift.profiles.'.$key)
+            ?? config('giftcoves.gift.profiles.'.self::FOR_SOMEONE)
             ?? [];
 
         return new self(
             key: $key,
             weights: array_map(
                 fn ($w) => (float) $w,
-                (array) ($config['weights'] ?? config('brandcoves.gift.weights')),
+                (array) ($config['weights'] ?? config('giftcoves.gift.weights')),
             ),
-            mmrLambda: (float) ($config['mmr_lambda'] ?? config('brandcoves.gift.mmr_lambda')),
+            mmrLambda: (float) ($config['mmr_lambda'] ?? config('giftcoves.gift.mmr_lambda')),
             budgetShape: (string) ($config['budget_shape'] ?? 'sweet_spot'),
         );
     }
@@ -97,7 +97,7 @@ final readonly class SuggestionProfile
             return 1.0;
         }
 
-        $sweetSpot = max(1, $ceilingCents) * (float) config('brandcoves.gift.budget_sweet_spot');
+        $sweetSpot = max(1, $ceilingCents) * (float) config('giftcoves.gift.budget_sweet_spot');
 
         // Symmetric falloff around 1.0, clamped. A distance of 1.0 in either
         // direction scores zero, which puts a €10 item against a €100 budget at

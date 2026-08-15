@@ -59802,13 +59802,13 @@ function SiteLayout({ children }) {
 							href: base,
 							className: "flex items-center gap-2 text-lg font-semibold tracking-tight",
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-								src: "/icons/brandcoves.svg",
+								src: "/icons/giftcoves.svg",
 								alt: "",
 								"aria-hidden": "true",
 								width: 28,
 								height: 28,
 								className: "h-7 w-7 rounded-md"
-							}), "Brandcoves"]
+							}), "GiftCoves"]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
 							className: "hidden gap-5 text-sm text-ink-soft sm:flex",
@@ -60013,7 +60013,7 @@ function SiteLayout({ children }) {
 server_default((page) => createInertiaApp({
 	page,
 	render: import_server_node.renderToString,
-	title: (title) => title ? `${title} · Brandcoves` : "Brandcoves",
+	title: (title) => title ? `${title} · GiftCoves` : "GiftCoves",
 	resolve: async (name) => {
 		const module = (/* @__PURE__ */ Object.assign({
 			"./Pages/Auth/Login.tsx": Login_exports,

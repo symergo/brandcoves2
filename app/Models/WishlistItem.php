@@ -181,7 +181,7 @@ class WishlistItem extends Model
     /** Only the person who claimed it may release it, and only within the undo window. */
     public function release(string $identityHash): bool
     {
-        $undoHours = (int) config('brandcoves.wishlist.claim_undo_hours');
+        $undoHours = (int) config('giftcoves.wishlist.claim_undo_hours');
 
         return static::query()
             ->whereKey($this->getKey())
@@ -200,6 +200,6 @@ class WishlistItem extends Model
      */
     public static function identityHash(string $identity): string
     {
-        return hash_hmac('sha256', $identity, (string) config('brandcoves.wishlist.claim_hash_secret'));
+        return hash_hmac('sha256', $identity, (string) config('giftcoves.wishlist.claim_hash_secret'));
     }
 }

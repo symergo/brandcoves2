@@ -28,10 +28,10 @@ class BolConnectorTest extends TestCase
         parent::setUp();
 
         config([
-            'brandcoves.connectors.bol.enabled' => true,
-            'brandcoves.connectors.bol.client_id' => 'test-id',
-            'brandcoves.connectors.bol.client_secret' => 'test-secret',
-            'brandcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
+            'giftcoves.connectors.bol.enabled' => true,
+            'giftcoves.connectors.bol.client_id' => 'test-id',
+            'giftcoves.connectors.bol.client_secret' => 'test-secret',
+            'giftcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
         ]);
 
         Cache::flush();
@@ -356,7 +356,7 @@ class BolConnectorTest extends TestCase
     #[Test]
     public function it_is_disabled_without_credentials(): void
     {
-        config(['brandcoves.connectors.bol.client_id' => null]);
+        config(['giftcoves.connectors.bol.client_id' => null]);
         Http::fake();
 
         $this->assertFalse($this->connector->supports(Market::BeNl));

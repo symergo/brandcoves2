@@ -23,7 +23,7 @@ it is there to show.
 
 | Surface | What it uses |
 |---|---|
-| Browser tab | `brandcoves.svg` first, `favicon.ico` as the fallback ([app.blade.php](../../resources/views/app.blade.php)) |
+| Browser tab | `giftcoves.svg` first, `favicon.ico` as the fallback ([app.blade.php](../../resources/views/app.blade.php)) |
 | Home screen | `apple-touch-icon`, the 512 PNG |
 | Site header | The SVG next to the wordmark ([SiteLayout.tsx](../../resources/js/Layouts/SiteLayout.tsx)) |
 | Admin | Filament `brandLogo` and `favicon` |
@@ -31,7 +31,7 @@ it is there to show.
 
 Two small decisions inside those:
 
-- **The header mark is `aria-hidden`.** The word "Brandcoves" sits right next to it inside the same
+- **The header mark is `aria-hidden`.** The word "GiftCoves" sits right next to it inside the same
   link, and a screen reader announcing the name twice is worse than not announcing the image at all.
   Width and height are set as attributes so the header does not reflow while it loads.
 - **The mark is the seed of the social card**, not the card itself: [social-cards.md](social-cards.md)

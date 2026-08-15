@@ -26,7 +26,7 @@ class HealthTest extends TestCase
          * since a wrong path passes any test that only checks the false case.
          */
         config([
-            'brandcoves.connectors.bol.client_id' => null,
+            'giftcoves.connectors.bol.client_id' => null,
             'services.resend.key' => null,
         ]);
 
@@ -36,7 +36,7 @@ class HealthTest extends TestCase
         $this->assertFalse($off['mail']);
 
         config([
-            'brandcoves.connectors.bol.client_id' => 'a-client-id',
+            'giftcoves.connectors.bol.client_id' => 'a-client-id',
             'services.resend.key' => 'a-key',
         ]);
 

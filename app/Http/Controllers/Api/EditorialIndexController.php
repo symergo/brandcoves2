@@ -26,7 +26,7 @@ class EditorialIndexController extends Controller
         $token = AuthenticateApiToken::from($request);
 
         return response()->json([
-            'service' => 'Brandcoves editorial API',
+            'service' => 'GiftCoves editorial API',
             'token' => [
                 'name' => $token?->name,
                 'abilities' => $token?->abilities ?? [],
@@ -88,8 +88,8 @@ class EditorialIndexController extends Controller
      */
     private function sources(): array
     {
-        $bol = (bool) config('brandcoves.connectors.bol.enabled')
-            && filled(config('brandcoves.connectors.bol.client_id'));
+        $bol = (bool) config('giftcoves.connectors.bol.enabled')
+            && filled(config('giftcoves.connectors.bol.client_id'));
 
         return [
             'awin' => [

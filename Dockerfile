@@ -21,7 +21,7 @@ COPY resources ./resources
 # VITE_* is inlined into the client bundle HERE. If it is missing at this point
 # it is missing in the browser forever — which is why these are Build Variables
 # in Coolify, not runtime environment variables.
-ARG VITE_APP_NAME=Brandcoves
+ARG VITE_APP_NAME=GiftCoves
 ENV VITE_APP_NAME=$VITE_APP_NAME
 # Builds both bundles: the client one into public/build, and the SSR one into
 # bootstrap/ssr for the `ssr` stage below.

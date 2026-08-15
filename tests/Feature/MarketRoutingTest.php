@@ -148,7 +148,7 @@ class MarketRoutingTest extends TestCase
     {
         // It still routes and nothing links to it, but a URL remembered from
         // elsewhere would still be crawled.
-        config(['brandcoves.robots_allow' => true]);
+        config(['giftcoves.robots_allow' => true]);
 
         $this->get('/robots.txt')
             ->assertOk()
@@ -158,10 +158,10 @@ class MarketRoutingTest extends TestCase
     #[Test]
     public function staging_is_kept_out_of_the_index(): void
     {
-        config(['brandcoves.robots_allow' => false]);
+        config(['giftcoves.robots_allow' => false]);
         $this->get('/be-nl')->assertSee('noindex', false);
 
-        config(['brandcoves.robots_allow' => true]);
+        config(['giftcoves.robots_allow' => true]);
         $this->get('/be-nl')->assertDontSee('noindex', false);
     }
 

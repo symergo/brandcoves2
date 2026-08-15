@@ -191,11 +191,11 @@ class OgImageCacheTest extends TestCase
         $group = $this->product();
         $renderer = $this->countingRenderer();
 
-        config(['brandcoves.commit_sha' => 'aaaaaaa']);
+        config(['giftcoves.commit_sha' => 'aaaaaaa']);
         $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
         $this->assertSame(1, $renderer->renders);
 
-        config(['brandcoves.commit_sha' => 'bbbbbbb']);
+        config(['giftcoves.commit_sha' => 'bbbbbbb']);
         $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
 
         $this->assertSame(2, $renderer->renders, 'the new build must not inherit the old build\'s card');

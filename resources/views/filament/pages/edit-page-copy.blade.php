@@ -19,7 +19,7 @@
                  question. --}}
             <span class="text-sm text-gray-500 dark:text-gray-400">
                 Live on the next page load. Each page keeps the same wording for
-                {{ config('brandcoves.copy.rotation', 'weekly') === 'static' ? 'good' : 'a ' . str_replace(['weekly', 'daily', 'monthly'], ['week', 'day', 'month'], config('brandcoves.copy.rotation', 'weekly')) }},
+                {{ config('giftcoves.copy.rotation', 'weekly') === 'static' ? 'good' : 'a ' . str_replace(['weekly', 'daily', 'monthly'], ['week', 'day', 'month'], config('giftcoves.copy.rotation', 'weekly')) }},
                 then draws again — so two pages rarely read the same.
             </span>
         </div>

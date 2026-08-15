@@ -83,8 +83,8 @@ class AwinConnector implements FeedConnector
 
     public function supports(Market $market): bool
     {
-        return (bool) config('brandcoves.connectors.awin.enabled')
-            && filled(config('brandcoves.connectors.awin.api_token'))
+        return (bool) config('giftcoves.connectors.awin.enabled')
+            && filled(config('giftcoves.connectors.awin.api_token'))
             && Feed::query()->enabled()->where('market', $market->value)->exists();
     }
 
@@ -145,8 +145,8 @@ class AwinConnector implements FeedConnector
      */
     public function availableFeeds(Market $market): array
     {
-        $token = (string) config('brandcoves.connectors.awin.api_token');
-        $publisher = (string) config('brandcoves.connectors.awin.publisher_id');
+        $token = (string) config('giftcoves.connectors.awin.api_token');
+        $publisher = (string) config('giftcoves.connectors.awin.publisher_id');
 
         if ($token === '' || $publisher === '') {
             return [];

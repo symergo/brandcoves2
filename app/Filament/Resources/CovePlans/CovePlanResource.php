@@ -91,7 +91,7 @@ class CovePlanResource extends Resource
                         ->label('Editorial')
                         ->rows(10)
                         ->columnSpanFull()
-                        ->maxLength((int) config('brandcoves.editorial_api.max_editorial_chars'))
+                        ->maxLength((int) config('giftcoves.editorial_api.max_editorial_chars'))
                         ->helperText('Two or three paragraphs, blank line between them. Link with tokens, never URLs: [[product:1234|label]], [[brand:Sony]], [[search:phrase]] — anything outside the edition\'s own products is rendered as plain text. Written here, it replaces the AI pass entirely and survives every rebuild.'),
                 ])
                 ->columns(2),

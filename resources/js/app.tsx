@@ -3,7 +3,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client'
 import type { ReactElement } from 'react'
 import Layout from './Layouts/SiteLayout'
 
-const appName = import.meta.env.VITE_APP_NAME ?? 'Brandcoves'
+const appName = import.meta.env.VITE_APP_NAME ?? 'GiftCoves'
 
 createInertiaApp({
     title: (title) => (title ? `${title} · ${appName}` : appName),

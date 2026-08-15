@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Take "we are a comparison site" out of the copy bank.
  *
- * Brandcoves is a product and brand discovery service that links to the shops
+ * GiftCoves is a product and brand discovery service that links to the shops
  * selling what it shows. The about and terms pages say so now; the FAQ answer on
  * every search and brand page still said the opposite, in four languages.
  *

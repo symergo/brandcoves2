@@ -245,7 +245,7 @@ class CopyBankTest extends TestCase
             $this->variant("Variant {$i} van :brand.");
         }
 
-        config(['brandcoves.copy.rotation' => 'weekly']);
+        config(['giftcoves.copy.rotation' => 'weekly']);
 
         $seen = [];
 
@@ -266,7 +266,7 @@ class CopyBankTest extends TestCase
             $this->variant("Variant {$i} van :brand.");
         }
 
-        config(['brandcoves.copy.rotation' => 'static']);
+        config(['giftcoves.copy.rotation' => 'static']);
 
         $seen = [];
 

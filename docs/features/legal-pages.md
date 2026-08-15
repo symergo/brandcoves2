@@ -19,7 +19,7 @@ that list is a 404 before a path is built.
 ## Company details are placeholders, not text
 
 `{{name}}`, `{{number}}`, `{{address}}`, `{{email}}`, `{{privacy_email}}` resolve from
-`config('brandcoves.company')`. An imprint under Article 5 of the e-Commerce Directive has to be
+`config('giftcoves.company')`. An imprint under Article 5 of the e-Commerce Directive has to be
 correct in six documents at once; keeping the strings in one place is the only way that stays true
 after the first address change.
 
@@ -28,7 +28,7 @@ company number belongs looks deliberate. A visible placeholder does not.
 
 ## How the service is described
 
-**Brandcoves is a product and brand discovery service that links to the shops selling the products.
+**GiftCoves is a product and brand discovery service that links to the shops selling the products.
 It is not a price comparison service, and the pages must not describe it as one.**
 
 The distinction is not cosmetic. "Comparison service" is close to a term of art, it invites the
@@ -57,7 +57,7 @@ policy together.
 
 ## Open
 
-`hello@brandcoves.com` and `privacy@brandcoves.com` are published in the pages and **do not exist
+`hello@giftcoves.com` and `privacy@giftcoves.com` are published in the pages and **do not exist
 yet**. Until those mailboxes are created, the GDPR contact point named in the privacy policy is
 unreachable, which is itself a compliance gap.
 

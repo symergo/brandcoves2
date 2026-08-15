@@ -111,7 +111,7 @@ enum AmazonLocale: string
      * about something they can see for themselves.
      *
      * Individual locales can be switched off per market via
-     * `config('brandcoves.connectors.amazon.hidden_locales')` — useful when a
+     * `config('giftcoves.connectors.amazon.hidden_locales')` — useful when a
      * storefront turns out to ship badly to a market, or when an account is not
      * approved for it. **The primary can never be hidden**: a market with no
      * Amazon storefront at all would be a selector with nothing in it, and the
@@ -124,7 +124,7 @@ enum AmazonLocale: string
         $primary = self::primaryFor($market);
         $hidden = array_map(
             'strval',
-            (array) config("brandcoves.connectors.amazon.hidden_locales.{$market->value}", []),
+            (array) config("giftcoves.connectors.amazon.hidden_locales.{$market->value}", []),
         );
 
         $rest = array_values(array_filter(

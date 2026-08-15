@@ -189,7 +189,7 @@ class GiftController extends Controller
     private function brief(array $validated, CurrentMarket $current, ?Recipient $recipient = null): TasteBrief
     {
         if ($recipient !== null) {
-            $stored = TasteBrief::fromRecipient($recipient, $current->get(), (int) config('brandcoves.gift.results'));
+            $stored = TasteBrief::fromRecipient($recipient, $current->get(), (int) config('giftcoves.gift.results'));
 
             $validated += array_filter([
                 'interests' => $stored->interests ?: null,
@@ -215,7 +215,7 @@ class GiftController extends Controller
             relationship: $validated['relationship'] ?? null,
             occasion: $validated['occasion'] ?? null,
             ageBand: $validated['age_band'] ?? null,
-            limit: (int) config('brandcoves.gift.results'),
+            limit: (int) config('giftcoves.gift.results'),
         );
     }
 

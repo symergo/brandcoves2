@@ -105,7 +105,7 @@ class AdminMigrationTest extends TestCase
          */
         $secrets = [
             (string) config('app.key'),
-            (string) config('brandcoves.wishlist.claim_hash_secret'),
+            (string) config('giftcoves.wishlist.claim_hash_secret'),
             (string) config('database.connections.pgsql.password'),
         ];
 
@@ -138,16 +138,16 @@ class AdminMigrationTest extends TestCase
         $report = app(ConfigReport::class);
 
         config([
-            'brandcoves.connectors.bol.client_id' => null,
-            'brandcoves.connectors.bol.client_secret' => null,
-            'brandcoves.connectors.amazon.access_key' => null,
+            'giftcoves.connectors.bol.client_id' => null,
+            'giftcoves.connectors.bol.client_secret' => null,
+            'giftcoves.connectors.amazon.access_key' => null,
         ]);
 
         $this->assertContains('BOL_CLIENT_ID', $report->failures());
 
         config([
-            'brandcoves.connectors.bol.client_id' => 'a-client-id',
-            'brandcoves.connectors.bol.client_secret' => 'a-secret',
+            'giftcoves.connectors.bol.client_id' => 'a-client-id',
+            'giftcoves.connectors.bol.client_secret' => 'a-secret',
         ]);
 
         $this->assertNotContains(
@@ -159,7 +159,7 @@ class AdminMigrationTest extends TestCase
         // Amazon's credentials are only required while Amazon is on, so the
         // enabled flag has to resolve too — a null there makes them optional
         // forever and hides a genuinely missing key.
-        config(['brandcoves.connectors.amazon.enabled' => true]);
+        config(['giftcoves.connectors.amazon.enabled' => true]);
 
         $this->assertContains('AMAZON_ACCESS_KEY', $report->failures());
     }

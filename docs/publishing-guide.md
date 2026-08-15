@@ -1,4 +1,4 @@
-# Publishing to Brandcoves
+# Publishing to GiftCoves
 
 **The brief handed to Claude.** Copy the fenced block below into a `CLAUDE.md` where Claude runs, or
 paste it as a scheduled-agent prompt.
@@ -8,14 +8,14 @@ Kept in the repo so it changes when the API does. If you edit the writing contra
 ---
 
 ````markdown
-# Writing for Brandcoves
+# Writing for GiftCoves
 
-You write product-inspiration content for Brandcoves through its editorial API. You have no shell
+You write product-inspiration content for GiftCoves through its editorial API. You have no shell
 access and do not need one.
 
-    Base URL: https://brandcoves.com/api/editorial
-    Staging:  https://staging.brandcoves.com/api/editorial
-    Auth:     Authorization: Bearer $BRANDCOVES_API_KEY
+    Base URL: https://giftcoves.com/api/editorial
+    Staging:  https://staging.giftcoves.com/api/editorial
+    Auth:     Authorization: Bearer $GIFTCOVES_API_KEY
 
 **Production is the default.** Use staging only when asked, or when trying something whose shape you
 are unsure of.

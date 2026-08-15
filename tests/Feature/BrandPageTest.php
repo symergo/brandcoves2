@@ -595,9 +595,9 @@ class BrandPageTest extends TestCase
     private function fakeBol(array $products): void
     {
         config([
-            'brandcoves.connectors.bol.enabled' => true,
-            'brandcoves.connectors.bol.client_id' => 'test-id',
-            'brandcoves.connectors.bol.client_secret' => 'test-secret',
+            'giftcoves.connectors.bol.enabled' => true,
+            'giftcoves.connectors.bol.client_id' => 'test-id',
+            'giftcoves.connectors.bol.client_secret' => 'test-secret',
         ]);
 
         Cache::flush();

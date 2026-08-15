@@ -26,7 +26,7 @@ rather than "somebody forgot".
 
 It has cost twice already. A login 500'd on a missing variable. Then the second Awin publisher
 account — `AWIN_VDB_API_TOKEN`, declared in config, documented in `.env.example`, and never passed
-through the compose file. `config/brandcoves.php` filters accounts on a filled token, so the account
+through the compose file. `config/giftcoves.php` filters accounts on a filled token, so the account
 disappeared without a word: a laptop ingested from two publishers and every deployed environment
 ingested from one, reporting complete success either way. That is the whole bug class in one
 example — **correct locally, quietly diminished in production, no error anywhere**.
@@ -37,7 +37,7 @@ example — **correct locally, quietly diminished in production, no error anywhe
 
 A static scan, deliberately not a runtime check: it has to fail on the machine of whoever adds the
 key, before a deploy, and long before someone wonders why production has fewer merchants. Every
-`env('KEY')` in `config/brandcoves.php` and `config/services.php` **without a default** must appear
+`env('KEY')` in `config/giftcoves.php` and `config/services.php` **without a default** must appear
 both in `.env.example` and in the compose file's app environment. It also checks the reverse — a
 `${VAR}` the compose file interpolates but nothing documents arrives as an empty string.
 
@@ -93,7 +93,7 @@ password while still showing that each is set.
 
 ## Declared vs configured
 
-`config/brandcoves.php` now carries `connectors.awin.declared_accounts` beside the filtered
+`config/giftcoves.php` now carries `connectors.awin.declared_accounts` beside the filtered
 `accounts`. The filter still decides what runs; the declared list survives so a diagnostic can say
 *which* account is absent and *which* variable to set.
 
@@ -106,7 +106,7 @@ account it cannot reach before it spends a minute discovering feeds.
 - `tests/Unit/ConfigContractTest.php`
 - `app/Console/Commands/CheckConfigCommand.php`
 - `app/Http/Controllers/HealthController.php` — the `config` block
-- `config/brandcoves.php` — `declared_accounts`
+- `config/giftcoves.php` — `declared_accounts`
 - `docker-compose.coolify.yml`, `.env.example` — the two halves that drift
 
 ## Verification
@@ -114,8 +114,8 @@ account it cannot reach before it spends a minute discovering feeds.
 ```bash
 composer test                  # ConfigContractTest fails the moment a key is unreachable
 php artisan bc:check-config    # locally: warns, exits 0. In production: fails.
-curl -s https://brandcoves.com/health | jq .config
+curl -s https://giftcoves.com/health | jq .config
 ```
 
-To prove the guard bites, add an `env('SOMETHING_NEW')` with no default to `config/brandcoves.php`
+To prove the guard bites, add an `env('SOMETHING_NEW')` with no default to `config/giftcoves.php`
 and run the test. It fails until the key is in both the compose file and `.env.example`.

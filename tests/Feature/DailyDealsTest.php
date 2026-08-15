@@ -214,6 +214,6 @@ class DailyDealsTest extends TestCase
             $this->group(['min_price' => 5000 + $i, 'median_price' => 12000]);
         }
 
-        $this->assertCount((int) config('brandcoves.deals.limit'), $this->deals());
+        $this->assertCount((int) config('giftcoves.deals.limit'), $this->deals());
     }
 }

@@ -9,6 +9,18 @@ date_added: 2026-08-08
 
 Moving `brandcoves.com` from the v1 WordPress site to v2.
 
+> **Every domain in this document is `brandcoves.com`, and that is deliberate.** v1 WordPress is
+> served at `brandcoves.com`; that is the domain this cutover moves. The site was renamed to
+> GiftCoves on 2026-08-15 ([rebrand.md](rebrand.md)), but Coolify has not been changed, so nothing
+> here has moved yet.
+>
+> **Do this cutover first, then the rename.** Both are domain moves, and running them together means
+> a failure cannot be attributed: if v2 comes up wrong on a brand-new domain, there is no way to tell
+> whether the release is broken or the DNS is. Taking `brandcoves.com` from v1 to v2 is reversible in
+> a minute — that is the whole argument below — and it leaves a known-good v2 in production for the
+> rename to move. Doing it the other way round hands the v1 WordPress site a domain nobody is
+> redirecting from.
+
 Both run on the same box under the same Coolify instance, which makes this a
 **domain move, not a DNS change** — the single most important fact in this
 document. DNS propagates for hours and cannot be undone quickly; a Coolify

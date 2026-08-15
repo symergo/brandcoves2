@@ -32,15 +32,15 @@ class BolPopularChartTest extends TestCase
         parent::setUp();
 
         config([
-            'brandcoves.connectors.bol.enabled' => true,
-            'brandcoves.connectors.bol.client_id' => 'test-id',
-            'brandcoves.connectors.bol.client_secret' => 'test-secret',
-            'brandcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
-            'brandcoves.connectors.bol.popular.enabled' => true,
-            'brandcoves.connectors.bol.popular.page_size' => 2,
-            'brandcoves.connectors.bol.popular.pages' => 2,
-            'brandcoves.connectors.bol.popular.rate' => 8.0,
-            'brandcoves.connectors.bol.popular.burst' => 8,
+            'giftcoves.connectors.bol.enabled' => true,
+            'giftcoves.connectors.bol.client_id' => 'test-id',
+            'giftcoves.connectors.bol.client_secret' => 'test-secret',
+            'giftcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
+            'giftcoves.connectors.bol.popular.enabled' => true,
+            'giftcoves.connectors.bol.popular.page_size' => 2,
+            'giftcoves.connectors.bol.popular.pages' => 2,
+            'giftcoves.connectors.bol.popular.rate' => 8.0,
+            'giftcoves.connectors.bol.popular.burst' => 8,
         ]);
 
         Cache::flush();
@@ -318,7 +318,7 @@ class BolPopularChartTest extends TestCase
     #[Test]
     public function charts_can_be_switched_off_without_disabling_search(): void
     {
-        config(['brandcoves.connectors.bol.popular.enabled' => false]);
+        config(['giftcoves.connectors.bol.popular.enabled' => false]);
         Http::fake($this->fakeToken());
 
         $this->assertTrue($this->connector->popular(Market::BeNl, null, 50)->isEmpty());

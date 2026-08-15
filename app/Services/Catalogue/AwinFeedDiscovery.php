@@ -64,7 +64,7 @@ class AwinFeedDiscovery
         $this->warnings = [];
         $available = [];
 
-        foreach ((array) config('brandcoves.connectors.awin.accounts', []) as $key => $account) {
+        foreach ((array) config('giftcoves.connectors.awin.accounts', []) as $key => $account) {
             $response = Http::timeout(60)
                 ->get("https://productdata.awin.com/datafeed/list/apikey/{$account['api_token']}/");
 
@@ -232,7 +232,7 @@ class AwinFeedDiscovery
         // Borre" should add Vanden Borre and nothing else.
         $wanted = $only !== []
             ? $only
-            : ($all ? [] : (array) config('brandcoves.connectors.awin.advertisers', []));
+            : ($all ? [] : (array) config('giftcoves.connectors.awin.advertisers', []));
 
         if ($only === [] && ($all || $wanted === [])) {
             return true;

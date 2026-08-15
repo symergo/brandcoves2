@@ -34,8 +34,8 @@ use RuntimeException;
  *
  * Callers pass an entity; the controller reads its title. Nothing here renders a
  * string taken from a query parameter. An endpoint that draws arbitrary words on
- * a Brandcoves-branded card is an impersonation tool with a URL — anyone could
- * post a screenshot of "Brandcoves says …" that our own domain would serve.
+ * a GiftCoves-branded card is an impersonation tool with a URL — anyone could
+ * post a screenshot of "GiftCoves says …" that our own domain would serve.
  */
 class OgImage
 {
@@ -136,7 +136,7 @@ class OgImage
     /**
      * The cove, drawn rather than loaded.
      *
-     * The same geometry as `public/icons/brandcoves.svg`, minus the tile: the
+     * The same geometry as `public/icons/giftcoves.svg`, minus the tile: the
      * card is already the tile's colour, so the headland and the buoy sit
      * straight on the background. Loading the SVG would need a rasteriser GD
      * does not have, and the PNG would mean resampling a bitmap that is the
@@ -172,7 +172,7 @@ class OgImage
     {
         $this->text(
             $canvas,
-            'Brandcoves',
+            'GiftCoves',
             self::MARGIN + 84,
             self::MARGIN + 44,
             32,

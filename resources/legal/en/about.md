@@ -1,12 +1,12 @@
 ---
-title: About Brandcoves
+title: About GiftCoves
 summary: A brand and product discovery site with curated finds and intelligent matching, for yourself and for other people.
 updated: 2026-08-09
 ---
 
 ## What this is
 
-Brandcoves is a **brand and product discovery site**. It exists to make finding
+GiftCoves is a **brand and product discovery site**. It exists to make finding
 things fun rather than a chore you get through, whether you are buying for
 yourself or for someone else.
 
@@ -93,7 +93,7 @@ The [terms](terms) set out what that means in practice.
 
 ## Who runs it
 
-Brandcoves is operated by {{name}}, enterprise number {{number}}, registered at
+GiftCoves is operated by {{name}}, enterprise number {{number}}, registered at
 {{address}}.
 
 Get in touch at {{email}}. If something here is wrong, that address reaches

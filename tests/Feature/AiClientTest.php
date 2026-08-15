@@ -34,9 +34,9 @@ class AiClientTest extends TestCase
         parent::setUp();
 
         config([
-            'brandcoves.ai.enabled' => true,
-            'brandcoves.ai.api_key' => 'sk-ant-test',
-            'brandcoves.ai.model' => 'claude-sonnet-5',
+            'giftcoves.ai.enabled' => true,
+            'giftcoves.ai.api_key' => 'sk-ant-test',
+            'giftcoves.ai.model' => 'claude-sonnet-5',
         ]);
     }
 

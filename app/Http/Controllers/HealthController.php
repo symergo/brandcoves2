@@ -65,19 +65,19 @@ class HealthController extends Controller
     {
         return [
             'appKey' => filled(config('app.key')),
-            'credentialsKey' => filled(config('brandcoves.credentials_key')),
-            'claimHashSecret' => filled(config('brandcoves.wishlist.claim_hash_secret')),
+            'credentialsKey' => filled(config('giftcoves.credentials_key')),
+            'claimHashSecret' => filled(config('giftcoves.wishlist.claim_hash_secret')),
             'mail' => filled(config('services.resend.key')),
-            'awin' => filled(config('brandcoves.connectors.awin.api_token')),
-            'awinAccounts' => count((array) config('brandcoves.connectors.awin.accounts', [])),
+            'awin' => filled(config('giftcoves.connectors.awin.api_token')),
+            'awinAccounts' => count((array) config('giftcoves.connectors.awin.accounts', [])),
             // `connectors.sources` does not exist — the key is `connectors.bol`.
             // The wrong path resolved to null, so this reported "bol: false" on
             // every environment including ones where bol works, which is worse
             // than not reporting it: a config check that always says "missing"
             // sends somebody chasing a credential that was never absent.
-            'bol' => filled(config('brandcoves.connectors.bol.client_id')),
-            'ai' => filled(config('brandcoves.ai.api_key')),
-            'robotsAllow' => (bool) config('brandcoves.robots_allow'),
+            'bol' => filled(config('giftcoves.connectors.bol.client_id')),
+            'ai' => filled(config('giftcoves.ai.api_key')),
+            'robotsAllow' => (bool) config('giftcoves.robots_allow'),
         ];
     }
 

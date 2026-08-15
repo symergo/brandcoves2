@@ -1,6 +1,6 @@
 ---
 title: Privacybeleid
-summary: Wat Brandcoves over je bewaart, op welke rechtsgrond, hoe lang, en hoe je er vanaf komt.
+summary: Wat GiftCoves over je bewaart, op welke rechtsgrond, hoe lang, en hoe je er vanaf komt.
 updated: 2026-08-09
 ---
 
@@ -93,7 +93,7 @@ schema en niet naar aanleiding van iets wat jij doet, dus wat jij typt bereikt
 nooit een model.
 
 **Winkels en affiliatenetwerken.** Klik je door naar een winkel, dan weten die
-winkel en het netwerk ertussen dat het bezoek van Brandcoves kwam, meestal via een
+winkel en het netwerk ertussen dat het bezoek van GiftCoves kwam, meestal via een
 parameter in de link, en zetten ze hun eigen tracking zodat een aankoop toegewezen
 kan worden. Dat gebeurt op hun domein onder hún privacybeleid, niet onder dit. Wij
 sturen hun nooit je e-mailadres, je account of je lijstjes.
@@ -165,7 +165,7 @@ analyticscookie, geen advertentiecookie, geen cookie van derden.
 
 ## Kinderen
 
-Brandcoves richt zich niet op kinderen en we bewaren niet bewust gegevens van
+GiftCoves richt zich niet op kinderen en we bewaren niet bewust gegevens van
 iemand onder de 16. Denk je van wel, mail dan {{privacy_email}} en het wordt
 verwijderd.
 

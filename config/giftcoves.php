@@ -18,6 +18,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | The domain, and the one it replaced
+    |--------------------------------------------------------------------------
+    |
+    | The site was called Brandcoves and lived at brandcoves.com until the rename
+    | to GiftCoves. Both domains point at this same instance, so `RedirectLegacyHost`
+    | 301s anything arriving on an old host to the same path on the canonical one.
+    |
+    | Both are empty by default. Local development and any environment that has
+    | not been cut over must not redirect, and a half-configured pair is the one
+    | state that could send a visitor somewhere that does not answer.
+    |
+    | `canonical_host` is a bare host — no scheme, no trailing slash — because the
+    | scheme is taken from the incoming request, which is what keeps a local HTTP
+    | test from being bounced to HTTPS.
+    */
+    'canonical_host' => env('CANONICAL_HOST', ''),
+
+    /** Comma-separated. Every host that should 301 to `canonical_host`. */
+    'legacy_hosts' => array_values(array_filter(array_map(
+        trim(...),
+        explode(',', (string) env('LEGACY_HOSTS', '')),
+    ))),
+
+    /*
+    |--------------------------------------------------------------------------
     | Search
     |--------------------------------------------------------------------------
     */
@@ -374,7 +399,7 @@ return [
     | Who operates this site
     |--------------------------------------------------------------------------
     |
-    | The legal identity behind Brandcoves, in one place because it appears in
+    | The legal identity behind GiftCoves, in one place because it appears in
     | three documents in four languages and a company number that disagrees with
     | itself across twelve files is a real problem rather than a typo.
     |
@@ -388,7 +413,7 @@ return [
     */
     'company' => [
         /*
-         * Symergo CommV is the operating entity; Brandcoves is the site it runs.
+         * Symergo CommV is the operating entity; GiftCoves is the site it runs.
          *
          * The legal form belongs in the name rather than being implied: a
          * Belgian imprint has to identify the company as it is registered, and
@@ -411,8 +436,8 @@ return [
          * Overridable by env so a working address can be swapped in without a
          * deploy.
          */
-        'email' => env('COMPANY_EMAIL', 'hello@brandcoves.com'),
-        'privacy_email' => env('PRIVACY_EMAIL', 'privacy@brandcoves.com'),
+        'email' => env('COMPANY_EMAIL', 'hello@giftcoves.com'),
+        'privacy_email' => env('PRIVACY_EMAIL', 'privacy@giftcoves.com'),
     ],
 
     /*
@@ -482,7 +507,7 @@ return [
              */
             'accounts' => array_filter([
                 'default' => [
-                    'label' => 'Brandcoves',
+                    'label' => 'GiftCoves',
                     'api_token' => env('AWIN_API_TOKEN'),
                     'publisher_id' => env('AWIN_PUBLISHER_ID'),
                 ],
@@ -495,7 +520,7 @@ return [
 
             /** Every account this build knows about, and the variable each needs. */
             'declared_accounts' => [
-                'default' => ['label' => 'Brandcoves', 'env' => 'AWIN_API_TOKEN'],
+                'default' => ['label' => 'GiftCoves', 'env' => 'AWIN_API_TOKEN'],
                 'vandenborre' => ['label' => 'Vanden Borre', 'env' => 'AWIN_VDB_API_TOKEN'],
             ],
 

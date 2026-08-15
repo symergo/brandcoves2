@@ -111,12 +111,12 @@ final readonly class TasteBrief
      */
     public function ceiling(): int
     {
-        return $this->budgetMax ?? (int) config('brandcoves.gift.max_price');
+        return $this->budgetMax ?? (int) config('giftcoves.gift.max_price');
     }
 
     public function floor(): int
     {
-        return $this->budgetMin ?? (int) config('brandcoves.gift.min_price');
+        return $this->budgetMin ?? (int) config('giftcoves.gift.min_price');
     }
 
     /**

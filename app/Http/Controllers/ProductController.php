@@ -155,7 +155,7 @@ class ProductController extends Controller
 
         $meta->addJsonLd(StructuredData::product($group, $offers, $market, $url));
         $meta->addJsonLd(StructuredData::breadcrumbs([
-            ['name' => 'Brandcoves', 'url' => url($current->url())],
+            ['name' => 'GiftCoves', 'url' => url($current->url())],
             ['name' => __('site.search.title'), 'url' => url($current->url('search'))],
             ['name' => $group->title, 'url' => $url],
         ]));

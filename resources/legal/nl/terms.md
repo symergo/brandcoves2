@@ -1,6 +1,6 @@
 ---
 title: Algemene voorwaarden
-summary: De regels voor het gebruik van Brandcoves: hoe resultaten gerangschikt worden, wat we beloven, wat niet, en bij wie je eigenlijk koopt.
+summary: De regels voor het gebruik van GiftCoves: hoe resultaten gerangschikt worden, wat we beloven, wat niet, en bij wie je eigenlijk koopt.
 updated: 2026-08-09
 ---
 
@@ -21,9 +21,9 @@ omgezet in Belgisch recht in boek XII van het Wetboek van economisch recht.
 Door de site te gebruiken aanvaard je deze voorwaarden. Aanvaard je ze niet, maak
 er dan geen gebruik van.
 
-## 2. Wat Brandcoves is, en niet is
+## 2. Wat GiftCoves is, en niet is
 
-Brandcoves is een **ontdekkingsdienst voor producten en merken**. We verzamelen
+GiftCoves is een **ontdekkingsdienst voor producten en merken**. We verzamelen
 productinformatie bij verkopers en affiliatenetwerken en presenteren die zodat je
 producten en de merken erachter kunt ontdekken, met links naar de winkels die ze
 verkopen.
@@ -109,7 +109,7 @@ Als Amazon Associate verdienen we aan in aanmerking komende aankopen.
 
 ## 6. Gebruik van de site
 
-Je mag Brandcoves gebruiken om producten en merken te ontdekken. Je mag niet:
+Je mag GiftCoves gebruiken om producten en merken te ontdekken. Je mag niet:
 
 - de catalogus scrapen, crawlen of in bulk kopiëren, of met geautomatiseerde
   middelen gegevens onttrekken die verder gaan dan gewoon browsen;
@@ -168,7 +168,7 @@ om het te identificeren. We kijken er snel naar.
 
 Uitgaande links leiden naar sites die wij niet beheren. We zijn niet
 verantwoordelijk voor hun inhoud, hun voorwaarden, hun prijzen of hun omgang met
-je gegevens. Een link volgen betekent Brandcoves verlaten.
+je gegevens. Een link volgen betekent GiftCoves verlaten.
 
 ## 11. Beschikbaarheid
 

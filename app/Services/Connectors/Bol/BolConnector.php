@@ -40,9 +40,9 @@ class BolConnector implements LiveConnector, PopularityConnector
 
     public function supports(Market $market): bool
     {
-        return (bool) config('brandcoves.connectors.bol.enabled')
-            && filled(config('brandcoves.connectors.bol.client_id'))
-            && filled(config('brandcoves.connectors.bol.client_secret'))
+        return (bool) config('giftcoves.connectors.bol.enabled')
+            && filled(config('giftcoves.connectors.bol.client_id'))
+            && filled(config('giftcoves.connectors.bol.client_secret'))
             // bol does not operate in Spain, so that market is Awin-only. A null
             // country means "skip", never "use the default".
             && $market->bolCountry() !== null;
@@ -98,7 +98,7 @@ class BolConnector implements LiveConnector, PopularityConnector
          * failure is expensive and invisible.
          */
         if ($products !== []) {
-            Cache::put($cacheKey, $products, (int) config('brandcoves.search.live_cache_ttl'));
+            Cache::put($cacheKey, $products, (int) config('giftcoves.search.live_cache_ttl'));
         }
 
         return $this->offersFrom($products, $market);
@@ -168,8 +168,8 @@ class BolConnector implements LiveConnector, PopularityConnector
             return PopularChart::empty();
         }
 
-        $pageSize = min(50, max(1, (int) config('brandcoves.connectors.bol.popular.page_size', 50)));
-        $maxPages = max(1, (int) config('brandcoves.connectors.bol.popular.pages', 2));
+        $pageSize = min(50, max(1, (int) config('giftcoves.connectors.bol.popular.page_size', 50)));
+        $maxPages = max(1, (int) config('giftcoves.connectors.bol.popular.pages', 2));
 
         $entries = [];
         $categories = [];
@@ -270,7 +270,7 @@ class BolConnector implements LiveConnector, PopularityConnector
     private function supportsCharts(Market $market): bool
     {
         return $this->supports($market)
-            && (bool) config('brandcoves.connectors.bol.popular.enabled');
+            && (bool) config('giftcoves.connectors.bol.popular.enabled');
     }
 
     /**
@@ -459,7 +459,7 @@ class BolConnector implements LiveConnector, PopularityConnector
             // The upstream has told us our own accounting is wrong. Back off
             // wholesale rather than retrying into the wall.
             $this->limiter($bucket)->penalise(
-                (int) config('brandcoves.connectors.bol.cooldown_seconds')
+                (int) config('giftcoves.connectors.bol.cooldown_seconds')
             );
             Log::warning('bol rate limited us; backing off', ['bucket' => $bucket]);
 
@@ -493,8 +493,8 @@ class BolConnector implements LiveConnector, PopularityConnector
                 $response = Http::asForm()
                     ->timeout(8)
                     ->withBasicAuth(
-                        (string) config('brandcoves.connectors.bol.client_id'),
-                        (string) config('brandcoves.connectors.bol.client_secret'),
+                        (string) config('giftcoves.connectors.bol.client_id'),
+                        (string) config('giftcoves.connectors.bol.client_secret'),
                     )
                     ->post(self::TOKEN_URL, ['grant_type' => 'client_credentials']);
 
@@ -651,7 +651,7 @@ class BolConnector implements LiveConnector, PopularityConnector
             't' => 'url',
             's' => $siteId,
             'f' => 'TXL',
-            'name' => 'brandcoves-'.$market->value,
+            'name' => 'giftcoves-'.$market->value,
             'url' => $url,
         ]);
     }
@@ -698,12 +698,12 @@ class BolConnector implements LiveConnector, PopularityConnector
         return new RateLimiter(
             bucket: "bol:{$endpoint}",
             rate: (float) config(
-                "brandcoves.connectors.bol.{$endpoint}.rate",
-                config('brandcoves.connectors.bol.rate'),
+                "giftcoves.connectors.bol.{$endpoint}.rate",
+                config('giftcoves.connectors.bol.rate'),
             ),
             capacity: (int) config(
-                "brandcoves.connectors.bol.{$endpoint}.burst",
-                config('brandcoves.connectors.bol.burst'),
+                "giftcoves.connectors.bol.{$endpoint}.burst",
+                config('giftcoves.connectors.bol.burst'),
             ),
         );
     }

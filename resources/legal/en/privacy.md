@@ -1,6 +1,6 @@
 ---
 title: Privacy policy
-summary: What Brandcoves stores about you, on what legal basis, for how long, and how to get rid of it.
+summary: What GiftCoves stores about you, on what legal basis, for how long, and how to get rid of it.
 updated: 2026-08-09
 ---
 
@@ -88,7 +88,7 @@ prompt: titles, prices, categories. Generation runs on a schedule rather than in
 response to anything you do, so nothing you type reaches a model.
 
 **Shops and affiliate networks.** When you click through to a shop, that shop and
-the network between us receive the fact that a visit came from Brandcoves,
+the network between us receive the fact that a visit came from GiftCoves,
 normally as a parameter in the link, and they set their own tracking so a purchase
 can be attributed. That happens on their domain under their privacy policy, not
 this one. We never send them your email address, your account or your lists.
@@ -159,7 +159,7 @@ cookie, no third-party cookie.
 
 ## Children
 
-Brandcoves is not aimed at children and we do not knowingly hold data about
+GiftCoves is not aimed at children and we do not knowingly hold data about
 anyone under 16. If you believe we do, write to {{privacy_email}} and it will be
 deleted.
 

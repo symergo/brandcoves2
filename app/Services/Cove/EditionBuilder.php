@@ -55,7 +55,7 @@ class EditionBuilder
     public function build(Market $market, ?CarbonImmutable $date = null): ?DailyPickSet
     {
         $date = $date ?? CarbonImmutable::today();
-        $perDay = (int) config('brandcoves.picks.per_day');
+        $perDay = (int) config('giftcoves.picks.per_day');
 
         /*
          * An approved plan outranks the calendar, which outranks the model.
@@ -130,7 +130,7 @@ class EditionBuilder
                     'guide_id' => $this->guide($market)?->id,
                     'status' => PublishStatus::Published->value,
                     'published_at' => $date->setTimeFromTimeString(
-                        (string) config('brandcoves.picks.drop_time')
+                        (string) config('giftcoves.picks.drop_time')
                     ),
                 ],
             );
@@ -187,7 +187,7 @@ class EditionBuilder
         ?Observance $observance = null,
         ?CovePlan $plan = null,
     ): array {
-        $memoryDays = (int) config('brandcoves.picks.memory_days');
+        $memoryDays = (int) config('giftcoves.picks.memory_days');
 
         /*
          * The rolling memory is what makes this a column rather than a feed.
@@ -560,7 +560,7 @@ class EditionBuilder
     {
         return DB::table('used_themes')
             ->where('market', $market->value)
-            ->where('used_on', '>=', now()->subDays((int) config('brandcoves.picks.theme_memory_days')))
+            ->where('used_on', '>=', now()->subDays((int) config('giftcoves.picks.theme_memory_days')))
             ->pluck('theme_slug')
             ->all();
     }
