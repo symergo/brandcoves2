@@ -21,7 +21,9 @@ return [
         'guides' => 'Guides',
         'surprise' => 'Surprise Cove',
         'scan' => 'Scan',
-        'lists' => 'My lists',
+        'lists' => 'My Lists',
+        'shared_lists' => 'Shared Lists',
+        'group_lists' => 'Group Lists',
         'notifications' => 'Notifications',
         'sign_in' => 'Sign in',
         'sign_out' => 'Sign out',
@@ -29,7 +31,7 @@ return [
         'main' => 'Main',
         'skip' => 'Skip to content',
         'choose_market' => 'Choose your market',
-        'santa' => 'Secret Santa',
+        'santa' => 'Secret Friend',
         'cove' => 'Gift Cove',
     ],
 
@@ -37,7 +39,7 @@ return [
         'title' => 'Find it, love it, gift it',
         'headline_1' => 'Something worth giving.',
         'headline_2' => 'Yourself included.',
-        'intro' => 'GiftCoves searches bol, Amazon and hundreds of shops at once, and turns what it finds into ideas. Keep wish lists and gift lists, share them, club together on something bigger, run a Secret Santa, or quiz your friends on how well they really know you.',
+        'intro' => 'GiftCoves searches bol, Amazon and hundreds of shops at once, and turns what it finds into ideas. Keep wish lists and gift lists, share them, club together on something bigger, run a Secret Friend, or quiz your friends on how well they really know you.',
         'cta_gift' => 'Find a gift',
         'cta_search' => 'Something for yourself',
         'today_badge' => "Today's Cove",
@@ -46,6 +48,8 @@ return [
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',
         'coves_all' => 'All Coves',
         'coves_volume' => ':count searches a month',
+        'organise_intro' => 'Somewhere to keep what you want, what you are getting other people, and what several of you are buying together.',
+        'organise_group_hint' => 'One present, several people, and nobody has to chase anyone for the money.',
         'gifting_heading' => 'Buying for someone else',
         'gifting_intro' => 'Describe them and we will suggest something. Or let them tell you themselves, and never see who bought what.',
         'gifting_whisperer' => 'Find a gift for someone',
@@ -54,7 +58,7 @@ return [
         'gifting_lists' => 'Lists',
         'gifting_lists_hint' => 'Save things for yourself, or research a present without them seeing.',
         'gifting_lists_count' => ':count lists on the go',
-        'gifting_santa' => 'Secret Santa',
+        'gifting_santa' => 'Secret Friend',
         'gifting_santa_hint' => 'One group, one draw, nobody knows who has who.',
         'gifting_santa_count' => ':count groups you are running',
     ],
@@ -379,6 +383,8 @@ return [
     'lists' => [
         'title' => 'My lists',
         'subtitle' => 'Things you are saving, for yourself and for other people.',
+        'shared_subtitle' => 'Lists other people have shared with you.',
+        'group_subtitle' => 'One gift, chosen together. Everyone votes, and what each of you puts in stays between you and the organiser.',
         'default_title' => 'My wishlist',
         'default_badge' => 'Default',
         'shared_short' => 'Shared',
@@ -508,14 +514,14 @@ return [
     ],
     /*
     |--------------------------------------------------------------------------
-    | Secret Santa
+    | Secret Friend
     |--------------------------------------------------------------------------
     |
     | An assignment layer over ordinary lists: the draw decides who you are
     | shopping for, and the rest is the gift page you already know.
     */
     'santa' => [
-        'title' => 'Secret Santa',
+        'title' => 'Secret Friend',
         'subtitle' => 'One group, one draw, nobody knows who has who.',
         'create' => 'Start a group',
         'group_name' => 'What is this group called?',
@@ -559,12 +565,12 @@ return [
         'attach_list' => 'Use this list',
         'list_attached' => 'That group now sees this list.',
         'list_attached_short' => 'In use',
-        'invite_text' => 'Join our Secret Santa: :title',
+        'invite_text' => 'Join our Secret Friend: :title',
         'delete' => 'Delete this group',
         'delete_confirm' => 'Delete :title? Everyone who joined will lose it.',
         'delete_confirm_drawn' => 'Delete :title? It has already been drawn, so everyone loses who they were buying for — and nobody will be told. Tell them yourself first.',
         'deleted' => 'Group deleted.',
-        'email_hint' => 'So your Santa can be told who they have. It is not shown to anyone else.',
+        'email_hint' => 'So the person who draws you can be told who they have. It is not shown to anyone else.',
     ],
     'quiz' => [
         'title' => 'How well do you know them?',
@@ -600,7 +606,7 @@ return [
     | The Gift Cove
     |--------------------------------------------------------------------------
     |
-    | Each tool gets a sentence saying what it is *for*. "Secret Santa" explains
+    | Each tool gets a sentence saying what it is *for*. "Secret Friend" explains
     | itself; "a list you build for somebody and then hand over" does not, and a
     | tool nobody understands is a tool nobody opens.
     |
@@ -651,8 +657,8 @@ return [
         'handover_step2' => 'Once they have used it, press Hand over and type the email they signed up with.',
         'handover_step3' => 'Confirm, and the list is theirs: they can share it, and other people can claim from it.',
 
-        'santa_title' => 'Secret Santa',
-        'santa_body' => 'One group, one draw, nobody knows who has who. Everyone can attach their own wishlist so their Santa is not guessing.',
+        'santa_title' => 'Secret Friend',
+        'santa_body' => 'One group, one draw, nobody knows who has who. Everyone can attach their own wishlist so whoever draws them is not guessing.',
         'santa_step1' => 'Press Start a group and give it a name, roughly what everyone should spend, and the date you are exchanging.',
         'santa_step2' => 'Send the invite link to everyone. They join with a name and an email, no account needed, and can name anyone they should not draw.',
         'santa_step3' => 'Once everybody is in, press Do the draw. Each person gets one email naming one person: theirs.',

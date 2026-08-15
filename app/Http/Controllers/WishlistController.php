@@ -36,7 +36,57 @@ class WishlistController extends Controller
             app(DefaultList::class)->for($owner, $current);
         }
 
-        $lists = $owner->scope(Wishlist::query())
+        /*
+         * One page, three views: `?view=mine|shared|group`, defaulting to mine.
+         *
+         * They are **views, not filters**, and the difference decides the query
+         * rather than decorating it. Each answers a different question about
+         * whose list it is — what am I keeping, what has somebody shown me, what
+         * are we choosing together — so they select different rows through
+         * different scopes rather than narrowing one pile.
+         *
+         * This replaces an earlier `?shared=1` that meant `visibility !=
+         * private`, i.e. *"a list I own that I have shared outward"*. That is a
+         * property of my own list, not a separate collection, and it made the
+         * Shared view a second copy of My Lists. Nothing ever linked to it,
+         * which is the only reason replacing it is free.
+         *
+         * An unrecognised value falls back to `mine` rather than showing
+         * everything: the views have different privacy characteristics, and the
+         * safe default is the one containing only rows this person owns.
+         *
+         * See docs/features/list-taxonomy.md.
+         */
+        $view = match ($request->query('view')) {
+            'shared' => 'shared',
+            'group' => 'group',
+            default => 'mine',
+        };
+
+        $query = match ($view) {
+            /*
+             * Somebody else's list, shown to me. `ListAccess::scope()` already
+             * unions owned and collaborated rows and was previously only ever
+             * used to look up ONE list by id — so a list shared with you could
+             * be opened from its URL and found nowhere. Excluding my own rows
+             * is what turns that union into "theirs, not mine".
+             *
+             * Anonymous visitors get nothing here rather than an error:
+             * collaboration is signed-in only by design, because an invitation
+             * is delivered to an address and a cookie has nowhere to receive it.
+             */
+            'shared' => ListAccess::scope(Wishlist::query(), $owner)
+                ->whereNot(fn ($q) => $owner->scope($q)),
+
+            // Chosen at creation, never derived — a list must not change section
+            // because somebody was invited to it.
+            'group' => $owner->scope(Wishlist::query())->where('kind', ListKind::Group->value),
+
+            default => $owner->scope(Wishlist::query())
+                ->whereIn('kind', [ListKind::Mine->value, ListKind::ForSomeone->value]),
+        };
+
+        $lists = $query
             ->with([
                 'recipient',
                 /*
@@ -65,6 +115,16 @@ class WishlistController extends Controller
 
         return Inertia::render('Lists/Index', [
             'lists' => $lists,
+            /*
+             * Which view this is, so the page can say so.
+             *
+             * Sent rather than re-derived from the URL in React: the page has
+             * to name what an empty result means, and "you have no shared
+             * lists" and "you have no lists" are different sentences. A page
+             * that shows one empty state for three questions tells the visitor
+             * nothing about which one they asked.
+             */
+            'view' => $view,
             'recipients' => $owner->scope(Recipient::query())
                 ->orderBy('name')
                 ->get(['id', 'name', 'relationship', 'occasion']),

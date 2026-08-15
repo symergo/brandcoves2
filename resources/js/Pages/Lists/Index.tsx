@@ -15,8 +15,11 @@ interface ListSummary {
     recipient: { id: string; name: string } | null
 }
 
+type ListsView = 'mine' | 'shared' | 'group'
+
 interface Props {
     lists: ListSummary[]
+    view: ListsView
     recipients: { id: string; name: string; relationship: string | null }[]
     isSignedIn: boolean
 }
@@ -100,7 +103,7 @@ function ListCard({ list }: { list: ListSummary }) {
     )
 }
 
-export default function ListsIndex({ lists, recipients, isSignedIn }: Props) {
+export default function ListsIndex({ lists, view, recipients, isSignedIn }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -118,22 +121,50 @@ export default function ListsIndex({ lists, recipients, isSignedIn }: Props) {
     // The recipient decides the kind; there is no separate switch to disagree with it.
     const form = useForm({ title: '', recipient_id: '', new_recipient: '' })
 
-    const mine = lists.filter((l) => l.kind === 'mine')
-    const forOthers = lists.filter((l) => l.kind !== 'mine')
+    /*
+     * Three views, and only one of them splits.
+     *
+     * My Lists divides into "For me" and "For someone else" because those two
+     * carry opposite privacy rules — a wish list exists to be seen, a list
+     * about somebody is research they must never see. Shared and Group are
+     * already one thing each, and splitting them would invent a distinction
+     * the rows do not have.
+     */
+    const groups =
+        view === 'mine'
+            ? [
+                  { key: 'mine', label: t('lists.for_me'), lists: lists.filter((l) => l.kind === 'mine') },
+                  {
+                      key: 'others',
+                      label: t('lists.for_someone_else'),
+                      lists: lists.filter((l) => l.kind !== 'mine'),
+                  },
+              ].filter((g) => g.lists.length > 0)
+            : [{ key: view, label: '', lists }]
 
-    const groups = [
-        { key: 'mine', label: t('lists.for_me'), lists: mine },
-        { key: 'others', label: t('lists.for_someone_else'), lists: forOthers },
-    ].filter((g) => g.lists.length > 0)
+    // Each view names itself and its own empty state. "You have no lists" and
+    // "nobody has shared a list with you" are different facts, and one sentence
+    // for three questions tells the reader nothing about which they asked.
+    const heading = {
+        mine: t('lists.title'),
+        shared: t('nav.shared_lists'),
+        group: t('nav.group_lists'),
+    }[view]
+
+    const subtitle = {
+        mine: t('lists.subtitle'),
+        shared: t('lists.shared_subtitle'),
+        group: t('lists.group_subtitle'),
+    }[view]
 
     return (
         <>
-            <Head title={t('lists.title')} />
+            <Head title={heading} />
 
             <header className="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold">{t('lists.title')}</h1>
-                    <p className="mt-1 text-ink-soft">{t('lists.subtitle')}</p>
+                    <h1 className="text-2xl font-semibold">{heading}</h1>
+                    <p className="mt-1 text-ink-soft">{subtitle}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {/*

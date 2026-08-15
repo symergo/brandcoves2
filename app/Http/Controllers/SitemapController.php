@@ -100,6 +100,19 @@ class SitemapController extends Controller
                 ['loc' => url("/{$resolved->value}/privacy"), 'priority' => '0.3', 'changefreq' => 'yearly'],
                 ['loc' => url("/{$resolved->value}/terms"), 'priority' => '0.3', 'changefreq' => 'yearly'],
                 ['loc' => url("/{$resolved->value}/gift"), 'priority' => '0.8', 'changefreq' => 'weekly'],
+
+                /*
+                 * The two hubs. Both are top-level nav destinations and neither
+                 * was listed — `/gift-cove` had been missing since it shipped.
+                 *
+                 * They matter to a crawler for the reason they matter to a
+                 * visitor: each is the only page that explains what a whole
+                 * section is for, and each is the densest internal-link node on
+                 * its half of the site. Weekly rather than daily — the tools
+                 * they describe change far less often than the editorial does.
+                 */
+                ['loc' => url("/{$resolved->value}/gift-cove"), 'priority' => '0.7', 'changefreq' => 'weekly'],
+                ['loc' => url("/{$resolved->value}/discover-cove"), 'priority' => '0.7', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/surprise"), 'priority' => '0.6', 'changefreq' => 'daily'],
             ];
 

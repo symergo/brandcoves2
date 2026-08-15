@@ -32,15 +32,40 @@ anonymous-first and live in that browser until they do.
 
 ## What the header offers, and in what order
 
-Changed 2026-08-15: every entry is now a **Cove**. The nav is five entries:
+Changed 2026-08-15. **Three verbs, two of which open.** The header says what you came to *do*; the
+surfaces live underneath.
+
+| Top level | Route | en | nl | fr | es |
+|---|---|---|---|---|---|
+| | `/{market}/gift-cove` | Organise | Organiseer | Organiser | Organizar |
+| | `/{market}/search` | Search | Zoek | Rechercher | Buscar |
+| | `/{market}/discover-cove` | Discover | Ontdek | Découvrir | Descubrir |
+
+Behind **Organise**: the Gift Finder, Lists, Secret Friend. Behind **Discover**, keeping the Cove
+names that were briefly the top-level labels:
 
 | Route | en | nl | fr | es |
 |---|---|---|---|---|
-| `/{market}/gift-cove` | Gift Cove | Cadeau Cove | Cove Cadeau | Cove de Regalos |
-| `/{market}/search` | Search Cove | Zoek Cove | Cove Recherche | Cove Búsqueda |
 | `/{market}/daily` | Daily Cove | Cove van de dag | Cove Quotidienne | Cove Diaria |
 | `/{market}/surprise` | Surprise Cove | Verrassingscove | Cove Surprise | Cove Sorpresa |
 | `/{market}/guides` | Idea Cove | Idee Cove | Cove d'Idées | Cove de Ideas |
+
+**Every verb is also a destination.** Each points at a hub that explains its section —
+`/gift-cove` already did, `/discover-cove` was built for this. A menu whose handle goes nowhere
+hides the one page written to explain the tools behind it, which is the page that exists *because*
+they are not self-evident.
+
+**The label is a link and the chevron is a separate button** (`NavMenu.tsx`). One control cannot do
+both without guessing, and the usual guess — navigate on click, open on hover — has no keyboard or
+touch equivalent at all. Escape closes and returns focus to the chevron rather than dropping it to
+the top of the document.
+
+**The phone flattens rather than nesting.** A dropdown inside an already-open panel is a second
+thing to open to reach a link that would have fitted on screen anyway.
+
+**Icons only in the Discover menu.** Its three entries are destinations with distinct characters and
+`CoveIcon` gives each one a mark; the Organise entries are tools whose names already say what they
+are, and nine icons in a dropdown is a contact sheet.
 
 **Editorial leads, tools follow.** The two Cove surfaces are the only things in the header that are
 *ours*; search, gifting and Surprise are ways of querying a catalogue that every competitor also
@@ -55,27 +80,29 @@ exact confusion the naming pass in `localisation.md` set out to remove, so the f
 Daily Cove / Cove van de dag / Cove Quotidienne / Cove Diaria, and All Coves / Alle Coves /
 Toutes les Coves / Todas las Coves.
 
-**Gifting was labelled with the verb, and no longer is.** `nav.give` — Geven, Gifting, Offrir,
-Regalar — read as a thing you do, which is the state someone buying for another person is actually
-in. That argument was right for Brandcoves and is wrong for GiftCoves: on a site whose *name* is the
-verb, every section is gifting, so the verb stops distinguishing anything and the label was carrying
-no information.
+**The labels went noun → Cove → verb in one day, and the round trip is the useful part.** They were
+briefly all Coves — Gift Cove, Search Cove, Daily Cove, Surprise Cove, Idea Cove. One consistent
+system, and it failed on two counts. Five labels sharing a suffix are harder to scan than five
+different words, because the eye must read past a repeated token to reach the one that
+distinguishes. And it named *surfaces* on a site where the sections overlap by design — Search, the
+gifting tools and the Coves all end in products — so the labels described where you would be rather
+than what you were trying to do.
+
+Verbs fix both, and the Cove names survive one level down where they are doing genuine work:
+distinguishing three things that really are three destinations.
 
 **`nav.give` is deleted, not renamed.** It and `nav.cove` pointed at the same page,
 `/{market}/gift-cove` — the header said "Gifting" and the account menu said "Gift Cove". That is the
 same two-names-for-one-surface defect the naming pass in [localisation.md](localisation.md) was
-written to remove, and it had already begun to drift: Spanish read "Cove de Regalos" against
-French's "Cove Cadeau". One key now, used in both places.
+written to remove, and it had already drifted: Spanish read "Cove de Regalos" against French's "Cove
+Cadeau". `nav.cove` remains as the surface's *name* in the account menu, while the header label is
+the verb — the page is called one thing, and the door to it is labelled with what you do inside.
 
-**The Dutch is "Cadeau Cove", not "Geschenk Cove".** The rejected form is still rejected — *geschenk*
-is the formal register and reads like a corporate hamper. *Cadeau* is the word people use, and it is
-what `home.cta_gift` has always said.
-
-**The cost of the system, stated plainly:** five labels ending in the same word are harder to scan
-than five different words, because the eye has to read past a repeated token to reach the one that
-distinguishes. That is a real loss, accepted for a real gain — "Cove" becomes the site's unit of
-meaning rather than a word used for two of five sections. `aria-current` and the underline carry
-more of the load now, which is why they are not optional.
+**Secret Santa is Secret Friend** (nl *Geheime Vriend*, fr *Ami Secret*, es *amigo invisible*,
+unchanged because it was already exactly that). Santa dates the feature to December; the draw works
+for a birthday, a team leaving do or a family in July. Spanish had the better name all along. Only
+the copy moved — the routes, tables and `SecretSanta*` classes keep their names, because
+`/{market}/santa/{group}/join/{token}` is a URL organisers have already sent to people.
 
 **Scan is not in the header.** It is a way of entering a query, not a section — see
 [barcode-scanner.md](barcode-scanner.md).

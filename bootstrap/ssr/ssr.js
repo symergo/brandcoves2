@@ -35474,6 +35474,154 @@ function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
 	] });
 }
 //#endregion
+//#region resources/js/Components/CoveIcon.tsx
+/**
+* The three discovery Coves, drawn.
+*
+* Same grid, same stroke weight and the same `currentColor` rule as
+* `ToolIcon` — deliberately the same set rather than a second icon style that
+* happens to sit next to the first. The reasoning for line art over emoji is
+* written out there and applies unchanged: an emoji is drawn by the reader's
+* operating system, arrives with its own colours into a palette with one
+* accent, and does not exist at all for half of what we need to depict.
+*
+* What each one shows is a decision, not decoration:
+*
+* - **Daily** is a calendar with one day marked, not a clock. The point is that
+*   there is a *new edition* and that past ones keep their date — a clock would
+*   depict "now", which is the half of it that does not bring anyone back.
+* - **Surprise** is a gift box seen corner-on with its lid lifting, not a
+*   question mark. A question mark says "we do not know"; the feature's promise
+*   is that we do know and you do not yet.
+* - **Idea** is an open book rather than a lightbulb. The Coves are long reads
+*   with a shortlist inside them; a lightbulb would promise a tip, which sets
+*   up the wrong expectation about how much there is to read.
+*
+* All three are `aria-hidden`: the Cove's name sits in words immediately beside
+* the icon everywhere this is used, and announcing "book" before "Idea Cove"
+* adds a riddle rather than information.
+*/
+var paths$1 = {
+	daily: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "3",
+			y: "5",
+			width: "18",
+			height: "16",
+			rx: "2"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 10h18M8 3v4M16 3v4" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "7",
+			y: "13",
+			width: "4",
+			height: "4",
+			rx: "1"
+		})
+	] }),
+	surprise: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 11h18v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9Z" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 11v10" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M2.5 7.5h19v3.5h-19z" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 7.5C10.5 4 9 3 7.5 3a2.25 2.25 0 0 0 0 4.5" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 7.5C13.5 4 15 3 16.5 3a2.25 2.25 0 0 1 0 4.5" })
+	] }),
+	idea: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 6.5C10.5 5 8.5 4.5 6 4.5H3v13h3.5c2.2 0 4.1.5 5.5 1.7" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 6.5C13.5 5 15.5 4.5 18 4.5h3v13h-3.5c-2.2 0-4.1.5-5.5 1.7" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 6.5v12.7" })
+	] })
+};
+function CoveIcon({ name, className }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		viewBox: "0 0 24 24",
+		fill: "none",
+		stroke: "currentColor",
+		strokeWidth: 1.5,
+		strokeLinecap: "round",
+		strokeLinejoin: "round",
+		"aria-hidden": "true",
+		focusable: "false",
+		className: className ?? "h-6 w-6",
+		children: paths$1[name]
+	});
+}
+//#endregion
+//#region resources/js/Pages/DiscoverCove.tsx
+var DiscoverCove_exports = /* @__PURE__ */ __exportAll({ default: () => DiscoverCove });
+/**
+* The Discover Cove hub.
+*
+* Three cards, one per Cove, each answering *what is this* in one sentence
+* before it asks for a click — the same rule the Gift Cove cards follow, and
+* for the same reason: "Surprise me" promises nothing a visitor can evaluate
+* in advance, so the page that sends them there has to say what arrives.
+*
+* No counts and no numbers. Everything worth counting belongs to a Cove and is
+* already on that Cove's page; a hub that totals things repeats the mistake
+* homepage.md removed from the front page.
+*/
+function DiscoverCove({ urls }) {
+	const { t } = useTranslations();
+	const coves = [
+		{
+			key: "daily",
+			href: urls.daily,
+			name: t("nav.daily"),
+			what: t("discover_cove.daily_what")
+		},
+		{
+			key: "surprise",
+			href: urls.surprise,
+			name: t("nav.surprise"),
+			what: t("discover_cove.surprise_what")
+		},
+		{
+			key: "idea",
+			href: urls.guides,
+			name: t("nav.coves"),
+			what: t("discover_cove.idea_what")
+		}
+	];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("discover_cove.title") }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mx-auto max-w-4xl px-4 py-10",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-3xl font-semibold tracking-tight text-ink",
+				children: t("discover_cove.title")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 max-w-2xl text-ink-soft",
+				children: t("discover_cove.intro")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-8 grid gap-4 sm:grid-cols-3",
+				children: coves.map((cove) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+					href: cove.href,
+					className: "flex h-full flex-col gap-3 rounded-xl border border-line p-5 hover:border-accent",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-accent",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CoveIcon, {
+								name: cove.key,
+								className: "h-8 w-8"
+							})
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "font-medium text-ink",
+							children: cove.name
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-sm text-ink-soft",
+							children: cove.what
+						})
+					]
+				}) }, cove.key))
+			})
+		]
+	})] });
+}
+//#endregion
 //#region resources/js/Pages/Gift/Wizard.tsx
 var Wizard_exports = /* @__PURE__ */ __exportAll({ default: () => GiftWizard });
 var STEPS = [
@@ -36270,6 +36418,269 @@ function GuideShow({ preview = false, guide, items }) {
 	] });
 }
 //#endregion
+//#region resources/js/Components/CoveIllustration.tsx
+/**
+* The three discovery Coves at card size.
+*
+* Not the `CoveIcon` scaled up. A 24px glyph enlarged to 160px is a thin
+* outline in a lot of empty space — the stroke stays hairline while everything
+* around it grows, which reads as a rendering fault rather than a drawing. These
+* are separate compositions with a foreground shape, a supporting one and a
+* tinted wash, sized for the space they actually occupy.
+*
+* They stay in the same visual language: one stroke weight, `currentColor` for
+* every line, and the single accent used only as a translucent fill. That is
+* what lets a card change its text colour on hover and take the drawing with
+* it, and it is why these survive a palette change without being redrawn.
+*
+* Each shows the *promise* of its Cove rather than its mechanism:
+*
+* - **Daily** is a stack, not a single page. The front card carries today's
+*   grid and the ones behind it are the archive — the reason to come back is
+*   that this happened yesterday too, and a lone calendar page cannot say that.
+* - **Surprise** is a box already open with something leaving it. A closed box
+*   depicts a gift; an open one depicts the moment the feature exists for.
+* - **Idea** is an open book against a shelf. The shelf is what makes it an
+*   archive rather than an article, which is the half of the Coves that earns
+*   traffic over years.
+*
+* Decorative throughout: `aria-hidden`, because the Cove's name and its
+* sentence sit directly beside every one of these.
+*/
+var scenes$1 = {
+	daily: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "26",
+			y: "30",
+			width: "86",
+			height: "66",
+			rx: "6",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "34",
+			y: "24",
+			width: "86",
+			height: "66",
+			rx: "6",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "42",
+			y: "18",
+			width: "86",
+			height: "66",
+			rx: "6",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M42 36h86" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M62 12v12M108 12v12" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "54",
+			y: "48",
+			width: "16",
+			height: "14",
+			rx: "3",
+			className: "fill-accent/25"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M80 52h34M80 62h22" })
+	] }),
+	surprise: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M34 44h94v14H34z",
+			className: "fill-accent/15"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M30 40l100-6 4 12-100 6z",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M40 58h84v40a4 4 0 0 1-4 4H44a4 4 0 0 1-4-4z",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M82 58v44" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M82 34c-6-12-12-16-19-14a8 8 0 0 0 2 15",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M84 34c7-13 13-17 20-15a8 8 0 0 1-2 15",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M104 26l6-8M116 34l10-5M112 16l2-9" })
+	] }),
+	idea: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "28",
+			y: "14",
+			width: "12",
+			height: "34",
+			rx: "2",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "44",
+			y: "18",
+			width: "10",
+			height: "30",
+			rx: "2",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "58",
+			y: "12",
+			width: "12",
+			height: "36",
+			rx: "2",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M24 50h54" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M80 66c-8-8-19-11-33-11H36v42h11c12 0 22 3 29 9",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M82 66c8-8 19-11 33-11h11v42h-11c-12 0-22 3-29 9",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M81 66v40" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M48 70h20M48 80h16M96 70h20M96 80h16" })
+	] })
+};
+function CoveIllustration({ name, className }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		viewBox: "0 0 160 116",
+		fill: "none",
+		stroke: "currentColor",
+		strokeWidth: 2,
+		strokeLinecap: "round",
+		strokeLinejoin: "round",
+		"aria-hidden": "true",
+		focusable: "false",
+		className: className ?? "h-28 w-full",
+		children: scenes$1[name]
+	});
+}
+//#endregion
+//#region resources/js/Components/ListIllustration.tsx
+/**
+* The four Organise surfaces at card size, matched to `CoveIllustration`.
+*
+* Same viewBox, same stroke weight, same `currentColor`-plus-one-accent-wash
+* rule — the two sections of the homepage sit directly above and below each
+* other, and two illustration styles on one page reads as two websites.
+*
+* Each shows the *relationship* rather than the object, because that is what
+* distinguishes these four. All four are, at bottom, a list:
+*
+* - **Mine** — one card with a heart. The only one of the four that is about
+*   wanting rather than coordinating.
+* - **Shared** — two cards, one passing behind the other, with the arrow
+*   pointing *at* the viewer. It is a list arriving from somebody else, and the
+*   direction is the whole distinction from a list you shared outward.
+* - **Group** — three marks converging on one box. Several people, one present;
+*   the convergence is what makes it a group list rather than a shared one.
+* - **Santa** — crossing arrows, matching `ToolIcon`'s santa glyph exactly.
+*   What the feature *is* is the draw, not the season, which is also why the
+*   name no longer mentions December.
+*
+* `aria-hidden` throughout: every one of these sits beside its own name.
+*/
+var scenes = {
+	mine: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "46",
+			y: "16",
+			width: "68",
+			height: "86",
+			rx: "6",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M60 40h40M60 54h30M60 68h34" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M96 84c3-3 6-6.5 6-11a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 4.5 3 8 6 11l3 3z" })
+	] }),
+	shared: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "22",
+			y: "26",
+			width: "56",
+			height: "72",
+			rx: "6",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("rect", {
+			x: "40",
+			y: "14",
+			width: "56",
+			height: "72",
+			rx: "6",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M54 34h28M54 46h20M54 58h24" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M112 74H86M96 62l-12 12 12 12" })
+	] }),
+	group: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M56 64h48v34a4 4 0 0 1-4 4H60a4 4 0 0 1-4-4z",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+			d: "M52 52h56v12H52z",
+			fill: "none"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M80 52v50" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "34",
+			cy: "26",
+			r: "8"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "80",
+			cy: "20",
+			r: "8"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "126",
+			cy: "26",
+			r: "8"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M40 34l14 12M80 30v14M120 34l-14 12" })
+	] }),
+	santa: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "80",
+			cy: "58",
+			r: "40",
+			className: "fill-accent/10"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M44 44h48l-12-12M116 74H68l12 12" }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "34",
+			cy: "44",
+			r: "5"
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("circle", {
+			cx: "126",
+			cy: "74",
+			r: "5"
+		})
+	] })
+};
+function ListIllustration({ name, className }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+		viewBox: "0 0 160 116",
+		fill: "none",
+		stroke: "currentColor",
+		strokeWidth: 2,
+		strokeLinecap: "round",
+		strokeLinejoin: "round",
+		"aria-hidden": "true",
+		focusable: "false",
+		className: className ?? "h-28 w-full",
+		children: scenes[name]
+	});
+}
+//#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
 function Home({ today, gifting, coves }) {
@@ -36309,54 +36720,128 @@ function Home({ today, gifting, coves }) {
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 			className: "mt-14",
-			"aria-labelledby": "gifting-heading",
+			"aria-labelledby": "organise-heading",
 			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					id: "gifting-heading",
-					className: "text-2xl font-semibold tracking-tight",
-					children: t("home.gifting_heading")
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-wrap items-baseline justify-between gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						id: "organise-heading",
+						className: "text-2xl font-semibold tracking-tight",
+						children: t("nav.organise")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: `${base}/gift-cove`,
+						className: "text-sm font-medium text-accent hover:text-accent-dark",
+						children: [t("nav.cove"), " →"]
+					})]
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-2 max-w-2xl text-ink-soft",
-					children: t("home.gifting_intro")
+					className: "mt-1 max-w-2xl text-ink-soft",
+					children: t("home.organise_intro")
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3",
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-							href: gifting.urls.gift,
-							className: "rounded-card border border-line bg-card p-6 transition hover:border-ink",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-								className: "font-medium",
-								children: t("home.gifting_whisperer")
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "mt-2 text-sm text-ink-soft",
-								children: gifting.people > 0 ? t("home.gifting_people_count", { count: n(gifting.people) }) : t("home.gifting_whisperer_hint")
-							})]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						{
+							key: "mine",
 							href: gifting.urls.lists,
-							className: "rounded-card border border-line bg-card p-6 transition hover:border-ink",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-								className: "font-medium",
-								children: t("home.gifting_lists")
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "mt-2 text-sm text-ink-soft",
-								children: gifting.lists > 0 ? t("home.gifting_lists_count", { count: n(gifting.lists) }) : t("home.gifting_lists_hint")
-							})]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+							name: t("nav.lists"),
+							hint: gifting.lists > 0 ? t("home.gifting_lists_count", { count: n(gifting.lists) }) : t("home.gifting_lists_hint")
+						},
+						{
+							key: "shared",
+							href: `${gifting.urls.lists}?view=shared`,
+							name: t("nav.shared_lists"),
+							hint: t("lists.shared_subtitle")
+						},
+						{
+							key: "group",
+							href: `${gifting.urls.lists}?view=group`,
+							name: t("nav.group_lists"),
+							hint: t("home.organise_group_hint")
+						},
+						{
+							key: "santa",
 							href: gifting.urls.santa,
-							className: "rounded-card border border-line bg-card p-6 transition hover:border-ink",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-								className: "font-medium",
-								children: t("home.gifting_santa")
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							name: t("nav.santa"),
+							hint: gifting.santaGroups > 0 ? t("home.gifting_santa_count", { count: n(gifting.santaGroups) }) : t("home.gifting_santa_hint")
+						}
+					].map((tool) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: tool.href,
+						className: "flex h-full flex-col rounded-card border border-line bg-card p-5 text-ink transition hover:border-ink hover:text-accent",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListIllustration, {
+								name: tool.key,
+								className: "h-24 w-full"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "mt-4 font-medium",
+								children: tool.name
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "mt-2 text-sm text-ink-soft",
-								children: gifting.santaGroups > 0 ? t("home.gifting_santa_count", { count: n(gifting.santaGroups) }) : t("home.gifting_santa_hint")
-							})]
-						})
-					]
+								children: tool.hint
+							})
+						]
+					}) }, tool.key))
+				})
+			]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-14",
+			"aria-labelledby": "discover-heading",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex flex-wrap items-baseline justify-between gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						id: "discover-heading",
+						className: "text-2xl font-semibold tracking-tight",
+						children: t("discover_cove.title")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: `${base}/discover-cove`,
+						className: "text-sm font-medium text-accent hover:text-accent-dark",
+						children: [t("nav.discover"), " →"]
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-1 max-w-2xl text-ink-soft",
+					children: t("discover_cove.intro")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+					className: "mt-6 grid gap-4 sm:grid-cols-3",
+					children: [
+						{
+							key: "daily",
+							href: `${base}/daily`,
+							name: t("nav.daily")
+						},
+						{
+							key: "surprise",
+							href: `${base}/surprise`,
+							name: t("nav.surprise")
+						},
+						{
+							key: "idea",
+							href: `${base}/guides`,
+							name: t("nav.coves")
+						}
+					].map((cove) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: cove.href,
+						className: "flex h-full flex-col rounded-card border border-line bg-card p-5 text-ink transition hover:border-ink hover:text-accent",
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CoveIllustration, {
+								name: cove.key,
+								className: "h-28 w-full"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "mt-4 font-medium",
+								children: cove.name
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "mt-2 text-sm text-ink-soft",
+								children: t(`discover_cove.${cove.key}_what`)
+							})
+						]
+					}) }, cove.key))
 				})
 			]
 		}),
@@ -36573,7 +37058,7 @@ function ListCard({ list }) {
 		})]
 	});
 }
-function ListsIndex({ lists, recipients, isSignedIn }) {
+function ListsIndex({ lists, view, recipients, isSignedIn }) {
 	const page = usePage();
 	const { market } = page.props;
 	const { t } = useTranslations();
@@ -36585,27 +37070,39 @@ function ListsIndex({ lists, recipients, isSignedIn }) {
 		recipient_id: "",
 		new_recipient: ""
 	});
-	const mine = lists.filter((l) => l.kind === "mine");
-	const forOthers = lists.filter((l) => l.kind !== "mine");
-	const groups = [{
+	const groups = view === "mine" ? [{
 		key: "mine",
 		label: t("lists.for_me"),
-		lists: mine
+		lists: lists.filter((l) => l.kind === "mine")
 	}, {
 		key: "others",
 		label: t("lists.for_someone_else"),
-		lists: forOthers
-	}].filter((g) => g.lists.length > 0);
+		lists: lists.filter((l) => l.kind !== "mine")
+	}].filter((g) => g.lists.length > 0) : [{
+		key: view,
+		label: "",
+		lists
+	}];
+	const heading = {
+		mine: t("lists.title"),
+		shared: t("nav.shared_lists"),
+		group: t("nav.group_lists")
+	}[view];
+	const subtitle = {
+		mine: t("lists.subtitle"),
+		shared: t("lists.shared_subtitle"),
+		group: t("lists.group_subtitle")
+	}[view];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("lists.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: heading }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "flex flex-wrap items-end justify-between gap-4",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
 				className: "text-2xl font-semibold",
-				children: t("lists.title")
+				children: heading
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-1 text-ink-soft",
-				children: t("lists.subtitle")
+				children: subtitle
 			})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "flex flex-wrap gap-2",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
@@ -59754,6 +60251,106 @@ function FlashMessage() {
 	});
 }
 //#endregion
+//#region resources/js/Components/NavMenu.tsx
+/**
+* A header section that is both a destination and a menu.
+*
+* Organise and Discover each have a landing page that explains what is behind
+* them, and three-to-nine surfaces behind that. Making the section *only* a
+* menu hides the explanation, which is the page that exists because these tools
+* are not self-evident. Making it *only* a link hides the surfaces, and puts the
+* Daily Cove — the one thing that brings somebody back tomorrow — two clicks
+* deep.
+*
+* So the label is a `Link` and the chevron is a separate `button`. Pressing the
+* word goes to the hub; pressing the chevron opens the list. A single control
+* cannot do both without guessing, and the usual guess — link on click, menu on
+* hover — has no keyboard or touch equivalent at all.
+*
+* The button carries its own accessible name (`nav.submenu`, interpolated with
+* the section) rather than inheriting the label, because "Discover, link" and
+* "Discover, button" one after another describes two controls by one word and
+* says nothing about what the second does.
+*/
+function NavMenu({ href, label, items, current, isCurrent, submenuLabel }) {
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const id = (0, import_react.useId)();
+	const wrapper = (0, import_react.useRef)(null);
+	const toggle = (0, import_react.useRef)(null);
+	(0, import_react.useEffect)(() => {
+		if (!open) return;
+		const onKey = (e) => {
+			if (e.key !== "Escape") return;
+			setOpen(false);
+			toggle.current?.focus();
+		};
+		const onPointerDown = (e) => {
+			if (!wrapper.current?.contains(e.target)) setOpen(false);
+		};
+		document.addEventListener("keydown", onKey);
+		document.addEventListener("mousedown", onPointerDown);
+		return () => {
+			document.removeEventListener("keydown", onKey);
+			document.removeEventListener("mousedown", onPointerDown);
+		};
+	}, [open]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		ref: wrapper,
+		className: "relative flex items-center gap-1",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+				href,
+				"aria-current": current ? "page" : void 0,
+				className: current ? "font-medium text-ink underline decoration-accent decoration-2 underline-offset-8" : "hover:text-ink",
+				children: label
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+				ref: toggle,
+				type: "button",
+				"aria-expanded": open,
+				"aria-controls": id,
+				onClick: () => setOpen(!open),
+				className: "rounded p-0.5 text-ink-soft hover:text-ink",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+					viewBox: "0 0 24 24",
+					fill: "none",
+					stroke: "currentColor",
+					strokeWidth: 2,
+					strokeLinecap: "round",
+					strokeLinejoin: "round",
+					"aria-hidden": "true",
+					focusable: "false",
+					className: `h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "m6 9 6 6 6-6" })
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "sr-only",
+					children: submenuLabel
+				})]
+			}),
+			open && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				id,
+				className: "absolute top-full left-0 z-40 mt-2 w-72 rounded-lg border border-line bg-white p-2 shadow-lg",
+				children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+					href: item.href,
+					"aria-current": isCurrent(item.href) ? "page" : void 0,
+					onClick: () => setOpen(false),
+					className: "flex gap-3 rounded-md px-3 py-2 hover:bg-sand",
+					children: [item.icon ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "mt-0.5 shrink-0 text-accent",
+						children: item.icon
+					}) : null, /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "block font-medium text-ink",
+						children: item.label
+					}), item.hint ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "block text-xs text-ink-soft",
+						children: item.hint
+					}) : null] })]
+				}) }, item.href))
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Layouts/SiteLayout.tsx
 function SiteLayout({ children }) {
 	const page = usePage();
@@ -59763,27 +60360,68 @@ function SiteLayout({ children }) {
 	const [menuOpen, setMenuOpen] = (0, import_react.useState)(false);
 	const path = (page.url ?? "").split("?")[0];
 	const isCurrent = (href) => path === href || path.startsWith(`${href}/`);
-	const nav = [
-		{
-			href: `${base}/daily`,
-			label: t("nav.daily")
-		},
-		{
-			href: `${base}/guides`,
-			label: t("nav.coves")
-		},
-		{
-			href: `${base}/search`,
-			label: t("nav.search")
-		},
-		{
-			href: `${base}/gift-cove`,
-			label: t("nav.give")
-		},
-		{
-			href: `${base}/surprise`,
-			label: t("nav.surprise")
-		}
+	const organise = {
+		href: `${base}/gift-cove`,
+		label: t("nav.organise"),
+		items: [
+			{
+				href: `${base}/lists`,
+				label: t("nav.lists")
+			},
+			{
+				href: `${base}/lists?view=shared`,
+				label: t("nav.shared_lists")
+			},
+			{
+				href: `${base}/lists?view=group`,
+				label: t("nav.group_lists")
+			},
+			{
+				href: `${base}/santa`,
+				label: t("nav.santa")
+			}
+		]
+	};
+	const discover = {
+		href: `${base}/discover-cove`,
+		label: t("nav.discover"),
+		items: [
+			{
+				href: `${base}/daily`,
+				label: t("nav.daily"),
+				icon: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CoveIcon, {
+					name: "daily",
+					className: "h-5 w-5"
+				})
+			},
+			{
+				href: `${base}/surprise`,
+				label: t("nav.surprise"),
+				icon: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CoveIcon, {
+					name: "surprise",
+					className: "h-5 w-5"
+				})
+			},
+			{
+				href: `${base}/guides`,
+				label: t("nav.coves"),
+				icon: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CoveIcon, {
+					name: "idea",
+					className: "h-5 w-5"
+				})
+			}
+		]
+	};
+	const nav = [{
+		href: `${base}/search`,
+		label: t("nav.search")
+	}];
+	const mobileNav = [
+		organise,
+		...organise.items,
+		...nav,
+		discover,
+		...discover.items
 	];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "flex min-h-screen flex-col",
@@ -59810,15 +60448,33 @@ function SiteLayout({ children }) {
 								className: "h-7 w-7 rounded-md"
 							}), "GiftCoves"]
 						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
-							className: "hidden gap-5 text-sm text-ink-soft sm:flex",
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
+							className: "hidden items-center gap-5 text-sm text-ink-soft sm:flex",
 							"aria-label": t("nav.main"),
-							children: nav.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-								href: item.href,
-								"aria-current": isCurrent(item.href) ? "page" : void 0,
-								className: isCurrent(item.href) ? "font-medium text-ink underline decoration-accent decoration-2 underline-offset-8" : "hover:text-ink",
-								children: item.label
-							}, item.href))
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(NavMenu, {
+									href: organise.href,
+									label: organise.label,
+									items: organise.items,
+									current: isCurrent(organise.href),
+									isCurrent,
+									submenuLabel: t("nav.submenu", { section: organise.label })
+								}),
+								nav.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+									href: item.href,
+									"aria-current": isCurrent(item.href) ? "page" : void 0,
+									className: isCurrent(item.href) ? "font-medium text-ink underline decoration-accent decoration-2 underline-offset-8" : "hover:text-ink",
+									children: item.label
+								}, item.href)),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(NavMenu, {
+									href: discover.href,
+									label: discover.label,
+									items: discover.items,
+									current: isCurrent(discover.href),
+									isCurrent,
+									submenuLabel: t("nav.submenu", { section: discover.label })
+								})
+							]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 							type: "button",
@@ -59883,7 +60539,7 @@ function SiteLayout({ children }) {
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
 							className: "flex flex-col gap-3 text-sm",
 							"aria-label": t("nav.main"),
-							children: [nav.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							children: [mobileNav.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 								href: item.href,
 								className: "hover:text-ink",
 								onClick: () => setMenuOpen(false),
@@ -60021,6 +60677,7 @@ server_default((page) => createInertiaApp({
 			"./Pages/Brands.tsx": Brands_exports,
 			"./Pages/Daily/Edition.tsx": Edition_exports,
 			"./Pages/Discover.tsx": Discover_exports,
+			"./Pages/DiscoverCove.tsx": DiscoverCove_exports,
 			"./Pages/Gift/Wizard.tsx": Wizard_exports,
 			"./Pages/GiftCove.tsx": GiftCove_exports,
 			"./Pages/Guides/Index.tsx": Index_exports$2,

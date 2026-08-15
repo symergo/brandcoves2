@@ -28,11 +28,17 @@ made, not just what the code does — the reasoning is the part that cannot be r
 
 ```bash
 docker compose up -d          # postgres :5432, redis :6379, mailpit :8025
-composer dev                  # serve + queue + logs + vite, all at once
+composer dev                  # serve + queue + vite + ssr, all at once
 php artisan migrate --force
 composer lint                 # Pint
 composer test
 ```
+
+> **`composer dev` does not run Pail, and must not.** Pail needs `pcntl`, which does not exist on
+> Windows — and `concurrently` runs with `--kill-others`, so Pail's immediate crash took `artisan
+> serve` down with it and left `localhost:8000` refusing connections seconds after start-up. The
+> failure reads as "the dev server never came up", because by the time you look, it hasn't. For logs,
+> read `storage/logs/laravel.log` directly (`Get-Content storage\logs\laravel.log -Wait -Tail 50`).
 
 Operational commands, all idempotent and safe to re-run:
 

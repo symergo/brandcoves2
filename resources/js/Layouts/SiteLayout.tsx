@@ -57,9 +57,22 @@ export default function SiteLayout({ children }: PropsWithChildren) {
     const organise = {
         href: `${base}/gift-cove`,
         label: t('nav.organise'),
+        /*
+         * The three lists views, then the draw.
+         *
+         * They are three questions rather than three filters — what am I
+         * keeping, what has somebody shown me, what are we choosing together —
+         * which is why each carries its own `?view=` rather than being one
+         * entry you narrow after arriving. See docs/features/list-taxonomy.md.
+         *
+         * The Gift Finder is deliberately absent: it suggests things rather
+         * than organising them, so it belongs to the homepage CTA and the Gift
+         * Cove hub, not under a verb meaning "organise".
+         */
         items: [
-            { href: `${base}/gift`, label: t('nav.gift') },
             { href: `${base}/lists`, label: t('nav.lists') },
+            { href: `${base}/lists?view=shared`, label: t('nav.shared_lists') },
+            { href: `${base}/lists?view=group`, label: t('nav.group_lists') },
             { href: `${base}/santa`, label: t('nav.santa') },
         ],
     }
