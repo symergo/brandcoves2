@@ -185,14 +185,27 @@ class SuggestionEngine
         if ($queries !== []) {
             $tsquery = implode(' OR ', array_map(fn (string $q) => trim($q), $queries));
 
+            /*
+             * The market is bound, not read from products.market.
+             *
+             * Same reason as in SearchService, where this cost a 90x difference
+             * on the same rows: a tsquery built from the scanned row's own column
+             * is not constant for the scan, so it cannot be an index condition
+             * and Postgres falls back to parsing a fresh tsquery per row. The
+             * pool is already `forMarket($brief->market)` and offers only ever
+             * join a group in their own market (invariant 2), so binding it
+             * selects exactly the same rows — and it doubles as the explicit
+             * filter that makes that reasoning checkable.
+             */
             $groups->whereExists(fn ($sub) => $sub
                 ->select(DB::raw(1))
                 ->from('products')
                 ->whereColumn('products.group_id', 'product_groups.id')
+                ->where('products.market', $brief->market->value)
                 ->where('products.status', 'active')
                 ->whereRaw(
-                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
-                    [$tsquery]
+                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                    [$brief->market->value, $tsquery]
                 ));
         }
 
