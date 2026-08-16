@@ -16,6 +16,7 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -86,6 +87,61 @@ class SearchTest extends TestCase
         $this->search(['q' => 'koptelefon'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('results.total', 1));
+    }
+
+    /**
+     * The threshold reaches Postgres, and search behaves as if it had.
+     *
+     * `<%` compares against `pg_trgm.word_similarity_threshold` and nothing the
+     * query can say. That threshold used to be spelled as an extra
+     * `word_similarity(?, title) >= 0.45` clause, which no index could answer and
+     * which cost a sequential scan of product_groups five times per search page —
+     * measured at 13-21s on staging. Removing it moved the number onto the
+     * session, so if AppServiceProvider ever stops setting it, search silently
+     * narrows to Postgres' 0.6 default and nothing else fails.
+     *
+     * "kopltelefon" is the guard: it scores 0.500 against "Sony WH-1000XM5
+     * Draadloze Koptelefoon", so it matches at 0.45 and does not at 0.6. It is
+     * also not a word any dictionary stems, so full text cannot quietly cover for
+     * the trigram branch and make this pass for the wrong reason. The existing
+     * typo above scores 0.818 and would pass either way.
+     */
+    #[Test]
+    public function a_typo_below_the_postgres_default_threshold_still_finds_the_product(): void
+    {
+        $this->assertSame(
+            (float) config('giftcoves.search.trigram_threshold'),
+            (float) DB::scalar('SHOW pg_trgm.word_similarity_threshold'),
+            'The trigram threshold is not reaching the Postgres session.',
+        );
+
+        $this->search(['q' => 'kopltelefon'])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+    }
+
+    /**
+     * Facets are cached, and the key is narrow enough to be honest.
+     *
+     * They are computed from market, term and in-stock only — ignoring the active
+     * filters, so the sidebar cannot erase its own options — which is exactly
+     * what makes every filter, sort and page variant of one term share a result
+     * worth caching. The risk that buys is a key too coarse to tell two searches
+     * apart, which would serve one term's sidebar under another's.
+     */
+    #[Test]
+    public function two_terms_do_not_share_a_facet_cache_entry(): void
+    {
+        $headphones = $this->search(['q' => 'koptelefoon'])
+            ->assertOk()
+            ->viewData('page')['props']['facets'];
+
+        $earbuds = $this->search(['q' => 'oordopjes'])
+            ->assertOk()
+            ->viewData('page')['props']['facets'];
+
+        $this->assertSame(['Sony'], array_column($headphones['brands'], 'value'));
+        $this->assertSame(['Nedis'], array_column($earbuds['brands'], 'value'));
     }
 
     #[Test]

@@ -318,6 +318,23 @@ class PageNarrative
             // similarity() compares whole strings and scores a realistic
             // neighbour under the 0.3 default, so `%` finds nothing.
             ->whereRaw('? <% query', [$needle])
+            /*
+             * Held at 0.6 explicitly. **Added 2026-08-16.**
+             *
+             * `<%` compares against pg_trgm.word_similarity_threshold, which
+             * search now sets to 0.45 on every connection so its own `<%` can
+             * use the trigram index. These chips were written against Postgres'
+             * 0.6 default and would have widened as a side effect.
+             *
+             * Wrong here for the same reason as in SpectrumRetriever, and more
+             * publicly: these are rendered as related searches on an indexable
+             * page. A loose neighbour is not a forgiving typo, it is a link
+             * promising something the target page does not answer.
+             */
+            ->whereRaw('word_similarity(?, query) >= ?', [
+                $needle,
+                (float) config('giftcoves.search.trigram_threshold_strict'),
+            ])
             ->where('result_count', '>', 0)
             ->groupBy('query')
             ->orderByRaw('sum(search_count) desc')

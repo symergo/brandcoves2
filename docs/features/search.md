@@ -93,6 +93,102 @@ default so single misspelled words still match, but not so low that unrelated pr
 Starting point only — it must be re-tuned against a real catalogue in Phase 2, because with two rows
 in the table false-positive testing is meaningless.
 
+**The threshold is a session setting, not a WHERE clause.** `AppServiceProvider` issues `SET
+pg_trgm.word_similarity_threshold` on every Postgres connection, because `<%` compares against that
+GUC and nothing the query can say. See the section below for why that matters more than it looks.
+
+## Why the text predicate is shaped the way it is
+
+**Rewritten 2026-08-16.** Search on staging measured **13–21s per query**; it is now well under a
+second. Nothing about *which* results come back changed — the fix was entirely in how the same
+question is asked. The four causes compounded, and no one of them was sufficient on its own.
+
+Measured on staging before the change, and the shape of the evidence is worth keeping:
+
+| Request | Before |
+|---|---|
+| `/be-nl/search?q=lego` | 13.4s |
+| `/be-nl/search?q=zzzqqxnothing` (no results at all) | 10.8s |
+| `/be-nl/search?q=1234567890128` (a GTIN — skips the text predicate) | **0.46s** |
+| `/be-nl/search` (no term) | 0.82s |
+
+The GTIN row is the one that localises the problem: it still calls the live connectors and still
+renders the whole Inertia page, and it is fast. A zero-result query costing 10.8s says the same thing
+from the other side — the time was spent *finding nothing*.
+
+### 1. The tsquery config came from the row
+
+`websearch_to_tsquery(bc_text_config(products.market), ?)` derives the dictionary from the scanned
+row's own column. An index scan computes its search key **once** and then descends the index, so the
+query-side operand has to be constant for the scan. This one is not: you would need the row in hand to
+build the key you were going to use to find the row. Postgres therefore demotes it from `Index Cond`
+to `Filter` and parses a fresh tsquery **per row**.
+
+```
+websearch_to_tsquery(bc_text_config(p.market), 'lego')   →  Filter, 23086 rows removed    820ms
+websearch_to_tsquery(bc_text_config($1), 'lego')         →  Bitmap Index Scan               9ms
+```
+
+`bc_text_config` being `IMMUTABLE` does not help — immutability governs constant-folding, not whether
+an expression references the scanned row. Binding the market as a parameter is enough, and it keeps
+the language map in SQL: a PHP copy of it is a second source of truth that can disagree with the
+generated column.
+
+### 2. The threshold was written as a function call
+
+`word_similarity(?, title) >= 0.45` is an ordinary function call in a comparison. No index answers it,
+so it forces a sequential scan on its own. It existed only because `<%` reads its cutoff from a
+session GUC defaulting to 0.6 while we want 0.45 — so the threshold moved to the session and the
+clause was deleted. `<%` alone is now both indexable and correct.
+
+### 3. One unindexable branch in an `OR` poisons all of them
+
+`A OR B OR C` needs an index path for **every** branch before Postgres can union the bitmaps. One
+branch without one means every row gets visited regardless — at which point the indexes the other
+branches could have used buy nothing. The isolated trigram clause was a 30ms Bitmap Index Scan; the
+identical clause inside the `OR` was part of a `Seq Scan … Filter`. The index was not disabled by the
+`OR`, it was made pointless by its neighbours.
+
+Fixing 1 and 2 is **not sufficient**, and this is the trap: a correlated `EXISTS` can never be a
+bitmap branch, so the `OR` would still have forced the scan. The predicate is therefore a `UNION` of
+two *uncorrelated* id selects — one per index — which is what lets each side use its own and lets the
+result be hashed once instead of probed per row.
+
+`applyTextMatch()` keeps its original signature so `facets()` can still apply it to a different base
+query; the branches live in a subquery precisely so this stays a predicate rather than becoming a
+pipeline every caller has to thread.
+
+### 4. It all ran five times per page
+
+`->paginate()` is two queries (a `count(*)` and the page), and `facets()` rebuilt the same predicate
+three more times — brands, merchants, price. 13.4s ÷ 5 ≈ 2.7s each, and `view=store` adds a sixth via
+`storeLanes()`, which measured +2.9s. That arithmetic closing is what confirmed the model.
+
+Facets are now cached on `SearchQuery::facetCacheKey()` — market, term and in-stock only, because
+those are the only inputs that reach them. They deliberately ignore the active filters so the sidebar
+cannot erase its own options, which is exactly what makes every brand, price, sort and page variant of
+one term share an entry. The cost is a sidebar that can trail the grid by `facet_cache_ttl`, since a
+search folds live offers in and moves `merchant_count`.
+
+### What this cost elsewhere
+
+Lowering the session threshold to 0.45 widens **every** `<%` in the codebase, not just search's.
+`SpectrumRetriever::anchor()` and `PageNarrative::related()` were written against Postgres' 0.6 and
+now re-check against `trigram_threshold_strict` explicitly. Both answer "what is near this?", where a
+loose match is a wrong neighbour rather than a forgiving typo — and the narrative's chips are rendered
+as related searches on an indexable page, so a bad one is a link promising something the target does
+not answer. The `<%` still drives the index; the re-check only narrows what survives.
+
+The `word_similarity()` calls in `ORDER BY` — `orderByRelevance()`, `GuideBuilder`, `SlotsRetriever`,
+`KeywordRetriever` — are unaffected. The GUC sets the operator's cutoff, never the function's return
+value, so all ranking is untouched.
+
+`SearchTest::a_typo_below_the_postgres_default_threshold_still_finds_the_product` is the regression
+guard. It asserts the GUC arrived *and* searches `kopltelefon`, which scores 0.500 against the Sony
+title: it matches at 0.45, misses at 0.6, and is not a word any dictionary stems, so full text cannot
+quietly cover for the trigram branch and pass it for the wrong reason. The older typo test scores
+0.818 and would pass either way.
+
 ## Offer comparison (Phase 2)
 
 The plan, not yet built:

@@ -144,6 +144,24 @@ class SpectrumRetriever implements Retriever
             ->presentable()
             ->whereNotNull('category')
             ->whereRaw('? <% product_groups.title', [$request->query])
+            /*
+             * Held at 0.6 explicitly. **Added 2026-08-16.**
+             *
+             * `<%` compares against pg_trgm.word_similarity_threshold, which
+             * search now sets to 0.45 on every connection so its own `<%` can
+             * use the trigram index. This lookup was written against Postgres'
+             * 0.6 default and would have widened as a side effect of that.
+             *
+             * Which would be wrong here: this picks the category a query lands
+             * in most often, to anchor a spectrum of neighbours. A looser match
+             * does not forgive a typo, it anchors the row to the wrong category
+             * and every product downstream of it is off. The operator above
+             * still drives the index; this only narrows what survives.
+             */
+            ->whereRaw('word_similarity(?, product_groups.title) >= ?', [
+                $request->query,
+                (float) config('giftcoves.search.trigram_threshold_strict'),
+            ])
             ->groupBy('category')
             ->orderByRaw('count(*) DESC')
             ->limit(1)

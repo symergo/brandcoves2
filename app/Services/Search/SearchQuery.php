@@ -217,6 +217,26 @@ final readonly class SearchQuery
         return 'bc:search:live:'.$this->market->value.':'.sha1(mb_strtolower($this->liveTerm()));
     }
 
+    /**
+     * Stable key for this search's facet counts.
+     *
+     * Only market, term and in-stock are in it, because only those three reach
+     * the facet queries — the counts deliberately ignore the active filters so
+     * that selecting a brand does not erase every other brand from the sidebar.
+     *
+     * That is what makes caching them worth doing: every brand, price, merchant,
+     * sort and page variant of one term shares this key, so refining a search
+     * recomputes nothing. Getting the key wrong in the other direction would be
+     * worse than not caching, so it is derived here next to the fields rather
+     * than assembled at the call site.
+     */
+    public function facetCacheKey(): string
+    {
+        return 'bc:search:facets:'.$this->market->value
+            .':'.($this->inStockOnly ? '1' : '0')
+            .':'.sha1(mb_strtolower($this->term));
+    }
+
     /** @return array<string, mixed> Query string for building filter links. */
     public function toArray(): array
     {

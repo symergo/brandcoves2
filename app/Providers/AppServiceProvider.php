@@ -26,8 +26,12 @@ use App\Services\Seo\CopyBank;
 use App\Services\Seo\PageMeta;
 use App\Services\Settings\AiSettingsStore;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Events\ConnectionEstablished;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -150,7 +154,58 @@ class AppServiceProvider extends ServiceProvider
          */
         app(AiSettingsStore::class)->apply();
 
+        $this->trigramThreshold();
         $this->editorialApiLimits();
+    }
+
+    /**
+     * Push the trigram threshold to Postgres as each connection is made.
+     *
+     * `<%` is the only form of the word_similarity test the trigram index can
+     * answer, and it compares against `pg_trgm.word_similarity_threshold` rather
+     * than against anything the query can say. Writing the threshold into the
+     * WHERE clause instead — `word_similarity(?, title) >= 0.45` — is a plain
+     * function call that no index can serve, and it cost search a sequential scan
+     * of product_groups per query, five times per page.
+     *
+     * On the connection rather than in a migration on purpose. `ALTER DATABASE`
+     * would move the number out of the repository and into database state, where
+     * it drifts: a fresh clone that had not run the migration would quietly
+     * search at Postgres' 0.6 default and return different results from staging,
+     * with nothing to indicate why. This way config is the only place it is set,
+     * and no environment can be missing it.
+     *
+     * Lazily, on ConnectionEstablished, so a request that never touches the
+     * database does not open one to say this.
+     *
+     * The loop afterwards is not redundant. A connection opened *before* this
+     * provider booted never sees the event, and the test suite is exactly that
+     * case: it migrates first and keeps that connection for the transaction
+     * RefreshDatabase wraps every test in. Without the loop the suite runs at
+     * 0.6 while production runs at 0.45 — the two disagreeing silently, which is
+     * the failure this whole arrangement exists to prevent. In a web request no
+     * connection is resolved yet, so it does nothing and costs nothing.
+     */
+    private function trigramThreshold(): void
+    {
+        // SET takes no bind parameters, so the value is interpolated. It is cast
+        // to float and formatted first, which is what makes that safe — config is
+        // not user input, but this is the one place a string from it would reach
+        // Postgres unquoted.
+        $threshold = (float) config('giftcoves.search.trigram_threshold');
+        $statement = sprintf('SET pg_trgm.word_similarity_threshold = %F', $threshold);
+
+        $apply = function (Connection $connection) use ($statement): void {
+            if ($connection->getDriverName() === 'pgsql') {
+                $connection->statement($statement);
+            }
+        };
+
+        Event::listen(fn (ConnectionEstablished $event) => $apply($event->connection));
+
+        foreach (DB::getConnections() as $connection) {
+            $apply($connection);
+        }
     }
 
     /**

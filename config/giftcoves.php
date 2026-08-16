@@ -63,12 +63,45 @@ return [
         // 0.45 is a starting point: below Postgres' 0.6 default so single
         // misspelled words still match, but not so low that unrelated products
         // leak in. Must be re-tuned against a real catalogue in Phase 2.
+        //
+        // THIS VALUE IS APPLIED AS A SESSION SETTING, not as a WHERE clause.
+        // `pg_trgm.word_similarity_threshold` is what the `<%` operator compares
+        // against, and only the operator can use the trigram index — spelling the
+        // same threshold as `word_similarity(?, title) >= 0.45` is an ordinary
+        // function call, which no index can answer and which therefore forced a
+        // sequential scan of product_groups on every search. AppServiceProvider
+        // pushes this to Postgres on connect, so config stays the one place it is
+        // set and a fresh clone cannot silently run on Postgres' 0.6 default.
         'trigram_threshold' => 0.45,
+
+        // What `<%` meant before the threshold above became global: Postgres'
+        // own default.
+        //
+        // Discover's anchor lookup and the narrative's related-search chips were
+        // written against 0.6 and are not search — they answer "what is near
+        // this?", where a loose match is a wrong neighbour rather than a
+        // forgiving typo. Lowering the session threshold would have widened them
+        // as a side effect, so both re-check against this explicitly. The `<%`
+        // still drives the index; this only narrows what survives.
+        'trigram_threshold_strict' => 0.6,
 
         // Live connector results are cached this long. Long enough to absorb a
         // burst of identical searches, short enough that a price on the results
         // page is not embarrassingly stale.
         'live_cache_ttl' => 900,
+
+        // Facet counts are cached this long.
+        //
+        // Facets are computed from market, term and in-stock only — deliberately
+        // ignoring the active filters, so a filter UI does not erase its own
+        // options. That makes them identical across every brand, price, sort and
+        // page variant of one term, and re-running three aggregates per click was
+        // the largest remaining cost on a search page.
+        //
+        // The cost is a sidebar that can trail the grid by this long: a search
+        // folds live offers in and moves merchant_count, so a count may be one
+        // behind. Five minutes keeps that invisible in practice.
+        'facet_cache_ttl' => 300,
     ],
 
     /*

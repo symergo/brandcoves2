@@ -124,6 +124,46 @@ class SearchService
      * finds nothing for a misspelling, and trigram is noisy for a well-spelled
      * multi-word query.
      *
+     * ## Why this is a UNION of ids and not three ORed clauses
+     *
+     * **Rewritten 2026-08-16, after search on staging was measured at 13-21s.**
+     * It used to read as `EXISTS(full text) OR title <% term OR
+     * word_similarity(term, title) >= 0.45`, which is the same question and
+     * could not be answered with an index.
+     *
+     * Three things had to be true at once, and each defeated the next:
+     *
+     * 1. The full-text side asked `websearch_to_tsquery(bc_text_config(
+     *    products.market), ?)`. The config came from the scanned row's own
+     *    column, so it was not constant across the scan and could not be an
+     *    index condition — Postgres has to hold the row before it can build the
+     *    tsquery it would have used to find the row. Measured on the same rows,
+     *    row-derived 820ms against 9ms for a bound one. Passing the market as a
+     *    parameter fixes it, and `bc_text_config` stays in SQL rather than being
+     *    mirrored into PHP, because a second copy of the language map is a thing
+     *    that can disagree with the generated column.
+     * 2. `word_similarity(...) >= ?` is a function call. No index answers it,
+     *    ever. It existed only because `<%` compares against a session setting
+     *    whose default is 0.6 and we want 0.45 — so the threshold moved to the
+     *    session, where the operator can use the index. See AppServiceProvider.
+     * 3. An OR is only indexable when *every* branch is. One unindexable branch
+     *    means every row must be visited anyway, at which point the indexes the
+     *    other branches could have used are worthless. So the whole predicate
+     *    collapsed to a sequential scan of product_groups with the EXISTS
+     *    re-executed per surviving row, at an estimated cost of 526157 against
+     *    3208 for the indexed form.
+     *
+     * Fixing 1 and 2 is not enough on its own: a correlated EXISTS cannot be a
+     * bitmap branch, so the OR would still have forced the scan. Collecting ids
+     * from two independent, uncorrelated SELECTs is what lets each side use its
+     * own index — `products_search_vector_idx` and
+     * `product_groups_title_trgm_idx` — and the union is hashed once instead of
+     * probed per row.
+     *
+     * The signature is unchanged so `facets()` can still apply this to a
+     * different base query; the branches are a subquery precisely so this stays
+     * a predicate rather than becoming a pipeline every caller has to thread.
+     *
      * @param  Builder<ProductGroup>  $groups
      */
     private function applyTextMatch(Builder $groups, SearchQuery $query): void
@@ -138,24 +178,40 @@ class SearchService
             return;
         }
 
-        $threshold = (float) config('giftcoves.search.trigram_threshold');
+        $market = $query->market->value;
 
-        $groups->where(function (Builder $q) use ($term, $threshold): void {
-            // websearch_to_tsquery handles quoted phrases and OR from user
-            // input without throwing on syntax a person would reasonably type —
-            // plainto_ and to_tsquery both blow up on a stray colon or bracket.
-            $q->whereExists(fn ($sub) => $sub
-                ->select(DB::raw(1))
-                ->from('products')
-                ->whereColumn('products.group_id', 'product_groups.id')
-                ->where('products.status', 'active')
-                ->whereRaw('products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)', [$term]))
-                // `<%` is word_similarity, NOT `%`. `%` compares whole strings,
-                // so a typo against a long product title scores below the 0.3
-                // default and finds nothing at all. See docs/features/search.md.
-                ->orWhereRaw('? <% product_groups.title', [$term])
-                ->orWhereRaw('word_similarity(?, product_groups.title) >= ?', [$term, $threshold]);
-        });
+        // websearch_to_tsquery handles quoted phrases and OR from user input
+        // without throwing on syntax a person would reasonably type — plainto_
+        // and to_tsquery both blow up on a stray colon or bracket.
+        //
+        // The market is bound rather than read from products.market so the
+        // tsquery is constant for the scan. It is also an explicit filter, which
+        // is what makes the group correlation safe to drop: offers only ever
+        // join a group in their own market (invariant 2), so this selects the
+        // same rows the correlated form did.
+        $byText = DB::table('products')
+            ->select('group_id')
+            ->where('market', $market)
+            ->where('status', 'active')
+            ->whereNotNull('group_id')
+            ->whereRaw(
+                'search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                [$market, $term],
+            );
+
+        // `<%` is word_similarity, NOT `%`. `%` compares whole strings, so a
+        // typo against a long product title scores below the 0.3 default and
+        // finds nothing at all. See docs/features/search.md.
+        //
+        // Market-filtered even though the outer query filters it too: measured,
+        // narrowing here is faster than letting the trigram index return every
+        // market's matches for the semi-join to discard (115ms against 159ms).
+        $byTitle = DB::table('product_groups')
+            ->select('id')
+            ->where('market', $market)
+            ->whereRaw('? <% title', [$term]);
+
+        $groups->whereIn('product_groups.id', $byText->union($byTitle));
     }
 
     /** @param Builder<ProductGroup> $groups */
@@ -436,9 +492,28 @@ class SearchService
      * selecting a brand does not make every other brand vanish from the list —
      * a filter UI that erases its own options is unusable.
      *
+     * Cached, because that independence from the filters is exactly what makes
+     * the three aggregates below repeat work: every filter, sort and page
+     * variant of one term produces the same sidebar. See `facetCacheKey()` for
+     * the key and `facet_cache_ttl` for what the staleness costs.
+     *
      * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, count: int}>, price: array{min: int|null, max: int|null}}
      */
     private function facets(SearchQuery $query): array
+    {
+        return Cache::remember(
+            $query->facetCacheKey(),
+            (int) config('giftcoves.search.facet_cache_ttl'),
+            fn (): array => $this->countFacets($query),
+        );
+    }
+
+    /**
+     * The three aggregates behind `facets()`, uncached.
+     *
+     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, count: int}>, price: array{min: int|null, max: int|null}}
+     */
+    private function countFacets(SearchQuery $query): array
     {
         $base = ProductGroup::query()
             ->forMarket($query->market)
