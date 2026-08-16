@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function Login({ googleEnabled }: Props) {
-    const { market, flash } = usePage<SharedProps>().props
+    const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
 
@@ -28,19 +28,21 @@ export default function Login({ googleEnabled }: Props) {
                 <p className="mt-2 text-ink-soft">{t('auth.intro')}</p>
 
                 {/*
-                  Success is announced politely rather than replacing the form:
-                  the most common next action is "it did not arrive, send
-                  another", and hiding the form makes that harder.
-                */}
-                {flash.success && (
-                    <p
-                        className="mt-6 rounded-card border border-sage/30 bg-sage/10 p-4 text-sm"
-                        role="status"
-                    >
-                        {flash.success}
-                    </p>
-                )}
+                  "Check your inbox…" is rendered by `FlashMessage` in the
+                  layout, not here.
 
+                  This page had its own copy of `flash.success`, written before
+                  that component existed — so once the layout gained one, sending
+                  a magic link printed the same sentence twice, one above the
+                  other. The layout's version is the one that survives: a
+                  controller reports an outcome by redirecting back, and the page
+                  it lands on should not have to know that happened.
+
+                  The behaviour the old comment here was protecting still holds —
+                  the banner is announced politely and does not replace the form,
+                  because the commonest next action is "it did not arrive, send
+                  another".
+                */}
                 <form onSubmit={submit} className="mt-6 space-y-3">
                     {/*
                       Optional, and only used when the account is created.

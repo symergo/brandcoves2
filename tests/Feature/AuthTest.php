@@ -326,4 +326,31 @@ class AuthTest extends TestCase
         $this->actingAs($user)->post('/be-nl/logout')->assertRedirect();
         $this->assertGuest();
     }
+
+    #[Test]
+    public function the_link_sent_message_is_rendered_once(): void
+    {
+        /*
+         * "Check your inbox…" appeared twice, one line above the other.
+         *
+         * `SiteLayout` renders `<FlashMessage />` above every page, and
+         * `Login.tsx` had its own copy of `flash.success` from before that
+         * component existed — so sending a magic link printed the same sentence
+         * from both.
+         *
+         * Asserted against the source rather than the rendered DOM: the banner
+         * is drawn client-side from a shared prop, so there is nothing in the
+         * HTML response to count. What matters is the rule — the layout owns
+         * flash, and a page does not render it a second time.
+         */
+        $login = file_get_contents(resource_path('js/Pages/Auth/Login.tsx'));
+
+        $this->assertStringNotContainsString('{flash.success}', $login);
+
+        // And the server still says it, so removing the duplicate did not
+        // remove the message.
+        $this->post('/be-nl/login', ['email' => 'someone@example.test'])
+            ->assertRedirect()
+            ->assertSessionHas('success', __('site.auth.link_sent'));
+    }
 }
