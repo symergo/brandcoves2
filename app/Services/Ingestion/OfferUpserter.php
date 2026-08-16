@@ -83,6 +83,8 @@ class OfferUpserter
             return ['written' => 0, 'skipped' => $skipped];
         }
 
+        $rows = $this->deduplicate($rows);
+
         DB::transaction(function () use ($rows, $now): void {
             DB::table('products')->upsert(
                 $rows,
@@ -105,6 +107,45 @@ class OfferUpserter
         });
 
         return ['written' => count($rows), 'skipped' => $skipped];
+    }
+
+    /**
+     * One row per `(source, external_id, market)` before the upsert sees them.
+     *
+     * Postgres refuses an `INSERT … ON CONFLICT DO UPDATE` whose own batch
+     * contains two rows with the same constrained key:
+     *
+     *     SQLSTATE[21000]: ON CONFLICT DO UPDATE command cannot affect row a
+     *     second time
+     *
+     * and it refuses the **whole statement**, so one duplicated product loses
+     * the entire chunk — tens of thousands of rows — and the run dies. Which is
+     * exactly what it did on a bol feed: the same product listed under two
+     * categories arrives twice in one page, and nothing upstream had any reason
+     * to notice.
+     *
+     * Fixed here rather than in the connector because this is the single choke
+     * point every caller goes through — the feed job, the chart puller and the
+     * live search path — and a feed is third-party input. Assuming a supplier
+     * will not repeat itself is the same class of mistake as trusting an
+     * affiliate URL's scheme.
+     *
+     * **Last occurrence wins**, matching what the upsert would have done had the
+     * rows arrived in two separate statements: later in the file is the more
+     * recent record of the same offer.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function deduplicate(array $rows): array
+    {
+        $byKey = [];
+
+        foreach ($rows as $row) {
+            $byKey[$row['source'].'|'.$row['market'].'|'.$row['external_id']] = $row;
+        }
+
+        return array_values($byKey);
     }
 
     /**
