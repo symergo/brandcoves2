@@ -30,7 +30,33 @@ if ! docker compose exec -T postgres pg_isready -U brandcoves >/dev/null 2>&1; t
     exit 1
 fi
 
-if ! php artisan test --parallel --processes=8; then
+# Find PHP by running it, not by looking it up.
+#
+# Herd on Windows installs `php.bat`, which is not marked executable, and Git
+# runs this hook under its own bundled `sh`. That shell will happily *execute*
+# `php.bat` but `command -v php.bat` reports nothing, because it only considers
+# files with the executable bit — so a lookup-based probe concludes PHP is
+# missing on a machine where it plainly works. The bare name `php` finds nothing
+# either, since sh does not append Windows executable extensions.
+#
+# Left unhandled the hook aborted every push on a Windows clone with "php:
+# command not found" under a banner reading "tests failed" — the one thing it
+# must never claim when the suite has not run at all. Probing by invocation
+# costs one process and is the only check that agrees with reality.
+PHP=
+for candidate in php php.bat; do
+    if "$candidate" -v >/dev/null 2>&1; then
+        PHP=$candidate
+        break
+    fi
+done
+
+if [ -z "$PHP" ]; then
+    printf '\033[0;31mpre-push: no working php found.\033[0m The suite did NOT run.\n'
+    exit 1
+fi
+
+if ! "$PHP" artisan test --parallel --processes=8; then
     printf '\033[0;31mpre-push: tests failed — push aborted.\033[0m\n'
     printf 'Fix them, or push with --no-verify if you know why this is fine.\n'
     exit 1
