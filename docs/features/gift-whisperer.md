@@ -150,7 +150,7 @@ every result page shows four of the same thing.
 ## 6. Explaining
 
 One reason per card, not a breakdown. Three reasons read as a machine justifying itself, and the
-strongest signal is almost always the true one. The full `breakdown` is kept on `GiftPick` — "why did
+strongest signal is almost always the true one. The full `breakdown` is kept on `Suggestion` — "why did
 it pick this" is the first question everyone asks, the shopper now and whoever tunes the weights in
 six months. A recommender you cannot interrogate is one you cannot fix.
 
@@ -167,8 +167,45 @@ never loops back to what was just rejected — the fastest way to lose trust in 
 ## Files
 
 - `app/Services/Gift/GiftabilityClassifier.php`, `Giftability.php`
-- `app/Services/Gift/AngleMap.php`, `GiftEngine.php`, `GiftBrief.php`, `GiftPick.php`
+- `app/Services/Gift/AngleMap.php`, `GiftEngine.php`, `TasteBrief.php`, `Suggestion.php`
 - `app/Jobs/ClassifyGiftability.php`, `WidenGiftAngles.php`
 - `app/Http/Controllers/GiftController.php`
 - `resources/js/Pages/Gift/Wizard.tsx`
-- `tests/Unit/GiftabilityClassifierTest.php`, `tests/Feature/GiftEngineTest.php`
+- `tests/Unit/GiftabilityClassifierTest.php`, `tests/Feature/SuggestionEngineTest.php`
+
+
+## "Show me something else" — two defects behind one promise
+
+Fixed 2026-08-16. `gift_cove.whisperer_step2` says *"what you rejected is never offered again"*, and
+neither half of that worked.
+
+**The board collapsed to one card.** `swap()` scored with `withLimit(1)` and rendered `picks` as that
+single replacement, so the three suggestions the visitor had kept were thrown away by the *render*,
+not by the ranker. It now re-renders a full board: because the ranker is deterministic, "top four
+minus the one you rejected" **is** the three that were kept plus the next one down — no id
+round-trip, no splice, and no trusting a client-supplied ordering of what is currently on screen.
+
+`isSwap` was declared in the props and never destructured. Deleted from both sides.
+
+**The rejection list did not survive its own round trip.** It lived in component state and was posted
+back with each swap — but the Wizard posts without `preserveState`, so Inertia rebuilt the component
+and the accumulator reset to empty. The first rejection could therefore reappear on the second swap.
+
+`RejectionMemory` moves it to the **session**, not the database: a rejection is a passing opinion
+during one sitting, is not worth a row, is not data anybody should be able to ask us for later, and a
+table would have to be taught to `bc:prune-personal-data` and then justified in the privacy policy.
+
+The one-word client fix — adding `preserveState` — was considered and rejected. It holds only until
+the visitor does something ordinary: a reload, a back-navigation or the "Try again" button all wipe
+component state, and the promise is unconditional.
+
+Two further consequences worth stating:
+
+- **Bucketed per brief**, keyed on a hash of the normalised brief. Describing your mother and then a
+  colleague in one sitting must not have one poison the other.
+- **"Try again" now means something.** It used to re-post the same brief and re-render the same four
+  cards, which is not what the button says. Opening the wizard flushes everything, which is what
+  "Start over" says.
+
+Both caps on the memory exist because a session store is visitor-controlled input: ~60 ids per brief
+and five briefs, LRU.

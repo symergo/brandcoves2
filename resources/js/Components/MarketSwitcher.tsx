@@ -33,6 +33,11 @@ import { useTranslations } from '../useTranslations'
  * French → the Netherlands lands on Dutch, because there is no French market
  * there; Belgium in Dutch → the Netherlands stays Dutch.
  *
+ * **The choice sticks.** Either control posts to `/market`, which records the
+ * market in a cookie before redirecting — so the bare domain sends you back to
+ * the market you picked instead of re-guessing from your browser's language
+ * every time. See App\Support\MarketPreference.
+ *
  * A full page load, both controls, exactly as the single dropdown did before.
  * Switching either changes the catalogue, the currency and the language, and a
  * client-side swap would leave the last market's prices on screen while the new
@@ -65,8 +70,40 @@ export default function MarketSwitcher({
 
     const currentLanguage = current.languages.find((l) => l.market === market.key)
 
+    /*
+     * POST to /market rather than navigating to /${marketKey}, so the choice is
+     * written down as well as acted on. Before this, switching worked until you
+     * next opened the bare domain, which re-guessed from Accept-Language and
+     * sent you back — a Belgian browser reporting "nl-NL" returned to the Dutch
+     * catalogue every single time, and the switcher looked like it had no
+     * effect.
+     *
+     * A real form submit, not fetch and not an Inertia visit, because this is
+     * still the full page load it always was: the market changes the catalogue,
+     * the currency and the language at once, and anything short of a document
+     * load risks the previous market's prices sitting under the new copy.
+     */
     const go = (marketKey: string) => {
-        window.location.href = `/${marketKey}`
+        const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
+
+        const form = document.createElement('form')
+        form.method = 'post'
+        form.action = '/market'
+        form.hidden = true
+
+        for (const [name, value] of [
+            ['market', marketKey],
+            ['_token', token ?? ''],
+        ]) {
+            const field = document.createElement('input')
+            field.type = 'hidden'
+            field.name = name
+            field.value = value
+            form.append(field)
+        }
+
+        document.body.append(form)
+        form.submit()
     }
 
     const chooseCountry = (country: string) => {

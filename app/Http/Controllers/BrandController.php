@@ -271,7 +271,6 @@ class BrandController extends Controller
 
         $terms = app(ResultTerms::class)->extract(
             $result->groups->items(),
-            $market,
             // The brand and whatever is already being sub-searched, so neither
             // comes back as a suggestion: both are the page you are on, and a
             // word already in `q` would add nothing when clicked.

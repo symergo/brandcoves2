@@ -386,11 +386,24 @@ return [
          *
          *   gift_angles  WidenGiftAngles, one call per market per night: 5. Also
          *                carries the credential test from the settings page.
+         *
+         *   community_triage
+         *                TriageCommunityPost, one call per question or answer
+         *                posted, doubled by the job's single retry. This is the
+         *                only cap driven by *visitor* volume rather than by a
+         *                schedule, so it is both the largest and the one that
+         *                matters most: reaching it does not break anything, it
+         *                just means the rest of the day's posts wait for a human
+         *                instead of publishing themselves. 400 is roughly 200
+         *                posts a day across five markets, which is far more
+         *                community than this site has and cheap enough to be
+         *                wrong about.
          */
         'caps' => [
             'daily_picks' => 30,
             'guide_copy' => 30,
             'gift_angles' => 20,
+            'community_triage' => 400,
         ],
     ],
 

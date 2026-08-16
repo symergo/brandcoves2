@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\ListKind;
 use App\Enums\Source;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
@@ -13,6 +12,7 @@ use App\Models\WishlistItem;
 use App\Rules\SafeExternalUrl;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ItemSaver;
+use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -167,6 +167,10 @@ class WishlistItemController extends Controller
             'new_list' => ['nullable', 'string', 'max:120'],
             'recipient_id' => ['nullable', 'uuid'],
             'new_recipient' => ['nullable', 'string', 'max:80'],
+
+            // "Start a group gift" from the picker. See `ListMaker` for why
+            // this is a boolean rather than a kind.
+            'together' => ['boolean'],
         ]);
 
         $list = match (true) {
@@ -298,38 +302,23 @@ class WishlistItemController extends Controller
     /**
      * A new list, made from the picker, with the product going straight into it.
      *
-     * The recipient decides the kind, exactly as in `WishlistController::store()`
-     * — there is no separate switch that could contradict it. A name typed here
-     * mints the person too, because "for someone new" is the common case and
-     * sending them to a different screen to create a contact first is the step
-     * where people give up.
+     * Delegates to {@see ListMaker}, which is also what the form on My Lists
+     * uses — the recipient resolution and the kind decision were duplicated here
+     * and would eventually have drifted apart, and a list whose kind disagrees
+     * with its recipient is the ambiguity `ListKind` exists to remove.
      *
      * @param  array<string, mixed>  $validated
      */
     private function createList(Owner $owner, CurrentMarket $current, array $validated): Wishlist
     {
-        $recipientId = $validated['recipient_id'] ?? null;
-
-        if ($recipientId !== null) {
-            // A guessed uuid must not attach somebody else's person to my list.
-            abort_unless(
-                $owner->scope(Recipient::query())->whereKey($recipientId)->exists(),
-                403,
-            );
-        } elseif (filled($validated['new_recipient'] ?? null)) {
-            $recipientId = Recipient::create([
-                ...$owner->attributes(),
-                'name' => $validated['new_recipient'],
-            ])->id;
-        }
-
-        return Wishlist::create([
-            ...$owner->attributes(),
-            'title' => $validated['new_list'],
-            'market' => $current->get(),
-            'recipient_id' => $recipientId,
-            'kind' => $recipientId === null ? ListKind::Mine : ListKind::ForSomeone,
-        ]);
+        return app(ListMaker::class)->make(
+            owner: $owner,
+            current: $current,
+            title: $validated['new_list'],
+            recipientId: $validated['recipient_id'] ?? null,
+            newRecipient: $validated['new_recipient'] ?? null,
+            together: (bool) ($validated['together'] ?? false),
+        );
     }
 
     /**

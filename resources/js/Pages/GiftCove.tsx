@@ -76,8 +76,20 @@ export default function GiftCove({ signedIn, mine, counts, santaGroups, urls }: 
             badge: mine ? t('gift_cove.items_count', { count: n(mine.items) }) : null,
         },
         { key: 'giftlist', href: forSomeone, badge: counts.giftLists ? n(counts.giftLists) : null },
-        { key: 'collab', href: forSomeone, badge: null },
-        { key: 'handover', href: forSomeone, badge: null },
+        /*
+         * Buying together genuinely *starts* with a new list, and since group
+         * lists became creatable that list is a group one — so the card, the
+         * form it opens and the step that describes it now all say the same
+         * thing. It used to open the "for someone else" shape while its first
+         * step said "open a list you made for someone else".
+         */
+        { key: 'collab', href: `${urls.lists}?new=group`, badge: null },
+        /*
+         * Handover acts on a list you already have, and there is no single such
+         * list — so this goes to My Lists, where they are. It used to open a
+         * *create* form while its first step said "open the list".
+         */
+        { key: 'handover', href: urls.lists, badge: null },
         { key: 'santa', href: urls.santa, badge: counts.santa ? n(counts.santa) : null },
         { key: 'registry', href: mine?.url ?? urls.lists, badge: counts.registries ? n(counts.registries) : null },
         { key: 'quiz', href: mine?.url ?? urls.lists, badge: null },

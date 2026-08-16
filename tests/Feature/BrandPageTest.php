@@ -307,9 +307,16 @@ class BrandPageTest extends TestCase
         $terms = array_column($props['terms'], 'url', 'term');
         $this->assertNotSame([], $terms, 'expected words extracted from the product titles');
 
-        // Where the link goes is pinned by
-        // a_term_narrows_the_brand_page_instead_of_leaving_it.
-        $this->assertArrayHasKey('koptelefoon', $terms);
+        /*
+         * A phrase, not a loose word. The fixture titles are "Aurex draadloze
+         * koptelefoon model N", and "draadloze koptelefoon" is the thing a
+         * reader would actually click — "koptelefoon" and "draadloze" as two
+         * separate chips each narrow the page by half a concept.
+         *
+         * Where the link goes is pinned by
+         * a_term_narrows_the_brand_page_instead_of_leaving_it.
+         */
+        $this->assertArrayHasKey('draadloze koptelefoon', array_change_key_case($terms));
 
         // The brand's own name is excluded, or the page links to itself.
         $this->assertArrayNotHasKey('Aurex', $terms);
@@ -393,12 +400,21 @@ class BrandPageTest extends TestCase
                 $terms = array_column($page->toArray()['props']['terms'], 'url', 'term');
                 $lowered = array_change_key_case($terms);
 
-                // The vocabulary of the results, extracted rather than invented.
+                /*
+                 * The vocabulary of the results, extracted rather than invented.
+                 *
+                 * A single word here rather than a phrase, and that follows from
+                 * the rule above it: the query's own words break a run, so with
+                 * "koptelefoon" searched for, "draadloze koptelefoon" cannot
+                 * form and "draadloze" is what is left to offer. On the brand
+                 * page, where the query is the brand, the same titles do yield
+                 * the phrase.
+                 */
                 $this->assertNotSame([], $terms);
                 $this->assertArrayHasKey('draadloze', $lowered);
 
-                // "koptelefoon" is the query, so it must NOT be echoed back as a
-                // characteristic term of its own results.
+                // "koptelefoon" is the query, so it must NOT be echoed back as
+                // a characteristic term of its own results.
                 $this->assertArrayNotHasKey('koptelefoon', $lowered);
 
                 // Every word narrows the search it came from rather than
@@ -691,7 +707,10 @@ class BrandPageTest extends TestCase
          * page is not asking to be shown other brands; they are asking which
          * Aurex products are the koptelefoons.
          */
-        $this->assertSame('/be-nl/brand/aurex?q=koptelefoon', $terms['koptelefoon'] ?? null);
+        $this->assertSame(
+            '/be-nl/brand/aurex?q='.urlencode('draadloze koptelefoon'),
+            array_change_key_case($terms)['draadloze koptelefoon'] ?? null,
+        );
     }
 
     #[Test]

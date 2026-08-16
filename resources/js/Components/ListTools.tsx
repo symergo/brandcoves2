@@ -138,9 +138,39 @@ export default function ListTools({
                                 )}
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-medium">{s.title}</p>
-                                    {s.from && (
-                                        <p className="text-xs text-ink-soft">
-                                            {t('suggestions.from', { name: s.from })}
+
+                                    {/*
+                                      Always attributed, even when we have no
+                                      name.
+
+                                      A suggestion may come from an anonymous
+                                      cookie identity — somebody who followed
+                                      the link and never signed up — and those
+                                      arrived with `from: null` and rendered
+                                      nothing at all. A message from nobody is
+                                      worse than one from somebody unnamed, and
+                                      the accept/dismiss decision is largely a
+                                      judgement about who sent it.
+                                    */}
+                                    <p className="text-xs text-ink-soft">
+                                        {s.from
+                                            ? t('suggestions.from', { name: s.from })
+                                            : t('suggestions.from_anonymous')}
+                                    </p>
+
+                                    {/*
+                                      What they said about it.
+
+                                      The field has been validated, stored and
+                                      sent to the owner since the feature
+                                      shipped, and rendered nowhere — so a note
+                                      somebody wrote reached the payload and
+                                      then vanished. Plain text, clamped, never
+                                      a link: this is a stranger's writing.
+                                    */}
+                                    {s.note && (
+                                        <p className="mt-1 line-clamp-2 text-xs text-ink-soft italic">
+                                            {s.note}
                                         </p>
                                     )}
                                 </div>

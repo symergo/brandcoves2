@@ -8,7 +8,13 @@ import { useTranslations } from '../useTranslations'
 interface ListOption {
     id: string
     title: string
-    kind: 'mine' | 'for_someone'
+    /**
+     * All three kinds. This was typed as the two the picker knew about, and the
+     * filters below matched on them exactly — so a `group` list existed, was
+     * returned by `/list-options`, and was invisible in the one control that
+     * saves to a list.
+     */
+    kind: 'mine' | 'for_someone' | 'group'
     recipient: string | null
     items: number
     /** The row this product already occupies on that list, if it is on it. */
@@ -71,7 +77,7 @@ export default function SaveToList({
     const saved = groupId !== undefined && savedIds !== null && savedIds.has(groupId)
     const [open, setOpen] = useState(false)
     const [options, setOptions] = useState<Options | null>(null)
-    const [creating, setCreating] = useState<null | 'mine' | 'for_someone'>(null)
+    const [creating, setCreating] = useState<null | 'mine' | 'for_someone' | 'group'>(null)
     const [name, setName] = useState('')
     const [rect, setRect] = useState<{ top: number; left: number } | null>(null)
 
@@ -246,6 +252,7 @@ export default function SaveToList({
 
     const mine = options?.lists.filter((l) => l.kind === 'mine') ?? []
     const forOthers = options?.lists.filter((l) => l.kind === 'for_someone') ?? []
+    const groups = options?.lists.filter((l) => l.kind === 'group') ?? []
 
     /*
      * One row, both directions. A tick means it is on that list and pressing it
@@ -296,12 +303,19 @@ export default function SaveToList({
                               className="p-2"
                               onSubmit={(e) => {
                                   e.preventDefault()
+                                  /*
+                                   * Both "for someone" shapes name a person and
+                                   * title the list after them; a group list adds
+                                   * `together`, which is the single bit that
+                                   * separates the two on the server.
+                                   */
                                   save(
                                       creating === 'mine'
                                           ? { new_list: name }
                                           : {
                                                 new_list: t('lists.for_person', { name }),
                                                 new_recipient: name,
+                                                together: creating === 'group',
                                             },
                                   )
                               }}
@@ -358,6 +372,26 @@ export default function SaveToList({
                                   className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
                               >
                                   + {t('lists.add_person')}
+                              </button>
+
+                              {/*
+                                A third section, because a group gift is a third
+                                answer to "who is this for?" — several of us, for
+                                one person. Its own heading rather than a badge
+                                inside "for someone else": the two carry
+                                different mechanisms, and a shortlist you are all
+                                putting money into is not private research.
+                              */}
+                              <p className="mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
+                                  {t('lists.group_gift')}
+                              </p>
+                              {groups.map((l) => row(l, l.recipient ?? l.title))}
+                              <button
+                                  type="button"
+                                  onClick={() => setCreating('group')}
+                                  className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
+                              >
+                                  + {t('lists.start_group_gift')}
                               </button>
                           </>
                       )}

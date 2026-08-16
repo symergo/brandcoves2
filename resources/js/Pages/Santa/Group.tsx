@@ -119,6 +119,59 @@ export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
                             {member.done && (
                                 <span className="text-xs text-sage">{t('lists.sent')}</span>
                             )}
+
+                            {/*
+                              Repairing the draw, organiser only.
+
+                              Both confirmations are worded differently before
+                              and after the draw, the same discipline as the
+                              delete button below — after it, the action sends
+                              mail naming a person, and mail cannot be unsent.
+
+                              Redraw only appears once there is something to
+                              redraw. Neither control reveals an assignment: the
+                              payload still carries no giftee for anybody.
+                            */}
+                            {isOrganiser && (
+                                <span className="flex items-center gap-3">
+                                    {group.drawn && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (confirm(t('santa.redraw_confirm', { name: member.name }))) {
+                                                    router.post(
+                                                        `/${market.key}/santa/${group.id}/members/${member.id}/redraw`,
+                                                        {},
+                                                        { preserveScroll: true },
+                                                    )
+                                                }
+                                            }}
+                                            className="text-xs text-ink-soft underline hover:text-ink"
+                                        >
+                                            {t('santa.redraw')}
+                                        </button>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const warning = group.drawn
+                                                ? t('santa.remove_confirm_drawn', { name: member.name })
+                                                : t('santa.remove_confirm', { name: member.name })
+
+                                            if (confirm(warning)) {
+                                                router.delete(
+                                                    `/${market.key}/santa/${group.id}/members/${member.id}`,
+                                                    { preserveScroll: true },
+                                                )
+                                            }
+                                        }}
+                                        className="text-xs text-ink-soft underline hover:text-accent"
+                                    >
+                                        {t('santa.remove_member')}
+                                    </button>
+                                </span>
+                            )}
                         </li>
                     ))}
                 </ul>

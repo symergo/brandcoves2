@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import ManualItem from '../../Components/ManualItem'
+import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import ListTools, { type Panel } from '../../Components/ListTools'
@@ -21,6 +22,12 @@ interface Item {
     slug: string | null
     merchantCount: number
     inStock: boolean
+    /**
+     * Only ever present on a `group` list, where the owner is the organiser.
+     * Absent on a wish list — an owner must not learn what has been claimed,
+     * and money pooled against an item is claim state (invariant #4).
+     */
+    contributions?: Contributions
 }
 
 interface Asked {
@@ -349,6 +356,7 @@ export default function ListShow({
                                 action={`${base}/list-items`}
                                 data={{ source: 'manual', wishlist_id: list.id }}
                                 hint={t('lists.manual_hint')}
+                                withNote
                             />
                         </div>
                     )}
@@ -356,7 +364,8 @@ export default function ListShow({
             ) : (
                 <ul className="mt-8 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
                     {items.map((item) => (
-                        <li key={item.id} className="flex items-center gap-4 p-4">
+                        <li key={item.id} className="p-4">
+                          <div className="flex items-center gap-4">
                             {item.image && (
                                 <img
                                     src={item.image}
@@ -422,6 +431,33 @@ export default function ListShow({
                             >
                                 ✕
                             </button>
+                          </div>
+
+                            {/*
+                              Who put in what, on a group list.
+
+                              The one place an owner is shown anything resembling
+                              claim state, and it is legitimate: the recipient of
+                              a group list is a third party who never opens this
+                              page, so there is no surprise to protect from the
+                              organiser — who is the person fronting the money.
+                              On every other kind of list the server sends no
+                              key here at all, which is why there is no `else`.
+
+                              Pledging needs the share link, because that is the
+                              URL the endpoint is mounted on. A private group
+                              list can therefore be read but not contributed to
+                              from here, which is honest: nobody else can reach
+                              it either until it is shared.
+                            */}
+                            {item.contributions !== undefined && (
+                                <Pledge
+                                    action={`${list.shareUrl}/pledge/${item.id}`}
+                                    contributions={item.contributions}
+                                    canContribute={list.shareUrl !== null}
+                                    price={item.currentPrice ?? item.price}
+                                />
+                            )}
                         </li>
                     ))}
                 </ul>
@@ -439,6 +475,7 @@ export default function ListShow({
                         action={`${base}/list-items`}
                         data={{ source: 'manual', wishlist_id: list.id }}
                         hint={t('lists.manual_hint')}
+                        withNote
                     />
                 </div>
             )}

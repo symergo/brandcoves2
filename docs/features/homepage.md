@@ -25,9 +25,52 @@ was missing; a visitor shopping for themselves previously had to read past a pag
 was for somebody else.
 
 The intro names the tools rather than only the search, because the tools are what a visitor cannot
-guess is here: lists, sharing, group giving, Secret Santa, the quiz. It stops at naming them. The
+guess is here: lists, sharing, group giving, Secret Friend, the quiz. It stops at naming them. The
 [Gift Cove](gifting-lenses.md) hub exists to explain them, and repeating that explanation on the
 front page is how both pages get longer and neither gets read.
+
+### The intro leads with the list, not with the search — 2026-08-16
+
+It used to open *"GiftCoves searches bol, Amazon and hundreds of shops at once"*: a description of
+the machinery, and one that positions the site as a price comparison engine. That is a category
+where the visitor already has a habit, and we are not the shop they compare against.
+
+It now opens with what the visitor makes — *"GiftCoves is where you make your wish lists and your
+gift lists"* — and then what they do with it: share, club together on a group gift, run a Secret
+Friend. The search is still directly under the paragraph as a box you can type into, which argues
+for itself better than a sentence about it does.
+
+The paragraph opens on the promise — *"Find and give the best gifts, to other people and to
+yourself"* — and only then names the tools, one per clause: lists, sharing, a group gift, a
+[Secret Friend](secret-santa.md), the [quiz](list-quiz.md). That sentence closed the paragraph in the
+first draft and was moved to the front, because a paragraph that opens on *how* is asking to be
+skipped by anyone who has not yet been told *what for*.
+
+**Only the product name for the santa feature.** A draft of this rewrite carried *"a Secret Friend
+or secret santa"* — the generic term alongside ours, on the theory that *secret santa* is what people
+search for. It is not worth it on the front page: it puts two names for one feature in a sentence
+whose job is to be scanned, and the recognition it buys belongs to the surfaces built for it
+(`home.seo_description`, the santa pages, the copy bank), not to the pitch. `nav.santa` — `Geheime
+Vriend`, `Ami Secret`, `Amigo invisible` — is the one name the whole product uses, so it is the one
+here.
+
+The Dutch says *"organiseer een Geheime Vriend-**sessie**"* where the other three markets say only
+the product name. *Organiseer een Geheime Vriend* reads in Dutch as organising a **person**; the
+extra noun makes it the event you organise. Written as one hyphenated compound, not three loose
+words — a proper name plus a noun is `Geheime Vriend-sessie` in Dutch, and the loose form is an
+anglicism. Only `home.intro` carries it: `nav.santa` and every other santa surface stay
+`Geheime Vriend`, because the feature is not called that, only this one sentence needs the verb to
+land.
+
+`home.seo_description` is unchanged and still leads with the search: it is read on a results page by
+someone who has never heard of us, where "searches bol, Amazon and hundreds of shops" is the part
+that distinguishes us from every other list site. The two keys are separate for exactly this reason —
+see the note above them in `lang/en/site.php`.
+
+The Dutch second headline moved with it, from *"Jezelf inbegrepen."* to *"Ook aan jezelf."*
+*Inbegrepen* is the language of what a price covers; the line is the end of a sentence about
+**giving**, and *aan jezelf* carries the same verb as the paragraph under it. The other three markets
+keep *"Yourself included." / "À vous aussi." / "También para ti."*, which never had that problem.
 
 ## What it does not end on: catalogue counters
 
@@ -119,3 +162,30 @@ place once, at the top, at size.
 - [daily-cove.md](daily-cove.md) — the edition this page opens with
 - [brand-mark.md](brand-mark.md) — the mark, its palette, and everywhere else it appears
 - [search-help.md](search-help.md) — linked from under the hero search box
+
+## The Discover band gained a fourth card
+
+2026-08-16. Ask others sits beside Daily, Surprise and the Coves, because it is a way of *finding*
+something rather than a tool for keeping track of what you already chose.
+
+Its sentence comes from `ask.nav_hint` — the same key the Discover hub uses — so the two pages
+describing it cannot drift. That is also why `what` is now spelled out per entry in the band rather
+than derived from the card's key: three of the four live under `discover_cove.*` and this one does
+not, and inventing a fourth `discover_cove` key would be a second copy of a sentence that already
+exists.
+
+## The Organise band gained a registry card
+
+The registry is a wish list with an occasion and a date on it, so the card links to that list rather
+than to a surface of its own — there is not one, and inventing a URL for what is really a panel on
+your own list is how two names for one page start.
+
+It shows the **soonest upcoming** registry, not the newest: a registry is a date people are buying
+towards, and last summer's wedding is not the list anybody is still adding to. Past dates are
+excluded outright; an occasion with no date still counts, and loses to one that is actually
+happening on a day.
+
+**No claim state, ever.** This is the owner's own front page, so the card says what the list is
+*for* and never how much of it has been bought — the exact surface where a helpful "2 of 8 bought"
+would be added by somebody who had not read invariant #4. `HomeRegistryTest::the_card_carries_no_claim_state`
+is the guard.

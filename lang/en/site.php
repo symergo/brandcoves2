@@ -70,9 +70,12 @@ return [
         'title' => 'GiftCoves wish lists: give and get gifts at the best price',
         'headline_1' => 'Something worth giving.',
         'headline_2' => 'Yourself included.',
-        'intro' => 'GiftCoves searches bol, Amazon and hundreds of shops at once, and turns what it finds into ideas. Keep wish lists and gift lists, share them, club together on something bigger, run a Secret Friend, or quiz your friends on how well they really know you.',
+        'intro' => 'Find and give the best gifts, to other people and to yourself. GiftCoves is where you make your wish lists and your gift lists. Share them with family and friends, club together and pick one group gift, run a Secret Friend for your next party, or quiz your friends on how well they really know you.',
         'search_label' => 'Search for a product or a brand',
-        'search_placeholder' => 'Headphones, a coffee grinder, a name…',
+        // "a name" was ambiguous next to two product nouns — it read as a
+        // person's name on a site full of gift lists. The other three locales
+        // already said brand ("een merknaam", "une marque", "una marca").
+        'search_placeholder' => 'Headphones, a coffee grinder, a brand name…',
         'recent_heading' => 'Recently searched',
         'cta_gift' => 'Find a gift',
         'cta_search' => 'Something for yourself',
@@ -84,13 +87,19 @@ return [
         'coves_volume' => ':count searches a month',
         'organise_intro' => 'Somewhere to keep what you want, what you are getting other people, and what several of you are buying together.',
         'organise_group_hint' => 'One present, several people, and nobody has to chase anyone for the money.',
+        // The card says what a registry IS to somebody who has none, and which
+        // one theirs is to somebody who has. Never how much of it has been
+        // bought — this is the owner's own front page (invariant #4).
+        'organise_registry' => 'Registry',
+        'organise_registry_hint' => 'A wish list with an occasion and a date on it, for a wedding, a baby or a new home.',
+        'organise_registry_on' => ':occasion on :date',
         'gifting_heading' => 'Buying for someone else',
         'gifting_intro' => 'Describe them and we will suggest something. Or let them tell you themselves, and never see who bought what.',
         'gifting_whisperer' => 'Find a gift for someone',
         'gifting_whisperer_hint' => 'Six questions about them, four suggestions with a reason each.',
         'gifting_people_count' => ':count people you shop for',
         'gifting_lists' => 'Lists',
-        'gifting_lists_hint' => 'Save things for yourself, or research a present without them seeing.',
+        'gifting_lists_hint' => 'Save things for yourself or share them with others.',
         'gifting_lists_count' => ':count lists on the go',
         'gifting_santa' => 'Secret Friend',
         'gifting_santa_hint' => 'One group, one draw, nobody knows who has who.',
@@ -308,6 +317,10 @@ return [
         'heading' => 'Suggested for you',
         'hint' => 'Nothing appears on your list until you accept it.',
         'from' => 'From :name',
+        'from_anonymous' => 'From someone with your link',
+        'waiting' => ':count waiting',
+        'one_waiting' => '1 waiting',
+        'note_label' => 'Add a note',
         'accept' => 'Add it',
         'dismiss' => 'No thanks',
         'sent' => 'Sent. They decide whether it goes on the list.',
@@ -330,6 +343,9 @@ return [
         'date' => 'Date',
         'address' => 'Delivery address',
         'address_hint' => 'Stored encrypted, and shown only to someone who has claimed something.',
+        'send_to' => 'Where to send it',
+        'address_locked' => 'Claim something and the delivery address appears here.',
+        'occasion_on' => ':occasion on :date',
         'types' => [
             'wedding' => 'Wedding',
             'baby' => 'New baby',
@@ -364,6 +380,15 @@ return [
         'who' => ':name put in :amount',
         'join' => 'I am in',
         'leave' => 'Actually, no',
+
+        // How many are in, never who or for how much. "Four people are in" is
+        // coordination; a ladder of names and amounts is pressure on whoever
+        // put in least, so only the organiser of a group list is shown that.
+        'count' => ':count people are in',
+        'one_in' => 'One person is in',
+        'none' => 'Nobody has put anything in yet.',
+        'your_share_is' => 'You put in :amount',
+        'organiser_note' => 'You can see who put in what. Everyone else sees the total and their own share.',
     ],
 
     'cove_mail' => [
@@ -497,7 +522,7 @@ return [
         'my_finds' => 'What I found',
         'collaborator_invited' => 'If they have an account, they can see this list now.',
         'collaborator_removed' => 'Removed.',
-        'collaborators' => 'Who else can see this',
+        'collaborators' => 'People',
         'invite_collaborator' => 'Invite someone to help',
         'invite_hint' => 'Useful when several of you are buying together. They see what has been claimed, so nobody doubles up.',
         'role_viewer' => 'Can look',
@@ -511,6 +536,13 @@ return [
         'shared_intro_anon' => 'Tap an item to mark that you are getting it. Whoever made this list will not see who claimed what.',
         'for_me' => 'For me',
         'for_someone_else' => 'For someone else',
+        // The third kind. Named by what you do rather than by what it is
+        // called internally: "group list" describes our schema, "together, for
+        // someone" describes the afternoon you are about to have.
+        'for_group' => 'Together, for someone',
+        'for_group_hint' => 'Several of you choosing one present. Everyone can put in a share, and only you see who put in what.',
+        'group_gift' => 'Group gift',
+        'start_group_gift' => 'Start a group gift',
         'for_person' => 'For :name',
         'cancel' => 'Cancel',
         'share_heading' => 'Share this list',
@@ -579,6 +611,14 @@ return [
         'draw' => 'Do the draw',
         'drawn' => 'Drawn. Everyone has been emailed.',
         'redraw' => 'Redraw this person',
+        'remove_member' => 'Remove',
+        'member_removed' => 'Removed. Their giver has been told who they are buying for now.',
+        'remove_confirm' => 'Remove :name from this group?',
+        'remove_confirm_drawn' => 'Remove :name? The draw has happened, so one other person will be emailed a new name. That cannot be undone.',
+        'cannot_remove_last' => 'A group needs at least two people.',
+        'redraw_confirm' => 'Redraw for :name? Two people will be emailed a new name, and that cannot be undone.',
+        'email_changed_subject' => 'Your Secret Friend has changed: you now have :name',
+        'email_changed_intro' => 'Something changed in the group, so this replaces the name we sent you before.',
         'redrawn' => 'Redrawn. Both people have been emailed.',
         'you_have' => 'You are buying for :name',
         'their_list' => 'What :name asked for',
@@ -687,7 +727,7 @@ return [
 
         'collab_title' => 'Buy together',
         'collab_body' => 'Invite other people onto a gift list so several of you can choose together, or pledge towards one bigger present and let one person buy it.',
-        'collab_step1' => 'Open a list you made for someone else and press People.',
+        'collab_step1' => 'Press New list, choose "Together, for someone", and name the person it is for.',
         'collab_step2' => 'Add each co-giver by email. A viewer can look; an editor can add and remove things.',
         'collab_step3' => 'Choose together. If the person has a wishlist of their own, that is where you say what you are getting, so two of you never buy the same thing.',
 
@@ -837,6 +877,98 @@ return [
      * docs/features/barcode-scanner.md, and softening it would turn a working
      * feature into one that looks broken.
      */
+    /*
+     * Ask others.
+     *
+     * The copy has one hard job: to be honest that a post is read before it
+     * appears, without making that sound like suspicion of the person who wrote
+     * it. "We read every post before it goes up" is a promise about the board
+     * being worth reading, not an accusation — and saying nothing at all is
+     * worse, because then the feature simply looks broken for ten minutes.
+     */
+    'ask' => [
+        'seo_title' => 'Ask others what to buy',
+        'seo_description' => 'Stuck for a gift? Describe who it is for and let other people suggest something. Every answer comes with real products and a price.',
+        'seo_question' => 'Gift ideas for: :title. Real suggestions from other people, with prices compared across shops.',
+
+        'title' => 'Ask others',
+        'intro' => 'Need inspiration? Describe who you are buying for and let the GiftCoves community suggest something. Answers come with actual products, not just advice.',
+        'nav_hint' => 'Describe who it is for and let other people suggest something.',
+
+        'all' => 'All questions',
+        'more_about_them' => 'Say a bit more about them (optional)',
+        'more_hint' => 'None of this is required. It just tends to get better answers.',
+        'occasion_label' => 'Occasion',
+        'occasion_placeholder' => 'Birthday, retirement…',
+        'age_label' => 'Roughly how old',
+        'age_placeholder' => '30s',
+        'ask_cta' => 'Ask a question',
+        'ask_heading' => 'What are you stuck on?',
+        'question_label' => 'Your question',
+        'question_placeholder' => 'My sister is turning 30 and already owns everything',
+        'detail_label' => 'Anything else that helps',
+        'detail_placeholder' => 'What they are into, what you have already ruled out, how well you know them.',
+        'budget_label' => 'Up to',
+        'budget_hint' => 'Optional. Answers tend to be better with a number to aim at.',
+        'submit' => 'Ask',
+        'cancel' => 'Cancel',
+
+        'sign_in_to_ask' => 'Sign in to ask a question or answer one.',
+
+        // Said at the moment of posting, so nobody watches for a question that
+        // is not going to appear yet.
+        'submitted' => 'Thanks — we read every question before it goes up. Yours will appear shortly.',
+        'answer_submitted' => 'Thanks — we read every answer before it goes up.',
+
+        'mine_heading' => 'Your questions',
+        'pending_notice' => 'We are reading this one. It is not on the board yet.',
+        'rejected_notice' => 'We could not put this one on the board.',
+
+        'empty' => 'Nobody has asked anything yet.',
+        'empty_hint' => 'Be the first. Somebody usually knows.',
+
+        'answers' => ':count answers',
+        'one_answer' => '1 answer',
+        'no_answers' => 'No answers yet',
+        'asked_by' => 'Asked by :name',
+        'budget_up_to' => 'Up to :amount',
+
+        'answer_heading' => 'Answer this',
+        'answer_placeholder' => 'What would you get them, and why?',
+        'answer_submit' => 'Post my answer',
+        'answers_heading' => 'Answers',
+        'be_first' => 'No answers yet. Yours would be the first.',
+
+        // The picker inside the answer form. Products come from our own
+        // catalogue rather than a pasted link — see docs/features/ask-others.md.
+        'picks_heading' => 'Suggest something specific',
+        'picks_hint' => 'Add up to :count things from the shops we cover. An answer with a product in it is worth ten without one.',
+        'picks_search' => 'Search for a product',
+        'picks_add' => 'Add',
+        'picks_added' => 'Added',
+        'picks_full' => 'That is as many as one answer can carry.',
+        'picks_none_found' => 'Nothing matched that.',
+
+        'status' => [
+            'pending' => 'Being read',
+            'published' => 'On the board',
+            'rejected' => 'Not published',
+        ],
+    ],
+
+    'invitations' => [
+        'mail_subject' => ':name would like your help choosing a gift',
+        'mail_heading' => 'Help choose a present',
+        'mail_intro' => ':name has asked you to help choose something, on a list called ":list".',
+        'mail_intro_for' => ':name has asked you to help choose something for :person.',
+        // Says what happens next, because "you have been invited" on its own
+        // does not tell somebody whether they need an account.
+        'mail_what' => 'Open the link below and sign in with this address. You will be able to see the list and add ideas to it.',
+        'mail_button' => 'See the list',
+        'mail_expiry' => 'The link works for two weeks.',
+        'sign_in_first' => 'Sign in with the address the invitation was sent to, and the list will be waiting.',
+    ],
+
     'search_help' => [
         'seo_title' => 'How to search: words, barcodes and Amazon links',
         'seo_description' => 'What the search box understands — product names, brands, barcodes and pasted Amazon links — and how to narrow results down to the offer you want.',

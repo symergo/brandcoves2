@@ -58,3 +58,10 @@ Amazon-tags.txt
 .claude/*.api
 .claude/*.token
 .claude/secrets*
+
+# Google OAuth client secrets, as downloaded from the Cloud console. The file
+# carries a live `client_secret` for the sign-in flow, and its default filename
+# is long and unmemorable enough that nobody reviewing a `git add .` would
+# recognise it. Ignored by pattern rather than by name so the next download —
+# which gets a different numeric prefix — is covered too.
+client_secret_*.json

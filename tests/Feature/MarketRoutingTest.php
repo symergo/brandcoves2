@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Market;
+use App\Support\MarketPreference;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -48,6 +49,79 @@ class MarketRoutingTest extends TestCase
         // 302, never 301: the guess comes from a request header and must not be
         // cached into permanence, pinning a visitor to a market they never chose.
         $this->get('/')->assertStatus(302);
+    }
+
+    /*
+     * The remembered choice.
+     *
+     * Accept-Language is a good first guess and a bad permanent answer: a
+     * Belgian machine whose browser language is plain "Nederlands" reports
+     * nl-NL, so it lands on the Dutch catalogue, and before the cookie existed
+     * nothing remembered the correction.
+     */
+
+    #[Test]
+    public function choosing_a_market_records_it_and_goes_there(): void
+    {
+        $this->post('/market', ['market' => 'be-nl'])
+            ->assertRedirect('/be-nl')
+            ->assertCookie(MarketPreference::COOKIE, 'be-nl');
+    }
+
+    #[Test]
+    public function a_chosen_market_beats_the_browser_language(): void
+    {
+        // The whole point. The header still says the Netherlands and the
+        // visitor still gets Belgium, because they said so.
+        $this->withCookie(MarketPreference::COOKIE, 'be-nl')
+            ->withHeader('Accept-Language', 'nl-NL,nl;q=0.9')
+            ->get('/')
+            ->assertRedirect('/be-nl');
+    }
+
+    #[Test]
+    public function merely_visiting_a_market_does_not_record_it(): void
+    {
+        // A shared link must not repoint someone's home market. Only the
+        // switcher writes the cookie; SetMarket deliberately does not, or
+        // opening a friend's /nl-nl/... link would silently move you.
+        $this->get('/nl-nl')->assertCookieMissing(MarketPreference::COOKIE);
+    }
+
+    #[Test]
+    public function an_unpublished_market_cannot_be_chosen(): void
+    {
+        // The switcher never offers `es`, so a request naming it did not come
+        // from the switcher. Rejected server-side rather than trusted.
+        $this->post('/market', ['market' => 'es'])->assertSessionHasErrors('market');
+        $this->post('/market', ['market' => 'de-de'])->assertSessionHasErrors('market');
+    }
+
+    #[Test]
+    public function a_choice_that_has_since_been_unpublished_is_ignored(): void
+    {
+        // The cookie outlives deploys by a year, so it can name a market that
+        // has been withdrawn. Honouring it would pin the visitor to a catalogue
+        // with no supply — fall through to negotiation instead.
+        $this->withCookie(MarketPreference::COOKIE, 'es')
+            ->withHeader('Accept-Language', 'fr-BE,fr;q=0.9')
+            ->get('/')
+            ->assertRedirect('/be-fr');
+    }
+
+    #[Test]
+    public function the_root_redirect_is_never_shared_between_visitors(): void
+    {
+        // It varies on a cookie and on a request header. A CDN holding one copy
+        // would hand the next visitor somebody else's market.
+        //
+        // Asserted per directive rather than as one string: Symfony's
+        // ResponseHeaderBag re-serialises Cache-Control from a parsed map, so
+        // the order is its business and not something to pin a test to.
+        $cacheControl = (string) $this->get('/')->headers->get('Cache-Control');
+
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringContainsString('private', $cacheControl);
     }
 
     #[Test]

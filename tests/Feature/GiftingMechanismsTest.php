@@ -8,6 +8,8 @@ use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\Market;
 use App\Enums\RecipientStatus;
+use App\Http\Middleware\TrackAnonymousIdentity;
+use App\Models\AnonymousIdentity;
 use App\Models\GiftPledge;
 use App\Models\LoginToken;
 use App\Models\ProductGroup;
@@ -386,15 +388,19 @@ class GiftingMechanismsTest extends TestCase
         $this->assertStringNotContainsString('Somewhere Street', $raw);
     }
 
+    /**
+     * Half of a distinction, not a statement about the feature.
+     *
+     * This used to be called `a_visitor_never_receives_the_delivery_address`
+     * and it asserted the absence of a feature the copy had been promising in
+     * two places since the day it shipped. The body is unchanged; what changed
+     * is that there is now a matching test for the other half.
+     */
     #[Test]
-    public function a_visitor_never_receives_the_delivery_address(): void
+    public function a_visitor_who_has_claimed_nothing_never_receives_the_delivery_address(): void
     {
         $user = User::factory()->create();
-        $list = $this->sharedList($user);
-
-        $this->actingAs($user)->patch("/be-nl/lists/{$list->id}", [
-            'delivery_address' => '12 Somewhere Street, Ghent',
-        ]);
+        $list = $this->registry($user);
 
         auth()->logout();
 
@@ -404,6 +410,151 @@ class GiftingMechanismsTest extends TestCase
             'Somewhere Street',
             json_encode($response->viewData('page')['props']),
         );
+    }
+
+    #[Test]
+    public function a_visitor_who_has_claimed_something_is_given_the_delivery_address(): void
+    {
+        // The whole point of a registry: somebody has to be able to post the
+        // parcel. `registry.address_hint` has promised exactly this to the
+        // owner since the feature shipped.
+        $user = User::factory()->create();
+        $list = $this->registry($user);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        auth()->logout();
+
+        // One identity across both requests: the gate reads the visitor's own
+        // claim hash, and the test client does not carry cookies between calls.
+        $visitor = AnonymousIdentity::create(['last_seen_at' => now()]);
+
+        $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $visitor->getKey())
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+            ->assertRedirect();
+
+        $props = $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $visitor->getKey())
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        $this->assertSame('12 Somewhere Street, Ghent', $props['registry']['address']);
+        $this->assertFalse($props['registry']['locked']);
+    }
+
+    #[Test]
+    public function a_visitor_who_claimed_nothing_does_not_see_another_claimers_address(): void
+    {
+        // The gate is per-visitor, not per-list. One person claiming does not
+        // publish the address to everybody else holding the link.
+        $user = User::factory()->create();
+        $list = $this->registry($user);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        auth()->logout();
+
+        $claimer = AnonymousIdentity::create(['last_seen_at' => now()]);
+        $bystander = AnonymousIdentity::create(['last_seen_at' => now()]);
+
+        $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $claimer->getKey())
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}");
+
+        $props = $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $bystander->getKey())
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        $this->assertNull($props['registry']['address']);
+    }
+
+    #[Test]
+    public function releasing_a_claim_takes_the_address_away_again(): void
+    {
+        /*
+         * Non-obvious and worth pinning: `WishlistItem::release()` nulls the
+         * hash, so the gate closes on its own. Nothing revokes the address
+         * explicitly, and nothing should have to.
+         */
+        $user = User::factory()->create();
+        $list = $this->registry($user);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        auth()->logout();
+
+        $visitor = AnonymousIdentity::create(['last_seen_at' => now()]);
+        $cookie = (string) $visitor->getKey();
+
+        $this->withCookie(TrackAnonymousIdentity::COOKIE, $cookie)
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}");
+
+        $this->withCookie(TrackAnonymousIdentity::COOKIE, $cookie)
+            ->delete("/be-nl/l/{$list->share_token}/claim/{$item->id}");
+
+        $props = $this->withCookie(TrackAnonymousIdentity::COOKIE, $cookie)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        $this->assertNull($props['registry']['address']);
+        $this->assertTrue($props['registry']['locked']);
+    }
+
+    #[Test]
+    public function the_occasion_and_date_are_shown_to_everybody_holding_the_link(): void
+    {
+        // Not gated: they are why the list exists. Only the address is.
+        $user = User::factory()->create();
+        $list = $this->registry($user);
+
+        auth()->logout();
+
+        $props = $this->get("/be-nl/l/{$list->share_token}")->assertOk()->viewData('page')['props'];
+
+        $this->assertSame(__('site.registry.types.wedding'), $props['registry']['occasion']);
+        $this->assertNotNull($props['registry']['date']);
+        $this->assertNull($props['registry']['address']);
+    }
+
+    #[Test]
+    public function the_owner_is_not_given_the_address_through_the_shared_view(): void
+    {
+        // They get it on their own page. The shared branch must not become a
+        // second supplier, because that is the branch that would eventually be
+        // asked "has anybody claimed?" to decide.
+        $user = User::factory()->create();
+        $list = $this->registry($user);
+
+        $props = $this->actingAs($user)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        $this->assertNull($props['registry']['address']);
+    }
+
+    #[Test]
+    public function an_ordinary_list_carries_no_registry_block(): void
+    {
+        $list = $this->sharedList(User::factory()->create());
+
+        auth()->logout();
+
+        $props = $this->get("/be-nl/l/{$list->share_token}")->assertOk()->viewData('page')['props'];
+
+        $this->assertNull($props['registry']);
+    }
+
+    /** A shared wish list with an occasion, a date and somewhere to post it. */
+    private function registry(User $owner): Wishlist
+    {
+        $list = $this->sharedList($owner);
+
+        $this->actingAs($owner)->patch("/be-nl/lists/{$list->id}", [
+            'event_type' => 'wedding',
+            'event_date' => now()->addMonths(2)->toDateString(),
+            'delivery_address' => '12 Somewhere Street, Ghent',
+        ]);
+
+        return $list->fresh();
     }
 
     // --- Suggestions ---------------------------------------------------------

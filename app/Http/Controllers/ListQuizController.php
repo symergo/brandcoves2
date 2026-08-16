@@ -136,23 +136,37 @@ class ListQuizController extends Controller
         }
 
         /*
-         * One attempt per player.
+         * One attempt per player, and now actually one.
          *
          * Replaying until you score five out of five is not a score anybody
          * would want to post, and a leaderboard of perfect scores says nothing
-         * about how well anyone knows anyone.
+         * about how well anyone knows anyone. This said exactly that and then
+         * used `updateOrCreate`, so a replay silently overwrote the first score
+         * — the intent was documented and the code did the opposite.
+         *
+         * The bound is honest rather than absolute: a signed-out attempt hangs
+         * off the anonymous cookie, so this stops an accidental replay and a
+         * casual second go. Somebody determined to clear their cookies can have
+         * another turn, and no amount of server-side work changes that for a
+         * game deliberately playable without an account.
          */
-        ListQuizAttempt::updateOrCreate(
-            [
-                'quiz_id' => $quiz->id,
-                ...$owner->attributes('user_id', 'anon_id'),
-            ],
-            [
-                'answers' => $answers,
-                'score' => $score,
-                'played_on' => now()->toDateString(),
-            ],
-        );
+        $already = $owner->scope(
+            ListQuizAttempt::query()->where('quiz_id', $quiz->id),
+            'user_id',
+            'anon_id',
+        )->first();
+
+        if ($already !== null) {
+            return back()->with('error', __('site.quiz.play_again'));
+        }
+
+        ListQuizAttempt::create([
+            'quiz_id' => $quiz->id,
+            ...$owner->attributes('user_id', 'anon_id'),
+            'answers' => $answers,
+            'score' => $score,
+            'played_on' => now()->toDateString(),
+        ]);
 
         return back();
     }

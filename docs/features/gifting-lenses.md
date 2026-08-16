@@ -19,7 +19,7 @@ own idea of what "claimed" means.
 |---|---|---|
 | Receiver — "what I want" | self-description, multi-source picking | `wishlists`, `wishlist_items`, `SearchService` |
 | Giver — "what I found for you" | the two-lane page | items, snapshots, `Owner` scoping |
-| Co-giver | invitations, roles | `wishlist_collaborators` |
+| Co-giver | invitations, roles, pooled contributions | `wishlist_collaborators`, `gift_pledges` |
 | Secret Santa | a group, a draw, an assignment | *the entire list + claim system* |
 | Matching game | rounds, distractors, a share grid | list membership, `GuessBand`'s discipline |
 | Occasion | a trigger, a scoring signal | `recipients`, `notifications` |
@@ -294,3 +294,20 @@ pressed.
 - `tests/Unit/SecretSantaDrawTest.php`, `tests/Feature/{RecipientProfile,SecretSanta,ListQuiz,WishlistCollaborator,OccasionReminder}Test.php`
 
 See [secret-santa.md](secret-santa.md) and [list-quiz.md](list-quiz.md).
+
+
+## The manual said things the code did not do
+
+Audited and fixed 2026-08-16. The rule that a step quotes the label actually on the screen is a good
+one and a fragile one — renaming a control silently invalidates the step that names it, and only a
+human reading the page notices. What the audit found:
+
+| Claim | Where the fix went |
+|---|---|
+| `collab_step1`: "press **People**" | **The label.** The tab read "Who else can see this" — a sentence in a row of one-word chips, and wrong for a group list where those people are co-organisers. The sentence survives as the panel hint. |
+| The `collab` card opened a *create* form while its step said "open a list you made" | **Both.** Buying together genuinely starts with a new list, and since group lists became creatable that list is a group one — so the card opens `?new=group` and the step names that choice. |
+| The `handover` card opened a create form while its step said "open the list" | **The link.** There is no single such list, so it goes to My Lists. |
+| The `suggestions` card pointed at `/lists`, which said nothing about suggestions | **The index, not the link.** The destination was right; the page just never mentioned them. It now carries a waiting badge — owner-only, and absent on a list somebody else owns, because a suggestion is a message addressed to its owner. |
+| `suggestions_step2`: "with the name of whoever sent it" | **A fallback.** A suggestion from an anonymous cookie identity has no name and rendered nothing at all. A message from nobody is worse than one from somebody unnamed, and the accept/dismiss decision is largely a judgement about the sender. |
+
+`CopyMatchesCodeTest` is the human, for the claims that can be checked mechanically.

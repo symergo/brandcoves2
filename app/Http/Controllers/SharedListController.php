@@ -10,6 +10,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
+use App\Services\Wishlist\ContributionView;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -28,8 +29,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class SharedListController extends Controller
 {
-    public function show(Request $request, CurrentMarket $current, string $market, string $token, SearchService $search): Response
-    {
+    public function show(
+        Request $request,
+        CurrentMarket $current,
+        string $market,
+        string $token,
+        SearchService $search,
+        ContributionView $contributor,
+    ): Response {
         $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
 
@@ -59,6 +66,36 @@ class SharedListController extends Controller
         $canSuggest = ! $isOwner && $claimable && $owner->exists();
 
         $term = $canSuggest ? trim((string) $request->query('q', '')) : '';
+
+        /*
+         * Has this visitor claimed something on this list?
+         *
+         * The one question the delivery address is gated on, decided here and
+         * nowhere else. It reads **their own** hash, so the answer tells them
+         * nothing about anybody else — and it is short-circuited by `! $isOwner`
+         * so it can never become a second route to "has anybody claimed", which
+         * is `progress` and is already withheld from the owner.
+         *
+         * The dangerous variant of this query is `whereNotNull('claimed_by_hash')`.
+         * Do not write it.
+         */
+        $hasClaimed = ! $isOwner
+            && $claimable
+            && $hash !== null
+            && $list->items()->where('claimed_by_hash', $hash)->exists();
+
+        $items = $list->items()->with(['group', 'pledges'])->get();
+
+        /*
+         * Money on the list.
+         *
+         * `$isOwner` is passed through rather than used to decide, and the
+         * distinction matters: it is `shouldHideClaimsFrom()`, which is **true
+         * for a group organiser too**. Reusing it here as "hide everything"
+         * would lock the organiser out of the breakdown that is the entire
+         * point of a group list. `ContributionView` holds the whole table.
+         */
+        $contributions = $contributor->forItems($list, $items, $owner, $isOwner);
 
         return Inertia::render('Lists/Shared', [
             'list' => [
@@ -101,6 +138,42 @@ class SharedListController extends Controller
             'isOwner' => $isOwner,
             'canSuggest' => $canSuggest,
             'suggestTerm' => $term,
+
+            /*
+             * Whether this viewer may put money in, mirrored from the endpoint
+             * exactly as `canSuggest` is. Mirrored, never trusted: the POST
+             * asks the same question again, because hiding a control stops
+             * nobody hand-building the request.
+             */
+            'canContribute' => $list->allowsContributionsFrom($owner),
+
+            /*
+             * The registry block: an occasion, a date, and where to send it.
+             *
+             * All three were stored and read back to the owner alone, so a
+             * registry was a form you could fill in and nobody could ever use.
+             * The copy has promised the gate below in two places since the
+             * feature shipped, and so has the migration's own comment.
+             *
+             * **The occasion and date are not gated.** They are why the list
+             * exists — "Wedding, 14 June" — and belong to everyone holding the
+             * link. Only the address is, which is exactly what
+             * `registry.address_hint` says.
+             *
+             * `delivery_address` is an encrypted cast, so reading it here is the
+             * authorised disclosure. There are exactly two readers in the
+             * codebase: the owner's own page behind `ListAccess::isOwner()`, and
+             * this one behind `$hasClaimed`. There is no third.
+             */
+            'registry' => ! $list->isRegistry() ? null : [
+                'occasion' => $list->event_type->label(),
+                'date' => $list->event_date?->toDateString(),
+                'address' => $hasClaimed ? $list->delivery_address : null,
+                // Said out loud, so somebody who has claimed nothing knows the
+                // address exists and how to see it, rather than assuming the
+                // owner forgot to add one.
+                'locked' => ! $hasClaimed && filled($list->delivery_address),
+            ],
 
             /*
              * Null means "no search has been run", `[]` means "searched and
@@ -148,7 +221,7 @@ class SharedListController extends Controller
                 'claimed' => $list->items()->whereNotNull('claimed_by_hash')->count(),
                 'total' => $list->items()->count(),
             ],
-            'items' => $list->items()->with('group')->get()->map(fn (WishlistItem $item) => [
+            'items' => $items->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
                 'title' => $item->snapshot_title,
                 'image' => $item->snapshot_image_url,
@@ -187,6 +260,16 @@ class SharedListController extends Controller
                 'sent' => ! $isOwner && $claimable && $hash !== null && $item->claimed_by_hash === $hash
                     ? $item->marked_sent_at !== null
                     : null,
+
+                /*
+                 * Absent, not null, wherever there is nothing to say — the same
+                 * discipline as `progress` above. `ContributionView` omits the
+                 * item entirely rather than returning an empty shape, so the
+                 * owner of a wish list receives no key here at all.
+                 */
+                ...isset($contributions[$item->id])
+                    ? ['contributions' => $contributions[$item->id]]
+                    : [],
             ]),
         ]);
     }

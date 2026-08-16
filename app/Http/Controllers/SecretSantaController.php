@@ -13,6 +13,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\DrawImpossible;
 use App\Services\Gift\GiftTarget;
+use App\Services\Gift\SantaRepair;
 use App\Services\Gift\SecretSantaDraw;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -263,19 +264,8 @@ class SecretSantaController extends Controller
         abort_if($santa->status->isDrawn(), 403, __('site.santa.already_drawn'));
 
         $members = $santa->members()->get();
-        $byEmail = $members->keyBy(fn (SecretSantaMember $m) => mb_strtolower($m->email));
 
-        // Exclusions are typed as names or emails by people who do not know
-        // each other's account details, so they are resolved loosely here and
-        // strictly inside the draw.
-        $exclusions = [];
-
-        foreach ($members as $member) {
-            $exclusions[$member->id] = $members
-                ->filter(fn (SecretSantaMember $other) => $other->id !== $member->id && $this->isExcluded($member, $other))
-                ->pluck('id')
-                ->all();
-        }
+        $exclusions = $this->exclusionMap($members);
 
         try {
             $assignments = $draw->assign($members->pluck('id')->all(), $exclusions);
@@ -307,9 +297,173 @@ class SecretSantaController extends Controller
         // even if the write rolled back.
         $this->notify($santa, $members->fresh(), $current);
 
-        unset($byEmail);
-
         return back()->with('success', __('site.santa.drawn'));
+    }
+
+    /**
+     * Remove somebody, and close the hole they leave.
+     *
+     * Before the draw this is a deletion and nothing else. After it, the draw
+     * has to be repaired around them — their giver takes on their giftee — and
+     * that is the whole reason this is not just an `update()`. See
+     * {@see SantaRepair} for why a full re-draw would be the wrong answer.
+     */
+    public function removeMember(
+        Request $request,
+        CurrentMarket $current,
+        string $market,
+        string $group,
+        string $member,
+        SantaRepair $repair,
+    ): RedirectResponse {
+        $santa = $this->find($group);
+
+        abort_unless($santa->isOrganiser($request->user()), 403, __('site.santa.organiser_only'));
+
+        $leaving = $santa->members()->whereKey($member)->first();
+
+        if ($leaving === null) {
+            throw new NotFoundHttpException;
+        }
+
+        /*
+         * Before the draw: no pairings exist, so nobody is affected and nobody
+         * is emailed. Kept as its own branch rather than folded in, because the
+         * ordinary case must not go anywhere near the repair path.
+         */
+        if (! $santa->status->isDrawn()) {
+            $leaving->update(['removed_at' => now()]);
+
+            return back()->with('success', __('site.santa.member_removed'));
+        }
+
+        $members = $santa->members()->get();
+
+        $assignments = [];
+
+        foreach ($members as $one) {
+            // Encrypted, not hashed — reversible, which is what makes a partial
+            // repair possible at all.
+            if ($one->assigned_member_id !== null) {
+                $assignments[$one->id] = (int) $one->assigned_member_id;
+            }
+        }
+
+        try {
+            $changed = $repair->remove($assignments, $leaving->id, $this->exclusionMap($members));
+        } catch (DrawImpossible $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        DB::transaction(function () use ($leaving, $members, $changed): void {
+            $leaving->update(['removed_at' => now(), 'assigned_member_id' => null]);
+
+            foreach ($changed as $giverId => $gifteeId) {
+                $members->firstWhere('id', $giverId)
+                    ?->update(['assigned_member_id' => (string) $gifteeId]);
+            }
+        });
+
+        /*
+         * Only the people whose assignment moved, and only after commit.
+         *
+         * The removed member is emailed nothing — the same rule as deleting a
+         * group. The organiser is talking to them anyway, and a "you have been
+         * removed" mail from us is a worse way to find out.
+         */
+        $this->notify(
+            $santa,
+            $santa->members()->whereIn('id', array_keys($changed))->get(),
+            $current,
+            changed: true,
+        );
+
+        return back()->with('success', __('site.santa.member_removed'));
+    }
+
+    /**
+     * "Not this person" — swap two givers' giftees.
+     *
+     * A transposition rather than a re-roll, which is what the copy has said
+     * since before this existed: `santa.redrawn` reads "Redrawn. Both people
+     * have been emailed."
+     */
+    public function redraw(
+        Request $request,
+        CurrentMarket $current,
+        string $market,
+        string $group,
+        string $member,
+        SantaRepair $repair,
+    ): RedirectResponse {
+        $santa = $this->find($group);
+
+        abort_unless($santa->isOrganiser($request->user()), 403, __('site.santa.organiser_only'));
+        abort_unless($santa->status->isDrawn(), 403, __('site.santa.not_drawn'));
+
+        $members = $santa->members()->get();
+        $subject = $members->firstWhere('id', (int) $member);
+
+        if ($subject === null) {
+            throw new NotFoundHttpException;
+        }
+
+        $assignments = [];
+
+        foreach ($members as $one) {
+            if ($one->assigned_member_id !== null) {
+                $assignments[$one->id] = (int) $one->assigned_member_id;
+            }
+        }
+
+        try {
+            $changed = $repair->redraw($assignments, $subject->id, $this->exclusionMap($members));
+        } catch (DrawImpossible $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        DB::transaction(function () use ($members, $changed): void {
+            foreach ($changed as $giverId => $gifteeId) {
+                $members->firstWhere('id', $giverId)?->update([
+                    'assigned_member_id' => (string) $gifteeId,
+                    'redrawn_at' => now(),
+                ]);
+            }
+        });
+
+        $this->notify(
+            $santa,
+            $santa->members()->whereIn('id', array_keys($changed))->get(),
+            $current,
+            changed: true,
+        );
+
+        return back()->with('success', __('site.santa.redrawn'));
+    }
+
+    /**
+     * Who may not draw whom, as member ids.
+     *
+     * Exclusions are typed as names or emails by people who do not know each
+     * other's account details, so they are resolved loosely here and applied
+     * strictly inside the draw. Extracted because the draw and both repair
+     * paths need exactly the same map, and three copies of it would drift.
+     *
+     * @param  Collection<int, SecretSantaMember>  $members
+     * @return array<int, list<int>>
+     */
+    private function exclusionMap($members): array
+    {
+        $map = [];
+
+        foreach ($members as $member) {
+            $map[$member->id] = $members
+                ->filter(fn (SecretSantaMember $other) => $other->id !== $member->id && $this->isExcluded($member, $other))
+                ->pluck('id')
+                ->all();
+        }
+
+        return $map;
     }
 
     /**
@@ -429,9 +583,18 @@ class SecretSantaController extends Controller
      *
      * @param  Collection<int, SecretSantaMember>  $members
      */
-    private function notify(SecretSantaGroup $santa, $members, CurrentMarket $current): void
+    private function notify(SecretSantaGroup $santa, $members, CurrentMarket $current, bool $changed = false): void
     {
-        $byId = $members->keyBy('id');
+        /*
+         * Giftees are resolved from the whole group, not from `$members`.
+         *
+         * `$members` is who to *email*, and after a repair that is two people
+         * out of twelve — whose giftees are almost certainly not among those
+         * two. Keying off the passed collection silently emailed nobody, which
+         * is the worst possible failure here: the write succeeds, the repair
+         * looks done, and one person is buying for someone who has changed.
+         */
+        $byId = $santa->allMembers()->get()->keyBy('id');
 
         foreach ($members as $member) {
             $giftee = $byId->get((int) $member->assigned_member_id);
@@ -450,6 +613,10 @@ class SecretSantaController extends Controller
                     : Number::currency($santa->budget_max / 100, $santa->market->currency()),
                 exchangeDate: $santa->exchange_date?->toFormattedDateString(),
                 gifteeHasList: $giftee->wishlist_id !== null,
+                // "This has changed" rather than "here is your person". Somebody
+                // who already read the first mail needs to know the second one
+                // supersedes it, or they will assume it is a duplicate.
+                changed: $changed,
             ));
         }
     }

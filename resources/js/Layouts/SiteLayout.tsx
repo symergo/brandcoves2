@@ -89,6 +89,13 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                 icon: <CoveIcon name="surprise" className="h-5 w-5" />,
             },
             { href: `${base}/guides`, label: t('nav.coves'), icon: <CoveIcon name="idea" className="h-5 w-5" /> },
+            /*
+             * Ask others sits under Discover rather than Organise: it is a way
+             * of *finding* something when you cannot describe it, not a tool for
+             * keeping track of what you already chose. It is also the only entry
+             * here whose content comes from other visitors rather than from us.
+             */
+            { href: `${base}/ask`, label: t('ask.title'), icon: <CoveIcon name="ask" className="h-5 w-5" /> },
         ],
     }
 

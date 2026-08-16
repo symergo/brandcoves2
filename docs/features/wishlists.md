@@ -198,9 +198,15 @@ suggested search somewhere else. `SearchQuery::$logged` defaults to true and thi
 out; `withBrands()` and `withTerm()` carry the flag rather than re-defaulting it, so a narrowed or
 rewritten query cannot start logging behind you.
 
-Deliberately not built yet: the optional `note` the endpoint already accepts. It is a free-text field
-on an unauthenticated page, which is a moderation surface, and it wants that thought through rather
-than a text input.
+**The `note` split, settled 2026-08-16.** The field was accepted, stored and sent to the owner, and
+rendered nowhere — so a note somebody wrote reached the payload and vanished. It is now read on the
+owner's side and written by the owner only (`ManualItem withNote`).
+
+The deferral was always about *writing*, not about the field: free text from a stranger on an
+unauthenticated page is a moderation surface. An owner typing "size M, in blue" on their own list is
+not one by definition. The visitor-side input stays unbuilt, and the considered version of "let
+strangers write things here" is [ask-others.md](ask-others.md), which has a triage job and a review
+queue behind it.
 
 ## Something we do not sell
 
@@ -325,6 +331,66 @@ anonymous majority and one index-only count for everyone else (`notifications` i
 
 Opening the page marks everything read. A separate "mark as read" button is a chore nobody performs,
 and the badge then never clears.
+
+---
+
+## The registry, which you could fill in and nobody could use
+
+Added 2026-08-16. `event_type`, `event_date` and `delivery_address` were stored and read back **to
+the owner alone** — `SharedListController::show()` emitted none of them in any branch — so a registry
+was a form with no reader. Two pieces of copy and the migration's own comment had promised otherwise
+since the day it shipped.
+
+**The occasion and the date are not gated.** They are why the list exists ("Wedding, 14 June") and
+belong to everybody holding the link. **Only the address is**, which is exactly what
+`registry.address_hint` says: it appears once you have claimed something.
+
+The gate is decided in one place, immediately after the viewer's claim hash:
+
+```php
+$hasClaimed = ! $isOwner && $claimable && $hash !== null
+    && $list->items()->where('claimed_by_hash', $hash)->exists();
+```
+
+It reads **their own** hash, so the answer tells them nothing about anybody else, and `! $isOwner`
+short-circuits it so it can never become a second route to "has anybody claimed" — which is
+`progress`, and is already withheld from the owner. The dangerous variant is
+`whereNotNull('claimed_by_hash')`; do not write it.
+
+`delivery_address` is an encrypted cast, so reading it there **is** the authorised disclosure. There
+are now exactly two readers in the codebase — the owner's own page behind `ListAccess::isOwner()`,
+and this one behind `$hasClaimed`. There is no third.
+
+Releasing a claim closes the gate again on its own, because `WishlistItem::release()` nulls the hash.
+Nothing revokes the address explicitly and nothing should have to;
+`releasing_a_claim_takes_the_address_away_again` pins it.
+
+> The test that used to be called `a_visitor_never_receives_the_delivery_address` is now
+> `a_visitor_who_has_claimed_nothing_never_receives_the_delivery_address`. Its body is unchanged. It
+> stopped being a statement about the feature and became one half of a distinction.
+
+---
+
+## Money on a list, which had a write path and no read path
+
+Added 2026-08-16. `GiftPledge`, `GiftPledgeController`, both `/l/{token}/pledge/{item}` routes and
+ten `pledges` copy keys in four languages shipped complete and were wired to **nothing**: no React
+file referenced a pledge, and no controller ever loaded `$item->pledges`, so the feature could
+neither be used nor seen. The Gift Cove advertised it the whole time
+(`gift_cove.collab_body`, "pledge towards one bigger present").
+
+Both halves now exist — `Wishlist::allowsContributionsFrom()` for the write, and
+`app/Services/Wishlist/ContributionView.php` for the read — and the privacy rule **inverts between
+two kinds of list**, which is the part worth reading before touching either. The full table and the
+three things that are load-bearing about it are in
+[list-taxonomy.md](list-taxonomy.md#built-2026-08-16-and-what-the-shape-turned-out-to-be).
+
+The one-line version: on a `mine` list a pledge is claim state and its owner is told nothing at all;
+on a `group` list the owner is the organiser rather than the recipient, so they see who put in what,
+and the other members see only the total and their own share.
+
+`gift_pledges.display_name` has been required on write since the table shipped and was read by
+nothing until now — `ContributionView::breakdown()` is its first and only reader.
 
 ---
 

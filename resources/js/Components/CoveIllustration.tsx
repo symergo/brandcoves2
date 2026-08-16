@@ -73,6 +73,29 @@ const scenes: Record<CoveKey, ReactNode> = {
             <path d="M48 70h20M48 80h16M96 70h20M96 80h16" />
         </>
     ),
+
+    /*
+     * Ask — two bubbles, and the second one is answering.
+     *
+     * The washed bubble is the question and the outlined one is the reply, so
+     * the drawing reads left-to-right as a conversation rather than as two
+     * shapes. Three product marks inside the reply, because what distinguishes
+     * this from any forum is that an answer arrives carrying actual things.
+     */
+    ask: (
+        <>
+            <path
+                d="M14 20h66a5 5 0 0 1 5 5v28a5 5 0 0 1-5 5H40L22 72V58h-8a5 5 0 0 1-5-5V25a5 5 0 0 1 5-5Z"
+                className="fill-accent/10"
+            />
+            <path d="M26 34h42M26 46h28" />
+
+            <path d="M96 62h44a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5v13l-16-13H96a5 5 0 0 1-5-5V67a5 5 0 0 1 5-5Z" fill="none" />
+            <rect x="102" y="72" width="11" height="13" rx="2" />
+            <rect x="117" y="72" width="11" height="13" rx="2" />
+            <rect x="132" y="72" width="11" height="13" rx="2" />
+        </>
+    ),
 }
 
 export default function CoveIllustration({ name, className }: { name: CoveKey; className?: string }) {

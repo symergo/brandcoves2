@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 
-export type CoveKey = 'daily' | 'surprise' | 'idea'
+export type CoveKey = 'daily' | 'surprise' | 'idea' | 'ask'
 
 /**
- * The three discovery Coves, drawn.
+ * The four discovery surfaces, drawn.
  *
  * Same grid, same stroke weight and the same `currentColor` rule as
  * `ToolIcon` — deliberately the same set rather than a second icon style that
@@ -23,10 +23,14 @@ export type CoveKey = 'daily' | 'surprise' | 'idea'
  * - **Idea** is an open book rather than a lightbulb. The Coves are long reads
  *   with a shortlist inside them; a lightbulb would promise a tip, which sets
  *   up the wrong expectation about how much there is to read.
+ * - **Ask** is two speech bubbles, the second answering the first. Not a
+ *   question mark — that is Surprise's rejected drawing, and it would say "we
+ *   do not know" about a feature whose whole premise is that somebody else
+ *   does. Two bubbles say the thing that matters: a person replies.
  *
- * All three are `aria-hidden`: the Cove's name sits in words immediately beside
- * the icon everywhere this is used, and announcing "book" before "Idea Cove"
- * adds a riddle rather than information.
+ * All four are `aria-hidden`: the name sits in words immediately beside the
+ * icon everywhere this is used, and announcing "book" before "Idea Cove" adds a
+ * riddle rather than information.
  */
 const paths: Record<CoveKey, ReactNode> = {
     daily: (
@@ -52,6 +56,15 @@ const paths: Record<CoveKey, ReactNode> = {
             <path d="M12 6.5C10.5 5 8.5 4.5 6 4.5H3v13h3.5c2.2 0 4.1.5 5.5 1.7" />
             <path d="M12 6.5C13.5 5 15.5 4.5 18 4.5h3v13h-3.5c-2.2 0-4.1.5-5.5 1.7" />
             <path d="M12 6.5v12.7" />
+        </>
+    ),
+
+    ask: (
+        <>
+            {/* The question, with its tail down-left. */}
+            <path d="M2.5 4.5h11a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H6l-3.5 3v-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z" />
+            {/* The answer, overlapping and tailed the other way: a reply. */}
+            <path d="M17.5 8.5h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1v3l-3.5-3h-4a1 1 0 0 1-1-1" />
         </>
     ),
 }

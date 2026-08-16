@@ -10,6 +10,7 @@ use App\Models\AnonymousIdentity;
 use App\Models\User;
 use App\Services\Auth\IdentityMerger;
 use App\Support\CurrentMarket;
+use App\Support\MarketPreference;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +41,14 @@ class GoogleController extends Controller
     {
         abort_unless($this->configured(), 404);
 
-        $market = session('auth.market', $request->route('market'));
+        /*
+         * The session is the primary source — redirect() put it there. The
+         * fallback is not decoration: the callback route carries no {market}
+         * segment, so a session that expired mid-round-trip would otherwise
+         * leave this null and build "//login", which a browser reads as a
+         * protocol-relative URL and resolves against the host "login".
+         */
+        $market = session('auth.market') ?? MarketPreference::resolve($request)->value;
         $loginPath = "/{$market}/login";
 
         try {

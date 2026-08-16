@@ -13,7 +13,9 @@ use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
+use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultList;
+use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -106,6 +108,12 @@ class WishlistController extends Controller
                     ->limit(4),
             ])
             ->withCount('items')
+            /*
+             * Only on My Lists. On the Shared and Group views these are other
+             * people's lists, and a pending suggestion is a message addressed
+             * to their owner — the count is theirs to see, not mine.
+             */
+            ->when($view === 'mine', fn ($q) => $q->withCount('suggestions'))
             ->latest('updated_at')
             ->get()
             ->map(fn (Wishlist $list) => [
@@ -132,7 +140,7 @@ class WishlistController extends Controller
         ]);
     }
 
-    public function store(Request $request, CurrentMarket $current): RedirectResponse
+    public function store(Request $request, CurrentMarket $current, ListMaker $maker): RedirectResponse
     {
         $owner = Owner::fromRequest($request);
         abort_unless($owner->exists(), 403);
@@ -151,50 +159,42 @@ class WishlistController extends Controller
              * not from the page called My lists.
              */
             'new_recipient' => ['nullable', 'string', 'max:80'],
-        ]);
 
-        // A recipient must belong to the same owner, or a guessed uuid would
-        // attach someone else's person to this list.
-        if (! empty($validated['recipient_id'])) {
-            $owned = $owner->scope(Recipient::query())
-                ->whereKey($validated['recipient_id'])
-                ->exists();
-
-            abort_unless($owned, 403);
-        } elseif (filled($validated['new_recipient'] ?? null)) {
-            $validated['recipient_id'] = Recipient::create([
-                ...$owner->attributes(),
-                'name' => $validated['new_recipient'],
-            ])->id;
-        }
-
-        $list = Wishlist::create([
-            ...$owner->attributes(),
-            'title' => $validated['title'],
-            'market' => $current->get(),
-            'recipient_id' => $validated['recipient_id'] ?? null,
             /*
-             * The recipient decides the kind; there is no separate switch.
-             * Letting the two be set independently is what allowed a list to
-             * claim it was a registry while being private research about a
-             * person — the ambiguity `kind` exists to remove.
+             * Several of us, one present. A boolean rather than a `kind`,
+             * because the recipient already decides mine-vs-else and a
+             * client-supplied kind could disagree with it. See `ListMaker`.
              */
-            'kind' => empty($validated['recipient_id'])
-                ? ListKind::Mine
-                : ListKind::ForSomeone,
+            'together' => ['boolean'],
         ]);
+
+        // The recipient decides the kind and `together` adds one bit; both
+        // creation paths go through the one service so they cannot drift.
+        $list = $maker->make(
+            owner: $owner,
+            current: $current,
+            title: $validated['title'],
+            recipientId: $validated['recipient_id'] ?? null,
+            newRecipient: $validated['new_recipient'] ?? null,
+            together: (bool) ($validated['together'] ?? false),
+        );
 
         return redirect()->to($current->url("lists/{$list->id}"));
     }
 
-    public function show(Request $request, CurrentMarket $current, string $market, string $list): Response
-    {
+    public function show(
+        Request $request,
+        CurrentMarket $current,
+        string $market,
+        string $list,
+        ContributionView $contributor,
+    ): Response {
         $owner = Owner::fromRequest($request);
 
         // Collaborators see it too — a co-giver invited to help choose has to
         // be able to open the thing they were invited to.
         $wishlist = ListAccess::scope(Wishlist::query(), $owner)
-            ->with(['recipient', 'items.group', 'collaborators.user'])
+            ->with(['recipient', 'items.group', 'items.pledges', 'collaborators.user'])
             ->find($list);
 
         if ($wishlist === null) {
@@ -204,6 +204,26 @@ class WishlistController extends Controller
         $target = $wishlist->recipient === null
             ? null
             : GiftTarget::fromRecipient($wishlist->recipient, $current->get());
+
+        /*
+         * Money, on the one kind of list whose owner may see it.
+         *
+         * `ContributionView` returns an empty array for every other case, so
+         * the `...` spread below adds no key at all — and that absence is
+         * load-bearing. A `contributions: null` on every item of a wish list is
+         * a channel that goes live the first time somebody tidies the null
+         * away, and they would tidy it away without knowing what it was for.
+         *
+         * Both arguments matter: a *collaborator* on a group list reaches this
+         * page through `ListAccess::scope()` above, and they are a member of the
+         * pool rather than the organiser collecting it.
+         */
+        $contributions = $contributor->forItems(
+            $wishlist,
+            $wishlist->items,
+            $owner,
+            ListAccess::isOwner($wishlist, $owner),
+        );
 
         return Inertia::render('Lists/Show', [
             'list' => $this->summarise($wishlist, $current),
@@ -365,7 +385,16 @@ class WishlistController extends Controller
                      * has been bought. This is the owner's view, so it must
                      * carry no hint — not a boolean, not a count, not an
                      * ordering difference.
+                     *
+                     * Contributions are the single exception, and only on a
+                     * `group` list, where the owner is the organiser and the
+                     * recipient is a third party who never opens this page.
+                     * Everywhere else the key is absent for exactly the reason
+                     * above.
                      */
+                    ...isset($contributions[$item->id])
+                        ? ['contributions' => $contributions[$item->id]]
+                        : [],
                 ]),
         ]);
     }
@@ -425,6 +454,13 @@ class WishlistController extends Controller
      * They never see any of this. It is their list, so `shouldHideClaimsFrom()`
      * suppresses claim state for them wherever they read it.
      *
+     * **No contributions here, deliberately.** These are somebody else's `mine`
+     * items rendered inside my page, so I am a giver and a total would be legal
+     * — but this is the one place where copying the group-list branch would
+     * hand a breakdown about one person's list to a different person entirely.
+     * If it is ever added, it goes through `ContributionView` with `$isOwner`
+     * false, and never by spreading whatever the shared view builds.
+     *
      * @return list<array<string, mixed>>
      */
     private function asked(GiftTarget $target, Owner $viewer, CurrentMarket $current): array
@@ -468,6 +504,21 @@ class WishlistController extends Controller
             'handedOver' => $list->handed_over_at !== null,
             'eventType' => $list->event_type?->value,
             'eventDate' => $list->event_date?->toDateString(),
+
+            /*
+             * Waiting suggestions, so the index says which list received one.
+             *
+             * The Gift Cove's suggestions card points at `/lists`, and that
+             * destination was chosen deliberately — the index is where you see
+             * which list has something waiting. It just did not say so, which
+             * made the card look like it went to the wrong place.
+             *
+             * Owner-only, and absent rather than zero on a list somebody else
+             * owns: a suggestion is a message addressed to the owner, and a
+             * collaborator learning that one arrived is a leak of the fact that
+             * somebody is thinking about this person.
+             */
+            'suggestions' => $list->suggestions_count ?? null,
             'visibility' => $list->visibility->value,
             'itemCount' => $list->items_count ?? $list->items()->count(),
             'recipient' => $list->recipient === null ? null : [

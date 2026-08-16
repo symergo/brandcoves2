@@ -13,6 +13,11 @@ interface ListSummary {
     covers: string[]
     url: string
     recipient: { id: string; name: string } | null
+    /**
+     * Suggestions waiting on a decision. Null on a list somebody else owns —
+     * that message is addressed to them, not to me.
+     */
+    suggestions: number | null
 }
 
 type ListsView = 'mine' | 'shared' | 'group'
@@ -97,6 +102,22 @@ function ListCard({ list }: { list: ListSummary }) {
                     >
                         {shared ? t('lists.shared_short') : t('lists.private_short')}
                     </span>
+
+                    {/*
+                      Somebody put something forward and it is waiting on you.
+
+                      This is the badge the Gift Cove's suggestions card was
+                      always pointing at: it sends you here so you can see which
+                      list received one, and until now the index said nothing
+                      about them at all.
+                    */}
+                    {list.suggestions !== null && list.suggestions > 0 && (
+                        <span className="rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+                            {list.suggestions === 1
+                                ? t('suggestions.one_waiting')
+                                : t('suggestions.waiting', { count: n(list.suggestions) })}
+                        </span>
+                    )}
                 </div>
             </div>
         </Link>
@@ -116,10 +137,23 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
      */
     const intent = new URLSearchParams(page.url.split('?')[1] ?? '').get('new')
     const [creating, setCreating] = useState(intent !== null)
-    const [forSomeone, setForSomeone] = useState(intent === 'for_someone')
 
-    // The recipient decides the kind; there is no separate switch to disagree with it.
-    const form = useForm({ title: '', recipient_id: '', new_recipient: '' })
+    /*
+     * Three choices, one piece of state.
+     *
+     * `for_me` and `for_someone` differ by whether a recipient is named;
+     * `group` differs from `for_someone` by one further bit, `together`. Held as
+     * one value rather than two booleans so the buttons cannot express a fourth
+     * combination that means nothing — "for me, together" is not a list.
+     */
+    const [audience, setAudience] = useState<'mine' | 'for_someone' | 'group'>(
+        intent === 'group' ? 'group' : intent === 'for_someone' ? 'for_someone' : 'mine',
+    )
+    const forSomeone = audience !== 'mine'
+
+    // The recipient decides the kind and `together` adds one bit; the server
+    // derives both in `ListMaker` so nothing here can contradict it.
+    const form = useForm({ title: '', recipient_id: '', new_recipient: '', together: false })
 
     /*
      * Three views, and only one of them splits.
@@ -231,25 +265,31 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                     */}
                     <fieldset>
                         <legend className="text-sm font-medium">{t('lists.for_whom')}</legend>
-                        <div className="mt-2 flex gap-2">
-                            {[
-                                { value: false, label: t('lists.for_me') },
-                                { value: true, label: t('lists.for_someone_else') },
-                            ].map((choice) => (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {([
+                                { value: 'mine', label: t('lists.for_me') },
+                                { value: 'for_someone', label: t('lists.for_someone_else') },
+                                { value: 'group', label: t('lists.for_group') },
+                            ] as const).map((choice) => (
                                 <button
-                                    key={String(choice.value)}
+                                    key={choice.value}
                                     type="button"
-                                    aria-pressed={forSomeone === choice.value}
+                                    aria-pressed={audience === choice.value}
                                     onClick={() => {
-                                        setForSomeone(choice.value)
+                                        setAudience(choice.value)
 
-                                        if (!choice.value) {
+                                        // Only a group list pools money, and the
+                                        // server re-derives this from the same
+                                        // bit — this just keeps the form honest.
+                                        form.setData('together', choice.value === 'group')
+
+                                        if (choice.value === 'mine') {
                                             form.setData('recipient_id', '')
                                             form.setData('new_recipient', '')
                                         }
                                     }}
                                     className={`rounded-full border px-3 py-1.5 text-sm ${
-                                        forSomeone === choice.value
+                                        audience === choice.value
                                             ? 'border-accent bg-accent/10 text-accent'
                                             : 'border-line hover:border-ink'
                                     }`}
@@ -258,6 +298,13 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                                 </button>
                             ))}
                         </div>
+
+                        {/* What a group list does that the other two do not.
+                            Shown only when chosen: three permanent hints under
+                            three buttons is a paragraph nobody reads. */}
+                        {audience === 'group' && (
+                            <p className="mt-2 text-xs text-ink-soft">{t('lists.for_group_hint')}</p>
+                        )}
                     </fieldset>
 
                     {forSomeone && (

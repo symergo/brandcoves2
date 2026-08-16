@@ -323,7 +323,6 @@ class SearchController extends Controller
 
         $terms = app(ResultTerms::class)->extract(
             $result->groups->items(),
-            $query->market,
             $query->term,
         );
 

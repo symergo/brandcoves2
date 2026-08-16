@@ -113,9 +113,20 @@ class Wishlist extends Model
         return $this->hasMany(WishlistCollaborator::class);
     }
 
+    /**
+     * Is this list *about* somebody other than its owner?
+     *
+     * Delegates rather than re-testing the enum. It used to compare against
+     * `ForSomeone` alone, which silently disagreed with
+     * `ListKind::isForSomeoneElse()` the moment `Group` existed — and
+     * `SharedListController` uses this to decide whose name a visitor is shown.
+     * A group list would have answered with the *organiser's* name where the
+     * recipient's belongs, telling the people buying the present that the list
+     * belongs to the person it is a surprise for.
+     */
     public function isForSomeoneElse(): bool
     {
-        return $this->kind === ListKind::ForSomeone;
+        return $this->kind->isForSomeoneElse();
     }
 
     /**
@@ -128,6 +139,36 @@ class Wishlist extends Model
     public function allowsClaiming(): bool
     {
         return $this->kind->allowsClaiming();
+    }
+
+    /**
+     * May this person put money in?
+     *
+     * Two questions in one, deliberately, because they are one question — and
+     * because the pledge endpoint used to ask them separately and got the second
+     * one wrong for a group list.
+     *
+     * On a `mine` list the owner **is** the person being surprised, so
+     * contributions are hidden from them absolutely (invariant #4) and they may
+     * not pledge on their own list. On a `group` list the owner is the
+     * organiser: the recipient is a third party who never sees the list at all,
+     * so there is no surprise to protect from its owner, and refusing them
+     * would lock the one person who fronts the money out of the pool.
+     *
+     * A `for_someone` list allows neither. It is one person's research, and
+     * there is nothing to pool against.
+     *
+     * Somebody with no identity at all is refused too — a pledge is a row
+     * belonging to a person, and there is nobody here to own it or to take it
+     * back later. Asked here rather than only at the endpoint so the button and
+     * the POST answer the same question: this is the value the page renders
+     * from, and a control that 403s when pressed is worse than no control.
+     */
+    public function allowsContributionsFrom(Owner $viewer): bool
+    {
+        return $viewer->exists()
+            && $this->kind->allowsContributions()
+            && ($this->kind->ownerSeesContributions() || ! $this->shouldHideClaimsFrom($viewer));
     }
 
     /**

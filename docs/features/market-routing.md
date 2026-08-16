@@ -37,9 +37,14 @@ French visitor.
 
 ## Root redirect
 
-`/` guesses from `Accept-Language` via `Market::fromAcceptLanguage()` and issues a **302, never a
-301**. The guess is based on a request header; caching it into permanence would pin a visitor to a
-market they never chose.
+`/` sends the visitor to `MarketPreference::resolve()` — **the stored choice first, then a guess from
+`Accept-Language`** — and issues a **302, never a 301**. The destination varies per visitor; caching
+it into permanence would pin someone to a market they never chose.
+
+For the same reason the response carries `Cache-Control: no-store, private`. It varies on a cookie
+*and* on a request header, so a shared cache holding one copy would hand the next visitor somebody
+else's market. `private` alone was not enough: a browser would still reuse a stale guess after the
+visitor switched.
 
 Matching is deliberately conservative — exact BCP 47 tag first (`nl-BE` → `be-nl`), then
 language-only (`fr` → `be-fr`), then the default. A wrong guess shows the wrong currency and the
@@ -47,6 +52,69 @@ wrong merchants, so anything unrecognised falls back rather than being approxima
 
 Negotiation only ever selects a **published** market. A Spanish `Accept-Language` resolves to the
 default, not to `es`.
+
+## Remembering the choice
+
+`Accept-Language` is the browser's language list and nothing else — no geolocation, no account
+setting. That is a fair first guess and a bad permanent answer, and the gap is not hypothetical: a
+Belgian machine whose browser language is plain "Nederlands" reports `nl-NL`, so it lands on the
+**Dutch** catalogue. Chrome and Windows offer "Nederlands" far more prominently than "Nederlands
+(België)", so this is the common case in Belgium, not an edge one.
+
+Before the cookie, clicking the Belgian flag fixed it only until the next visit to the bare domain,
+which re-ran the same negotiation and sent the visitor straight back. **The switcher looked broken
+because its effect had no memory.**
+
+`bc_market` holds the choice for a year — encrypted, `httpOnly`, `SameSite=Lax`, same lifetime as
+`bc_visitor`. The expiry does not slide: refreshing it would mean a `Set-Cookie` on every request to
+spare a visitor who has not returned in twelve months one flag click.
+
+### Only an explicit choice is recorded
+
+The cookie is written by `MarketPreferenceController` and **by nothing else** — in particular not by
+`SetMarket`, which would have been a one-line change and the wrong one. `SetMarket` runs on every
+market page, including one reached by opening a friend's shared `/nl-nl/p/123` link, so writing there
+would let any link anyone sends you silently repoint your home market. A guess must never be able to
+promote itself into a preference.
+
+### Why the switcher POSTs
+
+`POST /market`, not a link. A GET would be a URL that silently rewrites the recipient's market
+preference — exactly the shape of thing that gets pasted into a chat and clicked. As a POST it needs
+a CSRF token, so only this site's own switcher can spend it.
+
+The switcher therefore builds and submits a hidden form rather than setting `location.href`. It was
+already doing a full document load — the market changes catalogue, currency and language at once, and
+anything less risks the previous market's prices sitting under the new copy — so nothing about how it
+feels changes.
+
+It redirects to the market **home**, not to the equivalent of the current page. Product identity is
+market-scoped, so the same path under another market is usually a 404; `Alternates` resolves genuine
+equivalents, but only for pages that have one and only for crawlers.
+
+### Re-validated on read
+
+`MarketPreference::stored()` re-checks `isPublished()` every time. The cookie outlives deploys by a
+year, so it can name a market that has since been withdrawn — honouring that would pin a visitor to a
+catalogue with no supply, the one outcome `isPublished()` exists to prevent. An unhonourable cookie
+falls through to negotiation rather than erroring.
+
+### One entry point
+
+The root redirect, the legacy-URL 404 mapper and the guest/auth redirects in `bootstrap/app.php` all
+ask `MarketPreference::resolve()`. A visitor who chose Belgium gets Belgium from those, not just from
+the homepage.
+
+**With one known gap: the legacy-URL 404 mapper cannot see the cookie.** A 404 is thrown by the
+router when nothing matches, which is *before* the `web` group runs — so `EncryptCookies` has not
+decrypted anything and `$request->cookie()` hands back the raw ciphertext. `Market::tryFrom()` fails
+on it and `stored()` returns null, so that path silently negotiates from `Accept-Language`.
+
+Left as is deliberately. The failure mode is "behaves the way it did before the cookie existed" on
+inbound v1 WordPress links only, and closing it means hand-decrypting the cookie against
+`CookieValuePrefix` outside the middleware that owns that job — more moving parts, and version-bound
+to internals, than the bug is worth. If it ever does matter, the cheaper fix is to promote
+`EncryptCookies` to global middleware rather than to decrypt by hand here.
 
 ## Published markets
 
@@ -87,6 +155,10 @@ page view would be a needless load on the primary.
 ## Files
 
 - `app/Enums/Market.php` — including `isPublished()` / `published()`
+- `app/Support/MarketPreference.php` — the stored choice, and the one place that resolves a market
+  for a request whose URL does not carry one
+- `app/Http/Controllers/MarketPreferenceController.php`
+- `resources/js/Components/MarketSwitcher.tsx`
 - `app/Http/Middleware/SetMarket.php`
 - `app/Services/Seo/Alternates.php` — hreflang, published only
 - `app/Http/Controllers/SitemapController.php` — sitemap index and `robots.txt`
@@ -98,8 +170,29 @@ page view would be a needless load on the primary.
 ## Verification
 
 ```bash
-curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' --max-redirs 0 http://localhost:8000/
-# 302 http://localhost:8000/be-nl   (with a Dutch Accept-Language)
+curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' --max-redirs 0 \
+  -H 'Accept-Language: nl-BE,nl;q=0.9' http://localhost:8000/
+# 302 http://localhost:8000/be-nl
+
+# The guess a Belgian browser set to plain "Nederlands" actually produces —
+# the reason the cookie exists.
+curl -s -o /dev/null -w '%{redirect_url}\n' --max-redirs 0 \
+  -H 'Accept-Language: nl-NL,nl;q=0.9' http://localhost:8000/
+# http://localhost:8000/nl-nl
+
+# /market is CSRF-protected, so curl alone gets a 419 — that is the control
+# working, not a fault.
+curl -s -o /dev/null -w '%{http_code}\n' -X POST -d 'market=be-nl' http://localhost:8000/market
+# 419
+
+# The override is easiest to check in a browser: switch to Belgium, then open
+# the bare domain in a new tab with the browser language still set to Dutch
+# (Netherlands). It must stay on /be-nl. The suite covers it headlessly —
+# tests/Feature/MarketRoutingTest.php::a_chosen_market_beats_the_browser_language
+
+# Not cacheable: it varies per visitor.
+curl -s -D - -o /dev/null http://localhost:8000/ | grep -i cache-control
+# Cache-Control: no-store, private
 
 curl -s -D - -o /dev/null http://localhost:8000/be-fr | grep -i content-language
 # Content-Language: fr-BE

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\CollaboratorRole;
-use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistCollaborator;
+use App\Services\Wishlist\Invitations;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -28,8 +28,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class WishlistCollaboratorController extends Controller
 {
-    public function store(Request $request, CurrentMarket $current, string $market, string $list): RedirectResponse
-    {
+    public function store(
+        Request $request,
+        CurrentMarket $current,
+        string $market,
+        string $list,
+        Invitations $invitations,
+    ): RedirectResponse {
         $wishlist = $this->findOwned($request, $list);
 
         $validated = $request->validate([
@@ -37,26 +42,28 @@ class WishlistCollaboratorController extends Controller
             'role' => ['nullable', 'string', 'in:'.implode(',', CollaboratorRole::values())],
         ]);
 
-        $user = User::query()->whereRaw('lower(email) = ?', [mb_strtolower($validated['email'])])->first();
-
         /*
-         * Deliberately not an oracle.
+         * Deliberately not an oracle, and now genuinely so.
          *
-         * The response is identical whether or not that address has an account,
-         * because otherwise anyone could type addresses into this form and learn
-         * which of their friends use the site. Same reasoning as the magic-link
-         * flow and the cove signup.
+         * The response must be identical whether or not that address has an
+         * account, or anyone could type addresses into this form and learn
+         * which of their friends use the site. It used to be identical because
+         * the no-account branch did *nothing* — the owner was told "they can see
+         * this list now" when nobody had been invited to anything, which is the
+         * common case: the person whose help you want is exactly the person who
+         * has not signed up yet.
          *
-         * An invitation to an address with no account is therefore a no-op today
-         * rather than an error. Delivering it by email is the natural next step
-         * and it changes nothing about this check.
+         * `Invitations::invite()` now writes a row and queues a mail in both
+         * cases, so the two paths are the same act rather than merely the same
+         * response.
          */
-        if ($user !== null && $user->id !== $wishlist->owner_user_id) {
-            WishlistCollaborator::updateOrCreate(
-                ['wishlist_id' => $wishlist->id, 'user_id' => $user->id],
-                ['role' => $validated['role'] ?? CollaboratorRole::Viewer->value],
-            );
-        }
+        $invitations->invite(
+            list: $wishlist,
+            from: $request->user(),
+            email: $validated['email'],
+            role: CollaboratorRole::tryFrom($validated['role'] ?? '') ?? CollaboratorRole::Viewer,
+            current: $current,
+        );
 
         return back()->with('success', __('site.lists.collaborator_invited'));
     }

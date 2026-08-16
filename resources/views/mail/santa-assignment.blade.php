@@ -6,6 +6,13 @@
 <x-mail::message>
 # {{ $groupTitle }}
 
+@if ($changed ?? false)
+{{-- Says up front that this replaces the earlier mail. Without it the second
+     assignment reads as a duplicate of the first and gets ignored, which is
+     the exact failure a partial repair exists to avoid. --}}
+{{ __('site.santa.email_changed_intro') }}
+
+@endif
 {{ __('site.santa.email_intro', ['name' => $gifteeName]) }}
 
 @if ($budget)

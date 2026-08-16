@@ -113,7 +113,10 @@ ${result.grid}`}
                         href={`/${market.key}/l/${token}`}
                         className="mt-2 inline-block rounded-lg border border-line px-4 py-2 text-sm"
                     >
-                        {t('lists.share')}
+                        {/* This goes to the shared list, so it says so.
+                            `lists.share` is the name of a different control on
+                            a different page, and it was labelling this one. */}
+                        {t('lists.view_list')}
                     </a>
                 </section>
             ) : (

@@ -27,6 +27,12 @@ interface Props {
         lists: number
         people: number
         santaGroups: number
+        /**
+         * The visitor's own registry, or null when they have none. Carries the
+         * occasion and the date and deliberately no claim state — this is the
+         * owner's front page (invariant #4).
+         */
+        registry: { title: string; occasion: string; date: string | null; url: string } | null
         urls: { gift: string; lists: string; santa: string }
     }
     coves: Cove[]
@@ -37,6 +43,25 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
+
+    /*
+     * Day and month, plus the year only when it is not this one.
+     *
+     * A registry is often dated a long way out — a wedding gets booked eighteen
+     * months ahead — and "14 Jun" for a date in 2027 is wrong in the one
+     * direction that matters here. Adding the year to every date instead makes
+     * the ordinary case heavier than it needs to be.
+     */
+    function registryDate(iso: string): string {
+        const date = new Date(iso)
+        const thisYear = date.getFullYear() === new Date().getFullYear()
+
+        return new Intl.DateTimeFormat(market.hrefLang, {
+            day: 'numeric',
+            month: 'short',
+            ...(thisYear ? {} : { year: 'numeric' }),
+        }).format(date)
+    }
 
     return (
         <>
@@ -212,7 +237,10 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                 </div>
                 <p className="mt-1 max-w-2xl text-ink-soft">{t('home.organise_intro')}</p>
 
-                <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {/* Five across at desktop rather than four-plus-a-widow. The
+                    cards are illustration-led and scale down happily; a lone
+                    fifth on its own row reads as an afterthought bolted on. */}
+                <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     {(
                         [
                             {
@@ -244,6 +272,27 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                                     gifting.santaGroups > 0
                                         ? t('home.gifting_santa_count', { count: n(gifting.santaGroups) })
                                         : t('home.gifting_santa_hint'),
+                            },
+                            /*
+                              A registry is a wish list with an occasion and a
+                              date on it, so the card leads to that list rather
+                              than to a surface of its own — there isn't one, and
+                              inventing a URL for a thing that is really a panel
+                              on your own list is how two names for one page
+                              start.
+                            */
+                            {
+                                key: 'registry',
+                                href: gifting.registry?.url ?? gifting.urls.lists,
+                                name: t('home.organise_registry'),
+                                hint: gifting.registry
+                                    ? gifting.registry.date
+                                        ? t('home.organise_registry_on', {
+                                              occasion: gifting.registry.occasion,
+                                              date: registryDate(gifting.registry.date),
+                                          })
+                                        : gifting.registry.occasion
+                                    : t('home.organise_registry_hint'),
                             },
                         ] as { key: ListSceneKey; href: string; name: string; hint: string }[]
                     ).map((tool) => (
@@ -291,13 +340,51 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                 </div>
                 <p className="mt-1 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
 
-                <ul className="mt-6 grid gap-4 sm:grid-cols-3">
+                <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {(
                         [
-                            { key: 'daily', href: `${base}/daily`, name: t('nav.daily') },
-                            { key: 'surprise', href: `${base}/surprise`, name: t('nav.surprise') },
-                            { key: 'idea', href: `${base}/guides`, name: t('nav.coves') },
-                        ] as { key: CoveKey; href: string; name: string }[]
+                            {
+                                key: 'daily',
+                                href: `${base}/daily`,
+                                name: t('nav.daily'),
+                                what: t('discover_cove.daily_what'),
+                            },
+                            {
+                                key: 'surprise',
+                                href: `${base}/surprise`,
+                                name: t('nav.surprise'),
+                                what: t('discover_cove.surprise_what'),
+                            },
+                            {
+                                key: 'idea',
+                                href: `${base}/guides`,
+                                name: t('nav.coves'),
+                                what: t('discover_cove.idea_what'),
+                            },
+                            /*
+                              The fourth is the one that is not ours.
+
+                              Daily, Surprise and the Coves are all this site
+                              showing you something it chose; Ask others is the
+                              one where the answer comes from another person. Its
+                              sentence comes from `ask.nav_hint` — the same key
+                              the Discover hub uses — so the two pages describing
+                              it cannot drift into describing it differently.
+
+                              That is also why `what` is now spelled out per
+                              entry rather than derived from the key: three of
+                              these live under `discover_cove.*` and this one
+                              does not, and inventing a fourth `discover_cove`
+                              key would be a second copy of a sentence that
+                              already exists.
+                            */
+                            {
+                                key: 'ask',
+                                href: `${base}/ask`,
+                                name: t('ask.title'),
+                                what: t('ask.nav_hint'),
+                            },
+                        ] as { key: CoveKey; href: string; name: string; what: string }[]
                     ).map((cove) => (
                         <li key={cove.key}>
                             <Link
@@ -306,7 +393,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             >
                                 <CoveIllustration name={cove.key} className="h-28 w-full" />
                                 <h3 className="mt-4 font-medium">{cove.name}</h3>
-                                <p className="mt-2 text-sm text-ink-soft">{t(`discover_cove.${cove.key}_what`)}</p>
+                                <p className="mt-2 text-sm text-ink-soft">{cove.what}</p>
                             </Link>
                         </li>
                     ))}

@@ -19,6 +19,19 @@ class GiftPledge extends Model
 {
     protected $guarded = [];
 
+    /**
+     * Belt and braces beside `ContributionView`.
+     *
+     * Every payload is built field by field there, so these never reach a
+     * client by the intended route. This is insurance against the unintended
+     * one: a `->toArray()` on a loaded relation, added in a hurry by somebody
+     * who did not know that `user_id` next to an amount de-anonymises the whole
+     * pool. The same reasoning as `SecretSantaMember::$hidden`.
+     *
+     * @var list<string>
+     */
+    protected $hidden = ['user_id', 'anon_id'];
+
     protected function casts(): array
     {
         return ['amount' => 'integer'];

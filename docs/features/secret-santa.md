@@ -156,15 +156,75 @@ rounding difference gets into a budget comparison.
 
 ## Files
 
-- `app/Services/Gift/SecretSantaDraw.php`, `DrawImpossible.php`
+- `app/Services/Gift/SecretSantaDraw.php`, `SantaRepair.php`, `DrawImpossible.php`
 - `app/Models/SecretSantaGroup.php`, `SecretSantaMember.php`, `app/Enums/SantaStatus.php`
 - `app/Http/Controllers/SecretSantaController.php`
 - `app/Mail/SecretSantaAssignmentMail.php`, `resources/views/mail/santa-assignment.blade.php`
 - `resources/js/Pages/Santa/Group.tsx`, `Join.tsx`, `Me.tsx`
-- `tests/Unit/SecretSantaDrawTest.php`, `tests/Feature/SecretSantaTest.php`
+- `database/migrations/2026_08_16_000300_a_santa_member_can_leave.php`
+- `tests/Unit/SecretSantaDrawTest.php`, `SantaRepairTest.php`
+- `tests/Feature/SecretSantaTest.php`, `SantaRepairFlowTest.php`
 
-## Not built
+## Repairing the chain
 
-Year-on-year group reuse with a "don't repeat last year's pairing" exclusion, and
-collapsing the chain when somebody drops out. Both were specced in v1 and neither
-was built there either.
+Built 2026-08-16. Somebody drops out of a drawn group, or an organiser needs one pairing changed.
+
+**Why not simply draw again.** Every member is holding an email naming one person, and a sent email
+cannot be unsent. Most people never open the group page after that mail. A full re-draw silently
+invalidates all of them, and the failure does not surface as an error — it surfaces weeks later as
+several people having bought for the wrong person. So a repair changes **as few assignments as it
+can**, and mails exactly the people whose assignment moved.
+
+**The collapse.** An assignment set is a permutation. Remove **X**, who has a giver **G** and a
+giftee **T**, and the hole closes with one write: `G → T`. One email, to G. T is told nothing — T's
+*giver* changed, and T never knew who that was.
+
+| Case | What happens |
+|---|---|
+| Group not drawn | mark removed, stop. No collapse, no email |
+| Ordinary | `G → T`; one write, one email |
+| G excludes T | re-draw **the cycle X was in**, minus X; everyone in that cycle is emailed |
+| G === T (a 2-cycle) | whatever remains is re-drawn |
+| Fewer than two would remain | refused — `SecretSantaDraw::assign()` already throws there, so the refusal is inherited rather than reimplemented |
+
+Re-drawing the *cycle* rather than the group is why this stays cheap: a permutation is a set of
+disjoint cycles and a removal only disturbs the one containing the leaver, so everybody outside it
+keeps the person they were already told about.
+
+**A redraw is a transposition, not a re-roll** — which the copy had already committed to before the
+feature existed: `santa.redrawn` reads *"Redrawn. Both people have been emailed."* Swapping two
+givers' giftees is also the only thing that *can* happen: giving one member somebody else's giftee
+would leave that giftee with two givers and somebody with none.
+
+`app/Services/Gift/SantaRepair.php` is pure — ids in, ids out, no database — for the same reason
+`SecretSantaDraw` is. Both methods return **only the changed pairs**, so a caller cannot accidentally
+rewrite the untouched members and re-mail the lot.
+
+> **`notify()` had to change, and the bug it would have caused is worth recording.** It resolved each
+> giftee from the collection it was *given*, which is fine for a draw (everybody) and silently wrong
+> for a repair (two people out of twelve, whose giftees are almost certainly not among those two). It
+> would have queued zero mails while the write succeeded — the repair looks done and one person is
+> shopping for someone who has moved. Giftees now resolve from `allMembers()`.
+
+### Soft removal, and deliberately not `SoftDeletes`
+
+`removed_at` on the member, with a partial index. Two concrete reasons, both specific to this table:
+
+- `assigned_member_id` is **encrypted text with no foreign key** — it cannot have one, because the
+  value is ciphertext. A hard `DELETE` leaves whoever was assigned to the leaver pointing at an id
+  that no longer resolves, and `mine()` null-coalesces, so their page quietly stops naming anybody
+  with nothing in the logs.
+- `SoftDeletes` installs a **global scope** that would rewrite every existing query on the model.
+  The precedent here is the explicit pair: `SecretSantaGroup::members()` filters, `allMembers()`
+  does not — the same split as `Wishlist::items()` / `allItems()`.
+
+`SantaStatus` stays two-valued: it answers "what may happen next", and a group with somebody removed
+is still simply Drawn.
+
+## Still not built
+
+**Year-on-year reuse** with a "don't repeat last year's pairing" exclusion. It needs last year's
+pairings, and storing them as plain JSON would put the whole game in the clear and make the
+encryption on `assigned_member_id` decorative — the exact defect this document records v1 having. It
+waits for an encrypted history column, and members are asked to retype it by hand in the meantime
+(the exclusions hint says "whoever you had last year").

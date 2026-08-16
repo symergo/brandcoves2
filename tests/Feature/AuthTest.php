@@ -241,6 +241,58 @@ class AuthTest extends TestCase
 
         // And the route itself is gone, not just the button.
         $this->get('/be-nl/auth/google')->assertNotFound();
+        $this->get('/auth/google/callback')->assertNotFound();
+    }
+
+    #[Test]
+    public function the_callback_is_registered_where_google_is_told_to_send_people(): void
+    {
+        /*
+         * GOOGLE_REDIRECT_URI is "${APP_URL}/auth/google/callback", with no
+         * market segment — and for a while the only callback route was inside
+         * the {market} prefix, so that URI matched nothing. Sign-in was not
+         * broken subtly; every visitor came back from Google to a 404, and it
+         * would have been invisible until the day credentials were first set.
+         *
+         * Socialite still rejects this request — there is no OAuth state on it —
+         * which is exactly the path a cancelled consent screen takes: back to
+         * the login page, in the market the visitor left from.
+         */
+        $this->configureGoogle();
+
+        $this->withSession(['auth.market' => 'be-nl'])
+            ->get('/auth/google/callback')
+            ->assertRedirect('/be-nl/login');
+    }
+
+    #[Test]
+    public function a_callback_with_no_session_left_still_goes_somewhere_real(): void
+    {
+        /*
+         * The session carries the market across the round-trip, and a slow
+         * visitor can outlive it. With the {market} route gone there is no
+         * segment to fall back on, so an unguarded null built "//login" — which
+         * a browser reads as protocol-relative and resolves against a host
+         * called "login", sending the visitor off-site entirely.
+         */
+        $this->configureGoogle();
+
+        $location = $this->get('/auth/google/callback')->headers->get('Location');
+
+        $this->assertNotNull($location);
+        $this->assertMatchesRegularExpression(
+            '#^(https?://[^/]+)?/('.implode('|', array_map('preg_quote', Market::values())).')/login$#',
+            $location,
+        );
+    }
+
+    private function configureGoogle(): void
+    {
+        config([
+            'services.google.client_id' => 'test-client-id',
+            'services.google.client_secret' => 'test-client-secret',
+            'services.google.redirect' => 'http://localhost/auth/google/callback',
+        ]);
     }
 
     #[Test]

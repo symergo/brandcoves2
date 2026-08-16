@@ -23,17 +23,31 @@ export default function ManualItem({
     action,
     data = {},
     hint,
+    withNote = false,
 }: {
     action: string
     data?: Record<string, string>
     /** Why this exists, in the words of whichever page is showing it. */
     hint: string
+    /**
+     * Offer a note field.
+     *
+     * **Owner side only.** `wishlist_items.note` has been accepted and stored
+     * since the feature shipped and had no input anywhere; adding one here is
+     * safe because an owner writing "size M, in blue" on their own list is not
+     * a moderation surface by definition. The visitor-side usage on
+     * `Lists/Shared` deliberately leaves this off — free text from a stranger
+     * on an unauthenticated page is the thing wishlists.md deferred, and the
+     * considered version of it is the Ask others board, not this input.
+     */
+    withNote?: boolean
 }) {
     const { t } = useTranslations()
     const [open, setOpen] = useState(false)
     const [title, setTitle] = useState('')
     const [url, setUrl] = useState('')
     const [price, setPrice] = useState('')
+    const [note, setNote] = useState('')
     const [error, setError] = useState<string | null>(null)
 
     function submit(event: React.FormEvent) {
@@ -57,6 +71,7 @@ export default function ManualItem({
                 price: price.trim() === ''
                     ? null
                     : Math.round(Number(price.replace(',', '.')) * 100),
+                ...(withNote ? { note: note.trim() || null } : {}),
             },
             {
                 preserveScroll: true,
@@ -64,6 +79,7 @@ export default function ManualItem({
                     setTitle('')
                     setUrl('')
                     setPrice('')
+                    setNote('')
                     setOpen(false)
                 },
                 // Server-side rules are the authority — the link check in
@@ -127,6 +143,18 @@ export default function ManualItem({
                     />
                 </label>
             </div>
+
+            {withNote && (
+                <label className="block text-sm font-medium">
+                    {t('suggestions.note_label')}
+                    <input
+                        maxLength={500}
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                    />
+                </label>
+            )}
 
             {/* Said plainly rather than discovered: nothing is fetched from the
                 link, so the title is the only thing that will ever show. */}

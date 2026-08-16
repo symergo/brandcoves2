@@ -36,12 +36,27 @@ class SecretSantaAssignmentMail extends Mailable
         public readonly ?string $budget = null,
         public readonly ?string $exchangeDate = null,
         public readonly bool $gifteeHasList = false,
+
+        /**
+         * This supersedes a mail they have already had.
+         *
+         * One flag on the existing mailable rather than a second class. The
+         * property that makes this mail safe is that it carries no product
+         * data and therefore has nothing to filter (`Source::allowsEmail()`);
+         * a second mailable is exactly how that gets lost the next time
+         * somebody edits one of them.
+         */
+        public readonly bool $changed = false,
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('site.santa.email_subject', ['name' => $this->gifteeName], $this->market->language()),
+            subject: __(
+                $this->changed ? 'site.santa.email_changed_subject' : 'site.santa.email_subject',
+                ['name' => $this->gifteeName],
+                $this->market->language(),
+            ),
         );
     }
 
@@ -57,6 +72,7 @@ class SecretSantaAssignmentMail extends Mailable
                 'budget' => $this->budget,
                 'exchangeDate' => $this->exchangeDate,
                 'gifteeHasList' => $this->gifteeHasList,
+                'changed' => $this->changed,
             ],
         );
     }

@@ -123,11 +123,64 @@ class HomeController extends Controller
                     ->where('owner_user_id', $user->id)
                     ->count(),
 
+            // A registry, if this visitor has one. Null is the ordinary case,
+            // and the card then explains what one is instead of naming it.
+            'registry' => $this->registry($owner, $current),
+
             'urls' => [
                 'gift' => $current->url('gift'),
                 'lists' => $current->url('lists'),
                 'santa' => $current->url('santa'),
             ],
+        ];
+    }
+
+    /**
+     * The visitor's own registry — a wish list with an occasion on it.
+     *
+     * Not a fourth kind of list: a registry is still `mine`, still claimable,
+     * still owned by the person it is for, and `event_type` is what makes it
+     * one. So this looks for the occasion rather than for a kind.
+     *
+     * The **soonest upcoming** one, not the newest. A registry is a date people
+     * are buying towards, and last summer's wedding is not the one you are
+     * still adding to — while a list with a date in the past is exactly the one
+     * that should stop occupying the front page. Past dates are excluded
+     * outright; a registry with no date at all still counts, because the
+     * occasion alone is enough to make it one.
+     *
+     * Carries no claim state of any kind. This is the owner's own front page
+     * (invariant #4), so it says what the list is *for* and never how much of
+     * it has been bought.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function registry(Owner $owner, CurrentMarket $current): ?array
+    {
+        if (! $owner->exists()) {
+            return null;
+        }
+
+        $registry = $owner->scope(Wishlist::query())
+            ->where('market', $current->value())
+            ->whereNotNull('event_type')
+            ->where(fn ($q) => $q
+                ->whereNull('event_date')
+                ->orWhere('event_date', '>=', now()->toDateString()))
+            // Nulls last, so a dated registry outranks an undated one rather
+            // than losing to it on an ORDER BY that treats null as smallest.
+            ->orderByRaw('event_date IS NULL, event_date')
+            ->first();
+
+        if ($registry === null) {
+            return null;
+        }
+
+        return [
+            'title' => $registry->title,
+            'occasion' => $registry->event_type->label(),
+            'date' => $registry->event_date?->toDateString(),
+            'url' => $current->url("lists/{$registry->id}"),
         ];
     }
 

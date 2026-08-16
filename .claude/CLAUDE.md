@@ -133,6 +133,11 @@ These are the rules the product depends on. Breaking one is a bug even when test
 - **`market`, never `locale`.** Laravel already has an app locale for framework strings. `be-nl` and
   `nl-nl` are the same *language* and different *markets*. `App\Enums\Market` is the single source of
   truth; `SetMarket` middleware resolves it from the `/{market}/` route prefix.
+- **A chosen market beats a guessed one, and only the switcher chooses.** When a URL carries no
+  market, `MarketPreference::resolve()` decides: the `bc_market` cookie first, `Accept-Language`
+  second. Write that cookie **only** from an explicit switcher POST — never from `SetMarket`, or
+  opening a friend's shared `/nl-nl/...` link silently repoints the visitor's home market. See
+  [docs/features/market-routing.md](docs/features/market-routing.md).
 - **Enum-ish columns are `string` + a CHECK constraint**, not native Postgres enums. Altering a PG
   enum cannot run inside a transaction, which makes every future value addition a deploy hazard.
   Cast to a PHP enum on the model.
@@ -164,23 +169,37 @@ Two mechanisms, because they fail differently:
 
 ## Deployment
 
-**Two branches, two apps, and both auto-deploy.** Read from Coolify on 2026-08-10:
+**Two branches, two apps, and both auto-deploy.** Domains verified live on 2026-08-16:
 
 | App | Tracks | Auto-deploy | Domain |
 |---|---|---|---|
-| `brandcoves2-staging` | `staging` | **on** | `staging.brandcoves.com` |
-| `brandcoves2-prod` | `main` | **on** | `brandcoves.com` |
+| `brandcoves2-staging` | `staging` | **on** | `staging.giftcoves.com` — `staging.brandcoves.com` 301s to it |
+| `brandcoves2-prod` | `main` | **on** | `brandcoves.com` — still the old domain |
 
 `git push origin staging` → staging. Verify, then fast-forward `main` — **which ships to production
 immediately**. There is no confirmation step and no human gate: the fast-forward *is* the deploy.
 
-> **The site is GiftCoves; the infrastructure is not, yet.** The rename landed in the codebase on
-> 2026-08-15 and Coolify still serves the old domains, so the table above is current. The domains,
-> `APP_NAME`, `APP_URL` and the Google OAuth callback all have to move together — a deploy that
-> changes `APP_NAME` without the rest logs every visitor out and breaks Google sign-in. See
-> [docs/features/rebrand.md](docs/features/rebrand.md). The Coolify **application** names stay
+> **The rename is half done: staging has moved, production has not.** `staging.giftcoves.com` serves
+> and `staging.brandcoves.com` 301s onto it, so `RedirectLegacyHost` is live there with
+> `canonical_host` set. Production still answers on `brandcoves.com` with `canonical_host` unset.
+>
+> **`giftcoves.com` is pointed but not attached.** DNS resolves to `51.75.78.173`, and that is all:
+> over HTTP the server 404s (no Traefik route for the host) and over HTTPS it presents an untrusted
+> certificate (none was ever issued for it). Adding the domain to `brandcoves2-prod` in Coolify is
+> what completes it — do not read the working DNS as a working domain.
+>
+> The domains, `APP_NAME`, `APP_URL` and the Google OAuth callback all have to move together — a
+> deploy that changes `APP_NAME` without the rest logs every visitor out and breaks Google sign-in.
+> See [docs/features/rebrand.md](docs/features/rebrand.md). The Coolify **application** names stay
 > `brandcoves2-*`: renaming them invalidates every issued deploy webhook and changes nothing a
 > visitor sees.
+
+> **`main` is well behind `staging` right now.** `/health` on 2026-08-16 reported production built
+> `2026-08-10` at migration `2026_08_10_000100_add_kind_to_guides`, against staging's `2026-08-15`
+> and `2026_08_15_000100_allow_the_group_list_kind`. Both apps auto-deploy, so this is drift in the
+> fast-forward, not in the pipeline — and it means production still runs the old `Market::default()`
+> of `be-nl`, which is why `brandcoves.com/` sends a header-less request to `/be-nl` while staging
+> sends it to `/en`. Check `/health` on both before assuming a fix is live.
 
 > **Planned, and not in effect.** A one-branch model — both apps on `main`, production behind a
 > manual trigger — is designed in [docs/deployment.md](docs/deployment.md), to end the drift that

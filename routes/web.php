@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Market;
 use App\Http\Controllers\AlertController;
+use App\Http\Controllers\AskController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BrandController;
@@ -21,7 +22,9 @@ use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\ListInvitationController;
 use App\Http\Controllers\ListQuizController;
+use App\Http\Controllers\MarketPreferenceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\PickReactionController;
@@ -39,6 +42,8 @@ use App\Http\Controllers\SuggestionController;
 use App\Http\Controllers\WishlistCollaboratorController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
+use App\Support\MarketPreference;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -60,13 +65,40 @@ Route::get('/sitemap/{market}/{page}.xml', [SitemapController::class, 'market'])
     ->whereNumber('page')
     ->name('sitemap.market');
 
-// Root sends visitors to their best-guess market. A 302, never a 301: the guess
-// is based on a request header and must not be cached into permanence.
-Route::get('/', function () {
-    $market = Market::fromAcceptLanguage(request()->header('Accept-Language'));
+// Root sends visitors to the market they chose, or failing that to our best
+// guess from Accept-Language. A 302, never a 301: this destination varies per
+// visitor and must not be cached into permanence.
+Route::get('/', function (Request $request) {
+    $market = MarketPreference::resolve($request);
 
-    return redirect('/'.$market->value, 302);
+    // Per-visitor, so it must not land in a shared cache — the response varies
+    // on a cookie and on a request header, and a CDN that kept one copy would
+    // hand the next visitor somebody else's market. `private` alone would let a
+    // browser reuse a stale guess after the visitor switched, so: no-store.
+    return redirect('/'.$market->value, 302)
+        ->header('Cache-Control', 'no-store, private');
 })->name('root');
+
+// Where the switcher posts a choice. Unprefixed and POST-only; the reasoning is
+// in MarketPreferenceController.
+Route::post('/market', MarketPreferenceController::class)->name('market.choose');
+
+/*
+ * Where Google sends the visitor back. Unprefixed, and it has to be.
+ *
+ * Google matches a redirect URI by exact string, so a market-scoped callback
+ * would mean registering one URI per market per environment — five markets
+ * times three environments, kept in sync with the Market enum by hand forever.
+ * One URI is registered instead, and the market survives the round-trip in the
+ * session, stashed by GoogleController::redirect() before the visitor leaves.
+ *
+ * The outbound leg stays market-scoped at /{market}/auth/google: it is a link
+ * we generate, not a URI Google has to recognise, and it needs the market in
+ * hand to stash it.
+ */
+Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
+    ->middleware('guest')
+    ->name('login.google.callback');
 
 /*
 |--------------------------------------------------------------------------
@@ -132,9 +164,8 @@ Route::prefix('{market}')->group(function () {
             ->middleware('throttle:20,1')
             ->name('login.magic');
 
+        // Outbound only. The callback is registered unprefixed, above.
         Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('login.google');
-        Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
-            ->name('login.google.callback');
     });
 
     Route::post('/logout', [MagicLinkController::class, 'logout'])
@@ -185,6 +216,19 @@ Route::prefix('{market}')->group(function () {
     Route::delete('/lists/{list}/collaborators/{collaborator}', [WishlistCollaboratorController::class, 'destroy'])
         ->middleware('auth')
         ->name('lists.collaborators.destroy');
+
+    /*
+     * Following an invitation to help choose.
+     *
+     * The token decides which list to land on, never whether access is granted
+     * - that happens on sign-in, keyed to the address the invitation was sent
+     * to. A link in an email is followed by whoever holds the inbox, and a URL
+     * cannot tell a forward from the real recipient.
+     */
+    Route::get('/invitations/{token}', ListInvitationController::class)
+        ->where('token', '[0-9a-f-]{36}')
+        ->middleware('throttle:30,1')
+        ->name('invitations.show');
 
     Route::post('/recipients', [RecipientController::class, 'store'])->name('recipients.store');
     Route::patch('/recipients/{recipient}', [RecipientController::class, 'update'])->name('recipients.update');
@@ -264,6 +308,23 @@ Route::prefix('{market}')->group(function () {
         Route::post('/santa', [SecretSantaController::class, 'store'])->name('santa.store');
         Route::post('/santa/{group}/draw', [SecretSantaController::class, 'draw'])->name('santa.draw');
         Route::delete('/santa/{group}', [SecretSantaController::class, 'destroy'])->name('santa.destroy');
+
+        /*
+         * Repairing a draw that has already happened.
+         *
+         * Organiser-only, and both change as little as possible: removing
+         * somebody hands their giftee to their giver, and a redraw swaps two
+         * givers. Every member is holding an email naming one person and an
+         * email cannot be unsent, so the alternative — drawing again — would
+         * silently invalidate all of them. See app/Services/Gift/SantaRepair.php.
+         */
+        Route::delete('/santa/{group}/members/{member}', [SecretSantaController::class, 'removeMember'])
+            ->whereNumber('member')
+            ->name('santa.member.destroy');
+
+        Route::post('/santa/{group}/members/{member}/redraw', [SecretSantaController::class, 'redraw'])
+            ->whereNumber('member')
+            ->name('santa.redraw');
     });
 
     Route::middleware('throttle:60,1')->group(function () {
@@ -343,6 +404,37 @@ Route::prefix('{market}')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Route::post('/gift', [GiftController::class, 'suggest'])->name('gift.suggest');
         Route::post('/gift/swap', [GiftController::class, 'swap'])->name('gift.swap');
+    });
+
+    /*
+    |----------------------------------------------------------------------
+    | Ask others
+    |----------------------------------------------------------------------
+    |
+    | The board where people ask what to buy and other people answer. Reading is
+    | open and indexable — a question with good answers on it is exactly the
+    | page that should rank, and a login wall is how it never does. Writing
+    | needs an account, which is what gives a public post a person behind it.
+    |
+    | Nothing on this surface publishes anything. A post is created `pending`
+    | and `TriageCommunityPost` decides, so the only thing that can put a
+    | stranger's writing on a public page is a queued job (invariant #1).
+    |
+    | Writes are throttled hard. This is the one endpoint where a visitor can
+    | create rows that cost money to moderate, and the rate that matters is
+    | "how fast can one account fill the queue", not "how fast can they read".
+    */
+    Route::get('/ask', [AskController::class, 'index'])->name('ask');
+
+    Route::get('/ask/{question}/{slug?}', [AskController::class, 'show'])
+        ->whereNumber('question')
+        ->name('ask.show');
+
+    Route::middleware(['auth', 'throttle:10,1'])->group(function () {
+        Route::post('/ask', [AskController::class, 'store'])->name('ask.store');
+        Route::post('/ask/{question}/answers', [AskController::class, 'answer'])
+            ->whereNumber('question')
+            ->name('ask.answer');
     });
 
     /*

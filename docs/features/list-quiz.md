@@ -105,3 +105,24 @@ claims and nothing about who played.
 **Match-the-gift-to-the-person** across a family or a Secret Santa group — a set
 of people who each have a list — follows almost free from this machinery, but
 only after the one-person version has proven itself.
+
+
+## One go each, enforced
+
+Fixed 2026-08-16. The docblock above the attempt write said *"Replaying until you score five out of
+five is not a score anybody would want to post"* — and the code used `updateOrCreate`, so a replay
+silently overwrote the first score. The intent was documented and the implementation did the
+opposite.
+
+`quiz.play_again` — *"You have already played. One go each, otherwise the score means nothing."* —
+turned out not to be a dead button label but the **refusal message**, written and never wired. It is
+wired now; no new copy was needed.
+
+The bound is honest rather than absolute: a signed-out attempt hangs off the anonymous cookie, so
+this stops an accidental replay and a casual second go. Somebody determined to clear their cookies
+gets another turn, and no amount of server-side work changes that for a game deliberately playable
+without an account.
+
+Separately, the "back to the list" link on the result screen was labelled `lists.share` — "Share",
+the name of a different control on a different page. It uses `lists.view_list`, which already
+existed in all four languages.

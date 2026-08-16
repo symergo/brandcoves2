@@ -50,7 +50,6 @@ interface Props {
     recipients: Recipient[]
     picks: Pick[] | null
     brief: Brief | null
-    isSwap?: boolean
 }
 
 const STEPS = ['who', 'interests', 'vibe', 'budget', 'avoid', 'values'] as const
@@ -77,10 +76,6 @@ export default function GiftWizard({ options, recipients, picks, brief }: Props)
     const [values, setValues] = useState<string[]>(brief?.values ?? [])
     const [relationship, setRelationship] = useState<string | null>(brief?.relationship ?? null)
 
-    // Everything already shown or swapped away, so "something else" never loops
-    // back to what was just rejected.
-    const [rejected, setRejected] = useState<number[]>([])
-
     const payload = () => ({
         interests,
         vibe,
@@ -94,13 +89,22 @@ export default function GiftWizard({ options, recipients, picks, brief }: Props)
         router.post(`/${market.key}/gift`, payload(), { preserveScroll: false })
     }
 
+    /*
+     * "Something else."
+     *
+     * The rejected list used to live here, in component state, and be posted
+     * back with each swap — and the swap's own response destroyed it, because
+     * this posts without `preserveState` and Inertia rebuilds the component. So
+     * the accumulator reset to empty on every round trip and the promise that
+     * a rejected pick never returns was kept only until the second swap.
+     *
+     * The server remembers now (`RejectionMemory`), keyed by the brief. All
+     * this has to send is which one was rejected.
+     */
     const swap = (pickId: number) => {
-        const exclude = [...rejected, ...(picks ?? []).map((p) => p.id)]
-        setRejected(exclude)
-
         router.post(
             `/${market.key}/gift/swap`,
-            { ...payload(), exclude, rejected: pickId },
+            { ...payload(), rejected: pickId },
             { preserveScroll: true },
         )
     }

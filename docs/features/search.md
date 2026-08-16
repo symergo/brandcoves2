@@ -223,3 +223,38 @@ WHERE 'koptelefon' <% title;
 ```
 
 All three verified passing 2026-08-07 against a two-row fixture.
+
+## The vocabulary row above the results
+
+`ResultTerms` counts the words genuinely present in a page of titles and offers the most
+characteristic ones as chips that *narrow* the search rather than replacing it. Reworked
+2026-08-16, for two defects that both made the row read as machine output.
+
+**Common words survived, in the wrong language.** The stopword list was chosen by the *market* —
+`STOPWORDS[$market->language()]` — while product titles are whatever the feed wrote. A Belgian feed
+is full of "Wireless Bluetooth Headphones with Noise Cancelling", so on `be-nl` the English function
+words were never filtered and "and", "with" and "for" were among the most frequent words on the
+page. Every language's list now applies at once; they are disjoint enough that unioning them costs
+nothing real.
+
+**Every chip was a single word.** "noise" and "cancelling" as two chips is one idea chopped in half,
+and clicking either narrows the page by half a concept. Adjacent pairs are now counted alongside
+single words, and a phrase **absorbs** its own words once it accounts for 60% of their occurrences.
+Three rules keep that from inventing language:
+
+- A stopword, a number or a short token **breaks the run**, so "Headphones with Case" never yields
+  "headphones case" — a phrase the page does not contain is exactly the invented vocabulary this
+  class exists to avoid.
+- **Phrases may not overlap.** "draadloze koptelefoon" and "koptelefoon model" share a word and are
+  one idea chained; the strongest wins and the rest is dropped.
+- **A brand is a stopword.** A title is overwhelmingly "Brand Attribute Noun", so without this the
+  strongest phrase on a page is routinely the brand plus whatever follows it — "Aurex draadloze",
+  which nobody would type. Brands already have their own filter and their own pages.
+
+One consequence worth knowing when reading the tests: the query's own words break a run too, so
+searching "koptelefoon" yields "draadloze" as a word while the *brand* page for the same products
+yields "draadloze koptelefoon" as a phrase. Both are right — the difference is which word is already
+on the page you are standing on.
+
+`extract()` no longer takes a `Market`. It took one only to pick the stopword list, and picking one
+was the bug.

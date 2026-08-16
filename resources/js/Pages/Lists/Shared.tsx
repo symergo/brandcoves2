@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import ManualItem from '../../Components/ManualItem'
+import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -20,6 +21,11 @@ interface Item {
     claimedByMe: boolean
     /** Only ever non-null for the person who claimed it. */
     sent: boolean | null
+    /**
+     * Absent — not null — wherever there is nothing this viewer may know about
+     * the money. The owner of a wish list never receives the key at all.
+     */
+    contributions?: Contributions
 }
 
 interface Result {
@@ -47,6 +53,19 @@ interface Props {
     suggestTerm: string
     /** null before a search is run; `[]` once one found nothing. */
     results: Result[] | null
+    /** Mirrored from the pledge endpoint, which re-checks it regardless. */
+    canContribute: boolean
+    /**
+     * Null unless this list has an occasion on it. `address` is non-null only
+     * for somebody who has claimed something — the server decides, and this
+     * page renders what it is given.
+     */
+    registry: {
+        occasion: string
+        date: string | null
+        address: string | null
+        locked: boolean
+    } | null
 }
 
 export default function SharedList({
@@ -57,6 +76,8 @@ export default function SharedList({
     canSuggest,
     suggestTerm,
     results,
+    canContribute,
+    registry,
 }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
@@ -73,6 +94,22 @@ export default function SharedList({
     const token = page.url.split('?')[0].split('/').filter(Boolean).pop()
     const base = `/${market.key}`
     const [query, setQuery] = useState(suggestTerm)
+
+    /*
+     * A registry date is booked a long way out — a wedding eighteen months
+     * ahead is ordinary — so the year is shown whenever it is not this one.
+     * Adding it unconditionally makes every near date heavier than it needs
+     * to be.
+     */
+    function registryDate(iso: string): string {
+        const date = new Date(iso)
+
+        return new Intl.DateTimeFormat(market.hrefLang, {
+            day: 'numeric',
+            month: 'short',
+            ...(date.getFullYear() === new Date().getFullYear() ? {} : { year: 'numeric' }),
+        }).format(date)
+    }
 
     return (
         <>
@@ -124,6 +161,48 @@ export default function SharedList({
                             total: String(progress.total),
                         })}
                     </p>
+                )}
+
+                {/*
+                  The registry block.
+
+                  The occasion and the date are why the list exists and are
+                  shown to everybody holding the link. The address is not: it
+                  appears once you have claimed something, which is the promise
+                  `registry.address_hint` has made to the owner since the
+                  feature shipped and which nothing implemented until now.
+
+                  The locked state says the address is there rather than saying
+                  nothing — otherwise somebody who has claimed nothing concludes
+                  the owner forgot to add one.
+                */}
+                {registry !== null && (
+                    <section className="mt-4 rounded-card border border-line bg-card p-4">
+                        <p className="text-sm font-medium">
+                            {registry.date
+                                ? t('registry.occasion_on', {
+                                      occasion: registry.occasion,
+                                      date: registryDate(registry.date),
+                                  })
+                                : registry.occasion}
+                        </p>
+
+                        {registry.address !== null && (
+                            <div className="mt-3">
+                                <p className="text-xs font-medium text-ink-soft">{t('registry.send_to')}</p>
+                                {/* An address, not a link. `pre-line` keeps the
+                                    owner's line breaks and gives them nothing
+                                    else. */}
+                                <address className="mt-1 text-sm whitespace-pre-line not-italic">
+                                    {registry.address}
+                                </address>
+                            </div>
+                        )}
+
+                        {registry.locked && (
+                            <p className="mt-3 text-xs text-ink-soft">{t('registry.address_locked')}</p>
+                        )}
+                    </section>
                 )}
             </header>
 
@@ -238,6 +317,23 @@ export default function SharedList({
                                     </button>
                                 )}
                             </div>
+                        )}
+
+                        {/*
+                          Money, beside the claim controls rather than behind a
+                          panel: it is a fact about this present, and the person
+                          reading it is deciding about this present. Rendered
+                          only when the server sent a payload — its absence is
+                          the privacy rule doing its job, so there is deliberately
+                          no fallback branch here.
+                        */}
+                        {item.contributions !== undefined && (
+                            <Pledge
+                                action={`${base}/l/${token}/pledge/${item.id}`}
+                                contributions={item.contributions}
+                                canContribute={canContribute}
+                                price={item.price}
+                            />
                         )}
                     </li>
                 ))}

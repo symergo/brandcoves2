@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\CommunityQuestion;
+use App\Models\DailyPick;
+use App\Models\DailyPickSet;
 use App\Models\Guide;
+use App\Models\ProductGroup;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
@@ -47,6 +51,30 @@ class DiscoverCoveController extends Controller
      */
     private const COVES = 12;
 
+    /**
+     * Questions on the hub.
+     *
+     * Six, not twenty. This is a landing page for four surfaces and the board
+     * is one of them — a longer list would make Ask look like the whole page,
+     * and `/ask` is one click away for anybody who wants the rest.
+     */
+    private const QUESTIONS = 6;
+
+    /** Finds from today's edition. An invitation to it, not a copy of it. */
+    private const FINDS = 4;
+
+    /**
+     * Surprises on the hub.
+     *
+     * Four, sampled from the same top slice `/surprise` draws from — so the
+     * band is different on every visit, which is the one property this surface
+     * has to demonstrate rather than describe.
+     */
+    private const SURPRISES = 4;
+
+    /** How deep the sample reaches. Matches `SerendipityController::POOL`. */
+    private const SURPRISE_POOL = 200;
+
     public function __invoke(CurrentMarket $current): Response
     {
         app(PageMeta::class)->set(
@@ -60,7 +88,69 @@ class DiscoverCoveController extends Controller
                 'daily' => $current->url('daily'),
                 'surprise' => $current->url('surprise'),
                 'guides' => $current->url('guides'),
+                // The one surface here whose content comes from other visitors
+                // rather than from us. See docs/features/ask-others.md.
+                'ask' => $current->url('ask'),
             ],
+
+            /*
+             * What the board is currently chewing on.
+             *
+             * The same argument as listing the Coves below: two of the four
+             * cards describe something you cannot see from here, and this one's
+             * value *is* its contents. "Let other people suggest something"
+             * cannot be evaluated in advance; six real questions can, and an
+             * unanswered one is the most effective invitation the feature has —
+             * somebody who knows the answer will recognise it on sight.
+             *
+             * Still no counts. A hub that totals things is the catalogue-counter
+             * mistake in a new place; the answer count belongs to the question
+             * it is about and travels with it.
+             */
+            'questions' => CommunityQuestion::query()
+                ->forMarket($current->get())
+                ->published()
+                ->orderByDesc('published_at')
+                ->limit(self::QUESTIONS)
+                ->get()
+                ->map(fn (CommunityQuestion $question) => [
+                    'title' => $question->title,
+                    'answers' => $question->answers_count,
+                    'url' => $current->url("ask/{$question->id}/{$question->slug()}"),
+                ])
+                ->all(),
+
+            'askUrl' => $current->url('ask'),
+
+            /*
+             * Today's edition, shown rather than described.
+             *
+             * This page was four cards and a list of titles, which made it a
+             * table of contents for the discovery half rather than a landing
+             * page for it — and the Daily Cove is the one surface here whose
+             * whole argument is "this changes, come back tomorrow". A dated
+             * edition with real finds on it makes that argument; a card saying
+             * "a new edition every day" asks the reader to take it on trust.
+             *
+             * Null before the first edition in a market, and the band simply
+             * does not render — an empty shelf is worse than no shelf.
+             */
+            'today' => $this->today($current),
+
+            /*
+             * A handful of surprises, resampled on every visit.
+             *
+             * Surprise was the one card with nothing underneath it, which left
+             * the page arguing for three surfaces and asserting a fourth. It is
+             * also the surface whose promise is least evaluable in advance —
+             * "show me something I didn't know existed" cannot be judged until
+             * you have seen one — so it is the card that benefits most from
+             * having its output on the page.
+             *
+             * Reads `surprise_score`, which `ScoreSerendipity` computed after
+             * the last ingest. Nothing is scored per request.
+             */
+            'surprises' => $this->surprises($current),
 
             'coves' => Guide::query()
                 ->forMarket($current->get())
@@ -81,5 +171,97 @@ class DiscoverCoveController extends Controller
                 ])
                 ->all(),
         ]);
+    }
+
+    /**
+     * The most recent published edition, with a few of its finds.
+     *
+     * Deliberately the same shape `HomeController::today()` builds, because it
+     * is the same band: an edition is a theme, a date and a handful of
+     * products, and two surfaces describing it differently is the drift this
+     * codebase keeps writing about.
+     *
+     * In stock only. An unbuyable product is a worse first impression than one
+     * fewer card, and this page is often somebody's second ever click.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function today(CurrentMarket $current): ?array
+    {
+        $edition = DailyPickSet::query()
+            ->forMarket($current->get())
+            ->published()
+            ->with(['picks.group'])
+            ->orderByDesc('drop_date')
+            ->first();
+
+        if ($edition === null) {
+            return null;
+        }
+
+        return [
+            'theme' => $edition->theme_title,
+            'blurb' => $edition->theme_blurb,
+            'date' => $edition->drop_date->toDateString(),
+            'label' => $edition->drop_date->format('j M'),
+            'url' => $current->url('daily'),
+            'finds' => $edition->picks
+                ->filter(fn (DailyPick $pick) => $pick->group !== null && $pick->group->in_stock)
+                ->take(self::FINDS)
+                ->map(fn (DailyPick $pick) => [
+                    'id' => $pick->group->id,
+                    'title' => $pick->group->title,
+                    'image' => $pick->group->image_url,
+                    'price' => $pick->group->min_price,
+                    'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * A few things worth not having gone looking for.
+     *
+     * Top slice by score, shuffled inside it — the same shape as
+     * `SerendipityController::sample()`, and for the same reason: `ORDER BY
+     * random()` over the whole table is both slow and wrong, because it returns
+     * median products, and a surface whose purpose is surprise must not show
+     * everyone the same four things forever.
+     *
+     * No blurbs. The Surprise page fetches a line of description per find
+     * because six unfamiliar objects need saying what they are; four cards
+     * under a heading on a hub are an invitation to that page rather than a
+     * substitute for it, and the extra query is not worth it here.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function surprises(CurrentMarket $current): array
+    {
+        $pool = ProductGroup::query()
+            ->forMarket($current->get())
+            ->presentable()
+            ->where('surprise_score', '>', 0)
+            ->orderByDesc('surprise_score')
+            ->limit(self::SURPRISE_POOL)
+            ->pluck('id');
+
+        if ($pool->isEmpty()) {
+            return [];
+        }
+
+        return ProductGroup::query()
+            ->whereIn('id', $pool->shuffle()->take(self::SURPRISES))
+            ->get()
+            ->map(fn (ProductGroup $group) => [
+                'id' => $group->id,
+                'title' => $group->title,
+                'brand' => $group->brand,
+                'image' => $group->image_url,
+                'price' => $group->min_price,
+                'url' => $current->url("p/{$group->id}/{$group->slug}"),
+            ])
+            ->values()
+            ->all();
     }
 }

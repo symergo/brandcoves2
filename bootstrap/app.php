@@ -11,6 +11,7 @@ use App\Http\Middleware\RequireApiAbility;
 use App\Http\Middleware\SetMarket;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Services\Seo\LegacyRedirects;
+use App\Support\MarketPreference;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -80,7 +81,7 @@ return Application::configure(basePath: dirname(__DIR__))
          * already browsing.
          */
         $market = fn (Request $request): Market => Market::tryFrom((string) $request->segment(1))
-            ?? Market::fromAcceptLanguage($request->header('Accept-Language'));
+            ?? MarketPreference::resolve($request);
 
         $middleware->redirectGuestsTo(fn (Request $request) => '/'.$market($request)->value.'/login');
 
@@ -132,7 +133,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             $destination = app(LegacyRedirects::class)->urlFor(
                 $request->path(),
-                Market::fromAcceptLanguage($request->header('Accept-Language')),
+                MarketPreference::resolve($request),
             );
 
             // 301, not 302: the move is permanent, and a 302 tells a crawler to

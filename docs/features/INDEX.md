@@ -6,6 +6,7 @@ cannot be recovered from a diff.
 | Feature | Area | Status |
 |---|---|---|
 | [market-routing.md](market-routing.md) | Core | Active |
+| [auth.md](auth.md) | Core / Accounts | Active — Google needs credentials per environment |
 | [localisation.md](localisation.md) | Core / Frontend | Active |
 | [navigation.md](navigation.md) | Core / Frontend | Active |
 | [homepage.md](homepage.md) | Core / Frontend | Active |
@@ -22,17 +23,19 @@ cannot be recovered from a diff.
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect waits on the connector |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active |
 | [gifting-lenses.md](gifting-lenses.md) | Gifting / Core | Active |
-| [secret-santa.md](secret-santa.md) | Gifting / Social | Active |
+| [secret-santa.md](secret-santa.md) | Gifting / Social | Active — chain repair built; year-on-year reuse open |
 | [list-quiz.md](list-quiz.md) | Gifting / Growth | Active |
 | [sharing.md](sharing.md) | Gifting / Growth | Active |
 | [serendipity.md](serendipity.md) | Discovery | Active |
+| [ask-others.md](ask-others.md) | Discovery / Community | Active — not in the sitemap yet |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [editorial-api.md](editorial-api.md) | Content / Operations | Active |
 | [content-promotion.md](content-promotion.md) | Content / Operations | Active |
 | [config-contract.md](config-contract.md) | Core / Operations | Active |
-| [wishlists.md](wishlists.md) | Wishlist / Alerts | Active |
+| [wishlists.md](wishlists.md) | Wishlist / Alerts | Active — registry address gated on a claim |
+| [list-taxonomy.md](list-taxonomy.md) | Wishlist / Gifting | Phases 1, 2 and 4 built — voting open |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
 | [cutover.md](cutover.md) | Operations | ✅ Done 2026-08-10 |

@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 
-export type ListSceneKey = 'mine' | 'shared' | 'group' | 'santa'
+export type ListSceneKey = 'mine' | 'shared' | 'group' | 'santa' | 'registry'
 
 /**
- * The four Organise surfaces at card size, matched to `CoveIllustration`.
+ * The five Organise surfaces at card size, matched to `CoveIllustration`.
  *
  * Same viewBox, same stroke weight, same `currentColor`-plus-one-accent-wash
  * rule — the two sections of the homepage sit directly above and below each
@@ -22,6 +22,11 @@ export type ListSceneKey = 'mine' | 'shared' | 'group' | 'santa'
  * - **Santa** — crossing arrows, matching `ToolIcon`'s santa glyph exactly.
  *   What the feature *is* is the draw, not the season, which is also why the
  *   name no longer mentions December.
+ * - **Registry** — the `mine` card with a calendar on it. Deliberately a
+ *   variation rather than a new object: a registry *is* a wish list with a date
+ *   attached, still `mine` and still claimable, and drawing it as something else
+ *   would suggest a fourth kind of list that does not exist. One ringed day,
+ *   because the date is the whole difference.
  *
  * `aria-hidden` throughout: every one of these sits beside its own name.
  */
@@ -61,6 +66,21 @@ const scenes: Record<ListSceneKey, ReactNode> = {
             <path d="M44 44h48l-12-12M116 74H68l12 12" />
             <circle cx="34" cy="44" r="5" />
             <circle cx="126" cy="74" r="5" />
+        </>
+    ),
+
+    registry: (
+        <>
+            {/* The same card as `mine`, shifted left to make room. */}
+            <rect x="30" y="16" width="62" height="86" rx="6" className="fill-accent/10" />
+            <path d="M44 40h34M44 54h26M44 68h30" />
+
+            {/* A calendar, overlapping the card: the date is attached to the
+                list rather than standing beside it. */}
+            <rect x="80" y="52" width="50" height="46" rx="5" fill="none" />
+            <path d="M80 66h50" />
+            <path d="M92 46v10M118 46v10" />
+            <circle cx="105" cy="82" r="7" className="fill-accent/10" />
         </>
     ),
 }

@@ -1,7 +1,7 @@
 ---
 name: My Lists, Shared Lists, Group Lists
 area: Wishlist / Gifting
-status: Designed — phase 1 in progress
+status: Phases 1, 2 and 4 built — voting open
 date_added: 2026-08-15
 ---
 
@@ -56,16 +56,35 @@ invited editor can add and remove, someone who opened a link can only look and c
 > list is *mine*, claims must vanish. `Wishlist::shouldHideClaimsFrom(Owner)` is the single place
 > that decides, and this view must not grow its own copy of the question.
 
-### Invitations become real
+### Invitations became real, 2026-08-16
 
-Today `WishlistCollaboratorController::store()` looks up a `User` by email and silently does nothing
-when there is no account — while returning `lists.collaborator_invited`, *"If they have an account,
-they can see this list now."* The owner is told something happened when nothing did.
+`WishlistCollaboratorController::store()` looked a `User` up by email and did **nothing** when there
+was no account — while returning *"If they have an account, they can see this list now."* The owner
+was told something happened when nothing had, and that is the common case: the person whose help you
+want is exactly the person who has not signed up.
 
-An invitation record with a token, delivered by email, replaces that. Deliberately **not** an
-oracle, exactly as the current controller is careful to be: the response must not differ between an
-address that has an account and one that does not, or the form becomes a way to test whether
-somebody is a member.
+`list_invitations` holds the promise; `Invitations` redeems it.
+
+**Both branches now do the same thing.** Whether or not the address has an account, a row is written
+and a mail is queued. The response was already identical, but only because the no-account path was a
+no-op — and "identical because both are real" is a much sturdier property than "identical because one
+of them does nothing". `inviting_does_not_reveal_whether_an_address_has_an_account` still passes, and
+it is what stops the form being a way to test who is a member.
+
+**Redemption is on sign-in, not on click.** A link in an email is followed by whoever holds the
+inbox — the right person almost always, but a forward or a shared machine is not something a URL can
+tell apart. `ClaimListInvitations` listens for `Login` and grants everything waiting for that
+address, so an invitation redeems itself even when the mail is lost. The token in the URL only
+decides which list to land on.
+
+A listener rather than two edits in `MagicLinkController` and `GoogleController`: an invitation that
+redeems on one sign-in path and not the other is a bug that shows up only for whichever half of
+people used the other button.
+
+Two refusals worth recording. An invitation to a list that has since been **handed over** is closed
+without granting anything — handing a list over purges its collaborators deliberately, and this
+would put one straight back. Inviting **yourself** is a no-op rather than an error, because it is a
+slip and the site should not argue with somebody.
 
 ## Group Lists
 
@@ -107,9 +126,55 @@ surprise to protect from the owner — and a visible ladder of who put in what i
 organiser needs. Members do not see each other's amounts, because a public ladder is social pressure
 on whoever put in least.
 
-`GiftPledgeController::resolve()` currently gates on `allowsClaiming()`, which is `mine`-only — so a
-list for a third person **structurally cannot carry contributions today**. That gate has to become a
-question about contributions rather than about claiming.
+### Built 2026-08-16, and what the shape turned out to be
+
+`GiftPledgeController::resolve()` gated on `allowsClaiming()`, which is `mine`-only — so a list for a
+third person **structurally could not carry contributions**, and it asked `shouldHideClaimsFrom()`
+separately, which locked out the organiser. Both are now one question, asked once:
+
+```php
+// app/Models/Wishlist.php
+public function allowsContributionsFrom(Owner $viewer): bool
+{
+    return $viewer->exists()
+        && $this->kind->allowsContributions()
+        && ($this->kind->ownerSeesContributions() || ! $this->shouldHideClaimsFrom($viewer));
+}
+```
+
+`$viewer->exists()` is in there for a reason found by a test rather than by reading: the page renders
+its "I am in" button from this value, and without the check a visitor whose cookie identity had not
+been minted yet was shown a control that 403'd when pressed. The endpoint had always checked it
+separately, which is exactly how a mirror drifts.
+
+**The read path is `app/Services/Wishlist/ContributionView.php`, and it is the only one.** Its whole
+job is this table:
+
+| viewer | `mine` list | `group` list |
+|---|---|---|
+| the owner | **no key at all** | `{ total, count, mine, breakdown }` |
+| anyone else | `{ total, count, mine }` | `{ total, count, mine }` |
+
+Three things about it are load-bearing:
+
+- **Absent, not zero.** An item with nothing to say is missing from the returned array entirely, so
+  the controllers spread `...isset($c[$id]) ? [...] : []` and the owner of a wish list receives no
+  key. A `contributions: null` on every item is a channel that goes live the day somebody tidies the
+  null away — and they would tidy it away without knowing what it was for. Same discipline as
+  `progress` in `SharedListController`.
+- **`$isOwner` **and** the kind, never the kind alone.** `WishlistController::show()` loads through
+  `ListAccess::scope()`, so a *collaborator* on a group list opens the organiser's page. They are a
+  member of the pool rather than the person collecting it, and asking only "is this a group list?"
+  hands them the ladder. `a_collaborator_on_a_group_list_does_not_get_the_breakdown` pins it.
+- **`$isOwner` must not be reused as "hide everything".** In `SharedListController` that variable is
+  `shouldHideClaimsFrom()`, which is **true for a group organiser too** — passing it through as a
+  suppression flag would hide the breakdown from the one person the feature is for. It is passed to
+  `ContributionView` as an input to the table, not applied before it.
+
+`WishlistController::asked()` — somebody else's `mine` items rendered inside my page — deliberately
+carries **no** contributions. A total there would be legal, since I am a giver rather than the
+recipient, but it is the one place where copying the group-list branch would hand a breakdown about
+one person's list to a different person entirely. The docblock there says so.
 
 ## What already exists and is being reused
 
@@ -123,23 +188,61 @@ Worth stating, because most of this was built and then never wired to anything:
 - `Owner::attributes()` / `scope()` taking column names, which is what lets pledges and votes use
   `user_id`/`anon_id` while wishlists use `owner_user_id`/`owner_anon_id`.
 
+## How a group list is created, and why `together` is a boolean
+
+Both creation paths — the form on My Lists and the save picker's "new list" — went through twenty
+duplicated lines that resolved the recipient, minted a new person and then decided the kind. They
+now share `app/Services/Wishlist/ListMaker.php`. That duplication was the reason to expect a
+divergence, and the consequence of one is a list whose kind disagrees with its recipient, which is
+the ambiguity `ListKind` exists to remove.
+
+The request carries `together` as a **boolean**, never `kind` as a string. A client-supplied kind
+would have to be re-derived and re-checked against the recipient anyway; a boolean cannot contradict
+anything. The recipient still decides mine-vs-else and `together` only chooses between the two ways
+of buying for somebody — so "for me, together" resolves to `Mine` rather than to a group list with
+nobody in it.
+
+A group list therefore always has a recipient, guaranteed twice: in the service, and by
+`wishlists_group_has_recipient` (`2026_08_16_000100`). Twice because the service is one of two
+callers today and nothing promises it stays two.
+
+**`Wishlist::isForSomeoneElse()` was wrong the moment `Group` became reachable.** It compared against
+`ForSomeone` alone while `ListKind::isForSomeoneElse()` included `Group`, and
+`SharedListController` uses the model's version to decide whose name a visitor is shown — so a group
+list would have displayed the **organiser's** name where the recipient's belongs, telling the people
+buying the present that the list belongs to the person it is a surprise for. It delegates to the enum
+now. The bug was invisible for as long as the kind was uncreatable, which is the hazard of shipping a
+value nothing can write.
+
 ## Phases
 
-1. **The taxonomy.** `ListKind::Group` + CHECK-constraint migration; the index served as three views
-   via `ListAccess::scope()`; nav entries. Replaces the dead `?shared=1` filter.
-2. **Shared Lists in full.** The opened-link record, and real invitations with a token and an email.
+1. ✅ **The taxonomy.** `ListKind::Group` + CHECK-constraint migration; the index served as three views
+   via `ListAccess::scope()`; nav entries. Replaces the dead `?shared=1` filter. Finished 2026-08-16
+   by making the kind creatable from both paths and widening the save picker, which filtered it out.
+2. ✅ **Real invitations**, built 2026-08-16 — a token, an email, and redemption on sign-in. The
+   *opened-link* record (remembering that I followed a `/l/{token}` link) is still open.
 3. **Voting.** `list_item_votes`, the tally on the card, ordering by it.
-4. **Contributions.** Extend the pledge gate past `allowsClaiming()`, and build the read path and UI
-   that has never existed.
+4. ✅ **Contributions.** Gate widened past `allowsClaiming()`, read path and UI built 2026-08-16.
 
 ## Files
 
 - `app/Enums/ListKind.php`, `app/Enums/CollaboratorRole.php`
-- `app/Http/Controllers/WishlistController.php` — `index()`, `summarise()`
+- `app/Services/Wishlist/ListMaker.php` — the one place a list is created
+- `app/Services/Wishlist/ContributionView.php` — the one place the money table lives
+- `app/Http/Controllers/WishlistController.php` — `index()`, `show()`, `summarise()`
+- `app/Http/Controllers/SharedListController.php` — `show()`
+- `app/Http/Controllers/GiftPledgeController.php`
 - `app/Support/ListAccess.php`, `app/Support/Owner.php`
 - `app/Models/Wishlist.php`, `app/Models/GiftPledge.php`, `app/Models/WishlistCollaborator.php`
-- `resources/js/Pages/Lists/Index.tsx`, `resources/js/Components/ListTools.tsx`
+- `database/migrations/2026_08_16_000100_a_group_list_needs_a_recipient.php`
+- `resources/js/Components/Pledge.tsx` — one component, both pages
+- `resources/js/Pages/Lists/Index.tsx`, `Show.tsx`, `Shared.tsx`,
+  `resources/js/Components/SaveToList.tsx`, `ListTools.tsx`
 - `lang/*/site.php` — `lists`, `pledges`, `nav`
+- `app/Services/Wishlist/Invitations.php`, `app/Models/ListInvitation.php`,
+  `app/Listeners/ClaimListInvitations.php`, `app/Mail/ListInvitationMail.php`
+- `database/migrations/2026_08_16_000400_create_list_invitations.php`
+- `tests/Feature/GroupListTest.php`, `ListInvitationTest.php`, `tests/Unit/ContributionViewTest.php`
 
 ## See also
 

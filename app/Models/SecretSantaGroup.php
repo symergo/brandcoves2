@@ -43,8 +43,33 @@ class SecretSantaGroup extends Model
         ];
     }
 
-    /** @return HasMany<SecretSantaMember, $this> */
+    /**
+     * The people still in the group.
+     *
+     * Filtered rather than global-scoped: `SoftDeletes` would silently rewrite
+     * every existing query on this model, and the precedent here is the explicit
+     * pair — `Wishlist::items()` hides pending suggestions and `allItems()` does
+     * not, for exactly this reason. Every surface that means "the group" gets
+     * the right set without asking, and the one place that needs a removed
+     * member says so.
+     *
+     * @return HasMany<SecretSantaMember, $this>
+     */
     public function members(): HasMany
+    {
+        return $this->hasMany(SecretSantaMember::class, 'group_id')->whereNull('removed_at');
+    }
+
+    /**
+     * Everybody who was ever in, including those who left.
+     *
+     * Needed because a removed member's row stays resolvable on purpose:
+     * `assigned_member_id` is encrypted ciphertext with no foreign key, so a
+     * hard delete would leave somebody's page quietly naming nobody.
+     *
+     * @return HasMany<SecretSantaMember, $this>
+     */
+    public function allMembers(): HasMany
     {
         return $this->hasMany(SecretSantaMember::class, 'group_id');
     }

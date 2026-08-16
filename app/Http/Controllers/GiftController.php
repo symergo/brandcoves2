@@ -9,6 +9,7 @@ use App\Enums\TasteSource;
 use App\Enums\Vibe;
 use App\Models\Event;
 use App\Models\Recipient;
+use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
@@ -34,9 +35,18 @@ use Inertia\Response;
  */
 class GiftController extends Controller
 {
-    public function show(Request $request, CurrentMarket $current): Response
+    public function show(Request $request, CurrentMarket $current, RejectionMemory $memory): Response
     {
         $this->seo($current);
+
+        /*
+         * Opening the wizard is starting over, so the rejections go.
+         *
+         * Without this, "Start over" returned to a page that silently still
+         * refused everything the previous sitting had rejected — and the button
+         * says the opposite of that.
+         */
+        $memory->flush();
 
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
@@ -53,13 +63,21 @@ class GiftController extends Controller
      * answers on screen next to the results — someone who dislikes a suggestion
      * wants to adjust one answer, not start again.
      */
-    public function suggest(Request $request, CurrentMarket $current, SuggestionEngine $engine): Response
+    public function suggest(Request $request, CurrentMarket $current, SuggestionEngine $engine, RejectionMemory $memory): Response
     {
         $validated = $this->validateBrief($request);
         $recipient = $this->recipient($request, $validated);
         $brief = $this->brief($validated, $current, $recipient);
 
-        $picks = $engine->suggest($brief);
+        /*
+         * Everything already rejected for this brief, remembered server-side.
+         *
+         * This is also what makes "Try again" mean something: it used to
+         * re-post the same brief and re-render the same four cards, which is
+         * not what the button says.
+         */
+        $key = $memory->key($brief);
+        $picks = $engine->suggest($brief->excluding($memory->all($key)));
 
         // Answering the same six questions about the same person twice is the
         // kind of small indignity that stops people coming back. `remember`
@@ -98,39 +116,49 @@ class GiftController extends Controller
     }
 
     /**
-     * Replace one card without disturbing the other three.
+     * "Show me something else" — one rejection, a whole board back.
      *
-     * The excluded list carries every group already on screen plus everything
-     * swapped away, so "show me something else" never loops back to what was
-     * just rejected — which is the single fastest way to lose someone's trust
-     * in a recommender.
+     * ## Why this renders four cards and not one
+     *
+     * It used to score with `withLimit(1)` and render `picks` as that single
+     * replacement, so the four-card grid collapsed to one card: the three the
+     * visitor had kept were thrown away by the render, not by the ranker.
+     *
+     * The fix is to stop making a swap a different kind of render. The ranker is
+     * deterministic, so "top four, minus the one you rejected" **is** the three
+     * that were kept plus the next one down — no id round-trip, no splice, and
+     * no trusting a client-supplied ordering of what is currently on screen.
+     *
+     * The two routes stay separate only so `gift.swap` keeps its own signal:
+     * how often people reject a suggestion is worth knowing on its own.
      */
-    public function swap(Request $request, CurrentMarket $current, SuggestionEngine $engine): Response
+    public function swap(Request $request, CurrentMarket $current, SuggestionEngine $engine, RejectionMemory $memory): Response
     {
         $validated = $this->validateBrief($request);
+        $brief = $this->brief($validated, $current, $this->recipient($request, $validated));
 
-        $exclude = array_map('intval', (array) $request->input('exclude', []));
+        $key = $memory->key($brief);
 
-        // One replacement, not a fresh set. `withLimit` rather than rebuilding
-        // the brief by hand: the longhand copy silently dropped whichever field
-        // was added to the constructor most recently.
-        $replacement = $engine->suggest(
-            $this->brief($validated, $current, $this->recipient($request, $validated))
-                ->excluding($exclude)
-                ->withLimit(1)
-        );
+        // Remembered before scoring, so the rejected one cannot come back in
+        // the very response that acknowledges it.
+        $memory->remember($key, $request->integer('rejected'));
+
+        $picks = $engine->suggest($brief->excluding($memory->all($key)));
 
         Event::record('gift.swap', [
             'market' => $current->value(),
             'rejected' => $request->integer('rejected'),
         ]);
 
+        // What came back is now also "already seen", so the next swap moves on
+        // rather than reshuffling the same four.
+        $memory->remember($key, ...array_map(fn ($pick) => $pick->group->id, $picks));
+
         return Inertia::render('Gift/Wizard', [
             'options' => $this->options(),
             'recipients' => $this->recipients($request),
-            'picks' => $this->present($replacement, $current),
+            'picks' => $this->present($picks, $current),
             'brief' => $validated,
-            'isSwap' => true,
         ]);
     }
 
