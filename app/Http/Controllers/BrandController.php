@@ -14,7 +14,6 @@ use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
 use App\Services\Seo\PageMeta;
-use App\Services\Seo\PageNarrative;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -35,10 +34,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * drift within a month.
  *
  * What the brand page adds is what a bare filtered search cannot have —
- * **indexability and prose**. `?brand[]=Sony` is `noindex` because facet URLs
- * are a crawl-budget trap; `/brand/sony` is one canonical URL per brand per
- * market, with paragraphs of checkable copy below the results and links out to
- * the Coves that mention the brand.
+ * **indexability and editorial**. `?brand[]=Sony` is `noindex` because facet
+ * URLs are a crawl-budget trap; `/brand/sony` is one canonical URL per brand
+ * per market, with the brand's own vocabulary above the results and links out
+ * to the articles that mention it below them. The generated paragraphs that
+ * used to fill that space went on 2026-08-16 — see coves().
  *
  * Above the results there is now only the brand's own vocabulary, as links. The
  * templated statistics that used to open the page said nothing a reader could
@@ -147,17 +147,13 @@ class BrandController extends Controller
              */
             'liveOffers' => array_map($this->liveCard(...), $result->liveOffers),
 
-            // Editorial, written by the AI pass, that happens to mention this
-            // brand. The narrative below carries the facts; this is where any
-            // personality on the page comes from.
+            /*
+             * Editorial that mentions this brand — now the whole of what sits
+             * below the grid. See coves() for what replaced the narrative and
+             * why articles are a better answer than generated paragraphs.
+             */
             'coves' => $this->coves($stat, $current),
             'related' => $this->related($stat, $current),
-
-            // The long copy, below the grid. Same reasoning as the search page:
-            // a results grid has nothing on it for a crawler to understand the
-            // page as being about, and a shopper should not have to scroll past
-            // three hundred words to reach a product.
-            'narrative' => $this->narrative($stat, $result, $query, $market),
         ]);
     }
 
@@ -286,38 +282,6 @@ class BrandController extends Controller
     }
 
     /**
-     * @return array{sections: list<array{heading: string, body: list<string>}>, faq: list<array{q: string, a: string}>, related: list<array{term: string, url: string}>}|null
-     */
-    private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
-    {
-        // Only on the canonical page. A sorted, paginated or sub-searched variant
-        // is noindex, and repeating several hundred words across them is the
-        // doorway-page pattern.
-        if ($query->page > 1 || $query->sort !== 'relevance' || $query->hasTerm() || $result->isEmpty()) {
-            return null;
-        }
-
-        $narrative = app(PageNarrative::class)->forBrand(
-            $stat->brand,
-            $result->groups->items(),
-            $market,
-            $result->groups->total(),
-            $stat->topMerchant?->name,
-            $stat->top_category,
-            array_values(array_filter(array_map(
-                fn ($row) => is_array($row) ? ($row['category'] ?? null) : null,
-                (array) $stat->categories,
-            ))),
-        );
-
-        if ($narrative['faq'] !== []) {
-            app(PageMeta::class)->addJsonLd(StructuredData::faq($narrative['faq']));
-        }
-
-        return $narrative;
-    }
-
-    /**
      * The brand index.
      *
      * Exists so brand pages are reachable by a crawler that has not seen a
@@ -351,19 +315,54 @@ class BrandController extends Controller
     }
 
     /**
-     * Coves that mention this brand.
+     * The articles that mention this brand.
      *
-     * Two sources, because they answer slightly different questions and both are
-     * worth linking:
+     * ## This is what the page carries below the grid now
      *
-     *  - A Cove whose prose contains `[[brand:X]]` — the writer chose to name it.
-     *  - A Cove that features one of the brand's products — structural, and true
-     *    even if the prose never spells the brand out.
+     * **Changed 2026-08-16.** What used to sit here was `PageNarrative` — three
+     * columns of paragraphs and an FAQ, assembled from the same numbers the grid
+     * above was already showing. Every clause was checkable, and that was the
+     * whole problem: it was arithmetic about the products immediately above it,
+     * written in sentences, on every one of a thousand brand pages. Nobody reads
+     * the second brand page's version of it, and a crawler comparing two of them
+     * sees one template with the nouns swapped.
      *
-     * The token match is a LIKE on `body_md`. Not elegant, and correct: the
-     * tokens are a closed syntax written by our own builder, so there is no
-     * false-positive risk beyond a brand whose name appears inside another
-     * brand's token, which the delimiters rule out.
+     * An article that mentions the brand is the opposite trade. It is a link to
+     * something a reader might actually want, it was written once about a real
+     * question, and it is an internal link into editorial rather than a
+     * restatement of the page it sits on.
+     *
+     * The FAQ's `FAQPage` structured data went with it. Nothing is lost that was
+     * true: the markup was only ever a description of the paragraphs that are
+     * now gone, and structured data whose answer is not on the page is a
+     * misrepresentation.
+     *
+     * ## Three ways an article counts as mentioning a brand
+     *
+     *  - It contains a `[[brand:X]]` token — the writer named it deliberately.
+     *  - It features one of the brand's products — structural, and true even
+     *    where the prose never spells the brand out.
+     *  - Its title, intro or body says the name in plain text. **Added
+     *    2026-08-16.** This is the one that makes the section non-empty in
+     *    practice: an advice article has no shortlist to match structurally, and
+     *    prose written about "the Sony over-ears" carries no token.
+     *
+     * The plain-text match is a word-boundary regex (`~*`, Postgres' `\y`), not
+     * a LIKE. `%sony%` matches "Sonya" and "masonry"; a brand page linking to an
+     * article about masonry is worse than a brand page linking to nothing. The
+     * name is regex-escaped because brands contain metacharacters — "Fisher-
+     * Price" is harmless, "M&M's" and "Dr. Oetker" are not, and an unescaped `.`
+     * would match any character.
+     *
+     * Two-letter spellings are excluded from the plain-text match alone. "LG" is
+     * a brand and also two letters that occur inside nothing, but the class of
+     * short spellings is where a boundary match stops being evidence of anything
+     * — an article containing the word "OK" is not about the brand OK. The token
+     * and product matches carry no such limit, because both are exact.
+     *
+     * Unindexed, and deliberately: a market holds hundreds of published
+     * articles, not millions, so the sequential scan is cheaper than the index
+     * that would have to be maintained on every publish.
      *
      * @return list<array<string, mixed>>
      */
@@ -383,15 +382,25 @@ class BrandController extends Controller
             ->where(function ($q) use ($featured, $spellings) {
                 $q->whereIn('id', $featured);
 
-                // Every spelling, because a Cove's allowlist was built from
+                // Every spelling, because an article's allowlist was built from
                 // whichever spelling the feed behind that product used.
                 foreach ($spellings as $spelling) {
                     $q->orWhere('body_md', 'like', '%[[brand:'.$spelling.']]%')
                         ->orWhere('body_md', 'like', '%[[brand:'.$spelling.'|%');
+
+                    if (mb_strlen($spelling) < 3) {
+                        continue;
+                    }
+
+                    $pattern = $this->mentionPattern($spelling);
+
+                    $q->orWhereRaw('title ~* ?', [$pattern])
+                        ->orWhereRaw('coalesce(intro, \'\') ~* ?', [$pattern])
+                        ->orWhereRaw('body_md ~* ?', [$pattern]);
                 }
             })
             ->orderByDesc('published_at')
-            ->limit(4)
+            ->limit(6)
             ->get(['slug', 'title', 'intro'])
             ->map(fn (Guide $guide) => [
                 'title' => $guide->title,
@@ -399,6 +408,36 @@ class BrandController extends Controller
                 'url' => $current->url("guides/{$guide->slug}"),
             ])
             ->all();
+    }
+
+    /**
+     * "This article says this brand's name", as a Postgres regular expression.
+     *
+     * Two things it has to get right, and the second is the one that bites.
+     *
+     * **Escaping.** `preg_quote()` is the wrong tool: it escapes for PCRE and
+     * emits `\#`, which POSIX ARE rejects as an undefined escape rather than
+     * reading as a literal `#`. Escaping exactly the ARE metacharacters is the
+     * whole job — and it is not optional, because an unescaped `(` in "Dr.
+     * Oetker (NL)" is a syntax error Postgres raises at query time, i.e. a 500
+     * on that brand's page.
+     *
+     * **Where the boundaries go.** `\y` matches *between* a word character and
+     * a non-word one, so `\yDr\. Oetker \(NL\)\y` never matches anything: the
+     * pattern already ends on `)`, and there is no boundary between `)` and the
+     * space after it. Anchoring unconditionally silently empties the section
+     * for every brand whose name is punctuated at either end. So each boundary
+     * is added only on the side where the name actually starts or ends on a
+     * word character.
+     */
+    private function mentionPattern(string $spelling): string
+    {
+        $escaped = preg_replace('/[.^$*+?()\[\]{}|\\\\]/', '\\\\$0', $spelling) ?? $spelling;
+
+        $opens = preg_match('/^[\p{L}\p{N}_]/u', $spelling) === 1 ? '\y' : '';
+        $closes = preg_match('/[\p{L}\p{N}_]$/u', $spelling) === 1 ? '\y' : '';
+
+        return $opens.$escaped.$closes;
     }
 
     /**

@@ -35,13 +35,20 @@ cards. Deliberately not a parallel implementation — the filter rail, the sort,
 offer comparison all already exist and all already work, and a second copy would drift within a
 month.
 
-What it adds is what a filtered search cannot have: a canonical URL, prose, and links out to Coves.
+What it adds is what a filtered search cannot have: a canonical URL, and links out to editorial.
 
-The prose lives **below** the grid. Above it there is one row of links — see
-[The statistics came off the top of the page](#the-statistics-came-off-the-top-of-the-page).
+Above the grid there is one row of the brand's own vocabulary, as links — see
+[The statistics came off the top of the page](#the-statistics-came-off-the-top-of-the-page). Below it
+there are articles that mention the brand. The generated paragraphs that used to fill that space went
+on 2026-08-16 — see [The long copy below the grid is gone](#the-long-copy-below-the-grid-is-gone).
 
 The brand facet is absent from its filter rail, because filtering a Sony page by brand is a control
 with one option.
+
+The rail carries the search page's ordering, changed with it on 2026-08-16: the shop facet first,
+then the discounted and in-stock switches, then the related-brand links. The "available from several
+shops" checkbox is gone from both rails — see
+[search.md](search.md#the-order-of-the-filter-rail).
 
 ## The live sources are asked too
 
@@ -396,6 +403,7 @@ page. Used by:
 | Surface | Behaviour |
 |---|---|
 | Product card | Brand links to its page; plain text otherwise |
+| Product page | Same, on the brand line above the title. *Added 2026-08-16* — it was the one surface that rendered a brand and never linked it, which is the page a shopper is most often standing on when they want more of the brand |
 | Search facet | Checkbox filters this page, an arrow goes to the brand page |
 | Cove prose (`[[brand:X]]`) | Brand page where one exists, filtered search otherwise |
 | Brand page itself | Sibling brands in the same category |
@@ -437,47 +445,77 @@ Excluded, each for its own reason:
 Each title contributes a word at most once, or twelve near-identical listings for one product make
 that product's model name the page's defining vocabulary.
 
-## The long copy below the grid
+## The long copy below the grid is gone
 
-A results grid has nothing on it for a search engine to treat the page as a document — strip the
-prices and titles and only markup remains, and the term links above it are three words each.
+**Removed 2026-08-16.** What a brand page carries below its products now is a list of articles that
+mention the brand, and nothing else.
 
-`PageNarrative` adds ~350–450 words **below** the products: three sections — about the brand, where
-it is sold, how to choose one — plus an FAQ and a strip of related searches. Below, not above — a shopper came for products, and several hundred words between
-them and the first card is a worse page for a human, which Google has been explicit about for years.
+`PageNarrative::forBrand()` used to add ~350–450 words there: three sections — about the brand, where
+it is sold, how to choose one — plus an FAQ and a strip of related searches. Every line of it was a
+fact the catalogue could back up or a true explanation of how the site works, and it was still the
+wrong thing to publish a thousand times.
 
-Every line is one of exactly two things:
+The reason it went is not that it was false. It is that it was **arithmetic about the grid directly
+above it, written in sentences**, and the same arithmetic on every brand page with the nouns swapped.
+A reader who scrolls past the products has already seen the price range; a crawler comparing two
+brand pages sees one template. The word count was real and the document it made was not.
 
-1. **A fact about this page** — counts, the price range, how many are reduced and by how much, how
-   many are comparable, which brands are present. Read off the items on the page rather than the whole
-   result set, because a reader can check a claim about twenty-four visible products and cannot check
-   one about four hundred they will never see.
-2. **A true explanation of how the site works** — what the 30-day median is and why it beats a
-   crossed-out "was" price, what an offer count tells you that a price does not, why everything
-   defaults to in-stock.
+The `FAQPage` JSON-LD went with it, necessarily: structured data whose answer is not on the page is a
+misrepresentation, so an FAQ block cannot outlive the paragraphs it describes.
 
-The second kind repeats across pages, which is fine and deliberate: it is boilerplate in the honest
-sense, the way a shipping policy is. The first kind cannot repeat, because it is read off the results.
+What sits there instead is the section below — articles, which are the one thing on a brand page that
+was written once, about a real question, and links *out* of the page rather than restating it.
 
-The obvious alternative is to hit a word count by repeating the query with filler around it. It works
-for about a fortnight, and then a helpful-content update decides the domain is mostly padding and
-takes the pages that were good down with it. `PageNarrativeTest` asserts a 300-word floor *and* that
-no placeholder is left unfilled — the two ways this fails.
+`PageNarrative::forBrand()`, the `brand_narrative` copy-bank surface and `PageNarrativeTest`'s brand
+half are all still in the tree. Nothing renders them. They are a deliberate loose end rather than an
+oversight: deleting them also means retiring an editable copy surface that `copy_templates` may hold
+seeded rows for on staging and production, which is a data question and not a code one.
 
-### FAQ, in both halves
+### Articles that mention the brand
 
-Three questions answered from the page's own numbers, rendered as visible `<dl>` **and** as `FAQPage`
-JSON-LD. Both are required: structured data whose answer is not on the page is a misrepresentation,
-and search engines have started treating it as one.
+`BrandController::coves()` — three ways an article counts, and the third was added the day the prose
+was removed, because the first two left the section empty on most pages:
 
-### Related searches
+1. Its prose contains a `[[brand:X]]` token. The writer named the brand deliberately.
+2. It features one of the brand's products. Structural, and true even where the prose never spells
+   the brand out — but only buying guides have a shortlist at all.
+3. Its title, intro or body says the name in plain text. This is the one that fires in practice: an
+   advice article has nothing to match structurally, and prose about "de Sony over-ears" carries no
+   token.
+
+The plain-text match is a **word-boundary regex (`~*` with Postgres' `\y`), never a LIKE**. `%sony%`
+matches "Sonya" and "masonry", and a brand page linking to an article about masonry is worse than one
+linking to nothing: it is a promise the click does not keep.
+
+Two details that are easy to get wrong and fail differently:
+
+- **The name is regex-escaped.** Brands are punctuated — "Dr. Oetker (NL)" — and an unescaped `(` is
+  not a subtle bug but a syntax error Postgres raises at query time, i.e. a 500 on that brand's page.
+- **The boundaries are conditional.** `\y` matches *between* a word character and a non-word one, so
+  `\yDr\. Oetker \(NL\)\y` matches nothing at all: the pattern already ends on `)`. Anchoring both
+  ends unconditionally silently empties the section for every brand whose name is punctuated at
+  either end — silently, because an empty section looks like "no articles yet". Each boundary is
+  added only on the side where the name starts or ends on a word character.
+
+Spellings under three characters are excluded from the plain-text match alone; the token and product
+matches carry no such limit because both are exact. A boundary match on two letters is not evidence
+of anything — an article containing the word "OK" is not about the brand OK.
+
+Unindexed, deliberately. A market holds hundreds of published articles, not millions, so the
+sequential scan costs less than an index maintained on every publish.
+
+### Related searches — on the search page only, since 2026-08-16
 
 From `search_log`, matched with the `<%` word-similarity operator — never `%`, whose whole-string
 `similarity()` scores a realistic neighbour under the 0.3 default and finds nothing. Real searches
 with real results, which is the demand signal no competitor has, and the outbound links that stop a
 results page being a leaf a crawler reaches and then stops at.
 
-### Editable, and rotating
+These chips lived inside the narrative, so a brand page lost them along with it. The brand page is
+not a leaf without them: the term links above the grid, the related-brand list in the rail and the
+article links below it are all outbound, and the last of those is new.
+
+### Editable, and rotating — the search page's narrative now
 
 The copy is not in the language files any more — or rather, it is, but only as the fallback.
 `copy_templates` holds **variants** of each **slot**, editable at `/admin` under *Page copy*, and

@@ -41,7 +41,6 @@ export default function SearchHelp({ urls }: Props) {
         { term: t('search_help.narrow_price_term'), what: t('search_help.narrow_price') },
         { term: t('search_help.narrow_brand_term'), what: t('search_help.narrow_brand') },
         { term: t('search_help.narrow_stock_term'), what: t('search_help.narrow_stock') },
-        { term: t('search_help.narrow_comparable_term'), what: t('search_help.narrow_comparable') },
         { term: t('search_help.narrow_sort_term'), what: t('search_help.narrow_sort') },
         { term: t('search_help.narrow_terms_term'), what: t('search_help.narrow_terms') },
     ]

@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react'
+import { Head, Link, usePage } from '@inertiajs/react'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -28,6 +28,8 @@ interface Props {
         id: number
         title: string
         brand: string | null
+        /** The brand's own page, when it has one. Null for most brands. */
+        brandUrl: string | null
         image: string | null
         category: string | null
         minPrice: number | null
@@ -91,8 +93,22 @@ export default function Product({ product, offers, alert }: Props) {
                 </div>
 
                 <div>
+                    {/*
+                      A link only where the brand has a page. Slugifying the
+                      name here would link every product confidently to a 404,
+                      because most brands never reach `pageworthy()` — so the
+                      server answers that question and sends a URL or a null.
+                    */}
                     {product.brand && (
-                        <div className="text-sm tracking-wide text-ink-soft uppercase">{product.brand}</div>
+                        <div className="text-sm tracking-wide text-ink-soft uppercase">
+                            {product.brandUrl ? (
+                                <Link href={product.brandUrl} className="hover:text-accent">
+                                    {product.brand}
+                                </Link>
+                            ) : (
+                                product.brand
+                            )}
+                        </div>
                     )}
                     <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{product.title}</h1>
 

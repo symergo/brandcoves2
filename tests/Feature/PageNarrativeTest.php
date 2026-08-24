@@ -23,6 +23,12 @@ use Tests\TestCase;
 /**
  * The long copy below a results grid.
  *
+ * **The search page only, since 2026-08-16.** Brand pages carried the same
+ * three sections and dropped them: the copy was arithmetic about the grid
+ * immediately above it, written in sentences, identically on a thousand pages.
+ * What replaced it is links to articles that mention the brand, covered by
+ * `BrandPageTest`.
+ *
  * Two opposing failure modes, and a test for each.
  *
  *  - **Too little.** A grid of cards is almost pure markup; without prose there
@@ -135,21 +141,16 @@ class PageNarrativeTest extends TestCase
             });
     }
 
-    #[Test]
-    public function a_brand_page_carries_enough_prose_too(): void
-    {
-        $this->seedBrand('Aurex');
-
-        $this->get('/be-nl/brand/aurex')
-            ->assertOk()
-            ->assertInertia(function ($page) {
-                $narrative = $page->toArray()['props']['narrative'];
-
-                $this->assertNotNull($narrative);
-                $this->assertGreaterThan(300, $this->wordCount($narrative));
-            });
-    }
-
+    /**
+     * The brand page has no narrative to carry any more.
+     *
+     * `a_brand_page_carries_enough_prose_too` used to sit here and asserted the
+     * same 300-word floor against `/be-nl/brand/aurex`. The copy below a brand
+     * page went on 2026-08-16, replaced by links to articles that mention the
+     * brand — see `BrandController::coves()` and
+     * docs/features/brand-pages.md. `PageNarrative::forBrand()` still exists and
+     * nothing calls it, so the floor is asserted on the search page alone.
+     */
     #[Test]
     public function every_placeholder_is_filled(): void
     {
@@ -158,18 +159,15 @@ class PageNarrativeTest extends TestCase
         // failure mode of a copy block with an optional placeholder in it.
         $this->seedBrand('Aurex');
 
-        foreach (['/be-nl/search?q=koptelefoon', '/be-nl/brand/aurex'] as $url) {
-            $this->get($url)
-                ->assertOk()
-                ->assertInertia(function ($page) use ($url) {
-                    $narrative = $page->toArray()['props']['narrative'];
-                    $blob = json_encode($narrative);
+        $this->get('/be-nl/search?q=koptelefoon')
+            ->assertOk()
+            ->assertInertia(function ($page) {
+                $blob = json_encode($page->toArray()['props']['narrative']);
 
-                    foreach ([':term', ':brand', ':count', ':low', ':high', ':shop', ':category', ':percent', ':shops'] as $token) {
-                        $this->assertStringNotContainsString($token, (string) $blob, "unfilled {$token} on {$url}");
-                    }
-                });
-        }
+                foreach ([':term', ':brand', ':count', ':low', ':high', ':shop', ':category', ':percent', ':shops'] as $token) {
+                    $this->assertStringNotContainsString($token, (string) $blob, "unfilled {$token}");
+                }
+            });
     }
 
     #[Test]
@@ -185,7 +183,6 @@ class PageNarrativeTest extends TestCase
         foreach ([
             '/be-nl/search?q=koptelefoon&page=2',
             '/be-nl/search?q=koptelefoon&discounted=1',
-            '/be-nl/brand/aurex?sort=price_asc',
         ] as $url) {
             $this->get($url)
                 ->assertOk()

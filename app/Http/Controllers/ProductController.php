@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\RestockAlert;
 use App\Services\Alerts\AlertEligibility;
+use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -60,6 +61,14 @@ class ProductController extends Controller
                 'id' => $productGroup->id,
                 'title' => $productGroup->title,
                 'brand' => $productGroup->brand,
+                /*
+                 * Null when the brand has no page of its own — which is most of
+                 * them, since `pageworthy()` wants three products. Resolved
+                 * through BrandLinker rather than slugified here, so the link
+                 * cannot point at a 404 or at a slug the nightly refresh has
+                 * since rewritten.
+                 */
+                'brandUrl' => app(BrandLinker::class)->url($productGroup->brand, $current->get()),
                 'image' => $productGroup->image_url,
                 'category' => $productGroup->category,
                 'minPrice' => $productGroup->min_price,

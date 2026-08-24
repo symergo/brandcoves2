@@ -34397,7 +34397,7 @@ function AskShow({ question, answers, canAnswer, maxPicks, results, searchTerm }
 //#region resources/js/Pages/Auth/Login.tsx
 var Login_exports = /* @__PURE__ */ __exportAll({ default: () => Login });
 function Login({ googleEnabled }) {
-	const { market, flash } = usePage().props;
+	const { market } = usePage().props;
 	const { t } = useTranslations();
 	const base = `/${market.key}`;
 	const form = useForm({
@@ -34418,11 +34418,6 @@ function Login({ googleEnabled }) {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-2 text-ink-soft",
 				children: t("auth.intro")
-			}),
-			flash.success && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-6 rounded-card border border-sage/30 bg-sage/10 p-4 text-sm",
-				role: "status",
-				children: flash.success
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
 				onSubmit: submit,
@@ -34487,85 +34482,6 @@ function Login({ googleEnabled }) {
 			})] })
 		]
 	})] });
-}
-//#endregion
-//#region resources/js/Components/PageNarrative.tsx
-/**
-* The long copy below a results grid.
-*
-* Rendered after the products, never before them. A shopper came for products,
-* and several hundred words between them and the first card is a worse page for
-* a human — which Google has been explicit about for years, so it is not even a
-* trade against ranking.
-*
-* The FAQ is plain markup rather than a `<details>` accordion. Collapsed answers
-* are still indexed, but they are also still hidden, and the point of putting
-* them on the page at all is that a reader can see the answer that the FAQPage
-* structured data claims is there.
-*/
-function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) {
-	const { t } = useTranslations();
-	if (narrative.sections.length === 0 && narrative.faq.length === 0 && narrative.related.length === 0) return null;
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "mt-16 border-t border-line pt-10",
-		children: [
-			narrative.sections.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "grid gap-8 md:grid-cols-2 lg:grid-cols-3",
-				children: narrative.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "font-semibold",
-					children: section.heading
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "mt-2 space-y-2 text-sm leading-relaxed text-ink-soft",
-					children: section.body.map((paragraph) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: paragraph }, paragraph))
-				})] }, section.heading))
-			}),
-			narrative.faq.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-				className: "mt-10",
-				"aria-labelledby": "narrative-faq",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					id: "narrative-faq",
-					className: "text-xl font-semibold tracking-tight",
-					children: faqHeading
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
-					className: "mt-4 grid gap-6 md:grid-cols-2",
-					children: narrative.faq.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", {
-						className: "font-medium",
-						children: item.q
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-						className: "mt-1 text-sm leading-relaxed text-ink-soft",
-						children: item.a
-					})] }, item.q))
-				})]
-			}),
-			narrative.related.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-				className: "mt-10",
-				"aria-labelledby": "narrative-related",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-						id: "narrative-related",
-						className: "font-semibold",
-						children: relatedHeading
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-1 text-sm text-ink-soft",
-						children: relatedIntro
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-						className: "mt-3 flex flex-wrap gap-2",
-						children: narrative.related.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-							href: item.url,
-							className: "block rounded-full border border-line px-3 py-1.5 text-sm hover:border-ink",
-							children: item.term
-						}) }, item.url))
-					})
-				]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-8 text-xs text-ink-soft",
-				children: t("footer.affiliate")
-			})
-		]
-	});
 }
 //#endregion
 //#region resources/js/savedItems.ts
@@ -35044,14 +34960,19 @@ function ProductCard({ group, brandUrl }) {
 //#region resources/js/Pages/Brand.tsx
 var Brand_exports = /* @__PURE__ */ __exportAll({ default: () => Brand });
 /**
-* A brand page: a search with the brand preselected, plus prose and links.
+* A brand page: a search with the brand preselected, plus editorial and links.
+*
+* Below the grid there are articles that mention the brand, and nothing else.
+* The three columns of generated paragraphs and the FAQ that used to sit there
+* went on 2026-08-16 — they restated the numbers on the cards above them, in
+* sentences, identically on every brand page. See BrandController::coves().
 *
 * The brand facet is deliberately absent from the rail — filtering a Sony page
 * by brand is a control with one option. Everything else (shops, stock,
-* discounted, comparable, sort, pagination) is the same as search, because it is
-* the same query object underneath.
+* discounted, sort, pagination) is the same as search, because it is the same
+* query object underneath.
 */
-function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves, related, narrative }) {
+function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves, related }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
@@ -35156,33 +35077,6 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 					"aria-label": t("search.filters"),
 					className: `space-y-6 text-sm lg:block ${filtersOpen ? "block" : "hidden"}`,
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-							className: "flex cursor-pointer items-center gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-								type: "checkbox",
-								checked: filters.in_stock !== "0",
-								onChange: (e) => go({ in_stock: e.target.checked ? null : "0" }),
-								className: "accent-accent"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("search.in_stock_only") })]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-							className: "flex cursor-pointer items-center gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-								type: "checkbox",
-								checked: filters.discounted === "1",
-								onChange: (e) => go({ discounted: e.target.checked ? "1" : null }),
-								className: "accent-accent"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("search.discounted_only") })]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-							className: "flex cursor-pointer items-center gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-								type: "checkbox",
-								checked: filters.comparable === "1",
-								onChange: (e) => go({ comparable: e.target.checked ? "1" : null }),
-								className: "accent-accent"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("search.comparable_only") })]
-						}),
 						facets.merchants.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 							className: "mb-2 font-medium",
 							children: t("search.shop")
@@ -35212,6 +35106,24 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 								}) }, m.id);
 							})
 						})] }),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+							className: "flex cursor-pointer items-center gap-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "checkbox",
+								checked: filters.discounted === "1",
+								onChange: (e) => go({ discounted: e.target.checked ? "1" : null }),
+								className: "accent-accent"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("search.discounted_only") })]
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+							className: "flex cursor-pointer items-center gap-2",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "checkbox",
+								checked: filters.in_stock !== "0",
+								onChange: (e) => go({ in_stock: e.target.checked ? null : "0" }),
+								className: "accent-accent"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("search.in_stock_only") })]
+						}),
 						related.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 							className: "mb-2 font-medium",
 							children: t("brand.related_heading")
@@ -35411,12 +35323,6 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 					})
 				] })
 			]
-		}),
-		narrative && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageNarrative, {
-			narrative,
-			faqHeading: t("brand_narrative.faq_heading", { brand: brand.name }),
-			relatedHeading: t("brand_narrative.related_heading"),
-			relatedIntro: t("brand_narrative.related_intro", { brand: brand.name })
 		})
 	] });
 }
@@ -39889,7 +39795,11 @@ function Product({ product, offers, alert }) {
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 				product.brand && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 					className: "text-sm tracking-wide text-ink-soft uppercase",
-					children: product.brand
+					children: product.brandUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+						href: product.brandUrl,
+						className: "hover:text-accent",
+						children: product.brand
+					}) : product.brand
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
 					className: "mt-1 text-2xl font-semibold sm:text-3xl",
@@ -41147,6 +41057,85 @@ function Scan() {
 	] });
 }
 //#endregion
+//#region resources/js/Components/PageNarrative.tsx
+/**
+* The long copy below a results grid.
+*
+* Rendered after the products, never before them. A shopper came for products,
+* and several hundred words between them and the first card is a worse page for
+* a human — which Google has been explicit about for years, so it is not even a
+* trade against ranking.
+*
+* The FAQ is plain markup rather than a `<details>` accordion. Collapsed answers
+* are still indexed, but they are also still hidden, and the point of putting
+* them on the page at all is that a reader can see the answer that the FAQPage
+* structured data claims is there.
+*/
+function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) {
+	const { t } = useTranslations();
+	if (narrative.sections.length === 0 && narrative.faq.length === 0 && narrative.related.length === 0) return null;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mt-16 border-t border-line pt-10",
+		children: [
+			narrative.sections.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "grid gap-8 md:grid-cols-2 lg:grid-cols-3",
+				children: narrative.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-semibold",
+					children: section.heading
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-2 space-y-2 text-sm leading-relaxed text-ink-soft",
+					children: section.body.map((paragraph) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: paragraph }, paragraph))
+				})] }, section.heading))
+			}),
+			narrative.faq.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "mt-10",
+				"aria-labelledby": "narrative-faq",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					id: "narrative-faq",
+					className: "text-xl font-semibold tracking-tight",
+					children: faqHeading
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
+					className: "mt-4 grid gap-6 md:grid-cols-2",
+					children: narrative.faq.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", {
+						className: "font-medium",
+						children: item.q
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
+						className: "mt-1 text-sm leading-relaxed text-ink-soft",
+						children: item.a
+					})] }, item.q))
+				})]
+			}),
+			narrative.related.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+				className: "mt-10",
+				"aria-labelledby": "narrative-related",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+						id: "narrative-related",
+						className: "font-semibold",
+						children: relatedHeading
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 text-sm text-ink-soft",
+						children: relatedIntro
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+						className: "mt-3 flex flex-wrap gap-2",
+						children: narrative.related.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+							href: item.url,
+							className: "block rounded-full border border-line px-3 py-1.5 text-sm hover:border-ink",
+							children: item.term
+						}) }, item.url))
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-8 text-xs text-ink-soft",
+				children: t("footer.affiliate")
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Pages/Search.tsx
 var Search_exports = /* @__PURE__ */ __exportAll({ default: () => Search });
 function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, pastedLink, terms, brandLinks, narrative }) {
@@ -41298,21 +41287,6 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 					"aria-label": t("search.filters"),
 					className: `space-y-6 text-sm lg:block ${filtersOpen ? "block" : "hidden"}`,
 					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
-							label: t("search.in_stock_only"),
-							checked: filters.in_stock !== "0",
-							onChange: (v) => go({ in_stock: v ? null : "0" })
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
-							label: t("search.discounted_only"),
-							checked: filters.discounted === "1",
-							onChange: (v) => go({ discounted: v ? "1" : null })
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
-							label: t("search.comparable_only"),
-							checked: filters.comparable === "1",
-							onChange: (v) => go({ comparable: v ? "1" : null })
-						}),
 						facets.brands.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Facet, {
 							title: t("search.brand"),
 							items: facets.brands.map((b) => ({
@@ -41341,6 +41315,16 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 								go({ merchant: active ? current.filter((m) => m !== key) : [...current, key] });
 							},
 							format: n
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
+							label: t("search.discounted_only"),
+							checked: filters.discounted === "1",
+							onChange: (v) => go({ discounted: v ? "1" : null })
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Toggle, {
+							label: t("search.in_stock_only"),
+							checked: filters.in_stock !== "0",
+							onChange: (v) => go({ in_stock: v ? null : "0" })
 						})
 					]
 				}),
@@ -41619,10 +41603,6 @@ function SearchHelp({ urls }) {
 		{
 			term: t("search_help.narrow_stock_term"),
 			what: t("search_help.narrow_stock")
-		},
-		{
-			term: t("search_help.narrow_comparable_term"),
-			what: t("search_help.narrow_comparable")
 		},
 		{
 			term: t("search_help.narrow_sort_term"),

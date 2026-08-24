@@ -154,144 +154,29 @@ class BrandPageTest extends TestCase
     }
 
     /**
-     * The brand page's prose, read off the page a visitor is served.
+     * The brand page carries no generated prose at all.
      *
-     * The four tests below have moved twice, and the rule they pin has not
-     * changed either time: **never state a number the catalogue cannot back up.**
+     * Four tests used to live here, and they had moved twice: first reading
+     * `props['copy']` — the templated statistics that opened a brand page —
+     * then `BrandCopy`, the service behind them, and finally the rendered
+     * `narrative` prop. All three pinned the same rule, **never state a number
+     * the catalogue cannot back up**, and all three are now moot: the copy is
+     * gone rather than corrected. See `BrandController::coves()`.
      *
-     * They first read `props['copy']`, the templated statistics that opened a
-     * brand page. Those came off the top of the page on 2026-08-10 and the
-     * assertions moved onto `BrandCopy`, the service behind them. `BrandCopy` is
-     * now gone too — nothing rendered it, and a service no page calls is a
-     * liability rather than coverage. The prose it used to write lives in
-     * `PageNarrative::forBrand()`, below the grid.
-     *
-     * So they read the rendered `narrative` prop now, which is the strongest of
-     * the three: it asserts against what a reader is actually shown rather than
-     * against a service that may or may not be wired to a page.
-     *
-     * @return array{sections: list<array{heading: string, body: list<string>}>, faq: list<array{q: string, a: string}>, related: list<array{term: string, url: string}>}
+     * This test replaces them with the rule that survives. A number that is
+     * never written cannot be wrong, so what is worth pinning is that nothing
+     * quietly puts the paragraphs back — a regression that would be invisible
+     * in review, because re-adding a `narrative` prop looks like a feature.
      */
-    private function brandProse(string $brand): array
-    {
-        $slug = BrandStat::query()->where('brand', $brand)->value('slug');
-
-        $narrative = $this->get("/be-nl/brand/{$slug}")
-            ->assertOk()
-            ->viewData('page')['props']['narrative'] ?? null;
-
-        $this->assertIsArray($narrative, "the brand page for {$brand} rendered no prose at all");
-
-        return $narrative;
-    }
-
-    /** Every sentence on the page, as one string. */
-    private function brandProseText(string $brand): string
-    {
-        $prose = $this->brandProse($brand);
-
-        $lines = [];
-
-        foreach ($prose['sections'] as $section) {
-            $lines[] = $section['heading'];
-            $lines = [...$lines, ...$section['body']];
-        }
-
-        foreach ($prose['faq'] as $entry) {
-            $lines[] = $entry['q'];
-            $lines[] = $entry['a'];
-        }
-
-        return implode(' ', $lines);
-    }
-
     #[Test]
-    public function the_copy_only_claims_a_discount_when_something_is_discounted(): void
+    public function the_page_carries_no_generated_prose(): void
     {
-        // median 14900, min from 9900 → genuinely reduced.
         $this->seedBrand('Aurex');
 
-        $this->assertStringContainsString('%', $this->brandProseText('Aurex'), 'expected a discount claim');
+        $props = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
 
-        // Now a brand whose median equals its minimum: nothing is reduced, so
-        // the sentence must not appear at all.
-        $this->seedBrand('Norvik', overrides: ['median_price' => 9900, 'min_price' => 9900]);
-
-        $this->assertSame(0, BrandStat::query()->where('brand', 'Norvik')->first()->discounted_count);
-
-        $this->assertStringNotContainsString(
-            '%',
-            $this->brandProseText('Norvik'),
-            'claimed a discount with nothing reduced',
-        );
-    }
-
-    #[Test]
-    public function the_copy_says_what_the_brand_makes(): void
-    {
-        $this->seedBrand('Denon');
-
-        // A second category, so the brand has a spread rather than one word.
-        $this->seedBrand('Denon', 2, ['category' => 'Televisies'], 10);
-
-        $stat = BrandStat::query()->where('brand', 'Denon')->firstOrFail();
-
-        /*
-         * `top_category` answered "mostly what?" and nothing else, so every
-         * sentence a brand page could write about the brand itself came out as
-         * one word — and the copy filled the gap with prices, medians and shop
-         * counts. Someone who arrived wanting to know what Denon is got three
-         * paragraphs about how we measure discounts.
-         */
-        $categories = array_column($stat->categories, 'category');
-
-        $this->assertContains('Audio', $categories);
-        $this->assertContains('Televisies', $categories);
-
-        $prose = $this->brandProseText('Denon');
-
-        // Named in the copy, not merely present in the stats row.
-        $this->assertStringContainsString('Audio', $prose);
-        $this->assertStringContainsString('Televisies', $prose);
-    }
-
-    #[Test]
-    public function the_brand_is_described_before_the_price_is(): void
-    {
-        $this->seedBrand('Marantz');
-        $this->seedBrand('Marantz', 2, ['category' => 'Versterkers'], 10);
-
-        $sections = $this->brandProse('Marantz')['sections'];
-
-        // The reader typed a brand name. The first section should answer "what
-        // is this", not "how do we compute a discount".
-        $this->assertNotSame([], $sections);
-        $this->assertStringContainsString('Versterkers', implode(' ', $sections[0]['body']));
-    }
-
-    #[Test]
-    public function a_brand_in_one_category_does_not_claim_a_range(): void
-    {
-        $this->seedBrand('Sennheiser');
-
-        $sections = $this->brandProse('Sennheiser')['sections'];
-
-        /*
-         * The list joiner would render a single-item list as a bare word, which
-         * reads as a truncated sentence — and claiming a spread from one
-         * category would be the invented sentence this copy exists to avoid.
-         *
-         * Asserted on the sentence that names the categories rather than the
-         * whole section, because the paragraphs around it have commas of their
-         * own and always did.
-         */
-        $named = array_values(array_filter(
-            $sections[0]['body'],
-            fn (string $line) => str_contains($line, 'Audio'),
-        ));
-
-        $this->assertNotSame([], $named, 'the brand\'s one category is never named');
-        $this->assertStringNotContainsString('Audio, ', $named[0]);
+        $this->assertArrayNotHasKey('narrative', $props, 'the generated paragraphs are back below the grid');
+        $this->assertArrayNotHasKey('copy', $props, 'the templated statistics are back above it');
     }
 
     #[Test]
@@ -387,6 +272,32 @@ class BrandPageTest extends TestCase
                 $this->assertSame('/be-nl/brand/aurex', $links['aurex'] ?? null);
                 $this->assertArrayNotHasKey('tinybrand', $links);
             });
+    }
+
+    /**
+     * The brand on a product page is a link to the brand's page.
+     *
+     * Same rule as everywhere else a brand is rendered, and the same reason it
+     * cannot be `Str::slug()` at the call site: most brands never reach the
+     * three-product threshold, so slugifying here would link confidently to a
+     * 404 from the page a shopper is most likely to be standing on.
+     */
+    #[Test]
+    public function a_product_page_links_its_brand_only_when_the_brand_has_a_page(): void
+    {
+        $this->seedBrand('Aurex');
+        $this->seedBrand('Tinybrand', count: 2);
+
+        $linked = ProductGroup::query()->where('brand', 'Aurex')->firstOrFail();
+        $unlinked = ProductGroup::query()->where('brand', 'Tinybrand')->firstOrFail();
+
+        $this->get("/be-nl/p/{$linked->id}/{$linked->slug}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('product.brandUrl', '/be-nl/brand/aurex'));
+
+        $this->get("/be-nl/p/{$unlinked->id}/{$unlinked->slug}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('product.brandUrl', null));
     }
 
     #[Test]
@@ -489,6 +400,123 @@ class BrandPageTest extends TestCase
                 $this->assertContains('De beste koptelefoons', $titles);
                 $this->assertContains('Stil werken', $titles);
                 $this->assertNotContains('Iets anders', $titles);
+            });
+    }
+
+    /**
+     * The third way an article counts: it simply says the name.
+     *
+     * This is the one that makes the section non-empty in practice, and it is
+     * why the section could replace the generated prose below the grid at all.
+     * An advice article has no shortlist to match structurally, and prose
+     * written by hand about "de Aurex-koptelefoons" carries no `[[brand:]]`
+     * token — under the old two-way match, neither reached the brand page.
+     */
+    #[Test]
+    public function an_article_that_names_the_brand_in_plain_prose_reaches_its_page(): void
+    {
+        $this->seedBrand('Aurex');
+
+        Guide::create([
+            'market' => Market::BeNl->value,
+            'slug' => 'ruis-uitleg',
+            'title' => 'Ruisonderdrukking uitgelegd',
+            'intro' => 'Hoe het werkt.',
+            'body_md' => 'De Aurex doet dit goed, net als anderen.',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        // Named in the title alone, with no body at all.
+        Guide::create([
+            'market' => Market::BeNl->value,
+            'slug' => 'aurex-of-norvik',
+            'title' => 'Aurex of Norvik?',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        $this->get('/be-nl/brand/aurex')
+            ->assertOk()
+            ->assertInertia(function ($page) {
+                $titles = array_column($page->toArray()['props']['coves'], 'title');
+
+                $this->assertContains('Ruisonderdrukking uitgelegd', $titles);
+                $this->assertContains('Aurex of Norvik?', $titles);
+            });
+    }
+
+    /**
+     * A word boundary, not a substring.
+     *
+     * `body_md LIKE '%aurex%'` would match "Aurexia" and every longer word the
+     * brand's letters happen to open — and a brand page linking to an article
+     * that is about something else is worse than a brand page linking to
+     * nothing, because it is a promise the click does not keep.
+     */
+    #[Test]
+    public function a_brand_name_inside_a_longer_word_is_not_a_mention(): void
+    {
+        $this->seedBrand('Aurex');
+
+        Guide::create([
+            'market' => Market::BeNl->value,
+            'slug' => 'aurexia',
+            'title' => 'Aurexia en andere merken',
+            'intro' => 'Niets met Aurexen te maken.',
+            'body_md' => 'Over Aurexia gesproken.',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        $this->get('/be-nl/brand/aurex')
+            ->assertOk()
+            ->assertInertia(function ($page) {
+                $titles = array_column($page->toArray()['props']['coves'], 'title');
+
+                $this->assertNotContains('Aurexia en andere merken', $titles);
+            });
+    }
+
+    /**
+     * A brand name with regex metacharacters in it does not blow up the query.
+     *
+     * The plain-text match is a Postgres regular expression, so an unescaped
+     * `.` would match any character and an unescaped `(` would be a syntax
+     * error Postgres raises at runtime — a 500 on the brand page for every
+     * brand whose name is punctuated, which is a great many of them.
+     */
+    #[Test]
+    public function a_brand_whose_name_is_punctuated_still_renders(): void
+    {
+        $this->seedBrand('Dr. Oetker (NL)');
+
+        $slug = BrandStat::query()->where('brand', 'Dr. Oetker (NL)')->value('slug');
+
+        Guide::create([
+            'market' => Market::BeNl->value,
+            'slug' => 'bakken',
+            'title' => 'Bakken met Dr. Oetker (NL)',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        // The `.` is a literal: "DroOetker" must not satisfy it.
+        Guide::create([
+            'market' => Market::BeNl->value,
+            'slug' => 'niet-dit',
+            'title' => 'Droetker (NL) is iets anders',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        $this->get("/be-nl/brand/{$slug}")
+            ->assertOk()
+            ->assertInertia(function ($page) {
+                $titles = array_column($page->toArray()['props']['coves'], 'title');
+
+                $this->assertContains('Bakken met Dr. Oetker (NL)', $titles);
+                $this->assertNotContains('Droetker (NL) is iets anders', $titles);
             });
     }
 
@@ -750,12 +778,6 @@ class BrandPageTest extends TestCase
             ->assertOk()
             ->assertSee('content="noindex, follow"', escape: false)
             ->assertSee('rel="canonical" href="'.url('/be-nl/brand/aurex').'"', escape: false);
-
-        // And it carries no narrative: several hundred words repeated across a
-        // combinatorial URL space is the doorway-page pattern at scale.
-        $this->assertNull(
-            $this->get('/be-nl/brand/aurex?q=koptelefoon')->viewData('page')['props']['narrative'],
-        );
     }
 
     #[Test]

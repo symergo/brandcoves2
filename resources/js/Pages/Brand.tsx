@@ -1,6 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
-import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -55,17 +54,20 @@ interface Props {
     }[]
     coves: { title: string; intro: string | null; url: string }[]
     related: { name: string; url: string; count: number }[]
-    /** Long-form copy below the grid. Null on sorted or paginated variants. */
-    narrative: Narrative | null
 }
 
 /**
- * A brand page: a search with the brand preselected, plus prose and links.
+ * A brand page: a search with the brand preselected, plus editorial and links.
+ *
+ * Below the grid there are articles that mention the brand, and nothing else.
+ * The three columns of generated paragraphs and the FAQ that used to sit there
+ * went on 2026-08-16 — they restated the numbers on the cards above them, in
+ * sentences, identically on every brand page. See BrandController::coves().
  *
  * The brand facet is deliberately absent from the rail — filtering a Sony page
  * by brand is a control with one option. Everything else (shops, stock,
- * discounted, comparable, sort, pagination) is the same as search, because it is
- * the same query object underneath.
+ * discounted, sort, pagination) is the same as search, because it is the same
+ * query object underneath.
  */
 export default function Brand({
     brand,
@@ -77,7 +79,6 @@ export default function Brand({
     liveOffers,
     coves,
     related,
-    narrative,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -200,34 +201,6 @@ export default function Brand({
                     aria-label={t('search.filters')}
                     className={`space-y-6 text-sm lg:block ${filtersOpen ? 'block' : 'hidden'}`}
                 >
-                    <label className="flex cursor-pointer items-center gap-2">
-                        <input
-                            type="checkbox"
-                            checked={filters.in_stock !== '0'}
-                            onChange={(e) => go({ in_stock: e.target.checked ? null : '0' })}
-                            className="accent-accent"
-                        />
-                        <span>{t('search.in_stock_only')}</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-2">
-                        <input
-                            type="checkbox"
-                            checked={filters.discounted === '1'}
-                            onChange={(e) => go({ discounted: e.target.checked ? '1' : null })}
-                            className="accent-accent"
-                        />
-                        <span>{t('search.discounted_only')}</span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-2">
-                        <input
-                            type="checkbox"
-                            checked={filters.comparable === '1'}
-                            onChange={(e) => go({ comparable: e.target.checked ? '1' : null })}
-                            className="accent-accent"
-                        />
-                        <span>{t('search.comparable_only')}</span>
-                    </label>
-
                     {facets.merchants.length > 0 && (
                         <div>
                             <h2 className="mb-2 font-medium">{t('search.shop')}</h2>
@@ -262,6 +235,32 @@ export default function Brand({
                             </ul>
                         </div>
                     )}
+
+                    {/*
+                      Below the shop facet, mirroring the search rail: the
+                      switches trim a set the facet has already chosen. Above
+                      it they were the entire collapsed panel on a phone.
+                      "Available from several shops" is gone here too — see
+                      docs/features/search.md.
+                    */}
+                    <label className="flex cursor-pointer items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={filters.discounted === '1'}
+                            onChange={(e) => go({ discounted: e.target.checked ? '1' : null })}
+                            className="accent-accent"
+                        />
+                        <span>{t('search.discounted_only')}</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2">
+                        <input
+                            type="checkbox"
+                            checked={filters.in_stock !== '0'}
+                            onChange={(e) => go({ in_stock: e.target.checked ? null : '0' })}
+                            className="accent-accent"
+                        />
+                        <span>{t('search.in_stock_only')}</span>
+                    </label>
 
                     {related.length > 0 && (
                         <div>
@@ -439,12 +438,13 @@ export default function Brand({
                     )}
 
                     {/*
-                      The creative half of the page.
+                      The written half of the page, and now the only half.
 
-                      The copy above carries facts and cannot carry personality —
-                      it is regenerated nightly from numbers. A Cove is written by
-                      the AI pass and reads like something a person made, so this
-                      is where any voice on a brand page comes from.
+                      A grid of cards states facts and cannot carry a voice. An
+                      article was written once, about a real question, by the AI
+                      pass — so this is where any personality on a brand page
+                      comes from, and it is a link out of the page rather than a
+                      paragraph about the page.
                     */}
                     {coves.length > 0 && (
                         <section className="mt-12" aria-labelledby="brand-coves">
@@ -483,14 +483,6 @@ export default function Brand({
                 </section>
             </div>
 
-            {narrative && (
-                <PageNarrative
-                    narrative={narrative}
-                    faqHeading={t('brand_narrative.faq_heading', { brand: brand.name })}
-                    relatedHeading={t('brand_narrative.related_heading')}
-                    relatedIntro={t('brand_narrative.related_intro', { brand: brand.name })}
-                />
-            )}
         </>
     )
 }

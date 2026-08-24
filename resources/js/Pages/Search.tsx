@@ -307,22 +307,6 @@ export default function Search({
                     aria-label={t('search.filters')}
                     className={`space-y-6 text-sm lg:block ${filtersOpen ? 'block' : 'hidden'}`}
                 >
-                    <Toggle
-                        label={t('search.in_stock_only')}
-                        checked={filters.in_stock !== '0'}
-                        onChange={(v) => go({ in_stock: v ? null : '0' })}
-                    />
-                    <Toggle
-                        label={t('search.discounted_only')}
-                        checked={filters.discounted === '1'}
-                        onChange={(v) => go({ discounted: v ? '1' : null })}
-                    />
-                    <Toggle
-                        label={t('search.comparable_only')}
-                        checked={filters.comparable === '1'}
-                        onChange={(v) => go({ comparable: v ? '1' : null })}
-                    />
-
                     {facets.brands.length > 0 && (
                         <Facet
                             title={t('search.brand')}
@@ -361,6 +345,25 @@ export default function Search({
                             format={n}
                         />
                     )}
+
+                    {/*
+                      The two switches sit below the facets, not above them.
+
+                      Brand and shop are what a shopper is actually looking for
+                      in this rail; the switches only trim what is already
+                      there. Above the facets they were the first thing on a
+                      collapsed phone panel, pushing the lists a screen down.
+                    */}
+                    <Toggle
+                        label={t('search.discounted_only')}
+                        checked={filters.discounted === '1'}
+                        onChange={(v) => go({ discounted: v ? '1' : null })}
+                    />
+                    <Toggle
+                        label={t('search.in_stock_only')}
+                        checked={filters.in_stock !== '0'}
+                        onChange={(v) => go({ in_stock: v ? null : '0' })}
+                    />
                 </aside>
 
                 <section>

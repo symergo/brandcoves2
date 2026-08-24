@@ -254,6 +254,21 @@ The long copy *below* the grid is untouched and still carries the page's facts. 
 several hundred words between a shopper and the first product is a worse page for them, and Google
 has said for years that it is a worse page for it too.
 
+## The order of the filter rail
+
+*Changed 2026-08-16.* Brand first, then shop, then the two switches — discounted, and in-stock last.
+
+The rail used to open on three switches, with the brand and shop lists below them. On a phone the
+rail is a collapsible panel, so those switches were the whole of it until you scrolled: the two
+controls a shopper actually reaches for were the two they could not see. The switches only trim a set
+the facets have already chosen, so they belong after it.
+
+**"Available from several shops" is gone from the rail.** It asked the shopper to think in the
+schema's terms — `merchant_count > 1` is an artefact of how many feeds happen to carry a product, not
+a property of the product — and the answer is already on every card that has it. `comparable=1` still
+works as a query parameter and `SearchService` still honours it (`SearchTest` covers it), so existing
+links and the guide builder are unaffected; there is simply no longer a control that sets it.
+
 ## A query in flight says so
 
 Every visit that replaces the result set — Enter, the Search button, a filter, the sort, a page —
