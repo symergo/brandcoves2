@@ -89,13 +89,11 @@ class CommunityQuestionResource extends Resource
 
                 TextColumn::make('author.email')->label('By')->searchable()->toggleable(),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        ModerationStatus::Published->value => 'success',
-                        ModerationStatus::Rejected->value => 'danger',
-                        default => 'warning',
-                    }),
+                // Colour and label both come from the enum, which implements
+                // Filament's HasColor and HasLabel. A closure here would receive
+                // the enum case rather than a string, because the model casts
+                // the column — which is what used to 500 this page.
+                TextColumn::make('status')->badge(),
 
                 // Why the job held or refused it. The single most useful column
                 // here: it turns "read this from scratch" into "check this one
@@ -107,7 +105,7 @@ class CommunityQuestionResource extends Resource
             ->filters([
                 SelectFilter::make('status')
                     ->options(collect(ModerationStatus::cases())
-                        ->mapWithKeys(fn (ModerationStatus $s) => [$s->value => $s->value])->all())
+                        ->mapWithKeys(fn (ModerationStatus $s) => [$s->value => $s->label()])->all())
                     // The queue, on arrival.
                     ->default(ModerationStatus::Pending->value),
 

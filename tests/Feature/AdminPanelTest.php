@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Market;
+use App\Enums\ModerationStatus;
 use App\Enums\Source;
 use App\Filament\Resources\ApiTokens\Pages\ListApiTokens;
 use App\Filament\Resources\IngestionJobs\IngestionJobResource;
 use App\Filament\Resources\Products\ProductResource;
 use App\Models\ApiToken;
+use App\Models\CommunityAnswer;
+use App\Models\CommunityQuestion;
 use App\Models\Feed;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
@@ -114,6 +117,32 @@ class AdminPanelTest extends TestCase
          */
         $admin = $this->user(admin: true);
 
+        /*
+         * Seeded, and that is the point.
+         *
+         * An empty table renders every Filament column definition without ever
+         * *calling* one, so a column closure with the wrong parameter type is
+         * invisible until a single row exists. That is exactly how
+         * `->color(fn (string $state) => …)` reached production on the two
+         * community queues: `status` is cast to an enum, Filament passes the
+         * case rather than its value, and the page 500'd the moment somebody
+         * asked a question.
+         *
+         * One row per status, so the badge is exercised in all three states.
+         */
+        foreach (ModerationStatus::cases() as $status) {
+            $question = CommunityQuestion::factory()->create([
+                'status' => $status,
+                'published_at' => $status->isPublished() ? now() : null,
+            ]);
+
+            CommunityAnswer::factory()->create([
+                'question_id' => $question->id,
+                'status' => $status,
+                'published_at' => $status->isPublished() ? now() : null,
+            ]);
+        }
+
         foreach ([
             '/admin/guides',
             '/admin/daily-editions',
@@ -125,6 +154,8 @@ class AdminPanelTest extends TestCase
             '/admin/copy-templates',
             '/admin/api-tokens',
             '/admin/migration',
+            '/admin/community-posts/community-questions',
+            '/admin/community-posts/community-answers',
         ] as $path) {
             // Named, so a failure says which page rather than which loop
             // iteration — the whole value of a smoke test is being able to act

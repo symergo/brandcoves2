@@ -81,20 +81,18 @@ class CommunityAnswerResource extends Resource
                 // board exists for.
                 TextColumn::make('picks_count')->counts('picks')->label('Picks'),
 
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        ModerationStatus::Published->value => 'success',
-                        ModerationStatus::Rejected->value => 'danger',
-                        default => 'warning',
-                    }),
+                // Colour and label both come from the enum, which implements
+                // Filament's HasColor and HasLabel. A closure here would receive
+                // the enum case rather than a string, because the model casts
+                // the column — which is what used to 500 this page.
+                TextColumn::make('status')->badge(),
 
                 TextColumn::make('moderation_note')->label('Flagged')->placeholder('—')->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('status')
                     ->options(collect(ModerationStatus::cases())
-                        ->mapWithKeys(fn (ModerationStatus $s) => [$s->value => $s->value])->all())
+                        ->mapWithKeys(fn (ModerationStatus $s) => [$s->value => $s->label()])->all())
                     ->default(ModerationStatus::Pending->value),
             ])
             ->recordActions([

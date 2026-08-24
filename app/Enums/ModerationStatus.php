@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
 /**
  * Whether a piece of writing from a visitor may be shown to anybody else.
  *
@@ -17,7 +20,7 @@ namespace App\Enums;
  * omission; publishing is an act, whether taken by the triage job or by a
  * human in the admin.
  */
-enum ModerationStatus: string
+enum ModerationStatus: string implements HasColor, HasLabel
 {
     /** Written, waiting on a decision. Visible to its author and to admins. */
     case Pending = 'pending';
@@ -46,6 +49,35 @@ enum ModerationStatus: string
     public function label(): string
     {
         return __('site.ask.status.'.$this->value);
+    }
+
+    /**
+     * The two Filament badge contracts, so the admin does not have to know.
+     *
+     * `community_questions.status` is cast to this enum, so a Filament column
+     * receives the **case**, not its string value — and a `->color(fn (string
+     * $state) => …)` closure copied from a resource whose status column is a
+     * plain string dies with a TypeError the moment one row exists. Both
+     * community resources had exactly that closure, and it 500'd the queue
+     * pages.
+     *
+     * Implementing the contracts fixes it in one place rather than two, and
+     * gets the label right as a side effect: without `HasLabel` a badge renders
+     * the raw `pending`, where this returns the translated "Being read".
+     */
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
+
+    public function getColor(): string
+    {
+        return match ($this) {
+            self::Published => 'success',
+            self::Rejected => 'danger',
+            // Waiting is the state that wants working through, not an error.
+            self::Pending => 'warning',
+        };
     }
 
     /** @return list<string> */
