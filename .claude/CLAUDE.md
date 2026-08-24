@@ -42,6 +42,14 @@ git config core.hooksPath .githooks   # once per clone: run the suite on push
 > you. See [docs/testing.md](../docs/testing.md) for why 8 processes and not 20, and why
 > `APP_DEBUG` is pinned false in the test run.
 
+> **PHP is Herd's, not WinGet's, and the dev stack runs supervised.** Smart App Control blocks the
+> WinGet build's unsigned `php8ts.dll`, so `php.exe` exits with `0xC0E90002` printing *nothing* and
+> `composer dev` dies with exit code 2 and no output. Herd's PHP is non-thread-safe, has no
+> `php8ts.dll`, and clears SAC on reputation. The stack itself runs under the `GiftCoves Dev Server`
+> scheduled task (at logon) via `scripts/dev-server.ps1`, which starts Docker, waits for postgres,
+> reaps port-squatting orphans and restarts the stack when it dies. Stop it with
+> `.\scripts\dev-stop.ps1`. See [docs/local-dev.md](../docs/local-dev.md).
+
 > **`composer dev` does not run Pail, and must not.** Pail needs `pcntl`, which does not exist on
 > Windows — and `concurrently` runs with `--kill-others`, so Pail's immediate crash took `artisan
 > serve` down with it and left `localhost:8000` refusing connections seconds after start-up. The
