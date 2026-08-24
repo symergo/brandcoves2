@@ -563,4 +563,78 @@ class CopyBankTest extends TestCase
             CopyTemplate::query()->where('slot', 'about_3')->where('language', 'nl')->where('body', 'EDITED :brand')->count(),
         );
     }
+
+    /**
+     * The migration that empties the bank of rows that say nothing new.
+     *
+     * Required by name rather than run through the migrator: the suite has
+     * already migrated by the time a test body runs, so this is the only way to
+     * exercise `up()` against rows the test itself put there.
+     */
+    private function purgeShadowCopy(): void
+    {
+        (require database_path(
+            'migrations/2026_08_24_000100_drop_the_seeded_copy_that_only_shadows_the_language_file.php',
+        ))->up();
+    }
+
+    #[Test]
+    public function the_purge_removes_a_row_that_only_repeats_the_language_file(): void
+    {
+        $this->artisan('bc:seed-copy')->assertSuccessful();
+
+        $before = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony');
+
+        $this->purgeShadowCopy();
+
+        // Every seeded row was the file's own sentence, so the whole bank goes.
+        $this->assertSame(0, CopyTemplate::query()->count());
+
+        // And the page reads exactly the same afterwards — through the fallback
+        // rather than the row, which is the entire point of removing them.
+        CopyBank::flush();
+        $this->assertSame($before, $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony'));
+    }
+
+    #[Test]
+    public function the_purge_leaves_an_edited_row_alone(): void
+    {
+        $this->artisan('bc:seed-copy')->assertSuccessful();
+
+        CopyTemplate::query()
+            ->where('surface', 'brand')->where('slot', 'about_3')->where('language', 'nl')
+            ->update(['body' => 'Onze eigen zin over :brand.']);
+
+        $this->purgeShadowCopy();
+
+        // A body that differs from the file cannot be reconstructed from it, so
+        // the predicate never sees it.
+        $this->assertSame(1, CopyTemplate::query()
+            ->where('surface', 'brand')->where('slot', 'about_3')->where('language', 'nl')
+            ->where('body', 'Onze eigen zin over :brand.')
+            ->count());
+    }
+
+    #[Test]
+    public function the_purge_leaves_a_slot_that_has_a_real_alternative(): void
+    {
+        $this->artisan('bc:seed-copy')->assertSuccessful();
+
+        $this->variant('Een tweede manier om het te zeggen over :brand.');
+
+        $this->purgeShadowCopy();
+
+        /*
+         * Two rows survive, not one. Dropping the seeded row here would not fall
+         * back to the language file — the fallback only fires for a slot with no
+         * rows at all — it would take the shipped sentence out of the rotation
+         * and leave every brand page reading the editor's alternative.
+         */
+        $this->assertSame(2, CopyTemplate::query()
+            ->where('surface', 'brand')->where('slot', 'about_3')->where('language', 'nl')
+            ->count());
+
+        // The rest of the bank still went.
+        $this->assertSame(2, CopyTemplate::query()->count());
+    }
 }

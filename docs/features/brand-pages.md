@@ -575,13 +575,51 @@ outside a dry run it names the number of rows and asks. `--force` skips the ques
 shell with no tty.
 
 ```bash
-php artisan bc:seed-copy --surface=brand_intro --replace --dry-run   # look first
-php artisan bc:seed-copy --surface=brand_intro --replace             # then do it
+php artisan bc:seed-copy --surface=brand --replace --dry-run   # look first
+php artisan bc:seed-copy --surface=brand --replace             # then do it
 ```
 
 **Rewriting shipped copy is therefore a two-part change**: the language files, and a `--replace` run
 wherever the bank has been seeded. A row for a slot that no longer exists is left behind and is
 harmless — the admin lists slots from `CopySlots`, so an orphan is not rendered and not shown.
+
+### Disarming it: the bank holds only what someone wrote — since 2026-08-24
+
+The trap needs a row to spring. Seeding put one under *every* slot, so it was armed everywhere the
+command had run, on every sentence — and none of those rows was doing anything else. Read on
+2026-08-24: development held **140** of them, 17 brand slots and 18 search slots across four
+languages, every one byte-identical to its language file line and **not one edited** since the
+seeding run. They changed nothing a visitor read. They only shadowed.
+
+`2026_08_24_000100_drop_the_seeded_copy_that_only_shadows_the_language_file` deletes them, and a
+migration rather than a `psql` session for the same reason as the two copy migrations before it:
+`copy_templates` is per-environment state that no deploy otherwise touches, so a hand-run `DELETE`
+reaches whichever environment someone remembered.
+
+**The predicate has two halves and both are load-bearing.** A row goes only when its body is exactly
+the current language file line *and* it is the only row for that `(surface, slot, language)`.
+
+- *Exactly the file line* is what makes the delete non-destructive without inspecting each
+  environment by hand: such a body is recoverable from the file by definition. An edited row differs
+  from the file and is invisible to the migration, whatever it was edited into.
+- *Only row* is the half that is easy to miss. Where an editor has written a genuine alternative, the
+  slot holds their variant **and** the seeded shipped line, and the rotation draws between them.
+  Deleting the seeded row there would not fall back to the file — **the fallback fires only for a
+  slot with no rows at all** — it would drop the shipped sentence out of the rotation and leave every
+  page on that slot reading the alternative. So a slot anyone has actually used is left untouched.
+
+Together: every page renders precisely what it rendered before. Three tests in `CopyBankTest` hold
+all three cases — the shadow goes and the sentence is unchanged, an edited row survives, a slot with
+a real alternative keeps both rows.
+
+**What the editor sees is unaffected.** `EditPageCopy` lists every slot in `CopySlots` whether or not
+it has a row, with the shipped line as the placeholder underneath, so an empty bank still opens as a
+full-looking page. That is what makes seeding optional now: it was written when the admin was a flat
+table of rows, where a slot with no row simply was not there.
+
+> `bc:seed-copy` — and the **Import shipped copy** button that runs it — still puts all of it back.
+> That is the right behaviour after a *new* slot is added and the wrong thing to run wholesale: it
+> re-arms the shadow across the whole bank in one click.
 
 ### Where it does not appear
 

@@ -46,7 +46,15 @@ class ListCopyTemplates extends ListRecords
                 ->label('Import shipped copy')
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->requiresConfirmation()
-                ->modalDescription('Imports the sentences the site currently renders, as the first variant of each slot. A slot that already has any variant is left completely alone, so this cannot overwrite your edits.')
+                /*
+                 * The warning matters as much as the description. A seeded row
+                 * that only repeats the language file shadows it: rewriting the
+                 * shipped copy afterwards changes nothing on this environment.
+                 * `2026_08_24_000100_drop_the_seeded_copy_that_only_shadows_the_language_file`
+                 * cleared exactly those rows, and this button puts all of them
+                 * back in one click.
+                 */
+                ->modalDescription('Imports the sentences the site currently renders, as the first variant of each slot. A slot that already has any variant is left completely alone, so this cannot overwrite your edits. You rarely need this: the editor already shows every slot, with the shipped sentence as its placeholder. Use it when a new slot has been added.')
                 ->action(function (): void {
                     Artisan::call('bc:seed-copy');
 

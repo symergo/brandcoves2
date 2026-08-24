@@ -68,8 +68,9 @@ php artisan bc:export-content         # editorial (feeds, coves, guides, copy) a
 php artisan bc:import-content --in=-  # apply one here. Dry run unless --write
 php artisan bc:api-token              # mint/list/revoke an editorial API key; plaintext shown once
 php artisan bc:seed-copy              # import shipped page copy into the editable copy bank
-php artisan bc:seed-copy --replace --surface=brand_intro   # after REWRITING shipped copy: a seeded
-                                      # slot shadows the language file, so the rewrite is invisible
+php artisan bc:seed-copy --replace --surface=brand   # after REWRITING shipped copy: a seeded slot
+                                      # shadows the language file, so the rewrite is invisible.
+                                      # Valid surfaces are search and brand — brand_intro was retired
 php artisan bc:prune-personal-data   # enforce the published GDPR retention windows
 php artisan bc:awin-feeds             # discover Awin advertiser feeds, register them per market
 php artisan bc:ingest                 # run feed ingestion now
