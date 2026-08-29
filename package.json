@@ -8,7 +8,8 @@
         "build:client": "vite build",
         "build:ssr": "vite build --ssr",
         "dev:ssr": "vite build --ssr && node bootstrap/ssr/ssr.js",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "shots": "node scripts/shots.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

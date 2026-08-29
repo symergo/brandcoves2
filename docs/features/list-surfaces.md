@@ -215,6 +215,29 @@ so it appears with the first claim instead.
 What is left is one card and a few lines. The owner note and the visitor intro are mutually
 exclusive — `hideClaims` implies ownership and the intro is `!isOwner` — so no reader ever sees both.
 
+### Seen, finally
+
+The pass above was reasoned from markup because there was no way to look at the pages. Playwright is
+a devDependency now and `npm run shots` renders every surface at iPhone width into
+`storage/app/shots/`.
+
+**The overflow report is the half that earns it.** A screenshot shows *that* something is wrong;
+`document.scrollWidth > clientWidth` plus the offending nodes says *which* element, which is
+otherwise guesswork — and it correctly reports zero on every page, because the overflow was never a
+wide element. It was the zoom. Nodes inside a deliberately scrollable ancestor are skipped, so a tab
+strip that is *meant* to be wider than its box does not drown the real ones.
+
+Looking at the result immediately found three things reading could not:
+
+- A **rule floating at the top of a card with nothing above it** — `Pledge` draws a top border to
+  separate itself from the product above, and in the group header it had no product above it.
+- **"Nobody has chipped in yet" under all six items** of a wish list, which is what led to removing
+  per-item pledging altogether.
+- **A feed title running to ten lines**, making one card four times the height of its neighbours.
+  Clamped to three: enough to recognise a thing you have already seen, which is what a list is for.
+
+The wish list went from 9108px to 5814px tall — a third of it gone, none of it content.
+
 ## Files
 
 - `resources/js/Components/ListKindBadge.tsx` — the badge, and the one place the sentence is chosen

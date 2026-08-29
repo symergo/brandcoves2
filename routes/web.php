@@ -295,18 +295,6 @@ Route::prefix('{market}')->group(function () {
         Route::delete('/l/{token}/claim/{item}', [SharedListController::class, 'unclaim'])->name('lists.unclaim');
         Route::post('/l/{token}/sent/{item}', [SharedListController::class, 'markSent'])->name('lists.sent');
 
-        // Group gift: pledges against one item, and a suggestion for the owner.
-        Route::post('/l/{token}/pledge/{item}', [GiftPledgeController::class, 'store'])->name('lists.pledge');
-        Route::delete('/l/{token}/pledge/{item}', [GiftPledgeController::class, 'destroy'])->name('lists.pledge.destroy');
-
-        /*
-         * The pot on a group list, which names no item.
-         *
-         * A group list is one present and the items under it are candidates, so
-         * money pledged against one of them would be a bet on an outcome the
-         * group has not decided. The controller refuses whichever of these two
-         * shapes is wrong for the kind rather than quietly doing the other.
-         */
         /*
          * Which present the group should buy.
          *
@@ -317,8 +305,18 @@ Route::prefix('{market}')->group(function () {
         Route::post('/l/{token}/vote/{item}', [ListItemVoteController::class, 'store'])->name('lists.vote');
         Route::delete('/l/{token}/vote/{item}', [ListItemVoteController::class, 'destroy'])->name('lists.vote.destroy');
 
-        Route::post('/l/{token}/pledge', [GiftPledgeController::class, 'store'])->name('lists.pledge.pot');
-        Route::delete('/l/{token}/pledge', [GiftPledgeController::class, 'destroy'])->name('lists.pledge.pot.destroy');
+        /*
+         * The pot, which names no item.
+         *
+         * There were two shapes here for a day — `/pledge/{item}` as well, for
+         * a wish list where several people might go in on one expensive thing.
+         * Rendered, that put an "I'm in" under every card of a six-item list,
+         * beside the claim button that is the real action there. Chipping in is
+         * a fact about the present, and a group list is what a shared present
+         * is.
+         */
+        Route::post('/l/{token}/pledge', [GiftPledgeController::class, 'store'])->name('lists.pledge');
+        Route::delete('/l/{token}/pledge', [GiftPledgeController::class, 'destroy'])->name('lists.pledge.destroy');
         Route::post('/l/{token}/suggest', [SuggestionController::class, 'store'])->name('lists.suggest');
     });
 

@@ -46,17 +46,4 @@ class GiftPledge extends Model
     {
         return $this->belongsTo(Wishlist::class);
     }
-
-    /**
-     * The item, when the pledge is against one.
-     *
-     * Null on a group list, where the whole list is one present and the pot is
-     * not attached to any single candidate.
-     *
-     * @return BelongsTo<WishlistItem, $this>
-     */
-    public function item(): BelongsTo
-    {
-        return $this->belongsTo(WishlistItem::class, 'item_id');
-    }
 }

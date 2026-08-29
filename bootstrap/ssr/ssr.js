@@ -39651,141 +39651,97 @@ function Pledge({ action, contributions, canContribute, price }) {
 			onError: (errors) => setError(Object.values(errors)[0] ?? null)
 		});
 	}
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "mt-4 border-t border-line pt-3",
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "text-sm font-medium",
-				children: total === 0 ? t("pledges.none") : price !== null ? t("pledges.pledged", {
-					total: formatPrice(total, market),
-					price: formatPrice(price, market)
-				}) : formatPrice(total, market)
-			}),
-			count > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-				className: "mt-1 text-xs text-ink-soft",
-				children: [count === 1 ? t("pledges.one_in") : t("pledges.count", { count: n(count) }), mine !== null && ` · ${t("pledges.your_share_is", { amount: formatPrice(mine, market) })}`]
-			}),
-			breakdown !== void 0 && breakdown.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-				className: "mt-3 space-y-1",
-				children: breakdown.map((entry, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
-					className: "flex justify-between gap-3 text-sm",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "truncate",
-						children: entry.name
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "shrink-0 tabular-nums text-ink-soft",
-						children: formatPrice(entry.amount, market)
-					})]
-				}, i))
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-2 text-xs text-ink-soft",
-				children: t("pledges.organiser_note")
-			})] }),
-			canContribute && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "mt-3",
-				children: mine !== null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => router.delete(action, { preserveScroll: true }),
-					className: "text-xs text-ink-soft underline hover:text-ink",
-					children: t("pledges.leave")
-				}) : open ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-					onSubmit: submit,
-					className: "space-y-2",
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "text-xs text-ink-soft",
-							children: t("pledges.hint")
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "grid gap-2 sm:grid-cols-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-								className: "block text-xs font-medium",
-								children: [t("pledges.your_name"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									required: true,
-									maxLength: 80,
-									value: name,
-									onChange: (e) => setName(e.target.value),
-									className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
-								})]
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-								className: "block text-xs font-medium",
-								children: [t("pledges.amount"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									required: true,
-									inputMode: "decimal",
-									value: amount,
-									onChange: (e) => setAmount(e.target.value),
-									className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
-								})]
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "text-sm font-medium",
+			children: total === 0 ? t("pledges.none") : price !== null ? t("pledges.pledged", {
+				total: formatPrice(total, market),
+				price: formatPrice(price, market)
+			}) : formatPrice(total, market)
+		}),
+		count > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+			className: "mt-1 text-xs text-ink-soft",
+			children: [count === 1 ? t("pledges.one_in") : t("pledges.count", { count: n(count) }), mine !== null && ` · ${t("pledges.your_share_is", { amount: formatPrice(mine, market) })}`]
+		}),
+		breakdown !== void 0 && breakdown.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-3 space-y-1",
+			children: breakdown.map((entry, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: "flex justify-between gap-3 text-sm",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "truncate",
+					children: entry.name
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "shrink-0 tabular-nums text-ink-soft",
+					children: formatPrice(entry.amount, market)
+				})]
+			}, i))
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-2 text-xs text-ink-soft",
+			children: t("pledges.organiser_note")
+		})] }),
+		canContribute && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-3",
+			children: mine !== null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: () => router.delete(action, { preserveScroll: true }),
+				className: "text-xs text-ink-soft underline hover:text-ink",
+				children: t("pledges.leave")
+			}) : open ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				onSubmit: submit,
+				className: "space-y-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs text-ink-soft",
+						children: t("pledges.hint")
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "grid gap-2 sm:grid-cols-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+							className: "block text-xs font-medium",
+							children: [t("pledges.your_name"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								required: true,
+								maxLength: 80,
+								value: name,
+								onChange: (e) => setName(e.target.value),
+								className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
 							})]
-						}),
-						error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "text-xs text-accent",
-							children: error
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-								type: "submit",
-								className: "rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white",
-								children: t("pledges.join")
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-								type: "button",
-								onClick: () => setOpen(false),
-								className: "rounded-lg border border-line px-3 py-1.5 text-xs",
-								children: t("lists.cancel")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+							className: "block text-xs font-medium",
+							children: [t("pledges.amount"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								required: true,
+								inputMode: "decimal",
+								value: amount,
+								onChange: (e) => setAmount(e.target.value),
+								className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
 							})]
-						})
-					]
-				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => setOpen(true),
-					className: "rounded-lg border border-line px-3 py-1.5 text-xs hover:border-ink",
-					children: t("pledges.join")
-				})
+						})]
+					}),
+					error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-xs text-accent",
+						children: error
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "submit",
+							className: "rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white",
+							children: t("pledges.join")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "button",
+							onClick: () => setOpen(false),
+							className: "rounded-lg border border-line px-3 py-1.5 text-xs",
+							children: t("lists.cancel")
+						})]
+					})
+				]
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: () => setOpen(true),
+				className: "rounded-lg border border-line px-3 py-1.5 text-xs hover:border-ink",
+				children: t("pledges.join")
 			})
-		]
-	});
-}
-//#endregion
-//#region resources/js/Components/Vote.tsx
-/**
-* "This is the one we should get."
-*
-* The card's primary action on a group list, and deliberately not collapsed
-* behind anything. `Pledge` hides its form because a form standing open under
-* every item reads as the main thing to do with them — but voting *is* the main
-* thing to do with a candidate, and it is one tap rather than a form.
-*
-* Approval voting: back as many as you like, press again to take it back. Not
-* "pick one favourite", which forces a decision the group has not made — the
-* shortlist exists precisely because nobody has.
-*
-* `aria-pressed` because it is a toggle, and the count alone would not tell a
-* screen reader whether this viewer is one of the four.
-*/
-function Vote({ action, votes, votedByMe, canVote }) {
-	const { t, n } = useTranslations();
-	if (!canVote) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-		className: "mt-4 w-full rounded-lg border border-line px-4 py-2 text-center text-sm text-ink-soft",
-		children: votes === 0 ? t("votes.none") : t("votes.count", { count: n(votes) })
-	});
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-		type: "button",
-		"aria-pressed": votedByMe,
-		onClick: () => votedByMe ? router.delete(action, { preserveScroll: true }) : router.post(action, {}, { preserveScroll: true }),
-		className: `mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${votedByMe ? "bg-accent text-white hover:bg-accent-dark" : "border border-line hover:border-ink"}`,
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				"aria-hidden": true,
-				children: votedByMe ? "♥" : "♡"
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: votedByMe ? t("votes.voted") : t("votes.vote") }),
-			votes > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				className: "tabular-nums opacity-80",
-				children: n(votes)
-			})
-		]
-	});
+		})
+	] });
 }
 //#endregion
 //#region resources/js/Pages/Lists/Shared.tsx
@@ -39885,96 +39841,81 @@ function SharedList({ list, isOwner, canClaim, hideClaims, claimNames, progress,
 			className: "mt-3 grid gap-4 sm:grid-cols-2",
 			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 				className: `flex flex-col rounded-card border bg-card p-4 ${item.claimed && !item.claimedByMe ? "border-dashed border-ink-soft/40 opacity-70" : "border-line"}`,
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "flex gap-4",
-						children: [
-							item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-								src: item.image,
-								alt: "",
-								className: "h-20 w-20 rounded object-contain",
-								onError: (e) => {
-									e.currentTarget.style.visibility = "hidden";
-								}
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "min-w-0 flex-1",
-								children: [
-									item.url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-										href: item.url,
-										className: "font-medium hover:underline",
-										children: item.title
-									}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-										href: item.externalUrl,
-										target: "_blank",
-										rel: "nofollow noopener noreferrer",
-										className: "font-medium hover:underline",
-										children: item.title
-									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-										className: "font-medium",
-										children: item.title
-									}),
-									item.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "mt-1 text-sm text-ink-soft",
-										children: item.note
-									}),
-									item.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "mt-1 font-semibold",
-										children: formatPrice(item.price, market)
-									})
-								]
-							}),
-							!isOwner && item.groupId !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-								className: "shrink-0 self-start",
-								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
-									groupId: item.groupId,
-									compact: true
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex gap-4",
+					children: [
+						item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: item.image,
+							alt: "",
+							className: "h-20 w-20 rounded object-contain",
+							onError: (e) => {
+								e.currentTarget.style.visibility = "hidden";
+							}
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "min-w-0 flex-1",
+							children: [
+								item.url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+									href: item.url,
+									className: "line-clamp-3 font-medium hover:underline",
+									children: item.title
+								}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+									href: item.externalUrl,
+									target: "_blank",
+									rel: "nofollow noopener noreferrer",
+									className: "line-clamp-3 font-medium hover:underline",
+									children: item.title
+								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "line-clamp-3 font-medium",
+									children: item.title
+								}),
+								item.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 text-sm text-ink-soft",
+									children: item.note
+								}),
+								item.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 font-semibold",
+									children: formatPrice(item.price, market)
 								})
+							]
+						}),
+						!isOwner && item.groupId !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "shrink-0 self-start",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+								groupId: item.groupId,
+								compact: true
 							})
-						]
-					}),
-					item.claimed !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-						className: "mt-4",
-						children: item.claimedByMe ? item.sent ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-center text-sm font-medium text-sage",
-							children: t("lists.sent")
-						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "flex flex-col gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-								onClick: () => router.post(`${base}/l/${token}/sent/${item.id}`, {}, { preserveScroll: true }),
-								className: "w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-sm font-medium text-sage",
-								children: t("lists.mark_sent")
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-								onClick: () => router.delete(`${base}/l/${token}/claim/${item.id}`, { preserveScroll: true }),
-								className: "text-xs text-ink-soft underline hover:text-ink",
-								children: t("lists.unclaim")
-							})]
-						}) : item.claimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "w-full rounded-lg border border-line px-4 py-2 text-center text-sm text-ink-soft",
-							children: item.claimedBy ? t("lists.claimed_by", { name: item.claimedBy }) : t("lists.claimed_by_someone")
-						}) : canClaim ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							onClick: () => router.post(`${base}/l/${token}/claim/${item.id}`, claimNames ? { display_name: claimName } : {}, { preserveScroll: true }),
-							className: "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark",
-							children: t("lists.claim")
-						}) : null
-					}),
-					item.votes !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Vote, {
-						action: `${base}/l/${token}/vote/${item.id}`,
-						votes: item.votes,
-						votedByMe: item.votedByMe ?? false,
-						canVote
-					}),
-					item.contributions !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pledge, {
-						action: `${base}/l/${token}/pledge/${item.id}`,
-						contributions: item.contributions,
-						canContribute,
-						price: item.price
-					})
-				]
+						})
+					]
+				}), item.claimed !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-4",
+					children: item.claimedByMe ? item.sent ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-center text-sm font-medium text-sage",
+						children: t("lists.sent")
+					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+						className: "flex flex-col gap-2",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							onClick: () => router.post(`${base}/l/${token}/sent/${item.id}`, {}, { preserveScroll: true }),
+							className: "w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-sm font-medium text-sage",
+							children: t("lists.mark_sent")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							onClick: () => router.delete(`${base}/l/${token}/claim/${item.id}`, { preserveScroll: true }),
+							className: "text-xs text-ink-soft underline hover:text-ink",
+							children: t("lists.unclaim")
+						})]
+					}) : item.claimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "w-full rounded-lg border border-line px-4 py-2 text-center text-sm text-ink-soft",
+						children: item.claimedBy ? t("lists.claimed_by", { name: item.claimedBy }) : t("lists.claimed_by_someone")
+					}) : canClaim ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						onClick: () => router.post(`${base}/l/${token}/claim/${item.id}`, claimNames ? { display_name: claimName } : {}, { preserveScroll: true }),
+						className: "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark",
+						children: t("lists.claim")
+					}) : null
+				})]
 			}, item.id))
 		}),
 		canSuggest && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-			className: "mt-12 rounded-card border border-line bg-card p-6",
+			className: "mt-8 rounded-card border border-line bg-card p-5 sm:mt-12 sm:p-6",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 					className: "font-medium",
@@ -41174,9 +41115,9 @@ function ListShow({ list, items, pot, target, asked, access, collaborators, sugg
 			})
 		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 			className: "mt-3 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
-			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", {
 				className: "p-4",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "flex items-center gap-4",
 					children: [
 						item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
@@ -41227,12 +41168,7 @@ function ListShow({ list, items, pot, target, asked, access, collaborators, sugg
 							children: "✕"
 						})
 					]
-				}), item.contributions !== void 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pledge, {
-					action: `${list.shareUrl}/pledge/${item.id}`,
-					contributions: item.contributions,
-					canContribute: list.shareUrl !== null,
-					price: item.currentPrice ?? item.price
-				})]
+				})
 			}, item.id))
 		})] })
 	] });

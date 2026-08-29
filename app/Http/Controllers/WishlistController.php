@@ -205,7 +205,7 @@ class WishlistController extends Controller
         // Collaborators see it too — a co-giver invited to help choose has to
         // be able to open the thing they were invited to.
         $wishlist = ListAccess::scope(Wishlist::query(), $owner)
-            ->with(['recipient', 'items.group', 'items.pledges', 'collaborators.user'])
+            ->with(['recipient', 'items.group', 'collaborators.user'])
             ->find($list);
 
         if ($wishlist === null) {
@@ -221,7 +221,7 @@ class WishlistController extends Controller
          *
          * `ContributionView` returns an empty array for every other case, so
          * the `...` spread below adds no key at all — and that absence is
-         * load-bearing. A `contributions: null` on every item of a wish list is
+         * load-bearing. A `pot: null` where there is no pot is
          * a channel that goes live the first time somebody tidies the null
          * away, and they would tidy it away without knowing what it was for.
          *
@@ -229,12 +229,6 @@ class WishlistController extends Controller
          * page through `ListAccess::scope()` above, and they are a member of the
          * pool rather than the organiser collecting it.
          */
-        $contributions = $contributor->forItems(
-            $wishlist,
-            $wishlist->items,
-            $owner,
-            ListAccess::isOwner($wishlist, $owner),
-        );
 
         /*
          * The pot, for the organiser's own page.
@@ -414,9 +408,6 @@ class WishlistController extends Controller
                      * Everywhere else the key is absent for exactly the reason
                      * above.
                      */
-                    ...isset($contributions[$item->id])
-                        ? ['contributions' => $contributions[$item->id]]
-                        : [],
                 ]),
         ]);
     }

@@ -682,9 +682,14 @@ two kinds of list**, which is the part worth reading before touching either. The
 three things that are load-bearing about it are in
 [list-taxonomy.md](list-taxonomy.md#built-2026-08-16-and-what-the-shape-turned-out-to-be).
 
-The one-line version: on a `mine` list a pledge is claim state and its owner is told nothing at all;
-on a `group` list the owner is the organiser rather than the recipient, so they see who put in what,
-and the other members see only the total and their own share.
+The one-line version, as it ended up: **a wish list has no money on it at all.** You claim a thing
+there — "I am buying this one" — and going in with somebody on one *is* a group gift, which is what a
+group list is for. On a group list the owner is the organiser rather than the recipient, so they see
+who put in what, and the other members see only the total and their own share.
+
+It pooled per item on a `mine` list until 2026-08-30, when it was rendered: an "I'm in" under every
+card of a six-item list, beside the claim button that is the real action there. See
+[list-taxonomy.md](list-taxonomy.md#and-then-off-the-wish-list-too-2026-08-30).
 
 `gift_pledges.display_name` has been required on write since the table shipped and was read by
 nothing until now — `ContributionView::breakdown()` is its first and only reader.

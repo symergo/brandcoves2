@@ -500,36 +500,50 @@ On a group list it is incoherent. The list is a shortlist *because* the group ha
 pledging against a candidate asks people to bet, and most of those pledges end up attached to
 something nobody buys. The money belongs to the pot; the votes decide what the pot buys.
 
-So a pledge names a **list** always and an **item** only when there is one to name, and
-`ContributionView` grew `forList()` beside `forItems()`. The privacy table is unchanged — it applies
-to one pot instead of *n* items.
+### And then off the wish list too, 2026-08-30
 
-**`forItems()` now returns nothing for a group list, and that is the half that would have gone wrong
-quietly.** Leaving it in place would give the page two ways to put money in — a pot in the header and
-a form under every candidate — showing two different totals, each true about something.
+The first cut kept `mine` pooling per item, on the argument above: chipping in for the one expensive
+thing on Anna's list is a fact about that thing. Rendered, it put an **"I'm in" under every card** of
+a six-item wish list — the secondary action on each, six times, beside the claim button that is the
+actual one.
 
-### One index, two rules
+The distinction that survives is cleaner than the one it replaced:
 
-```sql
-CREATE UNIQUE INDEX gift_pledges_user_idx ON gift_pledges (wishlist_id, item_id, user_id)
-    NULLS NOT DISTINCT WHERE user_id IS NOT NULL;
-```
+> On a wish list you **claim** a thing — "I am buying this one". On a group list you **contribute**
+> to a thing the group buys together.
 
-Postgres treats nulls as distinct in a unique index by default, so without `NULLS NOT DISTINCT`
-(PG15+, and we are on 16) one person could pledge to the same pot any number of times — every pot row
-has a null `item_id`, and no two nulls collide. With it, one index says both things at once: unique
-per person per **list** when `item_id` is null, per person per **item** when it is set.
+Going in with somebody on a wishlist item *is* a group gift, and a group list is what that is. So
+`allowsContributions()` is `Group` only, `ContributionView::forItems()` is gone, and
+`2026_08_30_000100` drops `item_id` rather than leaving a nullable column nothing writes — which
+reads as a capability to whoever meets it next, and is the drift this codebase keeps finding.
 
-That is not cleverness for its own sake. The null in `item_id` **is** the fact "this is for the whole
-list", so the constraint and the meaning are one thing rather than two that can drift.
+Safe to drop outright because `gift_pledges` was empty in every environment: the write path only
+reached a UI on 2026-08-16 and nothing had used it. With rows it would have had to fold each
+per-item pledge into its list's pot and reconcile one person having pledged against two items of the
+same list. Worth writing down rather than left as an assumption somebody re-derives.
 
-### A question asked with the right name
+### One index said both rules, for a day
 
-`ListKind::poolsOnTheList()` is a separate method from `ownerSeesContributions()`, and they return
-the same set today. One is about *where the money is attached*, the other about *who may look at it*.
-A gate that works because two unrelated questions happen to share an answer stops working silently
-the day they diverge — which is exactly how the quiz ended up offerable over a list about somebody
-else, on `shared && claimable` standing in for "mine".
+While both shapes existed the uniqueness was `(wishlist_id, item_id, user_id) NULLS NOT DISTINCT`.
+Postgres treats nulls as distinct in a unique index by default, so without that clause one person
+could pledge to the same pot any number of times — every pot row has a null `item_id`, and no two
+nulls collide. With it, one index said both things at once: unique per person per **list** when
+`item_id` was null, per person per **item** when it was set.
+
+Worth recording because it was the right shape for the model it served, and because the model lasted
+a day. It is a plain partial unique per person per list now: the column whose null carried the
+meaning is gone.
+
+### A question that stopped having two answers
+
+`poolsOnTheList()` existed briefly beside `ownerSeesContributions()`, to keep *where the money
+attaches* apart from *who may look at it* — two questions with the same answer, which is the shape
+that fails silently the day they diverge. That is exactly how the quiz ended up offerable over a list
+about somebody else, on `shared && claimable` standing in for "mine".
+
+With per-item pledging gone there is only one place money can attach, so the question no longer has
+two answers and the method went with it. Keeping a distinction alive after the thing it
+distinguished has been removed is its own kind of drift.
 
 ## Adding to somebody else's list, 2026-08-29
 

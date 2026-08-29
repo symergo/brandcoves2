@@ -537,13 +537,17 @@ class GroupListTest extends TestCase
     }
 
     #[Test]
-    public function the_owner_of_a_wish_list_never_sees_contributions(): void
+    public function a_wish_list_has_no_pot_for_anybody(): void
     {
         /*
-         * Invariant #4, on both surfaces that render an owner's own list. The
-         * assertion is that the KEY is absent — a `contributions: null` on every
-         * item is a channel that goes live the day somebody tidies the null
-         * away.
+         * This replaces two tests that pledged against an item on a wish list
+         * and then checked who could see the total — one for the owner, one for
+         * a visitor. Both were protecting invariant #4 against a per-item pool,
+         * and the pool is gone: a wish list has no money on it at all, so there
+         * is nothing to leak rather than something carefully withheld.
+         *
+         * Asserted for both viewers, because "no pot" has to be true of the
+         * page as well as of the owner.
          */
         $owner = User::factory()->create();
 
@@ -554,55 +558,18 @@ class GroupListTest extends TestCase
             'visibility' => ListVisibility::Link,
         ]);
 
-        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
 
-        $this->actingAs(User::factory()->create())
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
-                'amount' => 25,
-                'display_name' => 'Bob',
-            ]);
-
-        auth()->logout();
-
-        foreach (["/be-nl/lists/{$list->id}", "/be-nl/l/{$list->share_token}"] as $url) {
-            $response = $this->actingAs($owner)->get($url)->assertOk();
-            $props = $this->props($response);
-
-            $this->assertArrayNotHasKey('contributions', $props['items'][0], "leaked on {$url}");
-            $this->assertStringNotContainsString('Bob', json_encode($props), "leaked on {$url}");
-        }
-    }
-
-    #[Test]
-    public function a_visitor_to_a_wish_list_sees_the_pool_but_not_who_is_in_it(): void
-    {
-        // A wish list still pools money — somebody claims the thing and the
-        // others chip in — and its owner is still told none of it.
-        $owner = User::factory()->create();
-
-        $list = Wishlist::factory()->create([
-            'owner_user_id' => $owner->id,
-            'kind' => ListKind::Mine,
-            'market' => Market::BeNl,
-            'visibility' => ListVisibility::Link,
-        ]);
-
-        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
-
-        $this->actingAs(User::factory()->create())
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
-                'amount' => 25,
-                'display_name' => 'Bob',
-            ]);
+        $this->actingAs($owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('pot', null));
 
         auth()->logout();
 
-        $response = $this->get("/be-nl/l/{$list->share_token}")->assertOk();
-        $contributions = $this->props($response)['items'][0]['contributions'];
-
-        $this->assertSame(2500, $contributions['total']);
-        $this->assertNull($contributions['mine']);
-        $this->assertArrayNotHasKey('breakdown', $contributions);
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('pot', null));
     }
 
     #[Test]

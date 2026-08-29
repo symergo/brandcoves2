@@ -35,11 +35,6 @@ interface Item {
     /** Only ever non-null for the person who claimed it. */
     sent?: boolean | null
     /**
-     * Absent — not null — wherever there is nothing this viewer may know about
-     * the money. The owner of a wish list never receives the key at all.
-     */
-    contributions?: Contributions
-    /**
      * Present only on a group list, where the items are candidates rather than
      * presents. Absent elsewhere, so the key's presence IS "this can be voted
      * on" — the same discipline as `claimed` and `contributions`.
@@ -407,8 +402,19 @@ export default function SharedList({
                             )}
 
                             <div className="min-w-0 flex-1">
+                                {/*
+                                  Clamped, because a feed title is written for a
+                                  search engine rather than a person: "OneOne
+                                  25W super snellader met 2 poorten + 1,5m
+                                  sterke USB C kabel. PD lader. Oplader adapter
+                                  past op Sony WH-1000XM3, WH-1000XM4, …" ran to
+                                  ten lines on a phone and made one card four
+                                  times the height of its neighbours. Three
+                                  lines is enough to recognise a thing you have
+                                  already seen, which is what this list is for.
+                                */}
                                 {item.url ? (
-                                    <Link href={item.url} className="font-medium hover:underline">
+                                    <Link href={item.url} className="line-clamp-3 font-medium hover:underline">
                                         {item.title}
                                     </Link>
                                 ) : item.externalUrl ? (
@@ -425,12 +431,12 @@ export default function SharedList({
                                         href={item.externalUrl}
                                         target="_blank"
                                         rel="nofollow noopener noreferrer"
-                                        className="font-medium hover:underline"
+                                        className="line-clamp-3 font-medium hover:underline"
                                     >
                                         {item.title}
                                     </a>
                                 ) : (
-                                    <span className="font-medium">{item.title}</span>
+                                    <span className="line-clamp-3 font-medium">{item.title}</span>
                                 )}
                                 {item.note && <p className="mt-1 text-sm text-ink-soft">{item.note}</p>}
                                 {item.price !== null && (
@@ -541,39 +547,6 @@ export default function SharedList({
                             </div>
                         )}
 
-                        {/*
-                          Money, beside the claim controls rather than behind a
-                          panel: it is a fact about this present, and the person
-                          reading it is deciding about this present. Rendered
-                          only when the server sent a payload — its absence is
-                          the privacy rule doing its job, so there is deliberately
-                          no fallback branch here.
-                        */}
-                        {/*
-                          The candidate's primary action, and its only one.
-
-                          Money on a group list is pooled in the header, not
-                          here: pledging against a candidate the group has not
-                          chosen asks people to bet, and most of those bets end
-                          up attached to something nobody buys.
-                        */}
-                        {item.votes !== undefined && (
-                            <Vote
-                                action={`${base}/l/${token}/vote/${item.id}`}
-                                votes={item.votes}
-                                votedByMe={item.votedByMe ?? false}
-                                canVote={canVote}
-                            />
-                        )}
-
-                        {item.contributions !== undefined && (
-                            <Pledge
-                                action={`${base}/l/${token}/pledge/${item.id}`}
-                                contributions={item.contributions}
-                                canContribute={canContribute}
-                                price={item.price}
-                            />
-                        )}
                     </li>
                 ))}
             </ul>
@@ -594,7 +567,7 @@ export default function SharedList({
               they scroll far enough to reach this anyway.
             */}
             {canSuggest && (
-                <section className="mt-12 rounded-card border border-line bg-card p-6">
+                <section className="mt-8 rounded-card border border-line bg-card p-5 sm:mt-12 sm:p-6">
                     {/*
                       The verb depends on where the item lands.
 

@@ -93,22 +93,36 @@ export default function Pledge({
     }
 
     return (
-        <div className="mt-4 border-t border-line pt-3">
+        <div>
             {/*
               The total, measured against the price when we know it. "€75
               pledged of €240" is the number that decides whether to put more
               in; "€75 pledged" on its own is a fact about nothing.
             */}
-            <p className="text-sm font-medium">
-                {total === 0
-                    ? t('pledges.none')
-                    : price !== null
-                      ? t('pledges.pledged', {
-                            total: formatPrice(total, market),
-                            price: formatPrice(price, market),
-                        })
-                      : formatPrice(total, market)}
-            </p>
+            {/*
+              An empty pot says so; an empty item does not.
+
+              On a wish list this renders under *every* product, so six copies
+              of "nobody has chipped in yet" above six identical buttons is most
+              of the page, saying nothing, about the secondary action on each
+              card. There "I'm in" carries the whole meaning alone.
+
+              In a group list's header it is the opposite: the pot is what the
+              page is *for*, it appears once, and a card containing nothing but
+              a button does not say what the button is about.
+            */}
+            {(
+                <p className="text-sm font-medium">
+                    {total === 0
+                        ? t('pledges.none')
+                        : price !== null
+                          ? t('pledges.pledged', {
+                                total: formatPrice(total, market),
+                                price: formatPrice(price, market),
+                            })
+                          : formatPrice(total, market)}
+                </p>
+            )}
 
             {/*
               How many, never who — unless this is the organiser, below. A

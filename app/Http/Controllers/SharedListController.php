@@ -114,7 +114,7 @@ class SharedListController extends Controller
          * only, which keeps the order stable while nobody has voted.
          */
         $items = $list->items()
-            ->with(['group', 'pledges', 'votes'])
+            ->with(['group', 'votes'])
             ->when(
                 $list->kind->allowsVoting(),
                 fn ($q) => $q->withCount('votes')->orderByDesc('votes_count')->latest(),
@@ -122,17 +122,6 @@ class SharedListController extends Controller
             ->get();
 
         $list->load('pledges');
-
-        /*
-         * Money on the list.
-         *
-         * `$isOwner` is passed through rather than used to decide, and the
-         * distinction matters: it is `shouldHideClaimsFrom()`, which is **true
-         * for a group organiser too**. Reusing it here as "hide everything"
-         * would lock the organiser out of the breakdown that is the entire
-         * point of a group list. `ContributionView` holds the whole table.
-         */
-        $contributions = $contributor->forItems($list, $items, $owner, $isOwner);
 
         /*
          * Who has claimed what, decided in one place.
@@ -256,12 +245,9 @@ class SharedListController extends Controller
             /*
              * The pot, on a group list: one payload for the whole present.
              *
-             * Null on every other kind, where money is pooled per item instead
-             * and `contributions` rides on the item. Two shapes rather than one
-             * because they are two different facts — "€75 towards this present"
-             * and "€75 towards this one thing on Anna's list" — and the page
-             * renders a header block for the first and a form under a card for
-             * the second.
+             * Null on every other kind: only a group list has a pot. Chipping
+             * in is a fact about the present, so it appears once, in the
+             * header, and never under a card.
              */
             'pot' => $contributor->forList($list, $owner, $isOwner),
 
@@ -389,7 +375,7 @@ class SharedListController extends Controller
                  * the owner of a wish list receives no `claimed` key at all,
                  * and a `claimed: false` on every item is a channel that goes
                  * live the moment one of them flips. Same discipline as
-                 * `contributions` below.
+                 * `votes` below.
                  *
                  * The page reads `claimed === undefined` to mean "no claiming
                  * here", so this must stay a spread rather than becoming three
@@ -401,7 +387,7 @@ class SharedListController extends Controller
                  * The tally, and whether this viewer is in it.
                  *
                  * Absent on every kind that does not vote — the same
-                 * absent-not-null discipline as `claimed` and `contributions`,
+                 * absent-not-null discipline as `claimed`,
                  * so the page reads the key's presence as "this is a candidate"
                  * rather than carrying a `votes: 0` that means two things.
                  *
@@ -413,16 +399,6 @@ class SharedListController extends Controller
                     'votes' => $item->votes->count(),
                     'votedByMe' => $this->hasVoted($item, $owner),
                 ] : [],
-
-                /*
-                 * Absent, not null, wherever there is nothing to say — the same
-                 * discipline as `progress` above. `ContributionView` omits the
-                 * item entirely rather than returning an empty shape, so the
-                 * owner of a wish list receives no key here at all.
-                 */
-                ...isset($contributions[$item->id])
-                    ? ['contributions' => $contributions[$item->id]]
-                    : [],
             ]),
         ]);
     }

@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Models\GiftPledge;
 use App\Models\Wishlist;
-use App\Models\WishlistItem;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -42,9 +41,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class GiftPledgeController extends Controller
 {
-    public function store(Request $request, CurrentMarket $current, string $market, string $token, ?string $item = null): RedirectResponse
+    public function store(Request $request, CurrentMarket $current, string $market, string $token): RedirectResponse
     {
-        [$list, $wishlistItem, $owner] = $this->resolve($request, $token, $item);
+        [$list, $owner] = $this->resolve($request, $token);
 
         $validated = $request->validate([
             // Euros in, cents stored — invariant #7.
@@ -55,9 +54,6 @@ class GiftPledgeController extends Controller
         GiftPledge::updateOrCreate(
             [
                 'wishlist_id' => $list->id,
-                // Null on a group list: the money is towards the present, and
-                // the shortlist under it is candidates for what that will be.
-                'item_id' => $wishlistItem?->id,
                 ...$owner->attributes('user_id', 'anon_id'),
             ],
             [
@@ -69,20 +65,12 @@ class GiftPledgeController extends Controller
         return back()->with('success', __('site.pledges.added'));
     }
 
-    public function destroy(Request $request, CurrentMarket $current, string $market, string $token, ?string $item = null): RedirectResponse
+    public function destroy(Request $request, CurrentMarket $current, string $market, string $token): RedirectResponse
     {
-        [$list, $wishlistItem, $owner] = $this->resolve($request, $token, $item);
+        [$list, $owner] = $this->resolve($request, $token);
 
         $owner->scope(
-            GiftPledge::query()
-                ->where('wishlist_id', $list->id)
-                // `whereNull` rather than `where(..., null)`, which never
-                // matches: leaving the pot has to find the row with no item.
-                ->when(
-                    $wishlistItem === null,
-                    fn ($q) => $q->whereNull('item_id'),
-                    fn ($q) => $q->where('item_id', $wishlistItem->id),
-                ),
+            GiftPledge::query()->where('wishlist_id', $list->id),
             'user_id',
             'anon_id',
         )->delete();
@@ -91,9 +79,9 @@ class GiftPledgeController extends Controller
     }
 
     /**
-     * @return array{0: Wishlist, 1: ?WishlistItem, 2: Owner}
+     * @return array{0: Wishlist, 1: Owner}
      */
-    private function resolve(Request $request, string $token, ?string $item): array
+    private function resolve(Request $request, string $token): array
     {
         $list = Wishlist::query()
             ->where('share_token', $token)
@@ -114,35 +102,11 @@ class GiftPledgeController extends Controller
          * a list for a third person structurally could not carry contributions;
          * the second locked out the organiser, who is a participant rather than
          * the person being surprised. `Wishlist::allowsContributionsFrom()`
-         * holds the whole rule now, including the inversion and the "somebody
-         * has to own this row" check, so no surface can re-decide half of it.
+         * holds the whole rule now, including the "somebody has to own this
+         * row" check, so no surface can re-decide half of it.
          */
         abort_unless($list->allowsContributionsFrom($owner), 403);
 
-        /*
-         * Where the money attaches is decided by the kind, never by the caller.
-         *
-         * Two routes reach this — `/pledge` and `/pledge/{item}` — and either
-         * one used on the wrong kind of list is refused rather than quietly
-         * doing the other thing. A pot pledge on a wish list would be money
-         * against nothing in particular; a per-item pledge on a group list is
-         * the incoherence this whole change removes, and accepting it would
-         * split one pot into several the page never adds up.
-         */
-        if ($list->kind->poolsOnTheList()) {
-            abort_unless($item === null, 403);
-
-            return [$list, null, $owner];
-        }
-
-        abort_if($item === null, 403);
-
-        $wishlistItem = $list->items()->whereKey($item)->first();
-
-        if ($wishlistItem === null) {
-            throw new NotFoundHttpException;
-        }
-
-        return [$list, $wishlistItem, $owner];
+        return [$list, $owner];
     }
 }

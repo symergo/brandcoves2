@@ -71,18 +71,21 @@ enum ListKind: string
     }
 
     /**
-     * Whether money may be pooled against items on this list.
+     * May money be pooled towards this list's present?
      *
-     * Deliberately **not** `allowsClaiming()`, which is what the pledge gate
-     * used to ask. Claiming and contributing are different acts: claiming says
-     * "I have got this one, nobody else take it", contributing says "here is my
-     * share of one thing we are all buying". A group list allows the second and
-     * not the first — there is nothing to claim, because the whole list is one
-     * present.
+     * A group list, and only a group list. It used to include `mine` as well,
+     * pooling per item — several people going in on the one expensive thing on
+     * Anna's wishlist — and rendering that put an "I'm in" under every card on
+     * a six-item list, beside the claim button that is the real action there.
+     *
+     * The distinction that survives: on a wish list you **claim** a thing ("I
+     * am buying this one"); on a group list you **contribute** to a thing the
+     * group buys together. Going in with somebody on a wishlist item is a group
+     * gift, and a group list is what that is.
      */
     public function allowsContributions(): bool
     {
-        return $this === self::Mine || $this === self::Group;
+        return $this === self::Group;
     }
 
     /**
@@ -123,35 +126,6 @@ enum ListKind: string
     }
 
     /**
-     * Whether the owner may see who contributed what.
-     *
-     * The inversion that makes group lists work, and the reason this is a
-     * method rather than a constant. On a `mine` list the owner **is** the
-     * person being surprised, so invariant #4 hides contributions from them
-     * absolutely. On a `group` list the owner is the organiser and the
-     * recipient is a third party who never sees the list at all — so there is
-     * no surprise to protect from the owner, and the organiser is exactly who
-     * needs the breakdown, because they front the money and collect afterwards.
-     */
-    /**
-     * Is the money attached to the list, or to one item on it?
-     *
-     * A group list is **one present**, so the pot belongs to the list and the
-     * shortlist under it is candidates for what to spend it on. Pledging
-     * against a candidate would ask people to bet on an outcome the group has
-     * not decided, and most of those pledges would end up attached to something
-     * nobody buys.
-     *
-     * A `mine` list is the opposite: several people chipping in for the one
-     * expensive thing on Anna's wishlist is a fact *about that thing*, and it
-     * has to stay per item.
-     *
-     * Deliberately separate from {@see ownerSeesContributions()}, which is the
-     * same set today. That one is about who may look at the money; this is
-     * about where the money is attached. Asking one when you mean the other
-     * works right up until they diverge, and then fails silently.
-     */
-    /**
      * Does the owner see claims when they have never said either way?
      *
      * A wish list hides: its owner is the person being surprised, and that is
@@ -167,11 +141,17 @@ enum ListKind: string
         return $this === self::ForSomeone;
     }
 
-    public function poolsOnTheList(): bool
-    {
-        return $this === self::Group;
-    }
-
+    /**
+     * Whether the owner may see who contributed what.
+     *
+     * The inversion that makes group lists work, and the reason this is a
+     * method rather than a constant. On a `mine` list the owner **is** the
+     * person being surprised, so invariant #4 hides contributions from them
+     * absolutely. On a `group` list the owner is the organiser and the
+     * recipient is a third party who never sees the list at all — so there is
+     * no surprise to protect from the owner, and the organiser is exactly who
+     * needs the breakdown, because they front the money and collect afterwards.
+     */
     public function ownerSeesContributions(): bool
     {
         return $this === self::Group;

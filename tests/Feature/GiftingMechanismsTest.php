@@ -366,64 +366,37 @@ class GiftingMechanismsTest extends TestCase
     // --- Group gift ----------------------------------------------------------
 
     #[Test]
-    public function several_people_can_pledge_towards_one_item(): void
+    public function only_a_group_list_can_be_pledged_on(): void
     {
+        /*
+         * These four tests used to pledge against an **item** on a wish list,
+         * because that is what the table was built for: "one person claims it,
+         * the others pledge against it."
+         *
+         * Rendered, that put an "I'm in" under every card of a six-item list,
+         * beside the claim button that is the real action there. On a wish list
+         * you claim a thing; going in together on one *is* a group gift, and a
+         * group list is what that is. So the money is the list's, and only a
+         * group list has any.
+         */
         $owner = User::factory()->create();
         $list = $this->sharedList($owner);
-        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
 
-        foreach (['Ann' => 25, 'Bob' => 30] as $name => $amount) {
-            $this->actingAs(User::factory()->create())
-                ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
-                    'amount' => $amount,
-                    'display_name' => $name,
-                ])
-                ->assertRedirect();
-        }
-
-        // Cents, per invariant #7.
-        $this->assertSame(5500, (int) GiftPledge::query()->sum('amount'));
-    }
-
-    #[Test]
-    public function pledging_twice_changes_your_mind_rather_than_adding_again(): void
-    {
-        $owner = User::factory()->create();
-        $list = $this->sharedList($owner);
-        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
-        $giver = User::factory()->create();
-
-        foreach ([25, 40] as $amount) {
-            $this->actingAs($giver)->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
-                'amount' => $amount,
-                'display_name' => 'Ann',
-            ]);
-        }
-
-        $this->assertSame(1, GiftPledge::query()->count());
-        $this->assertSame(4000, GiftPledge::query()->first()->amount);
-    }
-
-    #[Test]
-    public function the_list_owner_cannot_pledge_on_their_own_list(): void
-    {
-        $owner = User::factory()->create();
-        $list = $this->sharedList($owner);
-        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
-
-        // A pledge is claim state: telling the owner that four people put money
-        // against the bicycle tells them about the bicycle.
-        $this->actingAs($owner)
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25,
-                'display_name' => 'Me',
+                'display_name' => 'Ann',
             ])
             ->assertForbidden();
+
+        $this->assertSame(0, GiftPledge::query()->count());
     }
 
     #[Test]
     public function a_research_list_cannot_be_pledged_on(): void
     {
+        // One person's research about somebody. There is no pool, because
+        // there is no group.
         $owner = User::factory()->create();
 
         $list = Wishlist::factory()->create([
@@ -434,10 +407,8 @@ class GiftingMechanismsTest extends TestCase
             'visibility' => ListVisibility::Link,
         ]);
 
-        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
-
         $this->actingAs(User::factory()->create())
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25,
                 'display_name' => 'Ann',
             ])

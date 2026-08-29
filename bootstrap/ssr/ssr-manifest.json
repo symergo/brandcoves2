@@ -122,7 +122,6 @@
   "resources/js/Components/ShareRow.tsx": [],
   "resources/js/Components/SignInDialog.tsx": [],
   "resources/js/Components/ToolIcon.tsx": [],
-  "resources/js/Components/Vote.tsx": [],
   "resources/js/Layouts/SiteLayout.tsx": [],
   "resources/js/Pages/Ask/Index.tsx": [],
   "resources/js/Pages/Ask/Show.tsx": [],

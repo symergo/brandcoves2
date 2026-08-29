@@ -162,17 +162,15 @@ class Wishlist extends Model
     /**
      * Money pledged towards the present, on a group list.
      *
-     * The pot, not the per-item pledges: `item_id` is null on exactly these
-     * rows, and that null **is** the fact that they are for the whole list.
-     * Filtering here rather than in each caller keeps "the pot" one idea — a
-     * caller that forgot the filter would silently add a wish list's per-item
-     * pledges into a group total.
+     * Every pledge belongs to the list now; there is no per-item kind to
+     * exclude. This used to filter on `whereNull('item_id')`, back when a wish
+     * list pooled per item as well.
      *
      * @return HasMany<GiftPledge, $this>
      */
     public function pledges(): HasMany
     {
-        return $this->hasMany(GiftPledge::class)->whereNull('item_id');
+        return $this->hasMany(GiftPledge::class);
     }
 
     /**
