@@ -64,6 +64,30 @@ The hooks directory is versioned; `.git/hooks` is not, which is why the indirect
 hook checks Postgres is reachable first and says so, rather than letting the failure arrive as 894
 connection errors. Skip it with `git push --no-verify` when you know why that is fine.
 
+### A failed parallel run is re-run serially — since 2026-08-29
+
+Under a real `git push` on this Windows machine, ParaTest prints its banner and exits **127**,
+command not found, having run **zero tests**. The identical command passes from a shell, under
+Git's `sh`, under the hook invoked by hand, and under `git push --dry-run`. The hook's environment
+on a real push is byte-identical to the dry-run's — `PATH`, `PATHEXT`, `COMSPEC`, cwd all match —
+`PHP_BINARY` resolves to Herd's `php.exe`, and two workers on a single test file are fine. It fails
+only when spawning eight workers for the full suite, and it fails before the first test runs.
+
+The hook reported that as *"tests failed — push aborted"*, which is precisely what it must never say
+when the suite has not run — the same class of bug as the earlier `php: command not found` under a
+"tests failed" banner. It blocked five consecutive pushes of a commit whose suite was green,
+verified five separate ways.
+
+The hook now re-runs the suite **serially** when the parallel run fails, and the serial result
+decides. This cannot weaken the gate — a genuinely broken test fails both ways and the push still
+aborts — it can only turn a false abort into a pass. The extra ~150s is spent only on a run that was
+going to abort anyway.
+
+The root cause is unresolved; the fallback is a guard, not a fix. If it fires routinely rather than
+rarely, suspect process-creation pressure from the supervised dev stack (`GiftCoves Dev Server`
+restarting `artisan serve`, the queue, Vite and SSR) racing eight fresh workers, and try
+`--processes=4` before anything cleverer.
+
 ## Why real Postgres, and other traps
 
 Recorded in the comments in [phpunit.xml](../phpunit.xml), which are worth reading before changing

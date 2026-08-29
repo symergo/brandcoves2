@@ -56,10 +56,36 @@ if [ -z "$PHP" ]; then
     exit 1
 fi
 
+# A failed parallel run is not proof of a failing test.
+#
+# Measured on 2026-08-29: under a real `git push`, ParaTest prints its banner and
+# exits 127 — command not found — having run zero tests. The same command passes
+# from a shell, under Git's `sh`, under this hook invoked by hand, and under
+# `git push --dry-run`. The hook's environment on a real push is byte-identical
+# to the dry-run's, `PHP_BINARY` resolves, and two workers on one test file are
+# fine; it only fails spawning eight workers for the full suite. Whatever the
+# cause, it happens before the first test runs.
+#
+# It was reported as "tests failed — push aborted", which is the one thing this
+# hook must never say when the suite has not run. It blocked five pushes of a
+# commit whose suite was green.
+#
+# So a failed parallel run is re-run serially and the serial result decides. That
+# cannot weaken the gate: a genuinely broken test fails both ways and the push
+# still aborts. It can only turn a false abort into a pass. The extra time is
+# spent only on a run that was going to abort anyway — 150s rather than 40s, on
+# the push you would have had to investigate by hand regardless.
 if ! "$PHP" artisan test --parallel --processes=8; then
-    printf '\033[0;31mpre-push: tests failed — push aborted.\033[0m\n'
-    printf 'Fix them, or push with --no-verify if you know why this is fine.\n'
-    exit 1
+    printf '\033[0;33mpre-push: the parallel run failed — re-running serially to see whether a test is really broken...\033[0m\n'
+
+    if ! "$PHP" artisan test; then
+        printf '\033[0;31mpre-push: tests failed — push aborted.\033[0m\n'
+        printf 'Fix them, or push with --no-verify if you know why this is fine.\n'
+        exit 1
+    fi
+
+    printf '\033[0;33mpre-push: the serial run passed.\033[0m The parallel runner crashed rather than\n'
+    printf 'finding a broken test — see the comment in .githooks/pre-push. Allowing the push.\n'
 fi
 
 exit 0
