@@ -383,7 +383,16 @@ export default function SiteLayout({ children }: PropsWithChildren) {
             */}
             <AddingToBar />
 
-            <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+            {/*
+              Vertical rhythm is lighter on a phone.
+
+              `py-10` is 40px top and bottom, chosen against a desktop
+              viewport where it is breathing room. On a 360px screen it
+              is most of the space above the fold spent on nothing, and
+              it reads as a page that starts late rather than as one
+              that is well spaced.
+            */}
+            <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-10">
                 {/*
                   Above the page, not inside it: a controller reports an outcome
                   by redirecting back, and the page it lands on should not have

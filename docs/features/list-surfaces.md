@@ -165,6 +165,56 @@ The Gift Cove went the other way for the same reason: its `registries` count is 
 `kind = mine`**, because that card is specifically about a registry — your own list, with a date and
 an address, that people post things to.
 
+## The phone, 2026-08-29
+
+Reported as three complaints — "the mobile view does not look nice", "something overflows sideways",
+"the screen zooms in when I tap a field". The last two are **one bug**, and finding that is what made
+the first tractable.
+
+### Safari zooms a field under 16px, and the zoom is the overflow
+
+iOS Safari magnifies the whole page when a focused input has a font smaller than 16px, and does not
+zoom back out. The page is then wider than the viewport, so the reader is left scrolling sideways
+through a layout that fitted a second earlier. Most text fields here are `text-sm` — 14px, chosen
+against a desktop viewport where it is a sensible compact control, and one class below the threshold
+that matters on the device these pages are mostly read on.
+
+Fixed once in `resources/css/app.css` rather than in several dozen class lists, which would also have
+changed how the same fields look on a desktop, where the zoom does not happen and 14px is right. The
+rule is **unlayered**, which is what lets it beat Tailwind's layered utilities without every call
+site opting in — the same trick, and the same reason, as the reduced-motion rule above it.
+
+**Not `maximum-scale=1` on the viewport meta**, which is the other well-known fix. It works by taking
+pinch-zoom away from everybody, permanently, on every page: a real accessibility loss traded for a
+styling problem. The font size is the actual cause, so it is the thing to change.
+
+The same rule sets a 44px floor on those controls. 16px text in `py-2` is a 34px box, which is under
+what a finger expects — and the padding is not raised in the utilities because it is right on a
+desktop.
+
+### Headings were written once, at desktop size
+
+27 of them, `text-2xl` and `text-3xl` with no step down. 30px on a 360px screen is a title that wraps
+to three lines and pushes what it introduces off the fold. They step now, and `main` drops from
+`py-10` to `py-6` below `sm`: 40px of nothing top and bottom reads as a page that starts late rather
+than one that is well spaced.
+
+### The shared list had six cards before its first product
+
+Self-inflicted, in this same pass: the badge, the owner note, the per-kind intro, a claim-consent
+card with a name input, the pot, the progress line and the occasion — each a bordered block, stacked,
+above the thing the page is for.
+
+Three of them were not cards at all. The occasion is a **caption** for the page, so it rides up next
+to the title as one line — a bordered box for "Birthday · 14 June" was a whole block of the first
+screen. Progress belongs under the intro, because "what this page is" and "how much is already
+handled" are one thought. And the claim disclosure is a line, not a form: it has to be read before
+somebody claims, but the *name field* was asking for something before anybody had decided to give it,
+so it appears with the first claim instead.
+
+What is left is one card and a few lines. The owner note and the visitor intro are mutually
+exclusive — `hideClaims` implies ownership and the intro is `!isOwner` — so no reader ever sees both.
+
 ## Files
 
 - `resources/js/Components/ListKindBadge.tsx` — the badge, and the one place the sentence is chosen

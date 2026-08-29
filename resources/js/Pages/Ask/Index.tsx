@@ -205,7 +205,7 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
                     <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
                         <CoveIcon name="ask" className="h-7 w-7" />
                     </span>
-                    <h1 className="text-3xl font-semibold tracking-tight">{t('ask.title')}</h1>
+                    <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{t('ask.title')}</h1>
                 </div>
 
                 <p className="mt-3 text-lg text-ink-soft">{t('ask.intro')}</p>

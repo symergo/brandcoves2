@@ -97,7 +97,7 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
         <>
             <Head title={t('discover_cove.seo_title')} />
 
-            <h1 className="text-3xl font-semibold tracking-tight text-ink">{t('discover_cove.title')}</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">{t('discover_cove.title')}</h1>
             <p className="mt-3 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
 
             <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -134,7 +134,7 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
                             </time>
                         </div>
 
-                        <h2 id="today-heading" className="mt-3 text-2xl font-semibold tracking-tight text-ink">
+                        <h2 id="today-heading" className="mt-3 text-xl sm:text-2xl font-semibold tracking-tight text-ink">
                             {today.theme}
                         </h2>
                         {today.blurb && <p className="mt-2 max-w-2xl text-ink-soft">{today.blurb}</p>}
@@ -204,7 +204,7 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
             {surprises.length > 0 && (
                 <section className="mt-14" aria-labelledby="surprise-heading">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="surprise-heading" className="text-2xl font-semibold tracking-tight text-ink">
+                        <h2 id="surprise-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
                             {t('nav.surprise')}
                         </h2>
                         <Link href={urls.surprise} className="text-sm font-medium text-accent hover:text-accent-dark">
@@ -264,7 +264,7 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
             {questions.length > 0 && (
                 <section className="mt-14" aria-labelledby="questions-heading">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="questions-heading" className="text-2xl font-semibold tracking-tight text-ink">
+                        <h2 id="questions-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
                             {t('ask.title')}
                         </h2>
                         <Link href={askUrl} className="text-sm font-medium text-accent hover:text-accent-dark">
@@ -307,7 +307,7 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
             {coves.length > 0 && (
                 <section className="mt-14" aria-labelledby="coves-heading">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight text-ink">
+                        <h2 id="coves-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
                             {t('home.coves_heading')}
                         </h2>
                         <Link

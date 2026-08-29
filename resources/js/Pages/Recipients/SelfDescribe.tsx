@@ -107,7 +107,7 @@ export default function SelfDescribe({
             </Head>
 
             <header className="max-w-2xl">
-                <h1 className="text-2xl font-semibold">{t('recipients.self_title')}</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold">{t('recipients.self_title')}</h1>
                 <p className="mt-2 text-ink-soft">
                     {t('recipients.self_intro', { name: person.name })}
                 </p>

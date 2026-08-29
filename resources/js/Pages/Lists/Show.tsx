@@ -138,7 +138,7 @@ export default function ListShow({
                         ← {t('lists.title')}
                     </Link>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <h1 className="text-2xl font-semibold">{list.title}</h1>
+                        <h1 className="text-xl sm:text-2xl font-semibold">{list.title}</h1>
                         {/*
                           What kind of list this is — the fact that decides who
                           may claim, who may vote and who sees the money, and

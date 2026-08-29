@@ -50,7 +50,7 @@ export default function HowItWorks({ backUrl }: { backUrl: string }) {
                 <Link href={backUrl} className="text-sm text-ink-soft hover:text-ink">
                     ← {t('gift_cove.title')}
                 </Link>
-                <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t('gift_cove.manual')}</h1>
+                <h1 className="mt-1 text-xl sm:text-2xl font-semibold tracking-tight">{t('gift_cove.manual')}</h1>
                 <p className="mt-2 max-w-2xl text-ink-soft">{t('gift_cove.manual_intro')}</p>
             </header>
 

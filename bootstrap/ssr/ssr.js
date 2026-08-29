@@ -33984,7 +33984,7 @@ function AskIndex({ questions, mine, canAsk, options }) {
 						className: "h-7 w-7"
 					})
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "text-3xl font-semibold tracking-tight",
+					className: "text-2xl sm:text-3xl font-semibold tracking-tight",
 					children: t("ask.title")
 				})]
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -34907,7 +34907,7 @@ function AskShow({ question, answers, canAnswer, maxPicks, results, searchTerm }
 			className: "mt-4 max-w-2xl",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "text-2xl font-semibold tracking-tight",
+					className: "text-xl sm:text-2xl font-semibold tracking-tight",
 					children: question.title
 				}),
 				question.body && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -35163,7 +35163,7 @@ function Login({ googleEnabled }) {
 		className: "mx-auto max-w-md",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "text-2xl font-semibold",
+				className: "text-xl sm:text-2xl font-semibold",
 				children: t("auth.title")
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -36644,7 +36644,7 @@ function DiscoverCove({ urls, coves, today, questions, askUrl, surprises }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("discover_cove.seo_title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-			className: "text-3xl font-semibold tracking-tight text-ink",
+			className: "text-2xl sm:text-3xl font-semibold tracking-tight text-ink",
 			children: t("discover_cove.title")
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -36694,7 +36694,7 @@ function DiscoverCove({ urls, coves, today, questions, askUrl, surprises }) {
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						id: "today-heading",
-						className: "mt-3 text-2xl font-semibold tracking-tight text-ink",
+						className: "mt-3 text-xl sm:text-2xl font-semibold tracking-tight text-ink",
 						children: today.theme
 					}),
 					today.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -36752,7 +36752,7 @@ function DiscoverCove({ urls, coves, today, questions, askUrl, surprises }) {
 					className: "flex flex-wrap items-baseline justify-between gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						id: "surprise-heading",
-						className: "text-2xl font-semibold tracking-tight text-ink",
+						className: "text-xl sm:text-2xl font-semibold tracking-tight text-ink",
 						children: t("nav.surprise")
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 						href: urls.surprise,
@@ -36813,7 +36813,7 @@ function DiscoverCove({ urls, coves, today, questions, askUrl, surprises }) {
 					className: "flex flex-wrap items-baseline justify-between gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						id: "questions-heading",
-						className: "text-2xl font-semibold tracking-tight text-ink",
+						className: "text-xl sm:text-2xl font-semibold tracking-tight text-ink",
 						children: t("ask.title")
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 						href: askUrl,
@@ -36849,7 +36849,7 @@ function DiscoverCove({ urls, coves, today, questions, askUrl, surprises }) {
 					className: "flex flex-wrap items-baseline justify-between gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						id: "coves-heading",
-						className: "text-2xl font-semibold tracking-tight text-ink",
+						className: "text-xl sm:text-2xl font-semibold tracking-tight text-ink",
 						children: t("home.coves_heading")
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 						href: urls.guides,
@@ -37324,7 +37324,7 @@ function HowItWorks({ backUrl }) {
 				children: ["← ", t("gift_cove.title")]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "mt-1 text-2xl font-semibold tracking-tight",
+				className: "mt-1 text-xl sm:text-2xl font-semibold tracking-tight",
 				children: t("gift_cove.manual")
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -37472,7 +37472,7 @@ function GiftCove({ signedIn, wishlists, counts, santaGroups, urls }) {
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "max-w-2xl",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "text-3xl font-semibold tracking-tight",
+				className: "text-2xl sm:text-3xl font-semibold tracking-tight",
 				children: t("gift_cove.title")
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-3 text-lg text-ink-soft",
@@ -38827,7 +38827,7 @@ function Home({ today, gifting, coves, recentSearches }) {
 					className: "flex flex-wrap items-baseline justify-between gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						id: "organise-heading",
-						className: "text-2xl font-semibold tracking-tight",
+						className: "text-xl sm:text-2xl font-semibold tracking-tight",
 						children: t("nav.organise")
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 						href: `${base}/gift-cove`,
@@ -38904,7 +38904,7 @@ function Home({ today, gifting, coves, recentSearches }) {
 					className: "flex flex-wrap items-baseline justify-between gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						id: "discover-heading",
-						className: "text-2xl font-semibold tracking-tight",
+						className: "text-xl sm:text-2xl font-semibold tracking-tight",
 						children: t("discover_cove.title")
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 						href: `${base}/discover-cove`,
@@ -39049,7 +39049,7 @@ function Home({ today, gifting, coves, recentSearches }) {
 					className: "flex flex-wrap items-baseline justify-between gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						id: "coves-heading",
-						className: "text-2xl font-semibold tracking-tight",
+						className: "text-xl sm:text-2xl font-semibold tracking-tight",
 						children: t("home.coves_heading")
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 						href: `${base}/coves`,
@@ -39309,7 +39309,7 @@ function ListsIndex({ lists, view, recipients, isSignedIn }) {
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "flex flex-wrap items-end justify-between gap-4",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "text-2xl font-semibold",
+				className: "text-xl sm:text-2xl font-semibold",
 				children: heading
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-1 text-ink-soft",
@@ -39810,9 +39810,16 @@ function SharedList({ list, isOwner, canClaim, hideClaims, claimNames, progress,
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "flex flex-wrap items-center gap-2",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "text-2xl font-semibold",
+					className: "text-xl sm:text-2xl font-semibold",
 					children: list.heading
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListKindBadge, { kind: list.kind })]
+			}),
+			occasion !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-1 text-sm text-ink-soft",
+				children: occasion.date ? t("registry.occasion_on", {
+					occasion: occasion.name,
+					date: formatOccasionDate(occasion.date, market)
+				}) : occasion.name
 			}),
 			list.description && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-2 text-ink-soft",
@@ -39826,20 +39833,18 @@ function SharedList({ list, isOwner, canClaim, hideClaims, claimNames, progress,
 				className: "mt-4 rounded-card border border-line bg-card p-4 text-sm",
 				children: list.kind === "mine" ? list.for ? t("lists.shared_intro", { name: list.for }) : t("lists.shared_intro_anon") : list.kind === "group" ? t("lists.shared_intro_group") : t("lists.shared_intro_gift")
 			}),
-			canClaim && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "mt-4 rounded-card border border-line bg-card p-4 text-sm",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "text-ink-soft",
-					children: claimNames ? t("lists.claim_named_note") : t("lists.claim_anonymous_note")
-				}), claimNames && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-					className: "mt-2 block text-xs font-medium",
-					children: [t("pledges.your_name"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						required: true,
-						maxLength: 80,
-						value: claimName,
-						onChange: (e) => setClaimName(e.target.value),
-						className: "mt-1 w-full max-w-xs rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
-					})]
+			canClaim && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-sm text-ink-soft",
+				children: claimNames ? t("lists.claim_named_note") : t("lists.claim_anonymous_note")
+			}),
+			canClaim && claimNames && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+				className: "mt-3 block text-xs font-medium",
+				children: [t("pledges.your_name"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					required: true,
+					maxLength: 80,
+					value: claimName,
+					onChange: (e) => setClaimName(e.target.value),
+					className: "mt-1 w-full max-w-xs rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
 				})]
 			}),
 			pot !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -39852,37 +39857,24 @@ function SharedList({ list, isOwner, canClaim, hideClaims, claimNames, progress,
 				})
 			}),
 			progress !== null && progress.total > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-4 text-sm text-ink-soft",
+				className: "mt-2 text-sm text-ink-soft",
 				children: t(list.kind === "mine" ? "lists.progress" : "lists.progress_gift", {
 					claimed: String(progress.claimed),
 					total: String(progress.total)
 				})
 			}),
-			occasion !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			occasion !== null && (occasion.address !== null || occasion.locked) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 				className: "mt-4 rounded-card border border-line bg-card p-4",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "text-sm font-medium",
-						children: occasion.date ? t("registry.occasion_on", {
-							occasion: occasion.name,
-							date: formatOccasionDate(occasion.date, market)
-						}) : occasion.name
-					}),
-					occasion.address !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-						className: "mt-3",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "text-xs font-medium text-ink-soft",
-							children: t("registry.send_to")
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("address", {
-							className: "mt-1 text-sm whitespace-pre-line not-italic",
-							children: occasion.address
-						})]
-					}),
-					occasion.locked && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-3 text-xs text-ink-soft",
-						children: t("registry.address_locked")
-					})
-				]
+				children: [occasion.address !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-xs font-medium text-ink-soft",
+					children: t("registry.send_to")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("address", {
+					className: "mt-1 text-sm whitespace-pre-line not-italic",
+					children: occasion.address
+				})] }), occasion.locked && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-xs text-ink-soft",
+					children: t("registry.address_locked")
+				})]
 			})
 		] }),
 		canVote && items.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
@@ -40992,7 +40984,7 @@ function ListShow({ list, items, pot, target, asked, access, collaborators, sugg
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "mt-1 flex flex-wrap items-center gap-2",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-						className: "text-2xl font-semibold",
+						className: "text-xl sm:text-2xl font-semibold",
 						children: list.title
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListKindBadge, { kind: list.kind })]
 				}),
@@ -41265,7 +41257,7 @@ function Notifications({ notifications, watching }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("notifications.title") }),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-			className: "text-2xl font-semibold",
+			className: "text-xl sm:text-2xl font-semibold",
 			children: t("notifications.title")
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
@@ -41500,7 +41492,7 @@ function Product({ product, offers, alert }) {
 				product.minPrice !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "mt-5 flex flex-wrap items-baseline gap-3",
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						className: "text-3xl font-semibold",
+						className: "text-2xl sm:text-3xl font-semibold",
 						children: formatPrice(product.minPrice, market)
 					}), product.discountPercent !== null && product.medianPrice && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 						className: "rounded bg-accent px-2 py-1 text-sm font-medium text-white",
@@ -41638,7 +41630,7 @@ function QuizPlay({ quiz, isOwner, result, stats }) {
 			className: "max-w-2xl",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "text-2xl font-semibold",
+					className: "text-xl sm:text-2xl font-semibold",
 					children: t("quiz.title")
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -41658,14 +41650,14 @@ function QuizPlay({ quiz, isOwner, result, stats }) {
 			className: "mt-8 max-w-2xl",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "text-3xl font-semibold",
+					className: "text-2xl sm:text-3xl font-semibold",
 					children: t("quiz.score", {
 						score: String(result.score),
 						total: String(result.total)
 					})
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "mt-4 text-2xl tracking-widest",
+					className: "mt-4 text-xl sm:text-2xl tracking-widest",
 					"aria-label": result.grid,
 					children: result.grid
 				}),
@@ -41899,7 +41891,7 @@ function SelfDescribe({ person, options, canClaim, isGiver, canSignInToClaim, it
 			className: "max-w-2xl",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "text-2xl font-semibold",
+					className: "text-xl sm:text-2xl font-semibold",
 					children: t("recipients.self_title")
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -42128,7 +42120,7 @@ function SantaGroup({ group, isOrganiser, members, me }) {
 			className: "max-w-2xl",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "text-2xl font-semibold",
+					className: "text-xl sm:text-2xl font-semibold",
 					children: group.title
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
@@ -42258,7 +42250,7 @@ function SantaIndex({ groups, isSignedIn }) {
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 			className: "max-w-2xl",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "text-3xl font-semibold tracking-tight",
+				className: "text-2xl sm:text-3xl font-semibold tracking-tight",
 				children: t("santa.title")
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "mt-3 text-lg text-ink-soft",
@@ -42419,7 +42411,7 @@ function SantaJoin({ group, members, you }) {
 				children: t("santa.title")
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "mt-1 text-2xl font-semibold",
+				className: "mt-1 text-xl sm:text-2xl font-semibold",
 				children: group.title
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("dl", {
@@ -42564,7 +42556,7 @@ function SantaMe({ group, me }) {
 			className: "max-w-2xl",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-					className: "text-2xl font-semibold",
+					className: "text-xl sm:text-2xl font-semibold",
 					children: group.title
 				}),
 				!group.drawn ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -43272,7 +43264,7 @@ function SearchHelp({ urls }) {
 		className: "mx-auto max-w-4xl px-4 py-10",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
-				className: "text-3xl font-semibold tracking-tight text-ink",
+				className: "text-2xl sm:text-3xl font-semibold tracking-tight text-ink",
 				children: t("search_help.title")
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
@@ -64225,7 +64217,7 @@ function SiteLayout({ children }) {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AddingToBar, {}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", {
 				id: "main",
-				className: "mx-auto w-full max-w-6xl flex-1 px-4 py-10",
+				className: "mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-10",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FlashMessage, {}), children]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToast, {}),

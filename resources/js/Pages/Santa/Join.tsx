@@ -57,7 +57,7 @@ export default function SantaJoin({ group, members, you }: Props) {
 
             <div className="mx-auto max-w-xl">
                 <p className="text-xs tracking-wide text-ink-soft uppercase">{t('santa.title')}</p>
-                <h1 className="mt-1 text-2xl font-semibold">{group.title}</h1>
+                <h1 className="mt-1 text-xl sm:text-2xl font-semibold">{group.title}</h1>
 
                 <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink-soft">
                     {budget && (

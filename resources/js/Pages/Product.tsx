@@ -114,7 +114,7 @@ export default function Product({ product, offers, alert }: Props) {
 
                     {product.minPrice !== null && (
                         <div className="mt-5 flex flex-wrap items-baseline gap-3">
-                            <span className="text-3xl font-semibold">{formatPrice(product.minPrice, market)}</span>
+                            <span className="text-2xl sm:text-3xl font-semibold">{formatPrice(product.minPrice, market)}</span>
 
                             {product.discountPercent !== null && product.medianPrice && (
                                 <>

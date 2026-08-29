@@ -173,7 +173,7 @@ export default function SharedList({
             <header>
                 {/* Whose list it is, not what they filed it under. */}
                 <div className="flex flex-wrap items-center gap-2">
-                    <h1 className="text-2xl font-semibold">{list.heading}</h1>
+                    <h1 className="text-xl sm:text-2xl font-semibold">{list.heading}</h1>
                     {/*
                       What kind of page this is, on the one screen that is
                       always opened cold — from a message, by somebody with no
@@ -183,6 +183,18 @@ export default function SharedList({
                     */}
                     <ListKindBadge kind={list.kind as ListKind} />
                 </div>
+                {/* One caption line: what this is for, and when. */}
+                {occasion !== null && (
+                    <p className="mt-1 text-sm text-ink-soft">
+                        {occasion.date
+                            ? t('registry.occasion_on', {
+                                  occasion: occasion.name,
+                                  date: formatOccasionDate(occasion.date, market),
+                              })
+                            : occasion.name}
+                    </p>
+                )}
+
                 {list.description && <p className="mt-2 text-ink-soft">{list.description}</p>}
 
                 {/*
@@ -249,25 +261,34 @@ export default function SharedList({
                   shown in the anonymous case too, because "nobody will see it
                   was you" is the reassurance that makes people press at all.
                 */}
-                {canClaim && (
-                    <div className="mt-4 rounded-card border border-line bg-card p-4 text-sm">
-                        <p className="text-ink-soft">
-                            {claimNames ? t('lists.claim_named_note') : t('lists.claim_anonymous_note')}
-                        </p>
+                {/*
+                  What a claim discloses, said before the press — as one line,
+                  not a card.
 
-                        {claimNames && (
-                            <label className="mt-2 block text-xs font-medium">
-                                {t('pledges.your_name')}
-                                <input
-                                    required
-                                    maxLength={80}
-                                    value={claimName}
-                                    onChange={(e) => setClaimName(e.target.value)}
-                                    className="mt-1 w-full max-w-xs rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
-                                />
-                            </label>
-                        )}
-                    </div>
+                  It has to be read before somebody claims, so it stays above
+                  the items. It does not have to be a bordered box with a form
+                  in it: on a phone that was a third block of chrome between the
+                  heading and the first product, and the name field inside it
+                  was asking for something before anybody had decided to give
+                  it. The field appears with the first claim instead.
+                */}
+                {canClaim && (
+                    <p className="mt-2 text-sm text-ink-soft">
+                        {claimNames ? t('lists.claim_named_note') : t('lists.claim_anonymous_note')}
+                    </p>
+                )}
+
+                {canClaim && claimNames && (
+                    <label className="mt-3 block text-xs font-medium">
+                        {t('pledges.your_name')}
+                        <input
+                            required
+                            maxLength={80}
+                            value={claimName}
+                            onChange={(e) => setClaimName(e.target.value)}
+                            className="mt-1 w-full max-w-xs rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                        />
+                    </label>
                 )}
 
                 {/*
@@ -295,8 +316,14 @@ export default function SharedList({
                     </div>
                 )}
 
+                {/*
+                  Under the intro rather than in a block of its own: "what this
+                  page is" and "how much of it is already handled" are one
+                  thought, and two bordered cards for two sentences is how the
+                  first screen filled up with chrome.
+                */}
                 {progress !== null && progress.total > 0 && (
-                    <p className="mt-4 text-sm text-ink-soft">
+                    <p className="mt-2 text-sm text-ink-soft">
                         {t(
                             list.kind === 'mine' ? 'lists.progress' : 'lists.progress_gift',
                             {
@@ -308,33 +335,20 @@ export default function SharedList({
                 )}
 
                 {/*
-                  The occasion block.
+                  The occasion, and where to send it.
 
-                  The occasion and the date are why the list exists and are
-                  shown to everybody holding the link, on a list of any kind —
-                  "Wedding, 14 June" on my own, "Dad's birthday" on one about
-                  him. The address is not, and it is registry-only besides: it
-                  appears once you have claimed something, which is the promise
-                  `registry.address_hint` has made to the owner since the
-                  feature shipped and which nothing implemented until now.
+                  The date rides up next to the title as a single line — it is
+                  a caption for the page, not a section of it, and on a phone a
+                  bordered card for four words was a whole block of the first
+                  screen spent on "Birthday · 14 June".
 
-                  The locked state says the address is there rather than saying
-                  nothing — otherwise somebody who has claimed nothing concludes
-                  the owner forgot to add one.
+                  The address keeps its card, because it is the one thing here
+                  somebody has to read carefully and copy.
                 */}
-                {occasion !== null && (
+                {occasion !== null && (occasion.address !== null || occasion.locked) && (
                     <section className="mt-4 rounded-card border border-line bg-card p-4">
-                        <p className="text-sm font-medium">
-                            {occasion.date
-                                ? t('registry.occasion_on', {
-                                      occasion: occasion.name,
-                                      date: formatOccasionDate(occasion.date, market),
-                                  })
-                                : occasion.name}
-                        </p>
-
                         {occasion.address !== null && (
-                            <div className="mt-3">
+                            <>
                                 <p className="text-xs font-medium text-ink-soft">{t('registry.send_to')}</p>
                                 {/* An address, not a link. `pre-line` keeps the
                                     owner's line breaks and gives them nothing
@@ -342,11 +356,11 @@ export default function SharedList({
                                 <address className="mt-1 text-sm whitespace-pre-line not-italic">
                                     {occasion.address}
                                 </address>
-                            </div>
+                            </>
                         )}
 
                         {occasion.locked && (
-                            <p className="mt-3 text-xs text-ink-soft">{t('registry.address_locked')}</p>
+                            <p className="text-xs text-ink-soft">{t('registry.address_locked')}</p>
                         )}
                     </section>
                 )}

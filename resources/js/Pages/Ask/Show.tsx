@@ -100,7 +100,7 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
             </nav>
 
             <header className="mt-4 max-w-2xl">
-                <h1 className="text-2xl font-semibold tracking-tight">{question.title}</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{question.title}</h1>
 
                 {question.body && (
                     // Plain text, never markup: this is a stranger's writing on

@@ -61,7 +61,7 @@ export default function Notifications({ notifications, watching }: Props) {
         <>
             <Head title={t('notifications.title')} />
 
-            <h1 className="text-2xl font-semibold">{t('notifications.title')}</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold">{t('notifications.title')}</h1>
 
             <section className="mt-8">
                 <h2 className="text-sm font-medium text-ink-soft">{t('notifications.recent')}</h2>

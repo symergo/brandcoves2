@@ -24,7 +24,7 @@ export default function Login({ googleEnabled }: Props) {
             <Head title={t('auth.title')} />
 
             <div className="mx-auto max-w-md">
-                <h1 className="text-2xl font-semibold">{t('auth.title')}</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold">{t('auth.title')}</h1>
                 <p className="mt-2 text-ink-soft">{t('auth.intro')}</p>
 
                 {/*

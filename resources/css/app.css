@@ -138,3 +138,49 @@
         outline-offset: 2px;
     }
 }
+
+/*
+ * A field never renders below 16px on a phone.
+ *
+ * Safari on iOS zooms the whole page in when a focused field has a font
+ * smaller than 16px, and it does not zoom back out afterwards — so tapping a
+ * search box magnifies the layout, pushes it wider than the viewport, and
+ * leaves the reader scrolling sideways through a page that fitted a moment
+ * earlier. Reported as two separate complaints, "the screen zooms in" and
+ * "something overflows sideways"; they are one bug.
+ *
+ * Most text fields here are `text-sm`, which is 14px — chosen against a desktop
+ * viewport where it is a sensible size for a compact control, and one pixel
+ * class below the threshold that matters on the device most of these pages are
+ * read on.
+ *
+ * **Not `maximum-scale=1` on the viewport meta.** That is the other well-known
+ * fix and it works by taking pinch-zoom away from everybody, permanently, on
+ * every page — a real accessibility loss traded for a styling problem. The
+ * font size is the actual cause, so it is the thing to change.
+ *
+ * Unlayered on purpose: Tailwind's utilities live in a cascade layer, and an
+ * unlayered rule beats a layered one regardless of specificity. That is what
+ * lets this override `text-sm` on the element without every call site opting
+ * in — and without touching how the same fields look on a desktop, where the
+ * zoom does not happen and 14px is right. Same trick, and the same reason, as
+ * the reduced-motion rule above.
+ *
+ * Checkboxes, radios and ranges are excluded: they carry no text, so they
+ * never trigger the zoom, and giving them a font size only perturbs their
+ * intrinsic sizing.
+ */
+@media (width <= 40rem) {
+    input:not([type='checkbox'], [type='radio'], [type='range'], [type='color']),
+    select,
+    textarea {
+        font-size: 1rem;
+
+        /*
+         * 16px text in `py-2` is a 34px control, under the 44px a finger
+         * expects. The padding is not raised in the utility classes because it
+         * is right on a desktop; this floor applies only where the tap is.
+         */
+        min-height: 2.75rem;
+    }
+}

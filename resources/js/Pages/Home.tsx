@@ -249,7 +249,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
             */}
             <section className="mt-14" aria-labelledby="organise-heading">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 id="organise-heading" className="text-2xl font-semibold tracking-tight">
+                    <h2 id="organise-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
                         {t('nav.organise')}
                     </h2>
                     <Link
@@ -363,7 +363,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
             */}
             <section className="mt-14" aria-labelledby="discover-heading">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 id="discover-heading" className="text-2xl font-semibold tracking-tight">
+                    <h2 id="discover-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
                         {t('discover_cove.title')}
                     </h2>
                     <Link
@@ -514,7 +514,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
             {coves.length > 0 && (
                 <section className="mt-14" aria-labelledby="coves-heading">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight">
+                        <h2 id="coves-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
                             {t('home.coves_heading')}
                         </h2>
                         {/*

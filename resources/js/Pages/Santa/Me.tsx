@@ -54,7 +54,7 @@ export default function SantaMe({ group, me }: Props) {
             </Head>
 
             <header className="max-w-2xl">
-                <h1 className="text-2xl font-semibold">{group.title}</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
 
                 {!group.drawn ? (
                     <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm">

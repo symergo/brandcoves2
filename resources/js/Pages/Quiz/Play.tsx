@@ -50,7 +50,7 @@ export default function QuizPlay({ quiz, isOwner, result, stats }: Props) {
             </Head>
 
             <header className="max-w-2xl">
-                <h1 className="text-2xl font-semibold">{t('quiz.title')}</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold">{t('quiz.title')}</h1>
                 <p className="mt-2 text-ink-soft">
                     {/*
                       Name a person, or say nothing about a person. Falling back
@@ -76,14 +76,14 @@ export default function QuizPlay({ quiz, isOwner, result, stats }: Props) {
                 </p>
             ) : result ? (
                 <section className="mt-8 max-w-2xl">
-                    <p className="text-3xl font-semibold">
+                    <p className="text-2xl sm:text-3xl font-semibold">
                         {t('quiz.score', {
                             score: String(result.score),
                             total: String(result.total),
                         })}
                     </p>
 
-                    <p className="mt-4 text-2xl tracking-widest" aria-label={result.grid}>
+                    <p className="mt-4 text-xl sm:text-2xl tracking-widest" aria-label={result.grid}>
                         {result.grid}
                     </p>
 
