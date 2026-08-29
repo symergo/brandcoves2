@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Models\Wishlist;
+
 /**
  * What a list is *for*, which is what decides whether it can be claimed from.
  *
@@ -39,9 +41,33 @@ enum ListKind: string
      */
     case Group = 'group';
 
+    /**
+     * Does saying "I'll get this" mean anything on this kind of list?
+     *
+     * **Was `Mine` only, and that was the wrong half of a right idea.** The
+     * rule it enforced — never gate claiming on *visibility* — is still here
+     * and still load-bearing: that bug made every shared list claimable,
+     * including somebody's private research about their own mother. The
+     * conclusion drawn from it was too strong. Claiming is coordination, and
+     * co-giver coordination is precisely what a `for_someone` list is for; its
+     * own docblock says "help me choose or don't double up", and refusing to
+     * claim left that with no mechanism at all.
+     *
+     * What changes with it is who may *see* the claims, which inverts by kind
+     * and then by a per-list setting. See {@see ClaimVisibility}.
+     *
+     * `Group` stays false, and is the reason this is not simply "any shared
+     * list". A group list is **one** present bought by everybody, so there is
+     * nothing to divide up and nothing to stop anyone duplicating. Its
+     * mechanism is the pledge.
+     *
+     * Note this asks only about the *kind*. Whether there is anybody to
+     * coordinate with is {@see Wishlist::hasCoGivers()}, and
+     * `Wishlist::allowsClaiming()` is the two together.
+     */
     public function allowsClaiming(): bool
     {
-        return $this === self::Mine;
+        return $this === self::Mine || $this === self::ForSomeone;
     }
 
     /**
@@ -65,6 +91,32 @@ enum ListKind: string
      * Only a group list has a decision to make. A wish list is not a poll, and
      * a for_someone list is one person's research.
      */
+    /**
+     * Does an item from somebody holding the link go straight on the list?
+     *
+     * The alternative is the approval queue, and which one is right depends
+     * entirely on **who the owner is to the list**.
+     *
+     * On a `mine` list a contribution is a *message to somebody about their own
+     * wish list* — "I think you would like this". They decide what is on it,
+     * and the accept/dismiss row is the whole point.
+     *
+     * On the other two the owner is a co-giver or an organiser, and everybody
+     * on the list is working on research about a third person who never sees
+     * any of it. Making each addition wait for the owner turns a shared
+     * workspace into an inbox, and the person who has to empty it is the one
+     * who asked for help in the first place.
+     *
+     * Note this covers a **catalogue** product only. Something typed in by hand
+     * is free text from somebody holding a link that can be forwarded anywhere,
+     * and that stays pending on every kind of list — see
+     * `SuggestionController::store()`.
+     */
+    public function acceptsDirectAdditions(): bool
+    {
+        return $this !== self::Mine;
+    }
+
     public function allowsVoting(): bool
     {
         return $this === self::Group;
@@ -81,6 +133,45 @@ enum ListKind: string
      * no surprise to protect from the owner, and the organiser is exactly who
      * needs the breakdown, because they front the money and collect afterwards.
      */
+    /**
+     * Is the money attached to the list, or to one item on it?
+     *
+     * A group list is **one present**, so the pot belongs to the list and the
+     * shortlist under it is candidates for what to spend it on. Pledging
+     * against a candidate would ask people to bet on an outcome the group has
+     * not decided, and most of those pledges would end up attached to something
+     * nobody buys.
+     *
+     * A `mine` list is the opposite: several people chipping in for the one
+     * expensive thing on Anna's wishlist is a fact *about that thing*, and it
+     * has to stay per item.
+     *
+     * Deliberately separate from {@see ownerSeesContributions()}, which is the
+     * same set today. That one is about who may look at the money; this is
+     * about where the money is attached. Asking one when you mean the other
+     * works right up until they diverge, and then fails silently.
+     */
+    /**
+     * Does the owner see claims when they have never said either way?
+     *
+     * A wish list hides: its owner is the person being surprised, and that is
+     * what the list is for. A list about somebody else shows: the owner is a
+     * co-giver organising the buying, and the recipient never opens the page,
+     * so there is no surprise to protect from them.
+     *
+     * A **default**, not a rule. Since 2026-08-29 the owner may say otherwise
+     * either way, and `Wishlist::ownerSeesClaims()` prefers what they said.
+     */
+    public function ownerSeesClaimsByDefault(): bool
+    {
+        return $this === self::ForSomeone;
+    }
+
+    public function poolsOnTheList(): bool
+    {
+        return $this === self::Group;
+    }
+
     public function ownerSeesContributions(): bool
     {
         return $this === self::Group;

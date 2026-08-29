@@ -9,8 +9,8 @@ import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Facets {
-    brands: { value: string; count: number }[]
-    merchants: { id: number; name: string; count: number }[]
+    brands: { value: string }[]
+    merchants: { id: number; name: string }[]
     price: { min: number | null; max: number | null }
 }
 
@@ -106,6 +106,21 @@ export default function Search({
          * is what lets the same instance that raised the flag lower it.
          */
         router.get(base, next as Record<string, string>, {
+            /*
+             * `brand[]=HP`, not `brand[0]=HP`.
+             *
+             * PHP needs bracket syntax to parse a repeated parameter into an
+             * array, so the brackets themselves are not optional — and a
+             * browser shows them percent-encoded as %5B and %5D, which is what
+             * makes a filtered search URL look mangled when it is pasted
+             * somewhere. Inertia's default `indices` format adds an index into
+             * the bargain, so two filters read `brand%5B0%5D=HP&merchant%5B0%5D=4`
+             * where `brand%5B%5D=HP&merchant%5B%5D=4` says the same thing.
+             *
+             * `SearchQuery::fromRequest()` casts with `(array)` and reads both,
+             * so links already shared in the old shape keep working.
+             */
+            queryStringArrayFormat: 'brackets',
             preserveScroll: true,
             preserveState: true,
             onStart: () => setSearching(true),
@@ -268,7 +283,6 @@ export default function Search({
                             items={facets.brands.map((b) => ({
                                 key: b.value,
                                 label: b.value,
-                                count: b.count,
                                 active: ([] as string[]).concat((filters.brand as string[]) ?? []).includes(b.value),
                                 // The checkbox filters this page; the arrow goes
                                 // to the brand's own page. Two different
@@ -280,7 +294,6 @@ export default function Search({
                                 const current = ([] as string[]).concat((filters.brand as string[]) ?? [])
                                 go({ brand: active ? current.filter((b) => b !== key) : [...current, key] })
                             }}
-                            format={n}
                         />
                     )}
 
@@ -290,14 +303,12 @@ export default function Search({
                             items={facets.merchants.map((m) => ({
                                 key: String(m.id),
                                 label: m.name,
-                                count: m.count,
                                 active: ([] as string[]).concat((filters.merchant as string[]) ?? []).map(String).includes(String(m.id)),
                             }))}
                             onToggle={(key, active) => {
                                 const current = ([] as string[]).concat((filters.merchant as string[]) ?? []).map(String)
                                 go({ merchant: active ? current.filter((m) => m !== key) : [...current, key] })
                             }}
-                            format={n}
                         />
                     )}
 
@@ -357,8 +368,18 @@ export default function Search({
 
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                         <p className="text-sm text-ink-soft" aria-live="polite">
+                            {/*
+                              No total.
+
+                              "1,284 results" answers a question nobody asked:
+                              it describes our catalogue rather than the thing
+                              the visitor is looking for, and a big number next
+                              to a search that missed reads as a boast. The
+                              count is still computed — pagination needs it, and
+                              the empty state below branches on it — it is just
+                              not something to say out loud.
+                            */}
                             {q ? t('search.results_for', { term: q }) : t('search.browse')}
-                            {results.total > 0 && ` · ${t('search.count', { count: n(results.total) })}`}
                         </p>
 
                         <div className="ml-auto flex items-center gap-2">
@@ -555,12 +576,10 @@ function Facet({
     title,
     items,
     onToggle,
-    format,
 }: {
     title: string
-    items: { key: string; label: string; count: number; active: boolean; href?: string | null }[]
+    items: { key: string; label: string; active: boolean; href?: string | null }[]
     onToggle: (key: string, active: boolean) => void
-    format: (n: number) => string
 }) {
     return (
         <div>
@@ -576,7 +595,6 @@ function Facet({
                                 className="accent-accent"
                             />
                             <span className="flex-1 truncate">{item.label}</span>
-                            <span className="text-xs text-ink-soft">{format(item.count)}</span>
                         </label>
                         {item.href && (
                             <Link

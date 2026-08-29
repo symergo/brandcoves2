@@ -25,10 +25,18 @@ use Tests\TestCase;
  * here — with no HTTP, no database and no session in the way — is what makes
  * the intent legible rather than accidental.
  *
- * | viewer | `mine` | `group` |
+ * | viewer | `mine`, per item | `group`, the pot |
  * |---|---|---|
  * | owner | nothing at all | total, share, count, breakdown |
  * | anyone else | total, share, count | total, share, count |
+ *
+ * **Two methods, because they are two facts.** `forItems()` answers "how much
+ * towards this one thing on Anna's list"; `forList()` answers "how much towards
+ * the present". A group list is one present with a shortlist of candidates
+ * under it, so money pledged against a candidate would be a bet on an outcome
+ * nobody has chosen — and most of those bets would end up attached to something
+ * nobody buys. The privacy rule is identical either way; only what it is about
+ * changes.
  */
 class ContributionViewTest extends TestCase
 {
@@ -63,6 +71,28 @@ class ContributionViewTest extends TestCase
         )));
 
         return $item;
+    }
+
+    /**
+     * A list with money against the list itself, rather than against an item.
+     *
+     * @param  array<int, array{0: string, 1: int, 2: int|null}>  $pledges
+     */
+    private function listWithPot(ListKind $kind, array $pledges): Wishlist
+    {
+        $list = $this->listOfKind($kind);
+
+        $list->setRelation('pledges', new Collection(array_map(
+            fn (array $p) => new GiftPledge([
+                'display_name' => $p[0],
+                'amount' => $p[1],
+                'user_id' => $p[2],
+                'anon_id' => null,
+            ]),
+            $pledges,
+        )));
+
+        return $list;
     }
 
     private function listOfKind(ListKind $kind): Wishlist
@@ -117,33 +147,60 @@ class ContributionViewTest extends TestCase
     {
         // The inversion: the recipient of a group list is a third party who
         // never opens it, so there is no surprise to protect from its owner.
-        $out = $this->service()->forItems(
-            $this->listOfKind(ListKind::Group),
-            new Collection([$this->item([['Bob', 2500, 2], ['Cara', 4000, 3]])]),
+        $out = $this->service()->forList(
+            $this->listWithPot(ListKind::Group, [['Bob', 2500, 2], ['Cara', 4000, 3]]),
             $this->owner(1),
             isOwner: true,
         );
 
-        $this->assertSame(6500, $out[1]['total']);
+        $this->assertSame(6500, $out['total']);
         $this->assertSame(
             [['name' => 'Cara', 'amount' => 4000], ['name' => 'Bob', 'amount' => 2500]],
-            $out[1]['breakdown'],
+            $out['breakdown'],
         );
+    }
+
+    #[Test]
+    public function a_group_list_pools_on_the_list_and_never_on_an_item(): void
+    {
+        /*
+         * The other half of the same decision, and the one that would go wrong
+         * quietly. If `forItems()` still answered for a group list, the page
+         * would offer two ways to put money in — a pot in the header and a form
+         * under every candidate — and show two different totals, each of them
+         * true about something.
+         */
+        $this->assertSame([], $this->service()->forItems(
+            $this->listOfKind(ListKind::Group),
+            new Collection([$this->item([['Bob', 2500, 2]])]),
+            $this->owner(1),
+            isOwner: true,
+        ));
+
+        // And a wish list is the mirror: per item, never a pot.
+        $this->assertNull($this->service()->forList(
+            $this->listWithPot(ListKind::Mine, [['Bob', 2500, 2]]),
+            $this->owner(2),
+            isOwner: false,
+        ));
     }
 
     #[Test]
     public function a_member_of_a_group_list_does_not_get_the_breakdown(): void
     {
-        $out = $this->service()->forItems(
-            $this->listOfKind(ListKind::Group),
-            new Collection([$this->item([['Bob', 2500, 2], ['Cara', 4000, 3]])]),
+        $out = $this->service()->forList(
+            $this->listWithPot(ListKind::Group, [['Bob', 2500, 2], ['Cara', 4000, 3]]),
             $this->owner(2),
             isOwner: false,
         );
 
-        $this->assertSame(6500, $out[1]['total']);
-        $this->assertSame(2500, $out[1]['mine']);
-        $this->assertArrayNotHasKey('breakdown', $out[1]);
+        $this->assertSame(6500, $out['total']);
+        $this->assertSame(2500, $out['mine']);
+
+        // Absent, not empty. A visible ladder of who put in what is social
+        // pressure on whoever put in least, so members get the total and their
+        // own share and nothing else.
+        $this->assertArrayNotHasKey('breakdown', $out);
     }
 
     #[Test]

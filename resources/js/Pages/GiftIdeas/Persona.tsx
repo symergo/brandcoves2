@@ -50,7 +50,7 @@ interface Props {
  * there, and the invitation at the end is to the next persona rather than to
  * tomorrow.
  *
- * Reactions are absent for the same reason. 🤯 / 😐 on a Daily is a signal
+ * Reactions are absent for the same reason. 👍 / 👎 on a Daily is a signal
  * about a find on the day it appeared; on a page that stands for a year it
  * would accumulate into a rating nobody meant to give.
  */

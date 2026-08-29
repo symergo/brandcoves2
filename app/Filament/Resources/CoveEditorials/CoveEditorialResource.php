@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\CoveEditorials;
 
 use App\Enums\CoveKind;
-use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Filament\Resources\CoveEditorials\Pages\EditCoveEditorial;
 use App\Filament\Resources\CoveEditorials\Pages\ListCoveEditorials;
@@ -227,8 +226,8 @@ class CoveEditorialResource extends Resource
             ->filters([
                 SelectFilter::make('kind')->options(collect(CoveKind::cases())
                     ->mapWithKeys(fn (CoveKind $k) => [$k->value => $k->label()])->all()),
-                SelectFilter::make('market')->options(collect(Market::cases())
-                    ->mapWithKeys(fn (Market $m) => [$m->value => $m->label()])->all()),
+                // No market filter: the market tab strip on the list page is
+                // that control, and two controls on one axis can disagree.
                 SelectFilter::make('status')->options(collect(PublishStatus::cases())
                     ->mapWithKeys(fn ($c) => [$c->value => $c->value])->all()),
             ])

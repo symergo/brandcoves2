@@ -11,7 +11,6 @@ return [
         'submenu' => 'Wat zit er in :section',
         'gift' => 'Cadeauzoeker',
         'daily' => 'Cove van de dag',
-        'coves' => 'Idee Cove',
         'guides' => 'Koopgidsen',
         'surprise' => 'Verrassingscove',
         'scan' => 'Scannen',
@@ -32,6 +31,29 @@ return [
             'int' => 'Internationaal',
             'es' => 'Spanje',
         ],
+        /*
+         * De Cove-soorten, zoals het Ontdek-menu ze toont. Drie vormen van
+         * hetzelfde: een editie die elke ochtend verandert, een plank rond een
+         * persoon, en een lang verhaal rond een onderwerp.
+         *
+         * Het bijvoeglijk naamwoord vertaalt, de naam niet — zie
+         * localisation.md.
+         */
+        'inspiration_coves' => 'Inspiratie Coves',
+        'gift_coves' => 'Cadeau Coves',
+        'all_coves' => 'Alle Coves',
+        'brand_coves' => 'Merk Coves',
+        'shop_coves' => 'Winkel Coves',
+
+        'hint_daily' => 'Elke ochtend nieuw',
+        'hint_surprise' => 'Iets zeldzaams, niet iets populairs',
+        'hint_inspiration_coves' => 'Shopping-inspiratie en koopgidsen',
+        'hint_gift_coves' => 'Ideeën rond één persoon',
+        'hint_all_coves' => 'Alles wat we gepubliceerd hebben',
+        'hint_brand_coves' => 'Elk merk met een eigen pagina',
+        'hint_shop_coves' => 'De winkels die we vergelijken, en wie er nieuw is',
+        'hint_ask' => 'Laat anderen iets voorstellen',
+
         'santa' => 'Geheime Vriend',
 
         // Namen, geen woorden: de Coves heten in elke taal hetzelfde, net als
@@ -60,8 +82,8 @@ return [
         'coves_volume' => ':count zoekopdrachten per maand',
         'organise_intro' => 'Eén plek voor wat jij wilt, wat je voor anderen zoekt, en wat jullie samen kopen.',
         'organise_group_hint' => 'Eén cadeau, meerdere mensen, en niemand hoeft achter het geld aan.',
-        'organise_registry' => 'Cadeaulijst',
-        'organise_registry_hint' => 'Een verlanglijst met een gelegenheid en een datum erop, voor een bruiloft, een baby of een nieuw huis.',
+        'organise_occasion' => 'Gelegenheid',
+        'organise_occasion_hint' => 'Zet een datum op een lijst — een verjaardag, een huwelijk, Kerst — en iedereen met de link weet waarvoor hij is.',
         'organise_registry_on' => ':occasion op :date',
         'gifting_heading' => 'Iets kopen voor iemand anders',
         'gifting_intro' => 'Beschrijf ze, dan doen wij suggesties. Of laat ze het zelf vertellen, en zie nooit wie wat heeft gekocht.',
@@ -85,7 +107,6 @@ return [
         'submit' => 'Zoeken',
         'searching' => 'Bezig met zoeken…',
         'results_for' => 'Resultaten voor ":term"',
-        'count' => ':count producten',
         'browse' => 'Blader door de catalogus',
         'empty' => 'Niets gevonden voor ":term".',
         'empty_hint' => 'Probeer een kortere zoekterm, of controleer de spelling.',
@@ -110,7 +131,7 @@ return [
         'previous' => 'Vorige',
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',
-        'seo_term' => 'Vergelijk :count producten voor :term op bol, Amazon en honderden winkels. Vind in seconden het goedkoopste aanbod.',
+        'seo_term' => 'Vergelijk producten voor :term op bol, Amazon en honderden winkels. Vind in seconden het goedkoopste aanbod.',
 
         /*
          * De woordenschat van de resultaten, boven het raster. Verving vier
@@ -129,13 +150,12 @@ return [
     'brand' => [
         'title' => ':brand',
         'heading' => ':brand',
-        'seo_description' => 'Vergelijk :count :brand-producten bij alle winkels die we volgen en vind de goedkoopste aanbieding.',
+        'seo_description' => 'Vergelijk :brand-producten bij alle winkels die we volgen en vind de goedkoopste aanbieding.',
         'crumb' => 'Merken',
         'index_title' => 'Merken',
         'index_seo_title' => 'Alle merken, prijzen vergeleken bij elke winkel',
         'index_seo_description' => 'Elk merk in de catalogus, met actuele prijzen vergeleken bij bol, Amazon en honderden winkels die het verkopen.',
         'index_intro' => 'Alle merken in de catalogus, met actuele prijzen vergeleken tussen de winkels die ze verkopen.',
-        'index_count' => ':count producten',
         'all_brands' => 'Alle merken',
         'products_heading' => 'Producten van :brand',
         'coves_heading' => 'Coves waarin :brand voorkomt',
@@ -176,7 +196,7 @@ return [
         'choosing_3' => 'Merken in deze resultaten zijn onder meer :brands. Elk merk heeft een eigen pagina met alles wat we ervan voeren, met dezelfde vergelijking tussen winkels.',
 
         'faq_price_q' => 'Wat kost :term?',
-        'faq_price_a' => 'Op deze pagina loopt :term van :low tot :high. Dat bereik omvat :count producten bij de winkels die we volgen, dus de onderkant en de bovenkant zijn meestal verschillende soorten producten en niet hetzelfde product tegen twee prijzen.',
+        'faq_price_a' => 'Op deze pagina loopt :term van :low tot :high. De onderkant en de bovenkant zijn meestal verschillende soorten producten en niet hetzelfde product tegen twee prijzen.',
         'faq_where_q' => 'Waar kan ik :term kopen?',
         'faq_where_a' => 'Bij de winkels die op elke kaart staan. Deze pagina bundelt :shops winkelaanbiedingen over de getoonde producten. Wij zijn een ontdekkingssite, geen winkel: elke link gaat naar de winkel die de aanbieding doet, en je koopt bij hen onder hun voorwaarden.',
         'faq_fresh_q' => 'Hoe actueel zijn deze prijzen voor :term?',
@@ -198,7 +218,7 @@ return [
         'choosing_3' => 'Elke productpagina heeft de volledige aanbiedingstabel en 90 dagen prijsgeschiedenis, zodat je ziet of vandaag een echt goed moment is om een bepaald product van :brand te kopen of gewoon een doordeweeks moment.',
 
         'faq_price_q' => 'Wat kosten :brand-producten?',
-        'faq_price_a' => ':brand-producten lopen op deze pagina van :low tot :high, over :count producten bij de winkels die we volgen. De onderkant en de bovenkant zijn meestal verschillende producten, niet hetzelfde product tegen twee prijzen.',
+        'faq_price_a' => ':brand-producten lopen op deze pagina van :low tot :high. De onderkant en de bovenkant zijn meestal verschillende producten, niet hetzelfde product tegen twee prijzen.',
         'faq_where_q' => 'Welke winkels verkopen :brand?',
         'faq_where_a' => 'De winkels die op elke kaart staan. Deze pagina bundelt :shops winkelaanbiedingen over de getoonde :brand-producten. Wij tonen en verkopen niet: elke link gaat naar de winkel die de aanbieding doet.',
         'faq_discount_q' => 'Is :brand nu in de aanbieding?',
@@ -245,7 +265,44 @@ return [
         'intro' => 'Drie manieren om iets te vinden waar je niet naar zocht. Eén verandert elke dag, één is met opzet onvoorspelbaar, en één is om rustig te lezen.',
         'daily_what' => 'Elke dag een nieuwe editie: een thema, een handvol vondsten en een prijsraadsel. Elke oude editie houdt zijn eigen pagina.',
         'surprise_what' => 'Iets waarvan je niet wist dat het bestond, gekozen op hoe zeldzaam het is en niet op hoe goed het verkoopt.',
-        'idea_what' => 'Lange verhalen rond één thema, met elk merk en product meteen doorgelinkt naar een live zoekopdracht.',
+        'idea_what' => 'Shopping-inspiratie en koopgidsen rond één onderwerp, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
+    ],
+
+    'shops' => [
+        'seo_title' => 'De webshops waarover we prijzen vergelijken',
+        'seo_description' => 'Elke winkel waarvan we hier de prijzen vergelijken, met de nieuwste eruit gelicht. Geen totalen, gewoon de lijst.',
+        'title' => 'Winkel Coves',
+        'intro' => 'Bij elk aanbod op deze site staat de winkel erbij. Dit zijn die winkels — de winkels waarover we in deze regio prijzen vergelijken.',
+        'empty' => 'Nog geen winkels aangesloten voor deze regio.',
+        'coves_heading' => 'Geschreven over deze winkels',
+        'coves_what' => 'Hoe het is om bij een winkel te kopen — de helft van de beslissing waar een prijs niets over zegt.',
+        'new_heading' => 'Nieuw hier',
+        'new_what' => 'Afgelopen maand aangesloten. Ze staan hieronder ook in de lijst — dit is een uitlichting, geen filter.',
+        'new_badge' => 'Nieuw',
+        'all_heading' => 'Alle winkels',
+    ],
+
+    'coves' => [
+        'seo_title' => 'Alle Coves: dagelijkse edities, cadeau-ideeën per persoon en lange verhalen',
+        'seo_description' => 'De hele plank. Elke ochtend een nieuwe editie, cadeau-ideeën rond één persoon, en lange verhalen rond één onderwerp met live vergeleken prijzen.',
+        'title' => 'Alle Coves',
+        'intro' => 'Alles wat we hier geschreven hebben, op vorm gesorteerd. De ene komt elke ochtend, de andere is rond een persoon gebouwd, de derde rond een onderwerp.',
+        'empty' => 'Nog niets gepubliceerd in deze regio. De eerste Coves komen eraan.',
+        'daily_heading' => 'Cove van de dag',
+        'daily_what' => 'Elke ochtend één editie: een thema, een handvol vondsten en een prijspuzzel. Elke oude editie houdt zijn eigen pagina.',
+        'daily_all' => 'Lees de editie van vandaag',
+        'gift_heading' => 'Cadeau Coves',
+        'gift_what' => 'Gebouwd rond een persoon in plaats van een datum — de kruidenvrouw, de vader die alles al heeft, de vriend die leest.',
+        'gift_all' => 'Alle Cadeau Coves',
+        'inspiration_heading' => 'Inspiratie Coves',
+        'inspiration_what' => 'Shopping-inspiratie en koopgidsen: lange verhalen rond één onderwerp, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
+        'inspiration_all' => 'Alle Inspiratie Coves',
+        'brand_heading' => 'Merk Coves',
+        'brand_what' => 'Eén pagina per merk: alles van hen dat we hier voeren, met per product de prijs van elke winkel.',
+        'brand_all' => 'Alle Merk Coves',
+        'shop_heading' => 'Winkel Coves',
+        'shop_what' => 'De webshops waarover we in deze regio prijzen vergelijken, nieuwste eerst.',
+        'shop_all' => 'Alle Winkel Coves',
     ],
 
     'cove' => [
@@ -260,6 +317,10 @@ return [
         'unsubscribed' => 'Je bent uitgeschreven. Geen harde gevoelens.',
     ],
     'suggestions' => [
+        'added' => 'Toegevoegd aan de lijst.',
+        'add_invite' => 'Voeg iets toe aan deze lijst',
+        'add_invite_hint' => 'Wat je toevoegt komt er meteen op te staan, zodat iedereen het ziet en kan reserveren.',
+        'add_action' => 'Aan de lijst toevoegen',
         'heading' => 'Voorgesteld voor jou',
         'hint' => 'Er komt niets op je lijst tot jij het accepteert.',
         'from' => 'Van :name',
@@ -282,10 +343,10 @@ return [
     ],
 
     'registry' => [
-        'heading' => 'Maak hier een geschenkenlijst van',
-        'hint' => 'Voeg een gelegenheid en een datum toe, en een adres als mensen je iets moeten opsturen.',
+        'heading' => 'Koppel er een speciale gelegenheid aan',
+        'hint' => 'Zeg waarvoor deze lijst is, en wanneer. Iedereen met wie je de link deelt, ziet het.',
         'occasion' => 'Gelegenheid',
-        'none' => 'Geen geschenkenlijst',
+        'none' => 'Geen gelegenheid',
         'date' => 'Datum',
         'address' => 'Bezorgadres',
         'address_hint' => 'Versleuteld opgeslagen, en alleen zichtbaar voor wie iets geclaimd heeft.',
@@ -293,18 +354,27 @@ return [
         'address_locked' => 'Claim iets en het bezorgadres verschijnt hier.',
         'occasion_on' => ':occasion op :date',
         'types' => [
+            'birthday' => 'Verjaardag',
+            'christmas' => 'Kerst',
             'wedding' => 'Huwelijk',
+            'anniversary' => 'Jubileum',
             'baby' => 'Geboorte',
             'housewarming' => 'Nieuwe woning',
-            'birthday' => 'Verjaardag',
+            'graduation' => 'Diploma',
+            'retirement' => 'Pensioen',
+            'farewell' => 'Afscheid',
+            'valentines' => 'Valentijn',
+            'mothers_day' => 'Moederdag',
+            'fathers_day' => 'Vaderdag',
+            'thank_you' => 'Bedankje',
             'other' => 'Iets anders',
         ],
-        'badge' => 'Geschenkenlijst',
+        'badge' => 'Speciale gelegenheid',
     ],
 
     'handover' => [
         'heading' => 'Geef deze lijst door',
-        'hint' => 'Geef de lijst aan :name. Het wordt hun eigen wenslijst, die ze kunnen delen en waaruit gekocht kan worden.',
+        'hint' => 'Geef de lijst aan :name. Het wordt hun eigen wenslijst, die ze met anderen kunnen delen.',
         'action' => 'Geef hem door',
         'confirm' => 'Deze lijst aan :name geven? Hij is dan niet meer van jou.',
         'done' => 'Doorgegeven aan :name.',
@@ -313,6 +383,15 @@ return [
         'not_linked' => 'Ze moeten eerst hun link claimen, zodat er een account is om aan te geven.',
         'no_account' => 'Er is nog geen account met dat e-mailadres. Stuur ze eerst de link om hun voorkeuren in te vullen.',
         'badge' => 'Doorgeven',
+    ],
+
+    'votes' => [
+        'vote' => 'Stem hierop',
+        'voted' => 'Gestemd',
+        'none' => 'Nog geen stemmen',
+        'count' => ':count stemmen',
+        'one' => 'Een stem',
+        'heading' => 'Stem op wat we moeten kopen',
     ],
 
     'pledges' => [
@@ -388,8 +467,12 @@ return [
 
     'lists' => [
         'title' => 'Mijn lijstjes',
-        'subtitle' => 'Wat je bewaart, voor jezelf en voor anderen.',
-        'shared_subtitle' => 'Lijsten die anderen met jou gedeeld hebben.',
+        'subtitle' => 'Alles wat jij bewaart, en alles wat anderen met jou gedeeld hebben.',
+        'shared_subtitle' => 'Lijsten die anderen met je gedeeld hebben. Zo koop je iets voor hen.',
+        'shared_empty' => 'Nog niemand heeft een lijst met je gedeeld. Zodra dat gebeurt, staat hij hier — met wat ze graag willen.',
+        'shop_for' => 'Reserveer iets voor :name',
+        'shared_with_me' => 'Met mij gedeeld',
+        'owned_by' => 'Van :name',
         'group_subtitle' => 'Eén cadeau, samen gekozen. Iedereen stemt, en wat je inlegt blijft tussen jou en de organisator.',
         'default_title' => 'Mijn wenslijst',
         'default_badge' => 'Standaard',
@@ -435,6 +518,15 @@ return [
         'empty' => 'Nog niets bewaard.',
         'empty_hint' => 'Zoek een product en druk op Bewaren.',
         'empty_list' => 'Dit lijstje is leeg.',
+        'empty_mine_step1' => 'Voeg dingen toe die je graag wilt. De bladwijzer op elk product zet het hier neer.',
+        'empty_mine_step2' => 'Klik op Delen wanneer je zover bent. Niet eerder — tot dan is hij van jou alleen.',
+        'empty_mine_step3' => 'Anderen geven aan wat zij kopen, of je stuurt de lijst als quiz.',
+        'empty_for_someone_step1' => 'Voeg ideeën toe wanneer je ze tegenkomt. Niemand anders ziet dit nog.',
+        'empty_for_someone_step2' => 'Helpen anderen mee? Klik op Delen en voeg ze toe met hun e-mailadres.',
+        'empty_for_someone_step3' => 'Iedereen geeft aan wat hij koopt, zodat niemand hetzelfde koopt.',
+        'empty_group_step1' => 'Voeg een paar kandidaten toe. Jullie kiezen er samen een uit.',
+        'empty_group_step2' => 'Klik op Delen en nodig de anderen uit.',
+        'empty_group_step3' => 'Zij stemmen op wat het wordt en zeggen wat ze kunnen bijdragen.',
         'items' => ':count items',
         'one_item' => '1 item',
         'added' => 'Bewaard in je lijstje.',
@@ -450,6 +542,7 @@ return [
         'share' => 'Delen',
         'sharing_off' => 'Alleen jij ziet dit lijstje.',
         'sharing_on' => 'Iedereen met de link kan dit lijstje zien.',
+        'share_hint' => 'Deze lijst is privé. Deel hem en iedereen met de link kan hem zien.',
         'enable_sharing' => 'Maak een deellink',
         'disable_sharing' => 'Stop met delen',
         'copy_link' => 'Link kopiëren',
@@ -462,7 +555,6 @@ return [
         'already_claimed' => 'Iemand anders was je net voor.',
         'cannot_unclaim' => 'Je kunt alleen je eigen keuze terugdraaien, en alleen binnen een dag.',
         'shared_intro' => 'Tik op een item om aan te geven dat jij het koopt. :name ziet niet wie wat koopt.',
-        'owner_view_note' => 'Dit is je eigen lijstje, dus je ziet niet wat er gekocht is, dat is de bedoeling.',
         'recipient_added' => 'Persoon toegevoegd.',
         'recipient_removed' => 'Persoon verwijderd.',
         'add_person' => 'Iemand toevoegen',
@@ -482,7 +574,7 @@ return [
         'not_claimable' => 'Dit is een voorselectie, geen verlanglijst, dus hier valt niets te claimen.',
         'asked_for' => 'Wat :name heeft gevraagd',
         'asked_none' => ':name heeft nog niets op een lijstje gezet.',
-        'my_finds' => 'Wat ik heb gevonden',
+        'my_finds' => 'De lijst',
         'collaborator_invited' => 'Als ze een account hebben, zien ze dit lijstje nu.',
         'collaborator_removed' => 'Verwijderd.',
         'collaborators' => 'Mensen',
@@ -497,10 +589,49 @@ return [
         'unfollow' => 'Ontvolgen',
         'followed' => 'Je volgt ze nu.',
         'shared_intro_anon' => 'Tik op iets om aan te geven dat jij het koopt. Wie dit lijstje maakte, ziet niet wie wat geclaimd heeft.',
+        'shared_intro_gift' => 'Jullie kopen met meerdere mensen iets voor deze persoon. Geef aan wat jij koopt, dan koopt niemand hetzelfde.',
+        'shared_intro_group' => 'Jullie kopen samen één cadeau. Stem op wat het wordt en zeg wat je kunt bijdragen.',
+        'progress_gift' => ':claimed van :total al bezet',
+        /*
+         * What kind of list this is, and what that means you can do with it.
+         *
+         * The badge names the kind and never changes. The sentence reads the
+         * kind AND whether anybody else is on the list: most lists are private,
+         * and a private list offers none of the mechanisms — so it says what
+         * the list is now, then what sharing would do. That second half is the
+         * only place these features are ever taught.
+         *
+         * See resources/js/Components/ListKindBadge.tsx.
+         */
+        'claimed_by' => ':name koopt dit',
+        'claim_anonymous_note' => 'Niemand ziet dat jij het was — ook niet degene die deze lijst beheert.',
+        'claim_named_note' => 'Je naam is zichtbaar voor de anderen op deze lijst, zodat ze weten wie wat koopt.',
+        'claim_privacy' => 'Wie ziet wie wat gereserveerd heeft?',
+        'claim_mine_show_hint_gift' => 'Standaard aan: deze lijst gaat over iemand anders, dus zien wat al gedekt is, is nu juist de bedoeling.',
+        'claim_mine_show_hint_mine' => 'Standaard uit: een verlanglijst werkt juist doordat je niet weet wat eraan komt. Zet het aan als je het liever wel ziet.',
+        'claim_mine_show' => 'Laat mij zien wat er gereserveerd is',
+        'claim_mine' => 'Wat jij ziet',
+        'claim_privacy_anonymous' => 'Niemand ziet namen',
+        'claim_privacy_anonymous_hint' => 'Mensen zien dat iets bezet is, nooit door wie.',
+        'claim_privacy_named' => 'Iedereen ziet namen',
+        'claim_privacy_named_hint' => 'Ze zien wie wat koopt. Handig als jullie elkaar kennen, zoals broers en zussen die voor een ouder kopen.',
+        'kind_mine' => 'Verlanglijst',
+        'kind_for_someone' => 'Cadeaulijst',
+        'kind_group' => 'Groepscadeau',
+        'about_mine_private' => 'Dingen die je bewaart. Alleen jij ziet dit — deel het en anderen kunnen iets reserveren, zonder dat jij ooit ziet wat.',
+        'about_mine_shared' => 'Anderen kunnen hiervan iets reserveren. Jij ziet nooit wat.',
+        'about_for_someone_private' => 'Een lijst over hen, en alleen jij ziet hem. Deel hem als jullie met meerdere mensen kopen.',
+        'about_for_someone_shared' => 'Jullie kopen ieder iets anders. Reserveer er een, dan koopt niemand hetzelfde.',
+        'about_group_private' => 'Er kan nog niemand meedoen. Klik op Mensen om ze uit te nodigen.',
+        'about_group_shared' => 'Jullie kopen samen één cadeau. Stem erop en zeg wat je kunt bijdragen.',
+        'quiz_unlocks' => 'Deel hem en je kunt er een quiz van maken: vier producten, één echt van jou. Kijk wie je het best kent.',
+        'new_mine_body' => 'Dingen die je graag wilt. Hou hem voor jezelf, of deel hem en laat anderen iets reserveren.',
+        'new_for_someone_body' => 'Een lijst over hen. Hou hem voor jezelf, of deel hem en verdeel het kopen.',
+        'new_group_body' => 'Met meerdere mensen één cadeau kopen en delen. Iedereen stemt en draagt bij.',
+
         'for_me' => 'Voor mezelf',
         'for_someone_else' => 'Voor iemand anders',
         'for_group' => 'Samen, voor iemand',
-        'for_group_hint' => 'Met een paar mensen een cadeau kiezen. Iedereen kan een deel inleggen, en alleen jij ziet wie wat inlegt.',
         'group_gift' => 'Samen cadeau',
         'start_group_gift' => 'Samen een cadeau kopen',
         'for_person' => 'Voor :name',
@@ -512,6 +643,7 @@ return [
         'share_instagram' => 'Instagram kan geen links uit een browser aannemen — kopieer hem en plak hem daar.',
         'shared_badge' => 'Gedeeld — iedereen met de link ziet het',
         'private_badge' => 'Alleen voor jou',
+        'owner_view_note' => 'Dit is je eigen lijstje, dus je ziet niet wat er gekocht is, dat is de bedoeling.',
     ],
 
     'recipients' => [
@@ -520,16 +652,20 @@ return [
         'saved' => 'Opgeslagen. Ze zien het de volgende keer.',
         'linked' => 'Dit ben jij nu.',
         'claim_this_is_me' => 'Dit ben ik',
+        'claim_is_you' => 'Dit is de link die jij hun stuurt. Jij hebt deze lijst gemaakt, dus hij kan niet van jou zijn — zij klikken aan hun kant op "dit ben ik".',
+        'claim_sign_in' => 'Meld je aan om te zeggen dat jij dit bent. Dan wordt dit je eigen lijst, die je met iedereen kunt delen.',
         'claim_hint' => 'Koppel dit aan je account, dan verschijnen je eigen lijstjes wanneer ze voor je zoeken.',
         'my_list' => 'Wat :name leuk zou vinden',
         'about_you' => 'Over jou',
+        'step_interests' => 'Waar hou je van?',
+        'step_vibe' => 'Hoe mag het voelen?',
+        'step_values' => 'Waar hecht je waarde aan?',
         'your_list' => 'Dingen die je leuk zou vinden',
         'add_something' => 'Iets toevoegen',
         'search_placeholder' => 'Zoek iets dat je wilt',
         'suggest' => 'Laat me ideeen zien',
         'suggest_hint' => 'Geen idee? Beantwoord de vragen hierboven, dan doen wij suggesties.',
         'nothing_yet' => 'Nog niets. Voeg het eerste toe.',
-        'privacy_note' => 'Je ziet nooit wie wat koopt. Dat is precies de bedoeling.',
         'ask_them' => 'Vraag het ze zelf',
         'ask_them_hint' => 'Stuur deze link. Zij vullen hun eigen voorkeuren in en zien nooit wat jij hebt uitgekozen.',
     ],
@@ -631,11 +767,15 @@ return [
         'items_count' => ':count dingen bewaard',
         'open_list' => 'Open mijn wenslijst',
         'start_list' => 'Begin mijn wenslijst',
+        'my_wishlists' => 'Mijn wenslijsten',
+        'another_list' => 'Nog een wenslijst',
+        'lists_count' => ':count wenslijsten',
         'privacy' => 'Een regel loopt overal doorheen: degene voor wie een lijst is, komt nooit te weten wat er geclaimd is. Niet wie, niet hoeveel, en niet dat er iets is.',
 
         'manual' => 'Hoe alles werkt',
         'manual_link' => 'Hoe alles werkt',
         'manual_intro' => 'Negen hulpmiddelen, met de stappen erbij. Elke knop die hieronder genoemd wordt, staat op de pagina waar je terechtkomt.',
+        'manual_back' => 'Terug naar de Cadeau Cove',
 
         'wishlist_title' => 'Mijn wenslijst',
         'wishlist_body' => 'Dingen die je echt leuk zou vinden. Deel hem en mensen kunnen aangeven wat zij kopen, zonder dat jij ooit ziet wie wat nam.',
@@ -647,13 +787,13 @@ return [
         'giftlist_body' => 'Een plek om ideeen te verzamelen voor een persoon. Prive voor jou, en nooit claimbaar, want het is voorwerk en geen verlanglijst.',
         'giftlist_step1' => 'Druk op Nieuw lijstje, kies "Voor iemand anders" en geef de persoon een naam. Deze kaart opent dat formulier meteen op die stand.',
         'giftlist_step2' => 'Zet er dingen op zodra je ze tegenkomt, net als bij elk ander lijstje.',
-        'giftlist_step3' => 'Er kan niets geclaimd worden en niemand anders ziet het, dus je mag zo vaak van gedachten veranderen als je wilt.',
+        'giftlist_step3' => 'Hou hem voor jezelf, of klik op Delen: dan zien de anderen hem en kunnen ze aangeven wat zij kopen, zodat niemand hetzelfde koopt.',
 
         'collab_title' => 'Samen kopen',
         'collab_body' => 'Nodig anderen uit op een cadeaulijst zodat jullie samen kunnen kiezen, of leg samen in voor een groter cadeau dat een van jullie koopt.',
         'collab_step1' => 'Druk op Nieuwe lijst, kies "Samen, voor iemand" en noem de persoon voor wie het is.',
-        'collab_step2' => 'Voeg elke mede-koper toe met een e-mailadres. Wie mag kijken kijkt alleen; wie mag toevoegen en verwijderen kan er ook in werken.',
-        'collab_step3' => 'Kies samen. Heeft de persoon een eigen wenslijst, dan geef je daar aan wat jij koopt, zodat niemand hetzelfde koopt.',
+        'collab_step2' => 'Klik op Delen en voeg elke mede-gever toe met zijn e-mailadres. Een kijker kan meekijken; een bewerker kan dingen toevoegen en verwijderen.',
+        'collab_step3' => 'Kies samen, en geef aan wat jij koopt zodat niemand hetzelfde koopt. Onder Delen bepaal je ook of namen zichtbaar zijn.',
 
         'handover_title' => 'Geef een lijst door',
         'handover_body' => 'Een lijst begonnen voor iemand die er nog niet was? Geef hem door zodra ze meedoen, dan wordt het hun eigen wenslijst.',
@@ -669,7 +809,7 @@ return [
 
         'registry_title' => 'Een geschenkenlijst',
         'registry_body' => 'Een wenslijst met een gelegenheid en een datum, voor een huwelijk, een baby of een nieuwe woning. Zet er een adres bij: alleen wie iets geclaimd heeft, ziet het.',
-        'registry_step1' => 'Open je eigen wenslijst en druk op Geschenkenlijst.',
+        'registry_step1' => 'Open een van je verlanglijsten, klik op Delen en vul Speciale gelegenheid in.',
         'registry_step2' => 'Kies de gelegenheid en de datum, en zet er een adres bij als mensen dingen moeten opsturen.',
         'registry_step3' => 'Deel hem zoals elk ander lijstje. Hij gedraagt zich ook zo: mensen claimen, en jou wordt nooit verteld wat.',
 
@@ -953,6 +1093,19 @@ return [
     ],
 
     'gift_ideas' => [
+
+        /*
+         * The placeholder title a drafted persona wears.
+         *
+         * `PlanDrafter` writes one per interest the gift wizard knows about,
+         * so a market's persona shelf can be filled with shortlists to react
+         * to rather than a blank table. It is deliberately dull: the interest
+         * leads so that a label like "DIY" or "The outdoors" keeps its own
+         * capitalisation, and no adjective has to agree with a noun in four
+         * languages. A person renames it before approving.
+         */
+        'draft_title' => ':interest — cadeau-ideeën',
+
         'title' => 'Cadeau-ideeën, per type',
         'description' => 'Cadeaus gekozen rond een persoon in plaats van een datum: de kruidenliefhebber, de vader die alles al heeft, de vriend die leest.',
         'empty' => 'Nog niets. Ze worden een voor een geschreven; de eerste komt eraan.',
@@ -1190,11 +1343,21 @@ return [
     ],
 
     'guides' => [
+        /*
+         * The heading is the Cove name; the `seo_*` pair is deliberately not.
+         *
+         * "Inspiration Coves" is what this section is called on this site and
+         * is what the header, the footer and the front page say — but nobody
+         * searches for it, because it is our word. The <title> and the meta
+         * description still lead with "buying guides", which is the phrase a
+         * person actually types. A brand name in an H1 and the reader's own
+         * vocabulary in the <title> is the normal split, not an inconsistency.
+         */
         'seo_title' => 'Koopgidsen met per product de prijzen vergeleken',
-        'title' => 'Koopgidsen',
-        'subtitle' => 'Geschreven op basis van wat mensen hier zoeken, niet van een zoekwoordtool.',
+        'title' => 'Inspiratie Coves',
+        'subtitle' => 'Shopping-inspiratie en koopgidsen, geschreven op basis van wat mensen hier zoeken en niet van een zoekwoordtool.',
         'seo_description' => 'Koopgidsen gebouwd op echte zoekvraag, met live prijzen vergeleken over elke winkel die het product heeft.',
-        'empty' => 'Nog geen gidsen. Ze worden geschreven zodra een onderwerp genoeg vraag opbouwt.',
+        'empty' => 'Nog geen Inspiratie Coves. Ze worden geschreven zodra een onderwerp genoeg vraag opbouwt.',
         'how_to_choose' => 'Hoe kies je',
         'faq' => 'Vragen',
         'updated' => 'Gecontroleerd op :date',

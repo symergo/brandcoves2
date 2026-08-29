@@ -1,5 +1,6 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import ListKindBadge, { type ListKind } from '../../Components/ListKindBadge'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
@@ -18,6 +19,18 @@ interface ListSummary {
      * that message is addressed to them, not to me.
      */
     suggestions: number | null
+    /**
+     * Somebody else's list that I have been let into, rather than one of mine.
+     *
+     * My Lists shows both now, so the card has to carry the difference: what I
+     * may do with the two is not the same, and a list I merely have access to
+     * can be changed out from under me by the person who owns it.
+     */
+    sharedWithMe: boolean
+    /** Who owns it. Null on my own rows, where the answer is me. */
+    ownerName: string | null
+    /** `viewer` or `editor`, on a list shared with me. */
+    role: string | null
 }
 
 type ListsView = 'mine' | 'shared' | 'group'
@@ -42,6 +55,15 @@ interface Props {
 function ListCard({ list }: { list: ListSummary }) {
     const { t, n } = useTranslations()
     const shared = list.visibility !== 'private'
+
+    /*
+     * "Shared" means two different things on this page and they must not be
+     * confused: `shared` above is *I have published this outward*, and
+     * `sharedWithMe` is *this is not mine at all*. Same word, opposite
+     * direction, which is why the second one gets a badge naming the owner
+     * rather than a second grey pill.
+     */
+    const theirs = list.sharedWithMe
 
     return (
         <Link
@@ -84,7 +106,54 @@ function ListCard({ list }: { list: ListSummary }) {
                     {list.recipient && ` · ${list.recipient.name}`}
                 </p>
 
-                <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
+                {/*
+                  What this card is FOR, on somebody else's wish list.
+
+                  A list Anna shared with me is, from where I stand, how I shop
+                  for Anna — and that is the commonest gifting act on the site.
+                  The card said "11 items" and nothing else, so the one row that
+                  answers "what do I get her?" read exactly like a row of my own
+                  filing.
+
+                  Only on a `mine` list of theirs: those are the ones with
+                  something to claim. A `for_someone` or `group` list I was
+                  invited to is co-giver coordination, and its own kind sentence
+                  covers it.
+                */}
+                {theirs && list.kind === 'mine' && list.ownerName && (
+                    <p className="mt-1 text-sm text-accent">
+                        {t('lists.shop_for', { name: list.ownerName })}
+                    </p>
+                )}
+
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
+                    {/*
+                      What kind of list this is.
+
+                      The kind lived only in the section heading, so a card read
+                      out of context — which is how a card is read, and the only
+                      way one is read in the Shared and Group views, where there
+                      are no sections — said nothing about what could be done
+                      with it.
+                    */}
+                    <ListKindBadge kind={list.kind as ListKind} />
+                    {/*
+                      Whose it is, first and in colour. On a page that mixes my
+                      lists with lists I was invited to, this is the fact that
+                      decides how to read everything else on the card.
+                    */}
+                    {theirs && (
+                        <span className="rounded-full bg-amber/20 px-2 py-0.5 font-medium">
+                            {list.ownerName
+                                ? t('lists.owned_by', { name: list.ownerName })
+                                : t('lists.shared_with_me')}
+                        </span>
+                    )}
+                    {theirs && list.role && (
+                        <span className="rounded-full bg-line/60 px-2 py-0.5 text-ink-soft">
+                            {list.role === 'editor' ? t('lists.role_editor') : t('lists.role_viewer')}
+                        </span>
+                    )}
                     {list.isDefault && (
                         <span className="rounded-full bg-line/60 px-2 py-0.5">{t('lists.default_badge')}</span>
                     )}
@@ -93,15 +162,17 @@ function ListCard({ list }: { list: ListSummary }) {
                       it is the difference between a private note and something
                       anyone with the link can read.
                     */}
-                    <span
-                        className={
-                            shared
-                                ? 'rounded-full bg-sage/15 px-2 py-0.5 text-sage'
-                                : 'rounded-full bg-line/60 px-2 py-0.5 text-ink-soft'
-                        }
-                    >
-                        {shared ? t('lists.shared_short') : t('lists.private_short')}
-                    </span>
+                    {!theirs && (
+                        <span
+                            className={
+                                shared
+                                    ? 'rounded-full bg-sage/15 px-2 py-0.5 text-sage'
+                                    : 'rounded-full bg-line/60 px-2 py-0.5 text-ink-soft'
+                            }
+                        >
+                            {shared ? t('lists.shared_short') : t('lists.private_short')}
+                        </span>
+                    )}
 
                     {/*
                       Somebody put something forward and it is waiting on you.
@@ -158,20 +229,44 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
     /*
      * Three views, and only one of them splits.
      *
-     * My Lists divides into "For me" and "For someone else" because those two
-     * carry opposite privacy rules — a wish list exists to be seen, a list
-     * about somebody is research they must never see. Shared and Group are
-     * already one thing each, and splitting them would invent a distinction
-     * the rows do not have.
+     * My Lists is now every list this person may open — mine of all three
+     * kinds, and the ones other people have let me into — so the sections carry
+     * the whole taxonomy rather than a two-way split. They are not decoration:
+     * a wish list exists to be seen, a list about somebody is research they
+     * must never see, a group list is money and a third person, and a list
+     * shared with me belongs to somebody who can change it. Same table, four
+     * different sets of rules.
+     *
+     * Shared and Group as their own views are already one thing each, and
+     * splitting those would invent a distinction the rows do not have.
+     *
+     * Empty sections are dropped rather than shown empty: a heading over
+     * nothing reads as a thing that failed to load.
      */
+    const mineOnly = lists.filter((l) => !l.sharedWithMe)
+
     const groups =
         view === 'mine'
             ? [
-                  { key: 'mine', label: t('lists.for_me'), lists: lists.filter((l) => l.kind === 'mine') },
+                  {
+                      key: 'mine',
+                      label: t('lists.for_me'),
+                      lists: mineOnly.filter((l) => l.kind === 'mine'),
+                  },
                   {
                       key: 'others',
                       label: t('lists.for_someone_else'),
-                      lists: lists.filter((l) => l.kind !== 'mine'),
+                      lists: mineOnly.filter((l) => l.kind === 'for_someone'),
+                  },
+                  {
+                      key: 'group',
+                      label: t('lists.for_group'),
+                      lists: mineOnly.filter((l) => l.kind === 'group'),
+                  },
+                  {
+                      key: 'shared',
+                      label: t('lists.shared_with_me'),
+                      lists: lists.filter((l) => l.sharedWithMe),
                   },
               ].filter((g) => g.lists.length > 0)
             : [{ key: view, label: '', lists }]
@@ -263,13 +358,39 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                       for yourself: the sole place to name a new person was the
                       picker on a product card.
                     */}
+                    {/*
+                      Three cards, each naming what will HAPPEN on the list.
+
+                      They were three pills — "For me", "For someone else",
+                      "Together" — which name who the list is *about*. That is
+                      not the choice being made: the three kinds differ in who
+                      may claim, who may vote and who sees the money, and none of
+                      that is recoverable from the audience. A hint appeared for
+                      the group option alone, on the stated grounds that three
+                      permanent hints is a paragraph nobody reads. True of a
+                      paragraph; not true of three cards, where the sentence is
+                      what is being compared and the eye reads across rather than
+                      down.
+
+                      This is also the only cheap moment to explain any of it.
+                      The choice is free to change here and awkward to change
+                      afterwards, and somebody who picks wrong finds out weeks
+                      later when the mechanism they wanted is not on the page.
+
+                      Neither of the first two promises an audience — most lists
+                      of both kinds stay private, and a card that says "people
+                      claim them" describes readers who do not exist. Only the
+                      group card does, because a group gift with nobody else on
+                      it is not a thing at all, which is exactly why that kind is
+                      chosen up front rather than derived.
+                    */}
                     <fieldset>
                         <legend className="text-sm font-medium">{t('lists.for_whom')}</legend>
-                        <div className="mt-2 flex flex-wrap gap-2">
+                        <div className="mt-2 grid gap-2 sm:grid-cols-3">
                             {([
-                                { value: 'mine', label: t('lists.for_me') },
-                                { value: 'for_someone', label: t('lists.for_someone_else') },
-                                { value: 'group', label: t('lists.for_group') },
+                                { value: 'mine', label: t('lists.for_me'), body: t('lists.new_mine_body') },
+                                { value: 'for_someone', label: t('lists.for_someone_else'), body: t('lists.new_for_someone_body') },
+                                { value: 'group', label: t('lists.for_group'), body: t('lists.new_group_body') },
                             ] as const).map((choice) => (
                                 <button
                                     key={choice.value}
@@ -288,23 +409,25 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                                             form.setData('new_recipient', '')
                                         }
                                     }}
-                                    className={`rounded-full border px-3 py-1.5 text-sm ${
+                                    className={`rounded-card border p-3 text-left ${
                                         audience === choice.value
-                                            ? 'border-accent bg-accent/10 text-accent'
+                                            ? 'border-accent bg-accent/10'
                                             : 'border-line hover:border-ink'
                                     }`}
                                 >
-                                    {choice.label}
+                                    <span
+                                        className={`block text-sm font-medium ${
+                                            audience === choice.value ? 'text-accent' : ''
+                                        }`}
+                                    >
+                                        {choice.label}
+                                    </span>
+                                    <span className="mt-1 block text-xs text-ink-soft">
+                                        {choice.body}
+                                    </span>
                                 </button>
                             ))}
                         </div>
-
-                        {/* What a group list does that the other two do not.
-                            Shown only when chosen: three permanent hints under
-                            three buttons is a paragraph nobody reads. */}
-                        {audience === 'group' && (
-                            <p className="mt-2 text-xs text-ink-soft">{t('lists.for_group_hint')}</p>
-                        )}
                     </fieldset>
 
                     {forSomeone && (
@@ -361,14 +484,29 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
 
             {lists.length === 0 ? (
                 <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
-                    <p className="font-medium">{t('lists.empty')}</p>
-                    <p className="mt-1 text-sm text-ink-soft">{t('lists.empty_hint')}</p>
-                    <Link
-                        href={`/${market.key}/search`}
-                        className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-                    >
-                        {t('lists.find_things')}
-                    </Link>
+                    {/*
+                      Shared Lists says something different when it is empty,
+                      and the difference is not cosmetic: "You have no lists yet"
+                      is *wrong* here — you may have a dozen — and the button
+                      under it sends somebody off to build a fourteenth when what
+                      they came to do was find a list somebody sent them. The
+                      page already draws this distinction for its heading and its
+                      subtitle; the empty state was the one place it did not.
+                    */}
+                    {view === 'shared' ? (
+                        <p className="font-medium">{t('lists.shared_empty')}</p>
+                    ) : (
+                        <>
+                            <p className="font-medium">{t('lists.empty')}</p>
+                            <p className="mt-1 text-sm text-ink-soft">{t('lists.empty_hint')}</p>
+                            <Link
+                                href={`/${market.key}/search`}
+                                className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                            >
+                                {t('lists.find_things')}
+                            </Link>
+                        </>
+                    )}
                 </div>
             ) : (
                 groups.map((group) => (

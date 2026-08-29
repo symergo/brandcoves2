@@ -44,6 +44,16 @@ class WishlistItem extends Model
         return $this->belongsTo(Wishlist::class);
     }
 
+    /**
+     * Votes for this candidate, on a group list.
+     *
+     * @return HasMany<ListItemVote, $this>
+     */
+    public function votes(): HasMany
+    {
+        return $this->hasMany(ListItemVote::class, 'item_id');
+    }
+
     /** @return BelongsTo<ProductGroup, $this> */
     public function group(): BelongsTo
     {
@@ -158,19 +168,30 @@ class WishlistItem extends Model
      * so the check and the write are one atomic statement and the affected-row
      * count is the answer.
      */
-    public function claim(string $identityHash): bool
+    public function claim(string $identityHash, ?string $name = null): bool
     {
         $claimed = static::query()
             ->whereKey($this->getKey())
             ->whereNull('claimed_by_hash')
             ->update([
                 'claimed_by_hash' => $identityHash,
+                /*
+                 * Null unless the list asked for a name, which the *caller*
+                 * decides — the list's setting is not this model's to read, and
+                 * an item that went looking for it would be a second place to
+                 * get the consent question wrong.
+                 */
+                'claimed_by_name' => $name,
                 'claimed_at' => now(),
                 'updated_at' => now(),
             ]);
 
         if ($claimed === 1) {
-            $this->forceFill(['claimed_by_hash' => $identityHash, 'claimed_at' => now()]);
+            $this->forceFill([
+                'claimed_by_hash' => $identityHash,
+                'claimed_by_name' => $name,
+                'claimed_at' => now(),
+            ]);
 
             return true;
         }
@@ -189,6 +210,10 @@ class WishlistItem extends Model
             ->where('claimed_at', '>=', now()->subHours($undoHours))
             ->update([
                 'claimed_by_hash' => null,
+                // The name belonged to that claim, not to the item. Leaving it
+                // behind would name somebody as the buyer of something they
+                // have just handed back.
+                'claimed_by_name' => null,
                 'claimed_at' => null,
                 'updated_at' => now(),
             ]) === 1;

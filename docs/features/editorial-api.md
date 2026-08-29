@@ -90,6 +90,44 @@ silently skipped pick at build time.
 typed into this site. A guide written against one of those has an audience before it is published,
 which is the entire reason guides rank.
 
+### A barcode is not a lookup here
+
+`/products?q=` is full-text against `products.search_vector`, and that vector is
+title A / brand B / category C / description D. **No EAN is in it.** So an author holding a list of
+barcodes — the most natural way to hand over a shortlist, and the way a merchant's own catalogue
+export is keyed — gets an empty array back, which reads as "we don't stock it" rather than "you
+asked the wrong way".
+
+The catalogue can answer the question perfectly well; the shopper path already does. `SearchService`
+normalises the term with `Gtin::normalise()` and matches `identity_key` exactly, which is one hit on
+the `(market, identity_key)` unique index, and `/{market}/scan/{barcode}` exposes that as JSON.
+`ProductLookup` does not, because it was written to answer "what could I write about" and a barcode
+is not that question.
+
+Until the editorial API grows the lookup, the two-step is the public scan endpoint followed by the
+group id in its `url`:
+
+```
+GET /be-nl/scan/4548736132580
+{"status":"found","title":"Sony WH-1000XM5 Zwart","url":"/be-nl/p/3921/wh-1000xm5-koptelefoon-zwart"}
+```
+
+The id in that URL is **per environment as well as per market**. Measured on 2026-08-29, one barcode
+in one market: `4548736132580` is group `3210` on production, `3921` on staging and `21214` on a
+local dev database. Ingestion order assigns them and nothing reconciles them across environments, so
+an id resolved on staging and written to production names a real, in-stock, perfectly usable
+*different product* — the one class of mistake `rejectUnusable()` cannot catch, because nothing about
+the row is wrong. Resolve against the host being written to, every time.
+
+Two more limits worth naming rather than discovering. Coverage is **EAN-grouped groups only** — a feed row
+with no barcode is grouped as `brand|normalised-title` instead and its `identity_key` is not a GTIN,
+so the site holds a product the scan cannot see. And `includeLive=1` on `/products` with an EAN
+*does* reach bol (the live term is the term, and `SearchService` treats a GTIN as an identity), so it
+can ingest a product the scan just missed — but its own response is still empty, because the reply is
+filtered by the same full-text query. The body is useless; the side effect is not. Scan again.
+
+`.claude/skills/giftcoves-seed-coves` is the client that does all of this, for handing to Claude.
+
 ### Where products come from
 
 `/products` reads the catalogue, which is the Awin feeds. That was a silent limit: an author writing
@@ -194,6 +232,60 @@ Two rules follow the kind rather than the item count, and both would be bugs the
 - **No `ItemList` JSON-LD without items.** An empty one asserts that the page ranks nothing, which is
   worse than staying quiet.
 
+## Asking the planner for ideas
+
+```
+POST /api/editorial/coves/drafts   {"market": "be-nl", "kind": "guide", "count": 10}
+```
+
+The first call of a writing run, and the one that decides whether the run is worth making.
+
+An agent asked to think of ten guide topics will think of ten plausible ones. This site already
+knows which ten are worth writing: `GET /topics` exposes the phrases people typed into its own
+search box, with how many products exist to answer each. That is a demand signal no model has and
+no competitor can measure, and until this endpoint the only way to act on it was a per-row button
+in the admin panel.
+
+Each kind draws on the source that knows something about it, and nothing else:
+
+| Kind | Where the ideas come from |
+|---|---|
+| `daily` | the observance calendar — the next themed days with no plan yet |
+| `guide` | the mined topic queue, most demand first |
+| `seasonal` | the seasonal calendar, soonest window first: a season is only useful if the page is indexed *before* it opens |
+| `persona` | one per gift-wizard interest, carrying that interest's own product nouns from `AngleMap` |
+| `advice` | nothing. **422 with the reason** |
+| `shop` | nothing. **422 with the reason** |
+
+Every plan comes back as a `draft` with a shortlist of real, in-stock, priced products already on
+it — the same selection the builder would have made — so the next call has ids it may link to
+without a search per product.
+
+**`shortfall` is the field a scheduled caller must read.** Fewer plans than asked for is normal:
+the topic queue runs dry, every interest already has a persona. A bare count cannot distinguish
+"the source is exhausted, stop asking" from "the request failed, retry", and one of those is an
+infinite loop. `shortfall` says which, in a sentence, and names the command that would produce
+more.
+
+Refusing `advice` and `shop` with a 422 rather than an empty 200 is the same decision. Nothing in
+the data suggests an advice article — it is an opinion about how to shop, not a topic a catalogue
+can propose — and a Shop Cove is seeded from the repository by `bc:seed-shop-coves` with no builder
+that reads a plan. An agent told that writes the titles itself; an agent handed a zero retries
+forever.
+
+### The loop
+
+`GET /api/editorial/` describes it, so a client never has to be told out of band:
+
+1. `POST /coves/drafts` — ask for ideas. Skip it when you already know what to write.
+2. `GET /coves/queue` — the briefs: shortlist, curator notes, link allowlist, revision.
+3. `POST /coves/{id}/editorial` — the prose, quoting that revision.
+4. `POST /coves/{id}/approve` with `build=1` — needs `editorial.publish`. Without it a person
+   approves in the panel, which is the intended shape.
+
+Nothing in steps 1–3 can reach a reader, and none of it costs AI spend on this server: the prose is
+written on the caller's side of the wire. See [ai-invariant.md](ai-invariant.md).
+
 ## Writing a Cove
 
 The API writes a `cove_plans` row, never an edition directly.
@@ -209,8 +301,47 @@ POST /api/editorial/coves/{id}/approve  {"build": true}
 GET  /api/editorial/editions/{market}/{date}
 ```
 
-Upsert on `(market, date)`, because the unique index allows one dated plan per market per day and a
+Upsert on `(market, date)` for a Daily, and on `(market, slug)` for everything else, because a
 client retrying after a timeout must not get a constraint violation for work it already did.
+
+### Every kind, addressed the way that kind is addressed
+
+`POST /coves` began as the Daily's endpoint and grew a persona. Every kind added after that —
+`guide`, `seasonal`, `advice`, `shop` — arrived here silently addressed as a Daily: the handler
+named `CoveKind::Persona` explicitly and everything else fell to the `default` arm, so a buying
+guide POSTed with a slug was stored **with a date and no slug at all**, and answered `201`.
+
+It now asks the enum, which is the same question `CoveKind` answers for the router, the sitemap and
+the planner:
+
+- a `daily` is addressed by its `date`; sending a `slug` is refused, because the slug of a Daily
+  comes from its title at build time
+- every other kind is addressed by its `slug`; sending a `date` is refused, and omitting the slug
+  is refused rather than stored as an unreachable page
+- **one slug namespace per market covers every kind.** A slug another kind already holds is a 422,
+  never an upsert — the upsert would silently change what an existing page *is*: its URL space, its
+  layout and its product floor at once
+
+The article kinds accept the parts of a piece that are decided before it is written —
+`focusKeyphrase`, `metaDescription`, `body`, `faq`, and `seasonFrom`/`seasonTo` on a seasonal
+guide. Left empty the builder writes them; filled they survive every rebuild. Sent with a kind that
+has no use for them they are **refused, not dropped**: an author who sends a FAQ with a persona and
+receives a 200 has every reason to believe it was stored, and finds out when the page renders
+without one.
+
+### Building one
+
+`POST /coves/{id}/build` dispatches `BuildCove`, which reads the kind off the plan. It used to name
+`BuildDailyEdition` and `BuildPersonaCove` individually, so approving a guide with `build=1`
+answered `202` and queued nothing at all — the failure mode this API is most prone to, because
+every step of it looks like it worked.
+
+A Daily still goes through `BuildDailyEdition`, because that job also mines yesterday's searches
+for topics and seeds the seasonal ones. Both are facts about the *day*, and an editor building next
+Tuesday should not advance the topic queue.
+
+`readBack` follows the kind too: a Daily points at the API endpoint that reports what the builder
+actually managed to put on the page, and every permanent kind points at its own URL.
 
 ### Authored prose wins outright, and skips the model
 

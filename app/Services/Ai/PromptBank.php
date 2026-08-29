@@ -130,6 +130,15 @@ class PromptBank
                 'allowed' => ['language', 'topic', 'title', 'direction'],
                 'required' => ['language'],
             ],
+            /*
+             * A Shop Cove is briefed like an advice article: the subject is a
+             * name and a direction, and there are no finds to describe. `topic`
+             * carries the shop's name.
+             */
+            'cove.shop' => [
+                'allowed' => ['language', 'topic', 'title', 'direction'],
+                'required' => ['language'],
+            ],
             'cove.theme' => [
                 'allowed' => ['language', 'finds', 'recent'],
                 'required' => ['language', 'finds'],

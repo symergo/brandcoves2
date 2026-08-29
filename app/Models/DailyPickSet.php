@@ -245,6 +245,22 @@ class DailyPickSet extends Model
         ));
     }
 
+    /**
+     * Shop Coves: the writing about shops.
+     *
+     * Its own scope rather than a widened `articles()`, because that one means
+     * "the /guides URL space" and a Shop Cove is read at `/shops/{slug}`.
+     * Folding it in would put it in the guides index, the guides sitemap and the
+     * guides hreflang set — three places where it does not belong and none of
+     * which would error.
+     *
+     * @param  Builder<$this>  $query
+     */
+    public function scopeShops(Builder $query): void
+    {
+        $query->where('kind', CoveKind::Shop->value);
+    }
+
     public function isPersona(): bool
     {
         return $this->kind === CoveKind::Persona;

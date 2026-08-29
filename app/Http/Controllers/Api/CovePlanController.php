@@ -10,8 +10,8 @@ use App\Enums\PickMode;
 use App\Enums\Source;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\AuthenticateApiToken;
+use App\Jobs\BuildCove;
 use App\Jobs\BuildDailyEdition;
-use App\Jobs\BuildPersonaCove;
 use App\Models\ApiToken;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
@@ -27,7 +27,13 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Writing a Daily Cove from outside the box.
+ * Writing a Cove — any kind of Cove — from outside the box.
+ *
+ * It began as the Daily's endpoint and grew a persona; every kind added since
+ * arrived silently addressed as a Daily, so a buying guide POSTed with a slug
+ * was stored with a date and no address and answered 201. It now asks the enum
+ * how a kind is addressed, which is the same question `CoveKind` answers for
+ * the router, the sitemap and the planner.
  *
  * ## Why this writes a plan and not an edition
  *
@@ -61,6 +67,7 @@ class CovePlanController extends Controller
     {
         $data = $request->validate([
             'market' => ['nullable', Rule::in(Market::values())],
+            'kind' => ['nullable', Rule::in(CoveKind::values())],
             'status' => ['nullable', Rule::in(['draft', 'approved', 'used', 'rejected'])],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
@@ -70,6 +77,7 @@ class CovePlanController extends Controller
         $plans = CovePlan::query()
             ->with('edition:id,drop_date,status,theme_title')
             ->when(isset($data['market']), fn ($q) => $q->where('market', $data['market']))
+            ->when(isset($data['kind']), fn ($q) => $q->where('kind', $data['kind']))
             ->when(isset($data['status']), fn ($q) => $q->where('status', $data['status']))
             ->when(isset($data['from']), fn ($q) => $q->whereDate('drop_date', '>=', $data['from']))
             ->when(isset($data['to']), fn ($q) => $q->whereDate('drop_date', '<=', $data['to']))
@@ -107,28 +115,77 @@ class CovePlanController extends Controller
         $slug = $data['slug'] ?? null;
 
         /*
-         * A persona has no date and a Daily has no slug.
+         * A Daily is addressed by its date; every other kind by its slug.
          *
          * Refused rather than reconciled, because both silent fixes are worse
          * than the error: dropping the date would publish something the author
-         * scheduled, and keeping it would hand the morning build a persona.
+         * scheduled, and keeping it would hand the morning build a guide.
+         *
+         * Asked of the enum rather than listed, because this used to name
+         * Persona and every kind added since arrived here silently addressed as
+         * a Daily — a guide POSTed with a slug was stored with a date and no
+         * address at all, and nothing said so.
          */
-        if ($kind === CoveKind::Persona) {
+        if ($kind->isDated()) {
+            if ($slug !== null) {
+                throw ValidationException::withMessages([
+                    'slug' => 'A Daily Cove is addressed by its date. Its URL slug comes from the title when it is built.',
+                ]);
+            }
+        } else {
             if ($date !== null) {
                 throw ValidationException::withMessages([
-                    'date' => 'A gift persona has no date — it is permanent. Send a slug instead.',
+                    'date' => 'A '.$kind->label().' has no date — it is permanent. Send a slug instead.',
                 ]);
             }
 
             if ($slug === null) {
                 throw ValidationException::withMessages([
-                    'slug' => 'A gift persona needs a slug: it is the permanent URL the page lives at.',
+                    'slug' => 'A '.$kind->label().' needs a slug: it is the permanent URL the page lives at.',
                 ]);
             }
         }
 
+        /*
+         * The article fields belong to an article, and are refused elsewhere.
+         *
+         * Dropping them silently is the failure worth avoiding: an author who
+         * sends a FAQ with a persona and gets a 200 has every reason to believe
+         * it was stored, and finds out when the page renders without one.
+         */
+        if (! $kind->isArticle()) {
+            $stray = array_keys(array_filter([
+                'focusKeyphrase' => $data['focusKeyphrase'] ?? null,
+                'metaDescription' => $data['metaDescription'] ?? null,
+                'body' => $data['body'] ?? null,
+                'faq' => $data['faq'] ?? null,
+            ]));
+
+            if ($stray !== []) {
+                throw ValidationException::withMessages([
+                    $stray[0] => 'Only a buying guide, a seasonal guide or an advice article carries '
+                        .implode(', ', $stray).'. A '.$kind->label().' is a column: its words go in `editorial`.',
+                ]);
+            }
+        }
+
+        /*
+         * A season is a scheduling fact about a seasonal guide and nothing else.
+         *
+         * A window on a kind nothing reads it from would be a decision that
+         * looks made and is not.
+         */
+        if ($kind !== CoveKind::Seasonal && (($data['seasonFrom'] ?? null) !== null || ($data['seasonTo'] ?? null) !== null)) {
+            throw ValidationException::withMessages([
+                'seasonFrom' => 'Only a seasonal guide carries a window. Send kind=seasonal, or leave it off.',
+            ]);
+        }
+
         $existing = match (true) {
-            $kind === CoveKind::Persona => CovePlan::persona($market, (string) $slug),
+            ! $kind->isDated() => CovePlan::query()
+                ->where('market', $market->value)
+                ->where('slug', $slug)
+                ->first(),
             $date === null => null,
             default => CovePlan::query()
                 ->where('market', $market->value)
@@ -136,6 +193,20 @@ class CovePlanController extends Controller
                 ->whereDate('drop_date', $date)
                 ->first(),
         };
+
+        /*
+         * One slug namespace per market, across every dateless kind.
+         *
+         * So the row this found may be a persona when a guide was asked for, and
+         * upserting it would silently change what an existing page *is* — its
+         * URL space, its layout and its product floor all at once.
+         */
+        if ($existing !== null && $existing->kind !== $kind) {
+            throw ValidationException::withMessages([
+                'slug' => "That slug is already a {$existing->kind->label()} in {$market->value}. "
+                    .'One slug namespace covers every kind in a market, so pick another.',
+            ]);
+        }
 
         if ($existing !== null) {
             $this->assertMayEdit($request, $existing);
@@ -147,8 +218,8 @@ class CovePlanController extends Controller
         $attributes = [
             'market' => $market->value,
             'kind' => $kind->value,
-            'drop_date' => $kind === CoveKind::Persona ? null : $date,
-            'slug' => $kind === CoveKind::Persona ? $slug : null,
+            'drop_date' => $kind->isDated() ? $date : null,
+            'slug' => $kind->isDated() ? null : $slug,
             'pick_mode' => $data['pickMode'] ?? PickMode::Open->value,
             'title' => $data['title'],
             'blurb' => $data['blurb'] ?? null,
@@ -156,6 +227,30 @@ class CovePlanController extends Controller
             'build_instructions' => $data['buildInstructions'] ?? null,
             'queries' => $data['queries'] ?? [],
             'note' => $data['note'] ?? null,
+
+            /*
+             * The parts of an article that are decided before it is written.
+             *
+             * Left empty the builder invents them, which is what a guide always
+             * did and the reason its keyphrase and FAQ were nobody's decision.
+             * Sent here they survive every rebuild — that is the whole contract.
+             */
+            ...($kind->isArticle() ? [
+                'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
+                'meta_description' => $data['metaDescription'] ?? null,
+                'body' => $data['body'] ?? null,
+                // Stored as the two-letter shape the page and the schema.org
+                // renderer read. The API spells them out, because `q`/`a` in a
+                // JSON body is a guess.
+                'faq' => isset($data['faq'])
+                    ? array_map(fn (array $pair) => ['q' => $pair['question'], 'a' => $pair['answer']], $data['faq'])
+                    : null,
+            ] : []),
+
+            ...($kind === CoveKind::Seasonal ? [
+                'season_from' => $data['seasonFrom'] ?? null,
+                'season_to' => $data['seasonTo'] ?? null,
+            ] : []),
         ];
 
         if ($existing === null) {
@@ -222,7 +317,7 @@ class CovePlanController extends Controller
         // Approving and building are separate calls, but wanting both in one
         // round trip is the normal case for an author who has just finished
         // writing and wants to look at the result.
-        $queued = $request->boolean('build') && ($plan->drop_date !== null || $plan->isPersona());
+        $queued = $request->boolean('build') && $this->isBuildable($plan);
 
         if ($queued) {
             $this->queueBuild($plan);
@@ -245,9 +340,11 @@ class CovePlanController extends Controller
      */
     public function build(CovePlan $plan): JsonResponse
     {
-        if ($plan->drop_date === null && ! $plan->isPersona()) {
+        if (! $this->isBuildable($plan)) {
             throw ValidationException::withMessages([
-                'plan' => 'That plan has no date and is not a persona. Give it one, or make it a persona with a slug.',
+                'plan' => $plan->kind->isDated()
+                    ? 'That Daily Cove has no date. Give it one, or make it a permanent kind with a slug.'
+                    : 'That '.$plan->kind->label().' has no slug, and a permanent page is addressed by one.',
             ]);
         }
 
@@ -264,24 +361,46 @@ class CovePlanController extends Controller
             'market' => $plan->market->value,
             'date' => $plan->drop_date?->toDateString(),
             'slug' => $plan->slug,
-            'readBack' => $plan->isPersona()
-                ? '/'.$plan->market->value.'/gift-ideas/'.$plan->slug
-                : "/api/editorial/editions/{$plan->market->value}/{$plan->drop_date->toDateString()}",
+            // A Daily is read back through the API, which reports what the
+            // builder actually managed to put on it; everything else is a
+            // permanent page and its own URL is the honest answer.
+            'readBack' => $plan->kind->isDated()
+                ? "/api/editorial/editions/{$plan->market->value}/{$plan->drop_date->toDateString()}"
+                : '/'.$plan->market->value.'/'.$plan->kind->path((string) $plan->slug),
         ], 202);
+    }
+
+    /**
+     * Is there an address to build this plan at?
+     *
+     * A Daily needs its date and everything else needs its slug. Asked in one
+     * place because it is asked three times — approve-and-build, build, and the
+     * error message that explains the refusal — and three copies of a rule that
+     * grows an arm per kind is how the persona-only version survived four new
+     * kinds without anyone noticing.
+     */
+    private function isBuildable(CovePlan $plan): bool
+    {
+        return $plan->kind->isDated()
+            ? $plan->drop_date !== null
+            : filled($plan->slug);
     }
 
     /**
      * Dispatch the right build for this plan's kind.
      *
-     * A persona does not go through BuildDailyEdition: that job also mines
-     * guide topics and seeds the seasonal ones, both of which are about the
-     * day, and a persona has none.
+     * A Daily goes through `BuildDailyEdition` because that job also does two
+     * things about the *day* — mining yesterday's searches for topics and
+     * seeding the seasonal ones — which nothing else wants. Every other kind
+     * goes to `BuildCove`, which reads the kind off the plan; naming them
+     * individually here is what left guides unbuildable through this API while
+     * the endpoint answered 202.
      */
     private function queueBuild(CovePlan $plan): void
     {
-        $plan->isPersona()
-            ? BuildPersonaCove::dispatch($plan->id)
-            : BuildDailyEdition::dispatch($plan->market, $plan->drop_date->toDateString());
+        $plan->kind->isDated()
+            ? BuildDailyEdition::dispatch($plan->market, $plan->drop_date->toDateString())
+            : BuildCove::dispatch($plan->id);
     }
 
     /** @return array<string, mixed> */
@@ -325,6 +444,28 @@ class CovePlanController extends Controller
             'kind' => ['nullable', Rule::in(CoveKind::values())],
             'slug' => ['nullable', 'string', 'max:80', 'alpha_dash'],
             'pickMode' => ['nullable', Rule::in(PickMode::values())],
+
+            /*
+             * Article fields. Optional every one of them: an empty field is the
+             * builder's to write, a filled one is the author's and is never
+             * overwritten.
+             */
+            'focusKeyphrase' => ['nullable', 'string', 'max:120'],
+            'metaDescription' => ['nullable', 'string', 'max:160'],
+            'body' => ['nullable', 'string', 'max:20000'],
+            'faq' => ['nullable', 'array', 'max:10'],
+            // Both halves or neither. A question with no answer renders as a
+            // broken FAQPage and Google says so out loud.
+            'faq.*.question' => ['required', 'string', 'max:200'],
+            'faq.*.answer' => ['required', 'string', 'max:600'],
+
+            /*
+             * MM-DD and year-less, because the window recurs every year. An end
+             * before its start wraps the year, which is how Valentine's opens on
+             * 12-27.
+             */
+            'seasonFrom' => ['nullable', 'string', 'regex:/^\d{2}-\d{2}$/'],
+            'seasonTo' => ['nullable', 'string', 'regex:/^\d{2}-\d{2}$/'],
 
             /*
              * Direction for whoever writes the prose, including a later call
@@ -489,9 +630,10 @@ class CovePlanController extends Controller
                 'status' => $plan->edition->status->value,
                 // A persona lives at its slug and has no date to build a URL
                 // from — the same split as the routes.
-                'url' => $plan->edition->drop_date === null
-                    ? '/'.$plan->market->value.'/gift-ideas/'.$plan->edition->slug
-                    : '/'.$plan->market->value.'/daily/'.$plan->edition->slug,
+                // Off the kind, not off the date. Four of the six kinds are
+                // dateless and only one of them is a persona, so a null date
+                // used to send a guide's URL into /gift-ideas.
+                'url' => '/'.$plan->market->value.'/'.$plan->kind->path((string) $plan->edition->slug),
             ],
         ];
     }
@@ -506,6 +648,23 @@ class CovePlanController extends Controller
             'buildInstructions' => $plan->build_instructions,
             'queries' => $plan->queries,
             'note' => $plan->note,
+
+            /*
+             * Read back so a writer can see what it has already decided.
+             *
+             * Only for the kinds that carry them — a persona reading back a null
+             * `faq` invites an agent to fill it in, and it would be refused.
+             */
+            ...($plan->kind->isArticle() ? [
+                'focusKeyphrase' => $plan->focus_keyphrase,
+                'metaDescription' => $plan->meta_description,
+                'body' => $plan->body,
+                'faq' => $plan->faq,
+            ] : []),
+
+            ...($plan->kind === CoveKind::Seasonal ? [
+                'season' => ['from' => $plan->season_from, 'to' => $plan->season_to],
+            ] : []),
 
             /*
              * The shortlist, in order, with the reason each entry is on it.

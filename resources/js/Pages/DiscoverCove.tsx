@@ -80,7 +80,7 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
     const sections: { key: CoveKey; href: string; name: string; what: string }[] = [
         { key: 'daily', href: urls.daily, name: t('nav.daily'), what: t('discover_cove.daily_what') },
         { key: 'surprise', href: urls.surprise, name: t('nav.surprise'), what: t('discover_cove.surprise_what') },
-        { key: 'idea', href: urls.guides, name: t('nav.coves'), what: t('discover_cove.idea_what') },
+        { key: 'idea', href: urls.guides, name: t('nav.inspiration_coves'), what: t('discover_cove.idea_what') },
         /*
          * The fourth is not ours.
          *

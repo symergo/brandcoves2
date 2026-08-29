@@ -108,7 +108,7 @@ class BrandController extends Controller
 
         $result = $search->search($query);
 
-        $this->seo($stat, $result->groups->total(), $current, $query);
+        $this->seo($stat, $current, $query);
 
         return Inertia::render('Brand', [
             'brand' => [
@@ -131,7 +131,7 @@ class BrandController extends Controller
             'filters' => $query->toArray(),
             'sort' => $query->sort,
             'view' => $query->view,
-            'facets' => $result->facets,
+            'facets' => $result->facetsWithoutCounts(),
             'results' => [
                 'total' => $result->groups->total(),
                 'currentPage' => $result->groups->currentPage(),
@@ -299,6 +299,16 @@ class BrandController extends Controller
             ->limit(500)
             ->get(['brand', 'slug', 'product_count']);
 
+        /*
+                 * `product_count` orders these and is not sent.
+                 *
+                 * The number decides *which* brands appear — most-stocked
+                 * first — and says nothing worth printing beside one. A count
+                 * next to a brand name describes our catalogue rather than the
+                 * brand, and it is the number most likely to be stale: it is
+                 * refreshed nightly while the grid under it is live.
+                 */
+
         app(PageMeta::class)->set(
             title: __('site.brand.index_seo_title'),
             description: __('site.brand.index_seo_description'),
@@ -309,7 +319,6 @@ class BrandController extends Controller
             'brands' => $brands->map(fn (BrandStat $stat) => [
                 'name' => $stat->brand,
                 'url' => $current->url("brand/{$stat->slug}"),
-                'count' => $stat->product_count,
             ])->all(),
         ]);
     }
@@ -469,7 +478,6 @@ class BrandController extends Controller
             ->map(fn (BrandStat $other) => [
                 'name' => $other->brand,
                 'url' => $current->url("brand/{$other->slug}"),
-                'count' => $other->product_count,
             ])
             ->all();
     }
@@ -485,7 +493,7 @@ class BrandController extends Controller
      * products has nothing to rank for and everything to spend crawl budget on —
      * but the canonical still names the bare page, so any signal consolidates.
      */
-    private function seo(BrandStat $stat, int $total, CurrentMarket $current, SearchQuery $query): void
+    private function seo(BrandStat $stat, CurrentMarket $current, SearchQuery $query): void
     {
         $thin = $query->page > 1
             || $query->minPrice !== null
@@ -504,10 +512,9 @@ class BrandController extends Controller
         app(PageMeta::class)
             ->set(
                 title: __('site.brand.title', ['brand' => $stat->brand]),
-                description: __('site.brand.seo_description', [
-                    'brand' => $stat->brand,
-                    'count' => $total,
-                ]),
+                // No count. `$total` was passed in for this one line and is
+                // gone with it — see the note in `SearchController::seo()`.
+                description: __('site.brand.seo_description', ['brand' => $stat->brand]),
                 image: url($current->url("og/brand/{$stat->slug}.png")),
                 canonical: url($current->url("brand/{$stat->slug}")),
                 robots: $thin ? 'noindex, follow' : null,

@@ -131,9 +131,15 @@ These are the rules the product depends on. Breaking one is a bug even when test
    market. `product_groups` rows are physical products. Search, product pages, gift picks and guides
    all operate on **groups**. This split is what makes offer comparison possible.
 
-4. **Claim state never reaches the list owner.** A gift list exists so the recipient does not know
-   what has been bought. `wishlist_items.claimed_by_hash` is `$hidden` on the model and must stay out
-   of any payload the owner can see.
+4. **Claim state reaches the list owner only if they asked for it.** A wish list exists so the
+   recipient does not know what has been bought, so it is hidden by **default** and nothing may
+   infer otherwise — not sharing, not inviting somebody, not an occasion. Only an explicit
+   `wishlists.owner_sees_claims` turns it on (null = never asked; the kind decides). A list *about
+   somebody else* defaults the other way, because there the owner is a co-giver and the recipient
+   never opens the page. `wishlist_items.claimed_by_hash` is `$hidden` on the model, and
+   `Wishlist::shouldHideClaimsFrom()` is the single place the question is answered —
+   `App\Services\Wishlist\ClaimView` the single place it is applied. Reworded 2026-08-29; it read
+   "never reaches the list owner", which was the rule before the owner could choose.
 
 5. **Affiliate URLs are hostile input.** They come from third-party feeds. Scheme-check (`https:`
    only, via `Product::hasSafeAffiliateUrl()`) before any redirect. HTML escaping alone happily

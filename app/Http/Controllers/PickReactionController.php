@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * 🤯 / meh on a daily pick.
+ * 👍 / 👎 on a daily pick.
  *
  * A visitor write, so it stays the cheapest possible thing: one upsert and a
  * counter. No AI, no live API call, rate-limited at the route. The worst a

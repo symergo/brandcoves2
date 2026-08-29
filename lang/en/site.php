@@ -17,7 +17,6 @@ return [
         'submenu' => 'What is in :section',
         'gift' => 'Gift Finder',
         'daily' => 'Daily Cove',
-        'coves' => 'Idea Cove',
         'guides' => 'Guides',
         'surprise' => 'Surprise Cove',
         'scan' => 'Scan',
@@ -44,6 +43,43 @@ return [
             'int' => 'International',
             'es' => 'Spain',
         ],
+        /*
+         * The Cove types, as the Discover menu lists them.
+         *
+         * Three shapes of the same thing: an edition that changes every
+         * morning, a shelf built around a person, and a long read built around
+         * a subject. `coves` — "Idea Cove" — used to be the only one of these
+         * in the header and stood for the article archive alone, which made
+         * "Cove" mean one of its three meanings in the one place a visitor
+         * learns the word.
+         *
+         * The qualifier translates and the noun does not, per the rule in
+         * localisation.md: Inspiration Coves / Inspiratie Coves / Coves Inspiration.
+         */
+        'inspiration_coves' => 'Inspiration Coves',
+        'gift_coves' => 'Gift Coves',
+        'all_coves' => 'All Coves',
+        'brand_coves' => 'Brand Coves',
+        'shop_coves' => 'Shop Coves',
+
+        /*
+         * One line under each entry in the Discover menu.
+         *
+         * Five Cove entries whose names differ by one word — Daily, Surprise,
+         * Theme, Gift, All — cannot be told apart by their labels alone the
+         * first time somebody opens the menu. Deliberately short: this is a
+         * dropdown, not the hub page, and the hub is one click away for the
+         * argument.
+         */
+        'hint_daily' => 'New every morning',
+        'hint_surprise' => 'Something rare, not something popular',
+        'hint_inspiration_coves' => 'Shopping inspiration and buying guides',
+        'hint_gift_coves' => 'Ideas built around a person',
+        'hint_all_coves' => 'Everything we have published',
+        'hint_brand_coves' => 'Every maker with a page here',
+        'hint_shop_coves' => 'The shops we compare, and who is new',
+        'hint_ask' => 'Let other people suggest something',
+
         'santa' => 'Secret Friend',
 
         // Names, not words: a Cove is called the same thing in every language,
@@ -90,8 +126,8 @@ return [
         // The card says what a registry IS to somebody who has none, and which
         // one theirs is to somebody who has. Never how much of it has been
         // bought — this is the owner's own front page (invariant #4).
-        'organise_registry' => 'Registry',
-        'organise_registry_hint' => 'A wish list with an occasion and a date on it, for a wedding, a baby or a new home.',
+        'organise_occasion' => 'Occasion',
+        'organise_occasion_hint' => 'Put a date on a list — a birthday, a wedding, Christmas — and everyone with the link knows what it is for.',
         'organise_registry_on' => ':occasion on :date',
         'gifting_heading' => 'Buying for someone else',
         'gifting_intro' => 'Describe them and we will suggest something. Or let them tell you themselves, and never see who bought what.',
@@ -115,7 +151,6 @@ return [
         'submit' => 'Search',
         'searching' => 'Searching…',
         'results_for' => 'Results for ":term"',
-        'count' => ':count products',
         'browse' => 'Browse the catalogue',
         'empty' => 'Nothing matched ":term".',
         'empty_hint' => 'Try a shorter search, or check the spelling.',
@@ -140,7 +175,7 @@ return [
         'previous' => 'Previous',
         'next' => 'Next',
         'page_of' => 'Page :current of :last',
-        'seo_term' => 'Compare :count products matching :term across bol, Amazon and hundreds of shops. Find the cheapest offer in seconds.',
+        'seo_term' => 'Compare products matching :term across bol, Amazon and hundreds of shops. Find the cheapest offer in seconds.',
 
         /*
          * The vocabulary of the results, above the grid.
@@ -169,13 +204,12 @@ return [
     'brand' => [
         'title' => ':brand',
         'heading' => ':brand',
-        'seo_description' => 'Compare :count :brand products across every shop we track, and find the cheapest offer.',
+        'seo_description' => 'Compare :brand products across every shop we track, and find the cheapest offer.',
         'crumb' => 'Brands',
         'index_title' => 'Brands',
         'index_seo_title' => 'All brands, prices compared across every shop',
         'index_seo_description' => 'Every brand in the catalogue, with live prices compared across bol, Amazon and hundreds of shops that stock them.',
         'index_intro' => 'Every brand in the catalogue, with live prices compared across the shops that stock it.',
-        'index_count' => ':count products',
         'all_brands' => 'All brands',
         'products_heading' => ':brand products',
         'coves_heading' => 'Coves that mention :brand',
@@ -224,7 +258,7 @@ return [
         'choosing_3' => 'Brands appearing in these results include :brands. Each has a page of its own listing everything we carry from it, with the same comparison across shops.',
 
         'faq_price_q' => 'How much does :term cost?',
-        'faq_price_a' => 'On this page, :term ranges from :low to :high. That range covers :count products across the shops we track, so the low end and the high end are usually different kinds of product rather than the same one at two prices.',
+        'faq_price_a' => 'On this page, :term ranges from :low to :high. The low end and the high end are usually different kinds of product rather than the same one at two prices.',
         'faq_where_q' => 'Where can I buy :term?',
         'faq_where_a' => 'From the shops listed on each card. This page draws :shops shop listings across the products shown. We are a discovery site, not a retailer: every link goes to the shop making the offer, and you buy from them on their own terms.',
         'faq_fresh_q' => 'How current are these :term prices?',
@@ -249,7 +283,7 @@ return [
         'choosing_3' => 'Each product page carries the full offer table and 90 days of price history, so you can see whether today is a genuinely good moment to buy a particular :brand product or an ordinary one.',
 
         'faq_price_q' => 'How much do :brand products cost?',
-        'faq_price_a' => ':brand products on this page range from :low to :high, across :count products from the shops we track. The low and the high are usually different products rather than the same one at two prices.',
+        'faq_price_a' => ':brand products on this page range from :low to :high. The low and the high are usually different products rather than the same one at two prices.',
         'faq_where_q' => 'Which shops sell :brand?',
         'faq_where_a' => 'The shops named on each card. This page draws :shops shop listings across the :brand products shown. We list rather than sell: every link goes to the shop making the offer.',
         'faq_discount_q' => 'Is :brand on offer right now?',
@@ -298,7 +332,52 @@ return [
         'intro' => 'Three ways to find something you were not looking for. One changes every day, one is deliberately unpredictable, and one is worth sitting down with.',
         'daily_what' => 'A new edition every day: a theme, a handful of finds and a price puzzle. Every past edition keeps its own page.',
         'surprise_what' => 'Something you did not know existed, chosen for how rare it is rather than how well it sells.',
-        'idea_what' => 'Long reads built around one theme, with every brand and product linked straight into a live search.',
+        'idea_what' => 'Shopping inspiration and buying guides around one subject, with every brand and product linked straight into a live search.',
+    ],
+
+    /*
+     * All Coves: the overview page at /coves.
+     *
+     * The one page that shows the whole shape of the thing the site is named
+     * after. Section copy says what each kind *is*, because "Inspiration Coves"
+     * "Gift Coves" are two words apart and a reader meeting them for the first
+     * time has nothing else to go on.
+     */
+    'shops' => [
+        'seo_title' => 'The online shops we compare prices across',
+        'seo_description' => 'Every shop whose prices are compared here, with the ones that arrived most recently called out. No totals, just the list.',
+        'title' => 'Shop Coves',
+        'intro' => 'Every offer on this site names the shop it came from. These are those shops — the ones this market’s prices are compared across.',
+        'empty' => 'No shops wired up for this market yet.',
+        'coves_heading' => 'Written about these shops',
+        'coves_what' => 'What a shop is like to buy from — the half of the decision a price cannot answer.',
+        'new_heading' => 'New here',
+        'new_what' => 'Wired up in the last month. They appear in the list below as well — this is a spotlight, not a filter.',
+        'new_badge' => 'New',
+        'all_heading' => 'Every shop',
+    ],
+
+    'coves' => [
+        'seo_title' => 'Every Cove: daily editions, gift ideas by person, and long reads',
+        'seo_description' => 'The full shelf. A new edition every morning, gift ideas built around a person, and long reads around one subject with live prices compared inside them.',
+        'title' => 'All Coves',
+        'intro' => 'Everything we have written here, by the shape it takes. One arrives every morning, one is built around a person, and one is built around a subject.',
+        'empty' => 'Nothing published in this market yet. The first Coves are on their way.',
+        'daily_heading' => 'Daily Cove',
+        'daily_what' => 'One edition every morning: a theme, a handful of finds and a price puzzle. Every past edition keeps its own page.',
+        'daily_all' => "Read today's edition",
+        'gift_heading' => 'Gift Coves',
+        'gift_what' => 'Built around a person rather than a date — the herbalist, the dad who has everything, the friend who reads.',
+        'gift_all' => 'All Gift Coves',
+        'inspiration_heading' => 'Inspiration Coves',
+        'inspiration_what' => 'Shopping inspiration and buying guides: long reads around one subject, with every brand and product linked straight into a live search.',
+        'inspiration_all' => 'All Inspiration Coves',
+        'brand_heading' => 'Brand Coves',
+        'brand_what' => 'One page per maker: everything of theirs we carry here, with every shop’s price on each product.',
+        'brand_all' => 'All Brand Coves',
+        'shop_heading' => 'Shop Coves',
+        'shop_what' => 'The online shops this market’s prices are compared across, newest first.',
+        'shop_all' => 'All Shop Coves',
     ],
 
     'cove' => [
@@ -313,6 +392,10 @@ return [
         'unsubscribed' => "You're unsubscribed. No hard feelings.",
     ],
     'suggestions' => [
+        'added' => 'Added to the list.',
+        'add_invite' => 'Add something to this list',
+        'add_invite_hint' => 'Anything you add goes straight on, so everyone can see it and claim it.',
+        'add_action' => 'Add to the list',
         'heading' => 'Suggested for you',
         'hint' => 'Nothing appears on your list until you accept it.',
         'from' => 'From :name',
@@ -335,10 +418,10 @@ return [
     ],
 
     'registry' => [
-        'heading' => 'Make this a registry',
-        'hint' => 'Add an occasion and a date, and a delivery address if people should post things to you.',
+        'heading' => 'Add a special occasion',
+        'hint' => 'Say what this list is for, and when. Everybody you share the link with sees it.',
         'occasion' => 'Occasion',
-        'none' => 'Not a registry',
+        'none' => 'No occasion',
         'date' => 'Date',
         'address' => 'Delivery address',
         'address_hint' => 'Stored encrypted, and shown only to someone who has claimed something.',
@@ -346,18 +429,27 @@ return [
         'address_locked' => 'Claim something and the delivery address appears here.',
         'occasion_on' => ':occasion on :date',
         'types' => [
+            'birthday' => 'Birthday',
+            'christmas' => 'Christmas',
             'wedding' => 'Wedding',
+            'anniversary' => 'Anniversary',
             'baby' => 'New baby',
             'housewarming' => 'New home',
-            'birthday' => 'Birthday',
+            'graduation' => 'Graduation',
+            'retirement' => 'Retirement',
+            'farewell' => 'Leaving do',
+            'valentines' => 'Valentine’s Day',
+            'mothers_day' => 'Mother’s Day',
+            'fathers_day' => 'Father’s Day',
+            'thank_you' => 'Thank you',
             'other' => 'Something else',
         ],
-        'badge' => 'Registry',
+        'badge' => 'Special occasion',
     ],
 
     'handover' => [
         'heading' => 'Hand this list over',
-        'hint' => 'Give the list to :name. It becomes their own wishlist, and they can share it and be bought from.',
+        'hint' => 'Give the list to :name. It becomes their own wishlist, which they can share with others.',
         'action' => 'Hand it over',
         'confirm' => 'Give this list to :name? You will no longer own it.',
         'done' => 'Handed over to :name.',
@@ -366,6 +458,15 @@ return [
         'not_linked' => 'They need to claim their link first, so there is an account to hand it to.',
         'no_account' => 'Nobody with that email has an account here yet. Send them the "ask them what they want" link first.',
         'badge' => 'Hand over',
+    ],
+
+    'votes' => [
+        'vote' => 'Vote for this',
+        'voted' => 'Voted',
+        'none' => 'No votes yet',
+        'count' => ':count votes',
+        'one' => 'One vote',
+        'heading' => 'Vote for the one we should get',
     ],
 
     'pledges' => [
@@ -444,8 +545,12 @@ return [
 
     'lists' => [
         'title' => 'My lists',
-        'subtitle' => 'Things you are saving, for yourself and for other people.',
-        'shared_subtitle' => 'Lists other people have shared with you.',
+        'subtitle' => 'Everything you are saving, and everything other people have shared with you.',
+        'shared_subtitle' => 'Lists people have shared with you. This is how you shop for them.',
+        'shared_empty' => 'Nobody has shared a list with you yet. When they do, it appears here — with what they want on it.',
+        'shop_for' => 'Claim something for :name',
+        'shared_with_me' => 'Shared with me',
+        'owned_by' => 'From :name',
         'group_subtitle' => 'One gift, chosen together. Everyone votes, and what each of you puts in stays between you and the organiser.',
         'default_title' => 'My wishlist',
         'default_badge' => 'Default',
@@ -499,6 +604,15 @@ return [
         'empty' => 'Nothing saved yet.',
         'empty_hint' => 'Search for a product and press Save.',
         'empty_list' => 'This list is empty.',
+        'empty_mine_step1' => 'Add things you would like. The bookmark on any product puts it here.',
+        'empty_mine_step2' => 'When you are ready, press Share. Not before — this is yours until you say otherwise.',
+        'empty_mine_step3' => 'People claim what they are getting, or you send the list as a quiz.',
+        'empty_for_someone_step1' => 'Add ideas as you come across them. Nobody else sees this yet.',
+        'empty_for_someone_step2' => 'If others are helping, press Share and add them by email.',
+        'empty_for_someone_step3' => 'Everyone marks what they are getting, so nobody buys the same thing twice.',
+        'empty_group_step1' => 'Add a few candidates. You will all choose one of them.',
+        'empty_group_step2' => 'Press Share and invite the others.',
+        'empty_group_step3' => 'They vote for the one to get and say what they can put in.',
         'items' => ':count items',
         'one_item' => '1 item',
         'added' => 'Saved to your list.',
@@ -514,6 +628,7 @@ return [
         'share' => 'Share',
         'sharing_off' => 'Only you can see this list.',
         'sharing_on' => 'Anyone with the link can see this list.',
+        'share_hint' => 'This list is private. Share it and anyone with the link can see it.',
         'enable_sharing' => 'Create a share link',
         'disable_sharing' => 'Stop sharing',
         'copy_link' => 'Copy link',
@@ -526,7 +641,6 @@ return [
         'already_claimed' => 'Someone else just claimed that one.',
         'cannot_unclaim' => 'You can only undo your own claim, and only within a day.',
         'shared_intro' => 'Tap an item to mark that you are getting it. :name will not see who claimed what.',
-        'owner_view_note' => 'This is your own list, so claims are hidden from you, that is the point.',
         'recipient_added' => 'Person added.',
         'recipient_removed' => 'Person removed.',
         'add_person' => 'Add a person',
@@ -546,7 +660,7 @@ return [
         'not_claimable' => 'This is a shortlist, not a wish list, so nothing here can be claimed.',
         'asked_for' => 'What :name asked for',
         'asked_none' => ':name has not put anything on a list yet.',
-        'my_finds' => 'What I found',
+        'my_finds' => 'The list',
         'collaborator_invited' => 'If they have an account, they can see this list now.',
         'collaborator_removed' => 'Removed.',
         'collaborators' => 'People',
@@ -561,13 +675,52 @@ return [
         'unfollow' => 'Unfollow',
         'followed' => 'Following them now.',
         'shared_intro_anon' => 'Tap an item to mark that you are getting it. Whoever made this list will not see who claimed what.',
+        'shared_intro_gift' => 'Several of you are buying for this person. Mark what you are getting so nobody buys the same thing twice.',
+        'shared_intro_group' => 'You are all buying one present together. Vote for the one to get, then say what you can put in.',
+        'progress_gift' => ':claimed of :total spoken for',
+        /*
+         * What kind of list this is, and what that means you can do with it.
+         *
+         * The badge names the kind and never changes. The sentence reads the
+         * kind AND whether anybody else is on the list: most lists are private,
+         * and a private list offers none of the mechanisms — so it says what
+         * the list is now, then what sharing would do. That second half is the
+         * only place these features are ever taught.
+         *
+         * See resources/js/Components/ListKindBadge.tsx.
+         */
+        'claimed_by' => ':name is getting this',
+        'claim_anonymous_note' => 'Nobody will see it was you — not even the person organising this list.',
+        'claim_named_note' => 'Your name will be shown to the others on this list, so they know who is getting what.',
+        'claim_privacy' => 'Who can see who claimed what?',
+        'claim_mine_show_hint_gift' => 'On by default: this list is about somebody else, so seeing what is covered is the point of it.',
+        'claim_mine_show_hint_mine' => 'Off by default: a wish list works because you do not know what is coming. Turn it on if you would rather see.',
+        'claim_mine_show' => 'Show me what has been claimed',
+        'claim_mine' => 'What you see',
+        'claim_privacy_anonymous' => 'Nobody sees names',
+        'claim_privacy_anonymous_hint' => 'People see that something is taken, never by whom.',
+        'claim_privacy_named' => 'Everyone sees names',
+        'claim_privacy_named_hint' => 'They see who is getting what. Good for people who all know each other, like siblings buying for a parent.',
+        'kind_mine' => 'Wish list',
+        'kind_for_someone' => 'Gift list',
+        'kind_group' => 'Group gift',
+        'about_mine_private' => 'Things you are keeping. Only you can see this — share it and people can claim them, and you will never see which.',
+        'about_mine_shared' => 'People can claim things off this list. You will never see which.',
+        'about_for_someone_private' => 'A list about them, and only you can see it. Share it if several of you are buying.',
+        'about_for_someone_shared' => 'Several of you are buying different things. Claim one so nobody doubles up.',
+        'about_group_private' => 'Nobody can join yet. Press People to invite them.',
+        'about_group_shared' => 'You are buying one present together. Vote for it, then say what you can put in.',
+        'quiz_unlocks' => 'Share it and you can send it as a quiz: four products, one really yours. See who knows you best.',
+        'new_mine_body' => 'Things you would like. Keep it to yourself, or share it and people can claim them.',
+        'new_for_someone_body' => 'A list about them. Keep it to yourself, or share it and split the shopping.',
+        'new_group_body' => 'Several of you buy one present and split it. Everyone votes and chips in.',
+
         'for_me' => 'For me',
         'for_someone_else' => 'For someone else',
         // The third kind. Named by what you do rather than by what it is
         // called internally: "group list" describes our schema, "together, for
         // someone" describes the afternoon you are about to have.
         'for_group' => 'Together, for someone',
-        'for_group_hint' => 'Several of you choosing one present. Everyone can put in a share, and only you see who put in what.',
         'group_gift' => 'Group gift',
         'start_group_gift' => 'Start a group gift',
         'for_person' => 'For :name',
@@ -579,6 +732,7 @@ return [
         'share_instagram' => 'Instagram cannot take links from a browser — copy it and paste it there.',
         'shared_badge' => 'Shared — anyone with the link can see it',
         'private_badge' => 'Private to you',
+        'owner_view_note' => 'This is your own list, so claims are hidden from you, that is the point.',
     ],
 
     /*
@@ -596,16 +750,20 @@ return [
         'saved' => 'Saved. They will see it next time they look.',
         'linked' => 'This is you now.',
         'claim_this_is_me' => 'This is me',
+        'claim_is_you' => 'This is the link you send them. You made this list, so it cannot be your own — they say "this is me" at their end.',
+        'claim_sign_in' => 'Sign in to say this is you. Then this becomes your own list, and you can share it with anyone.',
         'claim_hint' => 'Link this to your account and your own lists show up when they shop for you.',
         'my_list' => 'What :name would like',
         'about_you' => 'About you',
+        'step_interests' => 'What are you into?',
+        'step_vibe' => 'How should it feel?',
+        'step_values' => 'Anything that matters to you?',
         'your_list' => 'Things you would like',
         'add_something' => 'Add something',
         'search_placeholder' => 'Search for something you want',
         'suggest' => 'Show me ideas',
         'suggest_hint' => 'Not sure? Answer the questions above and we will suggest things.',
         'nothing_yet' => 'Nothing here yet. Add the first thing.',
-        'privacy_note' => 'You will never see who is getting what. That is the whole idea.',
         'ask_them' => 'Ask them what they want',
         'ask_them_hint' => 'Send this link. They fill in their own tastes and never see what you picked.',
     ],
@@ -734,11 +892,15 @@ return [
         'items_count' => ':count things saved',
         'open_list' => 'Open my wishlist',
         'start_list' => 'Start my wishlist',
+        'my_wishlists' => 'My wishlists',
+        'another_list' => 'Another wishlist',
+        'lists_count' => ':count wishlists',
         'privacy' => 'One rule runs through all of it: the person a list is for never learns what has been claimed. Not who, not how many, not that anything has.',
 
         'manual' => 'How each one works',
         'manual_link' => 'How each one works',
         'manual_intro' => 'Nine tools and the steps for each. Every button named below is a button on the page it sends you to.',
+        'manual_back' => 'Back to the Gift Cove',
 
         'wishlist_title' => 'My wishlist',
         'wishlist_body' => 'Things you would actually like. Share it and people can mark what they are getting, without you ever seeing who took what.',
@@ -750,13 +912,13 @@ return [
         'giftlist_body' => 'Somewhere to gather ideas for one person. Private to you, and never claimable, because it is research rather than a registry.',
         'giftlist_step1' => 'Press New list, choose "For someone else" and name the person. This card opens that form already on that setting.',
         'giftlist_step2' => 'Save things to it as you come across them, exactly as you would to any other list.',
-        'giftlist_step3' => 'Nothing on it can be claimed and nobody else can see it, so change your mind as often as you like.',
+        'giftlist_step3' => 'Keep it to yourself, or press Share: then the others can see it and mark what they are getting, so nobody buys the same thing twice.',
 
         'collab_title' => 'Buy together',
         'collab_body' => 'Invite other people onto a gift list so several of you can choose together, or pledge towards one bigger present and let one person buy it.',
         'collab_step1' => 'Press New list, choose "Together, for someone", and name the person it is for.',
-        'collab_step2' => 'Add each co-giver by email. A viewer can look; an editor can add and remove things.',
-        'collab_step3' => 'Choose together. If the person has a wishlist of their own, that is where you say what you are getting, so two of you never buy the same thing.',
+        'collab_step2' => 'Press Share and add each co-giver by email. A viewer can look; an editor can add and remove things.',
+        'collab_step3' => 'Choose together, and mark what you are getting so two of you never buy the same thing. Under Share you also decide whether names are shown.',
 
         'handover_title' => 'Hand a list over',
         'handover_body' => 'Started a list for someone before they were here? Give it to them once they join, and it becomes their own wishlist.',
@@ -772,7 +934,7 @@ return [
 
         'registry_title' => 'A registry',
         'registry_body' => 'A wishlist with an occasion and a date on it, for a wedding, a baby or a new home. Add a delivery address and only people who have claimed something can see it.',
-        'registry_step1' => 'Open your own wishlist and press Registry.',
+        'registry_step1' => 'Open one of your wishlists and press Share, then fill in Special occasion.',
         'registry_step2' => 'Pick the occasion and the date, and add a delivery address if people should be posting things to you.',
         'registry_step3' => 'Share it as you would any list. It behaves like one: people claim, and you are never told what.',
 
@@ -1089,6 +1251,19 @@ return [
      * shopping for" is the question most visitors actually arrive with.
      */
     'gift_ideas' => [
+
+        /*
+         * The placeholder title a drafted persona wears.
+         *
+         * `PlanDrafter` writes one per interest the gift wizard knows about,
+         * so a market's persona shelf can be filled with shortlists to react
+         * to rather than a blank table. It is deliberately dull: the interest
+         * leads so that a label like "DIY" or "The outdoors" keeps its own
+         * capitalisation, and no adjective has to agree with a noun in four
+         * languages. A person renames it before approving.
+         */
+        'draft_title' => ':interest — gift ideas',
+
         'title' => 'Gift ideas, by person',
         'description' => 'Presents chosen around a person rather than a date — the herbalist, the dad who has everything, the friend who reads.',
         'empty' => 'Nothing here yet. These are written one at a time, and the first is on its way.',
@@ -1327,11 +1502,21 @@ return [
     ],
 
     'guides' => [
+        /*
+         * The heading is the Cove name; the `seo_*` pair is deliberately not.
+         *
+         * "Inspiration Coves" is what this section is called on this site and
+         * is what the header, the footer and the front page say — but nobody
+         * searches for it, because it is our word. The <title> and the meta
+         * description still lead with "buying guides", which is the phrase a
+         * person actually types. A brand name in an H1 and the reader's own
+         * vocabulary in the <title> is the normal split, not an inconsistency.
+         */
         'seo_title' => 'Buying guides with prices compared per product',
-        'title' => 'Buying guides',
-        'subtitle' => 'Written from what people search for here, not from a keyword tool.',
+        'title' => 'Inspiration Coves',
+        'subtitle' => 'Shopping inspiration and buying guides, written from what people search for here rather than from a keyword tool.',
         'seo_description' => 'Buying guides built from real search demand, with live prices compared across every shop that stocks each product.',
-        'empty' => 'No guides yet. They are written as topics build up enough demand.',
+        'empty' => 'No Inspiration Coves yet. They are written as topics build up enough demand.',
         'how_to_choose' => 'How to choose',
         'faq' => 'Questions',
         'updated' => 'Checked :date',

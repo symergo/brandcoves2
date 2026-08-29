@@ -61,7 +61,14 @@ someone's private research about their own mother**.
 | `kind` | Subject | A shared link means | Claimable |
 |---|---|---|---|
 | `mine` | the owner | "here is what I'd like" | **yes** |
-| `for_someone` | a `recipient_id` | "help me choose / don't double up" | **no** |
+| `for_someone` | a `recipient_id` | "help me choose / don't double up" | **yes**, since 2026-08-29 |
+| `group` | a `recipient_id` | "we are buying one present together" | **no** — pledges instead |
+
+> **The `for_someone` row said "no" for a year, and the row above it explains why that was wrong.**
+> "Don't double up" *is* claiming. What the `no` was really protecting is that claiming must not be
+> gated on visibility — which still holds, and is why `group` is not claimable either. Who may *see*
+> the claims inverts by kind; see
+> [list-taxonomy.md](list-taxonomy.md#claiming-on-a-gift-list-and-the-same-inversion-a-second-time).
 
 The recipient decides the kind; there is no separate switch that can contradict
 it. `Wishlist::allowsClaiming()` is the one place any lens asks.
@@ -110,6 +117,53 @@ the giver did.* No claim state on their own items, no view of the giver's
 `for_someone` list, no count of what has been picked.
 
 ---
+
+### Two ways the self-describe page was broken, 2026-08-29
+
+Both reported from a browser, and both invisible to the suite because the tests posted to endpoints
+rather than opening the page.
+
+**"This is me" answered 403.** `claim()` has always refused the *giver* — claiming your own stub
+would make you the recipient of your own gift research — and `canClaim` asked only "signed in, and
+not yet linked". So the likeliest visitor to this page, the giver checking the link before sending
+it, was offered a button that failed with no explanation. The page now mirrors the endpoint exactly
+and says which side of the link you are on; the endpoint still refuses, because hiding a button
+stops nobody hand-building the request. Same defect, and the same fix, as
+`allowsContributionsFrom()` and `canSuggest`.
+
+Somebody **signed out** now gets the way in rather than nothing. The token is the credential, so
+describing yourself needs no account — but saying "this is me" attaches a person to one, which makes
+this the short path to having an account rather than a refusal.
+
+**Searching wiped the page.** `suggest()` rendered `Recipients/SelfDescribe` with *only*
+`suggestions`, and the page reaches it through `router.get()` — a full visit, not a partial reload.
+Every other prop was therefore replaced with nothing, `person` came back undefined, and the page died
+on `person.name`. That is "the search does not work" as a person experiences it.
+
+Fixed by making the payload whole rather than by asking the client for a partial reload.
+`only: ['suggestions']` would also have worked and is one property short of correct: **a URL that
+renders a broken page when somebody refreshes it, or opens it from their history, is broken.**
+`/for/{token}/suggest?q=…` is a real address and has to stand on its own, so `page()` builds the
+whole payload and both routes use it.
+
+**And the questions were in the wrong person.** The page reused `gift.step_interests` and its two
+siblings — copy written for the Gift Whisperer, where you describe *somebody else* — so it asked the
+reader "what are **they** into?" about themselves. `recipients.step_*` is a second set in the second
+person; the wizard keeps its own, because there the third person is right.
+
+### Signing in without leaving the page
+
+`Components/SignInDialog` is the same two ways in as the login page, in a `<dialog>` over whatever
+you were doing. The places that need it are places somebody has already arrived with an intention —
+saying "this is me", keeping a product, claiming something — and navigating away throws that
+context out. `wishlists.md` records what that cost the save path before `PendingSave` existed; a
+dialog avoids the crossing rather than carrying the intent across it.
+
+Native `<dialog>` with `showModal()`, not a div: focus trapping, Escape, an inert page behind and a
+top-layer backdrop, all of which a hand-rolled overlay gets wrong for exactly the people who would
+notice. `auth.googleEnabled` moved to the shared Inertia props, because signing in is no longer
+something that only happens *on* the login page and the Google button must stay hidden when the
+client id is unset.
 
 ## Two engines, one pipeline
 

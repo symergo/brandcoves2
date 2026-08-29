@@ -59,6 +59,18 @@ class ContributionView
             return [];
         }
 
+        /*
+         * A group list pools on the *list*, so it has nothing per item.
+         *
+         * Without this the page would offer two ways to put money in — a pot in
+         * the header and a form under every candidate — and the totals would be
+         * two different numbers, both of them true about something.
+         * `forList()` is the only contribution path for this kind.
+         */
+        if ($list->kind->poolsOnTheList()) {
+            return [];
+        }
+
         // The owner of a wish list learns nothing here, and the cheapest way to
         // guarantee that is to never build the payload in the first place.
         if ($isOwner && ! $list->kind->ownerSeesContributions()) {
@@ -97,6 +109,54 @@ class ContributionView
         }
 
         return $out;
+    }
+
+    /**
+     * The pot on a group list: one payload for the whole thing.
+     *
+     * The per-item version above stays, and is the right shape for a `mine`
+     * list — several people chipping in for the one expensive thing on Anna's
+     * wishlist is a real act, and it is *about that thing*. A group list is the
+     * opposite: it is a shortlist precisely because nobody has decided, so
+     * pledging against one candidate asks people to bet, and most of those
+     * pledges end up attached to something nobody buys.
+     *
+     * Same privacy table as `forItems()`, applied once instead of per item —
+     * the organiser gets the breakdown, members get the total and their own
+     * share. Null rather than an empty shape when there is nothing to say, so
+     * the page renders no pot at all rather than an empty one.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function forList(Wishlist $list, Owner $viewer, bool $isOwner): ?array
+    {
+        /*
+         * Asked as `poolsOnTheList()`, not as `ownerSeesContributions()`.
+         *
+         * Those two are the same set today — both mean `Group` — and reusing
+         * the second here would read as "the pot exists because the organiser
+         * may see it", which is not why. One is about *where the money is
+         * attached*, the other about *who may look at it*, and a gate that
+         * works because two unrelated questions happen to have the same answer
+         * stops working silently the day they diverge. That is exactly how the
+         * quiz ended up offerable over a list about somebody else.
+         */
+        if (! $list->kind->poolsOnTheList()) {
+            return null;
+        }
+
+        $pledges = $list->pledges;
+
+        if ($pledges->isEmpty() && ! $list->allowsContributionsFrom($viewer)) {
+            return null;
+        }
+
+        return [
+            'total' => (int) $pledges->sum('amount'),
+            'count' => $pledges->count(),
+            'mine' => $this->mine($pledges, $viewer),
+            ...$isOwner ? ['breakdown' => $this->breakdown($pledges)] : [],
+        ];
     }
 
     /**

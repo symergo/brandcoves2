@@ -27,6 +27,37 @@ final readonly class SearchResult
         public array $liveOffers = [],
     ) {}
 
+    /**
+     * The facets, with their counts left behind.
+     *
+     * The count is what *orders* the facet list — most-stocked brand first,
+     * fifteen of them — and it is not something to print beside a checkbox. A
+     * number there describes our catalogue rather than the thing being looked
+     * for, and it is computed against a cached aggregate while the grid beside
+     * it is live, so the two disagree by design.
+     *
+     * Shaped here rather than in each controller because both the search page
+     * and the brand page render the same rail, and a count reintroduced on one
+     * of them is exactly the sort of drift that goes unnoticed.
+     *
+     * @return array{brands: list<array{value: string}>, merchants: list<array{id: int, name: string}>, price: array{min: int|null, max: int|null}}
+     */
+    public function facetsWithoutCounts(): array
+    {
+        return [
+            'brands' => array_map(
+                fn (array $f) => ['value' => $f['value']],
+                $this->facets['brands'] ?? [],
+            ),
+            'merchants' => array_map(
+                fn (array $f) => ['id' => $f['id'], 'name' => $f['name']],
+                $this->facets['merchants'] ?? [],
+            ),
+            // The price range is a filter bound, not a count of anything.
+            'price' => $this->facets['price'] ?? ['min' => null, 'max' => null],
+        ];
+    }
+
     public function isEmpty(): bool
     {
         return $this->groups->total() === 0;

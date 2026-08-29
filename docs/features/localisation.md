@@ -147,6 +147,46 @@ homepage.
 > loads, which is what hreflang requires; translated slugs are a Phase 6 concern
 > once guides exist per market.
 
+## A stored string we wrote: "My wishlist"
+
+Added 2026-08-29. Almost every list title is typed by a person and is simply
+stored and shown. The default list is the exception — nobody chose that name, we
+did — and storing it froze it in the language of whichever market the owner
+happened to be on when the list was created. Someone who started on `/en` and
+then switched to `/be-nl` had a list called "My wishlist" sitting among Dutch
+pages, permanently, because the row holds the words rather than a key.
+
+`site.lists.default_title` was translated in all four languages the whole time.
+The bug was never a missing translation; it was that the string had already been
+written into a database column before anybody chose a language.
+
+**So the stored value is a record of what we wrote, and the rendered value is
+looked up fresh.** `App\Services\Wishlist\DefaultTitle` owns both halves:
+
+- `isOurs()` — is this a name we wrote, in **any** language? It compares against
+  `site.lists.default_title` in every language `Market::languages()` lists, plus
+  the retired pre-`DefaultList` names (`Saved items`, `Bewaard`, `Enregistrés`,
+  `Guardados`) that are in no language file any more but are still in rows.
+- `current(?string $language)` — what to call it now. The argument is for the
+  places not rendering to the reader in front of us: an invitation mail goes out
+  in the language of the list's *market*, not of whoever pressed send.
+
+`Wishlist::displayTitle()` is what every surface reads. A title a person typed is
+returned untouched, because they meant something by it.
+
+**The comparison being locale-independent is the point, not a detail.**
+`SharedListController` replaces our own default name with "Sanne's wishlist" for
+visitors — a link arriving in a group chat titled "My wishlist" belongs to
+nobody. That branch used to test `$list->title === __('site.lists.default_title')`
+against the *active* locale only, so a list created on `/en` and opened on
+`/be-nl` failed to be recognised as ours and went out anonymous. Pinned by
+`a_shared_default_list_is_named_after_its_owner_in_any_language`.
+
+The general rule this is an instance of: **if the application writes a
+user-visible string into a column, it also needs a way to recognise its own
+writing later.** Anything stored is stored in one language, and the reader gets
+to pick a different one.
+
 ## Guardrails
 
 `LocalisationTest` pins the behaviour, including two tests that exist to stop

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\CoveKind;
 use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
@@ -14,6 +13,8 @@ use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use App\Support\PreviewAccess;
+use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -64,12 +65,35 @@ class GuideController extends Controller
 
     public function show(Request $request, CurrentMarket $current, string $market, string $slug): Response
     {
+        return $this->render($request, $current, $slug, fn (Builder $q) => $q->articles());
+    }
+
+    /**
+     * A Shop Cove: the same page, read from a different URL space.
+     *
+     * `/shops/{slug}` rather than `/guides/{slug}`, because a piece about what
+     * a shop is like to buy from belongs above the directory of shops rather
+     * than in the archive of buying guides. Everything below this line is
+     * identical — the allowlist, the prose resolution, the FAQ, the preview
+     * gate and the structured data are properties of *an article*, and a second
+     * copy of them would drift within a month.
+     */
+    public function shop(Request $request, CurrentMarket $current, string $market, string $slug): Response
+    {
+        return $this->render($request, $current, $slug, fn (Builder $q) => $q->shops());
+    }
+
+    /**
+     * @param  Closure(Builder<DailyPickSet>): mixed  $kinds
+     */
+    private function render(Request $request, CurrentMarket $current, string $slug, Closure $kinds): Response
+    {
         // An admin, or somebody holding a signed preview link, reads the draft.
         $preview = PreviewAccess::allowed($request);
 
         $guide = DailyPickSet::query()
             ->where('market', $current->value())
-            ->articles()
+            ->tap($kinds)
             ->where('slug', $slug)
             ->unless($preview, fn ($query) => $query->where('status', PublishStatus::Published->value))
             ->with(['picks.group'])
@@ -151,7 +175,7 @@ class GuideController extends Controller
                  * values the React page already knows about means the fold
                  * changed no component props.
                  */
-                'kind' => $guide->kind === CoveKind::Advice ? 'advice' : 'buying',
+                'kind' => $guide->kind->expectsShortlist() ? 'buying' : 'advice',
                 'intro' => $this->prose($guide->theme_blurb, $current, $allowed),
                 'body' => $this->prose($guide->body, $current, $allowed),
                 'faq' => $this->faq($guide, $current, $allowed),
@@ -247,16 +271,17 @@ class GuideController extends Controller
              * nothing left to say and should not be indexed. An advice article
              * has no products by design and is the most indexable thing on the
              * site, so applying the same rule would `noindex` exactly the pages
-             * written to rank.
+             * written to rank — and a Shop Cove is the same case, which is why
+             * this asks `expectsShortlist()` rather than naming Advice.
              */
             robots: $preview
                 ? 'noindex, nofollow'
-                : ($items === [] && $guide->kind !== CoveKind::Advice ? 'noindex, follow' : null),
+                : ($items === [] && $guide->kind->expectsShortlist() ? 'noindex, follow' : null),
         );
 
         // An ItemList of nothing asserts that this page ranks nothing, which is
-        // worse than staying quiet — so an advice article emits no ItemList at
-        // all rather than an empty one.
+        // worse than staying quiet — so a kind with no shortlist emits no
+        // ItemList at all rather than an empty one.
         if ($items !== []) {
             $meta->addJsonLd(StructuredData::itemList(
                 array_map(fn (array $item) => [

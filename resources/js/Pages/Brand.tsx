@@ -24,8 +24,8 @@ interface Props {
     sort: string
     view: 'grid' | 'store'
     facets: {
-        brands: { value: string; count: number }[]
-        merchants: { id: number; name: string; count: number }[]
+        brands: { value: string }[]
+        merchants: { id: number; name: string }[]
         price: { min: number | null; max: number | null }
     }
     results: {
@@ -57,7 +57,7 @@ interface Props {
         externalId: string
     }[]
     coves: { title: string; intro: string | null; url: string }[]
-    related: { name: string; url: string; count: number }[]
+    related: { name: string; url: string }[]
 }
 
 /**
@@ -107,7 +107,12 @@ export default function Brand({
             const v = next[k]
             if (v === null || v === undefined || v === '' || v === false) delete next[k]
         })
-        router.get(base, next as Record<string, string>, { preserveScroll: true, preserveState: true })
+        router.get(base, next as Record<string, string>, {
+            // `brand[]=`, not `brand[0]=`. See the note in Search.tsx.
+            queryStringArrayFormat: 'brackets',
+            preserveScroll: true,
+            preserveState: true,
+        })
     }
 
     return (
@@ -245,7 +250,6 @@ export default function Brand({
                                                     className="accent-accent"
                                                 />
                                                 <span className="flex-1 truncate">{m.name}</span>
-                                                <span className="text-xs text-ink-soft">{n(m.count)}</span>
                                             </label>
                                         </li>
                                     )
@@ -288,7 +292,6 @@ export default function Brand({
                                     <li key={other.url}>
                                         <Link href={other.url} className="flex gap-2 hover:text-accent">
                                             <span className="flex-1 truncate">{other.name}</span>
-                                            <span className="text-xs text-ink-soft">{n(other.count)}</span>
                                         </Link>
                                     </li>
                                 ))}
@@ -304,8 +307,8 @@ export default function Brand({
                 <section className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                         <h2 className="text-sm text-ink-soft">
+                            {/* No total, for the reason written out in Search.tsx. */}
                             {t('brand.products_heading', { brand: brand.name })}
-                            {results.total > 0 && ` · ${t('search.count', { count: n(results.total) })}`}
                         </h2>
 
                         <div className="ml-auto">

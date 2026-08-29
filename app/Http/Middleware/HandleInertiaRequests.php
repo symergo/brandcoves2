@@ -56,6 +56,17 @@ class HandleInertiaRequests extends Middleware
                     'email' => $request->user()->email,
                     'isAdmin' => $request->user()->is_admin,
                 ],
+
+                /*
+                 * Shared rather than a prop of the login page, because signing
+                 * in is no longer only something that happens *on* that page:
+                 * `SignInDialog` offers the same two ways from wherever
+                 * somebody hits the wall, and it must not offer a Google button
+                 * that leads to an exception when the client id is unset.
+                 *
+                 * A config read per request, on a page most visitors see once.
+                 */
+                'googleEnabled' => filled(config('services.google.client_id')),
             ],
 
             'market' => [

@@ -133,7 +133,7 @@ class PendingSave
 
             $saver->saveGroup($list, $group, $current);
 
-            return $list->title;
+            return $list->displayTitle();
         }
 
         $source = Source::tryFrom((string) ($payload['source'] ?? ''));
@@ -159,6 +159,6 @@ class PendingSave
             ],
         );
 
-        return $list->title;
+        return $list->displayTitle();
     }
 }

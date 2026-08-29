@@ -242,6 +242,23 @@ enum Market: string
         };
     }
 
+    /**
+     * Every language this application speaks, each once.
+     *
+     * Five markets, four languages — `be-nl` and `nl-nl` share one. Anything
+     * that has to be produced in *all* of them (a stored string translated
+     * after the fact, a language-independent comparison) iterates this rather
+     * than `cases()`, which would do the Dutch work twice.
+     *
+     * @return list<string>
+     */
+    public static function languages(): array
+    {
+        return array_values(array_unique(
+            array_map(fn (self $m): string => $m->language(), self::cases()),
+        ));
+    }
+
     /** @return list<string> */
     public static function values(): array
     {

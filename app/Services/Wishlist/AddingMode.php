@@ -92,6 +92,6 @@ class AddingMode
             return null;
         }
 
-        return ['id' => $list->id, 'title' => $list->title];
+        return ['id' => $list->id, 'title' => $list->displayTitle()];
     }
 }

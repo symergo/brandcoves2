@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react'
 import { useTranslations } from '../useTranslations'
 
 interface Props {
-    brands: { name: string; url: string; count: number }[]
+    brands: { name: string; url: string }[]
 }
 
 /**
@@ -69,9 +69,6 @@ export default function Brands({ brands }: Props) {
                                         <li key={brand.url}>
                                             <Link href={brand.url} className="flex gap-2 py-0.5 hover:text-accent">
                                                 <span className="flex-1 truncate">{brand.name}</span>
-                                                <span className="shrink-0 text-xs text-ink-soft">
-                                                    {n(brand.count)}
-                                                </span>
                                             </Link>
                                         </li>
                                     ))}

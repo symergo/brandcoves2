@@ -63,6 +63,32 @@ wrong for eleven months of the year. Its prompt says: name the season, never dat
 reader — and it is given `{season}`, the window itself, so it can be specific without
 being timely.
 
+**And it now names the title as a thing to be written, because it was the one output
+nobody had briefed.** The model has always returned a `title` — it is in
+`GuideWriter`'s schema hint — but the seasonal system prompt asked for "three things"
+and listed the intro, the how-to-choose and the entries. Given no guidance and a
+`{title}` in the *input* that is only the topic word (`TopicPlanner` seeds a plan's
+title as `Str::ucfirst($topic->topic)`, so "barbecue"), the model reached for the
+formula every competitor already uses: "the best barbecues". A title that describes
+the page's *format* is interchangeable with every other page on the subject, which is
+the one thing a page competing on a known season cannot afford.
+
+The rules that follow are all consequences rather than taste. No "the best", "top 10",
+"the ultimate" or a leading number. Keep the subject recognisable, because clever and
+unidentifiable loses the scan of a results page — a real tension, since `focus_keyphrase`
+is a separate field and it is tempting to let the title go fully abstract once the
+keyphrase is safe. Under ten words, no stacked subtitle. And no year and no "this
+season", which is the seasonal rule the rest of the prompt already lives by: a title
+that dates is a title that expires, on a page written to be read eight weeks early, on
+the day, and again next year.
+
+> **The AI-off fallback still says "the best".** `GuideWriter::template()` titles from
+> `site.guides.template_title` — "De beste :topic" / "The best :topic" — and that slot
+> is shared with ordinary buying guides in four languages. It only appears when
+> `AI_ENABLED=false` or the call fails, and on a seasonal topic it also reads badly
+> ("De beste schoonmaken"). Changing it is a separate decision because it is not
+> seasonal-only.
+
 The other three differ for smaller reasons. A **Daily** is one morning's edition and
 must not refer to yesterday's or promise tomorrow's, because it is mostly read later
 from the archive. A **guide** is a comparison, so "best for X" is required and "the

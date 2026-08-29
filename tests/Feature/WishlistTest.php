@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\ClaimVisibility;
+use App\Enums\CollaboratorRole;
 use App\Enums\ListKind;
+use App\Enums\ListVisibility;
 use App\Enums\Market;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AnonymousIdentity;
@@ -12,6 +15,7 @@ use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Models\WishlistCollaborator;
 use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -47,6 +51,49 @@ class WishlistTest extends TestCase
     private function user(string $email = 'owner@example.test'): User
     {
         return User::create(['email' => $email]);
+    }
+
+    /**
+     * A list about a third person, with one item on it.
+     *
+     * Takes the kind and the visibility because the three questions this file
+     * now asks — may you claim, who sees it, under what name — all turn on
+     * those two and nothing else.
+     *
+     * @return array{Wishlist, WishlistItem}
+     */
+    private function giftListForSomeone(
+        ListKind $kind = ListKind::ForSomeone,
+        ListVisibility $visibility = ListVisibility::Link,
+    ): array {
+        // A distinct owner per call: this helper is used inside a loop over the
+        // three kinds, and `user()` defaults to one address.
+        $owner = $this->user('owner-'.bin2hex(random_bytes(4)).'@example.test');
+
+        $recipient = Recipient::create([
+            'owner_user_id' => $owner->id,
+            'name' => 'Mum',
+        ]);
+
+        $list = Wishlist::create([
+            'owner_user_id' => $owner->id,
+            // A `mine` list is about its owner, and a group list is refused by
+            // `wishlists_group_has_recipient` without one.
+            'recipient_id' => $kind === ListKind::Mine ? null : $recipient->id,
+            'title' => 'Gifts for Mum',
+            'market' => Market::BeNl,
+            'kind' => $kind,
+            'visibility' => $visibility,
+        ]);
+
+        $item = WishlistItem::create([
+            'wishlist_id' => $list->id,
+            'group_id' => $this->group()->id,
+            'snapshot_title' => 'Sony WH-1000XM5',
+            'snapshot_price' => 32999,
+        ]);
+
+        return [$list, $item];
     }
 
     #[Test]
@@ -225,7 +272,7 @@ class WishlistTest extends TestCase
             ->get("/be-nl/l/{$list->share_token}")
             ->assertInertia(fn ($page) => $page
                 ->where('isOwner', true)
-                ->where('items.0.claimed', null));
+                ->missing('items.0.claimed'));
     }
 
     #[Test]
@@ -261,7 +308,7 @@ class WishlistTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('isOwner', true)
-                ->where('items.0.claimed', null));
+                ->missing('items.0.claimed'));
     }
 
     #[Test]
@@ -291,41 +338,281 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
-    public function a_list_for_someone_else_is_never_claimable(): void
+    public function a_shared_list_for_someone_else_is_claimable(): void
     {
-        $owner = $this->user();
-
-        $recipient = Recipient::create([
-            'owner_user_id' => $owner->id,
-            'name' => 'Mum',
-        ]);
-
-        $list = Wishlist::create([
-            'owner_user_id' => $owner->id,
-            'recipient_id' => $recipient->id,
-            'title' => 'Gifts for Mum',
-            'market' => Market::BeNl,
-            'kind' => ListKind::ForSomeone,
-            'visibility' => 'link',
-        ]);
-
-        $item = WishlistItem::create([
-            'wishlist_id' => $list->id,
-            'group_id' => $this->group()->id,
-            'snapshot_title' => 'Sony WH-1000XM5',
-            'snapshot_price' => 32999,
-        ]);
-
         /*
-         * Sharing private research with a co-giver is coordination, not a
-         * registry. Gating on visibility alone made every shared list
-         * claimable, including one whose subject is a person who never asked
-         * for any of it.
+         * This test used to be `a_list_for_someone_else_is_never_claimable`,
+         * and reversing it is the point rather than an accident.
+         *
+         * The old rule read "sharing private research with a co-giver is
+         * coordination, not a registry" — correct about what the list is, and
+         * it drew the wrong conclusion. Coordination is *exactly* what claiming
+         * does: it stops two siblings buying the same thing. The kind was doing
+         * two jobs, and refusing to claim was the wrong half.
+         *
+         * What has NOT changed is the rule underneath it. Gating claiming on
+         * visibility alone was the original bug, and it stays fixed: a `group`
+         * list is shared and still not claimable, because there is one present
+         * and nothing to divide.
          */
+        [$list, $item] = $this->giftListForSomeone();
+
+        $this->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+            ->assertRedirect();
+
+        $this->assertNotNull($item->fresh()->claimed_by_hash);
+    }
+
+    #[Test]
+    public function a_group_list_is_shared_and_still_not_claimable(): void
+    {
+        // One present, bought by everybody. There is nothing to claim, and
+        // saying "I will get this" about a candidate the group has not chosen
+        // is not a thing anybody means. Pledges are the mechanism here.
+        [$list, $item] = $this->giftListForSomeone(ListKind::Group);
+
         $this->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
             ->assertForbidden();
 
         $this->assertNull($item->fresh()->claimed_by_hash);
+    }
+
+    // --- Claiming needs somebody to coordinate with --------------------------
+
+    #[Test]
+    public function a_private_list_of_any_kind_offers_no_claiming(): void
+    {
+        /*
+         * Most lists are private, of every kind: a gift list about somebody is
+         * usually solo research, and the default wish list every account gets
+         * is simply where a bookmark lands. Claiming exists to stop two people
+         * buying the same thing, so it is noise until there is a second person
+         * — and a claim-privacy setting about an audience of one is worse than
+         * noise, because it implies readers who do not exist.
+         *
+         * Asserted on the model rather than through the endpoint on purpose.
+         * `findShared()` 404s a private list, so the route cannot reach this
+         * question at all; the page reads `allowsClaiming()` to decide what
+         * controls to draw, and that is what has to be false.
+         */
+        foreach ([ListKind::Mine, ListKind::ForSomeone, ListKind::Group] as $kind) {
+            [$list] = $this->giftListForSomeone($kind, ListVisibility::Private);
+
+            $this->assertFalse(
+                $list->allowsClaiming(),
+                "A private {$kind->value} list should offer no claiming.",
+            );
+        }
+    }
+
+    #[Test]
+    public function sharing_a_gift_list_turns_claiming_on(): void
+    {
+        [$list] = $this->giftListForSomeone(ListKind::ForSomeone, ListVisibility::Private);
+
+        $this->assertFalse($list->allowsClaiming());
+
+        $list->update(['visibility' => ListVisibility::Link]);
+
+        $this->assertTrue($list->fresh()->allowsClaiming());
+    }
+
+    #[Test]
+    public function inviting_a_co_giver_turns_claiming_on_without_sharing_a_link(): void
+    {
+        /*
+         * The other half of "is anybody else on this list". An invited
+         * collaborator is a second person just as surely as a pasted link is,
+         * and the owner's own page has to offer the controls to them.
+         */
+        [$list] = $this->giftListForSomeone(ListKind::ForSomeone, ListVisibility::Private);
+
+        WishlistCollaborator::create([
+            'wishlist_id' => $list->id,
+            'user_id' => $this->user('cogiver@example.test')->id,
+            'role' => CollaboratorRole::Editor,
+        ]);
+
+        $this->assertTrue($list->fresh()->allowsClaiming());
+    }
+
+    // --- Who sees a claim, and under whose name -----------------------------
+
+    #[Test]
+    public function the_owner_of_a_gift_list_sees_claim_state(): void
+    {
+        /*
+         * The inversion, and the reason the whole feature works.
+         *
+         * On a `mine` list the owner IS the person being surprised, so
+         * invariant #4 hides everything from them. On a list about somebody
+         * else the recipient is a third party who never opens the page — there
+         * is no surprise to protect *from the owner*, and the owner is the
+         * person organising the buying. Hiding it from them leaves the one
+         * person co-ordinating as the only one who cannot see what is covered.
+         *
+         * Exactly the inversion `ListKind::ownerSeesContributions()` already
+         * makes for money on a group list.
+         */
+        [$list, $item] = $this->giftListForSomeone();
+
+        $item->claim(WishlistItem::identityHash('anon:a-sibling'));
+
+        $this->actingAs($list->owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('isOwner', true)
+                ->where('items.0.claimed', true));
+    }
+
+    #[Test]
+    public function a_wish_list_owner_still_never_sees_claim_state(): void
+    {
+        /*
+         * Invariant #4, asserted beside the inversion rather than only in its
+         * own test far away. These two are one decision, and the way it breaks
+         * is somebody widening the gift-list branch by one kind.
+         */
+        [$list, $item] = $this->giftListForSomeone(ListKind::Mine);
+
+        $item->claim(WishlistItem::identityHash('anon:a-friend'));
+
+        $this->actingAs($list->owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('isOwner', true)
+                ->missing('items.0.claimed'));
+    }
+
+    #[Test]
+    public function a_wish_list_owner_can_ask_to_see_claims_and_only_then_does(): void
+    {
+        /*
+         * Invariant #4 became a **default** on 2026-08-29 rather than an
+         * absolute: hidden unless the owner has explicitly asked otherwise.
+         *
+         * The half that matters is the assertion above this one — nothing
+         * *infers* it. Not sharing, not inviting somebody, not putting an
+         * occasion on the list. Only this press, stored as a boolean that
+         * starts null, which is why `ownerSeesClaims()` distinguishes "never
+         * asked" from "said no".
+         */
+        [$list, $item] = $this->giftListForSomeone(ListKind::Mine);
+
+        $item->claim(WishlistItem::identityHash('anon:a-friend'));
+
+        $this->assertFalse($list->ownerSeesClaims(), 'A wish list hides by default.');
+
+        $list->update(['owner_sees_claims' => true]);
+
+        $this->actingAs($list->owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('isOwner', true)
+                ->where('items.0.claimed', true));
+    }
+
+    #[Test]
+    public function what_the_owner_sees_and_what_the_others_see_are_two_settings(): void
+    {
+        /*
+         * They were one three-valued enum, in which "hide claims from me" sat
+         * among options otherwise about *names* — so the third meant something
+         * different per kind of list, and this combination could not be
+         * expressed at all: **show me the claims, and let the others see each
+         * other's names.**
+         */
+        [$list, $item] = $this->giftListForSomeone(ListKind::Mine);
+
+        $list->update([
+            'owner_sees_claims' => true,
+            'claim_visibility' => ClaimVisibility::Named,
+        ]);
+
+        $item->claim(WishlistItem::identityHash('anon:anna'), 'Anna');
+
+        $this->actingAs($list->owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('items.0.claimed', true)
+                ->where('items.0.claimedBy', 'Anna'));
+    }
+
+    #[Test]
+    public function an_owner_who_asks_to_be_kept_out_is_kept_out(): void
+    {
+        /*
+         * The opt-out exists for one real case: a list about "the family" that
+         * the owner might end up receiving from. They give up the coordinating
+         * view deliberately, and everybody else keeps it.
+         */
+        [$list, $item] = $this->giftListForSomeone();
+        $list->update(['owner_sees_claims' => false]);
+
+        $item->claim(WishlistItem::identityHash('anon:a-sibling'));
+
+        $this->actingAs($list->owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->missing('items.0.claimed'));
+
+        // And a visitor still coordinates normally: the setting is about the
+        // owner alone, not about turning the mechanism off.
+        auth()->logout();
+
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('items.0.claimed', true));
+    }
+
+    #[Test]
+    public function a_claim_carries_a_name_only_when_the_list_asks_for_one(): void
+    {
+        /*
+         * A name shown to other people is a consent decision, so it is stored
+         * only when the list was in `named` mode at the moment of the claim —
+         * never backfilled by a later change of setting, because nobody
+         * consented to it then.
+         */
+        [$anon, $anonItem] = $this->giftListForSomeone();
+
+        $this->post("/be-nl/l/{$anon->share_token}/claim/{$anonItem->id}", [
+            'display_name' => 'Anna',
+        ])->assertRedirect();
+
+        $this->assertNull(
+            $anonItem->fresh()->claimed_by_name,
+            'An anonymous list must discard a name even when one is posted.',
+        );
+
+        [$named, $namedItem] = $this->giftListForSomeone();
+        $named->update(['claim_visibility' => ClaimVisibility::Named]);
+
+        $this->post("/be-nl/l/{$named->share_token}/claim/{$namedItem->id}", [
+            'display_name' => 'Anna',
+        ])->assertRedirect();
+
+        $this->assertSame('Anna', $namedItem->fresh()->claimed_by_name);
+    }
+
+    #[Test]
+    public function switching_a_list_to_named_does_not_name_the_claims_already_on_it(): void
+    {
+        [$list, $item] = $this->giftListForSomeone();
+
+        $item->claim(WishlistItem::identityHash('anon:a-sibling'));
+
+        $list->update(['claim_visibility' => ClaimVisibility::Named]);
+
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('items.0.claimed', true)
+                ->where('items.0.claimedBy', null));
     }
 
     #[Test]

@@ -31,6 +31,8 @@ cannot be recovered from a diff.
 | [ask-others.md](ask-others.md) | Discovery / Community | Active — not in the sitemap yet |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
+| [all-coves.md](all-coves.md) | Discovery / Content | Active |
+| [shop-coves.md](shop-coves.md) | Discovery / Content | Built — withheld from the header menu |
 | [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
 | [cove-curation.md](cove-curation.md) | Content / Operations | Active |
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |
@@ -41,7 +43,8 @@ cannot be recovered from a diff.
 | [content-promotion.md](content-promotion.md) | Content / Operations | Active |
 | [config-contract.md](config-contract.md) | Core / Operations | Active |
 | [wishlists.md](wishlists.md) | Wishlist / Alerts | Active — registry address gated on a claim |
-| [list-taxonomy.md](list-taxonomy.md) | Wishlist / Gifting | Phases 1, 2 and 4 built — voting open |
+| [list-taxonomy.md](list-taxonomy.md) | Wishlist / Gifting | Phases 1–4 built |
+| [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | In progress |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
 | [cutover.md](cutover.md) | Operations | ✅ Done 2026-08-10 |

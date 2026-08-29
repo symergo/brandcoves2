@@ -38,6 +38,86 @@ class RecipientProfileTest extends TestCase
     }
 
     #[Test]
+    public function searching_for_something_keeps_the_rest_of_the_page(): void
+    {
+        /*
+         * Reported from the browser as "the search does not work".
+         *
+         * `suggest()` rendered `Recipients/SelfDescribe` with **only**
+         * `suggestions`, and the page reaches it through `router.get()` — a
+         * full visit, not a partial reload, so every other prop was replaced
+         * with nothing. `person` came back undefined and the page died on
+         * `person.name`.
+         *
+         * Asserting `person` rather than the results is the point: the results
+         * were never the broken half.
+         */
+        $recipient = Recipient::factory()->create([
+            'owner_user_id' => User::factory()->create()->id,
+            'name' => 'Mum',
+        ]);
+
+        $this->get("/be-nl/for/{$recipient->share_token}/suggest?q=koptelefoon")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Recipients/SelfDescribe')
+                ->where('person.name', 'Mum')
+                ->has('options')
+                ->has('suggestions')
+                ->where('suggestTerm', 'koptelefoon'));
+    }
+
+    #[Test]
+    public function the_giver_is_not_offered_a_button_that_refuses_them(): void
+    {
+        /*
+         * Reported from the browser: pressing "This is me" gave a bare 403.
+         *
+         * The endpoint has always refused it — claiming your own stub would
+         * make you the recipient of your own gift research — and `canClaim`
+         * asked only "signed in, and not yet linked". So the likeliest visitor
+         * to this page, the giver checking the link before sending it, was
+         * shown a control that failed with no explanation.
+         *
+         * A control that 403s when pressed is worse than no control. The page
+         * now says which side of the link they are on.
+         */
+        $giver = User::factory()->create();
+        $recipient = Recipient::factory()->create(['owner_user_id' => $giver->id]);
+
+        $this->actingAs($giver)
+            ->get("/be-nl/for/{$recipient->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('canClaim', false)
+                ->where('isGiver', true));
+
+        // And the endpoint still refuses it, because hiding a button stops
+        // nobody hand-building the request.
+        $this->actingAs($giver)
+            ->post("/be-nl/for/{$recipient->share_token}/claim")
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function somebody_signed_out_is_offered_the_way_in_rather_than_nothing(): void
+    {
+        // Describing yourself needs no account — the token is the credential.
+        // Saying "this is me" attaches a person to an account, so it needs one,
+        // which makes this the short path to having one rather than a refusal.
+        $recipient = Recipient::factory()->create([
+            'owner_user_id' => User::factory()->create()->id,
+        ]);
+
+        $this->get("/be-nl/for/{$recipient->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('canClaim', false)
+                ->where('isGiver', false)
+                ->where('canSignInToClaim', true));
+    }
+
+    #[Test]
     public function the_self_describe_page_never_reveals_the_givers_list(): void
     {
         $owner = User::factory()->create();

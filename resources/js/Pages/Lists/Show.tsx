@@ -5,6 +5,7 @@ import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import ListTools, { type Panel } from '../../Components/ListTools'
+import ListKindBadge, { type ListKind, useListKindWords } from '../../Components/ListKindBadge'
 import ShareRow from '../../Components/ShareRow'
 import { markRemoved } from '../../savedItems'
 import { useTranslations } from '../../useTranslations'
@@ -91,13 +92,19 @@ interface Props {
         handedOver: boolean
         eventType: string | null
         eventDate: string | null
+        hasCoGivers: boolean
+        claimVisibility: string
+        ownerSeesClaims: boolean
     }
     items: Item[]
+    /** The pot on a group list, for the organiser's own page. */
+    pot: Contributions | null
 }
 
 export default function ListShow({
     list,
     items,
+    pot,
     target,
     asked,
     access,
@@ -117,28 +124,9 @@ export default function ListShow({
 
     const shared = list.visibility !== 'private'
     const [panel, setPanel] = useState<Panel | null>(null)
-
-    /**
-     * Share, in one press.
-     *
-     * It used to take two, in two places: a header toggle that minted the link
-     * and a tab below that displayed it — and the tab did not exist until the
-     * toggle had been used, so nothing on the screen suggested the second step
-     * was there. People turned sharing on and left without the link.
-     */
-    function share() {
-        if (shared) {
-            setPanel('share')
-
-            return
-        }
-
-        router.patch(
-            `${base}/lists/${list.id}`,
-            { visibility: 'link' },
-            { preserveScroll: true, onSuccess: () => setPanel('share') },
-        )
-    }
+    // The ask-them link, revealed on press rather than shown outright.
+    const [asking, setAsking] = useState(false)
+    const { sentence } = useListKindWords()
 
     return (
         <>
@@ -149,7 +137,15 @@ export default function ListShow({
                     <Link href={`${base}/lists`} className="text-sm text-ink-soft hover:text-ink">
                         ← {t('lists.title')}
                     </Link>
-                    <h1 className="mt-1 text-2xl font-semibold">{list.title}</h1>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <h1 className="text-2xl font-semibold">{list.title}</h1>
+                        {/*
+                          What kind of list this is — the fact that decides who
+                          may claim, who may vote and who sees the money, and
+                          which this page has never said out loud.
+                        */}
+                        <ListKindBadge kind={list.kind as ListKind} />
+                    </div>
                     {list.recipient && (
                         <p className="mt-1 text-ink-soft">{list.recipient.name}</p>
                     )}
@@ -160,18 +156,41 @@ export default function ListShow({
                     <p className="mt-1 text-xs text-ink-soft">
                         {shared ? t('lists.shared_badge') : t('lists.private_badge')}
                     </p>
+                    {/*
+                      And what that means you can do with it, read against
+                      whether anybody else is actually on the list. A private
+                      list of any kind offers none of the mechanisms, so this
+                      says what the list is now and then what sharing would do.
+                    */}
+                    <p className="mt-2 max-w-prose text-sm text-ink-soft">
+                        {sentence(list.kind as ListKind, shared)}
+                    </p>
+                    {/*
+                      The quiz, named on the one list it cannot appear on.
+
+                      `ListTools` gates the tab on `shared && claimable`, and
+                      rightly — a quiz publishes what is on the list, so it must
+                      not exist over a private one. The consequence was that the
+                      feature invented to solve "nobody fills in a wishlist" was
+                      invisible on exactly the wishlist nobody had filled in. The
+                      gate does not move; the sentence is how you learn the tab
+                      is there to be earned.
+                    */}
+                    {!shared && list.kind === 'mine' && (
+                        <p className="mt-1 max-w-prose text-sm text-ink-soft">
+                            {t('lists.quiz_unlocks')}
+                        </p>
+                    )}
                 </div>
 
+                {/*
+                  Share has moved down into `ListTools`, next to the other
+                  things you can do with this list. Two copies of one control on
+                  one screen is not twice as findable, and the row below is
+                  where somebody looks for what a list can do — this header is
+                  about getting rid of it.
+                */}
                 <div className="flex flex-wrap items-center gap-2">
-                    {access.isOwner && (
-                        <button
-                            onClick={share}
-                            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
-                        >
-                            {t('lists.share')}
-                        </button>
-                    )}
-
                     {access.isOwner && (
                         <button
                             onClick={() => {
@@ -188,6 +207,38 @@ export default function ListShow({
                     )}
                 </div>
             </header>
+
+            {/*
+              The pot, on the page the organiser actually works from.
+
+              Contributions are made through the share link, because that is
+              where the endpoint is mounted and where the members are — but
+              reading the running total should not mean opening your own list as
+              though you were a visitor to it.
+            */}
+            {pot !== null && (
+                <div className="mt-6 rounded-card border border-line bg-card p-4">
+                    <Pledge
+                        action={list.shareUrl ? `${list.shareUrl}/pledge` : ''}
+                        contributions={pot}
+                        canContribute={list.shareUrl !== null}
+                        price={null}
+                    />
+                </div>
+            )}
+
+            {/*
+              "Claims are hidden from you, that is the point."
+
+              Not shown to an owner who has asked to see them — invariant #4 is
+              a default now, and explaining a state somebody has turned off is
+              worse than saying nothing.
+            */}
+            {list.claimable && shared && !list.ownerSeesClaims && (
+                <p className="mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft">
+                    {t('lists.owner_view_note')}
+                </p>
+            )}
 
             <ListTools
                 base={base}
@@ -207,17 +258,6 @@ export default function ListShow({
             />
 
             {/*
-              No claim state anywhere on this page. This is the owner's view,
-              and a gift list exists so the owner does not learn what has been
-              bought — not even how many things.
-            */}
-            {list.claimable && shared && (
-                <p className="mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft">
-                    {t('lists.owner_view_note')}
-                </p>
-            )}
-
-            {/*
               Lane one: what they actually asked for.
 
               The payoff of linking a recipient to an account. Claiming here
@@ -234,12 +274,52 @@ export default function ListShow({
                     {!target.isLinked ? (
                         <div className="mt-3 rounded-card border border-line bg-card p-4">
                             {target.askUrl && (
-                                <ShareRow
-                                    url={target.askUrl}
-                                    text={t('recipients.ask_them')}
-                                    label={t('recipients.ask_them')}
-                                    hint={t('recipients.ask_them_hint')}
-                                />
+                                <>
+                                    <h3 className="text-sm font-medium">
+                                        {t('recipients.ask_them')}
+                                    </h3>
+                                    <p className="mt-1 text-xs text-ink-soft">
+                                        {t('recipients.ask_them_hint')}
+                                    </p>
+
+                                    {/*
+                                      A button, and the link behind it.
+
+                                      This block used to open with a raw URL in a
+                                      `<code>` box — the first thing on the one
+                                      section of the page that is an *action*, and
+                                      a URL is not one. It read as reference
+                                      material for something you had already
+                                      decided to do, so the deciding never
+                                      happened.
+
+                                      Not replaced by a lone copy button, though:
+                                      `ShareRow` was extracted precisely because
+                                      the Santa invite was a copy button with the
+                                      URL nowhere in sight, and its reasoning
+                                      holds — people check a link before pasting
+                                      it into a message to one named person, and a
+                                      button claiming to have copied something is
+                                      worth less than the thing itself. So the
+                                      press reveals it rather than skipping it.
+                                    */}
+                                    {asking ? (
+                                        <div className="mt-3">
+                                            <ShareRow
+                                                url={target.askUrl}
+                                                text={t('recipients.ask_them')}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setAsking(true)}
+                                            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                                        >
+                                            {t('recipients.ask_them')}
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     ) : asked.length === 0 ? (
@@ -321,7 +401,37 @@ export default function ListShow({
 
             {items.length === 0 ? (
                 <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
-                    <p className="text-ink-soft">{t('lists.empty_list')}</p>
+                    <p className="font-medium">{t('lists.empty_list')}</p>
+
+                    {/*
+                      What happens next, in three steps, per kind.
+
+                      The worst screen in the product after this pass was a
+                      fresh group list: no items, no members, no votes, no
+                      money, and one sentence saying it was empty. A group list
+                      is the one kind that does nothing at all until other
+                      people are on it, so "add things" is not the whole
+                      instruction — and it is the only kind where none of the
+                      steps is optional.
+
+                      The `mine` steps stay deliberately soft. A personal list
+                      of saved things is a finished, legitimate use of this
+                      page, and an empty state that reads as a to-do list tells
+                      most owners they have done it wrong.
+                    */}
+                    <ol className="mx-auto mt-4 max-w-md space-y-2 text-left">
+                        {[1, 2, 3].map((step) => (
+                            <li key={step} className="flex gap-3 text-sm text-ink-soft">
+                                <span
+                                    aria-hidden
+                                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-[11px] font-medium text-ink"
+                                >
+                                    {step}
+                                </span>
+                                {t(`lists.empty_${list.kind}_step${step}`)}
+                            </li>
+                        ))}
+                    </ol>
                     {/*
                       One control here too. An empty list is exactly where
                       somebody discovers their present is not something we

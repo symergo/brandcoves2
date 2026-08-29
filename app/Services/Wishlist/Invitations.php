@@ -88,7 +88,9 @@ class Invitations
         }
 
         Mail::to($email)->queue(new ListInvitationMail(
-            listTitle: $list->title,
+            // In the language of the list's market, which is the language the
+            // rest of this mail is rendered in.
+            listTitle: $list->displayTitle($list->market->language()),
             fromName: $from->displayName(),
             market: $list->market,
             url: url($current->url("invitations/{$invitation->token}")),

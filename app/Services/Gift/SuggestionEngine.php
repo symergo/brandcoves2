@@ -402,6 +402,26 @@ class SuggestionEngine
         'housewarming' => ['housewarming', 'nieuwe woning', 'inhuizing', 'hogar'],
         'anniversary' => ['jubileum', 'anniversary', 'aniversario'],
         'thanks' => ['bedankt', 'thank', 'merci', 'gracias'],
+
+        /*
+         * The keys `EventType` uses, so the two vocabularies agree.
+         *
+         * They are still two systems — this matches `recipients.occasion`,
+         * which is free text, while `EventType` sits on the list — and that is
+         * precisely why the overlap is written out. An occasion typed on one
+         * side and chosen on the other should score the same, and `baby` /
+         * `newborn` and `thank_you` / `thanks` are the same occasion under two
+         * spellings. An unlisted key falls through to matching itself, which is
+         * weak rather than broken, so this is about quality and not correctness.
+         */
+        'baby' => ['baby', 'geboorte', 'newborn', 'naissance', 'kraamcadeau'],
+        'thank_you' => ['bedankt', 'thank', 'merci', 'gracias'],
+        'graduation' => ['geslaagd', 'diploma', 'graduation', 'abschluss', 'graduacion'],
+        'retirement' => ['pensioen', 'retirement', 'retraite', 'jubilacion'],
+        'farewell' => ['afscheid', 'farewell', 'leaving', 'despedida'],
+        'valentines' => ['valentijn', 'valentine', 'valentin'],
+        'mothers_day' => ['moederdag', 'mother', 'maman', 'madre'],
+        'fathers_day' => ['vaderdag', 'father', 'papa', 'padre'],
     ];
 
     /**

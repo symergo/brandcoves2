@@ -42,7 +42,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class GiftPledgeController extends Controller
 {
-    public function store(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse
+    public function store(Request $request, CurrentMarket $current, string $market, string $token, ?string $item = null): RedirectResponse
     {
         [$list, $wishlistItem, $owner] = $this->resolve($request, $token, $item);
 
@@ -54,7 +54,10 @@ class GiftPledgeController extends Controller
 
         GiftPledge::updateOrCreate(
             [
-                'item_id' => $wishlistItem->id,
+                'wishlist_id' => $list->id,
+                // Null on a group list: the money is towards the present, and
+                // the shortlist under it is candidates for what that will be.
+                'item_id' => $wishlistItem?->id,
                 ...$owner->attributes('user_id', 'anon_id'),
             ],
             [
@@ -63,30 +66,34 @@ class GiftPledgeController extends Controller
             ],
         );
 
-        unset($list);
-
         return back()->with('success', __('site.pledges.added'));
     }
 
-    public function destroy(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse
+    public function destroy(Request $request, CurrentMarket $current, string $market, string $token, ?string $item = null): RedirectResponse
     {
         [$list, $wishlistItem, $owner] = $this->resolve($request, $token, $item);
 
         $owner->scope(
-            GiftPledge::query()->where('item_id', $wishlistItem->id),
+            GiftPledge::query()
+                ->where('wishlist_id', $list->id)
+                // `whereNull` rather than `where(..., null)`, which never
+                // matches: leaving the pot has to find the row with no item.
+                ->when(
+                    $wishlistItem === null,
+                    fn ($q) => $q->whereNull('item_id'),
+                    fn ($q) => $q->where('item_id', $wishlistItem->id),
+                ),
             'user_id',
             'anon_id',
         )->delete();
-
-        unset($list);
 
         return back()->with('success', __('site.pledges.removed'));
     }
 
     /**
-     * @return array{0: Wishlist, 1: WishlistItem, 2: Owner}
+     * @return array{0: Wishlist, 1: ?WishlistItem, 2: Owner}
      */
-    private function resolve(Request $request, string $token, string $item): array
+    private function resolve(Request $request, string $token, ?string $item): array
     {
         $list = Wishlist::query()
             ->where('share_token', $token)
@@ -111,6 +118,24 @@ class GiftPledgeController extends Controller
          * has to own this row" check, so no surface can re-decide half of it.
          */
         abort_unless($list->allowsContributionsFrom($owner), 403);
+
+        /*
+         * Where the money attaches is decided by the kind, never by the caller.
+         *
+         * Two routes reach this — `/pledge` and `/pledge/{item}` — and either
+         * one used on the wrong kind of list is refused rather than quietly
+         * doing the other thing. A pot pledge on a wish list would be money
+         * against nothing in particular; a per-item pledge on a group list is
+         * the incoherence this whole change removes, and accepting it would
+         * split one pot into several the page never adds up.
+         */
+        if ($list->kind->poolsOnTheList()) {
+            abort_unless($item === null, 403);
+
+            return [$list, null, $owner];
+        }
+
+        abort_if($item === null, 403);
 
         $wishlistItem = $list->items()->whereKey($item)->first();
 

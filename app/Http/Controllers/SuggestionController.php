@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ListKind;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
@@ -24,9 +25,24 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * in for you. Somebody opens your shared list, sees it is thin, and adds the
  * thing they have been meaning to tell you about.
  *
- * A suggestion is not on the list until you accept it. That matters for more
- * than tidiness — an unfiltered list would let anyone with the link put
- * anything in front of everyone else holding it.
+ * ## Whether it waits depends on whose list it is
+ *
+ * On a `mine` list a contribution is a message *to somebody about their own
+ * wish list*, so it waits for them: an unfiltered list would let anyone with
+ * the link put anything in front of everyone else holding it.
+ *
+ * On a `for_someone` or `group` list the owner is a co-giver or an organiser
+ * and everybody is researching a third person who never sees it. There an
+ * addition goes **straight on**, because making each one wait turns a shared
+ * workspace into an inbox that the person who asked for help has to empty.
+ * {@see ListKind::acceptsDirectAdditions()}.
+ *
+ * A **hand-written** item waits on every kind, and that split is the one
+ * judgement call here. A catalogue product is a `group_id` — structured, ours,
+ * nothing to moderate. A typed title and price is free text from somebody
+ * holding a link that can be forwarded anywhere, which is the moderation
+ * surface `wishlists.md` declined to open, and the pending queue is the control
+ * that already exists for it.
  *
  * ## Not claim state
  *
@@ -44,13 +60,31 @@ class SuggestionController extends Controller
 
         abort_unless($owner->exists(), 403);
 
-        // Suggesting to yourself is just adding, and the list page already does
-        // that without the round trip through approval.
-        abort_if($list->shouldHideClaimsFrom($owner), 403);
+        /*
+         * Contributing to yourself is just adding, and the list page already
+         * does that without the round trip.
+         *
+         * Asks identity — `isOwnedBy()` — rather than `shouldHideClaimsFrom()`,
+         * which it used to. The two agreed while every owner was a hidden
+         * owner, and stopped agreeing when a gift list's owner began to see
+         * claims: that owner would otherwise be able to suggest into their own
+         * list and then approve it.
+         */
+        abort_if($list->isOwnedBy($owner), 403);
 
-        // Only somebody's own list. A `for_someone` list is private research,
-        // and suggesting into it would tell a stranger it exists.
-        abort_unless($list->allowsClaiming(), 403);
+        /*
+         * No kind check.
+         *
+         * This was `abort_unless($list->allowsClaiming())` — "only somebody's
+         * own list; a `for_someone` list is private research, and suggesting
+         * into it would tell a stranger it exists". The premise does not hold:
+         * a stranger cannot reach this at all, because `findShared()` refuses a
+         * private list, so anybody here was *sent the link on purpose*. Helping
+         * fill a gift list is the reason they were sent it.
+         *
+         * The list being shared is therefore the whole gate, and it is enforced
+         * by `findShared()` above rather than repeated here.
+         */
 
         /*
          * Two shapes, one endpoint: a product we stock, or something typed in.
@@ -80,6 +114,8 @@ class SuggestionController extends Controller
                 note: $validated['note'] ?? null,
             );
 
+            // Free text waits, on every kind of list. See the class docblock:
+            // this is the one channel with unmoderated words in it.
             return $this->pending($request, $item);
         }
 
@@ -114,7 +150,26 @@ class SuggestionController extends Controller
             return back()->with('error', __('site.suggestions.already_on_list'));
         }
 
-        return $this->pending($request, $saver->saveGroup($list, $group, $current, $validated['note'] ?? null));
+        $item = $saver->saveGroup($list, $group, $current, $validated['note'] ?? null);
+
+        /*
+         * Straight on, or into the queue.
+         *
+         * `saveGroup()` hands back an accepted row either way, so this is the
+         * only place the difference is made — and the direct branch is a
+         * *return without acting*, which is the right way round: forgetting it
+         * makes an addition wait, which is visible and recoverable. The
+         * opposite mistake publishes something nobody approved.
+         */
+        if ($list->kind->acceptsDirectAdditions()) {
+            // Who added it, so a shared list is not a pile of anonymous finds
+            // that two people quietly delete for each other.
+            $item->forceFill(['suggested_by_user_id' => $request->user()?->id])->save();
+
+            return back()->with('success', __('site.suggestions.added'));
+        }
+
+        return $this->pending($request, $item);
     }
 
     /**

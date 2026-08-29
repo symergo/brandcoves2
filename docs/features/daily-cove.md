@@ -64,6 +64,20 @@ Two cards, from `lg` up, stacking under the article below it. The article keeps
 its `max-w-2xl` measure — prose past roughly 70 characters a line is harder to
 read — and the column uses the space that cap was already leaving empty.
 
+**The whole edition body goes in the left column, not just the prose** — and
+that is what lets the rail stay a rail. When the column held the header and the
+editorial alone, the split was balanced on the assumption that the writing would
+always run long enough to reach past the cards beside it. It does not: the
+29 Aug 2026 edition published with `editorial` empty, because nothing had
+written it yet, so the column ended a few lines under the headline while the
+sticky rail ran on for another eight hundred pixels — and the finds grid,
+sitting outside the two-column grid, waited below all of it. The page read as a
+headline, a void, and then the products.
+
+With the finds and the guide inside the column it is the taller of the two
+whatever the copy does, which is the way round that cannot leave a hole. Only
+the subscribe box and the archive stay full width, below both columns.
+
 **Biggest drops right now.** "Newest highest discounts" is two orderings that
 fight: the deepest discount in the catalogue may be a month old, and the newest
 may be 4% off. Sorted by discount *within* a fortnight's recency window, so the
@@ -71,6 +85,33 @@ column is both fresh and worth looking at rather than a stale hall of fame. Ever
 figure is against our own 30-day median, never a shop's crossed-out price — the
 same rule the badges and the brand pages hold to, and the reason a saving shown
 here can be defended.
+
+## Six finds, three across
+
+`picks.per_day` is **6** because the grid is three wide and stops at two rows.
+Seven left one card alone on a third row, which reads as a product that failed
+to load rather than as the end of the list — the count is a layout fact before
+it is an editorial one.
+
+Three is what the column can hold. Sharing the container with a 20rem rail
+leaves a card at 240px, and the price and the save control need 184px on the row
+they share; four across was measured at 175px a card, which does not fit, and
+buying the width back by moving the grid outside the column would cost the rail
+the article beside it. Two across below `lg`. The grid slices to six as well as
+configuring to six, because editions built when the count was 7 are still in the
+archive, and a plan can carry live Amazon items on top of its catalogue picks.
+
+Products the editorial *names* are not in this grid — they render as figures
+inside the prose, under the paragraph that is about them — so a well-written
+edition shows fewer than six cards here. That is the intended trade: the grid is
+what the article did not get to.
+
+**Thumbs, not faces.** The two reactions render 👍 and 👎; they were 🤯 and 😐.
+Read at a glance beside a price, "is this any good" carries where "did this
+astonish you" did not. `Reaction`'s case names and the `mindblown_count` /
+`meh_count` columns keep the old vocabulary deliberately — renaming them is a
+data migration across `pick_reactions` and two counters for a change nobody can
+see, and `Reaction::emoji()` is the one place the two spellings have to meet.
 
 ### Only what you can buy
 

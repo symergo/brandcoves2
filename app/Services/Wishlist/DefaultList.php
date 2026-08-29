@@ -26,32 +26,6 @@ use App\Support\Owner;
 class DefaultList
 {
     /**
-     * Titles this application has given the default list, in every language it
-     * speaks. Anything else was typed by a person.
-     *
-     * @var list<string>
-     */
-    private const OUR_OLD_DEFAULTS = [
-        'Saved items',
-        'Bewaard',
-        'Enregistrés',
-        'Guardados',
-    ];
-
-    private static function isOurOldDefault(?string $title): bool
-    {
-        $title = trim((string) $title);
-
-        foreach ([...self::OUR_OLD_DEFAULTS, __('site.lists.default_title')] as $ours) {
-            if (mb_strtolower($title) === mb_strtolower((string) $ours)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * The owner's standard list, created if this is their first.
      *
      * Adopts an existing `mine` list rather than making a second one, so people
@@ -92,8 +66,8 @@ class DefaultList
                  * the list itself. A title the person typed is theirs and is
                  * never touched.
                  */
-                'title' => self::isOurOldDefault($adopted->title)
-                    ? __('site.lists.default_title')
+                'title' => DefaultTitle::isOurs($adopted->title)
+                    ? DefaultTitle::current()
                     : $adopted->title,
             ]);
 
@@ -102,7 +76,7 @@ class DefaultList
 
         return Wishlist::create([
             ...$owner->attributes(),
-            'title' => __('site.lists.default_title'),
+            'title' => DefaultTitle::current(),
             'market' => $current->get(),
             'kind' => ListKind::Mine,
             'is_default' => true,

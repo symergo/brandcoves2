@@ -46,8 +46,8 @@ export default function SiteLayout({ children }: PropsWithChildren) {
      *
      * Five flat entries described five surfaces and left nine gifting tools and
      * the whole discovery half reachable only from inside a page you had to know
-     * to open. Grouping under what you came to *do* — organise, search,
-     * discover — means the header describes intents rather than URLs, and the
+     * to open. Grouping under what you came to *do* — organise, discover,
+     * search — means the header describes intents rather than URLs, and the
      * dropdowns are where the surfaces live.
      *
      * Each verb still points at a hub that explains its section, so the label is
@@ -80,24 +80,77 @@ export default function SiteLayout({ children }: PropsWithChildren) {
         ],
     }
 
+    /*
+     * The Cove types, then the one thing here that is not one.
+     *
+     * The menu used to name three surfaces — Daily, "Idea Cove" and Ask — which
+     * meant the header used the word "Cove" for the daily column and for the
+     * article archive and had no word at all for the personas, whose shelf at
+     * `/gift-ideas` was reachable from nothing. A reader could not learn from
+     * the header that Cove is one thing with several shapes, because the header
+     * only showed two of the shapes and called one of them by the name of the
+     * whole.
+     *
+     * So: one entry per kind, named for the kind, and All Coves under them for
+     * the overview. Every entry carries a hint — five labels differing by one
+     * word cannot be told apart on first opening, and the hint slot has been on
+     * `NavMenuItem` since it was written.
+     *
+     * Ask others sits below the Coves rather than among them. It is a way of
+     * *finding* something when you cannot describe it, which is why it belongs
+     * under Discover at all, but its content comes from other visitors rather
+     * than from us — it is not something we published, and listing it as a
+     * fourth Cove type would say that it is.
+     */
     const discover = {
         href: `${base}/discover-cove`,
         label: t('nav.discover'),
         items: [
-            { href: `${base}/daily`, label: t('nav.daily'), icon: <CoveIcon name="daily" className="h-5 w-5" /> },
+            {
+                href: `${base}/daily`,
+                label: t('nav.daily'),
+                hint: t('nav.hint_daily'),
+                icon: <CoveIcon name="daily" className="h-5 w-5" />,
+            },
             {
                 href: `${base}/surprise`,
                 label: t('nav.surprise'),
+                hint: t('nav.hint_surprise'),
                 icon: <CoveIcon name="surprise" className="h-5 w-5" />,
             },
-            { href: `${base}/guides`, label: t('nav.coves'), icon: <CoveIcon name="idea" className="h-5 w-5" /> },
+            {
+                href: `${base}/guides`,
+                label: t('nav.inspiration_coves'),
+                hint: t('nav.hint_inspiration_coves'),
+                icon: <CoveIcon name="idea" className="h-5 w-5" />,
+            },
+            {
+                href: `${base}/gift-ideas`,
+                label: t('nav.gift_coves'),
+                hint: t('nav.hint_gift_coves'),
+                icon: <CoveIcon name="persona" className="h-5 w-5" />,
+            },
             /*
-             * Ask others sits under Discover rather than Organise: it is a way
-             * of *finding* something when you cannot describe it, not a tool for
-             * keeping track of what you already chose. It is also the only entry
-             * here whose content comes from other visitors rather than from us.
+             * Brand Coves (`/brands`) and Shop Coves (`/shops`) are withheld
+             * from this menu for now, deliberately — not removed.
+             *
+             * Both pages exist, are linked from All Coves, and are in the
+             * sitemap; their copy, icons (`brand`, `shop`) and `nav.*_coves`
+             * keys are all in place. Restoring them is putting two entries back
+             * in this list, between Gift Coves and All Coves.
              */
-            { href: `${base}/ask`, label: t('ask.title'), icon: <CoveIcon name="ask" className="h-5 w-5" /> },
+            {
+                href: `${base}/coves`,
+                label: t('nav.all_coves'),
+                hint: t('nav.hint_all_coves'),
+                icon: <CoveIcon name="all" className="h-5 w-5" />,
+            },
+            {
+                href: `${base}/ask`,
+                label: t('ask.title'),
+                hint: t('nav.hint_ask'),
+                icon: <CoveIcon name="ask" className="h-5 w-5" />,
+            },
         ],
     }
 
@@ -111,7 +164,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
      * surfaces are simply listed, hubs first, in the order the wide header
      * shows them.
      */
-    const mobileNav = [organise, ...organise.items, ...nav, discover, ...discover.items]
+    const mobileNav = [organise, ...organise.items, discover, ...discover.items, ...nav]
 
     return (
         <div className="flex min-h-screen flex-col">
@@ -158,6 +211,15 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                             submenuLabel={t('nav.submenu', { section: organise.label })}
                         />
 
+                        <NavMenu
+                            href={discover.href}
+                            label={discover.label}
+                            items={discover.items}
+                            current={isCurrent(discover.href)}
+                            isCurrent={isCurrent}
+                            submenuLabel={t('nav.submenu', { section: discover.label })}
+                        />
+
                         {nav.map((item) => (
                             <Link
                                 key={item.href}
@@ -172,15 +234,6 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                                 {item.label}
                             </Link>
                         ))}
-
-                        <NavMenu
-                            href={discover.href}
-                            label={discover.label}
-                            items={discover.items}
-                            current={isCurrent(discover.href)}
-                            isCurrent={isCurrent}
-                            submenuLabel={t('nav.submenu', { section: discover.label })}
-                        />
                     </nav>
 
                     {/*
@@ -360,6 +413,11 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                       on the site. A footer link on every page is exactly that.
                     */}
                     <nav aria-label={t('footer.explore')} className="mb-4 flex flex-wrap gap-x-5 gap-y-2">
+                        {/* Under its own name, not `nav.brand_coves`: with
+                            Brand Coves withheld from the header there is no
+                            header entry for this to agree with, and a footer
+                            link is not the place to introduce a name the rest
+                            of the site is not yet using. */}
                         <Link href={`/${market.key}/brands`} className="hover:text-accent">
                             {t('brand.index_title')}
                         </Link>
@@ -367,7 +425,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                             under two different words is the exact confusion the
                             Cove naming pass set out to remove. */}
                         <Link href={`/${market.key}/guides`} className="hover:text-accent">
-                            {t('nav.coves')}
+                            {t('nav.inspiration_coves')}
                         </Link>
                         <Link href={`/${market.key}/daily`} className="hover:text-accent">
                             {t('nav.daily')}

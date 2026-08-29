@@ -1,5 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import SignInDialog from '../../Components/SignInDialog'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
@@ -41,6 +42,10 @@ interface Props {
     }
     options: { interests: Option[]; vibes: Option[]; values: string[] }
     canClaim: boolean
+    /** You are the giver, looking at the link you are about to send. */
+    isGiver: boolean
+    /** Signed out: saying "this is me" is what needs an account. */
+    canSignInToClaim: boolean
     items: Item[]
     listId: string | null
     suggestions?: Suggestion[]
@@ -57,6 +62,8 @@ export default function SelfDescribe({
     person,
     options,
     canClaim,
+    isGiver,
+    canSignInToClaim,
     items,
     listId,
     suggestions = [],
@@ -67,6 +74,9 @@ export default function SelfDescribe({
     // See the note in Lists/Shared: `window` is absent on the server.
     const token = page.url.split('?')[0].split('/').filter(Boolean).pop()
     const base = `/${market.key}/for/${token}`
+
+    // The sign-in dialog, so saying "this is me" does not cost the page.
+    const [signingIn, setSigningIn] = useState(false)
 
     const [query, setQuery] = useState('')
 
@@ -101,10 +111,6 @@ export default function SelfDescribe({
                 <p className="mt-2 text-ink-soft">
                     {t('recipients.self_intro', { name: person.name })}
                 </p>
-                <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
-                    {t('recipients.privacy_note')}
-                </p>
-
                 {canClaim && (
                     <div className="mt-4 rounded-card border border-accent/40 bg-accent/5 p-4">
                         <p className="text-sm">{t('recipients.claim_hint')}</p>
@@ -117,6 +123,57 @@ export default function SelfDescribe({
                         </button>
                     </div>
                 )}
+
+                {/*
+                  You are the person who made this list.
+
+                  The button used to be offered here and answered 403 when
+                  pressed — the endpoint has always refused it, because claiming
+                  your own stub would make you the recipient of your own gift
+                  research. The likeliest visitor to this page is the giver
+                  checking what they are about to send, so this says which side
+                  of the link they are on rather than rendering nothing and
+                  leaving them to wonder whether the page is broken.
+                */}
+                {isGiver && (
+                    <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
+                        {t('recipients.claim_is_you')}
+                    </p>
+                )}
+
+                {/*
+                  Signed out. Describing yourself needs no account — the token
+                  is the credential — but saying "this is me" attaches the
+                  person to an account, so it needs one. That makes this the
+                  short path to having one rather than a refusal.
+                */}
+                {canSignInToClaim && (
+                    <div className="mt-4 rounded-card border border-line bg-card p-4">
+                        <p className="text-sm text-ink-soft">{t('recipients.claim_sign_in')}</p>
+                        {/*
+                          A dialog, not a link to the login page.
+
+                          Somebody is here because a friend sent them a link and
+                          they were part-way through describing themselves.
+                          Navigating away to sign in throws that away — the form
+                          they had started, and the page they meant to come back
+                          to. `SignInDialog` keeps both.
+                        */}
+                        <button
+                            type="button"
+                            onClick={() => setSigningIn(true)}
+                            className="mt-3 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
+                        >
+                            {t('nav.sign_in')}
+                        </button>
+                    </div>
+                )}
+
+                <SignInDialog
+                    open={signingIn}
+                    onClose={() => setSigningIn(false)}
+                    hint={t('recipients.claim_sign_in')}
+                />
             </header>
 
             <section className="mt-10 max-w-2xl">
@@ -130,7 +187,7 @@ export default function SelfDescribe({
                     }}
                 >
                     <fieldset>
-                        <legend className="text-sm font-medium">{t('gift.step_interests')}</legend>
+                        <legend className="text-sm font-medium">{t('recipients.step_interests')}</legend>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {options.interests.map((option) => (
                                 <button
@@ -151,7 +208,7 @@ export default function SelfDescribe({
                     </fieldset>
 
                     <fieldset>
-                        <legend className="text-sm font-medium">{t('gift.step_vibe')}</legend>
+                        <legend className="text-sm font-medium">{t('recipients.step_vibe')}</legend>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {options.vibes.map((option) => (
                                 <button
@@ -177,7 +234,7 @@ export default function SelfDescribe({
                     </fieldset>
 
                     <fieldset>
-                        <legend className="text-sm font-medium">{t('gift.step_values')}</legend>
+                        <legend className="text-sm font-medium">{t('recipients.step_values')}</legend>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {options.values.map((value) => (
                                 <button

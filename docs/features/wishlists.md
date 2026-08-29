@@ -36,6 +36,23 @@ It now takes an `Owner` and compares both owner columns. Worth recording because
 the signature looked right, the tests passed, and the failing case was the
 common one rather than an exotic one.
 
+### Claiming is no longer `mine`-only, 2026-08-29
+
+A `for_someone` list is claimable once somebody else is on it, and its owner sees the claims —
+because there the owner is a co-giver rather than the person being surprised. The full table, the
+`ClaimVisibility` setting and the `$isOwner` split are in
+[list-taxonomy.md](list-taxonomy.md#claiming-on-a-gift-list-and-the-same-inversion-a-second-time).
+
+**Handover is where that change bites, and its docblock said the opposite.** It read "there are no
+claims to worry about: a `for_someone` list is not claimable in the first place". Now:
+
+- **The claim hash stays.** A sibling may already have bought the thing; releasing it sends a second
+  person to the shops. The new owner never learns of it — the list is `mine` now, so claims are
+  hidden from them absolutely.
+- **The name and the setting are reset.** A claimer typed their name for a small audience of
+  co-givers plotting a surprise; the list is now a wish list its owner may share with anyone, and
+  consent to the first audience is not consent to the second.
+
 ### Claiming is gated on what a list is *for*
 
 `is_gift_list` sat beside a nullable `recipient_id`, answering an overlapping
@@ -564,6 +581,13 @@ and the badge then never clears.
 
 ## The registry, which you could fill in and nobody could use
 
+> **The control is called "Special occasion" as of 2026-08-29**, in every language — `registry.badge`,
+> with `registry.heading` and `registry.none` moved to match. *Registry* named the artefact; the
+> button attaches an occasion and a date to a wish list you already have, which is what the new label
+> says. Nothing below changed: the columns, the gate and the two readers are exactly as described.
+> See [list-taxonomy.md](list-taxonomy.md#registry-became-special-occasion).
+
+
 Added 2026-08-16. `event_type`, `event_date` and `delivery_address` were stored and read back **to
 the owner alone** — `SharedListController::show()` emitted none of them in any branch — so a registry
 was a form with no reader. Two pieces of copy and the migration's own comment had promised otherwise
@@ -596,6 +620,51 @@ Nothing revokes the address explicitly and nothing should have to;
 > The test that used to be called `a_visitor_never_receives_the_delivery_address` is now
 > `a_visitor_who_has_claimed_nothing_never_receives_the_delivery_address`. Its body is unchanged. It
 > stopped being a statement about the feature and became one half of a distinction.
+
+### An occasion stopped being a registry, 2026-08-29
+
+The panel was gated `access.isOwner && list.kind === 'mine'` — so an occasion could only be set on a
+wish list of your own. Everything underneath it was already kind-agnostic: the column, the
+`update()` validator, and `SharedListController`'s block. A birthday on a list about your father was
+**storable, renderable, and had nowhere to be typed**. Same shape as the pledges and the progress
+strip — complete, and unreachable.
+
+The gate is now `access.isOwner`, and the split that makes that safe is on the model:
+
+| | Answers | Used by |
+|---|---|---|
+| `hasOccasion()` | does this list say what it is for? | the occasion block, any kind |
+| `isRegistry()` | `hasOccasion()` **and** `kind === Mine` | the delivery address, and only that |
+
+**One method answering both is how the address gate widens.** `delivery_address` is the owner's
+home, encrypted, disclosed to anybody who has claimed something — and it is only ever appropriate on
+a list belonging to the person the parcel is for. A gift list about somebody else may carry an
+occasion and must never carry an address. The field is hidden for those kinds, and the panel then
+**omits the key from the PATCH entirely** rather than sending an empty string: `FormData.get()`
+returns null for an absent input, so posting it unconditionally would clear a stored address every
+time somebody edited the occasion.
+
+The payload key is `occasion`, not `registry`, for the same reason — `registry` on a group list
+would be a lie about what the block is.
+
+#### The enum was the registry's five, and the calendar was missing
+
+Wedding, baby, housewarming, birthday, other. Christmas — the biggest gifting occasion there is —
+had to be filed under "Something else". `EventType` now carries fourteen, and
+`2026_08_29_000100_an_occasion_is_not_only_a_registry` widens the CHECK constraint to match.
+
+**That migration writes its values out literally, and the original does not.**
+`2026_08_09_002100` builds the constraint by calling `EventType::values()`, which means it describes
+a *different schema every time the enum changes* — replay it on a fresh database today and you get
+fourteen values where every real database has five. That divergence is the reason the second
+migration exists, so repeating the mistake in it would be strange.
+
+The consequence is that **adding a case to `EventType` now needs a migration**, and forgetting is
+silent: valid PHP, a validator that builds its `in:` rule from the same enum and passes it, and a
+dropdown option that throws a `QueryException` the moment somebody picks it. Nothing else catches
+it, because every other test picks `wedding`.
+`every_occasion_the_enum_offers_is_one_the_database_accepts` is that catch — asserted per case, and
+observed failing against a deliberately unmigrated case before being kept.
 
 ---
 

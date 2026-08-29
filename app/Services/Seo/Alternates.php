@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Seo;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\ProductGroup;
@@ -45,6 +46,7 @@ class Alternates
         return match ($kind) {
             'p' => $this->product($segments, $current),
             'guides' => $this->guide($segments, $current),
+            'shops' => $this->shop($segments, $current),
             'daily' => $this->daily($segments, $current),
             // Home, search, discover, gift, surprise, lists: the same page in
             // another market, and the segment swap is exactly right.
@@ -179,6 +181,47 @@ class Alternates
 
             if ($market !== null) {
                 $alternates[$market->hrefLang()] = url("/{$market->value}/guides/{$row->slug}");
+            }
+        }
+
+        return count($alternates) > 1 ? $alternates : [];
+    }
+
+    /**
+     * The same Shop Cove in another market.
+     *
+     * A separate method rather than a widened `guide()` for the reason that one
+     * already gives about personas: the two live at different paths, so pairing
+     * a `/shops/{slug}` with a `/guides/{slug}` that happens to share a slug
+     * would point hreflang at a page about something else. Shop Cove slugs are
+     * derived from a shop's domain and the same shop keeps the same slug in
+     * every market it trades in, which is exactly what makes them pairable.
+     *
+     * @param  array<int, string>  $segments
+     * @return array<string, string>
+     */
+    private function shop(array $segments, Market $current): array
+    {
+        $slug = $segments[2] ?? null;
+
+        if ($slug === null) {
+            // The directory itself exists in every market.
+            return $this->swap('/'.implode('/', $segments));
+        }
+
+        $rows = DB::table('daily_pick_sets')
+            ->where('slug', $slug)
+            ->where('kind', CoveKind::Shop->value)
+            ->where('status', PublishStatus::Published->value)
+            ->get(['market', 'slug']);
+
+        $alternates = [];
+
+        foreach ($rows as $row) {
+            $market = Market::tryFrom((string) $row->market);
+
+            if ($market !== null) {
+                $alternates[$market->hrefLang()] = url("/{$market->value}/shops/{$row->slug}");
             }
         }
 

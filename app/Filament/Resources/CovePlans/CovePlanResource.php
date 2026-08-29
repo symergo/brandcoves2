@@ -371,7 +371,8 @@ class CovePlanResource extends Resource
             ->filters([
                 SelectFilter::make('kind')->options(collect(CoveKind::cases())
                     ->mapWithKeys(fn (CoveKind $k) => [$k->value => $k->label()])->all()),
-                SelectFilter::make('market'),
+                // No market filter: the market tab strip on the list page is
+                // that control, and two controls on one axis can disagree.
                 SelectFilter::make('status')->options([
                     'draft' => 'draft',
                     'approved' => 'approved',

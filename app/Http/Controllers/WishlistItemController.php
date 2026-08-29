@@ -134,7 +134,7 @@ class WishlistItemController extends Controller
         return response()->json([
             'lists' => $lists->map(fn (Wishlist $list) => [
                 'id' => $list->id,
-                'title' => $list->title,
+                'title' => $list->displayTitle(),
                 // The distinction the picker is built around: a list for me and
                 // a list about somebody else are different acts, and burying
                 // both under "save" is what made this unusable.
@@ -384,7 +384,7 @@ class WishlistItemController extends Controller
         return response()->json([
             'itemId' => $item->id,
             'listId' => $list->id,
-            'listTitle' => $list->title,
+            'listTitle' => $list->displayTitle(),
             'message' => $this->confirm($list),
         ]);
     }
@@ -400,7 +400,7 @@ class WishlistItemController extends Controller
      */
     private function confirm(Wishlist $list): string
     {
-        return __('site.lists.added_to', ['list' => $list->title]);
+        return __('site.lists.added_to', ['list' => $list->displayTitle()]);
     }
 
     public function update(Request $request, CurrentMarket $current, string $market, string $item): RedirectResponse

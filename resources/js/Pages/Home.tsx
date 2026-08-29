@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react'
-import type { CoveKey } from '../Components/CoveIcon'
+import type { CoveSceneKey } from '../Components/CoveIllustration'
 import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import HomeIllustration from '../Components/HomeIllustration'
@@ -34,7 +34,14 @@ interface Props {
          * occasion and the date and deliberately no claim state — this is the
          * owner's front page (invariant #4).
          */
-        registry: { title: string; occasion: string; date: string | null; url: string } | null
+        registry: {
+            title: string
+            occasion: string
+            date: string | null
+            /** The recipient, on a list about somebody else. Null on your own. */
+            for: string | null
+            url: string
+        } | null
         urls: { gift: string; lists: string; santa: string }
     }
     coves: Cove[]
@@ -301,15 +308,26 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             {
                                 key: 'registry',
                                 href: gifting.registry?.url ?? gifting.urls.lists,
-                                name: t('home.organise_registry'),
+                                name: t('home.organise_occasion'),
+                                /*
+                                 * Names the person when the occasion is not the
+                                 * visitor's own. "Wedding on 14 June" on a list
+                                 * about your father reads as though you are the
+                                 * one getting married.
+                                 */
                                 hint: gifting.registry
-                                    ? gifting.registry.date
-                                        ? t('home.organise_registry_on', {
-                                              occasion: gifting.registry.occasion,
-                                              date: registryDate(gifting.registry.date),
-                                          })
-                                        : gifting.registry.occasion
-                                    : t('home.organise_registry_hint'),
+                                    ? [
+                                          gifting.registry.date
+                                              ? t('home.organise_registry_on', {
+                                                    occasion: gifting.registry.occasion,
+                                                    date: registryDate(gifting.registry.date),
+                                                })
+                                              : gifting.registry.occasion,
+                                          gifting.registry.for,
+                                      ]
+                                          .filter(Boolean)
+                                          .join(' · ')
+                                    : t('home.organise_occasion_hint'),
                             },
                         ] as { key: ListSceneKey; href: string; name: string; hint: string }[]
                     ).map((tool) => (
@@ -375,7 +393,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             {
                                 key: 'idea',
                                 href: `${base}/guides`,
-                                name: t('nav.coves'),
+                                name: t('nav.inspiration_coves'),
                                 what: t('discover_cove.idea_what'),
                             },
                             /*
@@ -401,7 +419,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                                 name: t('ask.title'),
                                 what: t('ask.nav_hint'),
                             },
-                        ] as { key: CoveKey; href: string; name: string; what: string }[]
+                        ] as { key: CoveSceneKey; href: string; name: string; what: string }[]
                     ).map((cove) => (
                         <li key={cove.key}>
                             <Link
@@ -499,7 +517,15 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                         <h2 id="coves-heading" className="text-2xl font-semibold tracking-tight">
                             {t('home.coves_heading')}
                         </h2>
-                        <Link href={`${base}/guides`} className="text-sm font-medium text-accent hover:text-accent-dark">
+                        {/*
+                          "All Coves" now goes to the page that is all Coves.
+                          It pointed at /guides, which is the theme archive —
+                          one of three — so the homepage promised the whole
+                          shelf and delivered a third of it. Two links reading
+                          "All Coves" and landing in different places is the
+                          drift this codebase keeps writing about.
+                        */}
+                        <Link href={`${base}/coves`} className="text-sm font-medium text-accent hover:text-accent-dark">
                             {t('home.coves_all')} →
                         </Link>
                     </div>

@@ -36,6 +36,11 @@ interface Props {
         recipient: { name: string } | null
         eventType: string | null
         eventDate: string | null
+        /** Is anybody else on this list? Most lists are private and solo. */
+        hasCoGivers: boolean
+        claimVisibility: string
+        /** Whether the owner has asked to see what has been claimed. */
+        ownerSeesClaims: boolean
     }
     access: { isOwner: boolean; canEdit: boolean }
     collaborators: Collaborator[]
@@ -50,18 +55,17 @@ interface Props {
     /*
      * Which panel is open is owned by the page, not by this row.
      *
-     * Sharing was two controls in two places: a toggle in the header that
-     * created the link, and a tab down here that showed it — and the tab only
-     * appeared *after* the toggle had been used, so the first half of the job
-     * gave no sign that the second half existed. One "Share" button can now
-     * turn sharing on and open the panel that shows the link, which needs the
-     * page to be able to say which panel that is.
+     * Lifted when Share was a header button that had to open a panel down here.
+     * That button has since moved into this row, so the state could come back —
+     * it stays lifted because the page is the thing a future control (a
+     * deep link, a flash message pointing at a panel) would reach for, and
+     * moving it back and forth costs more than leaving it where it works.
      */
     panel: Panel | null
     onPanel: (panel: Panel | null) => void
 }
 
-export type Panel = 'share' | 'quiz' | 'registry' | 'people' | 'handover' | 'santa'
+export type Panel = 'share' | 'quiz' | 'handover' | 'santa'
 
 /**
  * Everything you can do with a list, behind one row of buttons.
@@ -101,23 +105,90 @@ export default function ListTools({
 
     const shared = list.visibility !== 'private'
 
+    // Only a wish list of your own is a registry; every kind may carry an
+    // occasion. The delivery address is the half that stays behind this.
+    const isRegistry = list.kind === 'mine'
+
     const tabs: { key: Panel; label: string; show: boolean }[] = [
-        { key: 'share', label: t('lists.share'), show: shared && Boolean(list.shareUrl) },
-        { key: 'quiz', label: t('quiz.badge'), show: shared && list.claimable },
-        { key: 'registry', label: t('registry.badge'), show: access.isOwner && list.kind === 'mine' },
+        /*
+         * Share sits in this row, always, and is the first thing in it.
+         *
+         * It used to appear here only once sharing was already on, with the
+         * button that turns it on living up in the header beside Delete — a row
+         * about administering the list. So the one control people came for was
+         * in a different place before and after the single press that matters,
+         * and the row of things you can do with a list did not include the main
+         * one. `toggle()` below turns sharing on when it is off, so the button
+         * means the same thing in both states.
+         *
+         * Kept visible to a collaborator on an already-shared list: they cannot
+         * change visibility, but they can pass the link on.
+         */
+        { key: 'share', label: t('lists.share'), show: access.isOwner || (shared && Boolean(list.shareUrl)) },
+        /*
+         * A quiz asks "how well do you know **me**", so it only exists over a
+         * wish list of your own.
+         *
+         * This was `shared && claimable`, which were the same thing as "mine"
+         * until gift lists became claimable — at which point the tab appeared
+         * on private research about a named person, offering to publish it as a
+         * game. `ListQuizController` enforces the kind too; this is the mirror.
+         */
         {
-            key: 'people',
-            label: t('lists.collaborators'),
-            show: access.isOwner && list.kind === 'for_someone',
+            key: 'quiz',
+            label: t('quiz.badge'),
+            show: shared && list.claimable && list.kind === 'mine',
         },
+        /*
+         * An occasion sits on any kind of list.
+         *
+         * This was `kind === 'mine'`, which made it the *registry* panel — and
+         * the column, the validator and the shared page were all kind-agnostic
+         * the whole time, so a birthday on a list about your father was storable
+         * and renderable and simply had nowhere to be typed. Only the delivery
+         * address inside the panel is registry-only; see below.
+         */
         { key: 'handover', label: t('handover.badge'), show: canHandOver },
         { key: 'santa', label: t('santa.title'), show: santaMemberships.length > 0 },
     ]
 
+    /*
+     * Ordered by what this kind is for, not by the order they were written in.
+     *
+     * A group list leads with the people, because it does nothing at all until
+     * somebody else is on it. Everything else leads with Share. The array below
+     * is a fixed order, so without this the tab that matters most for a kind
+     * falls wherever it happens to.
+     */
     const visible = tabs.filter((tab) => tab.show)
 
     function toggle(panel: Panel) {
-        onPanel(open === panel ? null : panel)
+        if (open === panel) {
+            onPanel(null)
+
+            return
+        }
+
+        /*
+         * Opening this panel used to publish the list.
+         *
+         * That was right while the panel was only the link: sharing took two
+         * presses in two places, people turned it on and left without the URL,
+         * and collapsing them meant the button meant the same thing in both
+         * states.
+         *
+         * It stopped being right when the panel absorbed the occasion and the
+         * roster. Those are things an owner sets on a list they have **not**
+         * decided to share — a wedding date, an invited sibling — and a tab
+         * that published the list as a side effect of being opened would be a
+         * privacy change nobody asked for, on the one page where privacy is the
+         * whole point.
+         *
+         * So the press is inside the panel now, where it is a button that says
+         * what it does. The two-press objection is answered by that button
+         * being the first thing in it rather than in a different place.
+         */
+        onPanel(panel)
     }
 
     return (
@@ -197,14 +268,20 @@ export default function ListTools({
             )}
 
             {visible.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                /*
+                 * Scrolls rather than wraps on a phone. Four chips wrap to two
+                 * rows on a narrow screen and push the list itself below the
+                 * fold, which is the thing the page is for.
+                 */
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                     {visible.map((tab) => (
                         <button
                             key={tab.key}
                             type="button"
                             onClick={() => toggle(tab.key)}
                             aria-expanded={open === tab.key}
-                            className={`rounded-full border px-3 py-1.5 text-sm transition ${
+                            aria-controls="list-tools-panel"
+                            className={`shrink-0 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition ${
                                 open === tab.key
                                     ? 'border-accent bg-accent/10 text-accent'
                                     : 'border-line hover:border-ink'
@@ -217,9 +294,54 @@ export default function ListTools({
             )}
 
             {open !== null && (
-                <div className="mt-3 rounded-card border border-line bg-card p-4">
-                    {open === 'share' && list.shareUrl && (
-                        <div>
+                <div id="list-tools-panel" className="mt-3 rounded-card border border-line bg-card p-4">
+                    {open === 'share' && (
+                        <div className="space-y-6">
+                            {/*
+                              One panel, because it was always one errand.
+                              
+                              Share, People and Occasion were three tabs asking
+                              three halves of the same question: who else is
+                              looking at this list, and what are they looking
+                              at it for. Opening a list to other people and
+                              then telling them what it is for are not two
+                              trips, and three chips made them look like three
+                              unrelated features — with the roster, the one
+                              thing a group list cannot work without, filed
+                              furthest from the button that shares it.
+                              
+                              What varies is the sections, not the panel: every
+                              kind gets the link and the occasion, and only a
+                              list about somebody else gets the people.
+                            */}
+
+                            {/*
+                              Private lists land here too, now that this panel
+                              is also where the occasion and the roster live —
+                              so it has to offer the press rather than assume
+                              it has already happened.
+                            */}
+                            {!list.shareUrl && access.isOwner && (
+                                <div>
+                                    <p className="text-xs text-ink-soft">{t('lists.share_hint')}</p>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            router.patch(
+                                                `${base}/lists/${list.id}`,
+                                                { visibility: 'link' },
+                                                { preserveScroll: true },
+                                            )
+                                        }
+                                        className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                                    >
+                                        {t('lists.share')}
+                                    </button>
+                                </div>
+                            )}
+
+                            {list.shareUrl && (
+                            <div>
                             <ShareRow
                                 url={list.shareUrl}
                                 text={t('lists.share_text', { title: list.title })}
@@ -243,6 +365,299 @@ export default function ListTools({
                                 >
                                     {t('lists.disable_sharing')}
                                 </button>
+                            )}
+                            </div>
+                            )}
+
+                            {/* Why the list exists. Any kind may say so; only a
+                                wish list of your own carries an address. */}
+                            {access.isOwner && (
+                                <section className="border-t border-line pt-5">
+                                    <h3 className="text-sm font-medium">{t('registry.badge')}</h3>
+                            <form
+                                className="grid gap-3 sm:grid-cols-2"
+                                onSubmit={(e) => {
+                                    e.preventDefault()
+                                    const data = new FormData(e.currentTarget)
+                                    router.patch(
+                                        `${base}/lists/${list.id}`,
+                                        {
+                                            event_type: String(data.get('event_type') || ''),
+                                            event_date: String(data.get('event_date') || ''),
+                                            /*
+                                             * Only when the field is on screen.
+                                             *
+                                             * `FormData.get` returns null for an
+                                             * absent input, which becomes '' and
+                                             * would *clear* a stored address every
+                                             * time somebody edited the occasion on
+                                             * a list that does not show the field.
+                                             * Harmless today, since only a `mine`
+                                             * list can have one — and exactly the
+                                             * kind of thing that stops being
+                                             * harmless the moment that changes.
+                                             */
+                                            ...(isRegistry
+                                                ? {
+                                                      delivery_address: String(
+                                                          data.get('delivery_address') || '',
+                                                      ),
+                                                  }
+                                                : {}),
+                                        },
+                                        { preserveScroll: true },
+                                    )
+                                }}
+                            >
+                                <p className="text-xs text-ink-soft sm:col-span-2">{t('registry.hint')}</p>
+
+                                <label className="block text-sm">
+                                    {t('registry.occasion')}
+                                    <select
+                                        name="event_type"
+                                        defaultValue={list.eventType ?? ''}
+                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                                    >
+                                        <option value="">{t('registry.none')}</option>
+                                        {registryOptions.map((o) => (
+                                            <option key={o.value} value={o.value}>
+                                                {o.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                <label className="block text-sm">
+                                    {t('registry.date')}
+                                    <input
+                                        type="date"
+                                        name="event_date"
+                                        defaultValue={list.eventDate ?? ''}
+                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                                    />
+                                </label>
+
+                                {/*
+                                  A registry, and only a registry.
+
+                                  This is the owner's home address, and it is only
+                                  ever appropriate on a list belonging to the person
+                                  the parcel is for. A gift list about somebody else
+                                  may carry an occasion and must never carry an
+                                  address — which is why `Wishlist::isRegistry()`
+                                  and `hasOccasion()` are two questions rather than
+                                  one.
+                                */}
+                                {isRegistry && (
+                                <label className="block text-sm sm:col-span-2">
+                                    {t('registry.address')}
+                                    <textarea
+                                        name="delivery_address"
+                                        rows={2}
+                                        defaultValue={deliveryAddress ?? ''}
+                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                                    />
+                                    <span className="mt-1 block text-xs text-ink-soft">
+                                        {t('registry.address_hint')}
+                                    </span>
+                                </label>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2"
+                                >
+                                    {t('lists.save')}
+                                </button>
+                            </form>
+                                </section>
+                            )}
+
+                            {/* Who else is on it — and, once somebody is, what
+                                they can see of who claimed what. Every kind: a
+                                wish list of your own is shared with people too,
+                                and "can they see each other's claims" is a
+                                question about those people rather than about
+                                the kind of list. */}
+                            {access.isOwner && (
+                                <section className="border-t border-line pt-5">
+                                    <h3 className="text-sm font-medium">{t('lists.collaborators')}</h3>
+                            <div>
+                                {/*
+                                  Who sees who claimed what.
+
+                                  In the People panel because it is a fact about the
+                                  people, not about the list — and shown only once
+                                  there ARE people. A privacy choice offered on a
+                                  solo research list is a question about an audience
+                                  of one, which reads as though somebody is already
+                                  looking.
+
+                                  **On a wish list of your own it is two options,
+                                  not three.** Claims are hidden from you there
+                                  whatever this says — invariant #4 is not a
+                                  preference — so the third is not withheld, it
+                                  is already permanently on. What remains is a
+                                  real question and a useful one: can the people
+                                  buying see each other's names, so two of them
+                                  can settle it between themselves? They
+                                  coordinate either way; names only make it
+                                  easier, and you learn nothing from either
+                                  answer.
+                                */}
+                                {list.claimable && list.hasCoGivers && (
+                                <>
+                                    {/*
+                                      Two questions, and they are not the same
+                                      question.
+
+                                      They used to be one three-valued setting,
+                                      in which "hide claims from me" was a value
+                                      of a control otherwise about *names*. That
+                                      made the third option mean something
+                                      different depending on the kind of list,
+                                      and made "show me claims, and let the
+                                      others see each other's names" impossible
+                                      to express at all.
+                                    */}
+                                    <fieldset className="mb-4 border-b border-line pb-4">
+                                        <legend className="text-xs font-medium">
+                                            {t('lists.claim_mine')}
+                                        </legend>
+
+                                        {/*
+                                          Invariant #4 as a default rather than
+                                          an absolute: a wish list hides by
+                                          default because the surprise is the
+                                          point, and nothing infers otherwise —
+                                          only this press turns it on.
+                                        */}
+                                        <label className="mt-2 flex gap-2 text-sm">
+                                            <input
+                                                type="checkbox"
+                                                className="mt-1"
+                                                checked={list.ownerSeesClaims}
+                                                onChange={(e) =>
+                                                    router.patch(
+                                                        `${base}/lists/${list.id}`,
+                                                        { owner_sees_claims: e.target.checked },
+                                                        { preserveScroll: true },
+                                                    )
+                                                }
+                                            />
+                                            <span>
+                                                {t('lists.claim_mine_show')}
+                                                <span className="block text-xs text-ink-soft">
+                                                    {list.kind === 'mine'
+                                                        ? t('lists.claim_mine_show_hint_mine')
+                                                        : t('lists.claim_mine_show_hint_gift')}
+                                                </span>
+                                            </span>
+                                        </label>
+                                    </fieldset>
+
+                                    <fieldset className="mb-4 border-b border-line pb-4">
+                                        <legend className="text-xs font-medium">
+                                            {t('lists.claim_privacy')}
+                                        </legend>
+
+                                        <div className="mt-2 space-y-2">
+                                            {(['anonymous', 'named'] as const).map((value) => (
+                                                <label key={value} className="flex gap-2 text-sm">
+                                                    <input
+                                                        type="radio"
+                                                        name="claim_visibility"
+                                                        className="mt-1"
+                                                        checked={list.claimVisibility === value}
+                                                        onChange={() =>
+                                                            router.patch(
+                                                                `${base}/lists/${list.id}`,
+                                                                { claim_visibility: value },
+                                                                { preserveScroll: true },
+                                                            )
+                                                        }
+                                                    />
+                                                    <span>
+                                                        {t(`lists.claim_privacy_${value}`)}
+                                                        {/* The consequence, not
+                                                            the label: what is
+                                                            being chosen is who
+                                                            sees what. */}
+                                                        <span className="block text-xs text-ink-soft">
+                                                            {t(`lists.claim_privacy_${value}_hint`)}
+                                                        </span>
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </fieldset>
+                                </>
+                                )}
+
+                                <p className="text-xs text-ink-soft">{t('lists.invite_hint')}</p>
+
+                                {collaborators.length > 0 && (
+                                    <ul className="mt-3 space-y-2">
+                                        {collaborators.map((c) => (
+                                            <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
+                                                <span>
+                                                    {c.name}
+                                                    <span className="ml-2 text-xs text-ink-soft">
+                                                        {c.role === 'editor'
+                                                            ? t('lists.role_editor')
+                                                            : t('lists.role_viewer')}
+                                                    </span>
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        router.delete(
+                                                            `${base}/lists/${list.id}/collaborators/${c.id}`,
+                                                            { preserveScroll: true },
+                                                        )
+                                                    }
+                                                    className="text-xs text-ink-soft hover:text-ink"
+                                                >
+                                                    {t('lists.remove')}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+
+                                <form
+                                    className="mt-3 flex flex-wrap gap-2"
+                                    onSubmit={(e) => {
+                                        e.preventDefault()
+                                        router.post(
+                                            `${base}/lists/${list.id}/collaborators`,
+                                            { email: invite, role },
+                                            { preserveScroll: true, onSuccess: () => setInvite('') },
+                                        )
+                                    }}
+                                >
+                                    <input
+                                        type="email"
+                                        required
+                                        value={invite}
+                                        onChange={(e) => setInvite(e.target.value)}
+                                        placeholder="name@example.com"
+                                        className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+                                    />
+                                    <select
+                                        value={role}
+                                        onChange={(e) => setRole(e.target.value)}
+                                        className="rounded-lg border border-line px-2 py-2 text-sm"
+                                    >
+                                        <option value="viewer">{t('lists.role_viewer')}</option>
+                                        <option value="editor">{t('lists.role_editor')}</option>
+                                    </select>
+                                    <button type="submit" className="rounded-lg border border-line px-4 py-2 text-sm">
+                                        {t('lists.invite_collaborator')}
+                                    </button>
+                                </form>
+                            </div>
+                                </section>
                             )}
                         </div>
                     )}
@@ -287,139 +702,7 @@ export default function ListTools({
                         </div>
                     )}
 
-                    {open === 'registry' && (
-                        <form
-                            className="grid gap-3 sm:grid-cols-2"
-                            onSubmit={(e) => {
-                                e.preventDefault()
-                                const data = new FormData(e.currentTarget)
-                                router.patch(
-                                    `${base}/lists/${list.id}`,
-                                    {
-                                        event_type: String(data.get('event_type') || ''),
-                                        event_date: String(data.get('event_date') || ''),
-                                        delivery_address: String(data.get('delivery_address') || ''),
-                                    },
-                                    { preserveScroll: true },
-                                )
-                            }}
-                        >
-                            <p className="text-xs text-ink-soft sm:col-span-2">{t('registry.hint')}</p>
 
-                            <label className="block text-sm">
-                                {t('registry.occasion')}
-                                <select
-                                    name="event_type"
-                                    defaultValue={list.eventType ?? ''}
-                                    className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                >
-                                    <option value="">{t('registry.none')}</option>
-                                    {registryOptions.map((o) => (
-                                        <option key={o.value} value={o.value}>
-                                            {o.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-
-                            <label className="block text-sm">
-                                {t('registry.date')}
-                                <input
-                                    type="date"
-                                    name="event_date"
-                                    defaultValue={list.eventDate ?? ''}
-                                    className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                />
-                            </label>
-
-                            <label className="block text-sm sm:col-span-2">
-                                {t('registry.address')}
-                                <textarea
-                                    name="delivery_address"
-                                    rows={2}
-                                    defaultValue={deliveryAddress ?? ''}
-                                    className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                />
-                                <span className="mt-1 block text-xs text-ink-soft">
-                                    {t('registry.address_hint')}
-                                </span>
-                            </label>
-
-                            <button
-                                type="submit"
-                                className="justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2"
-                            >
-                                {t('lists.save')}
-                            </button>
-                        </form>
-                    )}
-
-                    {open === 'people' && (
-                        <div>
-                            <p className="text-xs text-ink-soft">{t('lists.invite_hint')}</p>
-
-                            {collaborators.length > 0 && (
-                                <ul className="mt-3 space-y-2">
-                                    {collaborators.map((c) => (
-                                        <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
-                                            <span>
-                                                {c.name}
-                                                <span className="ml-2 text-xs text-ink-soft">
-                                                    {c.role === 'editor'
-                                                        ? t('lists.role_editor')
-                                                        : t('lists.role_viewer')}
-                                                </span>
-                                            </span>
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    router.delete(
-                                                        `${base}/lists/${list.id}/collaborators/${c.id}`,
-                                                        { preserveScroll: true },
-                                                    )
-                                                }
-                                                className="text-xs text-ink-soft hover:text-ink"
-                                            >
-                                                {t('lists.remove')}
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-
-                            <form
-                                className="mt-3 flex flex-wrap gap-2"
-                                onSubmit={(e) => {
-                                    e.preventDefault()
-                                    router.post(
-                                        `${base}/lists/${list.id}/collaborators`,
-                                        { email: invite, role },
-                                        { preserveScroll: true, onSuccess: () => setInvite('') },
-                                    )
-                                }}
-                            >
-                                <input
-                                    type="email"
-                                    required
-                                    value={invite}
-                                    onChange={(e) => setInvite(e.target.value)}
-                                    placeholder="name@example.com"
-                                    className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-                                />
-                                <select
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="rounded-lg border border-line px-2 py-2 text-sm"
-                                >
-                                    <option value="viewer">{t('lists.role_viewer')}</option>
-                                    <option value="editor">{t('lists.role_editor')}</option>
-                                </select>
-                                <button type="submit" className="rounded-lg border border-line px-4 py-2 text-sm">
-                                    {t('lists.invite_collaborator')}
-                                </button>
-                            </form>
-                        </div>
-                    )}
 
                     {open === 'handover' && (
                         <form

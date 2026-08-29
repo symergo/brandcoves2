@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ClaimVisibility;
 use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
@@ -20,8 +21,10 @@ use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -48,15 +51,22 @@ class WishlistController extends Controller
          * are we choosing together — so they select different rows through
          * different scopes rather than narrowing one pile.
          *
+         * `mine` answers the broadest of the three and therefore contains the
+         * other two: it is the page a person opens to find *a list*, and a page
+         * called My Lists that omits half of them sends people hunting through
+         * a nav menu for the one they are looking straight past. The narrow
+         * views still exist for the times the question really is only one of
+         * them.
+         *
          * This replaces an earlier `?shared=1` that meant `visibility !=
          * private`, i.e. *"a list I own that I have shared outward"*. That is a
          * property of my own list, not a separate collection, and it made the
          * Shared view a second copy of My Lists. Nothing ever linked to it,
          * which is the only reason replacing it is free.
          *
-         * An unrecognised value falls back to `mine` rather than showing
-         * everything: the views have different privacy characteristics, and the
-         * safe default is the one containing only rows this person owns.
+         * An unrecognised value falls back to `mine` rather than to nothing:
+         * it is the view every row this person may see belongs to, and each row
+         * says on its own card whose it is.
          *
          * See docs/features/list-taxonomy.md.
          */
@@ -66,61 +76,61 @@ class WishlistController extends Controller
             default => 'mine',
         };
 
-        $query = match ($view) {
-            /*
-             * Somebody else's list, shown to me. `ListAccess::scope()` already
-             * unions owned and collaborated rows and was previously only ever
-             * used to look up ONE list by id — so a list shared with you could
-             * be opened from its URL and found nowhere. Excluding my own rows
-             * is what turns that union into "theirs, not mine".
-             *
-             * Anonymous visitors get nothing here rather than an error:
-             * collaboration is signed-in only by design, because an invitation
-             * is delivered to an address and a cookie has nowhere to receive it.
-             */
-            'shared' => ListAccess::scope(Wishlist::query(), $owner)
-                ->whereNot(fn ($q) => $owner->scope($q)),
+        /*
+         * My own, whatever shape they are.
+         *
+         * This used to exclude `group`, so a group list I started was absent
+         * from the page called My Lists and appeared only under a nav entry I
+         * had to know about. A list I own belongs on my index; the sections
+         * below say which is which.
+         */
+        $owned = $owner->scope(Wishlist::query());
 
-            // Chosen at creation, never derived — a list must not change section
-            // because somebody was invited to it.
-            'group' => $owner->scope(Wishlist::query())->where('kind', ListKind::Group->value),
+        /*
+         * Somebody else's list, shown to me. `ListAccess::scope()` already
+         * unions owned and collaborated rows and was previously only ever
+         * used to look up ONE list by id — so a list shared with you could
+         * be opened from its URL and found nowhere. Excluding my own rows
+         * is what turns that union into "theirs, not mine".
+         *
+         * Anonymous visitors get nothing here rather than an error:
+         * collaboration is signed-in only by design, because an invitation
+         * is delivered to an address and a cookie has nowhere to receive it.
+         */
+        $sharedWithMe = ListAccess::scope(Wishlist::query(), $owner)
+            ->whereNot(fn ($q) => $owner->scope($q));
 
-            default => $owner->scope(Wishlist::query())
-                ->whereIn('kind', [ListKind::Mine->value, ListKind::ForSomeone->value]),
+        /*
+         * My Lists is now the whole picture: everything I own, and everything
+         * anybody has let me into, in one place with labelled sections.
+         *
+         * The three views remain three questions — the nav still asks each one
+         * on its own — but "where is that list?" was answerable only by
+         * guessing which of the three it had been filed under, and the two
+         * narrow views are reachable from one entry each. So the broad one is
+         * the superset and the sections carry the distinction that the separate
+         * pages used to carry.
+         *
+         * They are still separate QUERIES rather than one widened scope,
+         * because the suggestion count may only be attached to rows I own — see
+         * `rows()`. A single `ListAccess::scope()` with a `withCount` would put
+         * a message addressed to somebody else on their card in my list.
+         */
+        $lists = match ($view) {
+            'shared' => $this->rows($sharedWithMe, $owner, $current, owned: false),
+
+            // Chosen at creation, never derived — a list must not change
+            // section because somebody was invited to it.
+            'group' => $this->rows(
+                $owned->where('kind', ListKind::Group->value),
+                $owner,
+                $current,
+                owned: true,
+            ),
+
+            default => $this->rows($owned, $owner, $current, owned: true)
+                ->concat($this->rows($sharedWithMe, $owner, $current, owned: false)),
         };
-
-        $lists = $query
-            ->with([
-                'recipient',
-                /*
-                 * Enough of each list to recognise it at a glance.
-                 *
-                 * The index rendered a title and a count, so five lists looked
-                 * like five identical cards and you opened them one by one to
-                 * find the right one. Four covers is what turns that into
-                 * recognition.
-                 *
-                 * Only items that carry a stored image, which quietly excludes
-                 * Amazon — nothing about it may be mirrored (invariant #6), and
-                 * a cover strip is not worth a live fetch per list.
-                 */
-                'items' => fn ($q) => $q->whereNotNull('snapshot_image_url')
-                    ->latest('created_at')
-                    ->limit(4),
-            ])
-            ->withCount('items')
-            /*
-             * Only on My Lists. On the Shared and Group views these are other
-             * people's lists, and a pending suggestion is a message addressed
-             * to their owner — the count is theirs to see, not mine.
-             */
-            ->when($view === 'mine', fn ($q) => $q->withCount('suggestions'))
-            ->latest('updated_at')
-            ->get()
-            ->map(fn (Wishlist $list) => [
-                ...$this->summarise($list, $current),
-                'covers' => $list->items->pluck('snapshot_image_url')->all(),
-            ]);
 
         return Inertia::render('Lists/Index', [
             'lists' => $lists,
@@ -226,8 +236,19 @@ class WishlistController extends Controller
             ListAccess::isOwner($wishlist, $owner),
         );
 
+        /*
+         * The pot, for the organiser's own page.
+         *
+         * `Lists/Show` is where an organiser actually works, so the running
+         * total and the breakdown have to be here as well as on the share link
+         * — the contributions themselves are made through the token, but
+         * reading them should not require opening your own list as a visitor.
+         */
+        $pot = $contributor->forList($wishlist, $owner, ListAccess::isOwner($wishlist, $owner));
+
         return Inertia::render('Lists/Show', [
             'list' => $this->summarise($wishlist, $current),
+            'pot' => $pot,
 
             'access' => [
                 'isOwner' => ListAccess::isOwner($wishlist, $owner),
@@ -415,13 +436,34 @@ class WishlistController extends Controller
             'visibility' => ['sometimes', 'string', 'in:private,link,public'],
 
             /*
-             * Registry. An ordinary list with an occasion, a date and somewhere
-             * to send the parcel — not a fourth kind of list, because it is
-             * still yours, still claimable and still shared the same way.
+             * The occasion. Not a fourth kind of list — any list of any kind
+             * may say what it is for, and the kind still decides everything
+             * else. The delivery address is the registry-only half, and the UI
+             * omits the field entirely rather than sending an empty string.
              */
             'event_type' => ['nullable', 'string', 'in:'.implode(',', EventType::values())],
             'event_date' => ['nullable', 'date'],
             'delivery_address' => ['nullable', 'string', 'max:500'],
+
+            /*
+             * Who may see who claimed what.
+             *
+             * Accepted on any kind and *read* on one — a `mine` list hides
+             * claims from its owner whatever this says, because invariant #4 is
+             * not a preference. Storing it regardless keeps the question in one
+             * place: a list that changes kind later has an answer already,
+             * rather than needing one invented somewhere else.
+             */
+            'claim_visibility' => ['sometimes', 'string', 'in:'.implode(',', ClaimVisibility::values())],
+
+            /*
+             * "Do I want to see what has been claimed off my own list?"
+             *
+             * Nullable on purpose: null is "never asked", and the kind decides
+             * until somebody does. Only an explicit choice turns claims on for
+             * an owner — nothing here may infer it.
+             */
+            'owner_sees_claims' => ['sometimes', 'nullable', 'boolean'],
         ]);
 
         $wishlist->update($validated);
@@ -527,7 +569,7 @@ class WishlistController extends Controller
             ->flatMap(fn (Wishlist $list) => $list->items->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
                 'token' => $list->share_token,
-                'listTitle' => $list->title,
+                'listTitle' => $list->displayTitle(),
                 'title' => $item->snapshot_title,
                 'image' => $item->snapshot_image_url,
                 'price' => $item->group?->min_price ?? $item->snapshot_price,
@@ -546,15 +588,102 @@ class WishlistController extends Controller
             ->all();
     }
 
+    /**
+     * One index row per list, with the covers that make it recognisable.
+     *
+     * `$owned` is the whole privacy argument of this method and is passed
+     * rather than derived: **the suggestion count may only be attached to rows
+     * I own.** A pending suggestion is a message addressed to the owner, and a
+     * collaborator learning that one arrived is a leak of the fact that
+     * somebody is thinking about this person. `summarise()` reads
+     * `suggestions_count ?? null`, so leaving the `withCount` off is what makes
+     * the key null on somebody else's list rather than merely zero.
+     *
+     * @param  Builder<Wishlist>  $query
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function rows(Builder $query, Owner $owner, CurrentMarket $current, bool $owned): Collection
+    {
+        $user = $owner->user;
+
+        return $query
+            ->with([
+                'recipient',
+                /*
+                 * Enough of each list to recognise it at a glance.
+                 *
+                 * The index rendered a title and a count, so five lists looked
+                 * like five identical cards and you opened them one by one to
+                 * find the right one. Four covers is what turns that into
+                 * recognition.
+                 *
+                 * Only items that carry a stored image, which quietly excludes
+                 * Amazon — nothing about it may be mirrored (invariant #6), and
+                 * a cover strip is not worth a live fetch per list.
+                 */
+                'items' => fn ($q) => $q->whereNotNull('snapshot_image_url')
+                    ->latest('created_at')
+                    ->limit(4),
+            ])
+            /*
+             * Who let me in, and as what.
+             *
+             * Only on a list I do not own, and only ever MY row of it: the
+             * roster belongs to the owner, and loading it whole to read one
+             * role would hand every card the names of everybody else invited.
+             */
+            ->when(! $owned && $user !== null, fn ($q) => $q->with([
+                'owner',
+                'collaborators' => fn ($c) => $c->where('user_id', $user->id),
+            ]))
+            ->withCount('items')
+            ->when($owned, fn ($q) => $q->withCount('suggestions'))
+            ->latest('updated_at')
+            ->get()
+            ->map(fn (Wishlist $list) => [
+                ...$this->summarise($list, $current),
+                'covers' => $list->items->pluck('snapshot_image_url')->all(),
+
+                /*
+                 * Whose list this is, said on the card rather than by which
+                 * page you happened to open.
+                 *
+                 * The index is one page now, so "mine" and "someone let me in"
+                 * sit next to each other and the difference has to be visible.
+                 * It is not decoration: what I may do with the two differs, and
+                 * a list about a person is research they must never see while a
+                 * list shared with me is somebody else's to change.
+                 */
+                'sharedWithMe' => ! $owned,
+                'ownerName' => $owned ? null : ($list->owner?->name ?? $list->owner?->email),
+                'role' => $owned ? null : $list->collaborators->first()?->role->value,
+            ]);
+    }
+
     /** @return array<string, mixed> */
     private function summarise(Wishlist $list, CurrentMarket $current): array
     {
         return [
             'id' => $list->id,
-            'title' => $list->title,
+            'title' => $list->displayTitle(),
             'description' => $list->description,
             'kind' => $list->kind->value,
             'claimable' => $list->allowsClaiming(),
+
+            /*
+             * Is anybody else on this list?
+             *
+             * The page draws claim controls, the claim-privacy setting and the
+             * co-ordinating summary from this. A solo gift list — which is most
+             * of them — gets none of it: a privacy setting about an audience of
+             * one describes readers who do not exist.
+             */
+            'hasCoGivers' => $list->hasCoGivers(),
+
+            // Only read on a `for_someone` list; sent always, so the panel does
+            // not have to know that rule twice.
+            'claimVisibility' => $list->claim_visibility->value,
+            'ownerSeesClaims' => $list->ownerSeesClaims(),
             'isDefault' => (bool) $list->is_default,
             'handedOver' => $list->handed_over_at !== null,
             'eventType' => $list->event_type?->value,

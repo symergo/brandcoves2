@@ -39,7 +39,7 @@ export interface SavingTo {
 }
 
 export interface SharedProps {
-    auth: { user: AuthUser | null }
+    auth: { user: AuthUser | null; googleEnabled: boolean }
     market: CurrentMarket
     markets: SwitcherCountry[]
     translations: Translations
@@ -52,6 +52,33 @@ export interface SharedProps {
 
 /** Prices cross the wire as integer cents, exactly as they are stored. */
 export type Cents = number
+
+/**
+ * An occasion's date, in the reader's market.
+ *
+ * The year is dropped when it is this one — "14 Jun" is how somebody says a
+ * date three months out, and "14 Jun 2026" on a wedding this summer is noise.
+ *
+ * Here rather than in a page, because two surfaces render the same date: the
+ * shared list a guest opens, and the owner's own Gift Cove. A private copy in
+ * each is a formatting difference waiting to appear between the page you set it
+ * on and the page other people read it from.
+ */
+export function formatOccasionDate(iso: string, market: CurrentMarket): string {
+    const date = new Date(iso)
+
+    // Same reasoning as `formatPrice`: `Intl` throws on a malformed locale, and
+    // a throw inside render blanks the page rather than one badge.
+    try {
+        return new Intl.DateTimeFormat(market.hrefLang, {
+            day: 'numeric',
+            month: 'short',
+            ...(date.getFullYear() === new Date().getFullYear() ? {} : { year: 'numeric' }),
+        }).format(date)
+    } catch {
+        return iso
+    }
+}
 
 export function formatPrice(cents: Cents, market: CurrentMarket): string {
     /*

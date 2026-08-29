@@ -100,7 +100,25 @@ class SitemapController extends Controller
                 ['loc' => url("/{$resolved->value}/daily"), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/gift-ideas"), 'priority' => '0.8', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
+
+                /*
+                 * The overview across all three. Lower priority than any of the
+                 * indexes it links to — it holds no text of its own, and a
+                 * crawler that finds the archives through it has found the
+                 * better page. It is listed for the internal links: it is the
+                 * only node connecting the daily column, the persona shelf and
+                 * the article archive to each other.
+                 */
+                ['loc' => url("/{$resolved->value}/coves"), 'priority' => '0.5', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/brands"), 'priority' => '0.6', 'changefreq' => 'weekly'],
+
+                /*
+                 * The shop directory. Monthly, because it changes when an
+                 * advertiser is onboarded and not otherwise — the page holds no
+                 * catalogue data at all, which is also why it is cheap enough
+                 * to be worth crawling.
+                 */
+                ['loc' => url("/{$resolved->value}/shops"), 'priority' => '0.5', 'changefreq' => 'monthly'],
 
                 /*
                  * An about page is a trust signal a search engine looks for, and
@@ -153,6 +171,31 @@ class SitemapController extends Controller
                         'loc' => url("/{$resolved->value}/guides/{$guide->slug}"),
                         'lastmod' => $guide->updated_at ? Carbon::parse($guide->updated_at)->toAtomString() : null,
                         'priority' => '0.8',
+                        'changefreq' => 'weekly',
+                    ];
+                });
+
+            /*
+             * Shop Coves. Their own block because they are their own URL
+             * space: the query above is the `/guides` one and deliberately
+             * lists kinds rather than asking `isArticle()`, so a sixth kind
+             * outside that space has to say so here.
+             *
+             * Weekly like the guides. The text describes a shop rather than a
+             * price, so it changes when somebody rewrites it and not when the
+             * catalogue moves.
+             */
+            DB::table('daily_pick_sets')
+                ->where('market', $resolved->value)
+                ->where('kind', CoveKind::Shop->value)
+                ->where('status', PublishStatus::Published->value)
+                ->orderBy('id')
+                ->get(['slug', 'updated_at'])
+                ->each(function ($cove) use (&$urls, $resolved): void {
+                    $urls[] = [
+                        'loc' => url("/{$resolved->value}/shops/{$cove->slug}"),
+                        'lastmod' => $cove->updated_at ? Carbon::parse($cove->updated_at)->toAtomString() : null,
+                        'priority' => '0.6',
                         'changefreq' => 'weekly',
                     ];
                 });

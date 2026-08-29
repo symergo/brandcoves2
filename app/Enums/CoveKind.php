@@ -31,7 +31,7 @@ namespace App\Enums;
  * Everything downstream that means "the daily column" therefore has to say so.
  * See `DailyPickSet::scopeDaily()` and the migration that made `drop_date`
  * nullable for what goes wrong when it does not — Postgres sorts
- * `ORDER BY drop_date DESC` NULLS FIRST, and four of these five kinds are
+ * `ORDER BY drop_date DESC` NULLS FIRST, and five of these six kinds are
  * dateless.
  */
 enum CoveKind: string
@@ -71,6 +71,22 @@ enum CoveKind: string
      */
     case Advice = 'advice';
 
+    /**
+     * A piece about a **shop** rather than about a thing to buy.
+     *
+     * "How Coolblue's returns actually work", "which Belgian shops deliver on a
+     * Sunday", "what bol.com's Plus subscription is for". Every offer on this
+     * site names the shop it came from and nothing here ever said a word about
+     * those shops — which is the half of a buying decision that a price
+     * comparison cannot answer.
+     *
+     * Prose, like Advice: its substance is the writing, so it publishes with no
+     * products. Unlike Advice it does **not** live in the `/guides` space — it
+     * is read at `/shops/{slug}`, above the directory of shops it is about, and
+     * `isArticle()` stays false for exactly that reason.
+     */
+    case Shop = 'shop';
+
     public function isDated(): bool
     {
         return $this === self::Daily;
@@ -83,6 +99,12 @@ enum CoveKind: string
      * the controller, the sitemap, the hreflang pairing, the allowlist and two
      * admin screens, and a list repeated six times is a list that will be five
      * places out of date.
+     *
+     * **Shop is prose and is still not an article here.** This method answers a
+     * question about *URL space*, not about page shape: a Shop Cove is read at
+     * `/shops/{slug}`, so answering true would sweep it into the `/guides`
+     * index, the guides sitemap and the guides hreflang pairing. Page shape is
+     * `expectsShortlist()`.
      */
     public function isArticle(): bool
     {
@@ -102,6 +124,23 @@ enum CoveKind: string
             self::Daily => 'daily/'.$address,
             self::Persona => 'gift-ideas/'.$address,
             self::Guide, self::Seasonal, self::Advice => 'guides/'.$address,
+            self::Shop => 'shops/'.$address,
+        };
+    }
+
+    /**
+     * Does the page expect a ranked shortlist under the prose?
+     *
+     * The one thing the React page branches on. An advice article or a Shop
+     * Cove rendering an empty `<ol>` reads as a broken buying guide rather than
+     * as a finished piece of writing — and a seasonal Cove answers **true**,
+     * because a season is a scheduling fact and not a layout one.
+     */
+    public function expectsShortlist(): bool
+    {
+        return match ($this) {
+            self::Advice, self::Shop => false,
+            default => true,
         };
     }
 
@@ -117,7 +156,7 @@ enum CoveKind: string
         return match ($this) {
             self::Daily, self::Persona => (int) config('giftcoves.picks.minimum'),
             self::Guide, self::Seasonal => (int) config('giftcoves.guides.min_products'),
-            self::Advice => 0,
+            self::Advice, self::Shop => 0,
         };
     }
 
@@ -127,7 +166,7 @@ enum CoveKind: string
         return match ($this) {
             self::Daily, self::Persona => (int) config('giftcoves.picks.per_day'),
             self::Guide, self::Seasonal => (int) config('giftcoves.guides.items_per_guide'),
-            self::Advice => 0,
+            self::Advice, self::Shop => 0,
         };
     }
 
@@ -141,7 +180,16 @@ enum CoveKind: string
      */
     public function aiFeature(): string
     {
-        return $this->isArticle() ? 'guide_copy' : 'daily_picks';
+        /*
+         * Not `isArticle()`. That asks about the /guides URL space and a Shop
+         * Cove is not in it — but it is prose written by the same prompt shape
+         * against the same budget, and billing it to `daily_picks` would spend
+         * the column's daily cap on something that is not the column.
+         */
+        return match ($this) {
+            self::Daily, self::Persona => 'daily_picks',
+            default => 'guide_copy',
+        };
     }
 
     public function label(): string
@@ -152,6 +200,7 @@ enum CoveKind: string
             self::Guide => 'Buying guide',
             self::Seasonal => 'Seasonal guide',
             self::Advice => 'Advice article',
+            self::Shop => 'Shop Cove',
         };
     }
 

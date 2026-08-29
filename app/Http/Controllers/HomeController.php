@@ -135,11 +135,19 @@ class HomeController extends Controller
     }
 
     /**
-     * The visitor's own registry — a wish list with an occasion on it.
+     * The next occasion the visitor is buying towards, on any list of theirs.
      *
-     * Not a fourth kind of list: a registry is still `mine`, still claimable,
-     * still owned by the person it is for, and `event_type` is what makes it
-     * one. So this looks for the occasion rather than for a kind.
+     * **This was "the visitor's own registry", and the query has not changed —
+     * the world under it has.** It has always looked for `event_type` rather
+     * than for a kind, on the correct reasoning that a registry is not a fourth
+     * kind of list. Once an occasion could be set on a list *about somebody
+     * else*, that same query started returning gift lists, and the card calling
+     * one "your registry" would tell somebody their research about their father
+     * was a wedding list of their own.
+     *
+     * So the card is about the occasion now, which is the more useful nudge in
+     * any case: a birthday you are shopping for beats a registry most people
+     * never create. `kind` rides along so the copy can tell the two apart.
      *
      * The **soonest upcoming** one, not the newest. A registry is a date people
      * are buying towards, and last summer's wedding is not the one you are
@@ -161,6 +169,7 @@ class HomeController extends Controller
         }
 
         $registry = $owner->scope(Wishlist::query())
+            ->with('recipient')
             ->where('market', $current->value())
             ->whereNotNull('event_type')
             ->where(fn ($q) => $q
@@ -176,9 +185,18 @@ class HomeController extends Controller
         }
 
         return [
-            'title' => $registry->title,
+            'title' => $registry->displayTitle(),
             'occasion' => $registry->event_type->label(),
             'date' => $registry->event_date?->toDateString(),
+
+            /*
+             * Whose occasion it is, so the card can say "Dad's birthday" rather
+             * than implying the visitor is the one being bought for. Null on a
+             * wish list of their own, where the answer is them.
+             */
+            'for' => $registry->kind->isForSomeoneElse()
+                ? $registry->recipient?->name
+                : null,
             'url' => $current->url("lists/{$registry->id}"),
         ];
     }

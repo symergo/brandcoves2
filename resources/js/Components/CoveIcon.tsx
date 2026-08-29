@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 
-export type CoveKey = 'daily' | 'surprise' | 'idea' | 'ask'
+export type CoveKey = 'daily' | 'surprise' | 'idea' | 'persona' | 'brand' | 'shop' | 'all' | 'ask'
 
 /**
- * The four discovery surfaces, drawn.
+ * The discovery surfaces, drawn.
  *
  * Same grid, same stroke weight and the same `currentColor` rule as
  * `ToolIcon` — deliberately the same set rather than a second icon style that
@@ -23,14 +23,29 @@ export type CoveKey = 'daily' | 'surprise' | 'idea' | 'ask'
  * - **Idea** is an open book rather than a lightbulb. The Coves are long reads
  *   with a shortlist inside them; a lightbulb would promise a tip, which sets
  *   up the wrong expectation about how much there is to read.
+ * - **Persona** is one person, head and shoulders. A Gift Cove is built around
+ *   somebody rather than a date, and that is the single fact separating it from
+ *   the book beside it. Not a gift box — that is Surprise, and it would depict
+ *   the output where the distinction is the *input*.
+ * - **Brand** is a tag with its hole, the mark a maker puts on a thing. Not a
+ *   label on a shelf — a Brand Cove is about who made it, and a shelf label is
+ *   about where it is sold, which is the shop beside it.
+ * - **Shop** is a storefront: an awning over a door. Not a shopping bag or a
+ *   trolley, both of which depict *buying*; this page is about the shops
+ *   themselves, and every other icon in the set would then have to explain why
+ *   it is not also about buying.
+ * - **All** is a two-by-two grid, the only icon here that depicts an
+ *   arrangement rather than a thing. It is the one entry that is not a kind of
+ *   Cove but the set of them, and a fifth object in the row would read as a
+ *   fifth kind.
  * - **Ask** is two speech bubbles, the second answering the first. Not a
  *   question mark — that is Surprise's rejected drawing, and it would say "we
  *   do not know" about a feature whose whole premise is that somebody else
  *   does. Two bubbles say the thing that matters: a person replies.
  *
- * All four are `aria-hidden`: the name sits in words immediately beside the
- * icon everywhere this is used, and announcing "book" before "Idea Cove" adds a
- * riddle rather than information.
+ * All of them are `aria-hidden`: the name sits in words immediately beside the
+ * icon everywhere this is used, and announcing "book" before "Inspiration Coves" adds
+ * a riddle rather than information.
  */
 const paths: Record<CoveKey, ReactNode> = {
     daily: (
@@ -56,6 +71,38 @@ const paths: Record<CoveKey, ReactNode> = {
             <path d="M12 6.5C10.5 5 8.5 4.5 6 4.5H3v13h3.5c2.2 0 4.1.5 5.5 1.7" />
             <path d="M12 6.5C13.5 5 15.5 4.5 18 4.5h3v13h-3.5c-2.2 0-4.1.5-5.5 1.7" />
             <path d="M12 6.5v12.7" />
+        </>
+    ),
+
+    persona: (
+        <>
+            <circle cx="12" cy="8" r="3.5" />
+            <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
+        </>
+    ),
+
+    brand: (
+        <>
+            <path d="M12.5 3H20a1 1 0 0 1 1 1v7.5a1 1 0 0 1-.3.7l-8.5 8.5a1 1 0 0 1-1.4 0l-7.5-7.5a1 1 0 0 1 0-1.4l8.5-8.5a1 1 0 0 1 .7-.3Z" />
+            <circle cx="16.5" cy="7.5" r="1.5" />
+        </>
+    ),
+
+    shop: (
+        <>
+            {/* The awning, and the door under it. */}
+            <path d="M3.5 9.5h17v10a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1v-10Z" />
+            <path d="M2.5 9.5 5 4h14l2.5 5.5" />
+            <path d="M9 20.5v-6h6v6" />
+        </>
+    ),
+
+    all: (
+        <>
+            <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" />
+            <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" />
+            <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" />
+            <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
         </>
     ),
 

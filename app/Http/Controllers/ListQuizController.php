@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Models\ListQuiz;
 use App\Models\ListQuizAttempt;
@@ -56,6 +57,22 @@ class ListQuizController extends Controller
          */
         abort_if($wishlist->visibility === ListVisibility::Private, 403, __('site.quiz.share_first'));
 
+        /*
+         * Only a wish list of your own.
+         *
+         * The quiz asks "how well do you know **me**", and it publishes what is
+         * on the list to whoever holds the link. Over a list about a third
+         * person that is somebody's private research turned into a game about
+         * them — and the sharing switch this endpoint checks above was never
+         * consent for that.
+         *
+         * Unchecked until 2026-08-29 because it could not come up: `mine` was
+         * the only claimable kind, and the visibility check happened to stand in
+         * for the kind. Widening `allowsClaiming()` separated them, and a gate
+         * that works by coincidence stops working silently.
+         */
+        abort_unless($wishlist->kind === ListKind::Mine, 403);
+
         $rounds = $builder->build($wishlist, $this->pool($wishlist, $current));
 
         if ($rounds === []) {
@@ -83,7 +100,7 @@ class ListQuizController extends Controller
 
         return Inertia::render('Quiz/Play', [
             'quiz' => [
-                'title' => $quiz->wishlist->title,
+                'title' => $quiz->wishlist->displayTitle(),
                 'owner' => $quiz->wishlist->owner?->displayName(),
                 // Questions only. The payload a player receives must not carry
                 // the thing they are being asked to guess.

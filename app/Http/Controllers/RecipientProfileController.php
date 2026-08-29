@@ -49,12 +49,37 @@ class RecipientProfileController extends Controller
 {
     public function show(Request $request, CurrentMarket $current, string $market, string $token): Response
     {
-        $recipient = $this->findByToken($token);
+        return Inertia::render(
+            'Recipients/SelfDescribe',
+            $this->page($request, $current, $this->findByToken($token)),
+        );
+    }
+
+    /**
+     * Everything this page needs, built once for both routes.
+     *
+     * `suggest()` used to render `Recipients/SelfDescribe` with **only**
+     * `suggestions`, and the page reaches it through `router.get()` — a full
+     * visit, not a partial reload. So searching replaced the whole prop set
+     * with one key: `person` came back undefined and the page died on
+     * `person.name`, which is "the search does not work" as a person
+     * experiences it.
+     *
+     * Fixed by making the payload whole rather than by asking the client for a
+     * partial reload. `only: ['suggestions']` would also have worked and is
+     * one property short of correct: a URL that renders a broken page when
+     * somebody refreshes it, or opens it from their history, is broken.
+     * `/for/{token}/suggest?q=…` is a real address and has to stand on its own.
+     *
+     * @return array<string, mixed>
+     */
+    private function page(Request $request, CurrentMarket $current, Recipient $recipient): array
+    {
         $owner = Owner::fromRequest($request);
 
         $list = $this->theirList($recipient, $owner, $current);
 
-        return Inertia::render('Recipients/SelfDescribe', [
+        return [
             'person' => [
                 'name' => $recipient->name,
                 // Their own answers, or blank. Deliberately NOT prefilled with
@@ -72,7 +97,37 @@ class RecipientProfileController extends Controller
                 'isLinked' => $recipient->isLinked(),
             ],
             'options' => RecipientTasteRequest::options(),
-            'canClaim' => $owner->isSignedIn() && ! $recipient->isLinked(),
+            /*
+             * Mirrors `claim()` exactly, and used not to.
+             *
+             * It was `isSignedIn() && ! isLinked()`, which omits the one refusal
+             * the endpoint actually makes: the **giver** cannot claim their own
+             * stub, because that would make them the recipient of their own
+             * gift research. So the person most likely to open this link — the
+             * one who made the list, checking what it looks like — was shown a
+             * button that answered 403 with no explanation.
+             *
+             * A control that 403s when pressed is worse than no control. Same
+             * defect, same fix, as `allowsContributionsFrom()` and `canSuggest`.
+             */
+            'canClaim' => $owner->isSignedIn()
+                && ! $recipient->isLinked()
+                && $recipient->owner_user_id !== $request->user()?->id,
+
+            /*
+             * Is this the person who made the list, looking at their own link?
+             *
+             * Worth saying out loud rather than rendering nothing: they came
+             * here to see what they were about to send, and a page that simply
+             * omits the control leaves them wondering whether it is broken.
+             */
+            'isGiver' => $recipient->owner_user_id !== null
+                && $recipient->owner_user_id === $request->user()?->id,
+
+            // Signed out, on a link somebody sent them. Describing yourself
+            // needs no account; saying "this is me" is what needs one, and it
+            // is the short path to having one.
+            'canSignInToClaim' => ! $owner->isSignedIn() && ! $recipient->isLinked(),
             'items' => $list === null ? [] : $this->items($list),
             'listId' => $list?->id,
 
@@ -80,7 +135,7 @@ class RecipientProfileController extends Controller
              * No `giverList`, no `pickedCount`, no claim state. Their absence is
              * the feature — see the class docblock.
              */
-        ]);
+        ];
     }
 
     /** Their own words about themselves, which outrank anyone's guess. */
@@ -143,6 +198,10 @@ class RecipientProfileController extends Controller
             ->searching($request->string('q')->toString() ?: null);
 
         return Inertia::render('Recipients/SelfDescribe', [
+            // The whole page, plus the results. This route is reached by a full
+            // visit and is a real address somebody can refresh; see `page()`.
+            ...$this->page($request, $current, $recipient),
+
             'suggestions' => array_map(fn ($pick) => [
                 'id' => $pick->group->id,
                 'title' => $pick->group->title,
@@ -150,6 +209,9 @@ class RecipientProfileController extends Controller
                 'price' => $pick->group->min_price,
                 'reason' => $pick->topSignal(),
             ], $engine->suggest($brief)),
+
+            // So the box still holds what they typed after the page comes back.
+            'suggestTerm' => $request->string('q')->toString(),
         ]);
     }
 

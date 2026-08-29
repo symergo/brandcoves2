@@ -1,8 +1,16 @@
 import type { ReactNode } from 'react'
 import type { CoveKey } from './CoveIcon'
 
+export type CoveSceneKey = Extract<CoveKey, 'daily' | 'surprise' | 'idea' | 'ask'>
+
 /**
- * The three discovery Coves at card size.
+ * The four discovery cards on the homepage, at card size.
+ *
+ * A strict subset of `CoveKey`, and deliberately so. `CoveIcon` draws every
+ * entry in the Discover menu including Gift Coves and All Coves; these are the
+ * four cards the homepage lays out, and a scene for a menu row nothing renders
+ * at 160px would be drawing for a surface that does not exist. `CoveSceneKey`
+ * is what keeps that a compile error rather than a blank card.
  *
  * Not the `CoveIcon` scaled up. A 24px glyph enlarged to 160px is a thin
  * outline in a lot of empty space — the stroke stays hairline while everything
@@ -29,7 +37,7 @@ import type { CoveKey } from './CoveIcon'
  * Decorative throughout: `aria-hidden`, because the Cove's name and its
  * sentence sit directly beside every one of these.
  */
-const scenes: Record<CoveKey, ReactNode> = {
+const scenes: Record<CoveSceneKey, ReactNode> = {
     daily: (
         <>
             {/* The archive, behind. */}
@@ -98,7 +106,7 @@ const scenes: Record<CoveKey, ReactNode> = {
     ),
 }
 
-export default function CoveIllustration({ name, className }: { name: CoveKey; className?: string }) {
+export default function CoveIllustration({ name, className }: { name: CoveSceneKey; className?: string }) {
     return (
         <svg
             viewBox="0 0 160 116"

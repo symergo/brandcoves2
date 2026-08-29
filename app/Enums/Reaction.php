@@ -14,11 +14,21 @@ enum Reaction: string
     case Mindblown = 'mindblown';
     case Meh = 'meh';
 
+    /*
+     * Thumbs, not the exploding head and the flat face they started as: the
+     * reaction is read at a glance beside a price, and "is this any good"
+     * carries there where "did this astonish you" did not.
+     *
+     * The case names and the `mindblown_count` / `meh_count` columns keep the
+     * old vocabulary on purpose. Renaming them is a data migration across
+     * `pick_reactions` and two counters for a change nobody can see, and the
+     * enum is the one place the two spellings have to meet.
+     */
     public function emoji(): string
     {
         return match ($this) {
-            self::Mindblown => '🤯',
-            self::Meh => '😐',
+            self::Mindblown => '👍',
+            self::Meh => '👎',
         };
     }
 

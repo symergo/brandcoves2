@@ -10,6 +10,7 @@ use App\Enums\Market;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AnonymousIdentity;
 use App\Models\GiftPledge;
+use App\Models\ListItemVote;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
@@ -148,20 +149,33 @@ class GroupListTest extends TestCase
     }
 
     #[Test]
-    public function a_group_list_does_not_appear_under_my_lists(): void
+    public function a_group_list_appears_under_my_lists_as_a_list_i_own(): void
     {
-        // Three views answering three questions. A group list is "what are we
-        // choosing together", and showing it in both places would make the
-        // sections decoration rather than an answer.
+        /*
+         * This asserted the opposite until 2026-08-29, on the grounds that
+         * three views answer three questions and showing a group list in two of
+         * them makes the sections decoration.
+         *
+         * The sections survived; the exclusion did not. My Lists is the page
+         * somebody opens to find *a list*, and it was the one place a third of
+         * their lists could not be found — the group view is one nav entry you
+         * have to already know about. So the broad view is the superset and the
+         * labelled section carries the distinction, which is what the section
+         * was for.
+         *
+         * `?view=group` still answers the narrow question, and the row still
+         * says it is mine rather than one somebody shared with me.
+         */
         $user = User::factory()->create();
         $list = $this->groupList($user);
 
         $response = $this->actingAs($user)->get('/be-nl/lists')->assertOk();
 
-        $this->assertNotContains(
-            $list->id,
-            array_column($this->props($response)['lists'], 'id'),
-        );
+        $row = collect($this->props($response)['lists'])->firstWhere('id', $list->id);
+
+        $this->assertNotNull($row, 'A group list I own is missing from My Lists.');
+        $this->assertSame(ListKind::Group->value, $row['kind']);
+        $this->assertFalse($row['sharedWithMe']);
     }
 
     #[Test]
@@ -181,13 +195,186 @@ class GroupListTest extends TestCase
         $this->assertSame('Dad', $this->props($response)['list']['for']);
     }
 
+    // --- Voting: which present the group buys --------------------------------
+
+    #[Test]
+    public function a_member_votes_for_a_candidate_and_can_take_it_back(): void
+    {
+        // Phase 3, and the half a group list was missing: the money pooled
+        // fine, and choosing what to spend it on happened in the group chat.
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $member = User::factory()->create();
+
+        $this->actingAs($member)
+            ->post("/be-nl/l/{$list->share_token}/vote/{$item->id}")
+            ->assertRedirect();
+
+        $this->assertSame(1, ListItemVote::query()->count());
+
+        $this->actingAs($member)
+            ->delete("/be-nl/l/{$list->share_token}/vote/{$item->id}")
+            ->assertRedirect();
+
+        $this->assertSame(0, ListItemVote::query()->count());
+    }
+
+    #[Test]
+    public function an_anonymous_member_can_vote(): void
+    {
+        /*
+         * The reason `list_item_votes` mirrors `gift_pledges` rather than
+         * hanging off `users`. Somebody joins an office group by link and never
+         * signs up; requiring an account to vote is how most of the group does
+         * not, and the organiser goes back to the spreadsheet.
+         */
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+        $identity = AnonymousIdentity::create(['last_seen_at' => now()]);
+
+        $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $identity->getKey())
+            ->post("/be-nl/l/{$list->share_token}/vote/{$item->id}")
+            ->assertRedirect();
+
+        $this->assertSame(1, ListItemVote::query()->count());
+    }
+
+    #[Test]
+    public function one_vote_per_person_per_item_even_when_the_writes_race(): void
+    {
+        /*
+         * The partial unique index is the thing under test, and a sequential
+         * double-post would not test it — `create()` twice in a row is caught
+         * by anything. Two inserts around one another are what a phone does
+         * when a tap lands before the first request has come back, and an
+         * `updateOrCreate` (a read-then-write) lets both win.
+         *
+         * Written against the database rather than the endpoint so the race is
+         * real rather than simulated.
+         */
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+        $member = User::factory()->create();
+
+        ListItemVote::create(['item_id' => $item->id, 'user_id' => $member->id, 'anon_id' => null]);
+
+        $this->expectException(QueryException::class);
+
+        ListItemVote::create(['item_id' => $item->id, 'user_id' => $member->id, 'anon_id' => null]);
+    }
+
+    #[Test]
+    public function pressing_vote_twice_is_not_an_error_to_a_person(): void
+    {
+        // The index decides; the endpoint swallows its complaint, because the
+        // state the person asked for is the state they get either way.
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+        $member = User::factory()->create();
+
+        foreach ([1, 2] as $ignored) {
+            $this->actingAs($member)
+                ->post("/be-nl/l/{$list->share_token}/vote/{$item->id}")
+                ->assertRedirect();
+        }
+
+        $this->assertSame(1, ListItemVote::query()->count());
+    }
+
+    #[Test]
+    public function nothing_but_a_group_list_can_be_voted_on(): void
+    {
+        /*
+         * A wish list is not a poll and a `for_someone` list is one person's
+         * research. Posted directly rather than checked on the page — hiding a
+         * button stops nobody hand-building the request.
+         */
+        $owner = User::factory()->create();
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $owner->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+            'visibility' => ListVisibility::Link,
+        ]);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/vote/{$item->id}")
+            ->assertForbidden();
+
+        $this->assertSame(0, ListItemVote::query()->count());
+    }
+
+    #[Test]
+    public function the_shortlist_is_ordered_by_its_tally(): void
+    {
+        /*
+         * A shortlist that does not visibly rank is a list, and the ordering is
+         * half of what stops a visitor reading five candidates as five
+         * presents.
+         */
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+
+        $quiet = WishlistItem::factory()->create(['wishlist_id' => $list->id, 'snapshot_title' => 'Quiet']);
+        $popular = WishlistItem::factory()->create(['wishlist_id' => $list->id, 'snapshot_title' => 'Popular']);
+
+        foreach ([User::factory()->create(), User::factory()->create()] as $voter) {
+            ListItemVote::create(['item_id' => $popular->id, 'user_id' => $voter->id, 'anon_id' => null]);
+        }
+
+        $this->actingAs($organiser)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('items.0.title', 'Popular')
+                ->where('items.0.votes', 2)
+                ->where('items.1.title', 'Quiet')
+                ->where('items.1.votes', 0));
+
+        unset($quiet);
+    }
+
+    #[Test]
+    public function a_wish_list_carries_no_vote_keys_at_all(): void
+    {
+        // Absent, not zero — the same discipline as `claimed` and
+        // `contributions`. A `votes: 0` on a wish list is a key somebody later
+        // renders, and the page reads the key's presence as "this is a
+        // candidate".
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => User::factory()->create()->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+            'visibility' => ListVisibility::Link,
+        ]);
+        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->missing('items.0.votes'));
+    }
+
     // --- Contributions: the write gate --------------------------------------
 
     #[Test]
     public function a_group_list_can_be_contributed_to(): void
     {
-        // The gate used to be `allowsClaiming()`, which is mine-only — so a
-        // list for a third person structurally could not carry contributions.
+        /*
+         * The gate used to be `allowsClaiming()`, which is mine-only — so a
+         * list for a third person structurally could not carry contributions.
+         *
+         * The route names no item, and that is the second half of the same
+         * idea: a group list is ONE present, so the money is towards the list
+         * and the items under it are candidates nobody has chosen between yet.
+         * Pledging against one would be a bet, and most of those bets would end
+         * up attached to something nobody buys.
+         */
         $organiser = User::factory()->create();
         $list = $this->groupList($organiser);
         $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
@@ -196,7 +383,7 @@ class GroupListTest extends TestCase
         // multiplied them since it shipped; `Pledge.tsx` normalises the comma
         // half our markets type before it gets here.
         $this->actingAs(User::factory()->create())
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => '25.50',
                 'display_name' => 'Bob',
             ])
@@ -216,7 +403,7 @@ class GroupListTest extends TestCase
         $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
 
         $this->actingAs($organiser)
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 40,
                 'display_name' => 'Ann',
             ])
@@ -234,7 +421,7 @@ class GroupListTest extends TestCase
         $identity = AnonymousIdentity::create(['last_seen_at' => now()]);
 
         $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $identity->getKey())
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 10,
                 'display_name' => 'Someone',
             ]);
@@ -242,7 +429,7 @@ class GroupListTest extends TestCase
         $this->assertSame(1, GiftPledge::query()->count());
 
         $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $identity->getKey())
-            ->delete("/be-nl/l/{$list->share_token}/pledge/{$item->id}");
+            ->delete("/be-nl/l/{$list->share_token}/pledge");
 
         $this->assertSame(0, GiftPledge::query()->count());
     }
@@ -258,7 +445,7 @@ class GroupListTest extends TestCase
 
         foreach (['Bob' => 25, 'Cara' => 30] as $name => $amount) {
             $this->actingAs(User::factory()->create())
-                ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+                ->post("/be-nl/l/{$list->share_token}/pledge", [
                     'amount' => $amount,
                     'display_name' => $name,
                 ]);
@@ -266,7 +453,7 @@ class GroupListTest extends TestCase
 
         $response = $this->actingAs($organiser)->get("/be-nl/lists/{$list->id}")->assertOk();
 
-        $contributions = $this->props($response)['items'][0]['contributions'];
+        $contributions = $this->props($response)['pot'];
 
         $this->assertSame(5500, $contributions['total']);
         $this->assertSame(2, $contributions['count']);
@@ -289,7 +476,7 @@ class GroupListTest extends TestCase
         $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
 
         $this->actingAs(User::factory()->create())
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25,
                 'display_name' => 'Bob',
             ]);
@@ -298,14 +485,14 @@ class GroupListTest extends TestCase
 
         $member = User::factory()->create();
 
-        $this->actingAs($member)->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+        $this->actingAs($member)->post("/be-nl/l/{$list->share_token}/pledge", [
             'amount' => 30,
             'display_name' => 'Cara',
         ]);
 
         $response = $this->actingAs($member)->get("/be-nl/l/{$list->share_token}")->assertOk();
         $props = $this->props($response);
-        $contributions = $props['items'][0]['contributions'];
+        $contributions = $props['pot'];
 
         // The pool and my own share: both coordination.
         $this->assertSame(5500, $contributions['total']);
@@ -337,7 +524,7 @@ class GroupListTest extends TestCase
         ]);
 
         $this->actingAs(User::factory()->create())
-            ->post("/be-nl/l/{$list->share_token}/pledge/{$item->id}", [
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25,
                 'display_name' => 'Bob',
             ]);
@@ -345,7 +532,7 @@ class GroupListTest extends TestCase
         $response = $this->actingAs($mate)->get("/be-nl/lists/{$list->id}")->assertOk();
         $props = $this->props($response);
 
-        $this->assertArrayNotHasKey('breakdown', $props['items'][0]['contributions']);
+        $this->assertArrayNotHasKey('breakdown', $props['pot']);
         $this->assertStringNotContainsString('Bob', json_encode($props));
     }
 

@@ -90,6 +90,26 @@ class ConnectorRegistry
         ));
     }
 
+    /**
+     * Live sources serving a market, cooling-down ones included.
+     *
+     * Deliberately unlike liveFor(), for the same reason popularityFor() is:
+     * that one answers "who can I ask right now" and drops a source backing off
+     * after a 429 so a *request* degrades. This one answers "who do we compare
+     * in this market", which is a fact about the integration rather than about
+     * this second's rate limit. A shop directory that loses bol because bol is
+     * briefly refusing would tell a visitor we do not carry it.
+     *
+     * @return list<Source>
+     */
+    public function liveSourcesFor(Market $market): array
+    {
+        return array_values(array_map(
+            fn (LiveConnector $c) => $c->source(),
+            array_filter($this->live, fn (LiveConnector $c) => $c->supports($market)),
+        ));
+    }
+
     /** @return list<Source> */
     public function feedSources(): array
     {

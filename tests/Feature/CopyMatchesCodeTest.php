@@ -132,6 +132,127 @@ class CopyMatchesCodeTest extends TestCase
     }
 
     #[Test]
+    public function my_lists_holds_every_list_i_can_open_and_says_whose_each_one_is(): void
+    {
+        /*
+         * My Lists used to mean "lists I own, of two of the three kinds". A
+         * group list I started and a list somebody invited me to were both
+         * absent, each reachable only from a nav entry you had to know existed
+         * — so the page named after finding a list was the one place half of
+         * them could not be found.
+         *
+         * Mixing them makes the label load-bearing: what I may do with my own
+         * research list and with somebody else's wish list is not the same
+         * thing, so every row has to say which it is.
+         */
+        $me = User::factory()->create();
+        $friend = User::factory()->create(['name' => 'Sanne']);
+
+        $ownGroup = Wishlist::factory()->create([
+            'owner_user_id' => $me->id,
+            'recipient_id' => Recipient::factory()->create(['owner_user_id' => $me->id])->id,
+            'kind' => ListKind::Group,
+            'market' => Market::BeNl,
+        ]);
+
+        $theirs = Wishlist::factory()->create([
+            'owner_user_id' => $friend->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+            'visibility' => ListVisibility::Link,
+        ]);
+
+        WishlistCollaborator::create([
+            'wishlist_id' => $theirs->id,
+            'user_id' => $me->id,
+            'role' => 'editor',
+        ]);
+
+        // A message addressed to its owner, which must not be counted onto my
+        // copy of their card now that their card is on my page.
+        WishlistItem::factory()->create(['wishlist_id' => $theirs->id, 'accepted_at' => null]);
+
+        $props = $this->actingAs($me)->get('/be-nl/lists')->assertOk()->viewData('page')['props'];
+
+        $rows = collect($props['lists']);
+
+        $mine = $rows->firstWhere('id', $ownGroup->id);
+        $this->assertNotNull($mine, 'A group list I own is missing from My Lists.');
+        $this->assertFalse($mine['sharedWithMe']);
+        $this->assertNull($mine['ownerName']);
+
+        $invited = $rows->firstWhere('id', $theirs->id);
+        $this->assertNotNull($invited, 'A list shared with me is missing from My Lists.');
+        $this->assertTrue($invited['sharedWithMe']);
+        $this->assertSame('Sanne', $invited['ownerName']);
+        $this->assertSame('editor', $invited['role']);
+
+        // Invariant: a pending suggestion is a message to the owner. Null
+        // rather than zero, so nothing can render a count for it.
+        $this->assertNull($invited['suggestions']);
+    }
+
+    #[Test]
+    public function i_may_keep_more_than_one_wishlist_for_myself(): void
+    {
+        /*
+         * The Gift Cove showed *the* default list and nothing else, so a person
+         * with a wedding list and a list of things they want some day saw one
+         * of them and had no sign the other was there. One list stays the
+         * default — a one-tap save needs a single answer to "where did it go?"
+         * — but being the default is not being the only one.
+         *
+         * Default first, because that is the one a save reaches without being
+         * asked about, and the cards on that page act on whichever is first.
+         */
+        $me = User::factory()->create();
+
+        foreach (['Bruiloft', 'Ooit eens'] as $title) {
+            Wishlist::factory()->create([
+                'owner_user_id' => $me->id,
+                'kind' => ListKind::Mine,
+                'market' => Market::BeNl,
+                'title' => $title,
+            ]);
+        }
+
+        $props = $this->actingAs($me)->get('/be-nl/gift-cove')->assertOk()->viewData('page')['props'];
+
+        $wishlists = collect($props['wishlists']);
+
+        $this->assertCount(2, $wishlists);
+        $this->assertSame([true], $wishlists->pluck('isDefault')->filter()->values()->all());
+        $this->assertTrue($wishlists->first()['isDefault']);
+        $this->assertEqualsCanonicalizing(
+            ['Bruiloft', 'Ooit eens'],
+            $wishlists->pluck('title')->all(),
+        );
+    }
+
+    #[Test]
+    public function the_occasion_panel_is_called_what_the_manual_calls_it(): void
+    {
+        /*
+         * `registry_step1` quotes the label on the button. It said "press
+         * Registry" — a word for the artefact rather than for what you are
+         * doing to the list — and the control is now "Special occasion", which
+         * is what somebody adding a wedding date to their own wish list thinks
+         * they are doing. Rename one without the other and the manual sends
+         * people hunting for a button they are looking straight at.
+         */
+        foreach (['en', 'nl', 'fr', 'es'] as $locale) {
+            $label = __('site.registry.badge', locale: $locale);
+            $step = __('site.gift_cove.registry_step1', locale: $locale);
+
+            $this->assertStringContainsString(
+                $label,
+                $step,
+                "The occasion step in {$locale} does not name the button: {$step}",
+            );
+        }
+    }
+
+    #[Test]
     public function an_anonymous_suggestion_is_attributed_rather_than_unsigned(): void
     {
         /*

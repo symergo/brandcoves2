@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Models\CovePlan;
 use App\Models\GuideTopic;
 use App\Models\User;
+use App\Services\Cove\PlanSlugs;
 use App\Services\Cove\Selectors\LadderSelector;
 use App\Services\Curation\PlanCurator;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +37,7 @@ class TopicPlanner
     public function __construct(
         private readonly LadderSelector $ladder,
         private readonly PlanCurator $curator,
+        private readonly PlanSlugs $slugs,
     ) {}
 
     public function draft(GuideTopic $topic, ?User $author = null): CovePlan
@@ -121,31 +123,15 @@ class TopicPlanner
      * The slug this guide will live at.
      *
      * Prefixed per language, exactly as `GuideBuilder::slug()` did, so a folded
-     * guide and a newly planned one are addressed the same way. Suffixed rather
-     * than allowed to collide: one slug namespace per market covers every
-     * dateless kind, so a persona could already hold this one.
+     * guide and a newly planned one are addressed the same way. The collision
+     * handling belongs to {@see PlanSlugs}: one slug namespace per market covers
+     * every dateless kind, so a persona could already hold this one.
      */
     private function freeSlug(GuideTopic $topic): string
     {
-        $base = Str::slug(
-            __('site.guides.slug_prefix', [], $topic->market->language()).'-'.$topic->topic
+        return $this->slugs->free(
+            $topic->market,
+            __('site.guides.slug_prefix', [], $topic->market->language()).'-'.$topic->topic,
         );
-
-        $taken = fn (string $candidate): bool => CovePlan::query()
-            ->where('market', $topic->market->value)
-            ->where('slug', $candidate)
-            ->exists();
-
-        if (! $taken($base)) {
-            return $base;
-        }
-
-        $n = 2;
-
-        while ($taken($base.'-'.$n)) {
-            $n++;
-        }
-
-        return $base.'-'.$n;
     }
 }

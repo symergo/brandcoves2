@@ -10,7 +10,9 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
+use App\Services\Wishlist\ClaimView;
 use App\Services\Wishlist\ContributionView;
+use App\Services\Wishlist\DefaultTitle;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -36,16 +38,37 @@ class SharedListController extends Controller
         string $token,
         SearchService $search,
         ContributionView $contributor,
+        ClaimView $claims,
     ): Response {
         $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
 
-        // If the owner opens their own share link, suppress claim state rather
-        // than showing it. Anonymous owners count: most lists are built before
-        // signup.
-        $isOwner = $list->shouldHideClaimsFrom($owner);
+        /*
+         * Two questions, and they used to be one variable.
+         *
+         * `$isOwner` was `shouldHideClaimsFrom()`, which answered both while
+         * the two happened to agree — every list whose owner must not see
+         * claims was also every list the owner owned. A gift list about
+         * somebody else breaks that: its owner is a co-giver rather than the
+         * person being surprised, so they *do* see claims, and every one of the
+         * eight uses below would have silently changed meaning.
+         *
+         * `list-taxonomy.md` names this exact hazard for `ContributionView`:
+         * "$isOwner must not be reused as 'hide everything'".
+         *
+         * - `$isOwner`    — identity. Whose list is this?
+         * - `$hideClaims` — policy. May this person see what is taken?
+         */
+        $isOwner = $list->isOwnedBy($owner);
+        $hideClaims = $list->shouldHideClaimsFrom($owner);
 
-        // A list *about* someone is co-giver coordination, not a registry.
+        /*
+         * Claiming needs a kind that allows it AND somebody to coordinate with.
+         * The second half is free here — `findShared()` excludes private lists,
+         * so anything reachable through this route is shared by definition —
+         * but it is asked through the model so this page and the owner's page
+         * cannot disagree about it.
+         */
         $claimable = $list->allowsClaiming();
 
         $identity = $owner->claimIdentity();
@@ -63,7 +86,7 @@ class SharedListController extends Controller
          * followed a link once; requiring a signup before they can say "she'd
          * love this" is how the feature does not get used.
          */
-        $canSuggest = ! $isOwner && $claimable && $owner->exists();
+        $canSuggest = ! $isOwner && $owner->exists();
 
         $term = $canSuggest ? trim((string) $request->query('q', '')) : '';
 
@@ -84,7 +107,21 @@ class SharedListController extends Controller
             && $hash !== null
             && $list->items()->where('claimed_by_hash', $hash)->exists();
 
-        $items = $list->items()->with(['group', 'pledges'])->get();
+        /*
+         * On a group list the items are candidates, and the tally is their
+         * order: most-backed first, so a shortlist that has been voted on reads
+         * as one rather than as an unsorted pile. `latest()` is the tiebreak
+         * only, which keeps the order stable while nobody has voted.
+         */
+        $items = $list->items()
+            ->with(['group', 'pledges', 'votes'])
+            ->when(
+                $list->kind->allowsVoting(),
+                fn ($q) => $q->withCount('votes')->orderByDesc('votes_count')->latest(),
+            )
+            ->get();
+
+        $list->load('pledges');
 
         /*
          * Money on the list.
@@ -97,9 +134,26 @@ class SharedListController extends Controller
          */
         $contributions = $contributor->forItems($list, $items, $owner, $isOwner);
 
+        /*
+         * Who has claimed what, decided in one place.
+         *
+         * This used to be three ternaries per item spelling out the same rule
+         * three times, which was survivable while the rule was "the owner sees
+         * nothing" and stopped being so the moment it inverted by kind and then
+         * by a per-list setting. `ClaimView` holds the whole table; absent
+         * rather than null wherever there is nothing to say.
+         */
+        $claimState = $claims->forItems($list, $items, $owner, $hideClaims);
+
+        /*
+         * Who may vote, mirrored from the endpoint exactly as `canClaim` is.
+         * Mirrored, never trusted: the POST asks the same question again.
+         */
+        $canVote = $list->allowsVotingFrom($owner);
+
         return Inertia::render('Lists/Shared', [
             'list' => [
-                'title' => $list->title,
+                'title' => $list->displayTitle(),
                 'description' => $list->description,
                 'kind' => $list->kind->value,
                 'claimable' => $claimable,
@@ -130,13 +184,64 @@ class SharedListController extends Controller
                  * saying "My wishlist" belongs to nobody. A title the owner
                  * actually chose ("Wedding", "Books") is kept, because they
                  * meant something by it; only our own default name is replaced.
+                 *
+                 * Recognising it is `DefaultTitle`'s job, not a string
+                 * comparison against the active locale: the stored title is
+                 * frozen in the language of the market the list was created on,
+                 * so a list started on `/en` and shared to a Dutch reader failed
+                 * this test and went out titled "My wishlist" — the exact
+                 * anonymous link this branch exists to prevent.
                  */
-                'heading' => $for !== null && $list->title === __('site.lists.default_title')
+                'heading' => $for !== null && DefaultTitle::isOurs($list->title)
                     ? __('site.lists.someones_wishlist', ['name' => $for])
-                    : $list->title,
+                    : $list->displayTitle(),
             ],
             'isOwner' => $isOwner,
+
+            /*
+             * May this viewer claim, mirrored from the endpoint.
+             *
+             * The three conditions `claim()` enforces, asked here so the button
+             * is absent wherever the POST would be refused. Mirrored, never
+             * trusted: the endpoint asks again, because hiding a control stops
+             * nobody hand-building the request.
+             *
+             * Note this is NOT `! $isOwner`. The owner of a gift list about
+             * somebody else is a co-giver like any other and may well be the
+             * one buying the scarf; it is only the owner of a *wish* list who
+             * must be kept out, and `$hideClaims` is what says so.
+             */
+            'canClaim' => $claimable && ! $hideClaims && $identity !== null,
+
+            /*
+             * Whether claims are being withheld from this viewer, so the page
+             * can say so rather than looking broken.
+             *
+             * `isOwner` used to stand in for this, and on a gift list it now
+             * says the opposite of what the banner means: its owner is looking
+             * at their own list *and* seeing claim state, which is the whole
+             * point of the inversion.
+             */
+            'hideClaims' => $hideClaims,
+
+            /*
+             * What the list has promised its claimers about their name, so the
+             * claim control can say it *before* the press rather than after.
+             * A name shown to other people is a consent decision, and consent
+             * given in a panel somebody else opened is not consent.
+             */
+            'claimNames' => $claimable && $list->claim_visibility->namesClaimers(),
             'canSuggest' => $canSuggest,
+
+            /*
+             * Whether what they add lands on the list or in the owner's queue.
+             *
+             * The page needs it for the verb — "Add to this list" is a
+             * different promise from "Suggest something", and getting it the
+             * wrong way round either surprises the owner or makes a helper
+             * think nothing happened.
+             */
+            'addsDirectly' => $list->kind->acceptsDirectAdditions(),
             'suggestTerm' => $term,
 
             /*
@@ -146,33 +251,59 @@ class SharedListController extends Controller
              * nobody hand-building the request.
              */
             'canContribute' => $list->allowsContributionsFrom($owner),
+            'canVote' => $canVote,
 
             /*
-             * The registry block: an occasion, a date, and where to send it.
+             * The pot, on a group list: one payload for the whole present.
+             *
+             * Null on every other kind, where money is pooled per item instead
+             * and `contributions` rides on the item. Two shapes rather than one
+             * because they are two different facts — "€75 towards this present"
+             * and "€75 towards this one thing on Anna's list" — and the page
+             * renders a header block for the first and a form under a card for
+             * the second.
+             */
+            'pot' => $contributor->forList($list, $owner, $isOwner),
+
+            /*
+             * Why this list exists: an occasion, a date, and — on a registry —
+             * where to send it.
              *
              * All three were stored and read back to the owner alone, so a
              * registry was a form you could fill in and nobody could ever use.
              * The copy has promised the gate below in two places since the
              * feature shipped, and so has the migration's own comment.
              *
-             * **The occasion and date are not gated.** They are why the list
-             * exists — "Wedding, 14 June" — and belong to everyone holding the
-             * link. Only the address is, which is exactly what
-             * `registry.address_hint` says.
+             * **The occasion and date are not gated, and no longer registry-
+             * only.** They are why the list exists — "Wedding, 14 June", "Dad's
+             * birthday, 14 June" — and belong to everyone holding the link,
+             * whatever kind of list it is. `hasOccasion()` is the question now;
+             * `isRegistry()` narrowed to mean what it says.
+             *
+             * **The address stays registry-only, and that is the reason the two
+             * questions were split.** It is the owner's home, and it is only
+             * ever appropriate on a list belonging to the person receiving the
+             * parcel. A gift list about somebody else may carry an occasion and
+             * must never carry an address — asking one question for both is how
+             * that gate would quietly widen.
              *
              * `delivery_address` is an encrypted cast, so reading it here is the
              * authorised disclosure. There are exactly two readers in the
              * codebase: the owner's own page behind `ListAccess::isOwner()`, and
              * this one behind `$hasClaimed`. There is no third.
              */
-            'registry' => ! $list->isRegistry() ? null : [
-                'occasion' => $list->event_type->label(),
+            'occasion' => ! $list->hasOccasion() ? null : [
+                'name' => $list->event_type->label(),
                 'date' => $list->event_date?->toDateString(),
-                'address' => $hasClaimed ? $list->delivery_address : null,
+                'address' => $list->isRegistry() && $hasClaimed
+                    ? $list->delivery_address
+                    : null,
                 // Said out loud, so somebody who has claimed nothing knows the
                 // address exists and how to see it, rather than assuming the
                 // owner forgot to add one.
-                'locked' => ! $hasClaimed && filled($list->delivery_address),
+                'locked' => $list->isRegistry()
+                    && ! $hasClaimed
+                    && filled($list->delivery_address),
             ],
 
             /*
@@ -211,16 +342,17 @@ class SharedListController extends Controller
             ),
 
             /*
-             * "3 of 11 claimed" — for visitors only, and null for the owner.
+             * "3 of 11 claimed" — null for anybody who may not see claims.
              *
-             * A count is claim state. Sending 0 to the owner would be just as
-             * fatal as sending the truth, because the moment it stops being 0
-             * they know. Absent, not zero.
+             * A count is claim state. Sending 0 to the owner of a wish list
+             * would be just as fatal as sending the truth, because the moment
+             * it stops being 0 they know. Null, never zero.
+             *
+             * Gated on `$hideClaims` rather than `$isOwner`: the organiser of a
+             * gift list about somebody else is exactly the person who needs to
+             * know how much is still uncovered.
              */
-            'progress' => $isOwner || ! $claimable ? null : [
-                'claimed' => $list->items()->whereNotNull('claimed_by_hash')->count(),
-                'total' => $list->items()->count(),
-            ],
+            'progress' => $claims->progress($list, $hideClaims),
             'items' => $items->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
                 'title' => $item->snapshot_title,
@@ -251,27 +383,36 @@ class SharedListController extends Controller
                 'inStock' => $item->group?->in_stock ?? false,
 
                 /*
-                 * Claim state is computed per viewer and suppressed entirely
-                 * for the owner.
+                 * Claim state, from the one place that decides it.
                  *
-                 * `claimedByMe` lets a visitor un-claim their own choice.
-                 * `claimed` tells other visitors not to buy the same thing.
-                 * The owner sees neither — not even the boolean — because a
-                 * single leaked flag defeats the whole point of a gift list.
+                 * Absent — not null — wherever this viewer may know nothing:
+                 * the owner of a wish list receives no `claimed` key at all,
+                 * and a `claimed: false` on every item is a channel that goes
+                 * live the moment one of them flips. Same discipline as
+                 * `contributions` below.
+                 *
+                 * The page reads `claimed === undefined` to mean "no claiming
+                 * here", so this must stay a spread rather than becoming three
+                 * nullable fields again.
                  */
-                'claimed' => $isOwner || ! $claimable ? null : $item->isClaimed(),
-                'claimedByMe' => $isOwner || ! $claimable || $hash === null
-                    ? false
-                    : $item->claimed_by_hash === $hash,
+                ...$claimState[$item->id] ?? [],
 
                 /*
-                 * Only ever shown to the person who claimed it. "Bought" is a
-                 * fact about their own errand — everyone else needs to know the
-                 * item is spoken for, and nothing more.
+                 * The tally, and whether this viewer is in it.
+                 *
+                 * Absent on every kind that does not vote — the same
+                 * absent-not-null discipline as `claimed` and `contributions`,
+                 * so the page reads the key's presence as "this is a candidate"
+                 * rather than carrying a `votes: 0` that means two things.
+                 *
+                 * A count, never a list of names: "four people want this" is
+                 * what decides something, and "Bob wanted this" is a
+                 * disagreement inside a group buying somebody a present.
                  */
-                'sent' => ! $isOwner && $claimable && $hash !== null && $item->claimed_by_hash === $hash
-                    ? $item->marked_sent_at !== null
-                    : null,
+                ...$list->kind->allowsVoting() ? [
+                    'votes' => $item->votes->count(),
+                    'votedByMe' => $this->hasVoted($item, $owner),
+                ] : [],
 
                 /*
                  * Absent, not null, wherever there is nothing to say — the same
@@ -309,9 +450,23 @@ class SharedListController extends Controller
             throw new NotFoundHttpException;
         }
 
+        /*
+         * The name, only when the list asks for one.
+         *
+         * Decided here rather than in the model: the setting belongs to the
+         * list, and an item that went looking for it would be a second place to
+         * get the consent question wrong. A name posted to an anonymous list is
+         * discarded rather than refused — the client should not have sent it,
+         * and arguing with somebody about a field they cannot see is worse than
+         * ignoring it.
+         */
+        $name = $list->claim_visibility->namesClaimers()
+            ? trim((string) $request->string('display_name')) ?: null
+            : null;
+
         // Atomic: two people tapping "I'll get this" at the same moment is the
         // expected case, not an edge case.
-        $claimed = $wishlistItem->claim(WishlistItem::identityHash($identity));
+        $claimed = $wishlistItem->claim(WishlistItem::identityHash($identity), $name);
 
         return back()->with(
             $claimed ? 'success' : 'error',
@@ -370,6 +525,22 @@ class SharedListController extends Controller
         return back()->with(
             $marked ? 'success' : 'error',
             __($marked ? 'site.lists.marked_sent' : 'site.lists.cannot_mark_sent'),
+        );
+    }
+
+    /**
+     * Has this viewer already backed this candidate?
+     *
+     * Read off the loaded relation rather than as a query per item — the votes
+     * are eager-loaded for the tally anyway, and a shortlist of five would
+     * otherwise cost five round trips to answer a question already in memory.
+     */
+    private function hasVoted(WishlistItem $item, Owner $viewer): bool
+    {
+        return $item->votes->contains(
+            fn ($vote) => $viewer->user !== null
+                ? $vote->user_id === $viewer->user->id
+                : $viewer->anonymous !== null && $vote->anon_id === $viewer->anonymous->getKey(),
         );
     }
 

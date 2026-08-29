@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\CatalogueController;
+use App\Http\Controllers\Api\CoveDraftController;
 use App\Http\Controllers\Api\CovePlanController;
 use App\Http\Controllers\Api\CoveQueueController;
 use App\Http\Controllers\Api\EditionController;
@@ -83,6 +84,17 @@ Route::prefix('editorial')
          */
         Route::middleware(['api.ability:'.ApiToken::WRITE, 'throttle:editorial-writes'])->group(function () {
             Route::post('/coves', [CovePlanController::class, 'store']);
+
+            /*
+             * Ideas, not prose: N draft plans from the sources that already
+             * know what is worth writing about here.
+             *
+             * Registered before /coves/{plan} would matter if this were a GET;
+             * it is a POST to a distinct path, and it sits here rather than
+             * under `publish` because a draft is exactly what a writing key is
+             * allowed to make. Nothing it creates can reach a reader.
+             */
+            Route::post('/coves/drafts', [CoveDraftController::class, 'store']);
 
             /*
              * Prose back, and only prose.

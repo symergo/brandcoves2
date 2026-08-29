@@ -52,6 +52,7 @@ class Defaults
             'cove.guide' => self::GUIDE_SYSTEM,
             'cove.seasonal' => self::SEASONAL_SYSTEM,
             'cove.advice' => self::ADVICE_SYSTEM,
+            'cove.shop' => self::SHOP_SYSTEM,
             'cove.theme' => self::THEME_SYSTEM,
             default => '',
         };
@@ -66,16 +67,30 @@ class Defaults
             'cove.guide' => self::GUIDE_PROMPT,
             'cove.seasonal' => self::SEASONAL_PROMPT,
             'cove.advice' => self::ADVICE_PROMPT,
+            'cove.shop' => self::SHOP_PROMPT,
             'cove.theme' => self::THEME_PROMPT,
             default => '',
         };
     }
 
-    /** Whether a slot's page is an article rather than a column. */
+    /**
+     * Whether a slot's page is an article rather than a column.
+     *
+     * Page *shape*, not URL space — so a Shop Cove answers true here while
+     * `CoveKind::isArticle()` says false for it. The two questions were the same
+     * question until a prose kind appeared outside `/guides`; this one is asked
+     * to decide how a brief is assembled, and a Shop Cove's brief is an
+     * article's.
+     */
     public static function isArticle(string $slot): bool
     {
-        return str_starts_with($slot, 'cove.')
-            && (CoveKind::tryFrom(substr($slot, 5))?->isArticle() ?? false);
+        if (! str_starts_with($slot, 'cove.')) {
+            return false;
+        }
+
+        $kind = CoveKind::tryFrom(substr($slot, 5));
+
+        return $kind !== null && $kind !== CoveKind::Daily && $kind !== CoveKind::Persona;
     }
 
     // ── A Daily Cove ──────────────────────────────────────────────────────
@@ -243,11 +258,31 @@ class Defaults
         every year. Somebody may be reading it eight weeks early, on the day, or
         next year. Write something true on all three days.
 
-        Write three things: an intro that says what makes this season's version
-        of the problem different, a "how to choose" section naming the two or
-        three decisions that matter, and one entry per product.
+        Write four things: a title, an intro that says what makes this season's
+        version of the problem different, a "how to choose" section naming the
+        two or three decisions that matter, and one entry per product.
 
-        Rules:
+        The title is the only line that has to earn the click, and it is the one
+        most easily wasted. "The best barbecues" is what every competitor has
+        already published: it describes the page's format instead of giving
+        anybody a reason to open it, and it is interchangeable with every other
+        page on the same subject. Name the situation, the tension, or the kind
+        of person — something only this season's version of the problem could
+        be called.
+
+        Title rules:
+        - Never open with "the best", "top 10", "the ultimate", "the complete"
+          or a number.
+        - Keep the subject recognisable in it. Somebody scanning a page of
+          search results must still see what this is about; clever and
+          unidentifiable is worse than dull.
+        - Under ten words. No colon, no subtitle stacked after one.
+        - No year and no "this season". The page is read eight weeks early, on
+          the day, and again next year — a title that dates is a title that
+          expires.
+        - No prices, no brand names, no exclamation marks, no questions.
+
+        Rules for the rest:
         - Only discuss the products listed below. Never invent one, and never
           invent a price, a rating or a claim about quality.
         - No prices at all: they change, and the page renders live ones.
@@ -307,6 +342,58 @@ class Defaults
     private const ADVICE_PROMPT = <<<'TXT'
         Language: {language}
         This article answers: {topic}
+        Title: {title}
+
+        {direction}
+        TXT;
+
+    // ── A Shop Cove ───────────────────────────────────────────────────────
+
+    /**
+     * What a shop is like to buy from.
+     *
+     * The one Cove kind whose subject is a company rather than a thing, which
+     * is the whole reason its rules differ from ADVICE_SYSTEM's. An advice
+     * article may never name a specific product; this one *must* name a
+     * specific shop, and every sentence about it is a claim about a real
+     * business that can be checked and can be wrong.
+     *
+     * So the rules are mostly prohibitions on the sort of sentence a model
+     * writes when it has no facts: delivery promises, return windows, fee
+     * structures. Those change, they differ per market, and a reader who acts
+     * on a wrong one loses money. What is left is what we can actually say —
+     * what the shop sells, how it sits against the others here, and what to
+     * check on their own page before buying.
+     */
+    private const SHOP_SYSTEM = <<<'TXT'
+        You write a short piece about one online shop, for a site that compares
+        prices across shops. The reader is deciding whether to buy from this one
+        rather than another, and the price is already on the screen — so the
+        question you are answering is everything the price does not tell them.
+
+        Voice: plain, specific, and even-handed. You are describing a shop, not
+        recommending it. We earn a commission on what people buy, so a piece
+        that reads as an advertisement is worse than no piece at all.
+
+        Rules:
+        - Never state a delivery time, a return window, a shipping fee, a
+          minimum order or a subscription price. These differ per market, change
+          without notice, and a reader who acts on a wrong one is out of pocket.
+          Say where on the shop's own site to check instead.
+        - Never claim the shop is cheapest, best, or fastest. The comparison on
+          this page is the answer to that and it changes per product.
+        - No invented history, no founding dates, no employee numbers, no
+          revenue. If you were not told it, you do not know it.
+        - Do name what they actually sell and who they suit. A piece that could
+          be about any shop is worse than no piece.
+        - Say plainly when something is a reason to buy elsewhere. A page about
+          a shop that finds nothing to qualify is not describing a shop.
+        - Two to four short paragraphs. This sits above a directory, not alone.
+        TXT;
+
+    private const SHOP_PROMPT = <<<'TXT'
+        Language: {language}
+        Shop: {topic}
         Title: {title}
 
         {direction}

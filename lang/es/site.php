@@ -11,7 +11,6 @@ return [
         'submenu' => 'Qué hay en :section',
         'gift' => 'Buscador de regalos',
         'daily' => 'Cove Diaria',
-        'coves' => 'Cove de Ideas',
         'guides' => 'Guías de compra',
         'surprise' => 'Cove Sorpresa',
         'scan' => 'Escanear',
@@ -32,6 +31,29 @@ return [
             'int' => 'Internacional',
             'es' => 'España',
         ],
+        /*
+         * Los tipos de Cove, tal como los enumera el menú Descubrir. Tres
+         * formas de lo mismo: una edición que cambia cada mañana, un estante
+         * construido en torno a una persona y una lectura larga construida en
+         * torno a un tema.
+         *
+         * El calificativo se traduce, el nombre no — véase localisation.md.
+         */
+        'inspiration_coves' => 'Coves de Inspiración',
+        'gift_coves' => 'Coves de Regalo',
+        'all_coves' => 'Todas las Coves',
+        'brand_coves' => 'Coves de Marca',
+        'shop_coves' => 'Coves de Tienda',
+
+        'hint_daily' => 'Nuevo cada mañana',
+        'hint_surprise' => 'Algo raro, no algo popular',
+        'hint_inspiration_coves' => 'Inspiración de compra y guías',
+        'hint_gift_coves' => 'Ideas construidas en torno a una persona',
+        'hint_all_coves' => 'Todo lo que hemos publicado',
+        'hint_brand_coves' => 'Cada marca con su propia página',
+        'hint_shop_coves' => 'Las tiendas que comparamos, y cuáles son nuevas',
+        'hint_ask' => 'Deja que otros sugieran algo',
+
         'santa' => 'Amigo invisible',
 
         // Nombres, no palabras: las Coves se llaman igual en todos los idiomas,
@@ -60,8 +82,8 @@ return [
         'coves_volume' => ':count búsquedas al mes',
         'organise_intro' => 'Un sitio para lo que tú quieres, lo que buscas para otros, y lo que compráis entre varios.',
         'organise_group_hint' => 'Un regalo, varias personas, y nadie tiene que perseguir a nadie por el dinero.',
-        'organise_registry' => 'Lista de regalos',
-        'organise_registry_hint' => 'Una lista de deseos con una ocasión y una fecha, para una boda, un bebé o una casa nueva.',
+        'organise_occasion' => 'Ocasión',
+        'organise_occasion_hint' => 'Pon una fecha en una lista — un cumpleaños, una boda, Navidad — y todo el que tenga el enlace sabe para qué es.',
         'organise_registry_on' => ':occasion el :date',
         'gifting_heading' => 'Comprar para otra persona',
         'gifting_intro' => 'Descríbela y te sugeriremos algo. O deja que te lo cuente ella misma, y no veas nunca quién ha comprado qué.',
@@ -85,7 +107,6 @@ return [
         'submit' => 'Buscar',
         'searching' => 'Buscando…',
         'results_for' => 'Resultados para «:term»',
-        'count' => ':count productos',
         'browse' => 'Explorar el catálogo',
         'empty' => 'No hay resultados para «:term».',
         'empty_hint' => 'Prueba con una búsqueda más corta o revisa la ortografía.',
@@ -110,7 +131,7 @@ return [
         'previous' => 'Anterior',
         'next' => 'Siguiente',
         'page_of' => 'Página :current de :last',
-        'seo_term' => 'Compara :count productos de :term en bol, Amazon y cientos de tiendas. Encuentra la oferta más barata en segundos.',
+        'seo_term' => 'Compara productos de :term en bol, Amazon y cientos de tiendas. Encuentra la oferta más barata en segundos.',
 
         /*
          * El vocabulario de los resultados, encima de la cuadrícula. Sustituyó a
@@ -129,13 +150,12 @@ return [
     'brand' => [
         'title' => ':brand',
         'heading' => ':brand',
-        'seo_description' => 'Compara :count productos de :brand en todas las tiendas que seguimos y encuentra la oferta más barata.',
+        'seo_description' => 'Compara los productos de :brand en todas las tiendas que seguimos y encuentra la oferta más barata.',
         'crumb' => 'Marcas',
         'index_title' => 'Marcas',
         'index_seo_title' => 'Todas las marcas, precios comparados',
         'index_seo_description' => 'Todas las marcas del catálogo, con precios actuales comparados en bol, Amazon y cientos de tiendas que las venden.',
         'index_intro' => 'Todas las marcas del catálogo, con precios actuales comparados entre las tiendas que las venden.',
-        'index_count' => ':count productos',
         'all_brands' => 'Todas las marcas',
         'products_heading' => 'Productos de :brand',
         'coves_heading' => 'Coves que mencionan :brand',
@@ -173,7 +193,7 @@ return [
         'choosing_3' => 'Entre las marcas de estos resultados están :brands. Cada una tiene su propia página con todo lo que llevamos de ella y la misma comparación entre tiendas.',
 
         'faq_price_q' => '¿Cuánto cuesta :term?',
-        'faq_price_a' => 'En esta página, :term va de :low a :high. Ese rango cubre :count productos en las tiendas que seguimos, así que el extremo bajo y el alto suelen ser tipos de producto distintos y no el mismo a dos precios.',
+        'faq_price_a' => 'En esta página, :term va de :low a :high. El extremo bajo y el alto suelen ser tipos de producto distintos y no el mismo a dos precios.',
         'faq_where_q' => '¿Dónde puedo comprar :term?',
         'faq_where_a' => 'En las tiendas que aparecen en cada ficha, esta página reúne :shops anuncios de tiendas sobre los productos mostrados. Somos un sitio de descubrimiento, no una tienda: cada enlace lleva a quien hace la oferta y compras allí, en sus condiciones.',
         'faq_fresh_q' => '¿Están actualizados estos precios de :term?',
@@ -194,7 +214,7 @@ return [
         'choosing_3' => 'Cada ficha de producto lleva la tabla completa de ofertas y 90 días de histórico de precios, para ver si hoy es un momento realmente bueno para comprar un producto concreto de :brand o uno corriente.',
 
         'faq_price_q' => '¿Cuánto cuestan los productos de :brand?',
-        'faq_price_a' => 'Los productos de :brand en esta página van de :low a :high, sobre :count productos en las tiendas que seguimos. El extremo bajo y el alto suelen ser productos distintos, no el mismo a dos precios.',
+        'faq_price_a' => 'Los productos de :brand en esta página van de :low a :high. El extremo bajo y el alto suelen ser productos distintos, no el mismo a dos precios.',
         'faq_where_q' => '¿Qué tiendas venden :brand?',
         'faq_where_a' => 'Las que aparecen en cada ficha, esta página reúne :shops anuncios de tiendas sobre los productos de :brand mostrados. Mostramos, no vendemos: cada enlace lleva a la tienda que hace la oferta.',
         'faq_discount_q' => '¿Hay ofertas de :brand ahora mismo?',
@@ -241,7 +261,44 @@ return [
         'intro' => 'Tres maneras de encontrar algo que no estabas buscando. Una cambia cada día, otra es deliberadamente impredecible, y la tercera se lee con calma.',
         'daily_what' => 'Una edición nueva cada día: un tema, un puñado de hallazgos y un acertijo de precios. Cada edición pasada conserva su página.',
         'surprise_what' => 'Algo que no sabías que existía, elegido por lo raro que es y no por lo bien que se vende.',
-        'idea_what' => 'Lecturas largas en torno a un tema, con cada marca y producto enlazados directamente a una búsqueda en vivo.',
+        'idea_what' => 'Inspiración de compra y guías de compra sobre un solo tema, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
+    ],
+
+    'shops' => [
+        'seo_title' => 'Las tiendas online cuyos precios comparamos',
+        'seo_description' => 'Cada tienda cuyos precios se comparan aquí, con las más recientes destacadas. Sin totales, solo la lista.',
+        'title' => 'Coves de Tienda',
+        'intro' => 'Cada oferta de este sitio dice de qué tienda viene. Estas son esas tiendas: aquellas cuyos precios comparamos en esta región.',
+        'empty' => 'Todavía no hay tiendas conectadas para esta región.',
+        'coves_heading' => 'Escrito sobre estas tiendas',
+        'coves_what' => 'Cómo es comprar en una tienda: la mitad de la decisión que un precio no responde.',
+        'new_heading' => 'Nuevas aquí',
+        'new_what' => 'Conectadas en el último mes. Aparecen también en la lista de abajo: esto es un destacado, no un filtro.',
+        'new_badge' => 'Nueva',
+        'all_heading' => 'Todas las tiendas',
+    ],
+
+    'coves' => [
+        'seo_title' => 'Todas las Coves: ediciones diarias, ideas por persona y lecturas largas',
+        'seo_description' => 'El estante completo. Una edición nueva cada mañana, ideas de regalo construidas en torno a una persona, y lecturas largas sobre un tema con los precios comparados en directo.',
+        'title' => 'Todas las Coves',
+        'intro' => 'Todo lo que hemos escrito aquí, ordenado por su forma. Una llega cada mañana, otra se construye en torno a una persona y la tercera en torno a un tema.',
+        'empty' => 'Todavía no hay nada publicado en esta región. Las primeras Coves están en camino.',
+        'daily_heading' => 'Cove Diaria',
+        'daily_what' => 'Una edición cada mañana: un tema, un puñado de hallazgos y un juego de precios. Cada edición pasada conserva su propia página.',
+        'daily_all' => 'Leer la edición de hoy',
+        'gift_heading' => 'Coves de Regalo',
+        'gift_what' => 'Construidas en torno a una persona en lugar de una fecha: la herbolaria, el padre que lo tiene todo, la amiga que lee.',
+        'gift_all' => 'Todas las Coves de Regalo',
+        'inspiration_heading' => 'Coves de Inspiración',
+        'inspiration_what' => 'Inspiración de compra y guías: lecturas largas sobre un solo tema, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
+        'inspiration_all' => 'Todas las Coves de Inspiración',
+        'brand_heading' => 'Coves de Marca',
+        'brand_what' => 'Una página por marca: todo lo suyo que tenemos aquí, con el precio de cada tienda en cada producto.',
+        'brand_all' => 'Todas las Coves de Marca',
+        'shop_heading' => 'Coves de Tienda',
+        'shop_what' => 'Las tiendas online cuyos precios comparamos en esta región, las más nuevas primero.',
+        'shop_all' => 'Todas las Coves de Tienda',
     ],
 
     'cove' => [
@@ -256,6 +313,10 @@ return [
         'unsubscribed' => 'Te has dado de baja. Sin rencores.',
     ],
     'suggestions' => [
+        'added' => 'Añadido a la lista.',
+        'add_invite' => 'Añade algo a esta lista',
+        'add_invite_hint' => 'Lo que añadas aparece al momento, para que todos lo vean y puedan reservarlo.',
+        'add_action' => 'Añadir a la lista',
         'heading' => 'Sugerido para ti',
         'hint' => 'No aparece nada en tu lista hasta que lo aceptes.',
         'from' => 'De :name',
@@ -278,10 +339,10 @@ return [
     ],
 
     'registry' => [
-        'heading' => 'Convertir en lista de regalos',
-        'hint' => 'Añade una ocasión y una fecha, y una dirección si te tienen que enviar algo.',
+        'heading' => 'Añadir una ocasión especial',
+        'hint' => 'Di para qué es esta lista, y cuándo. Lo ve todo el que reciba el enlace.',
         'occasion' => 'Ocasión',
-        'none' => 'No es una lista de regalos',
+        'none' => 'Sin ocasión',
         'date' => 'Fecha',
         'address' => 'Dirección de envío',
         'address_hint' => 'Guardada cifrada, y visible solo para quien haya reservado algo.',
@@ -289,18 +350,27 @@ return [
         'address_locked' => 'Reserva algo y aquí aparecerá la dirección de envío.',
         'occasion_on' => ':occasion el :date',
         'types' => [
+            'birthday' => 'Cumpleaños',
+            'christmas' => 'Navidad',
             'wedding' => 'Boda',
+            'anniversary' => 'Aniversario',
             'baby' => 'Nacimiento',
             'housewarming' => 'Casa nueva',
-            'birthday' => 'Cumpleaños',
+            'graduation' => 'Graduación',
+            'retirement' => 'Jubilación',
+            'farewell' => 'Despedida',
+            'valentines' => 'San Valentín',
+            'mothers_day' => 'Día de la Madre',
+            'fathers_day' => 'Día del Padre',
+            'thank_you' => 'Agradecimiento',
             'other' => 'Otra cosa',
         ],
-        'badge' => 'Lista de regalos',
+        'badge' => 'Ocasión especial',
     ],
 
     'handover' => [
         'heading' => 'Ceder esta lista',
-        'hint' => 'Dale la lista a :name. Pasa a ser su propia lista, que puede compartir y de la que pueden comprarle.',
+        'hint' => 'Dale la lista a :name. Pasa a ser su propia lista de deseos, que pueden compartir con otros.',
         'action' => 'Cederla',
         'confirm' => 'Dar esta lista a :name? Dejará de ser tuya.',
         'done' => 'Cedida a :name.',
@@ -309,6 +379,15 @@ return [
         'not_linked' => 'Primero tienen que reclamar su enlace, para que haya una cuenta a la que dársela.',
         'no_account' => 'Nadie con ese correo tiene cuenta todavía. Envíale primero el enlace para que cuente lo que quiere.',
         'badge' => 'Ceder',
+    ],
+
+    'votes' => [
+        'vote' => 'Vota por esto',
+        'voted' => 'Votado',
+        'none' => 'Aún sin votos',
+        'count' => ':count votos',
+        'one' => 'Un voto',
+        'heading' => 'Vota por el que deberíamos comprar',
     ],
 
     'pledges' => [
@@ -384,8 +463,12 @@ return [
 
     'lists' => [
         'title' => 'Mis listas',
-        'subtitle' => 'Lo que guardas, para ti y para otros.',
-        'shared_subtitle' => 'Listas que otras personas han compartido contigo.',
+        'subtitle' => 'Todo lo que guardas, y todo lo que otras personas han compartido contigo.',
+        'shared_subtitle' => 'Listas que otros han compartido contigo. Así es como les compras algo.',
+        'shared_empty' => 'Todavía no te han compartido ninguna lista. Cuando lo hagan, aparecerá aquí — con lo que les gustaría.',
+        'shop_for' => 'Reserva algo para :name',
+        'shared_with_me' => 'Compartidas conmigo',
+        'owned_by' => 'De :name',
         'group_subtitle' => 'Un regalo, elegido entre todos. Cada uno vota, y lo que pones queda entre tú y quien lo organiza.',
         'default_title' => 'Mi lista de deseos',
         'default_badge' => 'Predeterminada',
@@ -431,6 +514,15 @@ return [
         'empty' => 'Aún no has guardado nada.',
         'empty_hint' => 'Busca un producto y pulsa Guardar.',
         'empty_list' => 'Esta lista está vacía.',
+        'empty_mine_step1' => 'Añade cosas que te gustaría tener. El marcador de cualquier producto lo trae aquí.',
+        'empty_mine_step2' => 'Pulsa Compartir cuando quieras. Antes no: hasta entonces es solo tuya.',
+        'empty_mine_step3' => 'Marcan lo que te van a regalar, o envías la lista como concurso.',
+        'empty_for_someone_step1' => 'Ve añadiendo ideas según las encuentres. Nadie más la ve todavía.',
+        'empty_for_someone_step2' => 'Si os ayudan otros, pulsa Compartir y añádelos por correo.',
+        'empty_for_someone_step3' => 'Cada uno marca lo que lleva, para que nadie compre lo mismo.',
+        'empty_group_step1' => 'Añade unos cuantos candidatos. Entre todos elegiréis uno.',
+        'empty_group_step2' => 'Pulsa Compartir e invita a los demás.',
+        'empty_group_step3' => 'Ellos votan cuál y dicen con cuánto pueden contribuir.',
         'items' => ':count artículos',
         'one_item' => '1 artículo',
         'added' => 'Guardado en tu lista.',
@@ -446,6 +538,7 @@ return [
         'share' => 'Compartir',
         'sharing_off' => 'Solo tú ves esta lista.',
         'sharing_on' => 'Cualquiera con el enlace puede ver esta lista.',
+        'share_hint' => 'Esta lista es privada. Compártela y cualquiera con el enlace podrá verla.',
         'enable_sharing' => 'Crear un enlace',
         'disable_sharing' => 'Dejar de compartir',
         'copy_link' => 'Copiar enlace',
@@ -458,7 +551,6 @@ return [
         'already_claimed' => 'Alguien se te acaba de adelantar.',
         'cannot_unclaim' => 'Solo puedes deshacer tu propia elección, y solo dentro de un día.',
         'shared_intro' => 'Toca un artículo para indicar que lo regalas tú. :name no verá quién regala qué.',
-        'owner_view_note' => 'Esta es tu lista, así que las reservas se te ocultan, de eso se trata.',
         'recipient_added' => 'Persona añadida.',
         'recipient_removed' => 'Persona eliminada.',
         'add_person' => 'Añadir a alguien',
@@ -478,7 +570,7 @@ return [
         'not_claimable' => 'Esto es una preselección, no una lista de deseos, así que aquí no se puede reservar nada.',
         'asked_for' => 'Lo que ha pedido :name',
         'asked_none' => ':name aún no ha puesto nada en una lista.',
-        'my_finds' => 'Lo que he encontrado',
+        'my_finds' => 'La lista',
         'collaborator_invited' => 'Si tiene cuenta, ya puede ver esta lista.',
         'collaborator_removed' => 'Eliminado.',
         'collaborators' => 'Personas',
@@ -493,10 +585,49 @@ return [
         'unfollow' => 'Dejar de seguir',
         'followed' => 'Ya los sigues.',
         'shared_intro_anon' => 'Toca algo para indicar que lo regalas tú. Quien hizo esta lista no verá quién ha reservado qué.',
+        'shared_intro_gift' => 'Sois varios comprando algo para esta persona. Marca lo que llevas tú para que nadie repita.',
+        'shared_intro_group' => 'Entre todos compráis un solo regalo. Votad cuál y decid con cuánto podéis contribuir.',
+        'progress_gift' => ':claimed de :total ya cogidos',
+        /*
+         * What kind of list this is, and what that means you can do with it.
+         *
+         * The badge names the kind and never changes. The sentence reads the
+         * kind AND whether anybody else is on the list: most lists are private,
+         * and a private list offers none of the mechanisms — so it says what
+         * the list is now, then what sharing would do. That second half is the
+         * only place these features are ever taught.
+         *
+         * See resources/js/Components/ListKindBadge.tsx.
+         */
+        'claimed_by' => ':name se encarga de esto',
+        'claim_anonymous_note' => 'Nadie verá que fuiste tú — ni siquiera quien organiza esta lista.',
+        'claim_named_note' => 'Tu nombre se mostrará a los demás de esta lista, para que sepan quién regala qué.',
+        'claim_privacy' => '¿Quién ve quién ha reservado qué?',
+        'claim_mine_show_hint_gift' => 'Activado por defecto: esta lista es sobre otra persona, así que ver lo que ya está cubierto es justo la idea.',
+        'claim_mine_show_hint_mine' => 'Desactivado por defecto: una lista de deseos funciona porque no sabes lo que viene. Actívalo si prefieres verlo.',
+        'claim_mine_show' => 'Muéstrame lo que ya está reservado',
+        'claim_mine' => 'Lo que ves tú',
+        'claim_privacy_anonymous' => 'Nadie ve los nombres',
+        'claim_privacy_anonymous_hint' => 'Se ve que algo está cogido, nunca por quién.',
+        'claim_privacy_named' => 'Todos ven los nombres',
+        'claim_privacy_named_hint' => 'Se ve quién regala qué. Va bien entre gente que se conoce, como hermanos comprando para un padre.',
+        'kind_mine' => 'Lista de deseos',
+        'kind_for_someone' => 'Lista de regalos',
+        'kind_group' => 'Regalo en grupo',
+        'about_mine_private' => 'Cosas que vas guardando. Solo la ves tú — compártela y podrán reservar algo, sin que tú sepas nunca el qué.',
+        'about_mine_shared' => 'Se pueden reservar cosas de esta lista. Tú nunca verás cuáles.',
+        'about_for_someone_private' => 'Una lista sobre esa persona, y solo la ves tú. Compártela si vais a comprar varios.',
+        'about_for_someone_shared' => 'Cada uno compra algo distinto. Reserva uno para que nadie repita.',
+        'about_group_private' => 'Todavía no puede entrar nadie. Pulsa Personas para invitarlos.',
+        'about_group_shared' => 'Vais a comprar un solo regalo entre todos. Votad y decid con cuánto podéis contribuir.',
+        'quiz_unlocks' => 'Compártela y podrás enviarla como concurso: cuatro productos, uno de verdad tuyo. A ver quién te conoce mejor.',
+        'new_mine_body' => 'Cosas que te gustaría tener. Guárdala para ti, o compártela y que reserven.',
+        'new_for_someone_body' => 'Una lista sobre esa persona. Guárdala para ti, o compártela y repartíos la compra.',
+        'new_group_body' => 'Entre varios compráis un solo regalo y lo dividís. Todos votan y contribuyen.',
+
         'for_me' => 'Para mi',
         'for_someone_else' => 'Para otra persona',
         'for_group' => 'Entre varios, para alguien',
-        'for_group_hint' => 'Varias personas eligiendo un solo regalo. Cada uno puede poner su parte, y solo tú ves quién pone qué.',
         'group_gift' => 'Regalo entre varios',
         'start_group_gift' => 'Empezar un regalo entre varios',
         'for_person' => 'Para :name',
@@ -508,6 +639,7 @@ return [
         'share_instagram' => 'Instagram no acepta enlaces desde el navegador: cópialo y pégalo allí.',
         'shared_badge' => 'Compartida: la ve quien tenga el enlace',
         'private_badge' => 'Solo para ti',
+        'owner_view_note' => 'Esta es tu lista, así que las reservas se te ocultan, de eso se trata.',
     ],
 
     'recipients' => [
@@ -516,16 +648,20 @@ return [
         'saved' => 'Guardado. Lo verán la próxima vez.',
         'linked' => 'Ahora eres tú.',
         'claim_this_is_me' => 'Soy yo',
+        'claim_is_you' => 'Este es el enlace que les envías. Tú creaste esta lista, así que no puede ser tuya — son ellos quienes dicen "soy yo".',
+        'claim_sign_in' => 'Inicia sesión para decir que eres tú. Entonces esta pasa a ser tu lista, y puedes compartirla con quien quieras.',
         'claim_hint' => 'Vincula esto a tu cuenta y tus propias listas aparecerán cuando busquen para ti.',
         'my_list' => 'Lo que le gustaría a :name',
         'about_you' => 'Sobre ti',
+        'step_interests' => '¿Qué te gusta?',
+        'step_vibe' => '¿Cómo debe sentirse?',
+        'step_values' => '¿Qué te importa?',
         'your_list' => 'Cosas que te gustarían',
         'add_something' => 'Añadir algo',
         'search_placeholder' => 'Busca algo que quieras',
         'suggest' => 'Ensename ideas',
         'suggest_hint' => '¿No lo tienes claro? Responde las preguntas de arriba y te sugerimos cosas.',
         'nothing_yet' => 'Aún no hay nada. Añade lo primero.',
-        'privacy_note' => 'Nunca verás quién regala qué. De eso se trata.',
         'ask_them' => 'Pregúntaselo a ellos',
         'ask_them_hint' => 'Envía este enlace. Rellenan sus propios gustos y nunca ven lo que has elegido.',
     ],
@@ -627,11 +763,15 @@ return [
         'items_count' => ':count cosas guardadas',
         'open_list' => 'Abrir mi lista',
         'start_list' => 'Empezar mi lista',
+        'my_wishlists' => 'Mis listas de deseos',
+        'another_list' => 'Otra lista de deseos',
+        'lists_count' => ':count listas de deseos',
         'privacy' => 'Una regla lo atraviesa todo: la persona para la que es una lista nunca sabe qué se ha reservado. Ni quién, ni cuánto, ni que haya algo.',
 
         'manual' => 'Cómo funciona cada uno',
         'manual_link' => 'Cómo funciona cada uno',
         'manual_intro' => 'Nueve herramientas y los pasos de cada una. Cada botón que se nombra abajo está en la página a la que te lleva.',
+        'manual_back' => 'Volver a la Cove de Regalos',
 
         'wishlist_title' => 'Mi lista de deseos',
         'wishlist_body' => 'Cosas que de verdad te gustarían. Compártela y cada uno marca lo que regala, sin que tú veas nunca quién cogió qué.',
@@ -643,13 +783,13 @@ return [
         'giftlist_body' => 'Un sitio donde reunir ideas para alguien. Privada, y nunca reservable: es trabajo previo, no una lista de deseos.',
         'giftlist_step1' => 'Pulsa Nueva lista, elige «Para otra persona» y ponle nombre. Esta tarjeta abre ese formulario ya en esa opción.',
         'giftlist_step2' => 'Ve añadiendo cosas según las encuentres, igual que en cualquier otra lista.',
-        'giftlist_step3' => 'Nadie puede reservar nada ni verla, así que cambia de idea las veces que quieras.',
+        'giftlist_step3' => 'Guárdala para ti, o pulsa Compartir: entonces los demás la ven y pueden marcar qué regalan, para que nadie compre lo mismo.',
 
         'collab_title' => 'Comprar entre varios',
         'collab_body' => 'Invita a otros a una lista para elegir juntos, o poned dinero para un regalo mayor que compre uno de vosotros.',
         'collab_step1' => 'Pulsa Nueva lista, elige «Entre varios, para alguien» y di para quién es.',
-        'collab_step2' => 'Añade a cada co-regalador por correo. Quien puede mirar solo mira; quien puede añadir y quitar trabaja contigo.',
-        'collab_step3' => 'Elegid juntos. Si la persona tiene lista propia, es ahí donde dices qué regalas, para que nadie compre lo mismo dos veces.',
+        'collab_step2' => 'Pulsa Compartir y añade a cada co-regalador por correo. Un lector puede mirar; un editor puede añadir y quitar cosas.',
+        'collab_step3' => 'Elegid juntos, y marca qué regalas tú para que nadie compre lo mismo. En Compartir decides además si se muestran los nombres.',
 
         'handover_title' => 'Ceder una lista',
         'handover_body' => 'Empezaste una lista para alguien antes de que estuviera aquí? Dásela cuando se una y pasa a ser su propia lista.',
@@ -665,7 +805,7 @@ return [
 
         'registry_title' => 'Una lista de regalos',
         'registry_body' => 'Una lista con una ocasión y una fecha: boda, bebé o casa nueva. Añade una dirección y solo la ve quien haya reservado algo.',
-        'registry_step1' => 'Abre tu propia lista de deseos y pulsa Lista de regalos.',
+        'registry_step1' => 'Abre una de tus listas de deseos, pulsa Compartir y rellena Ocasión especial.',
         'registry_step2' => 'Elige la ocasión y la fecha, y añade una dirección de envío si te van a mandar las cosas.',
         'registry_step3' => 'Compártela como cualquier lista. Se comporta igual: la gente reserva y a ti nunca se te dice qué.',
 
@@ -949,6 +1089,19 @@ return [
     ],
 
     'gift_ideas' => [
+
+        /*
+         * The placeholder title a drafted persona wears.
+         *
+         * `PlanDrafter` writes one per interest the gift wizard knows about,
+         * so a market's persona shelf can be filled with shortlists to react
+         * to rather than a blank table. It is deliberately dull: the interest
+         * leads so that a label like "DIY" or "The outdoors" keeps its own
+         * capitalisation, and no adjective has to agree with a noun in four
+         * languages. A person renames it before approving.
+         */
+        'draft_title' => ':interest — ideas de regalo',
+
         'title' => 'Ideas de regalo, por perfil',
         'description' => 'Regalos elegidos en torno a una persona y no a una fecha: la herbolaria, el padre que ya lo tiene todo, la amiga que lee.',
         'empty' => 'Todavía no hay nada. Se escriben uno a uno; el primero está en camino.',
@@ -1187,11 +1340,21 @@ return [
     ],
 
     'guides' => [
+        /*
+         * The heading is the Cove name; the `seo_*` pair is deliberately not.
+         *
+         * "Inspiration Coves" is what this section is called on this site and
+         * is what the header, the footer and the front page say — but nobody
+         * searches for it, because it is our word. The <title> and the meta
+         * description still lead with "buying guides", which is the phrase a
+         * person actually types. A brand name in an H1 and the reader's own
+         * vocabulary in the <title> is the normal split, not an inconsistency.
+         */
         'seo_title' => 'Guías de compra con precios comparados',
-        'title' => 'Guías de compra',
-        'subtitle' => 'Escritas a partir de lo que la gente busca aquí, no de una herramienta de palabras clave.',
+        'title' => 'Coves de Inspiración',
+        'subtitle' => 'Inspiración de compra y guías, escritas a partir de lo que la gente busca aquí y no de una herramienta de palabras clave.',
         'seo_description' => 'Guías de compra construidas sobre demanda real, con precios en vivo comparados en todas las tiendas que venden cada producto.',
-        'empty' => 'Aún no hay guías. Se escriben cuando un tema acumula suficiente demanda.',
+        'empty' => 'Aún no hay Coves de Inspiración. Se escriben cuando un tema acumula suficiente demanda.',
         'how_to_choose' => 'Cómo elegir',
         'faq' => 'Preguntas',
         'updated' => 'Revisada el :date',

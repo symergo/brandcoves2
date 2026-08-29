@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\ListKind;
+use App\Enums\ListVisibility;
 use App\Enums\Market;
+use App\Models\ListQuiz;
 use App\Models\ProductGroup;
+use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
@@ -25,6 +28,41 @@ use Tests\TestCase;
 class ListQuizTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    public function a_quiz_cannot_be_made_from_a_list_about_somebody_else(): void
+    {
+        /*
+         * A quiz asks "how well do you know **me**", and it publishes what is
+         * on the list to whoever holds the link. Over a list about a third
+         * person that is somebody's private research turned into a game about
+         * them, and the sharing switch the endpoint checks was never consent
+         * for it.
+         *
+         * This could not happen until 2026-08-29: `mine` was the only claimable
+         * kind, so the visibility check stood in for the kind by coincidence.
+         * Widening `allowsClaiming()` separated them, and a gate that worked by
+         * coincidence stops working silently.
+         *
+         * Posted directly rather than checked on the page — hiding the tab
+         * stops nobody hand-building the request.
+         */
+        $owner = User::factory()->create();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $owner->id,
+            'recipient_id' => Recipient::factory()->create(['owner_user_id' => $owner->id])->id,
+            'kind' => ListKind::ForSomeone,
+            'market' => Market::BeNl,
+            'visibility' => ListVisibility::Link,
+        ]);
+
+        $this->actingAs($owner)
+            ->post("/be-nl/lists/{$list->id}/quiz")
+            ->assertForbidden();
+
+        $this->assertSame(0, ListQuiz::query()->count());
+    }
 
     private function builder(): QuizBuilder
     {

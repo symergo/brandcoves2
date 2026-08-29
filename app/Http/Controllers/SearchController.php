@@ -60,7 +60,7 @@ class SearchController extends Controller
             'filters' => $query->toArray(),
             'sort' => $query->sort,
             'view' => $query->view,
-            'facets' => $result->facets,
+            'facets' => $result->facetsWithoutCounts(),
             'results' => $this->present($result),
             'lanes' => $query->view === 'store'
                 ? $this->presentLanes($search->storeLanes($query))
@@ -258,8 +258,18 @@ class SearchController extends Controller
                 title: $query->hasTerm()
                     ? __('site.search.results_for', ['term' => $query->term])
                     : __('site.search.title'),
+                /*
+                 * No count in the description either.
+                 *
+                 * A meta description is the one piece of our copy a person
+                 * reads *before* deciding to click, and "Compare 1,284 products
+                 * matching bluetooth speaker" is a boast about the catalogue
+                 * rather than a reason to come. It is also the number most
+                 * likely to be wrong by the time the snippet is served, because
+                 * a crawler's copy of it can be months old.
+                 */
                 description: $query->hasTerm()
-                    ? __('site.search.seo_term', ['term' => $query->term, 'count' => $result->groups->total()])
+                    ? __('site.search.seo_term', ['term' => $query->term])
                     : __('site.search.seo_default'),
                 // Canonical points at the unfiltered term, so any ranking signal
                 // a filtered variant picks up consolidates onto one URL.

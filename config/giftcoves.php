@@ -266,7 +266,16 @@ return [
     ],
 
     'picks' => [
-        'per_day' => 7,
+        /*
+         * Six, because the page shows them three across in two full rows.
+         *
+         * Seven left a single card alone on a third row, which reads as a
+         * product that failed to load rather than the end of the list. The
+         * number is a layout fact before it is an editorial one — an edition is
+         * as long as its grid is wide, and the grid is three wide because it
+         * shares the container with the rail.
+         */
+        'per_day' => 6,
 
         /*
          * Below this, the edition does not publish at all.

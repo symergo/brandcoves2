@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\ClaimVisibility;
 use App\Enums\ListKind;
 use App\Models\User;
 use App\Models\Wishlist;
@@ -36,8 +37,25 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * who was plotting and leaves those people reading a list that is now somebody
  * else's private property.
  *
- * There are no claims to worry about: a `for_someone` list is not claimable in
- * the first place, so nothing has ever been bought from it.
+ * ## Claims survive, names do not
+ *
+ * This docblock used to say "there are no claims to worry about: a
+ * `for_someone` list is not claimable in the first place". That stopped being
+ * true when gift lists became claimable, and the sentence is the kind that goes
+ * on being believed long after it is wrong.
+ *
+ * **The claim hash stays.** A sibling may already have bought the thing, and
+ * releasing the claim sends a second person to the shops. The new owner never
+ * learns of it: the list is now `mine`, so `shouldHideClaimsFrom()` hides it
+ * from them absolutely, and their own page has never carried a claim field.
+ *
+ * **The name goes, and so does the setting.** A claimer typed their name for a
+ * small audience of co-givers who were plotting a surprise. The list is now a
+ * wish list its owner may share with anyone, which is a different audience
+ * entirely, and consent to the first is not consent to the second. Resetting
+ * `claim_visibility` matters for the same reason: `named` is meaningless on a
+ * `mine` list and would be waiting to take effect if the list were ever handed
+ * on again.
  */
 class HandoverController extends Controller
 {
@@ -89,11 +107,22 @@ class HandoverController extends Controller
         DB::transaction(function () use ($wishlist, $newOwner): void {
             WishlistCollaborator::query()->where('wishlist_id', $wishlist->id)->delete();
 
+            // The claim itself is deliberately untouched — see the class
+            // docblock. Only the name given to a co-giver audience goes.
+            $wishlist->items()->whereNotNull('claimed_by_name')->update([
+                'claimed_by_name' => null,
+            ]);
+
             $wishlist->update([
                 'owner_user_id' => $newOwner->id,
                 'owner_anon_id' => null,
                 'recipient_id' => null,
                 'kind' => ListKind::Mine,
+                'claim_visibility' => ClaimVisibility::Anonymous,
+                // Back to "never asked": the new owner has expressed no
+                // preference, and inheriting the giver's would decide for
+                // them whether their own list surprises them.
+                'owner_sees_claims' => null,
                 // Never the new owner's default: it arrives beside a list they
                 // may already have, and quietly moving where their saves land
                 // is not a gift.

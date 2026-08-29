@@ -10,12 +10,14 @@ use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
+use App\Http\Controllers\CovesController;
 use App\Http\Controllers\CoveSubscriptionController;
 use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\DiscoverCoveController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftCoveController;
+use App\Http\Controllers\GiftCoveManualController;
 use App\Http\Controllers\GiftIdeasController;
 use App\Http\Controllers\GiftPledgeController;
 use App\Http\Controllers\GuideController;
@@ -24,6 +26,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ListInvitationController;
+use App\Http\Controllers\ListItemVoteController;
 use App\Http\Controllers\ListQuizController;
 use App\Http\Controllers\MarketPreferenceController;
 use App\Http\Controllers\NotificationController;
@@ -39,6 +42,7 @@ use App\Http\Controllers\SearchHelpController;
 use App\Http\Controllers\SecretSantaController;
 use App\Http\Controllers\SerendipityController;
 use App\Http\Controllers\SharedListController;
+use App\Http\Controllers\ShopsController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\SuggestionController;
 use App\Http\Controllers\WishlistCollaboratorController;
@@ -294,6 +298,27 @@ Route::prefix('{market}')->group(function () {
         // Group gift: pledges against one item, and a suggestion for the owner.
         Route::post('/l/{token}/pledge/{item}', [GiftPledgeController::class, 'store'])->name('lists.pledge');
         Route::delete('/l/{token}/pledge/{item}', [GiftPledgeController::class, 'destroy'])->name('lists.pledge.destroy');
+
+        /*
+         * The pot on a group list, which names no item.
+         *
+         * A group list is one present and the items under it are candidates, so
+         * money pledged against one of them would be a bet on an outcome the
+         * group has not decided. The controller refuses whichever of these two
+         * shapes is wrong for the kind rather than quietly doing the other.
+         */
+        /*
+         * Which present the group should buy.
+         *
+         * Mounted on the share token beside the pledge routes, because that is
+         * how a member reaches a group list at all — most of them have no
+         * account, which is the point of the join-by-link design.
+         */
+        Route::post('/l/{token}/vote/{item}', [ListItemVoteController::class, 'store'])->name('lists.vote');
+        Route::delete('/l/{token}/vote/{item}', [ListItemVoteController::class, 'destroy'])->name('lists.vote.destroy');
+
+        Route::post('/l/{token}/pledge', [GiftPledgeController::class, 'store'])->name('lists.pledge.pot');
+        Route::delete('/l/{token}/pledge', [GiftPledgeController::class, 'destroy'])->name('lists.pledge.pot.destroy');
         Route::post('/l/{token}/suggest', [SuggestionController::class, 'store'])->name('lists.suggest');
     });
 
@@ -427,6 +452,17 @@ Route::prefix('{market}')->group(function () {
     Route::get('/gift-cove', GiftCoveController::class)->name('gift-cove');
 
     /*
+     * The manual, on its own page.
+     *
+     * It was the bottom half of the hub, which has two readers wanting
+     * opposite things: one is here to use a tool and one to understand
+     * it. A page also gives the explanation an address — a section behind
+     * a `#manual` anchor cannot be linked to from an email or a search
+     * result.
+     */
+    Route::get('/gift-cove/how-it-works', GiftCoveManualController::class)->name('gift-cove.manual');
+
+    /*
      * And the same for the discovery half: one page explaining the Daily Cove,
      * Surprise and the Coves archive, which were three header entries that read
      * as three unrelated links.
@@ -558,6 +594,23 @@ Route::prefix('{market}')->group(function () {
 
     /*
     |----------------------------------------------------------------------
+    | All Coves
+    |----------------------------------------------------------------------
+    |
+    | Every Cove this market has published, in one page. The three kinds each
+    | had an index of their own — /daily, /gift-ideas, /guides — and nothing
+    | held all of them, so the one word the whole product is named after pointed
+    | at four different rooms.
+    |
+    | A literal segment, never a {slug} catch-all. /coves/subscribe, /confirm
+    | and /unsubscribe live below and a catch-all beside them would shadow all
+    | three the first time somebody named a Cove "subscribe" — the reason
+    | personas are at /gift-ideas rather than here in the first place.
+    */
+    Route::get('/coves', CovesController::class)->name('coves');
+
+    /*
+    |----------------------------------------------------------------------
     | Cove subscriptions
     |----------------------------------------------------------------------
     |
@@ -627,6 +680,39 @@ Route::prefix('{market}')->group(function () {
     Route::get('/{page}', LegalController::class)
         ->whereIn('page', ['about', 'privacy', 'terms'])
         ->name('legal');
+
+    /*
+    |----------------------------------------------------------------------
+    | Shop Coves
+    |----------------------------------------------------------------------
+    |
+    | The shops this market's prices are compared across. Every offer card on
+    | the site names its shop and nothing answered the question that raises —
+    | which shops are these? "We compare hundreds of shops" is a claim a visitor
+    | cannot check; a list they can scroll is worth more.
+    |
+    | Membership comes from the feeds table and the connector registry, not from
+    | products: a shop onboarded this morning is here before its first ingest
+    | finishes, and one switched off last week is gone before its rows are
+    | pruned.
+    */
+    Route::get('/shops', ShopsController::class)->name('shops');
+
+    /*
+    | A Shop Cove: what a shop is like to buy from.
+    |
+    | Rendered by GuideController — it is an article in every respect the page
+    | cares about — but addressed here rather than under /guides, because a
+    | piece about a shop belongs above the directory of shops rather than in
+    | the archive of buying guides.
+    |
+    | Registered after the literal /shops so the index cannot be captured by
+    | the slug pattern, and the pattern is Str::slug()'s output so anything
+    | else is a probe rejected at the router.
+    */
+    Route::get('/shops/{slug}', [GuideController::class, 'shop'])
+        ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
+        ->name('shops.show');
 
     Route::get('/brands', [BrandController::class, 'index'])->name('brands');
     Route::get('/brand/{slug}', [BrandController::class, 'show'])

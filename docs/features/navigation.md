@@ -38,8 +38,8 @@ surfaces live underneath.
 | Top level | Route | en | nl | fr | es |
 |---|---|---|---|---|---|
 | | `/{market}/gift-cove` | Organise | Organiseer | Organiser | Organizar |
-| | `/{market}/search` | Search | Zoek | Rechercher | Buscar |
 | | `/{market}/discover-cove` | Discover | Ontdek | Découvrir | Descubrir |
+| | `/{market}/search` | Search | Zoek | Rechercher | Buscar |
 
 Behind **Organise**: the Gift Finder, Lists, Secret Friend. Behind **Discover**, keeping the Cove
 names that were briefly the top-level labels:
@@ -48,7 +48,89 @@ names that were briefly the top-level labels:
 |---|---|---|---|---|
 | `/{market}/daily` | Daily Cove | Cove van de dag | Cove Quotidienne | Cove Diaria |
 | `/{market}/surprise` | Surprise Cove | Verrassingscove | Cove Surprise | Cove Sorpresa |
-| `/{market}/guides` | Idea Cove | Idee Cove | Cove d'Idées | Cove de Ideas |
+| `/{market}/guides` | Inspiration Coves | Inspiratie Coves | Coves Inspiration | Coves de Inspiración |
+| `/{market}/gift-ideas` | Gift Coves | Cadeau Coves | Coves Cadeaux | Coves de Regalo |
+| `/{market}/coves` | All Coves | Alle Coves | Toutes les Coves | Todas las Coves |
+
+### Brand Coves and Shop Coves are built and withheld, 2026-08-29
+
+Two more Cove types were named, built and then **deliberately kept out of this menu for now**.
+
+| | Route | en | nl | fr | es |
+|---|---|---|---|---|---|
+| | `/{market}/brands` | Brand Coves | Merk Coves | Coves Marques | Coves de Marca |
+| | `/{market}/shops` | Shop Coves | Winkel Coves | Coves Boutiques | Coves de Tienda |
+
+**Brand Coves** is `/brands`, which already existed. **Shop Coves** is `/shops`, which did not —
+see [shop-coves.md](shop-coves.md).
+
+Withheld, not removed, and the distinction matters to whoever restores them. Both pages are live and
+indexed, both are listed on All Coves, and their icons (`brand`, `shop` on `CoveIcon`), their
+`nav.*_coves` labels and their `nav.hint_*` lines are all written in four languages. Restoring them
+is putting two entries back into `discover.items`, between Gift Coves and All Coves — the block is
+marked with a comment saying so.
+
+The footer keeps its `/brands` link under `brand.index_title`, its own name, rather than under
+`nav.brand_coves`. With no header entry to agree with, a footer link is not the place to introduce a
+name the rest of the site is not yet using — and `/shops` has no footer link at all while it is
+withheld.
+
+### The menu names the Cove *types*, 2026-08-29
+
+It used to name three surfaces — Daily, "Idea Cove" and Ask others — and that was wrong in three
+separate ways at once.
+
+**"Idea Cove" was the article archive wearing the name of the whole.** `/guides` is one of three
+shapes a Cove takes, and it was the only one in the header carrying the bare word. A reader learning
+the vocabulary from the header learned that a Cove is a long read, which is a third of the truth.
+
+**The persona shelf was reachable from nothing.** `/gift-ideas` has existed since personas shipped
+and appeared in no menu, no hub and no footer — only in the sitemap. It is the answer to "who am I
+shopping for", which is the question most visitors actually arrive with.
+
+**There was no page holding all of them.** Three kinds, three indexes, and nowhere showing that they
+are three shapes of one thing. `/coves` is that page; see [all-coves.md](all-coves.md).
+
+So the menu is now one entry per kind, named for the kind, with All Coves under them. Every entry
+carries a `hint` — `NavMenuItem` has had the slot since it was written and nothing used it, and five
+labels differing by one word (Daily, Surprise, Theme, Gift, All) cannot be told apart on first
+opening. The hints are deliberately short: this is a dropdown, and the hub is one click away for the
+argument.
+
+**Ask others stays, below the Coves rather than among them.** It belongs under Discover — it is a
+way of finding something when you cannot describe it well enough to search for — but its content
+comes from other visitors rather than from us. Listing it as a fourth Cove type would say we
+published it.
+
+**`nav.coves` was retired, not repointed.** The footer, the front page and the Discover hub all
+labelled `/guides` with it, and the footer's own comment said "same name as the header uses". Leaving
+the header on "Inspiration Coves" while three other surfaces said "Idea Cove" would have been two
+names for one page — the exact confusion the Cove naming pass in
+[localisation.md](localisation.md) set out to remove — so all four moved to `nav.inspiration_coves`
+together and the old key is gone.
+
+**Why "Inspiration Coves" and not "Theme Coves".** The entry was briefly called Theme Coves, named
+after what the page is organised *by*. That is a fact about our filing system, not about what the
+reader gets: `/guides` holds shopping inspiration and buying guides, and "theme" describes neither.
+The qualifier now names the value, which is also what makes it survive translation — Inspiratie
+Coves and Coves Inspiration mean the same thing to a reader, where a literal "Thema" only means
+something to somebody who already knows how we sort our content.
+
+The key moved with it. `nav.theme_coves` holding "Inspiration Coves" would be the same two-names
+drift the paragraph above is about, one level down — so `theme_coves`, `hint_theme_coves` and the
+page's `coves.theme_*` block are all `inspiration_*`, and `CovesController`'s section key changed
+to match, because the page builds its copy keys from it (`coves.{key}_heading`).
+
+**Two icons were added** to `CoveIcon`: `persona` (one person, head and shoulders — a Gift Cove is
+built around somebody rather than a date, and that is the single fact separating it from the book
+beside it) and `all` (a two-by-two grid, the only mark here depicting an arrangement rather than a
+thing, because All Coves is not a kind of Cove but the set of them). `CoveIllustration` did **not**
+grow to match: it draws the four homepage cards and now takes a narrower `CoveSceneKey`, so a scene
+for a menu row nothing renders at 160px is a compile error rather than a blank card.
+
+> **Still outstanding.** `/discover-cove` and the footer both describe three surfaces and were not
+> extended. The hub's copy says "three ways to find something you were not looking for" while the
+> menu now offers five entries, so the two disagree until somebody decides what the hub should say.
 
 **Every verb is also a destination.** Each points at a hub that explains its section —
 `/gift-cove` already did, `/discover-cove` was built for this. A menu whose handle goes nowhere
@@ -89,6 +171,13 @@ are, and nine icons in a dropdown is a contact sheet.
 *ours*; search, gifting and Surprise are ways of querying a catalogue that every competitor also
 has. Putting Search first made the site look like a search box with some extras attached, which is
 the version of it that has no reason to be visited twice.
+
+Changed 2026-08-29: **Search moved from the middle to the end**, so the order is Organise, Discover,
+Search. Search between the two verbs split them, and it was the one entry that reads as a control
+rather than a section — sitting between two menus it also broke the run of chevrons. Last is where a
+visitor looks when the two curated routes did not have what they came for, which is what Search is
+for. The phone panel follows the same order, hubs and their surfaces flattened, with Search at the
+bottom.
 
 **The header now uses the Cove names.** It was the last surface still calling `/guides` "Guides"
 (`nav.guides`, "Koopgidsen") and `/daily` "Daily Picks" ("Dagtips"), while the homepage, the
