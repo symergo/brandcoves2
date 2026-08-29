@@ -66,6 +66,44 @@ requests while vite, ssr and the queue are all dead — the site looks fine and 
 Cleanup only ever kills `php.exe`/`node.exe` that belong to this project. VS Code's extension host is
 also `node.exe`, and matching on image name alone would take Intelephense out with it.
 
+### The health check has to be address-family agnostic
+
+Fixed 2026-08-29, after a morning of `localhost` serving a blank page.
+
+`Test-Port` connected to `127.0.0.1` with `New-Object Net.Sockets.TcpClient`, which on Windows
+PowerShell 5.1 creates an **IPv4-only** socket. Vite is given no `server.host`, so it binds whatever
+`localhost` resolves to — here `::1`, and it listens on IPv6 **only**:
+
+```
+Get-NetTCPConnection -State Listen -LocalPort 5173
+LocalAddress LocalPort OwningProcess
+::1               5173         29672
+```
+
+So the probe failed against a Vite that was running perfectly — `devserver.out.log` says *"ready in
+412 ms"* on the same line the supervisor calls it dead. The stack was then killed and restarted every
+two minutes, indefinitely.
+
+**What it looks like is not an outage.** `public/hot` points the browser at a port whose process keeps
+being killed underneath it, so the site is blank or stale much of the time and it reads as "my change
+did not take". `devserver.log` is where it is obvious: an unbroken `unhealthy: vite(:5173) not
+listening` → `restarting in 5s` loop.
+
+Retrying the connect against `::1` is **not** the fix — the same IPv4 socket throws on an IPv6
+address, so the second attempt fails silently in the `catch`. `Test-Port` now asks
+`Get-NetTCPConnection`, which is address-family agnostic, answers the question the supervisor
+actually has (*is anything serving this port?*), and is already what `Stop-StackOrphan` depends on.
+
+> Pinning Vite to `127.0.0.1` in `vite.config.ts` would also have worked, and was rejected: a health
+> check that can only see IPv4 will tell the same lie about the next service that prefers IPv6.
+
+**A warning worth having.** `Stop-Process node -Force` — killing every node process to clear a stray
+SSR server — takes Vite down with it, and takes the supervisor's stack with it. Use
+[`scripts/dev-stop.ps1`](../scripts/dev-stop.ps1), which stops the task and frees the three ports by
+owner, and then `Start-ScheduledTask "GiftCoves Dev Server"`. Note that `dev-stop.ps1` leaves a
+`storage/framework/dev-server.stop` file that the next supervisor start consumes and exits on, so
+starting the task immediately after stopping it appears to do nothing.
+
 ## Day to day
 
 ```powershell

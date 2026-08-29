@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
-use App\Models\Guide;
 use App\Models\Recipient;
 use App\Models\SecretSantaGroup;
 use App\Models\Wishlist;
@@ -189,6 +188,10 @@ class HomeController extends Controller
     {
         $edition = DailyPickSet::query()
             ->forMarket($current->get())
+            // daily(), and not for tidiness: a persona has no drop date, and
+            // Postgres sorts DESC with NULLS FIRST — so without this the newest
+            // gift persona is served as today's edition, on the front page.
+            ->daily()
             ->published()
             ->with(['picks.group'])
             ->orderByDesc('drop_date')
@@ -227,16 +230,17 @@ class HomeController extends Controller
     /** @return list<array<string, mixed>> */
     private function coves(CurrentMarket $current): array
     {
-        return Guide::query()
+        return DailyPickSet::query()
             ->forMarket($current->get())
+            ->articles()
             ->published()
             ->orderByDesc('published_at')
             ->limit(6)
-            ->get(['slug', 'title', 'intro', 'source_volume'])
-            ->map(fn (Guide $guide) => [
-                'title' => $guide->title,
-                'intro' => $guide->intro,
-                'url' => $current->url("guides/{$guide->slug}"),
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'source_volume'])
+            ->map(fn (DailyPickSet $guide) => [
+                'title' => $guide->theme_title,
+                'intro' => $guide->theme_blurb,
+                'url' => $current->url($guide->kind->path((string) $guide->slug)),
                 // Why it exists, and a fact no competitor has.
                 'searches' => $guide->source_volume,
             ])

@@ -49,27 +49,81 @@ a junk row buying its way in on rarity alone — this is asserted directly by
 
 ### Two things that are deliberately log-scaled
 
-`lexicalRarity()` and `rarityOfShare()` both use `-log10(share) / 4`. Raw share is useless here: the
-gap between a word appearing in 0.01% of titles and one appearing in 0.5% is enormous perceptually
-and invisible linearly.
+`rarityOfShare()` uses `-log10(share) / 4`, and so does `lexicalRarity()` when it is scoring against
+the whole market. Raw share is useless here: the gap between a word appearing in 0.01% of titles and
+one appearing in 0.5% is enormous perceptually and invisible linearly.
 
 ### The rarest word, not the average
 
 "Draadloze bluetooth koptelefoon met ruisonderdrukking" is five common words and one specific one,
 and the specific one is what tells you what the thing is. Averaging buries it.
 
-### Unknown words score nothing
+### A word is judged against its own category
 
-A word absent from the corpus is almost always a model number or a typo, not an exotic product.
-Treating absence as maximal rarity would rank pure noise to the top, so unknown words are skipped
-entirely rather than scored high.
+Changed 2026-08-29. Measured across the whole market, this signal cannot tell an unusual product from
+a category we have barely ingested — "almost nobody stocks this" and "we have thin coverage here"
+produce the same number. With 200 board games and 40,000 phone accessories in the catalogue, every
+board-game word looks exotic and the engine ranks an ingestion gap as a discovery.
+
+Within its own category the question becomes the one worth asking: is this word unusual *for a
+kitchen product*? "koptelefoon" among audio is furniture; "sous-vide" among kitchen is a find.
+
+The scoped scale divides by the category's own dynamic range (`log10(1/share) / log10(total)`) rather
+than a fixed four decades. A fixed window would hand bigger categories higher scores for free — in a
+category of 200 the rarest possible word sits at 1/200, which four decades reads as 0.575, while a
+category of 20,000 reaches 1.0 for the identical fact of "appears once". Mapping "appears once" to
+1.0 everywhere is the only reading that compares across categories. Four decades is itself
+`log10(10,000)`: the same formula against an assumed corpus size, which is why the market-wide
+fallback keeps it.
+
+Categories under **200 products** fall back to the market corpus. Below that the rarest a word could
+possibly be is 1/200, and calling that maximal on the evidence of one listing is how noise reaches
+the top.
+
+### A part number is not a rare word
+
+This is the bug that made the signal nearly useless, found 2026-08-29 while measuring the change
+above.
+
+The rule used to be "a word absent from the corpus is a model number or a typo, so skip it". **It
+could never fire.** The corpus is built from these same titles, so every word in a product's title is
+in it by construction — a part number included, with a count of exactly one, which the log scale
+reads as maximally rare. `BEKO BM5DFT4941B` scored 1.000.
+
+Measured on the real be-nl catalogue: **61.1% of products scored ≥0.99** on the signal carrying 40 of
+the 100 rarity points. The strongest input to the ranking was very nearly a constant.
+
+Two rules now say what that comment meant to say. A token containing a digit is a part number, a
+capacity or a size (`bm5dft4941b`, `64gb`, `77mm`) — every title has one and none of them tells you
+what the thing is. And a token used by fewer than **three** listings is not a word: a descriptive
+noun recurs, while a token appearing once or twice in 136,000 is a typo, a transliteration or a model
+name spelled without digits. Support is counted market-wide even when scoring within a category, so
+"is this a word" stays a fact about the language and "how rare is it here" a fact about the category.
+
+Saturation fell from **61.1% to 24.7%**, with the rest of the distribution actually populated. The
+residual is category-unique words hitting the ceiling honestly, and is left alone — there is no
+ground truth to tune against and a shape tuned by eye is what gets "cleaned up" later.
+
+### The corpus is unaccented; the lookup was not
+
+Fixed in the same pass. The corpus is built in SQL with `lower(unaccent(title))` and was read back in
+PHP with `mb_strtolower` alone, so every accented word missed: the corpus held "cafe", the lookup
+asked for "café", `isset` said no, and the word was skipped as unknown. The signal was quietly
+dropping accented nouns in the two Dutch markets and the French one — where the distinctive words
+live. Folded by table rather than `iconv('ASCII//TRANSLIT')`, whose output differs across glibc, musl
+and Windows.
 
 ## The quality gate
 
-Hard zeroes — no image, no price, out of stock, or `giftable = false`. That last one matters more
-than it looks: consumables and spare parts are extremely rare *and* extremely unwelcome, so the
+Hard zeroes — no image, no price, out of stock, or `worth_showing = false`. That last one matters
+more than it looks: consumables and fitment are extremely rare *and* extremely unwelcome, so the
 giftability classifier's verdict does double duty here. Rarity is exactly the wrong measure for a
 printer cartridge.
+
+**`worth_showing`, not `giftable`** — changed 2026-08-29. This surface is not suggesting a present,
+so the gift engine's "over €500 is a decision rather than a suggestion" rule has no business gating
+it; an expensive unusual object is the best thing that can land on a Cove. That one flag was keeping
+9,040 rows off the editorial surfaces. See [giftability.md](giftability.md).
 
 Softer multipliers — under €10 halves the score (the tail of cable ties and phone charms is rare for
 the wrong reason), and a missing brand costs 20% (weak evidence of a white-label listing; plenty of

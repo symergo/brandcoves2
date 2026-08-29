@@ -7,7 +7,7 @@ namespace App\Services\Editorial;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\BrandStat;
-use App\Models\Guide;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use Illuminate\Support\Collection;
 
@@ -114,8 +114,9 @@ class Allowlist
     /** @return list<string> */
     public function guideSlugs(Market $market, ?int $excludeGuideId = null): array
     {
-        return Guide::query()
+        return DailyPickSet::query()
             ->where('market', $market->value)
+            ->articles()
             ->where('status', PublishStatus::Published->value)
             ->when($excludeGuideId !== null, fn ($q) => $q->where('id', '!=', $excludeGuideId))
             // Capped: an article cannot meaningfully link to a thousand guides,

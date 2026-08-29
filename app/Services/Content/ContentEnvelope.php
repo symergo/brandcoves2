@@ -6,11 +6,10 @@ namespace App\Services\Content;
 
 use App\Models\CopyTemplate;
 use App\Models\CovePlan;
+use App\Models\CovePlanItem;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
-use App\Models\Guide;
-use App\Models\GuideItem;
 use App\Models\GuideTopic;
 use App\Models\ProductGroup;
 use Illuminate\Database\Eloquent\Builder;
@@ -57,16 +56,24 @@ use Illuminate\Support\Facades\DB;
  */
 class ContentEnvelope
 {
-    /** Bumped when the envelope shape changes in a way an old import cannot read. */
-    public const VERSION = 1;
+    /**
+     * Bumped when the envelope shape changes in a way an old import cannot read.
+     *
+     * Version 2 retired the guides surface: guides are Coves now, and they
+     * travel in editions with every other kind. A v1 envelope is still
+     * readable — its guides rows are folded into editions on the way in, so an
+     * export taken before the change still imports. See importLegacyGuides().
+     */
+    public const VERSION = 2;
 
     /**
      * What may travel, in dependency order.
      *
-     * Order matters on import: guides must exist before `guide_topics` and
-     * `daily_pick_sets` can point at them.
+     * Order matters on import: an edition must exist before guide_topics and
+     * another edition's
+eatured_cove_id can point at it.
      */
-    public const SURFACES = ['feeds', 'copy', 'guides', 'topics', 'editions', 'plans'];
+    public const SURFACES = ['feeds', 'copy', 'editions', 'topics', 'plans'];
 
     /**
      * Columns stripped on the way out, per surface.
@@ -84,9 +91,8 @@ class ContentEnvelope
     private const DROP = [
         'feeds' => ['id', 'merchant_id', 'last_run_at', 'last_row_count', 'last_error', 'created_at', 'updated_at'],
         'copy' => ['id', 'author_id', 'created_at', 'updated_at'],
-        'guides' => ['id', 'created_at', 'updated_at'],
-        'topics' => ['id', 'guide_id', 'created_at', 'updated_at', 'last_attempt_at', 'attempts'],
-        'editions' => ['id', 'guide_id', 'challenge_group_id', 'created_at', 'updated_at'],
+        'topics' => ['id', 'guide_id', 'edition_id', 'plan_id', 'created_at', 'updated_at', 'last_attempt_at', 'attempts'],
+        'editions' => ['id', 'guide_id', 'featured_cove_id', 'folded_from_guide_id', 'challenge_group_id', 'created_at', 'updated_at'],
         'plans' => ['id', 'edition_id', 'created_by', 'created_at', 'updated_at'],
     ];
 
@@ -105,7 +111,6 @@ class ContentEnvelope
             $out[$surface] = match ($surface) {
                 'feeds' => $this->exportFeeds(),
                 'copy' => $this->exportCopy(),
-                'guides' => $this->exportGuides(),
                 'topics' => $this->exportTopics(),
                 'editions' => $this->exportEditions(),
                 'plans' => $this->exportPlans(),
@@ -155,7 +160,9 @@ class ContentEnvelope
                 $report[$surface] = match ($surface) {
                     'feeds' => $this->importFeeds($rows),
                     'copy' => $this->importCopy($rows),
-                    'guides' => $this->importGuides($rows),
+                    // A v1 envelope. Its guides become editions on the way in,
+                    // so an export taken before the fold still imports.
+                    'guides' => $this->importLegacyGuides($rows),
                     'topics' => $this->importTopics($rows),
                     'editions' => $this->importEditions($rows),
                     'plans' => $this->importPlans($rows),
@@ -233,49 +240,16 @@ class ContentEnvelope
     }
 
     /** @return list<array<string, mixed>> */
-    private function exportGuides(): array
-    {
-        return Guide::query()->with('items')->orderBy('id')->get()
-            ->map(function (Guide $guide): array {
-                $row = $this->strip($guide->getAttributes(), 'guides');
-
-                $row['items'] = $guide->items
-                    ->map(function (GuideItem $item): ?array {
-                        $ref = $this->identify($item->group_id === null ? null : (int) $item->group_id);
-
-                        // Unresolvable here means the source lost the product
-                        // after the guide was written. Exporting it would just
-                        // move the problem.
-                        if ($ref === null) {
-                            return null;
-                        }
-
-                        $attributes = $item->getAttributes();
-                        unset($attributes['id'], $attributes['guide_id'], $attributes['group_id'], $attributes['created_at'], $attributes['updated_at']);
-                        $attributes['product'] = $ref;
-
-                        return $attributes;
-                    })
-                    ->filter()
-                    ->values()
-                    ->all();
-
-                return $row;
-            })
-            ->all();
-    }
-
-    /** @return list<array<string, mixed>> */
     private function exportTopics(): array
     {
         return GuideTopic::query()->orderBy('id')->get()
             ->map(function (GuideTopic $topic): array {
                 $row = $this->strip($topic->getAttributes(), 'topics');
 
-                // Guides travel by slug, the only handle both sides share.
-                $row['guide_slug'] = $topic->guide_id === null
+                // Coves travel by slug, the only handle both sides share.
+                $row['guide_slug'] = $topic->edition_id === null
                     ? null
-                    : Guide::query()->whereKey($topic->guide_id)->value('slug');
+                    : DailyPickSet::query()->whereKey($topic->edition_id)->value('slug');
 
                 return $row;
             })
@@ -289,9 +263,9 @@ class ContentEnvelope
             ->map(function (DailyPickSet $set): array {
                 $row = $this->strip($set->getAttributes(), 'editions');
 
-                $row['guide_slug'] = $set->guide_id === null
+                $row['guide_slug'] = $set->featured_cove_id === null
                     ? null
-                    : Guide::query()->whereKey($set->guide_id)->value('slug');
+                    : DailyPickSet::query()->whereKey($set->featured_cove_id)->value('slug');
 
                 $row['challenge_product'] = $this->identify(
                     $set->challenge_group_id === null ? null : (int) $set->challenge_group_id
@@ -333,13 +307,37 @@ class ContentEnvelope
             ->map(function (CovePlan $plan): array {
                 $row = $this->strip($plan->getAttributes(), 'plans');
 
-                $pinned = $plan->pinned_group_ids;
-                $pinned = is_string($pinned) ? (array) json_decode($pinned, true) : (array) $pinned;
+                /*
+                 * The curated shortlist, as portable references.
+                 *
+                 * Without this, `bc:export-content` would move a plan's title,
+                 * blurb and prose between environments and silently leave its
+                 * products behind — and the plan would look complete on the
+                 * far side right up until it built a page nobody chose.
+                 */
+                $row['items'] = $plan->items()->get()
+                    ->map(function (CovePlanItem $item): ?array {
+                        $ref = $this->identify($item->group_id === null ? null : (int) $item->group_id);
 
-                $row['pinned_products'] = array_values(array_filter(array_map(
-                    fn ($id) => $this->identify((int) $id),
-                    $pinned,
-                )));
+                        // A pick from a source we may not mirror has no group to
+                        // identify; it travels on its own id, exactly as an
+                        // Amazon pick does in an edition.
+                        if ($ref === null && blank($item->external_id)) {
+                            return null;
+                        }
+
+                        return [
+                            'product' => $ref,
+                            'source' => $item->source?->value,
+                            'external_id' => $item->external_id,
+                            'rank' => $item->rank,
+                            'note' => $item->note,
+                            'verdict' => $item->verdict,
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
 
                 return $row;
             })
@@ -418,26 +416,53 @@ class ContentEnvelope
      * @param  list<array<string, mixed>>  $rows
      * @return array{created:int, updated:int, dropped:list<string>}
      */
-    private function importGuides(array $rows): array
+    private function importLegacyGuides(array $rows): array
     {
         $report = $this->report();
 
         foreach ($rows as $row) {
             $items = (array) ($row['items'] ?? []);
-            unset($row['items']);
 
-            $guide = $this->upsert(
-                Guide::query(),
-                ['market' => $row['market'], 'slug' => $row['slug']],
-                $row,
+            /*
+             * A v1 guide, translated into the edition it would be today.
+             *
+             * Field for field, the same mapping GuideFold applies to a local
+             * table — an envelope exported before the fold describes exactly
+             * the rows that migration moved, so reading it any other way would
+             * mean two answers to one question.
+             */
+            $edition = $this->upsert(
+                DailyPickSet::query(),
+                [
+                    'market' => $row['market'],
+                    'kind' => ($row['kind'] ?? 'buying') === 'advice'
+                        ? CoveKind::Advice->value
+                        : CoveKind::Guide->value,
+                    'slug' => $row['slug'],
+                ],
+                [
+                    'theme_title' => $row['title'] ?? $row['slug'],
+                    'theme_slug' => $row['slug'],
+                    'theme_source' => 'imported',
+                    'theme_blurb' => $row['intro'] ?? null,
+                    'body' => $row['body_md'] ?? null,
+                    'faq' => $row['faq'] ?? null,
+                    'meta_description' => $row['meta_description'] ?? null,
+                    'focus_keyphrase' => $row['focus_keyphrase'] ?? null,
+                    'source_queries' => $row['source_queries'] ?? [],
+                    'source_volume' => $row['source_volume'] ?? 0,
+                    'status' => $row['status'] ?? 'draft',
+                    'published_at' => $row['published_at'] ?? null,
+                    'last_checked_at' => $row['last_checked_at'] ?? null,
+                ],
                 $report,
             );
 
             // Replaced wholesale rather than merged: rank is a property of the
             // list, so a half-updated list would silently reorder itself.
-            $guide->items()->delete();
+            $edition->picks()->delete();
 
-            foreach ($items as $item) {
+            foreach ($items as $rank => $item) {
                 $groupId = $this->resolve($item['product'] ?? null);
 
                 if ($groupId === null) {
@@ -447,9 +472,14 @@ class ContentEnvelope
                     continue;
                 }
 
-                unset($item['product']);
-                $item['group_id'] = $groupId;
-                $guide->items()->create($item);
+                $edition->picks()->create([
+                    'group_id' => $groupId,
+                    'rank' => $item['rank'] ?? $rank + 1,
+                    'slug' => Str::slug((string) ($item['product']['identity_key'] ?? 'item')).'-'.$groupId,
+                    'blurb' => $item['editorial_copy'] ?? null,
+                    'verdict' => $item['verdict'] ?? null,
+                    'unavailable' => (bool) ($item['unavailable'] ?? false),
+                ]);
             }
         }
 
@@ -468,9 +498,11 @@ class ContentEnvelope
             $slug = $row['guide_slug'] ?? null;
             unset($row['guide_slug']);
 
-            $row['guide_id'] = $slug === null
+            // The Cove this topic produced, matched by the only handle both
+            // sides share.
+            $row['edition_id'] = $slug === null
                 ? null
-                : Guide::query()->where('market', $row['market'])->where('slug', $slug)->value('id');
+                : DailyPickSet::query()->where('market', $row['market'])->where('slug', $slug)->value('id');
 
             $this->upsert(
                 GuideTopic::query(),
@@ -497,17 +529,27 @@ class ContentEnvelope
             $challenge = $row['challenge_product'] ?? null;
             unset($row['picks'], $row['guide_slug'], $row['challenge_product']);
 
-            $row['guide_id'] = $slug === null
+            // The Cove this one points its readers at — a self-reference since
+            // the fold, resolved by slug like everything else.
+            $row['featured_cove_id'] = $slug === null
                 ? null
-                : Guide::query()->where('market', $row['market'])->where('slug', $slug)->value('id');
+                : DailyPickSet::query()->where('market', $row['market'])->where('slug', $slug)->value('id');
 
             // The guess-the-price round simply does not run without its product,
             // which is a better outcome than a round about the wrong one.
             $row['challenge_group_id'] = $this->resolve($challenge);
 
+            /*
+             * A persona edition is keyed on its slug, a Daily on its date —
+             * for the same reason as the plans above: `drop_date = NULL` matches
+             * nothing, so a single key would re-create every persona on every
+             * import.
+             */
             $set = $this->upsert(
                 DailyPickSet::query(),
-                ['market' => $row['market'], 'drop_date' => $row['drop_date']],
+                ($row['kind'] ?? 'daily') === 'persona'
+                    ? ['market' => $row['market'], 'kind' => 'persona', 'slug' => $row['slug'] ?? null]
+                    : ['market' => $row['market'], 'drop_date' => $row['drop_date'] ?? null],
                 $row,
                 $report,
             );
@@ -518,7 +560,7 @@ class ContentEnvelope
                 $groupId = $this->resolve($pick['product'] ?? null);
 
                 if ($groupId === null && blank($pick['amazon_asin'] ?? null)) {
-                    $report['dropped'][] = "edition {$row['market']} {$row['drop_date']}: "
+                    $report['dropped'][] = 'edition '.$row['market'].' '.($row['drop_date'] ?? $row['slug'] ?? '?').': '
                         .($pick['product']['identity_key'] ?? 'unknown product');
 
                     continue;
@@ -542,34 +584,70 @@ class ContentEnvelope
         $report = $this->report();
 
         foreach ($rows as $row) {
-            $pinned = (array) ($row['pinned_products'] ?? []);
+            $items = (array) ($row['items'] ?? []);
+            unset($row['items']);
+
+            // The legacy field. An envelope written before the shortlist became
+            // a table still carries pins, and they mean exactly the same thing.
+            $legacy = (array) ($row['pinned_products'] ?? []);
             unset($row['pinned_products']);
 
+            $label = 'plan '.$row['market'].' '.($row['drop_date'] ?? ($row['slug'] ?? '?'));
             $resolved = [];
+            $rank = 0;
 
-            foreach ($pinned as $ref) {
-                $id = $this->resolve($ref);
+            foreach ([...$items, ...array_map(fn ($ref) => ['product' => $ref], $legacy)] as $item) {
+                $rank++;
 
-                if ($id === null) {
-                    $report['dropped'][] = "plan {$row['market']} {$row['drop_date']}: "
-                        .($ref['identity_key'] ?? 'unknown product');
+                $id = $this->resolve($item['product'] ?? null);
+
+                if ($id === null && blank($item['external_id'] ?? null)) {
+                    // Dropped rather than failed: the far environment may simply
+                    // not stock this product, and losing one item off a
+                    // shortlist is a smaller loss than refusing the whole plan.
+                    $report['dropped'][] = $label.': '
+                        .($item['product']['identity_key'] ?? 'unknown product');
 
                     continue;
                 }
 
-                $resolved[] = $id;
+                $resolved[] = [
+                    'group_id' => $id,
+                    'source' => $item['source'] ?? null,
+                    'external_id' => $item['external_id'] ?? null,
+                    'rank' => $item['rank'] ?? $rank,
+                    'note' => $item['note'] ?? null,
+                    'verdict' => $item['verdict'] ?? null,
+                ];
             }
 
-            // A pin is a preference, not a requirement — an empty list means the
-            // builder chooses freely, which is what it does for an unplanned day.
-            $row['pinned_group_ids'] = $resolved;
+            /*
+             * A persona is keyed on its slug, a Daily on its date.
+             *
+             * Not one key with a null in it: `where('drop_date', null)` compiles
+             * to `drop_date = NULL`, which matches nothing in SQL — so every
+             * import would create a second copy of every persona, forever.
+             */
+            $key = ($row['kind'] ?? 'daily') === 'persona'
+                ? ['market' => $row['market'], 'kind' => 'persona', 'slug' => $row['slug'] ?? null]
+                : ['market' => $row['market'], 'drop_date' => $row['drop_date'] ?? null];
 
-            $this->upsert(
-                CovePlan::query(),
-                ['market' => $row['market'], 'drop_date' => $row['drop_date']],
-                $row,
-                $report,
-            );
+            $plan = $this->upsert(CovePlan::query(), $key, $row, $report);
+
+            if ($plan instanceof CovePlan) {
+                /*
+                 * Replace, never merge.
+                 *
+                 * An import is "make this environment match the envelope". A
+                 * merge would leave behind items the author deleted on the far
+                 * side, and no second run would ever remove them.
+                 */
+                $plan->items()->delete();
+
+                foreach ($resolved as $item) {
+                    $plan->items()->create($item);
+                }
+            }
         }
 
         return $report;

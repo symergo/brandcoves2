@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
-use App\Models\Guide;
+use App\Models\DailyPickSet;
 use App\Services\Editorial\Allowlist;
 use App\Services\Guides\CoveMarkup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -81,28 +82,9 @@ class EditorialLinkTest extends TestCase
     #[Test]
     public function a_guide_link_resolves_only_for_a_published_guide_in_this_market(): void
     {
-        $live = Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'gepubliceerd',
-            'title' => 'Gepubliceerd',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
-
-        Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'concept',
-            'title' => 'Concept',
-            'status' => PublishStatus::Draft->value,
-        ]);
-
-        Guide::create([
-            'market' => Market::En->value,
-            'slug' => 'other-market',
-            'title' => 'Other market',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $live = $this->guide('gepubliceerd', 'Gepubliceerd');
+        $this->guide('concept', 'Concept', PublishStatus::Draft);
+        $this->guide('other-market', 'Other market', market: Market::En);
 
         $allowed = app(Allowlist::class)->guideSlugs(Market::BeNl);
 
@@ -123,13 +105,7 @@ class EditorialLinkTest extends TestCase
     #[Test]
     public function an_article_may_not_link_to_itself(): void
     {
-        $guide = Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'zichzelf',
-            'title' => 'Zichzelf',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $guide = $this->guide('zichzelf', 'Zichzelf');
 
         // A loop the reader has to notice to escape, and a self-referential
         // internal link a crawler learns nothing from.
@@ -154,5 +130,28 @@ class EditorialLinkTest extends TestCase
 
         // The value when no label was given — the same fallback render() uses.
         $this->assertSame('Sony maakt ze.', app(CoveMarkup::class)->plain('[[brand:Sony]] maakt ze.'));
+    }
+
+    /**
+     * A guide at a known slug.
+     *
+     * An edition since the fold: the `/guides` space is `daily_pick_sets` rows,
+     * and the link allowlist reads them there.
+     */
+    private function guide(
+        string $slug,
+        string $title,
+        PublishStatus $status = PublishStatus::Published,
+        Market $market = Market::BeNl,
+    ): DailyPickSet {
+        return DailyPickSet::create([
+            'market' => $market->value,
+            'kind' => CoveKind::Guide->value,
+            'slug' => $slug,
+            'theme_title' => $title,
+            'theme_slug' => $slug,
+            'status' => $status->value,
+            'published_at' => $status === PublishStatus::Published ? now() : null,
+        ]);
     }
 }

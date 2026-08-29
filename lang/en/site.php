@@ -462,6 +462,34 @@ return [
         'manual_url_invalid' => 'A link has to start with https://',
         'added_to' => 'Saved to :list',
         'view_list' => 'View list',
+        'undo' => 'Undo',
+        // The picker fetch failed, which is not the same as owning no lists —
+        // and offering "+ New list" to someone whose connection dropped is how
+        // a duplicate of a list they already have gets made.
+        'options_failed' => 'Could not load your lists.',
+        'retry' => 'Try again',
+        'loading_lists' => 'Loading your lists…',
+        'save_failed' => 'That did not save. Try again?',
+        // Filling one named list, rather than saving one product.
+        'adding_to' => 'Adding to :list',
+        'added_count' => ':count added',
+        'done_adding' => 'Done',
+        'add_to_this' => 'Add to :list',
+        // On somebody else's list: this keeps it for me, and tells them nothing.
+        'save_to_mine' => 'Save to my list',
+        // One control for the whole of putting a thing on a list: search the
+        // catalogue and the live sources, adjust the wording, or write in
+        // something we do not sell — without searching first.
+        'add_product' => 'Add a product',
+        'add_search_placeholder' => 'Search for a product...',
+        'search_failed' => 'The search did not work. Try again?',
+        'add_nothing_found' => 'Nothing found for ":term".',
+        'add_own_intro' => 'Not in the shops we cover?',
+        'add_own_cta' => 'Write it in yourself',
+        'add_description' => 'Description',
+        'add_note_placeholder' => 'size M, in blue',
+        'add_live_title_note' => 'The title and price come straight from :shop, so they cannot be edited here.',
+        'back' => 'Back',
         'new_list' => 'New list',
         'list_name' => 'List name',
         'create' => 'Create list',
@@ -509,7 +537,7 @@ return [
         'price_now' => 'Now :price',
         'price_was' => 'Was :price',
         'sign_in_to_keep' => 'Sign in to keep these lists safe',
-        'sign_in_hint' => 'Your lists live in this browser right now. Sign in and they move to your account.',
+        'sign_in_hint' => 'Sign in and everything you save is kept to your account, on every device you use.',
         'marked_sent' => 'Marked as bought.',
         'cannot_mark_sent' => 'You can only do that for something you claimed.',
         'mark_sent' => 'I have bought it',
@@ -1051,6 +1079,21 @@ return [
         // maker's name is the least we can say about an object, and it is more
         // than an empty gap under the title.
         'by_brand' => 'By :brand',
+    ],
+
+    /*
+     * Gift personas: the Coves that are about a person rather than a day.
+     *
+     * Same machinery as the Daily Cove, different question. The daily column is
+     * a stream you catch up with; these are a shelf you browse, and "who am I
+     * shopping for" is the question most visitors actually arrive with.
+     */
+    'gift_ideas' => [
+        'title' => 'Gift ideas, by person',
+        'description' => 'Presents chosen around a person rather than a date — the herbalist, the dad who has everything, the friend who reads.',
+        'empty' => 'Nothing here yet. These are written one at a time, and the first is on its way.',
+        'finds_title' => 'What to get them',
+        'find_count' => ':count ideas',
     ],
 
     'daily' => [

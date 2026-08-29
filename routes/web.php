@@ -16,6 +16,7 @@ use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\DiscoverCoveController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftCoveController;
+use App\Http\Controllers\GiftIdeasController;
 use App\Http\Controllers\GiftPledgeController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HandoverController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\PickReactionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\RecipientProfileController;
+use App\Http\Controllers\SaveIntentController;
 use App\Http\Controllers\ScanController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SearchHelpController;
@@ -195,6 +197,18 @@ Route::prefix('{market}')->group(function () {
     // Which products are already saved, so a card can show it without asking.
     Route::get('/saved-items', [WishlistItemController::class, 'saved'])->name('items.saved');
 
+    /*
+     * A save pressed before there was an account to keep it in.
+     *
+     * Unauthenticated by definition — it exists for people who have not signed
+     * up — and it writes only to the caller's own session. Throttled anyway,
+     * because an unauthenticated POST with no rate limit is a habit worth not
+     * forming. See App\Services\Wishlist\PendingSave.
+     */
+    Route::post('/save-intent', [SaveIntentController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('items.intent');
+
     Route::middleware('auth')->group(function () {
         Route::post('/lists', [WishlistController::class, 'store'])->name('lists.store');
         Route::patch('/lists/{list}', [WishlistController::class, 'update'])->name('lists.update');
@@ -203,6 +217,29 @@ Route::prefix('{market}')->group(function () {
         Route::post('/list-items', [WishlistItemController::class, 'store'])->name('items.store');
         Route::patch('/list-items/{item}', [WishlistItemController::class, 'update'])->name('items.update');
         Route::delete('/list-items/{item}', [WishlistItemController::class, 'destroy'])->name('items.destroy');
+
+        /*
+         * Searching from inside a list, without leaving it.
+         *
+         * Throttled because the live half of a search costs real requests to
+         * bol and Amazon, and this one is reached by typing. `SearchService`
+         * caches the mirrorable connectors; the throttle is what bounds the
+         * one it cannot.
+         */
+        Route::get('/list-search', [WishlistItemController::class, 'find'])
+            ->middleware('throttle:60,1')
+            ->name('items.find');
+
+        /*
+         * Filling one list, rather than saving one product.
+         *
+         * `add` turns the mode on and lands on search; `done` turns it off and
+         * goes back to the list. Both are GETs because both are reached from a
+         * link on a page, and neither changes anything a visitor could not undo
+         * by pressing the other one. See App\Services\Wishlist\AddingMode.
+         */
+        Route::get('/lists/{list}/add', [WishlistController::class, 'add'])->name('lists.add');
+        Route::get('/done-adding', [WishlistController::class, 'doneAdding'])->name('lists.done_adding');
     });
 
     /*
@@ -476,14 +513,48 @@ Route::prefix('{market}')->group(function () {
     | The Daily Cove
     |----------------------------------------------------------------------
     |
-    | One page a day: a price guess, a themed set of finds, and a buying guide.
-    | Every edition keeps a permanent dated URL — the archive is the SEO asset,
-    | and a daily game whose past rounds 404 has no archive to link to.
+    | One page a day: a themed set of finds and an article. Every edition keeps a
+    | permanent URL — the archive is the SEO asset, and a daily column whose past
+    | editions 404 has no archive to link to.
+    |
+    | That URL is now the edition's *name* rather than its date:
+    | `/be-nl/daily/vondsten-voor-thuiswerkers`, not `/be-nl/daily/2026-08-29`. A
+    | date tells a reader nothing and a search engine less.
+    |
+    | The dated form is registered FIRST and permanently redirects. Three months
+    | of digest emails and everything already indexed point at it, so it has to
+    | keep resolving — and it has to be matched before the slug route, which
+    | would otherwise swallow `2026-08-29` as a perfectly valid slug and 404.
     */
     Route::get('/daily', DailyCoveController::class)->name('daily');
-    Route::get('/daily/{date}', DailyCoveController::class)
+
+    Route::get('/daily/{date}', [DailyCoveController::class, 'dated'])
         ->where('date', '\d{4}-\d{2}-\d{2}')
+        ->name('daily.dated');
+
+    Route::get('/daily/{slug}', DailyCoveController::class)
+        ->where('slug', '[a-z0-9-]+')
         ->name('daily.edition');
+
+    /*
+    |----------------------------------------------------------------------
+    | Gift personas
+    |----------------------------------------------------------------------
+    |
+    | The Coves that are about a person rather than a day: "the cottagecore
+    | herbalist", "the dad who has everything". Built by the same builder from
+    | the same curated plan; addressed by a permanent slug because a persona
+    | never stops being current, so it has no date to be found by.
+    |
+    | Under /gift-ideas rather than /coves/{slug}: /coves/subscribe, /confirm
+    | and /unsubscribe already live there, and a slug catch-all beside them
+    | would shadow all three the first time somebody named a persona
+    | "subscribe".
+    */
+    Route::get('/gift-ideas', [GiftIdeasController::class, 'index'])->name('gift-ideas');
+    Route::get('/gift-ideas/{slug}', [GiftIdeasController::class, 'show'])
+        ->where('slug', '[a-z0-9-]+')
+        ->name('gift-ideas.persona');
 
     /*
     |----------------------------------------------------------------------

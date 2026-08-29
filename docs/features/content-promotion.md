@@ -102,9 +102,31 @@ write to it over the network — a standing capability, always live, existing on
 it by mistake. A file passes through a person, and the dry run makes that person read the drop list
 first. **Apply is hidden until something has been checked**, for the same reason.
 
-The page also shows what this environment holds — guides, editions, plans, products — because a
-production catalogue smaller than staging's is exactly why picks get dropped, and seeing both counts
-explains a drop list before it appears.
+**The buttons live on the sections they act on.** *Download envelope*, *Check upload* and *Apply
+upload* sit under the Content transfer section, in the order you do them; *Save webhook* and *Deploy*
+sit under Deploy. They were five page-header actions in a row, with nothing to say which button
+belonged to which section — and the most destructive one, Deploy, sat next to the most routine one.
+
+Three things about that section are load-bearing rather than cosmetic:
+
+- **Apply is withdrawn when the selection changes.** A dry run describes one file and one set of
+  surfaces. Leaving Apply live afterwards let you preview envelope A, swap to B, and write B with
+  nobody having seen its drop list — the exact outcome the gate exists to prevent, reached by a route
+  that looks like normal use.
+- **A section action must be registered as well as placed.** `footerActions()` decides only where an
+  action is *drawn*; `getActions()` is what resolves one by name when it is clicked. An action that
+  is only in the footer renders correctly and then cannot mount its confirmation modal.
+- **An empty export is refused.** Exporting a fresh environment produces a valid envelope containing
+  nothing, which downloads and imports without complaint and leaves the far side exactly as it was.
+  The only symptom is somebody concluding the importer is broken, so the export says how many rows
+  per surface it found and declines when that is zero.
+
+The page also shows what this environment holds, **broken down per Cove kind** — Daily Coves,
+personas, buying guides, seasonal guides, advice articles — plus picks, plans, curated products and
+the catalogue. Since the fold every published page lives in `daily_pick_sets`, so a single "412
+editions" on each side would hide the fact that one environment has no guides at all, which is
+precisely what you open this page to find out. A production catalogue smaller than staging's is also
+why picks get dropped, and seeing both counts explains a drop list before it appears.
 
 ### Deploy
 

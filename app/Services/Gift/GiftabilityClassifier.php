@@ -36,6 +36,30 @@ namespace App\Services\Gift;
  *
  * Where a compound is still ambiguous — a replacement filter really can be a
  * lens filter — a rescue list carries the exception.
+ *
+ * ## Two verdicts, because there are two questions
+ *
+ * `giftable` carries the price ceiling: over €500 is a decision rather than a
+ * suggestion, and this feature exists to make suggestions. `worthShowing` does
+ * not, because the editorial surfaces are not suggesting anything — an
+ * expensive unusual object is exactly what a Cove is for. Every other
+ * rejection clears both. See docs/features/giftability.md.
+ *
+ * ## What is deliberately *not* in the lists any more
+ *
+ * Measured against the dev catalogue, `spare_part`, `service` and
+ * `household_staple` rejected 114 rows between them out of 63,508 classified —
+ * 0.18%, for three hand-maintained multilingual term lists. They were removed
+ * on 2026-08-29. The consequence, recorded rather than discovered later: a
+ * warranty extension, a software subscription and a cordless-drill battery now
+ * pass. Staples mostly still fail, because they are sold in counts and the bulk
+ * patterns read counts — that is the structural signal doing the work a lexical
+ * list was doing badly.
+ *
+ * `consumable` and `fitment` stay. Their raw counts are also small (1,568 and
+ * 689) but the rows are not randomly distributed: a cartridge scores well on
+ * every rarity signal, so those are concentrated exactly where the discovery
+ * surfaces would otherwise have surfaced them.
  */
 class GiftabilityClassifier
 {
@@ -81,25 +105,6 @@ class GiftabilityClassifier
             'vervangingsfilter', 'filtre de rechange', 'replacement filter',
         ],
 
-        // Parts. A gift is a whole thing.
-        'spare_part' => [
-            'reserveonderdeel', 'vervangingsonderdeel',
-            'spare part', 'replacement part', 'piece de rechange', 'repuesto',
-            'ersatzteil', 'borstel voor', 'brush for',
-            'accupack', 'vervangende accu', 'replacement battery',
-        ],
-
-        // Not an object at all.
-        'service' => [
-            'garantieverlenging', 'extended warranty', 'extension de garantie',
-            'garantia extendida', 'servicecontract', 'service plan',
-            'installatieservice', 'installation service', 'montageservice',
-            'abonnement', 'subscription', 'suscripcion',
-            'licentie', 'license key', 'licencia', 'activatiecode',
-            'verzekering', 'insurance', 'assurance', 'seguro',
-            'retourlabel', 'verzendkosten', 'shipping cost', 'frais de port',
-        ],
-
         /*
          * Fitment. A phone case is a fine gift only if you know exactly which
          * handset they carry — and if you knew that, you would not need us.
@@ -112,14 +117,6 @@ class GiftabilityClassifier
             'passend voor', 'hoesje voor', 'case for', 'coque pour', 'funda para',
             'screenprotector', 'screen protector', 'beschermfolie',
             'protector de pantalla', 'film de protection',
-        ],
-
-        // Necessities. Nobody unwraps forty rolls of anything with delight.
-        'household_staple' => [
-            'toiletpapier', 'toilet paper', 'papier toilette', 'papel higienico',
-            'keukenrol', 'kitchen roll', 'essuie-tout',
-            'vuilniszak', 'bin bag', 'sac poubelle', 'bolsa de basura',
-            'batterijen aa', 'aa batteries', 'aaa batteries',
         ],
     ];
 
@@ -137,11 +134,6 @@ class GiftabilityClassifier
         'replacement filter' => ['lens', 'camera', 'polarising', 'polarizing'],
         'filtre de rechange' => ['objectif', 'appareil photo'],
 
-        // A battery pack for a drill is a spare; a power bank is a present.
-        'accupack' => ['powerbank', 'power bank'],
-        'vervangende accu' => ['powerbank', 'power bank'],
-        'replacement battery' => ['powerbank', 'power bank'],
-
         // A gift set built around consumables is a gift — the packaging is the
         // product. A coffee hamper is not a bag of pods.
         'navul' => ['cadeau', 'geschenk', 'gift set', 'coffret', 'set de regalo'],
@@ -155,11 +147,18 @@ class GiftabilityClassifier
      * written a hundred ways per language but always as a number beside a unit
      * noun. Two digits and up — a "3-delige set" is a normal product, a
      * "50 stuks" is a supply run.
+     *
+     * Roll units carry the weight the `household_staple` list used to. Staples
+     * are always sold by the count — "24 rollen", "18 rolls" — so the count is
+     * the reliable signal and the noun list was the unreliable one. This is one
+     * unit noun per language against fourteen product names, and it generalises
+     * to staples nobody thought to enumerate.
      */
     private const BULK_PATTERNS = [
         '/\b\d{2,}\s*(stuks|stuk|pack|pcs|units|unidades|pieces)\b/u',
         '/\b(pak|set|doos|box|lot)\s+van\s+\d{2,}\b/u',
         '/\b\d{2,}[\s\-]?(pack|delig|teilig)\b/u',
+        '/\b\d{2,}\s*(rollen|rollos|rolls|rouleaux|rol)\b/u',
     ];
 
     /**
@@ -200,8 +199,16 @@ class GiftabilityClassifier
             return Giftability::no('too_cheap');
         }
 
+        /*
+         * The one rejection that does not clear the page.
+         *
+         * Over the ceiling this stops being a suggestion and starts being a
+         * decision, which is the gift engine's problem and nobody else's. A
+         * €700 espresso machine is still an object worth a slot in a Cove, so
+         * `worthShowing` survives where `giftable` does not.
+         */
         if ($priceCents > $this->maxPrice) {
-            return Giftability::no('too_expensive');
+            return Giftability::notAGiftButWorthShowing('too_expensive');
         }
 
         foreach (self::DISQUALIFYING as $reason => $terms) {

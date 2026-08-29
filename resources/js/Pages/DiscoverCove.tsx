@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
+import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -141,7 +142,16 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
                         {today.finds.length > 0 && (
                             <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                                 {today.finds.map((find) => (
-                                    <li key={find.id}>
+                                    <li key={find.id} className="relative">
+                                        {/*
+                                          Outside the anchor and above it on the
+                                          z-axis. A tile is one big link, and a
+                                          button nested inside it is not a
+                                          button — the anchor takes the click.
+                                        */}
+                                        <div className="absolute top-2 right-2 z-10">
+                                            <SaveToList groupId={find.id} compact />
+                                        </div>
                                         <Link
                                             href={find.url}
                                             className="flex h-full flex-col rounded-lg border border-line p-3 transition hover:border-ink"
@@ -205,7 +215,11 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
 
                     <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         {surprises.map((find) => (
-                            <li key={find.id}>
+                            <li key={find.id} className="relative">
+                                {/* Outside the anchor; see today's finds above. */}
+                                <div className="absolute top-2 right-2 z-10">
+                                    <SaveToList groupId={find.id} compact />
+                                </div>
                                 <Link
                                     href={find.url}
                                     className="flex h-full flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink"

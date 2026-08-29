@@ -59,15 +59,32 @@ function Write-Log {
     Add-Content -Path $log -Value $line -Encoding utf8
 }
 
+# Ask the OS what is listening, rather than trying to connect over IPv4.
+#
+# `New-Object Net.Sockets.TcpClient` creates an IPv4-ONLY socket on Windows
+# PowerShell 5.1, and the old probe connected to 127.0.0.1 with it. Vite is
+# given no `server.host`, so it binds whatever `localhost` resolves to -- here
+# ::1, and it listens on IPv6 only. The probe therefore failed against a Vite
+# that was running perfectly ("ready in 412 ms" in devserver.out.log), the
+# supervisor concluded "vite(:5173) not listening", and killed and restarted the
+# whole stack roughly every two minutes, for ever.
+#
+# The symptom is not an obviously broken dev server. It is a site that is blank
+# or stale much of the time, because `public/hot` points the browser at a port
+# whose process keeps being killed underneath it -- which reads as "my change
+# did not take" rather than as an outage. devserver.log shows the loop running
+# unbroken through 2026-08-29.
+#
+# Retrying the connect against '::1' is NOT the fix: the same IPv4 socket throws
+# on an IPv6 address, so the second attempt fails too, silently, in the catch.
+# `Get-NetTCPConnection` is address-family agnostic and answers the question the
+# supervisor actually has -- is anything serving this port -- and the script
+# already depends on it in Stop-StackOrphan.
 function Test-Port {
     param([int]$Port)
+
     try {
-        $client = New-Object System.Net.Sockets.TcpClient
-        $async  = $client.BeginConnect('127.0.0.1', $Port, $null, $null)
-        $opened = $async.AsyncWaitHandle.WaitOne(1000)
-        if ($opened) { $client.EndConnect($async) }
-        $client.Close()
-        return $opened
+        return [bool] (Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction SilentlyContinue)
     } catch {
         return $false
     }

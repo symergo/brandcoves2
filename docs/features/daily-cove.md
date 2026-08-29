@@ -101,7 +101,7 @@ Four filters, in `giftcoves.deals`, each removing one kind of junk:
 | `min_price` €20 | Cheap things whose percentage says more about the price point than the offer |
 | `min_saving` €10 | Big percentages hiding small money |
 | `comparable()` | A median drawn from one shop — that is the shop's opinion, and a discount against it is its marketing |
-| `giftable` | Printer cartridges, beside gift writing on a gift site |
+| `worthShowing()` | Printer cartridges, beside gift writing on a gift site. Not `giftable()`: a deal is a deal at any price, and a heavily discounted expensive thing is the best row this column can carry. See [giftability.md](giftability.md) |
 
 Then **one product per brand**, over-fetching ten times the limit so the cap does
 not leave the column short. Six covers from one maker is one fact repeated six
@@ -223,6 +223,37 @@ those editions run with a title and no blurb, which is correct rather than broke
 An evergreen theme is passed to the model as "today's angle … this is NOT a named day", because told
 "the occasion: cosy" a model writes "today we celebrate cosiness" and invents a holiday.
 
+## Curation: the products are chosen first
+
+Since 2026-08-29 a plan carries an **ordered shortlist with a reason per product**, curated on its
+own screen before the article is written, and the writer is told to cover it. This replaced
+`cove_plans.pinned_group_ids` — a jsonb array of ids edited through an `ILIKE` dropdown that could
+only see what had already been ingested.
+
+The three things it changed here:
+
+- **`finds()` reads `cove_plan_items`**, in the curator's rank order, instead of the pinned array.
+  Curated products still lead and are still exempt from the 90-day repeat memory, for the unchanged
+  reason: the point of curation is to override a score, so a pick the ranker could veto would not be
+  curation.
+- **`pick_mode` decides what the engine may add.** `open` tops the edition up to `picks.per_day`;
+  `locked` publishes exactly the shortlist, in order, with `spread()` skipped so the variety trim
+  cannot reorder a hand-built list. The publish floor is now `picks.minimum` in config rather than a
+  literal 3, so the curation screen can warn about a short locked plan before 06:00.
+- **The editorial prompt is handed the shortlist and its notes**, and its last rule flips: an
+  engine-picked edition is told to pick two or three worth a sentence, a curated one to write about
+  every product in the order given.
+
+The full reasoning is in [cove-curation.md](cove-curation.md).
+
+## The other kind of Cove
+
+A **gift persona** is the same object with no date — built by this builder, from a plan curated on
+the same screen, and served at `/{market}/gift-ideas/{slug}`. `daily_pick_sets.drop_date` is
+therefore nullable, which introduced the one trap worth knowing about before touching any query in
+this feature: Postgres sorts `ORDER BY drop_date DESC` **NULLS FIRST**, so every listing that means
+"the daily column" now has to say `->daily()`. See [gift-personas.md](gift-personas.md).
+
 ## Compliance
 
 Prices shown in an edition follow the ordinary rules: a source that requires a live re-fetch and
@@ -277,10 +308,13 @@ better shape than none, and the cap means a run usually cannot have both.
 
 ## Schema
 
-- `daily_pick_sets` — theme, editorial, `guide_id`, and the disused `challenge_*` columns above
+- `daily_pick_sets` — theme, editorial, `guide_id`, `kind` + nullable `drop_date`/`slug` (see gift
+  personas), and the disused `challenge_*` columns above
 - `daily_picks` — the finds, with their reaction counts
 - `challenge_attempts` — disused; awaiting the contract migration
 - `guides` / `guide_items` / `guide_topics` — linked from an edition
+- `cove_plans` — the plan, with `kind` and `pick_mode`
+- `cove_plan_items` — the curated shortlist, ordered, each with the reason it is there
 
 ## Status
 

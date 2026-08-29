@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Models\CopyTemplate;
 use App\Models\CovePlan;
+use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\Guide;
 use App\Models\ProductGroup;
@@ -42,30 +44,55 @@ class ContentPromotionTest extends TestCase
         ]);
     }
 
+    /**
+     * A guide, which is an edition since the fold.
+     *
+     * It travels in the editions surface with every other kind of Cove — the
+     * guides surface only exists on the way *in*, for a v1 envelope exported
+     * before the change.
+     */
+    private function guide(ProductGroup $product, string $slug = 'beste-koptelefoons'): DailyPickSet
+    {
+        $guide = DailyPickSet::create([
+            'market' => Market::BeNl,
+            'kind' => CoveKind::Guide,
+            'slug' => $slug,
+            'theme_title' => 'Beste koptelefoons',
+            'theme_slug' => $slug,
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+
+        $guide->picks()->create([
+            'group_id' => $product->id,
+            'rank' => 1,
+            'slug' => $product->slug.'-'.$product->id,
+        ]);
+
+        return $guide;
+    }
+
     #[Test]
     public function a_guide_survives_a_round_trip(): void
     {
         $product = $this->product('ean:1111111111111');
 
-        $guide = Guide::create([
-            'market' => Market::BeNl,
-            'slug' => 'beste-koptelefoons',
-            'title' => 'Beste koptelefoons',
-            'status' => 'published',
-        ]);
-        $guide->items()->create(['group_id' => $product->id, 'rank' => 1]);
+        $this->guide($product);
 
-        $exported = $this->envelope()->export(['guides']);
+        $exported = $this->envelope()->export(['editions']);
 
         // The export must not contain the local id anywhere, or an import would
         // have something wrong to fall back on.
         $json = json_encode($exported);
         $this->assertStringContainsString('ean:1111111111111', (string) $json);
 
-        $this->envelope()->import($exported, ['guides'], dryRun: false);
+        $this->envelope()->import($exported, ['editions'], dryRun: false);
 
-        $this->assertSame(1, Guide::where('slug', 'beste-koptelefoons')->count());
-        $this->assertSame($product->id, (int) Guide::where('slug', 'beste-koptelefoons')->first()->items->first()->group_id);
+        $this->assertSame(1, DailyPickSet::where('slug', 'beste-koptelefoons')->count());
+        $this->assertSame(
+            $product->id,
+            (int) DailyPickSet::where('slug', 'beste-koptelefoons')->first()->picks->first()->group_id,
+        );
     }
 
     #[Test]
@@ -82,19 +109,21 @@ class ContentPromotionTest extends TestCase
          */
         $source = $this->product('ean:2222222222222');
 
-        $guide = Guide::create([
+        $guide = DailyPickSet::create([
             'market' => Market::BeNl,
+            'kind' => CoveKind::Guide,
+            'theme_slug' => 'draadloze-oordopjes',
             'slug' => 'draadloze-oordopjes',
-            'title' => 'Draadloze oordopjes',
+            'theme_title' => 'Draadloze oordopjes',
             'status' => 'published',
         ]);
-        $guide->items()->create(['group_id' => $source->id, 'rank' => 1]);
+        $guide->picks()->create(['group_id' => $source->id, 'rank' => 1, 'slug' => 'p1']);
 
-        $exported = $this->envelope()->export(['guides']);
+        $exported = $this->envelope()->export(['editions']);
 
         // Rebuild the world so the identity lands on a different id, exactly as
         // a separately ingested environment would.
-        Guide::query()->delete();
+        DailyPickSet::query()->delete();
         ProductGroup::query()->delete();
 
         $this->product('ean:9999999999999');   // shifts the sequence along
@@ -103,9 +132,9 @@ class ContentPromotionTest extends TestCase
 
         $this->assertNotSame($source->id, $target->id, 'the ids must differ or this proves nothing');
 
-        $this->envelope()->import($exported, ['guides'], dryRun: false);
+        $this->envelope()->import($exported, ['editions'], dryRun: false);
 
-        $item = Guide::where('slug', 'draadloze-oordopjes')->first()->items->first();
+        $item = DailyPickSet::where('slug', 'draadloze-oordopjes')->first()->picks->first();
         $this->assertSame($target->id, (int) $item->group_id);
     }
 
@@ -115,31 +144,33 @@ class ContentPromotionTest extends TestCase
         $keep = $this->product('ean:3333333333333');
         $gone = $this->product('ean:4444444444444');
 
-        $guide = Guide::create([
+        $guide = DailyPickSet::create([
             'market' => Market::BeNl,
+            'kind' => CoveKind::Guide,
+            'theme_slug' => 'koffiemachines',
             'slug' => 'koffiemachines',
-            'title' => 'Koffiemachines',
+            'theme_title' => 'Koffiemachines',
             'status' => 'published',
         ]);
-        $guide->items()->create(['group_id' => $keep->id, 'rank' => 1]);
-        $guide->items()->create(['group_id' => $gone->id, 'rank' => 2]);
+        $guide->picks()->create(['group_id' => $keep->id, 'rank' => 1, 'slug' => 'p1']);
+        $guide->picks()->create(['group_id' => $gone->id, 'rank' => 2, 'slug' => 'p2']);
 
-        $exported = $this->envelope()->export(['guides']);
+        $exported = $this->envelope()->export(['editions']);
 
-        Guide::query()->delete();
+        DailyPickSet::query()->delete();
         $gone->delete();
 
-        $report = $this->envelope()->import($exported, ['guides'], dryRun: false);
+        $report = $this->envelope()->import($exported, ['editions'], dryRun: false);
 
-        $items = Guide::where('slug', 'koffiemachines')->first()->items;
+        $items = DailyPickSet::where('slug', 'koffiemachines')->first()->picks;
 
         $this->assertCount(1, $items, 'the unmatched item must not be invented');
         $this->assertSame($keep->id, (int) $items->first()->group_id);
 
         // Named, not merely counted — a count tells you something went missing
         // without telling you what to go and look at.
-        $this->assertCount(1, $report['guides']['dropped']);
-        $this->assertStringContainsString('ean:4444444444444', $report['guides']['dropped'][0]);
+        $this->assertCount(1, $report['editions']['dropped']);
+        $this->assertStringContainsString('ean:4444444444444', $report['editions']['dropped'][0]);
     }
 
     #[Test]
@@ -147,21 +178,23 @@ class ContentPromotionTest extends TestCase
     {
         $product = $this->product('ean:5555555555555');
 
-        $guide = Guide::create([
+        $guide = DailyPickSet::create([
             'market' => Market::BeNl,
+            'kind' => CoveKind::Guide,
             'slug' => 'stofzuigers',
-            'title' => 'Stofzuigers',
-            'status' => 'published',
+            'theme_slug' => 'stofzuigers',
+            'theme_title' => 'Stofzuigers',
+            'published_at' => now(),
         ]);
-        $guide->items()->create(['group_id' => $product->id, 'rank' => 1]);
+        $guide->picks()->create(['group_id' => $product->id, 'rank' => 1, 'slug' => 'p1']);
 
-        $exported = $this->envelope()->export(['guides']);
-        Guide::query()->delete();
+        $exported = $this->envelope()->export(['editions']);
+        DailyPickSet::query()->delete();
 
-        $report = $this->envelope()->import($exported, ['guides'], dryRun: true);
+        $report = $this->envelope()->import($exported, ['editions'], dryRun: true);
 
-        $this->assertSame(1, $report['guides']['created'], 'the report must describe the real work');
-        $this->assertSame(0, Guide::count(), 'and none of it may survive the dry run');
+        $this->assertSame(1, $report['editions']['created'], 'the report must describe the real work');
+        $this->assertSame(0, DailyPickSet::count(), 'and none of it may survive the dry run');
     }
 
     #[Test]
@@ -171,36 +204,40 @@ class ContentPromotionTest extends TestCase
         // promotion into two of every Cove.
         $product = $this->product('ean:6666666666666');
 
-        $guide = Guide::create([
+        $guide = DailyPickSet::create([
             'market' => Market::BeNl,
+            'kind' => CoveKind::Guide,
+            'theme_slug' => 'airfryers',
             'slug' => 'airfryers',
-            'title' => 'Airfryers',
+            'theme_title' => 'Airfryers',
             'status' => 'published',
         ]);
-        $guide->items()->create(['group_id' => $product->id, 'rank' => 1]);
+        $guide->picks()->create(['group_id' => $product->id, 'rank' => 1, 'slug' => 'p1']);
 
-        $exported = $this->envelope()->export(['guides']);
+        $exported = $this->envelope()->export(['editions']);
 
-        $this->envelope()->import($exported, ['guides'], dryRun: false);
-        $this->envelope()->import($exported, ['guides'], dryRun: false);
+        $this->envelope()->import($exported, ['editions'], dryRun: false);
+        $this->envelope()->import($exported, ['editions'], dryRun: false);
 
-        $this->assertSame(1, Guide::where('slug', 'airfryers')->count());
-        $this->assertSame(1, Guide::where('slug', 'airfryers')->first()->items->count());
+        $this->assertSame(1, DailyPickSet::where('slug', 'airfryers')->count());
+        $this->assertSame(1, DailyPickSet::where('slug', 'airfryers')->first()->picks->count());
     }
 
     #[Test]
-    public function a_pinned_plan_keeps_only_the_products_that_exist(): void
+    public function a_curated_plan_keeps_only_the_products_that_exist(): void
     {
         $keep = $this->product('ean:7777777777777');
         $gone = $this->product('ean:1212121212121');
 
-        CovePlan::create([
+        $plan = CovePlan::create([
             'market' => Market::BeNl,
             'drop_date' => '2026-09-01',
             'title' => 'Herfst',
-            'pinned_group_ids' => [$keep->id, $gone->id],
             'status' => 'draft',
         ]);
+
+        $plan->items()->create(['group_id' => $keep->id, 'rank' => 1, 'note' => 'lead with this']);
+        $plan->items()->create(['group_id' => $gone->id, 'rank' => 2]);
 
         $exported = $this->envelope()->export(['plans']);
 
@@ -209,11 +246,46 @@ class ContentPromotionTest extends TestCase
 
         $this->envelope()->import($exported, ['plans'], dryRun: false);
 
-        $plan = CovePlan::where('drop_date', '2026-09-01')->first();
+        $imported = CovePlan::where('drop_date', '2026-09-01')->first();
 
-        // A pin is a preference: losing one narrows the plan rather than
-        // invalidating it.
-        $this->assertSame([$keep->id], $plan->pinned_group_ids);
+        // A curated product is a preference: losing one narrows the plan rather
+        // than invalidating it.
+        $this->assertSame([$keep->id], $imported->items->pluck('group_id')->all());
+
+        // And the reason it was chosen travels with it. Without the note, the
+        // far environment has the shortlist and not the brief, and the article
+        // it builds is about the right products for no stated reason.
+        $this->assertSame('lead with this', $imported->items->first()->note);
+    }
+
+    #[Test]
+    public function a_persona_survives_a_second_import_as_one_row(): void
+    {
+        /*
+         * A persona has no drop date, and `where('drop_date', null)` compiles
+         * to `drop_date = NULL`, which matches nothing. Keyed on the date, every
+         * import would therefore create another copy of every persona — and
+         * nothing about a growing gift-ideas page looks like a bug.
+         */
+        $product = $this->product('ean:5555555555555');
+
+        $plan = CovePlan::create([
+            'market' => Market::BeNl,
+            'kind' => 'persona',
+            'slug' => 'de-kruidenliefhebber',
+            'title' => 'De kruidenliefhebber',
+            'status' => 'draft',
+        ]);
+
+        $plan->items()->create(['group_id' => $product->id, 'rank' => 1]);
+
+        $exported = $this->envelope()->export(['plans']);
+
+        $this->envelope()->import($exported, ['plans'], dryRun: false);
+        $this->envelope()->import($exported, ['plans'], dryRun: false);
+
+        $this->assertSame(1, CovePlan::where('slug', 'de-kruidenliefhebber')->count());
+        $this->assertSame(1, CovePlan::where('slug', 'de-kruidenliefhebber')->first()->items()->count());
     }
 
     #[Test]

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\Notification;
+use App\Services\Wishlist\AddingMode;
 use App\Support\CurrentMarket;
 use App\Support\MarketSwitcher;
+use App\Support\Owner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
 use Inertia\Middleware;
@@ -97,6 +99,22 @@ class HandleInertiaRequests extends Middleware
             'unreadCount' => fn () => $request->user() === null
                 ? 0
                 : Notification::query()->where('user_id', $request->user()->id)->unread()->count(),
+
+            /*
+             * The list currently being filled, or null.
+             *
+             * A closure for the same reason `unreadCount` is one: it costs
+             * nothing for everybody who is not in adding mode, which is almost
+             * everybody almost always. When it is on, it is one primary-key
+             * lookup, and it is worth paying on every page because the mode has
+             * to be *visible* on every page — an invisible mode that quietly
+             * redirects saves is worse than no mode at all.
+             *
+             * This is the only wishlist data in the shared payload, and it
+             * stays that way deliberately: `savedItems.ts` fetches the rest
+             * lazily precisely so pages that render no cards pay nothing.
+             */
+            'savingTo' => fn () => app(AddingMode::class)->current(Owner::fromRequest($request)),
 
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

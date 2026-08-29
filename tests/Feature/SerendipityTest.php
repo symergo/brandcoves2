@@ -39,8 +39,44 @@ class SerendipityTest extends TestCase
             'merchant_count' => 4,
             'in_stock' => true,
             'giftable' => true,
+            'worth_showing' => true,
             ...$attributes,
         ]);
+    }
+
+    /**
+     * A category big enough for {@see CatalogueStats::MIN_CATEGORY_SAMPLE}.
+     *
+     * One insert rather than 250 creates: these tests need the category to have
+     * a *distribution*, not particular rows, and doing it a row at a time put
+     * seconds on the suite for nothing.
+     */
+    private function bulkCatalogue(string $category, string $noun, int $count): void
+    {
+        $rows = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $rows[] = [
+                'market' => Market::BeNl->value,
+                'identity_key' => "{$category}-{$i}",
+                'identity_kind' => 'ean',
+                'title' => "Krups {$noun} type {$i}",
+                'slug' => mb_strtolower("{$category}-{$noun}-{$i}"),
+                'brand' => 'Krups',
+                'category' => $category,
+                'image_url' => 'https://img.test/x.jpg',
+                'min_price' => 9999,
+                'merchant_count' => 2,
+                'in_stock' => true,
+                'giftable' => true,
+                'worth_showing' => true,
+                'first_seen_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        ProductGroup::insert($rows);
     }
 
     /**
@@ -61,6 +97,90 @@ class SerendipityTest extends TestCase
     private function engine(): SerendipityEngine
     {
         return new SerendipityEngine(CatalogueStats::build(Market::BeNl));
+    }
+
+    #[Test]
+    public function a_part_number_is_not_a_rare_word(): void
+    {
+        $this->ordinaryCatalogue();
+
+        // Two listings share this one, one short of the support floor.
+        $this->group(['title' => 'Sony koptelefoon kalebasfluit', 'category' => 'Audio']);
+        $this->group(['title' => 'Sony koptelefoon kalebasfluit zwart', 'category' => 'Audio']);
+
+        // Three share this one, which is enough to call it a word.
+        foreach (range(1, 3) as $i) {
+            $this->group(['title' => "Sony koptelefoon vogelhuisje {$i}", 'category' => 'Audio']);
+        }
+
+        $stats = CatalogueStats::build(Market::BeNl);
+
+        /*
+         * The bug this pins. "Unknown words are skipped" could never fire — the
+         * corpus is built from these same titles, so a part number is in it
+         * with a count of one, which the log scale reads as maximally rare. It
+         * put 61% of the real be-nl catalogue at ≥0.99 on the signal carrying
+         * 40 of the 100 rarity points.
+         */
+        $this->assertSame(
+            0.0,
+            $stats->lexicalRarity('Sony koptelefoon RX7ZX900', 'Audio'),
+            'a part number must not read as a rare word',
+        );
+
+        // Same treatment for a token nearly nothing uses, digits or not.
+        $this->assertSame(
+            0.0,
+            $stats->lexicalRarity('Sony koptelefoon kalebasfluit', 'Audio'),
+            'two listings is not enough to call something a word',
+        );
+
+        $this->assertGreaterThan(
+            0.0,
+            $stats->lexicalRarity('Sony koptelefoon vogelhuisje', 'Audio'),
+            'three listings is',
+        );
+    }
+
+    #[Test]
+    public function a_word_is_judged_against_its_own_category(): void
+    {
+        $this->bulkCatalogue('Keuken', 'espressomachine', 250);
+        $this->bulkCatalogue('Audio', 'koptelefoon', 250);
+
+        $stats = CatalogueStats::build(Market::BeNl);
+
+        /*
+         * The signal's original sin: measured across the whole market, "rare"
+         * and "we have barely ingested this category" are the same number.
+         *
+         * "espressomachine" is half the market and *all* of Keuken. Market-wide
+         * it looks half-rare; against its own category it is furniture, which
+         * is the honest answer and the one that stops an ingestion gap ranking
+         * as a discovery.
+         */
+        $this->assertSame(0.0, $stats->lexicalRarity('Krups espressomachine', 'Keuken'));
+        $this->assertGreaterThan(0.0, $stats->lexicalRarity('Krups espressomachine', null));
+    }
+
+    #[Test]
+    public function a_category_too_small_to_have_an_opinion_falls_back_to_the_market(): void
+    {
+        $this->bulkCatalogue('Keuken', 'espressomachine', 250);
+
+        // Twelve rows cannot say what is normal for a category: the rarest a
+        // word could possibly be is 1/12, and calling that "maximally rare" on
+        // the evidence of one listing is how noise reaches the top.
+        $this->bulkCatalogue('Optiek', 'telescoop', 12);
+
+        $stats = CatalogueStats::build(Market::BeNl);
+
+        // Scored against the market, where "telescoop" is genuinely uncommon —
+        // not against eleven neighbours that all happen to be telescopes.
+        $this->assertSame(
+            $stats->lexicalRarity('Krups telescoop', null),
+            $stats->lexicalRarity('Krups telescoop', 'Optiek'),
+        );
     }
 
     #[Test]
@@ -118,19 +238,49 @@ class SerendipityTest extends TestCase
     {
         $this->ordinaryCatalogue();
 
-        // Consumables and spare parts are extremely rare *and* extremely
-        // unwelcome. Rarity is exactly the wrong measure for them.
+        // Consumables and fitment are extremely rare *and* extremely unwelcome.
+        // Rarity is exactly the wrong measure for them.
         $cartridge = $this->group([
             'title' => 'HP 305XL inktcartridge zwart origineel',
             'category' => 'Printerbenodigdheden',
             'merchant_count' => 1,
             'giftable' => false,
+            'worth_showing' => false,
         ]);
 
         $result = $this->engine()->score($cartridge);
 
         $this->assertSame(0.0, $result['score']);
         $this->assertArrayHasKey('gated', $result['breakdown']);
+    }
+
+    #[Test]
+    public function an_expensive_product_is_still_a_find(): void
+    {
+        $this->ordinaryCatalogue();
+
+        /*
+         * The gate reads `worth_showing`, not `giftable`.
+         *
+         * "Too expensive to suggest as a present" is the gift engine's rule and
+         * has no bearing on a surface whose entire promise is "look what we
+         * found" — an expensive unusual object is the best thing that can land
+         * here. Before the split this whole price band was invisible.
+         */
+        $telescope = $this->group([
+            'title' => 'Celestron NexStar telescoop met azimutmontering',
+            'category' => 'Optiek',
+            'merchant_count' => 1,
+            'min_price' => 129900,
+            'giftable' => false,
+            'worth_showing' => true,
+            'giftable_reason' => 'too_expensive',
+        ]);
+
+        $result = $this->engine()->score($telescope);
+
+        $this->assertGreaterThan(0.0, $result['score']);
+        $this->assertArrayNotHasKey('gated', $result['breakdown']);
     }
 
     #[Test]

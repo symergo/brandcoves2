@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use App\Enums\CoveKind;
 use App\Services\Content\ContentEnvelope;
 use App\Services\Ops\ConfigReport;
 use App\Services\Ops\DeployTrigger;
@@ -20,6 +21,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 use UnitEnum;
@@ -46,6 +48,15 @@ use UnitEnum;
  * The commands remain the fast path for anyone with a shell; this exists so
  * having a shell is not a requirement. `ContentEnvelope` does the actual work in
  * both cases, so there is one set of rules rather than two.
+ *
+ * ## Why the buttons live in the sections
+ *
+ * They used to be five header actions in a row — Download, Check, Apply, Deploy,
+ * Save webhook — above two unrelated sections, with nothing to say which button
+ * belonged to which. "Download envelope" acts on the surface checkboxes fifty
+ * pixels further down the page and read as a page-level operation; "Deploy" sat
+ * next to it and is the one irreversible thing here. Each section now carries
+ * its own actions, in the order you would do them.
  */
 class Migration extends Page implements HasForms
 {
@@ -83,32 +94,49 @@ class Migration extends Page implements HasForms
     {
         $deploy = app(DeployTrigger::class);
 
+        /*
+         * Registered as well as placed in the footer.
+         *
+         * `footerActions()` only decides where an action is *drawn*;
+         * `getActions()` is what resolves one by name when it is clicked. An
+         * action that is only in the footer renders fine and then cannot mount
+         * its confirmation modal — which would have shipped as "Apply upload
+         * does nothing", the single worst button on this page to break.
+         */
+        $transfer = $this->transferActions();
+        $deployment = $this->deployActions();
+
         return $schema
             ->components([
                 Section::make('Content transfer')
-                    ->description('Editorial does not regenerate the way the catalogue does — a guide is AI-written, so having the far side write its own would spend the budget twice and produce different words. Product references travel as market plus identity key, because the integer ids differ per environment.')
+                    // Keyed so its actions are addressable — by Filament, and
+                    // by the tests that assert Apply stays hidden.
+                    ->key('transfer')
+                    ->description('Editorial does not regenerate the way the catalogue does — a Cove is AI-written, so having the far side write its own would spend the budget twice and produce different words. Product references travel as market plus identity key, because the integer ids differ per environment.')
                     ->schema([
                         CheckboxList::make('surfaces')
                             ->label('What to move')
-                            ->options(array_combine(ContentEnvelope::SURFACES, [
-                                'Feeds — registration only, never switched on',
-                                'Copy bank',
-                                'Guides and their items',
-                                'Guide topics',
-                                'Daily Cove editions and picks',
-                                'Cove plans',
-                            ]))
+                            ->options(self::surfaceLabels())
                             ->columns(2)
+                            ->live()
+                            // Changing the selection invalidates the dry run
+                            // that is on screen. See $preview.
+                            ->afterStateUpdated(fn () => $this->preview = null)
                             ->helperText('Nothing personal can be selected: the exporter works from an allowlist of surfaces, so a table added later is excluded by default rather than included by omission.'),
 
                         FileUpload::make('envelope')
                             ->label('Envelope to import')
                             ->acceptedFileTypes(['application/json', 'text/plain'])
                             ->storeFiles(false)
+                            ->live()
+                            ->afterStateUpdated(fn () => $this->preview = null)
                             ->helperText('Exported from another environment. Checking it is a dry run — nothing is written until you press Apply.'),
-                    ]),
+                    ])
+                    ->registerActions($transfer)
+                    ->footerActions($transfer),
 
                 Section::make('Deploy')
+                    ->key('deployment')
                     ->description($deploy->isConfigured()
                         ? 'Redeploys this application from its tracked branch. It cannot choose a commit — that stays in Coolify, where the audit trail is.'
                         : 'No webhook set. Coolify → this application → Webhooks → Deploy Webhook.')
@@ -121,9 +149,100 @@ class Migration extends Page implements HasForms
                             ->placeholder($deploy->isConfigured() ? 'Set — leave empty to keep it' : 'https://coolify.example.com/api/v1/deploy?uuid=…')
                             ->dehydrated(fn (?string $state) => filled($state))
                             ->helperText('A per-application webhook, deliberately not an API token: the worst this secret can do if it leaks is redeploy the current commit. Stored encrypted with APP_KEY.'),
-                    ]),
+                    ])
+                    ->registerActions($deployment)
+                    ->footerActions($deployment),
             ])
             ->statePath('data');
+    }
+
+    /**
+     * Export, then check, then apply — the order you actually do them in.
+     *
+     * @return list<Action>
+     */
+    private function transferActions(): array
+    {
+        return [
+            Action::make('export')
+                ->label('Download envelope')
+                ->icon(Heroicon::OutlinedArrowDownTray)
+                ->action('export'),
+
+            Action::make('check')
+                ->label('Check upload')
+                ->icon(Heroicon::OutlinedMagnifyingGlass)
+                ->color('gray')
+                ->action('check'),
+
+            Action::make('apply')
+                ->label('Apply upload')
+                ->icon(Heroicon::OutlinedCheck)
+                ->color('danger')
+                /*
+                 * Only once a dry run has been read, and only while it still
+                 * describes what is on screen — changing the file or the
+                 * surfaces clears it. The drop list is the reason to run an
+                 * import at all, so applying one that nobody has previewed
+                 * defeats the design of the page.
+                 */
+                ->visible(fn (): bool => $this->preview !== null)
+                ->requiresConfirmation()
+                ->modalDescription('This writes the uploaded content into this environment. Re-running is safe — surfaces match on natural keys — but products this environment lacks stay dropped.')
+                ->action('apply'),
+        ];
+    }
+
+    /** @return list<Action> */
+    private function deployActions(): array
+    {
+        return [
+            Action::make('saveWebhook')
+                ->label('Save webhook')
+                ->color('gray')
+                ->action('saveWebhook'),
+
+            Action::make('deploy')
+                ->label('Deploy')
+                ->icon(Heroicon::OutlinedRocketLaunch)
+                ->color('warning')
+                // A button that cannot work is worse than no button: it invites
+                // a click and then explains itself in a toast.
+                ->visible(fn (): bool => app(DeployTrigger::class)->isConfigured())
+                ->requiresConfirmation()
+                ->modalDescription('Redeploys this application from its tracked branch, whatever that branch currently points at.')
+                ->action('deploy'),
+        ];
+    }
+
+    /**
+     * The surfaces an envelope can carry, labelled.
+     *
+     * Keyed rather than `array_combine(SURFACES, [...])`, which paired a list of
+     * labels against a list of keys *by position* — so adding a surface anywhere
+     * but the end silently relabelled every one after it, and the page would
+     * have gone on looking correct while offering to move the wrong thing.
+     *
+     * A surface with no label here shows its own key rather than disappearing:
+     * an unlabelled checkbox is a small problem, an uncheckable surface is a
+     * feature that silently stopped existing.
+     *
+     * @return array<string, string>
+     */
+    private static function surfaceLabels(): array
+    {
+        $known = [
+            'feeds' => 'Feeds — registration only, never switched on',
+            'copy' => 'Copy bank',
+            'guides' => 'Guides and their items',
+            'topics' => 'Cove topics',
+            'editions' => 'Coves and their picks — Daily, personas, guides',
+            'plans' => 'Cove plans and their curated shortlists',
+        ];
+
+        return collect(ContentEnvelope::SURFACES)
+            ->mapWithKeys(fn (string $s) => [$s => $known[$s] ?? $s])
+            ->all();
     }
 
     // --- What is running here ------------------------------------------------
@@ -167,16 +286,38 @@ class Migration extends Page implements HasForms
         return app(DeployTrigger::class)->last();
     }
 
-    /** What this environment holds, so the two sides can be compared before moving anything. */
+    /**
+     * What this environment holds, so the two sides can be compared before
+     * moving anything.
+     *
+     * Broken out per kind rather than as one "editions" total. Since the fold,
+     * every published page — a Daily, a persona, a buying guide, a seasonal one,
+     * an advice article — is a row in the same table, and "412 editions" on both
+     * sides can hide the fact that one of them has no guides at all.
+     *
+     * @return array<string, int>
+     */
     public function contentCounts(): array
     {
+        $byKind = DB::table('daily_pick_sets')
+            ->selectRaw('kind, count(*) as total')
+            ->groupBy('kind')
+            ->pluck('total', 'kind');
+
+        $counts = [];
+
+        foreach (CoveKind::cases() as $kind) {
+            // Every kind is listed even at zero: a missing row reads as "not
+            // measured", and a zero is the thing you are looking for.
+            $counts[Str::plural($kind->label())] = (int) ($byKind[$kind->value] ?? 0);
+        }
+
         return [
-            'guides' => DB::table('guides')->count(),
-            'guide items' => DB::table('guide_items')->count(),
-            'topics' => DB::table('guide_topics')->count(),
-            'editions' => DB::table('daily_pick_sets')->count(),
+            ...$counts,
             'picks' => DB::table('daily_picks')->count(),
             'plans' => DB::table('cove_plans')->count(),
+            'curated products' => DB::table('cove_plan_items')->count(),
+            'topics' => DB::table('guide_topics')->count(),
             'copy' => DB::table('copy_templates')->count(),
             'feeds' => DB::table('feeds')->count(),
             'products' => DB::table('product_groups')->count(),
@@ -184,48 +325,6 @@ class Migration extends Page implements HasForms
     }
 
     // --- Actions -------------------------------------------------------------
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('export')
-                ->label('Download envelope')
-                ->icon(Heroicon::OutlinedArrowDownTray)
-                ->action('export'),
-
-            Action::make('check')
-                ->label('Check upload')
-                ->icon(Heroicon::OutlinedMagnifyingGlass)
-                ->color('gray')
-                ->action('check'),
-
-            Action::make('apply')
-                ->label('Apply upload')
-                ->icon(Heroicon::OutlinedCheck)
-                ->color('danger')
-                // Only offered once a dry run has been read. The drop list is
-                // the reason to run this at all, so writing before seeing it
-                // would defeat the design.
-                ->visible(fn (): bool => $this->preview !== null)
-                ->requiresConfirmation()
-                ->modalDescription('This writes the uploaded content into this environment. Re-running is safe — surfaces match on natural keys — but products this environment lacks stay dropped.')
-                ->action('apply'),
-
-            Action::make('deploy')
-                ->label('Deploy')
-                ->icon(Heroicon::OutlinedRocketLaunch)
-                ->color('warning')
-                ->visible(fn (): bool => app(DeployTrigger::class)->isConfigured())
-                ->requiresConfirmation()
-                ->modalDescription('Redeploys this application from its tracked branch, whatever that branch currently points at.')
-                ->action('deploy'),
-
-            Action::make('saveWebhook')
-                ->label('Save webhook')
-                ->color('gray')
-                ->action('saveWebhook'),
-        ];
-    }
 
     public function export(): ?StreamedResponse
     {
@@ -246,9 +345,41 @@ class Migration extends Page implements HasForms
         }
 
         $json = (string) json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        /*
+         * An empty surface is worth saying out loud.
+         *
+         * Exporting a fresh environment produces a valid envelope containing
+         * nothing, which downloads and imports without complaint and leaves the
+         * far side exactly as it was. The only symptom is somebody concluding
+         * the import is broken.
+         */
+        $rows = collect((array) ($payload['surfaces'] ?? []))->map(
+            fn ($rows) => is_countable($rows) ? count($rows) : 0
+        );
+
+        if ($rows->sum() === 0) {
+            Notification::make()
+                ->title('Nothing to export')
+                ->body('The selected surfaces are empty in this environment.')
+                ->warning()
+                ->send();
+
+            return null;
+        }
+
+        Notification::make()
+            ->title('Envelope ready — '.$rows->sum().' row(s)')
+            ->body($rows->map(fn (int $n, string $s) => "{$s}: {$n}")->implode(' · '))
+            ->success()
+            ->send();
+
+        // The environment is in the filename because the mistake this prevents
+        // is importing staging's editorial into production from a downloads
+        // folder holding four of these.
         $name = 'giftcoves-content-'.app()->environment().'-'.now()->format('Y-m-d-His').'.json';
 
-        return response()->streamDownload(fn () => print ($json), $name, [
+        return response()->streamDownload(fn () => print $json, $name, [
             'Content-Type' => 'application/json',
         ]);
     }
@@ -320,13 +451,25 @@ class Migration extends Page implements HasForms
         }
 
         $dropped = array_sum(array_map(fn (array $r) => count($r['dropped']), $this->preview));
+        $written = array_sum(array_map(fn (array $r) => $r['created'] + $r['updated'], $this->preview));
+
+        /*
+         * A dry run that drops references is a warning, not a success.
+         *
+         * It used to send `success` either way — the ternary picking between
+         * 'success' and 'success' — so the one outcome this screen exists to
+         * make you read announced itself in green and got clicked past.
+         */
+        $clean = $dropped === 0;
 
         Notification::make()
-            ->title($dryRun ? 'Dry run complete — nothing written' : 'Applied')
-            ->body($dropped === 0
+            ->title($dryRun
+                ? 'Dry run complete — nothing written'
+                : "Applied — {$written} row(s) written")
+            ->body($clean
                 ? 'Every product reference resolved in this environment.'
                 : $dropped.' reference(s) had no product here and were dropped. The list is below.')
-            ->{$dryRun ? 'success' : 'success'}()
+            ->{$clean ? 'success' : 'warning'}()
             ->send();
     }
 

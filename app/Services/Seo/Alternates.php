@@ -163,8 +163,12 @@ class Alternates
             return $this->swap('/'.implode('/', $segments));
         }
 
-        $rows = DB::table('guides')
+        $rows = DB::table('daily_pick_sets')
             ->where('slug', $slug)
+            // The article kinds. A persona could hold this slug in another
+            // market and lives at a different path, so pairing the two would
+            // point hreflang at a page about something else entirely.
+            ->whereIn('kind', ['guide', 'seasonal', 'advice'])
             ->where('status', PublishStatus::Published->value)
             ->get(['market', 'slug']);
 
@@ -193,26 +197,45 @@ class Alternates
      */
     private function daily(array $segments, Market $current): array
     {
-        $date = $segments[2] ?? null;
+        $slug = $segments[2] ?? null;
 
-        if ($date === null) {
+        if ($slug === null) {
             return $this->swap('/'.implode('/', $segments));
         }
 
+        /*
+         * Paired by date, addressed by slug.
+         *
+         * The date is what makes two editions the same edition — every market
+         * publishes one per day, about the same occasion — and the slug is
+         * written in each market's own language, so it is exactly what cannot be
+         * matched across them. Since the rename this needs both: find the date
+         * from this market's slug, then find every market's slug for that date.
+         */
+        $date = DB::table('daily_pick_sets')
+            ->where('market', $current->value)
+            ->where('slug', $slug)
+            ->value('drop_date');
+
+        if ($date === null) {
+            return [];
+        }
+
         $rows = DB::table('daily_pick_sets')
-            ->where('drop_date', $date)
+            ->whereDate('drop_date', $date)
             ->where('status', PublishStatus::Published->value)
-            ->pluck('market');
+            ->whereNotNull('slug')
+            ->get(['market', 'slug']);
 
         $alternates = [];
 
-        foreach ($rows as $value) {
-            $market = Market::tryFrom((string) $value);
+        foreach ($rows as $row) {
+            $market = Market::tryFrom((string) $row->market);
 
             // A row can exist for a market that is not open yet — editions are
             // planned ahead of the market being published.
             if ($market !== null && $market->isPublished()) {
-                $alternates[$market->hrefLang()] = url("/{$market->value}/daily/{$date}");
+                $alternates[$market->hrefLang()] = url("/{$market->value}/daily/{$row->slug}");
             }
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Availability;
+use App\Enums\CoveKind;
 use App\Enums\IdentityKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
@@ -14,9 +15,9 @@ use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\RefreshBrandStats;
 use App\Models\BrandStat;
+use App\Models\DailyPick;
+use App\Models\DailyPickSet;
 use App\Models\Feed;
-use App\Models\Guide;
-use App\Models\GuideItem;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
@@ -356,41 +357,21 @@ class BrandPageTest extends TestCase
 
         $group = ProductGroup::query()->where('brand', 'Aurex')->firstOrFail();
 
-        $featured = Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'de-beste-koptelefoons',
-            'title' => 'De beste koptelefoons',
-            'intro' => 'Wat te kiezen.',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $featured = $this->cove('de-beste-koptelefoons', 'De beste koptelefoons', intro: 'Wat te kiezen.');
 
-        GuideItem::create([
-            'guide_id' => $featured->id,
+        DailyPick::create([
+            'set_id' => $featured->id,
             'group_id' => $group->id,
             'rank' => 1,
+            'slug' => $group->slug.'-'.$group->id,
         ]);
 
         // A second Cove that only *mentions* the brand in its prose. Both are
         // worth linking and they answer different questions.
-        Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'stil-werken',
-            'title' => 'Stil werken',
-            'intro' => 'Over ruis.',
-            'body_md' => 'Wij kijken naar [[brand:Aurex]] en anderen.',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->cove('stil-werken', 'Stil werken', intro: 'Over ruis.', body: 'Wij kijken naar [[brand:Aurex]] en anderen.');
 
         // And one that mentions nobody, to prove the filter filters.
-        Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'iets-anders',
-            'title' => 'Iets anders',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->cove('iets-anders', 'Iets anders');
 
         $this->get('/be-nl/brand/aurex')
             ->assertOk()
@@ -417,24 +398,10 @@ class BrandPageTest extends TestCase
     {
         $this->seedBrand('Aurex');
 
-        Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'ruis-uitleg',
-            'title' => 'Ruisonderdrukking uitgelegd',
-            'intro' => 'Hoe het werkt.',
-            'body_md' => 'De Aurex doet dit goed, net als anderen.',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->cove('ruis-uitleg', 'Ruisonderdrukking uitgelegd', intro: 'Hoe het werkt.', body: 'De Aurex doet dit goed, net als anderen.');
 
         // Named in the title alone, with no body at all.
-        Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'aurex-of-norvik',
-            'title' => 'Aurex of Norvik?',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->cove('aurex-of-norvik', 'Aurex of Norvik?');
 
         $this->get('/be-nl/brand/aurex')
             ->assertOk()
@@ -459,15 +426,7 @@ class BrandPageTest extends TestCase
     {
         $this->seedBrand('Aurex');
 
-        Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'aurexia',
-            'title' => 'Aurexia en andere merken',
-            'intro' => 'Niets met Aurexen te maken.',
-            'body_md' => 'Over Aurexia gesproken.',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->cove('aurexia', 'Aurexia en andere merken', intro: 'Niets met Aurexen te maken.', body: 'Over Aurexia gesproken.');
 
         $this->get('/be-nl/brand/aurex')
             ->assertOk()
@@ -493,22 +452,10 @@ class BrandPageTest extends TestCase
 
         $slug = BrandStat::query()->where('brand', 'Dr. Oetker (NL)')->value('slug');
 
-        Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'bakken',
-            'title' => 'Bakken met Dr. Oetker (NL)',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->cove('bakken', 'Bakken met Dr. Oetker (NL)');
 
         // The `.` is a literal: "DroOetker" must not satisfy it.
-        Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'niet-dit',
-            'title' => 'Droetker (NL) is iets anders',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $this->cove('niet-dit', 'Droetker (NL) is iets anders');
 
         $this->get("/be-nl/brand/{$slug}")
             ->assertOk()
@@ -935,5 +882,27 @@ class BrandPageTest extends TestCase
             );
 
         $this->assertSame(0, Product::query()->where('source', Source::Amazon->value)->count());
+    }
+
+    /**
+     * A published Cove in the `/guides` space.
+     *
+     * An edition since the fold — the brand page finds these by joining their
+     * picks and by scanning their prose for `[[brand:…]]` tokens, both of which
+     * now live on `daily_pick_sets` / `daily_picks`.
+     */
+    private function cove(string $slug, string $title, ?string $intro = null, ?string $body = null): DailyPickSet
+    {
+        return DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Guide->value,
+            'slug' => $slug,
+            'theme_title' => $title,
+            'theme_slug' => $slug,
+            'theme_blurb' => $intro,
+            'body' => $body,
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
     }
 }

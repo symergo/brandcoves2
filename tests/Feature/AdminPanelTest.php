@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\ModerationStatus;
+use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Filament\Resources\ApiTokens\Pages\ListApiTokens;
 use App\Filament\Resources\IngestionJobs\IngestionJobResource;
@@ -13,6 +15,7 @@ use App\Filament\Resources\Products\ProductResource;
 use App\Models\ApiToken;
 use App\Models\CommunityAnswer;
 use App\Models\CommunityQuestion;
+use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
@@ -143,9 +146,31 @@ class AdminPanelTest extends TestCase
             ]);
         }
 
+        /*
+         * One Cove of every kind, for the same reason the questions above are
+         * seeded in every status.
+         *
+         * The editorials table branches on `kind` in a badge colour, and fills
+         * the date column from the slug when there is no date — four of the five
+         * kinds have none. An empty table renders both closures without calling
+         * either, so the first row of the wrong shape would 500 the page for
+         * whoever opened it next.
+         */
+        foreach (CoveKind::cases() as $i => $kind) {
+            DailyPickSet::create([
+                'market' => Market::BeNl->value,
+                'kind' => $kind->value,
+                'drop_date' => $kind->isDated() ? today()->subDays($i)->toDateString() : null,
+                'slug' => $kind->isDated() ? null : 'smoke-'.$kind->value,
+                'theme_title' => $kind->label().' smoke test',
+                'theme_slug' => 'smoke-'.$kind->value,
+                'status' => PublishStatus::Published->value,
+                'published_at' => now()->subDays($i),
+            ]);
+        }
+
         foreach ([
-            '/admin/guides',
-            '/admin/daily-editions',
+            '/admin/cove-editorials',
             '/admin/mode-profiles',
             '/admin/cove-plans',
             '/admin/guide-topics',
@@ -154,6 +179,7 @@ class AdminPanelTest extends TestCase
             '/admin/copy-templates',
             '/admin/api-tokens',
             '/admin/migration',
+            '/admin/prompt-templates',
             '/admin/community-posts/community-questions',
             '/admin/community-posts/community-answers',
         ] as $path) {

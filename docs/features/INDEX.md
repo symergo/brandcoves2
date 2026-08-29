@@ -22,6 +22,7 @@ cannot be recovered from a diff.
 | [search-help.md](search-help.md) | Search / Content | Active |
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect waits on the connector |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active |
+| [giftability.md](giftability.md) | Gifting / Catalogue | Active |
 | [gifting-lenses.md](gifting-lenses.md) | Gifting / Core | Active |
 | [secret-santa.md](secret-santa.md) | Gifting / Social | Active — chain repair built; year-on-year reuse open |
 | [list-quiz.md](list-quiz.md) | Gifting / Growth | Active |
@@ -30,6 +31,11 @@ cannot be recovered from a diff.
 | [ask-others.md](ask-others.md) | Discovery / Community | Active — not in the sitemap yet |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
+| [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
+| [cove-curation.md](cove-curation.md) | Content / Operations | Active |
+| [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |
+| [scheduled-writing.md](scheduled-writing.md) | Content / Operations | Active |
+| [gift-personas.md](gift-personas.md) | Discovery / Content | Active — not in the nav yet |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [editorial-api.md](editorial-api.md) | Content / Operations | Active |
 | [content-promotion.md](content-promotion.md) | Content / Operations | Active |

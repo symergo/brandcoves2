@@ -4,6 +4,8 @@ import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import HomeIllustration from '../Components/HomeIllustration'
 import ListIllustration, { type ListSceneKey } from '../Components/ListIllustration'
+import SaveToList from '../Components/SaveToList'
+import ScanButton from '../Components/ScanButton'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -124,6 +126,21 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                                 placeholder={t('home.search_placeholder')}
                                 className="min-w-0 flex-1 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none"
                             />
+                            {/*
+                              The camera, beside the field, on the first screen
+                              of the site.
+
+                              Someone standing in a shop with the product in
+                              their hand has the highest intent this site ever
+                              sees, and until now the only way to reach the
+                              scanner was to run a search they did not want, in
+                              order to find the button on the results page. The
+                              weight is not the reason it was absent either: the
+                              wasm decoder is fetched inside the click handler,
+                              so a home page nobody scans from still loads
+                              nothing extra.
+                            */}
+                            <ScanButton className="shrink-0 rounded-lg border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" />
                             <button
                                 type="submit"
                                 className="rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark"
@@ -422,7 +439,16 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                         {today.finds.length > 0 && (
                             <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
                                 {today.finds.map((find) => (
-                                    <li key={find.id}>
+                                    <li key={find.id} className="relative">
+                                        {/*
+                                          Outside the anchor and above it on the
+                                          z-axis. A tile is one big link, and a
+                                          button nested inside it is not a
+                                          button — the anchor takes the click.
+                                        */}
+                                        <div className="absolute top-2 right-2 z-10">
+                                            <SaveToList groupId={find.id} compact />
+                                        </div>
                                         <Link href={find.url} className="group block">
                                             <div className="aspect-square overflow-hidden rounded-lg bg-cream">
                                                 {find.image && (

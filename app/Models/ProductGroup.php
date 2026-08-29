@@ -41,6 +41,7 @@ class ProductGroup extends Model
             'surprise_breakdown' => 'array',
             'in_stock' => 'boolean',
             'giftable' => 'boolean',
+            'worth_showing' => 'boolean',
             'first_seen_at' => 'datetime',
         ];
     }
@@ -89,10 +90,29 @@ class ProductGroup extends Model
         $query->where('merchant_count', '>', 1);
     }
 
-    /** @param Builder<$this> $query */
+    /**
+     * The gift engine's filter. Carries the price ceiling.
+     *
+     * @param  Builder<$this>  $query
+     */
     public function scopeGiftable(Builder $query): void
     {
         $query->where('giftable', true);
+    }
+
+    /**
+     * The editorial surfaces' filter. Everything `giftable()` allows, plus the
+     * things that are only excluded for costing too much to suggest.
+     *
+     * Not the same question, which is why it is not the same column: a €700
+     * espresso machine is a bad gift suggestion and a good thing to put in a
+     * Cove. See docs/features/giftability.md.
+     *
+     * @param  Builder<$this>  $query
+     */
+    public function scopeWorthShowing(Builder $query): void
+    {
+        $query->where('worth_showing', true);
     }
 
     /**

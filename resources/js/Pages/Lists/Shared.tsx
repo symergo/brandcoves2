@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import ManualItem from '../../Components/ManualItem'
+import SaveToList from '../../Components/SaveToList'
 import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
@@ -13,6 +14,8 @@ interface Item {
     price: number | null
     note: string | null
     url: string | null
+    /** So a visitor can keep it on a list of their own. Null for a manual wish. */
+    groupId: number | null
     /** Off-site, for a hand-written item. Never an Inertia visit. */
     externalUrl: string | null
     inStock: boolean
@@ -255,6 +258,27 @@ export default function SharedList({
                                     <p className="mt-1 font-semibold">{formatPrice(item.price, market)}</p>
                                 )}
                             </div>
+
+                            {/*
+                              Keep it for myself.
+                              
+                              Somebody looking at a friend's list is looking at
+                              a page full of things chosen for a person they
+                              also know, and had no way to note one down for
+                              later. It reads *my* lists and writes to *my*
+                              list; the owner's list is untouched and learns
+                              nothing, so this is not a claim and invariant #4
+                              is not involved.
+                              
+                              Hidden from the owner for a different reason: on
+                              their own list everything here is already theirs,
+                              so the control would do nothing but confuse.
+                            */}
+                            {!isOwner && item.groupId !== null && (
+                                <div className="shrink-0 self-start">
+                                    <SaveToList groupId={item.groupId} compact />
+                                </div>
+                            )}
                         </div>
 
                         {/*

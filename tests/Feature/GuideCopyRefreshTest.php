@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
-use App\Models\Guide;
-use App\Models\GuideItem;
+use App\Models\DailyPick;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
-use App\Services\Guides\GuideBuilder;
+use App\Services\Cove\EditionBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
@@ -36,14 +37,17 @@ class GuideCopyRefreshTest extends TestCase
         ]);
     }
 
-    private function guide(?string $body = null): Guide
+    private function guide(?string $body = null): DailyPickSet
     {
-        $guide = Guide::create([
+        $guide = DailyPickSet::create([
             'market' => Market::BeNl->value,
+            // An edition since the fold: the /guides space is daily_pick_sets.
+            'kind' => CoveKind::Guide->value,
             'slug' => 'beste-koptelefoons',
-            'title' => 'Beste koptelefoons',
-            'intro' => 'Een selectie.',
-            'body_md' => $body,
+            'theme_title' => 'Beste koptelefoons',
+            'theme_slug' => 'beste-koptelefoons',
+            'theme_blurb' => 'Een selectie.',
+            'body' => $body,
             'focus_keyphrase' => 'koptelefoons',
             'status' => PublishStatus::Published->value,
             'published_at' => now(),
@@ -51,11 +55,14 @@ class GuideCopyRefreshTest extends TestCase
         ]);
 
         foreach (range(1, 3) as $rank) {
-            GuideItem::create([
-                'guide_id' => $guide->id,
-                'group_id' => ProductGroup::factory()->create()->id,
+            $group = ProductGroup::factory()->create();
+
+            DailyPick::create([
+                'set_id' => $guide->id,
+                'group_id' => $group->id,
                 'rank' => $rank,
-                'editorial_copy' => null,
+                'slug' => $group->slug.'-'.$group->id,
+                'blurb' => null,
                 'verdict' => null,
                 'unavailable' => false,
             ]);
@@ -94,14 +101,14 @@ class GuideCopyRefreshTest extends TestCase
         $guide = $this->guide();
         $this->fakeCopy();
 
-        $this->assertTrue(app(GuideBuilder::class)->refreshCopy($guide));
+        $this->assertTrue(app(EditionBuilder::class)->refreshCopy($guide));
 
         $guide->refresh();
 
-        $this->assertSame('De beste koptelefoons', $guide->title);
-        $this->assertSame('Kijk naar pasvorm en ruisonderdrukking.', $guide->body_md);
-        $this->assertSame('Compact en stil.', $guide->items()->where('rank', 1)->value('editorial_copy'));
-        $this->assertSame('Beste budget', $guide->items()->where('rank', 2)->value('verdict'));
+        $this->assertSame('De beste koptelefoons', $guide->theme_title);
+        $this->assertSame('Kijk naar pasvorm en ruisonderdrukking.', $guide->body);
+        $this->assertSame('Compact en stil.', $guide->picks()->where('rank', 1)->value('blurb'));
+        $this->assertSame('Beste budget', $guide->picks()->where('rank', 2)->value('verdict'));
     }
 
     #[Test]
@@ -111,17 +118,17 @@ class GuideCopyRefreshTest extends TestCase
         // because a model was briefly unreachable is a downgrade, and it would
         // happen on every run where the cap was already spent.
         $guide = $this->guide(body: 'Bestaande tekst die goed is.');
-        $guide->items()->where('rank', 1)->update(['editorial_copy' => 'Bestaande zin.']);
+        $guide->picks()->where('rank', 1)->update(['blurb' => 'Bestaande zin.']);
 
         Http::fake(['api.anthropic.com/*' => Http::response([], 500)]);
 
-        $this->assertFalse(app(GuideBuilder::class)->refreshCopy($guide));
+        $this->assertFalse(app(EditionBuilder::class)->refreshCopy($guide));
 
         $guide->refresh();
 
-        $this->assertSame('Bestaande tekst die goed is.', $guide->body_md);
-        $this->assertSame('Beste koptelefoons', $guide->title);
-        $this->assertSame('Bestaande zin.', $guide->items()->where('rank', 1)->value('editorial_copy'));
+        $this->assertSame('Bestaande tekst die goed is.', $guide->body);
+        $this->assertSame('Beste koptelefoons', $guide->theme_title);
+        $this->assertSame('Bestaande zin.', $guide->picks()->where('rank', 1)->value('blurb'));
     }
 
     #[Test]
@@ -133,12 +140,12 @@ class GuideCopyRefreshTest extends TestCase
          * ranked.
          */
         $guide = $this->guide();
-        $before = $guide->items()->orderBy('rank')->pluck('group_id')->all();
+        $before = $guide->picks()->orderBy('rank')->pluck('group_id')->all();
 
         $this->fakeCopy();
-        app(GuideBuilder::class)->refreshCopy($guide);
+        app(EditionBuilder::class)->refreshCopy($guide);
 
-        $this->assertSame($before, $guide->items()->orderBy('rank')->pluck('group_id')->all());
+        $this->assertSame($before, $guide->picks()->orderBy('rank')->pluck('group_id')->all());
     }
 
     #[Test]
@@ -148,21 +155,27 @@ class GuideCopyRefreshTest extends TestCase
         // a run usually cannot serve both.
         $this->guide(body: 'Oud maar echt.');
 
-        $empty = Guide::create([
+        $empty = DailyPickSet::create([
             'market' => Market::BeNl->value,
+            'kind' => CoveKind::Guide->value,
             'slug' => 'beste-speakers',
-            'title' => 'Beste speakers',
-            'intro' => 'Een selectie.',
-            'body_md' => null,
+            'theme_title' => 'Beste speakers',
+            'theme_slug' => 'beste-speakers',
+            'theme_blurb' => 'Een selectie.',
+            'body' => null,
             'focus_keyphrase' => 'speakers',
             'status' => PublishStatus::Published->value,
             'published_at' => now(),
             'last_checked_at' => now(),
         ]);
-        GuideItem::create([
-            'guide_id' => $empty->id,
-            'group_id' => ProductGroup::factory()->create()->id,
+
+        $group = ProductGroup::factory()->create();
+
+        DailyPick::create([
+            'set_id' => $empty->id,
+            'group_id' => $group->id,
             'rank' => 1,
+            'slug' => $group->slug.'-'.$group->id,
             'unavailable' => false,
         ]);
 
@@ -172,7 +185,7 @@ class GuideCopyRefreshTest extends TestCase
             ->expectsOutputToContain('beste-speakers')
             ->assertSuccessful();
 
-        $this->assertNotNull($empty->fresh()->body_md);
+        $this->assertNotNull($empty->fresh()->body);
     }
 
     #[Test]

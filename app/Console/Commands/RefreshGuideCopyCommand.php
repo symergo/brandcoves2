@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Models\AiUsage;
-use App\Models\Guide;
-use App\Services\Guides\GuideBuilder;
+use App\Models\DailyPickSet;
+use App\Services\Cove\EditionBuilder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
@@ -45,7 +45,7 @@ class RefreshGuideCopyCommand extends Command
 
     private const FEATURE = 'guide_copy';
 
-    public function handle(GuideBuilder $builder): int
+    public function handle(EditionBuilder $builder): int
     {
         $limit = max(1, (int) $this->option('limit'));
         $stale = max(1, (int) $this->option('stale'));
@@ -90,25 +90,26 @@ class RefreshGuideCopyCommand extends Command
         return self::SUCCESS;
     }
 
-    /** @return Collection<int, Guide> */
+    /** @return Collection<int, DailyPickSet> */
     private function candidates(int $stale, int $limit)
     {
         $market = $this->option('market');
 
-        $base = fn () => Guide::query()
+        $base = fn () => DailyPickSet::query()
+            ->articles()
             ->published()
             ->when(is_string($market) && $market !== '', fn ($q) => $q->where('market', $market));
 
-        // No AI copy: `body_md` is only ever written from a model answer, so a
+        // No AI copy: `body` is only ever written from a model answer, so a
         // null one is a guide that has never had a word generated for it.
-        $missing = $base()->whereNull('body_md')->orderBy('id')->limit($limit)->get();
+        $missing = $base()->whereNull('body')->orderBy('id')->limit($limit)->get();
 
         if ($missing->count() >= $limit) {
             return $missing;
         }
 
         $aged = $base()
-            ->whereNotNull('body_md')
+            ->whereNotNull('body')
             ->where(fn ($q) => $q->whereNull('last_checked_at')->orWhere('last_checked_at', '<', now()->subDays($stale)))
             ->whereNotIn('id', $missing->pluck('id'))
             ->orderBy('last_checked_at')

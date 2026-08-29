@@ -10,6 +10,9 @@ use App\Models\Recipient;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Rules\SafeExternalUrl;
+use App\Services\Connectors\Offer;
+use App\Services\Search\SearchQuery;
+use App\Services\Search\SearchService;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ItemSaver;
 use App\Services\Wishlist\ListMaker;
@@ -34,6 +37,17 @@ class WishlistItemController extends Controller
      * Ids only, and only for this market, so the payload stays small enough to
      * fetch once and hold. Any list of yours counts: a thing on your research
      * list for your mother is still a thing you have already found.
+     *
+     * ## `?list=` — the same question about one list
+     *
+     * While somebody is filling a named list, "have I kept this anywhere?" is
+     * the wrong question: it ticks items that are on a different list and hides
+     * the ones actually added during this run. `listGroupIds` answers the right
+     * one, in the same round trip rather than a second request per card.
+     *
+     * Scoped through `ListAccess`, so asking about a list you have no part in
+     * returns an empty set rather than its contents — this is a read of
+     * somebody's list membership and has to be gated like one.
      */
     public function saved(Request $request, CurrentMarket $current): JsonResponse
     {
@@ -51,7 +65,23 @@ class WishlistItemController extends Controller
             ->unique()
             ->values();
 
-        return response()->json(['groupIds' => $ids]);
+        $list = $request->query('list');
+
+        if (! is_string($list) || $list === '') {
+            return response()->json(['groupIds' => $ids]);
+        }
+
+        $onList = ListAccess::scope(Wishlist::query(), $owner)->whereKey($list)->exists()
+            ? WishlistItem::query()
+                ->where('wishlist_id', $list)
+                ->whereNotNull('group_id')
+                ->whereNotNull('accepted_at')
+                ->pluck('group_id')
+                ->unique()
+                ->values()
+            : collect();
+
+        return response()->json(['groupIds' => $ids, 'listGroupIds' => $onList]);
     }
 
     /**
@@ -121,13 +151,89 @@ class WishlistItemController extends Controller
     }
 
     /**
+     * Find something to put on a list, without leaving the list.
+     *
+     * ## Why the list page needed its own search
+     *
+     * Filling a list meant leaving it: "find things to add" navigated to the
+     * search page, and "add something yourself" was a separate form for the
+     * separate case where the catalogue does not have it. Two buttons for one
+     * intention — *put a thing on this list* — and the split was ours, not the
+     * visitor's. They are one control now, and this is the half that searches.
+     *
+     * Stored and live in one answer, because the difference is ours too. The
+     * `groups` half is the catalogue (including anything a live source folded
+     * in a moment ago); `live` is what may not be mirrored at all — Amazon —
+     * and so has no group to point at. `SearchService` already draws that line;
+     * this only forwards it.
+     *
+     * `storable` travels with each live row because it decides what the client
+     * may offer: for a source we may not mirror, a title the owner types would
+     * be discarded at render (invariant #6), and a field that silently does
+     * nothing is worse than an absent one.
+     */
+    public function find(Request $request, CurrentMarket $current, SearchService $search): JsonResponse
+    {
+        $term = trim($request->string('q')->toString());
+
+        // Two characters is where a search stops being a keystroke. Below it
+        // every term matches half the catalogue and every live connector is
+        // asked a question with no answer, which costs a request each time.
+        if (mb_strlen($term) < 2) {
+            return response()->json(['groups' => [], 'live' => []]);
+        }
+
+        $result = $search->search(new SearchQuery(
+            market: $current->get(),
+            term: $term,
+            /*
+             * Both defaults are wrong here and both are wrong quietly.
+             * `discountedOnly` defaults to true, which would silently limit a
+             * gift list to whatever happens to be reduced today; `inStockOnly`
+             * stays on, because putting something unbuyable on a list is how a
+             * list disappoints somebody later.
+             */
+            discountedOnly: false,
+            /*
+             * Not public demand. `search_log` feeds the related-search chips on
+             * public pages and the queue that decides which buying guides get
+             * written — and a term typed while filling "Cadeau voor mama" is
+             * about one named person. Same opt-out, and the same reason, as the
+             * search box inside a shared list.
+             */
+            logged: false,
+        ));
+
+        return response()->json([
+            'groups' => array_map(fn (ProductGroup $group) => [
+                'id' => $group->id,
+                'title' => $group->title,
+                'image' => $group->image_url,
+                'price' => $group->min_price,
+                'brand' => $group->brand,
+                'merchantCount' => $group->merchant_count,
+            ], array_slice($result->groups->items(), 0, 8)),
+
+            'live' => array_map(fn (Offer $offer) => [
+                'source' => $offer->source->value,
+                'externalId' => $offer->externalId,
+                'title' => $offer->title,
+                'image' => $offer->imageUrl,
+                'price' => $offer->price,
+                'merchant' => $offer->merchantName ?? $offer->source->label(),
+                'storable' => $offer->source->allowsCatalogueStorage(),
+            ], array_slice($result->liveOffers, 0, 4)),
+        ]);
+    }
+
+    /**
      * Add a product to a list.
      *
      * Creates the list on the fly when none is given, because the common path
      * is someone pressing "save" on a product page having never made a list —
      * asking them to create one first loses most of them.
      */
-    public function store(Request $request, CurrentMarket $current, ItemSaver $saver): RedirectResponse
+    public function store(Request $request, CurrentMarket $current, ItemSaver $saver): RedirectResponse|JsonResponse
     {
         $owner = Owner::fromRequest($request);
         abort_unless($owner->exists(), 403);
@@ -195,9 +301,19 @@ class WishlistItemController extends Controller
                 throw new NotFoundHttpException;
             }
 
-            $saver->saveGroup($list, $group, $current, $validated['note'] ?? null);
-
-            return back()->with('success', $this->confirm($list));
+            return $this->report(
+                $request,
+                $saver->saveGroup(
+                    list: $list,
+                    group: $group,
+                    current: $current,
+                    note: $validated['note'] ?? null,
+                    // Owner-written wording. A feed title is written for a
+                    // search engine; a list is read by a person. See ItemSaver.
+                    title: $validated['title'] ?? null,
+                ),
+                $list,
+            );
         }
 
         /*
@@ -209,15 +325,13 @@ class WishlistItemController extends Controller
          * abandoned. Nothing is fetched from the link; see `ItemSaver`.
          */
         if ($validated['source'] === Source::Manual->value) {
-            $saver->saveManual(
+            return $this->report($request, $saver->saveManual(
                 list: $list,
                 title: $validated['title'],
                 url: $validated['url'] ?? null,
                 price: $validated['price'] ?? null,
                 note: $validated['note'] ?? null,
-            );
-
-            return back()->with('success', $this->confirm($list));
+            ), $list);
         }
 
         /*
@@ -228,7 +342,7 @@ class WishlistItemController extends Controller
          * them may be stored at all — so a hand-built request naming Amazon
          * cannot smuggle a mirrored title and price into the catalogue.
          */
-        $saver->saveExternal(
+        return $this->report($request, $saver->saveExternal(
             list: $list,
             source: Source::from($validated['source']),
             externalId: $validated['external_id'],
@@ -238,9 +352,41 @@ class WishlistItemController extends Controller
                 'price' => $validated['price'] ?? null,
             ],
             note: $validated['note'] ?? null,
-        );
+        ), $list);
+    }
 
-        return back()->with('success', $this->confirm($list));
+    /**
+     * Report a save, in whichever shape the caller can use.
+     *
+     * ## Why there are two shapes
+     *
+     * The save control sits on a product card on every discovery surface, and
+     * answering it with `back()` made one bookmark tap a full Inertia round
+     * trip: the page's props are rebuilt — a forty-result search re-run — to
+     * move a single row. Worse, the confirmation then arrives through `flash`,
+     * which `FlashMessage` draws as an in-flow banner at the top of the page.
+     * Saving from the bottom of a grid therefore rendered the confirmation
+     * off-screen *and* pushed the grid down under the cursor.
+     *
+     * The JSON branch also carries `itemId`, which is what makes an Undo
+     * possible at all: a flash string names the list and cannot name the row,
+     * so undoing meant reopening the picker and hunting for the tick.
+     *
+     * `back()` stays for ordinary form posts — `ManualItem` and the list pages
+     * submit through Inertia and do want the page to come back.
+     */
+    private function report(Request $request, WishlistItem $item, Wishlist $list): RedirectResponse|JsonResponse
+    {
+        if (! $request->expectsJson()) {
+            return back()->with('success', $this->confirm($list));
+        }
+
+        return response()->json([
+            'itemId' => $item->id,
+            'listId' => $list->id,
+            'listTitle' => $list->title,
+            'message' => $this->confirm($list),
+        ]);
     }
 
     /**
@@ -271,9 +417,15 @@ class WishlistItemController extends Controller
         return back();
     }
 
-    public function destroy(Request $request, CurrentMarket $current, string $market, string $item): RedirectResponse
+    public function destroy(Request $request, CurrentMarket $current, string $market, string $item): RedirectResponse|JsonResponse
     {
         $this->findOwned($request, $item)->delete();
+
+        // Both shapes, for the same reason as `saved()` — and this is also the
+        // path an Undo takes, which is an XHR by definition.
+        if ($request->expectsJson()) {
+            return response()->json(['message' => __('site.lists.removed')]);
+        }
 
         return back()->with('success', __('site.lists.removed'));
     }

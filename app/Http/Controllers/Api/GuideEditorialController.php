@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\CoveKind;
 use App\Enums\GuideKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Http\Controllers\Controller;
-use App\Models\Guide;
-use App\Models\GuideItem;
+use App\Models\DailyPick;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Services\Editorial\LinkCheck;
 use App\Services\Editorial\ProductLookup;
@@ -64,8 +65,9 @@ class GuideEditorialController extends Controller
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $guides = Guide::query()
-            ->withCount('items')
+        $guides = DailyPickSet::query()
+            ->articles()
+            ->withCount('picks')
             ->when(isset($data['market']), fn ($q) => $q->where('market', $data['market']))
             ->when(isset($data['status']), fn ($q) => $q->where('status', $data['status']))
             ->orderByDesc('id')
@@ -74,23 +76,23 @@ class GuideEditorialController extends Controller
 
         return response()->json([
             'count' => $guides->count(),
-            'data' => $guides->map(fn (Guide $g) => [
+            'data' => $guides->map(fn (DailyPickSet $g) => [
                 'id' => $g->id,
                 'market' => $g->market->value,
                 'slug' => $g->slug,
-                'title' => $g->title,
-                'kind' => $g->kind->value,
+                'title' => $g->theme_title,
+                'kind' => self::apiKind($g),
                 'status' => $g->status->value,
-                'itemCount' => $g->items_count,
+                'itemCount' => $g->picks_count,
                 'publishedAt' => $g->published_at?->toIso8601String(),
                 'url' => '/'.$g->market->value.'/guides/'.$g->slug,
             ])->all(),
         ]);
     }
 
-    public function show(Guide $guide): JsonResponse
+    public function show(DailyPickSet $guide): JsonResponse
     {
-        $guide->load('items.group');
+        $guide->load('picks.group');
 
         return response()->json(['data' => $this->payload($guide)]);
     }
@@ -117,12 +119,23 @@ class GuideEditorialController extends Controller
             ]);
         }
 
-        $kind = GuideKind::from($data['kind'] ?? GuideKind::Buying->value);
+        /*
+         * Two vocabularies, deliberately.
+         *
+         * GuideKind is what this API speaks and what decides how many products
+         * a *human-authored* piece needs — three for a buying guide, none for
+         * advice. CoveKind is what the table stores, and its floor of five
+         * governs pieces the machine generates. Folding the two would silently
+         * raise the API's floor to five and start rejecting deliberate
+         * three-product comparisons that have always been allowed.
+         */
+        $requested = GuideKind::from($data['kind'] ?? GuideKind::Buying->value);
+        $kind = $requested === GuideKind::Advice ? CoveKind::Advice : CoveKind::Guide;
         $items = $data['items'] ?? [];
 
-        if (count($items) < $kind->minimumItems()) {
+        if (count($items) < $requested->minimumItems()) {
             throw ValidationException::withMessages([
-                'items' => "A {$kind->value} guide needs at least {$kind->minimumItems()} products. ".
+                'items' => "A {$requested->value} guide needs at least {$requested->minimumItems()} products. ".
                     'Writing about how to shop rather than about what to buy? Send kind: "advice", which needs none.',
             ]);
         }
@@ -144,7 +157,8 @@ class GuideEditorialController extends Controller
             ]);
         }
 
-        $existing = Guide::query()
+        $existing = DailyPickSet::query()
+            ->articles()
             ->where('market', $market->value)
             ->where('slug', $slug)
             ->first();
@@ -160,14 +174,27 @@ class GuideEditorialController extends Controller
             $status = PublishStatus::Draft;
         }
 
-        $guide = DB::transaction(function () use ($market, $slug, $data, $status, $kind, $items): Guide {
-            $guide = Guide::updateOrCreate(
-                ['market' => $market->value, 'slug' => $slug],
+        $guide = DB::transaction(function () use ($market, $slug, $data, $status, $kind, $items): DailyPickSet {
+            $guide = DailyPickSet::updateOrCreate(
                 [
-                    'title' => $data['title'],
+                    'market' => $market->value,
+                    /*
+                     * The kind is part of the key, not just a column.
+                     *
+                     * (market, slug) is unique across every dateless kind, so
+                     * without it a POST could silently overwrite a persona that
+                     * happened to hold this slug — turning a gift page into a
+                     * buying guide with no error anywhere.
+                     */
                     'kind' => $kind->value,
-                    'intro' => $data['intro'] ?? null,
-                    'body_md' => $data['bodyMd'] ?? null,
+                    'slug' => $slug,
+                ],
+                [
+                    'theme_title' => $data['title'],
+                    'theme_slug' => $slug,
+                    'theme_source' => 'planned',
+                    'theme_blurb' => $data['intro'] ?? null,
+                    'body' => $data['bodyMd'] ?? null,
                     'source_queries' => $data['sourceQueries'] ?? [],
                     'source_volume' => (int) ($data['sourceVolume'] ?? 0),
                     /*
@@ -193,16 +220,22 @@ class GuideEditorialController extends Controller
                 ],
             );
 
-            $guide->items()->delete();
+            $guide->picks()->delete();
 
             foreach ($items as $rank => $item) {
-                GuideItem::create([
-                    'guide_id' => $guide->id,
-                    'group_id' => (int) $item['groupId'],
+                $group = ProductGroup::query()->find((int) $item['groupId']);
+
+                DailyPick::create([
+                    'set_id' => $guide->id,
+                    'group_id' => $group->id,
                     // Rank is array order. Position is the argument a "best of"
                     // is making, so it is the author's to decide.
                     'rank' => $rank + 1,
-                    'editorial_copy' => $item['copy'] ?? null,
+                    // A permanent per-pick slug, as every other pick has. The
+                    // old `guide_items` had none, which is why this is derived
+                    // here rather than carried across.
+                    'slug' => Str::slug($group->title).'-'.$group->id,
+                    'blurb' => $item['copy'] ?? null,
                     'verdict' => $item['verdict'] ?? null,
                     'unavailable' => false,
                 ]);
@@ -211,7 +244,7 @@ class GuideEditorialController extends Controller
             return $guide;
         });
 
-        $guide->load('items.group');
+        $guide->load('picks.group');
 
         return response()->json(
             [
@@ -226,13 +259,13 @@ class GuideEditorialController extends Controller
                  */
                 'linkCheck' => $this->links->all(
                     [
-                        $guide->intro,
-                        $guide->body_md,
+                        $guide->theme_blurb,
+                        $guide->body,
                         ...array_map(fn (array $pair) => $pair['a'] ?? null, (array) $guide->faq),
-                        ...$guide->items->pluck('editorial_copy')->all(),
+                        ...$guide->picks->pluck('blurb')->all(),
                     ],
                     $market,
-                    $guide->items->map(fn (GuideItem $item) => $item->group)->filter(),
+                    $guide->picks->map(fn (DailyPick $pick) => $pick->group)->filter(),
                     excludeGuideId: $guide->id,
                     extraSearches: (array) $guide->source_queries,
                 ),
@@ -242,15 +275,17 @@ class GuideEditorialController extends Controller
     }
 
     /** Publish a guide, or unpublish one that should not be live. */
-    public function publish(Request $request, Guide $guide): JsonResponse
+    public function publish(Request $request, DailyPickSet $guide): JsonResponse
     {
         $publish = ! $request->boolean('unpublish');
 
-        $minimum = $guide->kind->minimumItems();
+        // The authored floor, not the generated one. See store().
+        $authored = GuideKind::from(self::apiKind($guide));
+        $minimum = $authored->minimumItems();
 
-        if ($publish && $guide->items()->count() < $minimum) {
+        if ($publish && $guide->picks()->count() < $minimum) {
             throw ValidationException::withMessages([
-                'guide' => "A {$guide->kind->value} guide needs at least {$minimum} items before it is worth a reader's time.",
+                'guide' => "A {$authored->value} guide needs at least {$minimum} items before it is worth a reader's time.",
             ]);
         }
 
@@ -263,7 +298,7 @@ class GuideEditorialController extends Controller
         ]);
 
         return response()->json([
-            'data' => $this->payload($guide->refresh()->load('items.group')),
+            'data' => $this->payload($guide->refresh()->load('picks.group')),
         ]);
     }
 
@@ -335,17 +370,36 @@ class GuideEditorialController extends Controller
         ], $faq));
     }
 
+    /**
+     * The kind this API has always spoken, from the kind the table now holds.
+     *
+     * `GuideKind` was `buying|advice` and `CoveKind` is five values, of which
+     * three live in the `/guides` space. The API keeps the old vocabulary
+     * because it is a published contract with an outside writer, and widening it
+     * would break every caller for no benefit they asked for.
+     *
+     * A seasonal Cove reports as `buying`, which is what it is from the API's
+     * point of view: a shortlist with prose around it. Its season is a
+     * scheduling fact set in the planner, not something a writer supplies.
+     */
+    private static function apiKind(DailyPickSet $guide): string
+    {
+        return $guide->kind === CoveKind::Advice
+            ? GuideKind::Advice->value
+            : GuideKind::Buying->value;
+    }
+
     /** @return array<string, mixed> */
-    private function payload(Guide $guide): array
+    private function payload(DailyPickSet $guide): array
     {
         return [
             'id' => $guide->id,
             'market' => $guide->market->value,
             'slug' => $guide->slug,
-            'title' => $guide->title,
-            'kind' => $guide->kind->value,
-            'intro' => $guide->intro,
-            'bodyMd' => $guide->body_md,
+            'title' => $guide->theme_title,
+            'kind' => self::apiKind($guide),
+            'intro' => $guide->theme_blurb,
+            'bodyMd' => $guide->body,
             'metaDescription' => $guide->meta_description,
             'focusKeyphrase' => $guide->focus_keyphrase,
             'faq' => $guide->faq,
@@ -354,13 +408,13 @@ class GuideEditorialController extends Controller
             'status' => $guide->status->value,
             'publishedAt' => $guide->published_at?->toIso8601String(),
             'url' => '/'.$guide->market->value.'/guides/'.$guide->slug,
-            'items' => $guide->items
-                ->map(fn (GuideItem $item) => [
-                    'rank' => $item->rank,
-                    'verdict' => $item->verdict,
-                    'copy' => $item->editorial_copy,
-                    'product' => $item->group instanceof ProductGroup
-                        ? $this->lookup->describe($item->group)
+            'items' => $guide->picks
+                ->map(fn (DailyPick $pick) => [
+                    'rank' => $pick->rank,
+                    'verdict' => $pick->verdict,
+                    'copy' => $pick->blurb,
+                    'product' => $pick->group instanceof ProductGroup
+                        ? $this->lookup->describe($pick->group)
                         : null,
                 ])
                 ->all(),

@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Models\CommunityQuestion;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
-use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
@@ -152,20 +151,21 @@ class DiscoverCoveController extends Controller
              */
             'surprises' => $this->surprises($current),
 
-            'coves' => Guide::query()
+            'coves' => DailyPickSet::query()
                 ->forMarket($current->get())
+                ->articles()
                 ->published()
                 ->orderByDesc('published_at')
                 ->limit(self::COVES)
-                ->get(['slug', 'title', 'intro', 'source_volume'])
-                ->map(fn (Guide $guide): array => [
-                    'title' => $guide->title,
+                ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'source_volume'])
+                ->map(fn (DailyPickSet $guide): array => [
+                    'title' => $guide->theme_title,
                     // A card blurb, not an article: tokens flattened to their
                     // labels, exactly as the archive index does it. A link
                     // inside a card whose whole surface is already a link is a
                     // target fighting its parent.
-                    'intro' => app(CoveMarkup::class)->plain($guide->intro),
-                    'url' => $current->url("guides/{$guide->slug}"),
+                    'intro' => app(CoveMarkup::class)->plain($guide->theme_blurb),
+                    'url' => $current->url($guide->kind->path((string) $guide->slug)),
                     // Why the Cove exists, and a fact no competitor has.
                     'searches' => $guide->source_volume,
                 ])
@@ -190,6 +190,8 @@ class DiscoverCoveController extends Controller
     {
         $edition = DailyPickSet::query()
             ->forMarket($current->get())
+            // See HomeController: NULLS FIRST would put a persona here.
+            ->daily()
             ->published()
             ->with(['picks.group'])
             ->orderByDesc('drop_date')

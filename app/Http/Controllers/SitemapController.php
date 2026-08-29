@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\BrandStat;
@@ -97,6 +98,7 @@ class SitemapController extends Controller
                 ['loc' => url("/{$resolved->value}/search-help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
 
                 ['loc' => url("/{$resolved->value}/daily"), 'priority' => '0.9', 'changefreq' => 'daily'],
+                ['loc' => url("/{$resolved->value}/gift-ideas"), 'priority' => '0.8', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/brands"), 'priority' => '0.6', 'changefreq' => 'weekly'],
 
@@ -138,8 +140,11 @@ class SitemapController extends Controller
 
             // Published guides and every past edition. The archive is the point:
             // a daily page whose history 404s has nothing accumulating.
-            DB::table('guides')
+            DB::table('daily_pick_sets')
                 ->where('market', $resolved->value)
+                // The article kinds only. A Daily is listed by date above and a
+                // persona by slug below; this block is the /guides space.
+                ->whereIn('kind', ['guide', 'seasonal', 'advice'])
                 ->where('status', PublishStatus::Published->value)
                 ->orderBy('id')
                 ->get(['slug', 'updated_at'])
@@ -183,15 +188,41 @@ class SitemapController extends Controller
                     });
             }
 
+            /*
+             * Gift personas.
+             *
+             * Undated and evergreen, so they get a real changefreq — unlike a
+             * past edition, which never changes again. A persona is rebuilt
+             * when its products move, and that is a page worth re-crawling.
+             */
             DB::table('daily_pick_sets')
                 ->where('market', $resolved->value)
+                ->where('kind', CoveKind::Persona->value)
+                ->where('status', PublishStatus::Published->value)
+                ->whereNotNull('slug')
+                ->orderBy('slug')
+                ->limit(400)
+                ->pluck('slug')
+                ->each(function ($slug) use (&$urls, $resolved): void {
+                    $urls[] = [
+                        'loc' => url("/{$resolved->value}/gift-ideas/{$slug}"),
+                        'priority' => '0.7',
+                        'changefreq' => 'weekly',
+                    ];
+                });
+
+            DB::table('daily_pick_sets')
+                ->where('market', $resolved->value)
+                // Dated editions only: a persona's drop_date is null and would
+                // emit /{market}/daily/ with an empty segment.
+                ->where('kind', CoveKind::Daily->value)
                 ->where('status', PublishStatus::Published->value)
                 ->orderByDesc('drop_date')
                 ->limit(400)
-                ->pluck('drop_date')
-                ->each(function ($date) use (&$urls, $resolved): void {
+                ->pluck('slug')
+                ->each(function ($slug) use (&$urls, $resolved): void {
                     $urls[] = [
-                        'loc' => url("/{$resolved->value}/daily/{$date}"),
+                        'loc' => url("/{$resolved->value}/daily/{$slug}"),
                         'priority' => '0.5',
                         // A past edition never changes. Saying so stops a
                         // crawler re-fetching ninety static pages a day.

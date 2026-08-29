@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\DailyPickSet;
-use App\Models\Guide;
 use App\Models\User;
 use App\Support\PreviewAccess;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,13 +25,16 @@ class PreviewTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function draftGuide(): Guide
+    private function draftGuide(): DailyPickSet
     {
-        return Guide::create([
+        return DailyPickSet::create([
             'market' => Market::BeNl,
+            // An edition since the fold: the /guides space is daily_pick_sets.
+            'kind' => CoveKind::Guide,
             'slug' => 'best-coffee-grinders',
-            'title' => 'The best coffee grinders',
-            'intro' => 'Not finished yet.',
+            'theme_title' => 'The best coffee grinders',
+            'theme_slug' => 'best-coffee-grinders',
+            'theme_blurb' => 'Not finished yet.',
             'status' => PublishStatus::Draft,
         ]);
     }
@@ -41,6 +44,8 @@ class PreviewTest extends TestCase
         return DailyPickSet::create([
             'market' => Market::BeNl,
             'drop_date' => $date,
+            // Every Cove is addressed by a slug now, a Daily included.
+            'slug' => 'tomorrow-'.$date,
             'theme_title' => 'Tomorrow',
             'theme_slug' => 'tomorrow',
             'theme_source' => 'curated',
@@ -101,10 +106,12 @@ class PreviewTest extends TestCase
     {
         $this->draftGuide();
 
-        Guide::create([
+        DailyPickSet::create([
             'market' => Market::BeNl,
+            'kind' => CoveKind::Guide,
             'slug' => 'other-draft',
-            'title' => 'Something else',
+            'theme_title' => 'Something else',
+            'theme_slug' => 'other-draft',
             'status' => PublishStatus::Draft,
         ]);
 
@@ -140,13 +147,13 @@ class PreviewTest extends TestCase
     public function tomorrows_edition_is_a_404_for_a_player_and_readable_in_a_preview(): void
     {
         $tomorrow = now()->addDay()->toDateString();
-        $this->draftEdition($tomorrow);
+        $edition = $this->draftEdition($tomorrow);
 
-        // Guessing tomorrow's puzzle by URL is an obvious hole in a daily game.
-        $this->get("/be-nl/daily/{$tomorrow}")->assertNotFound();
+        // Guessing tomorrow's edition by URL would leak its theme and finds.
+        $this->get("/be-nl/daily/{$edition->slug}")->assertNotFound();
 
         $this->actingAs(User::factory()->create(['is_admin' => true]))
-            ->get("/be-nl/daily/{$tomorrow}")
+            ->get("/be-nl/daily/{$edition->slug}")
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('preview', true));
     }
@@ -154,10 +161,12 @@ class PreviewTest extends TestCase
     #[Test]
     public function a_published_page_is_not_labelled_a_preview(): void
     {
-        Guide::create([
+        DailyPickSet::create([
             'market' => Market::BeNl,
+            'kind' => CoveKind::Guide,
             'slug' => 'live-guide',
-            'title' => 'A live guide',
+            'theme_title' => 'A live guide',
+            'theme_slug' => 'live-guide',
             'status' => PublishStatus::Published,
             'published_at' => now()->subDay(),
         ]);

@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\DailyPick;
 use App\Models\DailyPickSet;
-use App\Models\Guide;
 use App\Models\ProductGroup;
-use App\Services\Editorial\Allowlist;
-use App\Services\Guides\CoveMarkup;
+use App\Services\Cove\EditionPresenter;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use App\Support\PreviewAccess;
-use Carbon\CarbonImmutable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,23 +32,27 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class DailyCoveController extends Controller
 {
+    // The presentation is shared with the gift-ideas pages: a persona is the
+    // same object served at a permanent URL, and the two must look identical.
+    public function __construct(private readonly EditionPresenter $presenter) {}
+
     public function __invoke(
         Request $request,
         CurrentMarket $current,
         string $market,
-        ?string $date = null,
+        ?string $slug = null,
     ): Response {
         // An admin, or somebody holding a signed preview link, reads a draft —
         // including one dated tomorrow, which is the whole point of checking it.
         $preview = PreviewAccess::allowed($request);
 
-        $edition = $this->findEdition($current, $date, $preview);
+        $edition = $this->findEdition($current, $slug, $preview);
 
         if ($edition === null) {
             throw new NotFoundHttpException;
         }
 
-        $this->seo($edition, $current, $date !== null, $preview && ! $edition->isPublished());
+        $this->seo($edition, $current, $slug !== null, $preview && ! $edition->isPublished());
 
         return Inertia::render('Daily/Edition', [
             // Renders a banner, and only ever true for somebody entitled to it.
@@ -72,11 +73,11 @@ class DailyCoveController extends Controller
                  * the catalogue degrade to plain text instead of leaving a dead
                  * link baked into a row nobody revisits.
                  */
-                'editorial' => $this->editorial($edition, $current),
+                'editorial' => $this->presenter->editorial($edition, $current),
             ],
 
-            'finds' => $this->finds($edition, $current),
-            'guide' => $this->guide($edition, $current),
+            'finds' => $this->presenter->finds($edition, $current),
+            'guide' => $this->presenter->guide($edition, $current),
             'deals' => $this->deals($current),
             'archive' => $this->archive($current, $edition),
         ]);
@@ -115,8 +116,11 @@ class DailyCoveController extends Controller
             // A median drawn from one shop is that shop's opinion, and a
             // "discount" against it is that shop's marketing.
             ->comparable()
-            // It sits beside gift writing on a gift site.
-            ->where('giftable', true)
+            // It sits beside gift writing on a gift site — so no consumables,
+            // no fitment, no bulk. But a deal is a deal at any price, and a
+            // heavily discounted expensive thing is the best row this column
+            // can carry, so this is `worthShowing`, not `giftable`.
+            ->worthShowing()
             ->whereNotNull('median_price')
             ->where('median_price', '>', 0)
             ->whereColumn('min_price', '<', 'median_price')
@@ -171,167 +175,63 @@ class DailyCoveController extends Controller
             ->all();
     }
 
-    private function findEdition(CurrentMarket $current, ?string $date, bool $preview = false): ?DailyPickSet
+    private function findEdition(CurrentMarket $current, ?string $slug, bool $preview = false): ?DailyPickSet
     {
         $query = DailyPickSet::query()
             ->forMarket($current->get())
+            // Dailies only. `/daily` with no date orders by drop_date DESC,
+            // which in Postgres puts the NULL-dated personas first.
+            ->daily()
             // A preview is for the edition that has *not* dropped yet, so the
             // published filter is exactly what has to come off.
             ->unless($preview, fn ($q) => $q->published())
             ->with(['picks.group']);
 
-        if ($date === null) {
+        if ($slug === null) {
             return $query->orderByDesc('drop_date')->first();
         }
 
-        try {
-            $parsed = CarbonImmutable::createFromFormat('Y-m-d', $date);
-        } catch (\Throwable) {
-            return null;
-        }
+        $edition = $query->where('slug', $slug)->first();
 
         /*
-         * A future date is a 404, not an empty page: tomorrow's edition is a
-         * draft, and reaching it by URL would leak the theme and the finds.
+         * A future edition is a 404, not an empty page: tomorrow's is a draft,
+         * and reaching it by URL would leak the theme and the finds.
          *
          * Unless this is a preview, where tomorrow's edition is precisely the
          * thing being checked — and the reader is an editor rather than a
-         * player.
+         * reader.
          */
-        if ($parsed === false || ($parsed->isFuture() && ! $preview)) {
+        if ($edition !== null && $edition->drop_date->isFuture() && ! $preview) {
             return null;
         }
 
-        return $query->where('drop_date', $parsed->toDateString())->first();
+        return $edition;
     }
 
     /**
-     * The article, paragraph by paragraph, each carrying the products it names.
+     * The old dated URL, permanently redirected to the named one.
      *
-     * The page used to be prose and then a grid: everything the writing was
-     * about sat below everything the writing said, so a paragraph discussing a
-     * kettle pointed at a card three screens down and the reader had to hold the
-     * name in their head to find it. That is a catalogue with an introduction,
-     * not an editorial.
+     * /daily/2026-08-29 is indexed and sits in three months of digest emails,
+     * so it has to keep resolving. A 301 rather than a rewrite: there is one
+     * canonical address for this page now, and telling a crawler that plainly is
+     * the whole reason for renaming it.
      *
-     * The pairing is already in the copy. A `[[product:12]]` token is the writer
-     * saying "this paragraph is about that thing"; reading the ids back out per
-     * paragraph is what lets the product appear where it is being discussed.
-     *
-     * @return list<array{html: string, groupIds: list<int>}>
+     * A date nothing was published on is a 404, exactly as it was before.
      */
-    private function editorial(DailyPickSet $edition, CurrentMarket $current): array
+    public function dated(CurrentMarket $current, string $market, string $date): RedirectResponse
     {
-        if (blank($edition->editorial)) {
-            return [];
+        $edition = DailyPickSet::query()
+            ->forMarket($current->get())
+            ->daily()
+            ->published()
+            ->whereDate('drop_date', $date)
+            ->first();
+
+        if ($edition === null) {
+            throw new NotFoundHttpException;
         }
 
-        $groups = $edition->picks
-            ->map(fn (DailyPick $pick) => $pick->group)
-            ->filter()
-            ->values();
-
-        // Today's finds, plus the guides this market has published — a Cove
-        // that can point at the guide for the thing it just showed you is the
-        // whole reason the two live on one page.
-        $allowed = app(Allowlist::class)->full($groups, $current->get());
-
-        $markup = app(CoveMarkup::class);
-        $paragraphs = preg_split('/\R{2,}/u', trim((string) $edition->editorial)) ?: [];
-
-        $out = [];
-        $used = [];
-
-        foreach ($paragraphs as $paragraph) {
-            if (trim($paragraph) === '') {
-                continue;
-            }
-
-            preg_match_all('/\[\[product:(\d+)/u', $paragraph, $matches);
-
-            /*
-             * Only ids the article was allowed to mention, and only the first
-             * time each appears. A token naming a product that is not in today's
-             * edition renders as plain text (see `CoveMarkup::render()`), and
-             * repeating the same card because the copy repeats the name would
-             * read as a stutter.
-             */
-            $ids = [];
-
-            foreach ($matches[1] as $id) {
-                $id = (int) $id;
-
-                if (isset($allowed['products'][$id]) && ! isset($used[$id])) {
-                    $used[$id] = true;
-                    $ids[] = $id;
-                }
-            }
-
-            $out[] = [
-                'html' => $markup->render($paragraph, $current->get(), $allowed)['html'],
-                'groupIds' => $ids,
-            ];
-        }
-
-        return $out;
-    }
-
-    /** @return list<array<string, mixed>> */
-    /**
-     * Today's finds, minus anything you cannot actually buy.
-     *
-     * An edition is built once and then served all day, and forever after in
-     * the archive. Nothing re-checked stock at render, so a pick that sold out
-     * at eleven carried on being presented as an ordinary buyable product —
-     * with a price, a shop count and a save button — for the rest of its life.
-     *
-     * Hidden rather than dimmed, which is the opposite of what
-     * {@see GuideController} does, and deliberately: a guide is a ranked list
-     * whose copy names each entry, so removing number three breaks the writing.
-     * A Cove's finds are a set. The prose keeps its link either way — a product
-     * page for something out of stock is a real page, with the price history
-     * and the restock alert on it.
-     */
-    private function finds(DailyPickSet $edition, CurrentMarket $current): array
-    {
-        return $edition->picks
-            ->filter(fn (DailyPick $pick) => $pick->group !== null && $pick->group->in_stock)
-            ->map(fn (DailyPick $pick) => [
-                'id' => $pick->id,
-                'groupId' => $pick->group->id,
-                'title' => $pick->group->title,
-                'image' => $pick->group->image_url,
-                'price' => $pick->group->min_price,
-                'merchantCount' => $pick->group->merchant_count,
-                'discountPercent' => $pick->discount_percent,
-                'blurb' => $pick->blurb,
-                'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
-                'mindblown' => $pick->mindblown_count,
-                'meh' => $pick->meh_count,
-            ])
-            ->values()
-            ->all();
-    }
-
-    /** @return array<string, mixed>|null */
-    private function guide(DailyPickSet $edition, CurrentMarket $current): ?array
-    {
-        $guide = $edition->guide;
-
-        if ($guide === null) {
-            return null;
-        }
-
-        return [
-            'title' => $guide->title,
-            'intro' => $guide->intro,
-            'url' => $current->url("guides/{$guide->slug}"),
-            'itemCount' => $guide->items()->count(),
-            // The demand that justified writing it. Shown because it is the
-            // honest answer to "why this guide" and because it is a fact only
-            // this site has.
-            'searchVolume' => $guide->source_volume,
-        ];
+        return redirect($current->url('daily/'.$edition->slug), 301);
     }
 
     /**
@@ -343,16 +243,17 @@ class DailyCoveController extends Controller
     {
         return DailyPickSet::query()
             ->forMarket($current->get())
+            ->daily()
             ->published()
             ->where('id', '!=', $edition->id)
             ->orderByDesc('drop_date')
             ->limit(7)
-            ->get(['drop_date', 'theme_title'])
+            ->get(['drop_date', 'slug', 'theme_title'])
             ->map(fn (DailyPickSet $set) => [
                 'date' => $set->drop_date->toDateString(),
                 'label' => $set->drop_date->format('j M'),
                 'theme' => $set->theme_title,
-                'url' => $current->url('daily/'.$set->drop_date->toDateString()),
+                'url' => $current->url('daily/'.$set->slug),
             ])
             ->all();
     }
@@ -360,7 +261,7 @@ class DailyCoveController extends Controller
     private function seo(DailyPickSet $edition, CurrentMarket $current, bool $isArchive, bool $preview = false): void
     {
         $url = $isArchive
-            ? url($current->url('daily/'.$edition->drop_date->toDateString()))
+            ? url($current->url('daily/'.$edition->slug))
             : url($current->url('daily'));
 
         $meta = app(PageMeta::class);

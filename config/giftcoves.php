@@ -268,6 +268,17 @@ return [
     'picks' => [
         'per_day' => 7,
 
+        /*
+         * Below this, the edition does not publish at all.
+         *
+         * A three-item page is worse than no page: it teaches a returning
+         * reader that the column is not worth opening, and that lesson outlasts
+         * the bad catalogue day that caused it. Lifted out of EditionBuilder so
+         * the curation screen can warn about a locked plan that is under it
+         * *before* 06:00 rather than after.
+         */
+        'minimum' => 3,
+
         // Fixed drop time makes it an appointment, like a daily puzzle.
         'drop_time' => '09:00',
 
@@ -303,9 +314,22 @@ return [
     | Buying guides
     |--------------------------------------------------------------------------
     */
+    /*
+     * `items_per_guide` and `min_products` had no readers until the fold: the
+     * builder used class constants of 7 and 5, the topic model tested viability
+     * against 6, and the miner used a third 5 of its own. Three numbers for two
+     * questions, and the one an editor could see in config was the one nothing
+     * obeyed.
+     *
+     * They now say what has actually produced every guide on the site. Seven
+     * entries is long enough to be a real comparison and short enough that each
+     * one earns its place; below five it is a list with gaps and reads as one,
+     * which is also the threshold the miner already refused to offer a topic
+     * under. See App\Enums\CoveKind::targetItems() and minimumItems().
+     */
     'guides' => [
-        'items_per_guide' => 8,
-        'min_products' => 6,
+        'items_per_guide' => 7,
+        'min_products' => 5,
         'topic_window_days' => 30,
         'freshness_check_days' => 30,
     ],

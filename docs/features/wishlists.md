@@ -115,6 +115,163 @@ list, in one chosen from the menu, or in a list created in the same click, and "
 is equally true of all three, so it confirms nothing. Naming it is what makes the default worth
 accepting without opening the menu.
 
+## The confirmation nobody could read
+
+Added 2026-08-29. The paragraph above was true, and the person saving never saw it.
+
+`store()` answered `back()->with('success', …)`, and `FlashMessage` draws `flash` in the layout, in
+the normal flow, at the top of `<main>`. Saving happens on a product card, and the commonest product
+card is thirty rows down a search grid — where `preserveScroll` correctly keeps you in place and the
+confirmation therefore rendered **off-screen**. Worse: being in the flow, it *inserted* a block at
+the top of the document while the scroll offset was held, so the grid jumped down under the cursor at
+the exact moment of a successful tap. The one line of copy written specifically to make the default
+destination trustworthy was the line the delivery made unreadable.
+
+Three things changed together, and they are one change rather than three:
+
+- **`store()` and `destroy()` answer JSON when the caller asks for it** (`expectsJson()`), keeping
+  `back()` for form posts — `ManualItem` and the list pages submit through Inertia and do want the
+  page back. A bookmark tap had been rebuilding every prop on the page: a forty-result search re-run
+  on the server to move one row.
+- **`SaveToList` posts directly** (`resources/js/http.ts`), which is the pattern `Daily/Edition`,
+  `Discover` and `MarketSwitcher` already use — CSRF token from the document head, `Accept:
+  application/json`. That header is load-bearing twice: it picks the JSON branch, and it turns
+  Laravel's guest redirect into a 401 rather than a 302 that `fetch` follows silently and reports as
+  a success.
+- **`SaveToast` reports it**, fixed to the viewport, six seconds, paused on hover or focus.
+
+**Undo is why the endpoint answers with a row.** A flash string can name a list and can never name
+the row it just created. Undoing a save previously meant reopening the picker and finding the ticked
+line — which works, and requires knowing that the picker reports membership at all. The mistake being
+recovered from is saving to the list one line above the one you meant, and the moment to catch it is
+the second afterwards, on the confirmation that has just named the wrong list. Undo calls the
+existing `DELETE /list-items/{item}`: no second delete path, and the ownership check is the one that
+was already there.
+
+`FlashMessage` is unchanged and keeps every other outcome. A claim somebody else won, or a quiz
+refused for being too short, is about the page, and prominence at the top is right for those. A save
+is about the thing under your finger.
+
+**The card variant now saves on the first press.** It used to open the picker in both states, on the
+stated grounds that saving somewhere unnamed and making people undo it is worse than asking first.
+That was correct while it held; the toast names the list and carries the undo, so the premise is
+gone. What remained was the real cost — the same bookmark meaning "save it" on a product page and
+"ask me where" on a grid is not something anybody learns, it is something they get wrong. Both
+variants now follow one rule, **not saved → save; saved → open the picker**, and the card keeps a
+narrow chevron so that filing straight into a named list does not first cost a save into the wrong
+one.
+
+### Two smaller things that were silently broken
+
+- **`place()` clamped `left` and never `top`.** `top` was `box.bottom + 6` with no bound at all, so a
+  card in the bottom row of a grid opened a three-section panel below the fold, where it could be
+  neither read nor reached. It now flips above the trigger when there is more room there, and caps
+  its height either way so twenty lists scroll rather than run off the screen. Below `sm` it is a
+  bottom sheet: a 288px popover anchored to a 36px button is a desktop shape, and on a phone every
+  card is at both edges of the viewport at once.
+- **Neither `save()` nor `remove()` had an error branch.** A 403 or a 422 re-enabled the button and
+  did nothing else, which is indistinguishable from a control that does not work — on the one control
+  people press at the moment they have decided something. Failures now surface in the toast, and the
+  optimistic bookmark rolls back. Relatedly, the `/list-options` fetch fell back to `{lists: [],
+  recipients: []}`, so a dropped connection was indistinguishable from "you have no lists" — and that
+  second reading invites somebody to create a duplicate of a list they already own. It has its own
+  error state, with a retry.
+
+## Signing in without losing the product
+
+Added 2026-08-29. "Keeping a list requires an account" is unchanged. What that decision never settled
+is what happens to the product in somebody's hand at the moment they are asked to sign in — and the
+answer was that it is thrown away.
+
+`requireAccount()` navigated to the login page **client-side, before any request reached the
+server**, so Laravel never recorded an intended URL. Signing in landed the visitor on My Lists, with
+an empty list, on a page they had not asked for, having forgotten what the product was called. The
+reversal to accounts-only was argued carefully and is still right; it simply accepted this loss
+rather than solving it, at exactly the moment a person is most willing to act.
+
+`App\Services\Wishlist\PendingSave` stashes the save in the session and sets `url.intended`, so both
+`MagicLinkController` and `GoogleController` return the visitor to the product with no change to
+either — they already end in `redirect()->intended(…)`. `ReplayPendingSave` listens for `Login`, for
+the same reason [`ClaimListInvitations`](../../app/Listeners/ClaimListInvitations.php) does: a save
+that completes on the magic link and not on Google is a bug visible only to whichever half of people
+pressed the other button.
+
+Four rules, each of which is the interesting part:
+
+- **One intent, not a queue.** Press save, get asked to sign in, sign in. That is the whole story. A
+  queue means deciding what to do with six intents gathered over a week of browsing, and replaying
+  five products somebody has forgotten choosing is a worse outcome than dropping them.
+- **One hour, single use.** A save replayed days later — plausibly on a shared machine, plausibly by
+  somebody else — is not what anyone asked for, and a gift list is the wrong place to find an item
+  you did not put there. It is cleared *before* it is applied, so a replay that throws cannot leave
+  one behind to fire on the next sign-in.
+- **`return_to` is checked, not trusted.** It ends up in `url.intended`, which is where a freshly
+  authenticated person is sent. An unchecked value there is an open redirect wearing a login page as
+  a costume. A path on this host or nothing: `//host` is a protocol-relative URL rather than a path,
+  and a backslash is refused because browsers have historically normalised it to a slash.
+- **No `wishlist_id`, and no `manual`.** A pending save lands in the default list; carrying a chosen
+  destination across a sign-in would mean checking ownership of a list against an account that did
+  not exist when it was chosen. And a hand-written wish is typed on a list page, which is behind
+  `auth` already — accepting one here would be a free-text channel with no owner.
+
+The snapshot fields stay hints on this path exactly as on the ordinary one, so a stale intent naming
+Amazon cannot smuggle a mirrored title and price into the catalogue: `ItemSaver::saveExternal()` is
+still the only thing deciding what may be stored (invariant #6).
+
+`lists.sign_in_hint` said *"Your lists live in this browser right now"* — left over from
+anonymous-first, describing a state that has not been reachable since the reversal. Rewritten
+forwards, in all four languages.
+
+## Where you can keep something, and where you could not
+
+Also 2026-08-29. Seven surfaces rendered products and offered no way to keep one. Each is a place
+somebody sees a thing they want and has nowhere to put it, which is the same failure the results
+grid had before it gained a bookmark.
+
+| Surface | Why it was worth fixing |
+|---|---|
+| Home, today's finds; Discover Cove finds and surprises | Four tiles on the two pages most likely to be somebody's first visit |
+| Search, the **by shop** lane | The grid saves because it is a `ProductCard`; this view is a bespoke row and had nothing — so changing how you *look* at the same results silently removed the ability to keep one |
+| Ask, answer picks | Somebody recommended this to a stranger and the stranger could not keep it |
+| A shared list, as a visitor | A page full of things chosen for a person you also know, and no way to note one down |
+| Secret Santa, your giftee's wishes | Claiming is a commitment to the group; keeping a note to yourself should not require making one |
+| Brand pages, live offers | See below |
+
+In each case the control sits **outside** the wrapping anchor and above it on the z-axis. A tile is
+one big link, and a button nested inside a link is not a button — the anchor takes the click. That is
+the same constraint `ProductCard` documents for its stretched link.
+
+**The shared list and Secret Santa needed `groupId` in the payload, and it discloses nothing.** `url`
+in the same payload has always been `p/{group_id}/{slug}`, so the id was already there; it was simply
+not in a form the save control could read. The act it enables reads the *viewer's* lists and writes
+to the viewer's list — the owner's list is not touched and learns nothing, so this is not a claim and
+invariant #4 is not involved. Pinned by
+`a_visitor_saving_from_a_shared_list_tells_the_owner_nothing`. The control is hidden from the owner
+of a list, where everything is already theirs and it would only confuse.
+
+**The live-offer save was built and reachable from nothing.** `store()` has accepted `source` +
+`external_id` since live results became searchable, and `ItemSaver::saveExternal()` has decided per
+source what may be stored — but `BrandController::liveCard()` emitted neither field, so the whole
+external path had no UI at all. The same shape as the progress strip, the suggest button and the
+pledges: complete, tested, unreachable. `liveCard()` now carries both. Passing the snapshot fields
+from the client stays safe because the server discards them for a source it may not mirror, so an
+Amazon offer keeps the decision and nothing else (invariant #6).
+
+## Files
+
+- `app/Http/Controllers/WishlistItemController.php` — `report()`, `saved(?list=)`, `find()`
+- `resources/js/Components/AddProduct.tsx` — the one control on the list page
+- `app/Services/Wishlist/ItemSaver.php` — `saveGroup()` takes the owner's wording
+- `tests/Feature/AddProductTest.php`
+- `app/Http/Controllers/SaveIntentController.php`, `app/Services/Wishlist/PendingSave.php`,
+  `app/Listeners/ReplayPendingSave.php`
+- `resources/js/http.ts` — one CSRF `fetch`, written once
+- `resources/js/Components/SaveToast.tsx`, `resources/js/saveToast.ts`
+- `resources/js/Components/SaveToList.tsx`, `resources/js/savedItems.ts`
+- `tests/Feature/SaveToListTest.php`, `tests/Feature/PendingSaveTest.php`
+- See [list-taxonomy.md](list-taxonomy.md#filling-one-list-rather-than-saving-one-product) for the
+  adding mode
+
 ## Claiming is a conditional UPDATE
 
 ```sql
@@ -207,6 +364,77 @@ unauthenticated page is a moderation surface. An owner typing "size M, in blue" 
 not one by definition. The visitor-side input stays unbuilt, and the considered version of "let
 strangers write things here" is [ask-others.md](ask-others.md), which has a triage job and a review
 queue behind it.
+
+## One button, because it was always one intention
+
+Added 2026-08-29. The list page carried two controls: **Find things to add**, which navigated away to
+a search, and **Add something yourself**, which opened a form for the case where the catalogue does
+not have it. `Product toevoegen` is both.
+
+**The split was ours, not the visitor's.** Choosing between those two buttons means answering, before
+typing anything, whether we happen to stock the thing you are thinking of — and that is a question
+only we can answer. The panel answers it by searching while they type, and keeps the hand-written
+path open the whole time.
+
+Three ways out, one control:
+
+- a catalogue result, with its price, link and offer comparison intact;
+- a live result from a source we do not mirror;
+- something typed by hand, **reachable without searching first**.
+
+That last point is the one worth defending. Offering the manual path only after a search has come
+back empty makes it a consolation prize, and it is not: a voucher for the climbing gym, or one
+particular edition of a book, is not a failed search. It sits in the panel from the moment it opens,
+and the search term prefills its description — somebody typed it because it is what the thing is
+called.
+
+### The wording belongs to the owner
+
+`ItemSaver::saveGroup()` now takes a `$title`. A feed title is written for a search engine — *"Merk
+XY-3000 draadloze koptelefoon met ANC, zwart, 2024"* — and a list is read by a person, sometimes one
+choosing a present under time pressure. *"De koptelefoon die ik wil"* is more use to them.
+
+This does not contradict [snapshots, not references](#snapshots-not-references). That rule is about
+an entry not rewriting *itself* when a feed changes; a title somebody typed on purpose is the same
+kind of fact as the note beside it. `group_id` is untouched, so the price, the link and the offer
+comparison all still come from the real product — only the words change.
+
+**A bug this surfaced, which predates it.** `saveGroup()` is an `updateOrCreate`, and every save from
+a product card posts no note at all — so re-saving something you had annotated **erased the
+annotation**, silently. The title would have gained the same defect the moment it became editable.
+Both are now kept when the incoming value is null, pinned by
+`saving_it_again_does_not_undo_the_wording`.
+
+### Where the title field is absent, and why
+
+For a source that may not be mirrored, `WishlistItem::rendersLive()` re-fetches title and price at
+render — so a title typed here would be discarded without saying so. `/list-search` returns
+`storable` per live row, and the panel offers the note instead, with a line naming the shop the title
+comes from. A field that silently does nothing is worse than an absent one (invariant #6).
+
+### The search inside the list
+
+`GET /{market}/list-search` — `auth`, `throttle:60,1`, refusing terms under two characters, and
+**run on Enter rather than as you type**. All of it bounds the same thing: the live half of a search
+costs real requests to bol and Amazon, and a typeahead turns one intention into eleven searches.
+`SearchService` caches the mirrorable connectors; the throttle, the minimum and the explicit submit
+are what bound the one it cannot.
+
+Submitting also reads better. A product search is a considered act — people type two or three words
+and then look — and results reshuffling under a half-typed word move the row somebody was reaching
+for. The field is a `<form>` so Enter submits with no key handler, and it carries a named **Search**
+button beside it, because nothing else on screen would say that typing alone does not search.
+
+Two defaults are overridden, and both would have been wrong quietly. `discountedOnly` defaults to
+**true**, which would have limited a gift list to whatever happens to be reduced today. And `logged`
+is turned off: `search_log` feeds the related-search chips on public pages and the queue that decides
+which guides get written, so *"verlovingsring"* typed while filling a list about one named person
+does not belong in it — the same opt-out, for the same reason, as the search box inside a shared
+list.
+
+`ManualItem` still exists and is still used on `Lists/Shared`, where a visitor suggests something
+into somebody else's list. That is a different act with different rules, and folding it into this
+panel would have put an owner-only note field on an unauthenticated page.
 
 ## Something we do not sell
 

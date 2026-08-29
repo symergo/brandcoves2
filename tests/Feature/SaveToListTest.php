@@ -10,6 +10,7 @@ use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -291,5 +292,157 @@ class SaveToListTest extends TestCase
                 'wishlist_id' => $other->id,
             ])
             ->assertNotFound();
+    }
+
+    /**
+     * The save control is an XHR now, and it needs the row back.
+     *
+     * `back()` cost a full page rebuild to move one row and delivered the
+     * confirmation through `flash`, which renders at the top of the document —
+     * unreadable from the bottom of a results grid, which is where saving
+     * happens. It also cannot carry an item id, so there was nothing an Undo
+     * could act on.
+     */
+    #[Test]
+    public function a_json_save_answers_with_the_row_and_the_list(): void
+    {
+        $user = User::factory()->create();
+        $group = $this->group();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Camping',
+            'market' => Market::BeNl,
+        ]);
+
+        $body = $this->actingAs($user)
+            ->postJson('/be-nl/list-items', ['group_id' => $group->id, 'wishlist_id' => $list->id])
+            ->assertOk()
+            ->json();
+
+        $item = WishlistItem::query()->where('group_id', $group->id)->firstOrFail();
+
+        $this->assertSame($item->id, $body['itemId']);
+        $this->assertSame($list->id, $body['listId']);
+        $this->assertSame('Camping', $body['listTitle']);
+
+        // By content, not by wording: this market reads Dutch, and the
+        // invariant is that the confirmation names its destination.
+        $this->assertStringContainsString('Camping', $body['message']);
+    }
+
+    /**
+     * And the form path is untouched.
+     *
+     * `ManualItem` and the list pages submit through Inertia and do want the
+     * page back, so the two shapes have to coexist rather than replace one
+     * another.
+     */
+    #[Test]
+    public function a_form_save_still_redirects_back_with_the_flash(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->post('/be-nl/list-items', ['group_id' => $this->group()->id])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+    }
+
+    #[Test]
+    public function removing_answers_json_too_so_undo_can_use_it(): void
+    {
+        $user = User::factory()->create();
+        $group = $this->group();
+
+        $itemId = $this->actingAs($user)
+            ->postJson('/be-nl/list-items', ['group_id' => $group->id])
+            ->json('itemId');
+
+        $this->actingAs($user)
+            ->deleteJson("/be-nl/list-items/{$itemId}")
+            ->assertOk()
+            ->assertJsonStructure(['message']);
+
+        $this->assertDatabaseMissing('wishlist_items', ['id' => $itemId]);
+    }
+
+    /**
+     * `?list=` answers "is this one on Camping yet?".
+     *
+     * While a named list is being filled, "it is on one of your lists
+     * somewhere" is the wrong question: it ticks items that are on a different
+     * list and hides the ones actually added during this run.
+     */
+    #[Test]
+    public function saved_items_can_answer_for_one_list(): void
+    {
+        $user = User::factory()->create();
+        $onBoth = $this->group();
+        $elsewhere = $this->group();
+
+        $camping = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Camping',
+            'market' => Market::BeNl,
+        ]);
+
+        $books = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Books',
+            'market' => Market::BeNl,
+        ]);
+
+        $this->actingAs($user)->postJson('/be-nl/list-items', [
+            'group_id' => $onBoth->id,
+            'wishlist_id' => $camping->id,
+        ])->assertOk();
+
+        /*
+         * Named explicitly rather than left to the default. `DefaultList`
+         * *adopts* an existing `mine` list rather than making a second one, so
+         * an unqualified save here would have landed on Camping too and the
+         * assertion would have passed for the wrong reason.
+         */
+        $this->actingAs($user)->postJson('/be-nl/list-items', [
+            'group_id' => $elsewhere->id,
+            'wishlist_id' => $books->id,
+        ])->assertOk();
+
+        $body = $this->actingAs($user)
+            ->getJson("/be-nl/saved-items?list={$camping->id}")
+            ->assertOk()
+            ->json();
+
+        $this->assertEqualsCanonicalizing([$onBoth->id, $elsewhere->id], $body['groupIds']);
+        $this->assertSame([$onBoth->id], $body['listGroupIds']);
+    }
+
+    /**
+     * Asking about a list you have no part in is a read of somebody's list
+     * membership, and is gated like one — empty, rather than its contents.
+     */
+    #[Test]
+    public function saved_items_will_not_report_on_a_stranger_list(): void
+    {
+        $stranger = User::factory()->create();
+        $group = $this->group();
+
+        $theirs = Wishlist::factory()->create([
+            'owner_user_id' => $stranger->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        $this->actingAs($stranger)->postJson('/be-nl/list-items', [
+            'group_id' => $group->id,
+            'wishlist_id' => $theirs->id,
+        ])->assertOk();
+
+        $this->actingAs(User::factory()->create())
+            ->getJson("/be-nl/saved-items?list={$theirs->id}")
+            ->assertOk()
+            ->assertExactJson(['groupIds' => [], 'listGroupIds' => []]);
     }
 }

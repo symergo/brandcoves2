@@ -47,8 +47,10 @@ class GiftabilityClassifierTest extends TestCase
         yield 'camera ND filter' => ['NiSi ND-filter 82mm', 'Foto', 12900, true, 'ok'];
         yield 'lens filter set' => ['K&F Concept lensfilter set UV CPL', 'Foto', 5999, true, 'ok'];
 
-        // Rescued: the word says spare, the context says present.
-        yield 'power bank' => ['Anker replacement battery powerbank 20000mAh', 'Accessoires', 5999, true, 'ok'];
+        // Rescued: the term says consumable, the context says camera. This is
+        // the RESCUES table's only job and nothing else exercised it — the
+        // polarising filters above survive because no term matches them at all.
+        yield 'rescued lens filter' => ['Hoya vervangingsfilter voor lens 77mm', 'Foto', 8999, true, 'ok'];
         // Regression: "navulling" and "navul" both matched, and the shorter
         // term — reached second, carrying no rescue — overturned the first
         // one's. A term must never sit in the list beside its own prefix.
@@ -72,16 +74,22 @@ class GiftabilityClassifierTest extends TestCase
         yield 'french detergent' => ['Ariel lessive liquide concentrée', 'Ménage', 1299, false, 'consumable'];
         yield 'toner' => ['Brother TN-2420 toner', 'Printers', 5999, false, 'consumable'];
 
-        // --- Spare parts ------------------------------------------------------
-
-        yield 'spare part' => ['Bosch reserveonderdeel motorborstel', 'Onderdelen', 2499, false, 'spare_part'];
-        yield 'drill battery' => ['Makita replacement battery 18V 5Ah', 'Gereedschap', 8999, false, 'spare_part'];
-
-        // --- Services ---------------------------------------------------------
-
-        yield 'extended warranty' => ['Garantieverlenging 3 jaar', 'Diensten', 4999, false, 'service'];
-        yield 'subscription' => ['Kaspersky abonnement 1 jaar 3 apparaten', 'Software', 3999, false, 'service'];
-        yield 'installation' => ['Installatieservice wasmachine', 'Diensten', 8900, false, 'service'];
+        /*
+         * --- What we deliberately stopped catching -----------------------------
+         *
+         * `spare_part`, `service` and `household_staple` rejected 114 rows
+         * between them out of 63,508 classified, and cost three hand-maintained
+         * multilingual term lists. Removed 2026-08-29.
+         *
+         * These stay in the golden file as *passing* rows rather than being
+         * deleted, because the cost of the decision is the point: a warranty
+         * extension is now a gift as far as this classifier is concerned. If
+         * that turns out to matter, this is where the evidence goes.
+         */
+        yield 'spare part now passes' => ['Bosch reserveonderdeel motorborstel', 'Onderdelen', 2499, true, 'ok'];
+        yield 'drill battery now passes' => ['Makita replacement battery 18V 5Ah', 'Gereedschap', 8999, true, 'ok'];
+        yield 'warranty now passes' => ['Garantieverlenging 3 jaar', 'Diensten', 4999, true, 'ok'];
+        yield 'subscription now passes' => ['Kaspersky abonnement 1 jaar 3 apparaten', 'Software', 3999, true, 'ok'];
 
         // --- Fitment ----------------------------------------------------------
 
@@ -97,23 +105,41 @@ class GiftabilityClassifierTest extends TestCase
         // reason excludes it; recording which one keeps admin honest.
         yield 'compatible ink' => ['Inkt compatible with Canon PG-540', 'Printers', 1999, false, 'fitment'];
 
-        // --- Staples ----------------------------------------------------------
-
-        yield 'toilet paper' => ['Page toiletpapier 24 rollen', 'Huishouden', 1599, false, 'household_staple'];
-        yield 'aa batteries' => ['Duracell AA batteries 16 stuks', 'Huishouden', 1899, false, 'household_staple'];
-
         // --- Bulk -------------------------------------------------------------
 
         yield 'bulk pack' => ['Wegwerpbekers 100 stuks', 'Huishouden', 1299, false, 'bulk'];
         yield 'box of fifty' => ['Doos van 50 mondmaskers', 'Gezondheid', 1999, false, 'bulk'];
 
+        /*
+         * The staples the term list used to name, now caught structurally.
+         *
+         * This is why removing `household_staple` was cheap: a staple is always
+         * sold by the count, so the count catches it without anybody having to
+         * enumerate "toiletpapier, papier toilette, papel higienico" — and it
+         * generalises to the ones nobody thought of.
+         */
+        yield 'toilet paper by the roll' => ['Page toiletpapier 24 rollen', 'Huishouden', 1599, false, 'bulk'];
+        yield 'aa batteries by the count' => ['Duracell AA batteries 16 stuks', 'Huishouden', 1899, false, 'bulk'];
+
         // --- Price band -------------------------------------------------------
 
         yield 'too cheap' => ['Sleutelhanger', 'Accessoires', 199, false, 'too_cheap'];
-        yield 'too expensive' => ['LG OLED 77 inch televisie', 'TV', 249900, false, 'too_expensive'];
         yield 'no price' => ['Sony WH-1000XM5', 'Audio', null, false, 'no_price'];
+
+        /*
+         * The split. Not a gift — you do not suggest a €2,499 television to
+         * someone asking what to buy their colleague — but absolutely an object
+         * worth a slot on a Cove, which is what `worthShowing` is for.
+         */
+        yield 'too expensive' => ['LG OLED 77 inch televisie', 'TV', 249900, false, 'too_expensive', true];
     }
 
+    /**
+     * @param  bool|null  $expectedWorthShowing  defaults to `$expectedGiftable`:
+     *                                           only `too_expensive` differs, and
+     *                                           spelling that out on 30 rows would
+     *                                           bury the one that matters.
+     */
     #[Test]
     #[DataProvider('cases')]
     public function it_classifies(
@@ -122,6 +148,7 @@ class GiftabilityClassifierTest extends TestCase
         ?int $price,
         bool $expectedGiftable,
         string $expectedReason,
+        ?bool $expectedWorthShowing = null,
     ): void {
         $verdict = $this->classifier()->classify($title, $category, $price);
 
@@ -133,6 +160,30 @@ class GiftabilityClassifierTest extends TestCase
         );
 
         $this->assertSame($expectedReason, $verdict->reason, "[$title] reason");
+
+        $this->assertSame(
+            $expectedWorthShowing ?? $expectedGiftable,
+            $verdict->worthShowing,
+            "[$title] worthShowing"
+        );
+    }
+
+    #[Test]
+    public function the_price_ceiling_is_the_only_rejection_that_still_shows(): void
+    {
+        // The invariant behind the split, stated once rather than inferred from
+        // the table above: everything else excludes a row from both surfaces.
+        $expensive = $this->classifier()->classify('LG OLED 77 inch televisie', 'TV', 249900);
+        $consumable = $this->classifier()->classify('HP 305XL inktcartridge zwart', 'Printers', 3299);
+        $cheap = $this->classifier()->classify('Sleutelhanger', 'Accessoires', 199);
+
+        $this->assertTrue($expensive->worthShowing, 'over the ceiling is still worth showing');
+        $this->assertFalse($consumable->worthShowing, 'a cartridge is not worth showing');
+        $this->assertFalse($cheap->worthShowing, 'a €2 keyring is not worth showing');
+
+        foreach ([$expensive, $consumable, $cheap] as $verdict) {
+            $this->assertFalse($verdict->giftable);
+        }
     }
 
     #[Test]
@@ -141,8 +192,8 @@ class GiftabilityClassifierTest extends TestCase
         // iconv's //TRANSLIT differs across glibc, musl and Windows. Tests run
         // on a Windows laptop; production is Alpine. A classifier that
         // disagrees with its own test suite by host is worse than none.
-        $accented = $this->classifier()->classify('Pièce de rechange moteur', 'Pièces', 2999);
-        $plain = $this->classifier()->classify('Piece de rechange moteur', 'Pieces', 2999);
+        $accented = $this->classifier()->classify('Détartrant pour machine à café', 'Ménage', 2999);
+        $plain = $this->classifier()->classify('Detartrant pour machine a cafe', 'Menage', 2999);
 
         $this->assertFalse($accented->giftable);
         $this->assertSame($plain->reason, $accented->reason);

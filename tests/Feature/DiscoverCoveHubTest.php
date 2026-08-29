@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\CommunityQuestion;
-use App\Models\Guide;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,13 +27,16 @@ class DiscoverCoveHubTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function guide(string $slug, string $title, Market $market, PublishStatus $status, string $publishedAt): Guide
+    private function guide(string $slug, string $title, Market $market, PublishStatus $status, string $publishedAt): DailyPickSet
     {
-        return Guide::create([
+        return DailyPickSet::create([
             'market' => $market->value,
+            // An edition since the fold: the /guides space is daily_pick_sets.
+            'kind' => CoveKind::Guide->value,
             'slug' => $slug,
-            'title' => $title,
-            'intro' => 'Waar het over gaat.',
+            'theme_title' => $title,
+            'theme_slug' => $slug,
+            'theme_blurb' => 'Waar het over gaat.',
             'status' => $status->value,
             'published_at' => $publishedAt,
         ]);

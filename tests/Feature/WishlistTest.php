@@ -463,6 +463,64 @@ class WishlistTest extends TestCase
     }
 
     /** @return array{0: Wishlist, 1: WishlistItem} */
+    /**
+     * A visitor keeping something for themselves is not a claim.
+     *
+     * `Lists/Shared` now carries a save control, which means the group id is in
+     * a payload strangers read. It discloses nothing new — `url` in the same
+     * payload has always been `p/{group_id}/{slug}` — and the act it enables
+     * reads the *viewer's* lists and writes to the viewer's list. This pins
+     * both halves: the owner's view is unchanged, and the visitor's save leaves
+     * no trace on the list they found it on.
+     */
+    #[Test]
+    public function a_visitor_saving_from_a_shared_list_tells_the_owner_nothing(): void
+    {
+        [$list, $item] = $this->sharedGiftList();
+        $owner = $list->owner;
+
+        $visitor = User::factory()->create();
+
+        $this->actingAs($visitor)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('items.0.groupId', $item->group_id));
+
+        $this->actingAs($visitor)
+            ->postJson('/be-nl/list-items', ['group_id' => $item->group_id])
+            ->assertOk();
+
+        // Their copy is their own, on a list of theirs.
+        $theirs = WishlistItem::query()
+            ->where('group_id', $item->group_id)
+            ->whereKeyNot($item->id)
+            ->firstOrFail();
+
+        $this->assertSame($visitor->id, $theirs->wishlist->owner_user_id);
+
+        // The owner's list is untouched, and still says nothing about claims.
+        $this->assertSame(1, $list->items()->count());
+
+        $payload = $this->actingAs($owner)
+            ->get("/be-nl/lists/{$list->id}")
+            ->assertOk()
+            ->viewData('page')['props']['items'][0];
+
+        $this->assertArrayNotHasKey('claimed', $payload);
+        $this->assertNull($list->items()->first()->claimed_by_hash);
+    }
+
+    /** Nothing about the group id reveals who is reading the list. */
+    #[Test]
+    public function the_owner_still_gets_no_progress_after_the_save_control_landed(): void
+    {
+        [$list] = $this->sharedGiftList();
+
+        $this->actingAs($list->owner)
+            ->get("/be-nl/l/{$list->share_token}")
+            ->assertInertia(fn ($page) => $page->where('progress', null));
+    }
+
     private function sharedGiftList(): array
     {
         $list = Wishlist::create([

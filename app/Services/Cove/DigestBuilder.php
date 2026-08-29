@@ -137,7 +137,7 @@ class DigestBuilder
             // place to resolve [[product:…]] tokens into links.
             'lead' => $this->lead($edition),
             'date' => $edition->drop_date->toDateString(),
-            'url' => $base.'/daily/'.$edition->drop_date->toDateString(),
+            'url' => $base.'/daily/'.$edition->slug,
             'finds' => $eligible,
             'omitted' => $omitted,
         ];

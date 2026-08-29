@@ -1,8 +1,9 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
-import BarcodeScanner from '../Components/BarcodeScanner'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
+import SaveToList from '../Components/SaveToList'
+import ScanButton from '../Components/ScanButton'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -59,7 +60,6 @@ export default function Search({
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [term, setTerm] = useState(q)
-    const [scannerOpen, setScannerOpen] = useState(false)
     const [filtersOpen, setFiltersOpen] = useState(false)
     const [searching, setSearching] = useState(false)
     const base = `/${market.key}/search`
@@ -168,22 +168,11 @@ export default function Search({
                     )}
                 </div>
                 {/*
-                  Next to the search box, not buried in the nav.
-
-                  Scanning is a way of *entering a query* — the same intent as
-                  typing, expressed with a camera — so it belongs where queries
-                  are entered. It is also the only place someone standing in a
-                  shop will look for it.
+                  Next to the search box, not buried in the nav. It is also the
+                  only place someone standing in a shop will look for it — and
+                  the home page has the same button, for the same reason.
                 */}
-                <button
-                    type="button"
-                    onClick={() => setScannerOpen(true)}
-                    className="rounded-lg border border-line px-4 py-3"
-                    aria-label={t('scan.title')}
-                    title={t('scan.title')}
-                >
-                    <span aria-hidden>▚</span>
-                </button>
+                <ScanButton />
 
                 {/*
                   Dimmed, not disabled. A disabled button loses focus mid-search
@@ -237,40 +226,6 @@ export default function Search({
                           ? t('search.pasted_searched', { terms: pastedLink.terms })
                           : t('search.pasted_unreadable')}
                 </p>
-            )}
-
-            {scannerOpen && (
-                <div
-                    className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={t('scan.title')}
-                    // Backdrop click closes. The check keeps a click that
-                    // started inside the panel from closing it on mouse-up.
-                    onMouseDown={(e) => {
-                        if (e.target === e.currentTarget) setScannerOpen(false)
-                    }}
-                >
-                    <div className="w-full max-w-md rounded-lg bg-cream p-5 shadow-lg">
-                        <div className="mb-3 flex items-baseline justify-between gap-4">
-                            <h2 className="font-medium">{t('scan.title')}</h2>
-                            <button
-                                type="button"
-                                onClick={() => setScannerOpen(false)}
-                                className="text-sm text-ink-soft underline"
-                            >
-                                {t('scan.close')}
-                            </button>
-                        </div>
-
-                        {/*
-                          Unmounted entirely when closed, which is what releases
-                          the camera — the component stops its own stream on
-                          unmount. Hiding it with CSS would leave the light on.
-                        */}
-                        <BarcodeScanner autoStart />
-                    </div>
-                </div>
             )}
 
             <div className="mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]">
@@ -486,10 +441,24 @@ export default function Search({
                                         image gives up most of its height. */}
                                     <ul className="space-y-3">
                                         {items.map((g) => (
-                                            <li key={g.id}>
+                                            <li key={g.id} className="relative">
+                                                {/*
+                                                  The grid view saves because it
+                                                  is a ProductCard; this one is a
+                                                  bespoke compact row and had no
+                                                  control at all — so changing
+                                                  how you look at the same
+                                                  results quietly took away the
+                                                  ability to keep one. Outside
+                                                  the anchor, which owns the
+                                                  click.
+                                                */}
+                                                <div className="absolute top-1 right-1 z-10">
+                                                    <SaveToList groupId={g.id} compact />
+                                                </div>
                                                 <a
                                                     href={`/${market.key}/p/${g.id}/${g.slug}`}
-                                                    className="flex gap-3 rounded border border-line bg-card p-2 hover:bg-cream"
+                                                    className="flex gap-3 rounded border border-line bg-card p-2 pr-16 hover:bg-cream"
                                                 >
                                                     {g.image && (
                                                         <img

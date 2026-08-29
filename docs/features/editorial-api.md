@@ -141,8 +141,8 @@ returns the authoritative one:
 ```
 
 For a plan this is **advisory**: the final allowlist includes the finds the Serendipity Engine picks
-at build time, which do not exist when the plan is written. A token naming an unpinned product may
-still resolve later. It is reported as unresolved anyway, because that is what is known now, and
+at build time, which do not exist when the plan is written. A token naming a product outside the
+curated shortlist may still resolve later. It is reported as unresolved anyway, because that is what is known now, and
 telling an author a link is fine when it might not be is the failure that matters.
 
 ### Linking to the rest of the site
@@ -310,10 +310,53 @@ them is a correctness bug, not a typo. A write containing an unusable id is reje
 
 1. `GET /coves?market=…&from=…` — see what is already planned. Do not write over an approved plan.
 2. `GET /products?market=…&q=…` — find real things. Look at more than you need.
-3. `POST /coves` with `market`, `date` (YYYY-MM-DD), `title`, `blurb`, `editorial`,
-   `pinnedGroupIds`, `queries`.
+3. `POST /coves` with `market`, `date` (YYYY-MM-DD), `title`, `blurb`, `editorial`, `items`,
+   `queries`.
 4. Read `linkCheck` in the response. `unresolved` lists tokens that will render as plain text.
    Fix them and POST again — the same date updates in place.
+
+### `items`: the curated shortlist
+
+The products the article is *about*, in the order the article follows, each with the reason it is on
+the list:
+
+```json
+"items": [
+  { "groupId": 8412, "note": "the only one with a real grinder", "verdict": "best overall" },
+  { "groupId": 5190, "note": "cheap, and the writing should say why that is fine" }
+]
+```
+
+`note` is a brief to whoever writes the prose — including a later `POST` from you — and is never
+shown to a reader. A curated plan tells the builder's model to cover **every** item in order, rather
+than picking two or three, so the shortlist is a commitment and not a hint. See
+[cove-curation.md](cove-curation.md).
+
+An item may instead carry `source` + `externalId`, but only for a source whose catalogue may not be
+mirrored (Amazon). Anything already in the catalogue has a `groupId`, and storing it by external id
+would make a second, unlinked copy of a product the site can already compare properly.
+
+A write **replaces** the shortlist rather than adding to it: a merge would make "remove the third
+product" impossible to express, and a retry after a timeout would double the list.
+
+`pinnedGroupIds` — a flat array of ids — is still accepted and written as items, so a key issued
+before curation existed keeps working. Errors are reported under whichever field you sent.
+
+### `buildInstructions`: how it should be written
+
+Direction for whoever writes the prose, applied once to the whole article — "keep it short", "lean on
+the nostalgia, not the tech". Distinct from an item's `note`, which is about one product, and from
+`editorial`, which *is* the article and skips the model entirely. Sent as part of the brief rather
+than as a rule, so it cannot loosen the constraints on prices and invented claims. Capped at 1000
+characters: a brief long enough to be an article is an article.
+
+### Writing a gift persona
+
+A persona is a Cove with no date, served permanently at `/{market}/gift-ideas/{slug}`. Same call,
+with `kind: "persona"` and a `slug` instead of a `date`; sending both is rejected rather than
+reconciled, because a persona holding a date would be published as that morning's Daily Cove. Most
+personas want `"pickMode": "locked"`, which publishes exactly the shortlist. See
+[gift-personas.md](gift-personas.md).
 
 Write in the market's language (`GET /api/editorial` lists them). `queries` are product words —
 "hondenmand" finds products, "cadeau voor hondenliefhebbers" finds nothing.

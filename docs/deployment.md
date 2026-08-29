@@ -41,6 +41,32 @@ believing a person still has to press a button in Coolify will ship to real traf
 is not hypothetical: `main` moved to `2140f25` at 07:24 on 2026-08-10 and production rebuilt within
 the minute.
 
+## Pushing is a deploy, so pushing is asked for
+
+Nobody — and no agent — pushes `staging` or `main` on their own initiative. Work gets committed
+locally and left there; the branch is *ready to push*, and whether it goes out is a decision someone
+makes deliberately, each time. Approval for one push is not approval for the next one.
+
+This is a consequence of the section above rather than a separate policy: with auto-deploy on both
+apps, there is no later moment at which a person reviews what is shipping. The push **is** that
+moment, so it is the one that has to be chosen.
+
+### Push the change whole
+
+Git cannot push uncommitted work, so the hazard is never a *missing* deploy — it is a **partial**
+one. A service committed without the migration behind it, a controller without the React page it
+renders, a config key read by code that shipped without the key: each of those builds, deploys, and
+then fails on the first real request.
+
+"Is `git status` clean?" is the wrong check. This tree routinely carries dozens of unrelated modified
+and untracked files, so that gate would never pass and would train you to wave it through. The right
+check is against the diff you are shipping: **does every piece this change needs have a commit?**
+
+Note that the local suite cannot catch this, and neither could CI before the fact — the hook runs
+against your working tree, where the missing pieces are still sitting there, present and green. CI
+catches it after the push, which is the right place but not a comfortable one when the push already
+deployed. So the check is yours to make before you push.
+
 ## Planned: one branch, two apps — NOT yet in effect
 
 The intended model is that both applications track **`main`**, staging deploying every push and

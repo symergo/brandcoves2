@@ -163,7 +163,8 @@ class DailyCoveTest extends TestCase
         $this->buildEdition();
 
         // A future edition is a draft. Reachable by URL, it would leak
-        // tomorrow's theme and finds to anyone who can type a date.
+        // tomorrow's theme and finds. The dated form 404s too — nothing is
+        // published on that date, so there is nothing to redirect to.
         $this->get('/be-nl/daily/'.CarbonImmutable::tomorrow()->toDateString())
             ->assertNotFound();
     }
@@ -173,11 +174,22 @@ class DailyCoveTest extends TestCase
     {
         $edition = $this->buildEdition();
 
-        // The archive is the SEO asset. A daily game whose past rounds 404 has
-        // nothing to link to and nothing indexed.
-        $this->get('/be-nl/daily/'.$edition->drop_date->toDateString())
+        /*
+         * The archive is the SEO asset. A column whose past editions 404 has
+         * nothing to link to and nothing indexed.
+         *
+         * Addressed by name now — /daily/vondsten-voor-thuiswerkers rather
+         * than by the day it fell on.
+         */
+        $this->get('/be-nl/daily/'.$edition->slug)
             ->assertOk()
             ->assertInertia(fn ($page) => $page->has('finds'));
+
+        // And the dated URL it used to live at still resolves, permanently, to
+        // that name: it is indexed and it is in three months of digest emails.
+        $this->get('/be-nl/daily/'.$edition->drop_date->toDateString())
+            ->assertRedirect('/be-nl/daily/'.$edition->slug)
+            ->assertStatus(301);
     }
 
     #[Test]

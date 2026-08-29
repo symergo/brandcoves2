@@ -109,8 +109,29 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        /*
+         * Who gets a JSON error rather than an HTML one.
+         *
+         * `api/*` alone was narrower than Laravel's own default, and the
+         * difference stopped mattering the moment the site grew a caller that
+         * is neither the API nor a page: the save control, which posts to
+         * `/list-items` and `/save-intent` with `Accept: application/json` and
+         * reads the answer.
+         *
+         * Under the old predicate a validation failure there was answered with
+         * a **302 to an HTML page**, which `fetch` follows silently and reports
+         * as a success — so the one thing the control could not do was find out
+         * that it had failed. A guest hitting an `auth` route got the login
+         * page as a 200 for the same reason.
+         *
+         * `expectsJson()` restores the framework default and is exactly the
+         * question worth asking: did this caller ask for JSON? Inertia visits
+         * are unaffected — they send `Accept: text/html`, so `wantsJson()` is
+         * false and `acceptsAnyContentType()` is false — and keep their
+         * redirect-and-flash behaviour.
+         */
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
 
         /*

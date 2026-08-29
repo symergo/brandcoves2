@@ -54,6 +54,7 @@ class DailyDealsTest extends TestCase
             'image_url' => "https://example.test/{$n}.jpg",
             'in_stock' => true,
             'giftable' => true,
+            'worth_showing' => true,
             'merchant_count' => 2,
             'min_price' => 5000,
             'median_price' => 10000,
@@ -105,10 +106,37 @@ class DailyDealsTest extends TestCase
     public function something_nobody_would_give_as_a_gift_is_not_shown(): void
     {
         // The column sits beside gift writing on a gift site.
-        $this->group(['title' => 'Printer cartridge', 'giftable' => false]);
+        $this->group([
+            'title' => 'Printer cartridge',
+            'giftable' => false,
+            'worth_showing' => false,
+        ]);
         $this->group(['title' => 'Headphones']);
 
         $this->assertSame(['Headphones'], $this->deals());
+    }
+
+    #[Test]
+    public function an_expensive_thing_is_still_a_deal(): void
+    {
+        /*
+         * The column gates on `worth_showing`, not `giftable`.
+         *
+         * Over the gift engine's ceiling a product stops being a suggestion,
+         * which is that engine's problem — a deal is a deal at any price, and a
+         * heavily discounted expensive thing is the best row this column can
+         * carry. Before the split these were silently excluded.
+         */
+        $this->group([
+            'title' => 'Espresso machine',
+            'giftable' => false,
+            'worth_showing' => true,
+            'giftable_reason' => 'too_expensive',
+            'min_price' => 70000,
+            'median_price' => 100000,
+        ]);
+
+        $this->assertSame(['Espresso machine'], $this->deals());
     }
 
     #[Test]

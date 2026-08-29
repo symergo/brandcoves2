@@ -1,5 +1,6 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import SaveToList from '../../Components/SaveToList'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -169,7 +170,16 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                                 {answer.picks.length > 0 && (
                                     <ul className="mt-4 grid gap-3 sm:grid-cols-3">
                                         {answer.picks.map((pick) => (
-                                            <li key={pick.id}>
+                                            <li key={pick.id} className="relative">
+                                                {/*
+                                                  Somebody recommended this to a
+                                                  stranger, and the stranger had
+                                                  no way to keep it. Outside the
+                                                  anchor, which owns the click.
+                                                */}
+                                                <div className="absolute top-2 right-2 z-10">
+                                                    <SaveToList groupId={pick.id} compact />
+                                                </div>
                                                 <Link
                                                     href={pick.url}
                                                     className="flex h-full flex-col rounded-lg border border-line p-3 transition hover:border-ink"

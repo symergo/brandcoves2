@@ -684,6 +684,10 @@ class SecretSantaController extends Controller
                 'url' => $item->group === null
                     ? null
                     : $current->url("p/{$item->group_id}/{$item->group->slug}"),
+                // So a Santa can keep an idea on their own shortlist while they
+                // think about it. Already present in `url`; see the same note
+                // in SharedListController.
+                'groupId' => $item->group_id,
                 // Claiming still matters inside a group: several people may hold
                 // the same person's link when families overlap.
                 'claimed' => $item->isClaimed(),

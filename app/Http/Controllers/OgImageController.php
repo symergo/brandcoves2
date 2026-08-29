@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
-use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Services\Seo\OgImage;
 use App\Support\CurrentMarket;
@@ -84,8 +83,9 @@ class OgImageController extends Controller
 
     public function guide(CurrentMarket $current, OgImage $og, string $market, string $slug): Response
     {
-        $guide = Guide::query()
+        $guide = DailyPickSet::query()
             ->forMarket($current->get())
+            ->articles()
             ->published()
             ->where('slug', $slug)
             ->firstOrFail();
@@ -95,9 +95,9 @@ class OgImageController extends Controller
         return $this->card(
             'guide:'.$guide->id,
             $og,
-            $guide->title,
+            $guide->theme_title,
             __('site.og.guide', [], $language),
-            __('site.og.guide_footnote', ['count' => $guide->items()->count()], $language),
+            __('site.og.guide_footnote', ['count' => $guide->picks()->count()], $language),
         );
     }
 
@@ -119,6 +119,7 @@ class OgImageController extends Controller
     {
         $edition = DailyPickSet::query()
             ->forMarket($current->get())
+            ->daily()
             ->published()
             ->whereDate('drop_date', $date)
             ->where('drop_date', '<=', now()->toDateString())

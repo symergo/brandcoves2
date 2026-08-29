@@ -65,6 +65,10 @@ class SendCoveDigest implements ShouldQueue
 
         $edition = DailyPickSet::query()
             ->forMarket($this->market)
+            // Matched on the date, so a persona could not be selected anyway —
+            // said explicitly because the next person to relax that date clause
+            // would be emailing one out as the morning's Cove.
+            ->daily()
             ->published()
             ->where('drop_date', $date)
             ->with(['picks.group'])

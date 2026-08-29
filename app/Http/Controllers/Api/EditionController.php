@@ -47,6 +47,7 @@ class EditionController extends Controller
 
         $edition = DailyPickSet::query()
             ->where('market', $resolved->value)
+            ->daily()
             ->whereDate('drop_date', $day->toDateString())
             ->with(['picks.group', 'guide'])
             ->first();
@@ -69,7 +70,7 @@ class EditionController extends Controller
                 'date' => $edition->drop_date->toDateString(),
                 'status' => $edition->status->value,
                 'publishedAt' => $edition->published_at?->toIso8601String(),
-                'url' => '/'.$edition->market->value.'/daily/'.$edition->drop_date->toDateString(),
+                'url' => '/'.$edition->market->value.'/daily/'.$edition->slug,
 
                 'theme' => [
                     'title' => $edition->theme_title,

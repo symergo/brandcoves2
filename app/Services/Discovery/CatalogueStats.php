@@ -22,9 +22,24 @@ use Illuminate\Support\Facades\DB;
 final class CatalogueStats
 {
     /**
+     * Below this a category cannot say anything about rarity.
+     *
+     * Within a category of n products the rarest a word can possibly be is
+     * 1/n, so a category of 50 would call a word appearing in a single title
+     * "maximally rare" on the evidence of one row. 200 buys at least 2.3
+     * decades of range, which is enough for the ordering to mean something.
+     * Smaller categories fall back to the market-wide corpus.
+     */
+    private const MIN_CATEGORY_SAMPLE = 200;
+
+    /** How many listings must use a token before it counts as a word. See {@see isWord()}. */
+    private const MIN_WORD_SUPPORT = 3;
+
+    /**
      * @param  array<string, int>  $categoryCounts
      * @param  array<string, int>  $brandCounts
      * @param  array<string, int>  $tokenCounts  how many groups contain each title word
+     * @param  array<string, array<string, int>>  $categoryTokenCounts  the same, per category
      * @param  array<int, float>  $demand  group id => bestseller-chart strength, 0-1
      */
     private function __construct(
@@ -32,6 +47,7 @@ final class CatalogueStats
         private readonly array $categoryCounts,
         private readonly array $brandCounts,
         private readonly array $tokenCounts,
+        private readonly array $categoryTokenCounts = [],
         private readonly array $demand = [],
     ) {}
 
@@ -42,9 +58,19 @@ final class CatalogueStats
             ->whereNotNull('min_price')
             ->count();
 
+        /*
+         * `min_price IS NOT NULL` on all three, matching `$total`.
+         *
+         * It was absent here, so `categoryShare()` divided a count over the
+         * whole table by a total over the priced rows only — every share came
+         * out slightly high and every category therefore slightly less rare
+         * than it is. Small, and wrong in a way that got worse as the
+         * proportion of unpriced rows grew.
+         */
         $categories = DB::table('product_groups')
             ->where('market', $market->value)
             ->whereNotNull('category')
+            ->whereNotNull('min_price')
             ->groupBy('category')
             ->select('category', DB::raw('count(*) as n'))
             ->pluck('n', 'category')
@@ -54,6 +80,7 @@ final class CatalogueStats
         $brands = DB::table('product_groups')
             ->where('market', $market->value)
             ->whereNotNull('brand')
+            ->whereNotNull('min_price')
             ->groupBy('brand')
             ->select('brand', DB::raw('count(*) as n'))
             ->pluck('n', 'brand')
@@ -89,6 +116,49 @@ final class CatalogueStats
         }
 
         /*
+         * The same frequencies again, but counted inside each category.
+         *
+         * This is the fix for the signal's original sin: measured across the
+         * whole market, "rare" and "we have thin coverage of this category"
+         * produce the same number. If the catalogue holds 200 board games and
+         * 40,000 phone accessories then every board-game word looks exotic, and
+         * the engine ranks an ingestion gap as a discovery.
+         *
+         * Within its own category the question becomes the one actually worth
+         * asking: is this word unusual *for a kitchen product*? "koptelefoon"
+         * among audio is furniture; "sous-vide" among kitchen is a find.
+         *
+         * Only categories at or above MIN_CATEGORY_SAMPLE are built, which also
+         * bounds the memory: the long tail of small categories is the bulk of
+         * the distinct (category, word) pairs and none of the signal.
+         */
+        $bigCategories = array_keys(array_filter(
+            $categories,
+            fn (int $n): bool => $n >= self::MIN_CATEGORY_SAMPLE,
+        ));
+
+        $categoryTokenCounts = [];
+
+        if ($bigCategories !== []) {
+            $placeholders = implode(',', array_fill(0, count($bigCategories), '?'));
+
+            $categoryTokens = DB::select(<<<SQL
+                SELECT category, word, count(DISTINCT id)::int AS n
+                FROM (
+                    SELECT id, category, unnest(regexp_split_to_array(lower(unaccent(title)), '[^a-z0-9]+')) AS word
+                    FROM product_groups
+                    WHERE market = ? AND min_price IS NOT NULL AND category IN ({$placeholders})
+                ) t
+                WHERE length(word) > 3
+                GROUP BY category, word
+            SQL, [$market->value, ...$bigCategories]);
+
+            foreach ($categoryTokens as $row) {
+                $categoryTokenCounts[$row->category][$row->word] = (int) $row->n;
+            }
+        }
+
+        /*
          * Which of these products a retailer's bestseller chart knows about.
          *
          * Loaded here rather than queried by the scorer so that SerendipityEngine
@@ -98,7 +168,7 @@ final class CatalogueStats
          */
         $demand = app(ChartDemand::class)->scores($market);
 
-        return new self(max(1, $total), $categories, $brands, $tokenCounts, $demand);
+        return new self(max(1, $total), $categories, $brands, $tokenCounts, $categoryTokenCounts, $demand);
     }
 
     /**
@@ -143,10 +213,21 @@ final class CatalogueStats
      * The *rarest* word, not the average: "draadloze bluetooth koptelefoon met
      * ruisonderdrukking" is five common words and one specific one, and it is
      * the specific one that tells you what the thing is. Averaging buries it.
+     *
+     * Scored against the product's own category where that category is big
+     * enough to have an opinion, and against the whole market otherwise. See
+     * the comment on the per-category corpus in {@see build()} for why: across
+     * the whole market this signal cannot tell an unusual product from a
+     * category we have barely ingested.
      */
-    public function lexicalRarity(string $title): float
+    public function lexicalRarity(string $title, ?string $category = null): float
     {
-        $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $scoped = $category !== null && isset($this->categoryTokenCounts[$category]);
+
+        $counts = $scoped ? $this->categoryTokenCounts[$category] : $this->tokenCounts;
+        $total = $scoped ? $this->categoryCounts[$category] : $this->total;
+
+        $words = preg_split('/[^\p{L}\p{N}]+/u', $this->fold($title), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         $rarest = 1.0;
         $considered = 0;
 
@@ -155,15 +236,12 @@ final class CatalogueStats
                 continue;
             }
 
-            // A word absent from the corpus is usually a model number or a typo
-            // rather than an exotic product. Treating it as maximally rare
-            // would rank noise to the top, so unknown words are skipped.
-            if (! isset($this->tokenCounts[$word])) {
+            if (! isset($counts[$word]) || ! $this->isWord($word)) {
                 continue;
             }
 
             $considered++;
-            $rarest = min($rarest, $this->tokenCounts[$word] / $this->total);
+            $rarest = min($rarest, $counts[$word] / $total);
         }
 
         if ($considered === 0) {
@@ -173,8 +251,86 @@ final class CatalogueStats
         /*
          * Log scale. Raw share is useless here: the difference between a word
          * in 0.01% of titles and one in 0.5% is enormous perceptually and
-         * invisible linearly. log10 over four decades maps that to 0-1.
+         * invisible linearly.
+         *
+         * Scoped, the divisor is the category's own dynamic range rather than a
+         * fixed number of decades. A fixed window would hand bigger categories
+         * higher scores for free — in a category of 200 the rarest possible
+         * word sits at 1/200, which four decades reads as 0.575, while a
+         * category of 20,000 reaches 1.0 for the identical fact of "appears
+         * once". Dividing by log10(total) maps "appears once" to 1.0 in every
+         * category, which is the only reading that compares across them.
+         *
+         * Unscoped keeps the tuned four decades. The market corpus is always
+         * ~10^5, so a fixed window is a fair one — and four decades is itself
+         * log10(10,000), the same formula against an assumed corpus size.
          */
-        return max(0.0, min(1.0, -log10(max($rarest, 1e-4)) / 4));
+        $rarity = $scoped
+            ? log10(1 / $rarest) / log10(max(10, $total))
+            : -log10(max($rarest, 1e-4)) / 4;
+
+        return max(0.0, min(1.0, $rarity));
+    }
+
+    /**
+     * Is this token a word at all, or a part number wearing one's clothes?
+     *
+     * The engine used to answer this with "is it absent from the corpus", on
+     * the reasoning that an unknown token is a model number or a typo. That
+     * rule cannot fire: the corpus is built from these same titles, so every
+     * word in a product's title is in it by construction — a model number
+     * included, with a count of exactly one, which the log scale reads as
+     * maximally rare. Measured before this was added, **61% of the be-nl
+     * catalogue scored ≥0.99** on the signal carrying 40 of the 100 rarity
+     * points. The strongest input to the ranking was very nearly a constant.
+     *
+     * Two rules, both restatements of what that comment meant to say:
+     *
+     * - **A token with a digit in it is a part number, a capacity or a size.**
+     *   "bm5dft4941b", "kis86afe0", "64gb", "77mm". None of them tells you what
+     *   the thing is, and every title has one.
+     * - **A word almost nothing else uses is not a word.** A genuinely
+     *   descriptive noun recurs; a token appearing in one or two listings out
+     *   of 136,000 is a typo, a transliteration, or a model name spelled
+     *   without digits. Three is the smallest count that can distinguish "rare"
+     *   from "unique", and being wrong here is cheap — the title has other
+     *   words, and the rarest surviving one still decides.
+     *
+     * Support is counted market-wide even when scoring within a category, so
+     * the two questions stay separate: "is this a word" is a fact about the
+     * language, "how rare is it here" is a fact about the category.
+     */
+    private function isWord(string $word): bool
+    {
+        if (preg_match('/\d/', $word) === 1) {
+            return false;
+        }
+
+        return ($this->tokenCounts[$word] ?? 0) >= self::MIN_WORD_SUPPORT;
+    }
+
+    /**
+     * Lowercase and strip accents, matching Postgres' `unaccent`.
+     *
+     * The corpus is built with `lower(unaccent(title))` in SQL and was looked
+     * up here with `mb_strtolower` alone, so every accented word missed: the
+     * corpus holds "cafe", the lookup asked for "café", and `isset` said no.
+     * Unknown words are skipped, so the signal was quietly dropping accented
+     * nouns — in the two Dutch markets and the French one, which is where the
+     * distinctive words live.
+     *
+     * Folded by table rather than `iconv('ASCII//TRANSLIT')`, which produces
+     * different output on glibc, musl and Windows.
+     */
+    private function fold(string $text): string
+    {
+        return strtr(mb_strtolower($text), [
+            'à' => 'a', 'á' => 'a', 'â' => 'a', 'ä' => 'a', 'ã' => 'a', 'å' => 'a',
+            'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
+            'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'ö' => 'o', 'õ' => 'o',
+            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
+            'ç' => 'c', 'ñ' => 'n', 'ß' => 'ss', 'ø' => 'o', 'æ' => 'ae',
+        ]);
     }
 }

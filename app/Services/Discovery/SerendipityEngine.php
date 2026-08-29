@@ -76,7 +76,7 @@ class SerendipityEngine
         }
 
         $signals = [
-            'lexical' => $this->stats->lexicalRarity($group->title),
+            'lexical' => $this->stats->lexicalRarity($group->title, $group->category),
             'category' => $this->rarityOfShare($this->stats->categoryShare($group->category)),
             'brand' => $this->rarityOfShare($this->stats->brandShare($group->brand)),
             'exclusivity' => $this->exclusivity($group),
@@ -115,9 +115,16 @@ class SerendipityEngine
             return 0.0;
         }
 
-        // The classifier has already decided this is a consumable, a spare part
-        // or a warranty. Those are extremely rare *and* extremely unwelcome.
-        if ($group->giftable === false) {
+        /*
+         * The classifier has already decided this is a consumable or fitment.
+         * Those are extremely rare *and* extremely unwelcome.
+         *
+         * `worth_showing`, not `giftable`: this surface is not suggesting a
+         * present, so the gift engine's price ceiling has no business here. An
+         * expensive unusual object is the best thing that can land on a Cove.
+         * Still `=== false`, so an unclassified row passes as before.
+         */
+        if ($group->worth_showing === false) {
             return 0.0;
         }
 

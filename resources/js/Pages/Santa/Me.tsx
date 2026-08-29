@@ -1,4 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react'
+import SaveToList from '../../Components/SaveToList'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
@@ -10,6 +11,8 @@ interface Wish {
     price: Cents | null
     live: boolean
     url: string | null
+    /** So a Santa can keep an idea on their own list. Null for a manual wish. */
+    groupId: number | null
     claimed: boolean
 }
 
@@ -126,6 +129,22 @@ export default function SantaMe({ group, me }: Props) {
                                             </p>
                                         )}
                                     </div>
+
+                                    {/*
+                                      Keep it on my own shortlist while I think.
+                                      
+                                      Claiming is a commitment to the group;
+                                      this is a note to myself, and needing the
+                                      first to do the second is what makes
+                                      somebody claim early and regret it. Writes
+                                      only to my list, so it tells the giftee
+                                      nothing.
+                                    */}
+                                    {wish.groupId !== null && (
+                                        <div className="shrink-0">
+                                            <SaveToList groupId={wish.groupId} compact />
+                                        </div>
+                                    )}
 
                                     {/* Claiming still matters inside a group:
                                         families overlap, and several people may

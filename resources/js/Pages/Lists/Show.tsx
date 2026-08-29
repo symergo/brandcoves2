@@ -1,6 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
-import ManualItem from '../../Components/ManualItem'
+import AddProduct from '../../Components/AddProduct'
 import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
@@ -163,21 +163,6 @@ export default function ListShow({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                    {/*
-                      Adding is what a list is for, and there was no way to do it
-                      from one: every save starts at a product, and this page
-                      pointed at no products. A dead end at the exact moment
-                      somebody has decided to fill it.
-                    */}
-                    {access.canEdit && (
-                        <Link
-                            href={`${base}/search`}
-                            className="rounded-lg border border-line px-3 py-2 text-sm hover:border-ink"
-                        >
-                            + {t('lists.find_things')}
-                        </Link>
-                    )}
-
                     {access.isOwner && (
                         <button
                             onClick={share}
@@ -337,147 +322,138 @@ export default function ListShow({
             {items.length === 0 ? (
                 <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
                     <p className="text-ink-soft">{t('lists.empty_list')}</p>
+                    {/*
+                      One control here too. An empty list is exactly where
+                      somebody discovers their present is not something we
+                      stock, and the panel carries that path without making it a
+                      second button to choose between.
+                    */}
                     {access.canEdit && (
                         <div className="mt-4 flex flex-wrap items-start justify-center gap-2">
-                            <Link
-                                href={`${base}/search`}
-                                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-                            >
-                                {t('lists.find_things')}
-                            </Link>
-                            {/*
-                              Beside the search, not instead of it. Most things
-                              are in the catalogue and searching is the better
-                              path; this is for the ones that are not, and an
-                              empty list is exactly where somebody discovers
-                              their present is one of them.
-                            */}
-                            <ManualItem
-                                action={`${base}/list-items`}
-                                data={{ source: 'manual', wishlist_id: list.id }}
-                                hint={t('lists.manual_hint')}
-                                withNote
-                            />
+                            <AddProduct base={base} listId={list.id} market={market} />
                         </div>
                     )}
                 </div>
             ) : (
-                <ul className="mt-8 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
-                    {items.map((item) => (
-                        <li key={item.id} className="p-4">
-                          <div className="flex items-center gap-4">
-                            {item.image && (
-                                <img
-                                    src={item.image}
-                                    alt=""
-                                    className="h-14 w-14 rounded object-contain"
-                                    onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
-                                />
-                            )}
+                <>
+                    {/*
+                      Directly on top of the thing it fills.
 
-                            <div className="min-w-0 flex-1">
-                                {item.groupId && item.slug ? (
-                                    <Link href={`${base}/p/${item.groupId}/${item.slug}`} className="font-medium hover:underline">
-                                        {item.title}
-                                    </Link>
-                                ) : item.externalUrl ? (
-                                    // A link the owner typed. Still `noopener
-                                    // noreferrer nofollow`: this list gets
-                                    // shared, and by then the link is being
-                                    // followed by people who did not type it.
-                                    <a
-                                        href={item.externalUrl}
-                                        target="_blank"
-                                        rel="nofollow noopener noreferrer"
-                                        className="font-medium hover:underline"
-                                    >
-                                        {item.title}
-                                    </a>
-                                ) : (
-                                    <span className="font-medium">{item.title}</span>
-                                )}
-                                {item.note && <p className="text-sm text-ink-soft">{item.note}</p>}
-                            </div>
+                      It sat in the header beside Share and Delete, which is a
+                      row about the list as a whole — renaming it, giving it
+                      away, getting rid of it. Adding to it is not that: it is
+                      the ordinary thing you came to do, and it belongs against
+                      the items rather than filed with the administration.
 
-                            <div className="text-right text-sm">
-                                {item.currentPrice !== null && (
-                                    <div className="font-semibold">
-                                        {t('lists.price_now', { price: formatPrice(item.currentPrice, market) })}
-                                    </div>
+                      Once, not also below. Two of the same control on one
+                      screen is not twice as findable.
+                    */}
+                    {access.canEdit && (
+                        <div className="mt-8">
+                            <AddProduct base={base} listId={list.id} market={market} />
+                        </div>
+                    )}
+
+                    <ul className="mt-3 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
+                        {items.map((item) => (
+                            <li key={item.id} className="p-4">
+                              <div className="flex items-center gap-4">
+                                {item.image && (
+                                    <img
+                                        src={item.image}
+                                        alt=""
+                                        className="h-14 w-14 rounded object-contain"
+                                        onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
+                                    />
                                 )}
-                                {/* Only when it actually moved — otherwise it is noise. */}
-                                {item.price !== null &&
-                                    item.currentPrice !== null &&
-                                    item.price !== item.currentPrice && (
-                                        <div className="text-xs text-ink-soft line-through">
-                                            {formatPrice(item.price, market)}
+
+                                <div className="min-w-0 flex-1">
+                                    {item.groupId && item.slug ? (
+                                        <Link href={`${base}/p/${item.groupId}/${item.slug}`} className="font-medium hover:underline">
+                                            {item.title}
+                                        </Link>
+                                    ) : item.externalUrl ? (
+                                        // A link the owner typed. Still `noopener
+                                        // noreferrer nofollow`: this list gets
+                                        // shared, and by then the link is being
+                                        // followed by people who did not type it.
+                                        <a
+                                            href={item.externalUrl}
+                                            target="_blank"
+                                            rel="nofollow noopener noreferrer"
+                                            className="font-medium hover:underline"
+                                        >
+                                            {item.title}
+                                        </a>
+                                    ) : (
+                                        <span className="font-medium">{item.title}</span>
+                                    )}
+                                    {item.note && <p className="text-sm text-ink-soft">{item.note}</p>}
+                                </div>
+
+                                <div className="text-right text-sm">
+                                    {item.currentPrice !== null && (
+                                        <div className="font-semibold">
+                                            {t('lists.price_now', { price: formatPrice(item.currentPrice, market) })}
                                         </div>
                                     )}
-                            </div>
+                                    {/* Only when it actually moved — otherwise it is noise. */}
+                                    {item.price !== null &&
+                                        item.currentPrice !== null &&
+                                        item.price !== item.currentPrice && (
+                                            <div className="text-xs text-ink-soft line-through">
+                                                {formatPrice(item.price, market)}
+                                            </div>
+                                        )}
+                                </div>
 
-                            <button
-                                onClick={() =>
-                                    router.delete(`${base}/list-items/${item.id}`, {
-                                        preserveScroll: true,
-                                        // Otherwise the bookmark on the product
-                                        // page still reads as saved after the
-                                        // item has gone.
-                                        onSuccess: () =>
-                                            item.groupId !== null && markRemoved(item.groupId),
-                                    })
-                                }
-                                aria-label={t('lists.remove')}
-                                className="rounded p-2 text-ink-soft hover:text-accent"
-                            >
-                                ✕
-                            </button>
-                          </div>
+                                <button
+                                    onClick={() =>
+                                        router.delete(`${base}/list-items/${item.id}`, {
+                                            preserveScroll: true,
+                                            // Otherwise the bookmark on the product
+                                            // page still reads as saved after the
+                                            // item has gone.
+                                            onSuccess: () =>
+                                                item.groupId !== null && markRemoved(item.groupId),
+                                        })
+                                    }
+                                    aria-label={t('lists.remove')}
+                                    className="rounded p-2 text-ink-soft hover:text-accent"
+                                >
+                                    ✕
+                                </button>
+                              </div>
 
-                            {/*
-                              Who put in what, on a group list.
+                                {/*
+                                  Who put in what, on a group list.
 
-                              The one place an owner is shown anything resembling
-                              claim state, and it is legitimate: the recipient of
-                              a group list is a third party who never opens this
-                              page, so there is no surprise to protect from the
-                              organiser — who is the person fronting the money.
-                              On every other kind of list the server sends no
-                              key here at all, which is why there is no `else`.
+                                  The one place an owner is shown anything resembling
+                                  claim state, and it is legitimate: the recipient of
+                                  a group list is a third party who never opens this
+                                  page, so there is no surprise to protect from the
+                                  organiser — who is the person fronting the money.
+                                  On every other kind of list the server sends no
+                                  key here at all, which is why there is no `else`.
 
-                              Pledging needs the share link, because that is the
-                              URL the endpoint is mounted on. A private group
-                              list can therefore be read but not contributed to
-                              from here, which is honest: nobody else can reach
-                              it either until it is shared.
-                            */}
-                            {item.contributions !== undefined && (
-                                <Pledge
-                                    action={`${list.shareUrl}/pledge/${item.id}`}
-                                    contributions={item.contributions}
-                                    canContribute={list.shareUrl !== null}
-                                    price={item.currentPrice ?? item.price}
-                                />
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            )}
-
-            {/*
-              After the list, not before it: this is the exception, and the
-              catalogue is still the ordinary way in. Present on a list that
-              already has things on it because "the last one is not in the
-              shops" is when it comes up.
-            */}
-            {items.length > 0 && access.canEdit && (
-                <div className="mt-4">
-                    <ManualItem
-                        action={`${base}/list-items`}
-                        data={{ source: 'manual', wishlist_id: list.id }}
-                        hint={t('lists.manual_hint')}
-                        withNote
-                    />
-                </div>
+                                  Pledging needs the share link, because that is the
+                                  URL the endpoint is mounted on. A private group
+                                  list can therefore be read but not contributed to
+                                  from here, which is honest: nobody else can reach
+                                  it either until it is shared.
+                                */}
+                                {item.contributions !== undefined && (
+                                    <Pledge
+                                        action={`${list.shareUrl}/pledge/${item.id}`}
+                                        contributions={item.contributions}
+                                        canContribute={list.shareUrl !== null}
+                                        price={item.currentPrice ?? item.price}
+                                    />
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </>
             )}
         </>
     )

@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PickMode;
+use App\Enums\Source;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Jobs\BuildDailyEdition;
+use App\Jobs\BuildPersonaCove;
 use App\Models\ApiToken;
 use App\Models\CovePlan;
+use App\Models\CovePlanItem;
 use App\Models\ProductGroup;
 use App\Services\Cove\ObservanceCalendar;
 use App\Services\Editorial\LinkCheck;
@@ -97,29 +102,59 @@ class CovePlanController extends Controller
     {
         $data = $this->validated($request);
         $market = Market::from($data['market']);
+        $kind = CoveKind::from($data['kind'] ?? CoveKind::Daily->value);
         $date = $data['date'] ?? null;
+        $slug = $data['slug'] ?? null;
 
-        $existing = $date === null
-            ? null
-            : CovePlan::query()
+        /*
+         * A persona has no date and a Daily has no slug.
+         *
+         * Refused rather than reconciled, because both silent fixes are worse
+         * than the error: dropping the date would publish something the author
+         * scheduled, and keeping it would hand the morning build a persona.
+         */
+        if ($kind === CoveKind::Persona) {
+            if ($date !== null) {
+                throw ValidationException::withMessages([
+                    'date' => 'A gift persona has no date — it is permanent. Send a slug instead.',
+                ]);
+            }
+
+            if ($slug === null) {
+                throw ValidationException::withMessages([
+                    'slug' => 'A gift persona needs a slug: it is the permanent URL the page lives at.',
+                ]);
+            }
+        }
+
+        $existing = match (true) {
+            $kind === CoveKind::Persona => CovePlan::persona($market, (string) $slug),
+            $date === null => null,
+            default => CovePlan::query()
                 ->where('market', $market->value)
+                ->where('kind', CoveKind::Daily->value)
                 ->whereDate('drop_date', $date)
-                ->first();
+                ->first(),
+        };
 
         if ($existing !== null) {
             $this->assertMayEdit($request, $existing);
         }
 
-        $pinned = $this->resolvePinned($market, $data['pinnedGroupIds'] ?? []);
+        $items = $this->resolveItems($market, $data);
+        $curated = $items->pluck('group')->filter()->values();
 
         $attributes = [
             'market' => $market->value,
-            'drop_date' => $date,
+            'kind' => $kind->value,
+            'drop_date' => $kind === CoveKind::Persona ? null : $date,
+            'slug' => $kind === CoveKind::Persona ? $slug : null,
+            'pick_mode' => $data['pickMode'] ?? PickMode::Open->value,
             'title' => $data['title'],
             'blurb' => $data['blurb'] ?? null,
             'editorial' => $data['editorial'] ?? null,
+            'build_instructions' => $data['buildInstructions'] ?? null,
             'queries' => $data['queries'] ?? [],
-            'pinned_group_ids' => $pinned->pluck('id')->all(),
             'note' => $data['note'] ?? null,
         ];
 
@@ -133,6 +168,26 @@ class CovePlanController extends Controller
             $plan = $existing->refresh();
         }
 
+        /*
+         * Replace the shortlist, never merge into it.
+         *
+         * A write says what the plan is, not what to add to it — a merge would
+         * make "remove the third product" impossible to express, and a retry
+         * after a timeout would double the list.
+         */
+        $plan->items()->delete();
+
+        foreach ($items as $rank => $item) {
+            $plan->items()->create([
+                'group_id' => $item['group']?->id,
+                'source' => $item['source'],
+                'external_id' => $item['externalId'],
+                'rank' => $rank + 1,
+                'note' => $item['note'],
+                'verdict' => $item['verdict'],
+            ]);
+        }
+
         return response()->json([
             'data' => $this->payload($plan),
             // The plan's own queries count as linkable searches: an author who
@@ -141,7 +196,7 @@ class CovePlanController extends Controller
             'linkCheck' => $this->links->against(
                 $plan->editorial,
                 $market,
-                $pinned,
+                $curated,
                 extraSearches: (array) $plan->queries,
             ),
         ], $existing === null ? 201 : 200);
@@ -167,10 +222,10 @@ class CovePlanController extends Controller
         // Approving and building are separate calls, but wanting both in one
         // round trip is the normal case for an author who has just finished
         // writing and wants to look at the result.
-        $queued = $request->boolean('build') && $plan->drop_date !== null;
+        $queued = $request->boolean('build') && ($plan->drop_date !== null || $plan->isPersona());
 
         if ($queued) {
-            BuildDailyEdition::dispatch($plan->market, $plan->drop_date->toDateString());
+            $this->queueBuild($plan);
         }
 
         return response()->json([
@@ -190,9 +245,9 @@ class CovePlanController extends Controller
      */
     public function build(CovePlan $plan): JsonResponse
     {
-        if ($plan->drop_date === null) {
+        if ($plan->drop_date === null && ! $plan->isPersona()) {
             throw ValidationException::withMessages([
-                'plan' => 'That plan has no date. Give it one before building — an edition is a day.',
+                'plan' => 'That plan has no date and is not a persona. Give it one, or make it a persona with a slug.',
             ]);
         }
 
@@ -202,14 +257,31 @@ class CovePlanController extends Controller
             ]);
         }
 
-        BuildDailyEdition::dispatch($plan->market, $plan->drop_date->toDateString());
+        $this->queueBuild($plan);
 
         return response()->json([
             'message' => 'Build queued.',
             'market' => $plan->market->value,
-            'date' => $plan->drop_date->toDateString(),
-            'readBack' => "/api/editorial/editions/{$plan->market->value}/{$plan->drop_date->toDateString()}",
+            'date' => $plan->drop_date?->toDateString(),
+            'slug' => $plan->slug,
+            'readBack' => $plan->isPersona()
+                ? '/'.$plan->market->value.'/gift-ideas/'.$plan->slug
+                : "/api/editorial/editions/{$plan->market->value}/{$plan->drop_date->toDateString()}",
         ], 202);
+    }
+
+    /**
+     * Dispatch the right build for this plan's kind.
+     *
+     * A persona does not go through BuildDailyEdition: that job also mines
+     * guide topics and seeds the seasonal ones, both of which are about the
+     * day, and a persona has none.
+     */
+    private function queueBuild(CovePlan $plan): void
+    {
+        $plan->isPersona()
+            ? BuildPersonaCove::dispatch($plan->id)
+            : BuildDailyEdition::dispatch($plan->market, $plan->drop_date->toDateString());
     }
 
     /** @return array<string, mixed> */
@@ -243,6 +315,39 @@ class CovePlanController extends Controller
             'queries' => ['nullable', 'array', 'max:12'],
             'queries.*' => ['string', 'max:60'],
 
+            /*
+             * A gift persona is a Cove with no date, addressed by a slug.
+             *
+             * Rejected rather than silently ignored when the two disagree: a
+             * dated persona would be picked up by the morning build and
+             * published as that day's Daily Cove.
+             */
+            'kind' => ['nullable', Rule::in(CoveKind::values())],
+            'slug' => ['nullable', 'string', 'max:80', 'alpha_dash'],
+            'pickMode' => ['nullable', Rule::in(PickMode::values())],
+
+            /*
+             * Direction for whoever writes the prose, including a later call
+             * from the same key. Capped short on purpose: it is a brief, and a
+             * brief long enough to be an article is an article.
+             */
+            'buildInstructions' => ['nullable', 'string', 'max:1000'],
+
+            /*
+             * The curated shortlist: what the article is written about.
+             *
+             * Ordered — position is part of the curation — and each entry may
+             * carry the reason it is there, which is handed to the writer.
+             */
+            'items' => ['nullable', 'array', 'max:24'],
+            'items.*.groupId' => ['nullable', 'integer'],
+            'items.*.source' => ['nullable', Rule::in(Source::values())],
+            'items.*.externalId' => ['nullable', 'string', 'max:100'],
+            'items.*.note' => ['nullable', 'string', 'max:500'],
+            'items.*.verdict' => ['nullable', 'string', 'max:80'],
+
+            // The pre-items field. Still accepted, and written as items, so a
+            // key deployed before this change keeps working unchanged.
             'pinnedGroupIds' => ['nullable', 'array', 'max:12'],
             'pinnedGroupIds.*' => ['integer'],
 
@@ -251,38 +356,97 @@ class CovePlanController extends Controller
     }
 
     /**
-     * Turn pinned ids into products, or fail the whole write.
+     * Turn the submitted shortlist into resolvable items, or fail the whole write.
      *
      * All or nothing on purpose. Silently dropping an id that does not resolve
      * leaves an article whose second paragraph discusses a product that is not
      * on the page — the exact failure the ids exist to prevent.
      *
-     * @param  list<int>  $ids
-     * @return Collection<int, ProductGroup>
+     * Both shapes are accepted. `items` is the current one; `pinnedGroupIds` is
+     * what keys written before curation existed still send, and it means the
+     * same thing with no note and no ordering beyond its own.
+     *
+     * @param  array<string, mixed>  $data
+     * @return Collection<int, array{group: ProductGroup|null, source: string|null, externalId: string|null, note: string|null, verdict: string|null}>
      */
-    private function resolvePinned(Market $market, array $ids): Collection
+    private function resolveItems(Market $market, array $data): Collection
     {
-        $ids = array_values(array_unique(array_map('intval', $ids)));
+        $submitted = collect((array) ($data['items'] ?? []));
 
-        if ($ids === []) {
+        /*
+         * Errors are reported under the field the caller actually sent.
+         *
+         * A key written before curation existed sends `pinnedGroupIds`, and
+         * being told its mistake is in `items` — a field it has never heard of
+         * — is a worse error message than no error message.
+         */
+        $field = 'items';
+
+        if ($submitted->isEmpty()) {
+            $field = 'pinnedGroupIds';
+            $submitted = collect((array) ($data['pinnedGroupIds'] ?? []))
+                ->map(fn ($id) => ['groupId' => $id]);
+        }
+
+        if ($submitted->isEmpty()) {
             return collect();
         }
 
-        $rejected = $this->lookup->rejectUnusable($market, $ids);
+        $ids = $submitted
+            ->pluck('groupId')
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
 
-        if ($rejected !== []) {
-            throw ValidationException::withMessages([
-                'pinnedGroupIds' => 'Not usable in '.$market->value.': '.implode(', ', $rejected).
-                    '. A product must exist in this market, be in stock, priced and have an image. '.
-                    'Product ids are per market — the same product elsewhere is a different id.',
-            ]);
+        if ($ids !== []) {
+            $rejected = $this->lookup->rejectUnusable($market, $ids);
+
+            if ($rejected !== []) {
+                throw ValidationException::withMessages([
+                    $field => 'Not usable in '.$market->value.': '.implode(', ', $rejected).
+                        '. A product must exist in this market, be in stock, priced and have an image. '.
+                        'Product ids are per market — the same product elsewhere is a different id.',
+                ]);
+            }
         }
 
-        // Ordered as the author gave them: a pin is a curation decision and its
-        // position is part of the decision.
         $groups = ProductGroup::query()->whereIn('id', $ids)->get()->keyBy('id');
 
-        return collect($ids)->map(fn (int $id) => $groups[$id])->values();
+        return $submitted->map(function (array $item) use ($groups, $field): array {
+            $groupId = isset($item['groupId']) ? (int) $item['groupId'] : null;
+            $source = $item['source'] ?? null;
+            $externalId = $item['externalId'] ?? null;
+
+            if ($groupId === null && ($source === null || $externalId === null)) {
+                throw ValidationException::withMessages([
+                    $field => 'Every item needs either a groupId, or a source and an externalId.',
+                ]);
+            }
+
+            /*
+             * An external id is only meaningful for a source we may not mirror.
+             *
+             * Anything else already has a group id, with offers, a price
+             * history and a comparison behind it; storing it by external id
+             * would make a second, unlinked copy of a product the site can
+             * already compare properly.
+             */
+            if ($groupId === null && Source::from($source)->allowsCatalogueStorage()) {
+                throw ValidationException::withMessages([
+                    $field => "{$source} is in the catalogue — send its groupId. An externalId is only for a source whose catalogue may not be stored.",
+                ]);
+            }
+
+            return [
+                'group' => $groupId === null ? null : $groups[$groupId],
+                'source' => $groupId === null ? $source : null,
+                'externalId' => $groupId === null ? $externalId : null,
+                'note' => $item['note'] ?? null,
+                'verdict' => $item['verdict'] ?? null,
+            ];
+        })->values();
     }
 
     /**
@@ -312,15 +476,22 @@ class CovePlanController extends Controller
         return [
             'id' => $plan->id,
             'market' => $plan->market->value,
+            'kind' => $plan->kind->value,
             'date' => $plan->drop_date?->toDateString(),
+            'slug' => $plan->slug,
+            'pickMode' => $plan->pick_mode->value,
             'title' => $plan->title,
             'status' => $plan->status,
-            'pinnedCount' => count((array) $plan->pinned_group_ids),
+            'curatedCount' => $plan->items()->count(),
             'hasEditorial' => filled($plan->editorial),
             'edition' => $plan->edition === null ? null : [
                 'id' => $plan->edition->id,
                 'status' => $plan->edition->status->value,
-                'url' => '/'.$plan->market->value.'/daily/'.$plan->edition->drop_date->toDateString(),
+                // A persona lives at its slug and has no date to build a URL
+                // from — the same split as the routes.
+                'url' => $plan->edition->drop_date === null
+                    ? '/'.$plan->market->value.'/gift-ideas/'.$plan->edition->slug
+                    : '/'.$plan->market->value.'/daily/'.$plan->edition->slug,
             ],
         ];
     }
@@ -328,17 +499,31 @@ class CovePlanController extends Controller
     /** @return array<string, mixed> */
     private function payload(CovePlan $plan): array
     {
-        $pinned = $plan->pinned_group_ids === []
-            ? collect()
-            : ProductGroup::query()->whereIn('id', $plan->pinned_group_ids)->get();
-
         return [
             ...$this->summary($plan),
             'blurb' => $plan->blurb,
             'editorial' => $plan->editorial,
+            'buildInstructions' => $plan->build_instructions,
             'queries' => $plan->queries,
             'note' => $plan->note,
-            'pinned' => $pinned->map(fn (ProductGroup $g) => $this->lookup->describe($g))->all(),
+
+            /*
+             * The shortlist, in order, with the reason each entry is on it.
+             *
+             * Read back deliberately: an author whose next call writes the
+             * prose needs the ids it may link to and the notes it is meant to
+             * turn into sentences, and asking for them is one request rather
+             * than a search per product.
+             */
+            'items' => $plan->items()->with('group')->get()
+                ->map(fn (CovePlanItem $item) => [
+                    'rank' => $item->rank,
+                    'note' => $item->note,
+                    'verdict' => $item->verdict,
+                    'source' => $item->source?->value,
+                    'externalId' => $item->external_id,
+                    'product' => $item->group === null ? null : $this->lookup->describe($item->group),
+                ])->all(),
 
             /*
              * What the calendar already thinks this day is.

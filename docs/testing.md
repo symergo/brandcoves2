@@ -12,6 +12,22 @@ php artisan test --dirty      # only tests touching uncommitted changes
 php artisan test --filter=BrandPage
 ```
 
+## Run what the change touches
+
+The full suite is for the push, not for the edit loop. While work is in progress — including work
+Claude is doing — run the narrowest thing that proves the change: `--filter` on the test class, or
+the test file itself, or `--dirty` to pick up everything touching uncommitted work. Report which one
+ran, so "tests pass" is never mistaken for "the suite passes".
+
+`composer test` earns its 39 seconds at one moment: **before production goes out** — a push to
+`main`, or the fast-forward that advances it — and whenever it is explicitly asked for.
+
+The hook already runs the suite on *every* push, staging included, so this deliberate run is not
+about coverage the hook would miss. It is about *when you learn*. Run by hand, a failure arrives
+while shipping is still a decision; left to the hook, it arrives after you have committed to the
+deploy and are watching it abort. Same 39 seconds, bought at the point where the answer can still
+change what you do.
+
 ## Parallel by default
 
 Measured on 2026-08-15, 20 logical cores, Postgres in Docker:
@@ -48,11 +64,36 @@ Pinned to `false` in `phpunit.xml` so it no longer depends on a file that may no
 diagnostics are unaffected: Laravel captures the exception on the `TestResponse` and prints it in
 the assertion message either way. The run now exercises the error page production actually serves.
 
-## Tests run on push, not on save
+## Two gates: the hook and CI
 
-`.githooks/pre-push` runs the suite and aborts the push if it fails. 40 seconds is too slow for an
-edit loop and too valuable to skip entirely, and a push is the last moment a failure is still cheap
-— `git push origin staging` *is* a deploy.
+`.github/workflows/tests.yml` runs the suite on GitHub for every push and pull request, against a
+real `postgres:16-alpine` service. **This is the gate.** It cannot be skipped with `--no-verify`,
+does not depend on anything a clone remembered to configure, and applies to pushes from machines
+nobody has set up at all — a GitHub web edit, a second laptop, a merge performed in the browser.
+
+`.githooks/pre-push` runs the same suite locally *before* the push leaves the machine, which is the
+same 40 seconds spent earlier, where a failure costs nothing. It is the early warning, not the gate,
+because it only exists once someone runs the per-clone config below.
+
+Both matter, and they fail differently: the hook is fast but optional, CI is authoritative but only
+learns about the code after it has been pushed — and a push to a tracked branch has already started
+a deploy by then. That asymmetry is the argument for the hook, not against it.
+
+### The differences in CI
+
+- **`--processes=4`, not 8.** A standard GitHub runner has 4 vCPU; the 8 in `composer test` is tuned
+  for a 20-core laptop, and oversubscribing spends wall clock rather than saving it.
+- **The frontend is built.** Feature tests render the root Blade shell, which calls `@vite`, and
+  `public/build` is gitignored — without `npm run build:client` every feature test dies on "Vite
+  manifest not found" before asserting anything. Client bundle only: the suite pins
+  `INERTIA_SSR_ENABLED=false`, so the SSR bundle is never loaded.
+- **`.env` exists only for `APP_KEY`.** `phpunit.xml` supplies `APP_ENV`, the database and every
+  connector credential itself; `.env.example` ships `APP_KEY` empty, so CI copies it and runs
+  `key:generate`.
+- **Pint runs as a separate job**, with `--test`, so CI reports formatting rather than producing a
+  diff someone has to reconcile.
+
+### Installing the hook
 
 Install once per clone:
 

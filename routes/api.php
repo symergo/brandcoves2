@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\CovePlanController;
+use App\Http\Controllers\Api\CoveQueueController;
 use App\Http\Controllers\Api\EditionController;
 use App\Http\Controllers\Api\EditorialIndexController;
 use App\Http\Controllers\Api\GuideEditorialController;
@@ -54,6 +55,15 @@ Route::prefix('editorial')
             Route::get('/topics', [CatalogueController::class, 'topics']);
 
             Route::get('/coves', [CovePlanController::class, 'index']);
+
+            /*
+             * What needs writing, with everything needed to write it.
+             *
+             * Registered before /coves/{plan} or 'queue' is swallowed as a plan
+             * id — which binds nothing and 404s, from a route that looks right.
+             */
+            Route::get('/coves/queue', [CoveQueueController::class, 'index']);
+
             Route::get('/coves/{plan}', [CovePlanController::class, 'show']);
 
             Route::get('/guides', [GuideEditorialController::class, 'index']);
@@ -73,6 +83,15 @@ Route::prefix('editorial')
          */
         Route::middleware(['api.ability:'.ApiToken::WRITE, 'throttle:editorial-writes'])->group(function () {
             Route::post('/coves', [CovePlanController::class, 'store']);
+
+            /*
+             * Prose back, and only prose.
+             *
+             * Narrower than POST /coves on purpose: that one replaces the item
+             * list wholesale, so an agent sending only words there can empty a
+             * curated shortlist. This cannot touch membership or rank.
+             */
+            Route::post('/coves/{plan}/editorial', [CoveQueueController::class, 'store']);
             Route::post('/guides', [GuideEditorialController::class, 'store']);
         });
 

@@ -4051,7 +4051,7 @@ var HttpHandlers = class {
 	}
 };
 var httpHandlers = new HttpHandlers();
-var HttpError = class extends Error {
+var HttpError$1 = class extends Error {
 	code;
 	url;
 	constructor(message, code, url) {
@@ -4061,7 +4061,7 @@ var HttpError = class extends Error {
 		this.url = url;
 	}
 };
-var HttpResponseError = class extends HttpError {
+var HttpResponseError = class extends HttpError$1 {
 	response;
 	constructor(message, response, url) {
 		super(message, "ERR_HTTP_RESPONSE", url);
@@ -4069,13 +4069,13 @@ var HttpResponseError = class extends HttpError {
 		this.response = response;
 	}
 };
-var HttpCancelledError = class extends HttpError {
+var HttpCancelledError = class extends HttpError$1 {
 	constructor(message = "Request was cancelled", url) {
 		super(message, "ERR_CANCELLED", url);
 		this.name = "HttpCancelledError";
 	}
 };
-var HttpNetworkError = class extends HttpError {
+var HttpNetworkError = class extends HttpError$1 {
 	cause;
 	constructor(message, url, cause) {
 		super(message, "ERR_NETWORK", url);
@@ -6491,7 +6491,7 @@ var injectCSS = (color) => {
   `;
 	document.head.appendChild(element);
 };
-var show = () => {
+var show$1 = () => {
 	hidden = false;
 	if (!progress2?.isConnected) return;
 	if (usePopover) try {
@@ -6515,7 +6515,7 @@ var progress_component_default = {
 	remove,
 	start,
 	status,
-	show,
+	show: show$1,
 	hide
 };
 var Progress = class {
@@ -33782,7 +33782,7 @@ function useTranslations() {
 }
 //#endregion
 //#region resources/js/Pages/Ask/Index.tsx
-var Index_exports$3 = /* @__PURE__ */ __exportAll({ default: () => AskIndex });
+var Index_exports$4 = /* @__PURE__ */ __exportAll({ default: () => AskIndex });
 /**
 * The board.
 *
@@ -34110,6 +34110,665 @@ function AskIndex({ questions, mine, canAsk, options }) {
 	] });
 }
 //#endregion
+//#region resources/js/addingMode.ts
+/**
+* How many things this run has added.
+*
+* Deliberately client-side and deliberately not persisted. The server knows how
+* many items the list holds; it does not know — and should not have to record —
+* how many of them arrived since the person pressed "Find things to add". The
+* number that answers "am I getting anywhere?" is the second one, and it is
+* worth nothing after the session that produced it.
+*
+* Reset when the mode changes rather than on navigation: Inertia keeps the
+* module alive across pages, which is exactly what lets a count survive
+* searching for something else halfway through.
+*/
+var count = 0;
+var forList = null;
+var listeners$2 = /* @__PURE__ */ new Set();
+function subscribe$2(listener) {
+	listeners$2.add(listener);
+	return () => {
+		listeners$2.delete(listener);
+	};
+}
+function addedCount() {
+	return count;
+}
+/** Called by the save control after a save that landed in the active list. */
+function countAdded(listId) {
+	if (forList !== listId) {
+		forList = listId;
+		count = 0;
+	}
+	count += 1;
+	listeners$2.forEach((fn) => fn());
+}
+/** An Undo should not leave the tally claiming something that is no longer there. */
+function countRemoved(listId) {
+	if (forList !== listId || count === 0) return;
+	count -= 1;
+	listeners$2.forEach((fn) => fn());
+}
+//#endregion
+//#region resources/js/http.ts
+/**
+* A write that does not navigate.
+*
+* `router.post` makes every save a full Inertia round trip: the page's props
+* are rebuilt — a forty-result search re-run — to move one row, and the answer
+* arrives as a whole new page. For a bookmark on a product card that is the
+* wrong shape twice over. It is slow, and it repaints the grid underneath the
+* thing the person just pressed.
+*
+* So the save control talks to the server directly. The pattern is already
+* established here: `Daily/Edition`, `Discover` and `MarketSwitcher` all reach
+* for the CSRF token in the document head and `fetch` with it. This is that,
+* written once.
+*/
+function csrfToken() {
+	return document.querySelector("meta[name=\"csrf-token\"]")?.content ?? "";
+}
+var HttpError = class extends Error {
+	status;
+	constructor(status, message) {
+		super(message);
+		this.status = status;
+		this.name = "HttpError";
+	}
+};
+/**
+* POST/DELETE as JSON, and insist on JSON back.
+*
+* `Accept: application/json` is load-bearing rather than polite: it is what
+* `WishlistItemController` reads to decide between answering with a row and
+* answering with a redirect, and it is also what turns Laravel's guest
+* redirect into a 401 we can act on instead of a 302 to the login page that
+* `fetch` would follow silently and report as a success.
+*/
+async function send(url, method, body) {
+	const response = await fetch(url, {
+		method,
+		headers: {
+			"Content-Type": "application/json",
+			Accept: "application/json",
+			"X-Requested-With": "XMLHttpRequest",
+			"X-CSRF-TOKEN": csrfToken()
+		},
+		credentials: "same-origin",
+		body: body === void 0 ? void 0 : JSON.stringify(body)
+	});
+	if (!response.ok) {
+		const detail = await response.json().then((data) => data.message).catch(() => void 0);
+		throw new HttpError(response.status, detail ?? `${method} ${url} failed`);
+	}
+	return response.json();
+}
+//#endregion
+//#region resources/js/savedItems.ts
+/**
+* What is already on one of your lists.
+*
+* The save control appears on every product card on every surface — search,
+* brand pages, guides, the daily edition, the wizard — and each instance used
+* to know only about its own clicks. So a product you saved last week showed an
+* empty bookmark, and the only way to discover it was already there was to save
+* it again.
+*
+* A module-level store rather than page props, for two reasons. Passing the ids
+* through every page would mean touching seven controllers and putting a query
+* on pages that render no cards at all. And a store lets every bookmark on a
+* grid of forty update the moment one of them is clicked, which per-component
+* state cannot do.
+*
+* Fetched once per page load, lazily: nothing happens until a card actually
+* mounts, and nothing happens at all for signed-out visitors, who cannot save.
+*
+* ## Two sets, because the bookmark answers two different questions
+*
+* Ordinarily it answers *"have I kept this anywhere?"* — any list of yours
+* counts, because a thing on your research list for your mother is still a
+* thing you have already found.
+*
+* While you are filling one named list, that is the wrong question. During a
+* run the thing you need to know is *"is this one on Camping yet?"*, and
+* answering it with "well, it is on your Books list" would tick items you have
+* not added and hide the ones you have. So the active list gets its own set,
+* filled by the same request.
+*/
+var saved = null;
+var active = null;
+var activeListId = null;
+var inflight = null;
+var listeners$1 = /* @__PURE__ */ new Set();
+function notify$1() {
+	saved = saved === null ? null : new Set(saved);
+	active = active === null ? null : new Set(active);
+	listeners$1.forEach((fn) => fn());
+}
+function subscribe$1(listener) {
+	listeners$1.add(listener);
+	return () => {
+		listeners$1.delete(listener);
+	};
+}
+function snapshot$1() {
+	return saved;
+}
+/** Server-rendered markup shows the unsaved state; the client corrects it. */
+function serverSnapshot$1() {
+	return null;
+}
+/** What is on the list currently being filled, or null when not in that mode. */
+function activeSnapshot() {
+	return active;
+}
+function load(marketKey, signedIn, listId = null) {
+	if (!signedIn) return;
+	if (listId !== activeListId) {
+		activeListId = listId;
+		saved = null;
+		active = null;
+		inflight = null;
+	}
+	if (saved !== null || inflight !== null) return;
+	const query = listId === null ? "" : `?list=${encodeURIComponent(listId)}`;
+	inflight = fetch(`/${marketKey}/saved-items${query}`, { headers: { Accept: "application/json" } }).then((r) => r.json()).then((data) => {
+		saved = new Set(data.groupIds ?? []);
+		active = listId === null ? null : new Set(data.listGroupIds ?? []);
+		notify$1();
+	}).catch(() => {
+		saved = /* @__PURE__ */ new Set();
+		active = listId === null ? null : /* @__PURE__ */ new Set();
+		notify$1();
+	}).finally(() => {
+		inflight = null;
+	});
+}
+/**
+* @param onActiveList Whether this save landed in the list being filled. False
+*                     for a save made from the picker into some other list
+*                     while a run is in progress — which must not tick the
+*                     bookmark, because the item is still not on Camping.
+*/
+function markSaved(groupId, onActiveList = true) {
+	saved ??= /* @__PURE__ */ new Set();
+	saved.add(groupId);
+	if (active !== null && onActiveList) active.add(groupId);
+	notify$1();
+}
+function markRemoved(groupId, fromActiveList = true) {
+	if (saved !== null) saved.delete(groupId);
+	if (active !== null && fromActiveList) active.delete(groupId);
+	notify$1();
+}
+//#endregion
+//#region resources/js/saveToast.ts
+var current = null;
+var nextKey = 1;
+var listeners = /* @__PURE__ */ new Set();
+function notify() {
+	listeners.forEach((fn) => fn());
+}
+function subscribe(listener) {
+	listeners.add(listener);
+	return () => {
+		listeners.delete(listener);
+	};
+}
+function snapshot() {
+	return current;
+}
+/** Nothing on the server-rendered pass; toasts are always a response to a click. */
+function serverSnapshot() {
+	return null;
+}
+function show(toast) {
+	current = {
+		...toast,
+		key: nextKey++
+	};
+	notify();
+}
+/**
+* @param key Dismiss only if this is still the message on screen. A timer
+*            belonging to a toast that has already been replaced must not close
+*            its successor early.
+*/
+function dismiss(key) {
+	if (key !== void 0 && current?.key !== key) return;
+	current = null;
+	notify();
+}
+//#endregion
+//#region resources/js/Components/SaveToList.tsx
+var PANEL_WIDTH = 288;
+var EDGE = 8;
+/**
+* Save a product — to a list for yourself, or to one about somebody else.
+*
+* ## The save no longer navigates
+*
+* This used to `router.post`, which rebuilt the whole page: a forty-result
+* search re-run on the server to move one row, and the confirmation delivered
+* through `flash` — drawn by `FlashMessage` at the top of the document, where
+* somebody saving from the bottom of a grid could not see it, and where
+* inserting it shoved the grid down under their cursor at the moment of a
+* successful tap.
+*
+* It now posts directly and reports through `SaveToast`. That is also what
+* makes Undo possible at all: the endpoint answers with the row's id, and a
+* flash string can name a list but never a row.
+*
+* ## Why the menu is a portal
+*
+* A product card is `overflow-hidden` (rounded corners, and the image scales on
+* hover), so an absolutely positioned panel inside it is simply clipped away —
+* the menu opened correctly and was invisible. Rendering it into `document.body`
+* escapes every `overflow-hidden` ancestor and every stacking context at once,
+* which no amount of z-index on the panel can do.
+*
+* ## One rule for both variants
+*
+* Not saved → save. Saved → open the picker, which is the only place it can be
+* taken off again.
+*
+* The card variant used to open the picker in both cases, on the stated grounds
+* that saving somewhere unnamed and making people undo it is worse than asking
+* first. The confirmation now *names* the list and carries an Undo, which
+* removes the premise. Two behaviours from one component was the greater cost:
+* the same bookmark meaning different things on a grid and on a product page is
+* not something anybody learns, it is something they get wrong.
+*/
+function SaveToList({ groupId, source, externalId, title, imageUrl, price, compact = false }) {
+	const { market, auth, savingTo } = usePage().props;
+	const { t } = useTranslations();
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const savedIds = (0, import_react.useSyncExternalStore)(subscribe$1, snapshot$1, serverSnapshot$1);
+	const activeIds = (0, import_react.useSyncExternalStore)(subscribe$1, activeSnapshot, serverSnapshot$1);
+	const relevant = savingTo ? activeIds : savedIds;
+	const saved = groupId !== void 0 && relevant !== null && relevant.has(groupId);
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const [options, setOptions] = (0, import_react.useState)(null);
+	const [failed, setFailed] = (0, import_react.useState)(false);
+	const [creating, setCreating] = (0, import_react.useState)(null);
+	const [name, setName] = (0, import_react.useState)("");
+	const [place, setPlace] = (0, import_react.useState)(null);
+	const [sheet, setSheet] = (0, import_react.useState)(false);
+	const trigger = (0, import_react.useRef)(null);
+	const menu = (0, import_react.useRef)(null);
+	const payload = groupId ? { group_id: groupId } : {
+		source,
+		external_id: externalId,
+		title,
+		image_url: imageUrl,
+		price
+	};
+	const destination = savingTo ? t("lists.save_to", { list: savingTo.title }) : t("lists.save_to_list");
+	(0, import_react.useEffect)(() => {
+		const query = window.matchMedia("(max-width: 639px)");
+		const apply = () => setSheet(query.matches);
+		apply();
+		query.addEventListener("change", apply);
+		return () => query.removeEventListener("change", apply);
+	}, []);
+	const position = (0, import_react.useCallback)(() => {
+		const button = trigger.current;
+		if (!button || sheet) return;
+		const box = button.getBoundingClientRect();
+		const left = Math.min(Math.max(EDGE, box.right - PANEL_WIDTH), window.innerWidth - PANEL_WIDTH - EDGE);
+		const below = window.innerHeight - box.bottom - EDGE - 6;
+		const above = box.top - EDGE - 6;
+		const flipped = below < 240 && above > below;
+		setPlace({
+			top: flipped ? box.top - 6 : box.bottom + 6,
+			left,
+			maxHeight: Math.max(160, flipped ? above : below),
+			flipped
+		});
+	}, [sheet]);
+	(0, import_react.useLayoutEffect)(() => {
+		if (open) position();
+	}, [open, position]);
+	(0, import_react.useEffect)(() => {
+		load(market.key, Boolean(auth.user), savingTo?.id ?? null);
+	}, [
+		market.key,
+		auth.user,
+		savingTo?.id
+	]);
+	const refresh = (0, import_react.useCallback)(async () => {
+		const query = groupId === void 0 ? "" : `?group_id=${groupId}`;
+		try {
+			const fresh = await fetch(`/${market.key}/list-options${query}`, { headers: { Accept: "application/json" } }).then((r) => r.json());
+			setOptions(fresh);
+			setFailed(false);
+			return fresh;
+		} catch {
+			setFailed(true);
+			return {
+				lists: [],
+				recipients: []
+			};
+		}
+	}, [groupId, market.key]);
+	(0, import_react.useEffect)(() => {
+		if (!open || options || failed) return;
+		refresh();
+	}, [
+		open,
+		options,
+		failed,
+		refresh
+	]);
+	(0, import_react.useEffect)(() => {
+		if (!open) return;
+		const away = (e) => {
+			const target = e.target;
+			if (menu.current?.contains(target) || trigger.current?.contains(target)) return;
+			setOpen(false);
+		};
+		const escape = (e) => e.key === "Escape" && setOpen(false);
+		document.addEventListener("mousedown", away);
+		document.addEventListener("keydown", escape);
+		window.addEventListener("scroll", position, true);
+		window.addEventListener("resize", position);
+		return () => {
+			document.removeEventListener("mousedown", away);
+			document.removeEventListener("keydown", escape);
+			window.removeEventListener("scroll", position, true);
+			window.removeEventListener("resize", position);
+		};
+	}, [open, position]);
+	async function requireAccount() {
+		if (auth.user) return true;
+		try {
+			await send(`/${market.key}/save-intent`, "POST", {
+				...payload,
+				return_to: window.location.pathname + window.location.search
+			});
+		} catch {}
+		router.get(`/${market.key}/login`);
+		return false;
+	}
+	function openPicker() {
+		requireAccount().then((ok) => ok && setOpen((v) => !v));
+	}
+	/**
+	* @param close Whether to dismiss the picker afterwards. A row is a toggle,
+	*              so it stays open and shows the tick it just earned; naming a
+	*              new list is a completed errand, so that one closes.
+	*/
+	async function save(extra = {}, close = true) {
+		if (busy || !await requireAccount()) return;
+		setBusy(true);
+		const chosen = extra.wishlist_id ?? savingTo?.id;
+		const ontoActive = !savingTo || chosen === savingTo.id;
+		if (groupId !== void 0) markSaved(groupId, ontoActive);
+		try {
+			const result = await send(`/${market.key}/list-items`, "POST", {
+				...payload,
+				...extra,
+				...savingTo && extra.wishlist_id === void 0 && extra.new_list === void 0 ? { wishlist_id: savingTo.id } : {}
+			});
+			setCreating(null);
+			setName("");
+			if (savingTo && result.listId === savingTo.id) countAdded(result.listId);
+			show({
+				message: result.message,
+				tone: "ok",
+				undo: {
+					itemId: result.itemId,
+					groupId
+				},
+				listId: result.listId
+			});
+			if (close) {
+				setOpen(false);
+				setOptions(null);
+			} else refresh();
+		} catch (error) {
+			if (groupId !== void 0) markRemoved(groupId, ontoActive);
+			show({
+				message: error instanceof HttpError && error.status === 422 ? error.message : t("lists.save_failed"),
+				tone: "error"
+			});
+		} finally {
+			setBusy(false);
+		}
+	}
+	/**
+	* Take it off a list, from the same row that put it there.
+	*
+	* The menu stays open: removing from the wrong list is the mistake this
+	* whole path exists to make recoverable, and closing the menu would make it
+	* unrecoverable in the same click. Outside adding mode the bookmark only
+	* goes hollow once no list holds the product — it is on your lists or it is
+	* not, and one of three lists letting go does not change that answer.
+	*/
+	async function remove(itemId, listId) {
+		if (busy) return;
+		setBusy(true);
+		try {
+			await send(`/${market.key}/list-items/${itemId}`, "DELETE");
+			const fresh = await refresh();
+			if (savingTo?.id === listId) countRemoved(listId);
+			if (groupId !== void 0) {
+				const onAny = fresh.lists.some((l) => l.itemId !== null);
+				const onActive = savingTo !== null && fresh.lists.some((l) => l.id === savingTo.id && l.itemId !== null);
+				if (!onAny) markRemoved(groupId, true);
+				else if (savingTo && !onActive) {
+					markRemoved(groupId, true);
+					markSaved(groupId, false);
+				}
+			}
+		} catch {
+			show({
+				message: t("lists.save_failed"),
+				tone: "error"
+			});
+		} finally {
+			setBusy(false);
+		}
+	}
+	const mine = options?.lists.filter((l) => l.kind === "mine") ?? [];
+	const forOthers = options?.lists.filter((l) => l.kind === "for_someone") ?? [];
+	const groups = options?.lists.filter((l) => l.kind === "group") ?? [];
+	function row(list, label) {
+		const on = list.itemId !== null;
+		return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			role: "menuitemcheckbox",
+			"aria-checked": on,
+			disabled: busy,
+			onClick: () => on ? void remove(list.itemId, list.id) : void save({ wishlist_id: list.id }, false),
+			title: on ? t("lists.remove_from", { list: label }) : t("lists.save_to", { list: label }),
+			className: "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-line/40 disabled:opacity-60",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				"aria-hidden": true,
+				className: `flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${on ? "border-sage bg-sage text-white" : "border-line"}`,
+				children: on ? "✓" : ""
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "min-w-0 flex-1 truncate",
+				children: label
+			})]
+		}, list.id);
+	}
+	const body = failed && options === null ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "p-3 text-sm",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "text-ink-soft",
+			children: t("lists.options_failed")
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			onClick: () => void refresh(),
+			className: "mt-2 rounded border border-line px-3 py-1.5 text-xs hover:border-ink",
+			children: t("lists.retry")
+		})]
+	}) : options === null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		className: "px-2 py-3 text-sm text-ink-soft",
+		children: t("lists.loading_lists")
+	}) : creating ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+		className: "p-2",
+		onSubmit: (e) => {
+			e.preventDefault();
+			save(creating === "mine" ? { new_list: name } : {
+				new_list: t("lists.for_person", { name }),
+				new_recipient: name,
+				together: creating === "group"
+			});
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
+				className: "block text-xs font-medium",
+				children: creating === "mine" ? t("lists.list_name") : t("lists.person_name")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+				autoFocus: true,
+				value: name,
+				onChange: (e) => setName(e.target.value),
+				required: true,
+				maxLength: 80,
+				className: "mt-1 w-full rounded border border-line px-2 py-1.5 text-sm"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mt-2 flex gap-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "submit",
+					disabled: busy,
+					className: "rounded bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60",
+					children: t("lists.save")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => setCreating(null),
+					className: "rounded border border-line px-3 py-1.5 text-xs",
+					children: t("lists.cancel")
+				})]
+			})
+		]
+	}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "px-2 pt-1 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
+			children: t("lists.for_me")
+		}),
+		mine.map((l) => row(l, l.title)),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			onClick: () => setCreating("mine"),
+			className: "block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40",
+			children: ["+ ", t("lists.new_list")]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
+			children: t("lists.for_someone_else")
+		}),
+		forOthers.map((l) => row(l, l.recipient ?? l.title)),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			onClick: () => setCreating("for_someone"),
+			className: "block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40",
+			children: ["+ ", t("lists.add_person")]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
+			children: t("lists.group_gift")
+		}),
+		groups.map((l) => row(l, l.recipient ?? l.title)),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			onClick: () => setCreating("group"),
+			className: "block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40",
+			children: ["+ ", t("lists.start_group_gift")]
+		})
+	] });
+	const panel = !open ? null : sheet ? (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "fixed inset-0 z-50 flex items-end",
+		role: "dialog",
+		"aria-modal": "true",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			"aria-label": t("lists.cancel"),
+			onClick: () => setOpen(false),
+			className: "absolute inset-0 bg-ink/40"
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			ref: menu,
+			role: "menu",
+			className: "relative max-h-[75vh] w-full overflow-y-auto rounded-t-card border-t border-line bg-card p-2 pb-6 text-left shadow-xl",
+			children: body
+		})]
+	}), document.body) : place ? (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		ref: menu,
+		role: "menu",
+		style: {
+			position: "fixed",
+			left: place.left,
+			width: PANEL_WIDTH,
+			maxHeight: place.maxHeight,
+			...place.flipped ? { bottom: window.innerHeight - place.top } : { top: place.top }
+		},
+		className: "z-50 overflow-y-auto rounded-card border border-line bg-card p-2 text-left shadow-xl",
+		children: body
+	}), document.body) : null;
+	if (compact) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+		className: "relative z-20 inline-flex items-stretch",
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			type: "button",
+			onClick: () => saved ? openPicker() : void save(),
+			disabled: busy,
+			"aria-pressed": saved,
+			"aria-label": saved ? t("lists.saved") : destination,
+			title: saved ? t("lists.saved") : destination,
+			className: `flex h-9 w-9 items-center justify-center rounded-l-full border shadow-sm backdrop-blur transition disabled:opacity-60 ${saved ? "border-sage bg-sage text-white" : "border-line bg-card/90 text-ink hover:border-ink hover:bg-card"}`,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
+				viewBox: "0 0 24 24",
+				className: "h-4 w-4",
+				"aria-hidden": true,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
+					d: "M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z",
+					fill: saved ? "currentColor" : "none",
+					stroke: "currentColor",
+					strokeWidth: "1.8",
+					strokeLinejoin: "round"
+				})
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+			ref: trigger,
+			type: "button",
+			onClick: openPicker,
+			"aria-expanded": open,
+			"aria-haspopup": "menu",
+			"aria-label": t("lists.save_to_list"),
+			className: "-ml-px flex h-9 w-5 items-center justify-center rounded-r-full border border-line bg-card/90 text-[10px] text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink",
+			children: "▾"
+		})]
+	}), panel] });
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "relative inline-flex items-stretch",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: () => saved ? openPicker() : void save(),
+				disabled: busy,
+				"aria-pressed": saved,
+				className: `rounded-l-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-60 ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink"}`,
+				children: saved ? `✓ ${t("lists.saved")}` : savingTo ? t("lists.add_to_this", { list: savingTo.title }) : t("lists.save")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				ref: trigger,
+				type: "button",
+				onClick: openPicker,
+				"aria-expanded": open,
+				"aria-haspopup": "menu",
+				"aria-label": t("lists.save_to_list"),
+				className: "-ml-px rounded-r-lg border border-line px-2.5 py-2 text-sm hover:border-ink",
+				children: "▾"
+			}),
+			panel
+		]
+	});
+}
+//#endregion
 //#region resources/js/Pages/Ask/Show.tsx
 var Show_exports$2 = /* @__PURE__ */ __exportAll({ default: () => AskShow });
 /**
@@ -34211,29 +34870,38 @@ function AskShow({ question, answers, canAnswer, maxPicks, results, searchTerm }
 						}),
 						answer.picks.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 							className: "mt-4 grid gap-3 sm:grid-cols-3",
-							children: answer.picks.map((pick) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-								href: pick.url,
-								className: "flex h-full flex-col rounded-lg border border-line p-3 transition hover:border-ink",
-								children: [
-									pick.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-										src: pick.image,
-										alt: "",
-										loading: "lazy",
-										className: "mx-auto h-24 w-auto max-w-full object-contain",
-										onError: (e) => {
-											e.currentTarget.style.visibility = "hidden";
-										}
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "mt-2 line-clamp-2 text-sm font-medium",
-										children: pick.title
-									}),
-									pick.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-										className: "mt-1 text-sm text-ink-soft",
-										children: formatPrice(pick.price, market)
+							children: answer.picks.map((pick) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+								className: "relative",
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "absolute top-2 right-2 z-10",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+										groupId: pick.id,
+										compact: true
 									})
-								]
-							}) }, pick.id))
+								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+									href: pick.url,
+									className: "flex h-full flex-col rounded-lg border border-line p-3 transition hover:border-ink",
+									children: [
+										pick.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+											src: pick.image,
+											alt: "",
+											loading: "lazy",
+											className: "mx-auto h-24 w-auto max-w-full object-contain",
+											onError: (e) => {
+												e.currentTarget.style.visibility = "hidden";
+											}
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "mt-2 line-clamp-2 text-sm font-medium",
+											children: pick.title
+										}),
+										pick.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+											className: "mt-1 text-sm text-ink-soft",
+											children: formatPrice(pick.price, market)
+										})
+									]
+								})]
+							}, pick.id))
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 							className: "mt-3 text-xs text-ink-soft",
@@ -34482,374 +35150,6 @@ function Login({ googleEnabled }) {
 			})] })
 		]
 	})] });
-}
-//#endregion
-//#region resources/js/savedItems.ts
-/**
-* What is already on one of your lists.
-*
-* The save control appears on every product card on every surface — search,
-* brand pages, guides, the daily edition, the wizard — and each instance used
-* to know only about its own clicks. So a product you saved last week showed an
-* empty bookmark, and the only way to discover it was already there was to save
-* it again.
-*
-* A module-level store rather than page props, for two reasons. Passing the ids
-* through every page would mean touching seven controllers and putting a query
-* on pages that render no cards at all. And a store lets every bookmark on a
-* grid of forty update the moment one of them is clicked, which per-component
-* state cannot do.
-*
-* Fetched once per page load, lazily: nothing happens until a card actually
-* mounts, and nothing happens at all for signed-out visitors, who cannot save.
-*/
-var saved = null;
-var inflight = null;
-var listeners = /* @__PURE__ */ new Set();
-function notify() {
-	saved = saved === null ? null : new Set(saved);
-	listeners.forEach((fn) => fn());
-}
-function subscribe(listener) {
-	listeners.add(listener);
-	return () => {
-		listeners.delete(listener);
-	};
-}
-function snapshot() {
-	return saved;
-}
-/** Server-rendered markup shows the unsaved state; the client corrects it. */
-function serverSnapshot() {
-	return null;
-}
-function load(marketKey, signedIn) {
-	if (!signedIn || saved !== null || inflight !== null) return;
-	inflight = fetch(`/${marketKey}/saved-items`, { headers: { Accept: "application/json" } }).then((r) => r.json()).then((data) => {
-		saved = new Set(data.groupIds ?? []);
-		notify();
-	}).catch(() => {
-		saved = /* @__PURE__ */ new Set();
-		notify();
-	}).finally(() => {
-		inflight = null;
-	});
-}
-function markSaved(groupId) {
-	saved ??= /* @__PURE__ */ new Set();
-	saved.add(groupId);
-	notify();
-}
-function markRemoved(groupId) {
-	if (saved === null) return;
-	saved.delete(groupId);
-	notify();
-}
-//#endregion
-//#region resources/js/Components/SaveToList.tsx
-/**
-* Save a product — to a list for yourself, or to one about somebody else.
-*
-* ## Why the menu is a portal
-*
-* A product card is `overflow-hidden` (rounded corners, and the image scales on
-* hover), so an absolutely positioned panel inside it is simply clipped away —
-* the menu opened correctly and was invisible. Rendering it into `document.body`
-* escapes every `overflow-hidden` ancestor and every stacking context at once,
-* which no amount of z-index on the panel can do.
-*
-* ## Why the card variant is an icon
-*
-* On a grid card there is no room for a labelled split button, and one crammed
-* in reads as clutter over the product. A bookmark in the corner is the
-* convention people already know from every shopping site, and it opens the
-* picker directly rather than saving somewhere unstated and making them undo it.
-*/
-function SaveToList({ groupId, source, externalId, title, imageUrl, price, compact = false }) {
-	const { market, auth } = usePage().props;
-	const { t } = useTranslations();
-	const [busy, setBusy] = (0, import_react.useState)(false);
-	const savedIds = (0, import_react.useSyncExternalStore)(subscribe, snapshot, serverSnapshot);
-	const saved = groupId !== void 0 && savedIds !== null && savedIds.has(groupId);
-	const [open, setOpen] = (0, import_react.useState)(false);
-	const [options, setOptions] = (0, import_react.useState)(null);
-	const [creating, setCreating] = (0, import_react.useState)(null);
-	const [name, setName] = (0, import_react.useState)("");
-	const [rect, setRect] = (0, import_react.useState)(null);
-	const trigger = (0, import_react.useRef)(null);
-	const menu = (0, import_react.useRef)(null);
-	const payload = groupId ? { group_id: groupId } : {
-		source,
-		external_id: externalId,
-		title,
-		image_url: imageUrl,
-		price
-	};
-	const place = (0, import_react.useCallback)(() => {
-		const button = trigger.current;
-		if (!button) return;
-		const box = button.getBoundingClientRect();
-		const width = 288;
-		const left = Math.min(Math.max(8, box.right - width), window.innerWidth - width - 8);
-		setRect({
-			top: box.bottom + 6,
-			left
-		});
-	}, []);
-	(0, import_react.useLayoutEffect)(() => {
-		if (open) place();
-	}, [open, place]);
-	(0, import_react.useEffect)(() => {
-		load(market.key, Boolean(auth.user));
-	}, [market.key, auth.user]);
-	const refresh = (0, import_react.useCallback)(async () => {
-		const query = groupId === void 0 ? "" : `?group_id=${groupId}`;
-		const fresh = await fetch(`/${market.key}/list-options${query}`, { headers: { Accept: "application/json" } }).then((r) => r.json()).catch(() => ({
-			lists: [],
-			recipients: []
-		}));
-		setOptions(fresh);
-		return fresh;
-	}, [groupId, market.key]);
-	(0, import_react.useEffect)(() => {
-		if (!open || options) return;
-		refresh();
-	}, [
-		open,
-		options,
-		refresh
-	]);
-	(0, import_react.useEffect)(() => {
-		if (!open) return;
-		const away = (e) => {
-			const target = e.target;
-			if (menu.current?.contains(target) || trigger.current?.contains(target)) return;
-			setOpen(false);
-		};
-		const escape = (e) => e.key === "Escape" && setOpen(false);
-		document.addEventListener("mousedown", away);
-		document.addEventListener("keydown", escape);
-		window.addEventListener("scroll", place, true);
-		window.addEventListener("resize", place);
-		return () => {
-			document.removeEventListener("mousedown", away);
-			document.removeEventListener("keydown", escape);
-			window.removeEventListener("scroll", place, true);
-			window.removeEventListener("resize", place);
-		};
-	}, [open, place]);
-	function requireAccount() {
-		if (auth.user) return true;
-		router.get(`/${market.key}/login`);
-		return false;
-	}
-	function openPicker() {
-		if (requireAccount()) setOpen((v) => !v);
-	}
-	/**
-	* @param close Whether to dismiss the picker afterwards. A row is a toggle,
-	*              so it stays open and shows the tick it just earned; naming a
-	*              new list is a completed errand, so that one closes.
-	*/
-	function save(extra = {}, close = true) {
-		if (busy || !requireAccount()) return;
-		setBusy(true);
-		router.post(`/${market.key}/list-items`, {
-			...payload,
-			...extra
-		}, {
-			preserveScroll: true,
-			preserveState: true,
-			onSuccess: () => {
-				if (groupId !== void 0) markSaved(groupId);
-				setCreating(null);
-				setName("");
-				if (close) {
-					setOpen(false);
-					setOptions(null);
-				} else refresh();
-			},
-			onFinish: () => setBusy(false)
-		});
-	}
-	/**
-	* Take it off a list, from the same row that put it there.
-	*
-	* The menu stays open: removing from the wrong list is the mistake this
-	* whole path exists to make recoverable, and closing the menu would make it
-	* unrecoverable in the same click. The bookmark only goes hollow once no
-	* list holds the product any more — it is on your lists or it is not, and
-	* one of three lists letting go does not change that answer.
-	*/
-	function remove(itemId) {
-		if (busy) return;
-		setBusy(true);
-		router.delete(`/${market.key}/list-items/${itemId}`, {
-			preserveScroll: true,
-			preserveState: true,
-			onSuccess: async () => {
-				const fresh = await refresh();
-				if (groupId !== void 0 && !fresh.lists.some((l) => l.itemId !== null)) markRemoved(groupId);
-			},
-			onFinish: () => setBusy(false)
-		});
-	}
-	const mine = options?.lists.filter((l) => l.kind === "mine") ?? [];
-	const forOthers = options?.lists.filter((l) => l.kind === "for_someone") ?? [];
-	const groups = options?.lists.filter((l) => l.kind === "group") ?? [];
-	function row(list, label) {
-		const on = list.itemId !== null;
-		return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-			type: "button",
-			role: "menuitemcheckbox",
-			"aria-checked": on,
-			disabled: busy,
-			onClick: () => on ? remove(list.itemId) : save({ wishlist_id: list.id }, false),
-			title: on ? t("lists.remove_from", { list: label }) : t("lists.save_to", { list: label }),
-			className: "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-line/40 disabled:opacity-60",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				"aria-hidden": true,
-				className: `flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${on ? "border-sage bg-sage text-white" : "border-line"}`,
-				children: on ? "✓" : ""
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-				className: "min-w-0 flex-1 truncate",
-				children: label
-			})]
-		}, list.id);
-	}
-	const panel = open && rect ? (0, import_react_dom.createPortal)(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		ref: menu,
-		role: "menu",
-		style: {
-			position: "fixed",
-			top: rect.top,
-			left: rect.left,
-			width: 288
-		},
-		className: "z-50 rounded-card border border-line bg-card p-2 text-left shadow-xl",
-		children: options === null ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
-			className: "px-2 py-3 text-sm text-ink-soft",
-			children: [t("lists.save_to_list"), "…"]
-		}) : creating ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-			className: "p-2",
-			onSubmit: (e) => {
-				e.preventDefault();
-				save(creating === "mine" ? { new_list: name } : {
-					new_list: t("lists.for_person", { name }),
-					new_recipient: name,
-					together: creating === "group"
-				});
-			},
-			children: [
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("label", {
-					className: "block text-xs font-medium",
-					children: creating === "mine" ? t("lists.list_name") : t("lists.person_name")
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-					autoFocus: true,
-					value: name,
-					onChange: (e) => setName(e.target.value),
-					required: true,
-					maxLength: 80,
-					className: "mt-1 w-full rounded border border-line px-2 py-1.5 text-sm"
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "mt-2 flex gap-2",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "submit",
-						disabled: busy,
-						className: "rounded bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60",
-						children: t("lists.save")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						onClick: () => setCreating(null),
-						className: "rounded border border-line px-3 py-1.5 text-xs",
-						children: t("lists.cancel")
-					})]
-				})
-			]
-		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "px-2 pt-1 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
-				children: t("lists.for_me")
-			}),
-			mine.map((l) => row(l, l.title)),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-				type: "button",
-				onClick: () => setCreating("mine"),
-				className: "block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40",
-				children: ["+ ", t("lists.new_list")]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
-				children: t("lists.for_someone_else")
-			}),
-			forOthers.map((l) => row(l, l.recipient ?? l.title)),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-				type: "button",
-				onClick: () => setCreating("for_someone"),
-				className: "block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40",
-				children: ["+ ", t("lists.add_person")]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-2 border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase",
-				children: t("lists.group_gift")
-			}),
-			groups.map((l) => row(l, l.recipient ?? l.title)),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-				type: "button",
-				onClick: () => setCreating("group"),
-				className: "block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40",
-				children: ["+ ", t("lists.start_group_gift")]
-			})
-		] })
-	}), document.body) : null;
-	if (compact) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-		ref: trigger,
-		type: "button",
-		onClick: openPicker,
-		"aria-expanded": open,
-		"aria-haspopup": "menu",
-		"aria-label": saved ? t("lists.saved") : t("lists.save_to_list"),
-		title: saved ? t("lists.saved") : t("lists.save_to_list"),
-		className: `relative z-20 flex h-9 w-9 items-center justify-center rounded-full border shadow-sm backdrop-blur transition ${saved ? "border-sage bg-sage text-white" : "border-line bg-card/90 text-ink hover:border-ink hover:bg-card"}`,
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("svg", {
-			viewBox: "0 0 24 24",
-			className: "h-4 w-4",
-			"aria-hidden": true,
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", {
-				d: "M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z",
-				fill: saved ? "currentColor" : "none",
-				stroke: "currentColor",
-				strokeWidth: "1.8",
-				strokeLinejoin: "round"
-			})
-		})
-	}), panel] });
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "relative inline-flex items-stretch",
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				onClick: () => saved ? openPicker() : save(),
-				disabled: busy,
-				"aria-pressed": saved,
-				className: `rounded-l-lg border px-4 py-2 text-sm font-medium transition ${saved ? "border-sage bg-sage/10 text-sage" : "border-line hover:border-ink"}`,
-				children: saved ? `✓ ${t("lists.saved")}` : t("lists.save")
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				ref: trigger,
-				type: "button",
-				onClick: openPicker,
-				"aria-expanded": open,
-				"aria-haspopup": "menu",
-				"aria-label": t("lists.save_to_list"),
-				className: "-ml-px rounded-r-lg border border-line px-2.5 py-2 text-sm hover:border-ink",
-				children: "▾"
-			}),
-			panel
-		]
-	});
 }
 //#endregion
 //#region resources/js/Components/ProductCard.tsx
@@ -35239,9 +35539,9 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 								className: "mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4",
 								children: liveOffers.map((offer) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 									className: "flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30",
-									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-										className: "aspect-square overflow-hidden bg-cream",
-										children: offer.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+										className: "relative aspect-square overflow-hidden bg-cream",
+										children: [offer.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
 											src: offer.image,
 											alt: "",
 											loading: "lazy",
@@ -35249,7 +35549,17 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 											onError: (e) => {
 												e.currentTarget.style.visibility = "hidden";
 											}
-										})
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+											className: "absolute right-2 bottom-2",
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+												source: offer.source,
+												externalId: offer.externalId,
+												title: offer.title,
+												imageUrl: offer.image,
+												price: offer.price,
+												compact: true
+											})
+										})]
 									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 										className: "flex flex-1 flex-col p-4",
 										children: [
@@ -36209,29 +36519,38 @@ function DiscoverCove({ urls, coves, today, questions, askUrl, surprises }) {
 					}),
 					today.finds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 						className: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
-						children: today.finds.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-							href: find.url,
-							className: "flex h-full flex-col rounded-lg border border-line p-3 transition hover:border-ink",
-							children: [
-								find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-									src: find.image,
-									alt: "",
-									loading: "lazy",
-									className: "mx-auto h-24 w-auto max-w-full object-contain",
-									onError: (e) => {
-										e.currentTarget.style.visibility = "hidden";
-									}
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "mt-2 line-clamp-2 text-sm font-medium",
-									children: find.title
-								}),
-								find.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "mt-1 text-sm text-ink-soft",
-									children: formatPrice(find.price, market)
+						children: today.finds.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "relative",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "absolute top-2 right-2 z-10",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+									groupId: find.id,
+									compact: true
 								})
-							]
-						}) }, find.id))
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+								href: find.url,
+								className: "flex h-full flex-col rounded-lg border border-line p-3 transition hover:border-ink",
+								children: [
+									find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+										src: find.image,
+										alt: "",
+										loading: "lazy",
+										className: "mx-auto h-24 w-auto max-w-full object-contain",
+										onError: (e) => {
+											e.currentTarget.style.visibility = "hidden";
+										}
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-2 line-clamp-2 text-sm font-medium",
+										children: find.title
+									}),
+									find.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-1 text-sm text-ink-soft",
+										children: formatPrice(find.price, market)
+									})
+								]
+							})]
+						}, find.id))
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
 						href: today.url,
@@ -36263,33 +36582,42 @@ function DiscoverCove({ urls, coves, today, questions, askUrl, surprises }) {
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 					className: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
-					children: surprises.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-						href: find.url,
-						className: "flex h-full flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink",
-						children: [
-							find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-								src: find.image,
-								alt: "",
-								loading: "lazy",
-								className: "mx-auto h-28 w-auto max-w-full object-contain",
-								onError: (e) => {
-									e.currentTarget.style.visibility = "hidden";
-								}
-							}),
-							find.brand && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "mt-3 text-xs tracking-wide text-ink-soft uppercase",
-								children: find.brand
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "mt-1 line-clamp-2 text-sm font-medium",
-								children: find.title
-							}),
-							find.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "mt-auto pt-2 text-sm text-ink-soft",
-								children: formatPrice(find.price, market)
+					children: surprises.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+						className: "relative",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "absolute top-2 right-2 z-10",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+								groupId: find.id,
+								compact: true
 							})
-						]
-					}) }, find.id))
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+							href: find.url,
+							className: "flex h-full flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink",
+							children: [
+								find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+									src: find.image,
+									alt: "",
+									loading: "lazy",
+									className: "mx-auto h-28 w-auto max-w-full object-contain",
+									onError: (e) => {
+										e.currentTarget.style.visibility = "hidden";
+									}
+								}),
+								find.brand && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "mt-3 text-xs tracking-wide text-ink-soft uppercase",
+									children: find.brand
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-1 line-clamp-2 text-sm font-medium",
+									children: find.title
+								}),
+								find.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "mt-auto pt-2 text-sm text-ink-soft",
+									children: formatPrice(find.price, market)
+								})
+							]
+						})]
+					}, find.id))
 				})
 			]
 		}),
@@ -37016,6 +37344,230 @@ function GiftCove({ signedIn, mine, counts, santaGroups, urls }) {
 	] });
 }
 //#endregion
+//#region resources/js/Pages/GiftIdeas/Index.tsx
+var Index_exports$3 = /* @__PURE__ */ __exportAll({ default: () => Index });
+/**
+* The shelf of gift personas.
+*
+* Deliberately a plain grid rather than a feed. These do not arrive in an
+* order that matters and none of them is more current than another — a persona
+* written in March is exactly as useful in November, which is the whole reason
+* it has no date on it.
+*/
+function Index({ personas }) {
+	const { t, n } = useTranslations();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("gift_ideas.title") }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-2xl font-semibold sm:text-3xl",
+				children: t("gift_ideas.title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-2 text-ink-soft",
+				children: t("gift_ideas.description")
+			})]
+		}),
+		personas.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-8 text-ink-soft",
+			children: t("gift_ideas.empty")
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3",
+			children: personas.map((persona) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+				className: "flex flex-col rounded-lg border border-line bg-card p-4",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+						href: persona.url,
+						className: "group",
+						children: [persona.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+							src: persona.image,
+							alt: "",
+							loading: "lazy",
+							className: "mx-auto h-36 object-contain"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+							className: "mt-3 font-medium group-hover:underline",
+							children: persona.title
+						})]
+					}),
+					persona.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-2 line-clamp-3 text-sm text-ink-soft",
+						children: persona.blurb
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-auto pt-4 text-xs text-ink-soft",
+						children: t("gift_ideas.find_count", { count: n(persona.findCount) })
+					})
+				]
+			}, persona.slug))
+		})
+	] });
+}
+//#endregion
+//#region resources/js/Pages/GiftIdeas/Persona.tsx
+var Persona_exports = /* @__PURE__ */ __exportAll({ default: () => Persona });
+/**
+* One gift persona.
+*
+* The Daily Cove's article, without the furniture that only makes sense for a
+* dated page: no archive strip, no "earlier editions", no subscribe box. A
+* persona is not something you catch up with — it is a shelf, permanently
+* there, and the invitation at the end is to the next persona rather than to
+* tomorrow.
+*
+* Reactions are absent for the same reason. 🤯 / 😐 on a Daily is a signal
+* about a find on the day it appeared; on a page that stands for a year it
+* would accumulate into a rating nobody meant to give.
+*/
+function Persona({ preview = false, persona, finds, guide }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	const byGroup = Object.fromEntries(finds.map((f) => [f.groupId, f]));
+	const named = new Set(persona.editorial.flatMap((block) => block.groupIds));
+	const rest = finds.filter((find) => !named.has(find.groupId));
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+		preview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PreviewBanner, {}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: persona.title }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
+			className: "max-w-2xl",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-xs tracking-wide text-ink-soft uppercase",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+						href: `/${market.key}/gift-ideas`,
+						className: "hover:underline",
+						children: t("gift_ideas.title")
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+					className: "mt-1 text-2xl font-semibold sm:text-3xl",
+					children: persona.title
+				}),
+				persona.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-ink-soft",
+					children: persona.blurb
+				})
+			]
+		}),
+		persona.editorial.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-6 max-w-2xl leading-relaxed text-ink",
+			children: persona.editorial.map((block, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 [&_a]:underline",
+				dangerouslySetInnerHTML: { __html: block.html }
+			}), block.groupIds.map((id) => byGroup[id]).filter(Boolean).map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figure", {
+				className: "my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+					href: find.url,
+					className: "shrink-0",
+					children: find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: find.image,
+						alt: "",
+						loading: "lazy",
+						className: "mx-auto h-32 w-32 object-contain"
+					})
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figcaption", {
+					className: "min-w-0 flex-1",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+							href: find.url,
+							className: "font-medium hover:underline",
+							children: find.title
+						}),
+						find.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-1 text-sm text-ink-soft",
+							children: find.blurb
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-3 flex flex-wrap items-center gap-3",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "font-semibold",
+									children: find.price === null ? "—" : formatPrice(find.price, market)
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+									href: find.url,
+									className: "text-sm text-accent underline",
+									children: t("daily.see_offers")
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "ml-auto",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.groupId })
+								})
+							]
+						})
+					]
+				})]
+			}, find.id))] }, i))
+		}),
+		rest.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "text-sm font-medium text-ink-soft",
+				children: t("gift_ideas.finds_title")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+				className: "mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3",
+				children: rest.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+					className: "flex flex-col rounded-lg border border-line bg-card p-4",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+							href: find.url,
+							children: [find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: find.image,
+								alt: "",
+								className: "mx-auto h-36 object-contain",
+								loading: "lazy"
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+								className: "mt-3 line-clamp-2 font-medium",
+								children: find.title
+							})]
+						}),
+						find.blurb && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							className: "mt-2 text-sm text-ink-soft",
+							children: find.blurb
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+							className: "mt-auto flex items-center justify-between pt-4",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "font-semibold",
+								children: find.price === null ? "—" : formatPrice(find.price, market)
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: find.groupId })]
+						})
+					]
+				}, find.id))
+			})]
+		}),
+		guide && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-10 rounded-lg border border-line p-5",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "text-sm font-medium text-ink-soft",
+					children: t("daily.guide_title")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: guide.url,
+					className: "mt-2 block text-lg font-medium hover:underline",
+					children: guide.title
+				}),
+				guide.intro && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-ink-soft",
+					children: guide.intro
+				}),
+				guide.searchVolume > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-2 text-xs text-ink-soft",
+					children: t("daily.guide_why", { count: n(guide.searchVolume) })
+				})
+			]
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-12",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+				href: `/${market.key}/gift-ideas`,
+				className: "inline-block rounded-lg border border-line px-4 py-2 text-sm hover:bg-card",
+				children: t("gift_ideas.title")
+			})
+		})
+	] });
+}
+//#endregion
 //#region resources/js/Pages/Guides/Index.tsx
 var Index_exports$2 = /* @__PURE__ */ __exportAll({ default: () => GuidesIndex });
 function GuidesIndex({ guides }) {
@@ -37597,6 +38149,306 @@ function ListIllustration({ name, className }) {
 	});
 }
 //#endregion
+//#region resources/js/Components/BarcodeScanner.tsx
+var FORMATS = [
+	"ean_13",
+	"ean_8",
+	"upc_a",
+	"upc_e",
+	"itf",
+	"code_128"
+];
+/**
+* A detector that works in every browser, not just the lucky ones.
+*
+* The native `BarcodeDetector` is not a general capability: Chrome ships it on
+* Android, ChromeOS and macOS, and **not on Windows or Linux desktop**, and
+* Safari and Firefox do not ship it at all. Feature-detecting it and showing
+* "your browser cannot scan" is technically correct and useless — most desktops
+* land there, and it looks like the feature is broken.
+*
+* So: native where it exists, and a WebAssembly decoder (ZXing) everywhere
+* else. The polyfill is imported dynamically, inside the click handler, so the
+* decoder — a megabyte of wasm, 450 KB over the wire — is fetched only by
+* someone who actually pressed "scan", and never by the pages that share this
+* bundle. That is also why the button shows a preparing state: on a phone the
+* fetch is noticeable, and a button that appears to do nothing gets pressed
+* again.
+*/
+async function makeDetector() {
+	if (typeof window !== "undefined" && window.BarcodeDetector) return new window.BarcodeDetector({ formats: FORMATS });
+	const [{ BarcodeDetector: Polyfill }, { prepareZXingModule }] = await Promise.all([import("./assets/ponyfill-DwzQoYTH.js"), import("./assets/reader-BSjAMM6O.js")]);
+	const wasmUrl = (await import("./assets/zxing_reader-WcExx7Sk.js")).default;
+	prepareZXingModule({ overrides: { locateFile: () => wasmUrl } });
+	return new Polyfill({ formats: FORMATS });
+}
+/**
+* The scanner itself, shared by the /scan page and the search-page dialog.
+*
+* One implementation rather than two: the camera lifecycle, the decoder
+* fallback and the frame loop are all subtle enough that a second copy would
+* drift, and the bug it drifted into would only show up on one of the two
+* surfaces.
+*/
+function BarcodeScanner({ autoStart = false, onFound }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	const videoRef = (0, import_react.useRef)(null);
+	const streamRef = (0, import_react.useRef)(null);
+	const lastCodeRef = (0, import_react.useRef)(null);
+	const detectorRef = (0, import_react.useRef)(null);
+	const [scanning, setScanning] = (0, import_react.useState)(false);
+	const [loading, setLoading] = (0, import_react.useState)(false);
+	const [errorKey, setErrorKey] = (0, import_react.useState)(null);
+	const [hit, setHit] = (0, import_react.useState)(null);
+	const [manual, setManual] = (0, import_react.useState)("");
+	const stop = (0, import_react.useCallback)(() => {
+		streamRef.current?.getTracks().forEach((track) => track.stop());
+		streamRef.current = null;
+		setScanning(false);
+	}, []);
+	const lookup = (0, import_react.useCallback)(async (code) => {
+		if (lastCodeRef.current === code) return;
+		lastCodeRef.current = code;
+		const result = await (await fetch(`/${market.key}/scan/${encodeURIComponent(code)}`, { headers: { Accept: "application/json" } })).json();
+		if (result.searchUrl) {
+			stop();
+			router.visit(result.searchUrl);
+			return;
+		}
+		setHit(result);
+	}, [market.key, stop]);
+	const start = (0, import_react.useCallback)(async () => {
+		setErrorKey(null);
+		setHit(null);
+		lastCodeRef.current = null;
+		setLoading(true);
+		try {
+			detectorRef.current ??= await makeDetector();
+		} catch {
+			setErrorKey("scan.unsupported");
+			setLoading(false);
+			return;
+		}
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({ video: {
+				facingMode: { ideal: "environment" },
+				width: { ideal: 1280 }
+			} });
+			streamRef.current = stream;
+			setScanning(true);
+		} catch {
+			setErrorKey("scan.no_camera");
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+	(0, import_react.useEffect)(() => stop, [stop]);
+	(0, import_react.useEffect)(() => {
+		const video = videoRef.current;
+		const stream = streamRef.current;
+		const detector = detectorRef.current;
+		if (!scanning || video === null || stream === null || detector === null) return;
+		let cancelled = false;
+		video.srcObject = stream;
+		video.play().catch(() => {
+			if (!cancelled) setErrorKey("scan.unsupported");
+		});
+		const tick = async () => {
+			if (cancelled) return;
+			if (video.readyState >= video.HAVE_CURRENT_DATA) try {
+				const codes = await detector.detect(video);
+				if (codes.length > 0) await lookup(codes[0].rawValue);
+			} catch {}
+			if (!cancelled) setTimeout(tick, 300);
+		};
+		tick();
+		return () => {
+			cancelled = true;
+			video.srcObject = null;
+		};
+	}, [scanning, lookup]);
+	(0, import_react.useEffect)(() => {
+		if (autoStart) start();
+	}, [autoStart, start]);
+	(0, import_react.useEffect)(() => {
+		if (hit?.status === "found") onFound?.();
+	}, [hit, onFound]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "max-w-md",
+		children: [
+			!scanning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: start,
+				disabled: loading,
+				className: "w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60",
+				children: loading ? t("scan.preparing") : t("scan.start")
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "space-y-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {
+					ref: videoRef,
+					className: "h-40 w-full rounded-lg border border-line bg-black object-cover sm:h-48",
+					muted: true,
+					playsInline: true
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: stop,
+					className: "w-full rounded border border-line px-5 py-2 text-sm",
+					children: t("scan.stop")
+				})]
+			}),
+			errorKey && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-sm text-ink-soft",
+				children: t(errorKey)
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "mt-6 flex gap-2",
+				onSubmit: (e) => {
+					e.preventDefault();
+					lastCodeRef.current = null;
+					if (manual.trim() !== "") lookup(manual.trim());
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					type: "text",
+					inputMode: "numeric",
+					className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
+					placeholder: t("scan.manual_placeholder"),
+					value: manual,
+					onChange: (e) => setManual(e.target.value),
+					"aria-label": t("scan.manual_placeholder")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "submit",
+					className: "rounded border border-line px-4 text-sm",
+					children: t("scan.look_up")
+				})]
+			})
+		]
+	}), hit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+		className: "mt-8 max-w-md rounded-lg border border-line bg-card p-5",
+		children: hit.status === "found" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+			href: hit.url,
+			className: "flex gap-4",
+			children: [hit.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+				src: hit.image,
+				alt: "",
+				className: "h-24 w-24 shrink-0 object-contain"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "min-w-0",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "font-medium",
+						children: hit.title
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 text-lg font-semibold",
+						children: hit.price == null ? "-" : formatPrice(hit.price, market)
+					}),
+					(hit.merchantCount ?? 0) > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-ink-soft",
+						children: t("scan.shops", { count: n(hit.merchantCount ?? 0) })
+					})
+				]
+			})]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "text-sm",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: hit.message }), hit.searchUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+				href: hit.searchUrl,
+				className: "mt-2 inline-block underline",
+				children: t("scan.search_instead")
+			})]
+		})
+	})] });
+}
+//#endregion
+//#region resources/js/Components/ScanButton.tsx
+/**
+* A barcode inside a viewfinder.
+*
+* The button used to be the box-drawing character ▚, which is a half-shaded
+* block — it is not a picture of anything, and at button size it reads as a
+* rendering fault or a missing glyph rather than as an instruction. Being a text
+* character it also took its shape from whichever font the reader happens to
+* have, so it was not reliably even that.
+*
+* Bars alone would name the *object*; the corner brackets name the *action*,
+* which is what a button needs to say — this one opens a camera rather than
+* showing you a barcode. Four bars, not the six a real barcode has: below about
+* 1.5px of gap the whitespace closes up at 20px and the bars smear into a
+* single grey block, which is the failure the old glyph already had.
+*
+* Drawn to the same rules as ToolIcon — 24px grid, one stroke weight,
+* `currentColor` — so it inherits the button's text colour in both themes and
+* needs no dark-mode variant of its own.
+*/
+function ScanIcon({ className = "h-5 w-5" }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		viewBox: "0 0 24 24",
+		className,
+		fill: "none",
+		stroke: "currentColor",
+		strokeWidth: 1.6,
+		strokeLinecap: "round",
+		strokeLinejoin: "round",
+		"aria-hidden": true,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M21 16v2.5a2.5 2.5 0 0 1-2.5 2.5H16" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M7.5 8.5v7M10.5 8.5v7M13.5 8.5v7M16.5 8.5v7" })
+		]
+	});
+}
+/**
+* The scan button that sits beside a search field, and the dialog it opens.
+*
+* Scanning is a way of *entering a query* — the same intent as typing,
+* expressed with a camera — so it belongs wherever a query is entered, not in
+* the nav (see docs/features/barcode-scanner.md). That is more than one place:
+* the home page and the search page both open with a search box, and someone
+* standing in a shop should not have to run a search first to find the camera.
+*
+* Extracted rather than duplicated because the pieces that are easy to get
+* wrong — unmounting the scanner to release the camera, the backdrop click that
+* must not fire on a drag out of the panel, `type="button"` inside a real
+* <form> — are exactly the ones a second copy would quietly drop.
+*/
+function ScanButton({ className = "rounded-lg border border-line px-4 py-3" }) {
+	const { t } = useTranslations();
+	const [open, setOpen] = (0, import_react.useState)(false);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		type: "button",
+		onClick: () => setOpen(true),
+		className: `inline-flex items-center justify-center ${className}`,
+		"aria-label": t("scan.title"),
+		title: t("scan.title"),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanIcon, {})
+	}), open && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center",
+		role: "dialog",
+		"aria-modal": "true",
+		"aria-label": t("scan.title"),
+		onMouseDown: (e) => {
+			if (e.target === e.currentTarget) setOpen(false);
+		},
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "w-full max-w-md rounded-lg bg-cream p-5 shadow-lg",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mb-3 flex items-baseline justify-between gap-4",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-medium",
+					children: t("scan.title")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => setOpen(false),
+					className: "text-sm text-ink-soft underline",
+					children: t("scan.close")
+				})]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BarcodeScanner, { autoStart: true })]
+		})
+	})] });
+}
+//#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
 function Home({ today, gifting, coves, recentSearches }) {
@@ -37638,17 +38490,21 @@ function Home({ today, gifting, coves, recentSearches }) {
 							method: "get",
 							role: "search",
 							className: "mt-8 flex max-w-xl gap-2",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-								type: "search",
-								name: "q",
-								"aria-label": t("home.search_label"),
-								placeholder: t("home.search_placeholder"),
-								className: "min-w-0 flex-1 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-								type: "submit",
-								className: "rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark",
-								children: t("nav.search")
-							})]
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									type: "search",
+									name: "q",
+									"aria-label": t("home.search_label"),
+									placeholder: t("home.search_placeholder"),
+									className: "min-w-0 flex-1 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none"
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanButton, { className: "shrink-0 rounded-lg border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" }),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "submit",
+									className: "rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark",
+									children: t("nav.search")
+								})
+							]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 							className: "mt-3 text-sm text-ink-soft",
@@ -37869,29 +38725,38 @@ function Home({ today, gifting, coves, recentSearches }) {
 					}),
 					today.finds.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 						className: "mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4",
-						children: today.finds.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-							href: find.url,
-							className: "group block",
-							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "aspect-square overflow-hidden rounded-lg bg-cream",
-									children: find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-										src: find.image,
-										alt: "",
-										loading: "lazy",
-										className: "h-full w-full object-contain transition group-hover:scale-105"
-									})
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "mt-2 line-clamp-2 text-sm group-hover:text-accent",
-									children: find.title
-								}),
-								find.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-									className: "text-sm font-medium tabular-nums",
-									children: formatPrice(find.price, market)
+						children: today.finds.map((find) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+							className: "relative",
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "absolute top-2 right-2 z-10",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+									groupId: find.id,
+									compact: true
 								})
-							]
-						}) }, find.id))
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
+								href: find.url,
+								className: "group block",
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "aspect-square overflow-hidden rounded-lg bg-cream",
+										children: find.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+											src: find.image,
+											alt: "",
+											loading: "lazy",
+											className: "h-full w-full object-contain transition group-hover:scale-105"
+										})
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "mt-2 line-clamp-2 text-sm group-hover:text-accent",
+										children: find.title
+									}),
+									find.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "text-sm font-medium tabular-nums",
+										children: formatPrice(find.price, market)
+									})
+								]
+							})]
+						}, find.id))
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
 						href: today.url,
@@ -38615,40 +39480,50 @@ function SharedList({ list, isOwner, progress, items, canSuggest, suggestTerm, r
 				children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "flex gap-4",
-						children: [item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-							src: item.image,
-							alt: "",
-							className: "h-20 w-20 rounded object-contain",
-							onError: (e) => {
-								e.currentTarget.style.visibility = "hidden";
-							}
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "min-w-0 flex-1",
-							children: [
-								item.url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: item.url,
-									className: "font-medium hover:underline",
-									children: item.title
-								}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-									href: item.externalUrl,
-									target: "_blank",
-									rel: "nofollow noopener noreferrer",
-									className: "font-medium hover:underline",
-									children: item.title
-								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "font-medium",
-									children: item.title
-								}),
-								item.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "mt-1 text-sm text-ink-soft",
-									children: item.note
-								}),
-								item.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-									className: "mt-1 font-semibold",
-									children: formatPrice(item.price, market)
+						children: [
+							item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+								src: item.image,
+								alt: "",
+								className: "h-20 w-20 rounded object-contain",
+								onError: (e) => {
+									e.currentTarget.style.visibility = "hidden";
+								}
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+								className: "min-w-0 flex-1",
+								children: [
+									item.url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+										href: item.url,
+										className: "font-medium hover:underline",
+										children: item.title
+									}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+										href: item.externalUrl,
+										target: "_blank",
+										rel: "nofollow noopener noreferrer",
+										className: "font-medium hover:underline",
+										children: item.title
+									}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "font-medium",
+										children: item.title
+									}),
+									item.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-1 text-sm text-ink-soft",
+										children: item.note
+									}),
+									item.price !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+										className: "mt-1 font-semibold",
+										children: formatPrice(item.price, market)
+									})
+								]
+							}),
+							!isOwner && item.groupId !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "shrink-0 self-start",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+									groupId: item.groupId,
+									compact: true
 								})
-							]
-						})]
+							})
+						]
 					}),
 					!isOwner && item.claimed !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 						className: "mt-4",
@@ -38761,6 +39636,326 @@ function SharedList({ list, isOwner, progress, items, canSuggest, suggestTerm, r
 			]
 		})
 	] });
+}
+//#endregion
+//#region resources/js/Components/AddProduct.tsx
+/**
+* "Product toevoegen" — one control for the whole of putting a thing on a list.
+*
+* ## Why one button and not two
+*
+* The list page had **Find things to add**, which navigated away to a search,
+* and **Add something yourself**, a separate form for the case where the
+* catalogue does not have it. Two buttons, one intention — *put a thing on this
+* list* — and the split was ours rather than the visitor's: it asks them to
+* know, before they have typed anything, whether we happen to stock what they
+* are thinking of. That is a question only we can answer, and this panel
+* answers it: they type a term, press Enter, and see.
+*
+* ## The three ways out, in one place
+*
+* - A catalogue result, kept with its price, link and offer comparison intact.
+* - A live result from a source we do not mirror.
+* - Something typed by hand, reachable **without searching first** — the
+*   voucher for the climbing gym, a book in one particular edition. It is a
+*   footer on the panel from the moment it opens, not a consolation prize
+*   offered after a search has failed.
+*
+* Whichever is chosen, the wording is editable before it lands. Feed titles are
+* written for a search engine; a list is read by a person.
+*/
+function AddProduct({ base, listId, market }) {
+	const { t } = useTranslations();
+	const [open, setOpen] = (0, import_react.useState)(false);
+	const [term, setTerm] = (0, import_react.useState)("");
+	const [groups, setGroups] = (0, import_react.useState)([]);
+	const [live, setLive] = (0, import_react.useState)([]);
+	const [searching, setSearching] = (0, import_react.useState)(false);
+	const [searched, setSearched] = (0, import_react.useState)(false);
+	const [chosen, setChosen] = (0, import_react.useState)(null);
+	const [title, setTitle] = (0, import_react.useState)("");
+	const [note, setNote] = (0, import_react.useState)("");
+	const [url, setUrl] = (0, import_react.useState)("");
+	const [price, setPrice] = (0, import_react.useState)("");
+	const [busy, setBusy] = (0, import_react.useState)(false);
+	const [error, setError] = (0, import_react.useState)(null);
+	const field = (0, import_react.useRef)(null);
+	const latest = (0, import_react.useRef)(0);
+	function runSearch(event) {
+		event?.preventDefault();
+		const q = term.trim();
+		setError(null);
+		if (q.length < 2) {
+			setGroups([]);
+			setLive([]);
+			setSearched(false);
+			setSearching(false);
+			return;
+		}
+		const id = ++latest.current;
+		setSearching(true);
+		fetch(`${base}/list-search?q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } }).then((r) => r.json()).then((data) => {
+			if (id !== latest.current) return;
+			setGroups(data.groups ?? []);
+			setLive(data.live ?? []);
+			setSearched(true);
+		}).catch(() => {
+			if (id !== latest.current) return;
+			setError(t("lists.search_failed"));
+			setSearched(true);
+		}).finally(() => {
+			if (id === latest.current) setSearching(false);
+		});
+	}
+	(0, import_react.useEffect)(() => {
+		if (open) field.current?.focus();
+	}, [open]);
+	function reset() {
+		setChosen(null);
+		setTitle("");
+		setNote("");
+		setUrl("");
+		setPrice("");
+		setError(null);
+	}
+	function close() {
+		setOpen(false);
+		setTerm("");
+		setGroups([]);
+		setLive([]);
+		setSearched(false);
+		reset();
+	}
+	function choose(next) {
+		setError(null);
+		setChosen(next);
+		setNote("");
+		setUrl("");
+		setPrice("");
+		setTitle(next.kind === "manual" ? term.trim() : next.hit.title);
+	}
+	function submit(event) {
+		event.preventDefault();
+		setError(null);
+		setBusy(true);
+		const common = {
+			wishlist_id: listId,
+			title: title.trim(),
+			note: note.trim() || null
+		};
+		const payload = chosen?.kind === "group" ? {
+			...common,
+			group_id: chosen.hit.id
+		} : chosen?.kind === "live" ? {
+			...common,
+			source: chosen.hit.source,
+			external_id: chosen.hit.externalId,
+			image_url: chosen.hit.image,
+			price: chosen.hit.price
+		} : {
+			...common,
+			source: "manual",
+			url: url.trim() || null,
+			price: price.trim() === "" ? null : Math.round(Number(price.replace(",", ".")) * 100)
+		};
+		router.post(`${base}/list-items`, payload, {
+			preserveScroll: true,
+			onSuccess: () => close(),
+			onError: (errors) => setError(Object.values(errors)[0] ?? null),
+			onFinish: () => setBusy(false)
+		});
+	}
+	if (!open) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+		type: "button",
+		onClick: () => setOpen(true),
+		className: "rounded-lg border border-line px-3 py-2 text-sm hover:border-ink",
+		children: ["+ ", t("lists.add_product")]
+	});
+	const nothingFound = searched && !searching && groups.length === 0 && live.length === 0;
+	function hitRow(key, hit, onPick, badge) {
+		return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
+			type: "button",
+			onClick: onPick,
+			className: "flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-cream",
+			children: [hit.image ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+				src: hit.image,
+				alt: "",
+				loading: "lazy",
+				className: "h-12 w-12 shrink-0 object-contain",
+				onError: (e) => {
+					e.currentTarget.style.visibility = "hidden";
+				}
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "h-12 w-12 shrink-0 rounded bg-cream" }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+				className: "min-w-0 flex-1",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "line-clamp-2 block text-sm",
+					children: hit.title
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+					className: "text-xs text-ink-soft",
+					children: [hit.price !== null && formatPrice(hit.price, market), badge && (hit.price !== null ? " · " : "") + badge]
+				})]
+			})]
+		}) }, key);
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "w-full rounded-card border border-line bg-card p-4",
+		children: chosen === null ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				onSubmit: runSearch,
+				className: "flex items-center gap-2",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						ref: field,
+						type: "search",
+						value: term,
+						onChange: (e) => setTerm(e.target.value),
+						placeholder: t("lists.add_search_placeholder"),
+						"aria-label": t("lists.add_search_placeholder"),
+						className: "w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						disabled: searching,
+						className: "shrink-0 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-60",
+						children: t("search.submit")
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: close,
+						className: "shrink-0 rounded-lg border border-line px-3 py-2 text-sm",
+						children: t("lists.cancel")
+					})
+				]
+			}),
+			searching && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-sm text-ink-soft",
+				children: t("search.searching")
+			}),
+			(groups.length > 0 || live.length > 0) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("ul", {
+				className: "mt-3 space-y-1",
+				children: [groups.map((g) => hitRow(`g${g.id}`, g, () => choose({
+					kind: "group",
+					hit: g
+				}), g.merchantCount > 1 ? t("product.across_shops", { count: g.merchantCount }) : g.brand ?? void 0)), live.map((l) => hitRow(`l${l.source}-${l.externalId}`, l, () => choose({
+					kind: "live",
+					hit: l
+				}), l.merchant))]
+			}),
+			nothingFound && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-sm text-ink-soft",
+				children: t("lists.add_nothing_found", { term: term.trim() })
+			}),
+			error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-sm text-accent",
+				children: error
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "mt-4 border-t border-line pt-3 text-sm text-ink-soft",
+				children: [
+					t("lists.add_own_intro"),
+					" ",
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: () => choose({ kind: "manual" }),
+						className: "font-medium text-accent underline hover:text-accent-dark",
+						children: t("lists.add_own_cta")
+					})
+				]
+			})
+		] }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+			onSubmit: submit,
+			className: "space-y-3",
+			children: [
+				chosen.kind !== "manual" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex items-center gap-3",
+					children: [chosen.hit.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+						src: chosen.hit.image,
+						alt: "",
+						className: "h-14 w-14 shrink-0 object-contain"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+						className: "text-sm text-ink-soft",
+						children: [chosen.hit.price !== null && formatPrice(chosen.hit.price, market), chosen.kind === "live" && ` · ${chosen.hit.merchant}`]
+					})]
+				}),
+				(chosen.kind !== "live" || chosen.hit.storable) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+					className: "block text-sm font-medium",
+					children: [t("lists.add_description"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						required: true,
+						autoFocus: true,
+						maxLength: 500,
+						value: title,
+						onChange: (e) => setTitle(e.target.value),
+						className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+					})]
+				}),
+				chosen.kind === "live" && !chosen.hit.storable && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+					className: "text-sm",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "font-medium",
+						children: chosen.hit.title
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+						className: "mt-1 block text-xs text-ink-soft",
+						children: t("lists.add_live_title_note", { shop: chosen.hit.merchant })
+					})]
+				}),
+				chosen.kind === "manual" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "grid gap-3 sm:grid-cols-[2fr_1fr]",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block text-sm font-medium",
+						children: [t("lists.manual_url"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "url",
+							inputMode: "url",
+							maxLength: 2048,
+							placeholder: "https://",
+							value: url,
+							onChange: (e) => setUrl(e.target.value),
+							className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+						})]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block text-sm font-medium",
+						children: [t("lists.manual_price"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							inputMode: "decimal",
+							value: price,
+							onChange: (e) => setPrice(e.target.value),
+							className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+						})]
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+					className: "block text-sm font-medium",
+					children: [t("suggestions.note_label"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+						maxLength: 500,
+						value: note,
+						onChange: (e) => setNote(e.target.value),
+						placeholder: t("lists.add_note_placeholder"),
+						className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+					})]
+				}),
+				chosen.kind === "manual" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-xs text-ink-soft",
+					children: t("lists.manual_no_preview")
+				}),
+				error && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-sm text-accent",
+					children: error
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "flex gap-2",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						disabled: busy,
+						className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60",
+						children: t("lists.manual_save")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "button",
+						onClick: reset,
+						className: "rounded-lg border border-line px-4 py-2 text-sm",
+						children: t("lists.back")
+					})]
+				})
+			]
+		})
+	});
 }
 //#endregion
 //#region resources/js/Components/ShareMenu.tsx
@@ -39340,27 +40535,19 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 				})
 			] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "flex flex-wrap items-center gap-2",
-				children: [
-					access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Link_default, {
-						href: `${base}/search`,
-						className: "rounded-lg border border-line px-3 py-2 text-sm hover:border-ink",
-						children: ["+ ", t("lists.find_things")]
-					}),
-					access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						onClick: share,
-						className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark",
-						children: t("lists.share")
-					}),
-					access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						onClick: () => {
-							if (confirm(t("lists.delete_confirm"))) router.delete(`${base}/lists/${list.id}`);
-						},
-						"aria-label": t("lists.delete_list"),
-						title: t("lists.delete_list"),
-						className: "rounded-lg border border-line px-3 py-2 text-sm text-ink-soft hover:border-accent hover:text-accent",
-						children: t("lists.delete_list")
-					})
-				]
+				children: [access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					onClick: share,
+					className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark",
+					children: t("lists.share")
+				}), access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					onClick: () => {
+						if (confirm(t("lists.delete_confirm"))) router.delete(`${base}/lists/${list.id}`);
+					},
+					"aria-label": t("lists.delete_list"),
+					title: t("lists.delete_list"),
+					className: "rounded-lg border border-line px-3 py-2 text-sm text-ink-soft hover:border-accent hover:text-accent",
+					children: t("lists.delete_list")
+				})]
 			})]
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListTools, {
@@ -39460,24 +40647,23 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 				className: "text-ink-soft",
 				children: t("lists.empty_list")
-			}), access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			}), access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "mt-4 flex flex-wrap items-start justify-center gap-2",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-					href: `${base}/search`,
-					className: "rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white",
-					children: t("lists.find_things")
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ManualItem, {
-					action: `${base}/list-items`,
-					data: {
-						source: "manual",
-						wishlist_id: list.id
-					},
-					hint: t("lists.manual_hint"),
-					withNote: true
-				})]
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AddProduct, {
+					base,
+					listId: list.id,
+					market
+				})
 			})]
-		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-			className: "mt-8 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "mt-8",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AddProduct, {
+				base,
+				listId: list.id,
+				market
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+			className: "mt-3 divide-y divide-line overflow-hidden rounded-card border border-line bg-card",
 			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 				className: "p-4",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -39538,19 +40724,7 @@ function ListShow({ list, items, target, asked, access, collaborators, suggestio
 					price: item.currentPrice ?? item.price
 				})]
 			}, item.id))
-		}),
-		items.length > 0 && access.canEdit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "mt-4",
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ManualItem, {
-				action: `${base}/list-items`,
-				data: {
-					source: "manual",
-					wishlist_id: list.id
-				},
-				hint: t("lists.manual_hint"),
-				withNote: true
-			})
-		})
+		})] })
 	] });
 }
 //#endregion
@@ -40790,6 +41964,13 @@ function SantaMe({ group, me }) {
 									children: formatPrice(wish.price, market)
 								})]
 							}),
+							wish.groupId !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "shrink-0",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+									groupId: wish.groupId,
+									compact: true
+								})
+							}),
 							wish.claimed ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 								className: "shrink-0 text-sm text-ink-soft",
 								children: t("lists.claimed_by_someone")
@@ -40811,217 +41992,6 @@ function SantaMe({ group, me }) {
 			]
 		})
 	] });
-}
-//#endregion
-//#region resources/js/Components/BarcodeScanner.tsx
-var FORMATS = [
-	"ean_13",
-	"ean_8",
-	"upc_a",
-	"upc_e",
-	"itf",
-	"code_128"
-];
-/**
-* A detector that works in every browser, not just the lucky ones.
-*
-* The native `BarcodeDetector` is not a general capability: Chrome ships it on
-* Android, ChromeOS and macOS, and **not on Windows or Linux desktop**, and
-* Safari and Firefox do not ship it at all. Feature-detecting it and showing
-* "your browser cannot scan" is technically correct and useless — most desktops
-* land there, and it looks like the feature is broken.
-*
-* So: native where it exists, and a WebAssembly decoder (ZXing) everywhere
-* else. The polyfill is imported dynamically, inside the click handler, so the
-* decoder — a megabyte of wasm, 450 KB over the wire — is fetched only by
-* someone who actually pressed "scan", and never by the pages that share this
-* bundle. That is also why the button shows a preparing state: on a phone the
-* fetch is noticeable, and a button that appears to do nothing gets pressed
-* again.
-*/
-async function makeDetector() {
-	if (typeof window !== "undefined" && window.BarcodeDetector) return new window.BarcodeDetector({ formats: FORMATS });
-	const [{ BarcodeDetector: Polyfill }, { prepareZXingModule }] = await Promise.all([import("./assets/ponyfill-DwzQoYTH.js"), import("./assets/reader-BSjAMM6O.js")]);
-	const wasmUrl = (await import("./assets/zxing_reader-WcExx7Sk.js")).default;
-	prepareZXingModule({ overrides: { locateFile: () => wasmUrl } });
-	return new Polyfill({ formats: FORMATS });
-}
-/**
-* The scanner itself, shared by the /scan page and the search-page dialog.
-*
-* One implementation rather than two: the camera lifecycle, the decoder
-* fallback and the frame loop are all subtle enough that a second copy would
-* drift, and the bug it drifted into would only show up on one of the two
-* surfaces.
-*/
-function BarcodeScanner({ autoStart = false, onFound }) {
-	const { market } = usePage().props;
-	const { t, n } = useTranslations();
-	const videoRef = (0, import_react.useRef)(null);
-	const streamRef = (0, import_react.useRef)(null);
-	const lastCodeRef = (0, import_react.useRef)(null);
-	const detectorRef = (0, import_react.useRef)(null);
-	const [scanning, setScanning] = (0, import_react.useState)(false);
-	const [loading, setLoading] = (0, import_react.useState)(false);
-	const [errorKey, setErrorKey] = (0, import_react.useState)(null);
-	const [hit, setHit] = (0, import_react.useState)(null);
-	const [manual, setManual] = (0, import_react.useState)("");
-	const stop = (0, import_react.useCallback)(() => {
-		streamRef.current?.getTracks().forEach((track) => track.stop());
-		streamRef.current = null;
-		setScanning(false);
-	}, []);
-	const lookup = (0, import_react.useCallback)(async (code) => {
-		if (lastCodeRef.current === code) return;
-		lastCodeRef.current = code;
-		const result = await (await fetch(`/${market.key}/scan/${encodeURIComponent(code)}`, { headers: { Accept: "application/json" } })).json();
-		if (result.searchUrl) {
-			stop();
-			router.visit(result.searchUrl);
-			return;
-		}
-		setHit(result);
-	}, [market.key, stop]);
-	const start = (0, import_react.useCallback)(async () => {
-		setErrorKey(null);
-		setHit(null);
-		lastCodeRef.current = null;
-		setLoading(true);
-		try {
-			detectorRef.current ??= await makeDetector();
-		} catch {
-			setErrorKey("scan.unsupported");
-			setLoading(false);
-			return;
-		}
-		try {
-			const stream = await navigator.mediaDevices.getUserMedia({ video: {
-				facingMode: { ideal: "environment" },
-				width: { ideal: 1280 }
-			} });
-			streamRef.current = stream;
-			setScanning(true);
-		} catch {
-			setErrorKey("scan.no_camera");
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-	(0, import_react.useEffect)(() => stop, [stop]);
-	(0, import_react.useEffect)(() => {
-		const video = videoRef.current;
-		const stream = streamRef.current;
-		const detector = detectorRef.current;
-		if (!scanning || video === null || stream === null || detector === null) return;
-		let cancelled = false;
-		video.srcObject = stream;
-		video.play().catch(() => {
-			if (!cancelled) setErrorKey("scan.unsupported");
-		});
-		const tick = async () => {
-			if (cancelled) return;
-			if (video.readyState >= video.HAVE_CURRENT_DATA) try {
-				const codes = await detector.detect(video);
-				if (codes.length > 0) await lookup(codes[0].rawValue);
-			} catch {}
-			if (!cancelled) setTimeout(tick, 300);
-		};
-		tick();
-		return () => {
-			cancelled = true;
-			video.srcObject = null;
-		};
-	}, [scanning, lookup]);
-	(0, import_react.useEffect)(() => {
-		if (autoStart) start();
-	}, [autoStart, start]);
-	(0, import_react.useEffect)(() => {
-		if (hit?.status === "found") onFound?.();
-	}, [hit, onFound]);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "max-w-md",
-		children: [
-			!scanning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				onClick: start,
-				disabled: loading,
-				className: "w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60",
-				children: loading ? t("scan.preparing") : t("scan.start")
-			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "space-y-3",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {
-					ref: videoRef,
-					className: "h-40 w-full rounded-lg border border-line bg-black object-cover sm:h-48",
-					muted: true,
-					playsInline: true
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: stop,
-					className: "w-full rounded border border-line px-5 py-2 text-sm",
-					children: t("scan.stop")
-				})]
-			}),
-			errorKey && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-3 text-sm text-ink-soft",
-				children: t(errorKey)
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-				className: "mt-6 flex gap-2",
-				onSubmit: (e) => {
-					e.preventDefault();
-					lastCodeRef.current = null;
-					if (manual.trim() !== "") lookup(manual.trim());
-				},
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-					type: "text",
-					inputMode: "numeric",
-					className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
-					placeholder: t("scan.manual_placeholder"),
-					value: manual,
-					onChange: (e) => setManual(e.target.value),
-					"aria-label": t("scan.manual_placeholder")
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "submit",
-					className: "rounded border border-line px-4 text-sm",
-					children: t("scan.look_up")
-				})]
-			})
-		]
-	}), hit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
-		className: "mt-8 max-w-md rounded-lg border border-line bg-card p-5",
-		children: hit.status === "found" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
-			href: hit.url,
-			className: "flex gap-4",
-			children: [hit.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-				src: hit.image,
-				alt: "",
-				className: "h-24 w-24 shrink-0 object-contain"
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "min-w-0",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "font-medium",
-						children: hit.title
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-1 text-lg font-semibold",
-						children: hit.price == null ? "-" : formatPrice(hit.price, market)
-					}),
-					(hit.merchantCount ?? 0) > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "text-sm text-ink-soft",
-						children: t("scan.shops", { count: n(hit.merchantCount ?? 0) })
-					})
-				]
-			})]
-		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "text-sm",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: hit.message }), hit.searchUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-				href: hit.searchUrl,
-				className: "mt-2 inline-block underline",
-				children: t("scan.search_instead")
-			})]
-		})
-	})] });
 }
 //#endregion
 //#region resources/js/Pages/Scan.tsx
@@ -41142,7 +42112,6 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
-	const [scannerOpen, setScannerOpen] = (0, import_react.useState)(false);
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
 	const [searching, setSearching] = (0, import_react.useState)(false);
 	const base = `/${market.key}/search`;
@@ -41206,17 +42175,7 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "animate-scan absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-accent to-transparent" })
 					})]
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => setScannerOpen(true),
-					className: "rounded-lg border border-line px-4 py-3",
-					"aria-label": t("scan.title"),
-					title: t("scan.title"),
-					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-						"aria-hidden": true,
-						children: "▚"
-					})
-				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanButton, {}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 					"aria-busy": searching,
 					className: `rounded-lg bg-accent px-5 py-3 font-medium text-white transition-opacity hover:bg-accent-dark ${searching ? "opacity-70" : ""}`,
@@ -41240,30 +42199,6 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 		pastedLink && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-3 rounded-lg border border-line bg-cream px-4 py-3 text-sm text-ink-soft",
 			children: pastedLink.shortlink ? t("search.pasted_shortlink") : pastedLink.usable ? t("search.pasted_searched", { terms: pastedLink.terms }) : t("search.pasted_unreadable")
-		}),
-		scannerOpen && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-			className: "fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center",
-			role: "dialog",
-			"aria-modal": "true",
-			"aria-label": t("scan.title"),
-			onMouseDown: (e) => {
-				if (e.target === e.currentTarget) setScannerOpen(false);
-			},
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "w-full max-w-md rounded-lg bg-cream p-5 shadow-lg",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "mb-3 flex items-baseline justify-between gap-4",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-						className: "font-medium",
-						children: t("scan.title")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						onClick: () => setScannerOpen(false),
-						className: "text-sm text-ink-soft underline",
-						children: t("scan.close")
-					})]
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BarcodeScanner, { autoStart: true })]
-			})
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]",
@@ -41428,25 +42363,34 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 								]
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 								className: "space-y-3",
-								children: items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
-									href: `/${market.key}/p/${g.id}/${g.slug}`,
-									className: "flex gap-3 rounded border border-line bg-card p-2 hover:bg-cream",
-									children: [g.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-										src: g.image,
-										alt: "",
-										className: "h-14 w-14 shrink-0 object-contain",
-										loading: "lazy"
-									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-										className: "min-w-0 flex-1",
-										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "line-clamp-2 text-sm",
-											children: g.title
-										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-											className: "mt-1 block text-sm font-semibold",
-											children: g.minPrice === null ? "-" : formatPrice(g.minPrice, market)
+								children: items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+									className: "relative",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+										className: "absolute top-1 right-1 z-10",
+										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, {
+											groupId: g.id,
+											compact: true
+										})
+									}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+										href: `/${market.key}/p/${g.id}/${g.slug}`,
+										className: "flex gap-3 rounded border border-line bg-card p-2 pr-16 hover:bg-cream",
+										children: [g.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+											src: g.image,
+											alt: "",
+											className: "h-14 w-14 shrink-0 object-contain",
+											loading: "lazy"
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+											className: "min-w-0 flex-1",
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "line-clamp-2 text-sm",
+												children: g.title
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+												className: "mt-1 block text-sm font-semibold",
+												children: g.minPrice === null ? "-" : formatPrice(g.minPrice, market)
+											})]
 										})]
 									})]
-								}) }, g.id))
+								}, g.id))
 							})]
 						}, shop))
 					}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -61698,6 +62642,53 @@ function AccountMenu() {
 	});
 }
 //#endregion
+//#region resources/js/Components/AddingToBar.tsx
+/**
+* "Adding to Camping · 4 added · Done".
+*
+* The visible half of the adding mode, and the reason the mode is allowed to
+* live in the session at all. A session flag that silently changes where a
+* bookmark sends things would be a trap: you would find out days later by
+* looking at a list you did not mean to fill. A bar that is on every page for
+* as long as the mode is on cannot do that — the state is never further away
+* than the top of the screen, and the way out is in the same sentence.
+*
+* Sticky rather than fixed, so it does not sit on top of content on a short
+* page, and directly under the header so it reads as part of the chrome rather
+* than as something the page is saying.
+*/
+function AddingToBar() {
+	const { savingTo, market } = usePage().props;
+	const { t, n } = useTranslations();
+	const added = (0, import_react.useSyncExternalStore)(subscribe$2, addedCount, () => 0);
+	if (!savingTo) return null;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "sticky top-0 z-40 border-b border-sage/40 bg-sage/10",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm",
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+					className: "min-w-0 flex-1 truncate",
+					children: [t("lists.adding_to", { list: savingTo.title }), added > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+						className: "text-ink-soft",
+						children: [" · ", t("lists.added_count", { count: n(added) })]
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/lists/${savingTo.id}`,
+					className: "shrink-0 text-ink-soft hover:text-ink",
+					children: t("lists.view_list")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/done-adding`,
+					className: "shrink-0 rounded-lg bg-accent px-3 py-1 text-xs font-medium text-white hover:bg-accent-dark",
+					children: t("lists.done_adding")
+				})
+			]
+		})
+	});
+}
+//#endregion
 //#region resources/js/Components/FlashMessage.tsx
 /**
 * What the server just said.
@@ -61733,6 +62724,89 @@ function FlashMessage() {
 			className: "shrink-0 text-ink-soft hover:text-ink",
 			children: "×"
 		})]
+	});
+}
+//#endregion
+//#region resources/js/Components/SaveToast.tsx
+/**
+* "Saved to Camping · Undo · View list", where you are looking.
+*
+* Mounted once in the layout; raised from any product card on the page. See
+* `saveToast.ts` for why saves stopped using the flash banner.
+*
+* ## Why Undo is here and not on the card
+*
+* Undoing a save used to mean reopening the picker and finding the ticked row —
+* which works, and requires knowing that the picker reports membership at all.
+* The mistake this recovers from is saving to the list one line above the one
+* you meant, and the moment to catch it is the second after it happened, on the
+* confirmation that just named the wrong list. Anywhere else is a search.
+*
+* It needs the row's id, which is why `store()` answers with one. A flash
+* string can name a list and cannot name a row.
+*/
+function SaveToast() {
+	const toast = (0, import_react.useSyncExternalStore)(subscribe, snapshot, serverSnapshot);
+	const { market } = usePage().props;
+	const { t } = useTranslations();
+	const [undoing, setUndoing] = (0, import_react.useState)(false);
+	const [paused, setPaused] = (0, import_react.useState)(false);
+	const key = toast?.key;
+	(0, import_react.useEffect)(() => {
+		if (key === void 0 || paused) return;
+		const timer = window.setTimeout(() => dismiss(key), 6e3);
+		return () => window.clearTimeout(timer);
+	}, [key, paused]);
+	(0, import_react.useEffect)(() => setPaused(false), [key]);
+	if (!toast) return null;
+	const isError = toast.tone === "error";
+	async function undo() {
+		if (!toast?.undo || undoing) return;
+		setUndoing(true);
+		try {
+			await send(`/${market.key}/list-items/${toast.undo.itemId}`, "DELETE");
+			if (toast.undo.groupId !== void 0) markRemoved(toast.undo.groupId);
+			dismiss(toast.key);
+		} catch {
+			setUndoing(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4 sm:justify-start sm:px-6",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			role: isError ? "alert" : "status",
+			"aria-live": isError ? "assertive" : "polite",
+			onMouseEnter: () => setPaused(true),
+			onMouseLeave: () => setPaused(false),
+			onFocus: () => setPaused(true),
+			onBlur: () => setPaused(false),
+			className: `pointer-events-auto flex max-w-full items-center gap-3 rounded-card border px-4 py-3 text-sm shadow-xl ${isError ? "border-accent/40 bg-card text-ink" : "border-line bg-card text-ink"}`,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "min-w-0 flex-1 truncate",
+					children: toast.message
+				}),
+				toast.undo && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => void undo(),
+					disabled: undoing,
+					className: "shrink-0 font-medium text-accent hover:text-accent-dark disabled:opacity-60",
+					children: t("lists.undo")
+				}),
+				toast.listId && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: `/${market.key}/lists/${toast.listId}`,
+					className: "shrink-0 font-medium text-ink-soft hover:text-ink",
+					children: t("lists.view_list")
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => dismiss(toast.key),
+					"aria-label": "×",
+					className: "shrink-0 text-ink-soft hover:text-ink",
+					children: "×"
+				})
+			]
+		})
 	});
 }
 //#endregion
@@ -62329,11 +63403,13 @@ function SiteLayout({ children }) {
 					})]
 				})]
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(AddingToBar, {}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("main", {
 				id: "main",
 				className: "mx-auto w-full max-w-6xl flex-1 px-4 py-10",
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FlashMessage, {}), children]
 			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToast, {}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("footer", {
 				className: "border-t border-line",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
@@ -62408,7 +63484,7 @@ server_default((page) => createInertiaApp({
 	},
 	resolve: async (name) => {
 		const module = (/* @__PURE__ */ Object.assign({
-			"./Pages/Ask/Index.tsx": Index_exports$3,
+			"./Pages/Ask/Index.tsx": Index_exports$4,
 			"./Pages/Ask/Show.tsx": Show_exports$2,
 			"./Pages/Auth/Login.tsx": Login_exports,
 			"./Pages/Brand.tsx": Brand_exports,
@@ -62418,6 +63494,8 @@ server_default((page) => createInertiaApp({
 			"./Pages/DiscoverCove.tsx": DiscoverCove_exports,
 			"./Pages/Gift/Wizard.tsx": Wizard_exports,
 			"./Pages/GiftCove.tsx": GiftCove_exports,
+			"./Pages/GiftIdeas/Index.tsx": Index_exports$3,
+			"./Pages/GiftIdeas/Persona.tsx": Persona_exports,
 			"./Pages/Guides/Index.tsx": Index_exports$2,
 			"./Pages/Guides/Show.tsx": Show_exports$1,
 			"./Pages/Home.tsx": Home_exports,

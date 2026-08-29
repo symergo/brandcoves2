@@ -35,11 +35,12 @@ class ClassifyGiftability implements ShouldQueue
     {
         $giftable = 0;
         $rejected = 0;
+        $showable = 0;
 
         ProductGroup::query()
             ->forMarket($this->market)
             ->select(['id', 'title', 'category', 'min_price'])
-            ->chunkById(1000, function ($groups) use ($classifier, &$giftable, &$rejected): void {
+            ->chunkById(1000, function ($groups) use ($classifier, &$giftable, &$rejected, &$showable): void {
                 $updates = [];
 
                 foreach ($groups as $group) {
@@ -50,10 +51,12 @@ class ClassifyGiftability implements ShouldQueue
                     );
 
                     $verdict->giftable ? $giftable++ : $rejected++;
+                    $verdict->worthShowing && $showable++;
 
                     $updates[] = [
                         'id' => $group->id,
                         'giftable' => $verdict->giftable,
+                        'worth_showing' => $verdict->worthShowing,
                         'giftable_reason' => $verdict->evidence === null
                             ? $verdict->reason
                             : $verdict->reason.': '.$verdict->evidence,
@@ -63,10 +66,13 @@ class ClassifyGiftability implements ShouldQueue
                 $this->flush($updates);
             });
 
+        // `showable` exceeds `giftable` by exactly the rows over the price
+        // ceiling. If the two are ever equal, the split has stopped working.
         Log::info('Giftability classified', [
             'market' => $this->market->value,
             'giftable' => $giftable,
             'rejected' => $rejected,
+            'worth_showing' => $showable,
         ]);
     }
 
@@ -82,7 +88,7 @@ class ClassifyGiftability implements ShouldQueue
      * "column giftable is of type boolean but expression is of type text".
      * Naming the type once in the VALUES list settles it for every row.
      *
-     * @param  list<array{id: int, giftable: bool, giftable_reason: string}>  $updates
+     * @param  list<array{id: int, giftable: bool, worth_showing: bool, giftable_reason: string}>  $updates
      */
     private function flush(array $updates): void
     {
@@ -90,7 +96,7 @@ class ClassifyGiftability implements ShouldQueue
             return;
         }
 
-        $placeholders = implode(',', array_fill(0, count($updates), '(?::bigint, ?::boolean, ?::text)'));
+        $placeholders = implode(',', array_fill(0, count($updates), '(?::bigint, ?::boolean, ?::boolean, ?::text)'));
         $bindings = [];
 
         foreach ($updates as $row) {
@@ -98,15 +104,17 @@ class ClassifyGiftability implements ShouldQueue
             // 'true'/'false', not PHP booleans: PDO renders false as an empty
             // string, which Postgres rejects as a boolean literal.
             $bindings[] = $row['giftable'] ? 'true' : 'false';
+            $bindings[] = $row['worth_showing'] ? 'true' : 'false';
             $bindings[] = $row['giftable_reason'];
         }
 
         DB::update(
             "UPDATE product_groups g
              SET giftable = v.giftable,
+                 worth_showing = v.worth_showing,
                  giftable_reason = v.reason,
                  updated_at = now()
-             FROM (VALUES {$placeholders}) AS v(id, giftable, reason)
+             FROM (VALUES {$placeholders}) AS v(id, giftable, worth_showing, reason)
              WHERE g.id = v.id",
             $bindings,
         );

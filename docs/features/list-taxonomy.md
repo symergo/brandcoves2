@@ -176,6 +176,56 @@ carries **no** contributions. A total there would be legal, since I am a giver r
 recipient, but it is the one place where copying the group-list branch would hand a breakdown about
 one person's list to a different person entirely. The docblock there says so.
 
+## Filling one list, rather than saving one product
+
+Added 2026-08-29. A fourth way a list gets filled, and the first one that treats filling a list as a
+single act rather than as a run of unrelated saves.
+
+**What it replaced.** "Find things to add" on `Lists/Show` linked to a bare `/{market}/search`, which
+knew nothing about the list it had been reached from. Every product then cost: open the picker, wait
+for `/list-options`, scan three sections, find the same list you chose thirty seconds ago, tap it.
+Ten items, ten identical decisions. The destination is the *least* variable part of filling a list
+and it was the part being asked about most.
+
+`GET /lists/{list}/add` turns the mode on and lands on search; `GET /done-adding` turns it off and
+returns to the list. While it is on, a bookmark adds straight to that list.
+
+### Three decisions
+
+**The session, not a query parameter.** `?to={list}` was the obvious alternative and is worse: it
+would have to survive search pagination, every facet link, a sort change, a click into a product and
+back, a guide, a brand page — every internal link on every discovery surface. Any one that forgot to
+carry it drops the mode silently, and the visitor finds out afterwards by looking at their list.
+
+**Which is only safe because the mode is always visible.** `AddingToBar` sits under the header on
+every page for as long as the mode is on, naming the list and offering the way out in the same
+sentence. A session flag that quietly redirected saves would be a trap; a mode you can see at all
+times cannot surprise you. The bar is the safeguard here — not an expiry, which would end the mode
+mid-run for exactly the person using it properly.
+
+**The id is stored; the title is resolved per request** (`savingTo`, a closure in
+`HandleInertiaRequests` beside `unreadCount`, so it costs nothing when the mode is off). That buys
+one primary-key lookup and makes the mode self-healing: rename the list and the bar follows, delete
+it or lose access and the mode ends rather than pointing at something that is not there. `canEdit` is
+re-checked on every request rather than trusted from the session — a collaborator can be demoted, a
+list can be handed over, and a mode that outlived permission would send every subsequent save into a
+403 with nothing on screen explaining why.
+
+### The bookmark changes what it means
+
+Ordinarily it answers *"have I kept this anywhere?"* — any list of yours counts, because a thing on
+your research list for your mother is still a thing you have already found.
+
+During a run that is the wrong question, and answering it would tick items that are on a different
+list while hiding the ones just added. `GET /saved-items?list=` returns `listGroupIds` alongside
+`groupIds` in the same round trip, and `savedItems.ts` holds both. The per-list read goes through
+`ListAccess`, because asking "what is on this list" about a list you have no part in is a read of
+somebody's list membership and is gated like one.
+
+The mode is a **default, not a lock**: the picker still reaches every list, and a save that names one
+goes there — which is why `markSaved()` takes an `onActiveList` flag. Saving to Books during a
+Camping run must not tick the bookmark, because the item is still not on Camping.
+
 ## What already exists and is being reused
 
 Worth stating, because most of this was built and then never wired to anything:
@@ -227,6 +277,10 @@ value nothing can write.
 ## Files
 
 - `app/Enums/ListKind.php`, `app/Enums/CollaboratorRole.php`
+- `app/Services/Wishlist/AddingMode.php` — the list currently being filled
+- `resources/js/Components/AddingToBar.tsx`, `resources/js/addingMode.ts` — the visible half
+- `resources/js/savedItems.ts` — two sets, because the bookmark answers two questions
+- `tests/Feature/AddingModeTest.php`
 - `app/Services/Wishlist/ListMaker.php` — the one place a list is created
 - `app/Services/Wishlist/ContributionView.php` — the one place the money table lives
 - `app/Http/Controllers/WishlistController.php` — `index()`, `show()`, `summarise()`

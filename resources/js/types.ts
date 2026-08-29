@@ -32,6 +32,12 @@ export interface AuthUser {
 /** Nested translation tree, as returned by Lang::get('site'). */
 export type Translations = { [key: string]: string | Translations }
 
+/** The list currently being filled, when the visitor is in adding mode. */
+export interface SavingTo {
+    id: string
+    title: string
+}
+
 export interface SharedProps {
     auth: { user: AuthUser | null }
     market: CurrentMarket
@@ -39,6 +45,7 @@ export interface SharedProps {
     translations: Translations
     translationVersion: string
     unreadCount: number
+    savingTo: SavingTo | null
     flash: { success?: string; error?: string; status?: string }
     [key: string]: unknown
 }

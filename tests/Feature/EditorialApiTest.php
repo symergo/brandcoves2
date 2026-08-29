@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Availability;
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\PublishStatus;
@@ -13,7 +14,7 @@ use App\Jobs\BuildDailyEdition;
 use App\Models\ApiToken;
 use App\Models\BrandStat;
 use App\Models\CovePlan;
-use App\Models\Guide;
+use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
@@ -426,14 +427,15 @@ class EditorialApiTest extends TestCase
 
         $prose = "Eerst dit.\n\nEn dan [[product:{$pinned->id}|de gepinde vondst]].";
 
-        CovePlan::create([
+        $plan = CovePlan::create([
             'market' => Market::BeNl->value,
             'drop_date' => CarbonImmutable::today()->toDateString(),
             'title' => 'Geschreven door een mens',
             'editorial' => $prose,
-            'pinned_group_ids' => [$pinned->id],
             'status' => 'approved',
         ]);
+
+        $plan->items()->create(['group_id' => $pinned->id, 'rank' => 1]);
 
         // Fail loudly if anything reaches for a model: an authored Cove must
         // cost nothing, and the AI invariant is the one this feature is most
@@ -462,14 +464,18 @@ class EditorialApiTest extends TestCase
         $this->seedFinds();
         $pinned = $this->find('Gepinde vondst', 12000, 'gepind', 95);
 
-        CovePlan::create([
+        $plan = CovePlan::create([
             'market' => Market::BeNl->value,
             'drop_date' => CarbonImmutable::today()->toDateString(),
             'title' => 'Met een kapotte link',
             'editorial' => "Zie [[product:{$pinned->id}|dit]] en [[brand:Verzonnen BV]].",
-            'pinned_group_ids' => [$pinned->id],
             'status' => 'approved',
         ]);
+
+        // Curated, so the product the prose links to is certainly in the
+        // edition — a token for something the engine did not pick renders as
+        // plain text, which is a different assertion from the one below.
+        $plan->items()->create(['group_id' => $pinned->id, 'rank' => 1]);
 
         app(EditionBuilder::class)->build(Market::BeNl);
 
@@ -514,10 +520,10 @@ class EditorialApiTest extends TestCase
         // Not on the site yet: the public route filters on published.
         $this->get('/'.Market::BeNl->value.'/guides/'.$slug)->assertNotFound();
 
-        $guide = Guide::query()->where('slug', $slug)->firstOrFail();
+        $guide = DailyPickSet::query()->articles()->where('slug', $slug)->firstOrFail();
 
         // Ranks are array order — position is the argument a "best of" makes.
-        $this->assertSame([1, 2, 3, 4], $guide->items()->pluck('rank')->all());
+        $this->assertSame([1, 2, 3, 4], $guide->picks()->pluck('rank')->all());
         // Stored as q/a, which is what the FAQ structured data reads.
         $this->assertSame('Welke is het stilst?', $guide->faq[0]['q']);
 
@@ -535,13 +541,7 @@ class EditorialApiTest extends TestCase
         $items = collect(range(1, 3))->map(fn (int $i) => $this->find("Ding {$i}", 5000));
         $first = $items->first();
 
-        $existing = Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'beste-koptelefoons',
-            'title' => 'De beste koptelefoons',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $existing = $this->publishedGuide('beste-koptelefoons', 'De beste koptelefoons');
 
         $response = $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
             ->postJson('/api/editorial/guides', [
@@ -651,13 +651,7 @@ class EditorialApiTest extends TestCase
     {
         $items = collect(range(1, 3))->map(fn (int $i) => $this->find("Ding {$i}", 5000));
 
-        $target = Guide::create([
-            'market' => Market::BeNl->value,
-            'slug' => 'doelgids',
-            'title' => 'De doelgids',
-            'status' => PublishStatus::Published->value,
-            'published_at' => now(),
-        ]);
+        $target = $this->publishedGuide('doelgids', 'De doelgids');
 
         $token = $this->key(ApiToken::abilities());
 
@@ -713,6 +707,25 @@ class EditorialApiTest extends TestCase
     private function key(array $abilities): string
     {
         return ApiToken::issue('test key', $abilities)['token'];
+    }
+
+    /**
+     * A published guide at a known slug, for a `[[guide:…]]` token to resolve to.
+     *
+     * An edition since the fold — the whole `/guides` space is `daily_pick_sets`
+     * rows now, and the link allowlist reads them there.
+     */
+    private function publishedGuide(string $slug, string $title): DailyPickSet
+    {
+        return DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Guide->value,
+            'slug' => $slug,
+            'theme_title' => $title,
+            'theme_slug' => $slug,
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
     }
 
     private function find(

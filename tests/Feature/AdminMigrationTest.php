@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Filament\Pages\Migration;
-use App\Models\Guide;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Ops\ConfigReport;
 use App\Services\Ops\DeployTrigger;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -60,17 +63,26 @@ class AdminMigrationTest extends TestCase
             'identity_key' => 'ean:1010101010101',
         ]);
 
-        $guide = Guide::create([
+        $guide = DailyPickSet::create([
             'market' => Market::BeNl,
+            // An edition since the fold: guides travel in the editions surface.
+            'kind' => CoveKind::Guide,
             'slug' => 'beste-blenders',
-            'title' => 'Beste blenders',
+            'theme_title' => 'Beste blenders',
+            'theme_slug' => 'beste-blenders',
             'status' => 'published',
+            'published_at' => now(),
         ]);
-        $guide->items()->create(['group_id' => $product->id, 'rank' => 1]);
+
+        $guide->picks()->create([
+            'group_id' => $product->id,
+            'rank' => 1,
+            'slug' => $product->slug.'-'.$product->id,
+        ]);
 
         $component = Livewire::actingAs($this->admin())
             ->test(Migration::class)
-            ->set('data.surfaces', ['guides'])
+            ->set('data.surfaces', ['editions'])
             ->call('export');
 
         // Asserted through the actual download payload rather than the return
@@ -83,14 +95,14 @@ class AdminMigrationTest extends TestCase
 
         $decoded = json_decode(base64_decode((string) $download['content']), true);
 
-        $this->assertSame(1, $decoded['version']);
-        $this->assertSame('beste-blenders', $decoded['surfaces']['guides'][0]['slug']);
+        $this->assertSame(2, $decoded['version']);
+        $this->assertSame('beste-blenders', $decoded['surfaces']['editions'][0]['slug']);
 
         // The identity, never the local id — that is the entire point of the
         // envelope, and a download is the last place it could regress unnoticed.
         $this->assertSame(
             'ean:1010101010101',
-            $decoded['surfaces']['guides'][0]['items'][0]['product']['identity_key'],
+            $decoded['surfaces']['editions'][0]['picks'][0]['product']['identity_key'],
         );
     }
 
@@ -171,13 +183,13 @@ class AdminMigrationTest extends TestCase
         // and then explains itself in a toast.
         Livewire::actingAs($this->admin())
             ->test(Migration::class)
-            ->assertActionHidden('deploy');
+            ->assertActionHidden(TestAction::make('deploy')->schemaComponent('deployment'));
 
         app(DeployTrigger::class)->setWebhook('https://coolify.example.test/api/v1/deploy?uuid=abc');
 
         Livewire::actingAs($this->admin())
             ->test(Migration::class)
-            ->assertActionVisible('deploy');
+            ->assertActionVisible(TestAction::make('deploy')->schemaComponent('deployment'));
     }
 
     #[Test]
@@ -256,6 +268,61 @@ class AdminMigrationTest extends TestCase
          */
         Livewire::actingAs($this->admin())
             ->test(Migration::class)
-            ->assertActionHidden('apply');
+            ->assertActionHidden(TestAction::make('apply')->schemaComponent('transfer'));
+    }
+
+    #[Test]
+    public function changing_the_selection_withdraws_the_apply_button(): void
+    {
+        /*
+         * A dry run describes one file and one set of surfaces. Leaving Apply
+         * live after either changes lets you preview envelope A, swap to B, and
+         * write B without anybody having seen its drop list — which is the exact
+         * outcome the preview gate exists to prevent, reached by a route that
+         * looks like normal use.
+         */
+        $component = Livewire::actingAs($this->admin())
+            ->test(Migration::class)
+            ->set('preview', ['guides' => ['created' => 1, 'updated' => 0, 'dropped' => []]])
+            ->assertActionVisible(TestAction::make('apply')->schemaComponent('transfer'));
+
+        $component
+            ->set('data.surfaces', ['plans'])
+            ->assertActionHidden(TestAction::make('apply')->schemaComponent('transfer'));
+    }
+
+    #[Test]
+    public function the_export_button_refuses_an_empty_environment(): void
+    {
+        /*
+         * An empty export is a valid envelope containing nothing. It downloads,
+         * it imports, it changes nothing on the far side, and the only symptom
+         * is somebody concluding the importer is broken.
+         */
+        Livewire::actingAs($this->admin())
+            ->test(Migration::class)
+            ->call('export')
+            ->assertNotified('Nothing to export');
+
+        $this->assertSame(0, DB::table('daily_pick_sets')->count());
+    }
+
+    #[Test]
+    public function the_content_counts_break_the_editorial_table_down_by_kind(): void
+    {
+        /*
+         * Since the fold every published page lives in one table, so a single
+         * "412 editions" on each side can hide the fact that one environment
+         * has no guides at all — which is precisely what you open this page to
+         * find out.
+         */
+        $counts = Livewire::actingAs($this->admin())
+            ->test(Migration::class)
+            ->instance()
+            ->contentCounts();
+
+        foreach (CoveKind::cases() as $kind) {
+            $this->assertArrayHasKey(Str::plural($kind->label()), $counts);
+        }
     }
 }

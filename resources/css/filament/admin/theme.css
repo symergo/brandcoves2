@@ -1,0 +1,42 @@
+/*
+ * Tailwind utilities for the admin panel's own Blade views.
+ *
+ * ## The problem this solves
+ *
+ * Filament ships a PREBUILT stylesheet (`public/css/filament/filament/app.css`)
+ * and it contains no Tailwind utilities at all — only its own `fi-*` component
+ * classes. So every `class="flex gap-3 rounded-lg"` written in a custom panel
+ * page has always been inert: the markup renders, the layout does not. It looks
+ * exactly like a page nobody styled, which is how it went unnoticed.
+ *
+ * ## Why utilities only, and no theme or preflight
+ *
+ * The obvious fix is Filament's own `make:filament-theme`, which imports
+ * Filament's `theme.css` and REPLACES the prebuilt stylesheet. Two reasons not
+ * to here:
+ *
+ *   - it needs `vendor/filament` at CSS-build time, and the Dockerfile's
+ *     frontend stage copies only `resources`, `package.json`, `vite.config.js`
+ *     and `tsconfig.json` — so the image would stop building;
+ *   - replacing the panel's whole stylesheet to add a grid is a large lever for
+ *     a small job, and a build that silently omits it leaves the admin naked
+ *     rather than merely unaligned.
+ *
+ * This is additive instead. `theme(reference)` makes Tailwind's theme available
+ * for *generating* utility names without emitting a single variable, so nothing
+ * here can override Filament's palette — and Filament's own stylesheet already
+ * defines the Tailwind 4 variables these utilities reference
+ * (`--color-gray-500`, `--spacing`, `--radius-lg`, `--text-sm` and the rest),
+ * mapped onto its own colours. The result is that `text-gray-500` in a panel
+ * view is Filament's grey rather than a second, slightly different one.
+ *
+ * No preflight, deliberately: it is a CSS reset, and resetting the panel out
+ * from under Filament would break far more than it fixed.
+ */
+
+@import 'tailwindcss/theme.css' theme(reference);
+@import 'tailwindcss/utilities.css';
+
+/* Where the classes are written. Both, because a panel page is a class and a view. */
+@source '../../../../app/Filament';
+@source '../../../../resources/views/filament';

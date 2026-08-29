@@ -13,6 +13,7 @@ use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
+use App\Services\Wishlist\AddingMode;
 use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ListMaker;
@@ -440,6 +441,60 @@ class WishlistController extends Controller
         $wishlist->delete();
 
         return redirect()->to($current->url('lists'));
+    }
+
+    /**
+     * Go and fill this list.
+     *
+     * The link that used to sit here pointed at a bare `/search`, which knew
+     * nothing about the list it had been reached from — so every product then
+     * cost a trip through the picker to choose the destination that had just
+     * been implied by pressing this. See {@see AddingMode} for why the mode
+     * lives in the session rather than in the URL.
+     *
+     * Search is the landing place because it is the only surface that takes a
+     * noun, and somebody who has decided to fill a named list usually has one
+     * in mind. Every other discovery surface keeps the mode once it is on.
+     */
+    public function add(
+        Request $request,
+        CurrentMarket $current,
+        AddingMode $mode,
+        string $market,
+        string $list,
+    ): RedirectResponse {
+        $owner = Owner::fromRequest($request);
+        $wishlist = ListAccess::scope(Wishlist::query(), $owner)->find($list);
+
+        if ($wishlist === null) {
+            throw new NotFoundHttpException;
+        }
+
+        // A viewer was brought in to coordinate, not to curate — the same rule
+        // `WishlistItemController::store()` enforces on every save.
+        abort_unless(ListAccess::canEdit($wishlist, $owner), 403);
+
+        $mode->start($wishlist);
+
+        return redirect()->to($current->url('search'));
+    }
+
+    /**
+     * Done filling it.
+     *
+     * Returns to the list rather than staying where they are: the question
+     * "what did I just add?" is the one somebody has at this moment, and the
+     * answer is on the list page.
+     *
+     * Needs no ownership check — it only ever clears the caller's own session,
+     * and there is nothing to protect in stopping.
+     */
+    public function doneAdding(CurrentMarket $current, AddingMode $mode): RedirectResponse
+    {
+        $list = $mode->listId();
+        $mode->stop();
+
+        return redirect()->to($current->url($list === null ? 'lists' : "lists/{$list}"));
     }
 
     /**

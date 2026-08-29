@@ -1,0 +1,131 @@
+# The test gate that a clone cannot forget to install.
+#
+# `.githooks/pre-push` runs the same suite locally, but it depends on
+# `git config core.hooksPath .githooks` being set per clone, and `--no-verify`
+# skips it silently. Neither applies here: this runs on GitHub, on every push,
+# and it is the only check that is true regardless of whose machine the commit
+# came from. Both branches auto-deploy, so a push is a deploy — this is the last
+# place a failure is still cheap.
+name: Tests
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+  workflow_dispatch:
+
+# A second push to the same branch makes the first run irrelevant: it is testing
+# a tree nobody will deploy. Cancel it rather than queueing behind it.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: composer test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      # The schema does not run on SQLite — partial indexes, CHECK constraints,
+      # num_nonnulls(), a tsvector generated column, pg_trgm and custom immutable
+      # SQL functions. See the note in phpunit.xml. Postgres 16 matches production.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          # phpunit.xml hardcodes these; they are not secrets and must match it.
+          POSTGRES_DB: brandcoves_test
+          POSTGRES_USER: brandcoves
+          POSTGRES_PASSWORD: brandcoves
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brandcoves -d brandcoves_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, mbstring, intl, bcmath, gd, zip
+          coverage: none
+          ini-values: memory_limit=512M
+
+      # Before composer install: post-autoload-dump runs artisan
+      # (package:discover, filament:upgrade), and artisan booting without a .env
+      # at all is a needless way to fail this early in the job.
+      - name: Create .env
+        run: cp .env.example .env
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install JS dependencies
+        run: npm ci --ignore-scripts
+
+      # Feature tests render the root Blade shell, which calls @vite — with no
+      # manifest in public/build (gitignored) every one of them dies on "Vite
+      # manifest not found" before asserting anything. Client build only: the
+      # suite pins INERTIA_SSR_ENABLED=false, so the SSR bundle is never loaded.
+      - name: Build frontend assets
+        run: npm run build:client
+
+      # phpunit.xml supplies APP_ENV, the database and every connector credential
+      # itself. .env matters here for one value only: APP_KEY, which .env.example
+      # ships empty and encryption needs.
+      - name: Generate the application key
+        run: php artisan key:generate
+
+      # --processes=4, not the 8 that `composer test` uses locally: a standard
+      # GitHub runner has 4 vCPU, and oversubscribing costs wall clock rather
+      # than saving it. The 8 in composer.json is tuned for a 20-core laptop.
+      - name: Run the suite
+        run: |
+          php artisan config:clear --ansi
+          php artisan test --parallel --processes=4
+
+  lint:
+    name: pint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # --test reports what Pint would change without writing it, so a CI run
+      # never produces a diff someone has to reconcile with their working tree.
+      - name: Check formatting
+        run: vendor/bin/pint --test

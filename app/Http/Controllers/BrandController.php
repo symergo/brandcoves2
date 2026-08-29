@@ -7,7 +7,7 @@ namespace App\Http\Controllers;
 use App\Enums\Availability;
 use App\Enums\Market;
 use App\Models\BrandStat;
-use App\Models\Guide;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
 use App\Services\Search\SearchQuery;
@@ -370,14 +370,16 @@ class BrandController extends Controller
     {
         $spellings = $stat->brandSpellings();
 
-        $featured = Guide::query()
+        $featured = DailyPickSet::query()
             ->forMarket($current->get())
+            ->articles()
             ->published()
-            ->whereHas('items.group', fn ($q) => $q->whereIn('brand', $spellings))
+            ->whereHas('picks.group', fn ($q) => $q->whereIn('brand', $spellings))
             ->pluck('id');
 
-        return Guide::query()
+        return DailyPickSet::query()
             ->forMarket($current->get())
+            ->articles()
             ->published()
             ->where(function ($q) use ($featured, $spellings) {
                 $q->whereIn('id', $featured);
@@ -385,8 +387,8 @@ class BrandController extends Controller
                 // Every spelling, because an article's allowlist was built from
                 // whichever spelling the feed behind that product used.
                 foreach ($spellings as $spelling) {
-                    $q->orWhere('body_md', 'like', '%[[brand:'.$spelling.']]%')
-                        ->orWhere('body_md', 'like', '%[[brand:'.$spelling.'|%');
+                    $q->orWhere('body', 'like', '%[[brand:'.$spelling.']]%')
+                        ->orWhere('body', 'like', '%[[brand:'.$spelling.'|%');
 
                     if (mb_strlen($spelling) < 3) {
                         continue;
@@ -394,18 +396,18 @@ class BrandController extends Controller
 
                     $pattern = $this->mentionPattern($spelling);
 
-                    $q->orWhereRaw('title ~* ?', [$pattern])
-                        ->orWhereRaw('coalesce(intro, \'\') ~* ?', [$pattern])
-                        ->orWhereRaw('body_md ~* ?', [$pattern]);
+                    $q->orWhereRaw('theme_title ~* ?', [$pattern])
+                        ->orWhereRaw('coalesce(theme_blurb, \'\') ~* ?', [$pattern])
+                        ->orWhereRaw("coalesce(body, '') ~* ?", [$pattern]);
                 }
             })
             ->orderByDesc('published_at')
             ->limit(6)
-            ->get(['slug', 'title', 'intro'])
-            ->map(fn (Guide $guide) => [
-                'title' => $guide->title,
-                'intro' => $guide->intro,
-                'url' => $current->url("guides/{$guide->slug}"),
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb'])
+            ->map(fn (DailyPickSet $guide) => [
+                'title' => $guide->theme_title,
+                'intro' => $guide->theme_blurb,
+                'url' => $current->url($guide->kind->path((string) $guide->slug)),
             ])
             ->all();
     }
@@ -540,6 +542,21 @@ class BrandController extends Controller
             'image' => $offer->imageUrl,
             'price' => $offer->price,
             'merchant' => $offer->merchantName ?? $offer->source->label(),
+
+            /*
+             * What it takes to keep one of these.
+             *
+             * `WishlistItemController::store()` has accepted `source` +
+             * `external_id` since live results became reachable, and
+             * `ItemSaver::saveExternal()` decides per source what may be
+             * stored — but this card emitted neither field, so the entire
+             * external-save path was unreachable from the one page that renders
+             * live offers. Passing the snapshot fields is safe because the
+             * server discards them for a source that may not be mirrored
+             * (invariant #6); they are hints, not instructions.
+             */
+            'source' => $offer->source->value,
+            'externalId' => $offer->externalId,
             'inStock' => $offer->availability === Availability::InStock,
             'needsPriceTimestamp' => $offer->source->requiresPriceTimestamp(),
             'directLink' => $offer->source->requiresDirectLink(),

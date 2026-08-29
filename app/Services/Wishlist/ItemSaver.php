@@ -27,17 +27,52 @@ class ItemSaver
      * tomorrow, and the list must still show what the person actually chose, at
      * the price they saw. That is the record of their decision and it should not
      * silently rewrite itself.
+     *
+     * ## Why the owner may retitle it
+     *
+     * `$title` overrides the catalogue's wording. Feed titles are written for a
+     * search engine — "Merk XY-3000 draadloze koptelefoon met ANC, zwart, 2024"
+     * — and a list is read by a person, sometimes a person choosing a present
+     * under time pressure. "De koptelefoon die ik wil" is more use to them than
+     * the SKU.
+     *
+     * This does not contradict the snapshot rule above. That rule is about the
+     * entry not rewriting *itself*; a title the owner typed on purpose is the
+     * same kind of fact as the note beside it. `group_id` still points at the
+     * real product, so the price, the link and the offer comparison are
+     * unaffected — only the words change.
+     *
+     * Null leaves the catalogue title alone, which matters because this is an
+     * `updateOrCreate`: saving the same product again from a card must not
+     * quietly undo a title somebody wrote here.
      */
-    public function saveGroup(Wishlist $list, ProductGroup $group, CurrentMarket $current, ?string $note = null): WishlistItem
-    {
+    public function saveGroup(
+        Wishlist $list,
+        ProductGroup $group,
+        CurrentMarket $current,
+        ?string $note = null,
+        ?string $title = null,
+    ): WishlistItem {
+        $existing = WishlistItem::query()
+            ->where('wishlist_id', $list->id)
+            ->where('group_id', $group->id)
+            ->first();
+
         $item = WishlistItem::updateOrCreate(
             ['wishlist_id' => $list->id, 'group_id' => $group->id],
             [
-                'snapshot_title' => $group->title,
+                'snapshot_title' => match (true) {
+                    filled($title) => trim((string) $title),
+                    $existing !== null => $existing->snapshot_title,
+                    default => $group->title,
+                },
                 'snapshot_image_url' => $group->image_url,
                 'snapshot_price' => $group->min_price,
                 'snapshot_url' => $current->url("p/{$group->id}/{$group->slug}"),
-                'note' => $note,
+                // Kept for the same reason as the title, and it was already
+                // being lost: every save from a product card posts no note, so
+                // re-saving something you had annotated erased the annotation.
+                'note' => $note ?? $existing?->note,
                 // Put there by somebody entitled to. A suggestion is written by
                 // SuggestionController, which nulls this afterwards.
                 'accepted_at' => now(),

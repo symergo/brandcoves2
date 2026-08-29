@@ -1,7 +1,9 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import AccountMenu from '../Components/AccountMenu'
+import AddingToBar from '../Components/AddingToBar'
 import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
+import SaveToast from '../Components/SaveToast'
 import MarketSwitcher from '../Components/MarketSwitcher'
 import NavMenu from '../Components/NavMenu'
 import { type PropsWithChildren, useState } from 'react'
@@ -320,15 +322,31 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                 )}
             </header>
 
+            {/*
+              The adding-mode bar sits directly under the header, outside
+              `<main>`, because it is chrome rather than page content — it
+              describes what the whole site is doing right now, not what this
+              page is about. Nothing renders when the mode is off.
+            */}
+            <AddingToBar />
+
             <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
                 {/*
                   Above the page, not inside it: a controller reports an outcome
                   by redirecting back, and the page it lands on should not have
                   to know that happened.
+
+                  Saves no longer come through here — a confirmation that
+                  renders at the top of the document is unreadable from the
+                  bottom of a results grid, which is where saving happens. They
+                  go to `SaveToast` instead; see resources/js/saveToast.ts.
                 */}
                 <FlashMessage />
                 {children}
             </main>
+
+            {/* Fixed to the viewport, so it is mounted once and outside the flow. */}
+            <SaveToast />
 
             <footer className="border-t border-line">
                 <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-ink-soft">

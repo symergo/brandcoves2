@@ -141,6 +141,17 @@ A buying guide's shortlist **is** a curated pool. So the Guides mode is the same
 another codebase. This is why the `curated` retriever unions daily picks and guide items rather than
 having one class each.
 
+Gift personas arrived in August 2026 and turned out to be *Coves* rather than pools — same builder,
+same `daily_picks` rows, addressed by a slug instead of a date. See
+[gift-personas.md](gift-personas.md).
+
+**They are not in the curated pool today, and that is an accident rather than a decision.**
+`pool()` bounds the picks with `s.drop_date >= now() - WINDOW_DAYS`, and a persona's drop date is
+null, so the comparison excludes it. The window exists to keep the pool *fresh*, which is a property
+of the daily column — a persona is evergreen by construction and never goes stale in that sense, so
+the honest fix is `OR kind = 'persona'` rather than widening the window. Left alone for now because
+it changes what four modes retrieve, which deserves its own change and its own test.
+
 ## Configuration
 
 `config/discovery.php` declares all nine profiles, reviewed like code; `mode_profiles` rows override

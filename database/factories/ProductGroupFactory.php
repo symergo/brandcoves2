@@ -42,6 +42,7 @@ class ProductGroupFactory extends Factory
             // Default to giftable: nearly every test that needs a group needs a
             // *presentable* one, and the retrieval predicate filters on this.
             'giftable' => true,
+            'worth_showing' => true,
             'first_seen_at' => now(),
         ];
     }
@@ -51,9 +52,33 @@ class ProductGroupFactory extends Factory
         return $this->state(fn () => ['market' => $market]);
     }
 
+    /**
+     * Rejected outright — not a gift and not worth a slot on a page.
+     *
+     * The default reason is `consumable` because that is the shape this state
+     * is nearly always standing in for. For the one rejection that still shows,
+     * use {@see tooExpensiveToSuggest()}.
+     */
     public function notGiftable(string $reason = 'consumable'): static
     {
-        return $this->state(fn () => ['giftable' => false, 'giftable_reason' => $reason]);
+        return $this->state(fn () => [
+            'giftable' => false,
+            'worth_showing' => false,
+            'giftable_reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Over the gift engine's price ceiling, and therefore still editorial
+     * material. The split this factory exists to let tests express.
+     */
+    public function tooExpensiveToSuggest(): static
+    {
+        return $this->state(fn () => [
+            'giftable' => false,
+            'worth_showing' => true,
+            'giftable_reason' => 'too_expensive',
+        ]);
     }
 
     public function outOfStock(): static

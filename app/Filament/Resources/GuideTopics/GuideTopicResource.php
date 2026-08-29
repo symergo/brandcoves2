@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\GuideTopics;
 
+use App\Filament\Resources\CovePlans\CovePlanResource;
 use App\Filament\Resources\GuideTopics\Pages\ListGuideTopics;
 use App\Models\GuideTopic;
+use App\Services\Guides\TopicPlanner;
 use BackedEnum;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
@@ -23,6 +25,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use InvalidArgumentException;
 use UnitEnum;
 
 /**
@@ -193,13 +196,47 @@ class GuideTopicResource extends Resource
             ->recordActions([
                 EditAction::make(),
 
-                Action::make('queue')
-                    ->icon(Heroicon::OutlinedArrowUp)
-                    ->visible(fn (GuideTopic $r) => $r->status === 'candidate')
-                    ->action(function (GuideTopic $record): void {
-                        $record->update(['status' => 'queued']);
-                        Notification::make()->title('Queued')->success()->send();
-                    }),
+                /*
+                 * A topic becomes a draft plan, not a published page.
+                 *
+                 * This queue used to be a second publishing pipeline: queue a
+                 * topic, and one night the builder chose its own products, wrote
+                 * about them and published — with no shortlist anyone could
+                 * curate and nowhere to say why a product was on it.
+                 *
+                 * Now it is an idea feed. The topic supplies what only it knows
+                 * — the phrase people actually searched for, the season, the
+                 * measured volume — and a person curates the rest.
+                 */
+                Action::make('draft')
+                    ->label('Draft a plan')
+                    ->icon(Heroicon::OutlinedPencilSquare)
+                    ->color('primary')
+                    ->visible(fn (GuideTopic $r) => $r->plan_id === null && $r->status !== 'rejected')
+                    ->action(function (GuideTopic $record, TopicPlanner $planner): void {
+                        try {
+                            $plan = $planner->draft($record);
+                        } catch (InvalidArgumentException $e) {
+                            Notification::make()->title('Could not draft it')->body($e->getMessage())->danger()->send();
+
+                            return;
+                        }
+
+                        Notification::make()
+                            ->title('Drafted with '.$plan->items()->count().' suggested product(s)')
+                            ->body('Curate it in the Cove planner, then approve.')
+                            ->success()
+                            ->send();
+                    })
+                    ->after(fn (GuideTopic $record) => redirect(
+                        CovePlanResource::getUrl('curate', ['record' => $record->refresh()->plan_id])
+                    )),
+
+                Action::make('openPlan')
+                    ->label('Its plan')
+                    ->icon(Heroicon::OutlinedSquares2x2)
+                    ->visible(fn (GuideTopic $r) => $r->plan_id !== null)
+                    ->url(fn (GuideTopic $r) => CovePlanResource::getUrl('curate', ['record' => $r->plan_id])),
 
                 Action::make('reject')
                     ->icon(Heroicon::OutlinedXMark)

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\GuideKind;
+use App\Enums\CoveKind;
 use App\Enums\PublishStatus;
-use App\Models\Guide;
-use App\Models\GuideItem;
+use App\Models\DailyPick;
+use App\Models\DailyPickSet;
 use App\Services\Editorial\Allowlist;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
@@ -20,30 +20,36 @@ use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Buying guides.
+ * Buying guides, seasonal guides and advice articles.
  *
  * The evergreen half of the Daily Cove. A guide gets its audience on the day its
  * edition drops and its traffic for years afterwards, which is why the two are
  * built together and published on separate clocks.
+ *
+ * Since the fold these are rows in `daily_pick_sets` like every other Cove,
+ * selected by `scopeArticles()`. The URLs did not change and must not: this
+ * space is indexed, linked from `[[guide:slug]]` tokens across the site, and the
+ * target of the `magazine`/`articles` legacy redirects.
  */
 class GuideController extends Controller
 {
     public function index(CurrentMarket $current): Response
     {
-        $guides = Guide::query()
+        $guides = DailyPickSet::query()
             ->where('market', $current->value())
+            ->articles()
             ->where('status', PublishStatus::Published->value)
             ->orderByDesc('published_at')
             ->limit(60)
             ->get()
-            ->map(fn (Guide $guide) => [
-                'title' => $guide->title,
+            ->map(fn (DailyPickSet $guide) => [
+                'title' => $guide->theme_title,
                 // A card blurb, not an article: tokens flattened to their
                 // labels rather than resolved. A link inside a card whose whole
                 // surface is already a link is a target fighting its parent.
-                'intro' => app(CoveMarkup::class)->plain($guide->intro),
+                'intro' => app(CoveMarkup::class)->plain($guide->theme_blurb),
                 'kind' => $guide->kind->value,
-                'url' => $current->url("guides/{$guide->slug}"),
+                'url' => $current->url($guide->kind->path((string) $guide->slug)),
                 'publishedAt' => $guide->published_at?->toDateString(),
             ]);
 
@@ -61,11 +67,12 @@ class GuideController extends Controller
         // An admin, or somebody holding a signed preview link, reads the draft.
         $preview = PreviewAccess::allowed($request);
 
-        $guide = Guide::query()
+        $guide = DailyPickSet::query()
             ->where('market', $current->value())
+            ->articles()
             ->where('slug', $slug)
             ->unless($preview, fn ($query) => $query->where('status', PublishStatus::Published->value))
-            ->with(['items.group'])
+            ->with(['picks.group'])
             ->first();
 
         if ($guide === null) {
@@ -85,7 +92,7 @@ class GuideController extends Controller
          * the page shares it — and one of its halves is a query.
          */
         $allowed = app(Allowlist::class)->full(
-            $guide->items->map(fn (GuideItem $item) => $item->group)->filter(),
+            $guide->picks->map(fn (DailyPick $pick) => $pick->group)->filter(),
             $current->get(),
             excludeGuideId: $guide->id,
             // The queries that justified this guide are also the searches it may
@@ -94,24 +101,35 @@ class GuideController extends Controller
             extraSearches: (array) $guide->source_queries,
         );
 
-        $items = $guide->items
-            ->filter(fn (GuideItem $item) => $item->group !== null)
-            ->map(fn (GuideItem $item) => [
-                'rank' => $item->rank,
-                'groupId' => $item->group->id,
-                'title' => $item->group->title,
-                'brand' => $item->group->brand,
-                'image' => $item->group->image_url,
-                // Live from the group, never from the guide. A price written
-                // into editorial copy is wrong within a week and the copy is
-                // what a reader trusts.
-                'price' => $item->group->min_price,
-                'merchantCount' => $item->group->merchant_count,
-                'inStock' => $item->group->in_stock,
-                'copy' => $this->prose($item->editorial_copy, $current, $allowed),
-                'verdict' => $item->verdict,
-                'unavailable' => $item->unavailable || ! $item->group->in_stock,
-                'url' => $current->url("p/{$item->group->id}/{$item->group->slug}"),
+        $items = $guide->picks
+            /*
+             * Catalogue products only.
+             *
+             * An article may now carry a pick that is a *decision* rather than a
+             * row — an Amazon ASIN, whose title and price we may not store and
+             * must re-fetch live. Guides never had one, because the old
+             * `guide_items` table could not express it. Dropped rather than
+             * half-rendered until the article page can fetch one; invariant 6
+             * says a failed fetch hides the item, and hiding it here is the same
+             * answer arrived at earlier.
+             */
+            ->filter(fn (DailyPick $pick) => $pick->group !== null)
+            ->map(fn (DailyPick $pick) => [
+                'rank' => $pick->rank,
+                'groupId' => $pick->group->id,
+                'title' => $pick->group->title,
+                'brand' => $pick->group->brand,
+                'image' => $pick->group->image_url,
+                // Live from the group, never from the row. A price written into
+                // editorial copy is wrong within a week and the copy is what a
+                // reader trusts.
+                'price' => $pick->group->min_price,
+                'merchantCount' => $pick->group->merchant_count,
+                'inStock' => $pick->group->in_stock,
+                'copy' => $this->prose($pick->blurb, $current, $allowed),
+                'verdict' => $pick->verdict,
+                'unavailable' => $pick->unavailable || ! $pick->group->in_stock,
+                'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
             ])
             ->values();
 
@@ -121,13 +139,21 @@ class GuideController extends Controller
             // Renders a banner, and only ever true for somebody entitled to it.
             'preview' => $preview && $guide->status !== PublishStatus::Published,
             'guide' => [
-                'title' => $guide->title,
-                // Decides whether the page expects a shortlist. An advice
-                // article with an empty <ol> would read as a broken buying
-                // guide rather than as a finished piece of writing.
-                'kind' => $guide->kind->value,
-                'intro' => $this->prose($guide->intro, $current, $allowed),
-                'body' => $this->prose($guide->body_md, $current, $allowed),
+                'title' => $guide->theme_title,
+                /*
+                 * Decides whether the page expects a shortlist. An advice
+                 * article with an empty <ol> would read as a broken buying guide
+                 * rather than as a finished piece of writing.
+                 *
+                 * A seasonal Cove reports itself as `buying`: it is a buying
+                 * guide in every respect the *page* cares about, and the season
+                 * is a scheduling fact rather than a layout one. Keeping the two
+                 * values the React page already knows about means the fold
+                 * changed no component props.
+                 */
+                'kind' => $guide->kind === CoveKind::Advice ? 'advice' : 'buying',
+                'intro' => $this->prose($guide->theme_blurb, $current, $allowed),
+                'body' => $this->prose($guide->body, $current, $allowed),
                 'faq' => $this->faq($guide, $current, $allowed),
                 'updatedAt' => $guide->last_checked_at?->toDateString(),
                 // Stated plainly. "We wrote this because 240 people searched for
@@ -175,7 +201,7 @@ class GuideController extends Controller
      * @param  array<string, mixed>  $allowed
      * @return list<array{q: string, a: list<string>}>|null
      */
-    private function faq(Guide $guide, CurrentMarket $current, array $allowed): ?array
+    private function faq(DailyPickSet $guide, CurrentMarket $current, array $allowed): ?array
     {
         if (! is_array($guide->faq) || $guide->faq === []) {
             return null;
@@ -188,7 +214,7 @@ class GuideController extends Controller
     }
 
     /** @param list<array<string, mixed>> $items */
-    private function seo(Guide $guide, array $items, CurrentMarket $current, bool $preview = false): void
+    private function seo(DailyPickSet $guide, array $items, CurrentMarket $current, bool $preview = false): void
     {
         $url = url($current->url("guides/{$guide->slug}"));
         $meta = app(PageMeta::class);
@@ -196,11 +222,11 @@ class GuideController extends Controller
         $markup = app(CoveMarkup::class);
 
         $meta->set(
-            title: $guide->title,
+            title: $guide->theme_title,
             // Through plain(): the intro carries link tokens now, and a meta
             // description reading "see [[page:search]]" is what a searcher sees
             // in the result.
-            description: $guide->meta_description ?? $markup->plain($guide->intro),
+            description: $guide->meta_description ?? $markup->plain($guide->theme_blurb),
             // The card, not the first product's photograph: a guide is about all
             // seven, and leading with one of them misrepresents it.
             image: url($current->url("og/guide/{$guide->slug}.png")),
@@ -225,7 +251,7 @@ class GuideController extends Controller
              */
             robots: $preview
                 ? 'noindex, nofollow'
-                : ($items === [] && $guide->kind === GuideKind::Buying ? 'noindex, follow' : null),
+                : ($items === [] && $guide->kind !== CoveKind::Advice ? 'noindex, follow' : null),
         );
 
         // An ItemList of nothing asserts that this page ranks nothing, which is
@@ -238,7 +264,7 @@ class GuideController extends Controller
                     'url' => url($item['url']),
                     'image' => $item['image'],
                 ], $items),
-                $guide->title,
+                $guide->theme_title,
                 $url,
             ));
         }
@@ -255,7 +281,7 @@ class GuideController extends Controller
         $meta->addJsonLd(StructuredData::breadcrumbs([
             ['name' => 'GiftCoves', 'url' => url($current->url())],
             ['name' => __('site.guides.title'), 'url' => url($current->url('guides'))],
-            ['name' => $guide->title, 'url' => $url],
+            ['name' => $guide->theme_title, 'url' => $url],
         ]));
     }
 }

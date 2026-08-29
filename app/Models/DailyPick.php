@@ -27,6 +27,15 @@ class DailyPick extends Model
     {
         return [
             'score_breakdown' => 'array',
+            /*
+             * Dimmed rather than dropped, on an article.
+             *
+             * A Daily hides a find that has sold out — the page is one
+             * morning's snapshot and a gap beats a dead card. A guide is an
+             * argument about what to buy, and silently removing the entry it
+             * argued for leaves the reasoning with a hole in it.
+             */
+            'unavailable' => 'boolean',
         ];
     }
 

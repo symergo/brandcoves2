@@ -158,6 +158,43 @@ works for anyone holding the URL, which is what a bookmarked or home-screen
 shortcut needs. Only the header link is gone. `nav.scan` stays in the language
 files for that page's own use.
 
+### And from the home page, for the same reason
+
+Added 2026-08-29. Removing the nav entry left exactly one way in: run a search
+you did not want, so that the results page could show you the camera. That is
+the wrong shape for the one visitor this feature is built for — someone standing
+in a shop holding the product, who has a query but no words for it.
+
+So the button now sits beside the home page's search field too. The rule did not
+change; it was applied twice. Scanning belongs *where a query is entered*, and
+the site has two such places.
+
+Weight was the obvious objection and it does not hold. The decoder is imported
+inside the click handler, so the home page's share of this is `ScanButton` plus
+`BarcodeScanner` — measured at 2.6 kB gzipped over both, against the 453 kB of
+wasm that is still fetched only by someone who actually presses it. The chunk
+split is visible in `npm run build`: `reader`, `ponyfill` and `zxing_reader.wasm`
+are their own chunks, and neither page imports them.
+
+The button is drawn, not typed. It shipped as the box-drawing character `▚`
+— a half-shaded block, which is not a picture of anything and at button size
+reads as a missing glyph rather than an instruction; being a text character its
+shape also came from whichever font the reader happened to have. It is now an
+inline SVG on ToolIcon's rules: 24px grid, one stroke weight, `currentColor`, so
+it needs no dark-mode variant. Corner brackets around the bars, because bars
+alone name the *object* while the viewfinder names the *action*, and this button
+opens a camera rather than displaying a barcode. Four bars rather than the six a
+real barcode carries: at 20px anything tighter closes the gaps up and the bars
+smear into a single grey block, which is the failure the old glyph already had.
+
+The button and its dialog live in `ScanButton`, not in each page. What is easy
+to get wrong here is not the markup — it is unmounting the scanner so the camera
+light goes out, the backdrop click that must not fire when a drag ends outside
+the panel, and `type="button"` on a button inside a real `<form method="get">`,
+which on the home page would otherwise submit an empty search instead of opening
+the camera. A second copy would have dropped one of those, and the bug would
+have appeared on only one of the two surfaces.
+
 ## Where it fits
 
 | | |
@@ -181,8 +218,15 @@ worth landing on. Building it before that means scanning into an empty result.
 
 ## Files
 
-- `resources/js/Pages/Scan.tsx` — camera UI, and `makeDetector()`: native
-  `BarcodeDetector` where it exists, lazy-loaded ZXing wasm everywhere else.
-  Small enough to stay in the page; there is no separate `scanner/` module.
+- `resources/js/Components/BarcodeScanner.tsx` — camera UI, and
+  `makeDetector()`: native `BarcodeDetector` where it exists, lazy-loaded ZXing
+  wasm everywhere else. One implementation, shared by all three surfaces.
+- `resources/js/Components/ScanButton.tsx` — the button beside a search field and
+  the dialog it opens. Used by `Pages/Home.tsx` and `Pages/Search.tsx`; takes a
+  `className` so it can match the field row it sits in, which differs between
+  the two.
+- `resources/js/Pages/Scan.tsx` — the standalone page, for a held URL or a
+  home-screen shortcut. Renders the scanner without `autoStart`, because there
+  the button is the page.
 - `app/Http/Controllers/ScanController.php` — validate, look up, fall back to bol
 - Reuses `App\Services\Identity\Gtin` and `BolConnector::fetchById()` unchanged

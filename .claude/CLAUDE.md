@@ -36,11 +36,22 @@ composer test:serial          # one process — 150s. For when parallelism is th
 git config core.hooksPath .githooks   # once per clone: run the suite on push
 ```
 
-> **The suite runs on push, not on save.** `.githooks/pre-push` aborts a push whose tests fail —
-> which matters here because `git push origin staging` *is* a deploy. It only works once
-> `core.hooksPath` is set, and that is per-clone local config, not something the repo can do for
-> you. See [docs/testing.md](../docs/testing.md) for why 8 processes and not 20, and why
-> `APP_DEBUG` is pinned false in the test run.
+> **Run the tests the change touches; run the full suite before production.** During a working
+> session, reach for the narrowest filter that exercises what you just edited —
+> `php artisan test --filter=SomeTest` or a single file — and say which one ran, so "tests pass" is
+> never read as "the suite passes". `composer test` is for one moment: **before a push to `main` or
+> a fast-forward of it**, plus whenever it is explicitly asked for. The pre-push hook runs the suite
+> on every push including staging, so the deliberate run buys you a green result *before* you commit
+> to shipping, rather than at the moment the deploy is already in flight.
+
+> **The suite runs on push, not on save — locally *and* on GitHub.**
+> [`.github/workflows/tests.yml`](../.github/workflows/tests.yml) runs it against a real Postgres 16
+> service on every push and PR; that one cannot be skipped, forgotten or bypassed with `--no-verify`.
+> `.githooks/pre-push` runs the same suite before the push leaves the machine, which is faster
+> feedback but only after `core.hooksPath` is set — per-clone local config the repo cannot do for
+> you. Treat the hook as the early warning and CI as the gate. See
+> [docs/testing.md](../docs/testing.md) for why 8 processes locally and 4 in CI, and why `APP_DEBUG`
+> is pinned false in the test run.
 
 > **PHP is Herd's, not WinGet's, and the dev stack runs supervised.** Smart App Control blocks the
 > WinGet build's unsigned `php8ts.dll`, so `php.exe` exits with `0xC0E90002` printing *nothing* and
@@ -60,7 +71,10 @@ Operational commands, all idempotent and safe to re-run:
 
 ```bash
 php artisan bc:refresh-discovery      # giftability → serendipity → brand stats → today's edition
-php artisan bc:plan-coves             # draft the editorial calendar 120 days ahead
+php artisan bc:plan-coves             # draft the editorial calendar 120 days ahead, each day
+                                      # pre-filled with the products the builder would pick, for
+                                      # a person to curate. Needs bc:refresh-discovery to have run
+                                      # first, or there are no scored candidates to suggest
 php artisan bc:make-admin             # create an admin; refuses a password in argv (visible in ps)
 php artisan bc:check-bol              # prove the bol credentials; prints lengths, never values
 php artisan bc:check-config           # did this environment's config arrive? lengths, never values
@@ -153,6 +167,14 @@ These are the rules the product depends on. Breaking one is a bug even when test
 - **Business logic lives in `app/Services/`**, not in controllers or jobs. Jobs orchestrate; services
   decide. Scoring and classification rules go in pure, unit-testable classes — that is where the
   subtle bugs live.
+- **Filament's stylesheet ships no Tailwind utilities.** `public/css/filament/filament/app.css` is
+  prebuilt and contains only Filament's own `fi-*` classes, so a `class="flex gap-3 rounded-lg"` in a
+  custom panel page renders and lays out *nothing* — a failure that looks exactly like a page nobody
+  styled. `resources/css/filament/admin/theme.css` is loaded alongside it and supplies the utilities,
+  scanned from `app/Filament` and `resources/views/filament`. It imports Tailwind's theme as
+  `theme(reference)` and no preflight, so it can neither override Filament's palette nor reset the
+  panel. Adding, not replacing: `viteTheme()` would swap Filament's stylesheet out and needs
+  `vendor/filament` at CSS-build time, which the Dockerfile's frontend stage does not have.
 - Strict types everywhere: `declare(strict_types=1);`.
 - Comment the *why*, especially for a threshold, a weight, or a workaround. A number with no
   justification will be "cleaned up" by someone later.
@@ -178,44 +200,66 @@ Two mechanisms, because they fail differently:
 
 ## Deployment
 
-**Two branches, two apps, and both auto-deploy.** Domains verified live on 2026-08-16:
+**Two branches, two apps. Staging auto-deploys; production does not.** Read from the Coolify API
+and both `/health` endpoints on 2026-08-29:
 
-| App | Tracks | Auto-deploy | Domain |
+| App | Tracks | Auto-deploy | Domains |
 |---|---|---|---|
-| `brandcoves2-staging` | `staging` | **on** | `staging.giftcoves.com` — `staging.brandcoves.com` 301s to it |
-| `brandcoves2-prod` | `main` | **on** | `brandcoves.com` — still the old domain |
+| `GiftCoves-staging` | `staging` | **on** | `staging.giftcoves.com`, `staging.brandcoves.com` |
+| `GiftCoves-prod` | `main` | **off** since 2026-08-29 | `giftcoves.com`, `www.giftcoves.com`, `brandcoves.com` |
 
-`git push origin staging` → staging. Verify, then fast-forward `main` — **which ships to production
-immediately**. There is no confirmation step and no human gate: the fast-forward *is* the deploy.
+`git push origin staging` → staging, automatically. **Production is now a deliberate act**:
+advancing `main` no longer ships anything by itself — someone triggers the deploy in Coolify.
 
-> **The rename is half done: staging has moved, production has not.** `staging.giftcoves.com` serves
-> and `staging.brandcoves.com` 301s onto it, so `RedirectLegacyHost` is live there with
-> `canonical_host` set. Production still answers on `brandcoves.com` with `canonical_host` unset.
+> **Verify that toggle in the UI before relying on it.** It was set through the Coolify API
+> (`{"is_auto_deploy_enabled": false}` → HTTP 200), and that API version does not return the field
+> on `GET`, so it could not be read back to confirm. Until you have seen it in the UI, assume
+> production still auto-deploys and treat `main` accordingly.
+
+> **Never push without being asked, and never push a half-committed tree.** A push to `staging`
+> deploys it outright; `main` no longer deploys on its own but is the branch production is built
+> from, so advancing it is still the decision that puts code in front of visitors. Neither happens
+> on Claude's initiative. Commit the work first, then stop and report the branch is ready; the
+> decision to publish is the user's, every time, and approval for one push does not carry to the
+> next. Before any push, check the change is committed **whole** — the migration with
+> the model, the controller with the page it renders, the config key with the code that reads it.
+> Not "`git status` is clean": this tree normally carries dozens of unrelated modified and untracked
+> files, so a clean-tree gate would never pass. Git will happily ship commit A while B and C sit on
+> the laptop, and the failure mode is not a missing deploy but an incoherent one.
+
+> **`giftcoves.com` is attached and serving.** Verified 2026-08-29: it holds a valid Let's Encrypt
+> certificate and answers `/health` with 200 in ~0.2s, as do `www.giftcoves.com` and
+> `brandcoves.com`. The earlier note here — DNS pointed but no Traefik route and no
+> certificate — is obsolete.
 >
-> **`giftcoves.com` is pointed but not attached.** DNS resolves to `51.75.78.173`, and that is all:
-> over HTTP the server 404s (no Traefik route for the host) and over HTTPS it presents an untrusted
-> certificate (none was ever issued for it). Adding the domain to `brandcoves2-prod` in Coolify is
-> what completes it — do not read the working DNS as a working domain.
+> **What is still outstanding is `canonical_host` on production.** All three hosts serve directly;
+> `brandcoves.com` does **not** 301 onto `giftcoves.com`, it just answers. So the same site is live
+> on three domains at once, which is a duplicate-content problem now that `ROBOTS_ALLOW=true` there.
+> Staging does redirect, because `canonical_host` is set on that app.
 >
 > The domains, `APP_NAME`, `APP_URL` and the Google OAuth callback all have to move together — a
 > deploy that changes `APP_NAME` without the rest logs every visitor out and breaks Google sign-in.
-> See [docs/features/rebrand.md](docs/features/rebrand.md). The Coolify **application** names stay
-> `brandcoves2-*`: renaming them invalidates every issued deploy webhook and changes nothing a
-> visitor sees.
+> See [docs/features/rebrand.md](docs/features/rebrand.md).
+>
+> **The Coolify applications were renamed to `GiftCoves-*`**, which this file previously said would
+> not happen, because renaming invalidates every issued deploy webhook. That Coolify behaviour is
+> real and was simply overridden; staging has deployed since (built `2026-08-29`), so its webhook
+> survived or was re-issued. Production's is unproven — it has not built since `2026-08-16`.
 
-> **`main` is well behind `staging` right now.** `/health` on 2026-08-16 reported production built
-> `2026-08-10` at migration `2026_08_10_000100_add_kind_to_guides`, against staging's `2026-08-15`
-> and `2026_08_15_000100_allow_the_group_list_kind`. Both apps auto-deploy, so this is drift in the
-> fast-forward, not in the pipeline — and it means production still runs the old `Market::default()`
-> of `be-nl`, which is why `brandcoves.com/` sends a header-less request to `/be-nl` while staging
-> sends it to `/en`. Check `/health` on both before assuming a fix is live.
+> **`main` is thirteen days behind `staging`.** `/health` on 2026-08-29: production built
+> `2026-08-16` at migration `2026_08_16_000500_a_question_can_describe_the_person`, against
+> staging's `2026-08-29` and
+> `2026_08_24_000100_drop_the_seeded_copy_that_only_shadows_the_language_file`. Now that production
+> no longer auto-deploys, this gap closes only when someone triggers a deploy.
+> `Market::default()` has caught up, though — every production host sends a header-less `/` to
+> `/en`, not the old `/be-nl`. Check `/health` on both before assuming a fix is live.
 
-> **Planned, and not in effect.** A one-branch model — both apps on `main`, production behind a
-> manual trigger — is designed in [docs/deployment.md](docs/deployment.md), to end the drift that
-> once left `main` seven commits behind `staging`. It needs two changes in Coolify that have not been
-> made: repoint `brandcoves2-staging` to `main`, and turn **off** auto-deploy on `brandcoves2-prod`.
-> Until both are done, follow the table above. Doing only the first would auto-deploy every commit
-> straight to production.
+> **Half adopted.** The one-branch model in [docs/deployment.md](docs/deployment.md) — both apps
+> on `main`, production behind a manual trigger — needed two Coolify changes. The **second is now
+> done**: auto-deploy is off on `GiftCoves-prod`, which was deliberately the safe one to do
+> first. The remaining step is repointing `GiftCoves-staging` from `staging` to `main`, and it is
+> safe to make only *because* the gate is now in place. Until it is, the two-branch flow in the
+> table above still applies.
 
 - **`VITE_*` is baked into the client bundle at build time.** In Coolify these must be ticked
   **Build Variable**. Left as runtime vars they are `undefined` in the browser: server-rendered pages

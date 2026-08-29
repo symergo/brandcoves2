@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
+import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -51,6 +52,9 @@ interface Props {
         inStock: boolean
         needsPriceTimestamp: boolean
         directLink: boolean
+        /** What it takes to keep one: the external-source save path. */
+        source: string
+        externalId: string
     }[]
     coves: { title: string; intro: string | null; url: string }[]
     related: { name: string; url: string; count: number }[]
@@ -184,7 +188,21 @@ export default function Brand({
                 )}
             </header>
 
-            <div className="mt-8 grid gap-8 lg:grid-cols-[16rem_1fr]">
+            {/*
+              Two explicit rows, and the first one is `auto`.
+
+              The sidebar holds the filters and, under them, the articles. With
+              implicit rows the results column — which spans both — had its
+              height shared out between them, so row one grew to roughly half a
+              screen of product grid and the articles were pushed far below the
+              facets they are supposed to sit against. `auto` pins row one to
+              the height of the filters; `1fr` gives row two whatever is left.
+
+              The row gap is tighter than the column gap for the same reason: 2rem
+              between two blocks in a 16rem column reads as a gap, where 2rem
+              between the sidebar and the results reads as a margin.
+            */}
+            <div className="mt-8 grid gap-x-8 gap-y-6 lg:grid-cols-[16rem_1fr] lg:grid-rows-[auto_1fr]">
                 <button
                     type="button"
                     className="flex items-center justify-between rounded border border-line px-4 py-3 text-sm lg:hidden"
@@ -199,7 +217,7 @@ export default function Brand({
                 <aside
                     id="brand-filters"
                     aria-label={t('search.filters')}
-                    className={`space-y-6 text-sm lg:block ${filtersOpen ? 'block' : 'hidden'}`}
+                    className={`space-y-6 text-sm lg:col-start-1 lg:row-start-1 lg:block ${filtersOpen ? 'block' : 'hidden'}`}
                 >
                     {facets.merchants.length > 0 && (
                         <div>
@@ -279,7 +297,11 @@ export default function Brand({
                     )}
                 </aside>
 
-                <section>
+                {/*
+                  Spans both rows, so the articles below the filters do not push
+                  the results down a screen on a wide viewport.
+                */}
+                <section className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
                     <div className="mb-4 flex flex-wrap items-center gap-3">
                         <h2 className="text-sm text-ink-soft">
                             {t('brand.products_heading', { brand: brand.name })}
@@ -376,7 +398,7 @@ export default function Brand({
                                         key={offer.url}
                                         className="flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30"
                                     >
-                                        <div className="aspect-square overflow-hidden bg-cream">
+                                        <div className="relative aspect-square overflow-hidden bg-cream">
                                             {offer.image && (
                                                 <img
                                                     src={offer.image}
@@ -388,6 +410,33 @@ export default function Brand({
                                                     }}
                                                 />
                                             )}
+
+                                            {/*
+                                              A live offer was the one product on
+                                              the site that could be looked at
+                                              and not kept. The whole external
+                                              save path — `source` +
+                                              `external_id`, and
+                                              `ItemSaver::saveExternal()` behind
+                                              it — was built and reachable from
+                                              no UI at all.
+
+                                              The snapshot fields are hints: the
+                                              server stores them only for a
+                                              source it is allowed to mirror, so
+                                              an Amazon offer keeps the decision
+                                              and nothing else (invariant #6).
+                                            */}
+                                            <div className="absolute right-2 bottom-2">
+                                                <SaveToList
+                                                    source={offer.source}
+                                                    externalId={offer.externalId}
+                                                    title={offer.title}
+                                                    imageUrl={offer.image}
+                                                    price={offer.price}
+                                                    compact
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="flex flex-1 flex-col p-4">
@@ -437,40 +486,6 @@ export default function Brand({
                         </section>
                     )}
 
-                    {/*
-                      The written half of the page, and now the only half.
-
-                      A grid of cards states facts and cannot carry a voice. An
-                      article was written once, about a real question, by the AI
-                      pass — so this is where any personality on a brand page
-                      comes from, and it is a link out of the page rather than a
-                      paragraph about the page.
-                    */}
-                    {coves.length > 0 && (
-                        <section className="mt-12" aria-labelledby="brand-coves">
-                            <h2 id="brand-coves" className="text-xl font-semibold tracking-tight">
-                                {t('brand.coves_heading', { brand: brand.name })}
-                            </h2>
-                            <ul className="mt-4 grid gap-4 sm:grid-cols-2">
-                                {coves.map((cove) => (
-                                    <li key={cove.url}>
-                                        <Link
-                                            href={cove.url}
-                                            className="block rounded-card border border-line bg-card p-5 transition hover:border-ink"
-                                        >
-                                            <h3 className="font-medium">{cove.title}</h3>
-                                            {cove.intro && (
-                                                <p className="mt-2 line-clamp-3 text-sm text-ink-soft">
-                                                    {cove.intro}
-                                                </p>
-                                            )}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-                    )}
-
                     {brand.minPrice !== null && (
                         <p className="mt-10 text-xs text-ink-soft">
                             {t('product.price_as_of')}{' '}
@@ -481,6 +496,60 @@ export default function Brand({
                         </p>
                     )}
                 </section>
+
+                {/*
+                  The written half of the page, and now the only half.
+
+                  A grid of cards states facts and cannot carry a voice. An
+                  article was written once, about a real question — so this is
+                  where any personality on a brand page comes from, and it is a
+                  link out of the page rather than a paragraph about the page.
+
+                  ## Where it sits, and why that differs by width
+
+                  On a wide screen it sits directly under the filters, in the
+                  same column — close enough to read as part of the same rail
+                  rather than as something stranded at the bottom of the page.
+                  `self-start` keeps it against the filters instead of stretching
+                  down the row.
+
+                  On a narrow screen it goes last, after the results. The column
+                  collapses to one, and putting articles between the filters and
+                  the products would make somebody who came here to look at
+                  products scroll past prose to reach them.
+
+                  Explicit placement rather than `order`: the results span both
+                  rows, so this has to be told which cell it belongs in. In DOM
+                  order it already comes last, which is exactly what the mobile
+                  single-column flow wants — no ordering classes needed there.
+                */}
+                {coves.length > 0 && (
+                    <aside
+                        className="lg:col-start-1 lg:row-start-2 lg:self-start"
+                        aria-labelledby="brand-coves"
+                    >
+                        <h2 id="brand-coves" className="text-lg font-semibold tracking-tight">
+                            {t('brand.coves_heading', { brand: brand.name })}
+                        </h2>
+                        <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                            {coves.map((cove) => (
+                                <li key={cove.url}>
+                                    <Link
+                                        href={cove.url}
+                                        className="block rounded-card border border-line bg-card p-4 transition hover:border-ink"
+                                    >
+                                        <h3 className="text-sm font-medium">{cove.title}</h3>
+                                        {cove.intro && (
+                                            <p className="mt-2 line-clamp-3 text-sm text-ink-soft">
+                                                {cove.intro}
+                                            </p>
+                                        )}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </aside>
+                )}
             </div>
 
         </>

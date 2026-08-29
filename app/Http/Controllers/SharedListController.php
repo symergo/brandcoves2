@@ -231,6 +231,18 @@ class SharedListController extends Controller
                     ? null
                     : $current->url("p/{$item->group_id}/{$item->group->slug}"),
 
+                /*
+                 * So a visitor can keep it on a list of their own.
+                 *
+                 * Discloses nothing new: `url` immediately above is
+                 * `p/{group_id}/{slug}`, so the id has always been in this
+                 * payload — it was simply not in a form the save control could
+                 * read. Saving reads the *viewer's* lists and writes to the
+                 * viewer's list; the owner's list is not touched and learns
+                 * nothing, so invariant #4 is untouched.
+                 */
+                'groupId' => $item->group_id,
+
                 // A hand-written item points somewhere off the site, so it is
                 // not the same link as the one above and must not be rendered
                 // as one. `https:` only, decided by the model.

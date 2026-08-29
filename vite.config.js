@@ -6,7 +6,14 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.tsx'],
+            input: [
+                'resources/css/app.css',
+                // Utilities for the admin panel's own Blade views. Filament's
+                // prebuilt stylesheet ships none, so without this every layout
+                // class in app/Filament and resources/views/filament is inert.
+                'resources/css/filament/admin/theme.css',
+                'resources/js/app.tsx',
+            ],
             // Server-side rendering. Crawlers get real HTML rather than an
             // empty div and a JSON blob.
             ssr: 'resources/js/ssr.tsx',

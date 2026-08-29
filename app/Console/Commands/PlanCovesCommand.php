@@ -6,8 +6,10 @@ namespace App\Console\Commands;
 
 use App\Enums\Market;
 use App\Models\CovePlan;
+use App\Services\Cove\EditionBuilder;
 use App\Services\Cove\Observance;
 use App\Services\Cove\ObservanceCalendar;
+use App\Services\Curation\PlanCurator;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 
@@ -32,11 +34,12 @@ class PlanCovesCommand extends Command
     protected $signature = 'bc:plan-coves
         {--market= : One market. Omit for all of them.}
         {--days=120 : How far ahead to look.}
-        {--from= : Start date (Y-m-d). Defaults to tomorrow.}';
+        {--from= : Start date (Y-m-d). Defaults to tomorrow.}
+        {--no-products : Draft the themes only, and leave the shortlists empty.}';
 
-    protected $description = 'Draft Cove plans for upcoming themed days.';
+    protected $description = 'Draft Cove plans for upcoming themed days, each with a shortlist to curate.';
 
-    public function handle(ObservanceCalendar $calendar): int
+    public function handle(ObservanceCalendar $calendar, EditionBuilder $builder, PlanCurator $curator): int
     {
         $markets = $this->markets();
 
@@ -55,6 +58,18 @@ class PlanCovesCommand extends Command
         $days = max(1, (int) $this->option('days'));
         $created = 0;
         $skipped = 0;
+        $filled = 0;
+        $perPlan = (int) config('giftcoves.picks.per_day');
+
+        /*
+         * Products already handed to a plan in this run.
+         *
+         * The rolling repeat memory reads `daily_picks`, and none of these days
+         * has been built yet — so without this the highest-scoring seven
+         * products in the market would be suggested for every one of the next
+         * hundred plans, and the feature would look broken on first sight.
+         */
+        $spoken = [];
 
         foreach ($markets as $market) {
             foreach ($this->calendar($calendar, $from, $market, $days) as $date => $observance) {
@@ -71,7 +86,7 @@ class PlanCovesCommand extends Command
                     continue;
                 }
 
-                CovePlan::create([
+                $plan = CovePlan::create([
                     'market' => $market->value,
                     'drop_date' => $date,
                     'title' => $observance->title($market),
@@ -84,10 +99,34 @@ class PlanCovesCommand extends Command
                 ]);
 
                 $created++;
+
+                /*
+                 * The shortlist a curator will react to.
+                 *
+                 * A plan that opens empty asks somebody to invent seven
+                 * products from nothing — the blank page, and the reason the
+                 * old pinned-products field went unused. This is the same
+                 * selection the builder would make on the day, so leaving it
+                 * untouched publishes exactly what would have published anyway
+                 * and every edit is an improvement on it.
+                 */
+                if (! $this->option('no-products')) {
+                    $candidates = $builder->candidates($plan, $perPlan, $spoken[$market->value] ?? []);
+                    $filled += $curator->prefill($plan, $candidates);
+
+                    foreach ($candidates as $group) {
+                        // Per market: `product_groups` is unique on (market,
+                        // identity_key), so the same product in two markets is
+                        // two different rows and suggesting both is correct.
+                        $spoken[$market->value][] = $group->id;
+                    }
+                }
             }
         }
 
-        $this->components->info("Drafted {$created} plan(s); left {$skipped} existing one(s) alone.");
+        $this->components->info(
+            "Drafted {$created} plan(s) with {$filled} suggested product(s); left {$skipped} existing one(s) alone."
+        );
 
         return self::SUCCESS;
     }
