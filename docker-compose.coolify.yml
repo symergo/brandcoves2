@@ -203,8 +203,25 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
+    # Healthy means "serving commands", not "the process is up".
+    #
+    # `redis-cli ping` answers PONG while Redis is still replaying the appendonly
+    # file into memory — PING is one of the few commands allowed in that state,
+    # and everything else gets `-LOADING`. So `service_healthy` went green on a
+    # Redis that refused every write, and the `migrate` one-shot — which takes a
+    # Redis lock for `--isolated` before it touches Postgres — exited 1. app,
+    # queue and scheduler all wait on migrate, so production served 503 because a
+    # cache was still warming up.
+    #
+    # It only bites where the AOF is big enough to take a moment: staging's loads
+    # instantly and never raced, production's has a real queue history. The
+    # window grows with the file.
+    #
+    # `INFO persistence` is allowed during loading and reports `loading:1`.
+    # Anchored, because `async_loading:0` contains `loading:0` as a substring and
+    # an unanchored match would report healthy at exactly the wrong moment.
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli info persistence | grep -q '^loading:0'"]
       interval: 10s
       timeout: 3s
       retries: 20

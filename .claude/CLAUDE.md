@@ -200,26 +200,31 @@ Two mechanisms, because they fail differently:
 
 ## Deployment
 
-**Two branches, two apps. Staging auto-deploys; production does not.** Read from the Coolify API
-and both `/health` endpoints on 2026-08-29:
+**Two branches, two apps. Both auto-deploy.** Read from the Coolify API and both `/health`
+endpoints on 2026-08-30:
 
 | App | Tracks | Auto-deploy | Domains |
 |---|---|---|---|
 | `GiftCoves-staging` | `staging` | **on** | `staging.giftcoves.com`, `staging.brandcoves.com` |
-| `GiftCoves-prod` | `main` | **off** since 2026-08-29 | `giftcoves.com`, `www.giftcoves.com`, `brandcoves.com` |
+| `GiftCoves-prod` | `main` | **on** — off between 2026-08-29 and 2026-08-30 | `giftcoves.com`, `www.giftcoves.com`, `brandcoves.com` |
 
-`git push origin staging` → staging, automatically. **Production is now a deliberate act**:
-advancing `main` no longer ships anything by itself — someone triggers the deploy in Coolify.
+`git push origin staging` → staging. **`git push origin main` → production, in front of real
+visitors, within the minute.** There is no gate between the two: a push to `main` *is* the deploy.
 
-> **Verify that toggle in the UI before relying on it.** It was set through the Coolify API
-> (`{"is_auto_deploy_enabled": false}` → HTTP 200), and that API version does not return the field
-> on `GET`, so it could not be read back to confirm. Until you have seen it in the UI, assume
-> production still auto-deploys and treat `main` accordingly.
+> **This was off for a day, and the round trip is worth knowing about.** Auto-deploy was disabled
+> on `GiftCoves-prod` through the Coolify API on 2026-08-29 as the first half of the one-branch
+> model. The API version in use does not return the field on `GET`, so it could never be read back
+> — and it was proven off only on 2026-08-30, when a push to `main` landed on GitHub and production
+> stayed on its 2026-08-16 build.
+>
+> It was then turned **back on**, deliberately, because a manual-only production meant every deploy
+> needed the Coolify UI and the API deploy endpoint refuses the app's stored webhook (HTTP 401 — it
+> wants a Bearer token, and `DeployTrigger` sends none by design).
 
-> **Never push without being asked, and never push a half-committed tree.** A push to `staging`
-> deploys it outright; `main` no longer deploys on its own but is the branch production is built
-> from, so advancing it is still the decision that puts code in front of visitors. Neither happens
-> on Claude's initiative. Commit the work first, then stop and report the branch is ready; the
+> **Never push without being asked, and never push a half-committed tree.** Both branches deploy
+> outright: `staging` to the staging hosts, and `main` to real visitors within the minute. There is
+> no review step between the push and the deploy, so the push *is* the release decision. Neither
+> happens on Claude's initiative. Commit the work first, then stop and report the branch is ready; the
 > decision to publish is the user's, every time, and approval for one push does not carry to the
 > next. Before any push, check the change is committed **whole** — the migration with
 > the model, the controller with the page it renders, the config key with the code that reads it.
@@ -246,20 +251,25 @@ advancing `main` no longer ships anything by itself — someone triggers the dep
 > real and was simply overridden; staging has deployed since (built `2026-08-29`), so its webhook
 > survived or was re-issued. Production's is unproven — it has not built since `2026-08-16`.
 
-> **`main` is thirteen days behind `staging`.** `/health` on 2026-08-29: production built
-> `2026-08-16` at migration `2026_08_16_000500_a_question_can_describe_the_person`, against
-> staging's `2026-08-29` and
-> `2026_08_24_000100_drop_the_seeded_copy_that_only_shadows_the_language_file`. Now that production
-> no longer auto-deploys, this gap closes only when someone triggers a deploy.
-> `Market::default()` has caught up, though — every production host sends a header-less `/` to
-> `/en`, not the old `/be-nl`. Check `/health` on both before assuming a fix is live.
+> **`main` and `staging` are level again**, both at `2f8aa2d`, fast-forwarded on 2026-08-30 after
+> thirteen days apart. That release is large: it folds `guides` into the editorial table, renames
+> every Daily Cove's URL, and lands the curation screen and gift personas that had been sitting
+> uncommitted. Check `/health` on both hosts before assuming a fix is live — the migration name is
+> the reliable field, not the build stamp.
 
-> **Half adopted.** The one-branch model in [docs/deployment.md](docs/deployment.md) — both apps
-> on `main`, production behind a manual trigger — needed two Coolify changes. The **second is now
-> done**: auto-deploy is off on `GiftCoves-prod`, which was deliberately the safe one to do
-> first. The remaining step is repointing `GiftCoves-staging` from `staging` to `main`, and it is
-> safe to make only *because* the gate is now in place. Until it is, the two-branch flow in the
-> table above still applies.
+> **Not adopted, and now blocked on the same step it started at.** The one-branch model in
+> [docs/deployment.md](docs/deployment.md) — both apps on `main`, production behind a manual
+> trigger — needs two Coolify changes, and the gate has to come first. That gate was in place for a
+> day and has been removed again, so the remaining step, repointing `GiftCoves-staging` from
+> `staging` to `main`, **must not be taken**: both apps would then track `main` with auto-deploy on,
+> and every commit would reach real visitors with no staging pass at all.
+>
+> Adopting it needs a production deploy path that works without the Coolify UI. Today there is
+> none: `DeployTrigger` sends no `Authorization` header, on purpose, and the stored
+> `/api/v1/deploy?uuid=…` endpoint answers 401 without a Bearer token. Either find the
+> per-application deploy webhook Coolify issues (auth in the URL, no header, blast radius of one
+> app) or accept an API token and write down why. Until one of those exists, the two-branch flow in
+> the table above is what there is.
 
 - **`VITE_*` is baked into the client bundle at build time.** In Coolify these must be ticked
   **Build Variable**. Left as runtime vars they are `undefined` in the browser: server-rendered pages
