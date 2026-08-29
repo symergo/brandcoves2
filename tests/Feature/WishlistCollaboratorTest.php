@@ -138,44 +138,22 @@ class WishlistCollaboratorTest extends TestCase
          * research list into one with a readership, and the subject of a
          * `for_someone` list must never be in it.
          */
+        /*
+         * Removing, not inviting: nothing invites by address any more, and the
+         * roster is now only somewhere an owner takes back access granted
+         * before sharing became a link. A collaborator who could remove
+         * collaborators is a list whose audience changes under its owner.
+         */
+        $this->collaborator($list, CollaboratorRole::Viewer);
+
+        // The row, not the user: the route removes a membership.
+        $victim = $list->collaborators()->latest('id')->firstOrFail();
+
         $this->actingAs($helper)
-            ->post("/be-nl/lists/{$list->id}/collaborators", ['email' => 'someone@example.test'])
+            ->delete("/be-nl/lists/{$list->id}/collaborators/{$victim->id}")
             ->assertNotFound();
-    }
 
-    #[Test]
-    public function inviting_does_not_reveal_whether_an_address_has_an_account(): void
-    {
-        [$owner, $list] = $this->ownedList();
-
-        $known = User::factory()->create(['email' => 'known@example.test']);
-
-        $withAccount = $this->actingAs($owner)
-            ->post("/be-nl/lists/{$list->id}/collaborators", ['email' => $known->email]);
-
-        $withoutAccount = $this->actingAs($owner)
-            ->post("/be-nl/lists/{$list->id}/collaborators", ['email' => 'stranger@example.test']);
-
-        // Otherwise the form is an oracle: type addresses in, read the response,
-        // learn which of your friends use the site.
-        $this->assertSame($withAccount->status(), $withoutAccount->status());
-        $this->assertSame(
-            $withAccount->getSession()->get('success'),
-            $withoutAccount->getSession()->get('success'),
-        );
-
-        $this->assertSame(1, $list->collaborators()->count());
-    }
-
-    #[Test]
-    public function the_owner_is_never_added_as_their_own_collaborator(): void
-    {
-        [$owner, $list] = $this->ownedList();
-
-        $this->actingAs($owner)
-            ->post("/be-nl/lists/{$list->id}/collaborators", ['email' => $owner->email]);
-
-        $this->assertSame(0, $list->collaborators()->count());
+        $this->assertSame(2, $list->collaborators()->count());
     }
 
     #[Test]

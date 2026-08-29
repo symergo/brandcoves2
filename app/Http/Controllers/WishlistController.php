@@ -448,6 +448,14 @@ class WishlistController extends Controller
             'claim_visibility' => ['sometimes', 'string', 'in:'.implode(',', ClaimVisibility::values())],
 
             /*
+             * May somebody holding the link put things on the list?
+             *
+             * Nullable for the same reason as `owner_sees_claims`: null is
+             * "never asked", and the kind answers until somebody does.
+             */
+            'link_can_add' => ['sometimes', 'nullable', 'boolean'],
+
+            /*
              * "Do I want to see what has been claimed off my own list?"
              *
              * Nullable on purpose: null is "never asked", and the kind decides
@@ -675,6 +683,7 @@ class WishlistController extends Controller
             // not have to know that rule twice.
             'claimVisibility' => $list->claim_visibility->value,
             'ownerSeesClaims' => $list->ownerSeesClaims(),
+            'linkCanAdd' => $list->linkCanAdd(),
             'isDefault' => (bool) $list->is_default,
             'handedOver' => $list->handed_over_at !== null,
             'eventType' => $list->event_type?->value,

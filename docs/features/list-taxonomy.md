@@ -587,6 +587,72 @@ hub that exists to show what you already have could not show that a group gift e
 The two are one bug seen twice, which is the tell. The kind became creatable on 2026-08-16 and every
 surface that had been written before that date kept asking the question it was written to ask.
 
+## Sharing is a link, 2026-08-30
+
+Co-givers were added one email address at a time, each with a viewer/editor
+role — sitting directly under the share link that already granted the same
+thing to whoever it reached. Two ways to let somebody in, one of which needed
+their address and had to be done again for each of them.
+
+Now there is the link, and one setting saying what it carries.
+
+### What this forced: the opened-link record
+
+`ListAccess::scope()` unioned owned lists with **invited** ones, so Shared Lists
+was built entirely on collaborators. Take invitations away and a whole nav entry
+is permanently empty.
+
+That was already the bug for anybody sent a link rather than an invitation —
+which is most people — and it is Phase 2's open half, finally closed.
+`list_opens` records that somebody followed a `/l/{token}` link, and the union
+includes it.
+
+**A bookmark, not a grant.** Access is still the token plus
+`visibility != private`, decided in `SharedListController` as before. Turning
+sharing off takes the list away from everyone who ever opened it, which is what
+turning sharing off has to mean, and it is why adding this union is safe.
+
+Not `wishlist_collaborators`: its `user_id` is `NOT NULL` and these readers are
+frequently signed out. The semantics differ too, which is the better reason — a
+collaborator was *granted* something by name, this records that somebody
+*arrived*, and one table holding both makes "who did the owner invite"
+unanswerable.
+
+> **`ON CONFLICT` cannot infer a partial unique index.** The first cut used the
+> two partials `gift_pledges` uses, which looked right and 500'd every shared
+> list, because Eloquent's `upsert()` does not repeat the index's `WHERE`. One
+> `NULLS NOT DISTINCT` index over all three columns does it instead — exactly
+> one identity column is ever set, so the triple is unique per person per list
+> either way.
+
+### `link_can_add`, which the kind used to decide
+
+Whether somebody holding the link may put things on the list was derived from
+its kind: `for_someone` and `group` took additions straight on, `mine` queued
+them. Good defaults, wrong shape for the question — it turns on how well you
+know the people holding the link, and the kind cannot tell a family gift list
+from a wish list sent to forty colleagues.
+
+It is a setting now, nullable so the kind still answers until somebody says
+otherwise, exactly as `owner_sees_claims` is. **Off routes to the approval queue
+rather than refusing**: what somebody adds goes where the owner can accept or
+dismiss it, and nobody is told a setting rejected them. A hand-written item waits
+regardless — free text through a forwardable link, and the queue is what
+moderates it.
+
+### What stayed, and why
+
+Nothing invites any more, but **invitations already sent still redeem**. They are
+sitting in real inboxes and a link in an email is followed whenever somebody gets
+round to it; deleting `Invitations::claimFor()` would turn every one of them into
+a dead end long after anybody could work out why. `invite()` is gone with the
+form that called it.
+
+The **roster survives as an undo**. Real people were granted real access by name
+before this, and `ListAccess` still honours `wishlist_collaborators` — dropping
+the union would revoke them silently. The owner keeps a way to take it back;
+there is just no longer a way to add.
+
 ## Phases
 
 1. ✅ **The taxonomy.** `ListKind::Group` + CHECK-constraint migration; the index served as three views

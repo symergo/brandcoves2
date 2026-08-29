@@ -11,6 +11,7 @@ use App\Enums\ListVisibility;
 use App\Enums\Market;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AnonymousIdentity;
+use App\Models\ListOpen;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
@@ -94,6 +95,93 @@ class WishlistTest extends TestCase
         ]);
 
         return [$list, $item];
+    }
+
+    #[Test]
+    public function opening_a_shared_list_puts_it_under_shared_lists(): void
+    {
+        /*
+         * Phase 2's open half, and what forced it: sharing is a link now, so
+         * `ListAccess::scope()` can no longer lean on invitations to populate
+         * Shared Lists. Without this, following a link recorded nothing and the
+         * list vanished the moment the message did — which was already true for
+         * anybody sent a link rather than an invitation, i.e. most people.
+         */
+        [$list] = $this->giftListForSomeone();
+        $reader = $this->user('reader-'.bin2hex(random_bytes(4)).'@example.test');
+
+        // Asserted on this list's id, not on a count: opening `/lists` mints
+        // the default "My wishlist" for anybody signed in, so the interesting
+        // number is never zero and a count would be measuring that instead.
+        $before = $this->actingAs($reader)->get('/be-nl/lists')->assertOk()
+            ->viewData('page')['props']['lists'];
+
+        $this->assertNotContains($list->id, array_column($before, 'id'));
+
+        $this->actingAs($reader)->get("/be-nl/l/{$list->share_token}")->assertOk();
+
+        $after = $this->actingAs($reader)->get('/be-nl/lists')->assertOk()
+            ->viewData('page')['props']['lists'];
+
+        $this->assertContains($list->id, array_column($after, 'id'));
+    }
+
+    #[Test]
+    public function opening_it_again_does_not_add_a_second_row(): void
+    {
+        // The write is an upsert on one unique index. A reader refreshing must
+        // not accumulate rows — and the index is `NULLS NOT DISTINCT` across
+        // all three columns precisely because Postgres cannot infer
+        // `ON CONFLICT` from a partial one, which 500'd every shared list.
+        [$list] = $this->giftListForSomeone();
+        $reader = $this->user('reader-'.bin2hex(random_bytes(4)).'@example.test');
+
+        foreach ([1, 2, 3] as $ignored) {
+            $this->actingAs($reader)->get("/be-nl/l/{$list->share_token}")->assertOk();
+        }
+
+        $this->assertSame(1, ListOpen::query()->count());
+    }
+
+    #[Test]
+    public function the_owner_opening_their_own_link_does_not_bookmark_it(): void
+    {
+        // Otherwise their own list turns up in their own Shared Lists.
+        [$list] = $this->giftListForSomeone();
+
+        $this->actingAs($list->owner)->get("/be-nl/l/{$list->share_token}")->assertOk();
+
+        $this->assertSame(0, ListOpen::query()->count());
+    }
+
+    #[Test]
+    public function the_owner_decides_whether_the_link_can_add(): void
+    {
+        /*
+         * It used to follow from the kind. Whether you want additions turns on
+         * how well you know the people holding the link, and the kind cannot
+         * tell a family gift list from a wish list sent to forty colleagues.
+         *
+         * Off is the approval queue, not a refusal — `items()` filters on
+         * `accepted_at`, so a pending row is on nobody's page until the owner
+         * accepts it.
+         */
+        // The helper seeds one item, so the counts below are deltas from one.
+        [$list] = $this->giftListForSomeone();
+        $seeded = $list->items()->count();
+
+        $this->assertTrue($list->linkCanAdd(), 'A gift list takes additions by default.');
+
+        $list->update(['link_can_add' => false]);
+
+        $this->actingAs($this->user('helper-'.bin2hex(random_bytes(4)).'@example.test'))
+            ->post("/be-nl/l/{$list->share_token}/suggest", [
+                'group_id' => $this->group()->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame($seeded, $list->items()->count(), 'It waits.');
+        $this->assertSame($seeded + 1, $list->allItems()->count(), 'But it exists.');
     }
 
     #[Test]

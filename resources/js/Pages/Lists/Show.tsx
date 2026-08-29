@@ -89,6 +89,7 @@ interface Props {
         hasCoGivers: boolean
         claimVisibility: string
         ownerSeesClaims: boolean
+        linkCanAdd: boolean
     }
     items: Item[]
     /** The pot on a group list, for the organiser's own page. */
@@ -395,7 +396,7 @@ export default function ListShow({
 
             {items.length === 0 ? (
                 <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
-                    <p className="font-medium">{t('lists.empty_list')}</p>
+                    <p className="line-clamp-3 font-medium">{t('lists.empty_list')}</p>
 
                     {/*
                       What happens next, in three steps, per kind.
@@ -473,7 +474,7 @@ export default function ListShow({
 
                                 <div className="min-w-0 flex-1">
                                     {item.groupId && item.slug ? (
-                                        <Link href={`${base}/p/${item.groupId}/${item.slug}`} className="font-medium hover:underline">
+                                        <Link href={`${base}/p/${item.groupId}/${item.slug}`} className="line-clamp-3 font-medium hover:underline">
                                             {item.title}
                                         </Link>
                                     ) : item.externalUrl ? (
@@ -485,30 +486,44 @@ export default function ListShow({
                                             href={item.externalUrl}
                                             target="_blank"
                                             rel="nofollow noopener noreferrer"
-                                            className="font-medium hover:underline"
+                                            className="line-clamp-3 font-medium hover:underline"
                                         >
                                             {item.title}
                                         </a>
                                     ) : (
-                                        <span className="font-medium">{item.title}</span>
+                                        <span className="line-clamp-3 font-medium">{item.title}</span>
                                     )}
                                     {item.note && <p className="text-sm text-ink-soft">{item.note}</p>}
-                                </div>
 
-                                <div className="text-right text-sm">
+                                    {/*
+                                      Price under the title, not in a column
+                                      beside it — the shape `AddProduct`'s
+                                      search rows already use, so a product
+                                      looks the same when you pick it and after
+                                      it is on the list.
+
+                                      The old right-aligned column cost the
+                                      title a third of a narrow screen and set
+                                      the price on its own baseline, so a long
+                                      feed title wrapped past a price floating
+                                      level with its first line.
+                                    */}
                                     {item.currentPrice !== null && (
-                                        <div className="font-semibold">
-                                            {t('lists.price_now', { price: formatPrice(item.currentPrice, market) })}
-                                        </div>
+                                        <p className="mt-0.5 text-sm">
+                                            <span className="font-semibold">
+                                                {t('lists.price_now', {
+                                                    price: formatPrice(item.currentPrice, market),
+                                                })}
+                                            </span>
+
+                                            {/* Only when it actually moved — otherwise it is noise. */}
+                                            {item.price !== null && item.price !== item.currentPrice && (
+                                                <span className="ml-2 text-xs text-ink-soft line-through">
+                                                    {formatPrice(item.price, market)}
+                                                </span>
+                                            )}
+                                        </p>
                                     )}
-                                    {/* Only when it actually moved — otherwise it is noise. */}
-                                    {item.price !== null &&
-                                        item.currentPrice !== null &&
-                                        item.price !== item.currentPrice && (
-                                            <div className="text-xs text-ink-soft line-through">
-                                                {formatPrice(item.price, market)}
-                                            </div>
-                                        )}
                                 </div>
 
                                 <button

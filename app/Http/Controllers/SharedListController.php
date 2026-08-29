@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\ListVisibility;
+use App\Models\ListOpen;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
@@ -61,6 +62,19 @@ class SharedListController extends Controller
          */
         $isOwner = $list->isOwnedBy($owner);
         $hideClaims = $list->shouldHideClaimsFrom($owner);
+
+        /*
+         * Remember that this person has the list, so they can find it again.
+         *
+         * Not for the owner, whose own lists are already theirs — a row there
+         * would put their list in their own Shared Lists. Written on the read
+         * because there is no other moment: somebody sent a link, and following
+         * it is the whole of the interaction until they claim something, which
+         * most readers never do.
+         */
+        if (! $isOwner) {
+            ListOpen::record($list, $owner);
+        }
 
         /*
          * Claiming needs a kind that allows it AND somebody to coordinate with.
@@ -230,7 +244,7 @@ class SharedListController extends Controller
              * wrong way round either surprises the owner or makes a helper
              * think nothing happened.
              */
-            'addsDirectly' => $list->kind->acceptsDirectAdditions(),
+            'addsDirectly' => $list->linkCanAdd(),
             'suggestTerm' => $term,
 
             /*

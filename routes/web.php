@@ -247,13 +247,14 @@ Route::prefix('{market}')->group(function () {
     });
 
     /*
-     * Co-givers. Only the owner manages the roster: a collaborator who could
-     * invite more collaborators is a list that quietly grows an audience, and
-     * the whole point of a `for_someone` list is that its subject never sees it.
+     * Revoking access that was granted by name, before sharing became a link.
+     *
+     * Nothing creates collaborators any more — `ListOpen` and the share link
+     * replaced them — but people granted access that way still have it, so the
+     * owner keeps a way to take it back. Only the owner: a collaborator who
+     * could remove collaborators is a list whose audience changes under its
+     * owner.
      */
-    Route::post('/lists/{list}/collaborators', [WishlistCollaboratorController::class, 'store'])
-        ->middleware('auth')
-        ->name('lists.collaborators.store');
     Route::delete('/lists/{list}/collaborators/{collaborator}', [WishlistCollaboratorController::class, 'destroy'])
         ->middleware('auth')
         ->name('lists.collaborators.destroy');

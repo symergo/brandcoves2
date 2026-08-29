@@ -40521,8 +40521,6 @@ function ShareRow({ url, text, label, hint }) {
 */
 function ListTools({ base, list, access, collaborators, suggestions, canHandOver, handoverEmail, registryOptions, deliveryAddress, quizUrl, quizPlays, santaMemberships, panel: open, onPanel }) {
 	const { t } = useTranslations();
-	const [invite, setInvite] = (0, import_react.useState)("");
-	const [role, setRole] = (0, import_react.useState)("viewer");
 	const [handTo, setHandTo] = (0, import_react.useState)(handoverEmail ?? "");
 	const shared = list.visibility !== "private";
 	const isRegistry = list.kind === "mine";
@@ -40760,10 +40758,23 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 									})] }),
 									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 										className: "text-xs text-ink-soft",
-										children: t("lists.invite_hint")
+										children: t("lists.share_grants")
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+										className: "mt-3 flex gap-2 text-sm",
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+											type: "checkbox",
+											className: "mt-1",
+											checked: list.linkCanAdd,
+											onChange: (e) => router.patch(`${base}/lists/${list.id}`, { link_can_add: e.target.checked }, { preserveScroll: true })
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [t("lists.link_can_add"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+											className: "block text-xs text-ink-soft",
+											children: list.linkCanAdd ? t("lists.link_can_add_on") : t("lists.link_can_add_off")
+										})] })]
 									}),
 									collaborators.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
 										className: "mt-3 space-y-2",
+										"aria-label": t("lists.invited_before"),
 										children: collaborators.map((c) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 											className: "flex items-center justify-between gap-3 text-sm",
 											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [c.name, /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
@@ -40776,46 +40787,6 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 												children: t("lists.remove")
 											})]
 										}, c.id))
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-										className: "mt-3 flex flex-wrap gap-2",
-										onSubmit: (e) => {
-											e.preventDefault();
-											router.post(`${base}/lists/${list.id}/collaborators`, {
-												email: invite,
-												role
-											}, {
-												preserveScroll: true,
-												onSuccess: () => setInvite("")
-											});
-										},
-										children: [
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-												type: "email",
-												required: true,
-												value: invite,
-												onChange: (e) => setInvite(e.target.value),
-												placeholder: "name@example.com",
-												className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
-												value: role,
-												onChange: (e) => setRole(e.target.value),
-												className: "rounded-lg border border-line px-2 py-2 text-sm",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-													value: "viewer",
-													children: t("lists.role_viewer")
-												}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-													value: "editor",
-													children: t("lists.role_editor")
-												})]
-											}),
-											/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-												type: "submit",
-												className: "rounded-lg border border-line px-4 py-2 text-sm",
-												children: t("lists.invite_collaborator")
-											})
-										]
 									})
 								] })]
 							})
@@ -41079,7 +41050,7 @@ function ListShow({ list, items, pot, target, asked, access, collaborators, sugg
 			className: "mt-10 rounded-card border border-line bg-card p-8 text-center",
 			children: [
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-					className: "font-medium",
+					className: "line-clamp-3 font-medium",
 					children: t("lists.empty_list")
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
@@ -41130,33 +41101,36 @@ function ListShow({ list, items, pot, target, asked, access, collaborators, sugg
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "min-w-0 flex-1",
-							children: [item.groupId && item.slug ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-								href: `${base}/p/${item.groupId}/${item.slug}`,
-								className: "font-medium hover:underline",
-								children: item.title
-							}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-								href: item.externalUrl,
-								target: "_blank",
-								rel: "nofollow noopener noreferrer",
-								className: "font-medium hover:underline",
-								children: item.title
-							}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-								className: "font-medium",
-								children: item.title
-							}), item.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "text-sm text-ink-soft",
-								children: item.note
-							})]
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-							className: "text-right text-sm",
-							children: [item.currentPrice !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-								className: "font-semibold",
-								children: t("lists.price_now", { price: formatPrice(item.currentPrice, market) })
-							}), item.price !== null && item.currentPrice !== null && item.price !== item.currentPrice && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-								className: "text-xs text-ink-soft line-through",
-								children: formatPrice(item.price, market)
-							})]
+							children: [
+								item.groupId && item.slug ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+									href: `${base}/p/${item.groupId}/${item.slug}`,
+									className: "line-clamp-3 font-medium hover:underline",
+									children: item.title
+								}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+									href: item.externalUrl,
+									target: "_blank",
+									rel: "nofollow noopener noreferrer",
+									className: "line-clamp-3 font-medium hover:underline",
+									children: item.title
+								}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+									className: "line-clamp-3 font-medium",
+									children: item.title
+								}),
+								item.note && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "text-sm text-ink-soft",
+									children: item.note
+								}),
+								item.currentPrice !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+									className: "mt-0.5 text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "font-semibold",
+										children: t("lists.price_now", { price: formatPrice(item.currentPrice, market) })
+									}), item.price !== null && item.price !== item.currentPrice && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "ml-2 text-xs text-ink-soft line-through",
+										children: formatPrice(item.price, market)
+									})]
+								})
+							]
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 							onClick: () => router.delete(`${base}/list-items/${item.id}`, {

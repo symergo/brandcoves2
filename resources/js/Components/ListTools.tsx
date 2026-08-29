@@ -41,6 +41,8 @@ interface Props {
         claimVisibility: string
         /** Whether the owner has asked to see what has been claimed. */
         ownerSeesClaims: boolean
+        /** May somebody holding the link put things on the list? */
+        linkCanAdd: boolean
     }
     access: { isOwner: boolean; canEdit: boolean }
     collaborators: Collaborator[]
@@ -99,8 +101,6 @@ export default function ListTools({
     onPanel,
 }: Props) {
     const { t } = useTranslations()
-    const [invite, setInvite] = useState('')
-    const [role, setRole] = useState('viewer')
     const [handTo, setHandTo] = useState(handoverEmail ?? '')
 
     const shared = list.visibility !== 'private'
@@ -594,10 +594,67 @@ export default function ListTools({
                                 </>
                                 )}
 
-                                <p className="text-xs text-ink-soft">{t('lists.invite_hint')}</p>
+                                {/*
+                                  Sharing is the link, not a list of addresses.
+
+                                  This held a form asking for an email and a
+                                  role, one person at a time, sitting directly
+                                  under the share link that already grants the
+                                  same thing to whoever it reaches. Two ways to
+                                  let somebody in, one of which needed you to
+                                  know their address and to do it again for each
+                                  of them.
+
+                                  The roster below survives it: nothing creates
+                                  collaborators any more, and people who were
+                                  granted access that way still have it, so the
+                                  owner keeps a way to take it back.
+                                */}
+                                <p className="text-xs text-ink-soft">{t('lists.share_grants')}</p>
+
+                                {/*
+                                  The one right the link carries beyond looking
+                                  and claiming, and the owner's to set.
+
+                                  It was decided by kind — a list about somebody
+                                  took additions straight on, a wish list queued
+                                  them — which are good defaults and the wrong
+                                  shape for the question. Whether you want
+                                  additions turns on how well you know the
+                                  people holding the link, and the kind cannot
+                                  tell a family gift list from a wish list sent
+                                  to forty colleagues.
+
+                                  Off is the approval queue, not a refusal:
+                                  what somebody adds goes where the owner can
+                                  accept or dismiss it, which is what a wish
+                                  list has always done.
+                                */}
+                                <label className="mt-3 flex gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        className="mt-1"
+                                        checked={list.linkCanAdd}
+                                        onChange={(e) =>
+                                            router.patch(
+                                                `${base}/lists/${list.id}`,
+                                                { link_can_add: e.target.checked },
+                                                { preserveScroll: true },
+                                            )
+                                        }
+                                    />
+                                    <span>
+                                        {t('lists.link_can_add')}
+                                        <span className="block text-xs text-ink-soft">
+                                            {list.linkCanAdd
+                                                ? t('lists.link_can_add_on')
+                                                : t('lists.link_can_add_off')}
+                                        </span>
+                                    </span>
+                                </label>
 
                                 {collaborators.length > 0 && (
-                                    <ul className="mt-3 space-y-2">
+                                    <ul className="mt-3 space-y-2" aria-label={t('lists.invited_before')}>
                                         {collaborators.map((c) => (
                                             <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
                                                 <span>
@@ -625,37 +682,6 @@ export default function ListTools({
                                     </ul>
                                 )}
 
-                                <form
-                                    className="mt-3 flex flex-wrap gap-2"
-                                    onSubmit={(e) => {
-                                        e.preventDefault()
-                                        router.post(
-                                            `${base}/lists/${list.id}/collaborators`,
-                                            { email: invite, role },
-                                            { preserveScroll: true, onSuccess: () => setInvite('') },
-                                        )
-                                    }}
-                                >
-                                    <input
-                                        type="email"
-                                        required
-                                        value={invite}
-                                        onChange={(e) => setInvite(e.target.value)}
-                                        placeholder="name@example.com"
-                                        className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-                                    />
-                                    <select
-                                        value={role}
-                                        onChange={(e) => setRole(e.target.value)}
-                                        className="rounded-lg border border-line px-2 py-2 text-sm"
-                                    >
-                                        <option value="viewer">{t('lists.role_viewer')}</option>
-                                        <option value="editor">{t('lists.role_editor')}</option>
-                                    </select>
-                                    <button type="submit" className="rounded-lg border border-line px-4 py-2 text-sm">
-                                        {t('lists.invite_collaborator')}
-                                    </button>
-                                </form>
                             </div>
                                 </section>
                             )}

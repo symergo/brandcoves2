@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Wishlist;
 
 use App\Enums\CollaboratorRole;
-use App\Mail\ListInvitationMail;
 use App\Models\ListInvitation;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistCollaborator;
-use App\Support\CurrentMarket;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
@@ -39,6 +37,16 @@ use Illuminate\Support\Facades\Mail;
  */
 class Invitations
 {
+    /*
+     * `invite()` lived here and is gone with the form that called it: sharing
+     * is a link now, which grants the same access without needing an address.
+     *
+     * `claimFor()` stays, and the distinction is the point. Invitations already
+     * sent are sitting in real inboxes, and a link in an email is followed
+     * whenever somebody gets round to it. Deleting the redemption path would
+     * turn every one of those into a dead end long after anybody could work out
+     * why.
+     */
     /**
      * Invite an address, whatever state it is in.
      *
@@ -46,58 +54,6 @@ class Invitations
      * rather than piling up rows, which is also what an owner expects when they
      * press it again because the first one went to spam.
      */
-    public function invite(
-        Wishlist $list,
-        User $from,
-        string $email,
-        CollaboratorRole $role,
-        CurrentMarket $current,
-    ): void {
-        $email = mb_strtolower(trim($email));
-
-        // Inviting yourself is a no-op rather than an error: it is a slip, and
-        // an error message here would be the site arguing with somebody.
-        if ($email === mb_strtolower((string) $from->email)) {
-            return;
-        }
-
-        $invitation = ListInvitation::updateOrCreate(
-            ['wishlist_id' => $list->id, 'email' => $email],
-            [
-                'invited_by_user_id' => $from->id,
-                'role' => $role,
-                // A re-send extends the deadline. The old token stays valid,
-                // because the point of re-sending is that the first mail was
-                // lost rather than that it was wrong.
-                'expires_at' => now()->addDays(ListInvitation::LIFETIME_DAYS),
-                'claimed_at' => null,
-            ],
-        );
-
-        /*
-         * An address that already has an account is granted access immediately
-         * *as well as* mailed — they can open the list before they read the
-         * invitation, which is what makes this an improvement rather than a
-         * regression for the case that used to work.
-         */
-        $existing = User::query()->whereRaw('lower(email) = ?', [$email])->first();
-
-        if ($existing !== null) {
-            $this->grant($list, $existing, $role);
-            $invitation->forceFill(['claimed_at' => now()])->save();
-        }
-
-        Mail::to($email)->queue(new ListInvitationMail(
-            // In the language of the list's market, which is the language the
-            // rest of this mail is rendered in.
-            listTitle: $list->displayTitle($list->market->language()),
-            fromName: $from->displayName(),
-            market: $list->market,
-            url: url($current->url("invitations/{$invitation->token}")),
-            forName: $list->recipient?->name,
-        ));
-    }
-
     /**
      * Redeem everything waiting for this account.
      *

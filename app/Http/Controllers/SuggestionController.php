@@ -161,7 +161,7 @@ class SuggestionController extends Controller
          * makes an addition wait, which is visible and recoverable. The
          * opposite mistake publishes something nobody approved.
          */
-        if ($list->kind->acceptsDirectAdditions()) {
+        if ($list->linkCanAdd()) {
             // Who added it, so a shared list is not a pile of anonymous finds
             // that two people quietly delete for each other.
             $item->forceFill(['suggested_by_user_id' => $request->user()?->id])->save();

@@ -33,19 +33,50 @@ final class ListAccess
         $user = $owner->user;
 
         if ($user === null) {
-            // Anonymous visitors cannot be collaborators, so this collapses to
-            // plain ownership — including the fail-closed empty result when
-            // there is no identity at all.
+            /*
+             * An anonymous visitor can open a link and *is* remembered — the
+             * bookmark takes a cookie identity — but this scope stays plain
+             * ownership for them.
+             *
+             * Because it is also the scope that decides what somebody may
+             * *edit*, and a cookie is not an identity worth widening a write
+             * path on: it is shared by everyone using that browser and gone
+             * when it is cleared. They keep reaching the list the way they were
+             * always going to, through the link they were sent.
+             */
             return $owner->scope($query);
         }
 
         return $query->where(fn (Builder $q) => $q
             ->where('owner_user_id', $user->id)
+
+            /*
+             * Invited collaborators. **Legacy, and honoured rather than
+             * created.** Sharing is a link now — see `ListOpen` — and nothing
+             * writes this table any more, but real people were granted real
+             * access through it before that and dropping the union would
+             * silently revoke it.
+             */
             ->orWhereExists(fn ($sub) => $sub
                 ->selectRaw('1')
                 ->from('wishlist_collaborators')
                 ->whereColumn('wishlist_collaborators.wishlist_id', 'wishlists.id')
-                ->where('wishlist_collaborators.user_id', $user->id)));
+                ->where('wishlist_collaborators.user_id', $user->id))
+
+            /*
+             * Lists they have opened by link, which is how a shared list is
+             * found again once the message carrying it is gone.
+             *
+             * A bookmark, not a grant: the list still has to be shared for the
+             * token to resolve, so turning sharing off takes it away from
+             * everybody who ever opened it. That is what turning sharing off
+             * has to mean, and it is why this union is safe.
+             */
+            ->orWhereExists(fn ($sub) => $sub
+                ->selectRaw('1')
+                ->from('list_opens')
+                ->whereColumn('list_opens.wishlist_id', 'wishlists.id')
+                ->where('list_opens.user_id', $user->id)));
     }
 
     /**

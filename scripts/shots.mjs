@@ -33,6 +33,14 @@ const T = {
     recipient: process.env.SHOTS_RECIPIENT,
 }
 
+/**
+ * A page behind `auth` needs a session, and the only way in is a magic link.
+ * `SHOTS_MAGIC` is a token minted locally; visiting it once leaves the cookie
+ * on the context, and every later page is signed in.
+ */
+const MAGIC = process.env.SHOTS_MAGIC
+const OWNED = process.env.SHOTS_LIST_ID
+
 const PAGES = [
     ['home', `/${MARKET}`],
     ['gift-cove', `/${MARKET}/gift-cove`],
@@ -43,6 +51,10 @@ const PAGES = [
     ['shared-gift', T.forSomeone && `/${MARKET}/l/${T.forSomeone}`],
     ['shared-group', T.group && `/${MARKET}/l/${T.group}`],
     ['self-describe', T.recipient && `/${MARKET}/for/${T.recipient}`],
+
+    // Signed in, so these come last — the magic link is consumed just before.
+    ['my-lists', MAGIC && `/${MARKET}/lists`],
+    ['my-list', MAGIC && OWNED && `/${MARKET}/lists/${OWNED}`],
 ].filter(([, url]) => Boolean(url))
 
 const only = process.argv.slice(2)
@@ -109,6 +121,12 @@ const context = await browser.newContext({
 
 const page = await context.newPage()
 let bad = 0
+
+if (MAGIC) {
+    // One use, and it expires in fifteen minutes — mint a fresh one per run.
+    await page.goto(`${BASE}/${MARKET}/auth/magic/${MAGIC}`, { waitUntil: 'networkidle' })
+    console.log(`signed in via magic link → ${new URL(page.url()).pathname}`)
+}
 
 for (const [name, url] of wanted) {
     const res = await page.goto(BASE + url, { waitUntil: 'networkidle' })

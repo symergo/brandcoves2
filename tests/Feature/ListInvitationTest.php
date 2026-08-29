@@ -6,7 +6,6 @@ namespace Tests\Feature;
 
 use App\Enums\ListKind;
 use App\Enums\Market;
-use App\Mail\ListInvitationMail;
 use App\Models\ListInvitation;
 use App\Models\LoginToken;
 use App\Models\Recipient;
@@ -49,6 +48,37 @@ class ListInvitationTest extends TestCase
     }
 
     /**
+     * An outstanding invitation, written directly.
+     *
+     * It used to come from `POST /lists/{id}/collaborators`, and that endpoint
+     * is gone: sharing is a link now, so nothing sends invitations any more.
+     * **Redemption is not gone**, and that is what this file is still for —
+     * invitations already sent are sitting in real inboxes, and a link in an
+     * email is followed whenever somebody gets round to it.
+     *
+     * So the row is made here rather than through a UI that no longer exists,
+     * which is also the honest shape: these tests were always about what
+     * happens *after* the mail, and the endpoint was scaffolding.
+     */
+    private function invitation(Wishlist $list, User $from, string $email, string $role = 'editor'): array
+    {
+        $token = (string) Str::uuid();
+
+        $invitation = ListInvitation::create([
+            'wishlist_id' => $list->id,
+            'invited_by_user_id' => $from->id,
+            // Lowercased on write: the lookup is case-insensitive, and storing
+            // the typed casing would mean two invitations for one person.
+            'email' => mb_strtolower($email),
+            'role' => $role,
+            'token' => $token,
+            'expires_at' => now()->addDays(14),
+        ]);
+
+        return ['token' => $token, 'model' => $invitation];
+    }
+
+    /**
      * Sign in for real, by consuming a magic link.
      *
      * `actingAs()` would not do: the whole mechanism hangs off the `Login`
@@ -65,59 +95,6 @@ class ListInvitationTest extends TestCase
     }
 
     #[Test]
-    public function inviting_an_address_with_no_account_creates_an_invitation(): void
-    {
-        Mail::fake();
-
-        $owner = User::factory()->create();
-        $list = $this->giftList($owner);
-
-        $this->actingAs($owner)
-            ->post("/be-nl/lists/{$list->id}/collaborators", [
-                'email' => 'helper@example.test',
-                'role' => 'editor',
-            ])
-            ->assertRedirect();
-
-        $invitation = ListInvitation::query()->firstOrFail();
-
-        $this->assertSame('helper@example.test', $invitation->email);
-        $this->assertSame($list->id, $invitation->wishlist_id);
-        $this->assertTrue($invitation->isOpen());
-
-        Mail::assertQueued(ListInvitationMail::class);
-    }
-
-    #[Test]
-    public function the_response_is_identical_whether_or_not_the_address_has_an_account(): void
-    {
-        /*
-         * The security property. Both branches now write a row and queue a mail
-         * — the same act, not merely the same response — so there is nothing
-         * left that could differ and leak membership.
-         */
-        Mail::fake();
-
-        $owner = User::factory()->create();
-        $list = $this->giftList($owner);
-
-        User::factory()->create(['email' => 'known@example.test']);
-
-        $known = $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'known@example.test',
-        ]);
-
-        $unknown = $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'stranger@example.test',
-        ]);
-
-        $this->assertSame($known->getStatusCode(), $unknown->getStatusCode());
-        $this->assertSame(session()->get('success'), session()->get('success'));
-        $this->assertSame(2, ListInvitation::query()->count());
-        Mail::assertQueuedCount(2);
-    }
-
-    #[Test]
     public function signing_up_later_grants_access(): void
     {
         // The whole point: the invitation survives the person not existing yet.
@@ -126,10 +103,7 @@ class ListInvitationTest extends TestCase
         $owner = User::factory()->create();
         $list = $this->giftList($owner);
 
-        $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'helper@example.test',
-            'role' => 'editor',
-        ]);
+        ['token' => $token] = $this->invitation($list, $owner, 'helper@example.test', 'editor');
 
         auth()->logout();
 
@@ -153,9 +127,7 @@ class ListInvitationTest extends TestCase
         $owner = User::factory()->create();
         $list = $this->giftList($owner);
 
-        $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'helper@example.test',
-        ]);
+        ['token' => $token] = $this->invitation($list, $owner, 'helper@example.test', 'viewer');
 
         auth()->logout();
 
@@ -180,9 +152,7 @@ class ListInvitationTest extends TestCase
         $owner = User::factory()->create();
         $list = $this->giftList($owner);
 
-        $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'helper@example.test',
-        ]);
+        ['token' => $token] = $this->invitation($list, $owner, 'helper@example.test', 'viewer');
 
         ListInvitation::query()->update(['expires_at' => now()->subDay()]);
 
@@ -194,63 +164,6 @@ class ListInvitationTest extends TestCase
     }
 
     #[Test]
-    public function inviting_the_same_person_twice_re_sends_rather_than_duplicating(): void
-    {
-        // Which is what an owner means when they press it again because the
-        // first mail went to spam.
-        Mail::fake();
-
-        $owner = User::factory()->create();
-        $list = $this->giftList($owner);
-
-        foreach ([1, 2] as $_) {
-            $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-                'email' => 'helper@example.test',
-            ]);
-        }
-
-        $this->assertSame(1, ListInvitation::query()->count());
-        Mail::assertQueuedCount(2);
-    }
-
-    #[Test]
-    public function inviting_yourself_does_nothing(): void
-    {
-        // A slip, not an error. The site should not argue with somebody.
-        Mail::fake();
-
-        $owner = User::factory()->create(['email' => 'me@example.test']);
-        $list = $this->giftList($owner);
-
-        $this->actingAs($owner)
-            ->post("/be-nl/lists/{$list->id}/collaborators", ['email' => 'ME@example.test'])
-            ->assertRedirect();
-
-        $this->assertSame(0, ListInvitation::query()->count());
-        Mail::assertNothingQueued();
-    }
-
-    #[Test]
-    public function an_address_that_already_has_an_account_gets_access_at_once(): void
-    {
-        // The case that used to work must not regress into "wait for a mail".
-        Mail::fake();
-
-        $owner = User::factory()->create();
-        $list = $this->giftList($owner);
-        $helper = User::factory()->create(['email' => 'known@example.test']);
-
-        $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'known@example.test',
-        ]);
-
-        $this->assertDatabaseHas('wishlist_collaborators', [
-            'wishlist_id' => $list->id,
-            'user_id' => $helper->id,
-        ]);
-    }
-
-    #[Test]
     public function following_the_link_signed_out_sends_you_to_sign_in(): void
     {
         Mail::fake();
@@ -258,9 +171,7 @@ class ListInvitationTest extends TestCase
         $owner = User::factory()->create();
         $list = $this->giftList($owner);
 
-        $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'helper@example.test',
-        ]);
+        ['token' => $token] = $this->invitation($list, $owner, 'helper@example.test', 'viewer');
 
         auth()->logout();
 
@@ -277,9 +188,7 @@ class ListInvitationTest extends TestCase
         $owner = User::factory()->create();
         $list = $this->giftList($owner);
 
-        $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'helper@example.test',
-        ]);
+        ['token' => $token] = $this->invitation($list, $owner, 'helper@example.test', 'viewer');
 
         auth()->logout();
 
@@ -310,9 +219,7 @@ class ListInvitationTest extends TestCase
         $owner = User::factory()->create();
         $list = $this->giftList($owner);
 
-        $this->actingAs($owner)->post("/be-nl/lists/{$list->id}/collaborators", [
-            'email' => 'helper@example.test',
-        ]);
+        ['token' => $token] = $this->invitation($list, $owner, 'helper@example.test', 'viewer');
 
         // The list changes hands.
         $list->update(['owner_user_id' => User::factory()->create()->id, 'kind' => ListKind::Mine]);

@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
  * @property ListKind $kind
  * @property ClaimVisibility $claim_visibility
  * @property bool|null $owner_sees_claims
+ * @property bool|null $link_can_add
  */
 class Wishlist extends Model
 {
@@ -55,6 +56,7 @@ class Wishlist extends Model
             'kind' => ListKind::class,
             'claim_visibility' => ClaimVisibility::class,
             'owner_sees_claims' => 'boolean',
+            'link_can_add' => 'boolean',
             'event_type' => EventType::class,
             'event_date' => 'date',
             'is_default' => 'boolean',
@@ -344,6 +346,30 @@ class Wishlist extends Model
         }
 
         return ! $this->ownerSeesClaims();
+    }
+
+    /**
+     * May somebody holding the link put things on this list?
+     *
+     * The one right a share link carries beyond looking and claiming, and the
+     * owner's to set. It used to be decided by kind — a list about somebody
+     * took additions straight on, a wish list sent them to the approval queue —
+     * which are good defaults and the wrong shape for the question. Whether you
+     * want additions turns on how well you know the people holding the link,
+     * and the kind cannot tell a family gift list from a wish list shared with
+     * forty colleagues.
+     *
+     * Null is "never asked", so the kind still answers until somebody says
+     * otherwise. Same reasoning as {@see ownerSeesClaims()}.
+     *
+     * **"No" routes to the approval queue rather than refusing.** A helper is
+     * never told a setting rejected them; what they added goes where the owner
+     * can accept or dismiss it. A hand-written item waits regardless — that is
+     * free text through a forwardable link, and the queue is what moderates it.
+     */
+    public function linkCanAdd(): bool
+    {
+        return $this->link_can_add ?? $this->kind->acceptsDirectAdditions();
     }
 
     /**
