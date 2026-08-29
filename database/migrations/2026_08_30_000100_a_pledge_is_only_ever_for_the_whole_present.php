@@ -25,12 +25,19 @@ use Illuminate\Support\Facades\Schema;
  *
  * ## Safe to drop outright
  *
- * `gift_pledges` was empty in every environment when this ran — the write path
- * reached a UI only on 2026-08-16 and nothing had used it. Had there been rows,
- * this would have had to fold each per-item pledge into its list's pot first,
- * and reconcile the collisions that creates when one person pledged against two
- * items of the same list. There were none, so it does not, and that is worth
- * writing down rather than leaving as an assumption somebody re-derives.
+ * `gift_pledges` was empty when this shipped: the write path reached a UI only
+ * on 2026-08-16, dev held no rows, and the deploy was confirmed safe on that
+ * basis before it went out.
+ *
+ * **What it would have had to do otherwise, and deliberately does not:** fold
+ * each per-item pledge into its list's pot, and reconcile the collision that
+ * creates when one person pledged against two items of the same list — the new
+ * unique index is per person per list, so two such rows would abort the
+ * migration in the middle of a deploy rather than merging quietly.
+ *
+ * That is the part to re-read before replaying this anywhere with data in it.
+ * Written down because "it was empty" is a fact about one moment, and a
+ * migration outlives the moment it was written in.
  */
 return new class extends Migration
 {
