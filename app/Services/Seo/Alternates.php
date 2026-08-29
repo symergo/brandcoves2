@@ -47,6 +47,7 @@ class Alternates
             'p' => $this->product($segments, $current),
             'guides' => $this->guide($segments, $current),
             'shops' => $this->shop($segments, $current),
+            'gift-ideas' => $this->persona($segments, $current),
             'daily' => $this->daily($segments, $current),
             // Home, search, discover, gift, surprise, lists: the same page in
             // another market, and the segment swap is exactly right.
@@ -222,6 +223,62 @@ class Alternates
 
             if ($market !== null) {
                 $alternates[$market->hrefLang()] = url("/{$market->value}/shops/{$row->slug}");
+            }
+        }
+
+        return count($alternates) > 1 ? $alternates : [];
+    }
+
+    /**
+     * The same gift persona in another market.
+     *
+     * Missing until 2026-08-29, and silently: `gift-ideas` was not in the match
+     * above, so a persona fell through to `swap()` and declared an alternate in
+     * **every** published market without checking one existed. That is precisely
+     * the bug in this class's docblock, on the one kind of page the class never
+     * learned about — and it stayed invisible only because the shelf was empty
+     * in all five markets.
+     *
+     * It is not a page that can be swapped. A persona is written per market and
+     * two markets need not carry the same ones: `de-hondenmens` is a be-nl page
+     * and `de-klusser` an nl-nl one, so four of the five alternates emitted for
+     * either would have been 404s, and Google discards a whole cluster that
+     * contains one — taking the honest pairs down with it.
+     *
+     * Paired on the slug, like a Shop Cove and unlike a Daily. There is no date
+     * to pair on, and the slug is the address a persona is written to keep; two
+     * markets carrying the same slug are carrying the same persona, which is
+     * exactly the promise `/be-nl/gift-ideas/de-thuiskok` and its nl-nl twin
+     * make. The prose behind them differs per market, as translations do.
+     *
+     * @param  array<int, string>  $segments
+     * @return array<string, string>
+     */
+    private function persona(array $segments, Market $current): array
+    {
+        $slug = $segments[2] ?? null;
+
+        if ($slug === null) {
+            // The shelf itself exists in every market, empty or not.
+            return $this->swap('/'.implode('/', $segments));
+        }
+
+        $rows = DB::table('daily_pick_sets')
+            ->where('slug', $slug)
+            ->where('kind', CoveKind::Persona->value)
+            ->where('status', PublishStatus::Published->value)
+            ->get(['market', 'slug']);
+
+        $alternates = [];
+
+        foreach ($rows as $row) {
+            $market = Market::tryFrom((string) $row->market);
+
+            // A persona can be built for a market that is not open yet, the
+            // same way an edition can — see `daily()`. Declaring it invites a
+            // crawler to a market deliberately not being indexed.
+            if ($market !== null && $market->isPublished()) {
+                $alternates[$market->hrefLang()] = url("/{$market->value}/gift-ideas/{$row->slug}");
             }
         }
 

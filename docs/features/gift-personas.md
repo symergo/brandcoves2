@@ -115,12 +115,37 @@ give.
 Or the same three steps through [the editorial API](editorial-api.md), with `kind: "persona"` and a
 `slug`.
 
+## hreflang: paired on the slug, and only when the twin exists
+
+Two markets carrying the same persona slug are carrying the same persona, so
+`/be-nl/gift-ideas/de-thuiskok` and its `nl-nl` twin are paired. The prose behind
+them differs per market — that is what a translation is.
+
+**They are not paired by swapping the market segment**, which is what happened
+until 2026-08-29. `gift-ideas` was missing from the `match` in
+`Alternates::for()`, so a persona fell through to `swap()` and declared an
+alternate in all five markets without checking any existed. Personas are written
+per market and the sets deliberately differ — `de-hondenmens` is a `be-nl` page
+because `nl-nl` has a sixth of the dog catalogue, and `de-klusser` is its `nl-nl`
+counterpart — so four of the five claims were 404s on those two, and Google
+discards an entire hreflang cluster that contains one bad member.
+
+It stayed invisible because the shelf was empty in every market until the first
+personas were seeded. `GiftPersonaTest` now pins all four cases: a real pair, a
+persona only one market carries, an unpublished twin, and the shelf itself
+(which *is* the same page everywhere and correctly still swaps).
+
+The persona set need not match across markets — the pairing handles a partial
+overlap. Where the same persona does exist in two markets, keep the slug
+identical or the two stop being twins.
+
 ## Files
 
 - `app/Enums/CoveKind.php`, `app/Jobs/BuildPersonaCove.php`
 - `app/Services/Cove/EditionBuilder.php` — `buildPersona()`
 - `app/Services/Cove/EditionPresenter.php` — shared with the Daily Cove
 - `app/Http/Controllers/GiftIdeasController.php`
+- `app/Services/Seo/Alternates.php` — `persona()`, and the `gift-ideas` case
 - `resources/js/Pages/GiftIdeas/Index.tsx`, `Persona.tsx`
 - `database/migrations/2026_08_29_000300_an_edition_need_not_have_a_date.php`
 - `tests/Feature/GiftPersonaTest.php`
@@ -136,5 +161,13 @@ Or the same three steps through [the editorial API](editorial-api.md), with `kin
   window is about freshness, which a persona has by construction — see
   [discovery-modes.md](discovery-modes.md) for why the fix is a kind check rather than a wider
   window, and why it was left for its own change.
-- **`fr` and `es` have the copy but no personas.** Nothing is market-specific about the mechanism; a
-  persona is written per market like everything else.
+- **The sitemap lists personas without alternates.** `SitemapController` emits `loc`, `priority` and
+  `changefreq` for each one and no `alternates` key, so the hreflang pairing above reaches the head
+  and not the sitemap — half of the "two independent signals" [seo.md](seo.md) describes. The naive
+  fix is a `persona()` call per URL, which is exactly the two-queries-per-URL shape that once took
+  the product sitemap past the proxy's thirty-second timeout; it needs a batched lookup like
+  `Alternates::forProducts()`.
+- **`en` and `es` have no personas.** `be-nl`, `nl-nl` and `be-fr` were seeded on 2026-08-29 with six
+  drafts each. Nothing is market-specific about the mechanism; a persona is written per market like
+  everything else. Note the sets deliberately differ where the catalogue does — see the hreflang
+  section for why that is safe.

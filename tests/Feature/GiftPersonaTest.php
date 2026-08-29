@@ -15,6 +15,7 @@ use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Services\Cove\EditionBuilder;
+use App\Services\Seo\Alternates;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -163,6 +164,82 @@ class GiftPersonaTest extends TestCase
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
+
+    #[Test]
+    public function the_same_persona_in_two_markets_is_paired_for_hreflang(): void
+    {
+        $this->persona('de-thuiskok', 'De thuiskok', Market::BeNl);
+        $this->persona('de-thuiskok', 'De thuiskok', Market::NlNl);
+
+        $alternates = app(Alternates::class)
+            ->for('/be-nl/gift-ideas/de-thuiskok', Market::BeNl);
+
+        $this->assertSame([
+            'nl-BE' => url('/be-nl/gift-ideas/de-thuiskok'),
+            'nl-NL' => url('/nl-nl/gift-ideas/de-thuiskok'),
+        ], $alternates);
+    }
+
+    /**
+     * The failure this pairing exists to prevent.
+     *
+     * `gift-ideas` was not in the `Alternates` match, so a persona fell through
+     * to the blind market swap and claimed a twin in all five markets. Two
+     * markets deliberately carry different personas — a dog one in be-nl, a DIY
+     * one in nl-nl — so those claims were 404s, and one bad member is enough for
+     * Google to discard the whole cluster.
+     */
+    #[Test]
+    public function a_persona_only_one_market_carries_declares_no_alternates(): void
+    {
+        $this->persona('de-hondenmens', 'De hondenmens', Market::BeNl);
+
+        $this->assertSame(
+            [],
+            app(Alternates::class)->for('/be-nl/gift-ideas/de-hondenmens', Market::BeNl),
+        );
+    }
+
+    #[Test]
+    public function an_unpublished_persona_is_not_offered_as_an_alternate(): void
+    {
+        $this->persona('de-thuiskok', 'De thuiskok', Market::BeNl);
+        $this->persona('de-thuiskok', 'De thuiskok', Market::NlNl, published: false);
+
+        $this->assertSame(
+            [],
+            app(Alternates::class)->for('/be-nl/gift-ideas/de-thuiskok', Market::BeNl),
+        );
+    }
+
+    #[Test]
+    public function the_shelf_itself_is_the_same_page_in_every_market(): void
+    {
+        // No slug, nothing keyed on a row: the plain segment swap is right, and
+        // an empty shelf is still a page that exists.
+        $alternates = app(Alternates::class)->for('/be-nl/gift-ideas', Market::BeNl);
+
+        $this->assertSame(url('/nl-nl/gift-ideas'), $alternates['nl-NL'] ?? null);
+        $this->assertSame(url('/be-fr/gift-ideas'), $alternates['fr-BE'] ?? null);
+    }
+
+    private function persona(
+        string $slug,
+        string $title,
+        Market $market,
+        bool $published = true,
+    ): DailyPickSet {
+        return DailyPickSet::create([
+            'market' => $market->value,
+            'kind' => 'persona',
+            'slug' => $slug,
+            'theme_title' => $title,
+            'theme_slug' => $slug,
+            'theme_blurb' => 'Waar het over gaat.',
+            'status' => $published ? 'published' : 'draft',
+            'published_at' => $published ? '2026-08-20' : null,
+        ]);
+    }
 
     private function buildPersona(): CovePlan
     {

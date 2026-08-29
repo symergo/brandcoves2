@@ -134,9 +134,25 @@ silently serves English copy into a Dutch market.
 
 ## hreflang and canonicals
 
-Every page emits alternates for all five markets plus `x-default`, in the head
-*and* in the sitemap — Google treats those as independent signals and picks the
-sitemap version up faster on a new URL.
+Alternates go in the head *and* in the sitemap — Google treats those as
+independent signals and picks the sitemap version up faster on a new URL.
+
+**A page only claims the twins it actually has.** A market-independent page —
+home, search, discover, the lists — emits all five markets plus `x-default` by
+swapping the market segment, which is exactly right for it. A page keyed on a
+database row looks its sibling up and emits *nothing* when there is not one:
+products join on `identity_key`, guides and Shop Coves and personas on their
+slug, Daily Coves on their date.
+
+The asymmetry matters because Google reads hreflang as a mutual declaration. One
+alternate pointing at a 404 does not get quietly ignored — the whole cluster is
+discarded, so the pages that *do* have real translations lose the annotation
+along with it. A missing alternate costs nothing; a wrong one costs the set.
+
+`Alternates::for()` dispatches on the first path segment, and **a keyed page
+whose segment is missing from that `match` falls through to the blind swap**.
+That is how personas shipped claiming five twins each: `gift-ideas` was not in
+the list. It is the failure mode to check for when adding a new keyed page type.
 
 ## Sitemaps
 
