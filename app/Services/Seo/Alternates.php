@@ -29,6 +29,19 @@ use Illuminate\Support\Facades\DB;
  *
  * So: market-independent paths swap the segment; keyed paths look the sibling
  * up and emit nothing when there is not one. A missing alternate costs nothing.
+ *
+ * ## Why these are ordered
+ *
+ * Every sibling lookup carries `orderBy('market')`. Postgres may return rows in
+ * any order it likes and under load it does: a parallel test run emitted the
+ * same two alternates as the serial run in the opposite order, failing an
+ * assertion that had passed a moment earlier. That reads exactly like a flaky
+ * runner — and `.githooks/pre-push` duly re-ran it serially, saw it pass, and
+ * concluded the parallel runner had crashed. It had not. The output was simply
+ * unordered, and the hook's rule cannot tell those two apart.
+ *
+ * hreflang does not care about order. Reproducible output does, because an
+ * assertion that only usually holds is worse than no assertion.
  */
 class Alternates
 {
@@ -173,6 +186,8 @@ class Alternates
             // point hreflang at a page about something else entirely.
             ->whereIn('kind', ['guide', 'seasonal', 'advice'])
             ->where('status', PublishStatus::Published->value)
+            // Deterministic order — see 'Why these are ordered' above.
+            ->orderBy('market')
             ->get(['market', 'slug']);
 
         $alternates = [];
@@ -214,6 +229,8 @@ class Alternates
             ->where('slug', $slug)
             ->where('kind', CoveKind::Shop->value)
             ->where('status', PublishStatus::Published->value)
+            // Deterministic order — see 'Why these are ordered' above.
+            ->orderBy('market')
             ->get(['market', 'slug']);
 
         $alternates = [];
@@ -267,6 +284,8 @@ class Alternates
             ->where('slug', $slug)
             ->where('kind', CoveKind::Persona->value)
             ->where('status', PublishStatus::Published->value)
+            // Deterministic order — see 'Why these are ordered' above.
+            ->orderBy('market')
             ->get(['market', 'slug']);
 
         $alternates = [];
@@ -325,6 +344,8 @@ class Alternates
             ->whereDate('drop_date', $date)
             ->where('status', PublishStatus::Published->value)
             ->whereNotNull('slug')
+            // Deterministic order — see 'Why these are ordered' above.
+            ->orderBy('market')
             ->get(['market', 'slug']);
 
         $alternates = [];

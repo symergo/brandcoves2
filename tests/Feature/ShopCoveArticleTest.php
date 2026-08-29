@@ -165,9 +165,12 @@ class ShopCoveArticleTest extends TestCase
         $alternates = app(Alternates::class)
             ->for('/be-nl/shops/bol-com', Market::BeNl);
 
+        // Ordered by market, so `be-fr` leads `be-nl`. This assertion used to
+        // depend on insertion order and flipped under the parallel runner —
+        // see the ordering note in the `Alternates` docblock.
         $this->assertSame([
-            'nl-BE' => url('/be-nl/shops/bol-com'),
             'fr-BE' => url('/be-fr/shops/bol-com'),
+            'nl-BE' => url('/be-nl/shops/bol-com'),
         ], $alternates);
     }
 }
