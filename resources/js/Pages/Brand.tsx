@@ -8,6 +8,7 @@ import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
+import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 
 interface Props {
     brand: {
@@ -61,6 +62,11 @@ interface Props {
     }[]
     coves: { title: string; intro: string | null; url: string }[]
     related: { name: string; url: string }[]
+    /**
+     * The tagged Amazon search for this brand, narrowed by any term chips.
+     * Null where the market has no Associates tag — see AmazonSearchLink.
+     */
+    amazonSearch: AmazonSearch | null
     /** The long copy under the grid. Null on any variant that is noindex. */
     narrative: Narrative | null
     intro: BlockPayload[] | null
@@ -88,6 +94,7 @@ export default function Brand({
     facets,
     results,
     liveOffers,
+    amazonSearch,
     coves,
     related,
     narrative,
@@ -105,6 +112,11 @@ export default function Brand({
     const narrowedTo = String(filters.q ?? '')
         .split(' ')
         .filter(Boolean)
+
+    // What the Amazon link is labelled with, and what the server searched for:
+    // the brand plus whatever chips are narrowing the page. Kept in step with
+    // BrandController by construction — same two pieces, same order.
+    const brandTerm = [brand.name, ...narrowedTo].join(' ')
 
     function go(changes: Record<string, unknown>) {
         const next = { ...filters, ...changes }
@@ -332,6 +344,21 @@ export default function Brand({
                         />
                         <span>{t('search.in_stock_only')}</span>
                     </label>
+
+                    {/*
+                      Separated by a rule: everything above it narrows this
+                      page, and this one leaves it. Suppressed when the page
+                      found nothing, because the empty state carries its own
+                      copy in the middle of the screen.
+                    */}
+                    {amazonSearch && results.total > 0 && (
+                        <div className="border-t border-line pt-6">
+                            <AmazonSearchCta
+                                link={amazonSearch}
+                                label={t('search.amazon_search', { term: brandTerm })}
+                            />
+                        </div>
+                    )}
                 </aside>
 
                 {/*
@@ -375,6 +402,16 @@ export default function Brand({
                               rather than for a crawler.
                             */}
                             <PageBlocks blocks={emptyCopy} className="mx-auto mt-2 max-w-xl" />
+
+                            {/* The dead end is where this link is worth most. */}
+                            {amazonSearch && (
+                                <div className="mx-auto mt-6 max-w-sm text-left">
+                                    <AmazonSearchCta
+                                        link={amazonSearch}
+                                        label={t('search.amazon_search', { term: brandTerm })}
+                                    />
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">

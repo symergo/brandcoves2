@@ -106,6 +106,55 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | The Amazon search hand-off
+    |--------------------------------------------------------------------------
+    |
+    | One link, in the search sidebar: run this same term on Amazon.
+    |
+    | Deliberately NOT under `connectors.amazon`, and deliberately not gated on
+    | `AMAZON_ENABLED`. That flag governs the PA-API connector, which is still
+    | Phase 8 and needs credentials. This is an outbound anchor — no API call,
+    | no catalogue row, nothing stored — so it works on every environment the
+    | moment the tag is known, and tying it to the connector's flag would leave
+    | a shipped feature switched off waiting on an unrelated one.
+    |
+    | It is also the one place Amazon may legitimately appear without the
+    | mirroring problem invariant 6 exists for: a search URL stores no title, no
+    | price and no image, because we never read the response.
+    |
+    | A market with no tag gets no link. Sending traffic to a storefront under
+    | somebody else's tag, or under none, is unattributed either way — and an
+    | untagged Amazon link is the failure that looks exactly like a working one.
+    |
+    */
+    'amazon_search' => [
+        /*
+         * market => [storefront host, Associates tag].
+         *
+         * Belgium goes to `amazon.com.be` and the Netherlands to `amazon.nl`,
+         * which is NOT what `AmazonLocale::primaryFor()` says — that prefers
+         * `amazon.nl` for Belgian visitors because it is the deeper catalogue.
+         * The tag is why they differ: an Associates tag is issued per
+         * marketplace, so a `.be` tag on a `.nl` URL tracks nothing. Attribution
+         * decides the host here; catalogue depth decides it there.
+         *
+         * `be-fr` uses the same `.com.be` storefront as `be-nl` — Amazon serves
+         * that marketplace in both languages off one host, and there is no
+         * separate French-Belgian tag to route to.
+         *
+         * `en` and `es` are absent, not empty: no tag has been issued for
+         * `amazon.co.uk` or `amazon.es` under this account, so those markets
+         * show no link at all rather than an untracked one.
+         */
+        'markets' => [
+            'nl-nl' => ['host' => 'www.amazon.nl', 'tag' => env('AMAZON_TAG_NL', 'giftcoves-21')],
+            'be-nl' => ['host' => 'www.amazon.com.be', 'tag' => env('AMAZON_TAG_BE', 'giftcoves05-21')],
+            'be-fr' => ['host' => 'www.amazon.com.be', 'tag' => env('AMAZON_TAG_BE', 'giftcoves05-21')],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Product identity and grouping
     |--------------------------------------------------------------------------
     */

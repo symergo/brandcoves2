@@ -6,6 +6,7 @@ declare(strict_types=1);
 return [
     'nav' => [
         'search' => 'Buscar',
+        'feedback' => 'Sugerencias',
         'organise' => 'Organizar',
         'discover' => 'Descubrir',
         'submenu' => 'Qué hay en :section',
@@ -70,7 +71,7 @@ return [
         'headline_2' => 'También para ti.',
         'intro' => 'Encuentra y regala lo mejor, a los demás y a ti mismo. Con GiftCoves creas tus listas de deseos y tus listas de regalos. Compártelas con tu familia y tus amigos, poned dinero en común para un regalo de grupo, organiza un Amigo invisible para tu próxima fiesta, o pon a prueba a tus amigos para ver cuánto te conocen de verdad.',
         'search_label' => 'Busca un producto o una marca',
-        'search_placeholder' => 'Auriculares, un molinillo, una marca…',
+        'search_placeholder' => 'Busca un regalo o escanea un código de barras',
         'recent_heading' => 'Buscado hace poco',
         'cta_gift' => 'Buscar un regalo',
         'cta_search' => 'Algo para ti',
@@ -100,7 +101,7 @@ return [
 
     'search' => [
         'title' => 'Buscar',
-        'placeholder' => 'Busca un producto, marca, código de barras o pega un enlace de Amazon',
+        'placeholder' => 'Busca un regalo o escanea un código de barras',
         'pasted_searched' => 'Es un enlace de Amazon. Hemos leído :terms y lo hemos buscado en las tiendas que seguimos.',
         'pasted_unreadable' => 'Es un enlace de Amazon, pero no lleva ningún nombre de producto que podamos leer, solo su código de Amazon. Copia el enlace largo que incluye el título del producto, o busca el producto por su nombre.',
         'pasted_shortlink' => 'Es un enlace de Amazon acortado, y no abrimos enlaces para ver adónde llevan. Ábrelo tú y pega la dirección completa, o busca el producto por su nombre.',
@@ -131,6 +132,10 @@ return [
         'hide_shop' => 'Dejar de mostrar :shop',
         'in_stock_only' => 'Solo disponibles',
         'discounted_only' => 'Solo con descuento',
+        // Consulta la explicación de estas claves en lang/en/site.php.
+        'amazon_search' => 'Busca :term también en Amazon',
+        'amazon_search_any' => 'Prueba a buscar en Amazon',
+        'amazon_search_host' => 'Abre :host',
         'previous' => 'Anterior',
         'next' => 'Siguiente',
         'page_of' => 'Página :current de :last',
@@ -195,6 +200,11 @@ return [
         'cheapest' => 'Más barato',
         'typical_price' => 'Precio habitual :price',
         'barcode' => 'Código de barras',
+        // Consulta la explicación de estas claves en lang/en/site.php.
+        'description_heading' => 'Sobre este producto',
+        'description_source' => 'Descripción facilitada por :shop.',
+        'amazon_search' => 'Busca también este producto en Amazon',
+        'amazon_search_barcode' => 'Por código de barras :ean',
         'price_as_of' => 'Precio y disponibilidad en el momento indicado; pueden cambiar.',
         'disclosure' => 'Podemos recibir una comisión si compras a través de este enlace. El precio que pagas no cambia.',
         'unavailable' => 'Este producto no está disponible ahora mismo en ninguna tienda que sigamos.',
@@ -963,6 +973,25 @@ return [
         'mail_button' => 'Ver la lista',
         'mail_expiry' => 'El enlace funciona durante dos semanas.',
         'sign_in_first' => 'Inicia sesión con la dirección a la que se envió la invitación y la lista estará esperando.',
+    ],
+
+    // Consulta la explicación de estas claves en lang/en/site.php.
+    'feedback' => [
+        'seo_title' => 'Cuéntanos qué falla',
+        'seo_description' => 'Informa de un precio incorrecto, un enlace roto o cualquier otra cosa que no esté bien, y lo arreglaremos.',
+        'title' => 'Cuéntanos qué falla',
+        'intro' => 'Un precio desactualizado, un enlace que no lleva a ninguna parte, un producto bajo la marca equivocada, una frase que parece escrita por una máquina: dínoslo y lo arreglaremos. No hace falta cuenta.',
+        'message_label' => '¿Qué falla?',
+        'message_placeholder' => 'El precio de esta página es 20 € más bajo en la propia tienda.',
+        'path_label' => '¿Qué página?',
+        'path_placeholder' => '/es/p/1234/…',
+        'path_hint' => 'Rellenado con la página de la que vienes. Cámbialo si el problema está en otro sitio.',
+        'email_label' => 'Tu correo (opcional)',
+        'email_placeholder' => 'tu@ejemplo.es',
+        'email_hint' => 'Solo para responderte. Nunca se envía nada más a esa dirección.',
+        'submit' => 'Enviar',
+        'sending' => 'Enviando…',
+        'thanks' => 'Gracias: ha llegado y alguien lo leerá.',
     ],
 
     'search_help' => [

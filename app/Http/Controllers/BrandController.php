@@ -14,6 +14,7 @@ use App\Services\Connectors\Offer;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\BrandContext;
 use App\Services\Pages\PageCopy;
+use App\Services\Search\AmazonSearchLink;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
@@ -168,6 +169,20 @@ class BrandController extends Controller
              * from this request's own fetch and are gone when it ends.
              */
             'liveOffers' => array_map($this->liveCard(...), $result->liveOffers),
+
+            /*
+             * "Search this brand on Amazon too".
+             *
+             * The brand name, plus whatever term chips are narrowing the page —
+             * so a visitor who has clicked down to "Sony koptelefoon" hands
+             * that across rather than starting again at "Sony". `$query->term`
+             * is empty on the brand's own landing page, which trims to the
+             * brand alone.
+             */
+            'amazonSearch' => AmazonSearchLink::for(
+                $current->get(),
+                trim($stat->brand.' '.$query->term),
+            )?->toArray(),
 
             /*
              * The long copy, below the grid and drawn from the editable bank

@@ -43,6 +43,7 @@ you have the right to object, and section *Your rights* explains how.
 | Lists, saved items, recipients you enter | Providing the list you asked for | Contract (Art. 6(1)(b)) |
 | Price and stock alerts | Sending the alert you asked for | Contract (Art. 6(1)(b)) |
 | Daily email address, confirmation date, signup IP | Sending the email, and proving consent | Consent (Art. 6(1)(a)) |
+| Feedback you send us: the message, the page, and an email address if you give one | Fixing what you reported, and replying if you asked us to | Legitimate interests (Art. 6(1)(f)) |
 
 ### A note on the visitor cookie
 
@@ -112,6 +113,7 @@ this one. We never send them your email address, your account or your lists.
 | Price history | 90 days |
 | Newsletter subscription | Until you unsubscribe |
 | Unconfirmed subscription | Deleted after 30 days |
+| Feedback you send us | 12 months, message and reply address together |
 | Server logs | 30 days |
 
 These are enforced by a job that runs every night, not by intention.

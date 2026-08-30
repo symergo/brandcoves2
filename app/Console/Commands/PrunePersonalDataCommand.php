@@ -35,6 +35,12 @@ use Illuminate\Support\Facades\DB;
  * credential nobody can use and a cookie identity nobody has presented in a year
  * are both data with no remaining purpose.
  *
+ * **Feedback** is free text somebody typed about the site, optionally with a
+ * reply address. Both go on the same clock, and the message is deleted with the
+ * address rather than kept as anonymised prose: a free-text field is whatever
+ * the person put in it, which is sometimes their own name. A year is long
+ * enough to act on a report and to notice the same one arriving again.
+ *
  * Scheduled nightly. Idempotent, and safe to run by hand.
  */
 class PrunePersonalDataCommand extends Command
@@ -55,6 +61,7 @@ class PrunePersonalDataCommand extends Command
         'search_log' => 365,
         'unconfirmed_subscribers' => 30,
         'anonymous_identities' => 365,
+        'feedback' => 365,
     ];
 
     public function handle(): int
@@ -108,6 +115,17 @@ class PrunePersonalDataCommand extends Command
                 ->where('last_seen_at', '<', now()->subDays(self::RETENTION['anonymous_identities']))
                 ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('wishlists')->whereColumn('wishlists.owner_anon_id', 'anonymous_identities.id'))
                 ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('recipients')->whereColumn('recipients.owner_anon_id', 'anonymous_identities.id')),
+            $dry,
+        );
+
+        /*
+         * Handled or not. A report nobody got to inside a year is not going to
+         * be acted on, and keeping it does not make that more likely — it only
+         * keeps the address.
+         */
+        $report['feedback'] = $this->prune(
+            'feedback',
+            fn () => DB::table('feedback')->where('created_at', '<', now()->subDays(self::RETENTION['feedback'])),
             $dry,
         );
 

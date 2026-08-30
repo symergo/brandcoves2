@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\RestockAlert;
 use App\Services\Alerts\AlertEligibility;
+use App\Services\Catalogue\ProductDescription;
+use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
@@ -83,7 +85,38 @@ class ProductController extends Controller
                 'ean' => $productGroup->identity_kind?->value === 'ean' ? $productGroup->identity_key : null,
             ],
             'offers' => $this->presentOffers($offers),
+
+            /*
+             * The long description, quoted from whichever shop supplies the
+             * fullest one.
+             *
+             * Read from the offers already loaded above — `products
+             * .description` has been ingested and search-weighted all along and
+             * was simply never rendered. No extra query, and no fetch: see
+             * ProductDescription for why a live call to bol at render time is
+             * the wrong shape for the most-crawled page on the site.
+             */
+            'description' => ProductDescription::pick($offers, $productGroup->title)?->toArray(),
             'alert' => $this->alertState($productGroup),
+
+            /*
+             * "Search this barcode on Amazon too".
+             *
+             * The EAN, not the title, because it is the only string that means
+             * the *same product* on the other side. A title search returns the
+             * accessories, the refill and the previous generation; a barcode
+             * either finds this exact item or finds nothing, and finding
+             * nothing is a truthful answer.
+             *
+             * So this is null on a group identified by a folded title rather
+             * than a barcode — the same condition that hides `ean` above. That
+             * is a large share of the catalogue, and the right behaviour: a
+             * link that quietly searches for something else is worse than no
+             * link.
+             */
+            'amazonSearch' => $productGroup->identity_kind?->value === 'ean'
+                ? AmazonSearchLink::for($current->get(), $productGroup->identity_key)?->toArray()
+                : null,
         ]);
     }
 

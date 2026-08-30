@@ -15,6 +15,7 @@ use App\Http\Controllers\CoveSubscriptionController;
 use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\DiscoverCoveController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftCoveController;
 use App\Http\Controllers\GiftCoveManualController;
@@ -128,6 +129,17 @@ Route::prefix('{market}')->group(function () {
     // document about the company, and the only pages that link to it are the
     // ones with a search field on them.
     Route::get('/search-help', SearchHelpController::class)->name('search-help');
+
+    /*
+     * Tell us what is wrong.
+     *
+     * Signed-out on purpose — see FeedbackController. The POST is rate limited
+     * in the controller rather than by a `throttle` middleware, because a
+     * throttled request must answer like a successful one rather than with a
+     * 429 that tells a script exactly where the line is.
+     */
+    Route::get('/feedback', [FeedbackController::class, 'show'])->name('feedback');
+    Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
 
     // The slug is decoration; the id is identity. A stale slug redirects rather
     // than 404s, so old shared links keep working after a retitle.

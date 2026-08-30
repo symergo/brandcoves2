@@ -97,6 +97,14 @@ class SitemapController extends Controller
                  */
                 ['loc' => url("/{$resolved->value}/search-help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
 
+                /*
+                 * The feedback form. Low priority and listed anyway: it is a
+                 * real page with real copy, and the alternative — a page in the
+                 * header that no crawler is told about — is the shape of a page
+                 * somebody forgot rather than one deliberately kept private.
+                 */
+                ['loc' => url("/{$resolved->value}/feedback"), 'priority' => '0.3', 'changefreq' => 'yearly'],
+
                 ['loc' => url("/{$resolved->value}/daily"), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/gift-ideas"), 'priority' => '0.8', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],

@@ -4,6 +4,7 @@ import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
+import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
 import type { SharedProps } from '../types'
@@ -37,6 +38,11 @@ interface Props {
         shortlink: boolean
         usable: boolean
     } | null
+    /**
+     * The tagged hand-off to Amazon for this term, or null where there is no
+     * Associates tag for the market. Built server-side — see AmazonSearchLink.
+     */
+    amazonSearch: AmazonSearch | null
     /** Words that recur in these results, each a search of its own. Empty on thin pages. */
     terms: { term: string; url: string }[]
     /** Lowercase brand name → brand page URL, for brands that have one. */
@@ -56,6 +62,7 @@ export default function Search({
     results,
     lanes,
     emptyBecauseOfFilters,
+    amazonSearch,
     pastedLink,
     terms,
     brandLinks,
@@ -78,6 +85,16 @@ export default function Search({
      * are excluded — they are not filters, and counting them would put a badge
      * on every search anyone ever runs.
      */
+    /*
+     * "Search <term> on Amazon too", or just "try searching on Amazon" when
+     * there is no term to quote — the search page before anything is typed.
+     * `hasTerm` is the server's word for it, because the server is what decided
+     * whether the URL carries a query at all.
+     */
+    const amazonLabel = amazonSearch?.hasTerm
+        ? t('search.amazon_search', { term: q })
+        : t('search.amazon_search_any')
+
     const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
         if (['q', 'view', 'sort', 'page'].includes(key)) return false
         if (Array.isArray(value)) return value.length > 0
@@ -309,6 +326,25 @@ export default function Search({
                                 go={go}
                                 showShops
                             />
+
+                            {/*
+                              Separated from the filters by a rule, not just by
+                              space: everything above it changes this page, and
+                              this one leaves it. Two different kinds of control
+                              stacked in one rail need the seam drawn.
+                            */}
+                            {/*
+                              Not on a page with no results — the empty state
+                              carries its own copy of this, in the middle of the
+                              screen where the shopper is already looking. Two
+                              identical accent buttons on one view is one of
+                              them being ignored.
+                            */}
+                            {amazonSearch && results.total > 0 && (
+                                <div className="border-t border-line pt-6">
+                                    <AmazonSearchCta link={amazonSearch} label={amazonLabel} />
+                                </div>
+                            )}
                         </aside>
                     </>
                 )}
@@ -510,6 +546,26 @@ export default function Search({
                               way out.
                             */}
                             <PageBlocks blocks={emptyCopy} className="mx-auto mt-3 max-w-xl" />
+
+                            {/*
+                              The dead end is where this link is worth most.
+                              We found nothing; the shopper's question is still
+                              open, and the next thing they do is try the shop
+                              we do not carry. Better they do it from here, with
+                              the term already in the URL, than from the address
+                              bar.
+
+                              Shown even when the emptiness is our filters'
+                              doing: "clear the filters" is the better answer
+                              and sits above this, but a shopper who does not
+                              want to fiddle with switches still deserves the
+                              way out.
+                            */}
+                            {amazonSearch && (
+                                <div className="mx-auto mt-6 max-w-sm text-left">
+                                    <AmazonSearchCta link={amazonSearch} label={amazonLabel} />
+                                </div>
+                            )}
                         </div>
                     ) : view === 'store' && lanes ? (
                         /*

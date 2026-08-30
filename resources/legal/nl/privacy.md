@@ -44,6 +44,7 @@ staat, heb je recht van bezwaar; onder *Je rechten* lees je hoe.
 | Lijstjes, bewaarde items, ontvangers die je invult | Het lijstje leveren waar je om vroeg | Overeenkomst (art. 6(1)(b)) |
 | Prijs- en voorraadmeldingen | De melding sturen waar je om vroeg | Overeenkomst (art. 6(1)(b)) |
 | E-mailadres nieuwsbrief, bevestigingsdatum, IP bij inschrijving | De mail sturen, en toestemming kunnen aantonen | Toestemming (art. 6(1)(a)) |
+| Feedback die je ons stuurt: het bericht, de pagina, en een e-mailadres als je dat geeft | Rechtzetten wat je meldde, en antwoorden als je daarom vroeg | Gerechtvaardigd belang (art. 6(1)(f)) |
 
 ### Een woord over de bezoekerscookie
 
@@ -117,6 +118,7 @@ sturen hun nooit je e-mailadres, je account of je lijstjes.
 | Prijsgeschiedenis | 90 dagen |
 | Inschrijving nieuwsbrief | Tot je je uitschrijft |
 | Niet-bevestigde inschrijving | Na 30 dagen verwijderd |
+| Feedback die je ons stuurt | 12 maanden, bericht en antwoordadres samen |
 | Serverlogs | 30 dagen |
 
 Deze termijnen worden elke nacht afgedwongen door een taak, niet door goede

@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
+import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import SaveToList from '../Components/SaveToList'
 import AlertButton from '../Components/AlertButton'
 import type { AlertState } from '../Components/AlertButton'
@@ -43,6 +44,16 @@ interface Props {
     }
     offers: Offer[]
     alert: AlertState
+    /**
+     * The tagged Amazon search for this product's barcode. Null when the group
+     * has no EAN, or the market has no Associates tag — see AmazonSearchLink.
+     */
+    amazonSearch: AmazonSearch | null
+    /**
+     * The shop's own description, in paragraphs, plus whose it is. Null when no
+     * offer on this group carries one worth a section — see ProductDescription.
+     */
+    description: { paragraphs: string[]; merchant: string } | null
 }
 
 /**
@@ -70,7 +81,7 @@ function reportClick(offer: Offer): void {
     }
 }
 
-export default function Product({ product, offers, alert }: Props) {
+export default function Product({ product, offers, alert, amazonSearch, description }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -157,6 +168,28 @@ export default function Product({ product, offers, alert }: Props) {
                             {t('product.barcode')}: <code>{product.ean}</code>
                         </p>
                     )}
+
+                    {/*
+                      Directly under the barcode, because the barcode is what it
+                      searches for — and because this belongs below the offer
+                      table's own context, not above it. Placed among the buy
+                      buttons it would compete with the shops we actually
+                      carry, which are the ones a click here should be worth
+                      less than.
+                    */}
+                    {amazonSearch && (
+                        <div className="mt-6">
+                            <AmazonSearchCta
+                                link={amazonSearch}
+                                label={t('product.amazon_search')}
+                                detail={
+                                    product.ean
+                                        ? t('product.amazon_search_barcode', { ean: product.ean })
+                                        : null
+                                }
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -241,6 +274,45 @@ export default function Product({ product, offers, alert }: Props) {
 
                 <p className="mt-3 text-xs text-ink-soft">{t('product.disclosure')}</p>
             </section>
+
+            {/*
+              The shop's own words, below the offers.
+
+              Above them it would push the one thing this page exists for — who
+              sells it and for how much — off the first screen, behind several
+              hundred words of somebody else's marketing copy. Below, it is
+              where a shopper who has seen the prices and wants to know what the
+              thing actually *is* goes looking.
+
+              Rendered as text, never as HTML. The paragraphs arrive already
+              stripped: this column comes from third-party feeds, and one Awin
+              advertiser ships unbalanced tags in it.
+            */}
+            {description && (
+                <section className="mt-12" aria-labelledby="product-description">
+                    <h2 id="product-description" className="mb-4 text-xl font-semibold">
+                        {t('product.description_heading')}
+                    </h2>
+
+                    <div className="rounded-card border border-line bg-card p-6">
+                        <div className="space-y-3 text-ink-soft">
+                            {description.paragraphs.map((paragraph, i) => (
+                                <p key={i}>{paragraph}</p>
+                            ))}
+                        </div>
+
+                        {/*
+                          Named, because it is a quotation. Unattributed it
+                          reads as our own editorial voice — a claim we cannot
+                          stand behind, since "the best headphones you will ever
+                          own" is the shop's opinion and not ours.
+                        */}
+                        <p className="mt-4 text-xs text-ink-soft/80">
+                            {t('product.description_source', { shop: description.merchant })}
+                        </p>
+                    </div>
+                </section>
+            )}
         </>
     )
 }

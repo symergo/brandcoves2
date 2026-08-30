@@ -20,7 +20,10 @@ cannot be recovered from a diff.
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
 | [search-help.md](search-help.md) | Search / Content | Active |
+| [feedback.md](feedback.md) | Core / Quality | Active |
+| [product-description.md](product-description.md) | Catalogue / Frontend | Active |
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect waits on the connector |
+| [amazon-search-cta.md](amazon-search-cta.md) | Search / Affiliate | Active on search, brand and product; `nl-nl` + both `be-*`, no tag for `en`/`es` |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active |
 | [giftability.md](giftability.md) | Gifting / Catalogue | Active |
 | [gifting-lenses.md](gifting-lenses.md) | Gifting / Core | Active |

@@ -12,6 +12,7 @@ declare(strict_types=1);
 return [
     'nav' => [
         'search' => 'Search',
+        'feedback' => 'Feedback',
         'organise' => 'Organise',
         'discover' => 'Discover',
         'submenu' => 'What is in :section',
@@ -108,10 +109,14 @@ return [
         'headline_2' => 'Yourself included.',
         'intro' => 'Find and give the best gifts, to other people and to yourself. GiftCoves is where you make your wish lists and your gift lists. Share them with family and friends, club together and pick one group gift, run a Secret Friend for your next party, or quiz your friends on how well they really know you.',
         'search_label' => 'Search for a product or a brand',
-        // "a name" was ambiguous next to two product nouns — it read as a
-        // person's name on a site full of gift lists. The other three locales
-        // already said brand ("een merknaam", "une marque", "una marca").
-        'search_placeholder' => 'Headphones, a coffee grinder, a brand name…',
+        // Names the second way in, not a third example. The examples this
+        // used to carry ("Headphones, a coffee grinder, a brand name…") taught
+        // the syntax of a field nobody struggles with; the camera beside it is
+        // the affordance people miss, because a scan button is not something a
+        // search box normally has. Only the two fields that actually sit next
+        // to a `ScanButton` — this one and `search.placeholder` — may promise
+        // it; the same line in a modal with no camera is a broken promise.
+        'search_placeholder' => 'Search for a gift or scan a barcode',
         'recent_heading' => 'Recently searched',
         'cta_gift' => 'Find a gift',
         'cta_search' => 'Something for yourself',
@@ -144,7 +149,7 @@ return [
 
     'search' => [
         'title' => 'Search',
-        'placeholder' => 'Search for a product, brand, barcode or paste an Amazon link',
+        'placeholder' => 'Search for a gift or scan a barcode',
         'pasted_searched' => 'That is an Amazon link. We read the product as :terms and looked for it at the shops we cover.',
         'pasted_unreadable' => 'That is an Amazon link, but it carries no product name we can read, only its Amazon code. Copy the longer link with the product title in it, or search for the product by name.',
         'pasted_shortlink' => 'That is a shortened Amazon link, and we do not open links to find out where they go. Open it yourself and paste the full address, or search for the product by name.',
@@ -177,6 +182,21 @@ return [
         'hide_shop' => 'Stop showing :shop',
         'in_stock_only' => 'In stock only',
         'discounted_only' => 'Discounted only',
+        /*
+         * The hand-off to Amazon, in the sidebar.
+         *
+         * `:term` is the visitor's own words, unquoted — the quotation marks
+         * were removed on request; they made a one-word search look like a
+         * citation. `amazon_search_host` names the storefront rather than
+         * leaving "Amazon" to mean whichever country they expect — a Belgian
+         * visitor landing on amazon.com.be should have been told so before the
+         * click, not after it.
+         */
+        'amazon_search' => 'Search :term on Amazon too',
+        // Shown where there is no term to quote: the search page before
+        // anything is typed. Not the same sentence with an empty gap in it.
+        'amazon_search_any' => 'Try searching on Amazon',
+        'amazon_search_host' => 'Opens :host',
         'previous' => 'Previous',
         'next' => 'Next',
         'page_of' => 'Page :current of :last',
@@ -266,6 +286,25 @@ return [
         'cheapest' => 'Cheapest',
         'typical_price' => 'Typical price :price',
         'barcode' => 'Barcode',
+        /*
+         * The Amazon hand-off, product-page wording.
+         *
+         * "this product" rather than the barcode itself: a shopper does not
+         * recognise their product in a thirteen-digit number, so the number
+         * goes in the detail line as evidence of *what* will be searched
+         * instead of standing in for the product's name.
+         */
+        /*
+         * The shop's own description, below the offers.
+         *
+         * ":shop" is not decoration. The text is a merchant's marketing copy
+         * quoted verbatim, and unattributed it reads as this site's editorial
+         * voice — a claim we cannot stand behind and did not write.
+         */
+        'description_heading' => 'About this product',
+        'description_source' => 'Description supplied by :shop.',
+        'amazon_search' => 'Search for this product on Amazon too',
+        'amazon_search_barcode' => 'By barcode :ean',
         'price_as_of' => 'Price and availability as of the time shown and may change.',
         'disclosure' => 'We may earn a commission if you buy through this link. The price you pay is unchanged.',
         'unavailable' => 'This product is not currently available from any shop we track.',
@@ -1120,6 +1159,38 @@ return [
         'mail_button' => 'See the list',
         'mail_expiry' => 'The link works for two weeks.',
         'sign_in_first' => 'Sign in with the address the invitation was sent to, and the list will be waiting.',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Feedback
+    |--------------------------------------------------------------------------
+    |
+    | Every quality problem this catalogue has is visible to a visitor long
+    | before it is visible to us. These are the words on the only page where
+    | they can say so.
+    |
+    | The address hint is written next to the field rather than left to the
+    | privacy policy, because "what will you do with this" is the question being
+    | asked at the moment the cursor is in the box.
+    |
+    */
+    'feedback' => [
+        'seo_title' => 'Tell us what is wrong',
+        'seo_description' => 'Report a wrong price, a dead link or anything else that is not right, and we will fix it.',
+        'title' => 'Tell us what is wrong',
+        'intro' => 'A price that is out of date, a link that goes nowhere, a product filed under the wrong brand, a sentence that reads like a machine wrote it — tell us and we will fix it. You do not need an account.',
+        'message_label' => 'What is wrong?',
+        'message_placeholder' => 'The price on this page is €20 lower at the shop itself.',
+        'path_label' => 'Which page?',
+        'path_placeholder' => '/en/p/1234/…',
+        'path_hint' => 'Filled in from the page you came from. Change it if the problem is somewhere else.',
+        'email_label' => 'Your email (optional)',
+        'email_placeholder' => 'you@example.com',
+        'email_hint' => 'Only so we can reply to this. Nothing else is ever sent to it.',
+        'submit' => 'Send',
+        'sending' => 'Sending…',
+        'thanks' => 'Thank you — this has arrived and somebody will read it.',
     ],
 
     'search_help' => [

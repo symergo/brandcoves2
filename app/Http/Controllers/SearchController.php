@@ -12,6 +12,7 @@ use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
+use App\Services\Search\AmazonSearchLink;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
@@ -77,6 +78,17 @@ class SearchController extends Controller
              */
             'terms' => $this->terms($query, $result, $current),
             'emptyBecauseOfFilters' => $result->emptyBecauseOfFilters(),
+
+            /*
+             * The one shop we do not carry, offered on purpose.
+             *
+             * Built server-side rather than assembled in the browser, because
+             * the Associates tag decides whether the click is worth anything
+             * and a market without one must produce no link at all — a decision
+             * with money attached does not belong in a component that cannot
+             * see the config. Null is the normal answer in `en` and `es`.
+             */
+            'amazonSearch' => AmazonSearchLink::for($current->get(), $query->term)?->toArray(),
 
             /*
              * What we made of a pasted link, if the box held one.

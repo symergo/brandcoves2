@@ -172,7 +172,20 @@ function Chrome({ children }: PropsWithChildren) {
         ],
     }
 
-    const nav = [{ href: `${base}/search`, label: t('nav.search') }]
+    /*
+     * The flat links, beside the two section menus.
+     *
+     * Feedback earns a place in the header rather than the footer because it is
+     * the only route a visitor has to report the thing this catalogue gets
+     * wrong most — a stale price, a dead link, a product filed under the wrong
+     * brand. In the footer it is found by people looking for it; here it is
+     * found by people who have just hit the problem, which is the only moment
+     * the report gets written.
+     */
+    const nav = [
+        { href: `${base}/search`, label: t('nav.search') },
+        { href: `${base}/feedback`, label: t('nav.feedback') },
+    ]
 
     /*
      * The phone gets the same sections, flattened.

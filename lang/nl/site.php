@@ -6,6 +6,7 @@ declare(strict_types=1);
 return [
     'nav' => [
         'search' => 'Zoek',
+        'feedback' => 'Feedback',
         'organise' => 'Organiseer',
         'discover' => 'Ontdek',
         'submenu' => 'Wat zit er in :section',
@@ -70,7 +71,7 @@ return [
         'headline_2' => 'Ook aan jezelf.',
         'intro' => 'Vind en geef de leukste cadeaus, aan anderen en aan jezelf. Met GiftCoves maak je je verlanglijstjes en cadeaulijstjes aan. Deel ze met familie en vrienden, leg samen in voor een groepscadeau, organiseer een Geheime Vriend-sessie voor je volgende feestje, of test je vrienden op hoe goed ze je echt kennen.',
         'search_label' => 'Zoek een product of een merk',
-        'search_placeholder' => 'Koptelefoon, koffiemolen, een merknaam…',
+        'search_placeholder' => 'Zoek een cadeau of scan een streepjescode',
         'recent_heading' => 'Recent gezocht',
         'cta_gift' => 'Vind een cadeau',
         'cta_search' => 'Iets voor jezelf',
@@ -100,7 +101,7 @@ return [
 
     'search' => [
         'title' => 'Zoeken',
-        'placeholder' => 'Zoek een product, merk, streepjescode of plak een Amazon-link',
+        'placeholder' => 'Zoek een cadeau of scan een streepjescode',
         'pasted_searched' => 'Dat is een Amazon-link. We lezen er :terms in en zochten daarnaar bij de winkels die we volgen.',
         'pasted_unreadable' => 'Dat is een Amazon-link, maar er staat geen productnaam in die we kunnen lezen, alleen de Amazon-code. Kopieer de langere link met de producttitel erin, of zoek het product op naam.',
         'pasted_shortlink' => 'Dat is een verkorte Amazon-link, en we openen geen links om te zien waar ze heen gaan. Open hem zelf en plak het volledige adres, of zoek het product op naam.',
@@ -131,6 +132,10 @@ return [
         'hide_shop' => ':shop niet meer tonen',
         'in_stock_only' => 'Alleen op voorraad',
         'discounted_only' => 'Alleen met korting',
+        // Zie de toelichting bij deze sleutels in lang/en/site.php.
+        'amazon_search' => 'Zoek :term ook op Amazon',
+        'amazon_search_any' => 'Probeer eens bij Amazon te zoeken',
+        'amazon_search_host' => 'Opent :host',
         'previous' => 'Vorige',
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',
@@ -199,6 +204,11 @@ return [
         'cheapest' => 'Goedkoopst',
         'typical_price' => 'Gebruikelijke prijs :price',
         'barcode' => 'Streepjescode',
+        // Zie de toelichting bij deze sleutels in lang/en/site.php.
+        'description_heading' => 'Over dit product',
+        'description_source' => 'Omschrijving aangeleverd door :shop.',
+        'amazon_search' => 'Zoek dit product ook op Amazon',
+        'amazon_search_barcode' => 'Op streepjescode :ean',
         'price_as_of' => 'Prijs en beschikbaarheid gelden op het getoonde moment en kunnen wijzigen.',
         'disclosure' => 'We verdienen mogelijk commissie als je via deze link koopt. Wat jij betaalt verandert niet.',
         'unavailable' => 'Dit product is nu bij geen enkele winkel die we volgen verkrijgbaar.',
@@ -967,6 +977,25 @@ return [
         'mail_button' => 'Bekijk de lijst',
         'mail_expiry' => 'De link werkt twee weken.',
         'sign_in_first' => 'Log in met het adres waar de uitnodiging naartoe is gestuurd, dan staat de lijst klaar.',
+    ],
+
+    // Zie de toelichting bij deze sleutels in lang/en/site.php.
+    'feedback' => [
+        'seo_title' => 'Vertel ons wat er mis is',
+        'seo_description' => 'Meld een verkeerde prijs, een dode link of iets anders dat niet klopt, dan zetten we het recht.',
+        'title' => 'Vertel ons wat er mis is',
+        'intro' => 'Een prijs die niet meer klopt, een link die nergens heen gaat, een product onder het verkeerde merk, een zin die door een machine geschreven lijkt — laat het weten, dan zetten we het recht. Je hebt geen account nodig.',
+        'message_label' => 'Wat is er mis?',
+        'message_placeholder' => 'De prijs op deze pagina is €20 lager bij de winkel zelf.',
+        'path_label' => 'Welke pagina?',
+        'path_placeholder' => '/be-nl/p/1234/…',
+        'path_hint' => 'Ingevuld vanaf de pagina waar je vandaan komt. Pas het aan als het ergens anders over gaat.',
+        'email_label' => 'Je e-mailadres (optioneel)',
+        'email_placeholder' => 'jij@voorbeeld.be',
+        'email_hint' => 'Alleen om hierop te antwoorden. Er wordt nooit iets anders naartoe gestuurd.',
+        'submit' => 'Versturen',
+        'sending' => 'Bezig met versturen…',
+        'thanks' => 'Bedankt — dit is aangekomen en iemand leest het.',
     ],
 
     'search_help' => [
