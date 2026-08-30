@@ -33,8 +33,13 @@ enum Market: string
      * which is the single worst guess available given what we just learned.
      *
      * It also changes what an unrecognised header costs: landing on `en` is a
-     * language they can probably read, on the Belgian catalogue, one flag click
-     * from anywhere else. Landing on `be-nl` is a page they cannot read at all.
+     * language they can probably read, one flag click from anywhere else.
+     * Landing on `be-nl` is a page they cannot read at all.
+     *
+     * Since 2026-08-30 that lands them somewhere with no live source configured
+     * — {@see self::bolCountry()}. Still the right default: an empty market in
+     * a language you read beats a stocked one you do not, and the flag click
+     * out of it works either way.
      */
     public static function default(): self
     {
@@ -116,8 +121,11 @@ enum Market: string
      *
      * `EU` is not a country and is not pretending to be one. The English market
      * has no single home: it exists so that somebody who reads neither Dutch nor
-     * French can still use the site, and it buys from the Belgian catalogue
-     * because that is where the supply is.
+     * French can still use the site.
+     *
+     * It used to buy from the Belgian catalogue, because that is where the
+     * supply is. It no longer does — see {@see self::bolCountry()} for why
+     * borrowing a neighbour's catalogue meant borrowing its language too.
      */
     public function country(): string
     {
@@ -194,14 +202,44 @@ enum Market: string
         return 'EUR';
     }
 
-    /** bol.com country code. Null means bol has no catalogue for this market. */
+    /**
+     * bol.com country code. Null means bol has no catalogue for this market.
+     *
+     * ## `en` is null by choice, not by geography
+     *
+     * It read `BE` until 2026-08-30, on the reasoning in {@see self::country()}:
+     * the English market has no home of its own, so it bought from the Belgian
+     * catalogue because that is where the supply is.
+     *
+     * What that delivered was an English market whose every product title was
+     * **Dutch**. bol has no English catalogue, so {@see
+     * self::bolAcceptLanguage()} asked it for `nl` deliberately, and the stored
+     * titles came back reading "Strex OBD2 Scanner - Auto Uitlezen en Storing
+     * Verwijderen - Nederlandse Taal" under English page furniture. That is not
+     * a thinner catalogue, it is an unreadable one, and no display-time filter
+     * repairs a title that is wrong in the database.
+     *
+     * So this is a decision about what `en` *is*, not about how much supply it
+     * has: a market that cannot describe what it sells in its own language is
+     * not serving that language. `docs/showcase-mode.md` holds the rejected
+     * alternative — keep the Dutch catalogue and translate it into a `title_en`
+     * column — which was priced at 3,400 rows and not taken.
+     *
+     * **This removes `en`'s only configured source.** Awin has no advertisers
+     * registered for it, and eBay and Tradedoubler are both credential-blocked
+     * (see `docs/TODO.md`), so `en` has no live supply until one of those
+     * lands. It is still {@see self::default()} — where every unrecognised
+     * `Accept-Language` arrives.
+     */
     public function bolCountry(): ?string
     {
         return match ($this) {
-            self::BeNl, self::BeFr, self::En => 'BE',
+            self::BeNl, self::BeFr => 'BE',
             self::NlNl => 'NL',
             // bol does not operate in Spain; this market is Awin-only for now.
             self::Es => null,
+            // English or nothing — see above.
+            self::En => null,
         };
     }
 
@@ -228,18 +266,117 @@ enum Market: string
     /**
      * Accept-Language sent to bol.
      *
-     * bol has no English catalogue, so the English market receives Dutch product
-     * names rather than no results at all.
+     * Null wherever {@see self::bolCountry()} is null, and it has to stay that
+     * way: a language here for a market bol is not asked about is a standing
+     * invitation to re-enable the wrong thing by reading this arm as evidence
+     * the market was supported.
+     *
+     * `en` returned `nl` until 2026-08-30 — bol has no English catalogue, and
+     * Dutch names were judged better than no results. They were not; that is
+     * why `en` no longer asks bol anything.
      */
     public function bolAcceptLanguage(): ?string
     {
         return match ($this) {
             self::BeNl => 'nl-BE',
             self::BeFr => 'fr-BE',
-            self::En => 'nl',
             self::NlNl => 'nl-NL',
-            self::Es => null,
+            self::En, self::Es => null,
         };
+    }
+
+    /**
+     * eBay marketplace id, for the `X-EBAY-C-MARKETPLACE-ID` header.
+     *
+     * Null means "do not query eBay for this market", never "use the default":
+     * a request sent to the wrong marketplace still succeeds, and returns
+     * priced, buyable, completely irrelevant results.
+     *
+     * ## Belgium is served from the neighbours, and that is a decision
+     *
+     * eBay publishes `EBAY_BENL` and `EBAY_BEFR` as marketplace ids, but the
+     * Browse API's marketplace support is narrower than the id list and the
+     * Belgian sites have long redirected at the storefront. A marketplace the
+     * Browse API does not serve fails the way every mistake in this connector
+     * fails — an empty array, indistinguishable from "eBay has nothing" — so
+     * the default is the neighbouring marketplace that is certainly served and
+     * certainly prices in euro: Dutch Belgium reads `ebay.nl`, French Belgium
+     * `ebay.fr`. Both ship to Belgium; neither invents a currency.
+     *
+     * Every value is overridable per market (`EBAY_MARKETPLACE_BE_NL` and
+     * friends), so pointing `be-nl` at `EBAY_BENL` after proving it with
+     * `bc:check-ebay --market=be-nl` is an env change, not a deploy of this file.
+     *
+     * `en` follows bol's precedent: there is no English euro marketplace, so it
+     * reads the Dutch one rather than `EBAY_GB`, whose prices are sterling. See
+     * EbayConnector::normalise() for why a non-euro price is dropped outright.
+     */
+    public function ebayMarketplace(): ?string
+    {
+        $configured = config("giftcoves.connectors.ebay.marketplace.{$this->value}");
+
+        return blank($configured) ? null : (string) $configured;
+    }
+
+    /**
+     * The eBay Partner Network campaign id that earns on a click from here.
+     *
+     * Follows the marketplace rather than the market, because EPN campaigns are
+     * created per marketplace and `be-nl`, `nl-nl` and `en` all read `EBAY_NL`
+     * — three markets, one campaign, one row of config.
+     *
+     * Null is survivable and silent, which is the danger: without a campaign id
+     * eBay simply omits `itemAffiliateWebUrl` from the response and the
+     * connector falls back to the plain item URL. The link works, the visitor
+     * buys, and the commission goes to nobody. Same failure as bol's site id,
+     * and `bc:check-ebay` reports it in red for the same reason.
+     */
+    public function ebayCampaignId(): ?string
+    {
+        $marketplace = $this->ebayMarketplace();
+
+        if ($marketplace === null) {
+            return null;
+        }
+
+        $id = config("giftcoves.connectors.ebay.campaign_id.{$marketplace}");
+
+        return blank($id) ? null : (string) $id;
+    }
+
+    /**
+     * Query parameters that scope a Tradedoubler search to this market.
+     *
+     * Null means "do not ask Tradedoubler about this market", never "use the
+     * default" — the same rule bol and eBay follow, and here it matters more
+     * than for either of them. Tradedoubler is a NETWORK spanning every European
+     * market at once, and an unrecognised filter parameter is *ignored* rather
+     * than rejected. So the failure mode is not an error and not an empty list:
+     * it is a Belgian visitor being shown German offers, in German, priced for
+     * delivery from Germany, with nothing anywhere reporting a problem.
+     *
+     * Returned as an array of parameters rather than a single code because the
+     * right scoping is not yet known and will change. `language` is the opening
+     * bid; program-id scoping is the real answer once the operator knows which
+     * advertisers they are joined to, exactly as `connectors.awin.advertisers`
+     * is for Awin. Config carries the whole array so that move is an env change
+     * rather than a signature change here.
+     *
+     * {@see App\Services\Connectors\Tradedoubler\TradedoublerConnector} does
+     * NOT rely on this alone: it drops any offer whose currency is not this
+     * market's, which is the guard that holds even when the scoping is wrong.
+     *
+     * @return array<string, scalar>|null
+     */
+    public function tradedoublerQuery(): ?array
+    {
+        $configured = config("giftcoves.connectors.tradedoubler.query.{$this->value}");
+
+        if (! is_array($configured) || $configured === []) {
+            return null;
+        }
+
+        return array_filter($configured, fn ($value): bool => $value !== null && $value !== '');
     }
 
     /**

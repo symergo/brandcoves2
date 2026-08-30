@@ -76,6 +76,8 @@ class HealthController extends Controller
             // than not reporting it: a config check that always says "missing"
             // sends somebody chasing a credential that was never absent.
             'bol' => filled(config('giftcoves.connectors.bol.client_id')),
+            'ebay' => filled(config('giftcoves.connectors.ebay.client_id')),
+            'tradedoubler' => filled(config('giftcoves.connectors.tradedoubler.token')),
             'ai' => filled(config('giftcoves.ai.api_key')),
             'robotsAllow' => (bool) config('giftcoves.robots_allow'),
         ];

@@ -12,6 +12,9 @@ cannot be recovered from a diff.
 | [homepage.md](homepage.md) | Core / Frontend | Active |
 | [ingestion.md](ingestion.md) | Catalogue | Active |
 | [popularity-charts.md](popularity-charts.md) | Catalogue / Discovery | Active — bol; Amazon on the same seam |
+| [ebay-connector.md](ebay-connector.md) | Catalogue | Merged, unverified — needs credentials, see [TODO](../TODO.md) |
+| [tradedoubler-connector.md](tradedoubler-connector.md) | Catalogue | Merged, unverified — supplied token is rejected, see [TODO](../TODO.md) |
+| [market-supply.md](market-supply.md) | Catalogue / Operations | Active |
 | [product-identity.md](product-identity.md) | Catalogue | Active |
 | [search.md](search.md) | Search | Active |
 | [seo.md](seo.md) | SEO / Frontend | Active |

@@ -46,7 +46,8 @@ product. Ingestion, grouping, scoring, daily picks and guide building all run as
 queued jobs — never in a web request, and neither does anything that costs AI tokens.
 
 See [CLAUDE.md](CLAUDE.md) for the invariants and [docs/features/](docs/features/) for per-feature
-documentation.
+documentation. [docs/TODO.md](docs/TODO.md) lists what is merged but not yet proven — currently the
+eBay and Tradedoubler connectors, both waiting on credentials.
 
 ## Deployment
 

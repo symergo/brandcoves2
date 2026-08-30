@@ -8,6 +8,8 @@ enum Source: string
 {
     case Awin = 'awin';
     case Bol = 'bol';
+    case Ebay = 'ebay';
+    case Tradedoubler = 'tradedoubler';
     case Amazon = 'amazon';
     case Manual = 'manual';
 
@@ -22,7 +24,7 @@ enum Source: string
 
     public function isLive(): bool
     {
-        return in_array($this, [self::Bol, self::Amazon], true);
+        return in_array($this, [self::Bol, self::Ebay, self::Tradedoubler, self::Amazon], true);
     }
 
     /*
@@ -143,6 +145,12 @@ enum Source: string
         return match ($this) {
             self::Awin => 'Awin',
             self::Bol => 'bol.com',
+            self::Ebay => 'eBay',
+            // The NETWORK, not a shop. Its offers each carry their own
+            // merchant name, so this label is only ever seen in admin and
+            // diagnostics — never on a product card, where it would tell a
+            // visitor to buy from a company that sells nothing.
+            self::Tradedoubler => 'Tradedoubler',
             self::Amazon => 'Amazon',
             self::Manual => 'Manual',
         };

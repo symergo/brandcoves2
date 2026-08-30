@@ -77,6 +77,10 @@ php artisan bc:plan-coves             # draft the editorial calendar 120 days ah
                                       # first, or there are no scored candidates to suggest
 php artisan bc:make-admin             # create an admin; refuses a password in argv (visible in ps)
 php artisan bc:check-bol              # prove the bol credentials; prints lengths, never values
+php artisan bc:check-ebay             # the same for eBay, plus the marketplace mapping — which
+                                      # this repo guesses per market, and gets no error for
+php artisan bc:check-tradedoubler     # the same for Tradedoubler. --raw prints the real payload
+                                      # shape, which that connector was written without
 php artisan bc:check-config           # did this environment's config arrive? lengths, never values
 php artisan bc:export-content         # editorial (feeds, coves, guides, copy) as a portable envelope
 php artisan bc:import-content --in=-  # apply one here. Dry run unless --write
@@ -84,6 +88,11 @@ php artisan bc:api-token              # mint/list/revoke an editorial API key; p
 php artisan bc:prune-personal-data   # enforce the published GDPR retention windows
 php artisan bc:awin-feeds             # discover Awin advertiser feeds, register them per market
 php artisan bc:ingest                 # run feed ingestion now
+php artisan bc:withdraw-source --market=en --source=bol   # suppress the offers a source
+                                      # left behind after it stopped serving a market.
+                                      # Turning a connector off does NOT hide what it
+                                      # already stored. Dry run unless --write; --restore
+                                      # is the undo; refuses while the source still serves
 php artisan bc:pull-charts            # pull bestseller charts — the demand signal, never a page
 php artisan bc:pull-charts --market=be-nl --discover   # prove the endpoint and the response
                                       # envelope in one request. Writes nothing

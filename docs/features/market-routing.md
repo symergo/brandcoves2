@@ -125,6 +125,34 @@ hidden.
 
 `Market::isPublished()` decides, and `Market::published()` is what public-facing code iterates.
 
+### `en` is published and has no live source — 2026-08-30
+
+`es` is the market with no supply that ships hidden. `en` is now a market with no supply that ships
+**visible**, and the two are different on purpose.
+
+bol served `en` from the Belgian catalogue, on the reasoning in `Market::country()`: the English
+market has no home of its own, so it bought where the supply was. What that delivered was an English
+market whose every stored product title was **Dutch** — bol has no English catalogue, so
+`bolAcceptLanguage()` asked for `nl` deliberately and the titles came back reading *"Strex OBD2
+Scanner - Auto Uitlezen en Storing Verwijderen - Nederlandse Taal"* under English page furniture.
+A title is wrong in the database, where no display-time filter reaches it.
+
+So `bolCountry()` returns null for `en`, and `bolAcceptLanguage()` with it — the two must move
+together, or the leftover language reads as evidence the market was supported and invites somebody
+to switch it back on. The 3,424 offers bol had already stored were suppressed with
+`bc:withdraw-source --market=en --source=bol --write`; turning a connector off does not hide what it
+already wrote, because stored search filters on market alone and never consults the registry.
+
+**It stays published, and the emptiness is catalogue work rather than a routing change.** `en` is
+also `Market::default()`, where every unrecognised `Accept-Language` lands, so unpublishing it would
+point the fallback at an unadvertised market. What it needs is supply it can describe in English:
+Awin advertisers registered for `en`, or the eBay and Tradedoubler credentials in
+[../TODO.md](../TODO.md) — though note both of those currently map `en` onto Dutch too (`EBAY_NL`,
+`language=nl`), so they inherit the same problem unless pointed somewhere English.
+
+Watch it on **Market supply** in the admin ([market-supply.md](market-supply.md)), which carries a
+red sidebar badge for exactly this state.
+
 **Hidden means unadvertised, not removed.** `/es/` still routes and still returns 200. The page templates,
 guides and Cove plans can all be built before the market opens, and opening it is flipping one arm of
 one `match`. Admin and console keep using `Market::cases()` for exactly that reason — an editor has

@@ -73,6 +73,20 @@ x-app: &app
     AWIN_VDB_PUBLISHER_ID: ${AWIN_VDB_PUBLISHER_ID}
     BOL_CLIENT_ID: ${BOL_CLIENT_ID}
     BOL_CLIENT_SECRET: ${BOL_CLIENT_SECRET}
+    # eBay. `EBAY_ENABLED` has a default and the marketplace map has defaults,
+    # so only the credentials and the campaign ids have to travel — and the
+    # campaign ids are the ones worth passing even though nothing breaks
+    # without them: a missing one means every eBay click resolves, sells, and
+    # is attributed to nobody. Same silent failure as AWIN_VDB above.
+    EBAY_CLIENT_ID: ${EBAY_CLIENT_ID}
+    EBAY_CLIENT_SECRET: ${EBAY_CLIENT_SECRET}
+    EBAY_CAMPAIGN_ID_NL: ${EBAY_CAMPAIGN_ID_NL}
+    EBAY_CAMPAIGN_ID_FR: ${EBAY_CAMPAIGN_ID_FR}
+    EBAY_CAMPAIGN_ID_ES: ${EBAY_CAMPAIGN_ID_ES}
+    # Tradedoubler. One value, and it is both the credential and the affiliate
+    # id — the tracking links come back already built around it. Absent here
+    # means the whole network is silently missing from search, with no error.
+    TRADEDOUBLER_TOKEN: ${TRADEDOUBLER_TOKEN}
     AMAZON_ENABLED: ${AMAZON_ENABLED:-false}
     AMAZON_ACCESS_KEY: ${AMAZON_ACCESS_KEY}
     AMAZON_SECRET_KEY: ${AMAZON_SECRET_KEY}

@@ -782,6 +782,190 @@ return [
             ],
         ],
 
+        /*
+         * eBay, live like bol and for a different reason.
+         *
+         * bol is queried live because it has no feed we can take. eBay is
+         * queried live because its inventory is *listings* — a listing ends,
+         * sells out or changes price on a timescale a nightly feed cannot
+         * follow, and a comparison page quoting a price for something that
+         * stopped existing yesterday is worse than one that omits eBay.
+         *
+         * Inert without credentials: EbayConnector::supports() requires both
+         * halves of the OAuth pair, so `enabled => true` here costs nothing on
+         * an environment that has not been given keys. That is deliberate —
+         * the alternative is an EBAY_ENABLED flag that is false everywhere and
+         * gets forgotten alongside the credentials it guards.
+         */
+        'ebay' => [
+            'enabled' => (bool) env('EBAY_ENABLED', true),
+
+            // The application keys from an eBay developer account's PRODUCTION
+            // keyset. The sandbox keyset authenticates against a different host
+            // and returns a catalogue of test data, which reads as "eBay works
+            // but sells nothing anyone wants".
+            'client_id' => env('EBAY_CLIENT_ID'),
+            'client_secret' => env('EBAY_CLIENT_SECRET'),
+
+            /*
+             * Market to eBay marketplace.
+             *
+             * Config rather than a match arm in the enum because the mapping is
+             * the part of this integration most likely to be wrong and most
+             * expensive to be wrong about — a marketplace the Browse API does
+             * not serve returns an empty list, which is indistinguishable from
+             * a market where eBay has nothing to sell. Keeping it here means
+             * `bc:check-ebay` proves it and an env var fixes it.
+             *
+             * The reasoning behind each default is in Market::ebayMarketplace().
+             * Blank means "never ask eBay for this market".
+             */
+            'marketplace' => [
+                'be-nl' => env('EBAY_MARKETPLACE_BE_NL', 'EBAY_NL'),
+                'be-fr' => env('EBAY_MARKETPLACE_BE_FR', 'EBAY_FR'),
+                'nl-nl' => env('EBAY_MARKETPLACE_NL_NL', 'EBAY_NL'),
+                'en' => env('EBAY_MARKETPLACE_EN', 'EBAY_NL'),
+                // The one market Awin and bol both leave empty, and the one
+                // eBay actually serves natively. Unpublished markets still
+                // route, so this is supply waiting for the switcher to open.
+                'es' => env('EBAY_MARKETPLACE_ES', 'EBAY_ES'),
+            ],
+
+            /*
+             * eBay Partner Network campaign ids, per marketplace.
+             *
+             * Sent as `affiliateCampaignId` in the X-EBAY-C-ENDUSERCTX header,
+             * which is what makes eBay return `itemAffiliateWebUrl` at all.
+             * Not secrets — they travel in every outbound link — but there is
+             * no sane default: an id belongs to an account, and someone else's
+             * id credits someone else.
+             */
+            'campaign_id' => [
+                'EBAY_NL' => env('EBAY_CAMPAIGN_ID_NL'),
+                'EBAY_FR' => env('EBAY_CAMPAIGN_ID_FR'),
+                'EBAY_ES' => env('EBAY_CAMPAIGN_ID_ES'),
+            ],
+
+            /*
+             * What counts as a giftable listing.
+             *
+             * eBay is two catalogues wearing one name. The half this site wants
+             * is fixed-price, new, from a shop that will ship it this week; the
+             * other half is auctions, used goods and collectables, where the
+             * price on screen is a bid rather than a price and "cheapest offer"
+             * becomes a lie the moment somebody outbids it.
+             *
+             * So both filters are on by default. They cost recall — genuinely
+             * good used gifts exist — and buy the one property the whole
+             * comparison rests on: the number shown is the number paid.
+             *
+             * `filter` is eBay's own syntax and is passed through verbatim;
+             * emptying it in env is how you go and look at the other half.
+             */
+            'filter' => env('EBAY_FILTER', 'conditions:{NEW},buyingOptions:{FIXED_PRICE}'),
+
+            /*
+             * eBay's application-token rate limits are per call, generous
+             * (5,000/day on Browse for a new keyset) and expressed per DAY, not
+             * per second — so there is no documented per-second number to size
+             * against the way bol's 10/s was sized.
+             *
+             * 5/s with a burst of 1 is therefore chosen against the daily
+             * budget rather than a rate ceiling: it is fast enough that a
+             * search never waits on it, and slow enough that a runaway loop
+             * burns a day's quota in twenty minutes rather than two.
+             */
+            'rate' => 5.0,
+            'burst' => 1,
+
+            // Longer than bol's 60s. eBay's limit is a daily quota, so a 429
+            // usually means the day is spent rather than that we crowded a
+            // per-second window — retrying in a minute would just spend the
+            // next request too.
+            'cooldown_seconds' => 300,
+        ],
+
+        /*
+         * Tradedoubler, live — and unlike bol and eBay, it is a NETWORK.
+         *
+         * That is the whole character of this connector. bol and eBay are one
+         * shop each; Tradedoubler is thousands of advertisers behind one
+         * endpoint, and its product API returns a product with a LIST of offers
+         * on it, one per advertiser. So a single response can produce several
+         * of our `products` rows carrying several different merchant names, and
+         * that is the first source in this codebase that hands us a real price
+         * comparison in one request rather than assembling one over time.
+         *
+         * It is queried live rather than ingested because its feeds are
+         * per-advertiser: taking them means joining programmes one at a time and
+         * running an ingestion job per programme, which is Awin's shape and
+         * Awin already occupies it. The API is the whole network at once.
+         */
+        'tradedoubler' => [
+            'enabled' => (bool) env('TRADEDOUBLER_ENABLED', true),
+
+            /*
+             * The Open Product API token, from the publisher interface.
+             *
+             * ONE credential, not a pair — it is passed as a query parameter,
+             * not a header, and there is no token exchange to do. It also
+             * carries the affiliate id: the `productUrl` that comes back is
+             * already a tracked `clk.tradedoubler.com` link, which is why there
+             * is no campaign-id equivalent to eBay's here.
+             *
+             * Which also means the token is what earns the commission. It is a
+             * secret in the ordinary sense and additionally in an unusual one:
+             * anybody holding it can attribute their own traffic to this
+             * account.
+             */
+            'token' => env('TRADEDOUBLER_TOKEN'),
+
+            /*
+             * How a search is scoped to one market.
+             *
+             * The reasoning is in Market::tradedoublerQuery(), and it is the
+             * riskiest part of this integration: Tradedoubler spans every
+             * European market at once and IGNORES a filter parameter it does
+             * not recognise, so getting this wrong shows Belgian visitors
+             * German offers rather than raising an error.
+             *
+             * An array per market, passed through verbatim, so replacing
+             * `language` with the program-id scoping this eventually wants is a
+             * config change rather than a code change. Empty or absent means
+             * the market is skipped outright.
+             *
+             * Verify with: php artisan bc:check-tradedoubler --market=be-nl --raw
+             */
+            'query' => [
+                'be-nl' => ['language' => env('TRADEDOUBLER_LANGUAGE_BE_NL', 'nl')],
+                'be-fr' => ['language' => env('TRADEDOUBLER_LANGUAGE_BE_FR', 'fr')],
+                'nl-nl' => ['language' => env('TRADEDOUBLER_LANGUAGE_NL_NL', 'nl')],
+                // English has no euro-market language of its own here, so it
+                // reads Dutch — the same call bol and eBay make, for the same
+                // reason: Dutch product names beat no results at all.
+                'en' => ['language' => env('TRADEDOUBLER_LANGUAGE_EN', 'nl')],
+                'es' => ['language' => env('TRADEDOUBLER_LANGUAGE_ES', 'es')],
+            ],
+
+            /*
+             * Tradedoubler publishes no per-second rate limit at all, which is
+             * not permission — it means there is no documented number to size
+             * against and no way to know we have crossed it until requests
+             * start failing.
+             *
+             * 5/s with a burst of 1 is therefore the same conservative default
+             * eBay gets: fast enough that a search never waits on it, slow
+             * enough that a runaway loop is visible before it is expensive.
+             */
+            'rate' => 5.0,
+            'burst' => 1,
+
+            // No documented limit means no way to know how long a 429 lasts.
+            // 300s rather than bol's 60s: guessing long costs a few minutes of
+            // one source, guessing short risks being blocked outright.
+            'cooldown_seconds' => 300,
+        ],
+
         // Deferred to Phase 8. The connector is written and registered but
         // disabled, so enabling it is a credentials step rather than a refactor.
         'amazon' => [

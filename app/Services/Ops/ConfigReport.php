@@ -46,6 +46,13 @@ class ConfigReport
          */
         $amazonOn = (bool) config('giftcoves.connectors.amazon.enabled');
 
+        // eBay ships enabled but credential-gated, so "on" here means the flag
+        // was not turned off — which is what makes its keys required rather
+        // than optional and stops them being quietly forgotten.
+        $ebayOn = (bool) config('giftcoves.connectors.ebay.enabled');
+
+        $tradedoublerOn = (bool) config('giftcoves.connectors.tradedoubler.enabled');
+
         $definition = [
             'Application' => [
                 ['APP_KEY', config('app.key'), true, 'Sessions and every encrypted cookie depend on it.'],
@@ -76,6 +83,16 @@ class ConfigReport
                 ['AWIN_PUBLISHER_ID', config('giftcoves.connectors.awin.publisher_id'), true, null],
                 ['BOL_CLIENT_ID', config('giftcoves.connectors.bol.client_id'), true, 'bol is the only supply the en market has.'],
                 ['BOL_CLIENT_SECRET', config('giftcoves.connectors.bol.client_secret'), true, null],
+                ['EBAY_CLIENT_ID', config('giftcoves.connectors.ebay.client_id'), $ebayOn, $ebayOn ? 'Required while eBay is on. Without it eBay is simply absent from search.' : 'Not needed while eBay is off.'],
+                ['EBAY_CLIENT_SECRET', config('giftcoves.connectors.ebay.client_secret'), $ebayOn, null],
+                // Not required, and the row most worth reading anyway: without
+                // a campaign id eBay links still work and earn nothing. See
+                // Market::ebayCampaignId().
+                ['EBAY_CAMPAIGN_ID_NL', config('giftcoves.connectors.ebay.campaign_id.EBAY_NL'), false, 'Missing means eBay clicks from be-nl, nl-nl and en are untracked.'],
+                ['EBAY_CAMPAIGN_ID_FR', config('giftcoves.connectors.ebay.campaign_id.EBAY_FR'), false, 'Missing means eBay clicks from be-fr are untracked.'],
+                // One credential, and it is both the key and the affiliate id:
+                // the tracking link comes back already built around it.
+                ['TRADEDOUBLER_TOKEN', config('giftcoves.connectors.tradedoubler.token'), $tradedoublerOn, $tradedoublerOn ? 'Required while Tradedoubler is on. It is also what earns the commission.' : 'Not needed while Tradedoubler is off.'],
                 ['AMAZON_ACCESS_KEY', config('giftcoves.connectors.amazon.access_key'), $amazonOn, $amazonOn ? 'Required while Amazon is on.' : 'Not needed while Amazon is off.'],
                 ['AMAZON_SECRET_KEY', config('giftcoves.connectors.amazon.secret_key'), $amazonOn, null],
             ],

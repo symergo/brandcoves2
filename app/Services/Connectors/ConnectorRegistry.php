@@ -115,4 +115,35 @@ class ConnectorRegistry
     {
         return array_map(fn (string $s) => Source::from($s), array_keys($this->feed));
     }
+
+    /**
+     * Every live source this build knows about, market or no market.
+     *
+     * The denominator liveFor() and liveSourcesFor() are numerators of. Both of
+     * those answer "who serves this market", and neither can distinguish a
+     * source that is registered but unconfigured from one that was never
+     * integrated at all — the two look identical from the outside and need
+     * completely different work to fix. A diagnostic has to tell them apart.
+     *
+     * @return list<Source>
+     */
+    public function liveSources(): array
+    {
+        return array_map(fn (string $s) => Source::from($s), array_keys($this->live));
+    }
+
+    /**
+     * One live connector, or null when the source has none.
+     *
+     * Deliberately nullable where feed() throws. feed() is called by the
+     * ingestion pipeline, which has already decided the source exists and
+     * cannot proceed if it does not — an exception is the honest answer there.
+     * This one is called by a diagnostic asking "is this source integrated",
+     * and a question whose whole purpose is to report "no" must be able to
+     * return it rather than blowing up the page that asked.
+     */
+    public function live(Source $source): ?LiveConnector
+    {
+        return $this->live[$source->value] ?? null;
+    }
 }

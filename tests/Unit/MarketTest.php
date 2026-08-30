@@ -55,12 +55,25 @@ class MarketTest extends TestCase
     }
 
     #[Test]
-    public function bol_has_no_english_catalogue_so_english_falls_back_to_dutch(): void
+    public function bol_does_not_serve_the_english_market(): void
     {
-        // Sending Accept-Language: en to bol returns nothing useful; Dutch
-        // product names beat no results.
-        $this->assertSame('nl', Market::En->bolAcceptLanguage());
-        $this->assertSame('BE', Market::En->bolCountry());
+        /*
+         * It did, on Belgium's catalogue, and that is exactly what went wrong:
+         * bol has no English catalogue, so every stored `en` title came back in
+         * Dutch. An English market it cannot describe in English is not one it
+         * serves.
+         *
+         * Both arms are asserted because they must move together. Leaving a
+         * language behind for a market with no country is how somebody later
+         * reads this arm as evidence the market was supported and turns it back
+         * on.
+         */
+        $this->assertNull(Market::En->bolCountry());
+        $this->assertNull(Market::En->bolAcceptLanguage());
+
+        // And with no country there is no site id, so nothing can quietly earn
+        // on a market we are not asking bol about.
+        $this->assertNull(Market::En->bolPartnerSiteId());
     }
 
     #[Test]

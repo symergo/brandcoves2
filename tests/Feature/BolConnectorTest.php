@@ -286,15 +286,23 @@ class BolConnectorTest extends TestCase
     }
 
     #[Test]
-    public function english_falls_back_to_dutch_because_bol_has_no_english_catalogue(): void
+    public function english_is_skipped_because_bol_has_no_english_catalogue(): void
     {
-        Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response($this->searchResponse([]))]);
+        Http::fake($this->fakeToken());
 
-        $this->connector->search('headphones', Market::En);
+        /*
+         * This test used to assert the opposite, and the assertion was the bug.
+         *
+         * `en` asked bol for the Belgian catalogue in Dutch, on the reasoning
+         * that Dutch product names beat no results. What it produced was an
+         * English market whose stored titles were all Dutch — and a title is
+         * wrong in the database, where no display filter reaches it. Skipping
+         * bol entirely is the answer; see Market::bolCountry().
+         */
+        $this->assertFalse($this->connector->supports(Market::En));
+        $this->assertSame([], $this->connector->search('headphones', Market::En));
 
-        // Dutch product names beat no results at all.
-        Http::assertSent(fn (Request $r) => ! str_contains($r->url(), 'login.bol.com')
-            && $r->header('Accept-Language')[0] === 'nl');
+        Http::assertNothingSent();
     }
 
     #[Test]

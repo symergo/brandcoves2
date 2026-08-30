@@ -9,6 +9,8 @@ use App\Services\Charts\ChartDemand;
 use App\Services\Connectors\Awin\AwinConnector;
 use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Connectors\Ebay\EbayConnector;
+use App\Services\Connectors\Tradedoubler\TradedoublerConnector;
 use App\Services\Discover\ModeEngine;
 use App\Services\Discover\ModeRegistry;
 use App\Services\Discover\Ranker;
@@ -92,6 +94,19 @@ class AppServiceProvider extends ServiceProvider
             // rather than one because a source may do either without the other
             // — which is how Amazon will arrive.
             $registry->registerPopularity($bol);
+
+            // Live only. eBay publishes no bestseller endpoint — its trending
+            // surfaces are web pages, and a search sorted by best match is
+            // relevance rather than demand — so it registers under one
+            // capability where bol registers under two. Inert until credentials
+            // exist: supports() requires the OAuth pair.
+            $registry->registerLive(new EbayConnector);
+
+            // Also live only, and the first source that is a NETWORK rather
+            // than a shop: one payload product fans out into several offers
+            // from several advertisers, which is a price comparison arriving in
+            // one request. Inert until a token exists.
+            $registry->registerLive(new TradedoublerConnector);
 
             // Amazon is written but stays config-disabled until its credentials
             // are verified (Phase 8). Registering it here is what makes that a

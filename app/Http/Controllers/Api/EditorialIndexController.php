@@ -109,6 +109,12 @@ class EditorialIndexController extends Controller
         $bol = (bool) config('giftcoves.connectors.bol.enabled')
             && filled(config('giftcoves.connectors.bol.client_id'));
 
+        $ebay = (bool) config('giftcoves.connectors.ebay.enabled')
+            && filled(config('giftcoves.connectors.ebay.client_id'));
+
+        $tradedoubler = (bool) config('giftcoves.connectors.tradedoubler.enabled')
+            && filled(config('giftcoves.connectors.tradedoubler.token'));
+
         return [
             'awin' => [
                 'available' => true,
@@ -119,6 +125,37 @@ class EditorialIndexController extends Controller
                 'how' => $bol
                     ? 'Live. Pass includeLive=1 on /products and matching offers are ingested and grouped in that request, so they come back with real ids and an affiliate link.'
                     : 'Configured off in this environment. includeLive=1 will return catalogue results only.',
+            ],
+            /*
+             * The one source worth a writer going out of their way for, and the
+             * reason is the barcode.
+             *
+             * Tradedoubler returns several advertisers' offers for one product
+             * WITH an EAN on it, so its results resolve to product groups and
+             * arrive as a genuine multi-shop comparison. That is exactly the
+             * shape a buying guide wants to cite and the shape eBay cannot give.
+             */
+            'tradedoubler' => [
+                'available' => $tradedoubler,
+                'how' => $tradedoubler
+                    ? 'Live, via includeLive=1. A network: one product comes back with prices from several shops attached, usually with an EAN, so results group properly and can be cited by barcode.'
+                    : 'Configured off in this environment. includeLive=1 will not reach Tradedoubler.',
+            ],
+            /*
+             * The caveat here is about *what* comes back, not whether anything
+             * does — a writer who does not know it will assume eBay is broken.
+             *
+             * eBay's search results carry no barcode, so most of them cannot be
+             * matched to a product group and cannot be cited by EAN the way a
+             * Coolblue or bol product can. They are listings, and a listing
+             * ends. Write about an eBay find as a lead, never as the anchor
+             * product of a Cove that has to still make sense next month.
+             */
+            'ebay' => [
+                'available' => $ebay,
+                'how' => $ebay
+                    ? 'Live, like bol, and included by the same includeLive=1 flag. Fixed-price new listings only. Results usually have no barcode, so they often will not resolve to a product group — do not build a Cove around one.'
+                    : 'Configured off in this environment. includeLive=1 will not reach eBay.',
             ],
             /*
              * Stated plainly because the alternative is a writer trying, getting
