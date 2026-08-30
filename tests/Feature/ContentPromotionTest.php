@@ -289,6 +289,95 @@ class ContentPromotionTest extends TestCase
     }
 
     #[Test]
+    public function two_dateless_plans_in_one_market_do_not_collapse_onto_each_other(): void
+    {
+        /*
+         * The regression for the bug the advice Coves exposed.
+         *
+         * The importer keyed anything that was not a persona on
+         * `['market' => …, 'drop_date' => null]`. Laravel renders that null as
+         * `drop_date IS NULL`, which does not match nothing — it matches *every
+         * dateless row in the market*. So the second guide imported would find
+         * the first, overwrite it, and report an update: one plan silently
+         * replaced, one never created, and a growing archive quietly losing
+         * pages.
+         *
+         * Five of the six kinds are dateless since the guide fold, so this
+         * applied to guides, seasonals, advice articles and Shop Coves alike —
+         * everything except the persona the original key happened to name.
+         */
+        $plans = collect(['guide', 'advice', 'seasonal'])->map(fn (string $kind, int $i) => CovePlan::create([
+            'market' => Market::BeNl,
+            'kind' => $kind,
+            'slug' => "dateless-{$kind}",
+            'title' => "A {$kind}",
+            'status' => 'draft',
+        ]));
+
+        $exported = $this->envelope()->export(['plans']);
+
+        // Wipe and re-import: the far environment starts without them.
+        CovePlan::query()->delete();
+
+        $this->envelope()->import($exported, ['plans'], dryRun: false);
+
+        $this->assertSame(3, CovePlan::query()->count(), 'each dateless plan should arrive as its own row');
+
+        foreach ($plans as $original) {
+            $landed = CovePlan::query()->where('slug', $original->slug)->first();
+
+            $this->assertNotNull($landed, "{$original->slug} was overwritten by another plan");
+            $this->assertSame($original->kind->value, $landed->kind->value);
+            $this->assertSame($original->title, $landed->title);
+        }
+
+        // And a second run still updates in place rather than duplicating.
+        $this->envelope()->import($exported, ['plans'], dryRun: false);
+
+        $this->assertSame(3, CovePlan::query()->count());
+    }
+
+    #[Test]
+    public function importing_a_guide_does_not_overwrite_an_unrelated_plan_already_there(): void
+    {
+        /*
+         * The same bug from the direction it was actually met: an environment
+         * that already has editorial — as production does, and as any
+         * environment that has run the advice-Cove seeding does — receiving an
+         * envelope. The pre-existing plan must survive untouched.
+         */
+        $resident = CovePlan::create([
+            'market' => Market::BeNl,
+            'kind' => 'advice',
+            'slug' => 'je-rechten-bij-een-online-aankoop',
+            'title' => 'Je rechten bij een online aankoop',
+            'status' => 'used',
+        ]);
+
+        $incoming = CovePlan::create([
+            'market' => Market::BeNl,
+            'kind' => 'guide',
+            'slug' => 'beste-koptelefoons',
+            'title' => 'De beste koptelefoons',
+            'status' => 'approved',
+        ]);
+
+        $exported = $this->envelope()->export(['plans']);
+
+        $incoming->delete();
+
+        $this->envelope()->import($exported, ['plans'], dryRun: false);
+
+        $resident->refresh();
+
+        $this->assertSame('advice', $resident->kind->value);
+        $this->assertSame('Je rechten bij een online aankoop', $resident->title);
+        $this->assertSame('je-rechten-bij-een-online-aankoop', $resident->slug);
+
+        $this->assertSame(1, CovePlan::query()->where('slug', 'beste-koptelefoons')->count());
+    }
+
+    #[Test]
     public function nothing_personal_can_be_exported(): void
     {
         /*

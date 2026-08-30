@@ -175,6 +175,81 @@ class CoveMarkupTest extends TestCase
     }
 
     #[Test]
+    public function an_amazon_token_becomes_a_tagged_link_in_a_market_that_has_a_tag(): void
+    {
+        config()->set('giftcoves.amazon_search.markets', [
+            'be-nl' => ['host' => 'www.amazon.com.be', 'tag' => 'giftcoves05-21'],
+        ]);
+
+        $result = $this->render('Kijk ook even [[amazon:draadloze koptelefoon|op Amazon]].');
+
+        $this->assertStringContainsString('https://www.amazon.com.be/s?', $result['html']);
+        $this->assertStringContainsString('tag=giftcoves05-21', $result['html']);
+        $this->assertStringContainsString('>op Amazon</a>', $result['html']);
+        $this->assertSame(1, $result['links']);
+    }
+
+    #[Test]
+    public function an_amazon_link_is_marked_sponsored(): void
+    {
+        /*
+         * An affiliate link a search engine cannot tell from an editorial one
+         * is the kind of thing that costs a site its rankings. `nofollow`
+         * alone no longer says what this is.
+         */
+        config()->set('giftcoves.amazon_search.markets', [
+            'be-nl' => ['host' => 'www.amazon.com.be', 'tag' => 'giftcoves05-21'],
+        ]);
+
+        $html = $this->render('[[amazon:koptelefoon]]')['html'];
+
+        $this->assertStringContainsString('rel="sponsored nofollow noopener"', $html);
+        $this->assertStringContainsString('target="_blank"', $html);
+    }
+
+    #[Test]
+    public function a_market_with_no_associates_tag_gets_no_amazon_link_at_all(): void
+    {
+        /*
+         * THE OTHER TEST THIS FILE EXISTS FOR, and the whole reason the token
+         * resolves through AmazonSearchLink rather than reading config itself.
+         *
+         * `en` and `es` have no tag issued. Sending a reader to a storefront
+         * under nobody's tag is unattributed traffic that looks exactly like
+         * working traffic — so the sentence loses its link and keeps its words,
+         * which is a visible absence rather than a silent leak.
+         *
+         * This is also what implements "only nl and be" without a market list
+         * anywhere in the content.
+         */
+        config()->set('giftcoves.amazon_search.markets', [
+            'be-nl' => ['host' => 'www.amazon.com.be', 'tag' => 'giftcoves05-21'],
+        ]);
+
+        $result = $this->markup()->render(
+            'Have a look [[amazon:wireless headphones|on Amazon]] too.',
+            Market::En,
+            $this->allowed(),
+        );
+
+        $this->assertStringNotContainsString('<a', $result['html']);
+        $this->assertStringNotContainsString('amazon.', $result['html']);
+        $this->assertStringNotContainsString('[[', $result['html']);
+        $this->assertStringContainsString('on Amazon', $result['html']);
+        $this->assertSame(0, $result['links']);
+    }
+
+    #[Test]
+    public function an_amazon_token_is_reduced_to_its_label_in_plain_text(): void
+    {
+        // A meta description or an email must never print the token, and must
+        // never print a URL either.
+        $plain = $this->markup()->plain('Kijk [[amazon:koptelefoon|op Amazon]] voor meer.');
+
+        $this->assertSame('Kijk op Amazon voor meer.', $plain);
+    }
+
+    #[Test]
     public function the_prompt_contract_lists_only_what_the_renderer_accepts(): void
     {
         $contract = $this->markup()->promptContract($this->allowed());
@@ -189,5 +264,15 @@ class CoveMarkupTest extends TestCase
         }
 
         $this->assertStringContainsString('Never write a URL', $contract);
+
+        /*
+         * And `amazon` is deliberately NOT offered to the model.
+         *
+         * That token is a paid link out of the site. Which sentences carry a
+         * commercial hand-off is an editorial judgement, and it is not one to
+         * delegate to something that is simultaneously being asked to sound
+         * helpful. Authored Coves use it; generated ones do not.
+         */
+        $this->assertStringNotContainsString('[[amazon:', $contract);
     }
 }

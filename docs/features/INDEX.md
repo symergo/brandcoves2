@@ -36,6 +36,7 @@ cannot be recovered from a diff.
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
 | [all-coves.md](all-coves.md) | Discovery / Content | Active |
 | [shop-coves.md](shop-coves.md) | Discovery / Content | Built — withheld from the header menu |
+| [advice-coves.md](advice-coves.md) | Content / Editorial | Active — 8 subjects × 4 markets seeded |
 | [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
 | [cove-curation.md](cove-curation.md) | Content / Operations | Active |
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |

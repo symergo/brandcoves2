@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Content;
 
+use App\Enums\CoveKind;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\DailyPick;
@@ -650,17 +651,9 @@ eatured_cove_id can point at it.
             // which is a better outcome than a round about the wrong one.
             $row['challenge_group_id'] = $this->resolve($challenge);
 
-            /*
-             * A persona edition is keyed on its slug, a Daily on its date —
-             * for the same reason as the plans above: `drop_date = NULL` matches
-             * nothing, so a single key would re-create every persona on every
-             * import.
-             */
             $set = $this->upsert(
                 DailyPickSet::query(),
-                ($row['kind'] ?? 'daily') === 'persona'
-                    ? ['market' => $row['market'], 'kind' => 'persona', 'slug' => $row['slug'] ?? null]
-                    : ['market' => $row['market'], 'drop_date' => $row['drop_date'] ?? null],
+                $this->naturalKey($row),
                 $row,
                 $report,
             );
@@ -732,18 +725,7 @@ eatured_cove_id can point at it.
                 ];
             }
 
-            /*
-             * A persona is keyed on its slug, a Daily on its date.
-             *
-             * Not one key with a null in it: `where('drop_date', null)` compiles
-             * to `drop_date = NULL`, which matches nothing in SQL — so every
-             * import would create a second copy of every persona, forever.
-             */
-            $key = ($row['kind'] ?? 'daily') === 'persona'
-                ? ['market' => $row['market'], 'kind' => 'persona', 'slug' => $row['slug'] ?? null]
-                : ['market' => $row['market'], 'drop_date' => $row['drop_date'] ?? null];
-
-            $plan = $this->upsert(CovePlan::query(), $key, $row, $report);
+            $plan = $this->upsert(CovePlan::query(), $this->naturalKey($row), $row, $report);
 
             if ($plan instanceof CovePlan) {
                 /*
@@ -767,15 +749,85 @@ eatured_cove_id can point at it.
     // --- Plumbing ------------------------------------------------------------
 
     /**
+     * What identifies this Cove — plan or edition — in the target environment.
+     *
+     * **A Daily is addressed by its date; every other kind by its slug.** That
+     * is the rule `App\Enums\CoveKind::isDated()` states, and asking the enum is
+     * the whole point of this method: the previous version asked
+     * `kind === 'persona'` instead, which was a correct reading of the world
+     * when `daily` and `persona` were the only two kinds and became silently
+     * wrong the moment the guide fold added four more.
+     *
+     * The failure it caused is worth writing down, because nothing about it
+     * looked like a bug. A `guide`, `seasonal`, `advice` or `shop` row took the
+     * date branch and was matched on `['market' => …, 'drop_date' => null]` —
+     * and Laravel turns a null value there into `drop_date IS NULL`, which does
+     * not match nothing, it matches **every dateless row in that market**. So an
+     * imported guide plan would find some unrelated advice plan, fill it with
+     * the guide's attributes and save it: one plan silently overwritten, one
+     * plan never created, and a report saying "updated". Where the overwritten
+     * row's new slug was already taken by a third plan it surfaced instead as a
+     * unique violation on `cove_plans_market_slug_idx`, which is how it was
+     * found at all.
+     *
+     * Keyed on `(market, slug)` without the kind, deliberately. The slug
+     * namespace is one per market **across** kinds — that is what the partial
+     * unique indexes on both tables enforce — so adding `kind` to the key would
+     * let an import miss a row that exists and then create a duplicate the
+     * database refuses.
+     *
+     * Null means "this row cannot be matched, always create it": a plan is held
+     * to the dating rule but not to the slug rule, so a dateless plan that has
+     * not been named yet has no natural key. Matching those on `slug IS NULL`
+     * would collapse every unnamed plan in a market onto the first one.
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>|null
+     */
+    private function naturalKey(array $row): ?array
+    {
+        $kind = CoveKind::tryFrom((string) ($row['kind'] ?? CoveKind::Daily->value));
+
+        if ($kind?->isDated() ?? true) {
+            /*
+             * An unknown kind is treated as a Daily, which is what the export
+             * side's default has always been.
+             *
+             * A dated row with no date is refused a key rather than given one
+             * containing a null — that null is the whole bug described above,
+             * and it would match a dateless row and overwrite it. Falling
+             * through to a create means the CHECK constraint rejects the row
+             * loudly, which is the correct outcome for a malformed envelope.
+             */
+            return blank($row['drop_date'] ?? null)
+                ? null
+                : ['market' => $row['market'], 'drop_date' => $row['drop_date']];
+        }
+
+        return blank($row['slug'] ?? null)
+            ? null
+            : ['market' => $row['market'], 'slug' => $row['slug']];
+    }
+
+    /**
      * Idempotent by natural key, so re-running updates rather than duplicating.
      *
+     * A null key means the row has nothing to be matched on and is always
+     * created — see {@see naturalKey()}.
+     *
      * @param  Builder<covariant \Illuminate\Database\Eloquent\Model>  $query
-     * @param  array<string, mixed>  $key
+     * @param  array<string, mixed>|null  $key
      * @param  array<string, mixed>  $values
      * @param  array{created:int, updated:int, dropped:list<string>}  $report
      */
-    private function upsert($query, array $key, array $values, array &$report): mixed
+    private function upsert($query, ?array $key, array $values, array &$report): mixed
     {
+        if ($key === null) {
+            $report['created']++;
+
+            return $query->create($values);
+        }
+
         $existing = (clone $query)->where($key)->first();
 
         if ($existing !== null) {

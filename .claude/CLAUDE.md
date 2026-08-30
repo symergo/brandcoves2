@@ -88,6 +88,11 @@ php artisan bc:pull-charts            # pull bestseller charts — the demand si
 php artisan bc:pull-charts --market=be-nl --discover   # prove the endpoint and the response
                                       # envelope in one request. Writes nothing
 php artisan bc:refresh-guide-copy     # re-write guides that have no editorial, then stale ones
+php artisan bc:seed-advice-coves      # publish the shipped advice articles from
+                                      # resources/content/advice-coves.php. Idempotent, and it
+                                      # never overwrites a Cove a person edited — --replace does,
+                                      # and asks first. The deploy migration runs this too, so
+                                      # this is for after you have edited the file
 php artisan bc:scrub --force          # MANDATORY after restoring a production dump
 ```
 

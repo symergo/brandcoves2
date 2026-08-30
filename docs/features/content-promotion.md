@@ -68,6 +68,30 @@ it was wrong sits in the same class — `importLegacyGuides()` exists to fold a 
 into editions, and had been unreachable dead code since the day it was written, rejected three frames
 earlier by the equality check. It is now `$version > self::VERSION`, plus a `< 1` sanity throw.
 
+## The natural key: a Daily by its date, everything else by its slug
+
+`ContentEnvelope::naturalKey()` is what makes an import idempotent, and it asks `CoveKind::isDated()`
+rather than listing kinds. It has to, and the reason is a bug that lived here for a release.
+
+The key used to be `kind === 'persona' ? slug : drop_date`, which was right while `daily` and
+`persona` were the only two kinds. The guide fold added four more and **five of the six are
+dateless** — so a guide, seasonal, advice or shop row fell into the date branch and was matched on
+`['market' => …, 'drop_date' => null]`. Laravel renders that null as `drop_date IS NULL`, which does
+not match nothing; it matches **every dateless row in that market**. An imported guide plan found
+whatever dateless plan was there first, overwrote it, and reported an update. One row replaced, one
+never created, and the report saying everything went fine.
+
+Two details of the fix are load-bearing:
+
+- **The key is `(market, slug)`, without the kind.** The slug namespace is one per market *across*
+  kinds — that is what the partial unique indexes on both tables enforce — so adding `kind` would let
+  an import miss a row that exists and then create a duplicate the database refuses.
+- **A row with nothing to match on returns null and is always created.** A plan is held to the dating
+  rule but not to the slug rule, so an unnamed plan has no natural key; matching those on
+  `slug IS NULL` would collapse every unnamed plan in a market onto the first one. A *dated* row with
+  no date returns null for the same reason, and the CHECK constraint then rejects it loudly, which is
+  the right outcome for a malformed envelope.
+
 **Blocks carry their variants nested inside them**, like `plans` carries its items, because a variant
 has no identity independent of its block: `(page, region, language, position)` looks like a natural
 key and is not, since position is exactly what an edit changes. Import therefore **replaces per

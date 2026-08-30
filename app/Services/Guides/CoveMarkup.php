@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Guides;
 
 use App\Enums\Market;
+use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\BrandLinker;
 use App\Support\CurrentMarket;
 
@@ -28,8 +29,9 @@ use App\Support\CurrentMarket;
  *     [[product:1234|Sony XM5]]   → /{market}/p/1234/slug
  *     [[guide:beste-koptelefoons]] → /{market}/guides/beste-koptelefoons
  *     [[page:gift-whisperer]]     → /{market}/gift
+ *     [[amazon:koptelefoon]]      → the market's Amazon storefront, tagged
  *
- * The last two are what make an article part of a site rather than a leaf.
+ * `guide` and `page` are what make an article part of a site rather than a leaf.
  * `guide` is allowlisted like everything else — it points at a row that has to
  * exist and be published in this market. `page` is not: those destinations are
  * ours, enumerated in `giftcoves.linkable_pages`, and identical in every
@@ -42,11 +44,36 @@ use App\Support\CurrentMarket;
  *
  * That is the whole safety property: the model chooses *emphasis*, we choose
  * *destinations*.
+ *
+ * ## The one token that leaves the site
+ *
+ * `amazon` is the exception to every sentence above, and the differences are
+ * the point.
+ *
+ * Our articles talk about Amazon constantly — it is the shop the reader was
+ * going to check next anyway — and every one of those mentions was flat text
+ * while the search page beside it carried a tagged hand-off. So the token
+ * resolves through {@see AmazonSearchLink}, which already owns the two facts
+ * that matter: which storefront a market belongs to, and the Associates tag
+ * issued for it.
+ *
+ * **Its allowlist is the tag table, so it enforces "only where we are paid"
+ * by construction.** A market with no tag — `en` and `es` — gets no link at
+ * all, and the sentence degrades to plain text like any rejected token. That
+ * is deliberate and it is the reason this does not read the market's tag
+ * itself: sending a reader to a storefront under nobody's tag, or under the
+ * wrong marketplace's, is unattributed traffic that looks exactly like working
+ * traffic. See the note in `config/giftcoves.php`.
+ *
+ * **It is marked `sponsored`.** An affiliate link that Google cannot tell from
+ * an editorial one is the kind of thing that costs a site its rankings, and
+ * `nofollow` alone no longer says what this is. `target="_blank"` because the
+ * reader is being sent to check a price, not to leave.
  */
 class CoveMarkup
 {
     /** `[[kind:value]]` or `[[kind:value|label]]` */
-    private const TOKEN = '/\[\[(brand|search|product|guide|page):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u';
+    private const TOKEN = '/\[\[(brand|search|product|guide|page|amazon):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u';
 
     /**
      * Injected rather than resolved inside `render()`.
@@ -86,7 +113,7 @@ class CoveMarkup
 
         $html = preg_replace_callback(
             self::TOKEN,
-            function (array $m) use ($allowed, $base, $brandUrls, &$links, &$rejected): string {
+            function (array $m) use ($allowed, $base, $brandUrls, $market, &$links, &$rejected): string {
                 $kind = $m[1];
                 // The token survived escaping, so its contents are escaped too.
                 $value = html_entity_decode($m[2], ENT_QUOTES);
@@ -98,6 +125,7 @@ class CoveMarkup
                     'product' => $this->product($value, $allowed['products'] ?? [], $base),
                     'guide' => $this->guide($value, $allowed['guides'] ?? [], $base),
                     'page' => $this->page($value, $base),
+                    'amazon' => $this->amazon($value, $market),
                     default => null,
                 };
 
@@ -109,6 +137,20 @@ class CoveMarkup
                 }
 
                 $links++;
+
+                /*
+                 * The only destination here that is not ours, and the only one
+                 * we are paid for. Both facts have to be in the markup:
+                 * `sponsored` because it is an affiliate link, and a new tab
+                 * because it is a price check rather than an exit.
+                 */
+                if ($kind === 'amazon') {
+                    return sprintf(
+                        '<a href="%s" rel="sponsored nofollow noopener" target="_blank">%s</a>',
+                        e($href),
+                        e($label),
+                    );
+                }
 
                 return sprintf('<a href="%s">%s</a>', e($href), e($label));
             },
@@ -280,12 +322,47 @@ class CoveMarkup
     }
 
     /**
+     * Amazon's own storefront for this market, searched for this term, tagged.
+     *
+     * Not allowlisted per article, for the same reason `page` is not: the set
+     * of valid destinations is config, not content. But where `page` fails open
+     * into our own site, this one fails *closed* — {@see AmazonSearchLink::for}
+     * returns null for a market with no Associates tag, and null here means the
+     * phrase renders as plain text.
+     *
+     * That is what implements "Amazon links in `nl-nl`, `be-nl` and `be-fr`
+     * only" without a market list in this file, in the content, or in anybody's
+     * memory. Issue a tag for a fourth market and its articles start linking;
+     * revoke one and they stop. The alternative — writing the rule into each
+     * article — would mean the English edition of a piece silently carrying a
+     * Dutch tag, which earns nothing and is invisible when it happens.
+     *
+     * The term is the search, so an article writes what the reader would type:
+     * `[[amazon:draadloze koptelefoon|zoek op Amazon]]`. Deep links to an ASIN
+     * are deliberately not offered — invariant 6 is that we do not mirror
+     * Amazon's catalogue, and a hand-written ASIN in an article is a product
+     * claim with no price, no stock and nothing to re-check it.
+     */
+    private function amazon(string $value, Market $market): ?string
+    {
+        return AmazonSearchLink::for($market, $value)?->url;
+    }
+
+    /**
      * The instruction block handed to the model.
      *
      * Kept next to the parser on purpose: a prompt that describes a syntax the
      * renderer does not implement is the most common way this kind of feature
      * rots, and the two drifting apart is silent — the tokens simply stop
      * becoming links.
+     *
+     * **`amazon` is deliberately absent, and that direction of drift is safe.**
+     * A prompt offering a token the parser lacks produces dead syntax; a parser
+     * accepting one the prompt never mentions produces nothing at all unless a
+     * person writes it. And a person is exactly who should: that token is a
+     * paid link out of the site, and "the writer decides where the commercial
+     * hand-offs go" is not a judgement to hand to a model that is also being
+     * asked to sound helpful. Authored Coves use it; generated ones do not.
      *
      * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
      */

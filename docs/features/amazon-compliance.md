@@ -21,6 +21,16 @@ Agreement and the Product Advertising API License Agreement.
 > The stake is real: a violation costs the Associates account, and with it every
 > Amazon link on the site retroactively.
 
+**Getting the account in the first place is a separate problem, and it has a
+plan.** This document governs what may be built *once* Amazon has approved us.
+Approval itself means showing Amazon a content property rather than an affiliate
+directory, in English, and the `en` market is Dutch-titled and price-led today.
+[../showcase-mode.md](../showcase-mode.md) is an archived, unstarted plan for
+turning `/en/` into that — filed in `docs/` rather than here because no code was
+written. Read it before designing anything in that direction; the research in it
+(what the `en` catalogue actually contains, and which seams the change goes
+through) is the expensive part.
+
 ## The line: storage is fine, *tracking as a feature* is not
 
 The distinction that matters most here, and the one easiest to get wrong in
@@ -113,6 +123,42 @@ forged request can do is skew a click count.
 ones — ad blockers and privacy settings drop some. Amazon click counts will
 therefore under-report relative to Awin and bol. Events carry `via: beacon` so
 the two are never compared as if they were the same measurement.
+
+### A third path: Amazon named inside an article
+
+Editorial prose mentions Amazon constantly — it is the shop the reader checks
+next whatever we do. Those mentions were flat text while the search page beside
+them carried a tagged hand-off, so `CoveMarkup` grew a token for it:
+
+```
+[[amazon:draadloze koptelefoon|op Amazon]]
+```
+
+It resolves through `AmazonSearchLink`, the same class behind the search
+sidebar, and therefore inherits the two rules that matter without restating
+them. Four properties, each load-bearing:
+
+- **It is a search URL, never a deep link to an ASIN.** Invariant 6 says we do
+  not mirror Amazon's catalogue, and a hand-written ASIN in an article is a
+  product claim with no price, no stock and nothing to re-check it. It also
+  keeps this clear of `requiresPriceTimestamp()` — there is no price on the page
+  to timestamp.
+- **A market with no Associates tag gets no link.** `AmazonSearchLink::for()`
+  returns null, the token degrades to its label, and the sentence still reads.
+  `en` and `es` have no tag issued, so they carry no Amazon links at all —
+  which is a visible absence rather than traffic sent under nobody's tag. This
+  is what implements "Amazon links in the Dutch and Belgian markets only"
+  without a market list in the content.
+- **`rel="sponsored nofollow noopener"`, and a new tab.** `nofollow` alone no
+  longer says what an affiliate link is, and an editorial link a search engine
+  cannot distinguish from a paid one is what costs a site its rankings.
+- **The model is never told the token exists.** `promptContract()` omits it
+  deliberately — see the note there. Which sentences carry a commercial
+  hand-off is an editorial judgement, and not one to delegate to something also
+  being asked to sound helpful. Authored Coves use it; generated ones do not.
+
+The affiliate disclosure requirement below applies to these pages exactly as it
+does to an offer table.
 
 ## Rules that bind us even with Amazon disabled
 
