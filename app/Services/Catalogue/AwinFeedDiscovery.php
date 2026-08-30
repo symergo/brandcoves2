@@ -57,7 +57,7 @@ class AwinFeedDiscovery
      * One bad account must not stop the others: a revoked key is a
      * configuration problem, not a reason to leave the rest unregistered.
      *
-     * @return array<string, array{id: string, account: string, accountLabel: string, advertiser: string, region: string, language: string, products: int}>
+     * @return array<string, array<string, mixed>>
      */
     public function available(): array
     {
@@ -97,14 +97,73 @@ class AwinFeedDiscovery
                     'account' => (string) $key,
                     'accountLabel' => (string) $account['label'],
                     'advertiser' => trim((string) ($record['Advertiser Name'] ?? '')),
+                    'advertiserId' => trim((string) ($record['Advertiser ID'] ?? '')),
                     'region' => strtoupper(trim((string) ($record['Primary Region'] ?? ''))),
                     'language' => strtolower(trim((string) ($record['Language'] ?? ''))),
-                    'products' => (int) str_replace([',', '.'], '', (string) ($record['No of products'] ?? '0')),
+                    'products' => self::number($record['No of products'] ?? $record['Number of products'] ?? '0'),
+
+                    /*
+                     * Everything below is for a person choosing, not for the
+                     * matching rules.
+                     *
+                     * Awin's column set is not a contract — it has gained and
+                     * lost columns without notice — so each is read with a
+                     * fallback and an empty string is a perfectly good answer.
+                     * A missing column must never be able to break discovery,
+                     * because discovery is how shops get added at all.
+                     */
+                    'feedName' => trim((string) ($record['Feed Name'] ?? '')),
+                    'vertical' => trim((string) ($record['Vertical'] ?? $record['Sector'] ?? '')),
+                    'currency' => strtoupper(trim((string) ($record['Currency'] ?? ''))),
+                    'commission' => trim((string) ($record['Commission'] ?? '')),
+                    // The one that answers "is this feed still alive?". A feed
+                    // Awin last imported months ago is a shop that has stopped
+                    // publishing, and registering it buys an empty download.
+                    'lastImported' => trim((string) ($record['Last Imported'] ?? '')),
+                    'lastChecked' => trim((string) ($record['Last Checked'] ?? '')),
                 ];
             }
         }
 
         return $available;
+    }
+
+    /**
+     * Awin writes counts with thousands separators, and not always the same one.
+     *
+     * "4,000" from one account and "4.000" from another is enough to turn a
+     * four-thousand-product feed into a four, which the minimum-products filter
+     * then quietly discards.
+     */
+    private static function number(mixed $value): int
+    {
+        return (int) preg_replace('/\D/', '', (string) $value);
+    }
+
+    /**
+     * Which market a single feed belongs to, or null for one we cannot serve.
+     *
+     * The same region-and-language rule `perMarket()` filters on, asked one feed
+     * at a time — because the picker shows an editor *everything* Awin offers and
+     * has to label each row, where `perMarket()` answers the different question
+     * "which feeds are worth registering".
+     *
+     * Both read `MARKET_MAP`, so there is still one place that decides. A second
+     * copy of this rule is how a Belgian feed ends up serving Dutch shoppers
+     * Belgian prices, stock and delivery — the same class of error that
+     * market-scoped product identity exists to prevent.
+     *
+     * @param  array{region: string, language: string}  $feed
+     */
+    public function marketFor(array $feed): ?string
+    {
+        foreach (self::MARKET_MAP as $market => $want) {
+            if ($feed['region'] === $want['region'] && $feed['language'] === $want['language']) {
+                return $market;
+            }
+        }
+
+        return null;
     }
 
     /**

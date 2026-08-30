@@ -77,14 +77,50 @@ second-hand, and nothing downstream would currently mark them as such.
 ## Discovery: one set of rules, two faces
 
 The market-matching rules live in `AwinFeedDiscovery`. `bc:awin-feeds` is the
-console face of it and **Discover feeds** in `/admin/feeds` is the other. They
+console face of it and **Discover Awin feeds** in `/admin` is the other. They
 were going to be two copies of the same logic, and the copy that drifts is the
 one that quietly serves Belgian prices to Dutch shoppers.
 
-`--only=vandenborre,dreamland` (and the *Advertisers* box in the admin) narrows a
-run to named advertisers, beating both the allowlist and `--all`. Adding one shop
-should add one shop; before this the only granularity was "everything on the
-allowlist", so bringing in a new merchant meant re-registering every existing one.
+`--only=vandenborre,dreamland` narrows a console run to named advertisers,
+beating both the allowlist and `--all`. Adding one shop should add one shop;
+before this the only granularity was "everything on the allowlist", so bringing
+in a new merchant meant re-registering every existing one.
+
+### The admin shows the list, because typing names blind did not work
+
+**Changed 2026-09-01.** The admin face used to be a modal with a text box: type
+advertiser names, comma separated, and press Register. That is fine for whoever
+wrote the allowlist and a wall for anybody else — you had to already know a shop
+was on Awin, and to spell it the way Awin spells it, which is "Vanden Borre BE"
+one month and something else the next. A wrong guess returned *nothing matched*,
+which is indistinguishable from *we are not joined to them*. So the real answer
+to "which shops can we add" stayed an SSH session.
+
+`App\Filament\Pages\DiscoverAwinFeeds` lists **everything the accounts are
+joined to**, with a search that narrows it, and registering is selecting rows.
+Each row carries what the decision actually needs: the feed name and sector
+(a retailer publishes many category feeds, and six slices of one shop all look
+plausible), the currency, when Awin last imported it (a huge feed nobody has
+published to in months is a large stale download), the market its region and
+language map to, and whether we already have it.
+
+Three things it deliberately does **not** do:
+
+- **Offer a market to choose.** `AwinFeedDiscovery::marketFor()` decides, and a
+  feed matching no market is refused rather than registered somewhere plausible.
+  A Belgian-Dutch feed carries Belgian prices, stock and delivery.
+- **Ask Awin per keystroke.** `available()` is one HTTP request per configured
+  account and the table re-evaluates on every search, sort and page, so the
+  result is cached for ten minutes and the search filters it in PHP.
+  **Refresh from Awin** is the only thing that goes back out.
+- **Hide the unusable ones for good.** Two filters are on by default — at least
+  100 products, and hide feeds no market can use — and both can be switched off,
+  because "why is this shop not on the site" is the question the screen exists to
+  answer.
+
+Search matches a stripped, lowercased form, so "vandenborre" finds "Vanden Borre
+BE" — the same folding the allowlist has always done, and for the same reason:
+Awin's spelling changes without warning.
 
 ### Re-running discovery must not switch a feed off
 

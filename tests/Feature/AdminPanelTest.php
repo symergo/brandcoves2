@@ -237,6 +237,7 @@ class AdminPanelTest extends TestCase
             '/admin/api-tokens',
             '/admin/migration',
             '/admin/prompt-templates',
+            '/admin/discover-awin-feeds',
             '/admin/community-posts/community-questions',
             '/admin/community-posts/community-answers',
         ] as $path) {
