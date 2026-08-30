@@ -37,6 +37,106 @@
 @import 'tailwindcss/theme.css' theme(reference);
 @import 'tailwindcss/utilities.css';
 
+/*
+ * Filament's semantic palette, so utilities can be built from it.
+ *
+ * Filament defines two naming conventions in its own stylesheet, and only one
+ * of them is Tailwind's. `--color-gray-*` and `--color-primary-*` are Tailwind 4
+ * theme variables, which is why `text-gray-500` in a panel view has always
+ * worked. Its semantic colours are NOT: they are `--warning-600`,
+ * `--success-600`, `--danger-600`, `--info-600`, with no `--color-` prefix, and
+ * Tailwind has no `warning` or `success` in its own palette at all.
+ *
+ * So `text-warning-600` generated nothing. Not a broken colour — no rule at
+ * all, silently, in every environment including a dev machine. The curation
+ * screen's amber "needs attention" banner and its green and amber counters were
+ * rendering with no colour on them and had been since they were written.
+ *
+ * `inline` is what keeps the promise this file makes above: it substitutes the
+ * value into the utility rather than emitting a `--color-warning-600` custom
+ * property, so nothing here can shadow or override what Filament defines. The
+ * `var()` also means the panel's configured colours are resolved at RUNTIME —
+ * change the panel from Amber to Rose and these follow, because they were never
+ * a copy of the value.
+ *
+ * The full 50-950 scale for each, deliberately, rather than the seven steps in
+ * use today. A palette with holes in it fails the same silent way the next time
+ * somebody reaches for a step nobody happened to need before.
+ */
+@theme inline {
+    --color-primary-50: var(--primary-50);
+    --color-primary-100: var(--primary-100);
+    --color-primary-200: var(--primary-200);
+    --color-primary-300: var(--primary-300);
+    --color-primary-400: var(--primary-400);
+    --color-primary-500: var(--primary-500);
+    --color-primary-600: var(--primary-600);
+    --color-primary-700: var(--primary-700);
+    --color-primary-800: var(--primary-800);
+    --color-primary-900: var(--primary-900);
+    --color-primary-950: var(--primary-950);
+
+    --color-danger-50: var(--danger-50);
+    --color-danger-100: var(--danger-100);
+    --color-danger-200: var(--danger-200);
+    --color-danger-300: var(--danger-300);
+    --color-danger-400: var(--danger-400);
+    --color-danger-500: var(--danger-500);
+    --color-danger-600: var(--danger-600);
+    --color-danger-700: var(--danger-700);
+    --color-danger-800: var(--danger-800);
+    --color-danger-900: var(--danger-900);
+    --color-danger-950: var(--danger-950);
+
+    --color-info-50: var(--info-50);
+    --color-info-100: var(--info-100);
+    --color-info-200: var(--info-200);
+    --color-info-300: var(--info-300);
+    --color-info-400: var(--info-400);
+    --color-info-500: var(--info-500);
+    --color-info-600: var(--info-600);
+    --color-info-700: var(--info-700);
+    --color-info-800: var(--info-800);
+    --color-info-900: var(--info-900);
+    --color-info-950: var(--info-950);
+
+    --color-success-50: var(--success-50);
+    --color-success-100: var(--success-100);
+    --color-success-200: var(--success-200);
+    --color-success-300: var(--success-300);
+    --color-success-400: var(--success-400);
+    --color-success-500: var(--success-500);
+    --color-success-600: var(--success-600);
+    --color-success-700: var(--success-700);
+    --color-success-800: var(--success-800);
+    --color-success-900: var(--success-900);
+    --color-success-950: var(--success-950);
+
+    --color-warning-50: var(--warning-50);
+    --color-warning-100: var(--warning-100);
+    --color-warning-200: var(--warning-200);
+    --color-warning-300: var(--warning-300);
+    --color-warning-400: var(--warning-400);
+    --color-warning-500: var(--warning-500);
+    --color-warning-600: var(--warning-600);
+    --color-warning-700: var(--warning-700);
+    --color-warning-800: var(--warning-800);
+    --color-warning-900: var(--warning-900);
+    --color-warning-950: var(--warning-950);
+}
+
+/*
+ * Dark mode is Filament's toggle, not the operating system's.
+ *
+ * Tailwind 4 compiles `dark:` to `@media (prefers-color-scheme: dark)` by
+ * default, and Filament switches its panel with a `.dark` class on <html>. Left
+ * alone the two disagree exactly when it matters: an editor who sets the panel
+ * to light on a machine themed dark keeps every `dark:` style in these views,
+ * and one who sets it to dark on a light machine gets none of them. Both look
+ * like a half-styled page rather than a setting being ignored.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Where the classes are written. Both, because a panel page is a class and a view. */
 @source '../../../../app/Filament';
 @source '../../../../resources/views/filament';

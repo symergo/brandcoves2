@@ -18,6 +18,14 @@ COPY vite.config.js ./
 # out, the image simply never builds — which is how it was found.
 COPY tsconfig.json ./
 COPY resources ./resources
+# The admin theme scans `app/Filament` as well as the Blade views, because a
+# panel page is a class AND a view: `extraAttributes(['class' => 'grid gap-4'])`
+# in a Filament resource is a utility class like any other. Without this the
+# `@source` in resources/css/filament/admin/theme.css points at a directory that
+# does not exist here, and every such class works locally and is silently absent
+# from the built stylesheet — which is the exact failure that theme file exists
+# to prevent.
+COPY app/Filament ./app/Filament
 # VITE_* is inlined into the client bundle HERE. If it is missing at this point
 # it is missing in the browser forever — which is why these are Build Variables
 # in Coolify, not runtime environment variables.
