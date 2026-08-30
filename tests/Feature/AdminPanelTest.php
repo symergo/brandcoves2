@@ -20,6 +20,7 @@ use App\Models\Feed;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Vite;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -86,6 +87,63 @@ class AdminPanelTest extends TestCase
         $this->actingAs($this->user(admin: true))
             ->get('/admin')
             ->assertOk();
+    }
+
+    /**
+     * The panel's stylesheets are linked at the scheme the page is served on.
+     *
+     * ## The bug this pins
+     *
+     * The utilities were registered as
+     * `Css::make('panel-utilities', Vite::asset(...))`. `Vite::asset()` ran once
+     * at provider boot and Filament kept the string — and at boot the request
+     * has not been through `TrustProxies`, so behind a TLS-terminating proxy the
+     * app still believed it was answering `http://`. Production served
+     * `<link href="http://giftcoves.com/build/...">` on an `https://` page, every
+     * browser blocked it as mixed content, and every custom panel page rendered
+     * with no Tailwind utilities at all.
+     *
+     * Filament's own assets were fine throughout, because they call `asset()`
+     * when they render rather than when they boot. That is what made the panel
+     * look mostly right and only the custom pages collapse.
+     *
+     * It caught a second one when it was written: `favicon()` was passed a
+     * string where `brandLogo()` beside it was passed a closure.
+     *
+     * ## Why the forwarded header
+     *
+     * It is the whole point. `trustProxies(at: '*')` in bootstrap/app.php means
+     * this header is what tells the app it is answering HTTPS, and it arrives
+     * per request — after boot. Without it, this test passes against the bug.
+     */
+    #[Test]
+    public function the_panel_links_its_stylesheets_at_the_requests_own_scheme(): void
+    {
+        if (app(Vite::class)->isRunningHot()) {
+            // The dev server serves its own http:// origin and no built
+            // environment does. Skipped rather than weakened, because it is the
+            // built URL that broke: CI has no hot file, and CI is the gate.
+            $this->markTestSkipped('Vite is running hot; this asserts what the manifest build emits.');
+        }
+
+        $html = $this->actingAs($this->user(admin: true))
+            ->get('/admin', ['X-Forwarded-Proto' => 'https'])
+            ->assertOk()
+            ->getContent();
+
+        $insecure = [];
+
+        foreach ((array) preg_split('~(?=<link)~', (string) $html) as $tag) {
+            if (preg_match('~^<link[^>]+href="(http://[^"]+)"~', (string) $tag, $m)) {
+                $insecure[] = $m[1];
+            }
+        }
+
+        $this->assertSame(
+            [],
+            $insecure,
+            'linked over http:// on an https:// page, so the browser will block it',
+        );
     }
 
     #[Test]
