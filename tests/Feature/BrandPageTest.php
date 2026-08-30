@@ -15,6 +15,7 @@ use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\RefreshBrandStats;
 use App\Models\BrandStat;
+use App\Models\CopyTemplate;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
@@ -155,29 +156,47 @@ class BrandPageTest extends TestCase
     }
 
     /**
-     * The brand page carries no generated prose at all.
+     * The prose below the grid is the bank's, not the language file's.
      *
-     * Four tests used to live here, and they had moved twice: first reading
-     * `props['copy']` — the templated statistics that opened a brand page —
-     * then `BrandCopy`, the service behind them, and finally the rendered
-     * `narrative` prop. All three pinned the same rule, **never state a number
-     * the catalogue cannot back up**, and all three are now moot: the copy is
-     * gone rather than corrected. See `BrandController::coves()`.
+     * This slot has held the opposite assertion, twice over. Four tests lived
+     * here across two rewrites — `props['copy']`, the templated statistics that
+     * once opened a brand page, then `BrandCopy` behind them — all pinning the
+     * same rule, **never state a number the catalogue cannot back up**. The last
+     * of them pinned the copy's *absence*, after it was removed on 2026-08-16
+     * for being a template nobody could reach.
      *
-     * This test replaces them with the rule that survives. A number that is
-     * never written cannot be wrong, so what is worth pinning is that nothing
-     * quietly puts the paragraphs back — a regression that would be invisible
-     * in review, because re-adding a `narrative` prop looks like a feature.
+     * It came back on 2026-08-30 with that objection answered rather than
+     * ignored: every sentence is a `CopySlots` entry an editor rewrites in
+     * admin. So the thing worth pinning is the claim the admin screen makes —
+     * an edited row reaches the page — and that the statistics above the grid
+     * did not come back with it.
      */
     #[Test]
-    public function the_page_carries_no_generated_prose(): void
+    public function the_prose_below_the_grid_comes_from_the_editable_bank(): void
     {
         $this->seedBrand('Aurex');
 
+        CopyTemplate::create([
+            'surface' => 'brand',
+            'slot' => 'about_3',
+            'language' => 'nl',
+            'body' => 'Deze zin komt uit de kopijbank.',
+            'weight' => 1,
+            'enabled' => true,
+        ]);
+
         $props = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
 
-        $this->assertArrayNotHasKey('narrative', $props, 'the generated paragraphs are back below the grid');
-        $this->assertArrayNotHasKey('copy', $props, 'the templated statistics are back above it');
+        $this->assertNotNull($props['narrative'] ?? null, 'the copy below the grid is missing');
+        $this->assertStringContainsString(
+            'Deze zin komt uit de kopijbank.',
+            (string) json_encode($props['narrative']),
+            'an edited slot did not reach the page',
+        );
+
+        // A separate decision, and it stays retired: nothing templated goes back
+        // above the grid, where a reader meets it before the products.
+        $this->assertArrayNotHasKey('copy', $props, 'the templated statistics are back above the grid');
     }
 
     #[Test]

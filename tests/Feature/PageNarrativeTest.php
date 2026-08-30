@@ -142,15 +142,31 @@ class PageNarrativeTest extends TestCase
     }
 
     /**
-     * The brand page has no narrative to carry any more.
+     * The brand page carries the same weight, against the same floor.
      *
-     * `a_brand_page_carries_enough_prose_too` used to sit here and asserted the
-     * same 300-word floor against `/be-nl/brand/aurex`. The copy below a brand
-     * page went on 2026-08-16, replaced by links to articles that mention the
-     * brand — see `BrandController::coves()` and
-     * docs/features/brand-pages.md. `PageNarrative::forBrand()` still exists and
-     * nothing calls it, so the floor is asserted on the search page alone.
+     * This assertion was deleted on 2026-08-16, when the copy below a brand page
+     * was replaced by links to articles that mention the brand, and restored on
+     * 2026-08-30 when it came back as editable slots. The floor is the search
+     * page's for the same reason: below it a page reads as generated, and a
+     * generated page is one a crawler samples once.
      */
+    #[Test]
+    public function a_brand_page_carries_enough_prose_too(): void
+    {
+        $this->seedBrand('Aurex');
+
+        $this->get('/be-nl/brand/aurex')
+            ->assertOk()
+            ->assertInertia(function ($page) {
+                $narrative = $page->toArray()['props']['narrative'];
+
+                $this->assertNotNull($narrative);
+                $this->assertGreaterThan(300, $this->wordCount($narrative));
+                $this->assertCount(3, $narrative['sections']);
+                $this->assertNotEmpty($narrative['faq']);
+            });
+    }
+
     #[Test]
     public function every_placeholder_is_filled(): void
     {
@@ -180,9 +196,18 @@ class PageNarrativeTest extends TestCase
          */
         $this->seedBrand('Aurex');
 
+        /*
+         * The brand variants are here rather than in a test of their own,
+         * because the rule is now literally one method: `BrandController`'s
+         * robots tag and its copy both read `isThin()`. They did not always —
+         * the copy's own guard ignored sort and the shop filter, so a `noindex`
+         * brand page still carried the canonical page's words.
+         */
         foreach ([
             '/be-nl/search?q=koptelefoon&page=2',
             '/be-nl/search?q=koptelefoon&discounted=1',
+            '/be-nl/brand/aurex?page=2',
+            '/be-nl/brand/aurex?sort=price_asc',
         ] as $url) {
             $this->get($url)
                 ->assertOk()

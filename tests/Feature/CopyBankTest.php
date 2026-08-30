@@ -511,6 +511,56 @@ class CopyBankTest extends TestCase
         $this->assertNotNull($otherLanguage->fresh(), 'saving Dutch deleted French copy');
     }
 
+    /**
+     * The bulk switch takes a page back to the shipped copy, and back again.
+     *
+     * The property worth pinning is that it is **not a delete**. An editor who
+     * decides a page reads wrong wants it to stop showing, and the version of
+     * that which loses their rewrite is the one they cannot undo — so this
+     * asserts the rows survive, that the page falls back while they are off, and
+     * that the same button brings them back.
+     */
+    #[Test]
+    public function turning_a_page_off_falls_back_to_the_shipped_copy_without_losing_it(): void
+    {
+        $admin = User::create(['email' => 'copy5@example.test', 'password' => 'password-for-testing']);
+        $admin->forceFill(['is_admin' => true])->save();
+
+        $mine = $this->variant('Mijn eigen zin over :brand.');
+        $otherLanguage = $this->variant('French line about :brand.', overrides: ['language' => 'fr']);
+
+        Livewire::actingAs($admin)
+            ->test(EditPageCopy::class)
+            ->set('surface', 'brand')
+            ->set('language', 'nl')
+            ->call('loadCopy')
+            ->callAction('toggleAll');
+
+        $this->assertNotNull($mine->fresh(), 'turning the page off deleted the work');
+        $this->assertFalse($mine->fresh()?->enabled, 'the variant is still in use');
+        $this->assertTrue($otherLanguage->fresh()?->enabled, 'turning Dutch off reached French');
+
+        // Nothing drawable, so the page renders the sentence the site shipped
+        // with rather than a blank.
+        $rendered = $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony');
+
+        $this->assertStringNotContainsString('Mijn eigen zin', $rendered);
+        $this->assertNotSame('', trim($rendered));
+
+        Livewire::actingAs($admin)
+            ->test(EditPageCopy::class)
+            ->set('surface', 'brand')
+            ->set('language', 'nl')
+            ->call('loadCopy')
+            ->callAction('toggleAll');
+
+        $this->assertTrue($mine->fresh()?->enabled, 'the same button did not bring it back');
+        $this->assertStringContainsString(
+            'Mijn eigen zin',
+            $this->bank()->line('brand', 'about_3', Market::BeNl, ['brand' => 'Sony'], 'sony'),
+        );
+    }
+
     #[Test]
     public function the_editor_refuses_a_placeholder_the_slot_cannot_supply(): void
     {

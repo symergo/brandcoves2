@@ -39,15 +39,22 @@ What it adds is what a filtered search cannot have: a canonical URL, and links o
 
 Above the grid there is one row of the brand's own vocabulary, as links — see
 [The statistics came off the top of the page](#the-statistics-came-off-the-top-of-the-page). Below it
-there are articles that mention the brand. The generated paragraphs that used to fill that space went
-on 2026-08-16 — see [The long copy below the grid is gone](#the-long-copy-below-the-grid-is-gone).
+there are articles that mention the brand, and under those the long copy — removed on 2026-08-16 and
+back on 2026-08-30, on terms that answer why it went. See
+[The long copy below the grid went, and came back editable](#the-long-copy-below-the-grid-went-and-came-back-editable).
 
 The brand facet is absent from its filter rail, because filtering a Sony page by brand is a control
 with one option.
 
-The rail carries the search page's ordering, changed with it on 2026-08-16: the shop facet first,
-then the discounted and in-stock switches, then the related-brand links. The "available from several
-shops" checkbox is gone from both rails — see
+The rail leads with the related-brand links, then the shop facet, then the discounted and in-stock
+switches. **Reordered 2026-08-30**, and it is the one place this rail deliberately departs from the
+search page's: the related brands are the only thing in it that leaves the page, and the reader who
+wants them has already decided this is the wrong brand. Underneath a facet and two switches they were
+a scroll away on a phone and below the fold on a laptop, so the reader most likely to use them was
+the least likely to see them. Everything else in the rail narrows a set the visitor has accepted;
+that list offers a different set, and the question comes first.
+
+The "available from several shops" checkbox is gone from both rails — see
 [search.md](search.md#the-order-of-the-filter-rail).
 
 ## The live sources are asked too
@@ -445,31 +452,54 @@ Excluded, each for its own reason:
 Each title contributes a word at most once, or twelve near-identical listings for one product make
 that product's model name the page's defining vocabulary.
 
-## The long copy below the grid is gone
+## The long copy below the grid went, and came back editable
 
-**Removed 2026-08-16.** What a brand page carries below its products now is a list of articles that
-mention the brand, and nothing else.
+**Removed 2026-08-16. Restored 2026-08-30.** Worth reading as one decision rather than two, because
+the second half only makes sense against the first.
 
-`PageNarrative::forBrand()` used to add ~350–450 words there: three sections — about the brand, where
-it is sold, how to choose one — plus an FAQ and a strip of related searches. Every line of it was a
-fact the catalogue could back up or a true explanation of how the site works, and it was still the
-wrong thing to publish a thousand times.
+`PageNarrative::forBrand()` adds ~350–450 words below the articles: three sections — about the brand,
+where it is sold, how to choose one — plus an FAQ and a strip of related searches. Every line of it
+is a fact the catalogue can back up or a true explanation of how the site works.
 
-The reason it went is not that it was false. It is that it was **arithmetic about the grid directly
-above it, written in sentences**, and the same arithmetic on every brand page with the nouns swapped.
-A reader who scrolls past the products has already seen the price range; a crawler comparing two
-brand pages sees one template. The word count was real and the document it made was not.
+**Why it went.** Not because it was false; the [copy rule](#the-copy-rule) is what makes that
+impossible. Because it was **arithmetic about the grid directly above it, written in sentences**, and
+the same arithmetic on every brand page with the nouns swapped. A reader who scrolls past the
+products has already seen the price range; a crawler comparing two brand pages sees one template. The
+word count was real and the document it made was not.
 
-The `FAQPage` JSON-LD went with it, necessarily: structured data whose answer is not on the page is a
-misrepresentation, so an FAQ block cannot outlive the paragraphs it describes.
+**What changed.** Not the sentences — who owns them. They are `CopySlots` entries: an editor opens
+*Page copy* in admin, picks *Brand page — long copy* and a language, and rewrites any of them, adding
+alternates that `CopyBank` draws between per page and per period. The corpus is maintained rather
+than shipped once, which is the difference between boilerplate and a template. The facts inside each
+sentence are still read off *this* page, which was always the honest half.
 
-What sits there instead is the section below — articles, which are the one thing on a brand page that
-was written once, about a real question, and links *out* of the page rather than restating it.
+That is also the answer to the loose end this section used to describe. `PageNarrative::forBrand()`,
+the `brand_narrative` copy-bank surface and `PageNarrativeTest`'s brand half were all left in the
+tree, rendering nowhere, precisely because retiring an editable surface that `copy_templates` may
+hold seeded rows for on staging and production is a data question. They are load-bearing again.
 
-`PageNarrative::forBrand()`, the `brand_narrative` copy-bank surface and `PageNarrativeTest`'s brand
-half are all still in the tree. Nothing renders them. They are a deliberate loose end rather than an
-oversight: deleting them also means retiring an editable copy surface that `copy_templates` may hold
-seeded rows for on staging and production, which is a data question and not a code one.
+**Seed the bank on each environment.** `php artisan bc:seed-copy --surface=brand` imports the shipped
+sentences as the first variant of every slot, so an editor's first action is rewriting a real sentence
+rather than filling a blank textarea. It is idempotent and leaves any slot that already has a row
+completely alone; without it the page still renders, because an unfilled slot falls back to the
+language file.
+
+The `FAQPage` JSON-LD comes back with the paragraphs and only with them: structured data whose answer
+is not on the page is a misrepresentation, so the markup cannot outlive — or precede — the answers it
+describes.
+
+**One guard, not two.** `BrandController::isThin()` is now the single definition of a brand URL that
+must not be indexed, and both the robots tag and the copy read it. They did not always: the copy's own
+guard counted the page number, the sort and a sub-search, while the robots tag also counted the price
+bounds and the shop filter. So a filtered brand page was `noindex` and still carried several hundred
+words identical to the canonical page's — the doorway-page pattern with the warning label on and the
+cause left in place.
+
+**The price line under the grid went instead.** A page-level *"Price and availability as of the time
+shown and may change"*, with the brand's whole price range after it, sat under the products. It read
+as a disclaimer on the grid, which does not need one — those are stored offers with their own
+timestamps. The Amazon programme's condition is untouched: it applies per offer, and each live card
+renders its own note when `needsPriceTimestamp` is set.
 
 ### Articles that mention the brand
 
@@ -504,18 +534,19 @@ of anything — an article containing the word "OK" is not about the brand OK.
 Unindexed, deliberately. A market holds hundreds of published articles, not millions, so the
 sequential scan costs less than an index maintained on every publish.
 
-### Related searches — on the search page only, since 2026-08-16
+### Related searches — on both pages again
 
 From `search_log`, matched with the `<%` word-similarity operator — never `%`, whose whole-string
 `similarity()` scores a realistic neighbour under the 0.3 default and finds nothing. Real searches
 with real results, which is the demand signal no competitor has, and the outbound links that stop a
 results page being a leaf a crawler reaches and then stops at.
 
-These chips lived inside the narrative, so a brand page lost them along with it. The brand page is
-not a leaf without them: the term links above the grid, the related-brand list in the rail and the
-article links below it are all outbound, and the last of those is new.
+These chips live inside the narrative, so a brand page lost them with it on 2026-08-16 and got them
+back on 2026-08-30. It was never a leaf without them — the term links above the grid, the
+related-brand list at the top of the rail and the article links below it are all outbound — which is
+why losing them was survivable rather than urgent.
 
-### Editable, and rotating — the search page's narrative now
+### Editable, and rotating — both surfaces
 
 The copy is not in the language files any more — or rather, it is, but only as the fallback.
 `copy_templates` holds **variants** of each **slot**, editable at `/admin` under *Page copy*, and
@@ -524,6 +555,13 @@ The copy is not in the language files any more — or rather, it is, but only as
 A slot is a position in the page's argument ("the second sentence about comparing"), and the code
 only ever asks for the slot. Add a fifth opening line for brand pages and a fifth of them start using
 it, immediately, with no deploy.
+
+**Turn all off** on that screen is the undo. It switches every variant for the page and language on
+screen out of use, so each slot falls back to the shipped sentence and the page reads the way it did
+before anyone edited it — and it deletes nothing, so the same button turns them back on at the
+weights they had. It is deliberately not a delete: "this page reads wrong, stop showing it" is the
+request, and the destructive version of it is the one an editor cannot take back. Variants at weight
+zero stay retired in both directions, because that is a per-variant decision somebody made on purpose.
 
 **Two axes of rotation.** *Across pages*, always: the page's own identity — the brand slug, the search
 term — is in the seed, so two pages drawing from the same three variants reliably get different ones.

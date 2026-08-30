@@ -15,6 +15,7 @@ use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
 use App\Services\Seo\PageMeta;
+use App\Services\Seo\PageNarrative;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -36,14 +37,29 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  *
  * What the brand page adds is what a bare filtered search cannot have —
  * **indexability and editorial**. `?brand[]=Sony` is `noindex` because facet
- * URLs are a crawl-budget trap; `/brand/sony` is one canonical URL per brand
- * per market, with the brand's own vocabulary above the results and links out
- * to the articles that mention it below them. The generated paragraphs that
- * used to fill that space went on 2026-08-16 — see coves().
+ * URLs are a crawl-budget trap; `/brand/sony` is one canonical URL per brand per
+ * market, with the brand's own vocabulary above the results, and below them the
+ * long copy and the articles that mention it.
  *
- * Above the results there is now only the brand's own vocabulary, as links. The
- * templated statistics that used to open the page said nothing a reader could
- * not see by looking at the grid under them.
+ * Above the results there is only that vocabulary, as links, and that part is not
+ * coming back: the templated statistics that used to open the page said nothing a
+ * reader could not see by looking at the grid under them.
+ *
+ * ## The long copy returned on 2026-08-30, on a different footing
+ *
+ * It was removed on 2026-08-16 and the objection in coves() still stands as
+ * written: three columns of arithmetic about the grid immediately above,
+ * identical in shape across a thousand brand pages, is one template a crawler
+ * sees through in a single sample.
+ *
+ * What changed is who writes it. Every sentence is a slot in `CopySlots`,
+ * rewritten per language in admin, with alternates that `CopyBank` draws between
+ * per page and per period — so it is a corpus somebody maintains rather than a
+ * template nobody can reach. The facts inside it are still read off *this* page,
+ * which was always the honest half of the arrangement.
+ *
+ * The articles stayed, below it. The two are not alternatives: the copy says how
+ * to choose between the products above it, an article says what somebody thought.
  *
  * ## The live sources are asked too
  *
@@ -149,9 +165,14 @@ class BrandController extends Controller
             'liveOffers' => array_map($this->liveCard(...), $result->liveOffers),
 
             /*
-             * Editorial that mentions this brand — now the whole of what sits
-             * below the grid. See coves() for what replaced the narrative and
-             * why articles are a better answer than generated paragraphs.
+             * The long copy, below the grid and drawn from the editable bank
+             * rather than straight from the language files. Null on any variant
+             * that is noindex — see narrative().
+             */
+            'narrative' => $this->narrative($stat, $result, $query, $market),
+
+            /*
+             * Editorial that mentions this brand, under the copy. See coves().
              */
             'coves' => $this->coves($stat, $current),
             'related' => $this->related($stat, $current),
@@ -322,6 +343,87 @@ class BrandController extends Controller
                 'url' => $current->url("brand/{$stat->slug}"),
             ])->all(),
         ]);
+    }
+
+    /**
+     * A variant of this page that must not be indexed — and must not repeat the
+     * copy either.
+     *
+     * One definition, two readers. The robots tag and the long copy were asking
+     * the same question in two places, and only one of them counted sort, price
+     * bounds and the shop filter. So a filtered brand page was `noindex` and
+     * still carried several hundred words identical to the canonical one's: the
+     * doorway-page pattern with the warning label on and the cause left in place.
+     *
+     * A sub-search counts. The term links narrow this page rather than leaving
+     * it and each click adds a word, so `?q=` is the widest source of URL
+     * variants a brand page has — the exact crawl-budget trap `/search?brand[]=`
+     * is noindex for. `follow` on the tag, because the results under it are real
+     * product pages worth reaching.
+     */
+    private function isThin(SearchQuery $query): bool
+    {
+        return $query->page > 1
+            || $query->minPrice !== null
+            || $query->maxPrice !== null
+            || $query->merchantIds !== []
+            || $query->sort !== 'relevance'
+            || $query->hasTerm();
+    }
+
+    /**
+     * The long copy below the grid.
+     *
+     * ## Why it is back, when coves() argued it away
+     *
+     * **Removed 2026-08-16, restored 2026-08-30.** The objection was never that
+     * the sentences were false — every clause is checkable against the grid above
+     * them, which is the property that makes them publishable at all. It was that
+     * they were a template nobody could reach: assembled from the numbers,
+     * identical in shape on every brand page, and rewritable only by editing a
+     * language file and deploying.
+     *
+     * They are `CopySlots` entries now. An editor rewrites each sentence per
+     * language in admin, adds alternates, and `CopyBank` draws between them per
+     * page and per period, so two brand pages reliably read differently and the
+     * corpus moves on a cadence without anyone touching it. A slot nobody has
+     * filled falls back to the shipped language file, so this renders correctly
+     * against an empty bank.
+     *
+     * ## The FAQ markup comes back with it, and only with it
+     *
+     * `FAQPage` structured data describes answers that are on the page. That is
+     * exactly why it was withdrawn when they were not, so re-adding it here is
+     * the same decision rather than a second one.
+     *
+     * @return array{sections: list<array{heading: string, body: list<string>}>, faq: list<array{q: string, a: string}>, related: list<array{term: string, url: string}>}|null
+     */
+    private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
+    {
+        if ($this->isThin($query) || $result->isEmpty()) {
+            return null;
+        }
+
+        $narrative = app(PageNarrative::class)->forBrand(
+            $stat->brand,
+            $result->groups->items(),
+            $market,
+            $result->groups->total(),
+            // displayName(), so the sentence naming the leading shop says
+            // "Coolblue" like every other surface rather than "Coolblue BE".
+            $stat->topMerchant?->displayName(),
+            $stat->top_category,
+            array_values(array_filter(array_map(
+                fn ($row) => is_array($row) ? ($row['category'] ?? null) : null,
+                (array) $stat->categories,
+            ))),
+        );
+
+        if ($narrative['faq'] !== []) {
+            app(PageMeta::class)->addJsonLd(StructuredData::faq($narrative['faq']));
+        }
+
+        return $narrative;
     }
 
     /**
@@ -496,19 +598,7 @@ class BrandController extends Controller
      */
     private function seo(BrandStat $stat, CurrentMarket $current, SearchQuery $query): void
     {
-        $thin = $query->page > 1
-            || $query->minPrice !== null
-            || $query->maxPrice !== null
-            || $query->merchantIds !== []
-            || $query->sort !== 'relevance'
-            /*
-             * A sub-search. The term links narrow this page rather than leaving
-             * it, and each click adds a word, so `?q=` is now the widest source
-             * of URL variants a brand page has — the exact crawl-budget trap
-             * `/search?brand[]=` is noindex for. `follow`, because the results
-             * under it are real product pages worth reaching.
-             */
-            || $query->hasTerm();
+        $thin = $this->isThin($query);
 
         app(PageMeta::class)
             ->set(

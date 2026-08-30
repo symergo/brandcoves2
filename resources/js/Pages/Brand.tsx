@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
+import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
@@ -58,15 +59,17 @@ interface Props {
     }[]
     coves: { title: string; intro: string | null; url: string }[]
     related: { name: string; url: string }[]
+    /** The long copy under the grid. Null on any variant that is noindex. */
+    narrative: Narrative | null
 }
 
 /**
  * A brand page: a search with the brand preselected, plus editorial and links.
  *
- * Below the grid there are articles that mention the brand, and nothing else.
- * The three columns of generated paragraphs and the FAQ that used to sit there
- * went on 2026-08-16 — they restated the numbers on the cards above them, in
- * sentences, identically on every brand page. See BrandController::coves().
+ * Below the grid: the articles that mention the brand, then the long copy. The
+ * copy went on 2026-08-16 for restating the cards above it identically on every
+ * brand page, and came back on 2026-08-30 once every sentence in it became a
+ * slot an editor rewrites in admin. See BrandController::narrative().
  *
  * The brand facet is deliberately absent from the rail — filtering a Sony page
  * by brand is a control with one option. Everything else (shops, stock,
@@ -83,6 +86,7 @@ export default function Brand({
     liveOffers,
     coves,
     related,
+    narrative,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -224,6 +228,35 @@ export default function Brand({
                     aria-label={t('search.filters')}
                     className={`space-y-6 text-sm lg:col-start-1 lg:row-start-1 lg:block ${filtersOpen ? 'block' : 'hidden'}`}
                 >
+                    {/*
+                      First in the rail, above the facets.
+
+                      It is the only thing in here that leaves the page, and it
+                      is what a reader who has decided this is the wrong brand
+                      is looking for. At the bottom it sat under a shop facet
+                      and two switches — a scroll away on a phone, below the
+                      fold on a laptop — so the reader most likely to want it
+                      was the least likely to see it.
+
+                      The facets narrow a set the visitor has already accepted.
+                      This offers a different set, and that question comes
+                      first.
+                    */}
+                    {related.length > 0 && (
+                        <div>
+                            <h2 className="mb-2 font-medium">{t('brand.related_heading')}</h2>
+                            <ul className="space-y-1">
+                                {related.map((other) => (
+                                    <li key={other.url}>
+                                        <Link href={other.url} className="flex gap-2 hover:text-accent">
+                                            <span className="flex-1 truncate">{other.name}</span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
                     {facets.merchants.length > 0 && (
                         <div>
                             <h2 className="mb-2 font-medium">{t('search.shop')}</h2>
@@ -283,21 +316,6 @@ export default function Brand({
                         />
                         <span>{t('search.in_stock_only')}</span>
                     </label>
-
-                    {related.length > 0 && (
-                        <div>
-                            <h2 className="mb-2 font-medium">{t('brand.related_heading')}</h2>
-                            <ul className="space-y-1">
-                                {related.map((other) => (
-                                    <li key={other.url}>
-                                        <Link href={other.url} className="flex gap-2 hover:text-accent">
-                                            <span className="flex-1 truncate">{other.name}</span>
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
                 </aside>
 
                 {/*
@@ -489,15 +507,18 @@ export default function Brand({
                         </section>
                     )}
 
-                    {brand.minPrice !== null && (
-                        <p className="mt-10 text-xs text-ink-soft">
-                            {t('product.price_as_of')}{' '}
-                            {formatPrice(brand.minPrice, market)}
-                            {brand.maxPrice !== null && brand.maxPrice > brand.minPrice
-                                ? ` – ${formatPrice(brand.maxPrice, market)}`
-                                : ''}
-                        </p>
-                    )}
+                    {/*
+                      The page-level "price and availability as of…" line, with
+                      the brand's whole range after it, was removed on
+                      2026-08-30. It read as a disclaimer on the grid, which does
+                      not need one: those cards are stored offers with their own
+                      timestamps.
+
+                      The Amazon condition is unaffected. It applies per offer,
+                      and each live card renders its own note when
+                      `needsPriceTimestamp` is set — see liveCard() for why that
+                      is read off `Source` rather than hard-coded.
+                    */}
                 </section>
 
                 {/*
@@ -555,6 +576,22 @@ export default function Brand({
                 )}
             </div>
 
+            {/*
+              Full width, under both columns rather than inside the results one.
+
+              It is the last thing on the page and it is prose: constrained to
+              the results column it would have run in a 3-column grid inside a
+              2-column layout, and on a wide screen its own columns came out
+              narrower than the product cards beside them.
+            */}
+            {narrative && (
+                <PageNarrative
+                    narrative={narrative}
+                    faqHeading={t('brand_narrative.faq_heading', { brand: brand.name })}
+                    relatedHeading={t('brand_narrative.related_heading')}
+                    relatedIntro={t('brand_narrative.related_intro', { brand: brand.name })}
+                />
+            )}
         </>
     )
 }

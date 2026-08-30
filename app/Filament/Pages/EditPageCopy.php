@@ -24,6 +24,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -323,6 +324,28 @@ class EditPageCopy extends Page implements HasForms
     }
 
     /**
+     * The variants for the page and language on screen.
+     *
+     * Scoped the same way `save()` scopes its delete. A control that reached
+     * across languages from one language's tab would be indistinguishable from a
+     * bug, and would be found the hard way.
+     *
+     * @return Builder<CopyTemplate>
+     */
+    private function variants(): Builder
+    {
+        return CopyTemplate::query()
+            ->where('surface', $this->surface)
+            ->where('language', $this->language);
+    }
+
+    /** Every variant on this page is switched off — so the site shows the shipped copy. */
+    private function allTurnedOff(): bool
+    {
+        return $this->variants()->exists() && ! $this->variants()->where('enabled', true)->exists();
+    }
+
+    /**
      * What the site renders today with no variant — the fallback line.
      *
      * Shown as the textarea placeholder, so an empty slot is self-explanatory
@@ -366,6 +389,65 @@ class EditPageCopy extends Page implements HasForms
                     $this->loadCopy();
 
                     Notification::make()->title('Imported')->body(trim(Artisan::output()))->success()->send();
+                }),
+
+            /*
+             * Take the whole page back to the copy the site shipped with.
+             *
+             * ## Off, not deleted
+             *
+             * The thing an editor wants when a page reads wrong is "stop showing
+             * this", and the destructive reading of it — delete the rows — is the
+             * one they cannot undo. `CopyBank` falls back to the language file
+             * for any slot with no *drawable* variant, so switching every row off
+             * renders exactly the page the site shipped with while the rewrite
+             * stays in the table. One click, and one click back.
+             *
+             * Weight zero is untouched by both directions. That is the soft
+             * retirement and it is a per-variant decision — a bulk switch that
+             * silently un-retired a line somebody had taken out of rotation would
+             * be doing something nobody asked for.
+             *
+             * ## One button, and it flips
+             *
+             * With everything already off the same control turns it back on,
+             * because the state this would otherwise leave — a page of copy
+             * nobody can see and no obvious way to bring it back — is the only
+             * thing that would make the button dangerous. A partially-off page
+             * still reads "Turn all off": that is the direction an editor looking
+             * at a mixed page means.
+             */
+            Action::make('toggleAll')
+                ->label(fn (): string => $this->allTurnedOff() ? 'Turn all back on' : 'Turn all off')
+                ->icon(fn (): Heroicon => $this->allTurnedOff() ? Heroicon::OutlinedEye : Heroicon::OutlinedEyeSlash)
+                ->color('gray')
+                // Nothing to turn off on a page nobody has written yet, and a
+                // button that does nothing is a button that teaches an editor to
+                // distrust the screen.
+                ->visible(fn (): bool => $this->variants()->exists())
+                ->requiresConfirmation()
+                ->modalHeading(fn (): string => $this->allTurnedOff()
+                    ? 'Use this page\'s copy again?'
+                    : 'Stop using this page\'s copy?')
+                ->modalDescription(fn (): string => $this->allTurnedOff()
+                    ? 'Every variant for this page and language goes back into the rotation, at the weight it already had.'
+                    : 'Every variant for this page and language stops being drawn and the site renders the sentences it shipped with. Nothing is deleted, and this button brings them back.')
+                ->modalSubmitActionLabel(fn (): string => $this->allTurnedOff() ? 'Turn on' : 'Turn off')
+                ->action(function (): void {
+                    $on = $this->allTurnedOff();
+
+                    $changed = $this->variants()->update(['enabled' => $on]);
+
+                    CopyBank::flush();
+                    $this->loadCopy();
+
+                    Notification::make()
+                        ->title($on ? 'Back in use' : 'Turned off')
+                        ->body($on
+                            ? "{$changed} variant(s) are being drawn again."
+                            : "{$changed} variant(s) are off. This page renders the shipped copy on the next load.")
+                        ->success()
+                        ->send();
                 }),
 
             Action::make('advanced')
