@@ -4,6 +4,7 @@ import SaveToList from '../../Components/SaveToList'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import SignInLink from '../../Components/SignInLink'
 
 interface Pick {
     id: number
@@ -375,9 +376,9 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                 question.status === 'published' && (
                     <p className="mt-12 max-w-2xl rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
                         {t('ask.sign_in_to_ask')}{' '}
-                        <Link href={`${base}/login`} className="underline">
+                        <SignInLink hint={t('ask.sign_in_to_ask')} className="underline">
                             {t('nav.sign_in')}
-                        </Link>
+                        </SignInLink>
                     </p>
                 )
             )}

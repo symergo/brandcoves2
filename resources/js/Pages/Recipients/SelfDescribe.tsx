@@ -1,6 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
-import SignInDialog from '../../Components/SignInDialog'
+import SignInLink from '../../Components/SignInLink'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
@@ -76,7 +76,6 @@ export default function SelfDescribe({
     const base = `/${market.key}/for/${token}`
 
     // The sign-in dialog, so saying "this is me" does not cost the page.
-    const [signingIn, setSigningIn] = useState(false)
 
     const [query, setQuery] = useState('')
 
@@ -157,23 +156,21 @@ export default function SelfDescribe({
                           they were part-way through describing themselves.
                           Navigating away to sign in throws that away — the form
                           they had started, and the page they meant to come back
-                          to. `SignInDialog` keeps both.
+                          to. The dialog keeps both.
+
+                          This page argued that first and kept its own copy of
+                          the dialog; the layout now mounts one for the whole
+                          site, so this is the same behaviour with the state
+                          somewhere it can be shared. See resources/js/signIn.tsx.
                         */}
-                        <button
-                            type="button"
-                            onClick={() => setSigningIn(true)}
-                            className="mt-3 rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
+                        <SignInLink
+                            hint={t('recipients.claim_sign_in')}
+                            className="mt-3 inline-block rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
                         >
                             {t('nav.sign_in')}
-                        </button>
+                        </SignInLink>
                     </div>
                 )}
-
-                <SignInDialog
-                    open={signingIn}
-                    onClose={() => setSigningIn(false)}
-                    hint={t('recipients.claim_sign_in')}
-                />
             </header>
 
             <section className="mt-10 max-w-2xl">

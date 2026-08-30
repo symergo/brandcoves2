@@ -2,6 +2,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import SignInLink from '../../Components/SignInLink'
 
 interface Group {
     id: string
@@ -47,9 +48,9 @@ export default function SantaIndex({ groups, isSignedIn }: Props) {
 
             {!isSignedIn ? (
                 <p className="mt-8 max-w-2xl rounded-card border border-line bg-card p-6">
-                    <Link href={`/${market.key}/login`} className="font-medium underline">
+                    <SignInLink hint={t('santa.create')} className="font-medium underline">
                         {t('nav.sign_in')}
-                    </Link>{' '}
+                    </SignInLink>{' '}
                     <span className="text-ink-soft">{t('santa.create')}</span>
                 </p>
             ) : (

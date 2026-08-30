@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react'
+import { usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { countAdded, countRemoved } from '../addingMode'
@@ -13,6 +13,7 @@ import {
     subscribe,
 } from '../savedItems'
 import { show as showToast } from '../saveToast'
+import { useSignIn } from '../signIn'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -110,6 +111,7 @@ export default function SaveToList({
     compact?: boolean
 }) {
     const { market, auth, savingTo } = usePage<SharedProps>().props
+    const signIn = useSignIn()
     const { t } = useTranslations()
 
     const [busy, setBusy] = useState(false)
@@ -281,13 +283,19 @@ export default function SaveToList({
     }, [open, position])
 
     /*
-     * Sign in first — but not empty-handed.
+     * Sign in first — but not empty-handed, and without leaving the product.
      *
-     * Enforced on the route too; done here as well so the visitor gets the
-     * login page rather than a silent 302 swallowed by an XHR. The intent is
-     * stashed server-side first, so signing in finishes the save and lands them
-     * back on the product, rather than on an empty lists page with no memory of
-     * what they were doing. See App\Services\Wishlist\PendingSave.
+     * Enforced on the route too; done here as well so the visitor gets asked
+     * rather than meeting a silent 302 swallowed by an XHR. It opens the dialog
+     * over the page they are on: the thing they wanted to save is on that page,
+     * and a navigation to the login form takes it away at the exact moment they
+     * were reaching for it.
+     *
+     * The intent is still stashed server-side first, and still matters — a
+     * magic link goes out by email, so the round trip happens in another tab or
+     * another hour, and `PendingSave` is what finishes the save when they come
+     * back. The dialog shortens the journey; it does not remove it. See
+     * App\Services\Wishlist\PendingSave.
      */
     async function requireAccount(): Promise<boolean> {
         if (auth.user) return true
@@ -301,7 +309,7 @@ export default function SaveToList({
             // Losing the intent makes for a worse sign-in, not a broken one.
         }
 
-        router.get(`/${market.key}/login`)
+        signIn.open(t('lists.sign_in_hint'))
 
         return false
     }

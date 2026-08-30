@@ -86,7 +86,21 @@ export default function SignInDialog({
                     onClose()
                 }
             }}
-            className="w-[min(28rem,calc(100vw-2rem))] rounded-card border border-line bg-card p-6 backdrop:bg-ink/40"
+            /*
+              `m-auto` is what centres it, and it is not decoration.
+
+              A native <dialog> centres itself with `margin: auto`, which
+              Tailwind's preflight resets to 0 along with every other element's
+              — so without this the dialog renders hard against the top-left
+              corner of the viewport. It looked like a broken overlay rather
+              than a sign-in form, and stayed unnoticed while this was one
+              page's dialog rather than the whole site's.
+
+              The height cap and scroll are for a small phone in landscape,
+              where the form is taller than the viewport and a <dialog> will
+              simply overflow off-screen rather than scroll.
+            */
+            className="m-auto max-h-[calc(100dvh-2rem)] w-[min(28rem,calc(100vw-2rem))] overflow-y-auto rounded-card border border-line bg-card p-6 backdrop:bg-ink/40"
         >
             <h2 className="text-lg font-semibold">{t('auth.title')}</h2>
             <p className="mt-2 text-sm text-ink-soft">{hint ?? t('auth.intro')}</p>

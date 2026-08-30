@@ -1,4 +1,5 @@
 import { router, usePage } from '@inertiajs/react'
+import SignInLink from './SignInLink'
 import { useState } from 'react'
 import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -44,12 +45,18 @@ export default function AlertButton({ groupId, alert, currentPrice, inStock }: P
 
     if (alert.requiresAccount) {
         return (
-            <a
-                href={`/${market.key}/login`}
+            /*
+              The dialog, not the login page. This control sits on a product
+              somebody is looking at, and the whole point of a price alert is
+              that they are looking at *this* product — sending them to a form
+              on another page loses the one thing the alert is about.
+            */
+            <SignInLink
+                hint={inStock ? t('alerts.watch_price') : t('alerts.watch_restock')}
                 className="inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-sm hover:bg-card"
             >
                 {inStock ? t('alerts.watch_price') : t('alerts.watch_restock')}
-            </a>
+            </SignInLink>
         )
     }
 

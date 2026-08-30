@@ -27,6 +27,43 @@ Both land on the same account, **matched on the email address case-insensitively
 link would produce two accounts with half a gift list each — and the person would have no way to tell
 which one held the list they were looking for.
 
+## Signing in is a dialog, not a destination
+
+Every "Sign in" on the site opens `SignInDialog` over the page the visitor is already on. The
+standalone `Pages/Auth/Login` still exists and `/{market}/login` still serves it — the dialog is an
+enhancement on top of a working link, not a replacement for one.
+
+**Why the dialog is the default.** People decide to sign in *while doing something else*: reading a
+question they want to answer, looking at a product they want to watch the price of, part-way through
+a list they want to keep. A navigation to a login form throws that context away, and the round trip
+does not end there — a magic link arrives by email, so they leave for their inbox and come back to
+whatever the site last showed them. What the dialog protects is the page they come back to.
+
+`Recipients/SelfDescribe` argued this first and carried its own copy of the dialog; on 2026-08-30 it
+became the site-wide default and that page moved onto the shared one.
+
+**One dialog, mounted in the layout.** `SignInProvider` (resources/js/signIn.tsx) is wrapped around
+`SiteLayout` and mounts exactly one `SignInDialog`; `useSignIn().open(hint)` is how anything asks for
+it. The alternative — a `useState` and a dialog per caller — is nine copies of the same wiring across
+the header, the mobile menu, the price-alert button, the save picker and four pages, each with its
+own chance to get it subtly wrong. There is only ever one sign-in happening.
+
+`hint` is what replaces the dialog's generic intro with the reason *this* caller asked: "watch the
+price", "sign in to ask", "keep your lists". The words are already written at each call site, because
+each one had a sentence explaining why an account was needed.
+
+**`SignInLink` renders an anchor, not a button.** It points at the real `/{market}/login` and
+intercepts only an unmodified primary click — the same rule Inertia's own `<Link>` applies. That
+keeps ⌘-click and middle-click opening the login page in a new tab, and keeps the server-rendered
+HTML navigable for a crawler or a visitor whose JavaScript never arrived. A page that opts out of
+`SiteLayout` has no provider, so `useSignIn()` falls back to navigating to the login page: the
+behaviour before any of this existed.
+
+**What the dialog does *not* change.** `SaveToList` still stashes the save intent server-side before
+opening it — see [wishlists.md](wishlists.md) and `App\Services\Wishlist\PendingSave`. The dialog
+shortens the journey; the email round trip still happens in another tab or another hour, and
+`PendingSave` is what finishes the save when the visitor returns.
+
 ## Registration is not a separate flow
 
 There is no sign-up form. First sign-in creates the account, on either path. Google's `email` is
@@ -85,7 +122,9 @@ there.
 
 With no `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`:
 
-- `googleEnabled` is false, so `Login.tsx` renders no button.
+- `googleEnabled` is false, so neither `Login.tsx` nor `SignInDialog` renders a button. The page
+  takes it as a prop; the dialog reads it from `SharedProps.auth`, which is where every other
+  surface can reach it.
 - Both routes `abort(404)`.
 
 A "Continue with Google" button that leads to a Socialite exception is worse than no button, and

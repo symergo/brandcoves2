@@ -3,6 +3,7 @@ import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import type { SharedProps } from '../types'
 import { formatOccasionDate } from '../types'
 import { useTranslations } from '../useTranslations'
+import SignInLink from '../Components/SignInLink'
 
 interface Wishlist {
     id: string
@@ -229,9 +230,9 @@ export default function GiftCove({ signedIn, wishlists, counts, santaGroups, url
             {!signedIn && (
                 <p className="mt-6 max-w-2xl rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
                     {t('lists.sign_in_hint')}{' '}
-                    <Link href={`${base}/login`} className="underline">
+                    <SignInLink hint={t('lists.sign_in_hint')} className="underline">
                         {t('nav.sign_in')}
-                    </Link>
+                    </SignInLink>
                 </p>
             )}
 

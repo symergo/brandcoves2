@@ -3,6 +3,7 @@ import { useState } from 'react'
 import ListKindBadge, { type ListKind } from '../../Components/ListKindBadge'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import SignInLink from '../../Components/SignInLink'
 
 interface ListSummary {
     id: string
@@ -325,9 +326,12 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                 <div className="mt-6 rounded-card border border-amber/40 bg-amber/10 p-4">
                     <p className="font-medium">{t('lists.sign_in_to_keep')}</p>
                     <p className="mt-1 text-sm text-ink-soft">{t('lists.sign_in_hint')}</p>
-                    <Link href={`/${market.key}/login`} className="mt-2 inline-block text-sm text-accent underline">
+                    <SignInLink
+                        hint={t('lists.sign_in_hint')}
+                        className="mt-2 inline-block text-sm text-accent underline"
+                    >
                         {t('nav.sign_in')}
-                    </Link>
+                    </SignInLink>
                 </div>
             )}
 

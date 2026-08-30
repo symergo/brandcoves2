@@ -1,4 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react'
+import SignInLink from './SignInLink'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -41,13 +42,14 @@ export default function AccountMenu() {
     if (auth.user === null) {
         // A button, not a text link. Signing in is the one thing we want a
         // visitor with lists in a cookie to do, and it read as footer furniture.
+        //
+        // It opens the dialog rather than the login page: the header is on
+        // every page, so whatever the visitor was reading when they decided to
+        // sign in is exactly what a navigation would throw away.
         return (
-            <Link
-                href={`/${market.key}/login`}
-                className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium hover:border-ink"
-            >
+            <SignInLink className="inline-block rounded-lg border border-line px-3 py-1.5 text-sm font-medium hover:border-ink">
                 {t('nav.sign_in')}
-            </Link>
+            </SignInLink>
         )
     }
 

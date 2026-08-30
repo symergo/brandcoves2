@@ -4,13 +4,31 @@ import AddingToBar from '../Components/AddingToBar'
 import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
+import SignInLink from '../Components/SignInLink'
 import MarketSwitcher from '../Components/MarketSwitcher'
 import NavMenu from '../Components/NavMenu'
 import { type PropsWithChildren, useState } from 'react'
+import { SignInProvider } from '../signIn'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
+/**
+ * The site chrome, and the one sign-in dialog underneath it.
+ *
+ * The provider wraps the chrome rather than only the page, because the header's
+ * own "Sign in" and the mobile menu's are two of its callers. See
+ * resources/js/signIn.tsx for why there is one dialog rather than one per
+ * caller.
+ */
 export default function SiteLayout({ children }: PropsWithChildren) {
+    return (
+        <SignInProvider>
+            <Chrome>{children}</Chrome>
+        </SignInProvider>
+    )
+}
+
+function Chrome({ children }: PropsWithChildren) {
     const page = usePage<SharedProps>()
     const { market, auth, unreadCount } = page.props
     const { t } = useTranslations()
@@ -353,9 +371,9 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                                         </button>
                                     </>
                                 ) : (
-                                    <Link href={`${base}/login`} onClick={() => setMenuOpen(false)}>
+                                    <SignInLink onNavigate={() => setMenuOpen(false)}>
                                         {t('nav.sign_in')}
-                                    </Link>
+                                    </SignInLink>
                                 )}
                             </span>
                         </nav>
