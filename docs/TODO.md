@@ -102,6 +102,36 @@ advertisers you are joined to — the same shape as `connectors.awin.advertisers
 
 ---
 
+## 3. Read the UX and the layout on a real phone
+
+**Blocked on:** somebody opening `staging.giftcoves.com` on a handset. Nothing else — this is the
+one item here whose missing input is a person rather than a credential.
+
+**Status:** everything below ships and is tested. What is untested is what it *looks* like at 390px,
+and no test in this suite can answer that: the frontend has no visual regression coverage, `tsc`
+type-checks the props and the PHP suite asserts the props arrive. A layout that wraps into nonsense
+passes all of it.
+
+**The specific things to look at**, newest first — these are the changes most likely to be wrong on
+a phone, not a general invitation to browse:
+
+| Where | The risk |
+|---|---|
+| Five picker rows that gained a scan button — the add-to-list panel, the suggestion box on a shared list, the picks picker on an answer, self-describe, the discovery dial | Each row is now `[field] [scan] [submit]` inside a `flex-wrap`. At 390px the field has to stay usable with two buttons beside it; the failure mode is a one-word-wide input above two orphaned buttons. The add panel is the tightest, because it also lost its Cancel and nothing rebalanced the row afterwards. |
+| The Amazon CTA in the search and brand rails | **The rail is `hidden` below `lg`**, behind the Filters toggle — so on a phone the CTA is inside a collapsed panel, which is close to not being there. The empty state carries its own copy and is fine; the resting page is the question. Possibly it belongs somewhere else entirely on small screens. |
+| The Amazon CTA on a product page | Accent fill, favicon, arrow, directly under the barcode. It is deliberately loud, and on a narrow column loud is louder — check it does not read as the page's primary action next to the shops we actually carry. |
+| The long product description | Up to 1800 characters of somebody else's marketing copy in paragraphs, below the offer table. Fine on a desktop column; on a phone it is several screens. Consider whether it wants a fold. |
+| The home page's first screen | `home.intro` was deleted, which should have *helped* — the search field moved a paragraph up. Worth confirming that is what actually happened rather than assuming it. |
+| The feedback form | New page, never seen on a handset. A 7-row textarea plus two inputs. |
+
+**What a pass looks like:** on a 390px viewport, `document.body.scrollWidth` is 390. Sideways scroll
+on the body is the one failure this codebase has hit before and written down — see the `min-w-0`
+comment in `Search.tsx`, where a grid item's default `min-width: auto` grew a track to the width of
+every lane laid end to end and the body scrolled instead of the strip. Measured at 1204px before the
+fix. Any new horizontal scroll is that bug again somewhere else.
+
+---
+
 ## Not blocked, but noted while doing the above
 
 - **`BolConnector` and `EbayConnector` retry a 4xx.** `TradedoublerConnector` does not any more: a
