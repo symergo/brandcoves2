@@ -103,7 +103,14 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             <br />
                             {t('home.headline_2')}
                         </h1>
-                        <p className="mt-5 max-w-2xl text-lg text-ink-soft">{t('home.intro')}</p>
+                        {/*
+                          `text-lg` only from `sm`. At phone width this
+                          paragraph ran to seven lines of near-heading type and
+                          took the whole first screen on its own, so the search
+                          field — the one thing this page wants pressed — sat
+                          under the fold behind a wall of prose.
+                        */}
+                        <p className="mt-5 max-w-2xl text-ink-soft sm:text-lg">{t('home.intro')}</p>
 
                         {/*
                           A search field, where the Gift Finder button used to
@@ -124,14 +131,24 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             action={`${base}/search`}
                             method="get"
                             role="search"
-                            className="mt-8 flex max-w-xl gap-2"
+                            /*
+                              Wraps on a phone, one row from `sm`.
+
+                              Three controls on one 390px line left the field
+                              about 200px wide and clipped its own placeholder
+                              mid-word — "Koptelefoon, koffiem…" — so the
+                              example that tells a visitor what this box accepts
+                              was the part cut off. The field now takes its own
+                              line and the two buttons share the next.
+                            */
+                            className="mt-8 flex max-w-xl flex-wrap gap-2"
                         >
                             <input
                                 type="search"
                                 name="q"
                                 aria-label={t('home.search_label')}
                                 placeholder={t('home.search_placeholder')}
-                                className="min-w-0 flex-1 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none"
+                                className="w-full min-w-0 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none sm:w-auto sm:flex-1"
                             />
                             {/*
                               The camera, beside the field, on the first screen
@@ -150,7 +167,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             <ScanButton className="shrink-0 rounded-lg border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" />
                             <button
                                 type="submit"
-                                className="rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark"
+                                className="flex-1 rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark sm:flex-none"
                             >
                                 {t('nav.search')}
                             </button>
@@ -332,13 +349,33 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                         ] as { key: ListSceneKey; href: string; name: string; hint: string }[]
                     ).map((tool) => (
                         <li key={tool.key}>
+                            {/*
+                              A row on a phone, the illustration-led card from
+                              `sm` up.
+
+                              Stacked, these five cards ran 226px each — 96px of
+                              it artwork — and this section plus Discover came to
+                              54% of the whole page: three screens of navigation
+                              before a phone reader reached any content at all.
+                              Laid on their side the art still reads at a glance
+                              and the card is about a third of the height.
+
+                              The SVG keeps its 160x116 viewBox and its default
+                              `preserveAspectRatio`, so the small box letterboxes
+                              it rather than squashing it.
+                            */}
                             <Link
                                 href={tool.href}
-                                className="flex h-full flex-col rounded-card border border-line bg-card p-5 text-ink transition hover:border-ink hover:text-accent"
+                                className="flex h-full flex-row items-center gap-4 rounded-card border border-line bg-card p-4 text-ink transition hover:border-ink hover:text-accent sm:flex-col sm:items-stretch sm:gap-0 sm:p-5"
                             >
-                                <ListIllustration name={tool.key} className="h-24 w-full" />
-                                <h3 className="mt-4 font-medium">{tool.name}</h3>
-                                <p className="mt-2 text-sm text-ink-soft">{tool.hint}</p>
+                                <ListIllustration
+                                    name={tool.key}
+                                    className="h-12 w-16 shrink-0 sm:h-24 sm:w-full"
+                                />
+                                <div className="min-w-0 sm:mt-4">
+                                    <h3 className="font-medium">{tool.name}</h3>
+                                    <p className="mt-1 text-sm text-ink-soft sm:mt-2">{tool.hint}</p>
+                                </div>
                             </Link>
                         </li>
                     ))}
@@ -422,13 +459,22 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                         ] as { key: CoveSceneKey; href: string; name: string; what: string }[]
                     ).map((cove) => (
                         <li key={cove.key}>
+                            {/* Same treatment as Organise above, and for the
+                                same reason — the two bands sit one under the
+                                other, so one of them staying tall would undo
+                                half the saving and read as the odd one out. */}
                             <Link
                                 href={cove.href}
-                                className="flex h-full flex-col rounded-card border border-line bg-card p-5 text-ink transition hover:border-ink hover:text-accent"
+                                className="flex h-full flex-row items-center gap-4 rounded-card border border-line bg-card p-4 text-ink transition hover:border-ink hover:text-accent sm:flex-col sm:items-stretch sm:gap-0 sm:p-5"
                             >
-                                <CoveIllustration name={cove.key} className="h-28 w-full" />
-                                <h3 className="mt-4 font-medium">{cove.name}</h3>
-                                <p className="mt-2 text-sm text-ink-soft">{cove.what}</p>
+                                <CoveIllustration
+                                    name={cove.key}
+                                    className="h-12 w-16 shrink-0 sm:h-28 sm:w-full"
+                                />
+                                <div className="min-w-0 sm:mt-4">
+                                    <h3 className="font-medium">{cove.name}</h3>
+                                    <p className="mt-1 text-sm text-ink-soft sm:mt-2">{cove.what}</p>
+                                </div>
                             </Link>
                         </li>
                     ))}

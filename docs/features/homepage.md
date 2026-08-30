@@ -149,6 +149,36 @@ cards want to show *what a surface does*, which a drawing can and a recoloured l
 near-identical tiles down one page is a pattern rather than a set of signposts. The mark earns its
 place once, at the top, at size.
 
+## On a phone the two card bands lie on their side
+
+Measured 2026-08-30 at iPhone 13 width, against the running app. The page was **4,792px — 5.7
+screens** — and `Organiseer` (1,318px) plus `Ontdek` (1,228px) were **54% of it**: nine cards at
+226px each, 96px of that artwork, stacked one per row. Roughly three screens of navigation before a
+phone reader reached a single product.
+
+The desktop card is right and is unchanged: illustration on top, at size, five and four across. It
+is only the one-column stack that fails, because the thing that makes the card work wide — a large
+drawing leading each one — is exactly what makes nine of them unreadable tall.
+
+So below `sm` the card is a **row**: the drawing at `h-12 w-16` on the left, title and hint on the
+right. 226px becomes 102px, and the page 3,692px — 4.4 screens. The SVGs keep their `160x116`
+viewBox and default `preserveAspectRatio`, so the smaller box letterboxes them rather than squashing
+them; nothing about the drawings themselves changed.
+
+**`sm:gap-0` is not decoration.** The row needs `gap-4`, and a `gap` set without a breakpoint reset
+survives into the `sm:flex-col` card and stacks on top of its `sm:mt-4`. That silently added 16px to
+every desktop card — caught by measuring the desktop layout before and after, not by looking at it.
+
+Two smaller phone fixes in the same pass:
+
+- **The search field wrapped.** Three controls on one 390px line left the input about 200px wide, so
+  it clipped its own placeholder mid-word — "Koptelefoon, koffiem…" — and the example that tells a
+  visitor what the box accepts was the half cut off. The field now takes its own line below `sm`,
+  the scanner and submit share the next, and the submit grows to fill.
+- **The intro is `text-lg` only from `sm`.** At phone width it ran to seven lines of near-heading
+  type and took the first screen by itself, which is the same failure the drawing was hidden to
+  avoid — see above.
+
 ## Files
 
 - `resources/js/Pages/Home.tsx`
