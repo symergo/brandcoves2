@@ -130,7 +130,13 @@ class ProductGroup extends Model
 
         // Floor, never round: a badge must not overstate a saving we would then
         // have to defend.
-        return (int) floor((($this->median_price - $this->min_price) / $this->median_price) * 100);
+        $percent = (int) floor((($this->median_price - $this->min_price) / $this->median_price) * 100);
+
+        // A saving of less than one percent floors to zero, and "0% off" is a
+        // badge that claims nothing while looking exactly like one that claims
+        // something. The price is a few cents under the median; there is no
+        // discount to announce, so there is no badge.
+        return $percent > 0 ? $percent : null;
     }
 
     public function hasMultipleMerchants(): bool

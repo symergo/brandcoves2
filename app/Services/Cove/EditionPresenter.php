@@ -122,7 +122,16 @@ class EditionPresenter
                 'image' => $pick->group->image_url,
                 'price' => $pick->group->min_price,
                 'merchantCount' => $pick->group->merchant_count,
-                'discountPercent' => $pick->discount_percent,
+                /*
+                 * A stored zero is not a discount.
+                 *
+                 * This reads the column the builder wrote rather than calling
+                 * ProductGroup::discountPercent() live, so it still carries the
+                 * zeros written before that method learned to return null for a
+                 * saving under one percent — and "−0%" is a badge that claims
+                 * nothing while looking exactly like one that claims something.
+                 */
+                'discountPercent' => $pick->discount_percent > 0 ? $pick->discount_percent : null,
                 'blurb' => $pick->blurb,
                 'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
                 'mindblown' => $pick->mindblown_count,
