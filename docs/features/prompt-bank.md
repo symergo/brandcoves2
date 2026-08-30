@@ -211,3 +211,38 @@ escape-then-allowlist rendering, so an edited prompt cannot inject markup into a
 
 - [ai-invariant.md](ai-invariant.md) — why AI is only ever called from a job
 - [cove-planner.md](cove-planner.md) — where `build_instructions` comes from
+
+## The list shows every prompt — since 2026-09-01
+
+`prompt_templates` holds **overrides**, and it is deliberately not seeded: a
+stale prompt produces plausible output, which is worse than an obviously missing
+one, so a slot with no row uses what the site shipped with.
+
+That is the right storage design and it made a bad screen. The admin table read
+straight off the model, so its *normal* state was empty — "Every prompt is the
+one the site shipped with" over a blank list — and the only way to find out which
+prompts exist at all was to read `PromptBank::slots()` in the source.
+
+So the rows are the **registry** now. `ListPromptTemplates` builds them from
+`PromptBank::slots()` and joins whatever override exists, which turns an override
+from *the reason a row exists* into *an attribute of one*. Each row says whether
+the rules and the brief are shipped or overridden, and whether an override is
+switched off — which is not the same as shipped, because the words are still
+there and somebody who read "shipped" would rewrite what they already wrote.
+
+Three details worth keeping:
+
+- **The edit modal pre-fills from the shipped prompt**, so a first edit starts
+  from the real thing rather than a blank textarea. That is the difference
+  between rewording a prompt and inventing one.
+- **A field left exactly as it came is not stored.** Saving a copy of today's
+  shipped text would work and would rot: the shipped prompts are improved in
+  code, and a row holding last year's wording silently pins that slot to it.
+  Both halves back to shipped with no note deletes the row outright.
+- **An orphan is listed and marked.** A stored row whose slot the code stopped
+  declaring is inert — `override()` checks the allowlist before reading it — but
+  somebody wrote it, and hiding it would leave a rename's casualties unreachable.
+
+The rows are arrays rather than models, so the list sets `recordAction(null)` and
+`recordUrl(null)`: `ListRecords` otherwise wires a click-the-row handler typed to
+an Eloquent model, which is a 500 the moment the page renders.
