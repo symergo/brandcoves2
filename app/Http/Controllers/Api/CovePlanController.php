@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PersonaScene;
 use App\Enums\PickMode;
 use App\Enums\Source;
 use App\Http\Controllers\Controller;
@@ -221,6 +222,14 @@ class CovePlanController extends Controller
             'drop_date' => $kind->isDated() ? $date : null,
             'slug' => $kind->isDated() ? null : $slug,
             'pick_mode' => $data['pickMode'] ?? PickMode::Open->value,
+            /*
+             * The drawing on a persona. Meaningless on every other kind
+             * and stored anyway rather than refused: a Daily carrying a
+             * scene renders exactly as before, and a validation error
+             * over a field nothing reads would be a rule to explain
+             * rather than a mistake to prevent. See App\Enums\PersonaScene.
+             */
+            'scene' => $data['scene'] ?? null,
             'title' => $data['title'],
             'blurb' => $data['blurb'] ?? null,
             'editorial' => $data['editorial'] ?? null,
@@ -444,6 +453,7 @@ class CovePlanController extends Controller
             'kind' => ['nullable', Rule::in(CoveKind::values())],
             'slug' => ['nullable', 'string', 'max:80', 'alpha_dash'],
             'pickMode' => ['nullable', Rule::in(PickMode::values())],
+            'scene' => ['nullable', Rule::in(PersonaScene::values())],
 
             /*
              * Article fields. Optional every one of them: an empty field is the
@@ -621,6 +631,7 @@ class CovePlanController extends Controller
             'date' => $plan->drop_date?->toDateString(),
             'slug' => $plan->slug,
             'pickMode' => $plan->pick_mode->value,
+            'scene' => $plan->scene?->value,
             'title' => $plan->title,
             'status' => $plan->status,
             'curatedCount' => $plan->items()->count(),

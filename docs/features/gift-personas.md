@@ -115,6 +115,46 @@ give.
 Or the same three steps through [the editorial API](editorial-api.md), with `kind: "persona"` and a
 `slug`.
 
+## The picture is drawn, and the persona names it
+
+Added 2026-08-30. `cove_plans.scene` and `daily_pick_sets.scene`, nullable, string plus a CHECK
+generated from `App\Enums\PersonaScene`, cast to that enum on both models.
+
+**The cover used to be a photograph of a product** — the first buyable find on the shelf. Wrong
+picture twice over. It made a shelf of *people* look like a shelf of product categories, and the
+cover moved whenever stock did: the same persona wearing a different face from one week to the next,
+for a reason no reader could see and no editor chose.
+
+`PersonaIllustration` draws it instead, in the same language as `CoveIllustration` and
+`ListIllustration` — one `160x116` viewBox, one stroke weight, `currentColor` for every line, the
+accent only as a translucent wash. That is what lets the card change colour on hover and take the
+drawing with it, and it is why these survive a palette change without being redrawn.
+
+**Nine scenes, not one per persona.** A drawing per persona makes artwork a gate on the writing.
+These are *kinds of person* — coffee, cooking, sim racing, has-everything, dogs, photography, DIY,
+outdoors — so a new persona almost always finds one that fits, and the ones that do not get
+`someone`, a featureless figure. Null means `someone`: every persona written before the field
+existed has no scene, and a missing drawing must not be a missing page.
+
+**A field, not a lookup keyed on the slug.** Slugs are per market. `de-koffiefanaat` and
+`le-fanatique-de-cafe` are one persona wearing two addresses, so a table keyed on the slug would be
+correct in the markets somebody remembered and blank in the rest, with nothing to say which was
+which. A field also puts the choice where the writing happens — the person deciding this Cove is
+about someone who cooks is already in the planner.
+
+**Both tables, because the plan is the source and the edition is the page.** `EditionBuilder::
+buildPersona()` copies it across with the title and the blurb. On the plan alone it would be a field
+you could set and never see; on the edition alone a rebuild would overwrite it.
+
+Set it in **Admin → Cove planner → Drawing** (visible only on the persona kind — nothing reads a
+scene on a Daily), or send `scene` to `POST /api/editorial/coves`.
+
+> **Three of the nine were redrawn before they shipped.** The first `coffee` was a grinder and read
+> at card size as a phone with a cup beside it; `cooking` was a pan from above and read as an
+> artist's palette; `racing`'s pedals were a small detached parallelogram that read as a stray shape.
+> All three were found by rendering the shelf and looking at it, which is the only way this class of
+> mistake is ever found — an SVG that is geometrically fine and semantically wrong throws no error.
+
 ## hreflang: paired on the slug, and only when the twin exists
 
 Two markets carrying the same persona slug are carrying the same persona, so

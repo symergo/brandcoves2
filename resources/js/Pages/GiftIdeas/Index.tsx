@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react'
+import PersonaIllustration, { type PersonaSceneKey } from '../../Components/PersonaIllustration'
 import { useTranslations } from '../../useTranslations'
 
 interface Persona {
@@ -6,7 +7,8 @@ interface Persona {
     title: string
     blurb: string | null
     url: string
-    image: string | null
+    /** Null until a curator picks one; the component draws a figure. */
+    scene: PersonaSceneKey | null
     findCount: number
 }
 
@@ -43,15 +45,18 @@ export default function Index({ personas }: Props) {
                             key={persona.slug}
                             className="flex flex-col rounded-lg border border-line bg-card p-4"
                         >
-                            <Link href={persona.url} className="group">
-                                {persona.image && (
-                                    <img
-                                        src={persona.image}
-                                        alt=""
-                                        loading="lazy"
-                                        className="mx-auto h-36 object-contain"
-                                    />
-                                )}
+                            {/*
+                              The drawing takes the card's text colour, so the
+                              whole card changes together on hover — that is what
+                              `currentColor` throughout the scene buys, and it is
+                              why these survive a palette change without being
+                              redrawn.
+                            */}
+                            <Link href={persona.url} className="group text-ink hover:text-accent">
+                                <PersonaIllustration
+                                    name={persona.scene}
+                                    className="h-28 w-full text-ink-soft transition group-hover:text-accent"
+                                />
                                 <h2 className="mt-3 font-medium group-hover:underline">
                                     {persona.title}
                                 </h2>

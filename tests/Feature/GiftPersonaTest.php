@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Enums\Availability;
 use App\Enums\Market;
+use App\Enums\PersonaScene;
 use App\Enums\PickMode;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
@@ -19,8 +20,10 @@ use App\Services\Seo\Alternates;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use ValueError;
 
 /**
  * Gift personas: the Coves that are about a person rather than a day.
@@ -163,7 +166,103 @@ class GiftPersonaTest extends TestCase
         ]);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
+    // --- The drawing ---------------------------------------------------------
+
+    #[Test]
+    public function the_shelf_and_the_page_carry_the_personas_scene(): void
+    {
+        $this->persona('de-koffiefanaat', 'De koffiefanaat', Market::BeNl, scene: PersonaScene::Coffee);
+
+        $this->get('/be-nl/gift-ideas')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('personas.0.scene', 'coffee'));
+
+        $this->get('/be-nl/gift-ideas/de-koffiefanaat')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('persona.scene', 'coffee'));
+    }
+
+    /**
+     * Null is the state every persona written before the field was added is in,
+     * and a missing drawing must not be a missing page. The component reads null
+     * as `someone` and draws a figure.
+     */
+    #[Test]
+    public function a_persona_with_no_scene_still_renders(): void
+    {
+        $this->persona('de-thuiskok', 'De thuiskok', Market::BeNl);
+
+        $this->get('/be-nl/gift-ideas')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('personas.0.scene', null));
+
+        $this->get('/be-nl/gift-ideas/de-thuiskok')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('persona.scene', null));
+    }
+
+    /**
+     * The CHECK is generated from the enum, so this is what stops the two from
+     * drifting — a value PHP knows and Postgres does not would only surface as a
+     * failed write in production.
+     *
+     * Inserted through the query builder rather than the model, deliberately.
+     * The Eloquent cast throws a `ValueError` on an unknown value before a query
+     * is ever sent, so going through `DailyPickSet::create()` asserts the cast
+     * and never reaches the constraint — which is the half that would still be
+     * standing if somebody added a case to the enum and no migration.
+     */
+    #[Test]
+    public function the_database_refuses_a_scene_the_enum_does_not_know(): void
+    {
+        $this->expectException(QueryException::class);
+
+        DB::table('daily_pick_sets')->insert([
+            'market' => Market::BeNl->value,
+            'kind' => 'persona',
+            'slug' => 'de-onbekende',
+            'theme_title' => 'De onbekende',
+            'theme_slug' => 'de-onbekende',
+            'status' => 'published',
+            'published_at' => '2026-08-20',
+            'scene' => 'not-a-real-scene',
+        ]);
+    }
+
+    /** And the cast is the other half: it refuses before a query is sent. */
+    #[Test]
+    public function the_model_refuses_a_scene_the_enum_does_not_know(): void
+    {
+        $this->expectException(ValueError::class);
+
+        DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => 'persona',
+            'slug' => 'de-onbekende',
+            'theme_title' => 'De onbekende',
+            'theme_slug' => 'de-onbekende',
+            'status' => 'published',
+            'published_at' => '2026-08-20',
+            'scene' => 'not-a-real-scene',
+        ]);
+    }
+
+    /**
+     * The drawing is authored, so it travels from the plan to the edition the
+     * same way the title and the blurb do. On the plan alone it would be a field
+     * you could set and never see.
+     */
+    #[Test]
+    public function the_builder_carries_the_scene_from_the_plan_to_the_edition(): void
+    {
+        $plan = $this->plan();
+        $plan->update(['scene' => PersonaScene::Coffee->value]);
+
+        $edition = app(EditionBuilder::class)->buildPersona($plan->fresh());
+
+        $this->assertNotNull($edition);
+        $this->assertSame(PersonaScene::Coffee, $edition->scene);
+    }
 
     #[Test]
     public function the_same_persona_in_two_markets_is_paired_for_hreflang(): void
@@ -223,11 +322,14 @@ class GiftPersonaTest extends TestCase
         $this->assertSame(url('/be-fr/gift-ideas'), $alternates['fr-BE'] ?? null);
     }
 
+    // ── Helpers ───────────────────────────────────────────────────────────
+
     private function persona(
         string $slug,
         string $title,
         Market $market,
         bool $published = true,
+        ?PersonaScene $scene = null,
     ): DailyPickSet {
         return DailyPickSet::create([
             'market' => $market->value,
@@ -238,6 +340,7 @@ class GiftPersonaTest extends TestCase
             'theme_blurb' => 'Waar het over gaat.',
             'status' => $published ? 'published' : 'draft',
             'published_at' => $published ? '2026-08-20' : null,
+            'scene' => $scene?->value,
         ]);
     }
 

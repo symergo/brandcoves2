@@ -6,6 +6,7 @@ namespace App\Filament\Resources\CovePlans;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PersonaScene;
 use App\Enums\PickMode;
 use App\Filament\Resources\CovePlans\Pages\CuratePlan;
 use App\Filament\Resources\CovePlans\Pages\ListCovePlans;
@@ -274,6 +275,27 @@ class CovePlanResource extends Resource
                         ->default(PickMode::Open->value)
                         ->required()
                         ->helperText('Locked publishes exactly the curated list, in order. Open lets the ranker fill the rest of the page around it.'),
+
+                    /*
+                     * The drawing, and only where there is one to choose.
+                     *
+                     * A persona's cover used to be its first buyable product's
+                     * photograph, which moved whenever stock did. This is the
+                     * editorial decision that replaced it, so it belongs beside
+                     * the other authored fields rather than in the curation
+                     * screen — it is about who the Cove is for, not about which
+                     * products ended up on it.
+                     *
+                     * Hidden on every other kind. Nothing reads a scene on a
+                     * Daily or a guide, and an always-visible select for a field
+                     * with no effect is a question the form cannot answer.
+                     */
+                    Select::make('scene')
+                        ->label('Drawing')
+                        ->options(PersonaScene::options())
+                        ->visible(fn ($get) => $get('kind') === CoveKind::Persona->value)
+                        ->placeholder('A figure, until you choose')
+                        ->helperText('The illustration on the shelf, the hub and the persona\'s own page. Pick the interest, not the person.'),
 
                     Placeholder::make('curated')
                         ->label('Curated products')

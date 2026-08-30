@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
+import PersonaIllustration, { type PersonaSceneKey } from '../../Components/PersonaIllustration'
 import PreviewBanner from '../../Components/PreviewBanner'
 import { useTranslations } from '../../useTranslations'
 import SaveToList from '../../Components/SaveToList'
@@ -25,6 +26,8 @@ interface Props {
         slug: string
         title: string
         blurb: string | null
+        /** Null until a curator picks one; the component draws a figure. */
+        scene: PersonaSceneKey | null
         /**
          * Paragraphs of HTML, links already resolved server-side, each
          * carrying the ids of the products that paragraph names.
@@ -70,14 +73,29 @@ export default function Persona({ preview = false, persona, finds, guide }: Prop
             {preview && <PreviewBanner />}
             <Head title={persona.title} />
 
-            <header className="max-w-2xl">
-                <p className="text-xs tracking-wide text-ink-soft uppercase">
-                    <Link href={`/${market.key}/gift-ideas`} className="hover:underline">
-                        {t('gift_ideas.title')}
-                    </Link>
-                </p>
-                <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{persona.title}</h1>
-                {persona.blurb && <p className="mt-2 text-ink-soft">{persona.blurb}</p>}
+            {/*
+              The drawing beside the title, not above it.
+
+              Stacked it would push the first paragraph under the fold on a
+              phone for a picture that says less than the sentence beside it —
+              the same trade `HomeIllustration` is hidden below `md` to avoid.
+              Here it is small enough to sit alongside at every width.
+            */}
+            <header className="flex max-w-2xl items-start gap-4 sm:gap-6">
+                <div className="min-w-0 flex-1">
+                    <p className="text-xs tracking-wide text-ink-soft uppercase">
+                        <Link href={`/${market.key}/gift-ideas`} className="hover:underline">
+                            {t('gift_ideas.title')}
+                        </Link>
+                    </p>
+                    <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{persona.title}</h1>
+                    {persona.blurb && <p className="mt-2 text-ink-soft">{persona.blurb}</p>}
+                </div>
+
+                <PersonaIllustration
+                    name={persona.scene}
+                    className="h-16 w-24 shrink-0 text-ink-soft sm:h-24 sm:w-32"
+                />
             </header>
 
             {/*

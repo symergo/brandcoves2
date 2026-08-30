@@ -492,6 +492,17 @@ personas want `"pickMode": "locked"`, which publishes exactly the shortlist. See
 Write in the market's language (`GET /api/editorial` lists them). `queries` are product words —
 "hondenmand" finds products, "cadeau voor hondenliefhebbers" finds nothing.
 
+`scene` names the drawing on the card — one of `App\Enums\PersonaScene`: `coffee`, `cooking`,
+`racing`, `has_everything`, `dog`, `photography`, `diy`, `outdoors`, `someone`. Optional, and
+omitting it means `someone`, a featureless figure. It is validated against the enum, so a value that
+is not on that list is a 422 rather than a silent drop. Read it back on the plan to confirm what
+landed. See [gift-personas.md](gift-personas.md) for why it is a field rather than a lookup on the
+slug.
+
+> **`POST /coves` replaces the plan, not just the fields you send.** To add a scene to a persona that
+> already has prose, read the plan first and send it back whole with `scene` added — a body carrying
+> only the scene blanks the editorial.
+
 ### Voice
 
 Two or three paragraphs. Dry, specific, quietly amused. You are pointing at odd things and saying

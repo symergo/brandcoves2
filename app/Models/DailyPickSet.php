@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PersonaScene;
 use App\Enums\PublishStatus;
 use Database\Factories\DailyPickSetFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -42,6 +43,8 @@ class DailyPickSet extends Model
             'market' => Market::class,
             'kind' => CoveKind::class,
             'status' => PublishStatus::class,
+            // Persona only, and nullable: null reads as PersonaScene::Someone.
+            'scene' => PersonaScene::class,
             'drop_date' => 'date',
             'published_at' => 'datetime',
             // Article kinds only. A Daily and a persona leave all of these at

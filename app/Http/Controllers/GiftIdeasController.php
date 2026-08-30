@@ -66,13 +66,18 @@ class GiftIdeasController extends Controller
                 'title' => $set->theme_title,
                 'blurb' => $set->theme_blurb,
                 'url' => $current->url('gift-ideas/'.$set->slug),
-                // The first buyable find, as the shelf's cover image. Buyable,
-                // because an out-of-stock pick is filtered off the page it
-                // links to and a cover for a product that is not there reads as
-                // a broken promise.
-                'image' => $set->picks
-                    ->first(fn ($pick) => $pick->group !== null && $pick->group->in_stock)
-                    ?->group->image_url,
+                /*
+                 * The drawing, not a product photograph.
+                 *
+                 * The cover used to be the first buyable find, which made a
+                 * shelf of *people* look like a shelf of products and changed
+                 * the persona's face whenever its stock did — a page looking
+                 * new for a reason no reader could see and no editor chose.
+                 *
+                 * Null until a curator picks one; the component reads that as
+                 * `someone` and draws a figure. See App\Enums\PersonaScene.
+                 */
+                'scene' => $set->scene?->value,
                 'findCount' => $set->picks
                     ->filter(fn ($pick) => $pick->group !== null && $pick->group->in_stock)
                     ->count(),
@@ -106,6 +111,7 @@ class GiftIdeasController extends Controller
                 'slug' => $persona->slug,
                 'title' => $persona->theme_title,
                 'blurb' => $persona->theme_blurb,
+                'scene' => $persona->scene?->value,
                 'editorial' => $this->presenter->editorial($persona, $current),
             ],
             'finds' => $this->presenter->finds($persona, $current),

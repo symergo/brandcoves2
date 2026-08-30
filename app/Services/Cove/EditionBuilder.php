@@ -245,6 +245,11 @@ class EditionBuilder
                     'theme_blurb' => $plan->blurb,
                     'theme_slug' => Str::slug($plan->title).'-'.$plan->id,
                     'theme_source' => 'planned',
+                    // The drawing is authored, like the title and the blurb, so
+                    // it travels with them. A rebuild refreshes it from the
+                    // plan, which is what makes changing it in the curation
+                    // screen and pressing Build the whole of that workflow.
+                    'scene' => $plan->scene,
                     'editorial' => $editorial['text'],
                     'editorial_source' => $editorial['source'],
                     'status' => PublishStatus::Published->value,
