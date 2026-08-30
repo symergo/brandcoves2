@@ -189,7 +189,7 @@ class ProductController extends Controller
         return $offers
             ->map(fn (Product $offer) => [
                 'id' => $offer->id,
-                'merchant' => $offer->merchant?->name ?? $offer->source->label(),
+                'merchant' => $offer->merchant?->displayName() ?? $offer->source->label(),
                 'merchantLogo' => $offer->merchant?->faviconUrl(),
                 'price' => $offer->price,
                 'currency' => $offer->currency,

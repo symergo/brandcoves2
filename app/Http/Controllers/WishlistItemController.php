@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\Source;
+use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\Wishlist;
@@ -220,7 +221,9 @@ class WishlistItemController extends Controller
                 'title' => $offer->title,
                 'image' => $offer->imageUrl,
                 'price' => $offer->price,
-                'merchant' => $offer->merchantName ?? $offer->source->label(),
+                'merchant' => $offer->merchantName === null
+                    ? $offer->source->label()
+                    : Merchant::withoutCountrySuffix($offer->merchantName),
                 'storable' => $offer->source->allowsCatalogueStorage(),
             ], array_slice($result->liveOffers, 0, 4)),
         ]);

@@ -8,6 +8,7 @@ use App\Enums\Availability;
 use App\Enums\Market;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
+use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
 use App\Services\Search\SearchQuery;
@@ -548,7 +549,9 @@ class BrandController extends Controller
             'url' => $offer->affiliateUrl,
             'image' => $offer->imageUrl,
             'price' => $offer->price,
-            'merchant' => $offer->merchantName ?? $offer->source->label(),
+            'merchant' => $offer->merchantName === null
+                    ? $offer->source->label()
+                    : Merchant::withoutCountrySuffix($offer->merchantName),
 
             /*
              * What it takes to keep one of these.

@@ -150,3 +150,11 @@ exactly what restoring it involves — nothing was deleted.
 - [all-coves.md](all-coves.md) — the overview that lists these alongside every other kind
 - [navigation.md](navigation.md#brand-coves-and-shop-coves-2026-08-29) — the menu that leads here
 - [cove-curation.md](cove-curation.md) — how a Cove is planned, curated and built
+
+## Shop names are trimmed for display
+
+`Merchant::displayName()` drops a trailing country code (`Coolblue BE` -> `Coolblue`), because the
+suffix is the affiliate network's per-country advertiser bookkeeping rather than the shop's name, and
+the market is already the visitor's own choice. `merchants.name` keeps the feed's spelling — it is
+what identifies the advertiser account when a feed is being debugged. The rule, and the surfaces it
+covers, are in [search.md](search.md#shop-names-lose-the-country-suffix).
