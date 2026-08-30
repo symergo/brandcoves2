@@ -50,7 +50,7 @@ skipped by anyone who has not yet been told *what for*.
 or secret santa"* — the generic term alongside ours, on the theory that *secret santa* is what people
 search for. It is not worth it on the front page: it puts two names for one feature in a sentence
 whose job is to be scanned, and the recognition it buys belongs to the surfaces built for it
-(`home.seo_description`, the santa pages, the copy bank), not to the pitch. `nav.santa` — `Geheime
+(`home.seo_description`, the santa pages, the page templates), not to the pitch. `nav.santa` — `Geheime
 Vriend`, `Ami Secret`, `Amigo invisible` — is the one name the whole product uses, so it is the one
 here.
 

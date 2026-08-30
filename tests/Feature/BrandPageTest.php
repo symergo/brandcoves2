@@ -15,16 +15,17 @@ use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\RefreshBrandStats;
 use App\Models\BrandStat;
-use App\Models\CopyTemplate;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\Merchant;
+use App\Models\PageBlock;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
+use App\Services\Pages\PageCopy;
 use App\Services\Seo\BrandCopy;
 use App\Services\Seo\BrandLinker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -166,37 +167,49 @@ class BrandPageTest extends TestCase
      * for being a template nobody could reach.
      *
      * It came back on 2026-08-30 with that objection answered rather than
-     * ignored: every sentence is a `CopySlots` entry an editor rewrites in
-     * admin. So the thing worth pinning is the claim the admin screen makes —
-     * an edited row reaches the page — and that the statistics above the grid
-     * did not come back with it.
+     * ignored, and on 2026-09-01 the answer got better: there is no template at
+     * all now. The page has regions, and what fills them is an ordered list of
+     * blocks an editor writes. So the thing worth pinning is the claim the admin
+     * screen makes — an edited block reaches the page — and that the statistics
+     * above the grid did not come back with it.
      */
     #[Test]
-    public function the_prose_below_the_grid_comes_from_the_editable_bank(): void
+    public function the_prose_below_the_grid_comes_from_the_editable_blocks(): void
     {
         $this->seedBrand('Aurex');
 
-        CopyTemplate::create([
-            'surface' => 'brand',
-            'slot' => 'about_3',
-            'language' => 'nl',
-            'body' => 'Deze zin komt uit de kopijbank.',
-            'weight' => 1,
-            'enabled' => true,
-        ]);
+        PageBlock::query()
+            ->where('page', 'brand')
+            ->where('region', 'below_grid')
+            ->where('language', 'nl')
+            ->where('kind', PageBlock::PARAGRAPH)
+            ->first()
+            ->variants()
+            ->first()
+            ->update(['body' => 'Deze zin komt uit de blokkeneditor.']);
+
+        PageCopy::flush();
 
         $props = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
 
         $this->assertNotNull($props['narrative'] ?? null, 'the copy below the grid is missing');
         $this->assertStringContainsString(
-            'Deze zin komt uit de kopijbank.',
+            'Deze zin komt uit de blokkeneditor.',
             (string) json_encode($props['narrative']),
-            'an edited slot did not reach the page',
+            'an edited block did not reach the page',
         );
 
-        // A separate decision, and it stays retired: nothing templated goes back
-        // above the grid, where a reader meets it before the products.
+        /*
+         * The statistics stay retired.
+         *
+         * There *is* an above-grid region again, and this is the assertion that
+         * says what changed and what did not: it is a place, not a comeback.
+         * Nothing generates what goes in it, and it renders nothing until a
+         * person writes something — so on a page nobody has written for, it is
+         * null.
+         */
         $this->assertArrayNotHasKey('copy', $props, 'the templated statistics are back above the grid');
+        $this->assertNull($props['intro'] ?? null, 'something is filling the intro that nobody wrote');
     }
 
     #[Test]

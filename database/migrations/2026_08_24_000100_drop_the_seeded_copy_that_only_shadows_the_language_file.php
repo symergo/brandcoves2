@@ -2,11 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\Market;
-use App\Services\Seo\CopyBank;
-use App\Services\Seo\CopySlots;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Delete the copy rows that say exactly what the language file already says.
@@ -64,69 +60,41 @@ use Illuminate\Support\Facades\DB;
  * Idempotent: after the first pass the surviving rows all differ from the file or
  * have siblings.
  *
+ * **This migration no longer does anything — see the note on the class below.**
+ *
  * > Re-running `bc:seed-copy` puts every one of these rows back. That is the
  * > command's job and it is still the right behaviour after a *new* slot is added
  * > — but running it wholesale re-arms the shadow across the whole bank.
  */
 return new class extends Migration
 {
+    /**
+     * ## Retired 2026-09-01, and left in place
+     *
+     * This walked `App\Services\Seo\CopySlots` and compared each row against
+     * `__('site.narrative.…')`. Both are gone: page copy is `page_blocks` now,
+     * and the narrative language keys were deleted in the same release.
+     *
+     * The body is not restored from history, and it is not deleted either.
+     * Migrations are forward-only, so this file has already run on every
+     * environment that has one — its work is done and cannot be undone by
+     * emptying it. What emptying it *does* fix is a fresh database, where
+     * `migrate` replays the whole history and this would fatal on a class that
+     * no longer exists. That is not hypothetical: it is `RefreshDatabase` in the
+     * test suite, on every run.
+     *
+     * Rewriting it to inline the old slot list would be the alternative, and it
+     * would be worse — a hundred lines reconstructing a comparison against
+     * strings that are also gone, to delete rows from a table nothing reads.
+     */
     public function up(): void
     {
-        $deleted = 0;
-
-        foreach ($this->languages() as $language) {
-            foreach (CopySlots::all() as $definition) {
-                $surface = $definition['surface'];
-                $slot = $definition['slot'];
-
-                $rows = DB::table('copy_templates')
-                    ->where('surface', $surface)
-                    ->where('slot', $slot)
-                    ->where('language', $language)
-                    ->get(['id', 'body']);
-
-                // Condition (2): a slot anyone has added a variant to is theirs.
-                if ($rows->count() !== 1) {
-                    continue;
-                }
-
-                $namespace = CopySlots::namespaceFor($surface);
-                $line = __("{$namespace}.{$slot}", [], $language);
-
-                // A missing translation resolves to the key itself, which no body
-                // will ever equal — so an absent language line leaves the row in
-                // place rather than deleting the only copy of that sentence.
-                if (! is_string($line) || $line !== $rows->first()->body) {
-                    continue;
-                }
-
-                $deleted += DB::table('copy_templates')->where('id', $rows->first()->id)->delete();
-            }
-        }
-
-        if ($deleted > 0) {
-            // The drawable set is cached for two minutes. Harmless to leave, but
-            // the delete is the sort of change someone verifies immediately.
-            CopyBank::flush();
-        }
+        // Deliberately nothing. See the note above.
     }
 
-    /**
-     * Deliberately a no-op.
-     *
-     * Every row this deleted held the language file's own sentence, which is
-     * still in `lang/*\/site.php`. `php artisan bc:seed-copy` re-imports exactly
-     * what was removed. Reconstructing it here would mean this file carrying its
-     * own copy of four languages of text — a duplicate that goes stale in silence.
-     */
-    public function down(): void {}
-
-    /** @return list<string> */
-    private function languages(): array
+    public function down(): void
     {
-        return array_values(array_unique(array_map(
-            fn (Market $market) => $market->language(),
-            Market::cases(),
-        )));
+        // It never had one: the rows it removed were duplicates of the language
+        // file, so there was nothing to restore even when the file existed.
     }
 };

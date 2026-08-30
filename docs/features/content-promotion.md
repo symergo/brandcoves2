@@ -48,8 +48,36 @@ follows the same rule, so the behaviour is one rule rather than a table of excep
 
 ## Allowlist, never denylist
 
-`ContentEnvelope::SURFACES` names what may travel: `feeds`, `copy`, `guides`, `topics`, `editions`,
-`plans`. Asking for anything else is an error, not an empty result.
+`ContentEnvelope::SURFACES` names what may travel: `feeds`, `blocks`, `topics`, `editions`, `plans`.
+Asking for anything else is an error, not an empty result.
+
+`ContentEnvelope::RETIRED` names the ones an *older* envelope may still carry — `copy` and `guides`.
+Import accepts those and export does not offer them, which is the whole asymmetry: a file taken from
+an older build has to load, and writing a shape nothing reads would be pointless.
+
+**Version 3 retired `copy`.** Page copy is `page_blocks` now — see
+[page-templates.md](page-templates.md) — and a v2 envelope's copy rows are **dropped and named** in the
+report rather than converted. Every environment is seeded identically by that release's migration, so
+importing them would recreate the same sentences under a different identity and print the region
+twice.
+
+**The version check changed direction at the same time, and that is a fix rather than a side effect.**
+It was `$version !== self::VERSION`, which is backwards for what it protects: the question is whether
+*this build* can read *that file*, and it is a file from a **newer** build that it cannot. The proof
+it was wrong sits in the same class — `importLegacyGuides()` exists to fold a v1 envelope's guides
+into editions, and had been unreachable dead code since the day it was written, rejected three frames
+earlier by the equality check. It is now `$version > self::VERSION`, plus a `< 1` sanity throw.
+
+**Blocks carry their variants nested inside them**, like `plans` carries its items, because a variant
+has no identity independent of its block: `(page, region, language, position)` looks like a natural
+key and is not, since position is exactly what an edit changes. Import therefore **replaces per
+`(page, region, language)`** rather than merging — a merge leaves behind blocks the author deleted on
+the far side, and merged blocks would interleave two orderings into one nonsense.
+
+> Importing blocks flushes the page-copy cache without `ContentEnvelope` knowing about it, because the
+> importer writes through Eloquent and the flush lives on `PageBlock::booted()`. That is deliberate:
+> the copy bank flushed from its admin screen, and the importer is not one, so a promoted change used
+> to sit behind a stale cache. Do not "tidy up" the model hook.
 
 A denylist of personal tables would silently include every table added afterwards, and the cost of
 being wrong is exporting real people's gift lists. Columns work the same way, which is how

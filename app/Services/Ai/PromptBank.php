@@ -25,7 +25,7 @@ use Throwable;
  * to the default. `prompt_templates` can be empty, half-filled or wrong and every
  * build still produces exactly what it produced before the table existed. An
  * editor cannot break a Cove by deleting a row, which is what makes the table
- * safe to hand over — the same guarantee `CopyBank` gives page copy.
+ * safe to hand over — the same guarantee page templates give a region.
  *
  * ## What is NOT here
  *

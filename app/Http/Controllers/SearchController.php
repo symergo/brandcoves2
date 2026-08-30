@@ -8,13 +8,15 @@ use App\Models\AmazonProduct;
 use App\Models\Event;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
+use App\Services\Pages\BlockSections;
+use App\Services\Pages\Context\SearchContext;
+use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
-use App\Services\Seo\PageNarrative;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -25,6 +27,9 @@ use Inertia\Response;
 
 class SearchController extends Controller
 {
+    /** Built once per request; three regions ask for the same facts. */
+    private ?SearchContext $context = null;
+
     public function __invoke(Request $request, CurrentMarket $current, SearchService $search): Response|RedirectResponse
     {
         $query = SearchQuery::fromRequest($request, $current->get());
@@ -108,6 +113,26 @@ class SearchController extends Controller
              * of near-identical URLs is the doorway-page pattern at scale.
              */
             'narrative' => $this->narrative($query, $result),
+
+            /*
+             * A sentence or two above the grid, if an editor wrote one.
+             *
+             * Ships empty and stays empty until somebody deliberately fills it.
+             * Gated exactly as the long copy is: an intro repeated across dozens
+             * of noindex, near-identical filtered URLs is the same doorway
+             * pattern with fewer words.
+             */
+            'intro' => $this->intro($query, $result),
+
+            /*
+             * What to read when nothing matched.
+             *
+             * The inverse guard — this is the one region that renders *because*
+             * the page is empty, and it renders on filtered and paginated
+             * variants too. Those are noindex, and this is not for a crawler: a
+             * dead end is exactly where a human needs a way out.
+             */
+            'emptyCopy' => $this->emptyCopy($query, $result),
         ]);
     }
 
@@ -190,29 +215,89 @@ class SearchController extends Controller
     }
 
     /**
-     * @return array{sections: list<array{heading: string, body: list<string>}>, faq: list<array{q: string, a: string}>, related: list<array{term: string, url: string}>}|null
+     * The long copy below the grid.
+     *
+     * Every word of it is now a `page_blocks` row an editor can rewrite, reorder
+     * or remove — including the questions and the related-searches block, which
+     * used to be markup nobody could reach. What stays here is the *guard*,
+     * because that is a decision about which URLs may carry copy at all and it
+     * is not an editorial one.
+     *
+     * @return array{sections: list<array{heading: string, body: list<list<array<string, mixed>>>}>}|null
      */
     private function narrative(SearchQuery $query, SearchResult $result): ?array
     {
-        if (! $query->hasTerm() || $result->isEmpty() || $query->page > 1 || $query->hasFilters()) {
+        if ($this->isThin($query, $result)) {
             return null;
         }
 
-        $narrative = app(PageNarrative::class)->forSearch(
-            $query->term,
-            $result->groups->items(),
-            $query->market,
-            $result->groups->total(),
+        $sections = BlockSections::assemble(
+            app(PageCopy::class)->forRegion('search', 'below_grid', $this->context($query, $result)),
         );
 
-        // Rendered as FAQPage as well as visible text. Both halves are required:
-        // structured data whose answer is not on the page is a misrepresentation,
-        // and search engines have started treating it as one.
-        if ($narrative['faq'] !== []) {
-            app(PageMeta::class)->addJsonLd(StructuredData::faq($narrative['faq']));
+        return $sections === [] ? null : ['sections' => $sections];
+    }
+
+    /**
+     * The optional sentence above the grid.
+     *
+     * @return list<array{kind: string, parts: list<array<string, mixed>>}>|null
+     */
+    private function intro(SearchQuery $query, SearchResult $result): ?array
+    {
+        if ($this->isThin($query, $result)) {
+            return null;
         }
 
-        return $narrative;
+        $blocks = app(PageCopy::class)->forRegion('search', 'above_grid', $this->context($query, $result));
+
+        return $blocks === [] ? null : $blocks;
+    }
+
+    /**
+     * The copy under the "nothing found" line.
+     *
+     * @return list<array{kind: string, parts: list<array<string, mixed>>}>|null
+     */
+    private function emptyCopy(SearchQuery $query, SearchResult $result): ?array
+    {
+        if (! $result->isEmpty() || ! $query->hasTerm()) {
+            return null;
+        }
+
+        $blocks = app(PageCopy::class)->forRegion('search', 'empty_state', $this->context($query, $result));
+
+        return $blocks === [] ? null : $blocks;
+    }
+
+    /**
+     * What this page can say about itself.
+     *
+     * Built once per request: the facts are read off the products actually on
+     * screen, and three regions asking for them separately would recompute the
+     * same arithmetic three times.
+     */
+    private function context(SearchQuery $query, SearchResult $result): SearchContext
+    {
+        return $this->context ??= new SearchContext(
+            $query->market,
+            $result->groups->items(),
+            $result->groups->total(),
+            $query->term,
+        );
+    }
+
+    /**
+     * Pages that may not carry copy.
+     *
+     * A filtered or paginated variant is `noindex` anyway, and repeating several
+     * hundred words across dozens of near-identical URLs is the doorway-page
+     * pattern at scale. The same rule the term links use, and it was one
+     * condition duplicated in three places before this.
+     */
+    private function isThin(SearchQuery $query, SearchResult $result): bool
+    {
+        return ! $query->hasTerm() || $result->isEmpty() || $query->page > 1 || $query->hasFilters();
     }
 
     /**
@@ -328,7 +413,8 @@ class SearchController extends Controller
      */
     private function terms(SearchQuery $query, SearchResult $result, CurrentMarket $current): array
     {
-        if (! $query->hasTerm() || $result->isEmpty() || $query->page > 1 || $query->hasFilters()) {
+        // The same rule as the copy, said once rather than three times.
+        if ($this->isThin($query, $result)) {
             return [];
         }
 

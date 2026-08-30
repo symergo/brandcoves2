@@ -8,8 +8,11 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Filament\Pages\Migration;
 use App\Models\DailyPickSet;
+use App\Models\PageBlock;
+use App\Models\PageBlockVariant;
 use App\Models\ProductGroup;
 use App\Models\User;
+use App\Services\Content\ContentEnvelope;
 use App\Services\Ops\ConfigReport;
 use App\Services\Ops\DeployTrigger;
 use Filament\Actions\Testing\TestAction;
@@ -95,7 +98,7 @@ class AdminMigrationTest extends TestCase
 
         $decoded = json_decode(base64_decode((string) $download['content']), true);
 
-        $this->assertSame(2, $decoded['version']);
+        $this->assertSame(ContentEnvelope::VERSION, $decoded['version']);
         $this->assertSame('beste-blenders', $decoded['surfaces']['editions'][0]['slug']);
 
         // The identity, never the local id — that is the entire point of the
@@ -298,7 +301,15 @@ class AdminMigrationTest extends TestCase
          * An empty export is a valid envelope containing nothing. It downloads,
          * it imports, it changes nothing on the far side, and the only symptom
          * is somebody concluding the importer is broken.
+         *
+         * "Empty" needs help now: page templates are seeded by a migration, so
+         * every environment has blocks from the moment it exists and no database
+         * is ever empty on its own. Clearing them is what puts this test back in
+         * the state it was written for.
          */
+        PageBlockVariant::query()->delete();
+        PageBlock::query()->delete();
+
         Livewire::actingAs($this->admin())
             ->test(Migration::class)
             ->call('export')

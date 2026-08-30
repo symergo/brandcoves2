@@ -36,6 +36,7 @@ cannot be recovered from a diff.
 | [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
 | [cove-curation.md](cove-curation.md) | Content / Operations | Active |
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |
+| [page-templates.md](page-templates.md) | Content / SEO | Active — replaces the copy bank |
 | [scheduled-writing.md](scheduled-writing.md) | Content / Operations | Active |
 | [gift-personas.md](gift-personas.md) | Discovery / Content | Active — not in the nav yet |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |

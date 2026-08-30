@@ -56,6 +56,15 @@ Rules that keep it honest, because fabricated markup is a manual-action risk:
 Also emitted: `BreadcrumbList` on product pages, `WebSite` with a `SearchAction`
 so a listing can offer a search box.
 
+**`FAQPage` is emitted by Coves and guides only — not by search or brand pages,
+since 2026-09-01.** Those two carried the same six templated questions across
+thousands of near-identical URLs, and Google narrowed FAQ rich results to a
+handful of authoritative government and health domains in 2023, so the markup had
+stopped paying for itself. The questions are still *on* those pages, as ordinary
+headings with their answers under them — only the JSON-LD went. A Cove keeps its
+own, where the questions are genuinely written per page. See
+[page-templates.md](page-templates.md).
+
 ## Crawl budget
 
 The real concern on search pages is not ranking, it is waste. Every filter

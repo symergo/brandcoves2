@@ -175,61 +175,10 @@ return [
      * Texte long sous une grille de résultats. Chaque ligne est soit un fait lu
      * sur la page, soit une explication exacte du fonctionnement du site.
      */
-    'narrative' => [
-        'faq_heading' => 'Questions sur :term',
-        'related_heading' => 'Recherches associées',
-        'related_intro' => 'Ce que les gens ont cherché ici après :term.',
-
-        'compare_heading' => 'Comparer :term entre boutiques',
-        'compare_1' => 'Cette page rassemble chaque :term pour lequel nous trouvons un prix en direct et affiche une fiche par produit physique, pas une fiche par annonce. Cette distinction justifie à elle seule la page : une boutique qui vend le même :term que trois autres propose le même objet à un chiffre différent, et la seule question intéressante est de savoir lequel est le plus bas aujourd’hui.',
-        'compare_2' => ':comparable des :shown produits affichés sont vendus par plus d’une boutique : chacune de ces fiches est donc déjà une comparaison, l’offre la moins chère en premier, le reste à un clic, et le nom de la boutique sur chacune. Lorsqu’un produit n’est vendu que par une boutique, nous le disons plutôt que de laisser croire à un choix inexistant.',
-        'compare_3' => 'Les offres viennent des flux des marchands et de requêtes en direct au moment où vous chargez la page, d’où l’écart possible avec un prix vu ce matin. Chaque lien mène à la boutique qui fait l’offre : nous ne vendons rien nous-mêmes et ne détenons aucun stock.',
-
-        'prices_heading' => 'Ce que signifient les prix pour :term',
-        'prices_1' => 'Les prix de cette page vont de :low à :high, et cet écart est le plus souvent un écart de produits, pas de boutiques, le :term le moins cher et le plus cher sont rarement la même chose avec une autre étiquette. Trier par prix reste le moyen le plus rapide de voir où se situe le milieu utile de cette fourchette.',
-        'prices_2' => 'Une étiquette de remise est mesurée sur notre propre prix médian à 30 jours pour ce produit précis, jamais sur un prix barré affiché par une boutique. Les deux divergent plus souvent qu’on ne le croit : un prix « avant » est une décision marketing, une médiane est ce que la chose a réellement coûté pendant un mois chez tous ceux qui la vendent. Si rien n’a bougé, aucune étiquette n’apparaît.',
-        'prices_3' => ':reduced produits de cette page sont actuellement sous cette médiane, le plus fort écart étant de :percent%. Prix et stocks sont revérifiés deux fois par jour et les sources en direct sont interrogées à chaque recherche : ce n’est pas un instantané de la semaine dernière.',
-
-        'choosing_heading' => 'Choisir entre :term',
-        'choosing_1' => 'Commencez par le nombre d’offres plutôt que par le prix. Un produit référencé chez quatre boutiques a un vrai prix de marché et un plancher fiable ; un produit vendu par une seule boutique a un prix et aucun moyen de le vérifier, ce qu’il vaut mieux savoir avant de conclure à la bonne affaire.',
-        'choosing_2' => 'Vérifiez ensuite la disponibilité. Tout est en stock par défaut sur cette page, car un prix qu’on ne peut pas payer n’est pas une offre, désactivez le filtre pour voir l’ensemble, y compris ce qui est temporairement indisponible. L’historique de prix sur chaque fiche produit indique si aujourd’hui est réellement un bon moment ou un jour ordinaire.',
-        'choosing_3' => 'Parmi les marques présentes dans ces résultats : :brands. Chacune dispose de sa propre page listant tout ce que nous référençons, avec la même comparaison entre boutiques.',
-
-        'faq_price_q' => 'Combien coûte :term ?',
-        'faq_price_a' => 'Sur cette page, :term va de :low à :high. Le bas et le haut correspondent généralement à des produits différents, pas au même produit à deux prix.',
-        'faq_where_q' => 'Où acheter :term ?',
-        'faq_where_a' => 'Chez les boutiques indiquées sur chaque fiche, cette page réunit :shops annonces de boutiques sur les produits affichés. Nous sommes un site de découverte, pas un marchand : chaque lien mène à la boutique qui fait l’offre, et vous achetez chez elle, à ses conditions.',
-        'faq_fresh_q' => 'Ces prix pour :term sont-ils à jour ?',
-        'faq_fresh_a' => 'Les prix des flux sont rafraîchis deux fois par jour et les sources en direct sont interrogées lors de la recherche : cette page reflète aujourd’hui, pas la semaine dernière. Un prix peut encore changer entre le chargement de la page et l’arrivée en boutique ; la page du marchand fait toujours foi.',
-    ],
 
     /*
      * La même idée sur une page de marque : ce lecteur a déjà choisi la marque.
      */
-    'brand_narrative' => [
-        'faq_heading' => 'Questions sur :brand',
-        'related_heading' => 'Recherches associées',
-        'related_intro' => 'Ce que les gens ont cherché ici autour de :brand.',
-
-        'choosing_heading' => 'Choisir un produit :brand',
-        'choosing_1' => 'Regardez le nombre d’offres avant le prix. Un produit :brand vendu par quatre boutiques a un prix fiable ; vendu par une seule, il a un prix et rien pour le vérifier. Tout est en stock par défaut, car un prix qu’on ne peut pas payer n’est pas une offre.',
-        'choosing_2' => 'Les prix vont ici de :low à :high. C’est une gamme de produits et non une gamme de marges : trier par prix montre où se situe la gamme :brand, pas qui est le moins cher.',
-        'choosing_3' => 'Chaque fiche produit porte le tableau complet des offres et 90 jours d’historique de prix, de quoi voir si aujourd’hui est un bon moment pour acheter tel produit :brand ou un moment ordinaire.',
-
-        'faq_price_q' => 'Combien coûtent les produits :brand ?',
-        'faq_price_a' => 'Les produits :brand de cette page vont de :low à :high. Le bas et le haut correspondent généralement à des produits différents, pas au même à deux prix.',
-        'faq_where_q' => 'Quelles boutiques vendent :brand ?',
-        'faq_where_a' => 'Celles nommées sur chaque fiche, cette page réunit :shops annonces de boutiques sur les produits :brand affichés. Nous présentons, nous ne vendons pas : chaque lien mène à la boutique qui fait l’offre.',
-        'faq_discount_q' => ':brand est-il en promotion en ce moment ?',
-        'faq_discount_a' => 'Oui, :reduced produits :brand sont actuellement sous leur prix médian à 30 jours, le plus fort écart étant de :percent%. C’est mesuré sur notre propre historique de prix et non sur un prix barré : il s’agit donc d’un mouvement réel.',
-        'about_heading' => 'À propos de :brand',
-        'about_1' => 'Sur ce marché, :brand apparaît en :categories. C’est ce que la marque signifie ici, et pas toujours ce que laisse entendre son catalogue mondial : un nom peut être une référence dans une catégorie qu’il ne vend presque pas dans un pays donné.',
-        'about_2' => 'L’essentiel relève de :category, et c’est là que comparer vaut le plus la peine : plusieurs boutiques y vendent le même modèle :brand et ne s’accordent pas sur le prix.',
-        'about_3' => 'Tout ce qui figure sur cette page est un produit que :brand vend réellement ici, rassemblé depuis les boutiques que nous suivons et non depuis le site de :brand. Une fiche par produit et non par annonce : deux boutiques vendant la même chose donnent un produit à deux prix, pas deux résultats.',
-        'stocked_heading' => 'Où :brand est vendu',
-        'stocked_1' => ':shop propose plus de :brand que toute autre boutique que nous suivons, ce qui en fait un bon point de départ et un mauvais point d’arrivée : l’offre la moins chère sur un produit donné se trouve souvent ailleurs, et elle figure de toute façon sur la fiche.',
-        'stocked_2' => ':comparable des :shown produits :brand affichés ici sont vendus par plus d’une boutique. Ce sont ceux dont le prix est un prix de marché et non l’avis d’une seule enseigne. Quand un seul magasin vend un article, nous le disons plutôt que de suggérer un choix qui n’existe pas.',
-    ],
 
     'product' => [
         'from' => 'à partir de',

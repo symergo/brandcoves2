@@ -1,6 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
+import PageBlocks from '../Components/PageBlocks'
+import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
@@ -61,6 +63,8 @@ interface Props {
     related: { name: string; url: string }[]
     /** The long copy under the grid. Null on any variant that is noindex. */
     narrative: Narrative | null
+    intro: BlockPayload[] | null
+    emptyCopy: BlockPayload[] | null
 }
 
 /**
@@ -87,6 +91,8 @@ export default function Brand({
     coves,
     related,
     narrative,
+    intro,
+    emptyCopy,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -177,6 +183,16 @@ export default function Brand({
                         ))}
                     </div>
                 )}
+
+                {/*
+                  An editor's sentence about this brand, above the products.
+
+                  This page opened with templated statistics until 2026-08-10,
+                  when they were removed for being arithmetic in sentences, the
+                  same on every brand. Nothing generates what goes here and it
+                  ships empty — a place, not a comeback.
+                */}
+                <PageBlocks blocks={intro} className="mt-4 max-w-3xl" />
 
                 {terms.length > 0 && (
                     <nav className="mt-4" aria-label={t('search.terms_heading')}>
@@ -351,7 +367,14 @@ export default function Brand({
                     {results.total === 0 ? (
                         <div className="rounded-card border border-line bg-card p-8 text-center">
                             <p className="font-medium">{t('brand.empty', { brand: brand.name })}</p>
-                            <p className="mt-2 text-sm text-ink-soft">{t('brand.empty_hint')}</p>
+
+                            {/*
+                              The line above is chrome and always renders; this
+                              is the editor's advice under it. Shown even on a
+                              noindex sub-search, because it is for the reader
+                              rather than for a crawler.
+                            */}
+                            <PageBlocks blocks={emptyCopy} className="mx-auto mt-2 max-w-xl" />
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
@@ -584,14 +607,7 @@ export default function Brand({
               2-column layout, and on a wide screen its own columns came out
               narrower than the product cards beside them.
             */}
-            {narrative && (
-                <PageNarrative
-                    narrative={narrative}
-                    faqHeading={t('brand_narrative.faq_heading', { brand: brand.name })}
-                    relatedHeading={t('brand_narrative.related_heading')}
-                    relatedIntro={t('brand_narrative.related_intro', { brand: brand.name })}
-                />
-            )}
+            {narrative && <PageNarrative narrative={narrative} />}
         </>
     )
 }

@@ -1,6 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
+import PageBlocks from '../Components/PageBlocks'
+import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
@@ -41,6 +43,8 @@ interface Props {
     brandLinks: Record<string, string>
     /** Long-form copy below the grid. Null on pages that are noindex anyway. */
     narrative: Narrative | null
+    intro: BlockPayload[] | null
+    emptyCopy: BlockPayload[] | null
 }
 
 export default function Search({
@@ -56,6 +60,8 @@ export default function Search({
     terms,
     brandLinks,
     narrative,
+    intro,
+    emptyCopy,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -403,6 +409,17 @@ export default function Search({
                       crawler receives them as anchors, not as a comma-separated
                       sentence.
                     */}
+                    {/*
+                      An editor's sentence or two, above the products.
+
+                      Empty unless somebody wrote one — there is no fallback
+                      under a region, deliberately. Kept short by the region's
+                      own guidance in admin: several hundred words between a
+                      shopper and the first card is a worse page for them and for
+                      Google alike.
+                    */}
+                    <PageBlocks blocks={intro} className="mb-5 max-w-3xl" />
+
                     {terms.length > 0 && (
                         <nav className="mb-5" aria-label={t('search.terms_heading')}>
                             <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>
@@ -477,13 +494,22 @@ export default function Search({
                             <p className="font-medium">
                                 {emptyBecauseOfFilters ? t('search.empty_filters') : t('search.empty', { term: q })}
                             </p>
-                            {emptyBecauseOfFilters ? (
+                            {emptyBecauseOfFilters && (
                                 <Link href={`${base}?q=${encodeURIComponent(q)}`} className="mt-3 inline-block text-accent underline">
                                     {t('search.clear_filters')}
                                 </Link>
-                            ) : (
-                                <p className="mt-2 text-sm text-ink-soft">{t('search.empty_hint')}</p>
                             )}
+
+                            {/*
+                              What to try instead, written by an editor.
+
+                              The line above is chrome and always renders; this
+                              is the advice under it, and it is the one region
+                              shown on a page a crawler is told to ignore —
+                              because a dead end is exactly where a human needs a
+                              way out.
+                            */}
+                            <PageBlocks blocks={emptyCopy} className="mx-auto mt-3 max-w-xl" />
                         </div>
                     ) : view === 'store' && lanes ? (
                         /*
@@ -713,14 +739,7 @@ export default function Search({
               what gives a crawler something to understand the page as being
               about — the grid itself is almost pure markup.
             */}
-            {narrative && (
-                <PageNarrative
-                    narrative={narrative}
-                    faqHeading={t('narrative.faq_heading', { term: q })}
-                    relatedHeading={t('narrative.related_heading')}
-                    relatedIntro={t('narrative.related_intro', { term: q })}
-                />
-            )}
+            {narrative && <PageNarrative narrative={narrative} />}
         </>
     )
 }

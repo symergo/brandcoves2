@@ -125,7 +125,7 @@ hidden.
 
 `Market::isPublished()` decides, and `Market::published()` is what public-facing code iterates.
 
-**Hidden means unadvertised, not removed.** `/es/` still routes and still returns 200. The copy bank,
+**Hidden means unadvertised, not removed.** `/es/` still routes and still returns 200. The page templates,
 guides and Cove plans can all be built before the market opens, and opening it is flipping one arm of
 one `match`. Admin and console keep using `Market::cases()` for exactly that reason — an editor has
 to be able to work on the market that has not opened yet.

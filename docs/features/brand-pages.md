@@ -467,26 +467,19 @@ the same arithmetic on every brand page with the nouns swapped. A reader who scr
 products has already seen the price range; a crawler comparing two brand pages sees one template. The
 word count was real and the document it made was not.
 
-**What changed.** Not the sentences — who owns them. They are `CopySlots` entries: an editor opens
-*Page copy* in admin, picks *Brand page — long copy* and a language, and rewrites any of them, adding
-alternates that `CopyBank` draws between per page and per period. The corpus is maintained rather
-than shipped once, which is the difference between boilerplate and a template. The facts inside each
-sentence are still read off *this* page, which was always the honest half.
+**What changed.** Not the sentences — who owns them.
 
-That is also the answer to the loose end this section used to describe. `PageNarrative::forBrand()`,
-the `brand_narrative` copy-bank surface and `PageNarrativeTest`'s brand half were all left in the
-tree, rendering nowhere, precisely because retiring an editable surface that `copy_templates` may
-hold seeded rows for on staging and production is a data question. They are load-bearing again.
-
-**Seed the bank on each environment.** `php artisan bc:seed-copy --surface=brand` imports the shipped
-sentences as the first variant of every slot, so an editor's first action is rewriting a real sentence
-rather than filling a blank textarea. It is idempotent and leaves any slot that already has a row
-completely alone; without it the page still renders, because an unfilled slot falls back to the
-language file.
-
-The `FAQPage` JSON-LD comes back with the paragraphs and only with them: structured data whose answer
-is not on the page is a misrepresentation, so the markup cannot outlive — or precede — the answers it
-describes.
+> **Superseded 2026-09-01.** The `CopySlots` / `CopyBank` machinery this section described is gone,
+> replaced by page templates: the brand page has *regions*, and a region is an ordered list of blocks
+> an editor writes, orders, conditions and removes. Everything below about *which sentences the page
+> carries and why* still holds; the mechanism does not. See
+> [page-templates.md](page-templates.md).
+>
+> Two things from that release matter here. The seeding migration carried every one of these
+> sentences across, in all four languages, so nothing a reader sees changed on the day. And the
+> `FAQPage` JSON-LD **did not** come with them: Google narrowed FAQ rich results to a handful of
+> authoritative domains in 2023, so the questions survive as ordinary headings with their answers
+> under them, and only the markup went.
 
 **One guard, not two.** `BrandController::isThin()` is now the single definition of a brand URL that
 must not be indexed, and both the robots tag and the copy read it. They did not always: the copy's own
@@ -579,47 +572,23 @@ period) and the period is what moves.
 The slot is in the seed as well as the page, or every slot on a page would draw the same index and a
 site with six variants each would have six documents rather than many.
 
-**The fallback is load-bearing.** A slot with no enabled variant renders from the language file. That
-means `copy_templates` can be empty, half-filled or wrong and every page still shows the copy the
-site shipped with — which is what makes the table safe to hand to an editor. The worst they can do is
-make a page ordinary again. `bc:seed-copy` imports the shipped lines as the first variant of each
-slot, so the admin opens populated rather than blank; it never touches a slot that already has a row.
-
-**Placeholders are validated per slot.** `CopySlots` declares which each may contain and the form
-refuses the rest. A typo'd `:cont` renders literally, and a placeholder the slot cannot supply is
-worse: `:percent` in a sentence that renders even when nothing is discounted asserts a 0% saving.
-Two tests hold the shipped copy to the same rule.
-
-This also retired `BrandCopy::LEAD_VARIANTS` — the four hard-coded openings picked by
-`hash(brand) % 4` are now four rows anyone can edit, reweight, or add a fifth to.
-
-### The trap: seeded copy shadows a rewritten language file
-
-The guarantee above — *never overwrite an editor's work* — has a consequence that stays invisible
-until it bites. **Once a slot has a row, rewriting its language file changes nothing on any
-environment where `bc:seed-copy` has run.** Local development, where the table is usually empty,
-shows the new words immediately; staging and production keep serving the old ones out of the
-database.
-
-Caught exactly that way. The brand copy was rewritten to describe the brand rather than the pricing,
-the tests passed, staging deployed — and staging carried on with the old sentences. The three *new*
-slots appeared straight away, because a slot with no row falls back to the file; the *changed* ones
-did not. A page half in the new voice and half in the old is a worse symptom than none of it landing,
-because it looks like the deploy worked.
-
-`bc:seed-copy --replace` deletes the chosen slots' rows and re-imports them. Destructive by
-definition, so: opt-in, narrowed with `--surface`, `--dry-run` reports what it would remove, and
-outside a dry run it names the number of rows and asks. `--force` skips the question for a deploy
-shell with no tty.
-
-```bash
-php artisan bc:seed-copy --surface=brand --replace --dry-run   # look first
-php artisan bc:seed-copy --surface=brand --replace             # then do it
-```
-
-**Rewriting shipped copy is therefore a two-part change**: the language files, and a `--replace` run
-wherever the bank has been seeded. A row for a slot that no longer exists is left behind and is
-harmless — the admin lists slots from `CopySlots`, so an orphan is not rendered and not shown.
+> **The three subsections that stood here are history now, and are summarised rather than kept.**
+>
+> They described the copy bank's fallback (a slot with no variant rendered the language file), its
+> per-slot placeholder validation, and a trap that followed from the first: because `bc:seed-copy`
+> never overwrote an editor's row, **rewriting a language file changed nothing on any environment
+> where it had run**. That was caught the hard way — the brand copy was rewritten, the tests passed,
+> staging deployed, and staging carried on serving the old sentences out of the database. The fix was
+> `bc:seed-copy --replace`, and the rule was that rewriting shipped copy became a two-part change.
+>
+> **None of it applies any more.** There is no fallback, no language file behind a slot, and no
+> `bc:seed-copy` — so there is nothing for a rewrite to shadow. Copy is edited in `/admin` → Page
+> templates and that is the only place it lives. What replaced the fallback's safety is
+> `PageRegionsTest`, which fails the build if a required region is empty in any language.
+>
+> Placeholder validation survives in a stronger form: a region declares which placeholders it offers,
+> the admin refuses the rest, and a sentence naming a value the page cannot supply does not render at
+> all rather than asserting a zero. See [page-templates.md](page-templates.md).
 
 ### Disarming it: the bank holds only what someone wrote — since 2026-08-24
 
@@ -650,14 +619,14 @@ Together: every page renders precisely what it rendered before. Three tests in `
 all three cases — the shadow goes and the sentence is unchanged, an edited row survives, a slot with
 a real alternative keeps both rows.
 
-**What the editor sees is unaffected.** `EditPageCopy` lists every slot in `CopySlots` whether or not
-it has a row, with the shipped line as the placeholder underneath, so an empty bank still opens as a
-full-looking page. That is what makes seeding optional now: it was written when the admin was a flat
-table of rows, where a slot with no row simply was not there.
-
-> `bc:seed-copy` — and the **Import shipped copy** button that runs it — still puts all of it back.
-> That is the right behaviour after a *new* slot is added and the wrong thing to run wholesale: it
-> re-arms the shadow across the whole bank in one click.
+> **Retired 2026-09-01.** That migration's body was emptied when `CopySlots` was deleted — it had
+> already run everywhere, so its work stands, but a fresh database replays the whole history and it
+> would have fatalled on a class that no longer exists. Which is not hypothetical: it is
+> `RefreshDatabase`, on every test run.
+>
+> The shadow it was written to disarm cannot recur. There is no language file behind a block, so
+> there is nothing for a stored row to shadow, and `bc:seed-copy` — the command that re-armed it in
+> one click — is gone with the rest. See [page-templates.md](page-templates.md).
 
 ### Where it does not appear
 

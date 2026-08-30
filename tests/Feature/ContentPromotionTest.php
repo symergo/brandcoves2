@@ -6,11 +6,11 @@ namespace Tests\Feature;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
-use App\Models\CopyTemplate;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\Guide;
+use App\Models\PageBlock;
 use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Content\ContentEnvelope;
@@ -301,13 +301,20 @@ class ContentPromotionTest extends TestCase
          */
         $user = User::factory()->create(['email' => 'someone@example.test', 'name' => 'Real Person']);
 
-        CopyTemplate::create([
-            'surface' => 'brand_intro',
-            'slot' => 'lede',
+        PageBlock::create([
+            'page' => 'brand',
+            'region' => 'above_grid',
             'language' => 'nl',
-            'body' => 'Een merk met karakter.',
-            'author_id' => $user->id,
+            'kind' => PageBlock::PARAGRAPH,
+            'position' => 1,
+            'conditions' => [],
             'enabled' => true,
+            'author_id' => $user->id,
+        ])->variants()->create([
+            'body' => 'Een merk met karakter.',
+            'weight' => 1,
+            'enabled' => true,
+            'author_id' => $user->id,
         ]);
 
         $json = (string) json_encode($this->envelope()->export(ContentEnvelope::SURFACES));

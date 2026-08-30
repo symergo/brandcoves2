@@ -1,10 +1,8 @@
-import { Link } from '@inertiajs/react'
 import { useTranslations } from '../useTranslations'
+import { type Paragraph as ParagraphType, Paragraph } from './Parts'
 
 export interface Narrative {
-    sections: { heading: string; body: string[] }[]
-    faq: { q: string; a: string }[]
-    related: { term: string; url: string }[]
+    sections: { heading: string; body: ParagraphType[] }[]
 }
 
 /**
@@ -15,90 +13,54 @@ export interface Narrative {
  * a human — which Google has been explicit about for years, so it is not even a
  * trade against ranking.
  *
- * The FAQ is plain markup rather than a `<details>` accordion. Collapsed answers
- * are still indexed, but they are also still hidden, and the point of putting
- * them on the page at all is that a reader can see the answer that the FAQPage
- * structured data claims is there.
+ * ## Everything here is editable now
+ *
+ * The sections, the questions, and the related-searches block at the end are all
+ * `page_blocks` rows. This component knows only that a section has a heading and
+ * some paragraphs; which sections exist, what they say, in what order, and
+ * whether they appear at all is the editor's, in `/admin` → Page templates.
+ *
+ * That is why the FAQ `<dl>` and the related-searches markup are gone from here.
+ * A question is a heading and its answer is the paragraph under it, so an editor
+ * builds one out of the two block kinds they already have — and the chips are a
+ * paragraph containing a single `:related_searches` placeholder, which they can
+ * retitle, move above the questions, or delete.
+ *
+ * A heading with no paragraphs under it never reaches this component: the server
+ * drops the section, because a heading standing over nothing is not a shorter
+ * page, it is a broken one.
  */
-export default function PageNarrative({
-    narrative,
-    faqHeading,
-    relatedHeading,
-    relatedIntro,
-}: {
-    narrative: Narrative
-    faqHeading: string
-    relatedHeading: string
-    relatedIntro: string
-}) {
+export default function PageNarrative({ narrative }: { narrative: Narrative }) {
     const { t } = useTranslations()
 
-    if (
-        narrative.sections.length === 0 &&
-        narrative.faq.length === 0 &&
-        narrative.related.length === 0
-    ) {
+    if (narrative.sections.length === 0) {
         return null
     }
 
     return (
         <div className="mt-16 border-t border-line pt-10">
-            {narrative.sections.length > 0 && (
-                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    {narrative.sections.map((section) => (
-                        <section key={section.heading}>
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {narrative.sections.map((section, i) => (
+                    /*
+                      Keyed by index, not by heading.
+                      A heading can be empty — a section of paragraphs with no
+                      title is legal — and two sections can legitimately share
+                      one, at which point keying on the string breaks React's
+                      reconciliation in a way that shows up as content swapping
+                      between columns.
+                    */
+                    <section key={i}>
+                        {section.heading !== '' && (
                             <h2 className="font-semibold">{section.heading}</h2>
-                            <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-soft">
-                                {section.body.map((paragraph) => (
-                                    <p key={paragraph}>{paragraph}</p>
-                                ))}
-                            </div>
-                        </section>
-                    ))}
-                </div>
-            )}
-
-            {narrative.faq.length > 0 && (
-                <section className="mt-10" aria-labelledby="narrative-faq">
-                    <h2 id="narrative-faq" className="text-xl font-semibold tracking-tight">
-                        {faqHeading}
-                    </h2>
-                    <dl className="mt-4 grid gap-6 md:grid-cols-2">
-                        {narrative.faq.map((item) => (
-                            <div key={item.q}>
-                                <dt className="font-medium">{item.q}</dt>
-                                <dd className="mt-1 text-sm leading-relaxed text-ink-soft">{item.a}</dd>
-                            </div>
-                        ))}
-                    </dl>
-                </section>
-            )}
-
-            {narrative.related.length > 0 && (
-                <section className="mt-10" aria-labelledby="narrative-related">
-                    <h2 id="narrative-related" className="font-semibold">
-                        {relatedHeading}
-                    </h2>
-                    <p className="mt-1 text-sm text-ink-soft">{relatedIntro}</p>
-                    {/*
-                      Real searches from our own log, not a keyword tool's
-                      guesses — and the outbound links that stop this page being
-                      a leaf a crawler reaches and stops at.
-                    */}
-                    <ul className="mt-3 flex flex-wrap gap-2">
-                        {narrative.related.map((item) => (
-                            <li key={item.url}>
-                                <Link
-                                    href={item.url}
-                                    className="block rounded-full border border-line px-3 py-1.5 text-sm hover:border-ink"
-                                >
-                                    {item.term}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
+                        )}
+                        <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-soft">
+                            {section.body.map((parts, j) => (
+                                <Paragraph key={j} parts={parts} />
+                            ))}
+                        </div>
+                    </section>
+                ))}
+            </div>
 
             <p className="mt-8 text-xs text-ink-soft">{t('footer.affiliate')}</p>
         </div>

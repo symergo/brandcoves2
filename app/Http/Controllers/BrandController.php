@@ -11,11 +11,13 @@ use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
+use App\Services\Pages\BlockSections;
+use App\Services\Pages\Context\BrandContext;
+use App\Services\Pages\PageCopy;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
 use App\Services\Seo\PageMeta;
-use App\Services\Seo\PageNarrative;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
@@ -86,6 +88,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class BrandController extends Controller
 {
+    /** Built once per request; three regions ask for the same facts. */
+    private ?BrandContext $pageContext = null;
+
     /**
      * `string $marketSegment` is declared and unused on purpose.
      *
@@ -170,6 +175,24 @@ class BrandController extends Controller
              * that is noindex — see narrative().
              */
             'narrative' => $this->narrative($stat, $result, $query, $market),
+
+            /*
+             * A sentence or two above the products, if an editor wrote one.
+             *
+             * A brand page opened with templated statistics until 2026-08-10,
+             * when they were removed for being arithmetic in sentences, the same
+             * on every brand. This is a place, not a comeback: it ships empty,
+             * nothing generates it, and it is gated exactly as the long copy is.
+             */
+            'intro' => $this->intro($stat, $result, $query, $market),
+
+            /*
+             * What to read when the brand has nothing to show.
+             *
+             * The inverse guard — rendered *because* the page is empty, on
+             * noindex sub-searches too, because it is for the reader.
+             */
+            'emptyCopy' => $this->emptyCopy($stat, $result, $query, $market),
 
             /*
              * Editorial that mentions this brand, under the copy. See coves().
@@ -376,27 +399,32 @@ class BrandController extends Controller
      *
      * ## Why it is back, when coves() argued it away
      *
-     * **Removed 2026-08-16, restored 2026-08-30.** The objection was never that
-     * the sentences were false — every clause is checkable against the grid above
-     * them, which is the property that makes them publishable at all. It was that
-     * they were a template nobody could reach: assembled from the numbers,
-     * identical in shape on every brand page, and rewritable only by editing a
-     * language file and deploying.
+     * **Removed 2026-08-16, restored 2026-08-30, and rebuilt on page templates
+     * on 2026-09-01.** The objection was never that the sentences were false —
+     * every clause is checkable against the grid above them, which is the
+     * property that makes them publishable at all. It was that they were a
+     * template nobody could reach: assembled from the numbers, identical in
+     * shape on every brand page, and rewritable only by editing a language file
+     * and deploying.
      *
-     * They are `CopySlots` entries now. An editor rewrites each sentence per
-     * language in admin, adds alternates, and `CopyBank` draws between them per
-     * page and per period, so two brand pages reliably read differently and the
-     * corpus moves on a cadence without anyone touching it. A slot nobody has
-     * filled falls back to the shipped language file, so this renders correctly
-     * against an empty bank.
+     * Now there is no template. The page has *regions*, and what fills them is
+     * an ordered list of blocks an editor writes, reorders, conditions and
+     * removes — including the questions and the related searches, which used to
+     * be markup nobody could touch. What stays in this controller is the guard,
+     * because which URLs may carry copy is not an editorial decision.
      *
-     * ## The FAQ markup comes back with it, and only with it
+     * ## The FAQ markup did not come back with it
      *
-     * `FAQPage` structured data describes answers that are on the page. That is
-     * exactly why it was withdrawn when they were not, so re-adding it here is
-     * the same decision rather than a second one.
+     * `FAQPage` structured data was withdrawn from brand and search pages when
+     * the copy became blocks. The questions themselves survive as ordinary
+     * headings with answers under them, so a reader loses nothing; what ends is
+     * emitting the same six templated questions across thousands of
+     * near-identical URLs. Google narrowed FAQ rich results to a handful of
+     * authoritative domains in 2023, so the payoff was close to nil, and a Cove
+     * still emits its own hand-written FAQ where the questions are genuinely per
+     * page — see GuideController.
      *
-     * @return array{sections: list<array{heading: string, body: list<string>}>, faq: list<array{q: string, a: string}>, related: list<array{term: string, url: string}>}|null
+     * @return array{sections: list<array{heading: string, body: list<list<array<string, mixed>>>}>}|null
      */
     private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
     {
@@ -404,26 +432,69 @@ class BrandController extends Controller
             return null;
         }
 
-        $narrative = app(PageNarrative::class)->forBrand(
-            $stat->brand,
-            $result->groups->items(),
-            $market,
-            $result->groups->total(),
+        $sections = BlockSections::assemble(
+            app(PageCopy::class)->forRegion('brand', 'below_grid', $this->context($stat, $result, $market)),
+        );
+
+        return $sections === [] ? null : ['sections' => $sections];
+    }
+
+    /**
+     * The optional sentence above the grid.
+     *
+     * @return list<array{kind: string, parts: list<array<string, mixed>>}>|null
+     */
+    private function intro(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
+    {
+        if ($this->isThin($query) || $result->isEmpty()) {
+            return null;
+        }
+
+        $blocks = app(PageCopy::class)->forRegion('brand', 'above_grid', $this->context($stat, $result, $market));
+
+        return $blocks === [] ? null : $blocks;
+    }
+
+    /**
+     * The copy under the "nothing here" line.
+     *
+     * @return list<array{kind: string, parts: list<array<string, mixed>>}>|null
+     */
+    private function emptyCopy(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
+    {
+        if (! $result->isEmpty()) {
+            return null;
+        }
+
+        $blocks = app(PageCopy::class)->forRegion('brand', 'empty_state', $this->context($stat, $result, $market));
+
+        return $blocks === [] ? null : $blocks;
+    }
+
+    /**
+     * What this page can say about itself.
+     *
+     * Built once per request: the facts are read off the products on screen, and
+     * three regions asking separately would recompute the same arithmetic three
+     * times.
+     */
+    private function context(BrandStat $stat, SearchResult $result, Market $market): BrandContext
+    {
+        return $this->pageContext ??= new BrandContext(
+            market: $market,
+            items: $result->groups->items(),
+            total: $result->groups->total(),
+            brand: $stat->brand,
+            slug: $stat->slug,
             // displayName(), so the sentence naming the leading shop says
             // "Coolblue" like every other surface rather than "Coolblue BE".
-            $stat->topMerchant?->displayName(),
-            $stat->top_category,
-            array_values(array_filter(array_map(
+            topShop: $stat->topMerchant?->displayName(),
+            topCategory: $stat->top_category,
+            categories: array_values(array_filter(array_map(
                 fn ($row) => is_array($row) ? ($row['category'] ?? null) : null,
                 (array) $stat->categories,
             ))),
         );
-
-        if ($narrative['faq'] !== []) {
-            app(PageMeta::class)->addJsonLd(StructuredData::faq($narrative['faq']));
-        }
-
-        return $narrative;
     }
 
     /**

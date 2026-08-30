@@ -35434,6 +35434,66 @@ function Login({ googleEnabled }) {
 	})] });
 }
 //#endregion
+//#region resources/js/Components/Parts.tsx
+/** Does this paragraph draw a block of its own rather than a sentence? */
+function isWidget(parts) {
+	return parts.length === 1 && parts[0].t === "chips";
+}
+/**
+* A row of pills.
+*
+* Server-rendered through SSR, so a crawler receives real anchors rather than a
+* comma-separated sentence — which is the only reason these are worth having on
+* an indexable page at all.
+*/
+function Chips({ items }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
+		className: "mt-3 flex flex-wrap gap-2",
+		children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+			href: item.url,
+			className: "block rounded-full border border-line px-3 py-1.5 text-sm hover:border-ink",
+			children: item.label
+		}) }, item.url))
+	});
+}
+/**
+* Inline links, comma-joined, with "and" left to the sentence around them.
+*
+* Punctuation stays out of here on purpose: the editor wrote the sentence and
+* knows whether it wants a comma, a full stop or nothing after the list.
+*/
+function Links({ items }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: items.map((item, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [i > 0 && ", ", /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+		href: item.url,
+		className: "underline hover:text-accent",
+		children: item.label
+	})] }, item.url)) });
+}
+function Parts({ parts }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: parts.map((part, i) => {
+		if (part.t === "text") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: part.v }, i);
+		if (part.t === "links") return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Links, { items: part.items }, i);
+		return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chips, { items: part.items }, i);
+	}) });
+}
+/**
+* One paragraph.
+*
+* A widget is not wrapped in a `<p>` — a `<ul>` inside one is invalid HTML that
+* browsers silently repair by closing the paragraph early, which is exactly the
+* kind of bug that renders fine and breaks a crawler's parse. This is the render
+* half of the "a widget must be alone in its paragraph" rule the admin also
+* validates.
+*/
+function Paragraph({ parts, className }) {
+	if (parts.length === 0) return null;
+	if (isWidget(parts)) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Parts, { parts });
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		className,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Parts, { parts })
+	});
+}
+//#endregion
 //#region resources/js/Components/PageNarrative.tsx
 /**
 * The long copy below a results grid.
@@ -35443,73 +35503,67 @@ function Login({ googleEnabled }) {
 * a human — which Google has been explicit about for years, so it is not even a
 * trade against ranking.
 *
-* The FAQ is plain markup rather than a `<details>` accordion. Collapsed answers
-* are still indexed, but they are also still hidden, and the point of putting
-* them on the page at all is that a reader can see the answer that the FAQPage
-* structured data claims is there.
+* ## Everything here is editable now
+*
+* The sections, the questions, and the related-searches block at the end are all
+* `page_blocks` rows. This component knows only that a section has a heading and
+* some paragraphs; which sections exist, what they say, in what order, and
+* whether they appear at all is the editor's, in `/admin` → Page templates.
+*
+* That is why the FAQ `<dl>` and the related-searches markup are gone from here.
+* A question is a heading and its answer is the paragraph under it, so an editor
+* builds one out of the two block kinds they already have — and the chips are a
+* paragraph containing a single `:related_searches` placeholder, which they can
+* retitle, move above the questions, or delete.
+*
+* A heading with no paragraphs under it never reaches this component: the server
+* drops the section, because a heading standing over nothing is not a shorter
+* page, it is a broken one.
 */
-function PageNarrative({ narrative, faqHeading, relatedHeading, relatedIntro }) {
+function PageNarrative({ narrative }) {
 	const { t } = useTranslations();
-	if (narrative.sections.length === 0 && narrative.faq.length === 0 && narrative.related.length === 0) return null;
+	if (narrative.sections.length === 0) return null;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 		className: "mt-16 border-t border-line pt-10",
-		children: [
-			narrative.sections.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-				className: "grid gap-8 md:grid-cols-2 lg:grid-cols-3",
-				children: narrative.sections.map((section) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "font-semibold",
-					children: section.heading
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "mt-2 space-y-2 text-sm leading-relaxed text-ink-soft",
-					children: section.body.map((paragraph) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: paragraph }, paragraph))
-				})] }, section.heading))
-			}),
-			narrative.faq.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-				className: "mt-10",
-				"aria-labelledby": "narrative-faq",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					id: "narrative-faq",
-					className: "text-xl font-semibold tracking-tight",
-					children: faqHeading
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dl", {
-					className: "mt-4 grid gap-6 md:grid-cols-2",
-					children: narrative.faq.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("dt", {
-						className: "font-medium",
-						children: item.q
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("dd", {
-						className: "mt-1 text-sm leading-relaxed text-ink-soft",
-						children: item.a
-					})] }, item.q))
-				})]
-			}),
-			narrative.related.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-				className: "mt-10",
-				"aria-labelledby": "narrative-related",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-						id: "narrative-related",
-						className: "font-semibold",
-						children: relatedHeading
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-1 text-sm text-ink-soft",
-						children: relatedIntro
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", {
-						className: "mt-3 flex flex-wrap gap-2",
-						children: narrative.related.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("li", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-							href: item.url,
-							className: "block rounded-full border border-line px-3 py-1.5 text-sm hover:border-ink",
-							children: item.term
-						}) }, item.url))
-					})
-				]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-8 text-xs text-ink-soft",
-				children: t("footer.affiliate")
-			})
-		]
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+			className: "grid gap-8 md:grid-cols-2 lg:grid-cols-3",
+			children: narrative.sections.map((section, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", { children: [section.heading !== "" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				className: "font-semibold",
+				children: section.heading
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+				className: "mt-2 space-y-2 text-sm leading-relaxed text-ink-soft",
+				children: section.body.map((parts, j) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paragraph, { parts }, j))
+			})] }, i))
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+			className: "mt-8 text-xs text-ink-soft",
+			children: t("footer.affiliate")
+		})]
+	});
+}
+//#endregion
+//#region resources/js/Components/PageBlocks.tsx
+/**
+* A region rendered as a single column of prose.
+*
+* The `flow` layout: above the grid, and inside an empty state. No column grid,
+* because those places are narrow and short by design — a region that wants
+* columns is `below_grid`, and that one is assembled into sections server-side.
+*
+* Renders nothing at all when the region is empty, which is the ordinary state
+* of `above_grid` until somebody writes something. There is no fallback beneath
+* it and that is deliberate: fixed system text is what this replaced.
+*/
+function PageBlocks({ blocks, className }) {
+	if (!blocks || blocks.length === 0) return null;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className,
+		children: blocks.map((block, i) => block.kind === "heading" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+			className: "mb-1 font-semibold",
+			children: block.parts.map((p) => p.t === "text" ? p.v : "").join("")
+		}, i) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paragraph, {
+			parts: block.parts,
+			className: "text-sm leading-relaxed text-ink-soft [&+p]:mt-2"
+		}, i))
 	});
 }
 //#endregion
@@ -35633,7 +35687,7 @@ var Brand_exports = /* @__PURE__ */ __exportAll({ default: () => Brand });
 * discounted, sort, pagination) is the same as search, because it is the same
 * query object underneath.
 */
-function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves, related, narrative }) {
+function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves, related, narrative, intro, emptyCopy }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
@@ -35702,6 +35756,10 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 							})
 						]
 					}, word))]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageBlocks, {
+					blocks: intro,
+					className: "mt-4 max-w-3xl"
 				}),
 				terms.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
 					className: "mt-4",
@@ -35844,9 +35902,9 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "font-medium",
 								children: t("brand.empty", { brand: brand.name })
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "mt-2 text-sm text-ink-soft",
-								children: t("brand.empty_hint")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageBlocks, {
+								blocks: emptyCopy,
+								className: "mx-auto mt-2 max-w-xl"
 							})]
 						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							className: "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4",
@@ -35980,12 +36038,7 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 				})
 			]
 		}),
-		narrative && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageNarrative, {
-			narrative,
-			faqHeading: t("brand_narrative.faq_heading", { brand: brand.name }),
-			relatedHeading: t("brand_narrative.related_heading"),
-			relatedIntro: t("brand_narrative.related_intro", { brand: brand.name })
-		})
+		narrative && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageNarrative, { narrative })
 	] });
 }
 //#endregion
@@ -43090,7 +43143,7 @@ function Scan() {
 //#endregion
 //#region resources/js/Pages/Search.tsx
 var Search_exports = /* @__PURE__ */ __exportAll({ default: () => Search });
-function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, pastedLink, terms, brandLinks, narrative }) {
+function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, pastedLink, terms, brandLinks, narrative, intro, emptyCopy }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
@@ -43252,6 +43305,10 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 							})]
 						})]
 					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageBlocks, {
+						blocks: intro,
+						className: "mb-5 max-w-3xl"
+					}),
 					terms.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("nav", {
 						className: "mb-5",
 						"aria-label": t("search.terms_heading"),
@@ -43323,17 +43380,21 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 					}),
 					results.total === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 						className: "rounded-card border border-line bg-card p-8 text-center",
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "font-medium",
-							children: emptyBecauseOfFilters ? t("search.empty_filters") : t("search.empty", { term: q })
-						}), emptyBecauseOfFilters ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-							href: `${base}?q=${encodeURIComponent(q)}`,
-							className: "mt-3 inline-block text-accent underline",
-							children: t("search.clear_filters")
-						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-2 text-sm text-ink-soft",
-							children: t("search.empty_hint")
-						})]
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "font-medium",
+								children: emptyBecauseOfFilters ? t("search.empty_filters") : t("search.empty", { term: q })
+							}),
+							emptyBecauseOfFilters && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+								href: `${base}?q=${encodeURIComponent(q)}`,
+								className: "mt-3 inline-block text-accent underline",
+								children: t("search.clear_filters")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageBlocks, {
+								blocks: emptyCopy,
+								className: "mx-auto mt-3 max-w-xl"
+							})
+						]
 					}) : view === "store" && lanes ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 						className: "-mx-1 flex snap-x gap-4 overflow-x-auto px-1 pb-3",
 						children: lanes.map(({ shop, logo, items }) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
@@ -43432,12 +43493,7 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 				]
 			})]
 		}),
-		narrative && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageNarrative, {
-			narrative,
-			faqHeading: t("narrative.faq_heading", { term: q }),
-			relatedHeading: t("narrative.related_heading"),
-			relatedIntro: t("narrative.related_intro", { term: q })
-		})
+		narrative && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageNarrative, { narrative })
 	] });
 }
 function Toggle({ label, checked, onChange }) {

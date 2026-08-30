@@ -21,8 +21,8 @@ use App\Services\Discover\Retrievers\SlotsRetriever;
 use App\Services\Discover\Retrievers\SpectrumRetriever;
 use App\Services\Discover\Retrievers\TwoTowerRetriever;
 use App\Services\Discover\Retrievers\ValueRetriever;
+use App\Services\Pages\PageCopy;
 use App\Services\Seo\BrandLinker;
-use App\Services\Seo\CopyBank;
 use App\Services\Seo\PageMeta;
 use App\Services\Settings\AiSettingsStore;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -53,14 +53,21 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(BrandLinker::class);
 
         /*
-         * Scoped for the same reason, and it matters more here: PageNarrative
-         * asks for around thirty slots on one render, each through app(). Without
-         * a shared instance every one of those is a fresh object with an empty
-         * memo, so the two-minute cache is hit thirty times per page instead of
-         * once. Scoped rather than singleton so an editor's save is visible on
-         * the next request rather than after an Octane worker restarts.
+         * The page templates.
+         *
+         * Scoped, not singleton: under FrankenPHP and Octane the container
+         * persists between requests, and this memoises a language's whole block
+         * set — a singleton would serve the copy an editor replaced until the
+         * worker happened to restart. Scoped and not transient because a render
+         * asks for three regions, and a fresh instance each time turns one cache
+         * read into three.
+         *
+         * `PageCopy::flush()` forgets this instance as well as the cache entry.
+         * Without that, the Livewire round-trip that just saved re-renders from
+         * the copy it had already read, and the editor concludes the admin does
+         * not work — which is exactly what the copy bank this replaced did.
          */
-        $this->app->scoped(CopyBank::class);
+        $this->app->scoped(PageCopy::class);
 
         /*
          * Scoped for the same reason again: the gift engine asks for a group's

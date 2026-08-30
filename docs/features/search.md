@@ -173,7 +173,7 @@ search folds live offers in and moves `merchant_count`.
 ### What this cost elsewhere
 
 Lowering the session threshold to 0.45 widens **every** `<%` in the codebase, not just search's.
-`SpectrumRetriever::anchor()` and `PageNarrative::related()` were written against Postgres' 0.6 and
+`SpectrumRetriever::anchor()` and `RelatedSearchQuery::for()` were written against Postgres' 0.6 and
 now re-check against `trigram_threshold_strict` explicitly. Both answer "what is near this?", where a
 loose match is a wrong neighbour rather than a forgiving typo — and the narrative's chips are rendered
 as related searches on an indexable page, so a bad one is a link promising something the target does

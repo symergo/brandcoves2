@@ -233,7 +233,8 @@ class Migration extends Page implements HasForms
     {
         $known = [
             'feeds' => 'Feeds — registration only, never switched on',
-            'copy' => 'Copy bank',
+            'blocks' => 'Page templates — blocks and their variants',
+            'copy' => 'Copy bank (retired — dropped on import)',
             'guides' => 'Guides and their items',
             'topics' => 'Cove topics',
             'editions' => 'Coves and their picks — Daily, personas, guides',
@@ -318,7 +319,14 @@ class Migration extends Page implements HasForms
             'plans' => DB::table('cove_plans')->count(),
             'curated products' => DB::table('cove_plan_items')->count(),
             'topics' => DB::table('guide_topics')->count(),
-            'copy' => DB::table('copy_templates')->count(),
+            /*
+             * Two rows rather than one, for the reason the Cove kinds are broken
+             * out: "412 blocks" on both sides can hide that one environment has
+             * no French, which is exactly the state this screen exists to catch
+             * before somebody promotes over it.
+             */
+            'page blocks' => DB::table('page_blocks')->count(),
+            'block variants' => DB::table('page_block_variants')->count(),
             'feeds' => DB::table('feeds')->count(),
             'products' => DB::table('product_groups')->count(),
         ];

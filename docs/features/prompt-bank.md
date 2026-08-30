@@ -25,7 +25,12 @@ empty, half-filled or wrong and every build still produces exactly what it produ
 before the table existed.
 
 That fallback is the whole reason this is safe to hand over: an editor cannot break a
-Cove by deleting a row. It is the same guarantee `CopyBank` gives page copy.
+Cove by deleting a row.
+
+> Page copy used to give the same guarantee and deliberately no longer does: a region with no blocks
+> renders nothing, because fixed system text was the thing page templates replaced. A prompt is not
+> copy — a blank one produces no article at all rather than a shorter one — so the floor stays here.
+> See [page-templates.md](page-templates.md).
 
 Clearing a field means "back to the shipped prompt", not "send the model an empty
 system message" — the same convention as `AiSettingsStore`, where a null value

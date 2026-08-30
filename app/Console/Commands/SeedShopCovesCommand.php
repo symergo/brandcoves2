@@ -19,7 +19,8 @@ use Illuminate\Support\Str;
 /**
  * Publish the shipped Shop Coves into the markets that have those shops.
  *
- * The counterpart to `bc:seed-copy`, and it exists for the same reason: text
+ * The counterpart to the page-template seeding migration, and it exists for the
+ * same reason: text
  * that ships in the repository is invisible to the editor until something puts
  * it in the database, and every other Cove kind is a database row that a person
  * can open and rewrite. A Shop Cove read straight out of a PHP file would be the

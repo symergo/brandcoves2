@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Content;
 
-use App\Models\CopyTemplate;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\GuideTopic;
+use App\Models\PageBlock;
 use App\Models\ProductGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -63,8 +63,20 @@ class ContentEnvelope
      * travel in editions with every other kind. A v1 envelope is still
      * readable — its guides rows are folded into editions on the way in, so an
      * export taken before the change still imports. See importLegacyGuides().
+     *
+     * Version 3 retired the `copy` surface, when page copy stopped being slots in
+     * a code registry and became blocks an editor arranges. A v2 envelope's copy
+     * rows are **dropped and named** rather than converted: every environment is
+     * seeded identically by the release migration, so importing them would recreate
+     * the same sentences under a different identity and print the region twice.
+     *
+     * The comparison below was `!==` until version 3, which made every one of these
+     * paragraphs a lie — a v1 envelope was rejected three frames before
+     * `importLegacyGuides()` could ever run, so that method has been unreachable
+     * since the day it was written. The question this guard is asking is "can this
+     * build read that file", and it is a file from a **newer** build that it cannot.
      */
-    public const VERSION = 2;
+    public const VERSION = 3;
 
     /**
      * What may travel, in dependency order.
@@ -73,7 +85,17 @@ class ContentEnvelope
      * another edition's
 eatured_cove_id can point at it.
      */
-    public const SURFACES = ['feeds', 'copy', 'editions', 'topics', 'plans'];
+    public const SURFACES = ['feeds', 'blocks', 'editions', 'topics', 'plans'];
+
+    /**
+     * Surfaces an older envelope may carry that this build no longer writes.
+     *
+     * Accepted on import so an export taken before the change still loads, and
+     * handled by an arm that says what it did with them rather than silently
+     * skipping — a dropped row nobody is told about is the failure mode this
+     * whole class is arranged to avoid.
+     */
+    private const RETIRED = ['copy', 'guides'];
 
     /**
      * Columns stripped on the way out, per surface.
@@ -90,7 +112,7 @@ eatured_cove_id can point at it.
      */
     private const DROP = [
         'feeds' => ['id', 'merchant_id', 'last_run_at', 'last_row_count', 'last_error', 'created_at', 'updated_at'],
-        'copy' => ['id', 'author_id', 'created_at', 'updated_at'],
+        'blocks' => ['id', 'author_id', 'created_at', 'updated_at'],
         'topics' => ['id', 'guide_id', 'edition_id', 'plan_id', 'created_at', 'updated_at', 'last_attempt_at', 'attempts'],
         'editions' => ['id', 'guide_id', 'featured_cove_id', 'folded_from_guide_id', 'challenge_group_id', 'created_at', 'updated_at'],
         'plans' => ['id', 'edition_id', 'created_by', 'created_at', 'updated_at'],
@@ -110,7 +132,7 @@ eatured_cove_id can point at it.
         foreach ($surfaces as $surface) {
             $out[$surface] = match ($surface) {
                 'feeds' => $this->exportFeeds(),
-                'copy' => $this->exportCopy(),
+                'blocks' => $this->exportBlocks(),
                 'topics' => $this->exportTopics(),
                 'editions' => $this->exportEditions(),
                 'plans' => $this->exportPlans(),
@@ -138,9 +160,14 @@ eatured_cove_id can point at it.
     {
         $version = (int) ($envelope['version'] ?? 0);
 
-        if ($version !== self::VERSION) {
+        if ($version < 1) {
+            throw new \RuntimeException('This file is not a content envelope.');
+        }
+
+        if ($version > self::VERSION) {
             throw new \RuntimeException(
-                "Envelope is version {$version}, this build reads ".self::VERSION.'.'
+                "Envelope is version {$version}, exported by a newer build than this one, which reads "
+                .self::VERSION.'. Deploy first, then import.'
             );
         }
 
@@ -150,7 +177,7 @@ eatured_cove_id can point at it.
         DB::beginTransaction();
 
         try {
-            foreach ($this->ordered($surfaces) as $surface) {
+            foreach ($this->ordered($surfaces, forImport: true) as $surface) {
                 if (! array_key_exists($surface, $payload)) {
                     continue;
                 }
@@ -159,7 +186,10 @@ eatured_cove_id can point at it.
 
                 $report[$surface] = match ($surface) {
                     'feeds' => $this->importFeeds($rows),
-                    'copy' => $this->importCopy($rows),
+                    'blocks' => $this->importBlocks($rows),
+                    // A surface this build no longer writes. Counted and named
+                    // rather than skipped, so the report says what happened.
+                    'copy' => $this->dropRetired($rows, 'copy templates: page copy is blocks now, and this environment already has them'),
                     // A v1 envelope. Its guides become editions on the way in,
                     // so an export taken before the fold still imports.
                     'guides' => $this->importLegacyGuides($rows),
@@ -231,11 +261,36 @@ eatured_cove_id can point at it.
             ->all();
     }
 
-    /** @return list<array<string, mixed>> */
-    private function exportCopy(): array
+    /**
+     * The page templates, with their phrasings nested inside them.
+     *
+     * Nested rather than a second flat surface, because a variant has no
+     * identity independent of its block: `(page, region, language, position)`
+     * looks like a natural key for one and is not, since position is exactly
+     * what an edit changes. The same shape `plans` uses for its items.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function exportBlocks(): array
     {
-        return CopyTemplate::query()->orderBy('id')->get()
-            ->map(fn (CopyTemplate $row) => $this->strip($row->getAttributes(), 'copy'))
+        return PageBlock::query()
+            ->with(['variants' => fn ($q) => $q->orderBy('id')])
+            ->orderBy('page')->orderBy('region')->orderBy('language')->orderBy('position')
+            ->get()
+            ->map(function (PageBlock $block): array {
+                $row = $this->strip($block->getAttributes(), 'blocks');
+                $row['conditions'] = $block->conditions ?? [];
+                $row['variants'] = $block->variants
+                    ->map(fn ($variant) => [
+                        'body' => $variant->body,
+                        'weight' => $variant->weight,
+                        'enabled' => $variant->enabled,
+                        'note' => $variant->note,
+                    ])
+                    ->all();
+
+                return $row;
+            })
             ->all();
     }
 
@@ -396,17 +451,73 @@ eatured_cove_id can point at it.
      * @param  list<array<string, mixed>>  $rows
      * @return array{created:int, updated:int, dropped:list<string>}
      */
-    private function importCopy(array $rows): array
+    private function importBlocks(array $rows): array
     {
         $report = $this->report();
 
+        /*
+         * Replace per (page, region, language), never merge.
+         *
+         * An import means "make this environment match the envelope". A merge
+         * leaves behind blocks the author deleted on the far side, and no second
+         * run would ever remove them — the same reasoning `importPlans()` gives
+         * for its items, and it matters more here because position is meaningful:
+         * merged blocks would interleave two orderings into one nonsense.
+         *
+         * A partial envelope carrying only Dutch replaces only Dutch, which is
+         * the behaviour somebody sending one would expect.
+         */
+        $scopes = [];
+
         foreach ($rows as $row) {
-            $this->upsert(
-                CopyTemplate::query(),
-                ['surface' => $row['surface'], 'slot' => $row['slot'], 'language' => $row['language'], 'body' => $row['body']],
-                $row,
-                $report,
-            );
+            $scopes["{$row['page']}|{$row['region']}|{$row['language']}"] = true;
+        }
+
+        foreach (array_keys($scopes) as $scope) {
+            [$page, $region, $language] = explode('|', $scope);
+
+            // Deleted through the model, so the variants cascade and the page
+            // cache is flushed by the model hook.
+            PageBlock::query()
+                ->where('page', $page)
+                ->where('region', $region)
+                ->where('language', $language)
+                ->get()
+                ->each(fn (PageBlock $block) => $block->delete());
+        }
+
+        foreach ($rows as $row) {
+            $variants = $row['variants'] ?? [];
+            unset($row['variants']);
+
+            $block = PageBlock::query()->create($row);
+            $report['created']++;
+
+            foreach ($variants as $variant) {
+                $block->variants()->create($variant);
+            }
+        }
+
+        return $report;
+    }
+
+    /**
+     * A surface this build no longer writes.
+     *
+     * Named in the report rather than silently ignored. Dropping loudly is what
+     * this class already commits to for a product reference it cannot resolve,
+     * and the reason is the same: a row that quietly did not arrive is a bug
+     * nobody finds until somebody notices a page reads wrong.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{created:int, updated:int, dropped:list<string>}
+     */
+    private function dropRetired(array $rows, string $why): array
+    {
+        $report = $this->report();
+
+        if ($rows !== []) {
+            $report['dropped'][] = count($rows).' '.$why;
         }
 
         return $report;
@@ -702,19 +813,30 @@ eatured_cove_id can point at it.
      * @param  list<string>  $surfaces
      * @return list<string>
      */
-    private function ordered(array $surfaces): array
+    private function ordered(array $surfaces, bool $forImport = false): array
     {
-        $unknown = array_diff($surfaces, self::SURFACES);
+        /*
+         * Import accepts a surface this build no longer writes; export does not
+         * offer one.
+         *
+         * The asymmetry is the whole point of `RETIRED`. An envelope taken from
+         * an older build has to load — that is what a version number is for —
+         * and the arm that handles it says in the report what it did with those
+         * rows. Exporting one would mean writing a shape nothing reads.
+         */
+        $known = $forImport ? [...self::SURFACES, ...self::RETIRED] : self::SURFACES;
+
+        $unknown = array_diff($surfaces, $known);
 
         if ($unknown !== []) {
             throw new \InvalidArgumentException(
                 'Not a promotable surface: '.implode(', ', $unknown)
-                .'. Known: '.implode(', ', self::SURFACES).'.'
+                .'. Known: '.implode(', ', $known).'.'
             );
         }
 
         return array_values(array_filter(
-            self::SURFACES,
+            $known,
             fn (string $surface) => in_array($surface, $surfaces, true),
         ));
     }

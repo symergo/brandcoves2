@@ -178,62 +178,11 @@ return [
      * kloppende uitleg van hoe de site werkt. Geen van beide laat zich met het
      * zoekwoord opvullen, zie App\Services\Seo\PageNarrative.
      */
-    'narrative' => [
-        'faq_heading' => 'Vragen over :term',
-        'related_heading' => 'Verwante zoekopdrachten',
-        'related_intro' => 'Wat mensen hier verder zochten na :term.',
-
-        'compare_heading' => ':term vergelijken tussen winkels',
-        'compare_1' => 'Deze pagina verzamelt elke :term waarvoor we een actuele prijs vinden en toont één kaart per fysiek product, niet één kaart per aanbieding. Dat onderscheid is de hele reden dat deze pagina bestaat: een winkel die dezelfde :term verkoopt als drie andere biedt hetzelfde voorwerp aan tegen een ander getal, en de enige interessante vraag is welk getal vandaag het laagst is.',
-        'compare_2' => ':comparable van de :shown getoonde producten worden door meer dan één winkel verkocht, dus elk van die kaarten is op zich al een vergelijking, de goedkoopste aanbieding bovenaan, de rest één klik verder, met op elke kaart de naam van de winkel. Wordt iets maar door één winkel verkocht, dan zeggen we dat, in plaats van een keuze te suggereren die er niet is.',
-        'compare_3' => 'Aanbiedingen komen uit winkelfeeds en uit live opvragingen op het moment dat je de pagina laadt; daarom kan een prijs hier verschillen van wat je vanochtend zag. Elke link gaat naar de winkel die de aanbieding doet. Wij verkopen zelf niets en hebben geen voorraad.',
-
-        'prices_heading' => 'Wat de prijzen voor :term betekenen',
-        'prices_1' => 'De prijzen op deze pagina lopen van :low tot :high, en die spreiding is meestal een spreiding van producten en niet van winkels, de goedkoopste :term en de duurste zijn zelden hetzelfde ding met een andere sticker. Sorteren op prijs is de snelste manier om te zien waar het bruikbare midden van dat bereik ligt.',
-        'prices_2' => 'Een kortingslabel hier wordt gemeten tegen onze eigen 30-daagse medianprijs voor precies dat product, nooit tegen een doorgestreepte winkelprijs. Die twee verschillen vaker dan je zou denken: een "van"-prijs is een marketingbeslissing, een mediaan is wat het ding een maand lang echt heeft gekost bij iedereen die het verkoopt. Beweegt er niets echt, dan verschijnt er geen label.',
-        'prices_3' => ':reduced producten op deze pagina staan nu onder die mediaan, de grootste met :percent%. Prijzen en voorraad worden twee keer per dag opnieuw gecontroleerd en live bronnen worden bij elke zoekopdracht bevraagd, dus dit is geen momentopname van vorige week.',
-
-        'choosing_heading' => 'Kiezen tussen :term',
-        'choosing_1' => 'Begin bij het aantal aanbiedingen, niet bij de prijs. Een product dat vier winkels verkopen heeft een echte marktprijs en een bodem waar je op kunt vertrouwen; een product bij één winkel heeft een prijs en geen enkele manier om die te toetsen, en dat is het waard om te weten voordat je besluit dat het een goede deal is.',
-        'choosing_2' => 'Kijk daarna naar de voorraad. Alles op deze pagina is standaard op voorraad, want een prijs die je niet kunt kopen is geen aanbieding, je kunt dat filter uitzetten om het volledige aanbod te zien, inclusief wat tijdelijk uitverkocht is. De prijsgeschiedenis op elke productpagina laat zien of vandaag echt een goed moment is of gewoon een gemiddelde dag.',
-        'choosing_3' => 'Merken in deze resultaten zijn onder meer :brands. Elk merk heeft een eigen pagina met alles wat we ervan voeren, met dezelfde vergelijking tussen winkels.',
-
-        'faq_price_q' => 'Wat kost :term?',
-        'faq_price_a' => 'Op deze pagina loopt :term van :low tot :high. De onderkant en de bovenkant zijn meestal verschillende soorten producten en niet hetzelfde product tegen twee prijzen.',
-        'faq_where_q' => 'Waar kan ik :term kopen?',
-        'faq_where_a' => 'Bij de winkels die op elke kaart staan. Deze pagina bundelt :shops winkelaanbiedingen over de getoonde producten. Wij zijn een ontdekkingssite, geen winkel: elke link gaat naar de winkel die de aanbieding doet, en je koopt bij hen onder hun voorwaarden.',
-        'faq_fresh_q' => 'Hoe actueel zijn deze prijzen voor :term?',
-        'faq_fresh_a' => 'Feedprijzen worden twee keer per dag ververst en live bronnen worden bij het zoeken bevraagd, dus deze pagina laat vandaag zien en niet vorige week. Een prijs kan alsnog veranderen tussen het laden van de pagina en de winkel; de pagina van de winkel zelf is altijd doorslaggevend.',
-    ],
 
     /*
      * Hetzelfde idee op een merkpagina. Andere invalshoek: deze lezer heeft het
      * merk al gekozen en kiest tussen producten en winkels.
      */
-    'brand_narrative' => [
-        'faq_heading' => 'Vragen over :brand',
-        'related_heading' => 'Verwante zoekopdrachten',
-        'related_intro' => 'Wat mensen hier rond :brand zochten.',
-
-        'choosing_heading' => 'Een product van :brand kiezen',
-        'choosing_1' => 'Kijk eerst naar het aantal aanbiedingen, dan pas naar de prijs. Een product van :brand dat bij vier winkels ligt heeft een prijs die je kunt vertrouwen; bij één winkel is er een prijs en niets om die tegen af te zetten. Alles hier is standaard op voorraad, want een prijs die je niet kunt afrekenen is geen aanbieding.',
-        'choosing_2' => 'De prijzen lopen hier van :low tot :high. Dat is een reeks producten, geen reeks marges, dus sorteren op prijs laat zien waar het assortiment van :brand ligt, niet wie het goedkoopst is.',
-        'choosing_3' => 'Elke productpagina heeft de volledige aanbiedingstabel en 90 dagen prijsgeschiedenis, zodat je ziet of vandaag een echt goed moment is om een bepaald product van :brand te kopen of gewoon een doordeweeks moment.',
-
-        'faq_price_q' => 'Wat kosten :brand-producten?',
-        'faq_price_a' => ':brand-producten lopen op deze pagina van :low tot :high. De onderkant en de bovenkant zijn meestal verschillende producten, niet hetzelfde product tegen twee prijzen.',
-        'faq_where_q' => 'Welke winkels verkopen :brand?',
-        'faq_where_a' => 'De winkels die op elke kaart staan. Deze pagina bundelt :shops winkelaanbiedingen over de getoonde :brand-producten. Wij tonen en verkopen niet: elke link gaat naar de winkel die de aanbieding doet.',
-        'faq_discount_q' => 'Is :brand nu in de aanbieding?',
-        'faq_discount_a' => 'Ja, :reduced :brand-producten staan nu onder hun 30-daagse medianprijs, de grootste met :percent%. Dat is gemeten tegen onze eigen prijsgeschiedenis en niet tegen een doorgestreepte winkelprijs, dus het gaat om een echte beweging.',
-        'about_heading' => 'Over :brand',
-        'about_1' => 'In deze markt duikt :brand op in :categories. Dat is waar het merk hier voor staat, en dat is niet altijd wat de wereldwijde catalogus suggereert: een naam kan een begrip zijn in een categorie die het in een bepaald land nauwelijks verkoopt.',
-        'about_2' => 'Het grootste deel is :category, en daar levert vergelijken het meeste op, want daar verkopen meerdere winkels hetzelfde model van :brand en zijn ze het oneens over de prijs.',
-        'about_3' => 'Alles op deze pagina is een product dat :brand hier echt verkoopt, verzameld uit de winkels die we volgen en niet van de site van :brand zelf. Eén kaart per product, niet per aanbieding, dus twee winkels met hetzelfde artikel worden één product met twee prijzen in plaats van twee resultaten.',
-        'stocked_heading' => 'Waar :brand verkocht wordt',
-        'stocked_1' => ':shop heeft meer :brand dan elke andere winkel die we volgen, wat het een logisch beginpunt maakt en een slecht eindpunt: de goedkoopste aanbieding voor een bepaald product zit vaak ergens anders, en die staat hoe dan ook op de kaart.',
-        'stocked_2' => ':comparable van de :shown getoonde producten van :brand liggen bij meer dan één winkel. Daar is de prijs een marktprijs en niet de mening van één winkel. Ligt iets maar bij één winkel, dan zeggen we dat, in plaats van een keuze te suggereren die er niet is.',
-    ],
 
     'product' => [
         'from' => 'vanaf',
