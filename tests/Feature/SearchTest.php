@@ -489,4 +489,142 @@ class SearchTest extends TestCase
         // price must never surface under /es.
         $this->get("/es/p/{$group->id}/{$group->slug}")->assertNotFound();
     }
+
+    /**
+     * Picking a shop in the by-store view leaves one lane, not five.
+     *
+     * The group filter deliberately keeps a product whose offer at ANY selected
+     * shop matches — the shopper is asking "who has this at Coolblue", so the
+     * Krefel price stays on the card as a comparison. The lane view then split
+     * those same groups by merchant and gave the unselected shops columns of
+     * their own, so deselecting Krefel left Krefel on screen.
+     *
+     * The Sony is the guard: both shops sell it, so a lane query that ignores
+     * the filter cannot help but produce a Krefel lane.
+     */
+    #[Test]
+    public function the_by_store_view_shows_only_the_shops_that_were_selected(): void
+    {
+        $coolblue = Merchant::query()->where('name', 'Coolblue')->firstOrFail();
+
+        $lanes = $this->search(['view' => 'store', 'merchant' => [$coolblue->id]])
+            ->assertOk()
+            ->viewData('page')['props']['lanes'];
+
+        $this->assertSame(['Coolblue'], array_column($lanes, 'shop'));
+        $this->assertNotEmpty($lanes[0]['items']);
+    }
+
+    /**
+     * Each lane carries its shop's mark.
+     *
+     * The lane payload used to be keyed by merchant name, which could not say
+     * anything else about the shop. It is a list of records now precisely so
+     * the column header can show a logo, and `faviconUrl()` derives one from
+     * the merchant's domain when no `logo_url` was stored.
+     */
+    /**
+     * A related-term pill narrows the search without changing the view.
+     *
+     * These links were `?q=` and nothing else, so clicking one from the
+     * by-store view answered the narrower question back in the grid. Sort went
+     * the same way. `withTerm()` already states the rule the whole page follows
+     * — the visitor chose the sort and the view, and a pill is not them
+     * changing their mind about either.
+     */
+    /**
+     * Three products that share a word, so there is a related term at all.
+     *
+     * The shared fixture cannot produce one: `ResultTerms` drops any word
+     * occurring once, and no search over that feed returns two groups with a
+     * word in common outside the query itself. Built here rather than added to
+     * the feed so the counts every other test in this file asserts on do not
+     * move.
+     */
+    private function productsSharingAWord(): void
+    {
+        foreach (['hoofdtelefoon', 'oordopjes', 'speaker'] as $i => $kind) {
+            $this->describedProduct(
+                "gizmo-{$i}",
+                "Gizmo ruisonderdrukkende {$kind}",
+                'Ruisonderdrukkende audio.',
+            );
+        }
+    }
+
+    #[Test]
+    public function a_related_term_keeps_the_view_and_the_sort(): void
+    {
+        $this->productsSharingAWord();
+
+        $terms = $this->search(['q' => 'gizmo', 'view' => 'store', 'sort' => 'price_asc'])
+            ->assertOk()
+            ->viewData('page')['props']['terms'];
+
+        $this->assertNotEmpty($terms, 'no related terms to assert on');
+
+        foreach ($terms as $item) {
+            parse_str((string) parse_url($item['url'], PHP_URL_QUERY), $params);
+
+            $this->assertSame('store', $params['view'] ?? null);
+            $this->assertSame('price_asc', $params['sort'] ?? null);
+            $this->assertStringStartsWith('gizmo ', $params['q']);
+        }
+    }
+
+    #[Test]
+    public function a_related_term_carries_no_view_when_none_was_chosen(): void
+    {
+        $this->productsSharingAWord();
+
+        $terms = $this->search(['q' => 'gizmo'])
+            ->assertOk()
+            ->viewData('page')['props']['terms'];
+
+        $this->assertNotEmpty($terms);
+
+        foreach ($terms as $item) {
+            parse_str((string) parse_url($item['url'], PHP_URL_QUERY), $params);
+
+            // The defaults stay out of the URL, so the commonest link is still
+            // just `?q=`.
+            $this->assertArrayNotHasKey('view', $params);
+            $this->assertArrayNotHasKey('sort', $params);
+        }
+    }
+
+    #[Test]
+    public function each_lane_carries_the_shops_mark(): void
+    {
+        $lanes = $this->search(['view' => 'store'])
+            ->assertOk()
+            ->viewData('page')['props']['lanes'];
+
+        foreach ($lanes as $lane) {
+            $this->assertArrayHasKey('logo', $lane);
+        }
+
+        $logos = array_filter(array_column($lanes, 'logo'));
+        $this->assertNotEmpty($logos, 'no lane offered a mark at all');
+
+        // Never the affiliate network's icon: Awin's mark on every column
+        // identifies nothing, on the view whose job is telling shops apart.
+        foreach ($logos as $logo) {
+            $this->assertStringNotContainsStringIgnoringCase('awin', $logo);
+        }
+    }
+
+    #[Test]
+    public function the_by_store_view_shows_every_shop_when_none_is_selected(): void
+    {
+        $lanes = $this->search(['view' => 'store'])
+            ->assertOk()
+            ->viewData('page')['props']['lanes'];
+
+        // The narrowing above must be the filter doing its job, not the lane
+        // query having quietly lost the other shop for some other reason.
+        $shops = array_column($lanes, 'shop');
+        sort($shops);
+        $this->assertSame(['Coolblue', 'Krefel'], $shops);
+    }
 }

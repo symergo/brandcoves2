@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AmazonProduct;
 use App\Models\Event;
+use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\SearchQuery;
@@ -338,9 +339,28 @@ class SearchController extends Controller
 
         $base = $current->url('search');
 
+        /*
+         * The pill narrows the search. It does not change how you are looking
+         * at it.
+         *
+         * These links used to be `?q=` and nothing else, so clicking one in the
+         * by-store view dropped you back into the grid — the visitor asked a
+         * narrower question and got answered in a different room. Sort went the
+         * same way.
+         *
+         * `withTerm()` already states the rule ("filters, sort and view survive,
+         * because the visitor chose those"), and `toArray()` already knows which
+         * of them are worth putting in a URL, so the link is built from the pair
+         * rather than from a second hand-rolled list of parameters that would
+         * drift from them. There are no filters to carry here — `terms()`
+         * returns nothing at all once any are set — so in practice this adds
+         * `view` and `sort`, each only when it is not the default.
+         */
         return array_map(fn (string $term) => [
             'term' => $term,
-            'url' => $base.'?q='.urlencode(trim($query->term.' '.$term)),
+            'url' => $base.'?'.http_build_query(
+                $query->withTerm(trim($query->term.' '.$term))->toArray()
+            ),
         ], $terms);
     }
 
@@ -355,11 +375,26 @@ class SearchController extends Controller
         ];
     }
 
-    /** @param array<string, list<ProductGroup>> $lanes */
+    /**
+     * One column per shop, each with the shop's own mark.
+     *
+     * `faviconUrl()` is a guess derived from the merchant's domain unless a
+     * `logo_url` was stored, so it is sent as a maybe and the browser decides —
+     * the client hides the image `onError`. It deliberately does not fall back
+     * to the affiliate network's icon: Awin's mark on every column identifies
+     * nothing, on the one view whose whole job is telling shops apart.
+     *
+     * @param  list<array{merchant: Merchant, groups: list<ProductGroup>}>  $lanes
+     * @return list<array<string, mixed>>
+     */
     private function presentLanes(array $lanes): array
     {
         return array_map(
-            fn (array $groups) => array_map($this->card(...), $groups),
+            fn (array $lane) => [
+                'shop' => $lane['merchant']->displayName(),
+                'logo' => $lane['merchant']->faviconUrl(),
+                'items' => array_map($this->card(...), $lane['groups']),
+            ],
             $lanes,
         );
     }

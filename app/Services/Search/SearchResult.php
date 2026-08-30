@@ -50,7 +50,11 @@ final readonly class SearchResult
                 $this->facets['brands'] ?? [],
             ),
             'merchants' => array_map(
-                fn (array $f) => ['id' => $f['id'], 'name' => $f['name']],
+                // `logo` is read with a fallback because facets are cached for
+                // facet_cache_ttl: an entry written before the key existed is
+                // still in Redis and would otherwise be an undefined index for
+                // five minutes after a deploy.
+                fn (array $f) => ['id' => $f['id'], 'name' => $f['name'], 'logo' => $f['logo'] ?? null],
                 $this->facets['merchants'] ?? [],
             ),
             // The price range is a filter bound, not a count of anything.

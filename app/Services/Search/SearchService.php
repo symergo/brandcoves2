@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
 use App\Services\Connectors\ConnectorRegistry;
@@ -497,7 +498,7 @@ class SearchService
      * variant of one term produces the same sidebar. See `facetCacheKey()` for
      * the key and `facet_cache_ttl` for what the staleness costs.
      *
-     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, count: int}>, price: array{min: int|null, max: int|null}}
+     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>, price: array{min: int|null, max: int|null}}
      */
     private function facets(SearchQuery $query): array
     {
@@ -537,7 +538,7 @@ class SearchService
             ->map(fn ($r) => ['value' => (string) $r->brand, 'count' => (int) $r->total])
             ->all();
 
-        $merchants = DB::table('products')
+        $counted = DB::table('products')
             ->join('merchants', 'merchants.id', '=', 'products.merchant_id')
             ->joinSub((clone $base)->select('product_groups.id'), 'g', 'g.id', '=', 'products.group_id')
             ->where('products.status', 'active')
@@ -545,8 +546,34 @@ class SearchService
             ->groupBy('merchants.id', 'merchants.name')
             ->orderByDesc('total')
             ->limit(15)
+            ->get();
+
+        /*
+         * The shop's mark travels with the facet, for the chip row above the
+         * by-store lanes.
+         *
+         * Hydrated rather than derived from the joined columns: the fallback
+         * from `logo_url` to a favicon guessed from the domain lives in
+         * `Merchant::faviconUrl()`, and the country suffix is trimmed by
+         * `Merchant::displayName()`. A second copy of either rule here is a
+         * thing that can disagree with the lane headers reading the first one.
+         * One extra query, on a path that is cached for facet_cache_ttl.
+         */
+        $shops = Merchant::query()
+            ->whereIn('id', $counted->pluck('id'))
             ->get()
-            ->map(fn ($r) => ['id' => (int) $r->id, 'name' => (string) $r->name, 'count' => (int) $r->total])
+            ->keyBy('id');
+
+        $merchants = $counted
+            ->map(fn ($r) => [
+                'id' => (int) $r->id,
+                // The chips and the lane headers name the same shops, so both
+                // read displayName() — the country suffix the feed attaches is
+                // not part of the name. See Merchant::displayName().
+                'name' => $shops->get((int) $r->id)?->displayName() ?? (string) $r->name,
+                'logo' => $shops->get((int) $r->id)?->faviconUrl(),
+                'count' => (int) $r->total,
+            ])
             ->all();
 
         $price = (clone $base)->selectRaw('min(min_price) as lo, max(min_price) as hi')->first();
@@ -564,7 +591,12 @@ class SearchService
      * Capped per merchant, because one recently-ingested advertiser with a huge
      * feed would otherwise fill every lane and the view would show a single shop.
      *
-     * @return array<string, list<ProductGroup>>
+     * Keyed by nothing: a list, each entry carrying the Merchant itself rather
+     * than just its name, so the caller can put the shop's mark on the column
+     * header. A name-keyed map could not — and two merchants are allowed to
+     * share a display name across sources, which a map would silently merge.
+     *
+     * @return list<array{merchant: Merchant, groups: list<ProductGroup>}>
      */
     public function storeLanes(SearchQuery $query): array
     {
@@ -577,25 +609,60 @@ class SearchService
 
         // A window function does the capping in SQL; pulling everything back
         // and slicing in PHP would mean fetching a whole feed to show 8 rows.
-        $ranked = DB::table('products as p')
+        $offers = DB::table('products as p')
             ->join('merchants as m', 'm.id', '=', 'p.merchant_id')
             ->whereIn('p.group_id', $ids)
-            ->where('p.status', 'active')
-            ->select('p.group_id', 'm.name as merchant', 'p.price')
+            ->where('p.status', 'active');
+
+        /*
+         * The merchant filter has to be applied AGAIN here, and it means
+         * something different from the one in storedQuery().
+         *
+         * There it selects GROUPS — a group qualifies if any of its offers is
+         * from a selected shop, because the shopper is asking "who has this at
+         * Coolblue". Those groups then carry all of their other offers with
+         * them, and this view turns every offer into a lane, so unselected
+         * shops came back as lanes of their own: pick one store and the page
+         * still showed five. In the grid that extra offer is a comparison
+         * price on a card the visitor asked for; here it is a whole shop they
+         * deselected.
+         */
+        if ($query->merchantIds !== []) {
+            $offers->whereIn('p.merchant_id', $query->merchantIds);
+        }
+
+        $ranked = $offers
+            ->select('p.group_id', 'm.id as merchant_id', 'p.price')
             ->selectRaw('row_number() OVER (PARTITION BY m.id ORDER BY p.price ASC NULLS LAST, p.id) as rn')
             ->get()
             ->filter(fn ($r) => $r->rn <= $cap)
-            ->groupBy('merchant');
+            ->groupBy('merchant_id');
 
         $groups = ProductGroup::query()->whereIn('id', $ids)->get()->keyBy('id');
+        $merchants = Merchant::query()->whereIn('id', $ranked->keys())->get()->keyBy('id');
 
-        return $ranked
-            ->map(fn ($rows) => $rows
+        $lanes = [];
+
+        foreach ($ranked as $merchantId => $rows) {
+            $merchant = $merchants->get((int) $merchantId);
+
+            if ($merchant === null) {
+                continue;
+            }
+
+            $laneGroups = $rows
                 ->map(fn ($r) => $groups->get($r->group_id))
                 ->filter()
                 ->values()
-                ->all())
-            ->filter(fn (array $lane) => $lane !== [])
-            ->all();
+                ->all();
+
+            if ($laneGroups === []) {
+                continue;
+            }
+
+            $lanes[] = ['merchant' => $merchant, 'groups' => $laneGroups];
+        }
+
+        return $lanes;
     }
 }

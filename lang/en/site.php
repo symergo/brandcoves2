@@ -170,6 +170,11 @@ return [
         'price_max' => 'To',
         'brand' => 'Brand',
         'shop' => 'Shop',
+        // The chip row above the by-store lanes: the reset, and the label a
+        // screen reader hears on a chip that is currently narrowing the view.
+        'all_shops' => 'All shops',
+        'only_shop' => 'Show only :shop',
+        'hide_shop' => 'Stop showing :shop',
         'in_stock_only' => 'In stock only',
         'discounted_only' => 'Discounted only',
         'previous' => 'Previous',

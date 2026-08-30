@@ -199,6 +199,159 @@ The plan, not yet built:
 - Results render as **group cards**: *"from €X · 3 offers across 2 stores"*.
 - `store_lane_cap` = 8 per merchant in the "by store" view, so one recently-ingested merchant with a
   huge feed cannot monopolise every slot.
+
+### The shop filter means two different things, and the by-store view needs both
+
+**Fixed 2026-08-30.** Selecting a shop left the other shops' lanes on screen.
+
+`storedQuery()` applies the merchant filter as an `EXISTS` over offers, which selects **groups**: a
+product qualifies when *any* of its offers is from a selected shop. That is deliberate and stays —
+the shopper is asking "who has this at Coolblue", not "which products are Coolblue-exclusive", so
+the Krefel price stays on the card as the comparison the site exists to make.
+
+`storeLanes()` then took those group ids and split **every** offer on them by merchant. The
+qualifying groups drag all of their other offers along, and each of those became a lane, so a shopper
+who deselected Krefel still got a Krefel column. The filter has to be applied a second time inside
+the lane query, where it means "which shops get a column" rather than "which products qualify".
+
+It is the same predicate reading differently by view: in the grid an unselected shop's offer is a
+number on a card the visitor asked for; in lanes it is a whole shop they said no to.
+
+The `PARTITION BY` cap runs after the narrowing, so a filtered view still shows up to
+`store_lane_cap` per remaining shop rather than a share of it.
+
+### The lane rows show the discount
+
+**Fixed 2026-08-30.** `discountPercent` was on the payload — lanes and the grid are both built by
+`SearchController::card()` — but the lane row is a bespoke compact `<li>`, not a `ProductCard`, and
+simply never rendered it. The same result looked full-price in one view and reduced in the other.
+
+It renders as a bare `−20%` trailing the price rather than the grid's badge over the image: the lane
+is 224px wide and its thumbnail 56px, which leaves room for a suffix and none for a badge or a second
+line. The visible text drops the translated ":percent% off" wording because it does not fit, so the
+full phrase is carried on `aria-label` — otherwise a screen reader reads a price followed by an
+unexplained negative number. The sign is U+2212, matching the Daily Cove and Discover, not a hyphen.
+
+Making it visible surfaced a second thing: **a saving under one percent floored to `0` and rendered
+as `−0%`**, a badge that claims nothing while looking exactly like one that claims something.
+`ProductGroup::discountPercent()` now returns null there — the floor is still right, it is the zero
+that was not a discount. Discover already carried a client-side `> 0` guard for this, which was the
+symptom being patched where it showed rather than where it came from. `EditionPresenter` keeps a
+guard of its own because it reads the `daily_picks.discount_percent` column the builder wrote, so it
+still meets zeros stored before the fix.
+
+### The lane headers carry the shop's mark
+
+`storeLanes()` returns a list of `{merchant, groups}` rather than a name-keyed map, so the column
+header can show a logo — and because two merchants from different sources are allowed to share a
+display name, which a map would silently merge into one lane.
+
+`Merchant::faviconUrl()` supplies it: `logo_url` when one was stored, otherwise a favicon guessed
+from the merchant's own domain, and **never** the affiliate network's icon — Awin's mark on every
+column identifies nothing, on the one view whose job is telling shops apart. Because the guess is
+only a guess, the client hides the image `onError` rather than checking first; the name alone reads
+as a shop, an empty box reads as a broken one. Measured on dev, two of five shops resolve a mark.
+
+The header also **lost its product count**. The lane is capped at `store_lane_cap`, so a shop with
+four hundred matches and one with exactly eight both said "8" — a number that described the cap
+rather than the shop.
+
+### The rail folds, and gets out of the way entirely in the by-store view
+
+Brand and shop are up to 15 options each, so the two lists are thirty rows above the switches. Each
+`Facet` is now collapsible, open by default — a filter nobody can see is a filter nobody uses — with
+the count of its active options on the header, so a folded list cannot quietly hold something that is
+changing the results. The open/closed state is not persisted: a remembered collapse would greet the
+next search with a rail folded shut for reasons that no longer apply.
+
+### The by-store view has no rail at all: the shops are the control
+
+Every other view is a rail plus a grid, and the grid reflows — take 16rem off it and the cards get
+narrower. Lanes do not reflow: they are fixed-width columns that scroll sideways, so the rail costs a
+whole shop's column on precisely the view built to hold shops side by side. Measured at a 1440px
+viewport, the results area goes from 832px beside the rail to 1128px without it.
+
+Widening it exposed an older bug in the strip. A grid item's default `min-width: auto` is its
+content's intrinsic width, and the strip's content is every column laid end to end — so the track
+grew to hold all of them, the strip never became narrower than its contents, and its `overflow-x-auto`
+had nothing to scroll. **The body scrolled sideways instead**, `document.body.scrollWidth` 1204 on a
+390px viewport. `min-w-0` on the results section is the fix.
+
+So this view drops the rail and gets **`ShopChips`** instead: a row of pills above the lane strip, one
+per shop, each carrying the same mark as the column it governs. The chip and the column are the same
+object a few pixels apart, so "drop this shop" is one click on the thing you want rid of rather than
+a hunt through a checkbox list that looks nothing like it.
+
+**Three chip states, not two.** "Shown because nothing is filtered" and "shown because you picked
+it" are both true of a column but they are not the same claim, and drawing them alike made the
+resting page a row of seven solid pills — a lot of ink to say *no filter is applied*, and it left
+`All shops` no way to look like the state it is. So only a deliberate choice is solid: at rest the
+shops sit quiet and readable and `All shops` is the one filled chip.
+
+**Why a chip still counts as active when nothing is selected.** The underlying filter is a multi-select that
+means *nothing* when empty, and an empty filter shows every shop. Drawn literally that is a row of
+hollow chips directly above the evidence that all of them are on. So the chips render what is true of
+the page, not what is in the query string. That makes the first click ambiguous and it resolves the
+way the row reads: clicking a shop while everything is shown means **only this one**, not "all except
+this one" — which would have to write every other shop into the URL and would silently exclude any
+shop that appears later. Deselecting the last one returns to all, so no sequence of clicks can empty
+the strip through this control alone. `All shops` is a chip rather than a "clear" link because it is
+the same kind of thing as its neighbours: one of the row's mutually reachable states.
+
+Everything that is *not* the shop axis — brand and the two switches — sits behind a **popover** at the
+right of the same row, because none of it belongs to this view in particular. A popover and not a
+block: opened as a block it pushed the whole lane strip down the page, so reading a filter cost you
+sight of the thing you were filtering. Measured, the lanes now move 0px when it opens.
+`FilterPanel` is shared with the rail so both render one definition, and `showShops` is false here —
+a shop facet in the popover would be a second control for the state the chips already own.
+
+### Shop names lose the country suffix
+
+Feeds name an advertiser per country, so the catalogue holds `Coolblue BE`, `DreamLand BE`,
+`Action BE-NL`. That suffix is the network's bookkeeping — which advertiser account the offers came
+from — not part of the shop's name, and it tells the visitor something they already know: they chose
+the market in the switcher and every price on the page is in its currency. Repeated down a row of
+chips and again across every lane header it is noise, and it costs real width in a 224px column where
+the name is already truncating.
+
+`Merchant::displayName()` trims it, with `Merchant::withoutCountrySuffix()` as a static form for the
+surfaces that read a name off a join (`$offer->merchantName` on the brand and wishlist pages) rather
+than a hydrated model — otherwise the same shop is "Coolblue" in one list and "Coolblue BE" in the
+next. Only a **trailing standalone two-letter code** goes, optionally bracketed and optionally a pair
+joined by a hyphen; anything longer is a word and stays, so `bol.com` and `Bakker Hillegom` are
+untouched, and a merchant whose entire name is a code keeps it rather than rendering as a blank
+header.
+
+Applied to the chips, the lane headers, the rail's shop facet, the product page's offer rows, the
+brand and wishlist live offers, and the shops index. **Not** applied to `merchants.name` itself —
+that keeps the feed's spelling, because it identifies the advertiser account when a feed is being
+debugged — nor to `Api\CatalogueController` or `StructuredData`, which are data contracts rather than
+menus.
+
+### A related-term pill narrows the search without changing the view
+
+The term pills under the search box were linked as `?q=` and nothing else, so clicking one from the
+by-store view answered the narrower question back in the grid, and a chosen sort went the same way.
+`SearchQuery::withTerm()` already states the rule — *filters, sort and view survive, because the
+visitor chose those* — and `toArray()` already knows which of them are worth putting in a URL, so the
+link is built from that pair rather than a second hand-rolled parameter list that would drift from
+them. There are no filters to carry in practice: `terms()` returns nothing once any are set.
+
+### Brand does not fold
+
+`Facet` takes a `collapsible` prop, and brand passes `false`. It is the list a shopper actually came
+to the rail for, and a control one click away from invisible is a worse default for it than a long
+list is. The fold earns its place on shop, where the question is often already answered.
+
+### The lanes are cards
+
+Stacked as bare bordered rows under a hairline heading, nothing said where one shop ended and the
+next began except the gap between them — and on a strip that scrolls sideways, the reader loses which
+column they are in. Each lane is now one surface: rounded, bordered, with the shop's name and mark
+banded across the top on `bg-cream`, and the rows inside divided by a hairline rather than boxed
+individually (inside a card that already has an edge, a border per row is three nested outlines in
+224px). The price took the weight and the title gave it up, because in a column of one shop's stock
+the price is the thing being compared. No new colours — all existing palette tokens.
 - Every query is logged to `search_log` — that table is the input to [buying-guides.md](buying-guides.md).
 
 ### What the live half is actually asked
