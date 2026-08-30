@@ -139,6 +139,35 @@ class WishlistItem extends Model
         return self::isSafeExternalUrl($this->snapshot_url) ? trim((string) $this->snapshot_url) : null;
     }
 
+    /**
+     * Our own page for this item, in the market the product is in.
+     *
+     * **Not the market the reader is browsing.** A wish list is not scoped to a
+     * market — you keep one list and shop from wherever you happen to be — so a
+     * list routinely holds a `nl-nl` group and a `be-fr` one at the same time,
+     * and every caller here used to prefix the path with `CurrentMarket`. Under
+     * `/en/` that produced `/en/p/{a nl-nl group id}/…`, which is not a page:
+     * `product_groups` is unique on `(market, identity_key)` per invariant #2,
+     * and the id belongs to exactly one of them.
+     *
+     * So the market comes from the group, and the reader's market is not
+     * consulted at all. Following the link switches market, which is correct
+     * and is what the visitor asked for by opening a product they saved there —
+     * `SetMarket` reads the prefix, and only the switcher writes the cookie, so
+     * it does not repoint their home market.
+     *
+     * Null when the group has gone (a feed dropped it, `nullOnDelete`). The row
+     * still renders from its snapshot; it just stops being a link.
+     */
+    public function productPath(): ?string
+    {
+        if ($this->group === null) {
+            return null;
+        }
+
+        return '/'.$this->group->market->value."/p/{$this->group_id}/{$this->group->slug}";
+    }
+
     public function isClaimed(): bool
     {
         return $this->claimed_by_hash !== null;

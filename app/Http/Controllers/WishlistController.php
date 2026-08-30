@@ -282,7 +282,7 @@ class WishlistController extends Controller
              * these are *their* items, and I am a visitor to them. The one thing
              * that must never happen is a second claim mechanism growing here.
              */
-            'asked' => $target === null ? [] : $this->asked($target, $owner, $current),
+            'asked' => $target === null ? [] : $this->asked($target, $owner),
 
             /*
              * Suggestions waiting on a decision.
@@ -375,7 +375,17 @@ class WishlistController extends Controller
                     'price' => $item->snapshot_price,
                     'note' => $item->note,
                     'groupId' => $item->group_id,
-                    'slug' => $item->group?->slug,
+
+                    /*
+                     * The path, built rather than assembled on the client.
+                     *
+                     * It used to send `slug` and let `Lists/Show` prefix it
+                     * with the market it was being read in. A list is not
+                     * scoped to a market, so that was wrong for every item
+                     * saved somewhere else; see
+                     * {@see WishlistItem::productPath()}.
+                     */
+                    'url' => $item->productPath(),
 
                     /*
                      * Where a hand-written item says you can buy it.
@@ -559,7 +569,7 @@ class WishlistController extends Controller
      *
      * @return list<array<string, mixed>>
      */
-    private function asked(GiftTarget $target, Owner $viewer, CurrentMarket $current): array
+    private function asked(GiftTarget $target, Owner $viewer): array
     {
         $identity = $viewer->claimIdentity();
         $hash = $identity === null ? null : WishlistItem::identityHash($identity);
@@ -574,9 +584,7 @@ class WishlistController extends Controller
                 'price' => $item->group?->min_price ?? $item->snapshot_price,
                 'note' => $item->note,
                 'live' => $item->rendersLive(),
-                'url' => $item->group === null
-                    ? null
-                    : $current->url("p/{$item->group_id}/{$item->group->slug}"),
+                'url' => $item->productPath(),
                 'claimed' => $item->isClaimed(),
                 'claimedByMe' => $hash !== null && $item->claimed_by_hash === $hash,
                 'sent' => $hash !== null && $item->claimed_by_hash === $hash

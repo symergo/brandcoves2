@@ -20,7 +20,13 @@ interface Item {
     groupId: number | null
     /** Off-site, for a hand-written item. Never an Inertia visit. */
     externalUrl: string | null
-    slug: string | null
+    /**
+     * Our page for it — already carrying the market the *product* is in, which
+     * is not necessarily the one this page is being read in. A list is not
+     * scoped to a market, so it is built server-side by
+     * `WishlistItem::productPath()` rather than from `base` here.
+     */
+    url: string | null
     merchantCount: number
     inStock: boolean
 }
@@ -473,8 +479,8 @@ export default function ListShow({
                                 )}
 
                                 <div className="min-w-0 flex-1">
-                                    {item.groupId && item.slug ? (
-                                        <Link href={`${base}/p/${item.groupId}/${item.slug}`} className="line-clamp-3 font-medium hover:underline">
+                                    {item.url ? (
+                                        <Link href={item.url} className="line-clamp-3 font-medium hover:underline">
                                             {item.title}
                                         </Link>
                                     ) : item.externalUrl ? (

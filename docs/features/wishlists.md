@@ -102,6 +102,40 @@ row owned by nobody is readable by nobody and deletable by nobody.
 Requiring a login before someone can press Save is how you lose the visit — the person came to
 compare a price, not to sign up.
 
+## A list belongs to a person, not to a market
+
+Everything else in this application is scoped to a market and rightly so — a product, a price, an
+offer and a search result are all statements about one country's shops, and invariant #2 keeps them
+apart. **A wish list is not one of those.** It is what somebody wants. Somebody who lives on the
+Dutch border, or reads English by preference, switches market several times in an afternoon without
+ever meaning to start a second collection.
+
+`wishlists.market` stays, as **provenance**: which market the list was made in, which is what freezes
+the language of a default title (`DefaultTitle`, and `Wishlist::displayTitle()` reading it back). It
+is not a filter. It was one in four places, and each did visible damage:
+
+| Where | The filter | What it did |
+|---|---|---|
+| `WishlistItemController::options()` | lists in this market | someone whose lists were made on `nl-nl` opened an `en` product and got an empty picker, inviting them to start again |
+| `WishlistItemController::saved()` | items on lists in this market | the bookmark on a product they saved last week rendered empty, offering to save it a second time onto the list it was already on |
+| `DefaultList::for()` | oldest `mine` list in this market | the first save after a switch **created a second default list** — two rows both called "My wishlist", both `is_default`, and which one a save landed on decided by the prefix in the URL |
+| item links | `CurrentMarket->url("p/{id}/{slug}")` | a product saved on `nl-nl` and read under `/en/` linked to `/en/p/{an nl-nl group id}/…`, which is not a page |
+
+The last one is the one to keep in mind, because it is where market-independence meets invariant #2.
+`product_groups` is unique on `(market, identity_key)`, so a group id belongs to exactly one market
+and a list holding items from two markets holds ids from two markets. The path is therefore built
+from **the group's** market, in one place — `WishlistItem::productPath()` — and the reader's market
+is not consulted at all. Following such a link switches market, which is correct: `SetMarket` reads
+the prefix, and only the switcher writes the `bc_market` cookie, so it does not repoint their home
+market. See [market-routing.md](market-routing.md).
+
+`saved()` still filters, and now on the right column. Its ids are matched against the group ids of
+the cards on the page asking, so an id from another market can never light a badge there and is only
+weight in the payload — but the filter belongs on `product_groups.market`, not on the market of
+whichever list the item happens to sit on.
+
+`MarketIndependentListsTest` holds all four.
+
 ## Snapshots, not references
 
 `wishlist_items` stores `snapshot_title`, `snapshot_image_url`, `snapshot_price` and `snapshot_url`
@@ -606,12 +640,6 @@ and the badge then never clears.
 > button attaches an occasion and a date to a wish list you already have, which is what the new label
 > says. Nothing below changed: the columns, the gate and the two readers are exactly as described.
 > See [list-taxonomy.md](list-taxonomy.md#registry-became-special-occasion).
->
-> **Where you press it: a chip of its own on `Lists/Show`**, labelled `registry.occasion` — one word,
-> because it sits in a scrolling row. It spent 2026-08-29 to 2026-08-30 as a section inside the Share
-> panel and moved back out; see
-> [list-surfaces.md](list-surfaces.md#six-tabs-became-four-then-five) for why. The form, the columns
-> and the gate are untouched by either move.
 >
 > **Where you press it: a chip of its own on `Lists/Show`**, labelled `registry.occasion` — one word,
 > because it sits in a scrolling row. It spent 2026-08-29 to 2026-08-30 as a section inside the Share

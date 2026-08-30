@@ -359,9 +359,7 @@ class SharedListController extends Controller
                 'image' => $item->snapshot_image_url,
                 'price' => $item->group?->min_price ?? $item->snapshot_price,
                 'note' => $item->note,
-                'url' => $item->group === null
-                    ? null
-                    : $current->url("p/{$item->group_id}/{$item->group->slug}"),
+                'url' => $item->productPath(),
 
                 /*
                  * So a visitor can keep it on a list of their own.

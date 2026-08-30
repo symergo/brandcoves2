@@ -61,7 +61,25 @@ class WishlistItemController extends Controller
         $ids = WishlistItem::query()
             ->whereNotNull('group_id')
             ->whereNotNull('accepted_at')
-            ->whereHas('wishlist', fn ($q) => $owner->scope($q)->where('market', $current->value()))
+            ->whereHas('wishlist', fn ($q) => $owner->scope($q))
+            /*
+             * Narrowed by the **product's** market, not the list's.
+             *
+             * These ids are matched against the group ids on the cards of the
+             * page asking, and `product_groups` is unique on `(market,
+             * identity_key)` — so an id from another market can never light a
+             * badge here and is only weight in the payload. That much the old
+             * filter also achieved.
+             *
+             * What it got wrong is which row it asked about. A wish list is
+             * not scoped to a market: one person keeps one list and shops from
+             * wherever they happen to be, so a list made on `nl-nl` holds
+             * `be-fr` products quite normally. Filtering on `wishlists.market`
+             * dropped every one of those, and the bookmark on a product they
+             * had saved a week ago rendered empty — offering to save it a
+             * second time onto the list it was already on.
+             */
+            ->whereHas('group', fn ($q) => $q->where('market', $current->value()))
             ->pluck('group_id')
             ->unique()
             ->values();
@@ -97,7 +115,7 @@ class WishlistItemController extends Controller
      * Anonymous-first, like everything else about lists: the visitor may have
      * built all of these before signing up.
      */
-    public function options(Request $request, CurrentMarket $current): JsonResponse
+    public function options(Request $request): JsonResponse
     {
         $owner = Owner::fromRequest($request);
 
@@ -106,7 +124,13 @@ class WishlistItemController extends Controller
         }
 
         $lists = $owner->scope(Wishlist::query())
-            ->where('market', $current->value())
+            /*
+             * All of them. The picker used to offer only the lists made in the
+             * market being browsed, so somebody who set their lists up on
+             * `nl-nl` and opened an `en` product page was shown an empty
+             * picker and invited to start again — and the list they already
+             * had was one market switch away, invisible from here.
+             */
             ->with('recipient')
             ->withCount('items')
             ->latest('updated_at')

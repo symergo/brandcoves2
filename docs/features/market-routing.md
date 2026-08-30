@@ -143,6 +143,19 @@ What an unpublished market is kept out of:
 The `Route::pattern` constraint deliberately still accepts it: hiding a market must not turn its URLs
 into 404s, or reopening it becomes a migration instead of a config change.
 
+## What is not scoped to a market
+
+Wish lists. A product, a price, an offer and a search result are statements about one country's
+shops; a list is a statement about a person, and somebody who switches market twice in an afternoon
+has not started a second collection. `wishlists.market` is provenance — which market it was made in,
+which fixes the language of a default title — and never a filter.
+
+The consequence that touches routing: a list holds items from several markets at once, so an item's
+link carries **the product's** market, not the reader's, and following one switches market. That is
+correct rather than a leak — `SetMarket` reads the prefix and only the switcher writes `bc_market`,
+so the visitor's home market is unchanged. See
+[wishlists.md](wishlists.md#a-list-belongs-to-a-person-not-to-a-market).
+
 ## Anonymous identity
 
 `TrackAnonymousIdentity` runs alongside, giving every visitor a durable encrypted cookie id. The gift

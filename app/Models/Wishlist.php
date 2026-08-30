@@ -51,6 +51,15 @@ class Wishlist extends Model
     protected function casts(): array
     {
         return [
+            /*
+             * Provenance, not a scope.
+             *
+             * Which market the list was made in — which is what fixes the
+             * language of a title we wrote, see {@see DefaultTitle}. A list
+             * belongs to a person rather than to a country and is never
+             * filtered by this; it holds products from any market at once.
+             * See docs/features/wishlists.md.
+             */
             'market' => Market::class,
             'visibility' => ListVisibility::class,
             'kind' => ListKind::class,

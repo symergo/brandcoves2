@@ -47,8 +47,17 @@ class DefaultList
             return $existing;
         }
 
+        /*
+         * The oldest `mine` list they have, in any market.
+         *
+         * This was filtered to the current one, which is a filter a
+         * market-independent list has no business carrying: somebody whose
+         * only list was made on `nl-nl` and who arrived on `en` matched
+         * nothing here and had a *second* default list created for them. Two
+         * lists both called "My wishlist", both default, and which one a save
+         * landed on depended on the prefix in the URL at the time.
+         */
         $adopted = $owner->scope(Wishlist::query())
-            ->where('market', $current->value())
             ->where('kind', ListKind::Mine->value)
             ->whereNull('handed_over_at')
             ->oldest()
