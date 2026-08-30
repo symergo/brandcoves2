@@ -35051,6 +35051,327 @@ function SaveToList({ groupId, source, externalId, title, imageUrl, price, compa
 	});
 }
 //#endregion
+//#region resources/js/Components/BarcodeScanner.tsx
+var FORMATS = [
+	"ean_13",
+	"ean_8",
+	"upc_a",
+	"upc_e",
+	"itf",
+	"code_128"
+];
+/**
+* A detector that works in every browser, not just the lucky ones.
+*
+* The native `BarcodeDetector` is not a general capability: Chrome ships it on
+* Android, ChromeOS and macOS, and **not on Windows or Linux desktop**, and
+* Safari and Firefox do not ship it at all. Feature-detecting it and showing
+* "your browser cannot scan" is technically correct and useless — most desktops
+* land there, and it looks like the feature is broken.
+*
+* So: native where it exists, and a WebAssembly decoder (ZXing) everywhere
+* else. The polyfill is imported dynamically, inside the click handler, so the
+* decoder — a megabyte of wasm, 450 KB over the wire — is fetched only by
+* someone who actually pressed "scan", and never by the pages that share this
+* bundle. That is also why the button shows a preparing state: on a phone the
+* fetch is noticeable, and a button that appears to do nothing gets pressed
+* again.
+*/
+async function makeDetector() {
+	if (typeof window !== "undefined" && window.BarcodeDetector) return new window.BarcodeDetector({ formats: FORMATS });
+	const [{ BarcodeDetector: Polyfill }, { prepareZXingModule }] = await Promise.all([import("./assets/ponyfill-DwzQoYTH.js"), import("./assets/reader-BSjAMM6O.js")]);
+	const wasmUrl = (await import("./assets/zxing_reader-WcExx7Sk.js")).default;
+	prepareZXingModule({ overrides: { locateFile: () => wasmUrl } });
+	return new Polyfill({ formats: FORMATS });
+}
+/**
+* The scanner itself, shared by the /scan page and the search-page dialog.
+*
+* One implementation rather than two: the camera lifecycle, the decoder
+* fallback and the frame loop are all subtle enough that a second copy would
+* drift, and the bug it drifted into would only show up on one of the two
+* surfaces.
+*/
+function BarcodeScanner({ autoStart = false, onFound, onCode }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	const videoRef = (0, import_react.useRef)(null);
+	const streamRef = (0, import_react.useRef)(null);
+	const lastCodeRef = (0, import_react.useRef)(null);
+	const detectorRef = (0, import_react.useRef)(null);
+	const [scanning, setScanning] = (0, import_react.useState)(false);
+	const [loading, setLoading] = (0, import_react.useState)(false);
+	const [errorKey, setErrorKey] = (0, import_react.useState)(null);
+	const [hit, setHit] = (0, import_react.useState)(null);
+	const [manual, setManual] = (0, import_react.useState)("");
+	const stop = (0, import_react.useCallback)(() => {
+		streamRef.current?.getTracks().forEach((track) => track.stop());
+		streamRef.current = null;
+		setScanning(false);
+	}, []);
+	const lookup = (0, import_react.useCallback)(async (code) => {
+		if (lastCodeRef.current === code) return;
+		lastCodeRef.current = code;
+		const result = await (await fetch(`/${market.key}/scan/${encodeURIComponent(code)}`, { headers: { Accept: "application/json" } })).json();
+		if (onCode && result.gtin) {
+			stop();
+			onCode(result.gtin);
+			return;
+		}
+		if (!onCode && result.searchUrl) {
+			stop();
+			router.visit(result.searchUrl);
+			return;
+		}
+		setHit(result);
+	}, [
+		market.key,
+		stop,
+		onCode
+	]);
+	const start = (0, import_react.useCallback)(async () => {
+		setErrorKey(null);
+		setHit(null);
+		lastCodeRef.current = null;
+		setLoading(true);
+		try {
+			detectorRef.current ??= await makeDetector();
+		} catch {
+			setErrorKey("scan.unsupported");
+			setLoading(false);
+			return;
+		}
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({ video: {
+				facingMode: { ideal: "environment" },
+				width: { ideal: 1280 }
+			} });
+			streamRef.current = stream;
+			setScanning(true);
+		} catch {
+			setErrorKey("scan.no_camera");
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+	(0, import_react.useEffect)(() => stop, [stop]);
+	(0, import_react.useEffect)(() => {
+		const video = videoRef.current;
+		const stream = streamRef.current;
+		const detector = detectorRef.current;
+		if (!scanning || video === null || stream === null || detector === null) return;
+		let cancelled = false;
+		video.srcObject = stream;
+		video.play().catch(() => {
+			if (!cancelled) setErrorKey("scan.unsupported");
+		});
+		const tick = async () => {
+			if (cancelled) return;
+			if (video.readyState >= video.HAVE_CURRENT_DATA) try {
+				const codes = await detector.detect(video);
+				if (codes.length > 0) await lookup(codes[0].rawValue);
+			} catch {}
+			if (!cancelled) setTimeout(tick, 300);
+		};
+		tick();
+		return () => {
+			cancelled = true;
+			video.srcObject = null;
+		};
+	}, [scanning, lookup]);
+	(0, import_react.useEffect)(() => {
+		if (autoStart) start();
+	}, [autoStart, start]);
+	(0, import_react.useEffect)(() => {
+		if (hit?.status === "found") onFound?.();
+	}, [hit, onFound]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "max-w-md",
+		children: [
+			!scanning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+				type: "button",
+				onClick: start,
+				disabled: loading,
+				className: "w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60",
+				children: loading ? t("scan.preparing") : t("scan.start")
+			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "space-y-3",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {
+					ref: videoRef,
+					className: "h-40 w-full rounded-lg border border-line bg-black object-cover sm:h-48",
+					muted: true,
+					playsInline: true
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: stop,
+					className: "w-full rounded border border-line px-5 py-2 text-sm",
+					children: t("scan.stop")
+				})]
+			}),
+			errorKey && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-sm text-ink-soft",
+				children: t(errorKey)
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				className: "mt-6 flex gap-2",
+				onSubmit: (e) => {
+					e.preventDefault();
+					lastCodeRef.current = null;
+					if (manual.trim() !== "") lookup(manual.trim());
+				},
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+					type: "text",
+					inputMode: "numeric",
+					className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
+					placeholder: t("scan.manual_placeholder"),
+					value: manual,
+					onChange: (e) => setManual(e.target.value),
+					"aria-label": t("scan.manual_placeholder")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "submit",
+					className: "rounded border border-line px-4 text-sm",
+					children: t("scan.look_up")
+				})]
+			})
+		]
+	}), hit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
+		className: "mt-8 max-w-md rounded-lg border border-line bg-card p-5",
+		children: hit.status === "found" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+			href: hit.url,
+			className: "flex gap-4",
+			children: [hit.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+				src: hit.image,
+				alt: "",
+				className: "h-24 w-24 shrink-0 object-contain"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "min-w-0",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "font-medium",
+						children: hit.title
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "mt-1 text-lg font-semibold",
+						children: hit.price == null ? "-" : formatPrice(hit.price, market)
+					}),
+					(hit.merchantCount ?? 0) > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-ink-soft",
+						children: t("scan.shops", { count: n(hit.merchantCount ?? 0) })
+					})
+				]
+			})]
+		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "text-sm",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: hit.message }), hit.searchUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+				href: hit.searchUrl,
+				className: "mt-2 inline-block underline",
+				children: t("scan.search_instead")
+			})]
+		})
+	})] });
+}
+//#endregion
+//#region resources/js/Components/ScanButton.tsx
+/**
+* A barcode inside a viewfinder.
+*
+* The button used to be the box-drawing character ▚, which is a half-shaded
+* block — it is not a picture of anything, and at button size it reads as a
+* rendering fault or a missing glyph rather than as an instruction. Being a text
+* character it also took its shape from whichever font the reader happens to
+* have, so it was not reliably even that.
+*
+* Bars alone would name the *object*; the corner brackets name the *action*,
+* which is what a button needs to say — this one opens a camera rather than
+* showing you a barcode. Four bars, not the six a real barcode has: below about
+* 1.5px of gap the whitespace closes up at 20px and the bars smear into a
+* single grey block, which is the failure the old glyph already had.
+*
+* Drawn to the same rules as ToolIcon — 24px grid, one stroke weight,
+* `currentColor` — so it inherits the button's text colour in both themes and
+* needs no dark-mode variant of its own.
+*/
+function ScanIcon({ className = "h-5 w-5" }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
+		viewBox: "0 0 24 24",
+		className,
+		fill: "none",
+		stroke: "currentColor",
+		strokeWidth: 1.6,
+		strokeLinecap: "round",
+		strokeLinejoin: "round",
+		"aria-hidden": true,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M21 16v2.5a2.5 2.5 0 0 1-2.5 2.5H16" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M7.5 8.5v7M10.5 8.5v7M13.5 8.5v7M16.5 8.5v7" })
+		]
+	});
+}
+/**
+* The scan button that sits beside a search field, and the dialog it opens.
+*
+* Scanning is a way of *entering a query* — the same intent as typing,
+* expressed with a camera — so it belongs wherever a query is entered, not in
+* the nav (see docs/features/barcode-scanner.md). That is more than one place:
+* the home page and the search page both open with a search box, and someone
+* standing in a shop should not have to run a search first to find the camera.
+*
+* Beside a field that owns its page — home, search — a scan navigates to the
+* results. Beside a *picker* — the add-to-list panel, the suggestion box on a
+* shared list, the answer composer, the discovery dial — it must not: the list
+* being added to, the half-typed answer and the dial settings all live on that
+* screen. Those callers pass `onScan` and search in place instead.
+*
+* Extracted rather than duplicated because the pieces that are easy to get
+* wrong — unmounting the scanner to release the camera, the backdrop click that
+* must not fire on a drag out of the panel, `type="button"` inside a real
+* <form> — are exactly the ones a second copy would quietly drop.
+*/
+function ScanButton({ className = "rounded-lg border border-line px-4 py-3", onScan }) {
+	const { t } = useTranslations();
+	const [open, setOpen] = (0, import_react.useState)(false);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+		type: "button",
+		onClick: () => setOpen(true),
+		className: `inline-flex items-center justify-center ${className}`,
+		"aria-label": t("scan.title"),
+		title: t("scan.title"),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanIcon, {})
+	}), open && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		className: "fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center",
+		role: "dialog",
+		"aria-modal": "true",
+		"aria-label": t("scan.title"),
+		onMouseDown: (e) => {
+			if (e.target === e.currentTarget) setOpen(false);
+		},
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "w-full max-w-md rounded-lg bg-cream p-5 shadow-lg",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "mb-3 flex items-baseline justify-between gap-4",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					className: "font-medium",
+					children: t("scan.title")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => setOpen(false),
+					className: "text-sm text-ink-soft underline",
+					children: t("scan.close")
+				})]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BarcodeScanner, {
+				autoStart: true,
+				onCode: onScan ? (gtin) => {
+					setOpen(false);
+					onScan(gtin);
+				} : void 0
+			})]
+		})
+	})] });
+}
+//#endregion
 //#region resources/js/Pages/Ask/Show.tsx
 var Show_exports$2 = /* @__PURE__ */ __exportAll({ default: () => AskShow });
 /**
@@ -35243,30 +35564,43 @@ function AskShow({ question, answers, canAnswer, maxPicks, results, searchTerm }
 							}),
 							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 								className: "mt-3 flex flex-wrap gap-2",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-									value: query,
-									onChange: (e) => setQuery(e.target.value),
-									onKeyDown: (e) => {
-										if (e.key === "Enter") {
-											e.preventDefault();
-											router.get(question.url, { q: query }, {
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+										value: query,
+										onChange: (e) => setQuery(e.target.value),
+										onKeyDown: (e) => {
+											if (e.key === "Enter") {
+												e.preventDefault();
+												router.get(question.url, { q: query }, {
+													preserveState: true,
+													preserveScroll: true
+												});
+											}
+										},
+										placeholder: t("ask.picks_search"),
+										"aria-label": t("ask.picks_search"),
+										className: "min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanButton, {
+										className: "shrink-0 rounded-lg border border-line px-3 py-2",
+										onScan: (gtin) => {
+											setQuery(gtin);
+											router.get(question.url, { q: gtin }, {
 												preserveState: true,
 												preserveScroll: true
 											});
 										}
-									},
-									placeholder: t("ask.picks_search"),
-									"aria-label": t("ask.picks_search"),
-									className: "min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-									type: "button",
-									onClick: () => router.get(question.url, { q: query }, {
-										preserveState: true,
-										preserveScroll: true
 									}),
-									className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
-									children: t("search.submit")
-								})]
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+										type: "button",
+										onClick: () => router.get(question.url, { q: query }, {
+											preserveState: true,
+											preserveScroll: true
+										}),
+										className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+										children: t("search.submit")
+									})
+								]
 							}),
 							results !== null && results.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "mt-3 text-sm text-ink-soft",
@@ -35672,6 +36006,83 @@ function ProductCard({ group, brandUrl }) {
 	});
 }
 //#endregion
+//#region resources/js/Components/AmazonSearchCta.tsx
+/**
+* "Search this on Amazon too" — the one shop we do not carry, offered on
+* purpose.
+*
+* ## Why a competitor sits on our own pages
+*
+* Because the shopper opens that tab anyway. A page of four offers has not
+* answered "am I sure this is the best price", and Amazon is the check they run
+* next — from their own address bar, retyping the term, on a visit we neither
+* see nor earn from. Put the link here and the same departure carries the query
+* they already have and the tag that attributes it.
+*
+* ## Why it is drawn as loudly as our own buttons
+*
+* Because a quiet version does not get the click, and the click is the entire
+* point. Drawn as a bordered note in the rail it read as a footnote about
+* Amazon rather than a way to go there, and the shopper still left through
+* their address bar — the outcome the link exists to replace. So it gets the
+* accent fill, the shop's own mark and an arrow: the three things on this site
+* that say "this is a thing you press".
+*
+* The cost is real and accepted: it competes with our own primary actions on
+* the same screen. It is placed where that competition is least damaging —
+* below the filters, below the offer table — rather than toned down.
+*
+* ## What makes it disappear
+*
+* `link` is null. That is the server's decision, never this component's: no
+* Associates tag for the market (`en` and `es` today), nothing to search on, or
+* — on a product page — a group whose identity is a folded title rather than a
+* barcode. See `AmazonSearchLink`.
+*
+* This never assembles a URL of its own. A URL built in the browser would be
+* missing the tag, and an untagged Amazon link is the failure that looks
+* exactly like a working one: the page loads, the visitor buys, the commission
+* goes nowhere, and nothing in the rendered page shows it.
+*/
+function AmazonSearchCta({ link, label, detail = null }) {
+	const { t } = useTranslations();
+	if (link === null) return null;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
+		href: link.url,
+		rel: "sponsored noopener nofollow",
+		target: "_blank",
+		className: "group flex items-center gap-3 rounded-card bg-accent p-4 text-white shadow-sm transition hover:bg-accent-dark",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+				src: link.icon,
+				alt: "",
+				width: 24,
+				height: 24,
+				loading: "lazy",
+				className: "h-6 w-6 shrink-0 rounded bg-white p-0.5",
+				onError: (e) => {
+					e.currentTarget.style.display = "none";
+				}
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+				className: "min-w-0 flex-1",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+					className: "block font-semibold leading-snug",
+					children: label
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
+					className: "mt-1 block text-xs text-white/80",
+					children: [detail !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [detail, " · "] }), t("search.amazon_search_host", { host: link.host })]
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				"aria-hidden": true,
+				className: "shrink-0 text-lg transition group-hover:translate-x-0.5",
+				children: "→"
+			})
+		]
+	});
+}
+//#endregion
 //#region resources/js/Pages/Brand.tsx
 var Brand_exports = /* @__PURE__ */ __exportAll({ default: () => Brand });
 /**
@@ -35687,12 +36098,13 @@ var Brand_exports = /* @__PURE__ */ __exportAll({ default: () => Brand });
 * discounted, sort, pagination) is the same as search, because it is the same
 * query object underneath.
 */
-function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves, related, narrative, intro, emptyCopy }) {
+function Brand({ brand, terms, filters, sort, facets, results, liveOffers, amazonSearch, coves, related, narrative, intro, emptyCopy }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
 	const base = `/${market.key}/brand/${brand.slug}`;
 	const narrowedTo = String(filters.q ?? "").split(" ").filter(Boolean);
+	const brandTerm = [brand.name, ...narrowedTo].join(" ");
 	function go(changes) {
 		const next = {
 			...filters,
@@ -35850,6 +36262,13 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 								onChange: (e) => go({ in_stock: e.target.checked ? null : "0" }),
 								className: "accent-accent"
 							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: t("search.in_stock_only") })]
+						}),
+						amazonSearch && results.total > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+							className: "border-t border-line pt-6",
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AmazonSearchCta, {
+								link: amazonSearch,
+								label: t("search.amazon_search", { term: brandTerm })
+							})
 						})
 					]
 				}),
@@ -35899,13 +36318,23 @@ function Brand({ brand, terms, filters, sort, facets, results, liveOffers, coves
 						}),
 						results.total === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "rounded-card border border-line bg-card p-8 text-center",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-								className: "font-medium",
-								children: t("brand.empty", { brand: brand.name })
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageBlocks, {
-								blocks: emptyCopy,
-								className: "mx-auto mt-2 max-w-xl"
-							})]
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+									className: "font-medium",
+									children: t("brand.empty", { brand: brand.name })
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageBlocks, {
+									blocks: emptyCopy,
+									className: "mx-auto mt-2 max-w-xl"
+								}),
+								amazonSearch && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+									className: "mx-auto mt-6 max-w-sm text-left",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AmazonSearchCta, {
+										link: amazonSearch,
+										label: t("search.amazon_search", { term: brandTerm })
+									})
+								})
+							]
 						}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 							className: "grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4",
 							children: results.items.map((g) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ProductCard, { group: g }, g.id))
@@ -36080,7 +36509,7 @@ function Brands({ brands }) {
 		}),
 		letters.length === 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 			className: "mt-8 rounded-card border border-line bg-card p-5 text-sm text-ink-soft",
-			children: t("search.empty_hint")
+			children: t("brand.index_empty")
 		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
 			"aria-label": t("brand.index_title"),
 			className: "mt-6 flex flex-wrap gap-2 text-sm",
@@ -36804,18 +37233,28 @@ function Discover({ mode, stops, query, surprise, items, layout, modeMeta }) {
 							e.preventDefault();
 							run(dial, surpriseDial, term);
 						},
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-							type: "search",
-							className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
-							placeholder: meta.layout === "kit" ? t("discover.goal_placeholder") : t("discover.query_placeholder"),
-							value: term,
-							onChange: (e) => setTerm(e.target.value),
-							"aria-label": t("discover.query_placeholder")
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							type: "submit",
-							className: "rounded bg-accent px-4 py-2 text-sm text-white",
-							children: t("discover.go")
-						})]
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "search",
+								className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
+								placeholder: meta.layout === "kit" ? t("discover.goal_placeholder") : t("discover.query_placeholder"),
+								value: term,
+								onChange: (e) => setTerm(e.target.value),
+								"aria-label": t("discover.query_placeholder")
+							}),
+							meta.layout !== "kit" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanButton, {
+								className: "shrink-0 rounded border border-line px-3 py-2",
+								onScan: (gtin) => {
+									setTerm(gtin);
+									run(dial, surpriseDial, gtin);
+								}
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "submit",
+								className: "rounded bg-accent px-4 py-2 text-sm text-white",
+								children: t("discover.go")
+							})
+						]
 					})]
 				})
 			]
@@ -37566,6 +38005,143 @@ function DiscoverCove({ urls, coves, personas, today, questions, askUrl, surpris
 			]
 		})
 	] });
+}
+//#endregion
+//#region resources/js/Pages/Feedback.tsx
+var Feedback_exports = /* @__PURE__ */ __exportAll({ default: () => Feedback });
+/**
+* Tell us what is wrong.
+*
+* ## One required field
+*
+* The message. Everything else — the address, the page — is optional, and the
+* page is prefilled. A report form that opens on five required fields collects
+* reports from people who were already determined to file one, which is not the
+* population worth hearing from: the useful reports come from someone mildly
+* annoyed, thirty seconds before they give up and leave.
+*
+* ## The address says what it is for
+*
+* "Only to reply to this" is written next to the field rather than buried in
+* the privacy policy, because that is the question being asked at the moment the
+* cursor is in the box. It is optional and the form works without it.
+*
+* ## The honeypot
+*
+* `website` is hidden from people and from screen readers — `aria-hidden` plus
+* `tabIndex={-1}` — so anything in it was typed by something filling every input
+* on the page. It is not `display:none` alone: a field with no `autoComplete`
+* off can still be filled by a browser's own autofill, so it is named something
+* no autofill heuristic recognises as a real field of this form.
+*/
+function Feedback({ path }) {
+	const { t } = useTranslations();
+	const { flash, market, auth } = usePage().props;
+	const base = `/${market.key}`;
+	const form = useForm({
+		message: "",
+		email: auth.user?.email ?? "",
+		path: path ?? "",
+		website: ""
+	});
+	function submit(event) {
+		event.preventDefault();
+		form.post(`${base}/feedback`, {
+			preserveScroll: true,
+			onSuccess: () => form.reset("message", "website")
+		});
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: t("feedback.title") }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+		className: "mx-auto max-w-2xl px-4 py-10",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", {
+				className: "text-3xl font-semibold tracking-tight",
+				children: t("feedback.title")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-3 text-ink-soft",
+				children: t("feedback.intro")
+			}),
+			flash.status && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+				className: "mt-6 rounded-card border border-line bg-card p-4 font-medium",
+				children: flash.status
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+				onSubmit: submit,
+				className: "mt-8 space-y-5",
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block text-sm font-medium",
+						children: [t("feedback.message_label"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+							required: true,
+							autoFocus: true,
+							rows: 7,
+							minLength: 10,
+							maxLength: 4e3,
+							value: form.data.message,
+							onChange: (e) => form.setData("message", e.target.value),
+							placeholder: t("feedback.message_placeholder"),
+							className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+						})]
+					}),
+					form.errors.message && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-accent",
+						children: form.errors.message
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block text-sm font-medium",
+						children: [t("feedback.path_label"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "text",
+							maxLength: 2048,
+							value: form.data.path,
+							onChange: (e) => form.setData("path", e.target.value),
+							placeholder: t("feedback.path_placeholder"),
+							className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+						})]
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+						className: "block text-sm font-medium",
+						children: [
+							t("feedback.email_label"),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								type: "email",
+								maxLength: 254,
+								value: form.data.email,
+								onChange: (e) => form.setData("email", e.target.value),
+								placeholder: t("feedback.email_placeholder"),
+								className: "mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+								className: "mt-1 block text-xs font-normal text-ink-soft",
+								children: t("feedback.email_hint")
+							})
+						]
+					}),
+					form.errors.email && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+						className: "text-sm text-accent",
+						children: form.errors.email
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+						className: "hidden",
+						"aria-hidden": true,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", { children: ["Website", /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							type: "text",
+							tabIndex: -1,
+							autoComplete: "off",
+							value: form.data.website,
+							onChange: (e) => form.setData("website", e.target.value)
+						})] })
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+						type: "submit",
+						disabled: form.processing,
+						className: "rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50",
+						children: form.processing ? t("feedback.sending") : t("feedback.submit")
+					})
+				]
+			})
+		]
+	})] });
 }
 //#endregion
 //#region resources/js/Pages/Gift/Wizard.tsx
@@ -39177,306 +39753,6 @@ function ListIllustration({ name, className }) {
 	});
 }
 //#endregion
-//#region resources/js/Components/BarcodeScanner.tsx
-var FORMATS = [
-	"ean_13",
-	"ean_8",
-	"upc_a",
-	"upc_e",
-	"itf",
-	"code_128"
-];
-/**
-* A detector that works in every browser, not just the lucky ones.
-*
-* The native `BarcodeDetector` is not a general capability: Chrome ships it on
-* Android, ChromeOS and macOS, and **not on Windows or Linux desktop**, and
-* Safari and Firefox do not ship it at all. Feature-detecting it and showing
-* "your browser cannot scan" is technically correct and useless — most desktops
-* land there, and it looks like the feature is broken.
-*
-* So: native where it exists, and a WebAssembly decoder (ZXing) everywhere
-* else. The polyfill is imported dynamically, inside the click handler, so the
-* decoder — a megabyte of wasm, 450 KB over the wire — is fetched only by
-* someone who actually pressed "scan", and never by the pages that share this
-* bundle. That is also why the button shows a preparing state: on a phone the
-* fetch is noticeable, and a button that appears to do nothing gets pressed
-* again.
-*/
-async function makeDetector() {
-	if (typeof window !== "undefined" && window.BarcodeDetector) return new window.BarcodeDetector({ formats: FORMATS });
-	const [{ BarcodeDetector: Polyfill }, { prepareZXingModule }] = await Promise.all([import("./assets/ponyfill-DwzQoYTH.js"), import("./assets/reader-BSjAMM6O.js")]);
-	const wasmUrl = (await import("./assets/zxing_reader-WcExx7Sk.js")).default;
-	prepareZXingModule({ overrides: { locateFile: () => wasmUrl } });
-	return new Polyfill({ formats: FORMATS });
-}
-/**
-* The scanner itself, shared by the /scan page and the search-page dialog.
-*
-* One implementation rather than two: the camera lifecycle, the decoder
-* fallback and the frame loop are all subtle enough that a second copy would
-* drift, and the bug it drifted into would only show up on one of the two
-* surfaces.
-*/
-function BarcodeScanner({ autoStart = false, onFound }) {
-	const { market } = usePage().props;
-	const { t, n } = useTranslations();
-	const videoRef = (0, import_react.useRef)(null);
-	const streamRef = (0, import_react.useRef)(null);
-	const lastCodeRef = (0, import_react.useRef)(null);
-	const detectorRef = (0, import_react.useRef)(null);
-	const [scanning, setScanning] = (0, import_react.useState)(false);
-	const [loading, setLoading] = (0, import_react.useState)(false);
-	const [errorKey, setErrorKey] = (0, import_react.useState)(null);
-	const [hit, setHit] = (0, import_react.useState)(null);
-	const [manual, setManual] = (0, import_react.useState)("");
-	const stop = (0, import_react.useCallback)(() => {
-		streamRef.current?.getTracks().forEach((track) => track.stop());
-		streamRef.current = null;
-		setScanning(false);
-	}, []);
-	const lookup = (0, import_react.useCallback)(async (code) => {
-		if (lastCodeRef.current === code) return;
-		lastCodeRef.current = code;
-		const result = await (await fetch(`/${market.key}/scan/${encodeURIComponent(code)}`, { headers: { Accept: "application/json" } })).json();
-		if (result.searchUrl) {
-			stop();
-			router.visit(result.searchUrl);
-			return;
-		}
-		setHit(result);
-	}, [market.key, stop]);
-	const start = (0, import_react.useCallback)(async () => {
-		setErrorKey(null);
-		setHit(null);
-		lastCodeRef.current = null;
-		setLoading(true);
-		try {
-			detectorRef.current ??= await makeDetector();
-		} catch {
-			setErrorKey("scan.unsupported");
-			setLoading(false);
-			return;
-		}
-		try {
-			const stream = await navigator.mediaDevices.getUserMedia({ video: {
-				facingMode: { ideal: "environment" },
-				width: { ideal: 1280 }
-			} });
-			streamRef.current = stream;
-			setScanning(true);
-		} catch {
-			setErrorKey("scan.no_camera");
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-	(0, import_react.useEffect)(() => stop, [stop]);
-	(0, import_react.useEffect)(() => {
-		const video = videoRef.current;
-		const stream = streamRef.current;
-		const detector = detectorRef.current;
-		if (!scanning || video === null || stream === null || detector === null) return;
-		let cancelled = false;
-		video.srcObject = stream;
-		video.play().catch(() => {
-			if (!cancelled) setErrorKey("scan.unsupported");
-		});
-		const tick = async () => {
-			if (cancelled) return;
-			if (video.readyState >= video.HAVE_CURRENT_DATA) try {
-				const codes = await detector.detect(video);
-				if (codes.length > 0) await lookup(codes[0].rawValue);
-			} catch {}
-			if (!cancelled) setTimeout(tick, 300);
-		};
-		tick();
-		return () => {
-			cancelled = true;
-			video.srcObject = null;
-		};
-	}, [scanning, lookup]);
-	(0, import_react.useEffect)(() => {
-		if (autoStart) start();
-	}, [autoStart, start]);
-	(0, import_react.useEffect)(() => {
-		if (hit?.status === "found") onFound?.();
-	}, [hit, onFound]);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "max-w-md",
-		children: [
-			!scanning ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-				type: "button",
-				onClick: start,
-				disabled: loading,
-				className: "w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60",
-				children: loading ? t("scan.preparing") : t("scan.start")
-			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "space-y-3",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("video", {
-					ref: videoRef,
-					className: "h-40 w-full rounded-lg border border-line bg-black object-cover sm:h-48",
-					muted: true,
-					playsInline: true
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: stop,
-					className: "w-full rounded border border-line px-5 py-2 text-sm",
-					children: t("scan.stop")
-				})]
-			}),
-			errorKey && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-				className: "mt-3 text-sm text-ink-soft",
-				children: t(errorKey)
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-				className: "mt-6 flex gap-2",
-				onSubmit: (e) => {
-					e.preventDefault();
-					lastCodeRef.current = null;
-					if (manual.trim() !== "") lookup(manual.trim());
-				},
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-					type: "text",
-					inputMode: "numeric",
-					className: "min-w-0 flex-1 rounded border border-line px-3 py-2",
-					placeholder: t("scan.manual_placeholder"),
-					value: manual,
-					onChange: (e) => setManual(e.target.value),
-					"aria-label": t("scan.manual_placeholder")
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "submit",
-					className: "rounded border border-line px-4 text-sm",
-					children: t("scan.look_up")
-				})]
-			})
-		]
-	}), hit && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("section", {
-		className: "mt-8 max-w-md rounded-lg border border-line bg-card p-5",
-		children: hit.status === "found" ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("a", {
-			href: hit.url,
-			className: "flex gap-4",
-			children: [hit.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
-				src: hit.image,
-				alt: "",
-				className: "h-24 w-24 shrink-0 object-contain"
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "min-w-0",
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "font-medium",
-						children: hit.title
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "mt-1 text-lg font-semibold",
-						children: hit.price == null ? "-" : formatPrice(hit.price, market)
-					}),
-					(hit.merchantCount ?? 0) > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-						className: "text-sm text-ink-soft",
-						children: t("scan.shops", { count: n(hit.merchantCount ?? 0) })
-					})
-				]
-			})]
-		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "text-sm",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: hit.message }), hit.searchUrl && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
-				href: hit.searchUrl,
-				className: "mt-2 inline-block underline",
-				children: t("scan.search_instead")
-			})]
-		})
-	})] });
-}
-//#endregion
-//#region resources/js/Components/ScanButton.tsx
-/**
-* A barcode inside a viewfinder.
-*
-* The button used to be the box-drawing character ▚, which is a half-shaded
-* block — it is not a picture of anything, and at button size it reads as a
-* rendering fault or a missing glyph rather than as an instruction. Being a text
-* character it also took its shape from whichever font the reader happens to
-* have, so it was not reliably even that.
-*
-* Bars alone would name the *object*; the corner brackets name the *action*,
-* which is what a button needs to say — this one opens a camera rather than
-* showing you a barcode. Four bars, not the six a real barcode has: below about
-* 1.5px of gap the whitespace closes up at 20px and the bars smear into a
-* single grey block, which is the failure the old glyph already had.
-*
-* Drawn to the same rules as ToolIcon — 24px grid, one stroke weight,
-* `currentColor` — so it inherits the button's text colour in both themes and
-* needs no dark-mode variant of its own.
-*/
-function ScanIcon({ className = "h-5 w-5" }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("svg", {
-		viewBox: "0 0 24 24",
-		className,
-		fill: "none",
-		stroke: "currentColor",
-		strokeWidth: 1.6,
-		strokeLinecap: "round",
-		strokeLinejoin: "round",
-		"aria-hidden": true,
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M3 8V5.5A2.5 2.5 0 0 1 5.5 3H8" }),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M16 3h2.5A2.5 2.5 0 0 1 21 5.5V8" }),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M21 16v2.5a2.5 2.5 0 0 1-2.5 2.5H16" }),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M8 21H5.5A2.5 2.5 0 0 1 3 18.5V16" }),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M7.5 8.5v7M10.5 8.5v7M13.5 8.5v7M16.5 8.5v7" })
-		]
-	});
-}
-/**
-* The scan button that sits beside a search field, and the dialog it opens.
-*
-* Scanning is a way of *entering a query* — the same intent as typing,
-* expressed with a camera — so it belongs wherever a query is entered, not in
-* the nav (see docs/features/barcode-scanner.md). That is more than one place:
-* the home page and the search page both open with a search box, and someone
-* standing in a shop should not have to run a search first to find the camera.
-*
-* Extracted rather than duplicated because the pieces that are easy to get
-* wrong — unmounting the scanner to release the camera, the backdrop click that
-* must not fire on a drag out of the panel, `type="button"` inside a real
-* <form> — are exactly the ones a second copy would quietly drop.
-*/
-function ScanButton({ className = "rounded-lg border border-line px-4 py-3" }) {
-	const { t } = useTranslations();
-	const [open, setOpen] = (0, import_react.useState)(false);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-		type: "button",
-		onClick: () => setOpen(true),
-		className: `inline-flex items-center justify-center ${className}`,
-		"aria-label": t("scan.title"),
-		title: t("scan.title"),
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanIcon, {})
-	}), open && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-		className: "fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center",
-		role: "dialog",
-		"aria-modal": "true",
-		"aria-label": t("scan.title"),
-		onMouseDown: (e) => {
-			if (e.target === e.currentTarget) setOpen(false);
-		},
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-			className: "w-full max-w-md rounded-lg bg-cream p-5 shadow-lg",
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-				className: "mb-3 flex items-baseline justify-between gap-4",
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
-					className: "font-medium",
-					children: t("scan.title")
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-					type: "button",
-					onClick: () => setOpen(false),
-					className: "text-sm text-ink-soft underline",
-					children: t("scan.close")
-				})]
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BarcodeScanner, { autoStart: true })]
-		})
-	})] });
-}
-//#endregion
 //#region resources/js/Pages/Home.tsx
 var Home_exports = /* @__PURE__ */ __exportAll({ default: () => Home });
 function Home({ today, gifting, coves, recentSearches }) {
@@ -39509,10 +39785,6 @@ function Home({ today, gifting, coves, recentSearches }) {
 								t("home.headline_2")
 							]
 						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-							className: "mt-5 max-w-2xl text-ink-soft sm:text-lg",
-							children: t("home.intro")
-						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
 							action: `${base}/search`,
 							method: "get",
@@ -39522,7 +39794,7 @@ function Home({ today, gifting, coves, recentSearches }) {
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
 									type: "search",
 									name: "q",
-									"aria-label": t("home.search_label"),
+									"aria-label": t("home.search_placeholder"),
 									placeholder: t("home.search_placeholder"),
 									className: "w-full min-w-0 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none sm:w-auto sm:flex-1"
 								}),
@@ -39603,7 +39875,7 @@ function Home({ today, gifting, coves, recentSearches }) {
 							key: "mine",
 							href: gifting.urls.lists,
 							name: t("nav.lists"),
-							hint: gifting.lists > 0 ? t("home.gifting_lists_count", { count: n(gifting.lists) }) : t("home.gifting_lists_hint")
+							hint: gifting.lists > 0 ? t("home.gifting_lists_count", { count: n(gifting.lists) }) : null
 						},
 						{
 							key: "shared",
@@ -39643,7 +39915,7 @@ function Home({ today, gifting, coves, recentSearches }) {
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
 								className: "font-medium",
 								children: tool.name
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+							}), tool.hint && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 								className: "mt-1 text-sm text-ink-soft sm:mt-2",
 								children: tool.hint
 							})]
@@ -40689,17 +40961,30 @@ function SharedList({ list, isOwner, canClaim, hideClaims, claimNames, progress,
 							preserveScroll: true
 						});
 					},
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-						value: query,
-						onChange: (e) => setQuery(e.target.value),
-						placeholder: t("suggestions.search_placeholder"),
-						"aria-label": t("suggestions.search_placeholder"),
-						className: "min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "submit",
-						className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
-						children: t("search.submit")
-					})]
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+							value: query,
+							onChange: (e) => setQuery(e.target.value),
+							placeholder: t("suggestions.search_placeholder"),
+							"aria-label": t("suggestions.search_placeholder"),
+							className: "min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanButton, {
+							className: "shrink-0 rounded-lg border border-line px-3 py-2",
+							onScan: (gtin) => {
+								setQuery(gtin);
+								router.get(`${base}/l/${token}`, { q: gtin }, {
+									preserveState: true,
+									preserveScroll: true
+								});
+							}
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+							type: "submit",
+							className: "rounded-lg border border-line px-4 py-2 text-sm hover:border-ink",
+							children: t("search.submit")
+						})
+					]
 				}),
 				results !== null && results.length === 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
 					className: "mt-4 text-sm text-ink-soft",
@@ -40793,7 +41078,10 @@ function AddProduct({ base, listId, market }) {
 	const latest = (0, import_react.useRef)(0);
 	function runSearch(event) {
 		event?.preventDefault();
-		const q = term.trim();
+		search(term);
+	}
+	function search(raw) {
+		const q = raw.trim();
 		setError(null);
 		if (q.length < 2) {
 			setGroups([]);
@@ -40923,17 +41211,18 @@ function AddProduct({ base, listId, market }) {
 						"aria-label": t("lists.add_search_placeholder"),
 						className: "w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
 					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanButton, {
+						className: "shrink-0 rounded-lg border border-line px-3 py-2",
+						onScan: (gtin) => {
+							setTerm(gtin);
+							search(gtin);
+						}
+					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						type: "submit",
 						disabled: searching,
 						className: "shrink-0 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-60",
 						children: t("search.submit")
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-						type: "button",
-						onClick: close,
-						className: "shrink-0 rounded-lg border border-line px-3 py-2 text-sm",
-						children: t("lists.cancel")
 					})
 				]
 			}),
@@ -41291,6 +41580,11 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 			show: shared && list.claimable && list.kind === "mine"
 		},
 		{
+			key: "occasion",
+			label: t("registry.occasion"),
+			show: access.isOwner
+		},
+		{
 			key: "handover",
 			label: t("handover.badge"),
 			show: canHandOver
@@ -41401,75 +41695,6 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 								className: "border-t border-line pt-5",
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
 									className: "text-sm font-medium",
-									children: t("registry.badge")
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
-									className: "grid gap-3 sm:grid-cols-2",
-									onSubmit: (e) => {
-										e.preventDefault();
-										const data = new FormData(e.currentTarget);
-										router.patch(`${base}/lists/${list.id}`, {
-											event_type: String(data.get("event_type") || ""),
-											event_date: String(data.get("event_date") || ""),
-											...isRegistry ? { delivery_address: String(data.get("delivery_address") || "") } : {}
-										}, { preserveScroll: true });
-									},
-									children: [
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
-											className: "text-xs text-ink-soft sm:col-span-2",
-											children: t("registry.hint")
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-											className: "block text-sm",
-											children: [t("registry.occasion"), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
-												name: "event_type",
-												defaultValue: list.eventType ?? "",
-												className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm",
-												children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-													value: "",
-													children: t("registry.none")
-												}), registryOptions.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
-													value: o.value,
-													children: o.label
-												}, o.value))]
-											})]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-											className: "block text-sm",
-											children: [t("registry.date"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-												type: "date",
-												name: "event_date",
-												defaultValue: list.eventDate ?? "",
-												className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-											})]
-										}),
-										isRegistry && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
-											className: "block text-sm sm:col-span-2",
-											children: [
-												t("registry.address"),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
-													name: "delivery_address",
-													rows: 2,
-													defaultValue: deliveryAddress ?? "",
-													className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-												}),
-												/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-													className: "mt-1 block text-xs text-ink-soft",
-													children: t("registry.address_hint")
-												})
-											]
-										}),
-										/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-											type: "submit",
-											className: "justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2",
-											children: t("lists.save")
-										})
-									]
-								})]
-							}),
-							access.isOwner && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-								className: "border-t border-line pt-5",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
-									className: "text-sm font-medium",
 									children: t("lists.collaborators")
 								}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
 									list.claimable && list.hasCoGivers && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("fieldset", {
@@ -41547,6 +41772,72 @@ function ListTools({ base, list, access, collaborators, suggestions, canHandOver
 							})
 						]
 					}),
+					open === "occasion" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+						className: "text-sm font-medium",
+						children: t("registry.badge")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("form", {
+						className: "mt-3 grid gap-3 sm:grid-cols-2",
+						onSubmit: (e) => {
+							e.preventDefault();
+							const data = new FormData(e.currentTarget);
+							router.patch(`${base}/lists/${list.id}`, {
+								event_type: String(data.get("event_type") || ""),
+								event_date: String(data.get("event_date") || ""),
+								...isRegistry ? { delivery_address: String(data.get("delivery_address") || "") } : {}
+							}, { preserveScroll: true });
+						},
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+								className: "text-xs text-ink-soft sm:col-span-2",
+								children: t("registry.hint")
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "block text-sm",
+								children: [t("registry.occasion"), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("select", {
+									name: "event_type",
+									defaultValue: list.eventType ?? "",
+									className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm",
+									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: "",
+										children: t("registry.none")
+									}), registryOptions.map((o) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("option", {
+										value: o.value,
+										children: o.label
+									}, o.value))]
+								})]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "block text-sm",
+								children: [t("registry.date"), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+									type: "date",
+									name: "event_date",
+									defaultValue: list.eventDate ?? "",
+									className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+								})]
+							}),
+							isRegistry && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("label", {
+								className: "block text-sm sm:col-span-2",
+								children: [
+									t("registry.address"),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+										name: "delivery_address",
+										rows: 2,
+										defaultValue: deliveryAddress ?? "",
+										className: "mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+										className: "mt-1 block text-xs text-ink-soft",
+										children: t("registry.address_hint")
+									})
+								]
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "submit",
+								className: "justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2",
+								children: t("lists.save")
+							})
+						]
+					})] }),
 					open === "quiz" && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
 						className: "text-sm font-medium",
 						children: t("quiz.own_title")
@@ -41857,8 +42148,8 @@ function ListShow({ list, items, pot, target, asked, access, collaborators, sugg
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "min-w-0 flex-1",
 							children: [
-								item.groupId && item.slug ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
-									href: `${base}/p/${item.groupId}/${item.slug}`,
+								item.url ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+									href: item.url,
 									className: "line-clamp-3 font-medium hover:underline",
 									children: item.title
 								}) : item.externalUrl ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
@@ -42126,7 +42417,7 @@ function reportClick(offer) {
 		navigator.sendBeacon?.(offer.beacon, new Blob([JSON.stringify({ offer: offer.id })], { type: "application/json" }));
 	} catch {}
 }
-function Product({ product, offers, alert }) {
+function Product({ product, offers, alert, amazonSearch, description }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const cheapestId = offers.filter((o) => o.isBuyable)[0]?.id;
@@ -42187,6 +42478,14 @@ function Product({ product, offers, alert }) {
 						": ",
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: product.ean })
 					]
+				}),
+				amazonSearch && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "mt-6",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AmazonSearchCta, {
+						link: amazonSearch,
+						label: t("product.amazon_search"),
+						detail: product.ean ? t("product.amazon_search_barcode", { ean: product.ean }) : null
+					})
 				})
 			] })]
 		}),
@@ -42262,6 +42561,24 @@ function Product({ product, offers, alert }) {
 					children: t("product.disclosure")
 				})
 			]
+		}),
+		description && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
+			className: "mt-12",
+			"aria-labelledby": "product-description",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+				id: "product-description",
+				className: "mb-4 text-xl font-semibold",
+				children: t("product.description_heading")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "rounded-card border border-line bg-card p-6",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "space-y-3 text-ink-soft",
+					children: description.paragraphs.map((paragraph, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: paragraph }, i))
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "mt-4 text-xs text-ink-soft/80",
+					children: t("product.description_source", { shop: description.merchant })
+				})]
+			})]
 		})
 	] });
 }
@@ -42533,16 +42850,26 @@ function SelfDescribe({ person, options, canClaim, isGiver, canSignInToClaim, it
 							e.preventDefault();
 							router.get(`${base}/suggest`, { q: query }, { preserveState: true });
 						},
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
-							value: query,
-							onChange: (e) => setQuery(e.target.value),
-							placeholder: t("recipients.search_placeholder"),
-							className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
-							type: "submit",
-							className: "rounded-lg border border-line px-4 py-2 text-sm",
-							children: t("recipients.add_something")
-						})]
+						children: [
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("input", {
+								value: query,
+								onChange: (e) => setQuery(e.target.value),
+								placeholder: t("recipients.search_placeholder"),
+								className: "min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ScanButton, {
+								className: "shrink-0 rounded-lg border border-line px-3 py-2",
+								onScan: (gtin) => {
+									setQuery(gtin);
+									router.get(`${base}/suggest`, { q: gtin }, { preserveState: true });
+								}
+							}),
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "submit",
+								className: "rounded-lg border border-line px-4 py-2 text-sm",
+								children: t("recipients.add_something")
+							})
+						]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						type: "button",
 						onClick: () => router.get(`${base}/suggest`, {}, { preserveState: true }),
@@ -43215,13 +43542,14 @@ function Scan() {
 //#endregion
 //#region resources/js/Pages/Search.tsx
 var Search_exports = /* @__PURE__ */ __exportAll({ default: () => Search });
-function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, pastedLink, terms, brandLinks, narrative, intro, emptyCopy }) {
+function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOfFilters, amazonSearch, pastedLink, terms, brandLinks, narrative, intro, emptyCopy }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
 	const [term, setTerm] = (0, import_react.useState)(q);
 	const [filtersOpen, setFiltersOpen] = (0, import_react.useState)(false);
 	const [searching, setSearching] = (0, import_react.useState)(false);
 	const base = `/${market.key}/search`;
+	const amazonLabel = amazonSearch?.hasTerm ? t("search.amazon_search", { term: q }) : t("search.amazon_search_any");
 	const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
 		if ([
 			"q",
@@ -43323,17 +43651,23 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 					"aria-hidden": true,
 					children: filtersOpen ? "▲" : "▼"
 				})]
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("aside", {
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("aside", {
 				id: "search-filters",
 				"aria-label": t("search.filters"),
 				className: `space-y-6 text-sm lg:block ${filtersOpen ? "block" : "hidden"}`,
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FilterPanel, {
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FilterPanel, {
 					facets,
 					filters,
 					brandLinks,
 					go,
 					showShops: true
-				})
+				}), amazonSearch && results.total > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "border-t border-line pt-6",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AmazonSearchCta, {
+						link: amazonSearch,
+						label: amazonLabel
+					})
+				})]
 			})] }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 				className: "min-w-0",
 				children: [
@@ -43465,6 +43799,13 @@ function Search({ q, filters, sort, view, facets, results, lanes, emptyBecauseOf
 							/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageBlocks, {
 								blocks: emptyCopy,
 								className: "mx-auto mt-3 max-w-xl"
+							}),
+							amazonSearch && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+								className: "mx-auto mt-6 max-w-sm text-left",
+								children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AmazonSearchCta, {
+									link: amazonSearch,
+									label: amazonLabel
+								})
 							})
 						]
 					}) : view === "store" && lanes ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
@@ -64710,6 +65051,9 @@ function Chrome({ children }) {
 	const nav = [{
 		href: `${base}/search`,
 		label: t("nav.search")
+	}, {
+		href: `${base}/feedback`,
+		label: t("nav.feedback")
 	}];
 	const mobileNav = [
 		organise,
@@ -64949,6 +65293,7 @@ server_default((page) => createInertiaApp({
 			"./Pages/Daily/Edition.tsx": Edition_exports,
 			"./Pages/Discover.tsx": Discover_exports,
 			"./Pages/DiscoverCove.tsx": DiscoverCove_exports,
+			"./Pages/Feedback.tsx": Feedback_exports,
 			"./Pages/Gift/Wizard.tsx": Wizard_exports,
 			"./Pages/GiftCove/HowItWorks.tsx": HowItWorks_exports,
 			"./Pages/GiftCove.tsx": GiftCove_exports,
