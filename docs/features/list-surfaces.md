@@ -112,16 +112,28 @@ Three changes:
   fourteenth when what they came for was a list somebody had sent them. The page already drew this
   distinction for its heading and subtitle; the empty state was the one place it did not.
 
-## Six tabs became four
+## Six tabs became four, then five
 
 `ListTools` grew a tab per feature: Share, Quiz, Special occasion, People, Handover, Secret Friend.
 Three of those were asking three halves of one question — *who else is looking at this list, and what
 are they looking at it for* — and the roster, the one thing a group list cannot work without, was
 filed furthest from the button that shares it.
 
-Share, People and Occasion are now one panel with sections. What varies is the sections rather than
-the panel: every kind gets the link and the occasion, and a list about somebody else also gets the
-people.
+Share, People and Occasion became one panel with sections. What varies is the sections rather than
+the panel: every kind gets the link, and a list about somebody else also gets the people.
+
+**The occasion came back out, and the merge was two-thirds right rather than wrong.** Share and
+People really are one errand: the roster only exists once the link does, and both answer *who else is
+looking at this list*. The occasion answers something else. You set it once, months before anybody is
+invited, and you set it just as readily on a list you never share at all — a birthday on a private
+list about your father is the ordinary case, not the edge. Folded into Share it was filed under a
+word that means something else, three forms deep, and the person who opened the panel to copy a link
+had to scroll past a wedding-date form to reach the roster.
+
+So `occasion` is a chip again, between Quiz and Handover, shown to the owner of any kind of list. It
+is labelled `registry.occasion` — *Gelegenheid*, *Occasion*, *Ocasión* — not `registry.badge`: a chip
+in a horizontally scrolling row wants one word, and the panel it opens still carries the full
+"Special occasion" as its heading. Both strings already existed; neither was added for this.
 
 **Opening it no longer publishes the list, and that regression is the interesting part.** Pressing
 Share used to turn sharing on as a side effect of opening the panel, which was right when the panel
@@ -132,9 +144,15 @@ opened is a privacy change nobody asked for, on the page where privacy is the po
 a button inside the panel, and the two-press objection is answered by it being the first thing in
 there.
 
-The manual's steps had to move with it — `registry_step1` said "press Special occasion", naming a tab
-that no longer exists. That is the rule about quoting real labels failing exactly as
-[gifting-lenses.md](gifting-lenses.md) warns it does, and only a human reading the page catches it.
+The manual's steps had to move both times — `registry_step1` said "press Special occasion", naming a
+tab that had stopped existing; it then said "press Share, then fill in Special occasion", naming a
+route that had stopped existing. That is the rule about quoting real labels failing exactly as
+[gifting-lenses.md](gifting-lenses.md) warns it does.
+
+`CopyMatchesCodeTest::the_occasion_panel_is_called_what_the_manual_calls_it` is the catch, and it
+asserts against `registry.occasion` — the chip — rather than `registry.badge`. Pointed at the badge it
+would have gone green while the manual named a word the row does not print, which is the whole failure
+it exists to prevent.
 
 ## "How each one works" is its own page
 

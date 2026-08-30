@@ -67,7 +67,7 @@ interface Props {
     onPanel: (panel: Panel | null) => void
 }
 
-export type Panel = 'share' | 'quiz' | 'handover' | 'santa'
+export type Panel = 'share' | 'occasion' | 'quiz' | 'handover' | 'santa'
 
 /**
  * Everything you can do with a list, behind one row of buttons.
@@ -146,8 +146,19 @@ export default function ListTools({
          * the column, the validator and the shared page were all kind-agnostic
          * the whole time, so a birthday on a list about your father was storable
          * and renderable and simply had nowhere to be typed. Only the delivery
-         * address inside the panel is registry-only; see below.
+         * address inside the panel is registry-only; see the panel below.
+         *
+         * It was then folded into Share for a day and is a tab again. Setting
+         * what a list is for is not the same errand as letting people see it —
+         * you name the occasion months before you invite anybody, and often on
+         * a list you never share at all — so under Share it was hidden behind a
+         * word that means something else.
+         *
+         * Labelled with `registry.occasion` rather than `registry.badge`: a chip
+         * in a scrolling row wants one word ("Gelegenheid"), and the panel it
+         * opens carries the full "Speciale gelegenheid" as its heading.
          */
+        { key: 'occasion', label: t('registry.occasion'), show: access.isOwner },
         { key: 'handover', label: t('handover.badge'), show: canHandOver },
         { key: 'santa', label: t('santa.title'), show: santaMemberships.length > 0 },
     ]
@@ -177,12 +188,11 @@ export default function ListTools({
          * and collapsing them meant the button meant the same thing in both
          * states.
          *
-         * It stopped being right when the panel absorbed the occasion and the
-         * roster. Those are things an owner sets on a list they have **not**
-         * decided to share — a wedding date, an invited sibling — and a tab
-         * that published the list as a side effect of being opened would be a
-         * privacy change nobody asked for, on the one page where privacy is the
-         * whole point.
+         * It stopped being right when the panel absorbed the roster. An
+         * invited sibling is something an owner adds to a list they have
+         * **not** decided to share, and a tab that published the list as a
+         * side effect of being opened would be a privacy change nobody asked
+         * for, on the one page where privacy is the whole point.
          *
          * So the press is inside the panel now, where it is a button that says
          * what it does. The two-press objection is answered by that button
@@ -298,28 +308,26 @@ export default function ListTools({
                     {open === 'share' && (
                         <div className="space-y-6">
                             {/*
-                              One panel, because it was always one errand.
-                              
-                              Share, People and Occasion were three tabs asking
-                              three halves of the same question: who else is
-                              looking at this list, and what are they looking
-                              at it for. Opening a list to other people and
-                              then telling them what it is for are not two
-                              trips, and three chips made them look like three
-                              unrelated features — with the roster, the one
-                              thing a group list cannot work without, filed
-                              furthest from the button that shares it.
-                              
-                              What varies is the sections, not the panel: every
-                              kind gets the link and the occasion, and only a
-                              list about somebody else gets the people.
+                              The link, and the people who get it.
+
+                              Share and People were two chips asking two halves
+                              of one question — who else is looking at this
+                              list — with the roster, the one thing a group
+                              list cannot work without, filed furthest from the
+                              button that shares it. They are one panel.
+
+                              The occasion was folded in here too and has moved
+                              back out to a chip of its own; see the `occasion`
+                              tab. What varies is the sections, not the panel:
+                              every kind gets the link, and only a list about
+                              somebody else gets the people.
                             */}
 
                             {/*
                               Private lists land here too, now that this panel
-                              is also where the occasion and the roster live —
-                              so it has to offer the press rather than assume
-                              it has already happened.
+                              is also where the roster lives — so it has to
+                              offer the press rather than assume it has already
+                              happened.
                             */}
                             {!list.shareUrl && access.isOwner && (
                                 <div>
@@ -367,110 +375,6 @@ export default function ListTools({
                                 </button>
                             )}
                             </div>
-                            )}
-
-                            {/* Why the list exists. Any kind may say so; only a
-                                wish list of your own carries an address. */}
-                            {access.isOwner && (
-                                <section className="border-t border-line pt-5">
-                                    <h3 className="text-sm font-medium">{t('registry.badge')}</h3>
-                            <form
-                                className="grid gap-3 sm:grid-cols-2"
-                                onSubmit={(e) => {
-                                    e.preventDefault()
-                                    const data = new FormData(e.currentTarget)
-                                    router.patch(
-                                        `${base}/lists/${list.id}`,
-                                        {
-                                            event_type: String(data.get('event_type') || ''),
-                                            event_date: String(data.get('event_date') || ''),
-                                            /*
-                                             * Only when the field is on screen.
-                                             *
-                                             * `FormData.get` returns null for an
-                                             * absent input, which becomes '' and
-                                             * would *clear* a stored address every
-                                             * time somebody edited the occasion on
-                                             * a list that does not show the field.
-                                             * Harmless today, since only a `mine`
-                                             * list can have one — and exactly the
-                                             * kind of thing that stops being
-                                             * harmless the moment that changes.
-                                             */
-                                            ...(isRegistry
-                                                ? {
-                                                      delivery_address: String(
-                                                          data.get('delivery_address') || '',
-                                                      ),
-                                                  }
-                                                : {}),
-                                        },
-                                        { preserveScroll: true },
-                                    )
-                                }}
-                            >
-                                <p className="text-xs text-ink-soft sm:col-span-2">{t('registry.hint')}</p>
-
-                                <label className="block text-sm">
-                                    {t('registry.occasion')}
-                                    <select
-                                        name="event_type"
-                                        defaultValue={list.eventType ?? ''}
-                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                    >
-                                        <option value="">{t('registry.none')}</option>
-                                        {registryOptions.map((o) => (
-                                            <option key={o.value} value={o.value}>
-                                                {o.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-
-                                <label className="block text-sm">
-                                    {t('registry.date')}
-                                    <input
-                                        type="date"
-                                        name="event_date"
-                                        defaultValue={list.eventDate ?? ''}
-                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                    />
-                                </label>
-
-                                {/*
-                                  A registry, and only a registry.
-
-                                  This is the owner's home address, and it is only
-                                  ever appropriate on a list belonging to the person
-                                  the parcel is for. A gift list about somebody else
-                                  may carry an occasion and must never carry an
-                                  address — which is why `Wishlist::isRegistry()`
-                                  and `hasOccasion()` are two questions rather than
-                                  one.
-                                */}
-                                {isRegistry && (
-                                <label className="block text-sm sm:col-span-2">
-                                    {t('registry.address')}
-                                    <textarea
-                                        name="delivery_address"
-                                        rows={2}
-                                        defaultValue={deliveryAddress ?? ''}
-                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
-                                    />
-                                    <span className="mt-1 block text-xs text-ink-soft">
-                                        {t('registry.address_hint')}
-                                    </span>
-                                </label>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2"
-                                >
-                                    {t('lists.save')}
-                                </button>
-                            </form>
-                                </section>
                             )}
 
                             {/* Who else is on it — and, once somebody is, what
@@ -685,6 +589,125 @@ export default function ListTools({
                             </div>
                                 </section>
                             )}
+                        </div>
+                    )}
+
+                    {/*
+                      Why the list exists, back behind a button of its own.
+
+                      It spent a day as a section inside Share, on the argument
+                      that "who is looking at this list" and "what are they
+                      looking at it for" are one errand. They are related, but
+                      they are not one press: the occasion is a thing you set
+                      once, months before anybody is invited, and a private list
+                      has one just as often as a shared one. Filing it under
+                      Share hid it behind a word that means something else, and
+                      left the panel three forms deep for the one person who
+                      came to copy a link.
+
+                      The button says Gelegenheid / Occasion — `registry.occasion`,
+                      the same word the field inside it uses.
+                    */}
+                    {open === 'occasion' && (
+                        <div>
+                            <h3 className="text-sm font-medium">{t('registry.badge')}</h3>
+
+                            <form
+                                className="mt-3 grid gap-3 sm:grid-cols-2"
+                                onSubmit={(e) => {
+                                    e.preventDefault()
+                                    const data = new FormData(e.currentTarget)
+                                    router.patch(
+                                        `${base}/lists/${list.id}`,
+                                        {
+                                            event_type: String(data.get('event_type') || ''),
+                                            event_date: String(data.get('event_date') || ''),
+                                            /*
+                                             * Only when the field is on screen.
+                                             *
+                                             * `FormData.get` returns null for an
+                                             * absent input, which becomes '' and
+                                             * would *clear* a stored address every
+                                             * time somebody edited the occasion on
+                                             * a list that does not show the field.
+                                             * Harmless today, since only a `mine`
+                                             * list can have one — and exactly the
+                                             * kind of thing that stops being
+                                             * harmless the moment that changes.
+                                             */
+                                            ...(isRegistry
+                                                ? {
+                                                      delivery_address: String(
+                                                          data.get('delivery_address') || '',
+                                                      ),
+                                                  }
+                                                : {}),
+                                        },
+                                        { preserveScroll: true },
+                                    )
+                                }}
+                            >
+                                <p className="text-xs text-ink-soft sm:col-span-2">{t('registry.hint')}</p>
+
+                                <label className="block text-sm">
+                                    {t('registry.occasion')}
+                                    <select
+                                        name="event_type"
+                                        defaultValue={list.eventType ?? ''}
+                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                                    >
+                                        <option value="">{t('registry.none')}</option>
+                                        {registryOptions.map((o) => (
+                                            <option key={o.value} value={o.value}>
+                                                {o.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                <label className="block text-sm">
+                                    {t('registry.date')}
+                                    <input
+                                        type="date"
+                                        name="event_date"
+                                        defaultValue={list.eventDate ?? ''}
+                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                                    />
+                                </label>
+
+                                {/*
+                                  A registry, and only a registry.
+
+                                  This is the owner's home address, and it is only
+                                  ever appropriate on a list belonging to the person
+                                  the parcel is for. A gift list about somebody else
+                                  may carry an occasion and must never carry an
+                                  address — which is why `Wishlist::isRegistry()`
+                                  and `hasOccasion()` are two questions rather than
+                                  one.
+                                */}
+                                {isRegistry && (
+                                <label className="block text-sm sm:col-span-2">
+                                    {t('registry.address')}
+                                    <textarea
+                                        name="delivery_address"
+                                        rows={2}
+                                        defaultValue={deliveryAddress ?? ''}
+                                        className="mt-1 w-full rounded-lg border border-line px-3 py-2 text-sm"
+                                    />
+                                    <span className="mt-1 block text-xs text-ink-soft">
+                                        {t('registry.address_hint')}
+                                    </span>
+                                </label>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    className="justify-self-start rounded-lg border border-line px-4 py-2 text-sm sm:col-span-2"
+                                >
+                                    {t('lists.save')}
+                                </button>
+                            </form>
                         </div>
                     )}
 

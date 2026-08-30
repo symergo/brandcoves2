@@ -733,7 +733,7 @@ return [
 
         'registry_title' => 'Une liste de cadeaux',
         'registry_body' => 'Une liste avec une occasion et une date : mariage, naissance, nouveau logement. Ajoutez une adresse : seuls ceux qui ont réservé la voient.',
-        'registry_step1' => 'Ouvrez une de vos listes d’envies, appuyez sur Partager, puis remplissez Occasion spéciale.',
+        'registry_step1' => 'Ouvrez une de vos listes d’envies et appuyez sur Occasion.',
         'registry_step2' => 'Choisissez l’occasion et la date, et ajoutez une adresse de livraison si l’on doit vous envoyer les choses.',
         'registry_step3' => 'Partagez-la comme n’importe quelle liste. Elle se comporte pareil : on réserve, et on ne vous dit jamais quoi.',
 

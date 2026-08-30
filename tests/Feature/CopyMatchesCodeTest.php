@@ -233,15 +233,19 @@ class CopyMatchesCodeTest extends TestCase
     public function the_occasion_panel_is_called_what_the_manual_calls_it(): void
     {
         /*
-         * `registry_step1` quotes the label on the button. It said "press
-         * Registry" — a word for the artefact rather than for what you are
-         * doing to the list — and the control is now "Special occasion", which
-         * is what somebody adding a wedding date to their own wish list thinks
-         * they are doing. Rename one without the other and the manual sends
-         * people hunting for a button they are looking straight at.
+         * `registry_step1` quotes the label on the button, and the button has
+         * been renamed twice: "Registry" named the artefact rather than what
+         * you are doing to the list, "Special occasion" replaced it, and the
+         * chip in `ListTools` now reads `registry.occasion` — one word, because
+         * it sits in a scrolling row of chips. The panel keeps
+         * `registry.badge` as its heading, so asserting against that one would
+         * pass while the manual named something the row does not show.
+         *
+         * Rename either without the other and the manual sends people hunting
+         * for a button they are looking straight at.
          */
         foreach (['en', 'nl', 'fr', 'es'] as $locale) {
-            $label = __('site.registry.badge', locale: $locale);
+            $label = __('site.registry.occasion', locale: $locale);
             $step = __('site.gift_cove.registry_step1', locale: $locale);
 
             $this->assertStringContainsString(

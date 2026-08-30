@@ -612,6 +612,12 @@ and the badge then never clears.
 > panel and moved back out; see
 > [list-surfaces.md](list-surfaces.md#six-tabs-became-four-then-five) for why. The form, the columns
 > and the gate are untouched by either move.
+>
+> **Where you press it: a chip of its own on `Lists/Show`**, labelled `registry.occasion` — one word,
+> because it sits in a scrolling row. It spent 2026-08-29 to 2026-08-30 as a section inside the Share
+> panel and moved back out; see
+> [list-surfaces.md](list-surfaces.md#six-tabs-became-four-then-five) for why. The form, the columns
+> and the gate are untouched by either move.
 
 
 Added 2026-08-16. `event_type`, `event_date` and `delivery_address` were stored and read back **to

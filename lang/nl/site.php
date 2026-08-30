@@ -737,7 +737,7 @@ return [
 
         'registry_title' => 'Een geschenkenlijst',
         'registry_body' => 'Een wenslijst met een gelegenheid en een datum, voor een huwelijk, een baby of een nieuwe woning. Zet er een adres bij: alleen wie iets geclaimd heeft, ziet het.',
-        'registry_step1' => 'Open een van je verlanglijsten, klik op Delen en vul Speciale gelegenheid in.',
+        'registry_step1' => 'Open een van je verlanglijsten en klik op Gelegenheid.',
         'registry_step2' => 'Kies de gelegenheid en de datum, en zet er een adres bij als mensen dingen moeten opsturen.',
         'registry_step3' => 'Deel hem zoals elk ander lijstje. Hij gedraagt zich ook zo: mensen claimen, en jou wordt nooit verteld wat.',
 

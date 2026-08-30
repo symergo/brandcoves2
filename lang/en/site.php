@@ -895,7 +895,7 @@ return [
 
         'registry_title' => 'A registry',
         'registry_body' => 'A wishlist with an occasion and a date on it, for a wedding, a baby or a new home. Add a delivery address and only people who have claimed something can see it.',
-        'registry_step1' => 'Open one of your wishlists and press Share, then fill in Special occasion.',
+        'registry_step1' => 'Open one of your wishlists and press Occasion.',
         'registry_step2' => 'Pick the occasion and the date, and add a delivery address if people should be posting things to you.',
         'registry_step3' => 'Share it as you would any list. It behaves like one: people claim, and you are never told what.',
 

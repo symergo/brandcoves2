@@ -733,7 +733,7 @@ return [
 
         'registry_title' => 'Una lista de regalos',
         'registry_body' => 'Una lista con una ocasión y una fecha: boda, bebé o casa nueva. Añade una dirección y solo la ve quien haya reservado algo.',
-        'registry_step1' => 'Abre una de tus listas de deseos, pulsa Compartir y rellena Ocasión especial.',
+        'registry_step1' => 'Abre una de tus listas de deseos y pulsa Ocasión.',
         'registry_step2' => 'Elige la ocasión y la fecha, y añade una dirección de envío si te van a mandar las cosas.',
         'registry_step3' => 'Compártela como cualquier lista. Se comporta igual: la gente reserva y a ti nunca se te dice qué.',
 
