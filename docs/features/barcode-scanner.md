@@ -155,8 +155,12 @@ the intent starts.
 
 The route, the controller and the page are unchanged: `/{market}/scan` still
 works for anyone holding the URL, which is what a bookmarked or home-screen
-shortcut needs. Only the header link is gone. `nav.scan` stays in the language
-files for that page's own use.
+shortcut needs. Only the header link is gone.
+
+This paragraph used to end "`nav.scan` stays in the language files for that
+page's own use", which was never true — [Scan.tsx](../../resources/js/Pages/Scan.tsx)
+titles itself from `scan.title`. The key sat unread in four languages until the
+2026-09-03 copy cull removed it.
 
 ### And from the home page, for the same reason
 
@@ -194,6 +198,41 @@ the panel, and `type="button"` on a button inside a real `<form method="get">`,
 which on the home page would otherwise submit an empty search instead of opening
 the camera. A second copy would have dropped one of those, and the bug would
 have appeared on only one of the two surfaces.
+
+### And beside every product search field
+
+Added 2026-09-03. Two entry points became seven, on the same rule applied a
+third time: scanning belongs **where a query is entered**, and the site enters a
+product query in more places than its two search boxes. The camera now sits
+beside the add-to-list panel, the suggestion box on a shared list, the picks
+picker on an answer, the self-describe list, and the discovery dial.
+
+**What had to change first is what a scan *does*.** Beside the home and search
+fields a good read navigates to `/search?q=<gtin>` — right there, and wrong in
+every one of the five above. Those are *pickers*: you search in order to attach
+something to the screen you are already on, and a `router.visit` would take the
+list being added to, the half-typed answer or the dial settings with it. So
+`BarcodeScanner` gained an `onCode` callback and `ScanButton` an `onScan`; where
+either is supplied the code is handed back and the picker searches in place,
+and where neither is, the navigating behaviour is untouched.
+
+**It is the normalised GTIN that is handed back, not the raw read.** A camera
+reads a UPC-A as 12 digits and an outer carton as ITF-14; `ScanController`
+already folds both to the GTIN-13 the catalogue stores. Every one of these
+pickers runs its query through `SearchService`, which resolves a GTIN as an
+exact identity (`identity_key`) rather than as thirteen digits of text — so the
+same code that works in the search box works in all of them, and passing the raw
+read instead would silently find nothing for every American product.
+
+A miss calls the handler too. "No product with this barcode" is still the answer
+to the question the field asked, and the picker's own empty state — which
+already offers to add the item by hand — says it better than a card inside a
+dialog can.
+
+**The discovery dial is the one exception, in its Projects layout.** That box
+wants a situation ("home office", "coffee corner"), and a barcode is the
+opposite kind of answer, so the button is hidden there — the same condition that
+already swaps the placeholder.
 
 ## Where it fits
 

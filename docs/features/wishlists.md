@@ -274,6 +274,26 @@ pledges: complete, tested, unreachable. `liveCard()` now carries both. Passing t
 from the client stays safe because the server discards them for a source it may not mirror, so an
 Amazon offer keeps the decision and nothing else (invariant #6).
 
+## The add panel has a camera and no cancel — 2026-09-03
+
+Two changes to the same search row, in opposite directions.
+
+**A `ScanButton` beside the field.** The panel is where somebody standing in a shop with the product
+in their hand is, and the barcode is the fastest way to get that product onto a list. It cannot use
+the scanner's normal behaviour, though: a good read there navigates to `/search?q=<gtin>`, which
+would take the list being added to with it. So `BarcodeScanner` gained an `onCode` callback and this
+panel searches in place with the normalised GTIN —
+[barcode-scanner.md](barcode-scanner.md#and-beside-every-product-search-field) has the detail.
+
+**The Cancel button is gone.** The row was `[field] [Search] [Cancel]`: three controls, one of which
+undoes the act of having opened a panel. The panel is inline rather than a dialog, so leaving it
+open costs a search row above the items and nothing else — which on a list page is arguably where it
+should have rested all along.
+
+The consequence, stated because it is a real one: once opened, the panel stays open until an item is
+added (`onSuccess` still collapses it) or the visitor leaves the page. That is the trade, taken
+deliberately. If the panel ever becomes a dialog, the escape has to come back with it.
+
 ## Files
 
 - `app/Http/Controllers/WishlistItemController.php` — `report()`, `saved(?list=)`, `find()`
@@ -586,6 +606,12 @@ and the badge then never clears.
 > button attaches an occasion and a date to a wish list you already have, which is what the new label
 > says. Nothing below changed: the columns, the gate and the two readers are exactly as described.
 > See [list-taxonomy.md](list-taxonomy.md#registry-became-special-occasion).
+>
+> **Where you press it: a chip of its own on `Lists/Show`**, labelled `registry.occasion` — one word,
+> because it sits in a scrolling row. It spent 2026-08-29 to 2026-08-30 as a section inside the Share
+> panel and moved back out; see
+> [list-surfaces.md](list-surfaces.md#six-tabs-became-four-then-five) for why. The form, the columns
+> and the gate are untouched by either move.
 
 
 Added 2026-08-16. `event_type`, `event_date` and `delivery_address` were stored and read back **to

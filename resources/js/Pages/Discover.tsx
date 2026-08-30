@@ -4,6 +4,7 @@ import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 import SaveToList from '../Components/SaveToList'
+import ScanButton from '../Components/ScanButton'
 
 export interface DiscoverItem {
     id: number
@@ -254,6 +255,26 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                             onChange={(e) => setTerm(e.target.value)}
                             aria-label={t('discover.query_placeholder')}
                         />
+                        {/*
+                          "Something like this one." The keyword retriever runs
+                          the query through SearchService, which resolves a GTIN
+                          as an exact identity — so a scan seeds discovery with
+                          the product in your hand rather than a text match on
+                          thirteen digits.
+
+                          Hidden in Projects, where the box wants a situation
+                          ("home office") and a barcode is the opposite kind of
+                          answer — the same reason the placeholder changes.
+                        */}
+                        {meta.layout !== 'kit' && (
+                            <ScanButton
+                                className="shrink-0 rounded border border-line px-3 py-2"
+                                onScan={(gtin) => {
+                                    setTerm(gtin)
+                                    run(dial, surpriseDial, gtin)
+                                }}
+                            />
+                        )}
                         <button type="submit" className="rounded bg-accent px-4 py-2 text-sm text-white">
                             {t('discover.go')}
                         </button>

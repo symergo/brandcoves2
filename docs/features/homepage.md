@@ -72,6 +72,33 @@ The Dutch second headline moved with it, from *"Jezelf inbegrepen."* to *"Ook aa
 **giving**, and *aan jezelf* carries the same verb as the paragraph under it. The other three markets
 keep *"Yourself included." / "À vous aussi." / "También para ti."*, which never had that problem.
 
+### And then it was deleted — 2026-09-03
+
+Everything above this line is history now. `home.intro` is gone, along with `home.search_label` and
+`home.gifting_lists_hint`, in a pass over the whole site for text that repeats what is already on
+screen.
+
+The paragraph was three sentences and seventy words, and every tool it named — lists, sharing, a
+group gift, a Secret Friend — is a card in the Organise band a screen below, each with its own line
+saying what it is. So it was an index of the page written above the page, and it sat in the one
+position that costs the most: between the headline and the search field, pushing the box a
+paragraph further down the first screen. The reasoning that put it there was sound and is left
+above deliberately — *the tools are what a visitor cannot guess is here* is still true. The cards
+say it, and they say it where a visitor can act on it.
+
+The headline and the two CTAs are untouched, and so is `home.seo_description`, which is read by
+somebody who has never seen the site and is the one place the pitch still has to be a sentence.
+
+**`home.search_label` went for a different reason: it had become a lie.** It was the search field's
+`aria-label`, reading *"Search for a product or a brand"*, while the placeholder beside it had been
+rewritten to *"Search for a gift or scan a barcode"* — so a screen reader announced one field and
+everyone else saw another. Two strings for one control drift apart the moment one of them is
+edited; the field now labels itself with its placeholder, as the search page's already did.
+
+**`home.gifting_lists_hint`** was the zero-state line under the Lists card: *"Keep things for
+yourself or share them with others"*, under a card called **Lists**. The card now shows its count
+when there is one and nothing when there is not.
+
 ## What it does not end on: catalogue counters
 
 Removed 2026-08-10. The page used to close with three stat tiles — products indexed, groups with

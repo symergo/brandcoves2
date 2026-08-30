@@ -15,6 +15,14 @@ interface Props {
      * display class still wins.
      */
     className?: string
+    /**
+     * Fill a field instead of leaving the page.
+     *
+     * Passed straight to `BarcodeScanner.onCode` — see there for why a picker
+     * must not navigate. The dialog closes itself, because the answer has
+     * arrived somewhere the visitor can see it.
+     */
+    onScan?: (gtin: string) => void
 }
 
 /**
@@ -72,12 +80,18 @@ function ScanIcon({ className = 'h-5 w-5' }: { className?: string }) {
  * the home page and the search page both open with a search box, and someone
  * standing in a shop should not have to run a search first to find the camera.
  *
+ * Beside a field that owns its page — home, search — a scan navigates to the
+ * results. Beside a *picker* — the add-to-list panel, the suggestion box on a
+ * shared list, the answer composer, the discovery dial — it must not: the list
+ * being added to, the half-typed answer and the dial settings all live on that
+ * screen. Those callers pass `onScan` and search in place instead.
+ *
  * Extracted rather than duplicated because the pieces that are easy to get
  * wrong — unmounting the scanner to release the camera, the backdrop click that
  * must not fire on a drag out of the panel, `type="button"` inside a real
  * <form> — are exactly the ones a second copy would quietly drop.
  */
-export default function ScanButton({ className = 'rounded-lg border border-line px-4 py-3' }: Props) {
+export default function ScanButton({ className = 'rounded-lg border border-line px-4 py-3', onScan }: Props) {
     const { t } = useTranslations()
     const [open, setOpen] = useState(false)
 
@@ -125,7 +139,17 @@ export default function ScanButton({ className = 'rounded-lg border border-line 
                           the camera — the component stops its own stream on
                           unmount. Hiding it with CSS would leave the light on.
                         */}
-                        <BarcodeScanner autoStart />
+                        <BarcodeScanner
+                            autoStart
+                            onCode={
+                                onScan
+                                    ? (gtin) => {
+                                          setOpen(false)
+                                          onScan(gtin)
+                                      }
+                                    : undefined
+                            }
+                        />
                     </div>
                 </div>
             )}

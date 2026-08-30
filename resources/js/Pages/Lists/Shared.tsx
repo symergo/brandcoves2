@@ -8,6 +8,7 @@ import Vote from '../../Components/Vote'
 import type { SharedProps } from '../../types'
 import { formatOccasionDate, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import ScanButton from '../../Components/ScanButton'
 
 interface Item {
     id: number
@@ -607,6 +608,23 @@ export default function SharedList({
                             placeholder={t('suggestions.search_placeholder')}
                             aria-label={t('suggestions.search_placeholder')}
                             className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                        />
+                        {/*
+                          Somebody suggesting a present is often holding it, or
+                          looking at it in a shop. The same GET as the submit
+                          button, with the barcode as the query — not a visit to
+                          /search, which would leave the list behind.
+                        */}
+                        <ScanButton
+                            className="shrink-0 rounded-lg border border-line px-3 py-2"
+                            onScan={(gtin) => {
+                                setQuery(gtin)
+                                router.get(
+                                    `${base}/l/${token}`,
+                                    { q: gtin },
+                                    { preserveState: true, preserveScroll: true },
+                                )
+                            }}
                         />
                         <button type="submit" className="rounded-lg border border-line px-4 py-2 text-sm hover:border-ink">
                             {t('search.submit')}

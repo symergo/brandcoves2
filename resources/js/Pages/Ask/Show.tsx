@@ -5,6 +5,7 @@ import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
+import ScanButton from '../../Components/ScanButton'
 
 interface Pick {
     id: number
@@ -284,6 +285,25 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                                     placeholder={t('ask.picks_search')}
                                     aria-label={t('ask.picks_search')}
                                     className="min-w-0 flex-1 rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                />
+                                {/*
+                                  The best answer to "what should I buy" is
+                                  often the thing the answerer already owns.
+                                  `preserveState` for the same reason the
+                                  buttons beside it use it: the half-typed
+                                  answer and the picks already chosen must
+                                  survive the search.
+                                */}
+                                <ScanButton
+                                    className="shrink-0 rounded-lg border border-line px-3 py-2"
+                                    onScan={(gtin) => {
+                                        setQuery(gtin)
+                                        router.get(
+                                            question.url,
+                                            { q: gtin },
+                                            { preserveState: true, preserveScroll: true },
+                                        )
+                                    }}
                                 />
                                 <button
                                     type="button"

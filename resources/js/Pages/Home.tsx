@@ -110,7 +110,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                           field — the one thing this page wants pressed — sat
                           under the fold behind a wall of prose.
                         */}
-                        <p className="mt-5 max-w-2xl text-ink-soft sm:text-lg">{t('home.intro')}</p>
+
 
                         {/*
                           A search field, where the Gift Finder button used to
@@ -146,7 +146,12 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             <input
                                 type="search"
                                 name="q"
-                                aria-label={t('home.search_label')}
+                                // The placeholder is the label. Two strings for
+                                // one field drifted apart the moment one of
+                                // them was rewritten: a screen reader heard
+                                // "a product or a brand" while the field on
+                                // screen offered to scan a barcode.
+                                aria-label={t('home.search_placeholder')}
                                 placeholder={t('home.search_placeholder')}
                                 className="w-full min-w-0 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none sm:w-auto sm:flex-1"
                             />
@@ -288,10 +293,14 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                                 key: 'mine',
                                 href: gifting.urls.lists,
                                 name: t('nav.lists'),
-                                hint:
-                                    gifting.lists > 0
-                                        ? t('home.gifting_lists_count', { count: n(gifting.lists) })
-                                        : t('home.gifting_lists_hint'),
+                                // Nothing when there is nothing to say. The
+                                // fallback here was "keep things for yourself
+                                // or share them with others" under a card
+                                // called Lists, which is the card's own name
+                                // at greater length.
+                                hint: gifting.lists > 0
+                                    ? t('home.gifting_lists_count', { count: n(gifting.lists) })
+                                    : null,
                             },
                             {
                                 key: 'shared',
@@ -374,7 +383,9 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                                 />
                                 <div className="min-w-0 sm:mt-4">
                                     <h3 className="font-medium">{tool.name}</h3>
-                                    <p className="mt-1 text-sm text-ink-soft sm:mt-2">{tool.hint}</p>
+                                    {tool.hint && (
+                                        <p className="mt-1 text-sm text-ink-soft sm:mt-2">{tool.hint}</p>
+                                    )}
                                 </div>
                             </Link>
                         </li>

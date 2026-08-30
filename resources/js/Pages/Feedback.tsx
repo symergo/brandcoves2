@@ -107,9 +107,6 @@ export default function Feedback({ path }: Props) {
                             placeholder={t('feedback.path_placeholder')}
                             className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
                         />
-                        <span className="mt-1 block text-xs font-normal text-ink-soft">
-                            {t('feedback.path_hint')}
-                        </span>
                     </label>
 
                     <label className="block text-sm font-medium">

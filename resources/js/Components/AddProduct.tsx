@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { formatPrice } from '../types'
 import type { CurrentMarket } from '../types'
 import { useTranslations } from '../useTranslations'
+import ScanButton from './ScanButton'
 
 interface GroupHit {
     id: number
@@ -105,7 +106,18 @@ export default function AddProduct({
     function runSearch(event?: React.FormEvent): void {
         event?.preventDefault()
 
-        const q = term.trim()
+        search(term)
+    }
+
+    /*
+     * The query is a parameter, not read from state.
+     *
+     * A scan sets the field and searches in the same tick, and `term` would
+     * still be the old value at that point — so the camera would search
+     * whatever was typed before it, or nothing at all.
+     */
+    function search(raw: string): void {
+        const q = raw.trim()
 
         setError(null)
 
@@ -312,6 +324,20 @@ export default function AddProduct({
                             aria-label={t('lists.add_search_placeholder')}
                             className="w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
                         />
+                        {/*
+                          The barcode is the fastest way to put the thing in
+                          your hand on a list, and this panel is where somebody
+                          standing in a shop is. It fills the field and searches
+                          rather than leaving: navigating to /search here would
+                          take the list being added to with it.
+                        */}
+                        <ScanButton
+                            className="shrink-0 rounded-lg border border-line px-3 py-2"
+                            onScan={(gtin) => {
+                                setTerm(gtin)
+                                search(gtin)
+                            }}
+                        />
                         {/* Named as well as pressable: nothing else on screen
                             says that typing here does not search by itself. */}
                         <button
@@ -321,13 +347,7 @@ export default function AddProduct({
                         >
                             {t('search.submit')}
                         </button>
-                        <button
-                            type="button"
-                            onClick={close}
-                            className="shrink-0 rounded-lg border border-line px-3 py-2 text-sm"
-                        >
-                            {t('lists.cancel')}
-                        </button>
+
                     </form>
 
                     {searching && (

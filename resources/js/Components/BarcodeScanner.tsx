@@ -100,6 +100,26 @@ interface Props {
     autoStart?: boolean
     /** Shown after a successful lookup, so the dialog can close itself. */
     onFound?: () => void
+    /**
+     * Hand the normalised barcode back instead of navigating to the results.
+     *
+     * The default behaviour — go straight to `/search?q=<gtin>` — is right
+     * beside a search field that owns the whole page, and wrong inside a
+     * picker. In the "add to list" panel, the suggestion box on a shared list,
+     * the answer composer and the discovery dial, the scan is a way of filling
+     * *that* field: navigating away would take the list, the answer or the
+     * dial settings with it, which is the one thing those screens must not do.
+     *
+     * The GTIN, not the raw read. `ScanController` normalises a 12-digit UPC-A
+     * and a 14-digit ITF-14 to the GTIN-13 the catalogue stores, and every
+     * picker's search resolves that as an exact identity — so handing back
+     * what the camera saw would find nothing for every American product.
+     *
+     * Called for a miss as well as a hit: "no product with this barcode" is
+     * still the answer to the question the field asked, and the picker's own
+     * empty state says so better than a card inside a dialog can.
+     */
+    onCode?: (gtin: string) => void
 }
 
 /**
@@ -110,7 +130,7 @@ interface Props {
  * drift, and the bug it drifted into would only show up on one of the two
  * surfaces.
  */
-export default function BarcodeScanner({ autoStart = false, onFound }: Props) {
+export default function BarcodeScanner({ autoStart = false, onFound, onCode }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -166,7 +186,29 @@ export default function BarcodeScanner({ autoStart = false, onFound }: Props) {
              * frame will probably be readable, so navigating away would throw
              * away the attempt.
              */
-            if (result.searchUrl) {
+            /*
+             * A picker takes the code and searches in place; everywhere else a
+             * good read goes straight to the results.
+             *
+             * Someone holding a product up to a camera has asked one question —
+             * "what does this cost elsewhere" — and an intermediate card that
+             * makes them tap again to find out is a step that exists only
+             * because the code was easier to write that way.
+             *
+             * A misread stays put: the camera is still running and the next
+             * frame will probably be readable, so navigating away would throw
+             * away the attempt. `result.gtin` is absent exactly then — an
+             * unreadable or check-digit-failing code answers 422 with no GTIN —
+             * which is why the handler is guarded on it rather than on status.
+             */
+            if (onCode && result.gtin) {
+                stop()
+                onCode(result.gtin)
+
+                return
+            }
+
+            if (! onCode && result.searchUrl) {
                 stop()
                 router.visit(result.searchUrl)
 
@@ -175,7 +217,7 @@ export default function BarcodeScanner({ autoStart = false, onFound }: Props) {
 
             setHit(result)
         },
-        [market.key, stop],
+        [market.key, stop, onCode],
     )
 
     const start = useCallback(async () => {

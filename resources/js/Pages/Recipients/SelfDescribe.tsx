@@ -3,6 +3,7 @@ import { useState } from 'react'
 import SignInLink from '../../Components/SignInLink'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import ScanButton from '../../Components/ScanButton'
 
 interface Option {
     value: string
@@ -282,6 +283,18 @@ export default function SelfDescribe({
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={t('recipients.search_placeholder')}
                             className="min-w-0 flex-1 rounded-lg border border-line px-3 py-2 text-sm"
+                        />
+                        {/*
+                          The third way in, beside typing and "show me ideas":
+                          the thing you already own and would like another of,
+                          or the one you photographed in a shop window.
+                        */}
+                        <ScanButton
+                            className="shrink-0 rounded-lg border border-line px-3 py-2"
+                            onScan={(gtin) => {
+                                setQuery(gtin)
+                                router.get(`${base}/suggest`, { q: gtin }, { preserveState: true })
+                            }}
                         />
                         <button
                             type="submit"

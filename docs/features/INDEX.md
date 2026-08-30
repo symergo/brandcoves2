@@ -21,6 +21,7 @@ cannot be recovered from a diff.
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
 | [search-help.md](search-help.md) | Search / Content | Active |
 | [feedback.md](feedback.md) | Core / Quality | Active |
+| [copy-cull.md](copy-cull.md) | Core / Content | Done — 2026-09-03, 45 keys removed |
 | [product-description.md](product-description.md) | Catalogue / Frontend | Active |
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect waits on the connector |
 | [amazon-search-cta.md](amazon-search-cta.md) | Search / Affiliate | Active on search, brand and product; `nl-nl` + both `be-*`, no tag for `en`/`es` |

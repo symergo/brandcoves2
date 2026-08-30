@@ -43,8 +43,15 @@ export default function Brands({ brands }: Props) {
             <p className="mt-3 max-w-2xl text-ink-soft">{t('brand.index_intro')}</p>
 
             {letters.length === 0 ? (
+                /*
+                  Replaced, not deleted. This rendered `search.empty_hint` —
+                  "try a shorter search term, or check the spelling" — on a
+                  page that has no search field and no term. The intro above it
+                  promises every brand in the catalogue, so the state needs one
+                  sentence saying there are none rather than none at all.
+                */
                 <p className="mt-8 rounded-card border border-line bg-card p-5 text-sm text-ink-soft">
-                    {t('search.empty_hint')}
+                    {t('brand.index_empty')}
                 </p>
             ) : (
                 <>
