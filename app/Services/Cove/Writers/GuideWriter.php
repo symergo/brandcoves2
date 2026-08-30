@@ -10,6 +10,7 @@ use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
 use App\Services\Ai\PromptBank;
+use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -62,12 +63,17 @@ class GuideWriter
                 /*
                  * The editable half, then the contract.
                  *
-                 * The link-token contract is appended in code and is not
-                 * overridable: an edited system prompt that dropped it would
-                 * stop every `[[product:…]]` being produced, and the only
-                 * symptom would be articles quietly losing their links.
+                 * Two contracts, both appended in code and neither
+                 * overridable. The link-token one: an edited system prompt that
+                 * dropped it would stop every `[[product:…]]` being produced,
+                 * and the only symptom would be articles quietly losing their
+                 * links. The paragraph one: an article's cards are placed by
+                 * the tokens in its own prose, so a prompt that stopped asking
+                 * for a paragraph per product would empty the article of
+                 * products and push all seven back into the list beneath it.
                  */
                 $this->prompts->system('cove.'.$plan->kind->value)
+                    ."\n\n".ProseCards::promptContract()
                     .($allowed === [] ? '' : "\n\n".$this->markup->promptContract($allowed)),
                 $this->prompt($market, $topic, $finds, $brief, $plan),
                 schemaHint: [
@@ -77,7 +83,15 @@ class GuideWriter
                     'faq' => [['q' => '...', 'a' => '...']],
                     'items' => [['verdict' => 'Best for ...', 'copy' => '...']],
                 ],
-                maxTokens: 2500,
+                /*
+                 * Raised from 2500. The article now owes a paragraph to every
+                 * product on top of the intro, the decisions and the FAQ, and a
+                 * response cut off at the ceiling loses the last products
+                 * outright — along with the `items` array, which the schema puts
+                 * last, so a short budget costs the fallback copy as well as the
+                 * writing it was meant to back up.
+                 */
+                maxTokens: 3500,
             );
         } catch (AiUnavailable $e) {
             Log::info('Guide copy unavailable, using template', ['reason' => $e->getMessage()]);
@@ -99,7 +113,14 @@ class GuideWriter
         return new Written(
             title: $this->clean($response['title'] ?? null, 120) ?? $fallback->title,
             intro: $this->clean($response['intro'] ?? null, 400) ?? $fallback->intro,
-            body: $this->clean($response['how_to_choose'] ?? null, 3000),
+            /*
+             * 6000, not 3000. The body is the article now: the decisions that
+             * matter and then a passage per product, where before it was only
+             * the decisions. A cut lands mid-paragraph in the last product and
+             * takes its link token with it, which loses that product its card
+             * as well as its sentences.
+             */
+            body: $this->clean($response['how_to_choose'] ?? null, 6000),
             faq: $this->faq($response['faq'] ?? null),
             items: $items,
             source: 'ai',

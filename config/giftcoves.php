@@ -387,11 +387,14 @@ return [
     |
     */
     'editorial_api' => [
-        // Matches the cap EditionBuilder applies to model-written prose, so a
-        // Cove reads the same length whoever wrote it — and so an author is
-        // told at the door rather than having their last paragraph silently
-        // truncated on the way into the edition.
-        'max_editorial_chars' => 4000,
+        // Matches EditionBuilder::EDITORIAL_LIMIT, so a Cove reads the same
+        // length whoever wrote it — and so an author is told at the door rather
+        // than having their last paragraph silently truncated on the way into
+        // the edition. Raised from 4000 with the rule that every product gets
+        // its own paragraph: at 4000 an author covering seven finds had 570
+        // characters each, and the truncation took the last product's link
+        // token with it, so it lost its card as well as its writing.
+        'max_editorial_chars' => 8000,
 
         // Reads are generous on purpose: researching a Cove means looking at a
         // lot of products, and an author who finds lookup expensive starts

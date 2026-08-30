@@ -459,9 +459,10 @@ the list:
 ```
 
 `note` is a brief to whoever writes the prose — including a later `POST` from you — and is never
-shown to a reader. A curated plan tells the builder's model to cover **every** item in order, rather
-than picking two or three, so the shortlist is a commitment and not a hint. See
-[cove-curation.md](cove-curation.md).
+shown to a reader. Every plan tells the builder's model to cover **every** product, one per
+paragraph; what curating adds is that they are covered *in your order*, with your reason for each.
+The shortlist is a commitment and not a hint. See [cove-curation.md](cove-curation.md) and
+[product-cards-in-prose.md](product-cards-in-prose.md).
 
 An item may instead carry `source` + `externalId`, but only for a source whose catalogue may not be
 mirrored (Amazon). Anything already in the catalogue has a `groupId`, and storing it by external id
@@ -505,13 +506,19 @@ slug.
 
 ### Voice
 
-Two or three paragraphs. Dry, specific, quietly amused. You are pointing at odd things and saying
-why they are worth a second look. You are not selling.
+Dry, specific, quietly amused. You are pointing at odd things and saying why they are worth a
+second look. You are not selling.
+
+**Shape: a short opening, then a paragraph about each product.** The frontend renders each product's
+card directly under the paragraph whose copy names it — so the paragraph is the writing that product
+gets, and the only writing it gets. A product no paragraph names appears as a bare card at the foot
+of the page with nothing said about it. One product per paragraph: two in one stacks both cards
+under it and reads as a caption for a pair, and only the first mention places a card. See
+[product-cards-in-prose.md](product-cards-in-prose.md).
 
 - Never state a price, a rating, or a claim about quality or stock. Prices move and the page
   renders live ones; a number in a sentence is wrong within a week.
 - No "amazing", no exclamation marks, no rhetorical questions.
-- Do not walk the list in order. Pick two or three worth a sentence and let the rest stand.
 
 ### Links
 

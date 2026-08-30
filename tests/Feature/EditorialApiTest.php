@@ -673,7 +673,12 @@ class EditorialApiTest extends TestCase
         $this->get('/'.Market::BeNl->value.'/guides/'.$created->json('data.slug'))
             ->assertOk()
             ->assertInertia(function ($page) {
-                $intro = implode(' ', $page->toArray()['props']['guide']['intro']);
+                // Blocks, not strings, since a paragraph carries the
+                // products it names as well as its HTML. See
+                // docs/features/product-cards-in-prose.md.
+                $intro = collect($page->toArray()['props']['guide']['intro'])
+                    ->pluck('html')
+                    ->implode(' ');
 
                 $this->assertStringContainsString('<a href="/be-nl/guides/doelgids">de doelgids</a>', $intro);
                 // From config('giftcoves.linkable_pages'), never a path the

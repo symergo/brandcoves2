@@ -188,7 +188,7 @@ wholesale** — send the full list every time, or use `POST /coves/{id}/editoria
 
 ## Writing the prose
 
-`editorial` is the article for a Daily or a persona (4000 characters max, the same
+`editorial` is the article for a Daily or a persona (8000 characters max, the same
 cap the builder applies to model-written prose). `body` is the article for a guide or
 an advice piece. Write in the market's language.
 
@@ -201,13 +201,20 @@ Only the plan's own products, their brands and their categories resolve; anythin
 else is stripped back to plain text, which is why `linkCheck` has to be read. On a
 plan it is advisory — the builder's own finds are not in the allowlist yet.
 
-Voice: two or three paragraphs, dry, specific, quietly amused. Pointing at odd things
-and saying why they are worth a second look, not selling.
+Voice: dry, specific, quietly amused. Pointing at odd things and saying why they are
+worth a second look, not selling.
 
+**Shape: a short opening, then a paragraph about each product.** The frontend renders
+each product's card directly underneath the paragraph whose copy names it, so the
+paragraph is the writing that product gets and the only writing it gets. A product no
+paragraph names has no card in the article at all — it drops to a bare card at the
+foot of the page.
+
+- **One product per paragraph.** Two in one paragraph stacks both cards under it and
+  reads as a caption for a pair. Only the first mention of a product places a card.
 - **Never state a price, a rating, or a claim about stock or quality.** The page
   renders live prices; a number in a sentence is wrong within a week.
 - No "amazing", no exclamation marks, no rhetorical questions.
-- Do not walk the list in order. Pick two or three worth a sentence, let the rest stand.
 
 `queries` are **product words** — "hondenmand" finds products, "cadeau voor
 hondenliefhebbers" finds nothing. They bias the builder's finds and never filter.

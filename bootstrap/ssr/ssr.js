@@ -38571,9 +38571,79 @@ function Prose({ blocks, className = "" }) {
 		dangerouslySetInnerHTML: { __html: html }
 	}, i)) });
 }
+/**
+* The card that sits under the paragraph discussing a product.
+*
+* It deliberately carries no `copy`. The paragraph above it IS the writing
+* about this product; printing the item's own blurb underneath would say the
+* same thing twice in two voices. `copy` is what the list below falls back to
+* for a product the article never reached, which is the only place it still
+* earns its keep.
+*/
+function InlineCard({ item }) {
+	const { market } = usePage().props;
+	const { t, n } = useTranslations();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figure", {
+		className: `my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row ${item.unavailable ? "opacity-60" : ""}`,
+		children: [item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+			href: item.url,
+			className: "shrink-0",
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
+				src: item.image,
+				alt: "",
+				loading: "lazy",
+				className: "mx-auto h-32 w-32 object-contain"
+			})
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("figcaption", {
+			className: "min-w-0 flex-1",
+			children: [
+				item.verdict && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+					className: "text-xs font-medium tracking-wide text-accent uppercase",
+					children: item.verdict
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+					href: item.url,
+					className: "mt-1 block font-medium hover:underline",
+					children: item.title
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "mt-3 flex flex-wrap items-center gap-4",
+					children: [
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "font-semibold",
+							children: item.unavailable ? t("guides.unavailable") : item.price === null ? "—" : formatPrice(item.price, market)
+						}),
+						item.merchantCount > 1 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "text-sm text-ink-soft",
+							children: t("guides.shops", { count: n(item.merchantCount) })
+						}),
+						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SaveToList, { groupId: item.groupId })
+					]
+				})
+			]
+		})]
+	});
+}
+/**
+* Paragraphs, each followed by the cards for the products it names.
+*
+* A paragraph naming nothing renders as an ordinary paragraph, which is what
+* makes this safe on every kind: an advice article has no shortlist, so every
+* block falls straight through and the page is prose from top to bottom.
+*/
+function Article({ blocks, byGroup, className = "" }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_jsx_runtime.Fragment, { children: blocks.map((block, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", {
+		className: `${className} [&_a]:underline`,
+		dangerouslySetInnerHTML: { __html: block.html }
+	}), block.groupIds.map((id) => byGroup[id]).filter(Boolean).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InlineCard, { item }, item.rank))] }, i)) });
+}
 function GuideShow({ preview = false, guide, items }) {
 	const { market } = usePage().props;
 	const { t, n } = useTranslations();
+	const byGroup = Object.fromEntries(items.map((i) => [i.groupId, i]));
+	const named = new Set([...guide.intro, ...guide.body].flatMap((block) => block.groupIds));
+	const rest = items.filter((item) => !named.has(item.groupId));
+	const bodyIsAboutProducts = guide.body.some((block) => block.groupIds.length > 0);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		preview && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PreviewBanner, {}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Head_default, { title: guide.title }),
@@ -38584,8 +38654,9 @@ function GuideShow({ preview = false, guide, items }) {
 					className: "text-2xl font-semibold sm:text-3xl",
 					children: guide.title
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Prose, {
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Article, {
 					blocks: guide.intro,
+					byGroup,
 					className: "mt-3 text-lg text-ink-soft"
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
@@ -38594,19 +38665,20 @@ function GuideShow({ preview = false, guide, items }) {
 				}),
 				guide.body.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
 					className: "mt-8",
-					children: [guide.kind === "buying" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
+					children: [guide.kind === "buying" && !bodyIsAboutProducts && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h2", {
 						className: "text-lg font-medium",
 						children: t("guides.how_to_choose")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Prose, {
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Article, {
 						blocks: guide.body,
+						byGroup,
 						className: "mt-3 leading-relaxed"
 					})]
 				})
 			]
 		}),
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
+		rest.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ol", {
 			className: "mt-10 space-y-5",
-			children: items.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
+			children: rest.map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", {
 				className: `flex flex-col gap-4 rounded-lg border border-line p-5 sm:flex-row ${item.unavailable ? "opacity-60" : ""}`,
 				children: [item.image && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("img", {
 					src: item.image,

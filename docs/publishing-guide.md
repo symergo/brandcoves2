@@ -148,16 +148,20 @@ resolve, and an article cannot link to itself.
 
 ## Voice
 
-Two or three paragraphs for a Cove; as long as it needs to be for a guide.
-
 Dry, specific, quietly amused. You are pointing at things and saying why they are worth a second
 look. You are not selling.
+
+**Shape: a short opening, then a paragraph about each product.** The frontend renders each
+product's card directly under the paragraph whose copy names it — so the paragraph is the writing
+that product gets, and the only writing it gets. A product no paragraph names appears as a bare card
+at the foot of the page with nothing said about it. One product per paragraph: two in one stacks
+both cards under it and reads as a caption for a pair, and only the first mention places a card.
+See [product-cards-in-prose.md](features/product-cards-in-prose.md).
 
 - **Never state a price, a rating, a discount or a stock claim in prose.** Prices move and the page
   renders live ones; a number in a sentence is wrong within a week and the sentence is what a reader
   trusts.
 - No "amazing", no exclamation marks, no rhetorical questions.
-- Do not walk the list in order. Pick the two or three worth a sentence.
 - Write in the market's language. `GET /api/editorial` lists them. Two markets are not a translation
   of each other — they have different catalogues, so write each one separately.
 

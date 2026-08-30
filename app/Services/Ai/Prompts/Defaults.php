@@ -98,14 +98,22 @@ class Defaults
     /**
      * One morning's edition, read the day it drops and archived afterwards.
      *
-     * The last rule is NOT here. It flips depending on whether a person chose
-     * the products — "write about every one, in order" against "pick two or
-     * three worth a sentence" — and that is derived from the plan in front of
-     * the builder rather than from a setting. `EditionBuilder` appends it.
+     * The paragraph rules are NOT here. "One product per paragraph, every
+     * product covered" is a fact about how the page renders — the card is
+     * placed under the paragraph naming it — rather than a matter of house
+     * style, so `EditionBuilder::editorialSystem()` appends it where an edit to
+     * this template cannot drop it. What curation adds on top (the order, and
+     * the note explaining each choice) is appended in the same place, because
+     * that too is derived from the plan in front of the builder.
      */
     private const DAILY_SYSTEM = <<<'TXT'
-        You write the short editorial that opens today's edition of a daily
-        column about unusual products. Two or three paragraphs.
+        You write the editorial for today's edition of a daily column about
+        unusual products: a short opening, then a passage about each find.
+
+        The passage is the point. Each product's card is rendered directly under
+        the paragraph that names it, so a paragraph is not an introduction to a
+        grid further down — it is the writing that product gets, and the only
+        writing it gets.
 
         The column exists because most shopping pages show you what everybody
         already sells. This one points at the odd thing at the back of the shelf
@@ -153,9 +161,13 @@ class Defaults
      * handed them.
      */
     private const PERSONA_SYSTEM = <<<'TXT'
-        You write the opening of a permanent gift-ideas page about one kind of
-        person — "the cottagecore herbalist", "the dad who has everything". Two
-        or three paragraphs.
+        You write a permanent gift-ideas page about one kind of person — "the
+        cottagecore herbalist", "the dad who has everything". An opening about
+        the person, then a passage about each gift.
+
+        Each gift's card is rendered directly under the paragraph that names it,
+        so a paragraph is the writing that gift gets, not a trailer for a grid
+        further down.
 
         The reader is buying a present for somebody else. They already know who
         that person is; what they lack is an idea. So write about the *recipient*
@@ -194,10 +206,16 @@ class Defaults
     /**
      * A ranked shortlist and an argument about it.
      *
-     * Its substance is the products; the prose is presentation. That is why the
-     * per-item copy is capped at two sentences and why "best for X" is required
-     * rather than "the best" — the page has to survive a reader who disagrees
-     * with the ranking.
+     * Its substance is the products, and since the cards moved into the article
+     * the prose is where the argument about each one lives rather than a
+     * preamble to a list. "Best for X" is still required instead of "the best":
+     * the page has to survive a reader who disagrees with the ranking.
+     *
+     * The per-item copy survives at two sentences and has changed job. It used
+     * to be the writing about a product; it is now the fallback shown under a
+     * card the article never reached, which is why the template says so — a
+     * model told to write both without being told which wins writes the same
+     * two sentences twice.
      */
     private const GUIDE_SYSTEM = <<<'TXT'
         You write the prose for a buying guide on a product and brand discovery
@@ -207,9 +225,17 @@ class Defaults
         not the products. A reader arrives knowing roughly what they want and
         needing to choose between things that look identical in a search result.
 
-        Write three things: an intro that says what actually separates these
-        products, a "how to choose" section naming the two or three decisions
-        that matter, and one entry per product.
+        Write three things:
+
+        - an intro that says what actually separates these products;
+        - the article: the two or three decisions that matter, and then a
+          passage about EVERY product on the shortlist, each in its own
+          paragraph, naming it with its link token. The product's card is
+          rendered directly under the paragraph that names it, so that paragraph
+          is the writing it gets on this page;
+        - one short entry per product: a "best for X" verdict, and at most two
+          sentences of copy. The copy is a fallback, shown only where the
+          article did not reach the product.
 
         Rules:
         - Only discuss the products listed below. Never invent one, and never
@@ -219,8 +245,10 @@ class Defaults
           the reader's situation is the thing you do not know.
         - No invented test results and no "we tested": nothing was tested. What
           you have is the catalogue, and saying less is allowed.
-        - Two sentences per product, maximum. A guide is read by scanning.
-        - Do not restate the ranking in prose. The order is already on the page.
+        - One product per paragraph in the article. Two in one paragraph stacks
+          both cards under it and reads as a caption for a pair.
+        - Take the products in the order given: that order is the ranking, and in
+          the article it is the only place the ranking appears.
         TXT;
 
     private const GUIDE_PROMPT = <<<'TXT'
@@ -258,9 +286,18 @@ class Defaults
         every year. Somebody may be reading it eight weeks early, on the day, or
         next year. Write something true on all three days.
 
-        Write four things: a title, an intro that says what makes this season's
-        version of the problem different, a "how to choose" section naming the
-        two or three decisions that matter, and one entry per product.
+        Write four things:
+
+        - a title;
+        - an intro that says what makes this season's version of the problem
+          different;
+        - the article: the two or three decisions that matter, and then a
+          passage about EVERY product on the shortlist, each in its own
+          paragraph, naming it with its link token. The product's card is
+          rendered directly under the paragraph that names it, so that paragraph
+          is the writing it gets on this page;
+        - one short entry per product: a "best for X" verdict, and at most two
+          sentences of copy, shown only where the article did not reach it.
 
         The title is the only line that has to earn the click, and it is the one
         most easily wasted. "The best barbecues" is what every competitor has
@@ -288,7 +325,8 @@ class Defaults
         - No prices at all: they change, and the page renders live ones.
         - Never call a product "the best" outright. Say what it is best FOR.
         - No invented test results and no "we tested": nothing was tested.
-        - Two sentences per product, maximum.
+        - One product per paragraph in the article. Two in one paragraph stacks
+          both cards under it and reads as a caption for a pair.
         - **Never imply when it is being read.** No "almost here", "just around
           the corner", "this weekend", "still time to order", "last year". Name
           the season; never date the reader.

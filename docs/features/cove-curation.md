@@ -272,19 +272,27 @@ is a brief, and a brief long enough to be an article is an article.
 ## The writer is told what to cover
 
 The curated list, in order, with each note, is passed to the editorial prompt as an explicit "write
-about every one of these, in this order" block — and the system prompt's last rule *flips* when a
-plan is curated:
+about every one of these, in this order" block.
 
-> Engine-picked: *"Do not list the products in order. Pick two or three worth a sentence."*
-> Curated: *"Write about EVERY product in the curated list, in the order given."*
+**This rule used to flip on curation and no longer does.** An engine-picked edition was told *"do not
+list the products in order — pick two or three worth a sentence and let the rest speak for
+themselves"*, which was right while the page was prose and then a grid: the grid carried whatever the
+prose skipped. Since the card moved under the paragraph that names it, a product no paragraph
+mentions has nothing written about it anywhere and drops to the foot of the page bare. So every
+product is covered whoever chose it, and what curation adds is the two things a ranker could not
+supply:
 
-On an engine-picked edition the first is right — the finds are a ranked set and writing about all
-seven reads as a catalogue with adjectives. On a curated one it is exactly wrong: somebody chose
-those products and wrote down why, and an article that skips four of them is the feature failing
-quietly.
+> Everywhere: *"Write about EVERY product listed below, each in its own paragraph, naming it with its
+> link token."*
+> Curated, on top: *"Take them in the order given"* and *"the note beside a product is the reason it
+> was chosen — use it, do not quote it."*
 
-If the returned prose names none of the curated products (checked on the `[[product:id]]` token, not
-on the title — a title fragment can match by coincidence), the builder logs it and retries **once**.
+See [product-cards-in-prose.md](product-cards-in-prose.md) for why the paragraph, rather than the
+grid, is now where a product gets its writing.
+
+If the returned prose names none of the products (checked on the `[[product:id]]` token, not on the
+title — a title fragment can match by coincidence), the builder logs it and retries **once**. That
+check used to apply only to a curated plan, for the same reason the rule used to flip.
 Not a loop: the daily AI cap is shared with the guides and the trends pass, and a builder that argues
 with the model spends the budget every other feature needs that day. If the second attempt is no
 better the prose still publishes — it is about the right products, it merely did not link them, and

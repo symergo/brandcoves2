@@ -29,15 +29,21 @@ use Throwable;
  *
  * ## What is NOT here
  *
- * Two things stay in code and are appended by the caller after the editable
- * system text:
+ * Three things stay in code and are appended by the caller after the editable
+ * system text. The first two describe how the page renders, which is not a
+ * matter of house style:
  *
  * 1. `CoveMarkup::promptContract()` — the link-token contract and the article's
  *    product/brand allowlist. If an editor could delete it, every
  *    `[[product:…]]` would stop being produced and articles would silently lose
  *    their internal links.
- * 2. The curated-versus-uncurated flip of the column's last rule, which is
- *    derived from the plan in front of the builder rather than from a setting.
+ * 2. `ProseCards::promptContract()` — one paragraph per product, every product
+ *    covered. Each card is placed under the paragraph naming it, so an edit
+ *    that dropped this would empty the article of products and leave all seven
+ *    stacked at the foot of the page.
+ * 3. What curation adds — the order somebody chose and the note explaining each
+ *    choice — which is derived from the plan in front of the builder rather
+ *    than from a setting.
  *
  * ## Precedence
  *

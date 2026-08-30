@@ -281,9 +281,10 @@ The three things it changed here:
   `locked` publishes exactly the shortlist, in order, with `spread()` skipped so the variety trim
   cannot reorder a hand-built list. The publish floor is now `picks.minimum` in config rather than a
   literal 3, so the curation screen can warn about a short locked plan before 06:00.
-- **The editorial prompt is handed the shortlist and its notes**, and its last rule flips: an
-  engine-picked edition is told to pick two or three worth a sentence, a curated one to write about
-  every product in the order given.
+- **The editorial prompt is handed the shortlist and its notes.** Every edition, curated or not, is
+  told to write about every product in its own paragraph; what curation adds is the order and the
+  reason each product is on the list. That rule used to flip — see
+  [product-cards-in-prose.md](product-cards-in-prose.md) for why it stopped.
 
 The full reasoning is in [cove-curation.md](cove-curation.md).
 

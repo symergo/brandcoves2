@@ -21,6 +21,7 @@ use App\Services\Cove\Selectors\Selectors;
 use App\Services\Cove\Writers\GuideWriter;
 use App\Services\Cove\Writers\Written;
 use App\Services\Editorial\Allowlist;
+use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -39,6 +40,20 @@ use Illuminate\Support\Str;
 class EditionBuilder
 {
     private const FEATURE = 'daily_picks';
+
+    /**
+     * How much prose an edition may carry, in characters.
+     *
+     * Was 4000, which was a comfortable ceiling on "two or three paragraphs"
+     * and a hard one on an article with a passage per product: seven finds at
+     * 4000 characters is 570 each, and the cut lands mid-sentence in the last
+     * one, taking its link token with it — so that product loses its card as
+     * well as its paragraph.
+     *
+     * Applied to authored prose and generated prose alike, because the failure
+     * is the same whoever wrote it.
+     */
+    private const EDITORIAL_LIMIT = 8000;
 
     public function __construct(
         private readonly AiClient $ai,
@@ -866,7 +881,7 @@ class EditionBuilder
          */
         if ($plan !== null && filled($plan->editorial)) {
             return [
-                'text' => Str::limit(trim((string) $plan->editorial), 4000, ''),
+                'text' => Str::limit(trim((string) $plan->editorial), self::EDITORIAL_LIMIT, ''),
                 'source' => 'planned',
             ];
         }
@@ -893,9 +908,16 @@ class EditionBuilder
         $text = $this->write($system, $prompt);
 
         /*
-         * A curated Cove whose article names none of its curated products has
-         * failed at the one thing the curation exists for, so it is worth one
-         * more call — and exactly one.
+         * An article that names none of its products has failed at the thing
+         * the page is for, so it is worth one more call — and exactly one.
+         *
+         * The check used to apply only to a curated Cove, on the reasoning that
+         * an engine-picked one was allowed to write about two or three finds
+         * and leave the rest to the grid. It is not allowed to any more: a
+         * product no paragraph names gets no card in the article and no
+         * sentence anywhere, so "named nothing at all" is now the same failure
+         * on every kind. Curated ids are still what is checked when there are
+         * some, because those are the ones somebody asked for by name.
          *
          * Not a loop. The daily cap is shared with the guides and the trends
          * pass, so a builder that argues with the model spends the budget every
@@ -903,21 +925,28 @@ class EditionBuilder
          * prose still publishes: it is about the right products, it merely did
          * not link them, and no prose at all is the worse outcome.
          */
-        if ($brief !== [] && $text !== null && ! $this->mentionsAny($text, $brief)) {
-            Log::info('Cove editorial ignored the curated products; retrying once', [
+        $wanted = $brief !== []
+            ? array_column($brief, 'id')
+            : array_map(fn (ProductGroup $group) => $group->id, $finds);
+
+        if ($wanted !== [] && $text !== null && ! $this->mentionsAny($text, $wanted)) {
+            Log::info('Cove editorial named none of its products; retrying once', [
                 'market' => $market->value,
+                'kind' => $kind->value,
                 'curated' => count($brief),
+                'products' => count($wanted),
             ]);
 
             $text = $this->write(
                 $system,
-                $prompt."\n\n".'Your previous attempt named none of the curated products. Write about those.',
+                $prompt."\n\n".'Your previous attempt named none of the products. Write about them, '
+                    .'each in its own paragraph, using its link token.',
             ) ?? $text;
         }
 
         return $text === null
             ? ['text' => null, 'source' => 'none']
-            : ['text' => Str::limit($text, 4000, ''), 'source' => 'ai'];
+            : ['text' => Str::limit($text, self::EDITORIAL_LIMIT, ''), 'source' => 'ai'];
     }
 
     /**
@@ -935,7 +964,13 @@ class EditionBuilder
                 $system,
                 $prompt,
                 schemaHint: ['editorial' => "First paragraph.\n\nSecond paragraph."],
-                maxTokens: 1200,
+                /*
+                 * Raised from 1200 with the per-product rule below. The model
+                 * now owes a paragraph for every find, and a response cut off
+                 * at the ceiling does not write about the last products
+                 * briefly — it does not reach them at all.
+                 */
+                maxTokens: 2200,
             );
         } catch (AiUnavailable $e) {
             Log::info('Cove editorial unavailable', ['reason' => $e->getMessage()]);
@@ -980,7 +1015,7 @@ class EditionBuilder
     }
 
     /**
-     * Did the article actually name any of the curated products?
+     * Did the article actually name any of these products?
      *
      * Tested on the link token, not on the title. The token is the only
      * unambiguous reference: a title fragment can appear by coincidence, and a
@@ -988,12 +1023,12 @@ class EditionBuilder
      * paragraph with no product beneath it — which is the failure being looked
      * for, not a near miss of it.
      *
-     * @param  list<array{id: int, title: string, note: string|null}>  $brief
+     * @param  list<int>  $ids
      */
-    private function mentionsAny(string $text, array $brief): bool
+    private function mentionsAny(string $text, array $ids): bool
     {
-        foreach ($brief as $item) {
-            if (str_contains($text, '[[product:'.$item['id'])) {
+        foreach ($ids as $id) {
+            if (str_contains($text, '[[product:'.$id)) {
                 return true;
             }
         }
@@ -1044,6 +1079,8 @@ class EditionBuilder
 
     /**
      * @param  bool  $curated  Whether a person chose the products this is written about.
+     *                         Adds the order and the notes; it does not decide
+     *                         whether every product is covered. See below.
      */
     private function editorialSystem(CoveKind $kind, bool $curated = false): string
     {
@@ -1057,27 +1094,35 @@ class EditionBuilder
         $base = $this->prompts->system('cove.'.$kind->value);
 
         /*
-         * The last rule flips when a person chose the products, and it is
-         * appended in code rather than left to the editable half.
+         * Every product gets written about. Curation adds two rules on top; it
+         * no longer decides whether the rule exists.
          *
-         * On an engine-picked edition "pick two or three worth a sentence" is
-         * right: the finds are a ranked set and writing about all seven reads
-         * as a catalogue with adjectives. On a curated one it is exactly wrong —
-         * somebody chose those products, wrote down why, and the article
-         * skipping four of them is the feature failing quietly. Which of the two
-         * applies is a fact about the plan in front of the builder, not a
-         * setting anybody could sensibly edit.
+         * This used to flip. An engine-picked edition was told "pick two or
+         * three worth a sentence and let the rest speak for themselves", and
+         * that was right while the page was prose and then a grid: the grid
+         * carried whatever the prose skipped, and writing about all seven read
+         * as a catalogue with adjectives.
+         *
+         * It stopped being right when the card moved under the paragraph that
+         * names it. A product no paragraph mentions now has nothing written
+         * about it anywhere — it drops to the foot of the page as a bare card,
+         * which is the shape the pairing exists to get away from. So the floor
+         * is one passage per product whoever chose them, and what curation adds
+         * is the order and the reasons.
+         *
+         * The paragraph rules themselves live on ProseCards, next to the walk
+         * that makes them true, because the guide writer needs the same ones.
+         * The curated pair below stays here: it is a fact about the plan in
+         * front of the builder, which ProseCards knows nothing about.
          */
+        $every = ProseCards::promptContract();
+
         return $base."\n".($curated
-            ? <<<'TXT'
-            - Write about EVERY product in the curated list below, in the order given.
-              Each one gets at least a sentence, and its link token where it is discussed.
+            ? $every."\n".<<<'TXT'
+            - Take them in the order given: somebody chose that order.
             - The note beside a product is the reason it was chosen. Use it. Do not quote it.
             TXT
-            : <<<'TXT'
-            - Do not list the products in order. Pick two or three worth a sentence
-              and let the rest speak for themselves.
-            TXT);
+            : $every);
     }
 
     /**

@@ -21,18 +21,32 @@ interface Item {
     url: string
 }
 
+/**
+ * A paragraph, and the products it is about.
+ *
+ * `groupIds` is read back out of the copy's own `[[product:N]]` tokens by
+ * ProseCards, so the writer decides where a card goes by deciding where to
+ * discuss the product. Empty on a paragraph that names none — most of an
+ * intro, and every paragraph of an advice article.
+ */
+interface Block {
+    html: string
+    groupIds: number[]
+}
+
 interface Props {
     preview?: boolean
 
     guide: {
         title: string
         kind: 'buying' | 'advice'
-        intro: string[]
-        body: string[]
+        intro: Block[]
+        body: Block[]
         faq: { q: string; a: string[] }[] | null
         updatedAt: string | null
         searchVolume: number
     }
+    /* Always the whole shortlist. What the list below renders is decided here. */
     items: Item[]
 }
 
@@ -59,9 +73,136 @@ function Prose({ blocks, className = '' }: { blocks: string[]; className?: strin
     )
 }
 
+/**
+ * The card that sits under the paragraph discussing a product.
+ *
+ * It deliberately carries no `copy`. The paragraph above it IS the writing
+ * about this product; printing the item's own blurb underneath would say the
+ * same thing twice in two voices. `copy` is what the list below falls back to
+ * for a product the article never reached, which is the only place it still
+ * earns its keep.
+ */
+function InlineCard({ item }: { item: Item }) {
+    const { market } = usePage<SharedProps>().props
+    const { t, n } = useTranslations()
+
+    return (
+        <figure
+            className={`my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row ${
+                item.unavailable ? 'opacity-60' : ''
+            }`}
+        >
+            {item.image && (
+                <Link href={item.url} className="shrink-0">
+                    <img
+                        src={item.image}
+                        alt=""
+                        loading="lazy"
+                        className="mx-auto h-32 w-32 object-contain"
+                    />
+                </Link>
+            )}
+
+            <figcaption className="min-w-0 flex-1">
+                {item.verdict && (
+                    <p className="text-xs font-medium tracking-wide text-accent uppercase">
+                        {item.verdict}
+                    </p>
+                )}
+
+                <Link href={item.url} className="mt-1 block font-medium hover:underline">
+                    {item.title}
+                </Link>
+
+                <div className="mt-3 flex flex-wrap items-center gap-4">
+                    {/*
+                      Live from the group, never written into the copy. A price
+                      baked into editorial is wrong within a week.
+                    */}
+                    <span className="font-semibold">
+                        {item.unavailable
+                            ? t('guides.unavailable')
+                            : item.price === null
+                              ? '—'
+                              : formatPrice(item.price, market)}
+                    </span>
+
+                    {item.merchantCount > 1 && (
+                        <span className="text-sm text-ink-soft">
+                            {t('guides.shops', { count: n(item.merchantCount) })}
+                        </span>
+                    )}
+
+                    <SaveToList groupId={item.groupId} />
+                </div>
+            </figcaption>
+        </figure>
+    )
+}
+
+/**
+ * Paragraphs, each followed by the cards for the products it names.
+ *
+ * A paragraph naming nothing renders as an ordinary paragraph, which is what
+ * makes this safe on every kind: an advice article has no shortlist, so every
+ * block falls straight through and the page is prose from top to bottom.
+ */
+function Article({
+    blocks,
+    byGroup,
+    className = '',
+}: {
+    blocks: Block[]
+    byGroup: Record<number, Item>
+    className?: string
+}) {
+    return (
+        <>
+            {blocks.map((block, i) => (
+                <div key={i}>
+                    <p
+                        className={`${className} [&_a]:underline`}
+                        dangerouslySetInnerHTML={{ __html: block.html }}
+                    />
+
+                    {block.groupIds
+                        .map((id) => byGroup[id])
+                        .filter(Boolean)
+                        .map((item) => (
+                            <InlineCard key={item.rank} item={item} />
+                        ))}
+                </div>
+            ))}
+        </>
+    )
+}
+
 export default function GuideShow({ preview = false, guide, items }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
+
+    const byGroup: Record<number, Item> = Object.fromEntries(items.map((i) => [i.groupId, i]))
+
+    // Every product the article showed a card for, wherever it showed it.
+    const named = new Set([...guide.intro, ...guide.body].flatMap((block) => block.groupIds))
+
+    /*
+      What the article did not get to.
+
+      The list is a fallback now rather than the page's spine: when the writing
+      covers all seven products this is empty, and when the model skips one — or
+      when a guide was written before the prose carried tokens at all — the
+      shortlist still renders in full. That is the whole reason it survives.
+    */
+    const rest = items.filter((item) => !named.has(item.groupId))
+
+    /*
+      "How to choose" is a heading about decisions, and it stops being true the
+      moment the body is also where the products are discussed. So it appears
+      only over a body that names none — the shape of every guide written before
+      this, and of one where the writer kept the two sections apart.
+    */
+    const bodyIsAboutProducts = guide.body.some((block) => block.groupIds.length > 0)
 
     return (
         <>
@@ -71,7 +212,11 @@ export default function GuideShow({ preview = false, guide, items }: Props) {
             <article className="max-w-3xl">
                 <h1 className="text-2xl font-semibold sm:text-3xl">{guide.title}</h1>
 
-                <Prose blocks={guide.intro} className="mt-3 text-lg text-ink-soft" />
+                <Article
+                    blocks={guide.intro}
+                    byGroup={byGroup}
+                    className="mt-3 text-lg text-ink-soft"
+                />
 
                 <p className="mt-3 text-xs text-ink-soft">
                     {guide.updatedAt && t('guides.updated', { date: guide.updatedAt })}
@@ -87,10 +232,14 @@ export default function GuideShow({ preview = false, guide, items }: Props) {
                           it "how to choose" would be a heading about a
                           shortlist that is not there.
                         */}
-                        {guide.kind === 'buying' && (
+                        {guide.kind === 'buying' && !bodyIsAboutProducts && (
                             <h2 className="text-lg font-medium">{t('guides.how_to_choose')}</h2>
                         )}
-                        <Prose blocks={guide.body} className="mt-3 leading-relaxed" />
+                        <Article
+                            blocks={guide.body}
+                            byGroup={byGroup}
+                            className="mt-3 leading-relaxed"
+                        />
                     </section>
                 )}
             </article>
@@ -98,67 +247,70 @@ export default function GuideShow({ preview = false, guide, items }: Props) {
             {/*
               No shortlist, no list markup. An advice article renders as an
               article; an empty <ol> under one reads as a buying guide whose
-              products failed to load.
+              products failed to load — and so does a list emptied because the
+              article covered everything, which is why this is the same test.
             */}
-            <ol className="mt-10 space-y-5">
-                {items.map((item) => (
-                    <li
-                        key={item.rank}
-                        className={`flex flex-col gap-4 rounded-lg border border-line p-5 sm:flex-row ${
-                            item.unavailable ? 'opacity-60' : ''
-                        }`}
-                    >
-                        {item.image && (
-                            <img
-                                src={item.image}
-                                alt=""
-                                className="h-32 w-32 shrink-0 self-center object-contain"
-                                loading="lazy"
-                            />
-                        )}
-
-                        <div className="min-w-0 flex-1">
-                            {item.verdict && (
-                                <p className="text-xs font-medium tracking-wide text-accent uppercase">
-                                    {item.verdict}
-                                </p>
+            {rest.length > 0 && (
+                <ol className="mt-10 space-y-5">
+                    {rest.map((item) => (
+                        <li
+                            key={item.rank}
+                            className={`flex flex-col gap-4 rounded-lg border border-line p-5 sm:flex-row ${
+                                item.unavailable ? 'opacity-60' : ''
+                            }`}
+                        >
+                            {item.image && (
+                                <img
+                                    src={item.image}
+                                    alt=""
+                                    className="h-32 w-32 shrink-0 self-center object-contain"
+                                    loading="lazy"
+                                />
                             )}
 
-                            <h2 className="mt-1 font-medium">
-                                <Link href={item.url} className="hover:underline">
-                                    {item.title}
-                                </Link>
-                            </h2>
-
-                            <Prose blocks={item.copy} className="mt-2 text-sm text-ink-soft" />
-
-                            <div className="mt-3 flex flex-wrap items-center gap-4">
-                                {/*
-                                  Live from the group, never written into the
-                                  copy. A price baked into editorial is wrong
-                                  within a week, and the copy is what a reader
-                                  trusts.
-                                */}
-                                <span className="font-semibold">
-                                    {item.unavailable
-                                        ? t('guides.unavailable')
-                                        : item.price === null
-                                          ? '—'
-                                          : formatPrice(item.price, market)}
-                                </span>
-
-                                {item.merchantCount > 1 && (
-                                    <span className="text-sm text-ink-soft">
-                                        {t('guides.shops', { count: n(item.merchantCount) })}
-                                    </span>
+                            <div className="min-w-0 flex-1">
+                                {item.verdict && (
+                                    <p className="text-xs font-medium tracking-wide text-accent uppercase">
+                                        {item.verdict}
+                                    </p>
                                 )}
 
-                                <SaveToList groupId={item.groupId} />
+                                <h2 className="mt-1 font-medium">
+                                    <Link href={item.url} className="hover:underline">
+                                        {item.title}
+                                    </Link>
+                                </h2>
+
+                                <Prose blocks={item.copy} className="mt-2 text-sm text-ink-soft" />
+
+                                <div className="mt-3 flex flex-wrap items-center gap-4">
+                                    {/*
+                                      Live from the group, never written into the
+                                      copy. A price baked into editorial is wrong
+                                      within a week, and the copy is what a reader
+                                      trusts.
+                                    */}
+                                    <span className="font-semibold">
+                                        {item.unavailable
+                                            ? t('guides.unavailable')
+                                            : item.price === null
+                                              ? '—'
+                                              : formatPrice(item.price, market)}
+                                    </span>
+
+                                    {item.merchantCount > 1 && (
+                                        <span className="text-sm text-ink-soft">
+                                            {t('guides.shops', { count: n(item.merchantCount) })}
+                                        </span>
+                                    )}
+
+                                    <SaveToList groupId={item.groupId} />
+                                </div>
                             </div>
-                        </div>
-                    </li>
-                ))}
-            </ol>
+                        </li>
+                    ))}
+                </ol>
+            )}
 
             {guide.faq && guide.faq.length > 0 && (
                 <section className="mt-12 max-w-3xl">

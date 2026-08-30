@@ -158,16 +158,20 @@ nothing and the failure is silent.
 
 ## What cannot be edited, and why the screen says so
 
-Two things stay in code and are appended after whatever is written here:
+Three things stay in code and are appended after whatever is written here. The first
+two describe how the page renders, which is not a matter of house style:
 
 1. **`CoveMarkup::promptContract()`** — the link-token contract and this article's
    product/brand allowlist. An edited system prompt that dropped it would stop every
    `[[product:…]]` being produced, and the only symptom would be articles quietly
    losing their internal links on a site whose whole argument is comparison.
-2. **The curated-versus-uncurated flip** of the column's last rule. On an
-   engine-picked edition "pick two or three worth a sentence" is right; on a curated
-   one it is exactly wrong, because somebody chose those products and wrote down why.
-   That is derived from the plan in front of the builder, not from a setting.
+2. **`ProseCards::promptContract()`** — one paragraph per product, every product
+   covered. Each card is rendered under the paragraph naming it, so an edit that
+   dropped this would empty the article of products and leave the whole shortlist
+   stacked at the foot of the page. See
+   [product-cards-in-prose.md](product-cards-in-prose.md).
+3. **What curation adds** — the order somebody chose, and the note explaining each
+   choice. That is derived from the plan in front of the builder, not from a setting.
 
 ## Precedence
 

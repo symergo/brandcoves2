@@ -7,6 +7,7 @@ namespace App\Services\Cove;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Services\Editorial\Allowlist;
+use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use App\Support\CurrentMarket;
 
@@ -62,43 +63,11 @@ class EditionPresenter
         // whole reason the two live on one page.
         $allowed = $this->allowlist->full($groups, $current->get());
 
-        $paragraphs = preg_split('/\R{2,}/u', trim((string) $edition->editorial)) ?: [];
-
-        $out = [];
-        $used = [];
-
-        foreach ($paragraphs as $paragraph) {
-            if (trim($paragraph) === '') {
-                continue;
-            }
-
-            preg_match_all('/\[\[product:(\d+)/u', $paragraph, $matches);
-
-            /*
-             * Only ids the article was allowed to mention, and only the first
-             * time each appears. A token naming a product that is not in this
-             * Cove renders as plain text (see `CoveMarkup::render()`), and
-             * repeating the same card because the copy repeats the name would
-             * read as a stutter.
-             */
-            $ids = [];
-
-            foreach ($matches[1] as $id) {
-                $id = (int) $id;
-
-                if (isset($allowed['products'][$id]) && ! isset($used[$id])) {
-                    $used[$id] = true;
-                    $ids[] = $id;
-                }
-            }
-
-            $out[] = [
-                'html' => $this->markup->render($paragraph, $current->get(), $allowed)['html'],
-                'groupIds' => $ids,
-            ];
-        }
-
-        return $out;
+        // One document, so a product introduced in the first paragraph does
+        // not get a second card further down. See ProseCards for why this is
+        // constructed rather than injected.
+        return (new ProseCards($this->markup, $current->get(), $allowed))
+            ->blocks($edition->editorial);
     }
 
     /**

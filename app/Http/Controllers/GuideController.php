@@ -8,6 +8,7 @@ use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Services\Editorial\Allowlist;
+use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
@@ -125,6 +126,20 @@ class GuideController extends Controller
             extraSearches: (array) $guide->source_queries,
         );
 
+        /*
+         * The article, paragraph by paragraph, each carrying the products it
+         * names — the same pairing the Daily Cove has had since it stopped
+         * being prose-then-grid.
+         *
+         * Built before the items, and from one document, so that reading order
+         * decides which paragraph owns a card: a product introduced in the
+         * intro is not shown a second time halfway down the article.
+         */
+        $prose = new ProseCards(app(CoveMarkup::class), $current->get(), $allowed);
+
+        $intro = $prose->blocks($guide->theme_blurb);
+        $body = $prose->blocks($guide->body);
+
         $items = $guide->picks
             /*
              * Catalogue products only.
@@ -176,8 +191,8 @@ class GuideController extends Controller
                  * changed no component props.
                  */
                 'kind' => $guide->kind->expectsShortlist() ? 'buying' : 'advice',
-                'intro' => $this->prose($guide->theme_blurb, $current, $allowed),
-                'body' => $this->prose($guide->body, $current, $allowed),
+                'intro' => $intro,
+                'body' => $body,
                 'faq' => $this->faq($guide, $current, $allowed),
                 'updatedAt' => $guide->last_checked_at?->toDateString(),
                 // Stated plainly. "We wrote this because 240 people searched for
@@ -185,6 +200,17 @@ class GuideController extends Controller
                 // can copy.
                 'searchVolume' => $guide->source_volume,
             ],
+            /*
+             * The whole shortlist, always — the page decides what to do with
+             * it, not this.
+             *
+             * Two readers need every row. The `<ol>` renders whatever the prose
+             * did not name, which it can only work out from the full set; and
+             * the ItemList below is built from the full set too, because the
+             * page ranks all seven products whether it showed a card inline or
+             * in the list. Shrinking this to "the leftovers" would under-report
+             * the page to a crawler to save the client one filter.
+             */
             'items' => $items,
         ]);
     }
