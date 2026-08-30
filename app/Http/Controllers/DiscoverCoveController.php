@@ -63,6 +63,16 @@ class DiscoverCoveController extends Controller
     private const FINDS = 4;
 
     /**
+     * Personas on the hub.
+     *
+     * Six, against the Coves' twelve. The shelf is deliberately short — these
+     * are written one at a time — so a dozen slots would show mostly gaps in
+     * every market for months, and a band that looks unfinished argues against
+     * the surface it is there to introduce.
+     */
+    private const PERSONAS = 6;
+
+    /**
      * Surprises on the hub.
      *
      * Four, sampled from the same top slice `/surprise` draws from — so the
@@ -87,6 +97,7 @@ class DiscoverCoveController extends Controller
                 'daily' => $current->url('daily'),
                 'surprise' => $current->url('surprise'),
                 'guides' => $current->url('guides'),
+                'giftIdeas' => $current->url('gift-ideas'),
                 // The one surface here whose content comes from other visitors
                 // rather than from us. See docs/features/ask-others.md.
                 'ask' => $current->url('ask'),
@@ -150,6 +161,49 @@ class DiscoverCoveController extends Controller
              * the last ingest. Nothing is scored per request.
              */
             'surprises' => $this->surprises($current),
+
+            /*
+             * The persona shelf, by name.
+             *
+             * The same argument the Coves band below makes, and the one this
+             * class's docblock already states: two of these surfaces describe
+             * something you cannot see from here, and this is not one of them.
+             * "Presents chosen around a person" is a category; "the coffee
+             * obsessive" and "the one who already has everything" are the
+             * reason to click, and a reader recognises the person they are
+             * shopping for on sight or does not.
+             *
+             * Empty until a market has published one, and then the band *and*
+             * its card both disappear — see the note on `sections` in
+             * `DiscoverCove.tsx`. Sending a hub visitor to an empty shelf is
+             * worse than not offering the surface yet.
+             *
+             * No counts, like everything else here. `/gift-ideas` shows a find
+             * count per persona because that is the shelf itself; a hub that
+             * totals things is the catalogue-counter mistake in a new place.
+             */
+            'personas' => DailyPickSet::query()
+                ->forMarket($current->get())
+                ->personas()
+                ->published()
+                // Matches the shelf at /gift-ideas. `published_at` is stamped
+                // once at first build and never refreshed by a rebuild, so this
+                // is stable rather than reshuffling when products refresh.
+                ->orderByDesc('published_at')
+                ->limit(self::PERSONAS)
+                ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene'])
+                ->map(fn (DailyPickSet $persona): array => [
+                    'title' => $persona->theme_title,
+                    'intro' => app(CoveMarkup::class)->plain($persona->theme_blurb),
+                    'url' => $current->url($persona->kind->path((string) $persona->slug)),
+                    // The drawing, not a product photo. This band said "no
+                    // images" when the only image available was a photograph of
+                    // a thing, which made a shelf of people look like a
+                    // category of products; a scene is about the person and is
+                    // the whole reason a reader recognises one.
+                    'scene' => $persona->scene?->value,
+                ])
+                ->all(),
 
             'coves' => DailyPickSet::query()
                 ->forMarket($current->get())

@@ -261,10 +261,12 @@ return [
         'seo_title' => 'Ideas de regalo y hallazgos, nuevos cada día',
         'seo_description' => 'Tres maneras de encontrar algo que no buscabas: una edición nueva cada día, una sorpresa elegida por lo rara que es, y lecturas largas por tema.',
         'title' => 'Descubrir',
-        'intro' => 'Tres maneras de encontrar algo que no estabas buscando. Una cambia cada día, otra es deliberadamente impredecible, y la tercera se lee con calma.',
+        'intro' => 'Maneras de encontrar algo que no estabas buscando. Una cambia cada día, otra es deliberadamente impredecible, otra trata de una persona y no de un objeto, y las demás se leen con calma.',
         'daily_what' => 'Una edición nueva cada día: un tema, un puñado de hallazgos y un acertijo de precios. Cada edición pasada conserva su página.',
         'surprise_what' => 'Algo que no sabías que existía, elegido por lo raro que es y no por lo bien que se vende.',
         'idea_what' => 'Inspiración de compra y guías de compra sobre un solo tema, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
+        'persona_what' => 'Regalos elegidos en torno a una persona y no a una fecha: el fanático del café, quien ya lo tiene todo.',
+        'persona_all' => 'Todas las ideas de regalo',
     ],
 
     'shops' => [

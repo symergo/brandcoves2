@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
+import PersonaIllustration, { type PersonaSceneKey } from '../Components/PersonaIllustration'
 import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -18,9 +19,20 @@ interface Question {
     url: string
 }
 
+/** A persona carries no `searches`: it is written about a person, not mined from a query. */
+interface Persona {
+    title: string
+    intro: string | null
+    url: string
+    /** Null until a curator picks one; the component draws a figure. */
+    scene: PersonaSceneKey | null
+}
+
 interface Props {
-    urls: { daily: string; surprise: string; guides: string; ask: string }
+    urls: { daily: string; surprise: string; guides: string; giftIdeas: string; ask: string }
     coves: Cove[]
+    /** Empty until a market publishes its first; the card goes with the band. */
+    personas: Persona[]
     /** Null before a market has published its first edition. */
     today: {
         theme: string
@@ -71,16 +83,45 @@ interface Props {
  * No container of its own — `SiteLayout`'s `<main>` is already `max-w-6xl px-4
  * py-10`, and this page used to nest a narrower one inside it.
  */
-export default function DiscoverCove({ urls, coves, today, questions, askUrl, surprises }: Props) {
+export default function DiscoverCove({
+    urls,
+    coves,
+    personas,
+    today,
+    questions,
+    askUrl,
+    surprises,
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
-    // The four surfaces. Named `sections` rather than `coves` because `coves`
+    // The surfaces. Named `sections` rather than `coves` because `coves`
     // is the archive's articles here, exactly as it is on the front page.
     const sections: { key: CoveKey; href: string; name: string; what: string }[] = [
         { key: 'daily', href: urls.daily, name: t('nav.daily'), what: t('discover_cove.daily_what') },
         { key: 'surprise', href: urls.surprise, name: t('nav.surprise'), what: t('discover_cove.surprise_what') },
         { key: 'idea', href: urls.guides, name: t('nav.inspiration_coves'), what: t('discover_cove.idea_what') },
+        /*
+         * Personas, and only once a market has one.
+         *
+         * Every other card here points at a surface that always has something
+         * on it — there is an edition most days, a surprise always, an archive.
+         * The persona shelf starts empty in a new market and stays empty until
+         * somebody writes one, so an unconditional card would be this hub's
+         * only link to a page saying "nothing here yet". The whole point of the
+         * band below is that a reader recognises the person they are shopping
+         * for; there is nothing to recognise in an empty grid.
+         */
+        ...(personas.length > 0
+            ? [
+                  {
+                      key: 'persona' as CoveKey,
+                      href: urls.giftIdeas,
+                      name: t('gift_ideas.title'),
+                      what: t('discover_cove.persona_what'),
+                  },
+              ]
+            : []),
         /*
          * The fourth is not ours.
          *
@@ -100,7 +141,17 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">{t('discover_cove.title')}</h1>
             <p className="mt-3 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
 
-            <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/*
+              Four across, or five when the persona card is present. Both
+              classes are written out because Tailwind scans source text and
+              never sees a class assembled from a variable — and four cards in a
+              five-column grid leaves a hole that reads as a missing card.
+            */}
+            <ul
+                className={`mt-8 grid gap-4 sm:grid-cols-2 ${
+                    sections.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
+                }`}
+            >
                 {sections.map((section) => (
                     <li key={section.key}>
                         <Link
@@ -304,6 +355,67 @@ export default function DiscoverCove({ urls, coves, today, questions, askUrl, su
               band — one source, so the two pages describing the same shelf
               cannot drift into describing it differently.
             */}
+            {/*
+              The personas, by name.
+
+              Above the Coves rather than below them because this is the more
+              answerable question: a reader arrives knowing who they are buying
+              for and can recognise them in a title, where an article has to be
+              read before it is worth anything.
+
+              Heading and intro come from `gift_ideas.*` — the same keys the
+              shelf itself uses — so the hub and the page it links to cannot
+              drift into describing the shelf differently. Still no counts.
+
+              This band carried no picture while the only one available was a
+              product photograph, which would have made a shelf of people read
+              as a category of things. A persona scene is about the person, so
+              it earns its place: it is what a reader recognises.
+            */}
+            {personas.length > 0 && (
+                <section className="mt-14" aria-labelledby="personas-heading">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h2
+                            id="personas-heading"
+                            className="text-xl sm:text-2xl font-semibold tracking-tight text-ink"
+                        >
+                            {t('gift_ideas.title')}
+                        </h2>
+                        <Link
+                            href={urls.giftIdeas}
+                            className="text-sm font-medium text-accent hover:text-accent-dark"
+                        >
+                            {t('discover_cove.persona_all')} →
+                        </Link>
+                    </div>
+                    <p className="mt-1 max-w-2xl text-ink-soft">{t('gift_ideas.description')}</p>
+
+                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {personas.map((persona) => (
+                            <li key={persona.url}>
+                                <Link
+                                    href={persona.url}
+                                    className="group flex h-full flex-row items-center gap-4 rounded-card border border-line bg-card p-5 transition hover:border-ink"
+                                >
+                                    <PersonaIllustration
+                                        name={persona.scene}
+                                        className="h-14 w-20 shrink-0 text-ink-soft transition group-hover:text-accent"
+                                    />
+                                    <div className="min-w-0">
+                                        <h3 className="font-medium text-ink">{persona.title}</h3>
+                                        {persona.intro && (
+                                            <p className="mt-1 line-clamp-2 text-sm text-ink-soft">
+                                                {persona.intro}
+                                            </p>
+                                        )}
+                                    </div>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
             {coves.length > 0 && (
                 <section className="mt-14" aria-labelledby="coves-heading">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">

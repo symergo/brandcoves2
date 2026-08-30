@@ -128,9 +128,15 @@ thing, because All Coves is not a kind of Cove but the set of them). `CoveIllust
 grow to match: it draws the four homepage cards and now takes a narrower `CoveSceneKey`, so a scene
 for a menu row nothing renders at 160px is a compile error rather than a blank card.
 
-> **Still outstanding.** `/discover-cove` and the footer both describe three surfaces and were not
-> extended. The hub's copy says "three ways to find something you were not looking for" while the
-> menu now offers five entries, so the two disagree until somebody decides what the hub should say.
+> **The hub was extended on 2026-08-30; the footer still has not been.** `/discover-cove` now carries
+> a fifth card for the persona shelf and a band listing the personas themselves — see
+> [gift-personas.md](gift-personas.md).
+>
+> Its intro no longer counts. It said "three ways" while the cards were four, the persona card made
+> it five, and a number in the copy is a promise the card row has to keep — broken twice now, so it
+> is gone rather than corrected to five. **`discover_cove.seo_description` still says "three"** and
+> still enumerates the original three; it was left alone deliberately, because rewriting a meta
+> description changes what shows in a search result and that is a decision rather than a typo fix.
 
 **Every verb is also a destination.** Each points at a hub that explains its section —
 `/gift-cove` already did, `/discover-cove` was built for this. A menu whose handle goes nowhere

@@ -334,10 +334,15 @@ return [
         'seo_title' => 'Gift ideas and product finds, new every day',
         'seo_description' => 'Three ways to find something you were not looking for: a new edition every day, a surprise chosen for how rare it is, and long reads around one theme.',
         'title' => 'Discover',
-        'intro' => 'Three ways to find something you were not looking for. One changes every day, one is deliberately unpredictable, and one is worth sitting down with.',
+        // Counts no longer. The hub described "three" while the cards were
+        // four, and the persona card made it five — a number in the copy is a
+        // promise the card row has to keep, and this one has been broken twice.
+        'intro' => 'Ways to find something you were not looking for. One changes every day, one is deliberately unpredictable, one is about a person rather than a thing, and the rest are worth sitting down with.',
         'daily_what' => 'A new edition every day: a theme, a handful of finds and a price puzzle. Every past edition keeps its own page.',
         'surprise_what' => 'Something you did not know existed, chosen for how rare it is rather than how well it sells.',
         'idea_what' => 'Shopping inspiration and buying guides around one subject, with every brand and product linked straight into a live search.',
+        'persona_what' => 'Presents chosen around a person rather than a date — the coffee obsessive, the one who already has everything.',
+        'persona_all' => 'All gift ideas',
     ],
 
     /*

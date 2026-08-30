@@ -265,10 +265,12 @@ return [
         'seo_title' => 'Cadeau-ideeën en vondsten, elke dag nieuw',
         'seo_description' => 'Drie manieren om iets te vinden waar je niet naar zocht: elke dag een nieuwe editie, een verrassing gekozen op zeldzaamheid, en lange verhalen per thema.',
         'title' => 'Ontdek',
-        'intro' => 'Drie manieren om iets te vinden waar je niet naar zocht. Eén verandert elke dag, één is met opzet onvoorspelbaar, en één is om rustig te lezen.',
+        'intro' => 'Manieren om iets te vinden waar je niet naar zocht. Eén verandert elke dag, één is met opzet onvoorspelbaar, één gaat over een persoon in plaats van een ding, en de rest is om rustig te lezen.',
         'daily_what' => 'Elke dag een nieuwe editie: een thema, een handvol vondsten en een prijsraadsel. Elke oude editie houdt zijn eigen pagina.',
         'surprise_what' => 'Iets waarvan je niet wist dat het bestond, gekozen op hoe zeldzaam het is en niet op hoe goed het verkoopt.',
         'idea_what' => 'Shopping-inspiratie en koopgidsen rond één onderwerp, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
+        'persona_what' => 'Cadeaus gekozen rond een persoon in plaats van een datum: de koffiefanaat, wie alles al heeft.',
+        'persona_all' => 'Alle cadeau-ideeën',
     ],
 
     'shops' => [

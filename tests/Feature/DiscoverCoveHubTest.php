@@ -105,6 +105,100 @@ class DiscoverCoveHubTest extends TestCase
             ->assertInertia(fn ($page) => $page->has('coves', 12));
     }
 
+    // --- The persona band ----------------------------------------------------
+
+    private function persona(string $slug, string $title, Market $market, PublishStatus $status, string $publishedAt): DailyPickSet
+    {
+        return DailyPickSet::create([
+            'market' => $market->value,
+            'kind' => CoveKind::Persona->value,
+            'slug' => $slug,
+            'theme_title' => $title,
+            'theme_slug' => $slug,
+            'theme_blurb' => 'Voor wie dat is.',
+            'status' => $status->value,
+            // A persona has no drop_date — the database enforces it — so this
+            // is the only thing there is to order the shelf by.
+            'published_at' => $publishedAt,
+        ]);
+    }
+
+    #[Test]
+    public function it_lists_the_published_personas_for_this_market_newest_first(): void
+    {
+        $this->persona('de-oudste', 'De oudste', Market::BeNl, PublishStatus::Published, '2026-01-01');
+        $this->persona('de-nieuwste', 'De nieuwste', Market::BeNl, PublishStatus::Published, '2026-08-01');
+
+        $this->get('/be-nl/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('personas', 2)
+                ->where('personas.0.title', 'De nieuwste')
+                ->where('personas.1.title', 'De oudste')
+                // /gift-ideas/, not /guides/ or /daily/. The path comes from
+                // CoveKind so the hub cannot invent a second address for a
+                // page that already has one.
+                ->where('personas.0.url', '/be-nl/gift-ideas/de-nieuwste')
+            );
+    }
+
+    #[Test]
+    public function a_draft_persona_is_not_listed(): void
+    {
+        // The 18 seeded on 2026-08-29 are all drafts. If this leaked, the hub
+        // would be the one public page advertising unfinished writing.
+        $this->persona('concept', 'Nog niet klaar', Market::BeNl, PublishStatus::Draft, '2026-08-01');
+
+        $this->get('/be-nl/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('personas', 0));
+    }
+
+    #[Test]
+    public function another_markets_personas_are_not_listed(): void
+    {
+        $this->persona('de-thuiskok', 'De thuiskok', Market::BeNl, PublishStatus::Published, '2026-08-01');
+
+        $this->get('/be-fr/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('personas', 0));
+    }
+
+    #[Test]
+    public function the_persona_band_is_capped(): void
+    {
+        for ($i = 1; $i <= 9; $i++) {
+            $this->persona("persona-{$i}", "Persona {$i}", Market::BeNl, PublishStatus::Published, '2026-08-01');
+        }
+
+        $this->get('/be-nl/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->has('personas', 6));
+    }
+
+    /**
+     * A guide is not a persona, and the two share one slug namespace.
+     *
+     * Both kinds live in `daily_pick_sets` since the fold, so a band that
+     * filtered on nothing but `published` would list every article as a
+     * persona and link each one at `/gift-ideas/{slug}` — a 404 apiece.
+     */
+    #[Test]
+    public function the_two_bands_do_not_borrow_each_others_rows(): void
+    {
+        $this->guide('beste-koptelefoons', 'Beste koptelefoons', Market::BeNl, PublishStatus::Published, '2026-08-01');
+        $this->persona('de-thuiskok', 'De thuiskok', Market::BeNl, PublishStatus::Published, '2026-08-02');
+
+        $this->get('/be-nl/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('coves', 1)
+                ->has('personas', 1)
+                ->where('coves.0.title', 'Beste koptelefoons')
+                ->where('personas.0.title', 'De thuiskok')
+            );
+    }
+
     // --- The questions band --------------------------------------------------
 
     #[Test]

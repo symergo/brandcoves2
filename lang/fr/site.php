@@ -261,10 +261,12 @@ return [
         'seo_title' => 'Idées cadeaux et trouvailles, chaque jour',
         'seo_description' => 'Trois façons de trouver ce que vous ne cherchiez pas : une nouvelle édition chaque jour, une surprise choisie pour sa rareté, et des lectures par thème.',
         'title' => 'Découvrir',
-        'intro' => "Trois façons de trouver ce que vous ne cherchiez pas. L'une change chaque jour, l'autre est volontairement imprévisible, et la troisième se lit tranquillement.",
+        'intro' => "Des façons de trouver ce que vous ne cherchiez pas. L'une change chaque jour, une autre est volontairement imprévisible, une autre parle d'une personne plutôt que d'un objet, et les dernières se lisent tranquillement.",
         'daily_what' => 'Une nouvelle édition chaque jour : un thème, quelques trouvailles et une énigme de prix. Chaque édition passée garde sa page.',
         'surprise_what' => "Quelque chose dont vous ignoriez l'existence, choisi pour sa rareté et non pour ses ventes.",
         'idea_what' => "Inspiration shopping et guides d'achat autour d'un seul sujet, avec chaque marque et chaque produit reliés directement à une recherche en direct.",
+        'persona_what' => "Des cadeaux choisis autour d'une personne plutôt que d'une date : le fanatique de café, celui qui a déjà tout.",
+        'persona_all' => 'Toutes les idées cadeaux',
     ],
 
     'shops' => [

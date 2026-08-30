@@ -181,7 +181,9 @@ identical or the two stop being twins.
 
 ## Files
 
-- `app/Enums/CoveKind.php`, `app/Jobs/BuildPersonaCove.php`
+- `app/Enums/CoveKind.php`, `app/Enums/PersonaScene.php`, `app/Jobs/BuildPersonaCove.php`
+- `resources/js/Components/PersonaIllustration.tsx` — the nine drawings
+- `database/migrations/2026_08_31_000200_a_persona_names_its_own_drawing.php`
 - `app/Services/Cove/EditionBuilder.php` — `buildPersona()`
 - `app/Services/Cove/EditionPresenter.php` — shared with the Daily Cove
 - `app/Http/Controllers/GiftIdeasController.php`
@@ -192,8 +194,13 @@ identical or the two stop being twins.
 
 ## Open
 
-- **Nothing links to `/gift-ideas` from the navigation yet.** The pages exist, are in the sitemap and
-  are reachable; the nav entry is a separate decision about what the site's top level says.
+- **The footer still does not link to `/gift-ideas`.** The header menu and the Discover hub both do
+  as of 2026-08-30 — the hub carries a card for the shelf and a band naming up to six personas, on
+  the argument that a reader recognises the person they are shopping for in a title and cannot
+  recognise anything in the phrase "presents chosen around a person". Both the card and the band
+  appear only once a market has published one: every other surface on that hub always has something
+  on it, and an unconditional card would make the hub the site's only link to a page reading
+  "nothing here yet". See [navigation.md](navigation.md).
 - **No OG image endpoint for a persona.** `/og/daily/{date}.png` is dated by construction. A persona
   shares as its title and blurb until one is added.
 - **A persona's picks do not reach the discovery `curated` pool.** `CuratedRetriever::pool()` bounds
