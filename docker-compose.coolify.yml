@@ -22,6 +22,13 @@ x-app: &app
     dockerfile: Dockerfile
     args:
       VITE_APP_NAME: ${APP_NAME:-GiftCoves}
+      # Coolify sets SOURCE_COMMIT in the build environment (it is a
+      # build-impact variable on the application). Passing it here is what puts
+      # the real SHA on /health; without this line the Dockerfile's ARG defaults
+      # to empty and the endpoint can only report a timestamp. The default keeps
+      # a local `docker compose build` working, where there is no Coolify to
+      # provide it.
+      SOURCE_COMMIT: ${SOURCE_COMMIT:-}
   environment: &app-env
     APP_NAME: ${APP_NAME:-GiftCoves}
     APP_ENV: production

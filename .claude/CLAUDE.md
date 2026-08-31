@@ -295,19 +295,26 @@ visitors, within the minute.** There is no gate between the two: a push to `main
 > uncommitted. Check `/health` on both hosts before assuming a fix is live — the migration name is
 > the reliable field, not the build stamp.
 
-> **Not adopted, and now blocked on the same step it started at.** The one-branch model in
+> **Not adopted, but no longer blocked.** The one-branch model in
 > [docs/deployment.md](docs/deployment.md) — both apps on `main`, production behind a manual
-> trigger — needs two Coolify changes, and the gate has to come first. That gate was in place for a
-> day and has been removed again, so the remaining step, repointing `GiftCoves-staging` from
-> `staging` to `main`, **must not be taken**: both apps would then track `main` with auto-deploy on,
-> and every commit would reach real visitors with no staging pass at all.
+> trigger — needs two Coolify changes, and the gate has to come first. The gate is currently OFF, so
+> the remaining step, repointing `GiftCoves-staging` from `staging` to `main`, **must not be
+> taken**: both apps would then track `main` with auto-deploy on, and every commit would reach real
+> visitors with no staging pass at all. That ordering has not changed.
 >
-> Adopting it needs a production deploy path that works without the Coolify UI. Today there is
-> none: `DeployTrigger` sends no `Authorization` header, on purpose, and the stored
-> `/api/v1/deploy?uuid=…` endpoint answers 401 without a Bearer token. Either find the
-> per-application deploy webhook Coolify issues (auth in the URL, no header, blast radius of one
-> app) or accept an API token and write down why. Until one of those exists, the two-branch flow in
-> the table above is what there is.
+> What changed is the reason it was parked. This file used to say adopting it needs "a production
+> deploy path that works without the Coolify UI" and that none existed, because `DeployTrigger`
+> sends no `Authorization` header and the stored endpoint answers 401. **That is true of the
+> webhook and false of the endpoint.** With a Bearer token, `GET /api/v1/deploy?uuid=<app-uuid>`
+> against `http://51.75.78.173:8000` returns 200 and queues a deploy — proven against
+> `GiftCoves-staging` on 2026-08-31, and Coolify records it as `is_api: true` / `is_webhook: false`,
+> so a deliberate release is distinguishable from an automatic one in the audit trail.
+>
+> So the blocker is gone and the decision is now a judgement rather than a wait. Two costs to weigh
+> before taking it: the token can redeploy, read every environment variable and reassign domains on
+> **both** applications, so routine use raises the stakes on where it lives; and production stops
+> being `git push origin main` and becomes an authenticated request or the UI. That friction is the
+> point of the model, and it is still a real cost.
 
 - **`VITE_*` is baked into the client bundle at build time.** In Coolify these must be ticked
   **Build Variable**. Left as runtime vars they are `undefined` in the browser: server-rendered pages

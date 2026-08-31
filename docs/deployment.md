@@ -147,21 +147,73 @@ long failures are *forgiven*, and shortening it would make a slow boot fail rath
 > for years and Coolify requires a Docker new enough to have it, so this is a formality — but it is
 > the one change here that cannot fail safely, and staging is where it gets proven.
 
-### Still on the table, both needing a decision outside this repo
+### Both open questions were answered on 2026-08-31
 
-**Check Coolify's automatic Docker cleanup first.** It decides whether builds are three minutes or
-twelve, and nothing in this file matters next to it. If it prunes the build cache between deploys,
-`install-php-extensions` recompiles `intl`, `gd` and `zip` from source every single time — several
-minutes, for a layer that is supposed to be a cache hit essentially forever.
+**The nightly prune was the whole story.** The server had `force_docker_cleanup = True` with
+`docker_cleanup_frequency = 0 0 * * *`, which prunes the build cache unconditionally every midnight
+— and while force is on, `docker_cleanup_threshold = 80` is **inert**, despite sitting right there
+looking like the governing value. So the first deploy after any midnight paid a fully cold build,
+including the ~5-minute `install-php-extensions` compile, and staging and production only shared
+cached layers when both deploys fell on the same side of midnight. Force cleanup is now **off**; the
+80% threshold governs, which prunes when the disk needs it rather than on a clock.
 
-**Build once, deploy twice.** The Dockerfile already avoids `config:cache` specifically so that "the
-same image is deployed to staging and production with different config" — but that is the intent, not
-what happens; the image is built twice from the same commit. Building in GitHub Actions, which
-already runs on every push, and pushing to GHCR, then switching the compose services from `build:` to
-`image:`, makes the production deploy a pull-and-up: seconds rather than a rebuild. A cheaper interim
-version is simply to confirm production's build hits staging's layer cache — both apps share one
-Docker daemon, so it should, **unless `APP_NAME` differs between them**, which feeds `VITE_APP_NAME`
-and forks the `frontend` stage at the ENV layer.
+Measured immediately after, on staging:
+
+| Deploy | What it rebuilt | Duration |
+|---|---|---|
+| webhook, commit `b25bab9` | whole `frontend` + `vendor` stages (the Dockerfile's own install lines changed) | **111s** |
+| API-triggered redeploy, same commit | nothing — fully cached | **83s** |
+
+A local build with everything warm runs the tail in ~10s: `install-php-extensions`, both cache-mounted
+installs and `npm run build` all `CACHED`, leaving only `COPY . .`, dump-autoload (5.7s), the two
+caches (1.4s) and the asset copy (0.1s).
+
+**Build once, deploy twice is therefore shelved, not deferred.** Both apps share one Docker daemon and
+`APP_NAME` is identical on each — verified from the outside, since both hosts issue a
+`giftcoves-session` cookie and `config/session.php` derives that name from `Str::slug(APP_NAME)`.
+`VITE_APP_NAME` is the only build arg that existed, so the `frontend` stage does not fork between the
+two apps and production inherits staging's layers directly. A registry would buy little for its setup
+cost.
+
+### The one-branch model is no longer blocked
+
+This file used to say the model needs "a production deploy path that works without the Coolify UI"
+and that none existed, because `DeployTrigger` sends no `Authorization` header and the stored webhook
+answers 401. That is true of the *webhook* and false of the *endpoint*. With a Bearer token:
+
+```bash
+curl -H "Authorization: Bearer $COOLIFY_TOKEN"      "http://51.75.78.173:8000/api/v1/deploy?uuid=<application-uuid>"
+# → 200 {"deployments":[{"message":"... deployment queued.","deployment_uuid":"..."}]}
+```
+
+Proven against `GiftCoves-staging` on 2026-08-31. Coolify records such a deploy as `is_api: true` /
+`is_webhook: false`, so the audit trail distinguishes a deliberate release from an automatic one —
+which is exactly the property a manually-gated production wants.
+
+Two cautions before adopting it. The token can redeploy, read every environment variable and reassign
+domains on both applications, so making it the routine production mechanism raises the stakes on where
+it lives. And production stops being `git push origin main` and becomes an authenticated request or
+the Coolify UI — deliberate friction, and the point of the model, but a real cost.
+
+**The order in the section above still binds:** auto-deploy off on `GiftCoves-prod` first, repoint
+`GiftCoves-staging` second. Reversed, both apps track `main` with auto-deploy on and every commit
+reaches real visitors with no staging pass.
+
+### Reading /health after a deploy
+
+Three fields, because the question has three parts, and one field was answering the wrong one:
+
+| Field | Answers | Caveat |
+|---|---|---|
+| `commit` | which code is serving | the real SHA, short form; null on a laptop |
+| `built` | when the image was made | **cacheable** — see below |
+| `started` | when this container came up | read from `/proc/1` per request, never stale |
+
+`built` comes from a `RUN date … > BUILD_STAMP` whose command is a constant string, so a redeploy of
+an **unchanged commit** is a cache hit and reports the *previous* build's time. Observed exactly that
+on staging: an API-triggered redeploy finishing at 19:46 served a stamp of 19:41. That is honest —
+an unchanged commit really does produce the same image — but it means a stale-looking `built` is not
+evidence of a failed deploy. Ask `commit` which code, and `started` whether anything restarted.
 
 ## Gotchas hit standing staging up (2026-08-07)
 
@@ -174,7 +226,7 @@ fresh environment.
 | Every request 502s while the container reports **healthy** | frankenphp exposes 80, 443 and 2019; adding 8080 gave Traefik four candidates and no `loadbalancer.server.port` label, so it routed to 80 where nothing listened. The healthcheck hit 8080 directly, so the container looked fine | Serve on **80** — the port Traefik already assumes. v1's WordPress works because it exposes exactly one port |
 | Redirects and asset URLs come out `http://` | Traefik terminates TLS and forwards plain HTTP; Laravel saw an insecure request | `$middleware->trustProxies(at: '*')` in `bootstrap/app.php`. Safe here: the container publishes no ports and is reachable only through Traefik |
 | `queue` and `scheduler` heading for permanently unhealthy | Both inherited the base image's healthcheck (`curl localhost:2019/metrics`, Caddy's admin API). Neither runs a web server | `horizon:status` for queue; healthcheck disabled for scheduler — a check that can never pass is worse than none |
-| `/health` reported `"commit": "unknown"` | Coolify exposes **no commit SHA** to the container — only `COOLIFY_BRANCH`, `COOLIFY_FQDN`, `COOLIFY_URL`, `COOLIFY_RESOURCE_UUID` | Build timestamp written into the image (`/app/BUILD_STAMP`) plus the branch |
+| `/health` reported `"commit": "unknown"` | Believed to be that Coolify exposes **no commit SHA**. It does — `SOURCE_COMMIT` is a build-impact variable on the application; it was simply never passed through | **Fixed 2026-08-31.** Compose passes `SOURCE_COMMIT` as a build arg, the Dockerfile takes it as a late `ARG`, `/health` reports `commit` |
 
 Two process notes worth as much as the fixes:
 

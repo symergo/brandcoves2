@@ -29,10 +29,30 @@ class HealthController extends Controller
 
         return response()->json([
             'status' => $healthy ? 'ok' : 'degraded',
-            // When the image was built, and from which branch. Coolify exposes
-            // no commit SHA to the container, so this is what answers "is my
-            // build actually serving, or is the previous one still up?".
+            /*
+             * Three fields, because "is my deploy live?" is three questions and
+             * one field kept answering the wrong one.
+             *
+             * `commit` is WHICH CODE. Now that the Dockerfile takes a
+             * SOURCE_COMMIT build arg this is the real SHA, and it is the field
+             * to check after a deploy.
+             *
+             * `built` is WHEN THE IMAGE WAS MADE, and it is subtler than it
+             * looks: the Dockerfile layer that writes it is cacheable, so a
+             * redeploy of an unchanged commit reports the PREVIOUS build's time.
+             * That is honest — an unchanged commit really is the same image —
+             * but it means a stale-looking `built` does not imply a failed
+             * deploy. Measured on staging: an API-triggered redeploy at 19:46 on
+             * 2026-08-31 served a stamp of 19:41.
+             *
+             * `started` is WHEN THIS CONTAINER CAME UP, read from /proc/1 at
+             * request time. It cannot be cached or baked, so it is the field
+             * that actually answers "did the deploy restart anything?" — the
+             * question `built` was being asked and could not reliably answer.
+             */
+            'commit' => $this->commit(),
             'built' => $this->buildStamp(),
+            'started' => $this->startedAt(),
             'branch' => env('COOLIFY_BRANCH', 'local'),
             'migration' => $this->lastMigration(),
             'environment' => app()->environment(),
@@ -176,6 +196,39 @@ class HealthController extends Controller
         $path = base_path('BUILD_STAMP');
 
         return is_readable($path) ? trim((string) file_get_contents($path)) : 'dev';
+    }
+
+    /**
+     * The commit that built this image, short form.
+     *
+     * Twelve characters rather than forty: long enough to be unambiguous in
+     * this repo and short enough to eyeball against `git log --oneline`. Null
+     * rather than 'unknown' when absent, so a laptop reads as "no answer" and
+     * not as a deploy that lost its SHA.
+     */
+    private function commit(): ?string
+    {
+        $sha = trim((string) env('GIT_COMMIT_SHA', ''));
+
+        return $sha === '' ? null : substr($sha, 0, 12);
+    }
+
+    /**
+     * When this container started, from procfs.
+     *
+     * The /proc/<pid> directory carries the process start time, and in a
+     * container PID 1 is the container. Read per request, so unlike anything
+     * baked into the image it cannot be stale — which is the entire point of
+     * having it next to `built`.
+     *
+     * Null off Linux (a Windows dev box has no procfs) rather than a fabricated
+     * time: an absent answer is honest, a wrong one is worse than none.
+     */
+    private function startedAt(): ?string
+    {
+        $ctime = @filectime('/proc/1');
+
+        return $ctime === false ? null : gmdate('Y-m-d\TH:i:s\Z', $ctime);
     }
 
     private function lastMigration(): ?string

@@ -151,10 +151,25 @@ class HealthTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('status', 'ok')
             ->assertJsonPath('checks.database.ok', true)
-            // The build stamp and the applied migration are what turn "it looks
-            // fine after deploy" into a verifiable fact. Coolify exposes no
-            // commit SHA to the container, so the build time stands in for it.
-            ->assertJsonStructure(['status', 'built', 'branch', 'migration', 'environment', 'config', 'checks']);
+            /*
+             * These are what turn "it looks fine after deploy" into a fact, and
+             * there are three of them because the question has three parts.
+             *
+             * `commit` is which code — Coolify does expose SOURCE_COMMIT, and
+             * the Dockerfile now takes it as a build arg. `built` is when the
+             * image was made, and is cacheable: an unchanged commit reports the
+             * previous build's stamp, so it must not be read as proof a deploy
+             * landed. `started` is when this container came up, read from
+             * /proc/1 per request and therefore never stale.
+             *
+             * Asserted as structure rather than value: on a laptop `commit` is
+             * null and `started` is null off Linux, and pinning either would
+             * make this test pass only inside a container.
+             */
+            ->assertJsonStructure([
+                'status', 'commit', 'built', 'started', 'branch',
+                'migration', 'environment', 'config', 'checks',
+            ]);
     }
 
     #[Test]

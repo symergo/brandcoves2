@@ -121,10 +121,30 @@ RUN php artisan event:cache \
 # ship some new JavaScript. Copied in after, it invalidates this one cheap layer.
 COPY --from=frontend /build/public/build ./public/build
 
-# Coolify does not expose the deployed commit to the container — it provides
-# COOLIFY_BRANCH, FQDN, URL and UUID, but no SHA. A build timestamp answers the
-# question that actually matters after a deploy ("is this my build, or the
-# previous one still serving?") and, unlike the commit, is always available.
+# The deployed commit. Coolify DOES expose it — SOURCE_COMMIT is a build-impact
+# variable, alongside COOLIFY_BRANCH/FQDN/URL/UUID — it simply was never passed
+# through, so this file's previous comment ("Coolify does not expose the
+# deployed commit") described the wiring rather than the platform. The compose
+# file passes it as a build arg; see the args block there.
+#
+# DECLARED HERE, NOT AT THE TOP. An ARG invalidates every layer below the point
+# it is declared, and this value changes on every single commit. Above the
+# vendor and asset copies it would rebuild the whole image each time; down here
+# it costs the three trivial layers that follow.
+ARG SOURCE_COMMIT=
+ENV GIT_COMMIT_SHA=$SOURCE_COMMIT
+
+# The build timestamp is a proxy for "which image is this", and a lossy one: the
+# command is a constant string, so on a redeploy of an UNCHANGED commit Docker
+# caches this layer and the stamp reports the previous build's time. Observed on
+# staging on 2026-08-31 — an API-triggered redeploy at 19:46 served a stamp of
+# 19:41. That is not a bug to fix here, because an unchanged commit genuinely
+# produces the same image; it is a reason not to ask this field the question.
+#
+# It sits below the ENV above so that it does refresh whenever the commit moves,
+# which is the case where a changed stamp means something. For "did my deploy
+# actually restart the container?", /health reports `started`, which is read
+# from the runtime and cannot be cached at all.
 RUN date -u +%Y-%m-%dT%H:%M:%SZ > /app/BUILD_STAMP
 
 ENV APP_ENV=production \
