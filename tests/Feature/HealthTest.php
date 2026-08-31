@@ -27,6 +27,9 @@ class HealthTest extends TestCase
          */
         config([
             'giftcoves.connectors.bol.client_id' => null,
+            // The suite runs on the `array` mailer, which counts as sendable —
+            // so the transport has to be named for this to test anything.
+            'mail.default' => 'resend',
             'services.resend.key' => null,
         ]);
 
@@ -45,6 +48,44 @@ class HealthTest extends TestCase
 
         $this->assertTrue($on['bol'], 'bol is configured and the flag still says it is not');
         $this->assertTrue($on['mail']);
+    }
+
+    #[Test]
+    public function the_mail_flag_follows_the_transport_actually_in_use(): void
+    {
+        /*
+         * It used to read `services.resend.key` whatever the mailer was.
+         *
+         * Harmless while Resend was hardcoded in compose, and a lie the moment
+         * production moved to OVH's SMTP: mail would work and health would
+         * report `mail: false` forever. The same class of error as the eBay
+         * flag that checked one half of a credential pair — a flag describing
+         * a state it cannot observe.
+         */
+        config([
+            'mail.default' => 'smtp',
+            'mail.mailers.smtp.host' => 'ssl0.ovh.net',
+            'mail.mailers.smtp.username' => 'hello@example.com',
+            'mail.mailers.smtp.password' => null,
+            // Set, and irrelevant now. If the flag still consults it, this is
+            // what catches that.
+            'services.resend.key' => 'a-resend-key',
+        ]);
+
+        $this->assertFalse(
+            $this->getJson('/health')->json('config.mail'),
+            'SMTP with no password cannot send, whatever Resend is holding',
+        );
+
+        config(['mail.mailers.smtp.password' => 'a-password']);
+
+        $this->assertTrue($this->getJson('/health')->json('config.mail'));
+
+        // A deliberately silent mailer is doing what it was asked to. Flagging
+        // it red is noise, and noise is how a health check gets ignored.
+        config(['mail.default' => 'array']);
+
+        $this->assertTrue($this->getJson('/health')->json('config.mail'));
     }
 
     #[Test]

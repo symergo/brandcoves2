@@ -67,7 +67,7 @@ class HealthController extends Controller
             'appKey' => filled(config('app.key')),
             'credentialsKey' => filled(config('giftcoves.credentials_key')),
             'claimHashSecret' => filled(config('giftcoves.wishlist.claim_hash_secret')),
-            'mail' => filled(config('services.resend.key')),
+            'mail' => $this->mailIsSendable(),
             'awin' => filled(config('giftcoves.connectors.awin.api_token')),
             'awinAccounts' => count((array) config('giftcoves.connectors.awin.accounts', [])),
             /*
@@ -117,6 +117,34 @@ class HealthController extends Controller
             'ai' => filled(config('giftcoves.ai.api_key')),
             'robotsAllow' => (bool) config('giftcoves.robots_allow'),
         ];
+    }
+
+    /**
+     * Whether this environment could actually send a message.
+     *
+     * Transport-aware, because the flag used to read `services.resend.key` no
+     * matter which mailer was configured — so switching production to OVH's
+     * SMTP would have left it reporting `mail: false` forever while mail
+     * worked perfectly, which is the same class of lie as the eBay flag that
+     * checked one half of a credential pair.
+     *
+     * `log` and `array` count as sendable: nothing leaves the machine, but the
+     * environment is doing what it was asked to, and a red flag on a
+     * deliberately silent mailer is noise rather than a warning.
+     */
+    private function mailIsSendable(): bool
+    {
+        return match ((string) config('mail.default')) {
+            'resend' => filled(config('services.resend.key')),
+            // A host alone is not enough: OVH refuses an unauthenticated
+            // session outright, so a blank username or password is a mailer
+            // that connects and then cannot send.
+            'smtp' => filled(config('mail.mailers.smtp.host'))
+                && filled(config('mail.mailers.smtp.username'))
+                && filled(config('mail.mailers.smtp.password')),
+            'log', 'array' => true,
+            default => false,
+        };
     }
 
     /** @param callable():mixed $probe */

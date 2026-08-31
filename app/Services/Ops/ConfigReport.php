@@ -53,6 +53,12 @@ class ConfigReport
 
         $tradedoublerOn = (bool) config('giftcoves.connectors.tradedoubler.enabled');
 
+        // Which mail credentials are required depends on the transport, and
+        // reporting the other one's as missing is how a config check trains
+        // people to ignore it.
+        $smtp = config('mail.default') === 'smtp';
+        $resend = config('mail.default') === 'resend';
+
         $definition = [
             'Application' => [
                 ['APP_KEY', config('app.key'), true, 'Sessions and every encrypted cookie depend on it.'],
@@ -67,8 +73,19 @@ class ConfigReport
                 ['DB_PASSWORD', config('database.connections.pgsql.password'), true, null],
             ],
             'Mail' => [
-                ['RESEND_API_KEY', config('services.resend.key'), true, 'No key means no magic link, so nobody can sign in.'],
-                ['MAIL_FROM_ADDRESS', config('mail.from.address'), true, null],
+                ['MAIL_MAILER', config('mail.default'), true, 'smtp is OVH; resend is the old path, kept switchable.'],
+                ['MAIL_HOST', config('mail.mailers.smtp.host'), $smtp, $smtp ? 'ssl0.ovh.net or smtp.mail.ovh.net.' : 'Not needed unless MAIL_MAILER is smtp.'],
+                ['MAIL_PORT', config('mail.mailers.smtp.port'), $smtp, null],
+                // The one that is easy to leave blank and hard to diagnose:
+                // 465 is implicit TLS, and a blank scheme makes Laravel try
+                // STARTTLS, which fails looking like a network fault.
+                ['MAIL_SCHEME', config('mail.mailers.smtp.scheme'), $smtp, $smtp ? 'Must be smtps on port 465.' : null],
+                ['MAIL_USERNAME', config('mail.mailers.smtp.username'), $smtp, null],
+                ['MAIL_PASSWORD', config('mail.mailers.smtp.password'), $smtp, $smtp ? 'No password means no magic link, so nobody can sign in.' : null],
+                ['RESEND_API_KEY', config('services.resend.key'), $resend, $resend ? 'Required while MAIL_MAILER is resend.' : 'Not needed while mail goes over SMTP.'],
+                // OVH refuses a From that is not the authenticated mailbox, so
+                // this is not free-form: it has to match MAIL_USERNAME.
+                ['MAIL_FROM_ADDRESS', config('mail.from.address'), true, 'Must match MAIL_USERNAME — OVH rejects anything else.'],
             ],
             'Sign-in' => [
                 ['GOOGLE_CLIENT_ID', config('services.google.client_id'), false, 'Optional — the button hides itself when unset.'],

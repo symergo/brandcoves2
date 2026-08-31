@@ -60,10 +60,34 @@ x-app: &app
     CACHE_STORE: redis
     QUEUE_CONNECTION: redis
 
-    MAIL_MAILER: resend
-    RESEND_API_KEY: ${RESEND_API_KEY}
-    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+    # Mail. OVH's Zimbra over SMTP, not Resend — which was hardcoded here and
+    # whose key was never set, so production could not send at all and nobody
+    # could sign in.
+    #
+    # Every one of these carries a compose-level default rather than a bare
+    # interpolation, and that is not decoration. An unset variable interpolates
+    # to an EMPTY STRING, and `env('MAIL_PORT', 2525)` returns '' for that
+    # rather than 2525 — a passthrough without a default actively defeats the
+    # default in config/mail.php. Same shape as the CANONICAL_HOST bug above.
+    MAIL_MAILER: ${MAIL_MAILER:-smtp}
+    MAIL_HOST: ${MAIL_HOST:-ssl0.ovh.net}
+    MAIL_PORT: ${MAIL_PORT:-465}
+    # smtps, not smtp: port 465 speaks implicit TLS, and Laravel infers plain
+    # STARTTLS when the scheme is blank — which fails on 465 with a handshake
+    # error that reads like a firewall problem.
+    MAIL_SCHEME: ${MAIL_SCHEME:-smtps}
+    MAIL_USERNAME: ${MAIL_USERNAME}
+    # No default, deliberately: a blank password is a visible auth failure,
+    # and there is no sane value to invent.
+    MAIL_PASSWORD: ${MAIL_PASSWORD}
+    # OVH rejects a From that is not the authenticated mailbox, so this is not
+    # free-form — it has to match MAIL_USERNAME.
+    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@giftcoves.com}
     MAIL_FROM_NAME: ${APP_NAME:-GiftCoves}
+
+    # Kept so switching back is an env change rather than a redeploy of this
+    # file. Unused while MAIL_MAILER is smtp.
+    RESEND_API_KEY: ${RESEND_API_KEY}
 
     GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
