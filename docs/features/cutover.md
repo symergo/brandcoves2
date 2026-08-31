@@ -36,7 +36,9 @@ attempt on a weekday.
 ### 1. Everything below must already be true
 
 - [ ] `staging.brandcoves.com/health` reports `ok`, with both database and Redis checks green.
-- [ ] The staging branch has been fast-forwarded to what will become `main`.
+- [ ] `main` carries everything intended for release. (Historic: this step read "the staging
+      branch has been fast-forwarded to what will become `main`" — there is only `main` since
+      2026-08-31.)
 - [ ] `php artisan bc:check-bol` passes **on the server**, not just locally.
 - [ ] `php artisan bc:refresh-discovery` has run for every market, so no
       discovery surface is empty on the first visit.
@@ -80,7 +82,7 @@ Roughly fifteen minutes, most of it waiting.
 ### 1. Fast-forward main
 
 ```bash
-git checkout main && git merge --ff-only staging && git push origin main
+git push origin main   # one branch since 2026-08-31; production still needs its trigger
 ```
 
 Forward-only. If the merge is not a fast-forward, stop — `main` has diverged and

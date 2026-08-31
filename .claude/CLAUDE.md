@@ -22,7 +22,7 @@ made, not just what the code does — the reasoning is the part that cannot be r
 | Admin | Filament 5 | `/admin`, gated on `users.is_admin` |
 | Frontend | Inertia 3 + React 19 + Tailwind 4 | Blade for the document shell only |
 | Server | FrankenPHP | single process, no nginx/fpm split |
-| Deploy | Coolify on `51.75.78.173` | `staging` and `main` branches → two apps |
+| Deploy | Coolify on `51.75.78.173` | one branch, `main` → two apps |
 
 ## Commands
 
@@ -221,18 +221,18 @@ Two mechanisms, because they fail differently:
 
 ## Deployment
 
-**Two branches, two apps. Staging auto-deploys; production does NOT.** Read from the Coolify API
-and both `/health` endpoints on 2026-08-31:
+**One branch, two apps. Staging auto-deploys; production does NOT.** The `staging` branch was
+deleted on 2026-08-31 and both applications now track `main`. Read from the Coolify API and both
+`/health` endpoints that day:
 
 | App | Tracks | Auto-deploy | Domains |
 |---|---|---|---|
-| `GiftCoves-staging` | `staging` | **on** | `staging.giftcoves.com`, `staging.brandcoves.com` |
+| `GiftCoves-staging` | `main` | **on** | `staging.giftcoves.com`, `staging.brandcoves.com` |
 | `GiftCoves-prod` | `main` | **OFF** since 2026-08-31 | `giftcoves.com`, `www.giftcoves.com`, `brandcoves.com` |
 
-`git push origin staging` → staging, within the minute. **`git push origin main` deploys
-NOTHING.** Production is now a deliberate trigger, and this is the single most important change to
-absorb: advancing `main` is no longer the release, so a fix sitting on `main` is not a fix that is
-live. Verified by behaviour on 2026-08-31 — `main` was fast-forwarded four commits and production
+`git push origin main` → **staging**, within the minute. It deploys **NOTHING to production**.
+Production is a deliberate trigger, and this is the single most important thing to absorb: advancing
+`main` is no longer the release, so a fix sitting on `main` is not a fix that is live. Verified by behaviour on 2026-08-31 — `main` was fast-forwarded four commits and production
 stayed on its previous build.
 
 **Deploying production is one authenticated request:**
@@ -270,10 +270,10 @@ in `.claude/coolify_api.api` (gitignored) as `KEY=<token>`, and the API base is
 > Note also that `/start` queues a full **rebuild**, not a container start, so it is not a cheap way
 > to apply changed runtime environment variables.
 
-> **Never push without being asked, and never push a half-committed tree.** `staging` deploys
-> outright to the staging hosts, so that push is still a deploy. `main` no longer deploys on its
-> own — but pushing it is still the act that decides what production *will* serve on the next
-> trigger, and the trigger is one request away. Treat both as release decisions. Neither
+> **Never push without being asked, and never push a half-committed tree.** There is one branch:
+> pushing `main` deploys the staging hosts outright, so that push *is* a deploy. It does not reach
+> production — but it decides what production will serve on the next trigger, and the trigger is one
+> request away. Treat the push and the trigger as two separate release decisions, both the user's. Neither
 > happens on Claude's initiative. Commit the work first, then stop and report the branch is ready; the
 > decision to publish is the user's, every time, and approval for one push does not carry to the
 > next. Before any push, check the change is committed **whole** — the migration with
@@ -318,32 +318,33 @@ in `.claude/coolify_api.api` (gitignored) as `KEY=<token>`, and the API base is
 > real and was simply overridden; staging has deployed since (built `2026-08-29`), so its webhook
 > survived or was re-issued. Production's is unproven — it has not built since `2026-08-16`.
 
-> **`main` and `staging` are level again**, both at `2f8aa2d`, fast-forwarded on 2026-08-30 after
-> thirteen days apart. That release is large: it folds `guides` into the editorial table, renames
-> every Daily Cove's URL, and lands the curation screen and gift personas that had been sitting
-> uncommitted. Check `/health` on both hosts before assuming a fix is live — the migration name is
-> the reliable field, not the build stamp.
+> **The `staging` branch is gone, so it can no longer drift.** It was deleted on 2026-08-31 once
+> `main` had been fast-forwarded to it and `GiftCoves-staging` repointed at `main`. The drift it
+> used to cause was not hypothetical: `main` sat four commits behind on 2026-08-31 including the
+> OVH mail fix, so production could not send a magic link at all, looked perfectly healthy, and
+> nothing anywhere said so. Check `/health` on both hosts before assuming a fix is live — `commit`
+> for which code, `started` for whether the container actually restarted.
 
-> **Not adopted, but no longer blocked.** The one-branch model in
-> [docs/deployment.md](docs/deployment.md) — both apps on `main`, production behind a manual
-> trigger — needs two Coolify changes, and the gate has to come first. The gate is currently OFF, so
-> the remaining step, repointing `GiftCoves-staging` from `staging` to `main`, **must not be
-> taken**: both apps would then track `main` with auto-deploy on, and every commit would reach real
-> visitors with no staging pass at all. That ordering has not changed.
+> **Adopted on 2026-08-31.** The one-branch model in
+> [docs/deployment.md](docs/deployment.md) is now what runs: both apps track `main`, staging deploys
+> every push, production waits for a trigger. It was taken in the order that keeps a staging pass in
+> front of production — auto-deploy **off** on `GiftCoves-prod` first, `main` fast-forwarded to
+> `staging`, `GiftCoves-staging` repointed to `main`, and only then the `staging` branch deleted.
+> Reversed, both apps would have tracked `main` with auto-deploy on and every commit would have
+> reached real visitors with no staging pass at all.
 >
-> What changed is the reason it was parked. This file used to say adopting it needs "a production
-> deploy path that works without the Coolify UI" and that none existed, because `DeployTrigger`
-> sends no `Authorization` header and the stored endpoint answers 401. **That is true of the
-> webhook and false of the endpoint.** With a Bearer token, `GET /api/v1/deploy?uuid=<app-uuid>`
-> against `http://51.75.78.173:8000` returns 200 and queues a deploy — proven against
-> `GiftCoves-staging` on 2026-08-31, and Coolify records it as `is_api: true` / `is_webhook: false`,
-> so a deliberate release is distinguishable from an automatic one in the audit trail.
+> It was unblocked by a correction rather than a change. This file used to say adopting it needs "a
+> production deploy path that works without the Coolify UI" and that none existed, because
+> `DeployTrigger` sends no `Authorization` header and the stored endpoint answers 401. **That is
+> true of the webhook and false of the endpoint** — with a Bearer token it returns 200 and queues a
+> deploy.
 >
-> So the blocker is gone and the decision is now a judgement rather than a wait. Two costs to weigh
-> before taking it: the token can redeploy, read every environment variable and reassign domains on
-> **both** applications, so routine use raises the stakes on where it lives; and production stops
-> being `git push origin main` and becomes an authenticated request or the UI. That friction is the
-> point of the model, and it is still a real cost.
+> The costs are real and were accepted knowingly: the token can redeploy, read every environment
+> variable and reassign domains on **both** applications, so where it lives matters more now that it
+> is the routine mechanism; and production is an authenticated request rather than `git push`. That
+> friction is the point. What it buys is that branch drift cannot happen, because there is no second
+> branch to drift — and the drift was not hypothetical, it had just cost a fortnight of production
+> being unable to send mail.
 
 - **`VITE_*` is baked into the client bundle at build time.** In Coolify these must be ticked
   **Build Variable**. Left as runtime vars they are `undefined` in the browser: server-rendered pages

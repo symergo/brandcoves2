@@ -4,13 +4,13 @@
 # `git config core.hooksPath .githooks` being set per clone, and `--no-verify`
 # skips it silently. Neither applies here: this runs on GitHub, on every push,
 # and it is the only check that is true regardless of whose machine the commit
-# came from. Both branches auto-deploy, so a push is a deploy — this is the last
-# place a failure is still cheap.
+# came from. `main` is the only branch now, and pushing it auto-deploys staging —
+# this is the last place a failure is still cheap.
 name: Tests
 
 on:
   push:
-    branches: [main, staging]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 

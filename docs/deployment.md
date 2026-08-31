@@ -8,38 +8,43 @@ laptop ──git push──▶ GitHub ──webhook──▶ Coolify ──▶ b
    └──────── pg_dump over SSH (production → laptop only) ─────┘
 ```
 
-## Two applications, one repo
+## Two applications, one branch
 
-Read from the Coolify database on 2026-08-10, not from memory:
+Read from the Coolify API on 2026-08-31, not from memory:
 
 | Coolify app | Branch | Auto deploy | Domain | Notes |
 |---|---|---|---|---|
-| `brandcoves2-staging` | `staging` | **on** | `staging.brandcoves.com` | `ROBOTS_ALLOW=false`, own database, low AI caps |
-| `brandcoves2-prod` | `main` | **on** | `brandcoves.com` | `ROBOTS_ALLOW=true` |
+| `GiftCoves-staging` | `main` | **on** | `staging.giftcoves.com` | `ROBOTS_ALLOW=false`, own database, low AI caps |
+| `GiftCoves-prod` | `main` | **OFF** | `giftcoves.com` | `ROBOTS_ALLOW=true` |
 
-> **The domains above are pre-rename and still current.** The codebase became GiftCoves on
-> 2026-08-15; Coolify has not been touched. Until the steps in
-> [rebrand.md](features/rebrand.md#the-coolify-side) are carried out, these are the live values —
-> and the two application names stay `brandcoves2-*` regardless, because renaming a Coolify
-> application changes nothing a visitor can see and would invalidate every deploy webhook already
-> issued against it.
+Application UUIDs, which the deploy trigger needs: staging `vhfcyk39ug5exk0fyvdj8qo3`, production
+`gr0kqzz1er3s79u17vdph27t`, server `ek8ge5t94i9ieavic2cvrovf`.
 
 Both: **Build Pack = Docker Compose**, **Compose Location = `/docker-compose.coolify.yml`**, domain
 assigned to the **`app`** service, Scheduled Backups on **`postgres`**.
 
-## How it deploys today
+## How it deploys
 
 ```bash
-git push origin staging       # staging builds automatically
-# verify staging, then:
-git push origin main          # production builds automatically, at once
+git push origin main          # staging builds automatically, within the minute
+# verify staging, then deploy production deliberately:
+TOK=$(grep -oP '(?<=^KEY=).*' .claude/coolify_api.api | tr -d '
+')
+curl -H "Authorization: Bearer $TOK"   "http://51.75.78.173:8000/api/v1/deploy?uuid=gr0kqzz1er3s79u17vdph27t"
 ```
 
-**There is no human gate on production.** Both apps have auto-deploy enabled, so the fast-forward to
-`main` *is* the deploy — nobody confirms anything, and nothing waits. Anyone advancing `main`
-believing a person still has to press a button in Coolify will ship to real traffic by accident. That
-is not hypothetical: `main` moved to `2140f25` at 07:24 on 2026-08-10 and production rebuilt within
-the minute.
+**There is one branch, and production has a human gate.** Pushing `main` deploys staging and nothing
+else; production waits for the request above. Coolify records an API-triggered deploy as
+`is_api: true` / `is_webhook: false`, so a deliberate release is distinguishable from an automatic
+build in the audit trail.
+
+The consequence to internalise: **a fix on `main` is not a fix that is live.** Under the old
+two-branch model the danger was forgetting to advance `main`; now it is forgetting to trigger. Both
+end the same way — production quietly serving old code while looking perfectly healthy.
+
+> **Auto-deploy cannot be read back.** The Coolify API exposes no auto-deploy field on `GET` for an
+> application and rejects it on `PATCH`; it is a UI-only setting. The only proof it is off is moving
+> `main` and watching production not rebuild, which is how it was confirmed on 2026-08-31.
 
 ## Pushing is a deploy, so pushing is asked for
 
@@ -67,29 +72,35 @@ against your working tree, where the missing pieces are still sitting there, pre
 catches it after the push, which is the right place but not a comfortable one when the push already
 deployed. So the check is yours to make before you push.
 
-## Planned: one branch, two apps — NOT yet in effect
+## One branch, two apps — adopted 2026-08-31
 
-The intended model is that both applications track **`main`**, staging deploying every push and
-production only when someone triggers it.
+Both applications track **`main`**. Staging deploys every push; production only when someone
+triggers it. The `staging` branch has been **deleted**.
 
-It would replace the `staging` → `main` fast-forward, which is bookkeeping that encodes what a deploy
-already records — and which drifts. `main` sat **seven commits** behind `staging` at one point,
-including four bug fixes, while production served real traffic. Worse, the drift was invisible:
-nothing about production looked wrong, it was simply old, and the narrower advertiser allowlist in
-those unshipped commits was quietly costing catalogue.
+It replaced a `staging` → `main` fast-forward that was bookkeeping encoding what a deploy already
+records, and which drifted. `main` sat **seven commits** behind at one point, including four bug
+fixes, while production served real traffic. Worse, the drift was invisible: nothing about production
+looked wrong, it was simply old, and the narrower advertiser allowlist in those unshipped commits was
+quietly costing catalogue.
 
-Under it, branch drift cannot happen because there is only one branch. **What is on production would
-be a deploy decision, not a branch state somebody has to remember to advance.**
+It happened again, and worse, on the day the model was adopted: `main` was four commits behind
+`staging`, one of which was the OVH mail fix, so **production could not send a magic link at all** —
+for a fortnight — while `/health` reported `ok`. That is the failure this model makes structurally
+impossible, because there is no second branch to drift.
 
-**Two changes in Coolify make it real, and the order matters:**
+**The order it was taken in, which matters if it is ever rebuilt:**
 
-1. Turn **off** auto-deploy on `brandcoves2-prod`. This is the gate the model assumes and the system
-   does not currently have.
-2. Repoint `brandcoves2-staging` from `staging` to `main`.
+1. Auto-deploy **off** on `GiftCoves-prod`.
+2. `main` fast-forwarded to `staging`, so nothing was stranded.
+3. `GiftCoves-staging` repointed from `staging` to `main`.
+4. Only then, the `staging` branch deleted — local and remote.
 
-Doing (2) first, or alone, points both apps at one branch while production still auto-deploys — every
-commit would reach real visitors with no staging pass at all, which is strictly worse than the
-two-branch model it replaces. Until both are done, follow *How it deploys today* above.
+Doing (3) before (1) would have pointed both apps at one branch while production still auto-deployed:
+every commit to real visitors with no staging pass, strictly worse than the model it replaced. Doing
+(4) before (3) would have left the staging app tracking a branch that no longer exists.
+
+**What you give up:** there is no longer a branch where in-progress work can sit and still deploy to
+staging. `main` must always be deployable, because pushing it *is* a staging deploy.
 
 Keep both environments. Since v1 was deleted there is no fallback, so staging is the only place a bad
 migration surfaces before real visitors meet it — and the whole stack idles at ~390 MiB.

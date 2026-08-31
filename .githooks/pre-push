@@ -5,7 +5,7 @@
 # Why here and not on every save: the suite is a 40-second parallel run against a
 # real Postgres, which is too slow to sit in an edit loop and too important to
 # skip. A push is the last moment the result is still cheap to act on — both
-# branches auto-deploy, so `git push origin staging` is a deploy and a
+# `main` is the only branch: pushing it auto-deploys staging, and a
 # fast-forward of `main` ships to production with no further gate.
 #
 # Install (once per clone):  git config core.hooksPath .githooks

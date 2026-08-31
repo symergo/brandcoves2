@@ -13,7 +13,8 @@ date_added: 2026-08-30
 > would have to go through — cost more than the writing did, and would otherwise have to be redone.
 >
 > Every file path, line reference and claim below was verified against the tree at commit `59f2f69`
-> (branch `staging`, 2026-08-30). **Two things to re-check first if this is picked up**, because they
+> (on `main`; written while the `staging` branch still existed, 2026-08-30). **Two things to
+> re-check first if this is picked up**, because they
 > are load-bearing and the tree will have moved:
 >
 > - that `SearchService::storedQuery()` (:72-73) and `countFacets()` (:521-522) still hand-roll the
