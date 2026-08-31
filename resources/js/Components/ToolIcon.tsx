@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 export type ToolKey =
     | 'wishlist'
     | 'giftlist'
+    | 'shared'
     | 'collab'
     | 'handover'
     | 'santa'
@@ -12,7 +13,7 @@ export type ToolKey =
     | 'whisperer'
 
 /**
- * The nine Gift Cove tools, drawn.
+ * The Gift Cove tools, drawn — the nine of them, plus `shared`.
  *
  * Line art rather than emoji, for three reasons that all bite at once. An emoji
  * is rendered by the reader's operating system, so 🎁 is a different picture on
@@ -44,6 +45,28 @@ const paths: Record<ToolKey, ReactNode> = {
             <path d="M9 4H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2" />
             <rect x="9" y="2" width="6" height="4" rx="1" />
             <path d="M9 11h6M9 15h4" />
+        </>
+    ),
+
+    /*
+     * The share glyph: one node, two lines, two nodes.
+     *
+     * Not a tool — the tenth key here is for the *Shared lists* view, which is
+     * a question about where a list came from rather than something you do to
+     * one. It lives in this set anyway because the alternative was a second
+     * icon style on the same menu, and the whole argument for `ToolIcon` is
+     * that one grid and one stroke weight is what makes a row of these read as
+     * a set instead of a collection.
+     *
+     * Deliberately not two people: `collab` is two people and means co-givers
+     * on one list, which is the row directly below this one.
+     */
+    shared: (
+        <>
+            <circle cx="6" cy="12" r="2.5" />
+            <circle cx="17.5" cy="6" r="2.5" />
+            <circle cx="17.5" cy="18" r="2.5" />
+            <path d="m8.2 10.8 7.1-3.6M8.2 13.2l7.1 3.6" />
         </>
     ),
 

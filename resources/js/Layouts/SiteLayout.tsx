@@ -8,6 +8,7 @@ import SaveToast from '../Components/SaveToast'
 import SignInLink from '../Components/SignInLink'
 import MarketSwitcher from '../Components/MarketSwitcher'
 import NavMenu, { type NavMenuItem } from '../Components/NavMenu'
+import ToolIcon from '../Components/ToolIcon'
 import { type PropsWithChildren, useState } from 'react'
 import { SignInProvider } from '../signIn'
 import type { SharedProps } from '../types'
@@ -91,11 +92,43 @@ function Chrome({ children }: PropsWithChildren) {
          * than organising them, so it belongs to the homepage CTA and the Gift
          * Cove hub, not under a verb meaning "organise".
          */
+        /*
+         * Iconed, like Discover.
+         *
+         * This menu deliberately had none: the entries are tools whose names
+         * say what they are, and the fear was a contact sheet. What that missed
+         * is that the two menus sit in one panel on a phone, where an iconed
+         * block above a bare one reads as one finished list and one unfinished
+         * one — and that three of these four names are the same noun with a
+         * different adjective, which is exactly the case a mark in the margin
+         * helps with.
+         *
+         * `ToolIcon`, not `CoveIcon`: these are the Gift Cove tools and already
+         * have their glyphs there, drawn on the same grid at the same weight as
+         * Discover's. Reusing them means the header cannot drift from the tool
+         * pages that teach them.
+         */
         items: [
-            { href: `${base}/lists`, label: t('nav.lists') },
-            { href: `${base}/lists?view=shared`, label: t('nav.shared_lists') },
-            { href: `${base}/lists?view=group`, label: t('nav.group_lists') },
-            { href: `${base}/santa`, label: t('nav.santa') },
+            {
+                href: `${base}/lists`,
+                label: t('nav.lists'),
+                icon: <ToolIcon name="wishlist" className="h-5 w-5" />,
+            },
+            {
+                href: `${base}/lists?view=shared`,
+                label: t('nav.shared_lists'),
+                icon: <ToolIcon name="shared" className="h-5 w-5" />,
+            },
+            {
+                href: `${base}/lists?view=group`,
+                label: t('nav.group_lists'),
+                icon: <ToolIcon name="collab" className="h-5 w-5" />,
+            },
+            {
+                href: `${base}/santa`,
+                label: t('nav.santa'),
+                icon: <ToolIcon name="santa" className="h-5 w-5" />,
+            },
         ],
     }
 

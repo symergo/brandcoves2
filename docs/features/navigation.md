@@ -192,9 +192,20 @@ links, same order, still one tap to any of them, still nothing to expand.
   the account block, four rows apart, which reads as two destinations. The wide header still carries
   its own copy beside the account menu, for the reason under *What stays out of the menu* below.
 
-**Icons only in the Discover menu.** Its three entries are destinations with distinct characters and
-`CoveIcon` gives each one a mark; the Organise entries are tools whose names already say what they
-are, and nine icons in a dropdown is a contact sheet.
+**Both menus carry icons** — `CoveIcon` in Discover, `ToolIcon` in Organise, drawn on one grid at one
+stroke weight so a row of them reads as a set.
+
+This used to say *icons only in Discover*, on the grounds that the Organise entries are tools whose
+names already say what they are and that a screenful of marks is a contact sheet. Two things were
+wrong with it. On a phone the two menus are one panel, so an iconed block above a bare one reads as
+one finished list and one unfinished one. And three of Organise's four entries are the same noun with
+a different adjective — My Lists, Shared Lists, Group Lists — which is precisely where a mark in the
+margin earns its place.
+
+`ToolIcon` gained a tenth key, `shared`, for the middle one: the share glyph, one node joined to two.
+Not two people, because `collab` is two people and means the co-givers on a group list, which is the
+row directly below it. The other three reuse `wishlist`, `collab` and `santa` exactly as the Gift Cove
+tool pages draw them, so the header cannot drift from the pages that teach them.
 
 **Editorial leads, tools follow.** The two Cove surfaces are the only things in the header that are
 *ours*; search, gifting and Surprise are ways of querying a catalogue that every competitor also
