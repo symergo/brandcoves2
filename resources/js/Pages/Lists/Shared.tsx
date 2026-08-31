@@ -494,28 +494,52 @@ export default function SharedList({
                                         </p>
                                     ) : (
                                         <div className="flex flex-col gap-2">
-                                            <button
-                                                onClick={() =>
-                                                    router.post(
-                                                        `${base}/l/${token}/sent/${item.id}`,
-                                                        {},
-                                                        { preserveScroll: true },
-                                                    )
-                                                }
-                                                className="w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-sm font-medium text-sage"
-                                            >
-                                                {t('lists.mark_sent')}
-                                            </button>
-                                            <button
-                                                onClick={() =>
-                                                    router.delete(`${base}/l/${token}/claim/${item.id}`, {
-                                                        preserveScroll: true,
-                                                    })
-                                                }
-                                                className="text-xs text-ink-soft underline hover:text-ink"
-                                            >
-                                                {t('lists.unclaim')}
-                                            </button>
+                                            {/*
+                                              What you did, before what you
+                                              could do next.
+
+                                              The strip used to lead with "I
+                                              have bought it" — the *next*
+                                              action, dressed as the state,
+                                              since it was the only thing in the
+                                              claimed strip wearing the sage
+                                              box. So the page said "bought"
+                                              about something merely spoken for,
+                                              and the fact that the tap had
+                                              worked lived in a banner at the
+                                              top of the document instead.
+                                              Now the box states the promise, in
+                                              the first person it was made in,
+                                              and the two follow-ups sit under
+                                              it as the small print they are.
+                                            */}
+                                            <p className="w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-center text-sm font-medium text-sage">
+                                                {t('lists.claimed')}
+                                            </p>
+                                            <div className="flex items-center justify-center gap-4 text-xs text-ink-soft">
+                                                <button
+                                                    onClick={() =>
+                                                        router.post(
+                                                            `${base}/l/${token}/sent/${item.id}`,
+                                                            {},
+                                                            { preserveScroll: true },
+                                                        )
+                                                    }
+                                                    className="underline hover:text-ink"
+                                                >
+                                                    {t('lists.mark_sent')}
+                                                </button>
+                                                <button
+                                                    onClick={() =>
+                                                        router.delete(`${base}/l/${token}/claim/${item.id}`, {
+                                                            preserveScroll: true,
+                                                        })
+                                                    }
+                                                    className="underline hover:text-ink"
+                                                >
+                                                    {t('lists.unclaim')}
+                                                </button>
+                                            </div>
                                         </div>
                                     )
                                 ) : item.claimed ? (

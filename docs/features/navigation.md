@@ -166,8 +166,31 @@ both without guessing, and the usual guess — navigate on click, open on hover 
 touch equivalent at all. Escape closes and returns focus to the chevron rather than dropping it to
 the top of the document.
 
-**The phone flattens rather than nesting.** A dropdown inside an already-open panel is a second
-thing to open to reach a link that would have fitted on screen anyway.
+**The phone groups rather than nesting.** A dropdown inside an already-open panel is a second thing
+to open to reach a link that would have fitted on screen anyway, so nothing in the phone menu
+collapses. That was read as licence to *flatten*, though, and the panel rendered
+`[organise, ...organise.items, discover, ...discover.items, ...nav]`: fourteen links in one column at
+one weight, where "Organise", "Secret Friend" and "Feedback" are the same size and the same distance
+apart. Nothing in it said which two were hubs, which four belonged under the first, or that the list
+had an end — the structure the wide header spends two menus expressing was thrown away at the exact
+width where a reader most needs it.
+
+So, since 2026-08-31: the hub is a heading you can press, its surfaces are indented under a rule,
+and the loose links, the account block and the market switcher are three groups below them. Same
+links, same order, still one tap to any of them, still nothing to expand.
+
+- **The heading is a `Link`, not a label.** Same argument as `NavMenu`: the hub page exists because
+  the section is not self-evident, and a heading that cannot be pressed puts it out of reach on the
+  one device with no hover to reveal anything.
+- **The hints survive on a phone.** Four Cove entries differing by one word cannot be told apart the
+  first time, which is why `nav.hint_*` exists at all; a narrow screen does not make that easier.
+- **"You are here" needed a second predicate.** `isCurrent` compares paths, so a product opened from
+  Search still reads as Search — but the three list views differ only by `?view=`, so a path match
+  lights all three at once and an unstripped comparison lights none. `isHere` is exact for an href
+  carrying a query and prefix-matching for everything else.
+- **My Lists is no longer repeated.** It was in the panel twice: once inside Organise and once in
+  the account block, four rows apart, which reads as two destinations. The wide header still carries
+  its own copy beside the account menu, for the reason under *What stays out of the menu* below.
 
 **Icons only in the Discover menu.** Its three entries are destinations with distinct characters and
 `CoveIcon` gives each one a mark; the Organise entries are tools whose names already say what they
@@ -182,8 +205,8 @@ Changed 2026-08-29: **Search moved from the middle to the end**, so the order is
 Search. Search between the two verbs split them, and it was the one entry that reads as a control
 rather than a section — sitting between two menus it also broke the run of chevrons. Last is where a
 visitor looks when the two curated routes did not have what they came for, which is what Search is
-for. The phone panel follows the same order, hubs and their surfaces flattened, with Search at the
-bottom.
+for. The phone panel follows the same order, with Search and Feedback in a group of their own below
+the two sections.
 
 **The header now uses the Cove names.** It was the last surface still calling `/guides` "Guides"
 (`nav.guides`, "Koopgidsen") and `/daily` "Daily Picks" ("Dagtips"), while the homepage, the
@@ -266,7 +289,8 @@ teaches people to ignore it, and then the one that matters is ignored too.
 - `app/Http/Controllers/Auth/MagicLinkController.php` — `logout()`
 - `bootstrap/app.php` — `redirectGuestsTo` / `redirectUsersTo`, both market-aware
 - `tests/Feature/PageSmokeTest.php` — every page, opened signed out and signed in
-- `lang/*/site.php` — `nav.daily`, `nav.coves`, `nav.give`, `nav.sign_out`, `nav.admin`
+- `lang/*/site.php` — `nav.daily`, `nav.coves`, `nav.give`, `nav.sign_out`, `nav.admin`,
+  `nav.account` (the caption over the phone menu's account group)
 
 ## See also
 

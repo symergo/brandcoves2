@@ -86,7 +86,6 @@ export default function Product({ product, offers, alert, amazonSearch, descript
     const { t, n } = useTranslations()
 
     const buyable = offers.filter((o) => o.isBuyable)
-    const cheapestId = buyable[0]?.id
 
     return (
         <>
@@ -222,12 +221,6 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                                     <div className="font-medium">{offer.merchant}</div>
                                     <div className="truncate text-xs text-ink-soft">{offer.title}</div>
                                 </div>
-
-                                {offer.id === cheapestId && (
-                                    <span className="rounded bg-sage/15 px-2 py-1 text-xs font-medium text-sage">
-                                        {t('product.cheapest')}
-                                    </span>
-                                )}
 
                                 <div className="text-right">
                                     {offer.price !== null && (

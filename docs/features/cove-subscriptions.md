@@ -128,3 +128,19 @@ genuinely send mail to real people if a misconfigured `MAIL_MAILER` ever pointed
 
 Subscribers are not `users`. Most will never make an account, and requiring signup to receive a daily
 email is how you lose the subscription — the same reasoning that lets wishlists work before signup.
+
+## One confirmation, in the card rather than at the top (2026-08-31)
+
+`CoveSubscribe` replaces the form with the confirmation, deliberately: leaving the form visible
+invites a second submission, which is a second confirmation email to somebody who already has one.
+It read that confirmation from `flash.status` — which the layout's `FlashMessage` also draws, at the
+top of `<main>` — so one press produced the identical sentence twice on the same page.
+
+The card keeps it, because that is where the field was. `store()` no longer flashes on any of its
+three paths and the component asks `form.wasSuccessful` instead.
+
+**All three returns are still a bare `back()`**, which is the property that matters here: new
+address, already subscribed and previously unsubscribed must be indistinguishable from the response,
+or the form becomes a way to ask whether an address reads this site. Removing the flash removed it
+from all three at once; adding a message to any one of them would break that, and the class docblock
+says so.

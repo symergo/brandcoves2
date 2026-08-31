@@ -456,10 +456,23 @@ class SharedListController extends Controller
         // expected case, not an edge case.
         $claimed = $wishlistItem->claim(WishlistItem::identityHash($identity), $name);
 
-        return back()->with(
-            $claimed ? 'success' : 'error',
-            __($claimed ? 'site.lists.claimed' : 'site.lists.already_claimed'),
-        );
+        /*
+         * Nothing is announced when it works.
+         *
+         * A successful claim used to flash `lists.claimed` — a banner at the
+         * top of `<main>`, saying "you are getting this" about an item that is
+         * usually well down a scrolled list and that now says so itself, in
+         * place, in the strip the press just changed. The alert was a second
+         * copy of the answer, further from the question, and on a long list it
+         * scrolled the page under the finger that tapped.
+         *
+         * The failure still speaks, because that one is not visible anywhere
+         * else: the row simply shows as taken, and without a word the tap looks
+         * like a control that does not work.
+         */
+        return $claimed
+            ? back()
+            : back()->with('error', __('site.lists.already_claimed'));
     }
 
     public function unclaim(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse

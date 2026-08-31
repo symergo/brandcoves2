@@ -62,7 +62,7 @@ class CoveSubscriptionController extends Controller
         $key = 'cove-subscribe:'.sha1($email);
 
         if (RateLimiter::tooManyAttempts($key, 3)) {
-            return back()->with('status', __('site.cove.subscribe_thanks'));
+            return back();
         }
 
         RateLimiter::hit($key, 3600);
@@ -74,7 +74,7 @@ class CoveSubscriptionController extends Controller
 
         if ($subscriber->exists && $subscriber->isConfirmed()) {
             // Already on the list. Say nothing different — see the class docblock.
-            return back()->with('status', __('site.cove.subscribe_thanks'));
+            return back();
         }
 
         $subscriber->fill([
@@ -97,7 +97,20 @@ class CoveSubscriptionController extends Controller
             requestedFrom: $request->ip(),
         ));
 
-        return back()->with('status', __('site.cove.subscribe_thanks'));
+        /*
+         * No flash, on any of the three paths out of here.
+         *
+         * `CoveSubscribe` draws the confirmation itself, in place of the form,
+         * so that a second submission is not invited — and the layout draws
+         * `flash.status` too, which meant the card and a banner at the top of
+         * the page carried the identical sentence about the identical press.
+         * The card keeps it, because that is where the field was.
+         *
+         * All three returns are still the same bare `back()`, which is the
+         * property that matters here: what happened must not be legible from
+         * the response. See the class docblock.
+         */
+        return back();
     }
 
     public function confirm(CurrentMarket $current, string $marketSegment, string $token): RedirectResponse

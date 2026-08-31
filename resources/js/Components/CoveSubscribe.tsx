@@ -15,7 +15,7 @@ import { useTranslations } from '../useTranslations'
  */
 export default function CoveSubscribe({ source = 'daily' }: { source?: string }) {
     const { t } = useTranslations()
-    const { market, flash } = usePage<SharedProps>().props
+    const { market } = usePage<SharedProps>().props
 
     const form = useForm({ email: '', source })
 
@@ -26,12 +26,27 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
             </h2>
             <p className="mt-2 max-w-xl text-sm text-ink-soft">{t('cove.subscribe_intro')}</p>
 
-            {flash?.status ? (
-                // Replaces the form rather than sitting above it: leaving the
-                // form visible invites a second submission, which is a second
-                // confirmation email to someone who already has one.
+            {form.wasSuccessful ? (
+                /*
+                 * Replaces the form rather than sitting above it: leaving the
+                 * form visible invites a second submission, which is a second
+                 * confirmation email to someone who already has one.
+                 *
+                 * Read from the form rather than from `flash.status`, because
+                 * the layout draws that channel too — so the card and the
+                 * banner at the top of the page said the identical sentence
+                 * about the identical press. The message belongs here, next to
+                 * the field it is about and in place of it, so
+                 * `CoveSubscriptionController::store()` no longer flashes and
+                 * this asks the form whether its own post landed.
+                 *
+                 * The three outcomes it covers — new, already subscribed,
+                 * resubscribed — still look identical from here, which is the
+                 * point of `cove.subscribe_thanks`: saying which one it was
+                 * would tell a stranger whether an address is on the list.
+                 */
                 <p className="mt-4 rounded border border-sage/40 bg-sage/10 p-3 text-sm" role="status">
-                    {flash.status}
+                    {t('cove.subscribe_thanks')}
                 </p>
             ) : (
                 <form

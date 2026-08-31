@@ -81,3 +81,31 @@ what it marks: without an undo, one mis-click removes a report from the only vie
 
 `Feedback::$hidden` keeps `email` out of anything the site serialises; the panel reads the attribute
 directly, which is the one place it is meant to be legible.
+
+## The page said thank you twice (2026-08-31)
+
+`FlashMessage` has drawn `flash.status` in the layout since it was added, and `Pages/Feedback.tsx` —
+written before that — never lost its own copy of the same prop. So sending feedback printed
+"Bedankt — dit is aangekomen en iemand leest het." twice, one under the other, in two different
+boxes. The local one is gone; the layout keeps it.
+
+What that local copy was *for* still holds and still happens: the form stays open below the message
+rather than collapsing into a thank-you, because somebody who has just reported one wrong price
+often has a second one.
+
+The same duplication existed on the Cove signup card and is fixed the other way round — see
+[cove-subscriptions.md](cove-subscriptions.md).
+
+## The copy is an invitation, not a bug report form (2026-08-31)
+
+The page was headed "Vertel ons wat er mis is" over a paragraph naming four kinds of mistake, with
+"Wat is er mis?" above the box — three pieces of copy, all of them asking what is broken, in front
+of a form with one field that matters. It now reads *"Vertel ons wat beter kan of geef een
+pluimpje"*, with nothing between the heading and the box: no intro paragraph, and the field label is
+`sr-only`, because a single textarea under a heading is labelled by the heading for anybody who can
+see it and needs a name for anybody who cannot.
+
+The placeholder carries the examples the paragraph used to: *"Wat loopt er mis, wat ontbreekt, wat
+zou je anders doen? Of laat ons gewoon weten wat je goed vindt aan GiftCoves :D"*. `seo_title` and
+`seo_description` moved with it — a meta description promising to fix wrong prices, on a page
+inviting compliments, is a page that disagrees with its own search result.

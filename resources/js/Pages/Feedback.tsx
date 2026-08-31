@@ -34,7 +34,7 @@ interface Props {
  */
 export default function Feedback({ path }: Props) {
     const { t } = useTranslations()
-    const { flash, market, auth } = usePage<SharedProps>().props
+    const { market, auth } = usePage<SharedProps>().props
     const base = `/${market.key}`
 
     const form = useForm<{
@@ -79,17 +79,19 @@ export default function Feedback({ path }: Props) {
                 <h1 className="text-3xl font-semibold tracking-tight">{t('feedback.title')}</h1>
 
                 {/*
-                  The confirmation replaces nothing and hides nothing — the form
-                  stays open below it. Somebody who has just reported one wrong
-                  price often has a second one, and a form that collapses into a
-                  thank-you makes them navigate back to it.
-                */}
-                {flash.status && (
-                    <p className="mt-6 rounded-card border border-line bg-card p-4 font-medium">
-                        {flash.status}
-                    </p>
-                )}
+                  The confirmation is `FlashMessage`'s, and only its.
 
+                  This page rendered `flash.status` itself as well, so sending
+                  feedback printed "thanks, this arrived and somebody reads it"
+                  twice, one under the other, in two different boxes. The layout
+                  has drawn that channel since it was added; a page written
+                  before that never lost its own copy.
+
+                  What the local copy was for still holds and still happens: the
+                  form stays open below the message rather than collapsing into
+                  a thank-you, because somebody who has just reported one wrong
+                  price often has a second one.
+                */}
                 <form onSubmit={submit} className="mt-8 space-y-5">
                     <label className="block text-sm font-medium">
                         {/*

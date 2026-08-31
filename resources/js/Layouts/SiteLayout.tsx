@@ -7,7 +7,7 @@ import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
 import SignInLink from '../Components/SignInLink'
 import MarketSwitcher from '../Components/MarketSwitcher'
-import NavMenu from '../Components/NavMenu'
+import NavMenu, { type NavMenuItem } from '../Components/NavMenu'
 import { type PropsWithChildren, useState } from 'react'
 import { SignInProvider } from '../signIn'
 import type { SharedProps } from '../types'
@@ -189,14 +189,45 @@ function Chrome({ children }: PropsWithChildren) {
     ]
 
     /*
-     * The phone gets the same sections, flattened.
+     * The phone gets the same sections, as sections.
      *
-     * A dropdown inside an already-expanded panel is a second thing to open to
-     * reach a link that would have fitted on screen anyway. The hub and its
-     * surfaces are simply listed, hubs first, in the order the wide header
-     * shows them.
+     * It used to get them flattened — `[organise, ...organise.items, discover,
+     * ...discover.items, ...nav]` — on the reasoning that a dropdown inside an
+     * already-expanded panel is a second thing to open. That half is still
+     * right and nothing here collapses. What it produced, though, was fourteen
+     * links in one column at one weight, where "Organise" and "Secret Friend"
+     * and "Feedback" are the same size and the same distance apart. A reader
+     * cannot tell from that which two of them are hubs, which four belong
+     * under the first, or that the list has an end.
+     *
+     * So the hub is a heading you can press, its surfaces are indented under a
+     * rule, and the two loose links, the account block and the market switcher
+     * are three groups after them. Same links, same order, same single tap to
+     * any of them.
      */
-    const mobileNav = [organise, ...organise.items, discover, ...discover.items, ...nav]
+    const sections: { href: string; label: string; items: NavMenuItem[] }[] = [organise, discover]
+
+    /*
+     * "You are here", in a menu where three entries share a path.
+     *
+     * `isCurrent` compares paths, deliberately, so a product opened from Search
+     * still reads as Search. The three list views differ only by `?view=`,
+     * which breaks that both ways: a path match lights all three at once, and
+     * comparing the full URL lights none of the entries that carry no query.
+     *
+     * So: if any entry in the menu matches the URL exactly, that one is the
+     * answer and nothing else is. Otherwise fall back to the prefix match. On
+     * `/lists?view=shared` that marks Shared Lists alone rather than it and My
+     * Lists together; on `/lists/{id}` nothing matches exactly, so My Lists
+     * lights by prefix, which is right.
+     */
+    const exact = (href: string) => (page.url ?? '') === href
+    const anyExact = [
+        ...sections.flatMap((section) => [section.href, ...section.items.map((item) => item.href)]),
+        ...nav.map((item) => item.href),
+    ].some(exact)
+
+    const isHere = (href: string) => (anyExact ? exact(href) : isCurrent(href))
 
     return (
         <div className="flex min-h-screen flex-col">
@@ -333,34 +364,114 @@ function Chrome({ children }: PropsWithChildren) {
                 */}
                 {menuOpen && (
                     <div id="mobile-menu" className="border-t border-line px-4 py-4 sm:hidden">
-                        <nav className="flex flex-col gap-3 text-sm" aria-label={t('nav.main')}>
-                            {mobileNav.map((item) => (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className="hover:text-ink"
-                                    // Close on navigate: an Inertia visit keeps
-                                    // the layout mounted, so a menu left open
-                                    // would cover the page just arrived at.
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    {item.label}
-                                </Link>
+                        <nav className="text-sm" aria-label={t('nav.main')}>
+                            {sections.map((section) => (
+                                <div key={section.href} className="mb-4 border-b border-line pb-4">
+                                    {/*
+                                      The hub is the heading and the heading is
+                                      a link. Both halves matter: the page
+                                      explains a section that is not
+                                      self-evident, and a heading that cannot be
+                                      pressed puts it out of reach on the one
+                                      device where there is no hover to reveal
+                                      anything.
+                                    */}
+                                    <Link
+                                        href={section.href}
+                                        aria-current={isHere(section.href) ? 'page' : undefined}
+                                        onClick={() => setMenuOpen(false)}
+                                        className={`flex items-center justify-between py-1 text-base font-semibold ${
+                                            isHere(section.href) ? 'text-accent' : 'text-ink'
+                                        }`}
+                                    >
+                                        {section.label}
+                                        <span aria-hidden className="text-xs text-ink-soft">
+                                            →
+                                        </span>
+                                    </Link>
+
+                                    {/* Indented under a rule, which is the
+                                        cheapest way to say "these belong to
+                                        that" without a control to expand. */}
+                                    <ul className="mt-1 border-l border-line pl-3">
+                                        {section.items.map((item) => (
+                                            <li key={item.href}>
+                                                <Link
+                                                    href={item.href}
+                                                    aria-current={isHere(item.href) ? 'page' : undefined}
+                                                    // Close on navigate: an
+                                                    // Inertia visit keeps the
+                                                    // layout mounted, so a menu
+                                                    // left open would cover the
+                                                    // page just arrived at.
+                                                    onClick={() => setMenuOpen(false)}
+                                                    className={`flex gap-2.5 py-2 ${
+                                                        isHere(item.href) ? 'font-medium text-accent' : ''
+                                                    }`}
+                                                >
+                                                    {item.icon ? (
+                                                        <span className="mt-0.5 shrink-0 text-accent">
+                                                            {item.icon}
+                                                        </span>
+                                                    ) : null}
+                                                    <span>
+                                                        <span className="block">{item.label}</span>
+                                                        {/* Kept on a phone for
+                                                            the reason they exist
+                                                            at all: four Cove
+                                                            entries differing by
+                                                            one word cannot be
+                                                            told apart the first
+                                                            time. */}
+                                                        {item.hint ? (
+                                                            <span className="block text-xs text-ink-soft">
+                                                                {item.hint}
+                                                            </span>
+                                                        ) : null}
+                                                    </span>
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             ))}
 
-                            <span className="flex flex-col gap-3 border-t border-line pt-3">
-                                <Link
-                                    href={`${base}/lists`}
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    {t('nav.lists')}
-                                </Link>
+                            {/* Search and Feedback belong to no section, and
+                                saying so by leaving them ungrouped is more
+                                honest than inventing a third heading for two
+                                links. */}
+                            <div className="mb-4 flex flex-col gap-1 border-b border-line pb-4">
+                                {nav.map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        aria-current={isHere(item.href) ? 'page' : undefined}
+                                        onClick={() => setMenuOpen(false)}
+                                        className={`py-1 ${isHere(item.href) ? 'font-medium text-accent' : ''}`}
+                                    >
+                                        {item.label}
+                                    </Link>
+                                ))}
+                            </div>
 
+                            <p className="pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
+                                {t('nav.account')}
+                            </p>
+
+                            {/*
+                              My Lists is deliberately not repeated here.
+                              It was, because the wide header carries it beside
+                              the account menu — but on a phone it sat four rows
+                              under the identical link inside Organise, which
+                              reads as two different destinations.
+                            */}
+                            <div className="flex flex-col gap-1">
                                 {auth.user ? (
                                     <>
                                         <Link
                                             href={`${base}/notifications`}
                                             onClick={() => setMenuOpen(false)}
+                                            className="py-1"
                                         >
                                             {t('nav.notifications')}
                                             {unreadCount > 0 && ` (${unreadCount})`}
@@ -379,7 +490,7 @@ function Chrome({ children }: PropsWithChildren) {
                                                 setMenuOpen(false)
                                                 router.post(`${base}/logout`)
                                             }}
-                                            className="text-left"
+                                            className="py-1 text-left"
                                         >
                                             {t('nav.sign_out')}
                                         </button>
@@ -389,7 +500,7 @@ function Chrome({ children }: PropsWithChildren) {
                                         {t('nav.sign_in')}
                                     </SignInLink>
                                 )}
-                            </span>
+                            </div>
                         </nav>
 
                         {/*

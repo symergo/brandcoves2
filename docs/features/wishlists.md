@@ -500,6 +500,26 @@ nobody buys the thing and nobody knows.
 identifies a claimer to *us* for the undo check without being reversible. Rotating that secret
 orphans every existing claim — it is permanent in practice.
 
+### A successful claim says nothing at the top of the page (2026-08-31)
+
+It used to flash `lists.claimed` — a banner at the top of `<main>` announcing "you are getting this"
+about an item that is usually well down a scrolled list, and that now says so itself, in place, in
+the strip the press just changed. A second copy of the answer, further from the question, and on a
+long list it moved the page under the finger that tapped. `claim()` returns a bare `back()` now.
+
+The **failure** still flashes. `already_claimed` is not visible anywhere else — the row simply shows
+as taken — and without a word the tap reads as a control that does not work.
+
+And the strip leads with the state rather than the next action. It used to open with "I have bought
+it", the only thing in it wearing the sage box, so a page said *bought* about something merely
+spoken for and the confirmation of the tap lived in that banner instead. The box now carries
+`lists.claimed`, and both follow-ups — mark it bought, or undo — sit under it as small print.
+
+`lists.claimed` moved into the first person with it: "Ik koop dit", "I am getting this", "Je m'en
+occupe", "Yo lo regalo" — the same promise the button made, rather than a narrator telling somebody
+what they just did. It is read by the person who made it, in two places: this strip, and the
+owner's own asked-for lane on `Lists/Show`.
+
 ## The shared page renders what the controller sends
 
 `SharedListController::show()` had been sending `progress` and a per-item `sent` since the strip was
