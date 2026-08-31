@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
+use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\CovesController;
 use App\Http\Controllers\CoveSubscriptionController;
 use App\Http\Controllers\DailyCoveController;
@@ -112,6 +113,10 @@ Route::get('/', function (Request $request) {
 // Where the switcher posts a choice. Unprefixed and POST-only; the reasoning is
 // in MarketPreferenceController.
 Route::post('/market', MarketPreferenceController::class)->name('market.choose');
+
+// Where the cookie banner posts its answer. Unprefixed for the same reason the
+// switcher is — consent is about the visitor, not the catalogue they are in.
+Route::post('/consent', CookieConsentController::class)->name('consent.choose');
 
 /*
  * Where Google sends the visitor back. Unprefixed, and it has to be.

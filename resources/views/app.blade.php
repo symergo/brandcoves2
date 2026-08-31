@@ -1,6 +1,8 @@
 @php
     use App\Enums\Market;
     use App\Services\Seo\PageMeta;
+    use App\Support\Analytics;
+    use App\Support\CookieConsent;
     use App\Support\CurrentMarket;
 
     $market = app(CurrentMarket::class)->get();
@@ -8,6 +10,19 @@
     $meta = $pageMeta->toArray();
     $canonical = $meta['canonical'] ?? url(request()->path());
     $indexable = config('giftcoves.robots_allow') && $meta['robots'] === null;
+
+    /*
+      The tag renders for a visitor who has accepted it, and for nobody else.
+
+      Gated here, server-side, rather than loaded and then told to behave: a tag
+      that decides after loading is a tag that has already fetched a script from
+      Google and already had the chance to read what it came for. Consent Mode
+      would be the lighter-touch version of this and reports less; the decision
+      recorded in docs/features/analytics.md was to ask properly instead.
+    */
+    $analyticsId = CookieConsent::stored(request()) === true
+        ? Analytics::measurementId()
+        : null;
 @endphp
 <!DOCTYPE html>
 {{-- lang comes from the market, not the app locale: nl-BE and nl-NL are the same
@@ -17,6 +32,44 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    @if ($analyticsId !== null)
+        {{-- Google tag (gtag.js). As high in <head> as the meta tags allow, so
+             the request is in flight before the stylesheet blocks rendering;
+             `async` keeps it off the critical path either way.
+
+             This fires the first page view only. Inertia navigations never
+             reload the document, so every page after the first is reported from
+             resources/js/app.tsx — without that, GA would record one hit per
+             visit and call every session a bounce. --}}
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ urlencode($analyticsId) }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            /*
+              Thirteen months, not the two years GA4 defaults to. That is the
+              CNIL's ceiling for a measurement cookie, it is the number the
+              privacy page commits to, and a two-year cookie outlives the
+              six-month consent that permitted it — which would leave us holding
+              an identifier under a permission that had already lapsed.
+            */
+            gtag('config', @js($analyticsId), {
+                cookie_expires: 33696000,
+                /*
+                  The two settings the privacy page promises are off, set here
+                  rather than left to the GA4 property — a checkbox in somebody's
+                  admin console is not a commitment this repo can keep, and the
+                  policy makes the claim in writing. Google Signals off means no
+                  cross-device advertising profile; ad personalization off means
+                  nothing measured here is reusable as an ad audience.
+                */
+                allow_google_signals: false,
+                allow_ad_personalization_signals: false,
+            });
+        </script>
+    @endif
 
     {{-- Icons. The SVG is what modern browsers take, and it is the one that
          stays sharp on a high-density tab strip; the .ico is the fallback every

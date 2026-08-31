@@ -368,8 +368,20 @@ return [
         'about' => 'Sobre nosotros',
         'privacy' => 'Privacidad',
         'terms' => 'Condiciones',
+        'cookies' => 'Cookies',
         'updated' => 'Última actualización: :date',
         'untranslated' => 'Esta página aún no está traducida, así que estás leyendo la versión en inglés, que es la que rige.',
+    ],
+
+    /*
+     * El banner de cookies. Una pregunta, una sola vez.
+     */
+    'cookies' => [
+        'title' => 'Cookies',
+        'body' => 'Nos gustaría contar las visitas con Google Analytics, lo que instala una cookie. Nada de este sitio la necesita, asi que la decisión es tuya.',
+        'accept' => 'Permitir',
+        'decline' => 'No, gracias',
+        'more' => 'Qué recogemos',
     ],
 
     'footer' => [

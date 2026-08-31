@@ -372,8 +372,20 @@ return [
         'about' => 'Over ons',
         'privacy' => 'Privacy',
         'terms' => 'Voorwaarden',
+        'cookies' => 'Cookies',
         'updated' => 'Laatst bijgewerkt op :date',
         'untranslated' => 'Deze pagina is nog niet vertaald, dus je leest de Engelse versie. De Engelse tekst is de geldende.',
+    ],
+
+    /*
+     * De cookiebanner. Eén vraag, één keer gesteld.
+     */
+    'cookies' => [
+        'title' => 'Cookies',
+        'body' => 'We tellen bezoeken graag met Google Analytics, en dat zet een cookie. Niets op deze site heeft het nodig, dus jij beslist.',
+        'accept' => 'Toestaan',
+        'decline' => 'Liever niet',
+        'more' => 'Wat we verzamelen',
     ],
 
     'footer' => [

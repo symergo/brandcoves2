@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import AccountMenu from '../Components/AccountMenu'
 import AddingToBar from '../Components/AddingToBar'
+import CookieBanner from '../Components/CookieBanner'
 import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
@@ -30,7 +31,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
 function Chrome({ children }: PropsWithChildren) {
     const page = usePage<SharedProps>()
-    const { market, auth, unreadCount } = page.props
+    const { market, auth, unreadCount, analytics } = page.props
     const { t } = useTranslations()
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
@@ -485,11 +486,29 @@ function Chrome({ children }: PropsWithChildren) {
                         <Link href={`/${market.key}/terms`} className="hover:text-accent">
                             {t('legal.terms')}
                         </Link>
+                        {/* Withdrawing consent has to be as easy as giving it
+                            was, and the honest way to offer that is to put the
+                            question back rather than to bury a toggle in a
+                            settings page. A button, not a Link: it reopens the
+                            banner where the visitor already is. Hidden where
+                            there is no tag, so it does not advertise a choice
+                            this environment never asked anyone to make. */}
+                        {analytics.id !== null && (
+                            <button
+                                type="button"
+                                onClick={() => window.dispatchEvent(new Event('bc:cookie-settings'))}
+                                className="hover:text-accent"
+                            >
+                                {t('legal.cookies')}
+                            </button>
+                        )}
                     </nav>
 
                     <p>{t('footer.affiliate')}</p>
                 </div>
             </footer>
+
+            <CookieBanner />
         </div>
     )
 }

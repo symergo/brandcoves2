@@ -484,8 +484,25 @@ return [
         'about' => 'About',
         'privacy' => 'Privacy',
         'terms' => 'Terms',
+        'cookies' => 'Cookies',
         'updated' => 'Last updated :date',
         'untranslated' => 'This page has not been translated yet, so you are reading the English version. The English text is the one that applies.',
+    ],
+
+    /*
+     * The cookie banner. One question, asked once.
+     *
+     * The body says what the cookie is for and does not pretend the site needs
+     * it — it does not, and a visitor who declines loses nothing. Naming
+     * Google is deliberate: "we use cookies to improve your experience" tells
+     * somebody nothing they could base a decision on.
+     */
+    'cookies' => [
+        'title' => 'Cookies',
+        'body' => 'We would like to count visits with Google Analytics, which sets a cookie. Nothing on this site needs it, so it is entirely your call.',
+        'accept' => 'Allow',
+        'decline' => 'No thanks',
+        'more' => 'What we collect',
     ],
 
     'footer' => [

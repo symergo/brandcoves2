@@ -1,7 +1,7 @@
 ---
 title: Privacy policy
 summary: What GiftCoves stores about you, on what legal basis, for how long, and how to get rid of it.
-updated: 2026-08-09
+updated: 2026-08-31
 ---
 
 ## The short version
@@ -78,6 +78,7 @@ Our processors, and what leaves the EEA:
 | OVH | Hosting the site and its database | Frankfurt, Germany (EU) |
 | Resend | Sending sign-in links, alerts and the daily email | United States |
 | Anthropic | Generating editorial text | United States |
+| Google | Counting visits, only if you allowed it | United States |
 
 **Transfers outside the EEA** are covered by the European Commission's standard
 contractual clauses, and where the provider is certified, by the EU-US Data
@@ -94,10 +95,21 @@ normally as a parameter in the link, and they set their own tracking so a purcha
 can be attributed. That happens on their domain under their privacy policy, not
 this one. We never send them your email address, your account or your lists.
 
+**Google Analytics, if you allow it.** It counts visits: which pages are read,
+roughly where in the world from, which site sent you. If you decline, or simply
+ignore the question, none of it loads — no script is fetched from Google and no
+cookie is set. Nothing on this site works differently either way, which is why
+the question is a real one rather than a wall you have to click through.
+
+We have turned off the parts of it that we can: no advertising features, no
+data sharing with Google's other products, and the cookie it sets expires after
+thirteen months rather than the two years it would default to. What it collects
+is still processed in the United States under the safeguards above.
+
 ## What we do not do
 
-- **No advertising trackers.** No Meta pixel, no Google Analytics, no advertising
-  cookies, no data broker.
+- **No advertising trackers.** No Meta pixel, no advertising cookies, no data
+  broker, and nothing that follows you off this site.
 - **No profile building.** We do not construct an interest profile from your
   browsing and we do not sell one.
 - **No selling data.** Not to shops, not to networks, not to anyone.
@@ -115,6 +127,8 @@ this one. We never send them your email address, your account or your lists.
 | Unconfirmed subscription | Deleted after 30 days |
 | Feedback you send us | 12 months, message and reply address together |
 | Server logs | 30 days |
+| Analytics cookie, if you allowed it | 13 months |
+| Your answer to the cookie question | 6 months, then we ask again |
 
 These are enforced by a job that runs every night, not by intention.
 
@@ -146,7 +160,7 @@ may also complain to the authority in the EU country where you live.
 
 ## Cookies
 
-Four, and all of them are necessary for something you asked for:
+Four that are necessary for something you asked for:
 
 - **Session:** keeps you signed in.
 - **Visitor identifier:** lets a list work before you have an account. See the
@@ -154,10 +168,21 @@ Four, and all of them are necessary for something you asked for:
 - **Market:** remembers which country and language you chose.
 - **CSRF token:** stops another site submitting forms as you.
 
-There is no cookie banner because there is nothing here that needs consent to be
-stored. Article 5(3) of the ePrivacy Directive requires consent for cookies that
-are not strictly necessary, and we set none: no analytics cookie, no advertising
-cookie, no third-party cookie.
+Article 5(3) of the ePrivacy Directive requires consent for cookies that are not
+strictly necessary. Those four are, so they need none.
+
+One that is not, and that we therefore ask about:
+
+- **Google Analytics:** counts visits. It is not loaded, and its cookie is not
+  set, unless you have said yes.
+
+Saying no is one click and costs you nothing — there is no feature behind it and
+no second prompt. Ignoring the banner counts as no, because consent has to be
+given rather than assumed.
+
+Your answer is itself kept in a cookie for six months, so you are not asked on
+every page. Changing your mind is the **Cookies** link at the bottom of any
+page: it clears that answer and puts the question back.
 
 ## Children
 

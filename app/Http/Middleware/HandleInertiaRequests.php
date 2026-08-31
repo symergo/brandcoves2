@@ -6,6 +6,8 @@ namespace App\Http\Middleware;
 
 use App\Models\Notification;
 use App\Services\Wishlist\AddingMode;
+use App\Support\Analytics;
+use App\Support\CookieConsent;
 use App\Support\CurrentMarket;
 use App\Support\MarketSwitcher;
 use App\Support\Owner;
@@ -67,6 +69,25 @@ class HandleInertiaRequests extends Middleware
                  * A config read per request, on a page most visitors see once.
                  */
                 'googleEnabled' => filled(config('services.google.client_id')),
+            ],
+
+            /*
+             * The Google tag, and whether this visitor has agreed to it.
+             *
+             * `id` is null wherever the tag is switched off — staging, local,
+             * an environment that cleared GA_MEASUREMENT_ID — and that null is
+             * what stops the banner appearing there. A cookie banner on a site
+             * that sets no non-essential cookie is theatre, and it trains
+             * people to dismiss the ones that mean something.
+             *
+             * The id is public by nature; it ships in the page source of every
+             * site that uses one, so there is nothing here a visitor could not
+             * already read. Shipping it lets the banner start reporting the
+             * page the visitor accepted *on*, rather than the next one.
+             */
+            'analytics' => [
+                'id' => Analytics::measurementId(),
+                'consent' => CookieConsent::state($request),
             ],
 
             'market' => [

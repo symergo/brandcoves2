@@ -18,6 +18,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Google Analytics
+    |--------------------------------------------------------------------------
+    |
+    | A GA4 measurement ID is public — it ships in the page source of every site
+    | that uses one — so it lives here with a default rather than being a secret
+    | an environment has to supply. Setting GA_MEASUREMENT_ID to an empty string
+    | is how an environment opts out.
+    |
+    | The tag is rendered only where `robots_allow` is true, which is the flag
+    | this repo already uses to mean "this is the real public site". Staging is a
+    | full duplicate of production on its own hosts, and its traffic — crawlers,
+    | deploy smoke checks, our own clicking about — would land in the same
+    | property as real visitors with no way to tell the two apart afterwards.
+    | One property, one site.
+    */
+    'google_analytics_id' => env('GA_MEASUREMENT_ID', 'G-1D0Z7W35SG'),
+
+    /*
+    |--------------------------------------------------------------------------
     | The domain, and the one it replaced
     |--------------------------------------------------------------------------
     |

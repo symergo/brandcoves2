@@ -1,7 +1,7 @@
 ---
 title: Privacybeleid
 summary: Wat GiftCoves over je bewaart, op welke rechtsgrond, hoe lang, en hoe je er vanaf komt.
-updated: 2026-08-09
+updated: 2026-08-31
 ---
 
 ## Kort samengevat
@@ -82,6 +82,7 @@ Onze verwerkers, en wat de EER verlaat:
 | OVH | De site en de database hosten | Frankfurt, Duitsland (EU) |
 | Resend | Inloglinks, meldingen en de dagelijkse mail versturen | Verenigde Staten |
 | Anthropic | Redactionele teksten genereren | Verenigde Staten |
+| Google | Bezoeken tellen, alleen als jij het toestaat | Verenigde Staten |
 
 **Doorgiften buiten de EER** verlopen via de modelcontractbepalingen van de
 Europese Commissie, en waar de aanbieder gecertificeerd is, via het EU-US Data
@@ -99,10 +100,21 @@ parameter in de link, en zetten ze hun eigen tracking zodat een aankoop toegewez
 kan worden. Dat gebeurt op hun domein onder hún privacybeleid, niet onder dit. Wij
 sturen hun nooit je e-mailadres, je account of je lijstjes.
 
+**Google Analytics, als jij het toestaat.** Het telt bezoeken: welke pagina's
+gelezen worden, ruwweg vanwaar ter wereld, welke site je stuurde. Weiger je, of
+laat je de vraag gewoon staan, dan wordt er niets geladen — geen script bij
+Google opgehaald en geen cookie geplaatst. Er werkt niets anders op deze site,
+en daarom is het een echte vraag en geen muur waar je doorheen moet klikken.
+
+Wat we konden uitzetten, staat uit: geen advertentiefuncties, geen deling met
+Googles andere producten, en de cookie vervalt na dertien maanden in plaats van
+de twee jaar die het standaard zou zijn. Wat het verzamelt wordt nog steeds in
+de Verenigde Staten verwerkt, onder de waarborgen hierboven.
+
 ## Wat we niet doen
 
-- **Geen advertentietrackers.** Geen Meta-pixel, geen Google Analytics, geen
-  advertentiecookies, geen datahandelaar.
+- **Geen advertentietrackers.** Geen Meta-pixel, geen advertentiecookies, geen
+  datahandelaar, en niets dat je volgt buiten deze site.
 - **Geen profielopbouw.** We bouwen geen interesseprofiel uit je surfgedrag en
   verkopen er ook geen.
 - **Geen gegevens verkopen.** Niet aan winkels, niet aan netwerken, aan niemand.
@@ -120,6 +132,8 @@ sturen hun nooit je e-mailadres, je account of je lijstjes.
 | Niet-bevestigde inschrijving | Na 30 dagen verwijderd |
 | Feedback die je ons stuurt | 12 maanden, bericht en antwoordadres samen |
 | Serverlogs | 30 dagen |
+| Analyticscookie, als je die toestond | 13 maanden |
+| Je antwoord op de cookievraag | 6 maanden, daarna vragen we opnieuw |
 
 Deze termijnen worden elke nacht afgedwongen door een taak, niet door goede
 bedoelingen.
@@ -151,7 +165,7 @@ EU-land waar je woont.
 
 ## Cookies
 
-Vier, en allemaal nodig voor iets waar je om gevraagd hebt:
+Vier die nodig zijn voor iets waar je om gevraagd hebt:
 
 - **Sessie:** houdt je ingelogd.
 - **Bezoekersidentificatie:** laat een lijstje werken vóór je een account hebt.
@@ -160,10 +174,22 @@ Vier, en allemaal nodig voor iets waar je om gevraagd hebt:
 - **CSRF-token:** verhindert dat een andere site formulieren in jouw naam
   verstuurt.
 
-Er is geen cookiebanner omdat er niets staat waarvoor toestemming nodig is om het
-te plaatsen. Artikel 5(3) van de e-Privacyrichtlijn vereist toestemming voor
-cookies die niet strikt noodzakelijk zijn, en die zetten we niet: geen
-analyticscookie, geen advertentiecookie, geen cookie van derden.
+Artikel 5(3) van de e-Privacyrichtlijn vereist toestemming voor cookies die niet
+strikt noodzakelijk zijn. Deze vier zijn dat wel, dus daarvoor is geen
+toestemming nodig.
+
+En één die dat niet is, en waar we het daarom over hebben:
+
+- **Google Analytics:** telt bezoeken. Het wordt niet geladen en de cookie wordt
+  niet geplaatst tenzij je ja hebt gezegd.
+
+Nee zeggen is één klik en kost je niets — er zit geen functie achter en je krijgt
+de vraag niet nog eens. De banner negeren telt als nee, want toestemming moet
+gegeven worden en mag niet worden aangenomen.
+
+Je antwoord bewaren we zelf zes maanden in een cookie, zodat we het niet op
+iedere pagina opnieuw vragen. Van gedachten veranderen doe je met de link
+**Cookies** onderaan elke pagina: die wist je antwoord en zet de vraag terug.
 
 ## Kinderen
 

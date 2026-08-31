@@ -64454,6 +64454,124 @@ function AddingToBar() {
 	});
 }
 //#endregion
+//#region resources/js/analytics.ts
+var TAG_ID = "ga-gtag";
+function loadGoogleTag(measurementId) {
+	if (document.getElementById(TAG_ID) !== null) return;
+	const script = document.createElement("script");
+	script.id = TAG_ID;
+	script.async = true;
+	script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+	document.head.appendChild(script);
+	window.dataLayer = window.dataLayer || [];
+	window.gtag = function gtag() {
+		window.dataLayer?.push(arguments);
+	};
+	window.gtag("js", /* @__PURE__ */ new Date());
+	window.gtag("config", measurementId, {
+		cookie_expires: 33696e3,
+		allow_google_signals: false,
+		allow_ad_personalization_signals: false
+	});
+}
+/**
+* Report a page the browser never reloaded.
+*
+* Inertia swaps the page component and pushes history without a navigation, so
+* a visitor who lands on the homepage and reads four guides is one page view
+* and a 100% bounce rate unless somebody says otherwise.
+*/
+function reportPageView() {
+	window.gtag?.("event", "page_view", {
+		page_location: window.location.href,
+		page_path: window.location.pathname + window.location.search,
+		page_title: document.title
+	});
+}
+//#endregion
+//#region resources/js/Components/CookieBanner.tsx
+/**
+* The one question this site has to ask before it may measure anything.
+*
+* Everything else stored here is strictly necessary for something the visitor
+* asked for and is exempt under Article 5(3) of the ePrivacy Directive.
+* Google Analytics is not, so it does not load until this is answered — see
+* App\Support\CookieConsent for why the gate is a server-read cookie rather
+* than a client-side check.
+*
+* **It appears only where there is a tag to consent to.** `analytics.id` is
+* null on staging and in local development, and a banner asking permission for
+* something that was never going to load is theatre that teaches people to
+* dismiss the ones that mean something.
+*
+* **Both answers are one click, and they look alike.** A prominent Accept
+* beside a greyed-out Decline is the pattern the EDPB has repeatedly called a
+* consent that was not freely given. The accent goes on Accept because it is
+* the affirmative action, not because refusing should feel like a mistake.
+*
+* **It does not block the page.** No overlay, no scroll lock, nothing over the
+* content — a bar at the bottom that can be ignored. Ignoring it is a valid
+* outcome: nothing is stored until an answer arrives, so a visitor who never
+* looks at it is a visitor we never measured, which is the correct default.
+*/
+function CookieBanner() {
+	const { analytics } = usePage().props;
+	const { t } = useTranslations();
+	const market = usePage().props.market;
+	const [answered, setAnswered] = (0, import_react.useState)(analytics.consent !== null);
+	(0, import_react.useEffect)(() => {
+		const reopen = () => setAnswered(false);
+		window.addEventListener("bc:cookie-settings", reopen);
+		return () => window.removeEventListener("bc:cookie-settings", reopen);
+	}, []);
+	if (analytics.id === null || answered) return null;
+	function answer(choice) {
+		setAnswered(true);
+		router.post("/consent", { choice }, {
+			preserveScroll: true,
+			preserveState: true
+		});
+		if (choice === "granted" && analytics.id !== null) {
+			loadGoogleTag(analytics.id);
+			reportPageView();
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+		role: "dialog",
+		"aria-live": "polite",
+		"aria-label": t("cookies.title"),
+		className: "fixed inset-x-0 bottom-0 z-50 border-t border-line bg-card/95 shadow-lg backdrop-blur",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+			className: "mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 text-sm sm:flex-row sm:items-center sm:justify-between",
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+				className: "text-ink-soft",
+				children: [
+					t("cookies.body"),
+					" ",
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link_default, {
+						href: `/${market.key}/privacy`,
+						className: "underline hover:text-accent",
+						children: t("cookies.more")
+					})
+				]
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+				className: "flex shrink-0 gap-2",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => answer("denied"),
+					className: "rounded-lg border border-line px-4 py-2 font-medium hover:border-ink-soft",
+					children: t("cookies.decline")
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					type: "button",
+					onClick: () => answer("granted"),
+					className: "rounded-lg bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark",
+					children: t("cookies.accept")
+				})]
+			})]
+		})
+	});
+}
+//#endregion
 //#region resources/js/Components/FlashMessage.tsx
 /**
 * What the server just said.
@@ -64960,7 +65078,7 @@ function SiteLayout({ children }) {
 }
 function Chrome({ children }) {
 	const page = usePage();
-	const { market, auth, unreadCount } = page.props;
+	const { market, auth, unreadCount, analytics } = page.props;
 	const { t } = useTranslations();
 	const base = `/${market.key}`;
 	const [menuOpen, setMenuOpen] = (0, import_react.useState)(false);
@@ -65252,11 +65370,18 @@ function Chrome({ children }) {
 								href: `/${market.key}/terms`,
 								className: "hover:text-accent",
 								children: t("legal.terms")
+							}),
+							analytics.id !== null && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+								type: "button",
+								onClick: () => window.dispatchEvent(new Event("bc:cookie-settings")),
+								className: "hover:text-accent",
+								children: t("legal.cookies")
 							})
 						]
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: t("footer.affiliate") })]
 				})
-			})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CookieBanner, {})
 		]
 	});
 }

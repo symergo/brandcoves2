@@ -40,6 +40,13 @@ export interface SavingTo {
 
 export interface SharedProps {
     auth: { user: AuthUser | null; googleEnabled: boolean }
+    /**
+     * `id` is null wherever the Google tag is switched off (staging, local),
+     * and that null is what stops the cookie banner appearing there.
+     * `consent` is null until the visitor has been asked — which is not the
+     * same as a no, and is the only state that shows the banner.
+     */
+    analytics: { id: string | null; consent: 'granted' | 'denied' | null }
     market: CurrentMarket
     markets: SwitcherCountry[]
     translations: Translations

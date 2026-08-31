@@ -19,6 +19,7 @@ cannot be recovered from a diff.
 | [product-identity.md](product-identity.md) | Catalogue | Active |
 | [search.md](search.md) | Search | Active |
 | [seo.md](seo.md) | SEO / Frontend | Active |
+| [analytics.md](analytics.md) | SEO / Compliance | Active — production only, behind a consent banner |
 | [brand-mark.md](brand-mark.md) | Brand / Frontend | Active |
 | [social-cards.md](social-cards.md) | SEO / Brand | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |

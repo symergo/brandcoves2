@@ -368,8 +368,20 @@ return [
         'about' => 'À propos',
         'privacy' => 'Confidentialité',
         'terms' => 'Conditions',
+        'cookies' => 'Cookies',
         'updated' => 'Dernière mise à jour le :date',
         'untranslated' => "Cette page n'est pas encore traduite : vous lisez la version anglaise, qui fait foi.",
+    ],
+
+    /*
+     * La bannière cookies. Une question, posée une fois.
+     */
+    'cookies' => [
+        'title' => 'Cookies',
+        'body' => "Nous aimerions compter les visites avec Google Analytics, ce qui dépose un cookie. Rien sur ce site n'en a besoin : c'est vous qui décidez.",
+        'accept' => 'Autoriser',
+        'decline' => 'Non merci',
+        'more' => 'Ce que nous collectons',
     ],
 
     'footer' => [

@@ -1,7 +1,8 @@
-import { createInertiaApp } from '@inertiajs/react'
+import { createInertiaApp, router } from '@inertiajs/react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import type { ReactElement } from 'react'
 import Layout from './Layouts/SiteLayout'
+import { reportPageView } from './analytics'
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'GiftCoves'
 
@@ -51,4 +52,39 @@ createInertiaApp({
     progress: {
         color: '#c9503a',
     },
+})
+
+/*
+  Page views for the pages the browser never reloaded.
+
+  The gtag snippet in app.blade.php reports the document it shipped with, and
+  that is the only report it will ever make: Inertia swaps the page component
+  and pushes history without a navigation, so a visitor who lands on the
+  homepage and reads four guides is one page view and a 100% bounce rate.
+
+  The first fire is skipped rather than sent — `gtag('config', ...)` has already
+  counted the landing page, and counting it twice inflates exactly the page that
+  matters most. `navigate` fires on the initial page as well, so the URL it
+  started on is what gets compared against.
+
+  Nothing here checks consent. `window.gtag` exists only if the shell rendered
+  the tag or the banner loaded it, and both of those already required a yes.
+*/
+let lastReportedUrl = window.location.pathname + window.location.search
+
+router.on('navigate', () => {
+    const url = window.location.pathname + window.location.search
+
+    if (url === lastReportedUrl) {
+        return
+    }
+
+    lastReportedUrl = url
+
+    /*
+      One frame late, on purpose. Inertia's <Head> writes document.title while
+      the new page renders, which is after this event — reading it now would
+      attribute every page view to the title of the page being left.
+    */
+    requestAnimationFrame(reportPageView)
 })
