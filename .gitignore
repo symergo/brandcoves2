@@ -12,6 +12,13 @@
 /auth.json
 /node_modules
 /public/build
+# The SSR bundle, for the same reason as /public/build above: it is Vite
+# output, rebuilt by `npm run build` in the Docker frontend stage and copied
+# from there into the `ssr` image. Committed, it was 3.3 MB of dead weight in
+# the runtime image and — worse — a cache buster: regenerating it locally
+# changed `COPY . .`, which re-ran dump-autoload, package:discover, event:cache
+# and view:cache to ship a file nothing in that image reads.
+/bootstrap/ssr
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage

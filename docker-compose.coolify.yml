@@ -162,9 +162,16 @@ services:
     <<: *app
     expose:
       - "80"            # Coolify's Traefik routes the domain here. Never publish ports.
+    # `interval` is deploy latency, not just monitoring cadence: Traefik will not
+    # route to this container until the first probe passes, and the first probe
+    # happens one interval after start. At 15s every deploy paid ~15s of dead
+    # wait for a FrankenPHP that, with opcache and a pre-built view cache, is
+    # answering /health in about two. 5s buys that back. `start_period` stays at
+    # 40s — it governs how long failures are forgiven, and shortening it would
+    # only make a slow boot fail rather than wait.
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:80/health') ? 0 : 1);"]
-      interval: 15s
+      interval: 5s
       timeout: 5s
       retries: 10
       start_period: 40s

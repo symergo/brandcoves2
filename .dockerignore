@@ -3,6 +3,10 @@
 node_modules
 vendor
 public/build
+# Vite's SSR output. The `ssr` stage takes its copy from the frontend stage,
+# and the runtime image never reads it, so anything here is dead weight that
+# also invalidates `COPY . .`.
+bootstrap/ssr
 public/hot
 public/storage
 storage/logs/*

@@ -10,7 +10,13 @@ FROM node:24-alpine AS frontend
 WORKDIR /build
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# The cache mount is what makes a dependency bump cheap. The layer cache already
+# covers the case where package-lock.json is unchanged — which is precisely the
+# build that was never slow. On the build where the lock file *did* change, the
+# layer is a miss and npm re-downloads the whole tree from the registry; the
+# mount keeps its tarball cache across builds so that becomes a re-link instead.
+RUN --mount=type=cache,target=/root/.npm \
+        npm ci --prefer-offline --no-audit --no-fund
 
 COPY vite.config.js ./
 # tsconfig.json is not optional here: `npm run build` typechecks before it
@@ -41,7 +47,13 @@ WORKDIR /build
 COPY composer.json composer.lock ./
 # --no-scripts: artisan is not present yet and package discovery needs the full
 # application. It runs in the final stage instead.
-RUN composer install \
+#
+# Same reasoning as the npm cache mount above: this layer is a miss exactly when
+# composer.lock moved, and that is the build where a warm package cache is worth
+# having. COMPOSER_CACHE_DIR has to be set explicitly — the mount is at a path
+# composer would not otherwise use.
+RUN --mount=type=cache,target=/tmp/composer-cache \
+    COMPOSER_CACHE_DIR=/tmp/composer-cache composer install \
         --no-dev \
         --no-scripts \
         --no-autoloader \
@@ -88,7 +100,6 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
 COPY --from=vendor /build/vendor ./vendor
 COPY . .
-COPY --from=frontend /build/public/build ./public/build
 
 # Now that the full app is present, finish the autoloader and run discovery.
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative \
@@ -100,6 +111,15 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative \
 # same image is deployed to staging and production with different config.
 RUN php artisan event:cache \
     && php artisan view:cache
+
+# The built client assets land AFTER the four commands above, and the ordering is
+# the point rather than tidiness. None of dump-autoload, package:discover,
+# event:cache or view:cache reads the Vite manifest — `@vite()` compiles to a
+# call that resolves the manifest at REQUEST time, not at view:cache time — so
+# nothing here needs public/build to exist yet. Copied in before them, as it was,
+# an asset-only change invalidated all four and re-ran the entire PHP tail to
+# ship some new JavaScript. Copied in after, it invalidates this one cheap layer.
+COPY --from=frontend /build/public/build ./public/build
 
 # Coolify does not expose the deployed commit to the container — it provides
 # COOLIFY_BRANCH, FQDN, URL and UUID, but no SHA. A build timestamp answers the

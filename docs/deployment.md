@@ -107,6 +107,62 @@ migration surfaces before real visitors meet it — and the whole stack idles at
 Two Horizons would double-process every job, including feed ingestion. `stop_grace_period: 60s` lets
 the in-flight job finish rather than abandoning a half-ingested chunk.
 
+## Build speed
+
+Every deploy is a from-source build **on the Coolify box**, and there are two per release — a push to
+`main` rebuilds from scratch what `staging` built minutes earlier off the same tree. So the cost that
+matters is not the cold build, which happens rarely, but the per-commit one, which happens always.
+
+Four changes were made on 2026-08-31, in descending order of how much they buy:
+
+**The client assets are copied in AFTER the PHP tail, not before it.** `dump-autoload`,
+`package:discover`, `event:cache` and `view:cache` are the expensive per-commit work in the runtime
+stage, and `COPY --from=frontend … ./public/build` used to sit above all four. None of them reads the
+Vite manifest — `@vite()` compiles to a call that resolves it at *request* time, not at `view:cache`
+time — so an asset-only change was re-running the entire PHP tail to ship some new JavaScript. Below
+them, it invalidates one cheap COPY. Roughly a sixth of recent commits touch `resources/` without
+touching `app/`, and those deploys now skip the tail outright.
+
+**`bootstrap/ssr/` is no longer committed.** 3.3 MB of Vite SSR output was tracked in git, and
+`.dockerignore` did not exclude it, so it rode into the *runtime* image via `COPY . .` — where
+nothing reads it, because the `ssr` service builds from its own stage which takes the bundle straight
+from `frontend`. Dead weight is the small half. The real cost was that regenerating it locally
+changed `COPY . .` and therefore invalidated all four commands above; two of the thirty commits
+before this one touched `bootstrap/` and nothing else, and each paid a full PHP rebuild for a file
+that was never read.
+
+**npm and composer install under cache mounts.** The layer cache already covered the build where the
+lock file was unchanged, which was never the slow one. The mounts cover the build where it *did*
+change, turning a cold re-download of the whole dependency tree into a re-link.
+
+**The `app` healthcheck interval went 15s → 5s.** Traefik will not route to the container until the
+first probe passes, and the first probe is one interval after start, so `interval` is deploy latency
+and not merely monitoring cadence. FrankenPHP with opcache and a pre-built view cache answers
+`/health` in about two seconds; it was waiting fifteen. `start_period` stays at 40s — that governs how
+long failures are *forgiven*, and shortening it would make a slow boot fail rather than wait.
+
+> **The cache mounts need BuildKit, and the Coolify host's builder is unverified.** `RUN --mount` is
+> a hard syntax error on the legacy builder rather than a slow path, so if that box is somehow not on
+> BuildKit the build fails outright instead of degrading. Docker Compose v2 has defaulted to BuildKit
+> for years and Coolify requires a Docker new enough to have it, so this is a formality — but it is
+> the one change here that cannot fail safely, and staging is where it gets proven.
+
+### Still on the table, both needing a decision outside this repo
+
+**Check Coolify's automatic Docker cleanup first.** It decides whether builds are three minutes or
+twelve, and nothing in this file matters next to it. If it prunes the build cache between deploys,
+`install-php-extensions` recompiles `intl`, `gd` and `zip` from source every single time — several
+minutes, for a layer that is supposed to be a cache hit essentially forever.
+
+**Build once, deploy twice.** The Dockerfile already avoids `config:cache` specifically so that "the
+same image is deployed to staging and production with different config" — but that is the intent, not
+what happens; the image is built twice from the same commit. Building in GitHub Actions, which
+already runs on every push, and pushing to GHCR, then switching the compose services from `build:` to
+`image:`, makes the production deploy a pull-and-up: seconds rather than a rebuild. A cheaper interim
+version is simply to confirm production's build hits staging's layer cache — both apps share one
+Docker daemon, so it should, **unless `APP_NAME` differs between them**, which feeds `VITE_APP_NAME`
+and forks the `frontend` stage at the ENV layer.
+
 ## Gotchas hit standing staging up (2026-08-07)
 
 Five real ones, all fixed. Recorded because every one of them would recur on a
