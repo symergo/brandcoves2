@@ -37,6 +37,7 @@ class HealthTest extends TestCase
 
         config([
             'giftcoves.connectors.bol.client_id' => 'a-client-id',
+            'giftcoves.connectors.bol.client_secret' => 'a-secret',
             'services.resend.key' => 'a-key',
         ]);
 
@@ -44,6 +45,61 @@ class HealthTest extends TestCase
 
         $this->assertTrue($on['bol'], 'bol is configured and the flag still says it is not');
         $this->assertTrue($on['mail']);
+    }
+
+    #[Test]
+    public function an_oauth_source_with_only_half_its_pair_reads_false(): void
+    {
+        /*
+         * The state this flag exists to make visible, and the one it used to
+         * hide.
+         *
+         * `supports()` requires both halves, so a connector with an id and no
+         * secret is never called at all — it is absent from every search while
+         * health reports it as present. That happened on production with eBay:
+         * the flag said true, eBay returned nothing, and the search code was
+         * suspected for an afternoon before the missing secret was.
+         */
+        config([
+            'giftcoves.connectors.ebay.client_id' => 'an-app-id',
+            'giftcoves.connectors.ebay.client_secret' => null,
+            'giftcoves.connectors.bol.client_id' => 'a-client-id',
+            'giftcoves.connectors.bol.client_secret' => null,
+        ]);
+
+        $config = $this->getJson('/health')->json('config');
+
+        $this->assertFalse($config['ebay'], 'eBay has no secret, so it cannot work, and the flag must not say it can');
+        $this->assertFalse($config['bol']);
+    }
+
+    #[Test]
+    public function ebay_tracking_is_reported_separately_from_ebay_working(): void
+    {
+        /*
+         * The two fail independently and only one of them is visible.
+         *
+         * Without a campaign id eBay still returns results, the links still
+         * work, the visitor still buys — and the commission goes to nobody.
+         * Folding it into `ebay` would report true for a connector earning
+         * zero, which is the failure that surfaces months later as an empty
+         * statement rather than as anything on the site.
+         */
+        config([
+            'giftcoves.connectors.ebay.client_id' => 'an-app-id',
+            'giftcoves.connectors.ebay.client_secret' => 'a-cert-id',
+            'giftcoves.connectors.ebay.campaign_id' => ['EBAY_NL' => null, 'EBAY_FR' => null],
+        ]);
+
+        $config = $this->getJson('/health')->json('config');
+
+        $this->assertTrue($config['ebay'], 'eBay is fully credentialed');
+        $this->assertFalse($config['ebayTracking'], 'no campaign id anywhere, so every click earns nothing');
+
+        config(['giftcoves.connectors.ebay.campaign_id' => ['EBAY_NL' => '5338111111', 'EBAY_FR' => null]]);
+
+        // One configured marketplace is enough to say tracking exists at all.
+        $this->assertTrue($this->getJson('/health')->json('config.ebayTracking'));
     }
 
     #[Test]

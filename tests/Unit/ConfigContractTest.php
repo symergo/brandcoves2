@@ -73,6 +73,46 @@ class ConfigContractTest extends TestCase
     }
 
     #[Test]
+    public function every_setting_defaulting_to_empty_reaches_a_container(): void
+    {
+        /*
+         * The gap the test above leaves, and it cost two of them.
+         *
+         * `env('X')` with no default is caught above. `env('X', '')` is not —
+         * it *has* a default, so it looks deliberate. But an empty string is
+         * the one default that carries no information: every consumer of these
+         * reads `''` as "this feature is off in this environment", which is
+         * indistinguishable from "the value never arrived".
+         *
+         * `CANONICAL_HOST` and `LEGACY_HOSTS` sat in that blind spot. Both were
+         * documented in .env.example, both were absent from compose, and the
+         * result was production serving the same site on three hostnames with
+         * no redirect and nothing anywhere reporting a problem — while
+         * CLAUDE.md recorded that staging redirected, which it did not.
+         *
+         * Only five settings default to `''`, so this is a cheap rule with a
+         * sharp edge rather than a broad one: a setting with a *meaningful*
+         * default (a rate, a threshold, a feature flag that is genuinely fine
+         * off) is untouched, because its default says something.
+         */
+        $missing = array_values(array_diff(
+            $this->settingsDefaultingToEmpty(),
+            $this->keysComposeProvides(),
+            self::NOT_OURS,
+        ));
+
+        $this->assertSame([], $missing, implode("\n", [
+            "These default to '', which every consumer reads as \"off in this environment\" —",
+            'the same thing they would read if the value simply never arrived. They are not',
+            'passed through '.self::COMPOSE.', so no container can ever see them and the',
+            'difference can never be observed.',
+            '',
+            'Add each to the app environment block:',
+            '  '.implode(', ', $missing),
+        ]));
+    }
+
+    #[Test]
     public function every_setting_without_a_default_is_documented(): void
     {
         $missing = array_values(array_diff(
@@ -139,6 +179,32 @@ class ConfigContractTest extends TestCase
         foreach (self::APP_CONFIG as $file) {
             preg_match_all(
                 '/env\(\s*[\'"]([A-Z][A-Z0-9_]*)[\'"]\s*\)/',
+                $this->read($file),
+                $matches,
+            );
+
+            $keys = [...$keys, ...$matches[1]];
+        }
+
+        return $this->unique($keys);
+    }
+
+    /**
+     * Settings whose default is an empty string.
+     *
+     * Deliberately narrower than "has any default": a default of `8.0` or
+     * `false` states an intention, and a setting that never varies per
+     * environment has no business in compose. `''` states nothing.
+     *
+     * @return list<string>
+     */
+    private function settingsDefaultingToEmpty(): array
+    {
+        $keys = [];
+
+        foreach (self::APP_CONFIG as $file) {
+            preg_match_all(
+                '/env\(\s*[\'"]([A-Z][A-Z0-9_]*)[\'"]\s*,\s*(?:\'\'|"")\s*\)/',
                 $this->read($file),
                 $matches,
             );

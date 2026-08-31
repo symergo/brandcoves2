@@ -70,13 +70,49 @@ class HealthController extends Controller
             'mail' => filled(config('services.resend.key')),
             'awin' => filled(config('giftcoves.connectors.awin.api_token')),
             'awinAccounts' => count((array) config('giftcoves.connectors.awin.accounts', [])),
-            // `connectors.sources` does not exist — the key is `connectors.bol`.
-            // The wrong path resolved to null, so this reported "bol: false" on
-            // every environment including ones where bol works, which is worse
-            // than not reporting it: a config check that always says "missing"
-            // sends somebody chasing a credential that was never absent.
-            'bol' => filled(config('giftcoves.connectors.bol.client_id')),
-            'ebay' => filled(config('giftcoves.connectors.ebay.client_id')),
+            /*
+             * A source flag means "this source could work here", so an OAuth
+             * source needs BOTH halves of its pair.
+             *
+             * Reporting on the client id alone was actively misleading, and it
+             * cost real time: production answered `ebay: true` while eBay was
+             * absent from every search, so the secret was never suspected and
+             * the search code was. `supports()` requires the pair, so a
+             * connector with an id and no secret is never even called — the
+             * one state this flag existed to make visible, and the one it hid.
+             *
+             * The market check `supports()` also does is deliberately not
+             * mirrored: it varies per market, and this is one flag for the
+             * environment.
+             *
+             * The path matters too. `bol` once pointed at
+             * `connectors.sources.bol.client_id`, which does not exist, so it
+             * read "missing" on every environment including ones where bol
+             * demonstrably works. A config check that is always wrong in the
+             * safe direction is worse than none: it gets ignored, or it sends
+             * somebody chasing a credential that was never absent.
+             */
+            'bol' => filled(config('giftcoves.connectors.bol.client_id'))
+                && filled(config('giftcoves.connectors.bol.client_secret')),
+            'ebay' => filled(config('giftcoves.connectors.ebay.client_id'))
+                && filled(config('giftcoves.connectors.ebay.client_secret')),
+
+            /*
+             * Whether an eBay click can earn anything.
+             *
+             * Separate from `ebay` because the two fail independently and only
+             * one of them is visible: without a campaign id eBay still returns
+             * results, the links still work, the visitor still buys, and the
+             * commission goes to nobody. Nothing on the site reports it and it
+             * surfaces months later as an empty EPN statement — so it is worth
+             * a flag of its own rather than being folded into `ebay`, which
+             * would report "true" for a connector earning zero.
+             */
+            'ebayTracking' => collect((array) config('giftcoves.connectors.ebay.campaign_id', []))
+                ->contains(fn ($id): bool => filled($id)),
+
+            // One credential, and it carries the affiliate id too, so there is
+            // no tracking flag to keep beside it.
             'tradedoubler' => filled(config('giftcoves.connectors.tradedoubler.token')),
             'ai' => filled(config('giftcoves.ai.api_key')),
             'robotsAllow' => (bool) config('giftcoves.robots_allow'),

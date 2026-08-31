@@ -30,6 +30,18 @@ x-app: &app
     APP_URL: ${APP_URL}
     APP_LOCALE: en
 
+    # The canonical host, and everything that should 301 onto it.
+    #
+    # Absent here until now, which is why setting them in Coolify did nothing:
+    # a variable the compose file does not name never reaches the container.
+    # Both default to '' in config, and '' reads as "redirects are off in this
+    # environment" — indistinguishable from "the value never arrived", so all
+    # three production hostnames served the same site directly and nothing
+    # anywhere said so. Exactly the AWIN_VDB failure, which is documented in
+    # config/giftcoves.php and cost a publisher's worth of catalogue.
+    CANONICAL_HOST: ${CANONICAL_HOST}
+    LEGACY_HOSTS: ${LEGACY_HOSTS}
+
     LOG_CHANNEL: stderr
     LOG_LEVEL: ${LOG_LEVEL:-warning}
 

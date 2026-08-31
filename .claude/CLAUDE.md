@@ -261,11 +261,28 @@ visitors, within the minute.** There is no gate between the two: a push to `main
 > **What is still outstanding is `canonical_host` on production.** All three hosts serve directly;
 > `brandcoves.com` does **not** 301 onto `giftcoves.com`, it just answers. So the same site is live
 > on three domains at once, which is a duplicate-content problem now that `ROBOTS_ALLOW=true` there.
-> Staging does redirect, because `canonical_host` is set on that app.
 >
-> The domains, `APP_NAME`, `APP_URL` and the Google OAuth callback all have to move together — a
-> deploy that changes `APP_NAME` without the rest logs every visitor out and breaks Google sign-in.
-> See [docs/features/rebrand.md](docs/features/rebrand.md).
+> **Staging does not redirect either, and the reason was never Coolify.** This file used to say it
+> did. `CANONICAL_HOST` and `LEGACY_HOSTS` were absent from `docker-compose.coolify.yml` until
+> 2026-08-31, so whatever either app held for them never reached PHP — verified by request:
+> `brandcoves.com`, `www.giftcoves.com` and `staging.brandcoves.com` all answered 200 with no
+> redirect. The AWIN_VDB failure exactly, in a second place. Both now pass through, and
+> `ConfigContractTest` grew a rule for settings that default to `''`, which is the blind spot that
+> hid it: an empty default is indistinguishable from a value that never arrived.
+>
+> **The `APP_NAME` warning that used to be here is spent.** Production already issues a
+> `giftcoves-session` cookie, so `APP_NAME` is already `GiftCoves` — there is nothing left to
+> change and nobody to log out. (The mechanism, if it ever matters again: `config/session.php`
+> derives the cookie from `Str::slug(APP_NAME)`, and `SESSION_COOKIE` is not set, so renaming the
+> app renames the cookie.) All four Google redirect URIs are registered too, `giftcoves.com`
+> included, so moving `APP_URL` no longer breaks sign-in.
+>
+> What is left is one deploy: set `APP_URL=https://giftcoves.com`, `CANONICAL_HOST=giftcoves.com`
+> and `LEGACY_HOSTS=brandcoves.com,www.brandcoves.com,www.giftcoves.com` together on
+> `GiftCoves-prod`. `APP_URL` still points at `brandcoves.com`, which is why the sitemap served from
+> `giftcoves.com` emits `brandcoves.com` URLs. Keep `giftcoves.com` out of `LEGACY_HOSTS` — the
+> canonical host redirecting to itself is a loop. See
+> [docs/features/rebrand.md](docs/features/rebrand.md).
 >
 > **The Coolify applications were renamed to `GiftCoves-*`**, which this file previously said would
 > not happen, because renaming invalidates every issued deploy webhook. That Coolify behaviour is
