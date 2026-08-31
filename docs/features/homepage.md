@@ -264,6 +264,32 @@ Together with the headline, 4,324px → 4,200px on `be-nl` and 3,258px → 3,114
 the kind of thing that only shows up measured — `node scripts/shots.mjs home` prints the page height
 and the overflow report, which is the half that matters.
 
+## The band that was pushing the page sideways — 2026-09-01
+
+Found by running `scripts/shots.mjs`'s overflow report against **production** rather than the local
+app, immediately after the phone pass above shipped. Recently searched was **1,103px wide in a
+390px viewport** on `en`, 823 on `nl-nl`, 653 on `be-nl`, 463 on `be-fr`. Only `es` was clean, and
+only because it has no search history yet.
+
+Two defaults, and either one alone is enough to break it:
+
+- The `<ul>` was a bare `grid`, so the implicit column is `auto`, which sizes to **max-content**.
+- A grid item's `min-width` is `auto`, which resolves to **its own content's minimum**.
+
+Between them the row grew to fit *"bluetooth tracker koptelefoon draadloze…"* at full length, and
+the `truncate` on the term never had a width to truncate against — it was doing nothing at all. The
+fix is `grid-cols-1` on the list (Tailwind emits `repeat(1, minmax(0,1fr))`, which caps the track)
+and `min-w-0` on the `<li>` (which lets the item shrink inside it). Verified by injecting exactly
+those two rules into the live page before writing them: 1,103px → 390px, and the term truncates to
+one 20px line instead of wrapping.
+
+**The reason it survived a mobile pass that was otherwise measured.** The band is served from a
+cache `RefreshRecentSearches` writes, and it is conditional on that cache having something in it. A
+development database with no search history renders no band, so `node scripts/shots.mjs home`
+reported a clean 390/390 page every time it was run — correctly, for the page it was looking at. The
+overflow report is only as good as the data behind the page. Where a band is conditional on
+production-shaped data, check it against production.
+
 ## Files
 
 - `resources/js/Pages/Home.tsx`

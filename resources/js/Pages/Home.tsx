@@ -255,9 +255,36 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                       own row, and each card carries four 40px thumbnails that
                       have nowhere to shrink to in a narrow column.
                     */}
-                    <ul className="mt-4 grid gap-3 lg:grid-cols-3">
+                    <ul className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
                         {recentSearches.map((recent) => (
-                            <li key={recent.term}>
+                            /*
+                              `min-w-0`, and the `grid-cols-1` above it, are
+                              what make the `truncate` on the term work.
+
+                              This band pushed the whole page sideways on a
+                              phone — 1,103px wide in a 390px viewport on `en`,
+                              and every market with search history behind it.
+                              Bare `grid` leaves the implicit column `auto`,
+                              which sizes to max-content, and a grid item's
+                              `min-width` defaults to `auto`, which is its own
+                              content's minimum. So the row grew to fit
+                              "bluetooth tracker koptelefoon draadloze…" in
+                              full, and the `truncate` never had a width to
+                              truncate against. `grid-cols-1` is
+                              `minmax(0,1fr)` in Tailwind, which caps the
+                              track; `min-w-0` lets the item shrink inside it.
+                              Both are needed — either alone leaves one of the
+                              two floors in place.
+
+                              Invisible in development on purpose, which is the
+                              part worth remembering: the band is served from a
+                              cache RefreshRecentSearches writes, so a local
+                              database with no search history renders nothing
+                              here and `scripts/shots.mjs` reports a clean page.
+                              It was found by running the same overflow report
+                              against production.
+                            */
+                            <li key={recent.term} className="min-w-0">
                                 <Link
                                     href={recent.url}
                                     className="flex items-center gap-3 rounded-card border border-line bg-card p-3 transition hover:border-ink"
