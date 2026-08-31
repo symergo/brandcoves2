@@ -221,30 +221,59 @@ Two mechanisms, because they fail differently:
 
 ## Deployment
 
-**Two branches, two apps. Both auto-deploy.** Read from the Coolify API and both `/health`
-endpoints on 2026-08-30:
+**Two branches, two apps. Staging auto-deploys; production does NOT.** Read from the Coolify API
+and both `/health` endpoints on 2026-08-31:
 
 | App | Tracks | Auto-deploy | Domains |
 |---|---|---|---|
 | `GiftCoves-staging` | `staging` | **on** | `staging.giftcoves.com`, `staging.brandcoves.com` |
-| `GiftCoves-prod` | `main` | **on** — off between 2026-08-29 and 2026-08-30 | `giftcoves.com`, `www.giftcoves.com`, `brandcoves.com` |
+| `GiftCoves-prod` | `main` | **OFF** since 2026-08-31 | `giftcoves.com`, `www.giftcoves.com`, `brandcoves.com` |
 
-`git push origin staging` → staging. **`git push origin main` → production, in front of real
-visitors, within the minute.** There is no gate between the two: a push to `main` *is* the deploy.
+`git push origin staging` → staging, within the minute. **`git push origin main` deploys
+NOTHING.** Production is now a deliberate trigger, and this is the single most important change to
+absorb: advancing `main` is no longer the release, so a fix sitting on `main` is not a fix that is
+live. Verified by behaviour on 2026-08-31 — `main` was fast-forwarded four commits and production
+stayed on its previous build.
 
-> **This was off for a day, and the round trip is worth knowing about.** Auto-deploy was disabled
-> on `GiftCoves-prod` through the Coolify API on 2026-08-29 as the first half of the one-branch
-> model. The API version in use does not return the field on `GET`, so it could never be read back
-> — and it was proven off only on 2026-08-30, when a push to `main` landed on GitHub and production
-> stayed on its 2026-08-16 build.
->
-> It was then turned **back on**, deliberately, because a manual-only production meant every deploy
-> needed the Coolify UI and the API deploy endpoint refuses the app's stored webhook (HTTP 401 — it
-> wants a Bearer token, and `DeployTrigger` sends none by design).
+**Deploying production is one authenticated request:**
 
-> **Never push without being asked, and never push a half-committed tree.** Both branches deploy
-> outright: `staging` to the staging hosts, and `main` to real visitors within the minute. There is
-> no review step between the push and the deploy, so the push *is* the release decision. Neither
+```bash
+TOK=$(grep -oP '(?<=^KEY=).*' .claude/coolify_api.api | tr -d '\r\n')
+
+# production
+curl -H "Authorization: Bearer $TOK" \
+  "http://51.75.78.173:8000/api/v1/deploy?uuid=gr0kqzz1er3s79u17vdph27t"
+
+# staging, for comparison
+curl -H "Authorization: Bearer $TOK" \
+  "http://51.75.78.173:8000/api/v1/deploy?uuid=vhfcyk39ug5exk0fyvdj8qo3"
+```
+
+Returns `200` with a `deployment_uuid`; Coolify records it as `is_api: true` / `is_webhook: false`,
+so a deliberate release is distinguishable from an automatic one in the audit trail. The token lives
+in `.claude/coolify_api.api` (gitignored) as `KEY=<token>`, and the API base is
+`http://51.75.78.173:8000` — plain HTTP, port 8000, not the Coolify UI hostname.
+
+> **The endpoint refuses the stored webhook, not the request.** This file used to say
+> `/api/v1/deploy` answers 401, which is true only of `DeployTrigger`, which sends no
+> `Authorization` header by design. With a Bearer token it works, and that is what made a
+> manually-gated production practical at all.
+
+> **Auto-deploy cannot be read back, so trust behaviour over configuration.** The API exposes no
+> auto-deploy field on `GET` for an application, and `PATCH` rejects it — it is a UI-only setting.
+> The only proof it is off is moving `main` and watching production not rebuild.
+
+> **DANGER: `applications/{uuid}/stop`, `/start` and `/restart` execute on a plain `GET`.** They are
+> not read-only probes. Requesting `/stop` to find out whether the route exists **stops the
+> application** — that took `giftcoves.com` down for about five minutes on 2026-08-31. Never probe an
+> action endpoint against production; use `GiftCoves-staging` if a route has to be discovered at all.
+> Note also that `/start` queues a full **rebuild**, not a container start, so it is not a cheap way
+> to apply changed runtime environment variables.
+
+> **Never push without being asked, and never push a half-committed tree.** `staging` deploys
+> outright to the staging hosts, so that push is still a deploy. `main` no longer deploys on its
+> own — but pushing it is still the act that decides what production *will* serve on the next
+> trigger, and the trigger is one request away. Treat both as release decisions. Neither
 > happens on Claude's initiative. Commit the work first, then stop and report the branch is ready; the
 > decision to publish is the user's, every time, and approval for one push does not carry to the
 > next. Before any push, check the change is committed **whole** — the migration with
