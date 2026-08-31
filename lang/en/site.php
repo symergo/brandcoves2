@@ -580,6 +580,10 @@ return [
         'add_live_title_note' => 'The title and price come straight from :shop, so they cannot be edited here.',
         'back' => 'Back',
         'new_list' => 'New list',
+        // The front page's version of the same button. Longer on
+        // purpose: on /lists it sits under a heading that already says
+        // "lists", and on the home page it has to say what it makes.
+        'make_new' => 'Make a new list',
         'list_name' => 'List name',
         'create' => 'Create list',
         'for_someone' => 'This list is for someone else',

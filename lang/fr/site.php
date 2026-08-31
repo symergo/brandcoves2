@@ -452,6 +452,7 @@ return [
         'add_live_title_note' => 'Le titre et le prix viennent directement de :shop et ne peuvent pas être modifiés ici.',
         'back' => 'Retour',
         'new_list' => 'Nouvelle liste',
+        'make_new' => 'Créer une nouvelle liste',
         'list_name' => 'Nom de la liste',
         'create' => 'Créer la liste',
         'for_someone' => 'Cette liste est pour quelqu\'un d\'autre',

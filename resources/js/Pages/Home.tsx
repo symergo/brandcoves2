@@ -1,4 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react'
+import { useEffect, useState } from 'react'
 import type { CoveSceneKey } from '../Components/CoveIllustration'
 import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
@@ -54,6 +55,34 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
     const base = `/${market.key}`
 
     /*
+     * The kind chooser under "Make a new list".
+     *
+     * Making a list is the one thing here that is awkward to undo: the three
+     * kinds differ in who may claim, who may vote and who sees the money, none
+     * of which is recoverable from the words "new list", and somebody who picks
+     * wrong finds out weeks later when the mechanism they wanted is not on the
+     * page. `Lists/Index` reaches the same conclusion and shows the same three
+     * cards in its create form — each choice here deep-links to `?new=<kind>`,
+     * which that page reads to open its form already on that shape. A shortcut
+     * into the one create form, not a second one.
+     *
+     * A disclosure rather than a floating menu. This sits at the top of a phone
+     * screen, so a popover anchored under it has nowhere to go but over the
+     * search field it is standing above, and a menu that covers the thing you
+     * were about to use is worse than one that moves it down.
+     */
+    const [pickingKind, setPickingKind] = useState(false)
+
+    useEffect(() => {
+        if (!pickingKind) return
+
+        const escape = (e: KeyboardEvent) => e.key === 'Escape' && setPickingKind(false)
+        document.addEventListener('keydown', escape)
+
+        return () => document.removeEventListener('keydown', escape)
+    }, [pickingKind])
+
+    /*
      * Day and month, plus the year only when it is not this one.
      *
      * A registry is often dated a long way out — a wedding gets booked eighteen
@@ -98,19 +127,22 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                 */}
                 <div className="flex flex-col gap-10 md:flex-row md:items-center md:gap-12">
                     <div className="min-w-0 flex-1">
-                        <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+                        {/*
+                          `text-3xl` on a phone, and the step to `text-4xl`
+                          waits for `sm`.
+
+                          Two sentences on two lines is the whole shape of this
+                          headline — that is what the `<br />` is for. At 36px
+                          in a 358px column both of them wrap, so the reader
+                          gets three ragged lines instead of two whole thoughts,
+                          and 120px of the first screen goes to the wrapping
+                          rather than the words.
+                        */}
+                        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
                             {t('home.headline_1')}
                             <br />
                             {t('home.headline_2')}
                         </h1>
-                        {/*
-                          `text-lg` only from `sm`. At phone width this
-                          paragraph ran to seven lines of near-heading type and
-                          took the whole first screen on its own, so the search
-                          field — the one thing this page wants pressed — sat
-                          under the fold behind a wall of prose.
-                        */}
-
 
                         {/*
                           A search field, where the Gift Finder button used to
@@ -212,7 +244,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
               why the whole band is conditional.
             */}
             {recentSearches.length > 0 && (
-                <section className="mt-12" aria-labelledby="recent-heading">
+                <section className="mt-10 sm:mt-12" aria-labelledby="recent-heading">
                     <h2 id="recent-heading" className="text-sm font-medium tracking-wide text-ink-soft uppercase">
                         {t('home.recent_heading')}
                     </h2>
@@ -269,7 +301,17 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
               "3 lists" is a reason to click; "make a list" stops being one the
               moment lists exist.
             */}
-            <section className="mt-14" aria-labelledby="organise-heading">
+            {/*
+              `mt-14` from `sm` up, `mt-10` below it.
+
+              56px between bands is read at arm's length on a desktop and at
+              20cm on a phone, where it is a seventh of the screen. Five of
+              these gaps down the page is most of a screenful spent on nothing,
+              on the device that has the least of it. The gap still has to be
+              bigger than the 16px between cards inside a band, or the bands
+              stop being bands — 40px is.
+            */}
+            <section className="mt-10 sm:mt-14" aria-labelledby="organise-heading">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 id="organise-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
                         {t('nav.organise')}
@@ -282,6 +324,102 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                     </Link>
                 </div>
                 <p className="mt-1 max-w-2xl text-ink-soft">{t('home.organise_intro')}</p>
+
+                {/*
+                  Making a list, offered as an action rather than only as a
+                  side effect.
+
+                  Every route to a new list used to run through a product: find
+                  something, save it, and the list appears underneath. That
+                  works for somebody who already knows what they want and not at
+                  all for somebody starting a birthday. The five cards below are
+                  all doors into lists that already exist; this is the one that
+                  makes one.
+
+                  Outlined rather than filled — the accent button on this page
+                  is the search, and Organise is not where the page asks to be
+                  pressed first.
+                */}
+                <div className="mt-4">
+                    <button
+                        type="button"
+                        onClick={() => setPickingKind((v) => !v)}
+                        aria-expanded={pickingKind}
+                        aria-controls="new-list-kinds"
+                        /*
+                          Full width only below `sm`: at 390px an inline button
+                          beside nothing looks like it fell off a toolbar, and
+                          everything else in this band is full width anyway.
+                          `py-2.5` at 16px keeps the tap target at 44px.
+                        */
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card px-4 py-2.5 font-medium text-ink transition hover:border-ink sm:inline-flex sm:w-auto"
+                    >
+                        <svg
+                            viewBox="0 0 20 20"
+                            aria-hidden="true"
+                            className="h-4 w-4 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                        >
+                            <path d="M10 4v12M4 10h12" />
+                        </svg>
+                        {t('lists.make_new')}
+                        <svg
+                            viewBox="0 0 20 20"
+                            aria-hidden="true"
+                            className={`h-4 w-4 shrink-0 text-ink-soft transition-transform ${
+                                pickingKind ? 'rotate-180' : ''
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="m5 8 5 5 5-5" />
+                        </svg>
+                    </button>
+
+                    {pickingKind && (
+                        <div
+                            id="new-list-kinds"
+                            className="mt-3 max-w-3xl rounded-card border border-line bg-card p-4"
+                        >
+                            <p className="text-sm font-medium">{t('lists.for_whom')}</p>
+
+                            {/*
+                              One column on a phone, three across from `sm`.
+                              Stacked, each choice is a heading and a sentence —
+                              the shape the eye already reads down a page — and
+                              three side by side at 390px would leave each body
+                              two words wide.
+                            */}
+                            <ul className="mt-2 grid gap-2 sm:grid-cols-3">
+                                {[
+                                    { kind: 'mine', label: t('lists.for_me'), body: t('lists.new_mine_body') },
+                                    {
+                                        kind: 'for_someone',
+                                        label: t('lists.for_someone_else'),
+                                        body: t('lists.new_for_someone_body'),
+                                    },
+                                    { kind: 'group', label: t('lists.for_group'), body: t('lists.new_group_body') },
+                                ].map((choice) => (
+                                    <li key={choice.kind}>
+                                        <Link
+                                            href={`${base}/lists?new=${choice.kind}`}
+                                            className="flex h-full flex-col rounded-card border border-line p-3 transition hover:border-accent hover:bg-accent/5"
+                                        >
+                                            <span className="text-sm font-medium">{choice.label}</span>
+                                            <span className="mt-1 text-xs text-ink-soft">{choice.body}</span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
 
                 {/* Five across at desktop rather than four-plus-a-widow. The
                     cards are illustration-led and scale down happily; a lone
@@ -409,7 +547,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
               to cannot drift into describing the same three things differently
               — which is the defect that produced two names for the Gift Cove.
             */}
-            <section className="mt-14" aria-labelledby="discover-heading">
+            <section className="mt-10 sm:mt-14" aria-labelledby="discover-heading">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 id="discover-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
                         {t('discover_cove.title')}
@@ -493,8 +631,8 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
             </section>
 
             {today && (
-                <section className="mt-14" aria-labelledby="today-heading">
-                    <div className="rounded-card border border-line bg-card p-6 sm:p-8">
+                <section className="mt-10 sm:mt-14" aria-labelledby="today-heading">
+                    <div className="rounded-card border border-line bg-card p-5 sm:p-8">
                         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                             <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">
                                 {t('home.today_badge')}
@@ -569,7 +707,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
             )}
 
             {coves.length > 0 && (
-                <section className="mt-14" aria-labelledby="coves-heading">
+                <section className="mt-10 sm:mt-14" aria-labelledby="coves-heading">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <h2 id="coves-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
                             {t('home.coves_heading')}
@@ -593,7 +731,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             <li key={cove.url}>
                                 <Link
                                     href={cove.url}
-                                    className="flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
+                                    className="flex h-full flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink sm:p-5"
                                 >
                                     <h3 className="font-medium">{cove.title}</h3>
                                     {cove.intro && (

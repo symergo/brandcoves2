@@ -206,6 +206,64 @@ Two smaller phone fixes in the same pass:
   type and took the first screen by itself, which is the same failure the drawing was hidden to
   avoid — see above.
 
+## Making a list, from the Organise band — 2026-09-01
+
+The band was five cards and every one of them was a **door into lists that already exist**: my
+lists, shared with me, group lists, Secret Friend, the occasion. Nothing on the front page made one.
+Every route to a new list ran through a product first — search, save, and the list appears
+underneath — which works for somebody who already knows what they want and not at all for somebody
+starting a birthday.
+
+So the band now opens with a **Make a new list** button, between its intro and the cards.
+
+**It asks which kind before it goes anywhere.** The three kinds differ in who may claim, who may
+vote and who sees the money ([list-taxonomy.md](list-taxonomy.md)), and none of that is recoverable
+from the words *new list*. Choosing is free at this moment and awkward afterwards: somebody who
+picks wrong finds out weeks later, when the mechanism they wanted is not on the page. `Lists/Index`
+reached the same conclusion for its own create form and shows the same three cards with the same
+three sentences — `lists.new_mine_body`, `lists.new_for_someone_body`, `lists.new_group_body` — so
+the two surfaces cannot describe the choice differently.
+
+**Each choice is a link to `?new=<kind>`, not a second create form.** `Lists/Index` already reads
+that parameter to open its form pre-set to a shape; it was added so the Gift Cove's cards could land
+on the thing they had just described. There is one `POST /lists` and one `ListMaker`, and this is a
+shortcut into them rather than a parallel path that can drift.
+
+**A disclosure, not a floating menu.** On a phone the band sits near the top of the second screen,
+and a popover anchored under the button has nowhere to go but over the cards it is standing above.
+A menu that covers what you were about to read is worse than one that moves it down. Escape closes
+it.
+
+**Outlined, not filled.** The accent button on this page is the search. Organise is not where the
+page asks to be pressed first, and two filled buttons one screen apart is a page with no primary
+action.
+
+`lists.make_new` is a separate key from `lists.new_list`, and longer on purpose: on `/lists` the
+button sits under a heading that already says *lists*, and here it has to say what it makes.
+
+## A second phone pass — 2026-09-01
+
+Measured at iPhone 13 width against the running app, after the pass described above. No overflow
+either time; this was about how much of the screen the page spends on nothing.
+
+- **The headline is `text-3xl` below `sm`.** Two sentences on two lines is the whole shape of it —
+  that is what the `<br />` is for. At 36px in a 358px column *both* wrapped, so the reader got
+  three ragged lines instead of two whole thoughts. At 30px the English is two lines again. Dutch
+  stays at three (*"Iets wat het geven waard is."* is 28 characters and needs about 24px to fit,
+  which is not a headline) — but 12px shorter per line, and the step to `text-4xl` now waits for
+  `sm` with `text-5xl` from `lg`, so the desktop hero is unchanged.
+- **`mt-14` between bands became `mt-10 sm:mt-14`.** 56px is read at arm's length on a desktop and
+  at 20cm on a phone, where it is a seventh of the screen; five of those gaps is most of a screenful
+  spent on nothing, on the device with the least of it. 40px is still comfortably more than the
+  16px between cards *inside* a band, which is what keeps a band a band.
+- **The Today card is `p-5` and the Cove cards `p-4`** below `sm`, both back to their old padding
+  from `sm` up. 20px on every side of a card that is already the full width of the phone is the
+  content column paying twice.
+
+Together with the headline, 4,324px → 4,200px on `be-nl` and 3,258px → 3,114px on `en`. Small, and
+the kind of thing that only shows up measured — `node scripts/shots.mjs home` prints the page height
+and the overflow report, which is the half that matters.
+
 ## Files
 
 - `resources/js/Pages/Home.tsx`
@@ -219,6 +277,7 @@ Two smaller phone fixes in the same pass:
 - [daily-cove.md](daily-cove.md) — the edition this page opens with
 - [brand-mark.md](brand-mark.md) — the mark, its palette, and everywhere else it appears
 - [search-help.md](search-help.md) — linked from under the hero search box
+- [list-taxonomy.md](list-taxonomy.md) — the three kinds the new-list button asks you to choose between
 
 ## The Discover band gained a fourth card
 

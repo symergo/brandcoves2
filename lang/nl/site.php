@@ -456,6 +456,7 @@ return [
         'add_live_title_note' => 'De titel en de prijs komen rechtstreeks van :shop, dus die kun je hier niet aanpassen.',
         'back' => 'Terug',
         'new_list' => 'Nieuw lijstje',
+        'make_new' => 'Maak een nieuw lijstje',
         'list_name' => 'Naam van het lijstje',
         'create' => 'Lijstje maken',
         'for_someone' => 'Dit lijstje is voor iemand anders',
