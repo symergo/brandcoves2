@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Notification;
 use App\Services\Wishlist\AddingMode;
+use App\Services\Wishlist\ListOptions;
 use App\Support\Analytics;
 use App\Support\CookieConsent;
 use App\Support\CurrentMarket;
@@ -142,11 +143,35 @@ class HandleInertiaRequests extends Middleware
              * to be *visible* on every page — an invisible mode that quietly
              * redirects saves is worse than no mode at all.
              *
-             * This is the only wishlist data in the shared payload, and it
-             * stays that way deliberately: `savedItems.ts` fetches the rest
-             * lazily precisely so pages that render no cards pay nothing.
+             * It is no longer the only wishlist data here; see `lists` below.
              */
             'savingTo' => fn () => app(AddingMode::class)->current(Owner::fromRequest($request)),
+
+            /*
+             * The lists the save picker offers, so it does not have to ask.
+             *
+             * This reverses the note that used to sit above `savingTo` — that
+             * `savedItems.ts` fetches everything else lazily so pages with no
+             * cards pay nothing. The reason it changed: the picker fetched
+             * `/list-options` **on every open**, per card, and that request sat
+             * between pressing the chevron and seeing the rows. A page where
+             * somebody opens three pickers made three identical requests for a
+             * fact about them that had not changed since they signed in.
+             *
+             * Signed in only, so the anonymous majority still pays nothing —
+             * the same reasoning as `unreadCount`, and the picker is
+             * unreachable while signed out anyway (`requireAccount()` opens the
+             * sign-in dialog instead). For everybody else it is one indexed
+             * query per response, against N fetches per page, and it arrives in
+             * a payload that was being sent regardless.
+             *
+             * Which list holds a given product is deliberately *not* here: that
+             * is a fact about the product rather than about the person, and it
+             * rides with the rest of them in `savedItems`.
+             */
+            'lists' => fn () => $request->user() === null
+                ? []
+                : ListOptions::forPicker(Owner::fromRequest($request)),
 
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

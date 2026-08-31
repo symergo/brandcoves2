@@ -256,12 +256,83 @@ Looking at the result immediately found three things reading could not:
 
 The wish list went from 9108px to 5814px tall — a third of it gone, none of it content.
 
+## The prose came off, and the controls say it instead (2026-08-31)
+
+Everything above is the argument for *explaining* a list in sentences. This pass takes most of them
+away, and the reason is not that the argument was wrong — it is that the explanations were being
+read by the owner, on every visit, forever, about a list they made.
+
+Four changes, all on `Lists/Show`:
+
+**The tool chips say what is switched on.** `ListTools` rendered five identical pills, so the only
+way to learn whether this list had an occasion, a quiz or a live link was to open each panel in turn
+and read it. Each tab now carries a `set` flag next to `show` — the *stored* fact its own panel
+writes, never a proxy for it — and a set tab renders in sage with a filled dot and an `sr-only`
+`lists.tool_on`. Open still wins visually: accent is "you are looking at this one", and if a set tab
+matched it the row would read as two panels open at once.
+
+| Chip | Lit when |
+|---|---|
+| Share | `visibility != private` **and** there is a `shareUrl` — the link is what the panel hands out |
+| Occasion | `eventType` **or** `eventDate` — a date with no type is still an answer |
+| Quiz | a `ListQuiz` exists. `quizPlays` is how it *went*, which is a fact for inside the panel |
+| Hand over | **never.** See below |
+| Secret Santa | some membership is `attached` — being in a group is why the chip exists at all |
+
+Handing over is an act, not a setting. `canHandOver` is already false once it has happened, so the
+chip disappears rather than lighting up — and `handoverEmail` is only the recipient's address
+prefilled for convenience, so lighting the chip off *that* would announce a handover nobody has
+offered.
+
+**The chips moved above the pot.** They were rendered after `Pledge`, so on the one kind of list
+that has a pot the controls started a card and a half down the page. Under the header on every kind
+is what makes their position learnable.
+
+**Delete is an icon in the corner.** It was the widest button on the page, level with the title —
+the only destructive control also the first thing the eye met. The words survive as `aria-label`
+and `title`.
+
+**Two paragraphs are gone.** The shared/private *sentence* became a chip beside the kind badge,
+using `lists.shared_short` / `private_short`, the same shape the index cards use; and the kind
+sentence — `useListKindWords().sentence`, the `lists.about_*` keys — is no longer rendered anywhere.
+So is the owner's "claims are hidden from you, that is the point" banner (`lists.owner_view_note`),
+which still appears on `Lists/Shared`, where a reader arriving from a link has not just come from
+the settings that caused it.
+
+That last one is a real loss against the argument above, and it is worth naming rather than
+smoothing over: the private sentence was **the only place the mechanisms were taught**. What
+survives is the case that section itself calls the clearest — `lists.quiz_unlocks`, still rendered
+on a private `mine` list, because a gated tab cannot teach that it exists. The rest is now taught by
+the chips being lit or not, which is a weaker teacher for a feature you have never heard of and a
+much better one for the state of a list you already own.
+
+`useListKindWords().sentence` and the `lists.about_*`, `lists.shared_badge` and `lists.private_badge`
+strings are left in place, unused. They are the whole of that argument, four languages deep, and the
+next person to want a teaching sentence should find it rather than rewrite it.
+
+### Two more, from reading the Dutch out loud
+
+**"Vraag het ze zelf" is "Vraag het hen zelf".** *Ze* as an indirect object is spoken Northern
+Dutch; a Belgian reader hears it as sloppy, and `be-nl` and `nl-nl` share one catalogue. Changed
+with the two strings that quote or echo it — `handover.handover_step1` names the button in its
+instructions, so a rename that missed it would have pointed people at a button that no longer
+existed.
+
+**And it only belongs on a list about somebody else.** The ask-them card is gated on the kind now
+(`for_someone` or `group`) as well as on there being a recipient. `ListMaker` derives one from the
+other, so on today's data those are the same condition — but "ask them what they want" on a wish
+list of your own is the page asking you to interview yourself, and a kind derived somewhere else is
+exactly the sort of thing that stops being derived.
+
 ## Files
 
 - `resources/js/Components/ListKindBadge.tsx` — the badge, and the one place the sentence is chosen
 - `resources/js/Pages/Lists/Show.tsx`, `Index.tsx`
-- `lang/*/site.php` — `lists.kind_*`, `lists.about_*`, `lists.new_*_body`, `lists.quiz_unlocks`,
-  `lists.shop_for`, `lists.shared_empty`
+- `resources/js/Components/ListTools.tsx` — the chip row, and the `set` flag per tool
+- `app/Services/Wishlist/ListMaker.php` — the recipient decides the kind, which the ask card mirrors
+- `lang/*/site.php` — `lists.kind_*`, `lists.new_*_body`, `lists.quiz_unlocks`, `lists.shop_for`,
+  `lists.shared_empty`, `lists.tool_on`, `lists.shared_short` / `private_short`. `lists.about_*`,
+  `lists.shared_badge` and `lists.private_badge` are kept but no longer rendered
 
 ## See also
 

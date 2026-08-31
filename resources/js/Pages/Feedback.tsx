@@ -65,8 +65,18 @@ export default function Feedback({ path }: Props) {
             <Head title={t('feedback.title')} />
 
             <div className="mx-auto max-w-2xl px-4 py-10">
+                {/*
+                  The heading is the whole invitation, and nothing sits under it.
+
+                  There used to be a paragraph listing four kinds of mistake —
+                  a stale price, a dead link, the wrong brand, a machine-written
+                  sentence — plus a heading above the box repeating the
+                  question. Three pieces of copy in front of a form with one
+                  field that matters, all of them saying "tell us what is
+                  broken", on a page that also wants to hear that something is
+                  good.
+                */}
                 <h1 className="text-3xl font-semibold tracking-tight">{t('feedback.title')}</h1>
-                <p className="mt-3 text-ink-soft">{t('feedback.intro')}</p>
 
                 {/*
                   The confirmation replaces nothing and hides nothing — the form
@@ -82,7 +92,14 @@ export default function Feedback({ path }: Props) {
 
                 <form onSubmit={submit} className="mt-8 space-y-5">
                     <label className="block text-sm font-medium">
-                        {t('feedback.message_label')}
+                        {/*
+                          Named for a screen reader, and only for one. A single
+                          textarea directly under the heading needs no visible
+                          label — the heading is the label — but an unlabelled
+                          field is not a field anybody can fill in without
+                          sight.
+                        */}
+                        <span className="sr-only">{t('feedback.message_label')}</span>
                         <textarea
                             required
                             autoFocus

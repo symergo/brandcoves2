@@ -201,6 +201,47 @@ class SaveToListTest extends TestCase
     }
 
     #[Test]
+    public function saving_to_a_list_does_not_move_it_in_the_picker(): void
+    {
+        $user = User::factory()->create();
+        $group = $this->group();
+
+        // Distinct seconds, so the order under test is a real order rather than
+        // whatever the database happened to return.
+        $older = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Older',
+            'market' => Market::BeNl,
+            'created_at' => now()->subDays(2),
+        ]);
+
+        Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Newer',
+            'market' => Market::BeNl,
+            'created_at' => now()->subDay(),
+        ]);
+
+        $before = array_column($this->actingAs($user)->getJson('/be-nl/list-options')->json('lists'), 'title');
+
+        // `ItemSaver` touches the list on every save. Ordered by `updated_at`,
+        // that put the list you just used at the top of its section — so the
+        // next card's picker had different rows under the same pixels, and the
+        // mistake it produces is a save into the list one line off.
+        $this->actingAs($user)->post('/be-nl/list-items', [
+            'group_id' => $group->id,
+            'wishlist_id' => $older->id,
+        ]);
+
+        $after = array_column($this->actingAs($user)->getJson('/be-nl/list-options')->json('lists'), 'title');
+
+        $this->assertSame(['Newer', 'Older'], $before);
+        $this->assertSame($before, $after);
+    }
+
+    #[Test]
     public function asking_without_a_product_reports_no_membership(): void
     {
         $user = User::factory()->create();
@@ -419,6 +460,38 @@ class SaveToListTest extends TestCase
         $this->assertSame([$onBoth->id], $body['listGroupIds']);
     }
 
+    #[Test]
+    public function saved_items_says_which_list_holds_each_product(): void
+    {
+        $user = User::factory()->create();
+        $group = $this->group();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        $this->actingAs($user)->postJson('/be-nl/list-items', [
+            'group_id' => $group->id,
+            'wishlist_id' => $list->id,
+        ])->assertOk();
+
+        /*
+         * The picker draws its current-list marker from this, and deletes
+         * through the `itemId` in it. It used to ask `/list-options?group_id=`
+         * for the same two fields on every open — a request between the press
+         * and the rows, for something these very rows already knew.
+         */
+        $item = $list->items()->firstOrFail();
+
+        $this->actingAs($user)
+            ->getJson('/be-nl/saved-items')
+            ->assertOk()
+            ->assertJsonPath("holders.{$group->id}.listId", $list->id)
+            ->assertJsonPath("holders.{$group->id}.itemId", $item->id);
+    }
+
     /**
      * Asking about a list you have no part in is a read of somebody's list
      * membership, and is gated like one — empty, rather than its contents.
@@ -443,6 +516,8 @@ class SaveToListTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->getJson("/be-nl/saved-items?list={$theirs->id}")
             ->assertOk()
-            ->assertExactJson(['groupIds' => [], 'listGroupIds' => []]);
+            // `holders` says which list holds each saved product; a stranger's
+            // list contributes nothing to it, exactly as it contributes no ids.
+            ->assertExactJson(['groupIds' => [], 'holders' => [], 'listGroupIds' => []]);
     }
 }

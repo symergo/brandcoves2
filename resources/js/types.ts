@@ -32,6 +32,18 @@ export interface AuthUser {
 /** Nested translation tree, as returned by Lang::get('site'). */
 export type Translations = { [key: string]: string | Translations }
 
+/**
+ * A list the save picker can offer, as shared on every response for a signed-in
+ * visitor. Deliberately without membership: which list holds a given product
+ * comes from `savedItems`, because that is a fact about the product.
+ */
+export interface ListOption {
+    id: string
+    title: string
+    kind: 'mine' | 'for_someone' | 'group'
+    recipient: string | null
+}
+
 /** The list currently being filled, when the visitor is in adding mode. */
 export interface SavingTo {
     id: string
@@ -53,6 +65,8 @@ export interface SharedProps {
     translationVersion: string
     unreadCount: number
     savingTo: SavingTo | null
+    /** Empty while signed out — the picker is unreachable there anyway. */
+    lists: ListOption[]
     flash: { success?: string; error?: string; status?: string }
     [key: string]: unknown
 }

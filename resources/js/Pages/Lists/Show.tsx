@@ -5,7 +5,7 @@ import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import ListTools, { type Panel } from '../../Components/ListTools'
-import ListKindBadge, { type ListKind, useListKindWords } from '../../Components/ListKindBadge'
+import ListKindBadge, { type ListKind } from '../../Components/ListKindBadge'
 import ShareRow from '../../Components/ShareRow'
 import { markRemoved } from '../../savedItems'
 import { useTranslations } from '../../useTranslations'
@@ -127,7 +127,6 @@ export default function ListShow({
     const [panel, setPanel] = useState<Panel | null>(null)
     // The ask-them link, revealed on press rather than shown outright.
     const [asking, setAsking] = useState(false)
-    const { sentence } = useListKindWords()
 
     return (
         <>
@@ -146,26 +145,29 @@ export default function ListShow({
                           which this page has never said out loud.
                         */}
                         <ListKindBadge kind={list.kind as ListKind} />
+                        {/*
+                          Shared or private, as a chip rather than the two
+                          sentences that used to sit under the title — one
+                          naming the state, one explaining what the state lets
+                          you do. The row of tools below now lights up per
+                          option, so the explanation had become a caption for
+                          controls that say it themselves. Same shape as the
+                          badge on the index card, so a list reads the same in
+                          both places.
+                        */}
+                        <span
+                            className={
+                                shared
+                                    ? 'rounded-full bg-sage/15 px-2 py-0.5 text-[11px] text-sage'
+                                    : 'rounded-full bg-line/60 px-2 py-0.5 text-[11px] text-ink-soft'
+                            }
+                        >
+                            {shared ? t('lists.shared_short') : t('lists.private_short')}
+                        </span>
                     </div>
                     {list.recipient && (
                         <p className="mt-1 text-ink-soft">{list.recipient.name}</p>
                     )}
-                    {/* A badge, not a sentence. The state matters; the
-                        explanation of the state does not need a paragraph every
-                        time. Beside the title, where it describes the thing it
-                        is true of. */}
-                    <p className="mt-1 text-xs text-ink-soft">
-                        {shared ? t('lists.shared_badge') : t('lists.private_badge')}
-                    </p>
-                    {/*
-                      And what that means you can do with it, read against
-                      whether anybody else is actually on the list. A private
-                      list of any kind offers none of the mechanisms, so this
-                      says what the list is now and then what sharing would do.
-                    */}
-                    <p className="mt-2 max-w-prose text-sm text-ink-soft">
-                        {sentence(list.kind as ListKind, shared)}
-                    </p>
                     {/*
                       The quiz, named on the one list it cannot appear on.
 
@@ -185,29 +187,77 @@ export default function ListShow({
                 </div>
 
                 {/*
-                  Share has moved down into `ListTools`, next to the other
-                  things you can do with this list. Two copies of one control on
-                  one screen is not twice as findable, and the row below is
-                  where somebody looks for what a list can do — this header is
-                  about getting rid of it.
+                  All this header still holds is getting rid of the list.
+
+                  Share moved down into `ListTools`, next to the other things
+                  you can do with one — two copies of a control on one screen is
+                  not twice as findable, and that row is where somebody looks
+                  for what a list can do.
                 */}
-                <div className="flex flex-wrap items-center gap-2">
-                    {access.isOwner && (
-                        <button
-                            onClick={() => {
-                                if (confirm(t('lists.delete_confirm'))) {
-                                    router.delete(`${base}/lists/${list.id}`)
-                                }
-                            }}
-                            aria-label={t('lists.delete_list')}
-                            title={t('lists.delete_list')}
-                            className="rounded-lg border border-line px-3 py-2 text-sm text-ink-soft hover:border-accent hover:text-accent"
+                {access.isOwner && (
+                    <button
+                        onClick={() => {
+                            if (confirm(t('lists.delete_confirm'))) {
+                                router.delete(`${base}/lists/${list.id}`)
+                            }
+                        }}
+                        aria-label={t('lists.delete_list')}
+                        title={t('lists.delete_list')}
+                        className="shrink-0 rounded-lg border border-line p-1.5 text-ink-soft transition hover:border-accent hover:text-accent"
+                    >
+                        {/*
+                          An icon, not the words "Delete this list".
+
+                          The only destructive control on the page was also its
+                          widest button, sitting level with the title and
+                          pulling the eye first on a screen that is about what
+                          is on the list. Small and cornered is the right
+                          weight for something you should have to go and find.
+                          The words survive as the label and the tooltip.
+                        */}
+                        <svg
+                            aria-hidden
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            className="h-4 w-4"
                         >
-                            {t('lists.delete_list')}
-                        </button>
-                    )}
-                </div>
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M4 7h16M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m2 0v12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V7M10 11v6M14 11v6"
+                            />
+                        </svg>
+                    </button>
+                )}
             </header>
+
+            {/*
+              Straight under the title, above everything else on the page.
+
+              The row of tools is what you do *to* a list, and it was sitting
+              below the group pot — so on the one kind of list that has a pot,
+              the controls started a card and a half down. Directly under the
+              heading it is the same place on every kind, which is what makes it
+              learnable.
+            */}
+            <ListTools
+                base={base}
+                list={list}
+                access={access}
+                collaborators={collaborators}
+                suggestions={suggestions}
+                canHandOver={canHandOver}
+                handoverEmail={handoverEmail}
+                registryOptions={registryOptions}
+                deliveryAddress={deliveryAddress}
+                quizUrl={quizUrl}
+                quizPlays={quizPlays}
+                santaMemberships={santaMemberships}
+                panel={panel}
+                onPanel={setPanel}
+            />
 
             {/*
               The pot, on the page the organiser actually works from.
@@ -229,44 +279,23 @@ export default function ListShow({
             )}
 
             {/*
-              "Claims are hidden from you, that is the point."
-
-              Not shown to an owner who has asked to see them — invariant #4 is
-              a default now, and explaining a state somebody has turned off is
-              worse than saying nothing.
-            */}
-            {list.claimable && shared && !list.ownerSeesClaims && (
-                <p className="mt-3 rounded-card border border-line bg-card p-3 text-sm text-ink-soft">
-                    {t('lists.owner_view_note')}
-                </p>
-            )}
-
-            <ListTools
-                base={base}
-                list={list}
-                access={access}
-                collaborators={collaborators}
-                suggestions={suggestions}
-                canHandOver={canHandOver}
-                handoverEmail={handoverEmail}
-                registryOptions={registryOptions}
-                deliveryAddress={deliveryAddress}
-                quizUrl={quizUrl}
-                quizPlays={quizPlays}
-                santaMemberships={santaMemberships}
-                panel={panel}
-                onPanel={setPanel}
-            />
-
-            {/*
               Lane one: what they actually asked for.
 
               The payoff of linking a recipient to an account. Claiming here
               hits the same endpoint as the shared-list page — one claim
               mechanism, so the privacy rule is enforced in one place. They
               never see any of this on their own list.
+
+              Gated on the kind as well as on the recipient. `ListMaker` derives
+              one from the other — a list with a recipient is `for_someone` or
+              `group`, a list without is `mine` — so on today's data the two
+              conditions are the same condition. Written out anyway, because
+              "ask them what they want" on a wish list of your own would be the
+              page asking you to interview yourself, and a kind that is derived
+              somewhere else is exactly the sort of thing that stops being
+              derived. `ListQuizController` names its kind for the same reason.
             */}
-            {target !== null && (
+            {target !== null && (list.kind === 'for_someone' || list.kind === 'group') && (
                 <section className="mt-10">
                     <h2 className="text-lg font-medium">
                         {t('lists.asked_for', { name: target.name })}

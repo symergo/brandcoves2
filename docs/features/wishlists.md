@@ -212,6 +212,141 @@ variants now follow one rule, **not saved → save; saved → open the picker**,
 narrow chevron so that filing straight into a named list does not first cost a save into the wrong
 one.
 
+### And it saves where the last one went (2026-08-31)
+
+The bookmark saves without asking, and until now "without asking" meant *into the default list*. So
+filling a list for one person from a search grid was: press the chevron and pick, on every card — or
+press the bookmark forty times and then move forty items. The fast control was fast in the wrong
+direction, and the only escape was adding mode, which you have to already know exists.
+
+An unqualified save now goes wherever the last save went. `resources/js/lastList.ts` keeps
+`{id, title}` in `localStorage`, keyed by user id, and every successful save writes to it — from the
+picker, from the bookmark, from a list created in the same click. The precedence is the one this
+codebase already uses for the market:
+
+1. an explicit `wishlist_id` or `new_list` — you said it
+2. `savingTo`, adding mode — you turned it on, and it is visible on screen
+3. the remembered list — a guess, from what you did last
+4. the server's default list — what happened before any of this
+
+**A guess has to say so.** The control's label and tooltip name the destination (`lists.save_to`,
+"Bewaar in Wat Aida leuk zou vinden") instead of the generic "Save to a list", and the toast names
+where it landed, as it already did. A bookmark that quietly files things into a list you have
+forgotten choosing would be worse than the default it replaces.
+
+**A remembered list can be deleted.** From the server that is a 404 on a request the reader never
+knowingly made, so it is recovered from rather than reported: forget the memory, retry the save
+unqualified, and it lands in the default list. A 403 is treated the same way — a collaborator
+demoted to viewer keeps the list in `ListAccess::scope()` and fails `canEdit`, which would otherwise
+stick to that browser until they saved somewhere by hand. Only for a *guess*: a list picked by name
+that fails is a real failure and is shown.
+
+**Per browser and per account, deliberately.** It is a habit on one device rather than a fact about
+an account, and a shared laptop must not land one person's saves in another's list. Every
+`localStorage` access is guarded — Safari in private mode throws rather than returning null — and
+every failure path falls back to the default list. Null on the server and in the first client paint,
+through `useSyncExternalStore` with a null `getServerSnapshot`, so the hydrated markup matches.
+
+### One list at a time, and a menu of options rather than a set of ticks (2026-08-31)
+
+The picker was a checklist: a product could sit on four lists at once, and each row was an
+independent toggle. It is a **menu of options** now. One list holds a product; picking a row puts it
+there and takes it off wherever it was.
+
+It passed through a radio group on the way, and the reason that was not the answer either is worth
+keeping. A radio group stops the multiple selection, but it still puts a control box in front of
+every list, and it makes the chosen row mean something no other row means — press it, and the
+product leaves every list, from a widget whose whole grammar says it *selects*. So there are no
+boxes at all:
+
+- Every row is one option — *put it here* — and pressing any of them moves it there.
+- Where it currently **is** gets reported rather than offered: marked, `aria-current="true"`, and
+  inert, because "put it where it already is" is not an action.
+- The other rows read "Move to :list" (`lists.move_to`) while some list holds it, and "Save to
+  :list" when none does. The row says which of the two presses it is.
+- Taking it off the lists altogether is its own option at the **top** of the menu — one word,
+  `lists.remove`, above the marked row it acts on, with `lists.remove_from` naming that list in the
+  tooltip. It sat at the foot first, on the usual reasoning that a destructive thing belongs out of
+  the way. That is the wrong reading here: "get this off my list" is a question people arrive with,
+  and burying it under eight lists means reading all of them to discover it is possible. It appears
+  only when a list holds the product, so it is never in the way of a plain save.
+- Creating a list from the picker moves it too. Naming a new list for this product is the same
+  intention as picking an existing one, and it was the last path back to two holders.
+- **Save first, then delete.** `save()` returns whether it landed, and the old row is deleted only on
+  a `true`, with `kept: true` so the bookmark does not go hollow in the middle of putting something
+  somewhere. Being briefly on both lists is the safe way for this to fail; the other order loses the
+  product entirely in response to a press that meant "put it over there".
+
+Reporting membership per row is untouched, and it is still the only way to answer "did I already
+save this?" by looking. What was wrong was the *offer*: the reason to open this menu is almost
+always **this one, not that one**, and expressing a move as an add plus a hunt for the old row is
+exactly how a product ends up on two lists, neither of which is the one you meant.
+
+### The picker asks the server nothing to open
+
+The rows used to arrive over HTTP. Opening the panel called `GET /list-options?group_id=`, per card,
+on every open — so the wait sat between pressing the chevron and seeing the rows, and a page where
+somebody opened three pickers made three identical requests for a fact about them that had not
+changed since they signed in. Both halves of that payload had a better home:
+
+- **The lists** are a fact about the person, so they ride in the shared Inertia props (`lists`),
+  shaped by `App\Services\Wishlist\ListOptions` — the same class `/list-options` uses, so the two
+  cannot disagree about the order. Signed in only: the anonymous majority pays nothing, and the
+  picker is unreachable while signed out anyway, because `requireAccount()` opens the sign-in dialog
+  instead. This reverses the note that used to sit in `HandleInertiaRequests` — *"savedItems fetches
+  the rest lazily precisely so pages that render no cards pay nothing"* — and the trade is stated
+  there: one indexed query per response for signed-in sessions, against N fetches per page for the
+  people who actually use the control.
+- **Which list holds this product** comes from `/saved-items`, which the page already fetches once,
+  lazily, the first time a card mounts. It queried exactly the right rows and threw two columns
+  away; it now returns `holders`, a `groupId → { listId, itemId }` map. That is only honest because a
+  product lives on one list — with the old checklist it would have been a list per product.
+
+A list created *inside* the picker is the one thing the props cannot know about, since they were
+serialised before it existed. That is one `router.reload({ only: ['lists'] })` on the rare press that
+creates a list, rather than a fetch on every open to cover it.
+
+What went with the fetch: `refresh()`, the `options` and `failed` state, the on-open effect, the
+loading line, the retry button, `lists.options_failed` / `lists.retry` / `lists.loading_lists` in
+four languages, and the `recipients` array that was fetched on every open and read by nothing.
+
+Measured in the browser, per interaction:
+
+| | before | now |
+|---|---|---|
+| open the panel | `GET /list-options` | **nothing** |
+| pick a list | `POST` + `GET /list-options` | `POST` |
+| move to another | `POST` + `GET` + `DELETE` + `GET` | `POST` + `DELETE` |
+| take it off | `DELETE` + `GET` | `DELETE` |
+
+`remove()` no longer recomputes membership across every list either: with one holder, removing from
+it means the product is on none — an answer already in hand, and not worth a round trip to be told.
+
+**The marker moves on the response, not on the press.** The optimistic `markSaved` before the request
+can only say *that* something is saved; which list it landed in is not known until the reply names
+it. The second `markSaved` — the one carrying the holder — is what moves the marker, and without it
+picking a different list did nothing you could see, while the save itself worked perfectly.
+
+The server still allows a product on several lists, and older items may sit that way — nothing
+migrates them. This is a rule about what the picker offers, not an invariant, and the first press on
+such an item consolidates it.
+
+### The picker stopped reordering itself
+
+`/list-options` ordered by `latest('updated_at')`, and `ItemSaver` calls `$list->touch()` on every
+save. So saving to a list moved it to the top of its section, and the next card's picker had
+different rows under the same pixels — a menu that rearranges itself in response to being used, on
+the one control where that is actively harmful: the mistake it produces is a save into the list one
+line off, which is the mistake the ticks and the undo exist to recover from.
+
+It is `is_default` first, then creation order, newest first. The default list is pinned because it
+is where a new account's saves land; everything below it is fixed by a timestamp nothing a person
+does afterwards can change. `saving_to_a_list_does_not_move_it_in_the_picker` holds it there.
+
+Note that this is the *opposite* of what the remembered destination does, and deliberately: recency
+decides where an unqualified save **goes**, and never where a row **sits**. One is a guess you can
+override by looking; the other is the thing you look at.
+
 ### Two smaller things that were silently broken
 
 - **`place()` clamped `left` and never `top`.** `top` was `box.bottom + 6` with no bound at all, so a
@@ -338,7 +473,11 @@ deliberately. If the panel ever becomes a dialog, the escape has to come back wi
   `app/Listeners/ReplayPendingSave.php`
 - `resources/js/http.ts` — one CSRF `fetch`, written once
 - `resources/js/Components/SaveToast.tsx`, `resources/js/saveToast.ts`
-- `resources/js/Components/SaveToList.tsx`, `resources/js/savedItems.ts`
+- `resources/js/Components/SaveToList.tsx`, `resources/js/savedItems.ts` — the picker and the
+  store that tells it where each saved product lives
+- `resources/js/lastList.ts` — the remembered destination for an unqualified save
+- `app/Services/Wishlist/ListOptions.php` — one definition of the menu, for the props and the
+  endpoint; `HandleInertiaRequests` shares it as `lists`
 - `tests/Feature/SaveToListTest.php`, `tests/Feature/PendingSaveTest.php`
 - See [list-taxonomy.md](list-taxonomy.md#filling-one-list-rather-than-saving-one-product) for the
   adding mode

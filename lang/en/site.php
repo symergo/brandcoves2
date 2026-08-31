@@ -545,6 +545,7 @@ return [
         'default_badge' => 'Default',
         'shared_short' => 'Shared',
         'private_short' => 'Private',
+        'tool_on' => 'on',
         'find_things' => 'Find things to add',
         'manual_add' => 'Add something yourself',
         'manual_title' => 'What is it?',
@@ -559,9 +560,6 @@ return [
         // The picker fetch failed, which is not the same as owning no lists —
         // and offering "+ New list" to someone whose connection dropped is how
         // a duplicate of a list they already have gets made.
-        'options_failed' => 'Could not load your lists.',
-        'retry' => 'Try again',
-        'loading_lists' => 'Loading your lists…',
         'save_failed' => 'That did not save. Try again?',
         // Filling one named list, rather than saving one product.
         'adding_to' => 'Adding to :list',
@@ -607,6 +605,7 @@ return [
         'saved' => 'Saved',
         'save_to_list' => 'Save to a list',
         'save_to' => 'Save to :list',
+        'move_to' => 'Move to :list',
         'remove_from' => 'Remove from :list',
         'delete_list' => 'Delete this list',
         'delete_confirm' => 'Delete this list and everything in it?',
@@ -1150,12 +1149,11 @@ return [
     |
     */
     'feedback' => [
-        'seo_title' => 'Tell us what is wrong',
-        'seo_description' => 'Report a wrong price, a dead link or anything else that is not right, and we will fix it.',
-        'title' => 'Tell us what is wrong',
-        'intro' => 'A price that is out of date, a link that goes nowhere, a product filed under the wrong brand, a sentence that reads like a machine wrote it — tell us and we will fix it. You do not need an account.',
-        'message_label' => 'What is wrong?',
-        'message_placeholder' => 'The price on this page is €20 lower at the shop itself.',
+        'seo_title' => 'Tell us what could be better, or pay us a compliment',
+        'seo_description' => 'Say what could be better — a price that is out of date, a link that goes nowhere — or tell us what you like. You do not need an account.',
+        'title' => 'Tell us what could be better, or pay us a compliment',
+        'message_label' => 'Your message',
+        'message_placeholder' => 'What is going wrong, what is missing, what would you do differently? Or just tell us what you like about GiftCoves :D',
         'path_label' => 'Which page?',
         'path_placeholder' => '/en/p/1234/…',
         'email_label' => 'Your email (optional)',

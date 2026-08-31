@@ -1,11 +1,20 @@
-import { usePage } from '@inertiajs/react'
+import { router, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { countAdded, countRemoved } from '../addingMode'
 import { HttpError, send } from '../http'
 import {
+    forget as forgetLastList,
+    remember as rememberLastList,
+    serverSnapshot as lastListOnServer,
+    snapshot as lastListFor,
+    subscribe as subscribeLastList,
+} from '../lastList'
+import {
     activeSnapshot,
+    holderSnapshot,
     load,
+    serverHolders,
     markRemoved,
     markSaved,
     snapshot,
@@ -14,29 +23,8 @@ import {
 } from '../savedItems'
 import { show as showToast } from '../saveToast'
 import { useSignIn } from '../signIn'
-import type { SharedProps } from '../types'
+import type { ListOption, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
-
-interface ListOption {
-    id: string
-    title: string
-    /**
-     * All three kinds. This was typed as the two the picker knew about, and the
-     * filters below matched on them exactly — so a `group` list existed, was
-     * returned by `/list-options`, and was invisible in the one control that
-     * saves to a list.
-     */
-    kind: 'mine' | 'for_someone' | 'group'
-    recipient: string | null
-    items: number
-    /** The row this product already occupies on that list, if it is on it. */
-    itemId: number | null
-}
-
-interface Options {
-    lists: ListOption[]
-    recipients: { id: string; name: string }[]
-}
 
 interface SaveResult {
     itemId: number
@@ -110,7 +98,7 @@ export default function SaveToList({
     price?: number | null
     compact?: boolean
 }) {
-    const { market, auth, savingTo } = usePage<SharedProps>().props
+    const { market, auth, savingTo, lists } = usePage<SharedProps>().props
     const signIn = useSignIn()
     const { t } = useTranslations()
 
@@ -127,6 +115,12 @@ export default function SaveToList({
     const activeIds = useSyncExternalStore(subscribe, activeSnapshot, serverSnapshot)
 
     /*
+     * Which list holds each saved product — the other half of the same fetch,
+     * and the reason this panel opens without asking the server anything.
+     */
+    const holders = useSyncExternalStore(subscribe, holderSnapshot, serverHolders)
+
+    /*
      * While a list is being filled, the bookmark reports membership of *that*
      * list. "It is on one of your lists somewhere" is the right answer to the
      * question somebody browsing has, and the wrong answer to the question
@@ -135,9 +129,22 @@ export default function SaveToList({
     const relevant = savingTo ? activeIds : savedIds
     const saved = groupId !== undefined && relevant !== null && relevant.has(groupId)
 
+    /*
+     * Where a bookmark press lands, when nothing else has said.
+     *
+     * See `lastList.ts`. Read through `useSyncExternalStore` for the same
+     * reason `savedItems` is: a save on one card has to update the label on the
+     * other thirty-nine, and per-component state cannot do that. Null in the
+     * server pass, so the first client paint matches the markup it hydrates.
+     */
+    const userId = auth.user?.id ?? null
+    const lastList = useSyncExternalStore(
+        subscribeLastList,
+        useCallback(() => lastListFor(userId), [userId]),
+        lastListOnServer,
+    )
+
     const [open, setOpen] = useState(false)
-    const [options, setOptions] = useState<Options | null>(null)
-    const [failed, setFailed] = useState(false)
     const [creating, setCreating] = useState<null | 'mine' | 'for_someone' | 'group'>(null)
     const [name, setName] = useState('')
     const [place, setPlace] = useState<Placement | null>(null)
@@ -152,7 +159,17 @@ export default function SaveToList({
         ? { group_id: groupId }
         : { source, external_id: externalId, title, image_url: imageUrl, price }
 
-    const destination = savingTo ? t('lists.save_to', { list: savingTo.title }) : t('lists.save_to_list')
+    /*
+     * Named, in the order the save itself resolves: the list being filled, then
+     * the one you used last, then "a list" when neither is known. A bookmark
+     * that files things somewhere without saying where would be worse than the
+     * default it replaces, and this label plus the toast are where it says.
+     */
+    const destination = savingTo
+        ? t('lists.save_to', { list: savingTo.title })
+        : lastList
+          ? t('lists.save_to', { list: lastList.title })
+          : t('lists.save_to_list')
 
     /*
      * A phone gets a sheet, not a popover.
@@ -220,43 +237,6 @@ export default function SaveToList({
         load(market.key, Boolean(auth.user), savingTo?.id ?? null)
     }, [market.key, auth.user, savingTo?.id])
 
-    /*
-     * Asked for with the product, so each row can say whether it already holds
-     * it. Without that the picker is a one-way door: every list looks equally
-     * empty, and saving to the wrong one — they are a line apart — can only be
-     * undone by going and finding that list.
-     */
-    const refresh = useCallback(async (): Promise<Options> => {
-        const query = groupId === undefined ? '' : `?group_id=${groupId}`
-
-        try {
-            const fresh: Options = await fetch(`/${market.key}/list-options${query}`, {
-                headers: { Accept: 'application/json' },
-            }).then((r) => r.json())
-
-            setOptions(fresh)
-            setFailed(false)
-
-            return fresh
-        } catch {
-            /*
-             * An empty picker used to be the fallback here, which made a
-             * dropped connection indistinguishable from "you have no lists" —
-             * and the second of those invites somebody to create a duplicate of
-             * a list they already own.
-             */
-            setFailed(true)
-
-            return { lists: [], recipients: [] }
-        }
-    }, [groupId, market.key])
-
-    useEffect(() => {
-        if (!open || options || failed) return
-
-        void refresh()
-    }, [open, options, failed, refresh])
-
     useEffect(() => {
         if (!open) return
 
@@ -323,8 +303,15 @@ export default function SaveToList({
      *              so it stays open and shows the tick it just earned; naming a
      *              new list is a completed errand, so that one closes.
      */
-    async function save(extra: Record<string, unknown> = {}, close = true): Promise<void> {
-        if (busy || !(await requireAccount())) return
+    /**
+     * @returns whether the item is now on the list this call aimed at. `move()`
+     *          deletes the old row only on a `true`, because the alternative —
+     *          a failed save followed by a successful delete — takes the
+     *          product off every list in response to a press that meant "put it
+     *          over there".
+     */
+    async function save(extra: Record<string, unknown> = {}, close = true): Promise<boolean> {
+        if (busy || !(await requireAccount())) return false
 
         setBusy(true)
 
@@ -335,7 +322,14 @@ export default function SaveToList({
          * nothing. The rollback below is what keeps that honest when the
          * request does not in fact succeed.
          */
-        const chosen = (extra.wishlist_id as string | undefined) ?? savingTo?.id
+        /*
+         * Nobody named a list, so one is guessed: adding mode if it is on,
+         * otherwise wherever the last save went. An explicit `wishlist_id` or a
+         * `new_list` is not a guess and is left alone.
+         */
+        const unqualified = extra.wishlist_id === undefined && extra.new_list === undefined
+        const guess = !unqualified ? undefined : (savingTo?.id ?? lastList?.id)
+        const chosen = (extra.wishlist_id as string | undefined) ?? guess
         const ontoActive = !savingTo || chosen === savingTo.id
 
         if (groupId !== undefined) {
@@ -343,15 +337,62 @@ export default function SaveToList({
         }
 
         try {
-            const result = await send<SaveResult>(`/${market.key}/list-items`, 'POST', {
+            const body = (target?: string) => ({
                 ...payload,
                 ...extra,
-                // In adding mode an unqualified save means "onto the list I am
-                // filling", which is the whole point of the mode.
-                ...(savingTo && extra.wishlist_id === undefined && extra.new_list === undefined
-                    ? { wishlist_id: savingTo.id }
-                    : {}),
+                ...(target === undefined ? {} : { wishlist_id: target }),
             })
+
+            let result: SaveResult
+
+            try {
+                result = await send<SaveResult>(`/${market.key}/list-items`, 'POST', body(guess))
+            } catch (error) {
+                /*
+                 * The remembered list has been deleted. That is a 404 on a
+                 * request the reader did not know was being made, so it is
+                 * ours to recover from: forget it and let the save land in the
+                 * default list, which is where it would have gone anyway
+                 * before any of this existed.
+                 *
+                 * Only for a guess. A list the reader picked by name is a
+                 * different failure and must be reported.
+                 */
+                if (
+                    guess !== undefined &&
+                    guess === lastList?.id &&
+                    guess !== savingTo?.id &&
+                    error instanceof HttpError &&
+                    // Gone (404), or no longer ours to write to — a collaborator
+                    // demoted to viewer keeps the list in `ListAccess::scope()`
+                    // and gets a 403 from `canEdit`, which would otherwise stick
+                    // to this browser until they saved somewhere by hand.
+                    (error.status === 404 || error.status === 403)
+                ) {
+                    forgetLastList(userId)
+                    result = await send<SaveResult>(`/${market.key}/list-items`, 'POST', body())
+                } else {
+                    throw error
+                }
+            }
+
+            // Whatever it landed in — picked, guessed or just created — is what
+            // the next unqualified save aims at.
+            rememberLastList(userId, { id: result.listId, title: result.listTitle })
+
+            /*
+             * And where the product now is, which is what moves the marker in
+             * an open picker.
+             *
+             * The optimistic `markSaved` above runs before the request and can
+             * only say *that* it is saved; the row it landed in is not known
+             * until the response names it. Without this second call the panel
+             * kept marking the list the product was on before the press, and
+             * picking a different one did nothing you could see.
+             */
+            if (groupId !== undefined) {
+                markSaved(groupId, ontoActive, { listId: result.listId, itemId: result.itemId })
+            }
 
             setCreating(null)
             setName('')
@@ -369,11 +410,22 @@ export default function SaveToList({
 
             if (close) {
                 setOpen(false)
-                // The list set may have changed, so the next open refetches.
-                setOptions(null)
-            } else {
-                void refresh()
             }
+
+            /*
+             * A list this page has never heard of.
+             *
+             * The rows come from the shared `lists` prop, which was serialised
+             * before this list existed — so a list named here would be missing
+             * from the next picker on the same page. One partial reload of that
+             * one prop, only on the rare press that creates a list, rather than
+             * a fetch on every open to cover it.
+             */
+            if (extra.new_list !== undefined) {
+                router.reload({ only: ['lists'] })
+            }
+
+            return true
         } catch (error) {
             if (groupId !== undefined) {
                 markRemoved(groupId, ontoActive)
@@ -392,8 +444,39 @@ export default function SaveToList({
                         : t('lists.save_failed'),
                 tone: 'error',
             })
+
+            return false
         } finally {
             setBusy(false)
+        }
+    }
+
+    /**
+     * One list at a time: put it here, and take it off wherever it was.
+     *
+     * The picker was a checklist, and a product could sit on four lists at once.
+     * That answered "where have I kept this?" and asked the wrong question of
+     * the person using it — the reason to open this menu is almost always *this
+     * one, not that one*, and expressing a move as an add plus a hunt for the
+     * old row is how a product ends up on two lists neither of which is the one
+     * you meant.
+     *
+     * Sequential rather than parallel, and the delete comes second. The window
+     * where the product is on both lists is the safe order to fail in; the other
+     * one loses it entirely.
+     */
+    async function move(
+        extra: Record<string, unknown>,
+        close = false,
+        keep?: string,
+    ): Promise<void> {
+        // One holder, so one delete — read before the save, which changes it.
+        const previous = held !== null && held.listId !== keep ? held : null
+
+        if (!(await save(extra, close))) return
+
+        if (previous !== null) {
+            await remove(previous.itemId, previous.listId, true)
         }
     }
 
@@ -402,11 +485,18 @@ export default function SaveToList({
      *
      * The menu stays open: removing from the wrong list is the mistake this
      * whole path exists to make recoverable, and closing the menu would make it
-     * unrecoverable in the same click. Outside adding mode the bookmark only
-     * goes hollow once no list holds the product — it is on your lists or it is
-     * not, and one of three lists letting go does not change that answer.
+     * unrecoverable in the same click.
+     *
+     * @param kept `true` when this delete is the second half of a move, so the
+     *             product is still on the list it went to. Without it the
+     *             bookmark would go hollow in the middle of putting something
+     *             somewhere.
+     *
+     * This used to refetch every list and recompute membership across all of
+     * them. One list holds a product now, so removing from it means it is on
+     * none — an answer already in hand, and not worth a round trip.
      */
-    async function remove(itemId: number, listId: string): Promise<void> {
+    async function remove(itemId: number, listId: string, kept = false): Promise<void> {
         if (busy) return
 
         setBusy(true)
@@ -414,28 +504,26 @@ export default function SaveToList({
         try {
             await send(`/${market.key}/list-items/${itemId}`, 'DELETE')
 
-            const fresh = await refresh()
-
             if (savingTo?.id === listId) {
                 countRemoved(listId)
             }
 
             if (groupId !== undefined) {
-                const onAny = fresh.lists.some((l) => l.itemId !== null)
-                const onActive =
-                    savingTo !== null &&
-                    fresh.lists.some((l) => l.id === savingTo.id && l.itemId !== null)
-
-                if (!onAny) {
+                if (!kept) {
                     markRemoved(groupId, true)
-                } else if (savingTo && !onActive) {
-                    // Still kept somewhere, just no longer on the list being
-                    // filled — so the general set keeps it and the active one
-                    // does not.
-                    markRemoved(groupId, true)
+                } else if (savingTo?.id === listId) {
+                    // `false` for the holder: the move has already written the
+                    // new one, and forgetting it here would blank the marker in
+                    // the open picker mid-move.
+                    // Moved off the list being filled and onto another one: the
+                    // bookmark answers "is it on Camping?" during a run, so it
+                    // goes hollow for that question and stays filled for the
+                    // general one.
+                    markRemoved(groupId, true, false)
                     markSaved(groupId, false)
                 }
             }
+
         } catch {
             showToast({ message: t('lists.save_failed'), tone: 'error' })
         } finally {
@@ -443,62 +531,96 @@ export default function SaveToList({
         }
     }
 
-    const mine = options?.lists.filter((l) => l.kind === 'mine') ?? []
-    const forOthers = options?.lists.filter((l) => l.kind === 'for_someone') ?? []
-    const groups = options?.lists.filter((l) => l.kind === 'group') ?? []
-
     /*
-     * One row, both directions. A tick means it is on that list and pressing it
-     * takes it off — the same control reporting the state and changing it, which
-     * is the only arrangement where "which lists is this on?" can be answered by
-     * looking rather than by remembering.
+     * The one list holding it, if any.
+     *
+     * Singular by design — see `move()`. It decides three things: whether the
+     * other rows read "save" or "move", which row is marked as the current
+     * answer, and whether the menu offers a way off the lists at all.
+     *
+     * Null until `savedItems` has answered, and null forever for a product with
+     * no group of its own — a live bol result, an Amazon product — which is the
+     * same as it was: nothing to match on, so nothing is claimed.
+     */
+    const held = groupId === undefined ? null : (holders?.[groupId] ?? null)
+    const holder = held === null ? null : (lists.find((l) => l.id === held.listId) ?? null)
+
+    const mine = lists.filter((l) => l.kind === 'mine')
+    const forOthers = lists.filter((l) => l.kind === 'for_someone')
+    const groups = lists.filter((l) => l.kind === 'group')
+
+    /**
+     * A row is an option, not a selection.
+     *
+     * It has been both. As a **checklist** it let a product sit on four lists at
+     * once, which asked the wrong question — the reason to open this menu is
+     * almost always *this one, not that one*. As a **radio group** it stopped
+     * that, but it still put a control box in front of every list and made the
+     * chosen row mean something different from all the others: press it and the
+     * product left every list, from a widget whose whole grammar says it selects.
+     *
+     * So: no boxes. Every row is one option — *put it here* — and pressing any
+     * of them moves it. Where it currently is, is reported rather than offered:
+     * marked, `aria-current`, and inert, because "put it where it already is"
+     * is not an action. Taking it off the lists altogether is its own named
+     * option at the foot of the menu, where a destructive thing belongs.
      */
     function row(list: ListOption, label: string) {
-        const on = list.itemId !== null
+        const on = held?.listId === list.id
 
         return (
             <button
                 key={list.id}
                 type="button"
-                role="menuitemcheckbox"
-                aria-checked={on}
-                disabled={busy}
-                onClick={() =>
+                role="menuitem"
+                aria-current={on ? 'true' : undefined}
+                disabled={busy || on}
+                onClick={() => void move({ wishlist_id: list.id }, false, list.id)}
+                title={
                     on
-                        ? void remove(list.itemId as number, list.id)
-                        : void save({ wishlist_id: list.id }, false)
+                        ? t('lists.saved')
+                        : holder
+                          ? t('lists.move_to', { list: label })
+                          : t('lists.save_to', { list: label })
                 }
-                title={on ? t('lists.remove_from', { list: label }) : t('lists.save_to', { list: label })}
-                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-line/40 disabled:opacity-60"
+                className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm ${
+                    on
+                        ? 'border border-sage bg-sage/15 font-semibold text-sage'
+                        : 'border border-transparent hover:bg-line/40 disabled:opacity-60'
+                }`}
             >
-                <span
-                    aria-hidden
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] ${
-                        on ? 'border-sage bg-sage text-white' : 'border-line'
-                    }`}
-                >
-                    {on ? '✓' : ''}
-                </span>
                 <span className="min-w-0 flex-1 truncate">{label}</span>
+                {/*
+                  Where it is, said loudly.
+
+                  A grey tick at the trailing edge of one row in a list of eight
+                  is not a state anybody reads — it was the same size and weight
+                  as the text beside it. The row itself carries the answer now:
+                  a sage tint, a sage border and a filled disc, so the one line
+                  that is different looks different from across the panel. Still
+                  at the trailing edge and still not a box, because it reports
+                  rather than offers.
+                */}
+                {on && (
+                    <span
+                        aria-hidden
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sage text-xs font-bold text-white"
+                    >
+                        ✓
+                    </span>
+                )}
             </button>
         )
     }
 
-    const body =
-        failed && options === null ? (
-            <div className="p-3 text-sm">
-                <p className="text-ink-soft">{t('lists.options_failed')}</p>
-                <button
-                    type="button"
-                    onClick={() => void refresh()}
-                    className="mt-2 rounded border border-line px-3 py-1.5 text-xs hover:border-ink"
-                >
-                    {t('lists.retry')}
-                </button>
-            </div>
-        ) : options === null ? (
-            <p className="px-2 py-3 text-sm text-ink-soft">{t('lists.loading_lists')}</p>
-        ) : creating ? (
+    /*
+     * No loading state, and no failure state, because there is nothing to wait
+     * for: the rows arrived with the page. What went with them is the retry
+     * button and `lists.options_failed`, which existed because a dropped fetch
+     * would otherwise have been indistinguishable from "you have no lists" —
+     * and the second of those invites somebody to duplicate a list they own.
+     */
+    const body = creating ? (
             <form
                 className="p-2"
                 onSubmit={(e) => {
@@ -507,8 +629,13 @@ export default function SaveToList({
                      * Both "for someone" shapes name a person and title the list
                      * after them; a group list adds `together`, which is the
                      * single bit that separates the two on the server.
+                     *
+                     * Through `move` rather than `save`: naming a new list for
+                     * this product is the same intention as picking an existing
+                     * one, and leaving the old row behind here would be the one
+                     * way back to two lists holding it.
                      */
-                    void save(
+                    void move(
                         creating === 'mine'
                             ? { new_list: name }
                             : {
@@ -516,6 +643,7 @@ export default function SaveToList({
                                   new_recipient: name,
                                   together: creating === 'group',
                               },
+                        true,
                     )
                 }}
             >
@@ -549,6 +677,42 @@ export default function SaveToList({
             </form>
         ) : (
             <>
+                {/*
+                  The way off the lists, first.
+
+                  It used to be the marked row itself: press the thing that says
+                  "it is on Camping" and it stops being on Camping. That is fine
+                  in a checklist and wrong in a menu of options, where every
+                  other row puts the product somewhere and one of them silently
+                  did the opposite.
+
+                  At the top rather than the foot, because it is the answer to a
+                  question you arrive with — "get this off my list" — and a
+                  panel of eight lists would otherwise make you read all of them
+                  to find out it was possible. One word: which list it leaves is
+                  the marked one, directly below, and the tooltip names it.
+                */}
+                {holder && held && (
+                    <>
+                        <button
+                            type="button"
+                            role="menuitem"
+                            disabled={busy}
+                            onClick={() => void remove(held.itemId, holder.id)}
+                            title={t('lists.remove_from', {
+                                list: holder.kind === 'mine' ? holder.title : (holder.recipient ?? holder.title),
+                            })}
+                            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-ink-soft hover:bg-line/40 hover:text-accent disabled:opacity-60"
+                        >
+                            <span aria-hidden className="text-xs">
+                                ✕
+                            </span>
+                            {t('lists.remove')}
+                        </button>
+                        <div className="my-1 border-t border-line" />
+                    </>
+                )}
+
                 <p className="px-2 pt-1 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
                     {t('lists.for_me')}
                 </p>

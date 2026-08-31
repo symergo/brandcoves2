@@ -28,8 +28,23 @@
  * not added and hide the ones you have. So the active list gets its own set,
  * filled by the same request.
  */
+/**
+ * Which list holds a product, for the products this person has saved.
+ *
+ * The same rows that answer "is this saved?" also know *where* it is saved, and
+ * the picker used to go and ask a second time — `/list-options?group_id=`, per
+ * product, on every open, with the wait sitting between the press and the rows.
+ * One entry per product, which is only honest because a product lives on one
+ * list now; see `SaveToList`'s `move()`.
+ */
+export interface Holder {
+    listId: string
+    itemId: number
+}
+
 let saved: Set<number> | null = null
 let active: Set<number> | null = null
+let holding: Record<number, Holder> | null = null
 let activeListId: string | null = null
 let inflight: Promise<void> | null = null
 
@@ -41,6 +56,7 @@ function notify(): void {
     // nothing had changed.
     saved = saved === null ? null : new Set(saved)
     active = active === null ? null : new Set(active)
+    holding = holding === null ? null : { ...holding }
     listeners.forEach((fn) => fn())
 }
 
@@ -61,6 +77,16 @@ export function serverSnapshot(): Set<number> | null {
     return null
 }
 
+/** Where each saved product lives, or null before the fetch has answered. */
+export function holderSnapshot(): Record<number, Holder> | null {
+    return holding
+}
+
+/** Nothing is known server-side; the client fills it in. */
+export function serverHolders(): Record<number, Holder> | null {
+    return null
+}
+
 /** What is on the list currently being filled, or null when not in that mode. */
 export function activeSnapshot(): Set<number> | null {
     return active
@@ -75,6 +101,7 @@ export function load(marketKey: string, signedIn: boolean, listId: string | null
         activeListId = listId
         saved = null
         active = null
+        holding = null
         inflight = null
     }
 
@@ -84,9 +111,12 @@ export function load(marketKey: string, signedIn: boolean, listId: string | null
 
     inflight = fetch(`/${marketKey}/saved-items${query}`, { headers: { Accept: 'application/json' } })
         .then((r) => r.json())
-        .then((data: { groupIds: number[]; listGroupIds?: number[] }) => {
+        .then((data: { groupIds: number[]; listGroupIds?: number[]; holders?: Record<number, Holder> }) => {
             saved = new Set(data.groupIds ?? [])
             active = listId === null ? null : new Set(data.listGroupIds ?? [])
+            // An empty PHP collection serialises as `[]`, not `{}`. Spreading
+            // either gives an object, and neither gives keys that are not there.
+            holding = { ...(data.holders ?? {}) }
             notify()
         })
         .catch(() => {
@@ -94,6 +124,7 @@ export function load(marketKey: string, signedIn: boolean, listId: string | null
             // behaviour rather than a broken page.
             saved = new Set()
             active = listId === null ? null : new Set()
+            holding = {}
             notify()
         })
         .finally(() => {
@@ -107,9 +138,13 @@ export function load(marketKey: string, signedIn: boolean, listId: string | null
  *                     while a run is in progress — which must not tick the
  *                     bookmark, because the item is still not on Camping.
  */
-export function markSaved(groupId: number, onActiveList = true): void {
+export function markSaved(groupId: number, onActiveList = true, holder: Holder | null = null): void {
     saved ??= new Set()
     saved.add(groupId)
+
+    if (holder !== null) {
+        holding = { ...(holding ?? {}), [groupId]: holder }
+    }
 
     if (active !== null && onActiveList) {
         active.add(groupId)
@@ -118,9 +153,19 @@ export function markSaved(groupId: number, onActiveList = true): void {
     notify()
 }
 
-export function markRemoved(groupId: number, fromActiveList = true): void {
+export function markRemoved(groupId: number, fromActiveList = true, forgetHolder = true): void {
     if (saved !== null) {
         saved.delete(groupId)
+    }
+
+    /*
+     * `forgetHolder` is false for the delete half of a move: the product has
+     * already been written into its new list, and dropping the entry here would
+     * blank the marker in an open picker mid-move.
+     */
+    if (forgetHolder && holding !== null && groupId in holding) {
+        holding = { ...holding }
+        delete holding[groupId]
     }
 
     if (active !== null && fromActiveList) {

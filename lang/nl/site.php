@@ -336,20 +336,20 @@ return [
     ],
 
     'pledges' => [
-        'hint' => 'Zeg wat jij inlegt. Een iemand koopt het, de rest rekent onderling af.',
+        'hint' => 'Zeg wat jij bijdraagt. Een iemand koopt het, de rest rekent onderling af.',
         'amount' => 'Jouw deel',
         'your_name' => 'Je naam',
         'added' => 'Je doet mee.',
         'removed' => 'Weer uitgestapt.',
-        'pledged' => ':total ingelegd van :price',
+        'pledged' => ':total bijgedragen van :price',
         'join' => 'Ik doe mee',
         'leave' => 'Toch niet',
 
         'count' => ':count mensen doen mee',
         'one_in' => 'Een iemand doet mee',
-        'none' => 'Nog niemand heeft iets ingelegd.',
-        'your_share_is' => 'Jij legde :amount in',
-        'organiser_note' => 'Jij ziet wie wat inlegt. De rest ziet het totaal en hun eigen deel.',
+        'none' => 'Nog niemand heeft iets bijgedragen.',
+        'your_share_is' => 'Jij droeg :amount bij',
+        'organiser_note' => 'Jij ziet wie wat bijdraagt. De rest ziet het totaal en hun eigen deel.',
     ],
 
     'cove_mail' => [
@@ -423,11 +423,12 @@ return [
         'shop_for' => 'Reserveer iets voor :name',
         'shared_with_me' => 'Met mij gedeeld',
         'owned_by' => 'Van :name',
-        'group_subtitle' => 'Eén cadeau, samen gekozen. Iedereen stemt, en wat je inlegt blijft tussen jou en de organisator.',
+        'group_subtitle' => 'Eén cadeau, samen gekozen. Iedereen stemt, en wat je bijdraagt blijft tussen jou en de organisator.',
         'default_title' => 'Mijn wenslijst',
         'default_badge' => 'Standaard',
         'shared_short' => 'Gedeeld',
         'private_short' => 'Privé',
+        'tool_on' => 'aan',
         'find_things' => 'Zoek iets om toe te voegen',
         'manual_add' => 'Zet er zelf iets op',
         'manual_title' => 'Wat is het?',
@@ -439,9 +440,6 @@ return [
         'added_to' => 'Bewaard in :list',
         'view_list' => 'Bekijk lijst',
         'undo' => 'Ongedaan maken',
-        'options_failed' => 'Je lijstjes konden niet geladen worden.',
-        'retry' => 'Opnieuw proberen',
-        'loading_lists' => 'Je lijstjes laden…',
         'save_failed' => 'Dat is niet bewaard. Nog eens proberen?',
         'adding_to' => 'Toevoegen aan :list',
         'added_count' => ':count toegevoegd',
@@ -483,6 +481,7 @@ return [
         'saved' => 'Bewaard',
         'save_to_list' => 'Bewaar in een lijstje',
         'save_to' => 'Bewaar in :list',
+        'move_to' => 'Verplaats naar :list',
         'remove_from' => 'Haal uit :list',
         'delete_list' => 'Dit lijstje verwijderen',
         'delete_confirm' => 'Dit lijstje en alles erin verwijderen?',
@@ -608,7 +607,7 @@ return [
         'search_placeholder' => 'Zoek iets dat je wilt',
         'suggest' => 'Laat me ideeen zien',
         'nothing_yet' => 'Nog niets. Voeg het eerste toe.',
-        'ask_them' => 'Vraag het ze zelf',
+        'ask_them' => 'Vraag het hen zelf',
         'ask_them_hint' => 'Stuur deze link. Zij vullen hun eigen voorkeuren in en zien nooit wat jij hebt uitgekozen.',
     ],
     'santa' => [
@@ -666,7 +665,7 @@ return [
         'invite_text' => 'Doe mee met onze Geheime Vriend: :title',
         'delete' => 'Verwijder deze groep',
         'delete_confirm' => ':title verwijderen? Iedereen die meedeed raakt hem kwijt.',
-        'delete_confirm_drawn' => ':title verwijderen? Er is al getrokken, dus iedereen verliest voor wie hij koopt — en niemand krijgt bericht. Zeg het ze eerst zelf.',
+        'delete_confirm_drawn' => ':title verwijderen? Er is al getrokken, dus iedereen verliest voor wie hij koopt — en niemand krijgt bericht. Zeg het hen eerst zelf.',
         'deleted' => 'Groep verwijderd.',
         'email_hint' => 'Zodat degene die jou trekt te horen krijgt wie hij heeft. Niemand anders ziet het.',
     ],
@@ -700,7 +699,7 @@ return [
 
     'gift_cove' => [
         'seo_title' => 'Verlanglijstjes, cadeaulijsten en Geheime Vriend',
-        'seo_description' => 'Negen cadeautools op één plek: verlanglijstjes, een lijst voor iemand anders, samen inleggen, Geheime Vriend en een quiz. Niemand ziet wie wat kocht.',
+        'seo_description' => 'Negen cadeautools op één plek: verlanglijstjes, een lijst voor iemand anders, samen bijdragen, Geheime Vriend en een quiz. Niemand ziet wie wat kocht.',
         'title' => 'De Geschenk Cove',
         'intro' => 'Alles om voor anderen te kopen, en om te vertellen wat je zelf leuk zou vinden. Niemand ziet ooit wie wat gekocht heeft.',
         'tools' => 'Wat je hier kunt doen',
@@ -737,7 +736,7 @@ return [
 
         'handover_title' => 'Geef een lijst door',
         'handover_body' => 'Een lijst begonnen voor iemand die er nog niet was? Geef hem door zodra ze meedoen, dan wordt het hun eigen wenslijst.',
-        'handover_step1' => 'Open het lijstje en stuur ze de link "Vraag het ze zelf", zodat er een account is om het aan te geven.',
+        'handover_step1' => 'Open het lijstje en stuur hen de link "Vraag het hen zelf", zodat er een account is om het aan te geven.',
         'handover_step2' => 'Zodra ze die gebruikt hebben, druk je op Doorgeven en vul je het e-mailadres in waarmee ze zich aanmeldden.',
         'handover_step3' => 'Bevestig, en het lijstje is van hen: zij kunnen het delen en anderen kunnen eruit claimen.',
 
@@ -951,12 +950,11 @@ return [
 
     // Zie de toelichting bij deze sleutels in lang/en/site.php.
     'feedback' => [
-        'seo_title' => 'Vertel ons wat er mis is',
-        'seo_description' => 'Meld een verkeerde prijs, een dode link of iets anders dat niet klopt, dan zetten we het recht.',
-        'title' => 'Vertel ons wat er mis is',
-        'intro' => 'Een prijs die niet meer klopt, een link die nergens heen gaat, een product onder het verkeerde merk, een zin die door een machine geschreven lijkt — laat het weten, dan zetten we het recht. Je hebt geen account nodig.',
-        'message_label' => 'Wat is er mis?',
-        'message_placeholder' => 'De prijs op deze pagina is €20 lager bij de winkel zelf.',
+        'seo_title' => 'Vertel ons wat beter kan of geef een pluimpje',
+        'seo_description' => 'Zeg wat beter kan — een prijs die niet klopt, een link die nergens heen gaat — of laat weten wat je wel bevalt. Je hebt geen account nodig.',
+        'title' => 'Vertel ons wat beter kan of geef een pluimpje',
+        'message_label' => 'Je bericht',
+        'message_placeholder' => 'Wat loopt er mis, wat ontbreekt, wat zou je anders doen? Of laat ons gewoon weten wat je goed vindt aan GiftCoves :D',
         'path_label' => 'Welke pagina?',
         'path_placeholder' => '/be-nl/p/1234/…',
         'email_label' => 'Je e-mailadres (optioneel)',

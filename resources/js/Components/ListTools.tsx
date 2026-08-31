@@ -109,7 +109,17 @@ export default function ListTools({
     // occasion. The delivery address is the half that stays behind this.
     const isRegistry = list.kind === 'mine'
 
-    const tabs: { key: Panel; label: string; show: boolean }[] = [
+    /*
+     * `show` is whether the chip exists; `set` is whether the thing behind it
+     * is switched on.
+     *
+     * The row said nothing about state, so the only way to learn whether this
+     * list had an occasion, a quiz or a live link was to open each panel in
+     * turn and read it. Five identical chips, one of which was already doing
+     * something. `set` lights the ones that are — and it is deliberately the
+     * *stored* fact each panel writes, never a proxy for it.
+     */
+    const tabs: { key: Panel; label: string; show: boolean; set: boolean }[] = [
         /*
          * Share sits in this row, always, and is the first thing in it.
          *
@@ -124,7 +134,14 @@ export default function ListTools({
          * Kept visible to a collaborator on an already-shared list: they cannot
          * change visibility, but they can pass the link on.
          */
-        { key: 'share', label: t('lists.share'), show: access.isOwner || (shared && Boolean(list.shareUrl)) },
+        {
+            key: 'share',
+            label: t('lists.share'),
+            show: access.isOwner || (shared && Boolean(list.shareUrl)),
+            // Lit when there is a live link, not merely when the list is not
+            // private: the link is the thing the panel hands out.
+            set: shared && Boolean(list.shareUrl),
+        },
         /*
          * A quiz asks "how well do you know **me**", so it only exists over a
          * wish list of your own.
@@ -138,6 +155,9 @@ export default function ListTools({
             key: 'quiz',
             label: t('quiz.badge'),
             show: shared && list.claimable && list.kind === 'mine',
+            // A quiz exists or it does not; `quizPlays` is how it went, which
+            // is a fact for inside the panel.
+            set: quizUrl !== null,
         },
         /*
          * An occasion sits on any kind of list.
@@ -158,9 +178,31 @@ export default function ListTools({
          * in a scrolling row wants one word ("Gelegenheid"), and the panel it
          * opens carries the full "Speciale gelegenheid" as its heading.
          */
-        { key: 'occasion', label: t('registry.occasion'), show: access.isOwner },
-        { key: 'handover', label: t('handover.badge'), show: canHandOver },
-        { key: 'santa', label: t('santa.title'), show: santaMemberships.length > 0 },
+        {
+            key: 'occasion',
+            label: t('registry.occasion'),
+            show: access.isOwner,
+            // Either half counts: a date with no type is still an answer to
+            // "what is this list for", and the panel stores them separately.
+            set: Boolean(list.eventType) || Boolean(list.eventDate),
+        },
+        /*
+         * Handing over is an act, not a setting, so it is never lit.
+         *
+         * `canHandOver` is already false once it has happened — the chip goes
+         * away rather than lighting up — and `handoverEmail` is only the
+         * recipient's address prefilled for convenience. Lighting the chip off
+         * that would announce a handover nobody has offered.
+         */
+        { key: 'handover', label: t('handover.badge'), show: canHandOver, set: false },
+        {
+            key: 'santa',
+            label: t('santa.title'),
+            show: santaMemberships.length > 0,
+            // Being in a group is why the chip is there at all; being the list
+            // that group reads is the setting.
+            set: santaMemberships.some((membership) => membership.attached),
+        },
     ]
 
     /*
@@ -291,13 +333,42 @@ export default function ListTools({
                             onClick={() => toggle(tab.key)}
                             aria-expanded={open === tab.key}
                             aria-controls="list-tools-panel"
-                            className={`shrink-0 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition ${
+                            /*
+                             * Three states, and open beats set.
+                             *
+                             * Accent is "you are looking at this one" and has
+                             * to stay the loudest, or the row reads as two
+                             * things being open at once. Sage is the colour
+                             * this product already uses for a live, benign
+                             * state — the Shared chip on an index card, a
+                             * claimed item — so a switched-on tool matches the
+                             * badge that says the same thing elsewhere.
+                             */
+                            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition ${
                                 open === tab.key
                                     ? 'border-accent bg-accent/10 text-accent'
-                                    : 'border-line hover:border-ink'
+                                    : tab.set
+                                      ? 'border-sage/60 bg-sage/10 text-sage hover:border-sage'
+                                      : 'border-line hover:border-ink'
                             }`}
                         >
+                            {/*
+                              A dot as well as the colour. Colour alone is not
+                              a state anybody can rely on — and these chips
+                              scroll past at a glance, where a filled dot reads
+                              faster than a tint does.
+                            */}
+                            {tab.set && (
+                                <span
+                                    aria-hidden
+                                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                                        open === tab.key ? 'bg-accent' : 'bg-sage'
+                                    }`}
+                                />
+                            )}
                             {tab.label}
+                            {/* And in words, for a reader who gets neither. */}
+                            {tab.set && <span className="sr-only"> — {t('lists.tool_on')}</span>}
                         </button>
                     ))}
                 </div>

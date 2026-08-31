@@ -17,6 +17,7 @@ use App\Services\Search\SearchService;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ItemSaver;
 use App\Services\Wishlist\ListMaker;
+use App\Services\Wishlist\ListOptions;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -55,10 +56,10 @@ class WishlistItemController extends Controller
         $owner = Owner::fromRequest($request);
 
         if (! $owner->isSignedIn()) {
-            return response()->json(['groupIds' => []]);
+            return response()->json(['groupIds' => [], 'holders' => (object) []]);
         }
 
-        $ids = WishlistItem::query()
+        $rows = WishlistItem::query()
             ->whereNotNull('group_id')
             ->whereNotNull('accepted_at')
             ->whereHas('wishlist', fn ($q) => $owner->scope($q))
@@ -80,14 +81,35 @@ class WishlistItemController extends Controller
              * second time onto the list it was already on.
              */
             ->whereHas('group', fn ($q) => $q->where('market', $current->value()))
-            ->pluck('group_id')
-            ->unique()
-            ->values();
+            ->get(['id', 'group_id', 'wishlist_id']);
+
+        $ids = $rows->pluck('group_id')->unique()->values();
+
+        /*
+         * And *which* list holds each of them.
+         *
+         * The picker used to learn this from `/list-options?group_id=`, per
+         * product, on every open — a request between pressing the chevron and
+         * seeing the rows, for something these very rows already knew. Three
+         * columns instead of one, out of a query that was being run anyway.
+         *
+         * Keyed by group id, one entry each, which is only honest because a
+         * product now lives on one list: `move()` deletes the old row as part
+         * of putting it somewhere else. Where older data still has a product on
+         * two lists, `keyBy` keeps the last and the first press consolidates
+         * it.
+         */
+        $holders = $rows
+            ->keyBy('group_id')
+            ->map(fn (WishlistItem $item): array => [
+                'listId' => $item->wishlist_id,
+                'itemId' => $item->id,
+            ]);
 
         $list = $request->query('list');
 
         if (! is_string($list) || $list === '') {
-            return response()->json(['groupIds' => $ids]);
+            return response()->json(['groupIds' => $ids, 'holders' => $holders]);
         }
 
         $onList = ListAccess::scope(Wishlist::query(), $owner)->whereKey($list)->exists()
@@ -100,17 +122,25 @@ class WishlistItemController extends Controller
                 ->values()
             : collect();
 
-        return response()->json(['groupIds' => $ids, 'listGroupIds' => $onList]);
+        return response()->json(['groupIds' => $ids, 'holders' => $holders, 'listGroupIds' => $onList]);
     }
 
     /**
      * Where a save could go.
      *
-     * A plain JSON endpoint rather than an Inertia page, because the save
-     * control lives on every product card on every surface — search, brand,
-     * guides, the wizard, the daily edition — and sharing this through page
-     * props would put a query on all of them for a control most visitors never
-     * open. Fetched once, when somebody first opens the picker.
+     * The picker itself no longer calls this. Its rows come from the shared
+     * `lists` prop and its membership from `savedItems`, so opening it costs no
+     * request at all — see `HandleInertiaRequests`. This stayed because it is
+     * the same question asked over HTTP, it is anonymous-capable where the prop
+     * is signed-in only, and it is what a caller outside an Inertia page would
+     * reach for. It is a candidate for deletion the day nothing does.
+     *
+     * The old reasoning, for the record: a plain JSON endpoint rather than page
+     * props, because the control lives on every product card on every surface
+     * and props would put a query on all of them for a control most visitors
+     * never open. What that missed is that the visitors who *do* open it pay
+     * the wait every single time, and signing the prop to logged-in sessions
+     * answers the cost half without answering it with their latency.
      *
      * Anonymous-first, like everything else about lists: the visitor may have
      * built all of these before signing up.
@@ -123,18 +153,9 @@ class WishlistItemController extends Controller
             return response()->json(['lists' => [], 'recipients' => []]);
         }
 
-        $lists = $owner->scope(Wishlist::query())
-            /*
-             * All of them. The picker used to offer only the lists made in the
-             * market being browsed, so somebody who set their lists up on
-             * `nl-nl` and opened an `en` product page was shown an empty
-             * picker and invited to start again — and the list they already
-             * had was one market switch away, invisible from here.
-             */
-            ->with('recipient')
-            ->withCount('items')
-            ->latest('updated_at')
-            ->get();
+        // Scope and order live in `ListOptions`, because the shared Inertia
+        // payload draws the same menu and the two must not disagree about it.
+        $lists = ListOptions::query($owner)->withCount('items')->get();
 
         /*
          * Where this product already is.
