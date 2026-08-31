@@ -122,7 +122,7 @@ return [
         'previous' => 'Précédent',
         'next' => 'Suivant',
         'page_of' => 'Page :current sur :last',
-        'seo_term' => 'Comparez les produits pour :term sur bol, Amazon et des centaines de boutiques. Trouvez la meilleure offre en quelques secondes.',
+        'seo_term' => 'Cherchez :term sur bol, Amazon et des centaines de boutiques, et voyez le prix demandé par chacune.',
 
         /*
          * Le vocabulaire des résultats, au-dessus de la grille. Il a remplacé
@@ -141,22 +141,22 @@ return [
     'brand' => [
         'title' => ':brand',
         'heading' => ':brand',
-        'seo_description' => 'Comparez les produits :brand dans toutes les boutiques que nous suivons et trouvez l\'offre la moins chère.',
+        'seo_description' => 'Tous les produits :brand que nous avons trouvés, avec le prix dans chaque boutique que nous suivons.',
         'crumb' => 'Marques',
         'index_title' => 'Marques',
-        'index_seo_title' => 'Toutes les marques, prix comparés',
-        'index_seo_description' => 'Toutes les marques du catalogue, avec les prix actuels comparés sur bol, Amazon et des centaines de boutiques qui les vendent.',
-        'index_intro' => 'Toutes les marques du catalogue, avec les prix actuels comparés entre les boutiques qui les vendent.',
+        'index_seo_title' => 'Toutes les marques du catalogue, et les boutiques qui les vendent',
+        'index_seo_description' => 'Toutes les marques du catalogue, avec les prix actuels de bol, Amazon et des centaines de boutiques qui les vendent.',
+        'index_intro' => 'Toutes les marques du catalogue, avec les prix actuels des boutiques qui les vendent.',
         'index_empty' => 'Encore aucune marque dans cette région.',
         'products_heading' => 'Produits :brand',
         'coves_heading' => 'Coves qui mentionnent :brand',
-        'related_heading' => 'D\'autres marques que les gens comparent',
+        'related_heading' => 'D\'autres marques que les gens regardent',
         'empty' => 'Rien de :brand n\'est en stock pour le moment.',
         'and' => 'et',
         // Offres d'une source que nous pouvons afficher mais pas conserver.
         'narrowed_to' => 'Affiné sur',
         'live_heading' => 'Plus de :brand, récupéré à l\'instant',
-        'live_note' => 'Récupéré en direct chez une boutique dont nous n\'avons pas le droit de conserver les prix : ce sont donc des offres isolées et non des produits comparés.',
+        'live_note' => 'Récupéré en direct chez une boutique dont nous n\'avons pas le droit de conserver les prix : ce sont donc des offres isolées et non une fiche produit complète.',
     ],
     /*
      * Texte long sous une grille de résultats. Chaque ligne est soit un fait lu
@@ -190,8 +190,8 @@ return [
         'price_as_of' => 'Prix et disponibilité au moment indiqué, susceptibles de changer.',
         'disclosure' => 'Nous pouvons percevoir une commission si vous achetez via ce lien. Le prix que vous payez ne change pas.',
         'unavailable' => "Ce produit n'est actuellement disponible dans aucune boutique que nous suivons.",
-        'seo_compare' => ':title à partir de :price, comparez les offres de :count boutiques et trouvez la moins chère.',
-        'seo_single' => ":title à partir de :price. Comparez les offres et consultez l'historique des prix avant d'acheter.",
+        'seo_compare' => ':title à partir de :price, avec l\'offre de chacune des :count boutiques.',
+        'seo_single' => ":title à partir de :price. Consultez l'historique des prix avant d'acheter.",
     ],
 
     /*
@@ -211,10 +211,10 @@ return [
     ],
 
     'shops' => [
-        'seo_title' => 'Les boutiques en ligne dont nous comparons les prix',
-        'seo_description' => 'Chaque boutique dont les prix sont comparés ici, les plus récentes mises en avant. Pas de totaux, juste la liste.',
+        'seo_title' => 'Les boutiques en ligne vers lesquelles nous renvoyons',
+        'seo_description' => 'Chaque boutique dont les offres apparaissent ici, les plus récentes mises en avant. Pas de totaux, juste la liste.',
         'title' => 'Coves Boutiques',
-        'intro' => "Chaque offre sur ce site nomme la boutique d'où elle vient. Voici ces boutiques — celles dont les prix sont comparés dans cette région.",
+        'intro' => "Chaque offre sur ce site nomme la boutique d'où elle vient. Voici ces boutiques — celles qui desservent cette région.",
         'empty' => 'Aucune boutique raccordée pour cette région pour le moment.',
         'coves_heading' => 'Écrit sur ces boutiques',
         'coves_what' => "Ce que c'est que d'acheter chez une boutique — la moitié de la décision qu'un prix ne tranche pas.",
@@ -226,7 +226,7 @@ return [
 
     'coves' => [
         'seo_title' => 'Toutes les Coves : éditions quotidiennes, idées par personne et longs formats',
-        'seo_description' => "L'étagère complète. Une nouvelle édition chaque matin, des idées cadeaux construites autour d'une personne, et des longs formats autour d'un sujet avec les prix comparés en direct.",
+        'seo_description' => "L'étagère complète. Une nouvelle édition chaque matin, des idées cadeaux construites autour d'une personne, et des longs formats autour d'un sujet avec les prix en direct.",
         'title' => 'Toutes les Coves',
         'intro' => "Tout ce que nous avons écrit ici, classé par forme. L'une arrive chaque matin, l'autre est construite autour d'une personne, la troisième autour d'un sujet.",
         'empty' => 'Rien de publié dans cette région pour le moment. Les premières Coves arrivent.',
@@ -243,7 +243,7 @@ return [
         'brand_what' => "Une page par marque : tout ce que nous portons d'elle ici, avec le prix de chaque boutique sur chaque produit.",
         'brand_all' => 'Toutes les Coves Marques',
         'shop_heading' => 'Coves Boutiques',
-        'shop_what' => "Les boutiques en ligne dont nous comparons les prix dans cette région, les plus récentes d'abord.",
+        'shop_what' => "Les boutiques en ligne qui desservent cette région, les plus récentes d'abord.",
         'shop_all' => 'Toutes les Coves Boutiques',
     ],
 
@@ -373,7 +373,7 @@ return [
     ],
 
     'footer' => [
-        'affiliate' => 'GiftCoves compare les offres de différentes boutiques. Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
+        'affiliate' => 'Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
         'explore' => 'Explorer',
     ],
 
@@ -797,7 +797,7 @@ return [
     'gift' => [
         'title' => 'Trouveur de cadeaux',
         'subtitle' => 'Parlez-nous d’elle ou de lui. Nous trouvons quatre cadeaux qui tiennent la route.',
-        'seo_description' => 'Décrivez la personne à qui vous offrez et recevez quatre idées de cadeaux, chacune avec sa raison, comparées entre magasins.',
+        'seo_description' => 'Décrivez la personne à qui vous offrez et recevez quatre idées de cadeaux, chacune avec sa raison et où l\'acheter.',
 
         'step_who' => 'C’est pour qui ?',
         'step_interests' => 'Qu’est-ce qui lui plaît ?',
@@ -859,7 +859,7 @@ return [
     'ask' => [
         'seo_title' => 'Demandez aux autres',
         'seo_description' => 'À court d’idées ? Décrivez la personne et laissez les autres vous suggérer quelque chose. Chaque réponse arrive avec de vrais produits et un prix.',
-        'seo_question' => 'Idées cadeaux pour : :title. De vraies suggestions d’autres personnes, avec les prix comparés entre boutiques.',
+        'seo_question' => 'Idées cadeaux pour : :title. De vraies suggestions d’autres personnes, avec les produits et les prix qui vont avec.',
 
         'title' => 'Demandez aux autres',
         'intro' => 'Besoin d’inspiration ? Décrivez pour qui vous cherchez et laissez la communauté GiftCoves proposer quelque chose. Les réponses arrivent avec de vrais produits, pas seulement des conseils.',
@@ -995,7 +995,7 @@ return [
         'scan_devices_term' => 'Quels téléphones en sont capables',
         'scan_devices' => 'Chrome sur Android lit les codes-barres nativement. Sur iPhone, ainsi que dans Safari et Firefox, un lecteur est téléchargé à l\'ouverture du scanner : le premier scan prend un instant de plus, les suivants non.',
         'scan_misses_term' => 'Ne rien trouver est normal',
-        'scan_misses' => 'Seuls les produits identifiés par leur code-barres peuvent être retrouvés, et toutes les boutiques n\'en publient pas. Nous consultons d\'abord notre catalogue, puis nous interrogeons bol directement. Un résultat vide signifie que nous ne savons pas encore comparer cet article — pas qu\'il n\'existe pas.',
+        'scan_misses' => 'Seuls les produits identifiés par leur code-barres peuvent être retrouvés, et toutes les boutiques n\'en publient pas. Nous consultons d\'abord notre catalogue, puis nous interrogeons bol directement. Un résultat vide signifie que nous n\'avons pas encore cet article — pas qu\'il n\'existe pas.',
         'scan_misread_term' => 'Les mauvaises lectures',
         'scan_misread' => 'Chaque code-barres porte un chiffre de contrôle, et un code qui ne le vérifie pas est écarté plutôt que recherché : un chiffre faux désigne un autre produit bien réel, pas un presque-résultat. S\'il ne se passe rien, gardez la caméra dessus.',
         'scan_manual_term' => 'Quand la caméra n\'y arrive pas',
@@ -1008,7 +1008,7 @@ return [
     'scan' => [
         'title' => 'Scanner un code-barres',
         'subtitle' => 'Vous êtes en magasin ? Scannez et voyez le prix partout ailleurs.',
-        'seo_description' => 'Scannez un code-barres et comparez le prix dans toutes les boutiques qui vendent le produit.',
+        'seo_description' => 'Scannez un code-barres et voyez le prix demandé par chaque boutique qui vend le produit.',
         'start' => 'Ouvrir la caméra',
         'stop' => 'Arrêter',
         'manual_placeholder' => 'Ou saisissez le code-barres',
@@ -1296,10 +1296,10 @@ return [
          * person actually types. A brand name in an H1 and the reader's own
          * vocabulary in the <title> is the normal split, not an inconsistency.
          */
-        'seo_title' => 'Guides d’achat avec les prix comparés par produit',
+        'seo_title' => 'Guides d’achat avec un prix en direct sur chaque produit',
         'title' => 'Coves Inspiration',
         'subtitle' => "Inspiration shopping et guides d'achat, écrits à partir de ce que les gens cherchent ici plutôt que d'un outil de mots-clés.",
-        'seo_description' => 'Des guides d’achat bâtis sur une demande réelle, avec les prix en direct comparés dans toutes les boutiques qui vendent chaque produit.',
+        'seo_description' => 'Des guides d’achat bâtis sur une demande réelle, avec les prix en direct de toutes les boutiques qui vendent chaque produit.',
         'empty' => "Pas encore de Coves Inspiration. Elles s'écrivent dès qu'un sujet accumule assez de demande.",
         'how_to_choose' => 'Comment choisir',
         'faq' => 'Questions',

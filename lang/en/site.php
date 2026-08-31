@@ -183,7 +183,7 @@ return [
         'previous' => 'Previous',
         'next' => 'Next',
         'page_of' => 'Page :current of :last',
-        'seo_term' => 'Compare products matching :term across bol, Amazon and hundreds of shops. Find the cheapest offer in seconds.',
+        'seo_term' => 'Search bol, Amazon and hundreds of shops for :term, and see what each of them is asking.',
 
         /*
          * The vocabulary of the results, above the grid.
@@ -212,27 +212,27 @@ return [
     'brand' => [
         'title' => ':brand',
         'heading' => ':brand',
-        'seo_description' => 'Compare :brand products across every shop we track, and find the cheapest offer.',
+        'seo_description' => 'Everything from :brand we have found, with the price at every shop we track.',
         'crumb' => 'Brands',
         'index_title' => 'Brands',
-        'index_seo_title' => 'All brands, prices compared across every shop',
-        'index_seo_description' => 'Every brand in the catalogue, with live prices compared across bol, Amazon and hundreds of shops that stock them.',
-        'index_intro' => 'Every brand in the catalogue, with live prices compared across the shops that stock it.',
+        'index_seo_title' => 'Every brand in the catalogue, and the shops that stock them',
+        'index_seo_description' => 'Every brand in the catalogue, with live prices from bol, Amazon and hundreds of shops that stock them.',
+        'index_intro' => 'Every brand in the catalogue, with live prices from the shops that stock it.',
         'index_empty' => 'No brands in this market yet.',
         'products_heading' => ':brand products',
         'coves_heading' => 'Coves that mention :brand',
-        'related_heading' => 'Other brands people compare',
+        'related_heading' => 'Other brands people look at',
         'empty' => 'Nothing from :brand is in stock right now.',
         'and' => 'and',
         /*
          * Offers from a source we may show but not store. The note says why they
          * sit apart from the grid instead of leaving a reader to wonder — they
-         * are single listings rather than compared products, and saying so is
+         * are single listings rather than full product pages, and saying so is
          * more honest than a heading that implies otherwise.
          */
         'narrowed_to' => 'Narrowed to',
         'live_heading' => 'More :brand, fetched just now',
-        'live_note' => 'Listed live from a shop whose prices we are not allowed to keep, so these are single offers rather than compared products.',
+        'live_note' => 'Listed live from a shop whose prices we are not allowed to keep, so these are single offers rather than a full product page.',
     ],
     /*
      * Long-form copy below a results grid.
@@ -290,8 +290,8 @@ return [
         'price_as_of' => 'Price and availability as of the time shown and may change.',
         'disclosure' => 'We may earn a commission if you buy through this link. The price you pay is unchanged.',
         'unavailable' => 'This product is not currently available from any shop we track.',
-        'seo_compare' => ':title from :price, compare offers from :count shops and find the cheapest.',
-        'seo_single' => ':title from :price. Compare offers and check the price history before you buy.',
+        'seo_compare' => ':title from :price, with the offer from each of :count shops.',
+        'seo_single' => ':title from :price, with the price history before you buy.',
     ],
 
     /*
@@ -324,10 +324,10 @@ return [
      * time has nothing else to go on.
      */
     'shops' => [
-        'seo_title' => 'The online shops we compare prices across',
-        'seo_description' => 'Every shop whose prices are compared here, with the ones that arrived most recently called out. No totals, just the list.',
+        'seo_title' => 'The online shops we link to',
+        'seo_description' => 'Every shop whose offers appear here, with the ones that arrived most recently called out. No totals, just the list.',
         'title' => 'Shop Coves',
-        'intro' => 'Every offer on this site names the shop it came from. These are those shops — the ones this market’s prices are compared across.',
+        'intro' => 'Every offer on this site names the shop it came from. These are those shops — the ones serving this market.',
         'empty' => 'No shops wired up for this market yet.',
         'coves_heading' => 'Written about these shops',
         'coves_what' => 'What a shop is like to buy from — the half of the decision a price cannot answer.',
@@ -339,7 +339,7 @@ return [
 
     'coves' => [
         'seo_title' => 'Every Cove: daily editions, gift ideas by person, and long reads',
-        'seo_description' => 'The full shelf. A new edition every morning, gift ideas built around a person, and long reads around one subject with live prices compared inside them.',
+        'seo_description' => 'The full shelf. A new edition every morning, gift ideas built around a person, and long reads around one subject with live prices inside them.',
         'title' => 'All Coves',
         'intro' => 'Everything we have written here, by the shape it takes. One arrives every morning, one is built around a person, and one is built around a subject.',
         'empty' => 'Nothing published in this market yet. The first Coves are on their way.',
@@ -356,7 +356,7 @@ return [
         'brand_what' => 'One page per maker: everything of theirs we carry here, with every shop’s price on each product.',
         'brand_all' => 'All Brand Coves',
         'shop_heading' => 'Shop Coves',
-        'shop_what' => 'The online shops this market’s prices are compared across, newest first.',
+        'shop_what' => 'The online shops serving this market, newest first.',
         'shop_all' => 'All Shop Coves',
     ],
 
@@ -489,7 +489,7 @@ return [
     ],
 
     'footer' => [
-        'affiliate' => 'GiftCoves compares offers across shops. We may earn a commission on purchases made through our links, it never changes what you pay.',
+        'affiliate' => 'We may earn a commission on purchases made through our links, it never changes what you pay.',
         'explore' => 'Explore',
     ],
 
@@ -959,7 +959,7 @@ return [
     'gift' => [
         'title' => 'Gift Finder',
         'subtitle' => 'Tell us about them. We will find four things worth giving.',
-        'seo_description' => 'Describe the person you are buying for and get four gift ideas, each with the reason it was chosen, compared across shops.',
+        'seo_description' => 'Describe the person you are buying for and get four gift ideas, each with the reason it was chosen and where to buy it.',
 
         'step_who' => 'Who is it for?',
         'step_interests' => 'What are they into?',
@@ -1038,7 +1038,7 @@ return [
     'ask' => [
         'seo_title' => 'Ask others what to buy',
         'seo_description' => 'Stuck for a gift? Describe who it is for and let other people suggest something. Every answer comes with real products and a price.',
-        'seo_question' => 'Gift ideas for: :title. Real suggestions from other people, with prices compared across shops.',
+        'seo_question' => 'Gift ideas for: :title. Real suggestions from other people, with the products and prices to go with them.',
 
         'title' => 'Ask others',
         'intro' => 'Need inspiration? Describe who you are buying for and let the GiftCoves community suggest something. Answers come with actual products, not just advice.',
@@ -1193,7 +1193,7 @@ return [
         'scan_devices_term' => 'Which phones can do it',
         'scan_devices' => 'Chrome on Android reads barcodes itself. On iPhone, and in Safari and Firefox, a reader is downloaded when you open the scanner — the first scan takes a moment longer and the ones after it do not.',
         'scan_misses_term' => 'Finding nothing is normal',
-        'scan_misses' => 'Only products identified by their barcode can be matched, and not every shop publishes one. We check our own catalogue first and then ask bol directly. Nothing found means we cannot compare that item yet — not that it does not exist.',
+        'scan_misses' => 'Only products identified by their barcode can be matched, and not every shop publishes one. We check our own catalogue first and then ask bol directly. Nothing found means we do not carry that item yet — not that it does not exist.',
         'scan_misread_term' => 'Misreads',
         'scan_misread' => 'Every barcode carries a check digit, and a code that fails it is thrown away rather than looked up: one wrong digit is a different real product, not a near miss. If nothing happens, keep the camera on it.',
         'scan_manual_term' => 'When the camera will not read it',
@@ -1206,7 +1206,7 @@ return [
     'scan' => [
         'title' => 'Scan a barcode',
         'subtitle' => 'Standing in a shop? Scan it and see what it costs everywhere else.',
-        'seo_description' => 'Scan a product barcode and compare the price across every shop that stocks it.',
+        'seo_description' => 'Scan a product barcode and see what every shop that stocks it is asking.',
         'start' => 'Open the camera',
         'stop' => 'Stop',
         'manual_placeholder' => 'Or type the barcode',
@@ -1321,7 +1321,7 @@ return [
             'childrens_books' => ['title' => "International Children's Book Day", 'blurb' => "Andersen's birthday, and the lamp to read them by."],
             'health' => ['title' => 'Quietly good for you', 'blurb' => 'World Health Day, without the lecture.'],
             'pets' => ['title' => 'For the animal that runs your house', 'blurb' => 'National Pet Day. They did not ask, but here we are.'],
-            'space' => ['title' => 'Yuri\x27s Night', 'blurb' => 'The first human in orbit, sixty-odd years ago today.'],
+            'space' => ['title' => 'Yuri’s Night', 'blurb' => 'The first human in orbit, sixty-odd years ago today.'],
             'earth' => ['title' => 'Things that last', 'blurb' => 'Earth Day, objects built to be owned twice.'],
             'books' => ['title' => 'For readers', 'blurb' => 'World Book Day, and everything around the reading rather than the books.'],
             'kingsday' => ['title' => 'Koningsdag', 'blurb' => 'Orange optional. A cool box is not.'],
@@ -1503,10 +1503,10 @@ return [
          * person actually types. A brand name in an H1 and the reader's own
          * vocabulary in the <title> is the normal split, not an inconsistency.
          */
-        'seo_title' => 'Buying guides with prices compared per product',
+        'seo_title' => 'Buying guides with a live price on every product',
         'title' => 'Inspiration Coves',
         'subtitle' => 'Shopping inspiration and buying guides, written from what people search for here rather than from a keyword tool.',
-        'seo_description' => 'Buying guides built from real search demand, with live prices compared across every shop that stocks each product.',
+        'seo_description' => 'Buying guides built from real search demand, with live prices from every shop that stocks each product.',
         'empty' => 'No Inspiration Coves yet. They are written as topics build up enough demand.',
         'how_to_choose' => 'How to choose',
         'faq' => 'Questions',
@@ -1516,7 +1516,7 @@ return [
         'unavailable' => 'Out of stock',
         'slug_prefix' => 'best',
         'template_title' => 'The best :topic',
-        'template_intro' => ':count options for :topic, with every shop\x27s price compared side by side.',
+        'template_intro' => ':count options for :topic, with every shop’s price side by side.',
     ],
 
     'discover' => [
@@ -1549,7 +1549,7 @@ return [
         'modes' => [
             'search' => [
                 'title' => 'Search',
-                'description' => 'You know what you want. Every shop\x27s price, one card per product.',
+                'description' => 'You know what you want. Every shop’s price, one card per product.',
             ],
             'guides' => [
                 'title' => 'Guides',
@@ -1561,7 +1561,7 @@ return [
             ],
             'deals' => [
                 'title' => 'Deals',
-                'description' => 'Real savings, measured against our own price history and against the other shops, never against a merchant\x27s “was” price.',
+                'description' => 'Real savings, measured against our own price history and against the other shops, never against a merchant’s “was” price.',
             ],
             'projects' => [
                 'title' => 'Projects',

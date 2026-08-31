@@ -48,6 +48,35 @@ What survived the reframing, deliberately:
   retailer's crossed-out "was" price. Article 6a of Directive 98/6/EC binds the seller announcing
   the reduction, which is not us, but stating the basis of our own badge is what keeps it honest.
 
+## The reframing was finished on 2026-08-31
+
+The pass above had only ever been applied to the home page and the legal text. Everywhere else the
+site still sold itself as a price comparison, and a meta description is the version of a claim that
+a search engine indexes and a person reads before they ever arrive. 86 strings across `en`, `nl`,
+`fr` and `es` were rewritten:
+
+- **The footer disclosure**, `site.footer.affiliate`, which opened with "GiftCoves compares offers
+  across shops" on every page of the site. The commission sentence after it is untouched — that one
+  is required. The same string is rendered by `PageNarrative` and the Cove digest email, so the edit
+  lands there too, intentionally: one service, one description of it.
+- **Meta titles and descriptions** for search, brands, the brand index, products, `/shops`, the Cove
+  index, the Gift Finder, Ask, scan and guides. `shops.seo_title` was "The online shops we compare
+  prices across"; the brand index was "All brands, prices compared across every shop".
+- **On-page intros** carrying the same claim: `shops.intro`, `brand.index_intro`, `coves.shop_what`.
+- **The shop-cove editorial** in `resources/content/shop-coves.php`, which said "onze
+  prijsvergelijking" / "notre comparaison" in six places.
+- **`Defaults::SHOP_SYSTEM`**, the prompt behind those articles. It opened "for a site that compares
+  prices across shops", so every regenerated shop Cove would have reintroduced the phrasing however
+  many times the file was cleaned. The prompt now names the site as a discovery service and forbids
+  the description outright.
+
+**What deliberately stayed.** Comparing the offers for one product is a real feature — invariant 3
+in `CLAUDE.md` exists to make it possible — so `product.compare` ("Compare :count offers"),
+`product.cheapest`, `search.sort_price_asc` and the guides' Compare section keep their names. The
+rule is about what the *service* claims to be, not about whether an offer table may say what it is.
+The `product.seo_compare` key also kept its name while its text was rewritten; renaming it would
+touch `ProductController` for no reader-visible gain.
+
 ## Retention
 
 `bc:prune-personal-data` runs nightly at 03:20 and enforces the windows the privacy policy states.

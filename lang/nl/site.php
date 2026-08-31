@@ -122,7 +122,7 @@ return [
         'previous' => 'Vorige',
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',
-        'seo_term' => 'Vergelijk producten voor :term op bol, Amazon en honderden winkels. Vind in seconden het goedkoopste aanbod.',
+        'seo_term' => 'Zoek :term op bol, Amazon en honderden winkels, en zie wat elke winkel ervoor vraagt.',
 
         /*
          * De woordenschat van de resultaten, boven het raster. Verving vier
@@ -141,22 +141,22 @@ return [
     'brand' => [
         'title' => ':brand',
         'heading' => ':brand',
-        'seo_description' => 'Vergelijk :brand-producten bij alle winkels die we volgen en vind de goedkoopste aanbieding.',
+        'seo_description' => 'Alles van :brand dat we gevonden hebben, met de prijs bij elke winkel die we volgen.',
         'crumb' => 'Merken',
         'index_title' => 'Merken',
-        'index_seo_title' => 'Alle merken, prijzen vergeleken bij elke winkel',
-        'index_seo_description' => 'Elk merk in de catalogus, met actuele prijzen vergeleken bij bol, Amazon en honderden winkels die het verkopen.',
-        'index_intro' => 'Alle merken in de catalogus, met actuele prijzen vergeleken tussen de winkels die ze verkopen.',
+        'index_seo_title' => 'Elk merk in de catalogus, en de winkels die het verkopen',
+        'index_seo_description' => 'Elk merk in de catalogus, met actuele prijzen van bol, Amazon en honderden winkels die het verkopen.',
+        'index_intro' => 'Alle merken in de catalogus, met actuele prijzen van de winkels die ze verkopen.',
         'index_empty' => 'Nog geen merken in deze regio.',
         'products_heading' => 'Producten van :brand',
         'coves_heading' => 'Coves waarin :brand voorkomt',
-        'related_heading' => 'Andere merken die mensen vergelijken',
+        'related_heading' => 'Andere merken die mensen bekijken',
         'empty' => 'Er is momenteel niets van :brand op voorraad.',
         'and' => 'en',
         // Aanbiedingen van een bron die we wel mogen tonen maar niet bewaren.
         'narrowed_to' => 'Beperkt tot',
         'live_heading' => 'Meer van :brand, zojuist opgehaald',
-        'live_note' => 'Live opgehaald bij een winkel waarvan we de prijzen niet mogen bewaren, dus dit zijn losse aanbiedingen en geen vergeleken producten.',
+        'live_note' => 'Live opgehaald bij een winkel waarvan we de prijzen niet mogen bewaren, dus dit zijn losse aanbiedingen en geen volledige productpagina.',
     ],
     /*
      * Lange tekst onder een resultatenraster.
@@ -194,8 +194,8 @@ return [
         'price_as_of' => 'Prijs en beschikbaarheid gelden op het getoonde moment en kunnen wijzigen.',
         'disclosure' => 'We verdienen mogelijk commissie als je via deze link koopt. Wat jij betaalt verandert niet.',
         'unavailable' => 'Dit product is nu bij geen enkele winkel die we volgen verkrijgbaar.',
-        'seo_compare' => ':title vanaf :price, vergelijk aanbiedingen van :count winkels en vind de goedkoopste.',
-        'seo_single' => ':title vanaf :price. Vergelijk aanbiedingen en bekijk de prijsgeschiedenis voor je koopt.',
+        'seo_compare' => ':title vanaf :price, met het aanbod van elk van :count winkels.',
+        'seo_single' => ':title vanaf :price, met de prijsgeschiedenis voordat je koopt.',
     ],
 
     /*
@@ -215,10 +215,10 @@ return [
     ],
 
     'shops' => [
-        'seo_title' => 'De webshops waarover we prijzen vergelijken',
-        'seo_description' => 'Elke winkel waarvan we hier de prijzen vergelijken, met de nieuwste eruit gelicht. Geen totalen, gewoon de lijst.',
+        'seo_title' => 'De webshops waar we naar doorlinken',
+        'seo_description' => 'Elke winkel waarvan hier aanbiedingen staan, met de nieuwste eruit gelicht. Geen totalen, gewoon de lijst.',
         'title' => 'Winkel Coves',
-        'intro' => 'Bij elk aanbod op deze site staat de winkel erbij. Dit zijn die winkels — de winkels waarover we in deze regio prijzen vergelijken.',
+        'intro' => 'Bij elk aanbod op deze site staat de winkel erbij. Dit zijn die winkels — de winkels die in deze regio leveren.',
         'empty' => 'Nog geen winkels aangesloten voor deze regio.',
         'coves_heading' => 'Geschreven over deze winkels',
         'coves_what' => 'Hoe het is om bij een winkel te kopen — de helft van de beslissing waar een prijs niets over zegt.',
@@ -230,7 +230,7 @@ return [
 
     'coves' => [
         'seo_title' => 'Alle Coves: dagelijkse edities, cadeau-ideeën per persoon en lange verhalen',
-        'seo_description' => 'De hele plank. Elke ochtend een nieuwe editie, cadeau-ideeën rond één persoon, en lange verhalen rond één onderwerp met live vergeleken prijzen.',
+        'seo_description' => 'De hele plank. Elke ochtend een nieuwe editie, cadeau-ideeën rond één persoon, en lange verhalen rond één onderwerp met live prijzen erin.',
         'title' => 'Alle Coves',
         'intro' => 'Alles wat we hier geschreven hebben, op vorm gesorteerd. De ene komt elke ochtend, de andere is rond een persoon gebouwd, de derde rond een onderwerp.',
         'empty' => 'Nog niets gepubliceerd in deze regio. De eerste Coves komen eraan.',
@@ -247,7 +247,7 @@ return [
         'brand_what' => 'Eén pagina per merk: alles van hen dat we hier voeren, met per product de prijs van elke winkel.',
         'brand_all' => 'Alle Merk Coves',
         'shop_heading' => 'Winkel Coves',
-        'shop_what' => 'De webshops waarover we in deze regio prijzen vergelijken, nieuwste eerst.',
+        'shop_what' => 'De webshops die in deze regio leveren, nieuwste eerst.',
         'shop_all' => 'Alle Winkel Coves',
     ],
 
@@ -377,7 +377,7 @@ return [
     ],
 
     'footer' => [
-        'affiliate' => 'GiftCoves vergelijkt aanbiedingen van verschillende winkels. We verdienen mogelijk commissie op aankopen via onze links, dat verandert nooit wat jij betaalt.',
+        'affiliate' => 'We verdienen mogelijk commissie op aankopen via onze links, dat verandert nooit wat jij betaalt.',
         'explore' => 'Ontdekken',
     ],
 
@@ -801,7 +801,7 @@ return [
     'gift' => [
         'title' => 'Cadeauzoeker',
         'subtitle' => 'Vertel ons over die persoon. Wij zoeken vier cadeaus die kloppen.',
-        'seo_description' => 'Beschrijf voor wie je zoekt en krijg vier cadeau-ideeën, elk met de reden erbij, vergeleken tussen winkels.',
+        'seo_description' => 'Beschrijf voor wie je zoekt en krijg vier cadeau-ideeën, elk met de reden erbij en waar je het koopt.',
 
         'step_who' => 'Voor wie is het?',
         'step_interests' => 'Waar houdt die persoon van?',
@@ -863,7 +863,7 @@ return [
     'ask' => [
         'seo_title' => 'Vraag het aan anderen',
         'seo_description' => 'Geen idee wat je moet kopen? Beschrijf voor wie het is en laat anderen iets voorstellen. Elk antwoord komt met echte producten en een prijs.',
-        'seo_question' => 'Cadeau-ideeën voor: :title. Echte tips van andere mensen, met prijzen vergeleken tussen winkels.',
+        'seo_question' => 'Cadeau-ideeën voor: :title. Echte tips van andere mensen, met de producten en prijzen erbij.',
 
         'title' => 'Vraag het aan anderen',
         'intro' => 'Geen inspiratie? Beschrijf voor wie je iets zoekt en laat de GiftCoves-community iets voorstellen. Antwoorden komen met echte producten, niet alleen met advies.',
@@ -999,7 +999,7 @@ return [
         'scan_devices_term' => 'Welke telefoons het kunnen',
         'scan_devices' => 'Chrome op Android leest barcodes zelf. Op de iPhone, en in Safari en Firefox, wordt er een lezer gedownload zodra je de scanner opent — de eerste scan duurt daardoor iets langer en de rest niet.',
         'scan_misses_term' => 'Niets vinden is normaal',
-        'scan_misses' => 'Alleen producten die aan hun barcode te herkennen zijn kunnen gevonden worden, en niet elke winkel geeft er een op. We kijken eerst in onze eigen catalogus en vragen het daarna rechtstreeks aan bol. Niets gevonden betekent dat we dat artikel nog niet kunnen vergelijken — niet dat het niet bestaat.',
+        'scan_misses' => 'Alleen producten die aan hun barcode te herkennen zijn kunnen gevonden worden, en niet elke winkel geeft er een op. We kijken eerst in onze eigen catalogus en vragen het daarna rechtstreeks aan bol. Niets gevonden betekent dat we dat artikel nog niet hebben — niet dat het niet bestaat.',
         'scan_misread_term' => 'Verkeerd gelezen codes',
         'scan_misread' => 'Elke barcode heeft een controlecijfer, en een code die daar niet op klopt wordt weggegooid in plaats van opgezocht: één verkeerd cijfer is een ander bestaand product, geen bijna-treffer. Gebeurt er niets, houd de camera er dan gewoon op.',
         'scan_manual_term' => 'Als de camera het niet leest',
@@ -1012,7 +1012,7 @@ return [
     'scan' => [
         'title' => 'Scan een barcode',
         'subtitle' => 'Sta je in de winkel? Scan het en zie wat het elders kost.',
-        'seo_description' => 'Scan een barcode en vergelijk de prijs bij elke winkel die het product heeft.',
+        'seo_description' => 'Scan een barcode en zie wat elke winkel die het product heeft ervoor vraagt.',
         'start' => 'Camera openen',
         'stop' => 'Stoppen',
         'manual_placeholder' => 'Of tik de barcode in',
@@ -1117,7 +1117,7 @@ return [
             'childrens_books' => ['title' => 'Internationale Kinderboekendag', 'blurb' => 'De verjaardag van Andersen, en de lamp om ze bij te lezen.'],
             'health' => ['title' => 'Stilletjes goed voor je', 'blurb' => 'Wereldgezondheidsdag, zonder het preken.'],
             'pets' => ['title' => 'Voor het dier dat je huis bestuurt', 'blurb' => 'Dag van het Huisdier. Ze vroegen er niet om, maar hier zijn we.'],
-            'space' => ['title' => 'Yuri\x27s Night', 'blurb' => 'De eerste mens in een baan om de aarde, vandaag ruim zestig jaar geleden.'],
+            'space' => ['title' => 'Yuri’s Night', 'blurb' => 'De eerste mens in een baan om de aarde, vandaag ruim zestig jaar geleden.'],
             'earth' => ['title' => 'Dingen die meegaan', 'blurb' => 'Dag van de Aarde, spullen die je twee keer kunt bezitten.'],
             'books' => ['title' => 'Voor lezers', 'blurb' => 'Wereldboekendag, en alles eromheen behalve de boeken.'],
             'kingsday' => ['title' => 'Koningsdag', 'blurb' => 'Oranje is optioneel. Een koelbox niet.'],
@@ -1298,10 +1298,10 @@ return [
          * person actually types. A brand name in an H1 and the reader's own
          * vocabulary in the <title> is the normal split, not an inconsistency.
          */
-        'seo_title' => 'Koopgidsen met per product de prijzen vergeleken',
+        'seo_title' => 'Koopgidsen met bij elk product een actuele prijs',
         'title' => 'Inspiratie Coves',
         'subtitle' => 'Shopping-inspiratie en koopgidsen, geschreven op basis van wat mensen hier zoeken en niet van een zoekwoordtool.',
-        'seo_description' => 'Koopgidsen gebouwd op echte zoekvraag, met live prijzen vergeleken over elke winkel die het product heeft.',
+        'seo_description' => 'Koopgidsen gebouwd op echte zoekvraag, met live prijzen van elke winkel die het product heeft.',
         'empty' => 'Nog geen Inspiratie Coves. Ze worden geschreven zodra een onderwerp genoeg vraag opbouwt.',
         'how_to_choose' => 'Hoe kies je',
         'faq' => 'Vragen',
