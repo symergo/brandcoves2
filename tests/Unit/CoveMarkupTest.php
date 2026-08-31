@@ -249,6 +249,74 @@ class CoveMarkupTest extends TestCase
         $this->assertSame('Kijk op Amazon voor meer.', $plain);
     }
 
+    /**
+     * The one piece of Markdown this renderer honours.
+     *
+     * Model output arrived carrying `**bold**` and the page printed the
+     * asterisks, because prose here is escaped and then walked for link tokens
+     * and nothing else. Two characters were the whole gap between a sentence an
+     * advice article wanted the reader to take away and a line that looked
+     * like a bug.
+     */
+    #[Test]
+    public function bold_markup_becomes_strong(): void
+    {
+        $result = $this->render('Let op: **er is geen vaste termijn.** Dat scheelt.');
+
+        $this->assertStringContainsString('<strong>er is geen vaste termijn.</strong>', $result['html']);
+        $this->assertStringNotContainsString('**', $result['html']);
+    }
+
+    #[Test]
+    public function bold_may_wrap_a_link(): void
+    {
+        // The shape a writer actually produces. Emphasis is resolved after the
+        // tokens, so the anchor is intact inside the <strong>.
+        $result = $this->render('**Kies de [[brand:Sony]].**');
+
+        $this->assertSame(
+            '<strong>Kies de <a href="/be-nl/search?brand%5B0%5D=Sony">Sony</a>.</strong>',
+            $result['html'],
+        );
+        $this->assertSame(1, $result['links']);
+    }
+
+    #[Test]
+    public function nothing_else_is_treated_as_markdown(): void
+    {
+        /*
+         * Bold is honoured because it is what the models write. Every other
+         * Markdown character is a syntax a feed's product title can contain by
+         * accident, and a renderer that grows a rule per character ends up
+         * interpreting markup we did not write.
+         */
+        $result = $this->render('# Not a heading, _not italics_ and [not a link](http://x.test).');
+
+        $this->assertStringNotContainsString('<h1', $result['html']);
+        $this->assertStringNotContainsString('<em', $result['html']);
+        $this->assertStringNotContainsString('<a', $result['html']);
+    }
+
+    #[Test]
+    public function a_stray_asterisk_is_left_alone(): void
+    {
+        // "5*" is not markup, and an unclosed pair is a typo rather than an
+        // instruction. Both must survive as written.
+        $this->assertStringContainsString('5* by buyers', $this->render('rated 5* by buyers')['html']);
+    }
+
+    #[Test]
+    public function plain_text_keeps_the_words_and_drops_the_asterisks(): void
+    {
+        // A <meta> description and a FAQPage answer have nothing to render
+        // emphasis with, and the one audience that reads them cannot ask what
+        // the asterisks were for.
+        $this->assertSame(
+            'Er is geen vaste termijn.',
+            $this->markup()->plain('**Er is geen vaste termijn.**'),
+        );
+    }
+
     #[Test]
     public function the_prompt_contract_lists_only_what_the_renderer_accepts(): void
     {
@@ -264,6 +332,10 @@ class CoveMarkupTest extends TestCase
         }
 
         $this->assertStringContainsString('Never write a URL', $contract);
+
+        // Said out loud so a writer does not reach for `#`, `_` or a list and
+        // get literal characters on the page.
+        $this->assertStringContainsString('**bold** renders', $contract);
 
         /*
          * And `amazon` is deliberately NOT offered to the model.

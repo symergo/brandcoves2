@@ -76,6 +76,26 @@ class CoveMarkup
     private const TOKEN = '/\[\[(brand|search|product|guide|page|amazon):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u';
 
     /**
+     * `**emphasis**`, the one piece of Markdown this renderer honours.
+     *
+     * Not a Markdown parser, and deliberately not the first step towards one.
+     * The models write bold and only bold — a sentence they want the reader to
+     * take away from a section of advice — and it reached the page as literal
+     * asterisks, because prose here is escaped and then walked for link tokens
+     * and nothing else. Two asterisks were the whole gap.
+     *
+     * `#`, `_`, `[]()` and the rest stay unhandled on purpose. Every one of
+     * them is a syntax a feed's product title can contain by accident, and a
+     * renderer that grows a rule per character ends up interpreting markup we
+     * did not write. Bold is the one that was actually being produced.
+     *
+     * The pair must wrap something (`(?=\S)` … `(?<=\S)`), so `5 ** 2` and a
+     * stray asterisk are left alone, and the match is non-greedy so two bold
+     * runs in a paragraph do not merge into one.
+     */
+    private const BOLD = '/\*\*(?=\S)(.+?)(?<=\S)\*\*/us';
+
+    /**
      * Injected rather than resolved inside `render()`.
      *
      * Reaching for the container mid-render made a **database query a hidden
@@ -157,6 +177,20 @@ class CoveMarkup
             $escaped,
         ) ?? $escaped;
 
+        /*
+         * Emphasis last, after the tokens have become anchors.
+         *
+         * Running it on the escaped text first would work for the common case
+         * and break the one that matters: a bold run wrapping a link is the
+         * shape a writer actually produces, and resolving the token afterwards
+         * would have to walk text that already contains our own `<strong>`.
+         * Doing it in this order, the only markup present when this runs is
+         * markup this method emitted, and the pattern cannot reach inside an
+         * `href` — every URL here has been through `e()` and holds no
+         * asterisks.
+         */
+        $html = preg_replace(self::BOLD, '<strong>$1</strong>', $html) ?? $html;
+
         return ['html' => $html, 'links' => $links, 'rejected' => $rejected];
     }
 
@@ -178,13 +212,18 @@ class CoveMarkup
             return '';
         }
 
-        return (string) preg_replace_callback(
+        $text = (string) preg_replace_callback(
             self::TOKEN,
             // The label if one was given, the value otherwise — the same
             // fallback render() uses for a token it cannot resolve.
             fn (array $m): string => $m[3] ?? $m[2],
             $text,
         );
+
+        // Emphasis has no meaning in any of these destinations, and asterisks
+        // in a `<meta>` description or a FAQPage answer are read literally by
+        // the one audience that cannot ask what they were for.
+        return (string) preg_replace(self::BOLD, '$1', $text);
     }
 
     /**
@@ -376,6 +415,11 @@ class CoveMarkup
 
         return implode("\n", array_filter([
             'Link by writing tokens. Never write a URL, a markdown link or an HTML tag.',
+            // Stated here rather than in the editable voice prompt for the same
+            // reason the token syntax is: it is a fact about the renderer. The
+            // one Markdown construct it understands, said out loud so a writer
+            // does not reach for `#`, `_` or a list and get literal characters.
+            'Markdown: **bold** renders. Nothing else does - no headings, no lists, no italics.',
             '  [[brand:NAME]]        [[search:PHRASE]]        [[product:ID|label]]',
             '  [[guide:SLUG]]        [[page:KEY]]',
             '',

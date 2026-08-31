@@ -21,6 +21,7 @@ use App\Services\Cove\Selectors\Selectors;
 use App\Services\Cove\Writers\GuideWriter;
 use App\Services\Cove\Writers\Written;
 use App\Services\Editorial\Allowlist;
+use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use Carbon\CarbonImmutable;
@@ -881,7 +882,15 @@ class EditionBuilder
          */
         if ($plan !== null && filled($plan->editorial)) {
             return [
-                'text' => Str::limit(trim((string) $plan->editorial), self::EDITORIAL_LIMIT, ''),
+                /*
+                 * House style applies to authored prose too, and that is not a
+                 * contradiction of the paragraph above. It is punctuation, not
+                 * wording: the writer here is usually Claude through the
+                 * editorial API, and an em dash it reached for is the habit
+                 * this rule exists to correct, not a decision it made. The
+                 * words are untouched. See {@see HouseStyle}.
+                 */
+                'text' => Str::limit(trim((string) HouseStyle::prose($plan->editorial)), self::EDITORIAL_LIMIT, ''),
                 'source' => 'planned',
             ];
         }
@@ -978,7 +987,7 @@ class EditionBuilder
             return null;
         }
 
-        $text = trim(strip_tags((string) ($response['editorial'] ?? '')));
+        $text = trim(strip_tags((string) HouseStyle::prose((string) ($response['editorial'] ?? ''))));
 
         return $text === '' ? null : $text;
     }
@@ -1252,7 +1261,9 @@ class EditionBuilder
             return $fallback;
         }
 
-        $title = trim(strip_tags((string) ($response['title'] ?? '')));
+        // `plain`, not `prose`: a theme title and its blurb are printed as
+        // text nodes and never see the renderer, so `**` would show.
+        $title = trim(strip_tags((string) HouseStyle::plain((string) ($response['title'] ?? ''))));
 
         if ($title === '') {
             return $fallback;
@@ -1260,7 +1271,7 @@ class EditionBuilder
 
         return [
             'title' => Str::limit($title, 80, ''),
-            'blurb' => Str::limit(trim(strip_tags((string) ($response['blurb'] ?? ''))), 200, '') ?: null,
+            'blurb' => Str::limit(trim(strip_tags((string) HouseStyle::plain((string) ($response['blurb'] ?? '')))), 200, '') ?: null,
             'slug' => Str::slug($title),
             'source' => 'ai',
         ];

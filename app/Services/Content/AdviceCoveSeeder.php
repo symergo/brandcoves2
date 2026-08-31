@@ -10,6 +10,7 @@ use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
+use App\Services\Editorial\HouseStyle;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -141,7 +142,17 @@ class AdviceCoveSeeder
                         ],
                         [
                             'kind' => CoveKind::Advice->value,
-                            'theme_title' => $article['title'],
+                            /*
+                             * House style, applied on the way in like every
+                             * other writer's output. These articles were
+                             * written by a model too; that the prose happens to
+                             * live in a file this repo ships does not make it a
+                             * different kind of text. See
+                             * {@see \App\Services\Editorial\HouseStyle} for
+                             * why `theme_blurb` and `body` keep their `**` and
+                             * the title does not.
+                             */
+                            'theme_title' => HouseStyle::plain($article['title']),
                             /*
                              * The slug, not a rotation key. `theme_slug` is the
                              * Daily's internal bookkeeping and is English in
@@ -149,10 +160,15 @@ class AdviceCoveSeeder
                              * to book-keep, so the address is the honest value.
                              */
                             'theme_slug' => $slug,
-                            'theme_blurb' => $article['blurb'],
-                            'body' => $article['body'],
-                            'faq' => $article['faq'] ?? null,
-                            'meta_description' => $article['meta_description'] ?? null,
+                            'theme_blurb' => HouseStyle::prose($article['blurb']),
+                            'body' => HouseStyle::prose($article['body']),
+                            'faq' => isset($article['faq'])
+                                ? array_map(fn (array $pair): array => [
+                                    'q' => HouseStyle::plain($pair['q']),
+                                    'a' => HouseStyle::prose($pair['a']),
+                                ], $article['faq'])
+                                : null,
+                            'meta_description' => HouseStyle::plain($article['meta_description'] ?? null),
                             'editorial_source' => self::SOURCE,
                             'status' => PublishStatus::Published->value,
                             // Stamped once — see the class note.

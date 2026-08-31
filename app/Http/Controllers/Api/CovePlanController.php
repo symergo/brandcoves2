@@ -18,6 +18,7 @@ use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\ProductGroup;
 use App\Services\Cove\ObservanceCalendar;
+use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\LinkCheck;
 use App\Services\Editorial\ProductLookup;
 use Carbon\CarbonImmutable;
@@ -230,9 +231,18 @@ class CovePlanController extends Controller
              * rather than a mistake to prevent. See App\Enums\PersonaScene.
              */
             'scene' => $data['scene'] ?? null,
-            'title' => $data['title'],
-            'blurb' => $data['blurb'] ?? null,
-            'editorial' => $data['editorial'] ?? null,
+            /*
+             * House style on everything a reader sees. `prose` where the field
+             * is rendered by CoveMarkup, `plain` where it is printed as a text
+             * node — see {@see HouseStyle} for why the two differ over `**`.
+             *
+             * `buildInstructions` and `note` are deliberately untouched: they
+             * are an editor talking to the builder, not copy, and neither is
+             * ever rendered.
+             */
+            'title' => HouseStyle::plain($data['title']),
+            'blurb' => HouseStyle::plain($data['blurb'] ?? null),
+            'editorial' => HouseStyle::prose($data['editorial'] ?? null),
             'build_instructions' => $data['buildInstructions'] ?? null,
             'queries' => $data['queries'] ?? [],
             'note' => $data['note'] ?? null,
@@ -246,13 +256,16 @@ class CovePlanController extends Controller
              */
             ...($kind->isArticle() ? [
                 'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
-                'meta_description' => $data['metaDescription'] ?? null,
-                'body' => $data['body'] ?? null,
+                'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null),
+                'body' => HouseStyle::prose($data['body'] ?? null),
                 // Stored as the two-letter shape the page and the schema.org
                 // renderer read. The API spells them out, because `q`/`a` in a
                 // JSON body is a guess.
                 'faq' => isset($data['faq'])
-                    ? array_map(fn (array $pair) => ['q' => $pair['question'], 'a' => $pair['answer']], $data['faq'])
+                    ? array_map(fn (array $pair) => [
+                        'q' => HouseStyle::plain($pair['question']),
+                        'a' => HouseStyle::prose($pair['answer']),
+                    ], $data['faq'])
                     : null,
             ] : []),
 
@@ -594,8 +607,10 @@ class CovePlanController extends Controller
                 'group' => $groupId === null ? null : $groups[$groupId],
                 'source' => $groupId === null ? $source : null,
                 'externalId' => $groupId === null ? $externalId : null,
+                // `note` is a brief for the builder; `verdict` is printed on
+                // the card, so only one of the two gets house style.
                 'note' => $item['note'] ?? null,
-                'verdict' => $item['verdict'] ?? null,
+                'verdict' => HouseStyle::plain($item['verdict'] ?? null),
             ];
         })->values();
     }

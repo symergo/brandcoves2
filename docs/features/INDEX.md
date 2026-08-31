@@ -45,6 +45,7 @@ cannot be recovered from a diff.
 | [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
 | [cove-curation.md](cove-curation.md) | Content / Operations | Active |
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |
+| [house-style.md](house-style.md) | Content / Operations | Active — enforced at every write; production archive not yet tidied |
 | [page-templates.md](page-templates.md) | Content / SEO | Active — replaces the copy bank |
 | [product-cards-in-prose.md](product-cards-in-prose.md) | Content / Frontend | Active |
 | [scheduled-writing.md](scheduled-writing.md) | Content / Operations | Active |

@@ -11,6 +11,7 @@ use App\Enums\PublishStatus;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Editorial\HouseStyle;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -139,10 +140,14 @@ class SeedShopCovesCommand extends Command
                         'slug' => $slug,
                     ],
                     [
-                        'theme_title' => $text['title'],
+                        // House style on the way in, the same as every other
+                        // writer's output. See App\Services\Editorial\HouseStyle:
+                        // a Shop Cove renders through GuideController, so its
+                        // blurb is the intro paragraph and keeps its emphasis.
+                        'theme_title' => HouseStyle::plain($text['title']),
                         'theme_slug' => $slug,
-                        'theme_blurb' => $text['blurb'],
-                        'body' => $text['body'],
+                        'theme_blurb' => HouseStyle::prose($text['blurb']),
+                        'body' => HouseStyle::prose($text['body']),
                         'editorial_source' => self::SOURCE,
                         'status' => PublishStatus::Published->value,
                         /*

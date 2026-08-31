@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Services\Editorial\Allowlist;
+use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\LinkCheck;
 use App\Services\Editorial\ProductLookup;
 use Illuminate\Http\JsonResponse;
@@ -158,14 +159,31 @@ class CoveQueueController extends Controller
         }
 
         DB::transaction(function () use ($plan, $data, $items): void {
+            /*
+             * House style, applied here because this is a writer's front door.
+             *
+             * The agent on the other end of this endpoint is a language model,
+             * and the two habits {@see HouseStyle} exists for arrive through
+             * it as surely as they arrive from `EditionBuilder`. Applied at the
+             * write so the stored plan is already right and every rebuild of
+             * every edition from it inherits that, rather than each renderer
+             * filtering and one of them eventually not.
+             *
+             * `prose` where a renderer follows, `plain` where the field is
+             * printed as a text node. The split is the whole difference between
+             * `**bold**` becoming emphasis and becoming asterisks.
+             */
             $plan->forceFill(array_filter([
-                'title' => $data['title'] ?? null,
-                'blurb' => $data['blurb'] ?? null,
-                'editorial' => $data['editorial'] ?? null,
-                'body' => $data['body'] ?? null,
-                'meta_description' => $data['metaDescription'] ?? null,
+                'title' => HouseStyle::plain($data['title'] ?? null),
+                'blurb' => HouseStyle::plain($data['blurb'] ?? null),
+                'editorial' => HouseStyle::prose($data['editorial'] ?? null),
+                'body' => HouseStyle::prose($data['body'] ?? null),
+                'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null),
                 'faq' => isset($data['faq'])
-                    ? array_map(fn (array $p) => ['q' => $p['question'], 'a' => $p['answer']], $data['faq'])
+                    ? array_map(fn (array $p) => [
+                        'q' => HouseStyle::plain($p['question']),
+                        'a' => HouseStyle::prose($p['answer']),
+                    ], $data['faq'])
                     : null,
             ], fn ($v) => $v !== null))->save();
 
@@ -173,8 +191,11 @@ class CoveQueueController extends Controller
                 // Membership and rank are untouched. Only what is *said* about a
                 // product can be written here.
                 CovePlanItem::query()->whereKey($id)->update(array_filter([
+                    // `note` is a brief for the model and never reaches a
+                    // reader, so it is left as sent. `verdict` is printed on
+                    // the card.
                     'note' => $item['copy'] ?? null,
-                    'verdict' => $item['verdict'] ?? null,
+                    'verdict' => HouseStyle::plain($item['verdict'] ?? null),
                 ], fn ($v) => $v !== null));
             }
         });

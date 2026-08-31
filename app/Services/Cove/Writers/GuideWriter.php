@@ -10,6 +10,7 @@ use App\Models\ProductGroup;
 use App\Services\Ai\AiClient;
 use App\Services\Ai\AiUnavailable;
 use App\Services\Ai\PromptBank;
+use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use Illuminate\Support\Facades\Log;
@@ -105,13 +106,15 @@ class GuideWriter
             // Positional: the model is asked for one entry per shortlist row, in
             // the order it was given them.
             $items[] = [
-                'copy' => $this->clean($response['items'][$index]['copy'] ?? null),
-                'verdict' => $this->clean($response['items'][$index]['verdict'] ?? null, 60),
+                // `daily_picks.blurb`, printed as a text node under a card.
+                // No renderer, so no asterisks.
+                'copy' => $this->clean($response['items'][$index]['copy'] ?? null, prose: false),
+                'verdict' => $this->clean($response['items'][$index]['verdict'] ?? null, 60, prose: false),
             ];
         }
 
         return new Written(
-            title: $this->clean($response['title'] ?? null, 120) ?? $fallback->title,
+            title: $this->clean($response['title'] ?? null, 120, prose: false) ?? $fallback->title,
             intro: $this->clean($response['intro'] ?? null, 400) ?? $fallback->intro,
             /*
              * 6000, not 3000. The body is the article now: the decisions that
@@ -257,7 +260,7 @@ class GuideWriter
         $faq = [];
 
         foreach ($raw as $entry) {
-            $q = $this->clean($entry['q'] ?? null, 200);
+            $q = $this->clean($entry['q'] ?? null, 200, prose: false);
             $a = $this->clean($entry['a'] ?? null, 600);
 
             // Both halves or neither: a half-empty Q&A pair renders as a broken
@@ -270,13 +273,29 @@ class GuideWriter
         return $faq === [] ? null : $faq;
     }
 
-    private function clean(mixed $value, int $limit = 1200): ?string
+    /**
+     * Model output, made storable.
+     *
+     * `$prose` says whether the field has a renderer downstream, and it decides
+     * what happens to `**bold**`: an intro, a body or an FAQ answer goes
+     * through {@see CoveMarkup} and gets `<strong>`, while a title, a verdict
+     * or an FAQ question is printed as a React text node and would show the
+     * asterisks. See {@see HouseStyle}.
+     *
+     * House style runs before the limit, not after. Replacing an em dash makes
+     * the string two characters longer, so trimming first would let a body come
+     * back over its ceiling — and the ceilings here are the ones that keep a
+     * `<meta>` description and a `varchar` column honest.
+     */
+    private function clean(mixed $value, int $limit = 1200, bool $prose = true): ?string
     {
         if (! is_string($value)) {
             return null;
         }
 
-        $value = trim(strip_tags($value));
+        $value = $prose ? HouseStyle::prose($value) : HouseStyle::plain($value);
+
+        $value = trim(strip_tags((string) $value));
 
         return $value === '' ? null : Str::limit($value, $limit, '');
     }

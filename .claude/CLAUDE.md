@@ -97,6 +97,11 @@ php artisan bc:pull-charts            # pull bestseller charts — the demand si
 php artisan bc:pull-charts --market=be-nl --discover   # prove the endpoint and the response
                                       # envelope in one request. Writes nothing
 php artisan bc:refresh-guide-copy     # re-write guides that have no editorial, then stale ones
+php artisan bc:tidy-prose             # bring published prose into house style: em dashes out,
+                                      # stray ** off the fields that cannot render it. New writing
+                                      # is already correct (App\Services\Editorial\HouseStyle runs
+                                      # at the write); this is for the archive. Idempotent, dry run
+                                      # unless --write
 php artisan bc:seed-advice-coves      # publish the shipped advice articles from
                                       # resources/content/advice-coves.php. Idempotent, and it
                                       # never overwrites a Cove a person edited — --replace does,
