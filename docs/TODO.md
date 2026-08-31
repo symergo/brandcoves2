@@ -11,13 +11,52 @@ matters. Delete an entry when it is verified; do not let it become a wishlist.
 
 ## 1. Verify the eBay API against a live account
 
-**Blocked on:** an eBay **production** keyset (App ID + Cert ID) and at least one eBay Partner
+**Blocked on:** an App ID / Cert ID pair that eBay actually accepts, plus at least one eBay Partner
 Network campaign id.
 
-**Status:** the connector, its 17 tests, the config and the migration are all in
-([ebay-connector.md](features/ebay-connector.md)). It is inert until credentials exist —
-`supports()` requires the OAuth pair — so nothing is broken meanwhile; eBay is simply absent from
-search.
+**Status (tested 2026-08-31): a keyset was supplied and eBay rejects it.**
+
+```
+php artisan bc:check-ebay --market=nl-nl
+→ HTTP 401  {"error":"invalid_client","error_description":"client authentication failed"}
+```
+
+The paste is not the problem, which is worth recording so nobody re-checks it: both values are
+structurally correct production credentials — App ID `<user>-<app>-PRD-<hex>-<hex>` (40 chars), Cert
+ID `PRD-<hex>-<hex>-<hex>-<hex>` (36 chars), no whitespace, no quotes, not swapped, neither carrying
+`SBX`. The token request itself is also not implicated: `bc:check-ebay` makes that call directly
+rather than through the connector, so the 401 is eBay refusing the pair, not our code mis-sending it.
+
+**Cause found: the application is marked `non compliant` in eBay's developer portal**, because it had
+no Marketplace Account Deletion endpoint. A non-compliant keyset does not mint production tokens,
+which is the whole of the `invalid_client` above — the credentials were never the problem.
+
+That endpoint now exists: `/webhooks/ebay/account-deletion`, 11 tests, verified end to end against
+the local dev server ([ebay-account-deletion.md](features/ebay-account-deletion.md)).
+
+**So the remaining work is a sequence, and the order matters** — eBay validates the endpoint the
+moment it is saved in the portal, so the route has to be live first or the challenge hits a 404 and
+the application stays non compliant:
+
+1. **Deploy** to the host being registered. Until then the endpoint does not exist in the running
+   build.
+2. Set `EBAY_DELETION_VERIFICATION_TOKEN` and `EBAY_DELETION_ENDPOINT` on that Coolify app. The
+   endpoint must be the exact URL to be registered — it is an input to the challenge hash, so www
+   and non-www are different answers.
+3. Self-test with the `curl` in the feature doc **before** touching the portal, so a failure there
+   means eBay rather than us.
+4. Register endpoint + token in the portal (Alerts and Notifications → Marketplace Account
+   Deletion). The "non compliant" label should clear.
+5. Re-run `bc:check-ebay`. If it still answers `invalid_client`, then and only then is it worth
+   suspecting the keyset itself — an unaccepted API License Agreement, or a Cert ID regenerated
+   after being copied.
+
+Meanwhile nothing is broken: `supports()` requires the pair, so eBay is simply absent from search,
+and the connector's own 17 tests pass ([ebay-connector.md](features/ebay-connector.md)).
+
+**Campaign ids are still blank**, so even once authentication succeeds every eBay click will earn
+nothing until they are set. That failure is invisible from the site — see the `Tracked link` column
+below.
 
 **What to provide**
 
@@ -139,6 +178,12 @@ fix. Any new horizontal scroll is that bug again somewhere else.
   same refusal on every search. The other two are working and verified, so they were left alone
   deliberately rather than changed in passing — but the same guard belongs in both, and it is a
   small, testable change.
+- **eBay notification signatures are not verified.** Each account-deletion POST carries an
+  `x-ebay-signature` header, checkable against a public key from eBay's Notification API — which
+  needs an application access token, which a non-compliant keyset will not issue. Circular, so it is
+  deferred until tokens mint, at which point it can be written against a real signed payload rather
+  than a guess. It buys little meanwhile: the handler takes no action, so a forged notification
+  achieves nothing beyond a log line carrying no personal data.
 - **`fetchById()` has no callers.** All three live connectors implement it because `LiveConnector`
   requires it, and no re-check job exists for any source. It is where a wishlist item would get a
   fresh price — and, for eBay, the only place a barcode can come from.

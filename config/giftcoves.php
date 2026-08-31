@@ -878,6 +878,56 @@ return [
             'rate' => 5.0,
             'burst' => 1,
 
+            /*
+             * Marketplace Account Deletion — eBay's compliance webhook.
+             *
+             * NOT optional, and not really about us. eBay requires every
+             * production application to expose an endpoint it can notify when
+             * one of ITS users asks for their personal data to be erased, and
+             * an application that has not configured one is marked
+             * "non compliant" in the developer portal. That is not a warning: a
+             * non-compliant keyset does not mint production tokens, which is
+             * precisely the `invalid_client` this integration was stuck on.
+             *
+             * So this block is what turns the eBay credentials on. See
+             * docs/features/ebay-account-deletion.md.
+             */
+            'deletion' => [
+                /*
+                 * A secret WE invent, paste into eBay's portal, and echo back
+                 * hashed. eBay imposes the shape: 32–80 characters, letters,
+                 * digits, underscore and hyphen only.
+                 *
+                 * It is not a credential eBay issues, and it authenticates
+                 * nothing on its own — its only job is to prove, during the
+                 * one-off challenge, that the endpoint eBay just called is run
+                 * by whoever configured the application.
+                 */
+                'verification_token' => env('EBAY_DELETION_VERIFICATION_TOKEN'),
+
+                /*
+                 * The endpoint URL, and it must be EXACTLY the string typed
+                 * into eBay's portal.
+                 *
+                 * This is the part that goes wrong. The challenge response is
+                 * `sha256(challengeCode + verificationToken + endpoint)`, so
+                 * the URL is an input to the hash rather than merely where the
+                 * request arrived — and `https://giftcoves.com/...` and
+                 * `https://www.giftcoves.com/...` produce completely different
+                 * hashes for the same request. eBay then reports a validation
+                 * failure that says nothing about which of the three inputs was
+                 * wrong.
+                 *
+                 * Explicit config rather than route() for that reason:
+                 * production serves three hostnames and does not yet redirect
+                 * between them (see CLAUDE.md on canonical_host), so the URL
+                 * this app would generate for itself is a guess. The fallback
+                 * exists so local and staging work without ceremony; production
+                 * should set it.
+                 */
+                'endpoint' => env('EBAY_DELETION_ENDPOINT'),
+            ],
+
             // Longer than bol's 60s. eBay's limit is a daily quota, so a 429
             // usually means the day is spent rather than that we crowded a
             // per-second window — retrying in a minute would just spend the

@@ -86,6 +86,12 @@ x-app: &app
     # Tradedoubler. One value, and it is both the credential and the affiliate
     # id — the tracking links come back already built around it. Absent here
     # means the whole network is silently missing from search, with no error.
+    # The account-deletion webhook. Absent means eBay marks the application
+    # non compliant, which stops the production keyset minting tokens — so
+    # these two are not optional extras beside the credentials above, they are
+    # what makes the credentials work.
+    EBAY_DELETION_VERIFICATION_TOKEN: ${EBAY_DELETION_VERIFICATION_TOKEN}
+    EBAY_DELETION_ENDPOINT: ${EBAY_DELETION_ENDPOINT}
     TRADEDOUBLER_TOKEN: ${TRADEDOUBLER_TOKEN}
     AMAZON_ENABLED: ${AMAZON_ENABLED:-false}
     AMAZON_ACCESS_KEY: ${AMAZON_ACCESS_KEY}

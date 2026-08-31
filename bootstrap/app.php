@@ -106,6 +106,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // click data on every Amazon link.
         $middleware->validateCsrfTokens(except: [
             '*/track/click',
+
+            // eBay's account-deletion webhook. A server-to-server POST from
+            // outside, so there is no session and no token to carry — and
+            // rejecting it would mark the application non compliant in eBay's
+            // portal, which stops the production keyset minting tokens.
+            // Exempt safely: the handler changes no state and writes no
+            // personal data. See docs/features/ebay-account-deletion.md.
+            'webhooks/ebay/account-deletion',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

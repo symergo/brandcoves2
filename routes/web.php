@@ -15,6 +15,7 @@ use App\Http\Controllers\CoveSubscriptionController;
 use App\Http\Controllers\DailyCoveController;
 use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\DiscoverCoveController;
+use App\Http\Controllers\Ebay\AccountDeletionController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftCoveController;
@@ -63,6 +64,28 @@ use Illuminate\Support\Facades\Route;
 // migration applied — Coolify's healthcheck target, and the first thing to
 // check after a deploy.
 Route::get('/health', HealthController::class)->name('health');
+
+/*
+ * eBay Marketplace Account Deletion — eBay's compliance webhook.
+ *
+ * Unprefixed and unauthenticated, because eBay calls it and knows nothing about
+ * markets or sessions. GET answers the one-off challenge; POST acknowledges a
+ * real deletion notification.
+ *
+ * This is not a nicety: an application with no such endpoint is marked "non
+ * compliant" in eBay's developer portal, and a non-compliant keyset does not
+ * mint production tokens. It is what makes the eBay connector work at all.
+ *
+ * Deliberately NOT rate limited. eBay retries an endpoint that does not answer
+ * 2xx and counts the failures against compliance, so throttling its retries is
+ * a way to fail the requirement while looking defensive. The POST changes no
+ * state and logs no personal data, so there is nothing here worth protecting
+ * with a limit. See docs/features/ebay-account-deletion.md.
+ */
+Route::get('/webhooks/ebay/account-deletion', [AccountDeletionController::class, 'challenge'])
+    ->name('ebay.deletion.challenge');
+Route::post('/webhooks/ebay/account-deletion', [AccountDeletionController::class, 'notify'])
+    ->name('ebay.deletion.notify');
 
 // Sitemaps and robots. Unprefixed: crawlers look for them at the root, and a
 // per-market copy would just be five competing files.
