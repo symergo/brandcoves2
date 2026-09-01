@@ -250,3 +250,57 @@ Three details worth keeping:
 The rows are arrays rather than models, so the list sets `recordAction(null)` and
 `recordUrl(null)`: `ListRecords` otherwise wires a click-the-row handler typed to
 an Eloquent model, which is a 500 the moment the page renders.
+
+## Every kind with a shortlist now states the layout the same way — 2026-09-01
+
+The pages built from `cove.daily`, `cove.persona`, `cove.guide` and `cove.seasonal` have one
+shape: a short opening, then a passage about each product, with that product's card rendered
+directly underneath the paragraph naming it. Four prompts described that shape, in four
+different amounts of detail, and only the Daily said it plainly.
+
+They now share the column's exact paragraph:
+
+> The passage is the point. Each product's card is rendered directly under the paragraph that
+> names it, so a paragraph is not an introduction to a grid further down - it is the writing
+> that product gets, and the only writing it gets.
+
+Identical wording, for the same reason the three reader-protection rules are identical: a model
+reads a re-phrased rule as a different rule. What each kind keeps is its own noun ("find",
+"gift", "product") and its own position in the prompt.
+
+**Why the wording matters more here than the rule does.** The enforceable half is already
+appended in code and cannot be edited away — `ProseCards::promptContract()`, one paragraph per
+product, every product covered. What the templates carry is the *reason*, and the reason is the
+part that changes behaviour: the failure it prevents is a model's default instinct to write two
+scene-setting paragraphs and then treat the products as a grid somewhere below. On these pages
+there is no grid below. A product the prose never reaches gets no card in the article, no
+sentence anywhere, and drops to the foot of the page bare. "And the only writing it gets" is the
+clause that says so, and it was the clause the persona prompt had dropped.
+
+**Where each one had it wrong:**
+
+- **`cove.persona`** had a shortened version with the consequence clause removed. Production's
+  override for this slot is the receipt: somebody had hit exactly this, and hand-appended
+  *"Include a section on each product to explain why it is a good pick for that kind of person"*
+  to a copy of an older shipped prompt.
+- **`cove.guide`** and **`cove.seasonal`** stated it correctly but buried it — a trailing
+  sub-clause on a bullet describing what to put in an output field, which is the weakest place in
+  a prompt for the fact the whole page depends on. It now leads, above the list of outputs.
+
+**And the duplicated rule came out of both.** The guide and seasonal prompts each restated "one
+product per paragraph, two stacks both cards under it" as a rule of their own, while
+`GuideWriter` was already appending the identical rule from `ProseCards::promptContract()`. Two
+copies read to a model as two rules, and to an editor as a rule they are free to delete — which
+they are not, and deleting it does nothing. The split is now the same as the Daily's and was
+always meant to be: **the enforceable rule is appended in code where nobody can lose it; the
+reason a writer would want to follow it is editable, because it is written in the voice of the
+page.**
+
+Nothing changed in `PromptBank`, the placeholders or the schema. This is prompt text only.
+
+> **The two production overrides are older than these prompts and will not pick this up.** That
+> is the documented trade-off of an override, not a bug — but both were written against earlier
+> shipped wording, and the persona one is a copy of a prompt that no longer exists in the code
+> plus one hand-written sentence. Both are worth re-basing on the shipped text by hand. There is
+> deliberately no mechanism to do it for them: a prompt silently rewritten under an editor is
+> worse than a stale one.

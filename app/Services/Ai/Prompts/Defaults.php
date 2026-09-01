@@ -6,6 +6,7 @@ namespace App\Services\Ai\Prompts;
 
 use App\Enums\CoveKind;
 use App\Services\Editorial\HouseStyle;
+use App\Services\Editorial\ProseCards;
 
 /**
  * The prompts the application ships with — one pair per kind of Cove.
@@ -41,6 +42,24 @@ use App\Services\Editorial\HouseStyle;
  * The three rules that protect the reader, phrased the same way every time
  * because they are the same rule: only the products listed, never a price, never
  * an invented claim. A model reads a re-phrased rule as a different rule.
+ *
+ * **And the layout paragraph**, on every kind that carries a shortlist: a short
+ * opening, then a passage about each product, whose card is rendered directly
+ * under the paragraph naming it. Identical wording for the same reason as the
+ * rules above, and it is the sentence that does the most work of any in this
+ * file. Every one of these pages has the same shape, and the failure it prevents
+ * is the one a model reaches for by default: a couple of scene-setting
+ * paragraphs and then a run of products treated as a grid somewhere below. On
+ * these pages there is no grid below. A product the prose never reaches gets no
+ * card in the article and no sentence anywhere, and drops to the foot of the
+ * page bare. See {@see ProseCards}.
+ *
+ * The persona, the guide and the seasonal guide each said this in their own
+ * words and each said less of it. The guide and the seasonal one buried it in a
+ * sub-clause of a bullet describing an output field, which is the weakest place
+ * in a prompt to put the fact the whole page depends on; the persona dropped the
+ * clause explaining *why*, and a rule with no reason is the first one a model
+ * drops when it is holding eight others.
  *
  * The em-dash rule is the fourth, and it is worded identically for the same
  * reason. It is stated here and enforced anyway in
@@ -119,6 +138,14 @@ class Defaults
      * this template cannot drop it. What curation adds on top (the order, and
      * the note explaining each choice) is appended in the same place, because
      * that too is derived from the plan in front of the builder.
+     *
+     * What *is* here is the paragraph explaining what that shape is for, and the
+     * split is deliberate: the enforceable rule is appended in code where nobody
+     * can lose it, and the reason a writer would want to follow it is editable,
+     * because it is written in the voice of the page. The guide and the seasonal
+     * guide restated the appended rule as a fourth bullet of their own until
+     * 2026-09-01, which read to a model as two rules rather than one, and to an
+     * editor as a rule they could delete.
      */
     private const DAILY_SYSTEM = <<<'TXT'
         You write the editorial for today's edition of a daily column about
@@ -175,15 +202,25 @@ class Defaults
      * tense is the whole difference, and it has to be stated as a rule because
      * a model handed a list of products naturally narrates the moment it was
      * handed them.
+     *
+     * Everything else about it is the column's shape, and now says so in the
+     * column's words: a short opening, then a passage per gift, card underneath.
+     * This prompt had a shortened version that dropped the "and the only writing
+     * it gets" clause, which is the half that says what happens when the model
+     * skips a product. Production's override for this slot is a live example of
+     * the cost — somebody had hit the same problem and hand-appended "Include a
+     * section on each product to explain why it is a good pick for that kind of
+     * person" to a copy of an older shipped prompt.
      */
     private const PERSONA_SYSTEM = <<<'TXT'
         You write a permanent gift-ideas page about one kind of person - "the
-        cottagecore herbalist", "the dad who has everything". An opening about
-        the person, then a passage about each gift.
+        cottagecore herbalist", "the dad who has everything": a short opening
+        about that person, then a passage about each gift.
 
-        Each gift's card is rendered directly under the paragraph that names it,
-        so a paragraph is the writing that gift gets, not a trailer for a grid
-        further down.
+        The passage is the point. Each gift's card is rendered directly under
+        the paragraph that names it, so a paragraph is not an introduction to a
+        grid further down - it is the writing that gift gets, and the only
+        writing it gets.
 
         The reader is buying a present for somebody else. They already know who
         that person is; what they lack is an idea. So write about the *recipient*
@@ -229,6 +266,12 @@ class Defaults
      * preamble to a list. "Best for X" is still required instead of "the best":
      * the page has to survive a reader who disagrees with the ranking.
      *
+     * The layout paragraph now leads, in the column's exact wording, instead of
+     * trailing a bullet about what to put in the `how_to_choose` field. Same
+     * fact, and it was already stated; the difference is that the shape of the
+     * page is now the second thing the model reads about it rather than a rider
+     * on an output-format instruction.
+     *
      * The per-item copy survives at two sentences and has changed job. It used
      * to be the writing about a product; it is now the fallback shown under a
      * card the article never reached, which is why the template says so — a
@@ -243,14 +286,17 @@ class Defaults
         not the products. A reader arrives knowing roughly what they want and
         needing to choose between things that look identical in a search result.
 
+        The passage is the point. Each product's card is rendered directly under
+        the paragraph that names it, so a paragraph is not an introduction to a
+        grid further down - it is the writing that product gets, and the only
+        writing it gets.
+
         Write three things:
 
         - an intro that says what actually separates these products;
         - the article: the two or three decisions that matter, and then a
           passage about EVERY product on the shortlist, each in its own
-          paragraph, naming it with its link token. The product's card is
-          rendered directly under the paragraph that names it, so that paragraph
-          is the writing it gets on this page;
+          paragraph, naming it with its link token;
         - one short entry per product: a "best for X" verdict, and at most two
           sentences of copy. The copy is a fallback, shown only where the
           article did not reach the product.
@@ -263,8 +309,6 @@ class Defaults
           the reader's situation is the thing you do not know.
         - No invented test results and no "we tested": nothing was tested. What
           you have is the catalogue, and saying less is allowed.
-        - One product per paragraph in the article. Two in one paragraph stacks
-          both cards under it and reads as a caption for a pair.
         - No em dashes. Where a sentence needs a break, use a comma, a colon,
           or a spaced hyphen - like this one.
         - Take the products in the order given: that order is the ranking, and in
@@ -294,6 +338,11 @@ class Defaults
      * first earns traffic the following May. A model told "this is the Halloween
      * guide" writes "with Halloween almost here", in July, on a page that then
      * reads as stale for eleven months and wrong for one.
+     *
+     * The layout paragraph leads here too, above the four outputs, for the
+     * reason given on GUIDE_SYSTEM. It sits after the "true on all three days"
+     * paragraph rather than before it: both describe the page, and the tense one
+     * is the reason this slot exists at all.
      */
     private const SEASONAL_SYSTEM = <<<'TXT'
         You write the prose for a seasonal buying guide on a product and brand
@@ -306,6 +355,11 @@ class Defaults
         every year. Somebody may be reading it eight weeks early, on the day, or
         next year. Write something true on all three days.
 
+        The passage is the point. Each product's card is rendered directly under
+        the paragraph that names it, so a paragraph is not an introduction to a
+        grid further down - it is the writing that product gets, and the only
+        writing it gets.
+
         Write four things:
 
         - a title;
@@ -313,9 +367,7 @@ class Defaults
           different;
         - the article: the two or three decisions that matter, and then a
           passage about EVERY product on the shortlist, each in its own
-          paragraph, naming it with its link token. The product's card is
-          rendered directly under the paragraph that names it, so that paragraph
-          is the writing it gets on this page;
+          paragraph, naming it with its link token;
         - one short entry per product: a "best for X" verdict, and at most two
           sentences of copy, shown only where the article did not reach it.
 
@@ -345,8 +397,6 @@ class Defaults
         - No prices at all: they change, and the page renders live ones.
         - Never call a product "the best" outright. Say what it is best FOR.
         - No invented test results and no "we tested": nothing was tested.
-        - One product per paragraph in the article. Two in one paragraph stacks
-          both cards under it and reads as a caption for a pair.
         - No em dashes. Where a sentence needs a break, use a comma, a colon,
           or a spaced hyphen - like this one.
         - **Never imply when it is being read.** No "almost here", "just around
