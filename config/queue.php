@@ -68,7 +68,36 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
+
+            /*
+             * Longer than the longest job timeout, and that is the whole rule.
+             *
+             * `retry_after` is how long Redis holds a job reserved before it
+             * decides the worker died and hands the job to somebody else. Set
+             * below a job's own `$timeout` it does not abort anything — it
+             * releases a job that is still running, a second worker picks up the
+             * same payload, and the attempt counter climbs while the original
+             * keeps working. Two releases is `$tries = 2` spent, so the job dies
+             * with MaxAttemptsExceeded having never once been allowed to finish.
+             *
+             * At the stock 90 that is what happened every morning on production:
+             * `BuildDailyEdition` for be-nl started at 06:00:01, was re-reserved
+             * at 06:01:32 and again at 06:03:04, and failed there — so
+             * `/be-nl/daily` 404'd while the small markets, which finish inside
+             * ninety seconds, published normally. Same cause for the daily
+             * IngestFeed, GroupProducts, RefreshBrandStats and ScoreSerendipity
+             * failures; every job on this queue that scans the catalogue was
+             * losing the same race. Diagnosed 2026-09-01.
+             *
+             * 3900 = IngestFeed's 3600s timeout plus five minutes of headroom.
+             * Raise this whenever a job's `$timeout` goes above it.
+             *
+             * The cost, accepted knowingly: a job orphaned by a worker that
+             * really did die now waits 65 minutes for its retry instead of 90
+             * seconds. Every job here is scheduled daily and idempotent, so a
+             * late retry is cheap — a guaranteed daily failure was not.
+             */
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 3900),
             'block_for' => null,
             'after_commit' => false,
         ],

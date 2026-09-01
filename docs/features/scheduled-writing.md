@@ -158,3 +158,49 @@ however wrong the prompt turns out to be.
 - [editorial-api.md](editorial-api.md) — abilities, tokens, the writing contract
 - [cove-planner.md](cove-planner.md) — where the plans and their briefs come from
 - [ai-invariant.md](ai-invariant.md) — why authored prose costs nothing
+
+---
+
+## The build was being retried to death, and only on the big markets
+
+Fixed 2026-09-01. `/be-nl/daily` had answered **404 on production since the market launched**, while
+`/en/daily` and `/nl-nl/daily` served normally. There was no error page, no alert and no obviously
+broken job — the edition simply did not exist.
+
+`config/queue.php` shipped Laravel's stock `retry_after` of **90 seconds**. Every long job in
+`app/Jobs/` declares its own `$timeout` well above that — `BuildDailyEdition` 900s, `IngestFeed`
+3600s. Redis does not abort a job when `retry_after` elapses; it decides the worker died and releases
+the job to somebody else, while the original keeps working. The attempt counter climbs underneath it,
+and `$tries = 2` is spent after two releases. Horizon's own log is the whole story:
+
+```
+06:00:01 App\Jobs\BuildDailyEdition ..... RUNNING
+06:01:32 App\Jobs\BuildDailyEdition ..... RUNNING     <- released at 90s, re-reserved
+06:03:04 App\Jobs\BuildDailyEdition ..... RUNNING     <- and again
+06:03:04 App\Jobs\BuildDailyEdition ..... 5.44ms FAIL <- MaxAttemptsExceeded
+```
+
+**Why only some markets.** The build scans the market's catalogue. `en` holds 16k product groups and
+finishes in about 2m25s — over the 90s line, but its first attempt still completed and deleted the
+job before the retries could kill it. `be-nl` holds 114k and `be-fr` 101k; those never won that race,
+and failed every single morning. Which is why the symptom read as "the Belgian markets have no daily
+column" rather than as a queue setting.
+
+It was never only the Cove. `IngestFeed`, `GroupProducts`, `RefreshBrandStats` and `ScoreSerendipity`
+fill `failed_jobs` with the same exception for the same reason — every job on this queue that walks
+the catalogue.
+
+`retry_after` is now **3900** (`IngestFeed`'s 3600 plus headroom).
+[tests/Unit/QueueRetryAfterTest.php](../../tests/Unit/QueueRetryAfterTest.php) reads every
+`$timeout` out of `app/Jobs/` and fails if any of them reaches it, because the next break will arrive
+via a different file: somebody raises a timeout to give a growing catalogue room, and breaks a queue
+setting they never opened.
+
+The accepted cost: a job orphaned by a worker that really did die now waits 65 minutes for its retry.
+Everything here is scheduled daily and idempotent, so a late retry is cheap — a guaranteed daily
+failure was not.
+
+**Still open.** `nl-nl` hit the real 900s timeout on 2026-09-01 (`15m 1s FAIL`), so the build itself
+is getting slow as the catalogue grows; raising `retry_after` stops the retry storm but does not make
+that job finish. And `es` genuinely has no catalogue — `Edition skipped: not enough finds
+{"market":"es","found":0}` — so `/es/daily` is a correct 404 until that market has products.
