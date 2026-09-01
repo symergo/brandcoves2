@@ -138,3 +138,39 @@ and no prose at all is the worse outcome.
 - [tests/Feature/ProductCardsInProseTest.php](../../tests/Feature/ProductCardsInProseTest.php) — the
   guide page's props, the list taking the remainder, and the prompt rule surviving an edited
   template.
+
+## A product token without a label used to print its id
+
+Fixed 2026-09-01. `[[product:1234|the lockable diary]]` renders the label; `[[product:1234]]`
+rendered **`1234`**. Three published editions read like this:
+
+> …rain is a different sport than walking to school in the rain, and the **6609172** is built for the
+> version on wheels…
+
+Linked, escaped, and pointed at the right page. The only thing wrong was the words a reader sees,
+which is why nothing caught it: every test asserted the destination.
+
+`CoveMarkup` fell back to the token's *value* for any token missing a label, which is right for every
+kind but this one. A brand token's value is "Sony" and a search token's is the phrase — there the
+value **is** the words. A product is addressed by id, so the value is a database key.
+
+Two changes, and the order matters:
+
+1. **`CoveMarkup::fallbackLabel()`** gives an unlabelled product token the product's own title, from
+   the allowlist the renderer already holds. It fixes the three live editions with no rewriting and
+   guarantees a number can never reach a sentence again. `plain()` takes an optional allowlist and
+   does the same, for meta descriptions and email.
+2. **The prompt stopped teaching the bare form.** `EditionBuilder` and `GuideWriter` listed the
+   products a writer may use as `- [[product:6609172]] Title (category)` — the strongest example the
+   model ever saw of what a token looks like, and it showed one with no label. Those lists now hand
+   over the id as a plain fact (`- id 6609172: Title (category)`), leaving
+   `CoveMarkup::promptContract()` the only place the token shape is stated, where it now says the
+   label is required and asks for the writer's own two or three words rather than the feed title.
+
+The title fallback is deliberately **not** shortened. A feed title runs long and reads like a spec
+sheet, so a missing label stays visible to whoever reads the page instead of being quietly
+acceptable. It is a floor under the writing, not a substitute for it.
+
+Guards: `CoveMarkupTest::a_product_token_without_a_label_is_never_rendered_as_its_id`,
+`::plain_text_gives_an_unlabelled_product_its_title_too`, and `::the_prompt_contract_demands_a_label`
+— the last because the renderer's fallback would otherwise let the contract quietly rot.

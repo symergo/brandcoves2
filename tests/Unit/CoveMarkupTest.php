@@ -88,6 +88,50 @@ class CoveMarkupTest extends TestCase
     }
 
     #[Test]
+    public function a_product_token_without_a_label_is_never_rendered_as_its_id(): void
+    {
+        /*
+         * The bug this guards, found on production 2026-09-01: three published
+         * editions wrote `[[product:6609172]]` and the page read "the 6609172
+         * is built for the version on wheels". Linked, escaped and pointed at
+         * the right page — only the words a reader sees were a database key.
+         *
+         * A brand or a search token echoing its value is right, because there
+         * the value *is* the words. A product is addressed by id, so it needs
+         * the one thing the allowlist can supply: the product's title.
+         */
+        $result = $this->render('The [[product:1234]] is the obvious one.');
+
+        $this->assertStringContainsString('href="/be-nl/p/1234/sony-wh-1000xm5"', $result['html']);
+        $this->assertStringContainsString('>Sony WH-1000XM5</a>', $result['html']);
+        $this->assertStringNotContainsString('>1234<', $result['html']);
+    }
+
+    #[Test]
+    public function plain_text_gives_an_unlabelled_product_its_title_too(): void
+    {
+        // A meta description, an email, a FAQ answer. Same failure, and the one
+        // audience that cannot ask what the number was for.
+        $plain = $this->markup()->plain('The [[product:1234]] is the obvious one.', $this->allowed());
+
+        $this->assertSame('The Sony WH-1000XM5 is the obvious one.', $plain);
+    }
+
+    #[Test]
+    public function the_prompt_contract_demands_a_label(): void
+    {
+        /*
+         * The renderer's fallback is a floor, not the fix. What should reach
+         * the page is the writer's own few words for the thing, so the contract
+         * has to ask for them — and has to keep asking after somebody tidies it.
+         */
+        $contract = $this->markup()->promptContract($this->allowed());
+
+        $this->assertStringContainsString('[[product:1234|', $contract);
+        $this->assertStringContainsString('MUST carry a label', $contract);
+    }
+
+    #[Test]
     public function an_invented_brand_degrades_to_plain_text(): void
     {
         /*

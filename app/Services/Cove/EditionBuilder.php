@@ -1158,8 +1158,17 @@ class EditionBuilder
                 continue;
             }
 
+            /*
+             * `id %d`, not `[[product:%d]]`. This list is the strongest example
+             * the model ever sees of what a product token looks like, and while
+             * it showed the bare form that is what came back in the prose — a
+             * number in the middle of a sentence, because an unlabelled token
+             * rendered as its id. Handing over the id as a plain fact leaves
+             * `promptContract()` the only place the token shape is stated, and
+             * there it is stated with its label required.
+             */
             $lines[] = sprintf(
-                '- [[product:%d]] %s (%s)',
+                '- id %d: %s (%s)',
                 $group->id,
                 $group->title,
                 $group->category ?? 'uncategorised',
@@ -1168,7 +1177,7 @@ class EditionBuilder
 
         $curated = array_map(
             fn (array $item, int $i) => sprintf(
-                '%d. [[product:%d]] %s%s',
+                '%d. id %d: %s%s',
                 $i + 1,
                 $item['id'],
                 $item['title'],

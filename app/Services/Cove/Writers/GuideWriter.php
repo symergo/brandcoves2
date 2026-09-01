@@ -164,7 +164,7 @@ class GuideWriter
              * query result could never supply.
              */
             $curated[] = sprintf(
-                '%d. [[product:%d]] %s%s',
+                '%d. id %d: %s%s',
                 $position + 1,
                 $entry['id'],
                 $entry['title'],
@@ -185,7 +185,7 @@ class GuideWriter
             // Structured facts only. The model gets what we know and nothing to
             // fill gaps with.
             $lines[] = sprintf(
-                '%d. [[product:%d]] %s | brand: %s | category: %s | sold by %d shop(s)',
+                '%d. id %d: %s | brand: %s | category: %s | sold by %d shop(s)',
                 $index + 1,
                 $group->id,
                 $group->title,

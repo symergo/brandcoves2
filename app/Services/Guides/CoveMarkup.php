@@ -137,7 +137,9 @@ class CoveMarkup
                 $kind = $m[1];
                 // The token survived escaping, so its contents are escaped too.
                 $value = html_entity_decode($m[2], ENT_QUOTES);
-                $label = isset($m[3]) ? html_entity_decode($m[3], ENT_QUOTES) : $value;
+                $label = isset($m[3])
+                    ? html_entity_decode($m[3], ENT_QUOTES)
+                    : $this->fallbackLabel($kind, $value, $allowed);
 
                 $href = match ($kind) {
                     'brand' => $this->brand($value, $allowed['brands'] ?? [], $base, $brandUrls),
@@ -205,8 +207,14 @@ class CoveMarkup
      * Not escaped, deliberately: the callers here are handing the string to
      * something that will escape it (Inertia, json_encode, a Blade `{{ }}`), and
      * escaping twice turns an apostrophe into `&#039;` on the page.
+     *
+     * `$allowed` is optional because most callers pass a blurb or an FAQ answer,
+     * where a product token is not expected. Pass it wherever the text can name
+     * a product, or an unlabelled one falls back to its id here as it used to.
+     *
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
      */
-    public function plain(?string $text): string
+    public function plain(?string $text, array $allowed = []): string
     {
         if ($text === null) {
             return '';
@@ -214,9 +222,9 @@ class CoveMarkup
 
         $text = (string) preg_replace_callback(
             self::TOKEN,
-            // The label if one was given, the value otherwise — the same
-            // fallback render() uses for a token it cannot resolve.
-            fn (array $m): string => $m[3] ?? $m[2],
+            // The label if one was given, the same fallback render() uses
+            // otherwise — which for a product means its title, never its id.
+            fn (array $m): string => $m[3] ?? $this->fallbackLabel($m[1], $m[2], $allowed),
             $text,
         );
 
@@ -307,6 +315,41 @@ class CoveMarkup
         return isset($products[$id])
             ? $base.'/p/'.$id.'/'.$products[$id]['slug']
             : null;
+    }
+
+    /**
+     * The anchor text for a token that came without one.
+     *
+     * For every kind but `product` the value already *is* the words — a brand
+     * is its name, a search is its phrase — so echoing it is right. A product
+     * is addressed by **id**, and echoing that put a bare number in the middle
+     * of a sentence: three published editions read "the 6609172 is built for
+     * the version on wheels". Rendered, escaped, linked and completely correct
+     * by the old rule, which is why nothing caught it. Found 2026-09-01.
+     *
+     * The product's own title instead. It is deliberately not shortened: a feed
+     * title runs long and reads like a spec sheet, so a missing label is
+     * obvious to whoever reads the page rather than quietly acceptable. The
+     * label is what should be there — see `promptContract()`, which now asks
+     * the writer for one in as many words — and this is the floor under it, not
+     * a substitute for it.
+     *
+     * An id that is not on the allowlist keeps falling through to the id
+     * itself: the token is about to be rejected and rendered as plain text
+     * anyway, and inventing a name for a product this page may not link to
+     * would be worse than showing the writer their own broken reference.
+     *
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
+     */
+    private function fallbackLabel(string $kind, string $value, array $allowed): string
+    {
+        if ($kind !== 'product') {
+            return $value;
+        }
+
+        $id = (int) trim($value);
+
+        return $allowed['products'][$id]['title'] ?? $value;
     }
 
     /**
@@ -422,6 +465,24 @@ class CoveMarkup
             'Markdown: **bold** renders. Nothing else does - no headings, no lists, no italics.',
             '  [[brand:NAME]]        [[search:PHRASE]]        [[product:ID|label]]',
             '  [[guide:SLUG]]        [[page:KEY]]',
+            '',
+            /*
+             * The label on a product token is not optional, and this says so in
+             * its own line because the syntax line above did not say it loudly
+             * enough: three published editions wrote `[[product:6609172]]` and
+             * read "the 6609172 is built for the version on wheels".
+             *
+             * Phrased as "name it in your own words" rather than "copy the
+             * title" on purpose. The list below carries feed titles — "Draadloze
+             * Bluetooth Koptelefoon met ruisonderdrukking, zwart, 40u" — and a
+             * sentence built around one of those reads like a spec sheet. The
+             * few words a person would actually use is the thing being asked
+             * for, and it is the only part of a link that a reader sees.
+             */
+            'A product token MUST carry a label: [[product:1234|the lockable diary]].',
+            'Name the product in your own words - the two or three a person would say out',
+            'loud, fitting the sentence around it. Never write [[product:1234]] on its own:',
+            'the id is an address, not a name, and it renders as a number in your sentence.',
             '',
             'You may ONLY use these. Anything else is deleted:',
             'Brands: '.implode(', ', array_slice($allowed['brands'] ?? [], 0, 40)),
