@@ -318,10 +318,33 @@ reach a container at all. See [config-contract.md](features/config-contract.md).
 One direction only. Schema changes reach production **only** as migrations run by `migrate`.
 
 ```bash
-PG=$(ssh root@51.75.78.173 "docker ps --format '{{.Names}}' | grep '^postgres-'")
-ssh root@51.75.78.173 "docker exec $PG pg_dump -U brandcoves -Fc brandcoves" > prod.dump
-docker compose exec -T postgres pg_restore -U brandcoves -d brandcoves --clean --if-exists < prod.dump
-php artisan bc:scrub
+# Use the ssh CONFIG ALIAS, not root@51.75.78.173. `~/.ssh/config` binds
+# brandcoves-vps to the host, the root user and ~/.ssh/brandcoves_vps; connecting
+# by raw host offers no key and fails `Permission denied (publickey,password)`,
+# which reads as "no access" and is really the wrong invocation.
+#
+# And match the PRODUCTION container specifically. There are two postgres
+# containers now, one per environment, distinguished by the Coolify project name
+# which is the application UUID. The old `grep '^postgres-'` matched both, and
+# restoring the wrong one silently gives you staging's small dataset:
+#   postgres-gr0kqzz1er3s79u17vdph27t-...  production
+#   postgres-vhfcyk39ug5exk0fyvdj8qo3-...  staging
+PG=$(ssh brandcoves-vps "docker ps --format '{{.Names}}' | grep gr0kqzz1er3s79u17vdph27t | grep -i postgres")
+ssh brandcoves-vps "docker exec $PG pg_dump -U brandcoves -Fc brandcoves" > "$TEMP/prod.dump"
+docker compose exec -T postgres pg_restore -U brandcoves -d brandcoves --clean --if-exists < "$TEMP/prod.dump"
+php artisan bc:scrub --force
+```
+
+Write the dump **outside this repo** — it sits in a Synology-synced folder, and `*.dump` being
+gitignored does nothing about the sync. The restore **destroys the local development database**.
+
+To read production without copying anything off the box, let the container supply its own
+credentials rather than looking them up:
+
+```bash
+ssh brandcoves-vps "docker exec -i $PG sh -c 'psql -U \$POSTGRES_USER -d \$POSTGRES_DB -X -P pager=off'" <<'SQL'
+SELECT count(*) FROM product_groups WHERE market='en';
+SQL
 ```
 
 **`bc:scrub` is mandatory.** `users`, `recipients` and `wishlists` hold real emails and personal

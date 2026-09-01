@@ -66,6 +66,14 @@ Amazon-tags.txt
 .claude/*.token
 .claude/secrets*
 
+# Agent permission rules. Not a secret, but a capability grant: this file
+# currently carries `Bash(ssh root@51.75.78.173:*)`, which hands any agent
+# running in this clone a root shell on the box serving production. Shared,
+# it becomes a standing grant on machines whose owner never chose it — and
+# permission rules are per-person and per-machine anyway.
+.claude/settings.json
+.claude/settings.local.json
+
 # Google OAuth client secrets, as downloaded from the Cloud console. The file
 # carries a live `client_secret` for the sign-in flow, and its default filename
 # is long and unmemorable enough that nobody reviewing a `git add .` would
