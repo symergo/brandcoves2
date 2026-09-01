@@ -55,12 +55,27 @@ return [
          * learns the word.
          *
          * The qualifier translates and the noun does not, per the rule in
-         * localisation.md: Inspiration Coves / Inspiratie Coves / Coves Inspiration.
+         * localisation.md: Gift Coves / Cadeau Coves / Coves Cadeau.
          */
-        'inspiration_coves' => 'Inspiration Coves',
         'gift_coves' => 'Gift Coves',
         'all_coves' => 'All Coves',
         'brand_coves' => 'Brand Coves',
+
+        /*
+         * Deliberately NOT one of the row above, and deliberately without
+         * "Cove" in its name.
+         *
+         * The other shelves are a shape — a gift, a brand, a shop — and
+         * "Cove" is our word for what we make of one. This shelf is not a
+         * shape but a promise: it is where you learn to buy better.
+         * "Inspiration Coves" said neither, and somebody looking for buying
+         * advice does not click on inspiration.
+         *
+         * So it translates in full, unlike the Cove names: Shop Smarter /
+         * Slim kopen / Acheter malin / Comprar mejor. The key is `smart`
+         * because that is the one word all four keep.
+         */
+        'smart' => 'Shop Smarter',
 
         /*
          * One line under each entry in the Discover menu.
@@ -73,7 +88,7 @@ return [
          */
         'hint_daily' => 'New every morning',
         'hint_surprise' => 'Something rare, not something popular',
-        'hint_inspiration_coves' => 'Shopping inspiration and buying guides',
+        'hint_smart' => 'Buying advice and guides by subject',
         'hint_gift_coves' => 'Ideas built around a person',
         'hint_all_coves' => 'Everything we have published',
         'hint_ask' => 'Let other people suggest something',
@@ -116,6 +131,15 @@ return [
         'cta_gift' => 'Find a gift',
         'today_badge' => "Today's Cove",
         'today_cta' => "See today's finds",
+        /*
+         * The persona band, worded as the shelf at /gift-ideas words
+         * itself. Two headings for one thing that read differently is
+         * how a visitor ends up unsure whether they are the same page.
+         */
+        'personas_heading' => 'Gift ideas, by person',
+        'personas_intro' => 'Presents chosen around a person rather than a date - the herbalist, the dad who has everything, the friend who reads.',
+        'personas_all' => 'All gift ideas',
+
         'coves_heading' => 'Coves',
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',
         'coves_all' => 'All Coves',
@@ -310,7 +334,7 @@ return [
         'intro' => 'Ways to find something you were not looking for. One changes every day, one is deliberately unpredictable, one is about a person rather than a thing, and the rest are worth sitting down with.',
         'daily_what' => 'A new edition every day: a theme, a handful of finds and a price puzzle. Every past edition keeps its own page.',
         'surprise_what' => 'Something you did not know existed, chosen for how rare it is rather than how well it sells.',
-        'idea_what' => 'Shopping inspiration and buying guides around one subject, with every brand and product linked straight into a live search.',
+        'idea_what' => 'Buying advice and guides around one subject: what to look at and what actually makes the difference, with every brand and product linked straight into a live search.',
         'persona_what' => 'Presents chosen around a person rather than a date — the coffee obsessive, the one who already has everything.',
         'persona_all' => 'All gift ideas',
     ],
@@ -319,8 +343,8 @@ return [
      * All Coves: the overview page at /coves.
      *
      * The one page that shows the whole shape of the thing the site is named
-     * after. Section copy says what each kind *is*, because "Inspiration Coves"
-     * "Gift Coves" are two words apart and a reader meeting them for the first
+     * after. Section copy says what each kind *is*, because "Shop Smarter" and
+     * "Gift Coves" say little to a reader meeting them for the first
      * time has nothing else to go on.
      */
     'shops' => [
@@ -349,9 +373,9 @@ return [
         'gift_heading' => 'Gift Coves',
         'gift_what' => 'Built around a person rather than a date — the herbalist, the dad who has everything, the friend who reads.',
         'gift_all' => 'All Gift Coves',
-        'inspiration_heading' => 'Inspiration Coves',
-        'inspiration_what' => 'Shopping inspiration and buying guides: long reads around one subject, with every brand and product linked straight into a live search.',
-        'inspiration_all' => 'All Inspiration Coves',
+        'smart_heading' => 'Shop Smarter',
+        'smart_what' => 'Buying advice and guides: what to look at, what makes the difference and what it should cost — long reads around one subject, with every brand and product linked straight into a live search.',
+        'smart_all' => 'All buying advice',
         'brand_heading' => 'Brand Coves',
         'brand_what' => 'One page per maker: everything of theirs we carry here, with every shop’s price on each product.',
         'brand_all' => 'All Brand Coves',
@@ -1513,20 +1537,24 @@ return [
 
     'guides' => [
         /*
-         * The heading is the Cove name; the `seo_*` pair is deliberately not.
+         * The heading is the section's name; the `seo_*` pair is deliberately
+         * not.
          *
-         * "Inspiration Coves" is what this section is called on this site and
-         * is what the header, the footer and the front page say — but nobody
-         * searches for it, because it is our word. The <title> and the meta
-         * description still lead with "buying guides", which is the phrase a
-         * person actually types. A brand name in an H1 and the reader's own
-         * vocabulary in the <title> is the normal split, not an inconsistency.
+         * "Shop Smarter" is what this section is called on this site and is
+         * what the header, the footer and the front page say — but nobody
+         * searches for it, because it is our phrase. The <title> and the meta
+         * description still lead with "buying guides", which is what a person
+         * actually types. Our own name in an H1 and the reader's vocabulary in
+         * the <title> is the normal split, not an inconsistency.
+         *
+         * It replaced "Inspiration Coves" on 2026-09-01, which named a mood
+         * where this shelf gives advice — see navigation.md.
          */
         'seo_title' => 'Buying guides with a live price on every product',
-        'title' => 'Inspiration Coves',
-        'subtitle' => 'Shopping inspiration and buying guides, written from what people search for here rather than from a keyword tool.',
+        'title' => 'Shop Smarter',
+        'subtitle' => 'Buying advice and guides, written from what people search for here rather than from a keyword tool.',
         'seo_description' => 'Buying guides built from real search demand, with live prices from every shop that stocks each product.',
-        'empty' => 'No Inspiration Coves yet. They are written as topics build up enough demand.',
+        'empty' => 'No buying advice yet. It is written as topics build up enough demand.',
         'how_to_choose' => 'How to choose',
         'faq' => 'Questions',
         'updated' => 'Checked :date',

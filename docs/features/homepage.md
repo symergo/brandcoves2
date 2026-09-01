@@ -331,3 +331,33 @@ happening on a day.
 *for* and never how much of it has been bought — the exact surface where a helpful "2 of 8 bought"
 would be added by somebody who had not read invariant #4. `HomeRegistryTest::the_card_carries_no_claim_state`
 is the guard.
+
+## The gift personas were on every shelf except the front page
+
+Added 2026-09-01. `HomeController::coves()` selects `->articles()` — guide, seasonal and advice — so
+a gift persona appeared at `/gift-ideas`, on `/coves`, in the sitemap and in the hreflang set, and
+nowhere a first-time visitor would meet one. Not a regression: the band had never existed. On a
+market whose only other Coves are advice articles, that made the front page read as a
+consumer-rights blog.
+
+**Its own band, above the articles one.** The articles band promises "long reads around a theme" and
+prints a monthly search volume on each card; a persona is neither — it is a person to shop for, it
+has no search volume, and it is drawn rather than described. Folding them in would have meant the
+intro could no longer say what the cards are. Placing it *above* is the argument: the page has just
+asked who the visitor is shopping for, and a persona answers that question where a buying guide
+answers a different one.
+
+Three, not six — the grid is three wide and this page already carries five sections, so one full row
+says the shelf exists and "All gift ideas" carries the rest. Ordered by `published_at` like the shelf
+itself, which is stamped once at first build and never refreshed by a rebuild; anything else would
+reshuffle the front page whenever a persona's products were refreshed, which is movement no reader
+could account for. The band does not render on a market with no personas.
+
+The copy is the shelf's copy, in all four locales. Two headings for one thing that read differently
+is how a visitor ends up unsure whether they are the same page.
+
+`GiftPersonaTest::a_persona_is_never_served_as_todays_edition` had to be tightened for this. It
+asserted `assertDontSee('De kruidenliefhebber')` on `/be-nl`, which was a fine proxy for the NULLS
+FIRST trap while the front page showed no personas at all, and became wrong the day it grew a band
+for them — a whole-page string search cannot tell the band from the trap. It now asserts the props:
+not `today.theme`, and present in `personas`.

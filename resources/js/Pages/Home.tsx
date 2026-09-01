@@ -5,6 +5,7 @@ import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import HomeIllustration from '../Components/HomeIllustration'
 import ListIllustration, { type ListSceneKey } from '../Components/ListIllustration'
+import PersonaIllustration, { type PersonaSceneKey } from '../Components/PersonaIllustration'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
 import { formatPrice, type SharedProps } from '../types'
@@ -15,6 +16,15 @@ interface Cove {
     intro: string | null
     url: string
     searches: number
+}
+
+interface Persona {
+    title: string
+    blurb: string | null
+    url: string
+    /** Null until a curator picks one; the component draws a figure. */
+    scene: PersonaSceneKey | null
+    findCount: number
 }
 
 interface Props {
@@ -45,11 +55,12 @@ interface Props {
         } | null
         urls: { gift: string; lists: string; santa: string }
     }
+    personas: Persona[]
     coves: Cove[]
     recentSearches: { term: string; url: string; images: string[] }[]
 }
 
-export default function Home({ today, gifting, coves, recentSearches }: Props) {
+export default function Home({ today, gifting, personas, coves, recentSearches }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
@@ -606,7 +617,7 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                             {
                                 key: 'idea',
                                 href: `${base}/guides`,
-                                name: t('nav.inspiration_coves'),
+                                name: t('nav.smart'),
                                 what: t('discover_cove.idea_what'),
                             },
                             /*
@@ -731,6 +742,74 @@ export default function Home({ today, gifting, coves, recentSearches }: Props) {
                 <div className="mt-10">
                     <CoveSubscribe source="home" />
                 </div>
+            )}
+
+            {/*
+              The people shelf, above the articles one.
+
+              Order is the argument: this page has just asked who the visitor is
+              shopping for, and a persona answers that question where a buying
+              guide answers a different one. Below the articles it would have
+              read as an afterthought to the archive rather than the front of it.
+
+              Empty on a market with no personas yet, and the band does not
+              render at all in that case — an "Ideas for a person" heading over
+              nothing is worse than a page that never promised it.
+            */}
+            {personas.length > 0 && (
+                <section className="mt-10 sm:mt-14" aria-labelledby="personas-heading">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h2
+                            id="personas-heading"
+                            className="text-xl sm:text-2xl font-semibold tracking-tight"
+                        >
+                            {t('home.personas_heading')}
+                        </h2>
+                        <Link
+                            href={`${base}/gift-ideas`}
+                            className="text-sm font-medium text-accent hover:text-accent-dark"
+                        >
+                            {t('home.personas_all')} →
+                        </Link>
+                    </div>
+                    <p className="mt-1 max-w-2xl text-ink-soft">{t('home.personas_intro')}</p>
+
+                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {personas.map((persona) => (
+                            <li
+                                key={persona.url}
+                                className="flex flex-col rounded-card border border-line bg-card p-4 sm:p-5"
+                            >
+                                {/*
+                                  The drawing takes the card's text colour, so
+                                  the whole card moves together on hover — the
+                                  same `currentColor` scene the shelf uses, and
+                                  the reason these survive a palette change
+                                  without being redrawn.
+                                */}
+                                <Link href={persona.url} className="group text-ink hover:text-accent">
+                                    <PersonaIllustration
+                                        name={persona.scene}
+                                        className="h-24 w-full text-ink-soft transition group-hover:text-accent"
+                                    />
+                                    <h3 className="mt-3 font-medium group-hover:underline">
+                                        {persona.title}
+                                    </h3>
+                                </Link>
+
+                                {persona.blurb && (
+                                    <p className="mt-2 line-clamp-3 text-sm text-ink-soft">
+                                        {persona.blurb}
+                                    </p>
+                                )}
+
+                                <p className="mt-auto pt-4 text-xs text-ink-soft/70">
+                                    {t('gift_ideas.find_count', { count: n(persona.findCount) })}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
             )}
 
             {coves.length > 0 && (

@@ -67,6 +67,24 @@ class HomeController extends Controller
              */
             'gifting' => $this->gifting($request, $current),
 
+            /*
+             * The shelf of people, which the front page never showed.
+             *
+             * `coves` below is `articles()` — guides, seasonal guides and
+             * advice — so a gift persona appeared on `/gift-ideas`, on `/coves`
+             * and in the sitemap, and nowhere a first-time visitor would meet
+             * one. On a market whose only other Coves are advice articles that
+             * made the front page look like a consumer-rights blog.
+             *
+             * Its own band rather than six more rows in that one. The articles
+             * band promises "long reads around a theme" and prints a monthly
+             * search volume per card; a persona is neither — it is a person to
+             * shop for, it has no search volume, and it is drawn rather than
+             * described. Mixing them would have needed the intro to stop saying
+             * what the cards are.
+             */
+            'personas' => $this->personas($current),
+
             // The evergreen half. Coves earn their traffic over years, so the
             // front page is where a first-time visitor discovers the archive
             // exists at all.
@@ -243,6 +261,55 @@ class HomeController extends Controller
                 ->values()
                 ->all(),
         ];
+    }
+
+    /**
+     * Gift personas, newest first.
+     *
+     * Three, not six: the grid is three wide, and this band sits above the
+     * articles one on a page that already carries five sections. A full row is
+     * enough to say the shelf exists, which is what the front page owes it —
+     * "All gift ideas" carries the rest.
+     *
+     * Ordered by `published_at` like the shelf at `/gift-ideas`, and for the
+     * same reason: a persona has no date, and that stamp is set once at first
+     * build and never refreshed by a rebuild. Anything else would reshuffle the
+     * front page whenever a persona's products were refreshed, which is
+     * movement no reader could account for.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function personas(CurrentMarket $current): array
+    {
+        return DailyPickSet::query()
+            ->forMarket($current->get())
+            ->personas()
+            ->published()
+            // The count below walks the picks, so they are loaded rather than
+            // counted one persona at a time.
+            ->with(['picks.group'])
+            ->orderByDesc('published_at')
+            ->limit(3)
+            ->get()
+            ->map(fn (DailyPickSet $persona) => [
+                'title' => $persona->theme_title,
+                'blurb' => $persona->theme_blurb,
+                'url' => $current->url('gift-ideas/'.$persona->slug),
+                /*
+                 * The drawing, not a product photograph — the same choice the
+                 * shelf makes. A cover taken from the first buyable find makes
+                 * a row of *people* look like a row of products, and changes
+                 * face whenever stock does.
+                 */
+                'scene' => $persona->scene?->value,
+                // In stock only. A count that includes what nobody can buy is a
+                // promise the page does not keep.
+                'findCount' => $persona->picks
+                    ->filter(fn ($pick) => $pick->group !== null && $pick->group->in_stock)
+                    ->count(),
+            ])
+            ->values()
+            ->all();
     }
 
     /** @return list<array<string, mixed>> */

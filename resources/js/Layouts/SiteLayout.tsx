@@ -172,8 +172,8 @@ function Chrome({ children }: PropsWithChildren) {
             },
             {
                 href: `${base}/guides`,
-                label: t('nav.inspiration_coves'),
-                hint: t('nav.hint_inspiration_coves'),
+                label: t('nav.smart'),
+                hint: t('nav.hint_smart'),
                 icon: <CoveIcon name="idea" className="h-5 w-5" />,
             },
             {
@@ -610,7 +610,7 @@ function Chrome({ children }: PropsWithChildren) {
                             under two different words is the exact confusion the
                             Cove naming pass set out to remove. */}
                         <Link href={`/${market.key}/guides`} className="hover:text-accent">
-                            {t('nav.inspiration_coves')}
+                            {t('nav.smart')}
                         </Link>
                         <Link href={`/${market.key}/daily`} className="hover:text-accent">
                             {t('nav.daily')}

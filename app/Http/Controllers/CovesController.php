@@ -92,7 +92,7 @@ class CovesController extends Controller
                     $current,
                 ),
                 $this->section(
-                    'inspiration',
+                    'smart',
                     DailyPickSet::query()->articles()->orderByDesc('published_at'),
                     self::PER_SECTION,
                     $current,

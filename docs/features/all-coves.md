@@ -12,7 +12,7 @@ A Cove has three shapes and each had an index of its own:
 |---|---|---|
 | `daily` | `/daily` | One edition every morning, addressed by date |
 | `persona` | `/gift-ideas` | A shelf built around a person, permanent |
-| `guide`, `seasonal`, `advice` | `/guides` | Shopping inspiration and buying guides |
+| `guide`, `seasonal`, `advice` | `/guides` | Buying advice and guides — "Shop Smarter" |
 | `shop` | `/shops` | What a shop is like to buy from ([shop-coves.md](shop-coves.md)) |
 
 Nothing held all of them. The word the site is named after pointed at four different rooms — three
@@ -87,7 +87,7 @@ each other.
 - `resources/js/Pages/Coves/Index.tsx`
 - `routes/web.php` — `GET /{market}/coves`, name `coves`
 - `app/Http/Controllers/SitemapController.php`
-- `lang/*/site.php` — `coves`, `nav.inspiration_coves`, `nav.gift_coves`, `nav.all_coves`, `nav.hint_*`
+- `lang/*/site.php` — `coves`, `nav.smart`, `nav.gift_coves`, `nav.all_coves`, `nav.hint_*`
 - `tests/Feature/AllCovesTest.php`
 
 ## See also

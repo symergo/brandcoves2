@@ -40,14 +40,29 @@ return [
          * Het bijvoeglijk naamwoord vertaalt, de naam niet — zie
          * localisation.md.
          */
-        'inspiration_coves' => 'Inspiratie Coves',
         'gift_coves' => 'Cadeau Coves',
         'all_coves' => 'Alle Coves',
         'brand_coves' => 'Merk Coves',
 
+        /*
+         * Deze staat bewust NIET in de rij hierboven, en heeft geen "Cove"
+         * in zijn naam.
+         *
+         * De andere planken zijn een vorm — een cadeau, een merk, een winkel
+         * — en "Cove" is het woord voor wat wij daarvan maken. Deze plank is
+         * geen vorm maar een belofte: hier leer je beter kopen. "Inspiratie
+         * Coves" zei dat niet, en een bezoeker die koopadvies zoekt klikt
+         * niet op inspiratie.
+         *
+         * Vertaalt dus volledig, anders dan de Cove-namen: Slim kopen / Shop
+         * Smarter / Acheter malin / Comprar mejor. De sleutel heet `smart`
+         * omdat dat het enige woord is dat in alle vier terugkomt.
+         */
+        'smart' => 'Slim kopen',
+
         'hint_daily' => 'Elke ochtend nieuw',
         'hint_surprise' => 'Iets zeldzaams, niet iets populairs',
-        'hint_inspiration_coves' => 'Shopping-inspiratie en koopgidsen',
+        'hint_smart' => 'Koopadvies en gidsen per onderwerp',
         'hint_gift_coves' => 'Ideeën rond één persoon',
         'hint_all_coves' => 'Alles wat we gepubliceerd hebben',
         'hint_ask' => 'Laat anderen iets voorstellen',
@@ -71,6 +86,15 @@ return [
         'cta_gift' => 'Vind een cadeau',
         'today_badge' => 'Cove van vandaag',
         'today_cta' => 'Bekijk de vondsten van vandaag',
+        /*
+         * The persona band, worded as the shelf at /gift-ideas words
+         * itself. Two headings for one thing that read differently is
+         * how a visitor ends up unsure whether they are the same page.
+         */
+        'personas_heading' => 'Cadeau-ideeën, per type',
+        'personas_intro' => 'Cadeaus gekozen rond een persoon in plaats van een datum: de kruidenliefhebber, de vader die alles al heeft, de vriend die leest.',
+        'personas_all' => 'Alle cadeau-ideeën',
+
         'coves_heading' => 'Coves',
         'coves_intro' => 'Lange verhalen rond één thema, waarbij elk merk en elk product doorlinkt naar een live zoekopdracht.',
         'coves_all' => 'Alle Coves',
@@ -209,7 +233,7 @@ return [
         'intro' => 'Manieren om iets te vinden waar je niet naar zocht. Eén verandert elke dag, één is met opzet onvoorspelbaar, één gaat over een persoon in plaats van een ding, en de rest is om rustig te lezen.',
         'daily_what' => 'Elke dag een nieuwe editie: een thema, een handvol vondsten en een prijsraadsel. Elke oude editie houdt zijn eigen pagina.',
         'surprise_what' => 'Iets waarvan je niet wist dat het bestond, gekozen op hoe zeldzaam het is en niet op hoe goed het verkoopt.',
-        'idea_what' => 'Shopping-inspiratie en koopgidsen rond één onderwerp, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
+        'idea_what' => 'Koopadvies en koopgidsen rond één onderwerp: waar je op let en wat het verschil maakt, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
         'persona_what' => 'Cadeaus gekozen rond een persoon in plaats van een datum: de koffiefanaat, wie alles al heeft.',
         'persona_all' => 'Alle cadeau-ideeën',
     ],
@@ -240,9 +264,9 @@ return [
         'gift_heading' => 'Cadeau Coves',
         'gift_what' => 'Gebouwd rond een persoon in plaats van een datum — de kruidenvrouw, de vader die alles al heeft, de vriend die leest.',
         'gift_all' => 'Alle Cadeau Coves',
-        'inspiration_heading' => 'Inspiratie Coves',
-        'inspiration_what' => 'Shopping-inspiratie en koopgidsen: lange verhalen rond één onderwerp, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
-        'inspiration_all' => 'Alle Inspiratie Coves',
+        'smart_heading' => 'Slim kopen',
+        'smart_what' => 'Koopadvies en koopgidsen: waar je op let, wat het verschil maakt en wat het mag kosten — lange verhalen rond één onderwerp, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
+        'smart_all' => 'Al het koopadvies',
         'brand_heading' => 'Merk Coves',
         'brand_what' => 'Eén pagina per merk: alles van hen dat we hier voeren, met per product de prijs van elke winkel.',
         'brand_all' => 'Alle Merk Coves',
@@ -1300,20 +1324,24 @@ return [
 
     'guides' => [
         /*
-         * The heading is the Cove name; the `seo_*` pair is deliberately not.
+         * The heading is the section's name; the `seo_*` pair is deliberately
+         * not.
          *
-         * "Inspiration Coves" is what this section is called on this site and
-         * is what the header, the footer and the front page say — but nobody
-         * searches for it, because it is our word. The <title> and the meta
-         * description still lead with "buying guides", which is the phrase a
-         * person actually types. A brand name in an H1 and the reader's own
-         * vocabulary in the <title> is the normal split, not an inconsistency.
+         * "Slim kopen" is what this section is called on this site and is what
+         * the header, the footer and the front page say — but nobody searches
+         * for it, because it is our phrase. The <title> and the meta
+         * description still lead with "koopgidsen", which is what a person
+         * actually types. Our own name in an H1 and the reader's vocabulary in
+         * the <title> is the normal split, not an inconsistency.
+         *
+         * It replaced "Inspiratie Coves" on 2026-09-01, which named a mood
+         * where this shelf gives advice — see navigation.md.
          */
         'seo_title' => 'Koopgidsen met bij elk product een actuele prijs',
-        'title' => 'Inspiratie Coves',
-        'subtitle' => 'Shopping-inspiratie en koopgidsen, geschreven op basis van wat mensen hier zoeken en niet van een zoekwoordtool.',
+        'title' => 'Slim kopen',
+        'subtitle' => 'Koopadvies en koopgidsen, geschreven op basis van wat mensen hier zoeken en niet van een zoekwoordtool.',
         'seo_description' => 'Koopgidsen gebouwd op echte zoekvraag, met live prijzen van elke winkel die het product heeft.',
-        'empty' => 'Nog geen Inspiratie Coves. Ze worden geschreven zodra een onderwerp genoeg vraag opbouwt.',
+        'empty' => 'Nog geen koopadvies. Het wordt geschreven zodra een onderwerp genoeg vraag opbouwt.',
         'how_to_choose' => 'Hoe kies je',
         'faq' => 'Vragen',
         'updated' => 'Gecontroleerd op :date',

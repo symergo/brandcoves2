@@ -40,14 +40,29 @@ return [
          *
          * El calificativo se traduce, el nombre no — véase localisation.md.
          */
-        'inspiration_coves' => 'Coves de Inspiración',
         'gift_coves' => 'Coves de Regalo',
         'all_coves' => 'Todas las Coves',
         'brand_coves' => 'Coves de Marca',
 
+        /*
+         * A propósito fuera de la fila de arriba, y a propósito sin «Cove» en
+         * el nombre.
+         *
+         * Los demás estantes son una forma — un regalo, una marca, una tienda
+         * — y «Cove» es nuestra palabra para lo que hacemos con ella. Este no
+         * es una forma sino una promesa: aquí se aprende a comprar mejor.
+         * «Coves de Inspiración» no decía ninguna de las dos cosas, y quien
+         * busca consejos de compra no hace clic en inspiración.
+         *
+         * Por eso se traduce entera, al contrario que los nombres de Cove:
+         * Comprar mejor / Shop Smarter / Slim kopen / Acheter malin. La clave
+         * es `smart`, la única palabra que las cuatro conservan.
+         */
+        'smart' => 'Comprar mejor',
+
         'hint_daily' => 'Nuevo cada mañana',
         'hint_surprise' => 'Algo raro, no algo popular',
-        'hint_inspiration_coves' => 'Inspiración de compra y guías',
+        'hint_smart' => 'Consejos de compra y guías por tema',
         'hint_gift_coves' => 'Ideas construidas en torno a una persona',
         'hint_all_coves' => 'Todo lo que hemos publicado',
         'hint_ask' => 'Deja que otros sugieran algo',
@@ -71,6 +86,15 @@ return [
         'cta_gift' => 'Buscar un regalo',
         'today_badge' => 'La Cove de hoy',
         'today_cta' => 'Ver los hallazgos de hoy',
+        /*
+         * The persona band, worded as the shelf at /gift-ideas words
+         * itself. Two headings for one thing that read differently is
+         * how a visitor ends up unsure whether they are the same page.
+         */
+        'personas_heading' => 'Ideas de regalo, por perfil',
+        'personas_intro' => 'Regalos elegidos en torno a una persona y no a una fecha: la herbolaria, el padre que ya lo tiene todo, la amiga que lee.',
+        'personas_all' => 'Todas las ideas de regalo',
+
         'coves_heading' => 'Coves',
         'coves_intro' => 'Lecturas largas en torno a un tema, con cada marca y cada producto enlazado a una búsqueda en vivo.',
         'coves_all' => 'Todas las Coves',
@@ -205,7 +229,7 @@ return [
         'intro' => 'Maneras de encontrar algo que no estabas buscando. Una cambia cada día, otra es deliberadamente impredecible, otra trata de una persona y no de un objeto, y las demás se leen con calma.',
         'daily_what' => 'Una edición nueva cada día: un tema, un puñado de hallazgos y un acertijo de precios. Cada edición pasada conserva su página.',
         'surprise_what' => 'Algo que no sabías que existía, elegido por lo raro que es y no por lo bien que se vende.',
-        'idea_what' => 'Inspiración de compra y guías de compra sobre un solo tema, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
+        'idea_what' => 'Consejos de compra y guías sobre un solo tema: en qué fijarse y qué marca de verdad la diferencia, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
         'persona_what' => 'Regalos elegidos en torno a una persona y no a una fecha: el fanático del café, quien ya lo tiene todo.',
         'persona_all' => 'Todas las ideas de regalo',
     ],
@@ -236,9 +260,9 @@ return [
         'gift_heading' => 'Coves de Regalo',
         'gift_what' => 'Construidas en torno a una persona en lugar de una fecha: la herbolaria, el padre que lo tiene todo, la amiga que lee.',
         'gift_all' => 'Todas las Coves de Regalo',
-        'inspiration_heading' => 'Coves de Inspiración',
-        'inspiration_what' => 'Inspiración de compra y guías: lecturas largas sobre un solo tema, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
-        'inspiration_all' => 'Todas las Coves de Inspiración',
+        'smart_heading' => 'Comprar mejor',
+        'smart_what' => 'Consejos de compra y guías: en qué fijarse, qué marca la diferencia y cuánto debería costar — lecturas largas sobre un solo tema, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
+        'smart_all' => 'Todos los consejos de compra',
         'brand_heading' => 'Coves de Marca',
         'brand_what' => 'Una página por marca: todo lo suyo que tenemos aquí, con el precio de cada tienda en cada producto.',
         'brand_all' => 'Todas las Coves de Marca',
@@ -1297,20 +1321,24 @@ return [
 
     'guides' => [
         /*
-         * The heading is the Cove name; the `seo_*` pair is deliberately not.
+         * The heading is the section's name; the `seo_*` pair is deliberately
+         * not.
          *
-         * "Inspiration Coves" is what this section is called on this site and
-         * is what the header, the footer and the front page say — but nobody
-         * searches for it, because it is our word. The <title> and the meta
-         * description still lead with "buying guides", which is the phrase a
-         * person actually types. A brand name in an H1 and the reader's own
-         * vocabulary in the <title> is the normal split, not an inconsistency.
+         * "Comprar mejor" is what this section is called on this site and is what
+         * the header, the footer and the front page say — but nobody searches
+         * for it, because it is our phrase. The <title> and the meta
+         * description still lead with "guías de compra", which is what a person
+         * actually types. Our own name in an H1 and the reader's vocabulary in
+         * the <title> is the normal split, not an inconsistency.
+         *
+         * It replaced "Coves de Inspiración" on 2026-09-01, which named a mood
+         * where this shelf gives advice — see navigation.md.
          */
         'seo_title' => 'Guías de compra con un precio en vivo en cada producto',
-        'title' => 'Coves de Inspiración',
-        'subtitle' => 'Inspiración de compra y guías, escritas a partir de lo que la gente busca aquí y no de una herramienta de palabras clave.',
+        'title' => 'Comprar mejor',
+        'subtitle' => 'Consejos de compra y guías, escritas a partir de lo que la gente busca aquí y no de una herramienta de palabras clave.',
         'seo_description' => 'Guías de compra construidas sobre demanda real, con precios en vivo de todas las tiendas que venden cada producto.',
-        'empty' => 'Aún no hay Coves de Inspiración. Se escriben cuando un tema acumula suficiente demanda.',
+        'empty' => 'Aún no hay consejos de compra. Se escriben cuando un tema acumula suficiente demanda.',
         'how_to_choose' => 'Cómo elegir',
         'faq' => 'Preguntas',
         'updated' => 'Revisada el :date',

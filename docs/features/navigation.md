@@ -48,7 +48,7 @@ names that were briefly the top-level labels:
 |---|---|---|---|---|
 | `/{market}/daily` | Daily Cove | Cove van de dag | Cove Quotidienne | Cove Diaria |
 | `/{market}/surprise` | Surprise Cove | Verrassingscove | Cove Surprise | Cove Sorpresa |
-| `/{market}/guides` | Inspiration Coves | Inspiratie Coves | Coves Inspiration | Coves de Inspiración |
+| `/{market}/guides` | Shop Smarter | Slim kopen | Acheter malin | Comprar mejor |
 | `/{market}/gift-ideas` | Gift Coves | Cadeau Coves | Coves Cadeaux | Coves de Regalo |
 | `/{market}/coves` | All Coves | Alle Coves | Toutes les Coves | Todas las Coves |
 
@@ -118,8 +118,30 @@ something to somebody who already knows how we sort our content.
 
 The key moved with it. `nav.theme_coves` holding "Inspiration Coves" would be the same two-names
 drift the paragraph above is about, one level down — so `theme_coves`, `hint_theme_coves` and the
-page's `coves.theme_*` block are all `inspiration_*`, and `CovesController`'s section key changed
-to match, because the page builds its copy keys from it (`coves.{key}_heading`).
+page's `coves.theme_*` block all moved with the name, and `CovesController`'s section key changed to
+match, because the page builds its copy keys from it (`coves.{key}_heading`).
+
+### It is "Shop Smarter" now, and it left the Cove family, 2026-09-01
+
+"Inspiration Coves" named a mood. The shelf holds buying guides, seasonal guides and advice
+articles — what to look at, what makes the difference, what it should cost — and somebody looking
+for buying advice does not click on inspiration. The paragraph above chose the qualifier for naming
+the *value* rather than the filing system; this goes one step further and says what the reader gets.
+
+**It has no "Cove" in its name, and that is the deliberate part.** Gift Coves, Brand Coves and Shop
+Coves are each a *shape* — a gift, a maker, a shop — with "Cove" as our word for what we make of
+one. This shelf is not a shape but a promise, so the naming pattern that fits its siblings does not
+fit it. It is now the only entry in the Discover menu without the word, and on `/coves` the only
+band whose heading does not carry it.
+
+**So it translates in full**, where a Cove name only translates its qualifier: Shop Smarter / Slim
+kopen / Acheter malin / Comprar mejor. `nav.inspiration_coves` and `nav.hint_inspiration_coves`
+became `nav.smart` and `nav.hint_smart` — `smart` because it is the one word all four keep — and the
+`coves.inspiration_*` block became `coves.smart_*`, with `CovesController`'s section key following
+for the same reason it followed last time.
+
+The `CoveIcon` stayed `idea` (the lightbulb). It reads as a good idea rather than as an inspiring
+one, and swapping the mark a reader has already learned would cost more than the name change buys.
 
 **Two icons were added** to `CoveIcon`: `persona` (one person, head and shoulders — a Gift Cove is
 built around somebody rather than a date, and that is the single fact separating it from the book

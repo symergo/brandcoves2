@@ -62,7 +62,7 @@ class AllCovesTest extends TestCase
                 // In the order the Discover menu lists them.
                 ->where('sections.0.key', 'daily')
                 ->where('sections.1.key', 'gift')
-                ->where('sections.2.key', 'inspiration')
+                ->where('sections.2.key', 'smart')
                 ->where('sections.0.coves.0.title', 'Vondsten van vandaag')
                 ->where('sections.1.coves.0.title', 'De vader die alles heeft')
                 ->where('sections.2.coves.0.title', 'De beste koptelefoons')
@@ -85,7 +85,7 @@ class AllCovesTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->has('sections', 1)
-                ->where('sections.0.key', 'inspiration')
+                ->where('sections.0.key', 'smart')
                 ->has('sections.0.coves', 2)
             );
     }
@@ -130,7 +130,7 @@ class AllCovesTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->has('sections', 1)
-                ->where('sections.0.key', 'inspiration')
+                ->where('sections.0.key', 'smart')
             );
     }
 

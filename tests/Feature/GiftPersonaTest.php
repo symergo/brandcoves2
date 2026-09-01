@@ -104,7 +104,21 @@ class GiftPersonaTest extends TestCase
         $this->buildPersona();
 
         $this->get('/be-nl/daily')->assertOk()->assertDontSee('De kruidenliefhebber');
-        $this->get('/be-nl')->assertOk()->assertDontSee('De kruidenliefhebber');
+
+        /*
+         * The home page asserts against the props, not the page text.
+         *
+         * It used to be `assertDontSee`, which was right while the front page
+         * showed no personas at all and became wrong the day it grew a band for
+         * them: the persona's name is now on that page legitimately, and a
+         * whole-page string search cannot tell the band from the trap. Both
+         * halves are stated instead — not today's edition, and on the shelf.
+         */
+        $this->get('/be-nl')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('today.theme', fn (?string $theme) => $theme !== 'De kruidenliefhebber')
+                ->where('personas.0.title', 'De kruidenliefhebber'));
     }
 
     #[Test]
