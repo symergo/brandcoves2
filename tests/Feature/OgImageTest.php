@@ -128,7 +128,7 @@ class OgImageTest extends TestCase
         // And the page points at the dated card even at its undated URL, which
         // is the half that makes the dating worth anything.
         $this->travelTo($edition->drop_date->addHours(12), function (): void {
-            $this->get('/be-nl/daily')->assertSee('/be-nl/og/daily/2026-08-08.png', false);
+            $this->get('/be-nl/cadeautips')->assertSee('/be-nl/og/daily/2026-08-08.png', false);
         });
     }
 

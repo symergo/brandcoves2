@@ -342,6 +342,7 @@ class CoveEditorialResource extends Resource
     {
         return url('/'.$record->market->value.'/'.$record->kind->path(
             $record->kind->isDated() ? $record->drop_date->toDateString() : (string) $record->slug,
+            $record->market,
         ));
     }
 

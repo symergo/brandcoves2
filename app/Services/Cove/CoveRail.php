@@ -135,7 +135,7 @@ class CoveRail
              * an index, because that is the page every past edition hangs off.
              */
             'url' => $current->url(match ($key) {
-                'daily' => 'daily',
+                'daily' => $current->get()->coveSegment(),
                 'gift' => 'gift-ideas',
                 'shop' => 'shops',
                 default => 'guides',
@@ -153,7 +153,7 @@ class CoveRail
                  * but 301s onto `/daily/{slug}`, so linking by date would send
                  * every click in this column through a redirect.
                  */
-                'url' => $current->url($set->kind->path((string) $set->slug)),
+                'url' => $current->url($set->kind->path((string) $set->slug, $current->get())),
                 /*
                  * Only an edition carries one. A persona has no date on purpose
                  * — it never stops being current — so dating it here would

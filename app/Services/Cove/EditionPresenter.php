@@ -125,7 +125,7 @@ class EditionPresenter
         return [
             'title' => $guide->theme_title,
             'intro' => $guide->theme_blurb,
-            'url' => $current->url($guide->kind->path((string) $guide->slug)),
+            'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
             'itemCount' => $guide->picks()->count(),
             // The demand that justified writing it. Shown because it is the
             // honest answer to "why this guide" and because it is a fact only

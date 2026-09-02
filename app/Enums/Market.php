@@ -185,6 +185,78 @@ enum Market: string
         };
     }
 
+    /**
+     * The URL segment the Daily Cove lives under, in this market's language.
+     *
+     * `/nl-nl/cadeau-van-de-dag/...`, not `/nl-nl/daily/...`. A path segment is
+     * read by both a person deciding whether to click and a search engine
+     * deciding what the page is about, and "daily" was doing neither job in four
+     * of the five markets.
+     *
+     * The phrase rather than the product's own name, deliberately. The site
+     * calls this The Daily Cove — `site.daily.title` — but nobody searches for
+     * "cove"; they search "cadeautips". The brand keeps the page, the heading
+     * and the newsletter; the URL is the one place where being findable beats
+     * being on-message.
+     *
+     * Short, and that cost something. `cadeau-van-de-dag` reads better and says
+     * "daily" outright, but seventeen characters in every archived URL is a lot
+     * to spend saying what the slug and the page already say. `cadeautips` is a
+     * phrase people actually type.
+     *
+     * `gift-ideas` is not available for English: it is already the persona
+     * shelf.
+     *
+     * **These strings are permanent.** They are the address of every archived
+     * edition, and the archive is the SEO asset the whole daily column is for.
+     * Changing one later means another redirect layer on top of the `/daily`
+     * one that already exists — see the Daily Cove block in routes/web.php.
+     */
+    public function coveSegment(): string
+    {
+        return match ($this) {
+            self::BeNl, self::NlNl => 'cadeautips',
+            self::BeFr => 'idees-cadeaux',
+            self::En => 'gift-tips',
+            self::Es => 'ideas-regalo',
+        };
+    }
+
+    /**
+     * Every segment any market uses, for the route constraint.
+     *
+     * The routes are declared once under a `{market}` prefix, so the segment
+     * cannot be a literal — the pattern has to admit all of them and the
+     * controller then rejects the ones that do not belong to the market in the
+     * URL. Without that check `/es/cadeau-van-de-dag/...` would resolve and put
+     * one market's page on another's address, which is duplicate content with
+     * the wrong hreflang.
+     *
+     * @return list<string>
+     */
+    public static function coveSegments(): array
+    {
+        return array_values(array_unique(array_map(
+            static fn (self $market): string => $market->coveSegment(),
+            self::cases(),
+        )));
+    }
+
+    /**
+     * The path of a Daily Cove page in this market.
+     *
+     * One place builds this. Before the segment was localised it was spelled
+     * `"/{$market->value}/daily/{$slug}"` as a raw string in the sitemap, the
+     * hreflang alternates, the digest mailer and two controllers — and a rule
+     * that lives in five string literals is a rule that will be right in four
+     * of them after the next change.
+     */
+    public function covePath(string $path = ''): string
+    {
+        return '/'.$this->value.'/'.$this->coveSegment()
+            .($path === '' ? '' : '/'.ltrim($path, '/'));
+    }
+
     /** BCP 47 tag for hreflang, <html lang> and Intl formatting. */
     public function hrefLang(): string
     {

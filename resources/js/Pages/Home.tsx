@@ -604,7 +604,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                         [
                             {
                                 key: 'daily',
-                                href: `${base}/daily`,
+                                href: `${base}/${market.coveSegment}`,
                                 name: t('nav.daily'),
                                 what: t('discover_cove.daily_what'),
                             },

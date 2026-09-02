@@ -117,11 +117,16 @@ enum CoveKind: string
      * `$address` is whatever addresses it: a `Y-m-d` date for a Daily, a slug for
      * everything else. The enum takes the string rather than the model so that
      * nothing in `app/Enums` has to know about Eloquent.
+     *
+     * `$market` is required rather than optional because the Daily segment is
+     * localised — `cadeau-van-de-dag`, `cadeau-du-jour` — and a default would
+     * mean one market's word silently appearing in another's URL. Every caller
+     * already holds the market; making them say so is cheaper than the bug.
      */
-    public function path(string $address): string
+    public function path(string $address, Market $market): string
     {
         return match ($this) {
-            self::Daily => 'daily/'.$address,
+            self::Daily => $market->coveSegment().'/'.$address,
             self::Persona => 'gift-ideas/'.$address,
             self::Guide, self::Seasonal, self::Advice => 'guides/'.$address,
             self::Shop => 'shops/'.$address,

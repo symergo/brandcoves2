@@ -46,8 +46,11 @@ class DailyCoveController extends Controller
         Request $request,
         CurrentMarket $current,
         string $market,
+        ?string $cove = null,
         ?string $slug = null,
     ): Response {
+        $this->assertSegmentBelongsHere($current, $cove);
+
         // An admin, or somebody holding a signed preview link, reads a draft —
         // including one dated tomorrow, which is the whole point of checking it.
         $preview = PreviewAccess::allowed($request);
@@ -234,7 +237,37 @@ class DailyCoveController extends Controller
      *
      * A date nothing was published on is a 404, exactly as it was before.
      */
-    public function dated(CurrentMarket $current, string $market, string $date): RedirectResponse
+    /**
+     * The dated form under the localised segment.
+     *
+     * Separate from {@see self::legacyDated()} rather than one method with an
+     * optional `$cove`, because **Laravel binds controller arguments by
+     * position, not by name**. The two routes carry different parameter lists —
+     * `{market}/{cove}/{date}` against `{market}/{date}` — so a shared
+     * signature hands `$date` the segment on one of them. That failure is a
+     * 404 on a URL whose route is registered and whose regex matches, which is
+     * a genuinely confusing thing to debug.
+     */
+    public function dated(CurrentMarket $current, string $market, string $cove, string $date): RedirectResponse
+    {
+        $this->assertSegmentBelongsHere($current, $cove);
+
+        return $this->redirectToEdition($current, $date);
+    }
+
+    /**
+     * The dated form at the old `/daily/{date}`.
+     *
+     * Redirects straight to the final slug URL rather than to the new dated
+     * form, so an address that is indexed and sits in three months of digest
+     * emails reaches its destination in one hop. A chain costs link equity.
+     */
+    public function legacyDated(CurrentMarket $current, string $market, string $date): RedirectResponse
+    {
+        return $this->redirectToEdition($current, $date);
+    }
+
+    private function redirectToEdition(CurrentMarket $current, string $date): RedirectResponse
     {
         $edition = DailyPickSet::query()
             ->forMarket($current->get())
@@ -247,14 +280,44 @@ class DailyCoveController extends Controller
             throw new NotFoundHttpException;
         }
 
-        return redirect($current->url('daily/'.$edition->slug), 301);
+        return redirect($current->get()->covePath($edition->slug), 301);
+    }
+
+    /**
+     * Everything that used to live under `/daily`, permanently moved.
+     *
+     * Kept forever rather than for a decent interval. The archive is the SEO
+     * asset the whole column exists to build, and these are the addresses it
+     * was built at — indexed, linked from three months of digests, and pasted
+     * into chats we cannot see.
+     */
+    public function moved(CurrentMarket $current, string $market, ?string $slug = null): RedirectResponse
+    {
+        return redirect($current->get()->covePath($slug ?? ''), 301);
+    }
+
+    /**
+     * Refuse another market's word for this page.
+     *
+     * The routes admit every market's segment because they are declared once
+     * under a `{market}` prefix, so `/es/cadeau-van-de-dag/...` matches the
+     * pattern. Serving it would put the Spanish edition on a Dutch address:
+     * duplicate content, carrying hreflang that contradicts it.
+     *
+     * Null is the legacy `/daily` path, which has no segment to check.
+     */
+    private function assertSegmentBelongsHere(CurrentMarket $current, ?string $cove): void
+    {
+        if ($cove !== null && $cove !== $current->get()->coveSegment()) {
+            throw new NotFoundHttpException;
+        }
     }
 
     private function seo(DailyPickSet $edition, CurrentMarket $current, bool $isArchive, bool $preview = false): void
     {
         $url = $isArchive
-            ? url($current->url('daily/'.$edition->slug))
-            : url($current->url('daily'));
+            ? url($current->get()->covePath($edition->slug))
+            : url($current->get()->covePath());
 
         $meta = app(PageMeta::class);
 
@@ -281,7 +344,7 @@ class DailyCoveController extends Controller
          */
         $meta->addJsonLd(StructuredData::breadcrumbs([
             ['name' => 'GiftCoves', 'url' => url($current->url())],
-            ['name' => __('site.daily.title'), 'url' => url($current->url('daily'))],
+            ['name' => __('site.daily.title'), 'url' => url($current->get()->covePath())],
             ['name' => $edition->theme_title, 'url' => $url],
         ]));
     }

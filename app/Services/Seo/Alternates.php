@@ -356,7 +356,10 @@ class Alternates
             // A row can exist for a market that is not open yet — editions are
             // planned ahead of the market being published.
             if ($market !== null && $market->isPublished()) {
-                $alternates[$market->hrefLang()] = url("/{$market->value}/daily/{$row->slug}");
+                // Each market's own word for the segment, not this one's — an
+                // hreflang pointing at /es/cadeau-van-de-dag/... names a URL
+                // that deliberately 404s.
+                $alternates[$market->hrefLang()] = url($market->covePath($row->slug));
             }
         }
 

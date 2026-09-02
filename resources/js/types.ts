@@ -20,6 +20,15 @@ export interface CurrentMarket {
     language: string
     hrefLang: string
     currency: string
+    /**
+     * The Daily Cove's URL segment in this market's language —
+     * `cadeau-van-de-dag`, `cadeau-du-jour`, `gift-of-the-day`.
+     *
+     * Always build the link from this rather than a literal: the route refuses
+     * another market's word, so a hardcoded `/daily` or a stale translation
+     * table produces a 404 rather than a redirect.
+     */
+    coveSegment: string
 }
 
 export interface AuthUser {

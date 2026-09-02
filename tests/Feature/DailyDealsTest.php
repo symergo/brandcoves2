@@ -64,7 +64,7 @@ class DailyDealsTest extends TestCase
     /** @return list<string> */
     private function deals(): array
     {
-        $props = $this->get('/be-nl/daily')->assertOk()->viewData('page')['props'];
+        $props = $this->get('/be-nl/cadeautips')->assertOk()->viewData('page')['props'];
 
         return array_column($props['deals'], 'title');
     }
@@ -205,7 +205,7 @@ class DailyDealsTest extends TestCase
          * at eleven carried on being presented as an ordinary buyable product —
          * price, shop count and a save button — for the rest of its life.
          */
-        $props = $this->get('/be-nl/daily')->assertOk()->viewData('page')['props'];
+        $props = $this->get('/be-nl/cadeautips')->assertOk()->viewData('page')['props'];
 
         $this->assertSame(['Still here'], array_column($props['finds'], 'title'));
     }

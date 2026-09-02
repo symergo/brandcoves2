@@ -53,7 +53,7 @@ class GuideController extends Controller
                 // surface is already a link is a target fighting its parent.
                 'intro' => app(CoveMarkup::class)->plain($guide->theme_blurb),
                 'kind' => $guide->kind->value,
-                'url' => $current->url($guide->kind->path((string) $guide->slug)),
+                'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
                 'publishedAt' => $guide->published_at?->toDateString(),
             ]);
 

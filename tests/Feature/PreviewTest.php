@@ -150,10 +150,10 @@ class PreviewTest extends TestCase
         $edition = $this->draftEdition($tomorrow);
 
         // Guessing tomorrow's edition by URL would leak its theme and finds.
-        $this->get("/be-nl/daily/{$edition->slug}")->assertNotFound();
+        $this->get("/be-nl/cadeautips/{$edition->slug}")->assertNotFound();
 
         $this->actingAs(User::factory()->create(['is_admin' => true]))
-            ->get("/be-nl/daily/{$edition->slug}")
+            ->get("/be-nl/cadeautips/{$edition->slug}")
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('preview', true));
     }

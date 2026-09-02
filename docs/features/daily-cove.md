@@ -53,10 +53,46 @@ Three rules, each one a way the naive version goes wrong:
 Today's buying guide, built from **what people actually searched on the site this week** — the
 `search_log` clustering that was Phase 6. "The five best X, and the one actually worth it."
 
-This is where the SEO value lives. Every edition has a permanent URL (`/{market}/daily/{date}`), so
-the archive is a growing corpus of indexed pages, each one a guide plus a set of products plus the
-writing that connects them. Ninety days in, that is ninety pages per market that did not exist
-before, each answering a question someone demonstrably asked.
+This is where the SEO value lives. Every edition has a permanent URL, so the archive is a growing
+corpus of indexed pages, each one a guide plus a set of products plus the writing that connects them.
+Ninety days in, that is ninety pages per market that did not exist before, each answering a question
+someone demonstrably asked.
+
+### The address, and why it is in the reader's language
+
+`/{market}/{segment}/{slug}` — `/nl-nl/cadeautips/de-laatste-vakantiedag`.
+
+The segment is localised per market: `cadeautips` (nl), `idees-cadeaux` (be-fr), `ideas-regalo`
+(es), `gift-tips` (en). See `Market::coveSegment()`, which is the only place they are written down.
+
+It used to be `/daily/` in every market. A path segment is read by a person deciding whether to click
+and by a search engine deciding what the page is about, and "daily" did neither job in four of the
+five markets. The site's own name for the section — The Daily Cove — is not the answer either:
+nobody searches for "cove". The brand keeps the page, the heading and the newsletter; the URL is the
+one place where being findable beats being on-message.
+
+`cadeau-van-de-dag` was the first choice and was rejected for length: seventeen characters in every
+archived URL to say something the slug and the page already say. `gift-ideas` was unavailable for
+English — it is the persona shelf.
+
+**Three addressing rules, all load-bearing:**
+
+- **The dated form redirects to the named one.** `/{segment}/2026-08-29` → `/{segment}/{slug}`, 301.
+  Registered *before* the slug route, or `2026-08-29` is swallowed as a perfectly valid slug.
+- **Everything under `/daily/` is kept forever** and redirects in **one hop** to its final address —
+  not via the new dated form. Those URLs are indexed and sit in three months of digest emails, and a
+  redirect chain costs link equity.
+- **Another market's word is not an address here.** The routes are declared once under a `{market}`
+  prefix, so the pattern admits every segment and `/es/cadeautips/...` matches it. The controller
+  404s it: serving it would put one market's page on another's address, carrying hreflang that
+  contradicts it.
+
+Two traps worth knowing if you touch this. `CoveKind::path()` takes the market as a **required**
+argument, because a default would mean one market's word silently appearing in another's URL. And
+Laravel binds controller arguments **by position, not by name** — the localised and legacy dated
+routes carry different parameter lists, so they are two methods rather than one with an optional
+parameter. Sharing a signature hands `$date` the segment, which 404s a URL whose route is registered
+and whose regex matches.
 
 ## The column beside the article
 

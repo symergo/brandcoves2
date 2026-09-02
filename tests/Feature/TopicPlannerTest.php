@@ -123,7 +123,7 @@ class TopicPlannerTest extends TestCase
         // Same shape a guide has always had, so a folded guide and a newly
         // planned one are addressed identically.
         $this->assertSame('beste-koptelefoon', $plan->slug);
-        $this->assertSame('guides/beste-koptelefoon', $plan->kind->path($plan->slug));
+        $this->assertSame('guides/beste-koptelefoon', $plan->kind->path($plan->slug, Market::BeNl));
     }
 
     #[Test]

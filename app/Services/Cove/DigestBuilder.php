@@ -137,7 +137,10 @@ class DigestBuilder
             // place to resolve [[product:…]] tokens into links.
             'lead' => $this->lead($edition),
             'date' => $edition->drop_date->toDateString(),
-            'url' => $base.'/daily/'.$edition->slug,
+            // covePath() carries the market itself, so it replaces $base rather
+            // than appending to it — the localised segment is only correct next
+            // to the market it belongs to.
+            'url' => $market->covePath($edition->slug),
             'finds' => $eligible,
             'omitted' => $omitted,
         ];

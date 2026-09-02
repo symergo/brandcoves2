@@ -65,7 +65,7 @@ class CoveRailTest extends TestCase
         $this->cove(CoveKind::Persona, 'De kruidenliefhebber');
         $this->cove(CoveKind::Guide, 'Beste koptelefoons');
 
-        $this->get('/be-nl/daily/'.$today->slug)
+        $this->get('/be-nl/cadeautips/'.$today->slug)
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('rail.coves.key', 'daily')

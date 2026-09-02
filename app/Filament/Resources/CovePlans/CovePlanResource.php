@@ -137,8 +137,14 @@ class CovePlanResource extends Resource
                          * `[[guide:slug]]` unambiguous about which page it means.
                          */
                         ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule, $get) => $rule->where('market', $get('market')))
+                        // The market matters now that the Daily segment is
+                        // localised: this hint has to show the word the chosen
+                        // market actually uses, not a stand-in from another one.
                         ->helperText(fn ($get) => '/{market}/'
-                            .(CoveKind::tryFrom((string) $get('kind')) ?? CoveKind::Persona)->path('{slug}')
+                            .(CoveKind::tryFrom((string) $get('kind')) ?? CoveKind::Persona)->path(
+                                '{slug}',
+                                Market::tryFrom((string) $get('market')) ?? Market::BeNl,
+                            )
                             .'. Set once — changing it breaks every link to the page.'),
 
                     /*

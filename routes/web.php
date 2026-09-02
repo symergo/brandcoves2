@@ -679,23 +679,59 @@ Route::prefix('{market}')->group(function () {
     | editions 404 has no archive to link to.
     |
     | That URL is now the edition's *name* rather than its date:
-    | `/be-nl/daily/vondsten-voor-thuiswerkers`, not `/be-nl/daily/2026-08-29`. A
-    | date tells a reader nothing and a search engine less.
+    | `/be-nl/cadeau-van-de-dag/vondsten-voor-thuiswerkers`, not
+    | `/be-nl/daily/2026-08-29`. A date tells a reader nothing and a search
+    | engine less.
     |
-    | The dated form is registered FIRST and permanently redirects. Three months
-    | of digest emails and everything already indexed point at it, so it has to
-    | keep resolving — and it has to be matched before the slug route, which
-    | would otherwise swallow `2026-08-29` as a perfectly valid slug and 404.
+    | The segment is localised per market — `cadeau-van-de-dag`,
+    | `cadeau-du-jour`, `regalo-del-dia`, `gift-of-the-day` — because a path
+    | segment is read by a person deciding whether to click and by a search
+    | engine deciding what the page is about, and "daily" did neither job in
+    | four of the five markets. See Market::coveSegment() for why the search
+    | phrase beats the product's own name here specifically.
+    |
+    | These routes are declared once under the {market} prefix, so the segment
+    | cannot be a literal: the pattern admits every market's word and the
+    | controller rejects the ones that do not belong to the market in the URL.
+    | Without that check /es/cadeau-van-de-dag/... would resolve, which is one
+    | market's page on another's address — duplicate content carrying the wrong
+    | hreflang.
+    |
+    | The dated form is registered BEFORE the slug form, or `2026-08-29` is
+    | swallowed as a perfectly valid slug and 404s.
+    |
+    | Everything under /daily/ is kept forever. Three months of digest emails
+    | and everything already indexed point there, and the archive is the whole
+    | reason the column has permanent URLs. Each legacy route redirects in ONE
+    | hop to its final destination rather than bouncing through the new dated
+    | form — a chain costs link equity and reads as sloppy in an audit.
     */
-    Route::get('/daily', DailyCoveController::class)->name('daily');
+    $coveSegment = implode('|', array_map(
+        static fn (string $segment): string => preg_quote($segment, '/'),
+        Market::coveSegments(),
+    ));
 
-    Route::get('/daily/{date}', [DailyCoveController::class, 'dated'])
-        ->where('date', '\d{4}-\d{2}-\d{2}')
+    Route::get('/{cove}', DailyCoveController::class)
+        ->where('cove', $coveSegment)
+        ->name('daily');
+
+    Route::get('/{cove}/{date}', [DailyCoveController::class, 'dated'])
+        ->where(['cove' => $coveSegment, 'date' => '\d{4}-\d{2}-\d{2}'])
         ->name('daily.dated');
 
-    Route::get('/daily/{slug}', DailyCoveController::class)
-        ->where('slug', '[a-z0-9-]+')
+    Route::get('/{cove}/{slug}', DailyCoveController::class)
+        ->where(['cove' => $coveSegment, 'slug' => '[a-z0-9-]+'])
         ->name('daily.edition');
+
+    Route::get('/daily', [DailyCoveController::class, 'moved'])->name('daily.legacy');
+
+    Route::get('/daily/{date}', [DailyCoveController::class, 'legacyDated'])
+        ->where('date', '\d{4}-\d{2}-\d{2}')
+        ->name('daily.legacy.dated');
+
+    Route::get('/daily/{slug}', [DailyCoveController::class, 'moved'])
+        ->where('slug', '[a-z0-9-]+')
+        ->name('daily.legacy.edition');
 
     /*
     |----------------------------------------------------------------------

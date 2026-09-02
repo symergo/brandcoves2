@@ -325,7 +325,7 @@ class HomeController extends Controller
             ->map(fn (DailyPickSet $guide) => [
                 'title' => $guide->theme_title,
                 'intro' => $guide->theme_blurb,
-                'url' => $current->url($guide->kind->path((string) $guide->slug)),
+                'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
                 // Why it exists, and a fact no competitor has.
                 'searches' => $guide->source_volume,
             ])

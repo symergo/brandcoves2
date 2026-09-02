@@ -606,7 +606,7 @@ class BrandController extends Controller
             ->map(fn (DailyPickSet $guide) => [
                 'title' => $guide->theme_title,
                 'intro' => $guide->theme_blurb,
-                'url' => $current->url($guide->kind->path((string) $guide->slug)),
+                'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
             ])
             ->all();
     }

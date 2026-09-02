@@ -178,18 +178,50 @@ class DailyCoveTest extends TestCase
          * The archive is the SEO asset. A column whose past editions 404 has
          * nothing to link to and nothing indexed.
          *
-         * Addressed by name now — /daily/vondsten-voor-thuiswerkers rather
-         * than by the day it fell on.
+         * Addressed by name, under the market's own word for the section:
+         * /be-nl/cadeautips/vondsten-voor-thuiswerkers.
          */
-        $this->get('/be-nl/daily/'.$edition->slug)
+        $this->get('/be-nl/cadeautips/'.$edition->slug)
             ->assertOk()
             ->assertInertia(fn ($page) => $page->has('finds'));
 
-        // And the dated URL it used to live at still resolves, permanently, to
-        // that name: it is indexed and it is in three months of digest emails.
-        $this->get('/be-nl/daily/'.$edition->drop_date->toDateString())
-            ->assertRedirect('/be-nl/daily/'.$edition->slug)
+        /*
+         * Every address this page has ever had still resolves, permanently and
+         * in one hop. Both are indexed and the dated one is in three months of
+         * digest emails; a chain through the old dated form would cost link
+         * equity on the way.
+         */
+        $this->get('/be-nl/daily/'.$edition->slug)
+            ->assertRedirect('/be-nl/cadeautips/'.$edition->slug)
             ->assertStatus(301);
+
+        $this->get('/be-nl/daily/'.$edition->drop_date->toDateString())
+            ->assertRedirect('/be-nl/cadeautips/'.$edition->slug)
+            ->assertStatus(301);
+
+        $this->get('/be-nl/cadeautips/'.$edition->drop_date->toDateString())
+            ->assertRedirect('/be-nl/cadeautips/'.$edition->slug)
+            ->assertStatus(301);
+
+        // /daily with no address is today's edition, wherever it now lives.
+        $this->get('/be-nl/daily')
+            ->assertRedirect('/be-nl/cadeautips')
+            ->assertStatus(301);
+    }
+
+    #[Test]
+    public function another_markets_word_for_the_section_is_not_an_address_here(): void
+    {
+        /*
+         * The routes are declared once under a {market} prefix, so the pattern
+         * admits every market's segment and /es/cadeau-van-de-dag/... matches
+         * it. Serving that would put one market's page on another's address:
+         * duplicate content, carrying hreflang that contradicts it.
+         */
+        $edition = $this->buildEdition();
+
+        $this->get('/be-nl/gift-of-the-day/'.$edition->slug)->assertNotFound();
+        $this->get('/be-nl/regalo-del-dia')->assertNotFound();
     }
 
     #[Test]

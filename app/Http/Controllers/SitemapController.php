@@ -105,7 +105,7 @@ class SitemapController extends Controller
                  */
                 ['loc' => url("/{$resolved->value}/feedback"), 'priority' => '0.3', 'changefreq' => 'yearly'],
 
-                ['loc' => url("/{$resolved->value}/daily"), 'priority' => '0.9', 'changefreq' => 'daily'],
+                ['loc' => url($resolved->covePath()), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/gift-ideas"), 'priority' => '0.8', 'changefreq' => 'weekly'],
                 ['loc' => url("/{$resolved->value}/guides"), 'priority' => '0.7', 'changefreq' => 'weekly'],
 
@@ -273,7 +273,7 @@ class SitemapController extends Controller
                 ->pluck('slug')
                 ->each(function ($slug) use (&$urls, $resolved): void {
                     $urls[] = [
-                        'loc' => url("/{$resolved->value}/daily/{$slug}"),
+                        'loc' => url($resolved->covePath($slug)),
                         'priority' => '0.5',
                         // A past edition never changes. Saying so stops a
                         // crawler re-fetching ninety static pages a day.

@@ -388,7 +388,7 @@ class CovePlanController extends Controller
             // permanent page and its own URL is the honest answer.
             'readBack' => $plan->kind->isDated()
                 ? "/api/editorial/editions/{$plan->market->value}/{$plan->drop_date->toDateString()}"
-                : '/'.$plan->market->value.'/'.$plan->kind->path((string) $plan->slug),
+                : '/'.$plan->market->value.'/'.$plan->kind->path((string) $plan->slug, $plan->market),
         ], 202);
     }
 
@@ -659,7 +659,7 @@ class CovePlanController extends Controller
                 // Off the kind, not off the date. Four of the six kinds are
                 // dateless and only one of them is a persona, so a null date
                 // used to send a guide's URL into /gift-ideas.
-                'url' => '/'.$plan->market->value.'/'.$plan->kind->path((string) $plan->edition->slug),
+                'url' => '/'.$plan->market->value.'/'.$plan->kind->path((string) $plan->edition->slug, $plan->market),
             ],
         ];
     }

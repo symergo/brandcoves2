@@ -159,7 +159,7 @@ function Chrome({ children }: PropsWithChildren) {
         label: t('nav.discover'),
         items: [
             {
-                href: `${base}/daily`,
+                href: `${base}/${market.coveSegment}`,
                 label: t('nav.daily'),
                 hint: t('nav.hint_daily'),
                 icon: <CoveIcon name="daily" className="h-5 w-5" />,
@@ -612,7 +612,7 @@ function Chrome({ children }: PropsWithChildren) {
                         <Link href={`/${market.key}/guides`} className="hover:text-accent">
                             {t('nav.smart')}
                         </Link>
-                        <Link href={`/${market.key}/daily`} className="hover:text-accent">
+                        <Link href={`/${market.key}/${market.coveSegment}`} className="hover:text-accent">
                             {t('nav.daily')}
                         </Link>
                         <Link href={`/${market.key}/surprise`} className="hover:text-accent">

@@ -71,7 +71,7 @@ class CoveArticleBuildTest extends TestCase
 
         // The address a reader reaches it by is unchanged from the old `guides`
         // table, which is the whole point of folding rather than replacing.
-        $this->assertSame('guides/beste-koptelefoons', $edition->kind->path($edition->slug));
+        $this->assertSame('guides/beste-koptelefoons', $edition->kind->path($edition->slug, Market::BeNl));
         $this->assertSame($edition->id, $plan->fresh()->edition_id);
     }
 

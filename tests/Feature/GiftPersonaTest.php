@@ -103,7 +103,7 @@ class GiftPersonaTest extends TestCase
         app(EditionBuilder::class)->build(Market::BeNl);
         $this->buildPersona();
 
-        $this->get('/be-nl/daily')->assertOk()->assertDontSee('De kruidenliefhebber');
+        $this->get('/be-nl/cadeautips')->assertOk()->assertDontSee('De kruidenliefhebber');
 
         /*
          * The home page asserts against the props, not the page text.
@@ -139,7 +139,7 @@ class GiftPersonaTest extends TestCase
         app(EditionBuilder::class)->build(Market::BeNl);
         $this->buildPersona();
 
-        $this->get('/be-nl/daily')
+        $this->get('/be-nl/cadeautips')
             ->assertOk()
             ->assertDontSee('De kruidenliefhebber');
     }
@@ -153,7 +153,7 @@ class GiftPersonaTest extends TestCase
 
         $response->assertSee('/be-nl/gift-ideas/de-kruidenliefhebber', escape: false);
         // The shape a null drop_date would produce if it reached the daily loop.
-        $response->assertDontSee('/be-nl/daily/</loc>', escape: false);
+        $response->assertDontSee('/be-nl/cadeautips/</loc>', escape: false);
     }
 
     #[Test]

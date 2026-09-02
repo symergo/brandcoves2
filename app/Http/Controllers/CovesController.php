@@ -227,7 +227,7 @@ class CovesController extends Controller
             'coves' => $coves->map(fn (DailyPickSet $cove): array => [
                 'title' => $cove->theme_title,
                 'intro' => app(CoveMarkup::class)->plain($cove->theme_blurb),
-                'url' => $current->url($cove->kind->path((string) $cove->slug)),
+                'url' => $current->url($cove->kind->path((string) $cove->slug, $current->get())),
                 'date' => null,
             ])->all(),
         ];
@@ -285,7 +285,7 @@ class CovesController extends Controller
                  * linking by date would send every click on this page through a
                  * redirect. The cards under `/daily` already link this way.
                  */
-                'url' => $current->url($cove->kind->path((string) $cove->slug)),
+                'url' => $current->url($cove->kind->path((string) $cove->slug, $current->get())),
                 /*
                  * Null on everything but an edition, and the card simply omits
                  * it. A persona has no date on purpose — it never stops being

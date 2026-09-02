@@ -121,6 +121,16 @@ class HandleInertiaRequests extends Middleware
                 'language' => $market->language(),
                 'hrefLang' => $market->hrefLang(),
                 'currency' => $market->currency(),
+                /*
+                 * The Daily Cove's URL segment, in this market's language.
+                 *
+                 * Shared because the header, the footer and two Cove rails all
+                 * link to it, and the alternative is five components agreeing on
+                 * a translation table that the server already owns. When it
+                 * disagrees, the link 404s — the route deliberately refuses
+                 * another market's word.
+                 */
+                'coveSegment' => $market->coveSegment(),
             ],
 
             /*

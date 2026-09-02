@@ -137,7 +137,7 @@ class ShopsController extends Controller
                     // listing does it: a link inside a card whose whole surface
                     // is already a link is a target fighting its parent.
                     'intro' => app(CoveMarkup::class)->plain($cove->theme_blurb),
-                    'url' => $current->url($cove->kind->path((string) $cove->slug)),
+                    'url' => $current->url($cove->kind->path((string) $cove->slug, $current->get())),
                 ])
                 ->all(),
 

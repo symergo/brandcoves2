@@ -195,7 +195,7 @@ class DiscoverCoveController extends Controller
                 ->map(fn (DailyPickSet $persona): array => [
                     'title' => $persona->theme_title,
                     'intro' => app(CoveMarkup::class)->plain($persona->theme_blurb),
-                    'url' => $current->url($persona->kind->path((string) $persona->slug)),
+                    'url' => $current->url($persona->kind->path((string) $persona->slug, $current->get())),
                     // The drawing, not a product photo. This band said "no
                     // images" when the only image available was a photograph of
                     // a thing, which made a shelf of people look like a
@@ -219,7 +219,7 @@ class DiscoverCoveController extends Controller
                     // inside a card whose whole surface is already a link is a
                     // target fighting its parent.
                     'intro' => app(CoveMarkup::class)->plain($guide->theme_blurb),
-                    'url' => $current->url($guide->kind->path((string) $guide->slug)),
+                    'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
                     // Why the Cove exists, and a fact no competitor has.
                     'searches' => $guide->source_volume,
                 ])
