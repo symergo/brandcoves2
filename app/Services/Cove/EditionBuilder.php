@@ -1255,6 +1255,15 @@ class EditionBuilder
                 - Describe what these things have in common, honestly. If they
                   have nothing in common, say that — "Seven things with nothing
                   in common" is a better title than a forced theme.
+                - Name something concrete. The title must contain at least one
+                  noun a person could plausibly type into a search box: the
+                  occasion, the room, the category, or who it is for. "The last
+                  day of the holidays" names a mood; "The last day of the school
+                  holidays" names a thing. Both are honest, and the second is
+                  findable.
+                - Do not stuff in "gift", "present" or "buy". The page and its
+                  address already say that, and a title that repeats it reads
+                  like every other shopping site.
                 - Never invent a product, a price or a claim about quality.
                 - No exclamation marks, no "amazing", no "you won't believe".
                 TXT,

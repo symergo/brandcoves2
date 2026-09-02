@@ -31,6 +31,12 @@ interface Props {
         date: string
         label: string
         theme: string
+        /**
+         * The <title>, which is a search result rather than a headline — the
+         * editorial name plus a phrase people actually search for. The h1 below
+         * uses `theme`, and deliberately: they are different jobs.
+         */
+        seoTitle: string
         blurb: string | null
         isToday: boolean
         /**
@@ -358,7 +364,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
     return (
         <>
             {preview && <PreviewBanner />}
-            <Head title={edition.theme} />
+            <Head title={edition.seoTitle} />
 
             {/*
               Two columns from `lg` up, one below it.

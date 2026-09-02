@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
+use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\ProductGroup;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
@@ -282,6 +286,49 @@ class SeoTest extends TestCase
         $this->get("/be-nl/p/{$group->id}/{$group->slug}")
             ->assertOk()
             ->assertSee('og/p/'.$group->id.'.png"', escape: false);
+    }
+
+    #[Test]
+    public function the_search_title_and_the_headline_are_not_the_same_string(): void
+    {
+        /*
+         * Three names for one page, each doing a different job, and the whole
+         * point is that they differ:
+         *
+         *   h1        the edition's editorial name — what it is called
+         *   og:title  the same, because a social card is not a search result
+         *   <title>   the name plus a phrase somebody would actually type
+         *
+         * Collapsing them is the trade people assume they have to make. They do
+         * not: the tags are separate, so the writing keeps its voice and the
+         * search result still carries the keyword.
+         */
+        $edition = DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Daily->value,
+            'drop_date' => '2026-08-08',
+            'theme_title' => 'De laatste vakantiedag',
+            'theme_slug' => 'vakantie',
+            'theme_source' => 'theme',
+            'status' => PublishStatus::Published->value,
+            'published_at' => CarbonImmutable::parse('2026-08-08')->setTime(6, 0),
+        ]);
+
+        $page = $this->get('/be-nl/cadeautips/'.$edition->slug)
+            ->assertOk()
+            ->viewData('page');
+
+        $this->assertSame(
+            'De laatste vakantiedag — cadeautips',
+            $page['props']['edition']['seoTitle'],
+            'the <title> carries the searchable phrase',
+        );
+
+        $this->assertSame(
+            'De laatste vakantiedag',
+            $page['props']['edition']['theme'],
+            'the headline keeps the editorial name, unchanged',
+        );
     }
 
     #[Test]

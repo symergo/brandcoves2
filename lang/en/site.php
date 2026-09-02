@@ -1352,6 +1352,7 @@ return [
 
     'daily' => [
         'title' => 'The Daily Cove',
+        'seo_title' => ':theme — gift tips',
         'seo_description' => 'A handful of things you did not know existed, and a buying guide built from what people actually searched for.',
         'see_offers' => 'See the offers',
         'finds_title' => "Today's finds",

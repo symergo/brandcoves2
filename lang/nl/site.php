@@ -1140,6 +1140,11 @@ return [
 
     'daily' => [
         'title' => 'De Dagelijkse Cove',
+        // The <title> tag, which is a search result rather than a headline. The
+        // page keeps its editorial name in the h1 and on the social card; this
+        // is the one place a searchable phrase earns its space. Brand suffix is
+        // appended by the Inertia title callback, so it is not repeated here.
+        'seo_title' => ':theme — cadeautips',
         'seo_description' => 'Een handvol dingen waarvan je niet wist dat ze bestonden, en een koopgids gebouwd op wat mensen hier echt zochten.',
         'see_offers' => 'Bekijk de aanbiedingen',
         'finds_title' => 'De vondsten van vandaag',

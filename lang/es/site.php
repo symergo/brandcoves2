@@ -1136,6 +1136,7 @@ return [
 
     'daily' => [
         'title' => 'La Cove Diaria',
+        'seo_title' => ':theme — ideas de regalo',
         'seo_description' => 'Un puñado de cosas que no sabías que existían y una guía de compra construida con lo que la gente buscó aquí de verdad.',
         'see_offers' => 'Ver las ofertas',
         'finds_title' => 'Los hallazgos de hoy',

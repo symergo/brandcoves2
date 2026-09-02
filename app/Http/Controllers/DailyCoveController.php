@@ -71,6 +71,20 @@ class DailyCoveController extends Controller
                 'date' => $edition->drop_date->toDateString(),
                 'label' => $edition->drop_date->format('j M Y'),
                 'theme' => $edition->theme_title,
+                /*
+                 * The <title>, which is a search result and not a headline.
+                 *
+                 * Deliberately different from `theme`: the h1 and the social
+                 * card keep the edition's editorial name, and this is the one
+                 * place a searchable phrase earns its space. "De laatste
+                 * vakantiedag" is good writing that nobody types into Google;
+                 * "De laatste vakantiedag — cadeautips" is both.
+                 *
+                 * Composed here rather than in the page, because it is copy and
+                 * copy is translated. The brand suffix is appended by the
+                 * Inertia title callback, so it is not repeated in the string.
+                 */
+                'seoTitle' => __('site.daily.seo_title', ['theme' => $edition->theme_title]),
                 'blurb' => $edition->theme_blurb,
                 'isToday' => $edition->drop_date->isToday(),
                 /*

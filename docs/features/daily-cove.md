@@ -75,6 +75,35 @@ one place where being findable beats being on-message.
 archived URL to say something the slug and the page already say. `gift-ideas` was unavailable for
 English — it is the persona shelf.
 
+### Three names for one page
+
+The page has three names and they are deliberately not the same string:
+
+| | what it is | example |
+|---|---|---|
+| `h1` | the edition's editorial name | De laatste vakantiedag |
+| `og:title` | the same — a social card is not a search result | De laatste vakantiedag |
+| `<title>` | the name plus a phrase people type | De laatste vakantiedag — cadeautips · GiftCoves |
+
+Collapsing them is the trade everyone assumes they have to make: keep the writing and rank for
+nothing, or stuff in keywords and sound like every affiliate site. It is a false choice. The tags are
+separate mechanisms — `<title>` comes from the React page's `<Head>`, `og:title` from `PageMeta` —
+so the writing keeps its voice *and* the search result carries the keyword.
+
+`site.daily.seo_title` holds the pattern, per market, because it is copy. The brand suffix is
+appended by the Inertia title callback and is not repeated in the string.
+
+**The slug follows the headline, and is not separately keyword-stuffed.** That is a decision, not an
+omission. The address already reads `/nl-nl/cadeautips/…`, so a slug carrying the same words gives
+`/cadeautips/cadeautips-de-laatste-vakantiedag` — the keyword twice, adjacently, which is the
+clearest over-optimisation signal there is. The slug instead inherits whatever the headline gained.
+
+Which is where the real change is: the theme prompt now requires the title to **name something
+concrete** — the occasion, the room, the category, or who it is for. "The last day of the holidays"
+names a mood; "the last day of the school holidays" names a thing. Both are honest and only one is
+findable. The prompt also forbids stuffing in "gift", "present" or "buy", because the page and its
+address already say that.
+
 **Three addressing rules, all load-bearing:**
 
 - **The dated form redirects to the named one.** `/{segment}/2026-08-29` → `/{segment}/{slug}`, 301.
