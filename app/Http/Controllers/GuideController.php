@@ -12,6 +12,7 @@ use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
+use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use App\Support\PreviewAccess;
@@ -294,7 +295,7 @@ class GuideController extends Controller
             description: $guide->meta_description ?? $markup->plain($guide->theme_blurb),
             // The card, not the first product's photograph: a guide is about all
             // seven, and leading with one of them misrepresents it.
-            image: url($current->url("og/guide/{$guide->slug}.png")),
+            image: SocialCard::versioned(url($current->url("og/guide/{$guide->slug}.png"))),
             canonical: $url,
             /*
              * A draft is never indexed, whatever else the page would say.

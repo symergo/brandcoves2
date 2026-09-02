@@ -20,6 +20,7 @@ use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
+use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Request;
@@ -692,7 +693,7 @@ class BrandController extends Controller
                 // No count. `$total` was passed in for this one line and is
                 // gone with it — see the note in `SearchController::seo()`.
                 description: __('site.brand.seo_description', ['brand' => $stat->brand]),
-                image: url($current->url("og/brand/{$stat->slug}.png")),
+                image: SocialCard::versioned(url($current->url("og/brand/{$stat->slug}.png"))),
                 canonical: url($current->url("brand/{$stat->slug}")),
                 robots: $thin ? 'noindex, follow' : null,
             )

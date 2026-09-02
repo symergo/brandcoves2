@@ -242,6 +242,49 @@ class SeoTest extends TestCase
     }
 
     #[Test]
+    public function the_card_url_carries_the_commit_so_a_deploy_reaches_the_platforms(): void
+    {
+        /*
+         * The endpoint keys its cache on the commit so a bad card cannot outlive
+         * a deploy. That protection stopped at our own front door: the URL was
+         * permanent and carries a week of max-age, so a platform that had
+         * fetched a card kept showing those bytes however the endpoint had been
+         * fixed. WhatsApp is the sharp case — it caches previews on the sender's
+         * device, where there is nothing to purge and no request we can make.
+         * Changing the URL is the only lever there is.
+         *
+         * The commit rather than the drawn text, deliberately: prices move
+         * constantly, and a URL that moved with them would cost a fetch and a
+         * render on every platform several times a day while never hitting a
+         * cache. See App\Services\Seo\SocialCard.
+         */
+        $group = $this->seedCatalogue();
+
+        config(['giftcoves.commit_sha' => 'abcdef0123456789']);
+
+        // The canonical slug URL, as every other test here uses: the bare
+        // /p/{id} form 301s to it, and a redirect body carries no meta tags.
+        $this->get("/be-nl/p/{$group->id}/{$group->slug}")
+            ->assertOk()
+            ->assertSee('og/p/'.$group->id.'.png?v=abcdef012345', escape: false);
+    }
+
+    #[Test]
+    public function the_card_url_is_left_bare_off_a_deployment(): void
+    {
+        // A laptop has no commit to name. Inventing one would put a token in the
+        // markup that means nothing, and make the local page differ from the
+        // deployed one for no reason anybody could act on.
+        $group = $this->seedCatalogue();
+
+        config(['giftcoves.commit_sha' => null]);
+
+        $this->get("/be-nl/p/{$group->id}/{$group->slug}")
+            ->assertOk()
+            ->assertSee('og/p/'.$group->id.'.png"', escape: false);
+    }
+
+    #[Test]
     public function robots_blocks_everything_on_staging(): void
     {
         config(['giftcoves.robots_allow' => false]);

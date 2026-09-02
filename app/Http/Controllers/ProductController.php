@@ -15,6 +15,7 @@ use App\Services\Catalogue\ProductDescription;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
+use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
@@ -188,7 +189,7 @@ class ProductController extends Controller
              * rendered card carries the title, the shop count and the price,
              * which is the part worth putting in a timeline.
              */
-            image: url($current->url("og/p/{$group->id}.png")),
+            image: SocialCard::versioned(url($current->url("og/p/{$group->id}.png"))),
             canonical: $url,
             // A product nobody stocks is a thin page; keep it out of the index
             // but keep following its links.

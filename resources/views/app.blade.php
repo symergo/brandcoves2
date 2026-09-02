@@ -150,7 +150,7 @@
              renders as a bare grey rectangle in every chat app, which reads as a
              broken page. Full width, because a page worth sharing deserves the
              large card even when it has no picture of its own. --}}
-        @php($fallbackCard = url($market->value.'/og/default.png'))
+        @php($fallbackCard = \App\Services\Seo\SocialCard::versioned(url($market->value.'/og/default.png')))
         <meta property="og:image" content="{{ $fallbackCard }}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">

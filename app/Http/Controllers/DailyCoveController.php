@@ -9,6 +9,7 @@ use App\Models\ProductGroup;
 use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
 use App\Services\Seo\PageMeta;
+use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use App\Support\PreviewAccess;
@@ -268,7 +269,7 @@ class DailyCoveController extends Controller
              * morning. Pointing at the dated image means a shared post keeps
              * showing the edition it was actually about.
              */
-            image: url($current->url('og/daily/'.$edition->drop_date->toDateString().'.png')),
+            image: SocialCard::versioned(url($current->url('og/daily/'.$edition->drop_date->toDateString().'.png'))),
             canonical: $url,
         );
 
