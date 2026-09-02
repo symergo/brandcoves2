@@ -205,10 +205,17 @@ class HealthController extends Controller
      * this repo and short enough to eyeball against `git log --oneline`. Null
      * rather than 'unknown' when absent, so a laptop reads as "no answer" and
      * not as a deploy that lost its SHA.
+     *
+     * Reads the config rather than the environment directly. This used to call
+     * `env('GIT_COMMIT_SHA')`, which meant the endpoint and the social-card
+     * cache key resolved the commit by two separate routes — and when the
+     * baked-in value turned out to be wrong, both were wrong independently.
+     * `config/giftcoves.php` is now the single place that answers this, and it
+     * knows about the runtime name Coolify actually sets.
      */
     private function commit(): ?string
     {
-        $sha = trim((string) env('GIT_COMMIT_SHA', ''));
+        $sha = trim((string) config('giftcoves.commit_sha'));
 
         return $sha === '' ? null : substr($sha, 0, 12);
     }

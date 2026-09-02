@@ -165,11 +165,17 @@ x-app: &app
     INERTIA_SSR_ENABLED: "true"
     INERTIA_SSR_URL: http://ssr:13714
     # GIT_COMMIT_SHA is deliberately NOT set here, and must not be added to the
-    # Coolify UI either. It is baked into the image at build time; any runtime
-    # value overrides that image ENV, and naming it here would also make Coolify
-    # materialise a stored variable for it — the same trap that SOURCE_COMMIT
-    # fell into. A pinned value would freeze the social-card cache key, which
-    # exists precisely so a bad card cannot survive a deploy.
+    # Coolify UI either. Naming it here would make Coolify materialise a stored
+    # variable for it — the same trap SOURCE_COMMIT fell into — and a pinned
+    # value would freeze the social-card cache key, which exists precisely so a
+    # bad card cannot survive a deploy.
+    #
+    # Nothing needs to be passed through for the commit at all. Coolify injects
+    # SOURCE_COMMIT into the container itself, with the real SHA, and
+    # config/giftcoves.php reads it there. Measured 2026-09-02:
+    # SOURCE_COMMIT=04862b2eb72f... in a container whose GIT_COMMIT_SHA was
+    # empty, which is what finally identified the runtime route as the working
+    # one.
   restart: unless-stopped
   depends_on:
     postgres:

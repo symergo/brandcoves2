@@ -11,7 +11,29 @@ declare(strict_types=1);
  */
 return [
 
-    'commit_sha' => env('GIT_COMMIT_SHA', 'dev'),
+    /*
+     * Which commit is serving. Null when there is no deployment behind this
+     * process, which is the normal answer on a laptop.
+     *
+     * Two names, in this order, because the value arrives by two different
+     * routes and only one of them has ever worked:
+     *
+     * - GIT_COMMIT_SHA is baked into the image by the Dockerfile from a build
+     *   arg. Kept first so an explicitly built image still wins.
+     * - SOURCE_COMMIT is what Coolify injects into the container at runtime,
+     *   and measured on 2026-09-02 it is the only one that actually carries the
+     *   real SHA. The compose file used to declare SOURCE_COMMIT as a build arg
+     *   to feed the first route; that declaration made Coolify materialise a
+     *   *stored* variable, which then shadowed the injected one, so every image
+     *   baked the literal string "unknown" for three weeks.
+     *
+     * Read at runtime rather than baked, which works only because the Dockerfile
+     * deliberately does not run `config:cache` — see the comment there. Both
+     * carry an empty default on purpose: ConfigContractTest requires any env()
+     * without one to be passed through the compose app environment, and passing
+     * SOURCE_COMMIT through compose is precisely the bug above.
+     */
+    'commit_sha' => env('GIT_COMMIT_SHA', '') ?: env('SOURCE_COMMIT', '') ?: null,
 
     // Staging must never be indexed. Production sets ROBOTS_ALLOW=true.
     'robots_allow' => (bool) env('ROBOTS_ALLOW', false),

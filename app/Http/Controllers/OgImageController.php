@@ -210,7 +210,12 @@ class OgImageController extends Controller
     private function card(string $scope, OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null): Response
     {
         $png = Cache::remember(
-            'og:'.config('giftcoves.commit_sha').':'.$scope.':'.self::fingerprint($title, $kicker, $footnote),
+            // `?? 'dev'` because the config is null off a deployment. An empty
+            // segment would still work as a key, but every laptop and every
+            // deployment that lost its SHA would then share one — and sharing a
+            // cache key across builds is the exact failure this segment exists
+            // to prevent.
+            'og:'.(config('giftcoves.commit_sha') ?? 'dev').':'.$scope.':'.self::fingerprint($title, $kicker, $footnote),
             self::TTL,
             fn (): string => $og->render($title, $kicker, $footnote),
         );

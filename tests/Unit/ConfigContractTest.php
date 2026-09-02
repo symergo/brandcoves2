@@ -53,6 +53,33 @@ class ConfigContractTest extends TestCase
         'SLACK_BOT_USER_OAUTH_TOKEN',
     ];
 
+    /**
+     * Variables the platform injects, which must NOT be passed through compose.
+     *
+     * The two tests below share a premise — "if it is not in the compose file,
+     * no container can see it" — and for these it is false. Coolify injects
+     * SOURCE_COMMIT into the running container itself, and reaching for it in
+     * compose is not merely unnecessary, it is the bug: Coolify materialises a
+     * *stored* environment variable for every name it parses out of that file,
+     * and a stored variable then shadows the one it would have injected.
+     *
+     * That is not theoretical. `SOURCE_COMMIT: ${…}` was added to the compose
+     * args block on 2026-08-31 to "pass the commit through", and from then until
+     * 2026-09-02 every image baked the literal string `unknown`: /health could
+     * not say which code was serving, and the social-card cache key — keyed on
+     * the commit precisely so a bad card cannot outlive a deploy — never moved.
+     *
+     * So this list is the opposite of NOT_OURS. These are entirely ours; they
+     * simply arrive by a route this file cannot see, and adding them to the
+     * compose to satisfy the rule would reintroduce the failure the rule exists
+     * to catch. Keep it short, and require a comment like this one for anything
+     * added to it.
+     */
+    private const INJECTED_BY_THE_PLATFORM = [
+        'GIT_COMMIT_SHA',
+        'SOURCE_COMMIT',
+    ];
+
     #[Test]
     public function every_setting_without_a_default_reaches_a_container(): void
     {
@@ -60,6 +87,7 @@ class ConfigContractTest extends TestCase
             $this->settingsWithoutDefault(),
             $this->keysComposeProvides(),
             self::NOT_OURS,
+            self::INJECTED_BY_THE_PLATFORM,
         ));
 
         $this->assertSame([], $missing, implode("\n", [
@@ -99,6 +127,7 @@ class ConfigContractTest extends TestCase
             $this->settingsDefaultingToEmpty(),
             $this->keysComposeProvides(),
             self::NOT_OURS,
+            self::INJECTED_BY_THE_PLATFORM,
         ));
 
         $this->assertSame([], $missing, implode("\n", [
@@ -107,7 +136,8 @@ class ConfigContractTest extends TestCase
             'passed through '.self::COMPOSE.', so no container can ever see them and the',
             'difference can never be observed.',
             '',
-            'Add each to the app environment block:',
+            'Add each to the app environment block — or to INJECTED_BY_THE_PLATFORM if the',
+            'platform sets it in the container itself, which compose must then leave alone:',
             '  '.implode(', ', $missing),
         ]));
     }

@@ -121,8 +121,15 @@ RUN php artisan event:cache \
 # ship some new JavaScript. Copied in after, it invalidates this one cheap layer.
 COPY --from=frontend /build/public/build ./public/build
 
-# The deployed commit. Coolify injects SOURCE_COMMIT into the build itself,
-# alongside COOLIFY_BRANCH/FQDN/URL/UUID.
+# The deployed commit. Coolify injects SOURCE_COMMIT into the running
+# CONTAINER, not into the build — measured 2026-09-02, and the opposite of what
+# this file previously claimed. So this ARG is normally empty, and the value
+# that reaches the app comes from config/giftcoves.php reading SOURCE_COMMIT at
+# runtime instead.
+#
+# The ARG stays because it costs nothing and lets an explicit
+# `docker build --build-arg SOURCE_COMMIT=...` stamp an image outside Coolify;
+# config prefers GIT_COMMIT_SHA when it is non-empty for exactly that case.
 #
 # Do NOT "help" it by declaring SOURCE_COMMIT in the compose file's args block.
 # That was tried on 2026-08-31 and is what broke it: Coolify materialises a
