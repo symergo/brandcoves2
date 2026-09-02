@@ -226,12 +226,19 @@ Schedule::job(new RefreshWishlistedProducts)
  * Occasion reminders.
  *
  * Once a day, in the morning: a reminder that a birthday is a fortnight away is
- * something to read over coffee, not at 3am. `recipients.birthday` was written
- * and never read until this job existed.
+ * something to read over coffee, not at 3am. Three dates feed it —
+ * `recipients.birthday`, a Secret Santa exchange, and the occasion on a list —
+ * and all three were written and never read until this job existed.
  *
  * The job dedupes per occurrence itself rather than relying on the schedule
  * running exactly once — a redeploy can replay a window, and a duplicated
- * reminder is how a notification channel gets muted.
+ * reminder is how a notification channel gets muted. It also emails on the pass
+ * that writes the row, so the dedupe covers both channels.
+ *
+ * **How many days ahead is not decided here.** It is
+ * `config('giftcoves.reminders.lead_days')`, edited at Operations → Reminders,
+ * so the schedule stays "once a day" and the judgement about how people shop
+ * stays where somebody can change it without a deploy.
  */
 Schedule::job(new SendOccasionReminders)
     ->name('occasion-reminders')

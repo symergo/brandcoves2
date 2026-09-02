@@ -27,6 +27,7 @@ use App\Services\Pages\PageCopy;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Settings\AiSettingsStore;
+use App\Services\Settings\ReminderSettingsStore;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Model;
@@ -175,6 +176,10 @@ class AppServiceProvider extends ServiceProvider
          * env value stands.
          */
         app(AiSettingsStore::class)->apply();
+
+        // Same overlay, same reasoning: when a reminder fires is a judgement
+        // about how people shop, and changing it should not be a deploy.
+        app(ReminderSettingsStore::class)->apply();
 
         $this->trigramThreshold();
         $this->editorialApiLimits();

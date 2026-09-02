@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Enums\Market;
+use App\Mail\Concerns\UsesTemplate;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -22,6 +23,7 @@ class CoveConfirmationMail extends Mailable
 {
     use Queueable;
     use SerializesModels;
+    use UsesTemplate;
 
     public function __construct(
         public readonly string $token,
@@ -32,12 +34,24 @@ class CoveConfirmationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('site.cove_mail.confirm_subject', locale: $this->market->language()),
+            subject: $this->template('cove_confirm', $this->market->language())['subject']
+                ?? __('site.cove_mail.confirm_subject', locale: $this->market->language()),
         );
     }
 
     public function content(): Content
     {
+        $template = $this->template('cove_confirm', $this->market->language());
+
+        if ($template !== null) {
+            return $this->templatedContent(
+                $template,
+                $this->market->language(),
+                url("/{$this->market->value}/coves/confirm/{$this->token}"),
+                (string) __('site.cove_mail.confirm_button', [], $this->market->language()),
+            );
+        }
+
         return new Content(
             markdown: 'mail.cove-confirm',
             with: [

@@ -489,6 +489,48 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Occasion reminders
+    |--------------------------------------------------------------------------
+    |
+    | "Your mother's birthday is in two weeks." Fired by SendOccasionReminders
+    | once a day, for three things that carry a date: a recipient's birthday, a
+    | Secret Santa exchange, and the occasion on a list.
+    |
+    | No env() on either of these on purpose. They are edited in the admin
+    | panel — Operations → Reminders — and stored in `connector_settings`, so
+    | putting them in the environment as well would be two places to change one
+    | thing, with the deploy needed to make the second one stick. What is here
+    | is the default a fresh install runs on.
+    */
+    'reminders' => [
+        /*
+         * Days before the date, and the whole shape of the feature.
+         *
+         * A single lead time has to be either too early to be useful or too
+         * late to be actionable: thirty days is "there is time to find
+         * something good", fifteen is "decide", two is "it is now". More than
+         * three windows and the reminder becomes the noise it exists to cut
+         * through — and a muted channel is silent at the moment that matters.
+         *
+         * Sorted descending when applied, and de-duplicated: two identical
+         * leads would write the same notification twice, and the dedupe key
+         * includes the lead.
+         */
+        'lead_days' => [30, 15, 2],
+
+        /*
+         * Also by email, not only in the inbox.
+         *
+         * The in-app inbox is read by somebody who came back to the site, and
+         * the entire point of a reminder is that they have not. Off makes the
+         * reminder in-app only; the notification row is written either way, so
+         * turning email off never loses the record.
+         */
+        'email' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | AI
     |--------------------------------------------------------------------------
     |

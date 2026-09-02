@@ -43,9 +43,18 @@ enum EventType: string
     case ThankYou = 'thank_you';
     case Other = 'other';
 
-    public function label(): string
+    /**
+     * The occasion's name, in the reader's language.
+     *
+     * `$language` is optional and almost always omitted: a request has a locale
+     * and this resolves in it. It is here for the one caller that has no
+     * request — `SendOccasionReminders` runs on the queue, where the locale is
+     * `app.locale` and therefore English, and a Dutch reminder reading "Your
+     * Graduation is in 15 days" is the bug.
+     */
+    public function label(?string $language = null): string
     {
-        return __('site.registry.types.'.$this->value);
+        return __('site.registry.types.'.$this->value, [], $language);
     }
 
     /** @return list<string> */

@@ -25,6 +25,7 @@ use Illuminate\Queue\SerializesModels;
  */
 class ListInvitationMail extends Mailable
 {
+    use Concerns\UsesTemplate;
     use Queueable;
     use SerializesModels;
 
@@ -37,10 +38,27 @@ class ListInvitationMail extends Mailable
         public readonly ?string $forName = null,
     ) {}
 
+    /**
+     * The editor's version, if there is one.
+     *
+     * Its placeholders are filled from the same facts the shipped copy uses, so
+     * `:name` means the same thing in an edited body as in the one it replaced.
+     *
+     * @return array{subject: string, body: string}|null
+     */
+    private function edited(): ?array
+    {
+        return $this->template('list_invitation', $this->market->language(), [
+            'name' => $this->fromName,
+            'list' => $this->listTitle,
+            'person' => $this->forName ?? '',
+        ]);
+    }
+
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __(
+            subject: $this->edited()['subject'] ?? __(
                 'site.invitations.mail_subject',
                 ['name' => $this->fromName],
                 $this->market->language(),
@@ -50,6 +68,17 @@ class ListInvitationMail extends Mailable
 
     public function content(): Content
     {
+        $template = $this->edited();
+
+        if ($template !== null) {
+            return $this->templatedContent(
+                $template,
+                $this->market->language(),
+                $this->url,
+                (string) __('site.invitations.mail_button', [], $this->market->language()),
+            );
+        }
+
         return new Content(
             markdown: 'mail.list-invitation',
             with: [
