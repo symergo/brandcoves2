@@ -121,11 +121,19 @@ RUN php artisan event:cache \
 # ship some new JavaScript. Copied in after, it invalidates this one cheap layer.
 COPY --from=frontend /build/public/build ./public/build
 
-# The deployed commit. Coolify DOES expose it — SOURCE_COMMIT is a build-impact
-# variable, alongside COOLIFY_BRANCH/FQDN/URL/UUID — it simply was never passed
-# through, so this file's previous comment ("Coolify does not expose the
-# deployed commit") described the wiring rather than the platform. The compose
-# file passes it as a build arg; see the args block there.
+# The deployed commit. Coolify injects SOURCE_COMMIT into the build itself,
+# alongside COOLIFY_BRANCH/FQDN/URL/UUID.
+#
+# Do NOT "help" it by declaring SOURCE_COMMIT in the compose file's args block.
+# That was tried on 2026-08-31 and is what broke it: Coolify materialises a
+# stored environment variable for every interpolated name it parses out of the
+# compose,
+# and a stored variable shadows the value it would otherwise inject per
+# deployment. The result was GIT_COMMIT_SHA=unknown baked into every image for
+# three weeks — /health could not say which code was serving, and the social
+# card cache key, which is keyed on the commit so a bad card cannot outlive a
+# deploy, never moved. See the args block in docker-compose.coolify.yml for the
+# longer version.
 #
 # DECLARED HERE, NOT AT THE TOP. An ARG invalidates every layer below the point
 # it is declared, and this value changes on every single commit. Above the

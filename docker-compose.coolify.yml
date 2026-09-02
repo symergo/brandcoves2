@@ -22,13 +22,30 @@ x-app: &app
     dockerfile: Dockerfile
     args:
       VITE_APP_NAME: ${APP_NAME:-GiftCoves}
-      # Coolify sets SOURCE_COMMIT in the build environment (it is a
-      # build-impact variable on the application). Passing it here is what puts
-      # the real SHA on /health; without this line the Dockerfile's ARG defaults
-      # to empty and the endpoint can only report a timestamp. The default keeps
-      # a local `docker compose build` working, where there is no Coolify to
-      # provide it.
-      SOURCE_COMMIT: ${SOURCE_COMMIT:-}
+      # SOURCE_COMMIT IS DELIBERATELY NOT DECLARED HERE, and the previous
+      # version of this block — "SOURCE_COMMIT: ${SOURCE_COMMIT:-}" — is why
+      # /health reported `unknown` for three weeks.
+      #
+      # Coolify parses this file and materialises a stored environment variable
+      # for every interpolated name it finds, one for production and one for
+      # previews. (Written without the dollar-brace spelling on purpose:
+      # ConfigContractTest scans this file for interpolations and cannot tell a
+      # comment from configuration, so an example in prose becomes a phantom
+      # undocumented variable and fails the suite.) A
+      # *stored* variable then shadows the per-deployment value Coolify would
+      # otherwise inject, so the reference intended to pass the real SHA through
+      # is exactly what stopped it arriving: every build baked the same literal.
+      # Confirmed in the running containers on 2026-09-02 —
+      # SOURCE_COMMIT=unknown, GIT_COMMIT_SHA=unknown, on an image built minutes
+      # earlier from a known commit.
+      #
+      # Deleting those variables in the UI is not enough on its own; the next
+      # parse of this file recreates them. The reference has to go first.
+      #
+      # Consequence for a local `docker compose build`: GIT_COMMIT_SHA is empty
+      # and /health reports null for the commit. That is honest — a laptop build
+      # has no deployed commit — and null is what HealthController returns for
+      # an absent value, deliberately, rather than a fabricated string.
   environment: &app-env
     APP_NAME: ${APP_NAME:-GiftCoves}
     APP_ENV: production
@@ -147,9 +164,12 @@ x-app: &app
     # falls back to client rendering rather than erroring.
     INERTIA_SSR_ENABLED: "true"
     INERTIA_SSR_URL: http://ssr:13714
-    # GIT_COMMIT_SHA is deliberately NOT set here. It is baked into the image
-    # from the SOURCE_COMMIT build arg; a runtime value would override that
-    # image ENV and Coolify only sets SOURCE_COMMIT meaningfully at build time.
+    # GIT_COMMIT_SHA is deliberately NOT set here, and must not be added to the
+    # Coolify UI either. It is baked into the image at build time; any runtime
+    # value overrides that image ENV, and naming it here would also make Coolify
+    # materialise a stored variable for it — the same trap that SOURCE_COMMIT
+    # fell into. A pinned value would freeze the social-card cache key, which
+    # exists precisely so a bad card cannot survive a deploy.
   restart: unless-stopped
   depends_on:
     postgres:
