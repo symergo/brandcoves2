@@ -345,6 +345,18 @@ in `.claude/coolify_api.api` (gitignored) as `KEY=<token>`, and the API base is
 > value there is not evidence of a failed deploy. This is the check that would have caught
 > production being unable to send a magic link for a fortnight while `/health` reported `ok`.
 
+> **Every `curl` carries a timeout, and every container healthcheck carries `--max-time`.** A curl
+> with no ceiling does not fail, it *hangs*, and a hang inside a healthcheck compounds: the WordPress
+> resource on this VPS ran `curl -f http://127.0.0.1` on a **2-second** interval with no `--max-time`,
+> so every unanswered check became a permanent process. 308 of them accumulated in uninterruptible IO
+> wait, the load average read **360** on 6 cores, and Coolify's own API started returning 504 — which
+> reads like a dead box rather than one healthy site's healthcheck. Docker's `HEALTHCHECK --timeout`
+> does **not** rescue this: D-state cannot be killed, so the timeout fires and reaps nothing.
+> `/root/.curlrc` on the VPS now sets `connect-timeout = 10` and `max-time = 300` as a floor —
+> generous on purpose, because it is a hang-catcher and a tight global ceiling would truncate real
+> transfers. A healthcheck should pass its own tight bound (`--max-time 5`) and an interval of
+> seconds is almost always wrong; 30s is the Docker default for a reason.
+
 The history behind all of this — how the one-branch model was adopted and in what order, why the
 Bearer token works where the stored webhook does not, what the nightly Docker prune was doing to
 build times, and the five gotchas from standing staging up — is in
