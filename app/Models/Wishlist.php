@@ -9,6 +9,7 @@ use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\Market;
+use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultTitle;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -28,6 +29,9 @@ use Illuminate\Support\Str;
  * @property ClaimVisibility $claim_visibility
  * @property bool|null $owner_sees_claims
  * @property bool|null $link_can_add
+ * @property bool|null $pledgers_visible
+ * @property int|null $pledge_amount cents, when everybody pays the same
+ * @property bool|null $voting_enabled
  */
 class Wishlist extends Model
 {
@@ -66,6 +70,9 @@ class Wishlist extends Model
             'claim_visibility' => ClaimVisibility::class,
             'owner_sees_claims' => 'boolean',
             'link_can_add' => 'boolean',
+            'pledgers_visible' => 'boolean',
+            'pledge_amount' => 'integer',
+            'voting_enabled' => 'boolean',
             'event_type' => EventType::class,
             'event_date' => 'date',
             'is_default' => 'boolean',
@@ -182,6 +189,23 @@ class Wishlist extends Model
     public function pledges(): HasMany
     {
         return $this->hasMany(GiftPledge::class);
+    }
+
+    /**
+     * The discussion beside the list.
+     *
+     * Unordered here on purpose: `App\Services\Wishlist\Board` decides the
+     * order and the cap, and it is the only thing that should — a relation that
+     * quietly sorted would be a second opinion about what the board is.
+     *
+     * Who may read it is not this relation's business either. It is the claim
+     * gate, because a board is claim state in prose; see the service.
+     *
+     * @return HasMany<ListMessage, $this>
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(ListMessage::class);
     }
 
     /**
@@ -319,7 +343,44 @@ class Wishlist extends Model
      */
     public function allowsVotingFrom(Owner $viewer): bool
     {
-        return $viewer->exists() && $this->kind->allowsVoting();
+        return $viewer->exists() && $this->votingEnabled();
+    }
+
+    /**
+     * Do the members of this group gift choose the present?
+     *
+     * On for every group list since voting shipped, decided by the kind. A good
+     * default and a bad rule: half of these are "we already know what we are
+     * buying, here it is, chip in", and on those the vote button under each
+     * candidate invites a decision that has been made — and reorders the
+     * shortlist under somebody who is reading it.
+     *
+     * Null is never asked and the kind still answers, so no existing list
+     * asserts a preference nobody expressed. Switching it off deletes nothing:
+     * a vote is somebody's opinion, and turning it back on shows the tally
+     * exactly as it was.
+     */
+    public function votingEnabled(): bool
+    {
+        return $this->voting_enabled ?? $this->kind->allowsVoting();
+    }
+
+    /**
+     * What one person puts in, when everybody puts in the same.
+     *
+     * Null is "everyone names their own", which is what the pot has always
+     * done. An integer is the standard share in cents (invariant #7), and the
+     * member's form stops asking for a number: they are in for that, or they
+     * are not in.
+     *
+     * Only meaningful on a group list, and asked only where a pot exists — it
+     * is one column rather than a boolean beside an amount because "is there a
+     * standard share" and "what is it" are one fact, and two columns could
+     * disagree.
+     */
+    public function standardPledge(): ?int
+    {
+        return $this->kind->allowsContributions() ? $this->pledge_amount : null;
     }
 
     /**
@@ -396,5 +457,24 @@ class Wishlist extends Model
     public function ownerSeesClaims(): bool
     {
         return $this->owner_sees_claims ?? $this->kind->ownerSeesClaimsByDefault();
+    }
+
+    /**
+     * May everyone on a group gift see who is chipping in?
+     *
+     * **Names only — never amounts.** Those stay the organiser's whatever this
+     * says: a visible ladder is social pressure on whoever put in least, which
+     * is the half of the pot's privacy rule that is not a preference. See
+     * {@see ContributionView}.
+     *
+     * Null is never asked and answers false, which is the behaviour every pot
+     * had before the setting existed. Unlike its two siblings there is no kind
+     * to fall back to: only a group list has a pot at all, so the question is
+     * asked of exactly one kind and a per-kind default would be a table with
+     * one row in it.
+     */
+    public function pledgersVisible(): bool
+    {
+        return $this->pledgers_visible ?? false;
     }
 }

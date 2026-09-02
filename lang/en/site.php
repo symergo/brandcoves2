@@ -374,7 +374,7 @@ return [
         'gift_what' => 'Built around a person rather than a date — the herbalist, the dad who has everything, the friend who reads.',
         'gift_all' => 'All Gift Coves',
         'smart_heading' => 'Shop Smarter',
-        'smart_what' => 'Buying advice and guides: what to look at, what makes the difference and what it should cost — long reads around one subject, with every brand and product linked straight into a live search.',
+        'smart_what' => 'Buying advice and guides: what to look at, what makes the difference and what it should cost — long reads around one subject.',
         'smart_all' => 'All buying advice',
         'brand_heading' => 'Brand Coves',
         'brand_what' => 'One page per maker: everything of theirs we carry here, with every shop’s price on each product.',
@@ -382,6 +382,7 @@ return [
         'shop_heading' => 'Shop Coves',
         'shop_what' => 'The online shops serving this market, newest first.',
         'shop_all' => 'All Shop Coves',
+        'rail_products' => 'More in these categories',
     ],
 
     'cove' => [
@@ -468,6 +469,26 @@ return [
         'heading' => 'Vote for the one we should get',
     ],
 
+    /*
+     * The discussion beside a shared list.
+     *
+     * `hint` states who is reading, because that is the one thing somebody
+     * typing here needs to know and cannot see: the people with the link, and
+     * — on a wish list — not the person it is for. See
+     * App\Services\Wishlist\Board.
+     */
+    'board' => [
+        'title' => 'Talk it over',
+        'hint' => 'Everyone with the link can read this. The person the list is for cannot.',
+        'empty' => 'Nothing said yet. Start it off.',
+        'placeholder' => 'Shall we go halves on the coat?',
+        'your_name' => 'Your name',
+        'post' => 'Post',
+        'remove' => 'Delete',
+        'posted' => 'Posted.',
+        'removed' => 'Deleted.',
+    ],
+
     'pledges' => [
         'hint' => 'Say what you are putting in. One person buys it and the rest settle up between you.',
         'amount' => 'Your share',
@@ -483,6 +504,7 @@ return [
         // put in least, so only the organiser of a group list is shown that.
         'count' => ':count people are in',
         'one_in' => 'One person is in',
+        'standard_share' => 'You are in for :amount.',
         'none' => 'Nobody has put anything in yet.',
         'your_share_is' => 'You put in :amount',
         'organiser_note' => 'You can see who put in what. Everyone else sees the total and their own share.',
@@ -642,6 +664,15 @@ return [
         'sharing_on' => 'Anyone with the link can see this list.',
         'share_hint' => 'This list is private. Share it and anyone with the link can see it.',
         'disable_sharing' => 'Stop sharing',
+        'anyone_can_add' => 'Anyone can add gifts',
+        'pledgers_visible' => 'Everyone sees who is chipping in',
+        'pledgers_visible_hint' => 'Names only. What each person put in stays yours alone.',
+        'voting_enabled' => 'Everyone can vote on the presents',
+        'voting_enabled_hint' => 'The shortlist sorts itself by the tally. Turn it off if the present is already decided.',
+        'pledge_mode' => 'How everyone chips in',
+        'pledge_mode_each' => 'Everyone says what they are putting in',
+        'pledge_mode_fixed' => 'Everyone puts in the same',
+        'pledge_mode_each_person' => 'each',
         'copy_link' => 'Copy link',
         'copied' => 'Link copied',
         'claim' => 'I\'ll get this',
@@ -657,6 +688,14 @@ return [
         'add_person' => 'Add a person',
         'person_name' => 'Their name',
         'someone_new' => 'Someone new',
+        'copy_to' => 'Copy to another list',
+        'copy_to_which' => 'Which list?',
+        'copied_to' => 'Copied to :list.',
+        'add_to_my_list' => 'Add to my list',
+        'birthday_optional' => 'Their birthday (optional)',
+        'birthday_why' => 'Day and month only. We use it to remind you in good time — never to work out their age.',
+        'birthday_day' => 'Day',
+        'birthday_month' => 'Month',
         'price_now' => 'Now :price',
         'sign_in_to_keep' => 'Sign in to keep these lists safe',
         'sign_in_hint' => 'Sign in and everything you save is kept to your account, on every device you use.',
@@ -665,15 +704,13 @@ return [
         'mark_sent' => 'I have bought it',
         'sent' => 'Bought',
         'progress' => ':claimed of :total claimed',
-        'asked_for' => 'What :name asked for',
         'asked_none' => ':name has not put anything on a list yet.',
-        'my_finds' => 'The list',
+        'ask_tab' => 'Ask :name',
         'collaborator_removed' => 'Removed.',
-        'collaborators' => 'Visibility',
-        'share_grants' => 'Anyone with the link can see this list and add to it. There is nothing else to set up.',
-        'link_can_add' => 'People with the link can add to this list',
-        'link_can_add_on' => 'What they add appears straight away, for everyone.',
-        'link_can_add_off' => 'What they add waits for you to accept it.',
+        'who_sees_what' => 'Who sees what',
+        'share_link' => 'The link to this list',
+        'copy_message' => 'Copy message and link',
+        'copy_manual' => 'Your browser would not let us copy. The link is selected — press Ctrl+C.',
         'invited_before' => 'Invited before sharing became a link',
         'role_viewer' => 'Can look',
         'role_editor' => 'Can add and remove',
@@ -701,15 +738,10 @@ return [
         'claimed_by' => ':name is getting this',
         'claim_anonymous_note' => 'Nobody will see it was you — not even the person organising this list.',
         'claim_named_note' => 'Your name will be shown to the others on this list, so they know who is getting what.',
-        'claim_privacy' => 'Who can see who claimed what?',
-        'claim_mine_show_hint_gift' => 'On by default: this list is about somebody else, so seeing what is covered is the point of it.',
+        'claim_names_visible' => 'Names of who is buying what are visible (except to the recipient)',
         'claim_mine_show_hint_mine' => 'Off by default: a wish list works because you do not know what is coming. Turn it on if you would rather see.',
         'claim_mine_show' => 'Show me what has been claimed',
         'claim_mine' => 'What you see',
-        'claim_privacy_anonymous' => 'Nobody sees names',
-        'claim_privacy_anonymous_hint' => 'People see that something is taken, never by whom.',
-        'claim_privacy_named' => 'Everyone sees names',
-        'claim_privacy_named_hint' => 'They see who is getting what. Good for people who all know each other, like siblings buying for a parent.',
         'kind_mine' => 'Wish list',
         'kind_for_someone' => 'Gift list',
         'kind_group' => 'Group gift',
@@ -736,6 +768,11 @@ return [
         'cancel' => 'Cancel',
         'share_text' => 'Here is my list: :title',
         'someones_wishlist' => ":name's wishlist",
+        'gift_list_for' => 'Gift list for :name',
+        'shared_by' => ':name shared this list',
+        'note_add' => 'Add a note',
+        'note_edit' => 'Edit',
+        'note_placeholder' => 'Anything the people opening this should know.',
         'share_native' => 'More apps…',
         'share_instagram' => 'Instagram cannot take links from a browser — copy it and paste it there.',
         'shared_badge' => 'Shared — anyone with the link can see it',
@@ -753,6 +790,8 @@ return [
     | been picked for them.
     */
     'recipients' => [
+        'step_birthday' => 'When is your birthday?',
+        'birthday_why' => 'Day and month only, so they can be reminded in time. We never ask for the year.',
         'self_title' => 'Tell them what you would actually like',
         'self_intro' => 'Someone is shopping for you, :name. Answer as much or as little as you like, and add anything you actually want.',
         'saved' => 'Saved. They will see it next time they look.',
@@ -892,6 +931,8 @@ return [
         'seo_title' => 'Wish lists, gift lists and Secret Friend',
         'seo_description' => 'Nine gifting tools in one place: wish lists, a list for someone else, buying together, Secret Friend and a gift quiz. Nobody sees who bought what.',
         'title' => 'The Gift Cove',
+        'rail_hint' => 'Everything here for buying for somebody else, in one place.',
+        'rail_cta' => 'Open the Gift Cove',
         'intro' => 'Everything for buying for other people, and for telling them what you would like. Nobody ever sees who bought what.',
         'tools' => 'What you can do here',
         'items_count' => ':count things saved',
@@ -922,7 +963,7 @@ return [
         'collab_title' => 'Buy together',
         'collab_body' => 'Invite other people onto a gift list so several of you can choose together, or pledge towards one bigger present and let one person buy it.',
         'collab_step1' => 'Press New list, choose "Together, for someone", and name the person it is for.',
-        'collab_step2' => 'Press Share and add each co-giver by email. A viewer can look; an editor can add and remove things.',
+        'collab_step2' => 'Press Share and send the link to each co-giver. Anyone holding it can look and claim; you decide whether they can add things too.',
         'collab_step3' => 'Choose together, and mark what you are getting so two of you never buy the same thing. Under Share you also decide whether names are shown.',
 
         'handover_title' => 'Hand a list over',
@@ -963,10 +1004,14 @@ return [
     ],
 
     'reminders' => [
-        'birthday_title' => ":name's birthday is coming up",
+        'birthday_title' => ':name\'s birthday is coming up',
         'exchange_title' => ':title is coming up',
-        'lead_14' => 'Two weeks to go. Enough time to find something good for :name.',
-        'lead_3' => 'Three days to go. Time to decide about :name.',
+        'list_title' => ':name\'s :occasion is coming up',
+        'list_title_mine' => 'Your :occasion is coming up',
+        'lead' => ':days days to go. Enough time to sort something out for :name.',
+        'list_lead_mine' => ':days days to go. A good moment to check your list is saying what you want it to.',
+        'mail_button' => 'Open it',
+        'mail_why' => 'You are getting this because you saved this date. You can turn reminders off in your account.',
     ],
 
     'alerts' => [
@@ -1312,7 +1357,6 @@ return [
         'finds_title' => "Today's finds",
         'guide_title' => "Today's guide",
         'guide_why' => 'Written because :count searches here asked for it.',
-        'archive' => 'Earlier editions',
 
         // The no-AI theme rotation, indexed by day of year modulo 7. Dated
         // rather than random so a rebuild of the same day is identical.
@@ -1531,8 +1575,6 @@ return [
         ],
         'deals_title' => 'Biggest drops right now',
         'deals_hint' => 'Against our own 30-day median, not a shop’s crossed-out price.',
-        'gift_cove_hint' => 'Everything here for buying for somebody else, in one place.',
-        'gift_cove_cta' => 'Open the Gift Cove',
     ],
 
     'guides' => [

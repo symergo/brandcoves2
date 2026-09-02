@@ -39,17 +39,25 @@ class CopyMatchesCodeTest extends TestCase
     public function the_co_giver_panel_is_called_what_the_manual_calls_it(): void
     {
         /*
-         * `collab_step1` says "press People". The tab read "Who else can see
-         * this" — a sentence sitting in a row of one-word chips, and wrong for
-         * a group list where the people are co-organisers rather than viewers.
+         * `collab_step2` says "press Share". It used to say "press People", and
+         * the tab it named read "Who else can see this" — a sentence sitting in
+         * a row of one-word chips, and wrong for a group list where the people
+         * are co-organisers rather than viewers.
+         *
+         * That tab is gone: People was folded into Share, and the key holding
+         * its label (`lists.collaborators`, "Visibility") was retired when the
+         * panel was reorganised — a word that on a sharing panel reads as "is
+         * this list visible", over two fieldsets about claims. So this now
+         * guards the label the manual actually names, which is the chip that
+         * actually exists.
          */
         foreach (['en', 'nl', 'fr', 'es'] as $locale) {
-            $label = __('site.lists.collaborators', locale: $locale);
+            $label = __('site.lists.share', locale: $locale);
 
             $this->assertLessThan(
                 20,
                 mb_strlen($label),
-                "The co-giver tab label in {$locale} is a sentence, not a chip: {$label}",
+                "The share tab label in {$locale} is a sentence, not a chip: {$label}",
             );
         }
     }

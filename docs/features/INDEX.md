@@ -16,6 +16,7 @@ cannot be recovered from a diff.
 | [ebay-connector.md](ebay-connector.md) | Catalogue | Merged, unverified — needs credentials, see [TODO](../TODO.md) |
 | [tradedoubler-connector.md](tradedoubler-connector.md) | Catalogue | Merged, unverified — supplied token is rejected, see [TODO](../TODO.md) |
 | [market-supply.md](market-supply.md) | Catalogue / Operations | Active |
+| [source-switch.md](source-switch.md) | Catalogue / Operations | Active |
 | [product-identity.md](product-identity.md) | Catalogue | Active |
 | [search.md](search.md) | Search | Active |
 | [seo.md](seo.md) | SEO / Frontend | Active |
@@ -36,11 +37,16 @@ cannot be recovered from a diff.
 | [secret-santa.md](secret-santa.md) | Gifting / Social | Active — chain repair built; year-on-year reuse open |
 | [list-quiz.md](list-quiz.md) | Gifting / Growth | Active |
 | [sharing.md](sharing.md) | Gifting / Growth | Active |
+| [list-board.md](list-board.md) | Gifting / Coordination | Active — new 2026-09-01 |
+| [occasion-reminders.md](occasion-reminders.md) | Gifting / Notifications | Active — windows editable in admin |
+| [recipient-birthday.md](recipient-birthday.md) | Gifting / Notifications | Active — day and month, never a year |
+| [copying-items.md](copying-items.md) | Wishlist / Gifting | Active — copy only, never move |
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [ask-others.md](ask-others.md) | Discovery / Community | Active — not in the sitemap yet |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
 | [all-coves.md](all-coves.md) | Discovery / Content | Active |
+| [cove-rail.md](cove-rail.md) | Discovery / Content | Active — replaced the Daily's archive strip |
 | [shop-coves.md](shop-coves.md) | Discovery / Content | Built — withheld from the header menu |
 | [advice-coves.md](advice-coves.md) | Content / Editorial | Active — 8 subjects × 4 markets seeded |
 | [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
@@ -48,6 +54,7 @@ cannot be recovered from a diff.
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |
 | [house-style.md](house-style.md) | Content / Operations | Active — enforced at every write; production archive not yet tidied |
 | [page-templates.md](page-templates.md) | Content / SEO | Active — replaces the copy bank |
+| [email-templates.md](email-templates.md) | Content / Operations | Active — 4 of 6 mails editable |
 | [product-cards-in-prose.md](product-cards-in-prose.md) | Content / Frontend | Active |
 | [scheduled-writing.md](scheduled-writing.md) | Content / Operations | Active |
 | [gift-personas.md](gift-personas.md) | Discovery / Content | Active — not in the nav yet |

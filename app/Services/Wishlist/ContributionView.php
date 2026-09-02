@@ -24,13 +24,19 @@ use Illuminate\Support\Collection;
  * | viewer | a `group` list |
  * |---|---|
  * | the organiser | total, own share, count, and the breakdown |
- * | anyone else | total, own share, count |
+ * | anyone else | total, own share, count — plus the names, if the organiser said so |
  *
  * Only a group list has a pot at all. The owner there is the organiser and the
  * recipient is a third party who never sees the list, so the breakdown is
  * exactly what the person fronting the money needs — and members still never
- * see each other's amounts, because a public ladder is social pressure on
- * whoever put in least. The count is fine; "who put in what" is not.
+ * see each other's **amounts**, because a public ladder is social pressure on
+ * whoever put in least. That half is a rule and cannot be switched on.
+ *
+ * The *names* are a setting, `wishlists.pledgers_visible`, off until asked. The
+ * count alone was the only answer and was therefore acting as a rule, which it
+ * is not: six colleagues buying a leaving present mostly want to know whether
+ * the other five are in, and a pot that will not say is a pot somebody chases
+ * by message. So "who is in" may be shared; "who put in what" still may not.
  *
  * Null rather than an empty shape when there is nothing to say, so a page
  * renders no pot rather than an empty one.
@@ -81,7 +87,36 @@ class ContributionView
             'total' => (int) $pledges->sum('amount'),
             'count' => $pledges->count(),
             'mine' => $this->mine($pledges, $viewer),
+            /*
+             * What one person puts in, when the organiser has said everybody
+             * puts in the same. Cents, or null for "everyone names their own".
+             *
+             * Sent to the members, not only to the organiser, and it has to be:
+             * the endpoint ignores whatever amount they post once this is set,
+             * so a form that still asked for one would take a number, thank
+             * them for it, and store something else.
+             */
+            'standard' => $list->standardPledge(),
             ...$isOwner ? ['breakdown' => $this->breakdown($pledges)] : [],
+            /*
+             * Who is in, when the organiser has said everyone may know.
+             *
+             * Names and nothing else. The count alone was the only setting and
+             * therefore a rule, and it is not one: six colleagues buying a
+             * leaving present mostly want to know whether the other five are
+             * actually in, and a pot that will not say is a pot somebody chases
+             * by message.
+             *
+             * Amounts are still not here and cannot be turned on, because that
+             * half of the rule is not a preference — a visible ladder is social
+             * pressure on whoever put in least. The organiser's `breakdown`
+             * above is the one place a number is attached to a name.
+             *
+             * Sent to the organiser too, and deliberately: it is what the
+             * others are looking at, and a setting whose effect the person who
+             * set it cannot see is a setting they have to take on trust.
+             */
+            ...$list->pledgersVisible() ? ['names' => $this->names($pledges)] : [],
         ];
     }
 
@@ -119,6 +154,26 @@ class ContributionView
      * @param  Collection<int, GiftPledge>  $pledges
      * @return list<array<string, mixed>>
      */
+    /**
+     * Who is in — names as typed at pledge time, in the order they joined.
+     *
+     * Not sorted by amount, unlike {@see breakdown()}. Ordering a list of names
+     * by money is the ladder this deliberately does not show, rebuilt out of
+     * the sequence: the top name would be the biggest contributor and everybody
+     * would read it that way. Joining order says nothing about anybody.
+     *
+     * @param  Collection<int, GiftPledge>  $pledges
+     * @return list<string>
+     */
+    private function names(Collection $pledges): array
+    {
+        return $pledges
+            ->sortBy('id')
+            ->map(fn (GiftPledge $pledge): string => (string) $pledge->display_name)
+            ->values()
+            ->all();
+    }
+
     private function breakdown(Collection $pledges): array
     {
         return $pledges

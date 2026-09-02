@@ -95,6 +95,21 @@ class RecipientProfileController extends Controller
                     : [],
                 'hasSpoken' => $recipient->taste_source === TasteSource::Self,
                 'isLinked' => $recipient->isLinked(),
+
+                /*
+                 * Their birthday, as the day and month they gave.
+                 *
+                 * Sent back so the field is not blank every time they return —
+                 * unlike the taste answers above, which are deliberately not
+                 * prefilled from the *giver's* guesses. There is no equivalent
+                 * hazard here: a date is a fact rather than a characterisation,
+                 * and it is theirs whoever typed it.
+                 *
+                 * The year is never sent, because the year is never asked for.
+                 * See `Recipient::BIRTHDAY_YEAR`.
+                 */
+                'birthdayDay' => $recipient->birthday?->day,
+                'birthdayMonth' => $recipient->birthday?->month,
             ],
             'options' => RecipientTasteRequest::options(),
             /*
@@ -147,6 +162,28 @@ class RecipientProfileController extends Controller
         // budget and private notes — none of which belong to the person being
         // described, and `notes` in particular is written *about* them.
         $recipient->describeTaste($request->taste(), TasteSource::Self);
+
+        /*
+         * Their birthday, if they gave one.
+         *
+         * Not part of `taste()` and deliberately separate from it: taste is a
+         * characterisation and this is a fact, and the two are stored,
+         * overwritten and reasoned about differently — `describeTaste()` stamps
+         * a `TasteSource`, and a date has no source worth recording.
+         *
+         * Absent means "left blank", which leaves what is stored alone. Only a
+         * real day-and-month pair writes: somebody who fills in their interests
+         * and skips the date must not thereby erase a date the giver already
+         * knew.
+         */
+        $birthday = Recipient::birthdayFrom(
+            $request->integer('birthday_day') ?: null,
+            $request->integer('birthday_month') ?: null,
+        );
+
+        if ($birthday !== null) {
+            $recipient->update(['birthday' => $birthday]);
+        }
 
         return back()->with('success', __('site.recipients.saved'));
     }

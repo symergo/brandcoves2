@@ -77,7 +77,22 @@ export default function Notifications({ notifications, watching }: Props) {
                                     notice.readAt === null ? 'bg-card' : ''
                                 }`}
                             >
-                                <span aria-hidden>{notice.kind === 'restock' ? '📦' : '↓'}</span>
+                                {/*
+                                  Three families, not two.
+
+                                  This column was `restock ? 📦 : ↓`, which made
+                                  every kind that is not a restock a price drop.
+                                  Occasion reminders write here too — a birthday,
+                                  a Secret Friend exchange, the date on a list —
+                                  and arrived wearing a down arrow.
+                                */}
+                                <span aria-hidden>
+                                    {notice.kind === 'restock'
+                                        ? '📦'
+                                        : notice.kind.startsWith('occasion.')
+                                          ? '🎁'
+                                          : '↓'}
+                                </span>
                                 <div className="min-w-0 flex-1">
                                     {notice.url ? (
                                         <Link href={notice.url} className="font-medium hover:underline">
@@ -87,18 +102,34 @@ export default function Notifications({ notifications, watching }: Props) {
                                         <span className="font-medium">{notice.title}</span>
                                     )}
                                     <p className="text-ink-soft">
-                                        {notice.kind === 'restock'
-                                            ? t('notifications.back_in_stock')
-                                            : t('notifications.dropped_to', {
-                                                  price:
-                                                      notice.price === null
-                                                          ? '-'
-                                                          : formatPrice(notice.price, market),
-                                                  was:
-                                                      notice.baseline === null
-                                                          ? '-'
-                                                          : formatPrice(notice.baseline, market),
-                                              })}
+                                        {/*
+                                          A notification that wrote its own
+                                          sentence gets to keep it.
+
+                                          The price alerts store `body: null` and
+                                          have their line computed from the
+                                          payload; a reminder stores the finished
+                                          sentence, already in the recipient's
+                                          language. Reading `body` first is what
+                                          lets a new kind arrive without a third
+                                          branch here — and it is why a reminder
+                                          used to render as "dropped to - (was
+                                          -)": its text was on the row all along
+                                          and nothing looked at it.
+                                        */}
+                                        {notice.body
+                                            ?? (notice.kind === 'restock'
+                                                ? t('notifications.back_in_stock')
+                                                : t('notifications.dropped_to', {
+                                                      price:
+                                                          notice.price === null
+                                                              ? '-'
+                                                              : formatPrice(notice.price, market),
+                                                      was:
+                                                          notice.baseline === null
+                                                              ? '-'
+                                                              : formatPrice(notice.baseline, market),
+                                                  }))}
                                     </p>
                                 </div>
                                 <time className="shrink-0 text-xs text-ink-soft" dateTime={notice.createdAt}>

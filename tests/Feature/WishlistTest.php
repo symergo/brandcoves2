@@ -155,6 +155,32 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
+    public function a_note_on_a_list_survives_the_next_setting_pressed(): void
+    {
+        /*
+         * `description` was validated `['nullable', 'string', 'max:2000']` with
+         * no `sometimes`, so a missing key validated as null and `update()`
+         * wrote the null. Every setting on this endpoint sends one key — so the
+         * first switch pressed after writing a note erased it, silently, on the
+         * same request that saved something else.
+         *
+         * Invisible until the note could be written at all, which is why it
+         * survived: nothing in the UI set `description` before 2026-09-01.
+         */
+        [$list] = $this->giftListForSomeone();
+
+        $this->actingAs($list->owner)
+            ->patch("/be-nl/lists/{$list->id}", ['description' => 'Bring it Friday.'])
+            ->assertRedirect();
+
+        $this->actingAs($list->owner)
+            ->patch("/be-nl/lists/{$list->id}", ['claim_visibility' => 'named'])
+            ->assertRedirect();
+
+        $this->assertSame('Bring it Friday.', $list->fresh()->description);
+    }
+
+    #[Test]
     public function the_owner_decides_whether_the_link_can_add(): void
     {
         /*

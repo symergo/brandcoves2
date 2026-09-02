@@ -11,6 +11,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
+use App\Services\Wishlist\Board;
 use App\Services\Wishlist\ClaimView;
 use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultTitle;
@@ -122,15 +123,21 @@ class SharedListController extends Controller
             && $list->items()->where('claimed_by_hash', $hash)->exists();
 
         /*
-         * On a group list the items are candidates, and the tally is their
-         * order: most-backed first, so a shortlist that has been voted on reads
-         * as one rather than as an unsorted pile. `latest()` is the tiebreak
-         * only, which keeps the order stable while nobody has voted.
+         * On a group list with voting on, the items are candidates and the tally
+         * is their order: most-backed first, so a shortlist that has been voted
+         * on reads as one rather than as an unsorted pile. `latest()` is the
+         * tiebreak only, which keeps the order stable while nobody has voted.
+         *
+         * **`votingEnabled()`, not `kind->allowsVoting()`.** The kind says a
+         * group list *can* vote; the setting says whether this one does. Asked
+         * of the kind, a list whose organiser had switched voting off went on
+         * reordering itself by a tally nobody could add to — which is precisely
+         * what the setting's own hint promises to stop.
          */
         $items = $list->items()
             ->with(['group', 'votes'])
             ->when(
-                $list->kind->allowsVoting(),
+                $list->votingEnabled(),
                 fn ($q) => $q->withCount('votes')->orderByDesc('votes_count')->latest(),
             )
             ->get();
@@ -198,6 +205,22 @@ class SharedListController extends Controller
                 'heading' => $for !== null && DefaultTitle::isOurs($list->title)
                     ? __('site.lists.someones_wishlist', ['name' => $for])
                     : $list->displayTitle(),
+
+                /*
+                 * Who sent you this, at the top of the page.
+                 *
+                 * The owner, always — which is *not* `for` above. On a list
+                 * about somebody else `for` is the recipient, so a page whose
+                 * only name was that one told a reader who the presents are for
+                 * and nothing about who is asking them to buy one. This page is
+                 * the one screen opened cold, from a message, by somebody with
+                 * no context; "who is this from" is the first thing they want
+                 * and the page never answered it.
+                 *
+                 * Null for an anonymous owner, who has no name to give. The UI
+                 * omits the line rather than inventing one.
+                 */
+                'sharedBy' => $list->owner?->displayName(),
             ],
             'isOwner' => $isOwner,
 
@@ -264,6 +287,16 @@ class SharedListController extends Controller
              * header, and never under a card.
              */
             'pot' => $contributor->forList($list, $owner, $isOwner),
+
+            /*
+             * The discussion beside the list.
+             *
+             * Null for anybody who may not see one, so the page draws no rail
+             * rather than an empty one — and on a wish list whose owner has not
+             * asked to see claims, that is the owner. A board is claim state in
+             * prose; see App\Services\Wishlist\Board.
+             */
+            'board' => app(Board::class)->forList($list, $owner),
 
             /*
              * Why this list exists: an occasion, a date, and — on a registry —
@@ -403,11 +436,16 @@ class SharedListController extends Controller
                  * so the page reads the key's presence as "this is a candidate"
                  * rather than carrying a `votes: 0` that means two things.
                  *
+                 * Absent for two reasons now: this is not a group list, or its
+                 * organiser has switched voting off. The page does not care
+                 * which — in both cases there is nothing to vote on, and one
+                 * test at the top of the item is better than two.
+                 *
                  * A count, never a list of names: "four people want this" is
                  * what decides something, and "Bob wanted this" is a
                  * disagreement inside a group buying somebody a present.
                  */
-                ...$list->kind->allowsVoting() ? [
+                ...$list->votingEnabled() ? [
                     'votes' => $item->votes->count(),
                     'votedByMe' => $this->hasVoted($item, $owner),
                 ] : [],

@@ -40,6 +40,12 @@ interface Props {
         values: string[]
         hasSpoken: boolean
         isLinked: boolean
+        /**
+         * Their birthday, day and month — never a year, because no reader uses
+         * one. Null until somebody gives it.
+         */
+        birthdayDay: number | null
+        birthdayMonth: number | null
     }
     options: { interests: Option[]; vibes: Option[]; values: string[] }
     canClaim: boolean
@@ -91,6 +97,16 @@ export default function SelfDescribe({
         interests: person.interests,
         vibe: person.vibe ?? '',
         values: person.values,
+        /*
+         * Seeded from what is stored, unlike the taste answers above.
+         *
+         * Those are deliberately blank until this person has spoken, because
+         * prefilling them with the giver's guesses reveals what they have been
+         * told about. A date carries no such characterisation — it is a fact,
+         * and it is theirs whoever typed it.
+         */
+        birthday_day: person.birthdayDay?.toString() ?? '',
+        birthday_month: person.birthdayMonth?.toString() ?? '',
     })
 
     const toggle = (list: string[], key: 'interests' | 'values', value: string) =>
@@ -249,6 +265,68 @@ export default function SelfDescribe({
                                     {t(`gift.values.${value}`)}
                                 </button>
                             ))}
+                        </div>
+                    </fieldset>
+
+                    {/*
+                      Their birthday, from the one person who definitely knows it.
+
+                      The giver is guessing — most people cannot name a friend's
+                      date, which is why `recipients.birthday` sat empty on
+                      almost every row while the reminder job that reads it was
+                      already running. This page is the one place the answer is
+                      free.
+
+                      Day and month, no year: every reader matches on month and
+                      day because a birthday recurs, and a year is personal data
+                      with no use here. The hint says so — being asked for a
+                      birthday and not for a year is unusual enough to explain,
+                      and on a page filled in by somebody who was sent a link by
+                      a friend, "why do you want this" deserves an answer before
+                      it is asked.
+                    */}
+                    <fieldset>
+                        <legend className="text-sm font-medium">
+                            {t('recipients.step_birthday')}
+                        </legend>
+                        <p className="mt-1 text-xs text-ink-soft">
+                            {t('recipients.birthday_why')}
+                        </p>
+
+                        <div className="mt-2 flex gap-2">
+                            <select
+                                aria-label={t('lists.birthday_day')}
+                                value={form.data.birthday_day}
+                                onChange={(e) => form.setData('birthday_day', e.target.value)}
+                                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                            >
+                                <option value="">{t('lists.birthday_day')}</option>
+                                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                                    <option key={day} value={day}>
+                                        {day}
+                                    </option>
+                                ))}
+                            </select>
+
+                            <select
+                                aria-label={t('lists.birthday_month')}
+                                value={form.data.birthday_month}
+                                onChange={(e) => form.setData('birthday_month', e.target.value)}
+                                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                            >
+                                <option value="">{t('lists.birthday_month')}</option>
+                                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                                    <option key={month} value={month}>
+                                        {/* The month's name in their own market:
+                                            "3" is March here and nowhere else
+                                            reliably. */}
+                                        {new Date(2000, month - 1, 1).toLocaleDateString(
+                                            market.hrefLang,
+                                            { month: 'long' },
+                                        )}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </fieldset>
 

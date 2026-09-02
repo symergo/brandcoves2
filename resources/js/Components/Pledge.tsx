@@ -17,6 +17,20 @@ export interface Contributions {
      * Its absence is the privacy rule, not a loading state.
      */
     breakdown?: { name: string; amount: number }[]
+    /**
+     * Who is in, without amounts — present when the organiser has said everyone
+     * may know. Its absence is the default, not a loading state.
+     */
+    names?: string[]
+    /**
+     * Cents per person when the organiser has set a standard share, null when
+     * everyone names their own.
+     *
+     * The endpoint **ignores** whatever amount is posted once this is set, so
+     * the form must not ask for one: a field that takes a number, thanks you
+     * for it and stores something else is worse than no field.
+     */
+    standard: number | null
 }
 
 /**
@@ -62,7 +76,7 @@ export default function Pledge({
     const [amount, setAmount] = useState('')
     const [error, setError] = useState<string | null>(null)
 
-    const { total, count, mine, breakdown } = contributions
+    const { total, count, mine, breakdown, names, standard } = contributions
 
     function submit(event: React.FormEvent) {
         event.preventDefault()
@@ -77,8 +91,13 @@ export default function Pledge({
                  * server-side. Sending cents here would silently inflate every
                  * pledge a hundredfold, so the string goes as typed and only
                  * the comma is normalised: half our markets write €12,50.
+                 *
+                 * Omitted entirely when the organiser has set a standard share:
+                 * the server uses theirs and ignores this, and sending a number
+                 * that is going to be discarded is how the two got out of step
+                 * in the first place.
                  */
-                amount: amount.replace(',', '.'),
+                ...(standard === null ? { amount: amount.replace(',', '.') } : {}),
                 display_name: name,
             },
             {
@@ -136,6 +155,21 @@ export default function Pledge({
                 </p>
             )}
 
+            {/*
+              Who is in, when the organiser has said everyone may know.
+
+              A sentence rather than a list, because it is read as one fact —
+              "Anna, Ben and Chris are in" — and a bulleted column of three
+              names beside a total makes the pot look like a form.
+
+              Never shown beside the breakdown: the organiser gets names with
+              amounts, and printing the same names again without them would be
+              the same list twice, once redacted.
+            */}
+            {names !== undefined && names.length > 0 && breakdown === undefined && (
+                <p className="mt-2 text-sm">{names.join(' · ')}</p>
+            )}
+
             {breakdown !== undefined && breakdown.length > 0 && (
                 <>
                     <ul className="mt-3 space-y-1">
@@ -180,16 +214,35 @@ export default function Pledge({
                                     />
                                 </label>
 
-                                <label className="block text-xs font-medium">
-                                    {t('pledges.amount')}
-                                    <input
-                                        required
-                                        inputMode="decimal"
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
-                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
-                                    />
-                                </label>
+                                {/*
+                                  No amount field when everybody puts in the
+                                  same.
+
+                                  The organiser set the share and the endpoint
+                                  uses theirs, so a box here would take a number,
+                                  accept it, and store a different one — which is
+                                  exactly what it did until this branch existed.
+                                  What is left is the fact: you are in for this
+                                  much.
+                                */}
+                                {standard === null ? (
+                                    <label className="block text-xs font-medium">
+                                        {t('pledges.amount')}
+                                        <input
+                                            required
+                                            inputMode="decimal"
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm font-normal"
+                                        />
+                                    </label>
+                                ) : (
+                                    <p className="self-end text-sm">
+                                        {t('pledges.standard_share', {
+                                            amount: formatPrice(standard, market),
+                                        })}
+                                    </p>
+                                )}
                             </div>
 
                             {error && <p className="text-xs text-accent">{error}</p>}

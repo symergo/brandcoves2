@@ -148,6 +148,18 @@ none of them alone:
 
 - **A line above the grid** naming what the cards are: *"Vote for the one we should get."*
 - **Ordering by tally**, most-backed first. A shortlist that does not visibly rank is a list.
+
+  **On load, not live.** The server sorts by the tally, so arriving at the link shows where the group
+  has landed — and then the page holds that order for as long as you are on it. Voting re-renders in
+  place, so the card you just backed used to climb past the ones above it, under your finger, on a
+  two-column grid, while you were still reading them. Approval voting invites exactly that: back
+  three things and the page rearranged itself three times. The counts still update live, which is the
+  feedback that matters; only the positions are frozen. `Lists/Shared` re-captures the order when the
+  *set* of items changes — an addition or a removal has to find a place — and a vote changes counts
+  rather than membership, so it never does.
+
+  Since 2026-09-01 this is also a setting: `wishlists.voting_enabled`, off leaves the shortlist in
+  its own order with no tally at all. See below.
 - **The vote is the card's only action.** Money moved to the header (see above), so a candidate
   carries exactly one thing to do.
 

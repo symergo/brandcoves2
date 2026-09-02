@@ -261,7 +261,7 @@ return [
         'gift_what' => 'Construidas en torno a una persona en lugar de una fecha: la herbolaria, el padre que lo tiene todo, la amiga que lee.',
         'gift_all' => 'Todas las Coves de Regalo',
         'smart_heading' => 'Comprar mejor',
-        'smart_what' => 'Consejos de compra y guías: en qué fijarse, qué marca la diferencia y cuánto debería costar — lecturas largas sobre un solo tema, con cada marca y cada producto enlazados directamente a una búsqueda en directo.',
+        'smart_what' => 'Consejos de compra y guías: en qué fijarse, qué marca la diferencia y cuánto debería costar — lecturas largas sobre un solo tema.',
         'smart_all' => 'Todos los consejos de compra',
         'brand_heading' => 'Coves de Marca',
         'brand_what' => 'Una página por marca: todo lo suyo que tenemos aquí, con el precio de cada tienda en cada producto.',
@@ -269,6 +269,7 @@ return [
         'shop_heading' => 'Coves de Tienda',
         'shop_what' => 'Las tiendas online que sirven a esta región, las más nuevas primero.',
         'shop_all' => 'Todas las Coves de Tienda',
+        'rail_products' => 'Más en estas categorías',
     ],
 
     'cove' => [
@@ -355,6 +356,26 @@ return [
         'heading' => 'Vota por el que deberíamos comprar',
     ],
 
+    /*
+     * The discussion beside a shared list.
+     *
+     * `hint` states who is reading, because that is the one thing somebody
+     * typing here needs to know and cannot see: the people with the link, and
+     * — on a wish list — not the person it is for. See
+     * App\Services\Wishlist\Board.
+     */
+    'board' => [
+        'title' => 'Comentarlo',
+        'hint' => 'Cualquiera con el enlace puede leer esto. La persona para quien es la lista, no.',
+        'empty' => 'Aún no se ha dicho nada. Empieza tú.',
+        'placeholder' => '¿Vamos a medias con el abrigo?',
+        'your_name' => 'Tu nombre',
+        'post' => 'Publicar',
+        'remove' => 'Eliminar',
+        'posted' => 'Publicado.',
+        'removed' => 'Eliminado.',
+    ],
+
     'pledges' => [
         'hint' => 'Di cuánto pones. Una persona lo compra y el resto se lo arregláis entre vosotros.',
         'amount' => 'Tu parte',
@@ -367,6 +388,7 @@ return [
 
         'count' => ':count personas se han apuntado',
         'one_in' => 'Una persona se ha apuntado',
+        'standard_share' => 'Participas con :amount.',
         'none' => 'Todavía no ha puesto nada nadie.',
         'your_share_is' => 'Tú pusiste :amount',
         'organiser_note' => 'Tú ves quién pone qué. Los demás ven el total y su propia parte.',
@@ -511,6 +533,15 @@ return [
         'sharing_on' => 'Cualquiera con el enlace puede ver esta lista.',
         'share_hint' => 'Esta lista es privada. Compártela y cualquiera con el enlace podrá verla.',
         'disable_sharing' => 'Dejar de compartir',
+        'anyone_can_add' => 'Cualquiera puede añadir regalos',
+        'pledgers_visible' => 'Todos ven quién contribuye',
+        'pledgers_visible_hint' => 'Solo los nombres. Cuánto pone cada uno sigue siendo solo para ti.',
+        'voting_enabled' => 'Todos pueden votar los regalos',
+        'voting_enabled_hint' => 'La lista se ordena por los votos. Desactívalo si el regalo ya está decidido.',
+        'pledge_mode' => 'Cómo contribuye cada uno',
+        'pledge_mode_each' => 'Cada uno dice cuánto pone',
+        'pledge_mode_fixed' => 'Todos ponen lo mismo',
+        'pledge_mode_each_person' => 'por persona',
         'copy_link' => 'Copiar enlace',
         'copied' => 'Enlace copiado',
         'claim' => 'Yo lo regalo',
@@ -526,6 +557,14 @@ return [
         'add_person' => 'Añadir a alguien',
         'person_name' => 'Su nombre',
         'someone_new' => 'Alguien nuevo',
+        'copy_to' => 'Copiar a otra lista',
+        'copy_to_which' => '¿A qué lista?',
+        'copied_to' => 'Copiado a :list.',
+        'add_to_my_list' => 'Añadir a mi lista',
+        'birthday_optional' => 'Su cumpleaños (opcional)',
+        'birthday_why' => 'Solo día y mes. Lo usamos para avisarte a tiempo, nunca para deducir su edad.',
+        'birthday_day' => 'Día',
+        'birthday_month' => 'Mes',
         'price_now' => 'Ahora :price',
         'sign_in_to_keep' => 'Inicia sesión para conservar tus listas',
         'sign_in_hint' => 'Inicia sesión y todo lo que guardes quedará en tu cuenta, en cualquier dispositivo que uses.',
@@ -534,15 +573,13 @@ return [
         'mark_sent' => 'Ya lo he comprado',
         'sent' => 'Comprado',
         'progress' => ':claimed de :total reservados',
-        'asked_for' => 'Lo que ha pedido :name',
         'asked_none' => ':name aún no ha puesto nada en una lista.',
-        'my_finds' => 'La lista',
+        'ask_tab' => 'Preguntar a :name',
         'collaborator_removed' => 'Eliminado.',
-        'collaborators' => 'Visibilidad',
-        'share_grants' => 'Cualquiera con el enlace ve esta lista y puede añadir cosas. No hay nada más que configurar.',
-        'link_can_add' => 'Quien tenga el enlace puede añadir a esta lista',
-        'link_can_add_on' => 'Lo que añadan aparece al momento, para todos.',
-        'link_can_add_off' => 'Lo que añadan espera a que tú lo aceptes.',
+        'who_sees_what' => 'Quién ve qué',
+        'share_link' => 'El enlace a esta lista',
+        'copy_message' => 'Copiar mensaje y enlace',
+        'copy_manual' => 'Tu navegador no nos dejó copiar. El enlace está seleccionado: pulsa Ctrl+C.',
         'invited_before' => 'Invitados antes de que compartir fuera un enlace',
         'role_viewer' => 'Puede mirar',
         'role_editor' => 'Puede añadir y quitar',
@@ -570,15 +607,10 @@ return [
         'claimed_by' => ':name se encarga de esto',
         'claim_anonymous_note' => 'Nadie verá que fuiste tú — ni siquiera quien organiza esta lista.',
         'claim_named_note' => 'Tu nombre se mostrará a los demás de esta lista, para que sepan quién regala qué.',
-        'claim_privacy' => '¿Quién ve quién ha reservado qué?',
-        'claim_mine_show_hint_gift' => 'Activado por defecto: esta lista es sobre otra persona, así que ver lo que ya está cubierto es justo la idea.',
+        'claim_names_visible' => 'Los nombres de quién compra qué son visibles (salvo para quien lo recibe)',
         'claim_mine_show_hint_mine' => 'Desactivado por defecto: una lista de deseos funciona porque no sabes lo que viene. Actívalo si prefieres verlo.',
         'claim_mine_show' => 'Muéstrame lo que ya está reservado',
         'claim_mine' => 'Lo que ves tú',
-        'claim_privacy_anonymous' => 'Nadie ve los nombres',
-        'claim_privacy_anonymous_hint' => 'Se ve que algo está cogido, nunca por quién.',
-        'claim_privacy_named' => 'Todos ven los nombres',
-        'claim_privacy_named_hint' => 'Se ve quién regala qué. Va bien entre gente que se conoce, como hermanos comprando para un padre.',
         'kind_mine' => 'Lista de deseos',
         'kind_for_someone' => 'Lista de regalos',
         'kind_group' => 'Regalo en grupo',
@@ -602,6 +634,11 @@ return [
         'cancel' => 'Cancelar',
         'share_text' => 'Esta es mi lista: :title',
         'someones_wishlist' => 'La lista de :name',
+        'gift_list_for' => 'Lista de regalos para :name',
+        'shared_by' => ':name ha compartido esta lista',
+        'note_add' => 'Añadir una nota',
+        'note_edit' => 'Editar',
+        'note_placeholder' => 'Lo que deberían saber quienes abran esto.',
         'share_native' => 'Mas aplicaciones…',
         'share_instagram' => 'Instagram no acepta enlaces desde el navegador: cópialo y pégalo allí.',
         'shared_badge' => 'Compartida: la ve quien tenga el enlace',
@@ -610,6 +647,8 @@ return [
     ],
 
     'recipients' => [
+        'step_birthday' => '¿Cuándo es tu cumpleaños?',
+        'birthday_why' => 'Solo día y mes, para poder avisarles a tiempo. Nunca pedimos el año.',
         'self_title' => 'Diles lo que de verdad te gustaría',
         'self_intro' => 'Alguien está buscando un regalo para ti, :name. Responde lo que quieras y añade lo que de verdad te apetece.',
         'saved' => 'Guardado. Lo verán la próxima vez.',
@@ -722,6 +761,8 @@ return [
         'seo_title' => 'Listas de deseos, de regalos y Amigo invisible',
         'seo_description' => 'Nueve herramientas de regalo en un solo sitio: listas de deseos, una lista para otra persona, comprar entre varios, Amigo invisible y un quiz.',
         'title' => 'La Cove de Regalos',
+        'rail_hint' => 'Todo lo que necesitas para comprarle algo a otra persona, en un sitio.',
+        'rail_cta' => 'Abrir la Cove de Regalos',
         'intro' => 'Todo para regalar a los demás, y para contar lo que te gustaría a ti. Nadie ve nunca quién ha comprado qué.',
         'tools' => 'Lo que puedes hacer aquí',
         'items_count' => ':count cosas guardadas',
@@ -752,7 +793,7 @@ return [
         'collab_title' => 'Comprar entre varios',
         'collab_body' => 'Invita a otros a una lista para elegir juntos, o poned dinero para un regalo mayor que compre uno de vosotros.',
         'collab_step1' => 'Pulsa Nueva lista, elige «Entre varios, para alguien» y di para quién es.',
-        'collab_step2' => 'Pulsa Compartir y añade a cada co-regalador por correo. Un lector puede mirar; un editor puede añadir y quitar cosas.',
+        'collab_step2' => 'Pulsa Compartir y envía el enlace a cada cocomprador. Cualquiera que lo tenga puede mirar y reservar; tú decides si además puede añadir cosas.',
         'collab_step3' => 'Elegid juntos, y marca qué regalas tú para que nadie compre lo mismo. En Compartir decides además si se muestran los nombres.',
 
         'handover_title' => 'Ceder una lista',
@@ -795,8 +836,12 @@ return [
     'reminders' => [
         'birthday_title' => 'El cumpleaños de :name se acerca',
         'exchange_title' => ':title se acerca',
-        'lead_14' => 'Quedan dos semanas. Tiempo de sobra para encontrar algo bueno para :name.',
-        'lead_3' => 'Quedan tres días. Toca decidir con :name.',
+        'list_title' => ':occasion de :name se acerca',
+        'list_title_mine' => 'Tu :occasion se acerca',
+        'lead' => 'Quedan :days días. Tiempo de sobra para preparar algo para :name.',
+        'list_lead_mine' => 'Quedan :days días. Buen momento para comprobar que tu lista dice lo que quieres.',
+        'mail_button' => 'Ábrelo',
+        'mail_why' => 'Recibes esto porque guardaste esta fecha. Puedes desactivar los recordatorios en tu cuenta.',
     ],
 
     'alerts' => [
@@ -1096,7 +1141,6 @@ return [
         'finds_title' => 'Los hallazgos de hoy',
         'guide_title' => 'La guía de hoy',
         'guide_why' => 'Escrita porque :count búsquedas aquí la pidieron.',
-        'archive' => 'Ediciones anteriores',
 
         // Days worth building an edition around. A blurb is optional; a missing
         // one renders as no blurb rather than as a dotted key.
@@ -1315,8 +1359,6 @@ return [
         ],
         'deals_title' => 'Las mayores bajadas',
         'deals_hint' => 'Medido contra nuestra propia mediana de 30 días, no contra un precio tachado.',
-        'gift_cove_hint' => 'Todo lo que necesitas para comprarle algo a otra persona, en un sitio.',
-        'gift_cove_cta' => 'Abrir la Cove de Regalos',
     ],
 
     'guides' => [

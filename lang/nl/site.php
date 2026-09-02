@@ -265,7 +265,7 @@ return [
         'gift_what' => 'Gebouwd rond een persoon in plaats van een datum — de kruidenvrouw, de vader die alles al heeft, de vriend die leest.',
         'gift_all' => 'Alle Cadeau Coves',
         'smart_heading' => 'Slim kopen',
-        'smart_what' => 'Koopadvies en koopgidsen: waar je op let, wat het verschil maakt en wat het mag kosten — lange verhalen rond één onderwerp, met elk merk en product direct doorgelinkt naar een live zoekopdracht.',
+        'smart_what' => 'Koopadvies en koopgidsen: waar je op let, wat het verschil maakt en wat het mag kosten — lange verhalen rond één onderwerp.',
         'smart_all' => 'Al het koopadvies',
         'brand_heading' => 'Merk Coves',
         'brand_what' => 'Eén pagina per merk: alles van hen dat we hier voeren, met per product de prijs van elke winkel.',
@@ -273,6 +273,7 @@ return [
         'shop_heading' => 'Winkel Coves',
         'shop_what' => 'De webshops die in deze regio leveren, nieuwste eerst.',
         'shop_all' => 'Alle Winkel Coves',
+        'rail_products' => 'Meer in deze categorieën',
     ],
 
     'cove' => [
@@ -359,8 +360,28 @@ return [
         'heading' => 'Stem op wat we moeten kopen',
     ],
 
+    /*
+     * The discussion beside a shared list.
+     *
+     * `hint` states who is reading, because that is the one thing somebody
+     * typing here needs to know and cannot see: the people with the link, and
+     * — on a wish list — not the person it is for. See
+     * App\Services\Wishlist\Board.
+     */
+    'board' => [
+        'title' => 'Overleg',
+        'hint' => 'Iedereen met de link leest dit mee. Degene voor wie de lijst is niet.',
+        'empty' => 'Nog niets gezegd. Begin maar.',
+        'placeholder' => 'Zullen we samen de jas doen?',
+        'your_name' => 'Je naam',
+        'post' => 'Plaatsen',
+        'remove' => 'Verwijderen',
+        'posted' => 'Geplaatst.',
+        'removed' => 'Verwijderd.',
+    ],
+
     'pledges' => [
-        'hint' => 'Zeg wat jij bijdraagt. Een iemand koopt het, de rest rekent onderling af.',
+        'hint' => 'Zeg wat jij bijdraagt. Iemand koopt het, de rest rekent onderling af.',
         'amount' => 'Jouw deel',
         'your_name' => 'Je naam',
         'added' => 'Je doet mee.',
@@ -369,8 +390,9 @@ return [
         'join' => 'Ik doe mee',
         'leave' => 'Toch niet',
 
-        'count' => ':count mensen doen mee',
-        'one_in' => 'Een iemand doet mee',
+        'count' => ':count personen doen mee',
+        'one_in' => 'Één persoon doet mee',
+        'standard_share' => 'Je doet mee voor :amount.',
         'none' => 'Nog niemand heeft iets bijgedragen.',
         'your_share_is' => 'Jij droeg :amount bij',
         'organiser_note' => 'Jij ziet wie wat bijdraagt. De rest ziet het totaal en hun eigen deel.',
@@ -515,6 +537,15 @@ return [
         'sharing_on' => 'Iedereen met de link kan dit lijstje zien.',
         'share_hint' => 'Deze lijst is privé. Deel hem en iedereen met de link kan hem zien.',
         'disable_sharing' => 'Stop met delen',
+        'anyone_can_add' => 'Iedereen kan cadeaus toevoegen',
+        'pledgers_visible' => 'Iedereen ziet wie bijdraagt',
+        'pledgers_visible_hint' => 'Alleen de namen. Wie hoeveel bijdraagt zie alleen jij.',
+        'voting_enabled' => 'Deelnemers kunnen stemmen op de cadeaus',
+        'voting_enabled_hint' => 'De lijst sorteert zich op het aantal stemmen. Zet het uit als het cadeau al vaststaat.',
+        'pledge_mode' => 'Hoe iedereen bijdraagt',
+        'pledge_mode_each' => 'Iedereen geeft zelf op hoeveel hij of zij bijdraagt',
+        'pledge_mode_fixed' => 'Iedereen draagt hetzelfde bij',
+        'pledge_mode_each_person' => 'per persoon',
         'copy_link' => 'Link kopiëren',
         'copied' => 'Link gekopieerd',
         'claim' => 'Ik koop dit',
@@ -530,6 +561,14 @@ return [
         'add_person' => 'Iemand toevoegen',
         'person_name' => 'Hun naam',
         'someone_new' => 'Iemand nieuw',
+        'copy_to' => 'Kopieer naar een ander lijstje',
+        'copy_to_which' => 'Naar welk lijstje?',
+        'copied_to' => 'Gekopieerd naar :list.',
+        'add_to_my_list' => 'Zet op mijn lijstje',
+        'birthday_optional' => 'Hun verjaardag (optioneel)',
+        'birthday_why' => 'Alleen dag en maand. We gebruiken het om je op tijd te herinneren, nooit om hun leeftijd uit te rekenen.',
+        'birthday_day' => 'Dag',
+        'birthday_month' => 'Maand',
         'price_now' => 'Nu :price',
         'sign_in_to_keep' => 'Log in om je lijstjes te bewaren',
         'sign_in_hint' => 'Log in en alles wat je bewaart hoort bij je account, op elk toestel dat je gebruikt.',
@@ -538,15 +577,13 @@ return [
         'mark_sent' => 'Ik heb het gekocht',
         'sent' => 'Gekocht',
         'progress' => ':claimed van :total geclaimd',
-        'asked_for' => 'Wat :name heeft gevraagd',
         'asked_none' => ':name heeft nog niets op een lijstje gezet.',
-        'my_finds' => 'De lijst',
+        'ask_tab' => 'Vraag :name',
         'collaborator_removed' => 'Verwijderd.',
-        'collaborators' => 'Zichtbaarheid',
-        'share_grants' => 'Iedereen met de link ziet deze lijst en kan er iets aan toevoegen. Verder hoef je niets in te stellen.',
-        'link_can_add' => 'Mensen met de link mogen aan deze lijst toevoegen',
-        'link_can_add_on' => 'Wat zij toevoegen staat er meteen op, voor iedereen.',
-        'link_can_add_off' => 'Wat zij toevoegen wacht tot jij het accepteert.',
+        'who_sees_what' => 'Wie ziet wat',
+        'share_link' => 'De link naar deze lijst',
+        'copy_message' => 'Kopieer bericht en link',
+        'copy_manual' => 'Je browser liet ons niet kopiëren. De link staat geselecteerd — druk op Ctrl+C.',
         'invited_before' => 'Uitgenodigd voordat delen een link werd',
         'role_viewer' => 'Kan bekijken',
         'role_editor' => 'Kan toevoegen en verwijderen',
@@ -574,15 +611,10 @@ return [
         'claimed_by' => ':name koopt dit',
         'claim_anonymous_note' => 'Niemand ziet dat jij het was — ook niet degene die deze lijst beheert.',
         'claim_named_note' => 'Je naam is zichtbaar voor de anderen op deze lijst, zodat ze weten wie wat koopt.',
-        'claim_privacy' => 'Wie ziet wie wat gereserveerd heeft?',
-        'claim_mine_show_hint_gift' => 'Standaard aan: deze lijst gaat over iemand anders, dus zien wat al gedekt is, is nu juist de bedoeling.',
+        'claim_names_visible' => 'Namen van wie wat koopt zijn zichtbaar (behalve voor de ontvanger)',
         'claim_mine_show_hint_mine' => 'Standaard uit: een verlanglijst werkt juist doordat je niet weet wat eraan komt. Zet het aan als je het liever wel ziet.',
         'claim_mine_show' => 'Laat mij zien wat er gereserveerd is',
         'claim_mine' => 'Wat jij ziet',
-        'claim_privacy_anonymous' => 'Niemand ziet namen',
-        'claim_privacy_anonymous_hint' => 'Mensen zien dat iets bezet is, nooit door wie.',
-        'claim_privacy_named' => 'Iedereen ziet namen',
-        'claim_privacy_named_hint' => 'Ze zien wie wat koopt. Handig als jullie elkaar kennen, zoals broers en zussen die voor een ouder kopen.',
         'kind_mine' => 'Verlanglijst',
         'kind_for_someone' => 'Cadeaulijst',
         'kind_group' => 'Groepscadeau',
@@ -606,6 +638,11 @@ return [
         'cancel' => 'Annuleren',
         'share_text' => 'Dit is mijn lijstje: :title',
         'someones_wishlist' => 'Wenslijst van :name',
+        'gift_list_for' => 'Cadeaulijst voor :name',
+        'shared_by' => ':name deelde dit lijstje',
+        'note_add' => 'Voeg een tekst toe',
+        'note_edit' => 'Bewerk',
+        'note_placeholder' => 'Wat de mensen die dit openen moeten weten.',
         'share_native' => 'Meer apps…',
         'share_instagram' => 'Instagram kan geen links uit een browser aannemen — kopieer hem en plak hem daar.',
         'shared_badge' => 'Gedeeld — iedereen met de link ziet het',
@@ -614,6 +651,8 @@ return [
     ],
 
     'recipients' => [
+        'step_birthday' => 'Wanneer ben je jarig?',
+        'birthday_why' => 'Alleen dag en maand, zodat ze op tijd herinnerd worden. Naar het jaar vragen we nooit.',
         'self_title' => 'Vertel ze wat je echt zou willen',
         'self_intro' => 'Iemand zoekt een cadeau voor je, :name. Vul in wat je wilt, en zet erbij wat je echt leuk zou vinden.',
         'saved' => 'Opgeslagen. Ze zien het de volgende keer.',
@@ -726,6 +765,8 @@ return [
         'seo_title' => 'Verlanglijstjes, cadeaulijsten en Geheime Vriend',
         'seo_description' => 'Negen cadeautools op één plek: verlanglijstjes, een lijst voor iemand anders, samen bijdragen, Geheime Vriend en een quiz. Niemand ziet wie wat kocht.',
         'title' => 'De Geschenk Cove',
+        'rail_hint' => 'Alles wat je nodig hebt om voor iemand anders te kopen, op één plek.',
+        'rail_cta' => 'Open de Geschenk Cove',
         'intro' => 'Alles om voor anderen te kopen, en om te vertellen wat je zelf leuk zou vinden. Niemand ziet ooit wie wat gekocht heeft.',
         'tools' => 'Wat je hier kunt doen',
         'items_count' => ':count dingen bewaard',
@@ -756,7 +797,7 @@ return [
         'collab_title' => 'Samen kopen',
         'collab_body' => 'Nodig anderen uit op een cadeaulijst zodat jullie samen kunnen kiezen, of leg samen in voor een groter cadeau dat een van jullie koopt.',
         'collab_step1' => 'Druk op Nieuwe lijst, kies "Samen, voor iemand" en noem de persoon voor wie het is.',
-        'collab_step2' => 'Klik op Delen en voeg elke mede-gever toe met zijn e-mailadres. Een kijker kan meekijken; een bewerker kan dingen toevoegen en verwijderen.',
+        'collab_step2' => 'Druk op Delen en stuur de link naar elke mede-gever. Iedereen met de link kan kijken en reserveren; jij bepaalt of ze ook dingen mogen toevoegen.',
         'collab_step3' => 'Kies samen, en geef aan wat jij koopt zodat niemand hetzelfde koopt. Onder Delen bepaal je ook of namen zichtbaar zijn.',
 
         'handover_title' => 'Geef een lijst door',
@@ -799,8 +840,12 @@ return [
     'reminders' => [
         'birthday_title' => 'De verjaardag van :name komt eraan',
         'exchange_title' => ':title komt eraan',
-        'lead_14' => 'Nog twee weken. Genoeg tijd om iets goeds te vinden voor :name.',
-        'lead_3' => 'Nog drie dagen. Tijd om te beslissen over :name.',
+        'list_title' => ':occasion van :name komt eraan',
+        'list_title_mine' => 'Jouw :occasion komt eraan',
+        'lead' => 'Nog :days dagen. Genoeg tijd om iets te regelen voor :name.',
+        'list_lead_mine' => 'Nog :days dagen. Een goed moment om te kijken of je lijstje zegt wat je wilt.',
+        'mail_button' => 'Bekijk het',
+        'mail_why' => 'Je krijgt dit omdat je deze datum hebt opgeslagen. Je kunt herinneringen uitzetten in je account.',
     ],
 
     'alerts' => [
@@ -1100,7 +1145,6 @@ return [
         'finds_title' => 'De vondsten van vandaag',
         'guide_title' => 'De gids van vandaag',
         'guide_why' => 'Geschreven omdat :count zoekopdrachten hier erom vroegen.',
-        'archive' => 'Eerdere edities',
 
         // The no-AI theme rotation, indexed by day of year modulo 7. Dated
         // rather than random so a rebuild of the same day is identical.
@@ -1318,8 +1362,6 @@ return [
         ],
         'deals_title' => 'Grootste dalers van nu',
         'deals_hint' => 'Gemeten tegen onze eigen mediaan over 30 dagen, niet tegen een doorgestreepte winkelprijs.',
-        'gift_cove_hint' => 'Alles wat je nodig hebt om voor iemand anders te kopen, op één plek.',
-        'gift_cove_cta' => 'Open de Geschenk Cove',
     ],
 
     'guides' => [

@@ -40,6 +40,7 @@ class ListMaker
      * @param  string|null  $recipientId  an existing person of this owner's
      * @param  string|null  $newRecipient  a name to mint a person from, when no id was given
      * @param  bool  $together  several people choosing one gift, rather than one person researching
+     * @param  string|null  $birthday  a `Y-m-d` day and month, when the creator knows it
      */
     public function make(
         Owner $owner,
@@ -48,8 +49,9 @@ class ListMaker
         ?string $recipientId = null,
         ?string $newRecipient = null,
         bool $together = false,
+        ?string $birthday = null,
     ): Wishlist {
-        $recipientId = $this->resolveRecipient($owner, $recipientId, $newRecipient);
+        $recipientId = $this->resolveRecipient($owner, $recipientId, $newRecipient, $birthday);
 
         return Wishlist::create([
             ...$owner->attributes(),
@@ -85,8 +87,12 @@ class ListMaker
      * intention, and sending somebody to a different screen to create a contact
      * first is the step where they give up.
      */
-    private function resolveRecipient(Owner $owner, ?string $recipientId, ?string $newRecipient): ?string
-    {
+    private function resolveRecipient(
+        Owner $owner,
+        ?string $recipientId,
+        ?string $newRecipient,
+        ?string $birthday = null,
+    ): ?string {
         if (filled($recipientId)) {
             // A guessed uuid must not attach somebody else's person to my list.
             abort_unless(
@@ -98,9 +104,20 @@ class ListMaker
         }
 
         if (filled($newRecipient)) {
+            /*
+             * The birthday rides along with the name, and only on a person
+             * being minted here.
+             *
+             * An *existing* recipient is not touched: the creator is choosing
+             * somebody they already have, and quietly overwriting a date they
+             * entered months ago from a field they may have left blank is the
+             * sort of edit nobody would find. Editing a person's details is
+             * that person's screen.
+             */
             return Recipient::create([
                 ...$owner->attributes(),
                 'name' => $newRecipient,
+                'birthday' => $birthday,
             ])->id;
         }
 

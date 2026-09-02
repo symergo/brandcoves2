@@ -27,9 +27,11 @@ use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ItemTransferController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ListInvitationController;
 use App\Http\Controllers\ListItemVoteController;
+use App\Http\Controllers\ListMessageController;
 use App\Http\Controllers\ListQuizController;
 use App\Http\Controllers\MarketPreferenceController;
 use App\Http\Controllers\NotificationController;
@@ -146,6 +148,34 @@ Route::get('/auth/google/callback', [GoogleController::class, 'callback'])
 */
 
 Route::pattern('market', implode('|', array_map('preg_quote', Market::values())));
+
+/*
+|--------------------------------------------------------------------------
+| A share token, as it appears in a URL
+|--------------------------------------------------------------------------
+|
+| `wishlists.share_token`, `recipients.share_token` and
+| `list_quizzes.share_token` are all **uuid columns**, and an unconstrained
+| `{token}` segment reaches Postgres as `where share_token = 'suggest'`. That
+| does not return zero rows — it raises `22P02: invalid input syntax for type
+| uuid` and the visitor gets a 500 where they should have had a 404.
+|
+| Every stray path under those prefixes did it: a mistyped link, a crawler
+| walking a URL it half-remembered, a client that built an address with an empty
+| token and left the `//` in it — `/for//suggest` collapses to `/for/suggest`,
+| which is how this was found.
+|
+| The pattern is written out at each of the three groups rather than hoisted
+| into a constant. A file-level `const` here is defined again every time the
+| route file is re-evaluated, which a test suite does once per test: the first
+| test passes and the other thirty-eight die on "Constant UUID_TOKEN already
+| defined". Three literals beat that.
+|
+| And deliberately not `Route::pattern('token', …)`: two other routes take a
+| `{token}` that is **not** a uuid — the Cove confirm and unsubscribe links are
+| 64 hex characters — and a global pattern that happens to be overridden in both
+| places today is a trap for the third one.
+*/
 
 Route::prefix('{market}')->group(function () {
     Route::get('/', HomeController::class)->name('home');
@@ -324,13 +354,38 @@ Route::prefix('{market}')->group(function () {
      */
     Route::post('/lists/{list}/handover', [HandoverController::class, 'store'])->name('lists.handover');
 
+    /*
+    |----------------------------------------------------------------------
+    | Copying an item onto another list
+    |----------------------------------------------------------------------
+    |
+    | One verb and two sources: a row on a list of mine, reached by that list's
+    | id, and a row on the recipient's own list, reached by their share token —
+    | which is how the Ask panel reads it in the first place.
+    |
+    | Copy only, never move. Removal already exists on every row, so a move
+    | would be a second way to do what the page can already do in two presses,
+    | with a failure mode the copy does not have. Neither endpoint touches the
+    | source list.
+    */
+    Route::post('/lists/{list}/items/{item}/copy', [ItemTransferController::class, 'between'])
+        ->whereNumber('item')
+        ->name('items.copy');
+
+    Route::post('/l/{token}/items/{item}/copy', [ItemTransferController::class, 'fromShared'])
+        ->where('token', '[0-9a-fA-F-]{36}')
+        ->whereNumber('item')
+        ->name('items.copy.shared');
+
     // Suggestions the owner has not decided on yet.
     Route::post('/suggestions/{item}/accept', [SuggestionController::class, 'accept'])->name('suggestions.accept');
     Route::delete('/suggestions/{item}', [SuggestionController::class, 'destroy'])->name('suggestions.destroy');
 
     // The shared, claimable view. Rate-limited because it is unauthenticated
-    // and the token is the only thing guarding it.
-    Route::middleware('throttle:60,1')->group(function () {
+    // and the token is the only thing guarding it — and constrained to a uuid,
+    // on the group so it cannot be forgotten on the next route added here. See
+    // UUID_TOKEN for what an unconstrained segment did.
+    Route::middleware('throttle:60,1')->where(['token' => '[0-9a-fA-F-]{36}'])->group(function () {
         Route::get('/l/{token}', [SharedListController::class, 'show'])->name('lists.shared');
         Route::post('/l/{token}/claim/{item}', [SharedListController::class, 'claim'])->name('lists.claim');
         Route::delete('/l/{token}/claim/{item}', [SharedListController::class, 'unclaim'])->name('lists.unclaim');
@@ -359,6 +414,33 @@ Route::prefix('{market}')->group(function () {
         Route::post('/l/{token}/pledge', [GiftPledgeController::class, 'store'])->name('lists.pledge');
         Route::delete('/l/{token}/pledge', [GiftPledgeController::class, 'destroy'])->name('lists.pledge.destroy');
         Route::post('/l/{token}/suggest', [SuggestionController::class, 'store'])->name('lists.suggest');
+
+        /*
+        |------------------------------------------------------------------
+        | The board beside a shared list
+        |------------------------------------------------------------------
+        |
+        | The conversation that decides the buying, on the page that knows what
+        | has been claimed and what the pot stands at — rather than in the group
+        | chat the link was pasted into, which knows none of it.
+        |
+        | Addressed by the list's share token like everything else here, because
+        | that token IS the permission: whoever holds it may read the list, and
+        | reading the board is the same right. Who may actually see it is
+        | `App\Services\Wishlist\Board`, which hangs the question off the claim
+        | gate — a board is claim state in prose.
+        |
+        | Throttled harder than a claim. A claim is one press per item and the
+        | table constrains it; a message is free text with nothing stopping a
+        | hundred of them.
+        */
+        Route::post('/l/{token}/messages', [ListMessageController::class, 'store'])
+            ->middleware('throttle:20,1')
+            ->name('lists.board.store');
+
+        Route::delete('/l/{token}/messages/{message}', [ListMessageController::class, 'destroy'])
+            ->whereNumber('message')
+            ->name('lists.board.destroy');
     });
 
     /*
@@ -371,7 +453,10 @@ Route::prefix('{market}')->group(function () {
     | nothing else. Same rate limit for the same reason: it is unauthenticated
     | and the token is the only thing guarding it.
     */
-    Route::middleware('throttle:60,1')->group(function () {
+    // Uuid-constrained, like `/l/{token}` and for the same reason. `/for/{token}`
+    // is where the 500 was actually reported: a request for `/for/suggest`
+    // matched here and asked Postgres for a uuid equal to "suggest".
+    Route::middleware('throttle:60,1')->where(['token' => '[0-9a-fA-F-]{36}'])->group(function () {
         Route::get('/for/{token}', [RecipientProfileController::class, 'show'])->name('recipients.self');
         Route::post('/for/{token}', [RecipientProfileController::class, 'update'])->name('recipients.self.update');
         Route::post('/for/{token}/claim', [RecipientProfileController::class, 'claim'])->name('recipients.self.claim');
@@ -387,7 +472,8 @@ Route::prefix('{market}')->group(function () {
     | signup before the first guess loses the player — and the share artefact is
     | a score, which is worthless if nobody ever gets one.
     */
-    Route::middleware('throttle:60,1')->group(function () {
+    // Same constraint, same reason: `list_quizzes.share_token` is a uuid too.
+    Route::middleware('throttle:60,1')->where(['token' => '[0-9a-fA-F-]{36}'])->group(function () {
         Route::post('/lists/{list}/quiz', [ListQuizController::class, 'store'])->name('quiz.store');
         Route::get('/q/{token}', [ListQuizController::class, 'show'])->name('quiz.show');
         Route::post('/q/{token}', [ListQuizController::class, 'submit'])->name('quiz.submit');

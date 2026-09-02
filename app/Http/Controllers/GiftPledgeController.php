@@ -45,9 +45,18 @@ class GiftPledgeController extends Controller
     {
         [$list, $owner] = $this->resolve($request, $token);
 
+        /*
+         * When the organiser has set a standard share, the member does not get
+         * to name a number — they are in for that, or they are not in. So the
+         * amount is `sometimes` and is ignored below: validating it as required
+         * would reject a form that correctly has no field, and trusting it
+         * would let anybody post €1 into a €10-a-head pot.
+         */
+        $standard = $list->standardPledge();
+
         $validated = $request->validate([
             // Euros in, cents stored — invariant #7.
-            'amount' => ['required', 'numeric', 'min:1', 'max:100000'],
+            'amount' => [$standard === null ? 'required' : 'sometimes', 'numeric', 'min:1', 'max:100000'],
             'display_name' => ['required', 'string', 'max:80'],
         ]);
 
@@ -57,7 +66,7 @@ class GiftPledgeController extends Controller
                 ...$owner->attributes('user_id', 'anon_id'),
             ],
             [
-                'amount' => (int) round((float) $validated['amount'] * 100),
+                'amount' => $standard ?? (int) round((float) $validated['amount'] * 100),
                 'display_name' => $validated['display_name'],
             ],
         );

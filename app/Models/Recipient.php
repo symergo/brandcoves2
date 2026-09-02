@@ -54,6 +54,45 @@ class Recipient extends Model
         ];
     }
 
+    /**
+     * The year a day-and-month birthday is stored under.
+     *
+     * `birthday` is a `date` column and every reader matches on **month and day
+     * only** — `SendOccasionReminders` extracts both and ignores the year,
+     * because a birthday recurs and the stored year does not. So a birthday
+     * given as "14 June" needs *some* year to be a date at all, and which one it
+     * is must never leak into a sentence.
+     *
+     * 2000, and the choice is load-bearing: it is a leap year. Under 2001 a
+     * person born on 29 February cannot be stored at all — `Carbon` rolls it to
+     * 1 March, silently, and their reminder arrives on the wrong day forever.
+     *
+     * A real birth year, when somebody supplies one, is welcome and unaffected:
+     * this is only the placeholder for the day-and-month form the UI asks for,
+     * because a year is a piece of personal data with no use here.
+     */
+    public const BIRTHDAY_YEAR = 2000;
+
+    /**
+     * A day and a month as a storable date, or null.
+     *
+     * Returns null unless both halves are present and the pair is a real date —
+     * 31 February is not one, and accepting it would store 3 March and remind
+     * somebody on a day nobody named.
+     */
+    public static function birthdayFrom(?int $day, ?int $month): ?string
+    {
+        if ($day === null || $month === null) {
+            return null;
+        }
+
+        if (! checkdate($month, $day, self::BIRTHDAY_YEAR)) {
+            return null;
+        }
+
+        return sprintf('%04d-%02d-%02d', self::BIRTHDAY_YEAR, $month, $day);
+    }
+
     /** @return HasMany<Wishlist, $this> */
     public function wishlists(): HasMany
     {

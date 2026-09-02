@@ -225,7 +225,16 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
 
     // The recipient decides the kind and `together` adds one bit; the server
     // derives both in `ListMaker` so nothing here can contradict it.
-    const form = useForm({ title: '', recipient_id: '', new_recipient: '', together: false })
+    const form = useForm({
+        title: '',
+        recipient_id: '',
+        new_recipient: '',
+        together: false,
+        // Day and month only, as strings because a select's value is one.
+        // Empty means "not given", which the server reads as null.
+        birthday_day: '',
+        birthday_month: '',
+    })
 
     /*
      * Three views, and only one of them splits.
@@ -463,6 +472,91 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                                         onChange={(e) => form.setData('new_recipient', e.target.value)}
                                         className="w-full rounded-lg border border-line bg-cream px-3 py-2"
                                     />
+
+                                    {/*
+                                      Their birthday, day and month, optional.
+
+                                      Asked here because here is where somebody
+                                      already has the person in mind — going and
+                                      finding them again later to add a date is a
+                                      trip nobody makes, which is why
+                                      `recipients.birthday` sat empty on almost
+                                      every row while the reminder job that reads
+                                      it was already running.
+
+                                      **No year.** Every reader matches on month
+                                      and day, because a birthday recurs; a year
+                                      would be a piece of personal data with no
+                                      use, and asking for one invites the
+                                      arithmetic nobody wants done. The hint says
+                                      so, because a date field with no year is
+                                      unusual enough to need explaining.
+
+                                      Only on a person being *created*. Picking
+                                      somebody who already exists leaves their
+                                      details alone — a blank field quietly
+                                      overwriting a date entered months ago is an
+                                      edit nobody would find.
+                                    */}
+                                    <fieldset className="mt-1">
+                                        <legend className="text-sm font-medium">
+                                            {t('lists.birthday_optional')}
+                                        </legend>
+                                        <p className="mt-1 text-xs text-ink-soft">
+                                            {t('lists.birthday_why')}
+                                        </p>
+
+                                        <div className="mt-2 flex gap-2">
+                                            <select
+                                                aria-label={t('lists.birthday_day')}
+                                                value={form.data.birthday_day}
+                                                onChange={(e) =>
+                                                    form.setData('birthday_day', e.target.value)
+                                                }
+                                                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            >
+                                                <option value="">{t('lists.birthday_day')}</option>
+                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(
+                                                    (day) => (
+                                                        <option key={day} value={day}>
+                                                            {day}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+
+                                            <select
+                                                aria-label={t('lists.birthday_month')}
+                                                value={form.data.birthday_month}
+                                                onChange={(e) =>
+                                                    form.setData('birthday_month', e.target.value)
+                                                }
+                                                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                            >
+                                                <option value="">{t('lists.birthday_month')}</option>
+                                                {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                                                    (month) => (
+                                                        <option key={month} value={month}>
+                                                            {/*
+                                                              The month's name in
+                                                              the reader's own
+                                                              market, not a
+                                                              number: "3" is
+                                                              March here and
+                                                              nowhere else in the
+                                                              world reliably.
+                                                            */}
+                                                            {new Date(2000, month - 1, 1)
+                                                                .toLocaleDateString(
+                                                                    market.hrefLang,
+                                                                    { month: 'long' },
+                                                                )}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                        </div>
+                                    </fieldset>
                                 </>
                             )}
                         </>

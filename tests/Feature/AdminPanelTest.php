@@ -240,6 +240,19 @@ class AdminPanelTest extends TestCase
             '/admin/discover-awin-feeds',
             '/admin/community-posts/community-questions',
             '/admin/community-posts/community-answers',
+
+            /*
+             * The two settings screens added 2026-09-01.
+             *
+             * Both are custom `Page`s that read config and fill a form in
+             * `mount()` — which no other test calls, so a bad default or a
+             * renamed key is invisible until an administrator opens the page and
+             * finds a 500 where the setting should be. `EmailTemplates` also
+             * reads its own registry against the language files, so a lang key
+             * that moved shows up here rather than in an editor's face.
+             */
+            '/admin/reminder-settings',
+            '/admin/email-templates',
         ] as $path) {
             // Named, so a failure says which page rather than which loop
             // iteration — the whole value of a smoke test is being able to act

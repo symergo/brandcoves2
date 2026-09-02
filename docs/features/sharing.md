@@ -30,7 +30,14 @@ The quiz result was worse. That screen had its own copy of the same logic, so th
 entire point is posting a score to friends could not post it anywhere. Two implementations of one
 idea meant the second one never got the fix the first one needed.
 
-Now: **native sheet first when the device has one, explicit channels always.**
+The fix at the time was to add the explicit channels and offer the sheet as the first row of the
+menu, labelled "More apps…". That was still backwards, and it stayed that way for a while: a phone —
+where sharing actually happens — got a hand-rolled dropdown of five web fallbacks, with the one thing
+that knows which apps are installed offered last and described as an afterthought.
+
+Now: **where `navigator.share` exists the button IS the sheet, and there is no menu.** It is not one
+more destination in a list, it is a better version of the entire list. The explicit channels are the
+desktop control, and neither pretends to be the other.
 
 ## The channels are not interchangeable
 
@@ -51,15 +58,57 @@ and does nothing is worse than an honest line of text, and this is the case wher
 technical option to fall back to — the limitation is Instagram's, and the only thing we control is
 whether we admit it.
 
-## Why the link is visible, not just copyable
+## Why the link is visible, and why it is a field
 
-`ShareRow` shows the URL in a `<code>` next to the buttons. People check a URL before pasting it into
-a group chat, and a button that claims to have copied something is worth less than the thing itself.
+People check a URL before pasting it into a group chat, and a button that claims to have copied
+something is worth less than the thing itself.
 
-It was extracted because the Secret Santa invite was a lone "copy" button with the URL nowhere in
-sight, while a wishlist showed the link, offered the sheet and confirmed the copy. Two ways of doing
-one thing on one site is an interface bug even when both work, and the sparser one was on the screen
-whose entire purpose is getting a link to other people.
+`ShareRow` was extracted because the Secret Santa invite was a lone "copy" button with the URL
+nowhere in sight, while a wishlist showed the link, offered the sheet and confirmed the copy. Two
+ways of doing one thing on one site is an interface bug even when both work, and the sparser one was
+on the screen whose entire purpose is getting a link to other people.
+
+It showed the URL in a truncated `<code>`: readable, and nothing else. It is a read-only `<input>`
+that selects its whole contents on focus, because the people whose clipboard is unavailable had no
+way to get the link at all — you cannot reliably select `text-overflow: ellipsis` text on a phone.
+One tap now gives them the browser's own copy.
+
+### Two buttons, two jobs, two different clipboards
+
+Copy is the solid button and Share is the outlined one, because they are not alternatives. Copy is
+for the destination this page cannot know about — a work chat, a note to self, a text message — and
+is what people reach for most. Share is the one that knows about WhatsApp.
+
+They both said **"Copy link"** and put different things on the clipboard: the row's copied the bare
+URL, the one inside the menu copied the URL with a sentence in front of it. Same words, a centimetre
+apart, two results. The row copies the link; the menu copies the message, and says so.
+
+### The clipboard is not always there
+
+`navigator.clipboard` is undefined outside a secure context — every plain-http address, including the
+LAN one this gets tested on — and it rejects when the document is not focused. Both threw into
+nothing: the button did visibly nothing, with no explanation. Now the field is selected and the
+status line says to press Ctrl+C, which is one keystroke and is at least true.
+
+### Confirmation is spoken, not swapped into the label
+
+"Copied" replaced the word "Share" for two seconds, which changed the button's width, shuffled the
+row around it, and said nothing at all to a reader who cannot see it. It is a `role="status"` line
+that holds its height whether or not it has anything to say.
+
+### The menu is a real menu
+
+It carried `role="menu"` and none of the behaviour — which is worse than no role at all, because a
+screen reader announces a menu and then the arrow keys scroll the page. Opening it moves focus to the
+first destination; ↑/↓/Home/End move between them; Escape and Tab close it and hand focus back to the
+button that opened it. The Instagram line sits outside the `role="menu"` element: a paragraph is not
+a menu item, and in menu mode a screen reader is entitled to skip anything that is not one — which
+would drop the one line there that exists to explain an absence.
+
+Each destination carries a mark ([ShareIcon](../../resources/js/Components/ShareIcon.tsx)), in the
+site's own line-art hand rather than the platforms' brand assets. A share menu is the one place icons
+earn their keep — the reader is not reading the list, they are looking for the app they already had
+in mind — and six official logos would bring six palettes into a design with one accent.
 
 ## `navigator` is read after mount
 
@@ -105,12 +154,16 @@ shareable, and a private list simply has no share URL to give it.
 
 ## Files
 
-- `resources/js/Components/ShareMenu.tsx` — the menu, the channels and their quirks
-- `resources/js/Components/ShareRow.tsx` — link, share, copy
+- `resources/js/Components/ShareMenu.tsx` — the native sheet, or the channels and their quirks
+- `resources/js/Components/ShareRow.tsx` — the link field, copy, share
+- `resources/js/Components/ShareIcon.tsx` — the destinations, drawn
+- `resources/js/Components/ListTools.tsx` — the sharing panel these sit inside; see
+  [wishlists.md](wishlists.md)
 - `resources/js/Pages/Lists/Show.tsx` — list, quiz and recipient links
 - `resources/js/Pages/Quiz/Play.tsx` — the score
 - `resources/js/Pages/Santa/Group.tsx` — the invite
-- `lang/*/site.php` — `lists.share_*`, `lists.copy_link`, `lists.copied`
+- `lang/*/site.php` — `lists.share_*`, `lists.copy_link`, `lists.copy_message`, `lists.copy_manual`,
+  `lists.copied`
 
 ## See also
 

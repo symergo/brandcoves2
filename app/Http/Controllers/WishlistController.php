@@ -15,6 +15,7 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
 use App\Services\Wishlist\AddingMode;
+use App\Services\Wishlist\Board;
 use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ListMaker;
@@ -172,6 +173,22 @@ class WishlistController extends Controller
             'new_recipient' => ['nullable', 'string', 'max:80'],
 
             /*
+             * When is their birthday? Day and month, never a year.
+             *
+             * The year is personal data with no use here — every reader matches
+             * on month and day, because a birthday recurs — so it is not asked
+             * for and not stored. `Recipient::birthdayFrom()` supplies the
+             * placeholder and rejects a pair like 31 February, which would
+             * otherwise be stored as 3 March and remind somebody on a day
+             * nobody named.
+             *
+             * Both halves or neither: `required_with` each way, so a half-filled
+             * pair is a visible error rather than a silently dropped date.
+             */
+            'birthday_day' => ['nullable', 'integer', 'min:1', 'max:31', 'required_with:birthday_month'],
+            'birthday_month' => ['nullable', 'integer', 'min:1', 'max:12', 'required_with:birthday_day'],
+
+            /*
              * Several of us, one present. A boolean rather than a `kind`,
              * because the recipient already decides mine-vs-else and a
              * client-supplied kind could disagree with it. See `ListMaker`.
@@ -188,6 +205,10 @@ class WishlistController extends Controller
             recipientId: $validated['recipient_id'] ?? null,
             newRecipient: $validated['new_recipient'] ?? null,
             together: (bool) ($validated['together'] ?? false),
+            birthday: Recipient::birthdayFrom(
+                $validated['birthday_day'] ?? null,
+                $validated['birthday_month'] ?? null,
+            ),
         );
 
         return redirect()->to($current->url("lists/{$list->id}"));
@@ -243,6 +264,44 @@ class WishlistController extends Controller
         return Inertia::render('Lists/Show', [
             'list' => $this->summarise($wishlist, $current),
             'pot' => $pot,
+
+            /*
+             * Where an item on this page can be copied to.
+             *
+             * Every list this person may write to, minus this one — copying a
+             * row onto the list it is already on is a duplicate somebody would
+             * have to tidy, and offering it invites the press.
+             *
+             * Ids and titles only. The picker names destinations in words
+             * rather than asking somebody to drag a card at one, so it needs
+             * nothing else — and a summary per list would be a second query
+             * per row on a page that already has one.
+             *
+             * `ListAccess::scope()` unions the lists I own with the ones I have
+             * been let into; `canEdit()` is what says I may add to them, and it
+             * is asked again at the endpoint because a payload decides a
+             * control and nothing more.
+             */
+            'copyTargets' => ListAccess::scope(Wishlist::query(), $owner)
+                ->whereKeyNot($wishlist->id)
+                ->orderBy('title')
+                ->get(['id', 'title', 'owner_user_id', 'owner_anon_id'])
+                ->filter(fn (Wishlist $other): bool => ListAccess::canEdit($other, $owner))
+                ->map(fn (Wishlist $other): array => [
+                    'id' => $other->id,
+                    'title' => $other->displayTitle(),
+                ])
+                ->values(),
+
+            /*
+             * The discussion beside the list.
+             *
+             * Null for anybody who may not see one, so the page draws no rail
+             * rather than an empty one — and on a wish list whose owner has not
+             * asked to see claims, that is the owner. A board is claim state in
+             * prose; see App\Services\Wishlist\Board.
+             */
+            'board' => app(Board::class)->forList($wishlist, $owner),
 
             'access' => [
                 'isOwner' => ListAccess::isOwner($wishlist, $owner),
@@ -433,7 +492,16 @@ class WishlistController extends Controller
 
         $validated = $request->validate([
             'title' => ['sometimes', 'string', 'max:120'],
-            'description' => ['nullable', 'string', 'max:2000'],
+            /*
+             * `sometimes`, and that word is load-bearing.
+             *
+             * Without it a `nullable` rule validates a missing key as null and
+             * `update()` writes the null — so every settings toggle on this
+             * endpoint, each of which sends one key, silently wiped the list's
+             * note. Harmless while nothing could set one; the moment the owner
+             * could, pressing any switch would have erased what they wrote.
+             */
+            'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'visibility' => ['sometimes', 'string', 'in:private,link,public'],
 
             /*
@@ -466,6 +534,32 @@ class WishlistController extends Controller
             'link_can_add' => ['sometimes', 'nullable', 'boolean'],
 
             /*
+             * "Can everyone on this group gift see who is chipping in?"
+             *
+             * Names only; the amounts are never a setting. Nullable for the
+             * same reason as its two siblings: null is "never asked", and
+             * `Wishlist::pledgersVisible()` answers false — the behaviour every
+             * pot had before this existed.
+             */
+            'pledgers_visible' => ['sometimes', 'nullable', 'boolean'],
+
+            /*
+             * What one person puts in, when everybody puts in the same.
+             *
+             * Euros in, cents stored — invariant #7, converted below rather
+             * than trusted from the client. Null is "everyone names their own",
+             * which is what the pot has always done and what the radio pair
+             * writes when the first option is chosen.
+             */
+            'pledge_amount' => ['sometimes', 'nullable', 'numeric', 'min:1', 'max:100000'],
+
+            /*
+             * Do the members choose the present? Nullable for the same reason
+             * as its siblings: null is "never asked" and the kind answers.
+             */
+            'voting_enabled' => ['sometimes', 'nullable', 'boolean'],
+
+            /*
              * "Do I want to see what has been claimed off my own list?"
              *
              * Nullable on purpose: null is "never asked", and the kind decides
@@ -474,6 +568,20 @@ class WishlistController extends Controller
              */
             'owner_sees_claims' => ['sometimes', 'nullable', 'boolean'],
         ]);
+
+        /*
+         * Euros to cents, once, here.
+         *
+         * The client sends what the organiser typed. Rounding on the way in is
+         * what keeps `pledge_amount` in the same units as `gift_pledges.amount`
+         * — a float in either would accumulate error across the totals the pot
+         * is added up from.
+         */
+        if (array_key_exists('pledge_amount', $validated)) {
+            $validated['pledge_amount'] = $validated['pledge_amount'] === null
+                ? null
+                : (int) round((float) $validated['pledge_amount'] * 100);
+        }
 
         $wishlist->update($validated);
 
@@ -692,6 +800,10 @@ class WishlistController extends Controller
             'claimVisibility' => $list->claim_visibility->value,
             'ownerSeesClaims' => $list->ownerSeesClaims(),
             'linkCanAdd' => $list->linkCanAdd(),
+            'pledgersVisible' => $list->pledgersVisible(),
+            // Cents, or null for "everyone names their own".
+            'pledgeAmount' => $list->standardPledge(),
+            'votingEnabled' => $list->votingEnabled(),
             'isDefault' => (bool) $list->is_default,
             'handedOver' => $list->handed_over_at !== null,
             'eventType' => $list->event_type?->value,

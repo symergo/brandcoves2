@@ -154,6 +154,76 @@ asserts against `registry.occasion` — the chip — rather than `registry.badge
 would have gone green while the manual named a word the row does not print, which is the whole failure
 it exists to prevent.
 
+## The sharing panel, in the order the decision is made
+
+The merge above got the *contents* right and left the panel itself a stack. It read: the link → who
+sees the claims → a loose sentence about what the link grants → what the link allows → the roster,
+all under one heading reading **"Visibility"**. So the two settings that are about the *link* sat
+below the two that are about *claims*, separated by a paragraph explaining a link they were nowhere
+near — and the one heading on the panel named neither.
+
+Four blocks now, each with its own heading, in the order somebody actually decides:
+
+| Block | Shown when | Holds |
+|---|---|---|
+| the state and the link | always | one sentence saying whether this is shared, then the link or the button that makes one |
+| **What the link allows** | owner, and there is a link | what the link grants, and whether people holding it can add |
+| **Who sees what** | owner, claimable, and somebody else is on it | do I see the claims; do the others see each other's names |
+| **Invited before sharing became a link** | owner, and the roster is not empty | the people let in one at a time, and the way to take it back |
+
+### It says what is true before it offers a control
+
+The panel used to open straight into either a button or a URL and leave the reader to work out the
+state from which of the two they got. On the page where the mistake is thinking something is private
+when it is not, that is worth a line of its own: `lists.sharing_on` / `lists.sharing_off`, at the top,
+before anything you can press.
+
+`sharing_on` used to be passed to `ShareRow` as its hint, which put "anyone with the link can see
+this list" *under* the link — describing a consequence below the thing that causes it.
+
+### The link's settings only exist once the link does
+
+"People with the link can add to this list" was offered on lists with no link. It is a property of a
+URL that exists, and showing it before there is one is a setting for something that has not happened
+— which is how the sentence explaining what the link grants ended up four controls away from the
+link it was about.
+
+### The sentence contradicted the control under it
+
+`lists.share_grants` read *"Anyone with the link can see this list **and add to it**. There is
+nothing else to set up"* — directly above the setting that decides whether they can add to it, which
+on a wish list defaults to *no*, and directly above three more things to set up. It now states the
+half that is always true and leaves the rest to the controls that own it.
+
+### Stop sharing is a button, not a footnote
+
+It was grey underlined text under the URL. It is the one irreversible thing on the panel — the link
+dies and everyone holding it is out — and while it should stay quiet and stay second, it should not
+read as an annotation to the field above it. A bordered secondary button: still quiet, still second,
+unmistakably a control.
+
+### Both outcomes on screen, not one behind a toggle
+
+`link_can_add` was a checkbox whose hint changed with its state, so the alternative was only readable
+*after* you had switched to it: you had to make the change to find out what the change did. Off here
+is not "nothing happens" — it is the approval queue — and a checkbox says otherwise by its shape.
+
+It is two radios carrying the two sentences that already existed, `link_can_add_on` and
+`link_can_add_off`, as their labels. Both outcomes are on screen; the one in force is the one
+selected. No copy was added for this.
+
+### A privacy switch that saves silently is a privacy switch you cannot trust
+
+Four settings here write on change, with no Save button and no confirmation: the request goes out,
+`back()` returns the page, and a re-render that looks identical to no re-render is not feedback. On a
+form that is a fair assumption. On *can the people I sent this to see each other's names* it leaves
+the reader with the control's own position as the only evidence anything was stored — which is
+exactly the evidence they would have had if it had failed.
+
+One `role="status"` line at the foot of the panel, `lists.saved`, cleared after two and a half
+seconds. One rather than one per control: four of these save the same way, and the line holds its
+height whether or not it has anything to say, so saving never nudges the page.
+
 ## "How each one works" is its own page
 
 The manual was the bottom half of `/gift-cove`, a page with two readers who want opposite things: one
@@ -328,7 +398,8 @@ exactly the sort of thing that stops being derived.
 
 - `resources/js/Components/ListKindBadge.tsx` — the badge, and the one place the sentence is chosen
 - `resources/js/Pages/Lists/Show.tsx`, `Index.tsx`
-- `resources/js/Components/ListTools.tsx` — the chip row, and the `set` flag per tool
+- `resources/js/Components/ListTools.tsx` — the chip row, the `set` flag per tool, and the sharing
+  panel's four blocks
 - `app/Services/Wishlist/ListMaker.php` — the recipient decides the kind, which the ask card mirrors
 - `lang/*/site.php` — `lists.kind_*`, `lists.new_*_body`, `lists.quiz_unlocks`, `lists.shop_for`,
   `lists.shared_empty`, `lists.tool_on`, `lists.shared_short` / `private_short`. `lists.about_*`,
@@ -339,3 +410,4 @@ exactly the sort of thing that stops being derived.
 - [list-taxonomy.md](list-taxonomy.md) — the three kinds, and why they are three
 - [wishlists.md](wishlists.md) — claiming, sharing, and the occasion
 - [list-quiz.md](list-quiz.md) — why the quiz cannot appear on a private list
+- [sharing.md](sharing.md) — the link, the copy button and the channels inside the first block

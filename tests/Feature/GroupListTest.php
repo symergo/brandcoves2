@@ -341,6 +341,84 @@ class GroupListTest extends TestCase
     }
 
     #[Test]
+    public function switching_voting_off_takes_the_tally_with_it(): void
+    {
+        /*
+         * The switch half-worked. `allowsVotingFrom()` consulted the setting, so
+         * the vote *button* went away — but the payload and the ordering both
+         * asked `kind->allowsVoting()`, which only knows that a group list *can*
+         * vote. So a list whose organiser had turned voting off went on showing
+         * the counts and reordering itself by a tally nobody could add to, which
+         * is exactly what the setting's own hint promises to stop.
+         *
+         * The page reads the key's *presence* as "this is a candidate", so its
+         * absence is the whole of the fix.
+         */
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/vote/{$item->id}");
+
+        $props = $this->props(
+            $this->actingAs($organiser)->get("/be-nl/l/{$list->share_token}")->assertOk(),
+        );
+
+        $this->assertSame(1, $props['items'][0]['votes'], 'On by default on a group list.');
+
+        $this->actingAs($organiser)
+            ->patch("/be-nl/lists/{$list->id}", ['voting_enabled' => false]);
+
+        $props = $this->props(
+            $this->actingAs($organiser)->get("/be-nl/l/{$list->share_token}")->assertOk(),
+        );
+
+        $this->assertArrayNotHasKey('votes', $props['items'][0]);
+        $this->assertArrayNotHasKey('votedByMe', $props['items'][0]);
+        $this->assertFalse($props['canVote']);
+    }
+
+    #[Test]
+    public function a_vote_cannot_be_cast_once_voting_is_off(): void
+    {
+        // The endpoint already asked the setting, and this is what keeps it
+        // asking: hiding a button stops nobody hand-building the request.
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs($organiser)
+            ->patch("/be-nl/lists/{$list->id}", ['voting_enabled' => false]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/vote/{$item->id}")
+            ->assertForbidden();
+    }
+
+    #[Test]
+    public function turning_voting_back_on_shows_the_tally_exactly_as_it_was(): void
+    {
+        // Switching it off deletes nothing. A vote is somebody's opinion, and
+        // the switch is not a judgement on it.
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/vote/{$item->id}");
+
+        $this->actingAs($organiser)->patch("/be-nl/lists/{$list->id}", ['voting_enabled' => false]);
+        $this->actingAs($organiser)->patch("/be-nl/lists/{$list->id}", ['voting_enabled' => true]);
+
+        $props = $this->props(
+            $this->actingAs($organiser)->get("/be-nl/l/{$list->share_token}")->assertOk(),
+        );
+
+        $this->assertSame(1, $props['items'][0]['votes']);
+    }
+
+    #[Test]
     public function a_wish_list_carries_no_vote_keys_at_all(): void
     {
         // Absent, not zero — the same discipline as `claimed` and
@@ -534,6 +612,138 @@ class GroupListTest extends TestCase
 
         $this->assertArrayNotHasKey('breakdown', $props['pot']);
         $this->assertStringNotContainsString('Bob', json_encode($props));
+    }
+
+    #[Test]
+    public function nobody_sees_who_is_in_until_the_organiser_says_so(): void
+    {
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
+                'amount' => 25,
+                'display_name' => 'Bob',
+            ]);
+
+        // Off by default: `pledgers_visible` is null, which is "never asked".
+        $props = $this->props(
+            $this->actingAs(User::factory()->create())
+                ->get("/be-nl/l/{$list->share_token}")
+                ->assertOk(),
+        );
+
+        $this->assertArrayNotHasKey('names', $props['pot']);
+        $this->assertStringNotContainsString('Bob', json_encode($props));
+    }
+
+    #[Test]
+    public function the_organiser_can_let_everyone_see_who_is_in_but_never_for_how_much(): void
+    {
+        /*
+         * The whole point of the setting, and its limit. Six colleagues buying
+         * a leaving present want to know whether the other five are actually
+         * in — that is coordination. What each of them put in is a ladder, and
+         * a ladder is pressure on whoever is at the bottom of it, so no setting
+         * turns that on for anybody but the organiser.
+         */
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
+                'amount' => 25,
+                'display_name' => 'Bob',
+            ]);
+
+        $this->actingAs($organiser)
+            ->patch("/be-nl/lists/{$list->id}", ['pledgers_visible' => true]);
+
+        $props = $this->props(
+            $this->actingAs(User::factory()->create())
+                ->get("/be-nl/l/{$list->share_token}")
+                ->assertOk(),
+        );
+
+        $this->assertSame(['Bob'], $props['pot']['names']);
+        // The name, and not the number beside it.
+        $this->assertArrayNotHasKey('breakdown', $props['pot']);
+    }
+
+    #[Test]
+    public function a_standard_share_overrides_whatever_a_member_posts(): void
+    {
+        /*
+         * Twelve colleagues, €10 each. The organiser sets the share and the
+         * endpoint uses it — so a member who posts €40, whether from a stale
+         * form or by hand, is in for €10 like everybody else. Otherwise the
+         * setting is a suggestion and the organiser is back to chasing people.
+         */
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs($organiser)
+            ->patch("/be-nl/lists/{$list->id}", ['pledge_amount' => 10]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
+                'amount' => 40,
+                'display_name' => 'Bob',
+            ]);
+
+        // Euros in, cents stored — invariant #7.
+        $this->assertSame(1000, GiftPledge::query()->firstOrFail()->amount);
+    }
+
+    #[Test]
+    public function the_pot_tells_members_what_the_standard_share_is(): void
+    {
+        /*
+         * The bug this pins: the endpoint ignored the posted amount and the
+         * form still asked for one, so a member typed €40, was thanked, and
+         * found €10 against their name. The page cannot ask for a number it is
+         * not going to use, and it can only know that if it is told.
+         */
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs($organiser)
+            ->patch("/be-nl/lists/{$list->id}", ['pledge_amount' => 10]);
+
+        $props = $this->props(
+            $this->actingAs(User::factory()->create())
+                ->get("/be-nl/l/{$list->share_token}")
+                ->assertOk(),
+        );
+
+        $this->assertSame(1000, $props['pot']['standard']);
+    }
+
+    #[Test]
+    public function everyone_names_their_own_amount_until_a_share_is_set(): void
+    {
+        $organiser = User::factory()->create();
+        $list = $this->groupList($organiser);
+        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/pledge", [
+                'amount' => 25.50,
+                'display_name' => 'Bob',
+            ]);
+
+        $this->assertSame(2550, GiftPledge::query()->firstOrFail()->amount);
+
+        $props = $this->props(
+            $this->actingAs($organiser)->get("/be-nl/lists/{$list->id}")->assertOk(),
+        );
+
+        // Null is the default and means "the form asks".
+        $this->assertNull($props['pot']['standard']);
     }
 
     #[Test]
