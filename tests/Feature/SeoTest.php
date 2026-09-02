@@ -210,6 +210,38 @@ class SeoTest extends TestCase
     }
 
     #[Test]
+    public function the_canonical_is_shared_with_the_client_so_it_survives_a_client_side_visit(): void
+    {
+        /*
+         * The head is rendered once by the Blade shell, and Inertia's <Head>
+         * manages only the title — so without this prop the canonical link goes
+         * on advertising whichever page was loaded from the server, for the
+         * whole session, while the address bar moves.
+         *
+         * iOS share sheets read that link in preference to the address bar. A
+         * visitor who tapped through to a product and shared it therefore sent
+         * the *entry* page's URL, and WhatsApp drew that page's card: a previous
+         * link and a previous card, indistinguishable from a caching problem.
+         * Reported 2026-09-02.
+         *
+         * Asserted on the Inertia payload rather than the rendered tag, because
+         * the tag is only correct on a full page load — the client-side visit
+         * this protects has nothing but the prop.
+         */
+        $this->seedCatalogue();
+
+        $response = $this->get('/be-nl/search?q=koptelefoon&brand[]=Sony&sort=price_asc');
+
+        $page = $response->viewData('page');
+
+        $this->assertSame(
+            url('/be-nl/search').'?q=koptelefoon',
+            $page['props']['canonical'] ?? null,
+            'the client must receive the same canonical the shell would have rendered',
+        );
+    }
+
+    #[Test]
     public function robots_blocks_everything_on_staging(): void
     {
         config(['giftcoves.robots_allow' => false]);

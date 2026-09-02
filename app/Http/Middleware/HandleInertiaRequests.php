@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\Notification;
+use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\AddingMode;
 use App\Services\Wishlist\ListOptions;
 use App\Support\Analytics;
@@ -90,6 +91,29 @@ class HandleInertiaRequests extends Middleware
                 'id' => Analytics::measurementId(),
                 'consent' => CookieConsent::state($request),
             ],
+
+            /*
+             * The canonical URL of this page, for the client to write into the
+             * <link rel="canonical"> the Blade shell rendered.
+             *
+             * That tag is emitted once, server-side, and Inertia's <Head> only
+             * manages the title — so on every client-side navigation the head
+             * kept advertising the canonical of whichever page the visitor
+             * first landed on. The address bar moved; the tag did not.
+             *
+             * That is not merely untidy, because iOS share sheets read the
+             * canonical link in preference to the address bar. Sharing a
+             * product you had tapped through to sent the *entry* page's URL to
+             * WhatsApp, which then drew that page's card — a previous link and
+             * a previous card, every time, and nothing about it looked like a
+             * front-end bug. Reported 2026-09-02.
+             *
+             * Mirrors the Blade fallback exactly (see app.blade.php), so the
+             * value the client writes is the value the server would have
+             * rendered had this been a full page load.
+             */
+            'canonical' => fn (): string => app(PageMeta::class)->toArray()['canonical']
+                ?? url($request->path()),
 
             'market' => [
                 'key' => $market->value,

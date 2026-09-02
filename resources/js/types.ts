@@ -59,6 +59,13 @@ export interface SharedProps {
      * same as a no, and is the only state that shows the banner.
      */
     analytics: { id: string | null; consent: 'granted' | 'denied' | null }
+    /**
+     * This page's canonical URL, written into the head on every client-side
+     * navigation — the Blade shell renders that tag once and Inertia's <Head>
+     * manages only the title. iOS share sheets read it in preference to the
+     * address bar, so a stale one shares the wrong page. See `app.tsx`.
+     */
+    canonical: string
     market: CurrentMarket
     markets: SwitcherCountry[]
     translations: Translations

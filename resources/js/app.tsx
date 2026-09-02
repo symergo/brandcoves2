@@ -72,7 +72,35 @@ createInertiaApp({
 */
 let lastReportedUrl = window.location.pathname + window.location.search
 
-router.on('navigate', () => {
+/**
+ * Keep the canonical link pointing at the page you are actually on.
+ *
+ * The Blade shell renders <link rel="canonical"> once, and Inertia's <Head>
+ * manages only the title — so without this the tag keeps advertising whichever
+ * page was loaded from the server, for the whole session.
+ *
+ * This is not a tidiness fix. **iOS share sheets read the canonical link in
+ * preference to the address bar**, so tapping through to a product and sharing
+ * it sent the entry page's URL: WhatsApp received a previous link and drew that
+ * page's card. It reads exactly like a caching problem, which is where two
+ * hours went before the head was suspected. Reported 2026-09-02.
+ *
+ * og:url is written alongside for coherence rather than need — scrapers fetch
+ * the HTML fresh and never see this DOM — because a head where one URL is
+ * current and its neighbour is stale is a trap for whoever reads it next.
+ */
+function updateCanonical(canonical: unknown): void {
+    if (typeof canonical !== 'string' || canonical === '') {
+        return
+    }
+
+    document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute('href', canonical)
+    document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', canonical)
+}
+
+router.on('navigate', (event) => {
+    updateCanonical(event.detail.page.props.canonical)
+
     const url = window.location.pathname + window.location.search
 
     if (url === lastReportedUrl) {
