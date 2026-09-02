@@ -5,19 +5,28 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Market;
+use App\Enums\PublishStatus;
+use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Services\Seo\OgImage;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * What a cached card is allowed to outlive.
+ * Which cards are cached, and what a cached one is allowed to outlive.
  *
- * The card is expensive and stable, so it is cached for a month. The question
- * that matters is what invalidates it — and the first two versions of this got
- * it wrong in ways that were invisible until they were in public.
+ * Two separate questions, and the first one is newer. Product cards are **not**
+ * cached; every other card is. These assertions used to run against the product
+ * endpoint because it was the convenient one to build a record for, which is
+ * exactly why they had to move: the endpoint they were written against is now
+ * the one endpoint that never caches.
+ *
+ * The key semantics are asserted through the Daily Cove card instead. Nothing
+ * about them is specific to a Cove — {@see OgImageController::card()} is one
+ * method — so this is the same coverage against a card that still has a key.
  *
  * These assert through the *renderer*, by counting how often it runs, rather
  * than by rebuilding the cache key. A test that reconstructs the key passes as
@@ -28,13 +37,32 @@ class OgImageCacheTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** A published edition in the past, addressable at a stable URL. */
+    private const DATE = '2026-08-08';
+
+    private function edition(): DailyPickSet
+    {
+        return DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'drop_date' => self::DATE,
+            'theme_title' => 'Alles voor de barbecue',
+            'theme_slug' => 'barbecue',
+            'theme_source' => 'theme',
+            'status' => PublishStatus::Published->value,
+            'published_at' => CarbonImmutable::parse(self::DATE)->setTime(6, 0),
+        ]);
+    }
+
+    private function url(): string
+    {
+        return '/be-nl/og/daily/'.self::DATE.'.png';
+    }
+
     private function product(): ProductGroup
     {
         return ProductGroup::factory()->create([
             'market' => Market::BeNl,
             'title' => 'Sony WH-1000XM5',
-            // The footnote is drawn from these, so they are part of what the
-            // key has to notice.
             'merchant_count' => 5,
             'min_price' => 27900,
         ]);
@@ -61,13 +89,74 @@ class OgImageCacheTest extends TestCase
     }
 
     #[Test]
-    public function a_card_is_rendered_once_and_then_served_from_the_cache(): void
+    public function a_product_card_is_never_cached(): void
     {
+        /*
+         * The reason this file was rewritten.
+         *
+         * Measured on production 2026-09-02: 113,626 product cards were holding
+         * 6.21GB of Redis on an 11.7GB box, which exhausted memory, drove the
+         * machine into swap and took the load average to 360.
+         *
+         * Volume was only half of it. A product card is fetched by a platform
+         * once and then held by that platform for a week, so the entry was
+         * written once and read almost never — the worst ratio in the system.
+         * There are 293,770 product groups and something walks all of them.
+         */
         $group = $this->product();
         $renderer = $this->countingRenderer();
 
         $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
         $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
+        $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
+
+        $this->assertSame(3, $renderer->renders, 'a product card must not be stored');
+    }
+
+    #[Test]
+    public function an_uncached_product_card_still_tells_the_platforms_to_cache_it(): void
+    {
+        /*
+         * Not caching server-side is a fact about our memory, and nothing the
+         * platforms need to know. Their week-long copy is what keeps the render
+         * count survivable now that every request draws: weakening these headers
+         * would turn one render per platform per week into one render per fetch.
+         */
+        $group = $this->product();
+
+        $this->get("/be-nl/og/p/{$group->id}.png")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('Cache-Control', 'max-age=604800, public');
+    }
+
+    #[Test]
+    public function a_product_card_that_is_redrawn_is_still_the_same_bytes(): void
+    {
+        // Rendering every time must not mean rendering *differently* every time:
+        // an ETag that changed per request would defeat every revalidating
+        // client, which is the other half of what makes the uncached path cheap.
+        $group = $this->product();
+
+        $first = $this->get("/be-nl/og/p/{$group->id}.png");
+        $second = $this->get("/be-nl/og/p/{$group->id}.png");
+
+        $this->assertSame(
+            md5((string) $first->getContent()),
+            md5((string) $second->getContent()),
+        );
+
+        $this->assertSame($first->headers->get('ETag'), $second->headers->get('ETag'));
+    }
+
+    #[Test]
+    public function a_card_is_rendered_once_and_then_served_from_the_cache(): void
+    {
+        $this->edition();
+        $renderer = $this->countingRenderer();
+
+        $this->get($this->url())->assertOk();
+        $this->get($this->url())->assertOk();
 
         // Asserted through the renderer rather than by timing a second request,
         // which is flaky on a loaded machine.
@@ -77,15 +166,15 @@ class OgImageCacheTest extends TestCase
     #[Test]
     public function editing_the_record_renders_a_new_card(): void
     {
-        $group = $this->product();
+        $edition = $this->edition();
 
-        $before = (string) $this->get("/be-nl/og/p/{$group->id}.png")->getContent();
+        $before = (string) $this->get($this->url())->getContent();
 
         // A retitle has to reach the card, or a shared link keeps announcing the
-        // old name for a month.
-        $group->forceFill(['title' => 'Bose QuietComfort Ultra'])->save();
+        // old theme for a month.
+        $edition->forceFill(['theme_title' => 'Alles voor de picknick'])->save();
 
-        $after = (string) $this->get("/be-nl/og/p/{$group->id}.png")->getContent();
+        $after = (string) $this->get($this->url())->getContent();
 
         $this->assertNotSame(md5($before), md5($after));
     }
@@ -106,19 +195,19 @@ class OgImageCacheTest extends TestCase
          */
         $this->freezeTime();
 
-        $group = $this->product();
+        $edition = $this->edition();
 
-        $first = (string) $this->get("/be-nl/og/p/{$group->id}.png")->getContent();
+        $first = (string) $this->get($this->url())->getContent();
 
-        $group->forceFill(['title' => 'Bose QuietComfort Ultra'])->save();
-        $second = (string) $this->get("/be-nl/og/p/{$group->id}.png")->getContent();
+        $edition->forceFill(['theme_title' => 'Alles voor de picknick'])->save();
+        $second = (string) $this->get($this->url())->getContent();
 
-        $group->forceFill(['title' => 'Sennheiser Momentum 4'])->save();
-        $third = (string) $this->get("/be-nl/og/p/{$group->id}.png")->getContent();
+        $edition->forceFill(['theme_title' => 'Alles voor het strand'])->save();
+        $third = (string) $this->get($this->url())->getContent();
 
         $this->assertSame(
-            $group->fresh()?->updated_at?->timestamp,
-            $group->updated_at?->timestamp,
+            $edition->fresh()?->updated_at?->timestamp,
+            $edition->updated_at?->timestamp,
             'the premise: all three edits share one updated_at',
         );
 
@@ -126,31 +215,36 @@ class OgImageCacheTest extends TestCase
     }
 
     #[Test]
-    public function an_aggregate_written_without_touching_the_record_renders_a_new_card(): void
+    public function a_write_that_never_touches_updated_at_still_renders_a_new_card(): void
     {
         /*
          * The second bug in the key, and the more expensive one.
          *
-         * "14 shops · from € 279,00" is drawn from `merchant_count` and
-         * `min_price`, which ingestion writes in bulk without moving
-         * `updated_at`. A product that went from five shops to fourteen went on
-         * announcing five to everyone it was shared with.
+         * Half of what a card draws is written without going through the model:
+         * a product's "14 shops · from € 279,00" comes from aggregates that
+         * ingestion writes in bulk, and a guide's footnote counts its items.
+         * Keyed on `updated_at`, a product that went from five shops to fourteen
+         * went on announcing five to everyone it was shared with.
+         *
+         * Hashing the drawn text is what fixes it, and that is a property of the
+         * key rather than of any one endpoint — so a raw write here stands in for
+         * the bulk write there.
          */
-        $group = $this->product();
+        $edition = $this->edition();
 
-        $before = (string) $this->get("/be-nl/og/p/{$group->id}.png")->getContent();
+        $before = (string) $this->get($this->url())->getContent();
 
-        DB::table('product_groups')
-            ->where('id', $group->id)
-            ->update(['merchant_count' => 14, 'min_price' => 24900]);
+        DB::table('daily_pick_sets')
+            ->where('id', $edition->id)
+            ->update(['theme_title' => 'Alles voor de picknick']);
 
         $this->assertSame(
-            $group->updated_at?->timestamp,
-            $group->fresh()?->updated_at?->timestamp,
-            'the premise: the aggregate write left updated_at alone',
+            $edition->updated_at?->timestamp,
+            $edition->fresh()?->updated_at?->timestamp,
+            'the premise: the raw write left updated_at alone',
         );
 
-        $after = (string) $this->get("/be-nl/og/p/{$group->id}.png")->getContent();
+        $after = (string) $this->get($this->url())->getContent();
 
         $this->assertNotSame(md5($before), md5($after));
     }
@@ -160,15 +254,16 @@ class OgImageCacheTest extends TestCase
     {
         // The other direction. Keying on content means a column the card never
         // shows must not cost a re-render, or a bulk recategorisation would
-        // redraw the entire catalogue.
-        $group = $this->product();
+        // redraw everything.
+        $edition = $this->edition();
         $renderer = $this->countingRenderer();
 
-        $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
+        $this->get($this->url())->assertOk();
 
-        $group->forceFill(['category' => 'audio/headphones'])->save();
+        // Drawn nowhere on the card, and not part of the URL either.
+        $edition->forceFill(['theme_slug' => 'barbecue-en-picknick'])->save();
 
-        $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
+        $this->get($this->url())->assertOk();
 
         $this->assertSame(1, $renderer->renders);
     }
@@ -188,15 +283,15 @@ class OgImageCacheTest extends TestCase
          * Keying on the commit costs one re-render per card per deploy and makes
          * a bad card impossible to inherit across one.
          */
-        $group = $this->product();
+        $this->edition();
         $renderer = $this->countingRenderer();
 
         config(['giftcoves.commit_sha' => 'aaaaaaa']);
-        $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
+        $this->get($this->url())->assertOk();
         $this->assertSame(1, $renderer->renders);
 
         config(['giftcoves.commit_sha' => 'bbbbbbb']);
-        $this->get("/be-nl/og/p/{$group->id}.png")->assertOk();
+        $this->get($this->url())->assertOk();
 
         $this->assertSame(2, $renderer->renders, 'the new build must not inherit the old build\'s card');
     }

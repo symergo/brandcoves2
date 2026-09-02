@@ -54,11 +54,41 @@ that adding `?title=` changes nothing about the bytes.
 Product cards are market-scoped like everything else: a card served under `/be-nl/` that describes a
 Dutch product would put a price nobody can pay into a Belgian timeline.
 
+## Product cards are never cached
+
+Every other card is cached for a month. The product card is drawn on every request, and that
+exception is the whole of this section.
+
+Measured on production 2026-09-02: **113,626 product cards were holding 6.21 GB of Redis** on an
+11.7 GB box, against a live keyspace of about 2 MB. That exhausted memory, drove the machine into
+swap, and took the load average to **360** — Coolify's own API began answering 504 and no deploy
+could run. The cards were 40–82 KB each with a 26-day TTL remaining.
+
+Volume is the obvious half: there are 293,770 product groups and something walks all of them, so
+the set has no ceiling. The decisive half is **hit rate**, and it runs against intuition.
+
+A product card is fetched by a platform once, and that platform then holds it for a week under the
+`max-age` we already send. So the cache entry is written once and read almost never — 62 KB kept for
+a month to save a single 58 ms render that will most likely never be asked for again. Measured, a
+card costs 58 ms and 62 KB; a full sweep of the catalogue is about 110 CPU-minutes, which is real
+but bounded, recurs only as often as a crawler chooses, and is spread across time rather than held
+in RAM all at once.
+
+The cards that stay cached are the ones that get *re-read*: 43 Coves and guides, 3,351 brands, one
+default per market. Bounded by editorial output, and fetched repeatedly by many platforms over their
+life. **Search result pages need no rule here** — they carry no card of their own and fall back to
+`/og/default.png`, which is one image per market.
+
+So the rule is: cache what gets re-read. Redis also carries `maxmemory 1gb` with `volatile-lru` as a
+backstop, set the same day, so no future long tail can repeat this. The headers are identical on both
+paths — not caching server-side is a fact about our memory and nothing the platforms need to know,
+and their week-long copy is what keeps the render count survivable now that every request draws.
+
 ## Caching, and the two things it got wrong first
 
-Cached for a month, keyed on **the exact text the card will draw** and **the commit that rendered
-it**. The response carries a week of `max-age` for platforms that respect it and an ETag for those
-that revalidate.
+For every card except the product one: cached for a month, keyed on **the exact text the card will
+draw** and **the commit that rendered it**. The response carries a week of `max-age` for platforms
+that respect it and an ETag for those that revalidate.
 
 The commit half was learned the hard way, in public, within an hour of shipping. A card's content
 comes from the row *and* from the code and language files that lay it out, and only the first of
@@ -86,7 +116,10 @@ different, and never otherwise. An edit that touches only a column the card neve
 recategorisation, say — correctly re-serves the cached bytes instead of redrawing the catalogue.
 
 Throttled at 60/minute despite the cache: a flood of requests for products nobody has shared is a
-flood of cache *misses*, and each miss rasterises type at 1200×630.
+flood of cache *misses*, and each miss rasterises type at 1200×630. That throttle stopped being a
+belt-and-braces measure on 2026-09-02 — now that product cards are never cached, it is the only
+thing bounding how fast a crawler can make us draw, and 60/minute caps that at about 3.5 CPU-seconds
+per minute per client. Do not raise it without replacing it with something else.
 
 ## The failure that would have been silent
 

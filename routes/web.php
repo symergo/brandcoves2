@@ -856,11 +856,17 @@ Route::prefix('{market}')->group(function () {
     | text: an endpoint that renders words from the query string would let
     | anyone publish "GiftCoves says ..." on our own domain.
     |
-    | Throttled despite being cached. The cache key includes the record's
-    | updated_at, so a flood of requests for products nobody has shared is a
-    | flood of cache misses, and each miss rasterises type at 1200×630. Sixty a
-    | minute is far more than every scraper on earth needs and far less than a
-    | useful amplification vector.
+    | Throttled, and for the product card the throttle is the only bound there
+    | is. Product cards are never cached — 113,626 of them held 6.21GB of Redis
+    | on 2026-09-02 and took the box into swap — so every request for one draws
+    | at 1200×630, measured at 58ms. Sixty a minute is about 3.5 CPU-seconds per
+    | minute per client: far more than every scraper on earth needs, and far
+    | less than a useful amplification vector. Raising it replaces the only
+    | ceiling on how fast a crawler can make us draw.
+    |
+    | The other cards are cached for a month, keyed on the text they draw and
+    | the commit that rendered them — not on updated_at, which was the first
+    | version of this key and wrong twice over. See the controller.
     */
     Route::middleware('throttle:60,1')->group(function (): void {
         Route::get('/og/default.png', [OgImageController::class, 'default'])->name('og.default');

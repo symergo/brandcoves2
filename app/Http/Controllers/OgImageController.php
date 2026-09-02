@@ -22,14 +22,36 @@ use Illuminate\Support\Number;
  * impersonation tool with a URL, and our own domain would be serving the
  * screenshot.
  *
- * ## Cached hard, on purpose
+ * ## Cached hard — except for products, which are never cached
  *
- * A card costs real CPU — GD lays out and rasterises type at 1200×630. It is
- * also completely stable between changes to the row behind it, and the only
- * clients are scrapers.
+ * A card costs real CPU — GD lays out and rasterises type at 1200×630, measured
+ * at 58ms and 62KB per card. It is also completely stable between changes to the
+ * row behind it, and the only clients are scrapers.
  *
- * So the bytes are cached under a key built from two things: **the exact text
- * the card will draw**, and **the commit that rendered it**.
+ * That argues for caching, and it is right for every card *except* the product
+ * one. Measured on production 2026-09-02: **113,626 product cards held 6.21GB of
+ * Redis** on an 11.7GB box, against a live keyspace of about 2MB. That exhausted
+ * memory, drove the machine into swap, and took the load average to 360 — the
+ * Coolify API started answering 504 and no deploy could run.
+ *
+ * The volume is the obvious half. The decisive half is **hit rate**, and it runs
+ * against intuition: a product card is fetched by a platform once and then held
+ * by that platform for a week under the `max-age` below. So the entry is written
+ * once and read almost never — 62KB kept for a month to save a single 58ms
+ * render that will most likely never be asked for again. There are 293,770
+ * product groups and something walks all of them.
+ *
+ * The cards that stay cached are the ones that get *re-read*: 43 Coves and
+ * guides, 3,351 brands, one default per market — bounded by editorial output,
+ * fetched repeatedly by many platforms over their life. Search result pages need
+ * no rule here; they fall back to the default card.
+ *
+ * So: cache what gets re-read. Redis also carries `maxmemory 1gb` with
+ * `volatile-lru` as a backstop, set the same day, so no future long tail can
+ * repeat this.
+ *
+ * The cached bytes are keyed on two things: **the exact text the card will
+ * draw**, and **the commit that rendered it**.
  *
  * The commit half is not belt and braces. A card's content comes from the row
  * *and* from the code and language files that lay it out, and only the first of
@@ -72,8 +94,9 @@ class OgImageController extends Controller
 
         $language = $current->get()->language();
 
-        return $this->card(
-            'product:'.$product->id,
+        // Rendered every time, deliberately. See the class docblock: this is the
+        // one card whose cache entry was written far more often than it was read.
+        return $this->render(
             $og,
             $product->title,
             __('site.og.product', [], $language),
@@ -192,6 +215,32 @@ class OgImageController extends Controller
             fn (): string => $og->render($title, $kicker, $footnote),
         );
 
+        return $this->respond($png);
+    }
+
+    /**
+     * The same card, drawn fresh and never stored. Used only by {@see self::product()}.
+     *
+     * Takes no `$scope`, because it has no key — and that is the point rather
+     * than an omission. A caller that wanted to cache this would have to go
+     * through {@see self::card()} and say which record it is for.
+     */
+    private function render(OgImage $og, string $title, ?string $kicker = null, ?string $footnote = null): Response
+    {
+        return $this->respond($og->render($title, $kicker, $footnote));
+    }
+
+    /**
+     * Identical headers either way.
+     *
+     * A product card is not cached *here*, which is a fact about our memory and
+     * nothing the platforms need to know: they still hold their copy for a week,
+     * and that week is what keeps the render count survivable now that every
+     * request draws. Weakening these headers for the uncached card would turn one
+     * render per platform per week into one render per fetch.
+     */
+    private function respond(string $png): Response
+    {
         return response($png, 200, [
             'Content-Type' => 'image/png',
             // A week at the platforms, and the key already changes with the
