@@ -15,8 +15,8 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -39,7 +39,22 @@ class FeedsTable
                     ->placeholder('— discovered on first run —')
                     ->searchable(),
 
-                IconColumn::make('enabled')->boolean()->sortable(),
+                /*
+                 * A switch, not an indicator.
+                 *
+                 * Turning one feed off was an Edit-form round trip, which is the
+                 * wrong shape for the moment it is needed: a single advertiser
+                 * dumping malformed rows, noticed while looking at this table.
+                 * The source-wide equivalent lives on Market supply; this is the
+                 * one-merchant version of the same decision.
+                 *
+                 * Off stops the next ingestion — IngestFeed returns on a
+                 * disabled feed — and leaves everything already ingested in
+                 * place. bc:withdraw-source is what removes those.
+                 */
+                ToggleColumn::make('enabled')
+                    ->sortable()
+                    ->tooltip('Off stops the next ingestion. Rows already ingested stay in search.'),
 
                 TextColumn::make('last_run_at')
                     ->label('Last run')

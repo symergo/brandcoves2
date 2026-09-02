@@ -1,5 +1,32 @@
 # Testing
 
+## Why 8 processes, and why the suite will not get much faster — measured 2026-09-01
+
+1,561 tests, 141 classes, ~63s wall at 8 processes on a 20-core machine. Do not re-run this
+experiment; these are the numbers.
+
+| Change | Result |
+|---|---|
+| 8 → 16 processes | 63s → 58s |
+| 8 → 20 processes | **worse** — abandoned after 400s, the box thrashes |
+| `fsync=off`, `synchronous_commit=off`, `shared_buffers=512MB` on the test Postgres | 63s → 62.7s. Reverted; a 1% gain does not justify the config surface |
+
+**The suite is PHP-bound, not database-bound**, which is why every database-side lever did nothing.
+Total CPU across workers is 446 seconds for 1,561 tests — a median of **0.22s each**, and that is
+Laravel booting the application and running an HTTP kernel, not Postgres answering queries. There is
+no slow-test problem to fix: the 18 slowest individual tests are the first test to run in each
+worker, each paying the same one-time ~6.8s cost of migrating that worker's database through all 81
+migrations.
+
+`php artisan schema:dump` is the standard fix for that 6.8s, and it does **not** work on this
+machine: Laravel shells out to `pg_dump` and `psql`, which exist only inside the Docker container,
+and Symfony invokes them through `cmd.exe` so a Git Bash shim is not found. Installing real Postgres
+client binaries would make it work — and would buy about 7 seconds of the 63, since all workers pay
+it simultaneously at the start. That is the whole prize, so it has not been done.
+
+**The conclusion to carry forward: the way to spend less time waiting on tests is to run fewer of
+them, not to make the suite faster.** Use `--filter`; the full run is for the moment before a push.
+
 894 tests, ~62,000 assertions, against a real PostgreSQL. The suite is the only thing standing
 between a commit and a deploy, because both branches auto-deploy and neither has a human gate.
 

@@ -24,6 +24,59 @@ made, not just what the code does — the reasoning is the part that cannot be r
 | Server | FrankenPHP | single process, no nginx/fpm split |
 | Deploy | Coolify on `51.75.78.173` | one branch, `main` → two apps |
 
+## Where things are
+
+[docs/map.md](../docs/map.md) answers "where does this change go" — the request path, the route
+surface, one line per service directory, which test covers what. Read it instead of `ls`-ing and
+grepping for the same twelve entry points; the transcripts show that ritual repeated in nearly every
+session, finding nothing that was not already knowable.
+
+## Shell facts — read before the first command
+
+Two shells with different rules, and the difference has cost more failed tool calls than any bug in
+this codebase: 57 `php: command not found`, 18 for `composer`, ~25 PowerShell filter failures and 50
+psql role errors across the session history, nearly all of them rediscovered from scratch.
+
+| Need | Bash tool | PowerShell tool |
+|---|---|---|
+| PHP | `php` | `php` |
+| Composer | `composer` | `composer` |
+| A test filter | `php artisan test --filter=X` | `php artisan test --% --filter=X` |
+
+- **`php` and `composer` work as bare names in Bash because of two shims in `~/bin`** — added
+  2026-09-01, each a one-line `exec php.bat "$@"`. Without them the bare names resolve to nothing:
+  Herd installs `php.bat` and `composer.bat` in `~/.config/herd/bin`, which *is* on PATH, but Git
+  Bash does not append Windows executable extensions to a bare name, and `command -v php.bat` ignores
+  the file for having no executable bit. So `php --version` answered `command not found` and
+  `which php.bat` found nothing, on a machine where `php.bat --version` printed 8.4.24 — 75 failed
+  calls' worth of that across the session history. `~/bin` is already first on the Git Bash PATH, so
+  the shims simply make the name mean what everyone types. `.githooks/pre-push` solves the same
+  problem independently, by probing by invocation rather than lookup.
+- **If `php` ever reports `command not found` again, `~/bin/php` has been lost** — recreate it rather
+  than working around it. In particular do not fall back to the absolute Herd path
+  (`C:/Users/bvand/.config/herd/bin/php84/php.exe`); it works, which is why it keeps getting adopted,
+  and it is a third spelling of one fact.
+- **PowerShell parses `|` inside `--filter="A|B"`** before PHP ever sees it and hands `B` to the
+  shell as a command, so the run dies with `'SearchTest' is not recognized` — a message about a
+  test name, which reads like a missing test rather than a quoting bug. Put `--%` before the
+  arguments, or run it from Bash.
+- **Local Postgres is `-U brandcoves`, never `-U postgres`.** That role does not exist, and
+  `FATAL: role "postgres" does not exist` reads like a broken container. Databases: `brandcoves`
+  (development), `brandcoves_test` (the suite; the parallel runner creates its own `_test_N` from
+  it). Credentials are all `brandcoves` and are in `.env`.
+
+  ```bash
+  docker compose exec -T postgres psql -U brandcoves -d brandcoves -c '<sql>'
+  ```
+
+  Prefer `docker compose exec` over `docker exec brandcoves2-postgres-1` so the container name is
+  never guessed — both spellings are in circulation and only one survives a `docker compose down`.
+- **Clean up scratch databases.** `bc_del`, `bc_fresh` and friends are still sitting in Postgres from
+  sessions that made a throwaway database and never dropped it. `dropdb -U brandcoves` when done.
+
+The command blocks below are written in canonical form (`php artisan …`, `composer …`); the table
+above says how to spell that in the shell you are actually holding.
+
 ## Commands
 
 ```bash
@@ -31,8 +84,8 @@ docker compose up -d          # postgres :5432, redis :6379, mailpit :8025
 composer dev                  # serve + queue + vite + ssr, all at once
 php artisan migrate --force
 composer lint                 # Pint
-composer test                 # parallel, 8 processes — 39s, against real Postgres
-composer test:serial          # one process — 150s. For when parallelism is the suspect
+composer test                 # parallel, 8 processes — ~63s, against real Postgres
+composer test:serial          # one process. For when parallelism is the suspect
 git config core.hooksPath .githooks   # once per clone: run the suite on push
 ```
 
@@ -254,11 +307,6 @@ so a deliberate release is distinguishable from an automatic one in the audit tr
 in `.claude/coolify_api.api` (gitignored) as `KEY=<token>`, and the API base is
 `http://51.75.78.173:8000` — plain HTTP, port 8000, not the Coolify UI hostname.
 
-> **The endpoint refuses the stored webhook, not the request.** This file used to say
-> `/api/v1/deploy` answers 401, which is true only of `DeployTrigger`, which sends no
-> `Authorization` header by design. With a Bearer token it works, and that is what made a
-> manually-gated production practical at all.
-
 > **Auto-deploy cannot be read back, so trust behaviour over configuration.** The API exposes no
 > auto-deploy field on `GET` for an application, and `PATCH` rejects it — it is a UI-only setting.
 > The only proof it is off is moving `main` and watching production not rebuild.
@@ -282,69 +330,26 @@ in `.claude/coolify_api.api` (gitignored) as `KEY=<token>`, and the API base is
 > files, so a clean-tree gate would never pass. Git will happily ship commit A while B and C sit on
 > the laptop, and the failure mode is not a missing deploy but an incoherent one.
 
-> **`giftcoves.com` is attached and serving.** Verified 2026-08-29: it holds a valid Let's Encrypt
-> certificate and answers `/health` with 200 in ~0.2s, as do `www.giftcoves.com` and
-> `brandcoves.com`. The earlier note here — DNS pointed but no Traefik route and no
-> certificate — is obsolete.
->
-> **What is still outstanding is `canonical_host` on production.** All three hosts serve directly;
-> `brandcoves.com` does **not** 301 onto `giftcoves.com`, it just answers. So the same site is live
-> on three domains at once, which is a duplicate-content problem now that `ROBOTS_ALLOW=true` there.
->
-> **Staging does not redirect either, and the reason was never Coolify.** This file used to say it
-> did. `CANONICAL_HOST` and `LEGACY_HOSTS` were absent from `docker-compose.coolify.yml` until
-> 2026-08-31, so whatever either app held for them never reached PHP — verified by request:
-> `brandcoves.com`, `www.giftcoves.com` and `staging.brandcoves.com` all answered 200 with no
-> redirect. The AWIN_VDB failure exactly, in a second place. Both now pass through, and
-> `ConfigContractTest` grew a rule for settings that default to `''`, which is the blind spot that
-> hid it: an empty default is indistinguishable from a value that never arrived.
->
-> **The `APP_NAME` warning that used to be here is spent.** Production already issues a
-> `giftcoves-session` cookie, so `APP_NAME` is already `GiftCoves` — there is nothing left to
-> change and nobody to log out. (The mechanism, if it ever matters again: `config/session.php`
-> derives the cookie from `Str::slug(APP_NAME)`, and `SESSION_COOKIE` is not set, so renaming the
-> app renames the cookie.) All four Google redirect URIs are registered too, `giftcoves.com`
-> included, so moving `APP_URL` no longer breaks sign-in.
->
-> What is left is one deploy: set `APP_URL=https://giftcoves.com`, `CANONICAL_HOST=giftcoves.com`
-> and `LEGACY_HOSTS=brandcoves.com,www.brandcoves.com,www.giftcoves.com` together on
-> `GiftCoves-prod`. `APP_URL` still points at `brandcoves.com`, which is why the sitemap served from
-> `giftcoves.com` emits `brandcoves.com` URLs. Keep `giftcoves.com` out of `LEGACY_HOSTS` — the
-> canonical host redirecting to itself is a loop. See
-> [docs/features/rebrand.md](docs/features/rebrand.md).
->
-> **The Coolify applications were renamed to `GiftCoves-*`**, which this file previously said would
-> not happen, because renaming invalidates every issued deploy webhook. That Coolify behaviour is
-> real and was simply overridden; staging has deployed since (built `2026-08-29`), so its webhook
-> survived or was re-issued. Production's is unproven — it has not built since `2026-08-16`.
+> **One thing is still outstanding: production does not redirect to a canonical host.**
+> `giftcoves.com`, `www.giftcoves.com` and `brandcoves.com` all serve directly — nothing 301s — so
+> the same site is live on three domains with `ROBOTS_ALLOW=true`, which is a duplicate-content
+> problem. The fix is one deploy setting three variables together on `GiftCoves-prod`:
+> `APP_URL=https://giftcoves.com`, `CANONICAL_HOST=giftcoves.com`,
+> `LEGACY_HOSTS=brandcoves.com,www.brandcoves.com,www.giftcoves.com`. `APP_URL` still points at
+> `brandcoves.com`, which is why the sitemap served from `giftcoves.com` emits `brandcoves.com`
+> URLs. Keep `giftcoves.com` **out** of `LEGACY_HOSTS` — the canonical host redirecting to itself is
+> a loop. See [docs/features/rebrand.md](docs/features/rebrand.md).
 
-> **The `staging` branch is gone, so it can no longer drift.** It was deleted on 2026-08-31 once
-> `main` had been fast-forwarded to it and `GiftCoves-staging` repointed at `main`. The drift it
-> used to cause was not hypothetical: `main` sat four commits behind on 2026-08-31 including the
-> OVH mail fix, so production could not send a magic link at all, looked perfectly healthy, and
-> nothing anywhere said so. Check `/health` on both hosts before assuming a fix is live — `commit`
-> for which code, `started` for whether the container actually restarted.
+> **After any deploy, read `/health` on the host you changed.** `commit` says which code is serving
+> and `started` says whether the container actually restarted; `built` is cacheable and a stale
+> value there is not evidence of a failed deploy. This is the check that would have caught
+> production being unable to send a magic link for a fortnight while `/health` reported `ok`.
 
-> **Adopted on 2026-08-31.** The one-branch model in
-> [docs/deployment.md](docs/deployment.md) is now what runs: both apps track `main`, staging deploys
-> every push, production waits for a trigger. It was taken in the order that keeps a staging pass in
-> front of production — auto-deploy **off** on `GiftCoves-prod` first, `main` fast-forwarded to
-> `staging`, `GiftCoves-staging` repointed to `main`, and only then the `staging` branch deleted.
-> Reversed, both apps would have tracked `main` with auto-deploy on and every commit would have
-> reached real visitors with no staging pass at all.
->
-> It was unblocked by a correction rather than a change. This file used to say adopting it needs "a
-> production deploy path that works without the Coolify UI" and that none existed, because
-> `DeployTrigger` sends no `Authorization` header and the stored endpoint answers 401. **That is
-> true of the webhook and false of the endpoint** — with a Bearer token it returns 200 and queues a
-> deploy.
->
-> The costs are real and were accepted knowingly: the token can redeploy, read every environment
-> variable and reassign domains on **both** applications, so where it lives matters more now that it
-> is the routine mechanism; and production is an authenticated request rather than `git push`. That
-> friction is the point. What it buys is that branch drift cannot happen, because there is no second
-> branch to drift — and the drift was not hypothetical, it had just cost a fortnight of production
-> being unable to send mail.
+The history behind all of this — how the one-branch model was adopted and in what order, why the
+Bearer token works where the stored webhook does not, what the nightly Docker prune was doing to
+build times, and the five gotchas from standing staging up — is in
+[docs/deployment.md](docs/deployment.md). It is kept there rather than here because it is read once
+when something surprises you, not on every session.
 
 - **`VITE_*` is baked into the client bundle at build time.** In Coolify these must be ticked
   **Build Variable**. Left as runtime vars they are `undefined` in the browser: server-rendered pages

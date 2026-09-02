@@ -14,6 +14,7 @@ use App\Services\Connectors\Offer;
 use App\Services\Connectors\PopularChart;
 use App\Services\Connectors\PopularityConnector;
 use App\Services\Connectors\RateLimiter;
+use App\Services\Connectors\SourceSwitch;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -40,7 +41,8 @@ class BolConnector implements LiveConnector, PopularityConnector
 
     public function supports(Market $market): bool
     {
-        return (bool) config('giftcoves.connectors.bol.enabled')
+        return app(SourceSwitch::class)->isEnabled(Source::Bol, $market)
+            && (bool) config('giftcoves.connectors.bol.enabled')
             && filled(config('giftcoves.connectors.bol.client_id'))
             && filled(config('giftcoves.connectors.bol.client_secret'))
             // bol does not operate in Spain, so that market is Awin-only. A null

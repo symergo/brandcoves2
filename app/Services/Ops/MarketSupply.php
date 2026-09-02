@@ -9,6 +9,7 @@ use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\LiveConnector;
+use App\Services\Connectors\SourceSwitch;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -64,7 +65,10 @@ class MarketSupply
 
     private const CACHE_KEY = 'bc:market-supply-counts';
 
-    public function __construct(private readonly ConnectorRegistry $registry) {}
+    public function __construct(
+        private readonly ConnectorRegistry $registry,
+        private readonly SourceSwitch $switch,
+    ) {}
 
     /**
      * The sources worth a column, in enum order.
@@ -156,6 +160,33 @@ class MarketSupply
         $lastRun = $totals['last_run_at'] ?? null;
 
         $notes = [];
+
+        /*
+         * The panel switch outranks the feed rows, because it outranks them at
+         * run time too: {@see \App\Jobs\IngestFeed} returns before touching a
+         * feed whose source is switched off for its market, however many enabled
+         * rows sit underneath. A cell reading "5 enabled" while nothing is being
+         * downloaded would be the page contradicting the pipeline.
+         *
+         * The counts still render as a note, because they are what comes back
+         * when it is switched on again.
+         */
+        if (! $this->switch->isEnabled($source, $market)) {
+            return [
+                'source' => $source,
+                'kind' => 'feed',
+                'status' => 'off',
+                'headline' => 'switched off in the panel',
+                'notes' => array_values(array_filter([
+                    'Ingestion skips this market until it is switched back on.',
+                    $total > 0 ? $total.' feed(s) registered, '.$enabled.' of them enabled' : 'no feeds registered',
+                    // The trap this page exists to stop somebody walking into:
+                    // the catalogue does not empty when a source is switched off.
+                    'Rows already ingested stay in search — bc:withdraw-source is what suppresses those.',
+                ])),
+                'earning' => null,
+            ];
+        }
 
         [$status, $headline] = match (true) {
             $total === 0 => ['absent', 'no feeds registered'],
@@ -272,6 +303,20 @@ class MarketSupply
         $off = static fn (string $path): bool => ! config('giftcoves.connectors.'.$path);
 
         $env = strtoupper(str_replace('-', '_', $market->value));
+
+        /*
+         * The admin switch short-circuits, and says so in its own words.
+         *
+         * It is deliberately not folded in with the reasons below. Those are
+         * facts about the integration — a credential that never arrived, a
+         * marketplace eBay does not serve — and each names an environment
+         * variable to go and fix. This one is a decision somebody took in this
+         * panel, and reporting it as "switched off in config" would send the
+         * next person to an env var that is set correctly.
+         */
+        if (! $this->switch->isEnabled($source, $market)) {
+            return ['switched off for this market in the panel — toggle it in the Sources section above'];
+        }
 
         return array_values(array_filter(match ($source) {
             Source::Bol => [

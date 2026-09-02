@@ -12,6 +12,7 @@ use App\Models\Feed;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\User;
+use App\Services\Connectors\SourceSwitch;
 use App\Services\Ops\MarketSupply;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -109,6 +110,55 @@ class MarketSupplyTest extends TestCase
         foreach (Market::values() as $market) {
             $response->assertSee($market);
         }
+    }
+
+    #[Test]
+    public function a_source_switched_off_in_the_panel_says_so_in_its_own_words(): void
+    {
+        $this->feed(Market::BeNl, enabled: true, ranAt: now()->subHour()->toDateTimeString());
+
+        app(SourceSwitch::class)->set(Source::Awin, Market::BeNl, false);
+
+        $cell = $this->cell(Market::BeNl, Source::Awin);
+
+        /*
+         * The distinction the whole switch depends on staying legible.
+         *
+         * "Switched off in the panel" and "switched off in config" are different
+         * facts with different fixes, and the second sends somebody to an
+         * environment variable that is set perfectly well. A feed cell reporting
+         * "1 enabled" here would be worse still: the rows *are* enabled, and
+         * nothing is being downloaded.
+         */
+        $this->assertSame('off', $cell['status']);
+        $this->assertSame('switched off in the panel', $cell['headline']);
+
+        // The catalogue is not retracted, and the page has to say which tool
+        // does that — otherwise the obvious next assumption is that switching
+        // off emptied search, and it did not.
+        $this->assertStringContainsString(
+            'bc:withdraw-source',
+            implode(' ', $cell['notes']),
+        );
+    }
+
+    #[Test]
+    public function switching_a_live_source_off_is_not_reported_as_a_missing_credential(): void
+    {
+        app(SourceSwitch::class)->set(Source::Ebay, Market::BeNl, false);
+
+        $cell = $this->cell(Market::BeNl, Source::Ebay);
+
+        $this->assertSame('off', $cell['status']);
+
+        $notes = implode(' ', $cell['notes']);
+
+        // blockers() short-circuits on the switch, so none of the environment
+        // advice fires. A cell telling somebody EBAY_CLIENT_ID is missing when
+        // it is present and correct is how a five-minute fix becomes an hour.
+        $this->assertStringContainsString('panel', $notes);
+        $this->assertStringNotContainsString('EBAY_CLIENT_ID', $notes);
+        $this->assertStringNotContainsString('EBAY_MARKETPLACE', $notes);
     }
 
     #[Test]

@@ -10,6 +10,7 @@ use App\Enums\Source;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
 use App\Services\Connectors\RateLimiter;
+use App\Services\Connectors\SourceSwitch;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
@@ -68,7 +69,8 @@ class TradedoublerConnector implements LiveConnector
 
     public function supports(Market $market): bool
     {
-        return (bool) config('giftcoves.connectors.tradedoubler.enabled')
+        return app(SourceSwitch::class)->isEnabled(Source::Tradedoubler, $market)
+            && (bool) config('giftcoves.connectors.tradedoubler.enabled')
             && filled(config('giftcoves.connectors.tradedoubler.token'))
             // No scoping for this market means skip. Never "ask unscoped" —
             // see the note on tradedoublerQuery(): an unrecognised filter is

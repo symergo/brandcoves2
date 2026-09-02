@@ -10,6 +10,7 @@ use App\Enums\Source;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
 use App\Services\Connectors\RateLimiter;
+use App\Services\Connectors\SourceSwitch;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -61,7 +62,8 @@ class EbayConnector implements LiveConnector
 
     public function supports(Market $market): bool
     {
-        return (bool) config('giftcoves.connectors.ebay.enabled')
+        return app(SourceSwitch::class)->isEnabled(Source::Ebay, $market)
+            && (bool) config('giftcoves.connectors.ebay.enabled')
             && filled(config('giftcoves.connectors.ebay.client_id'))
             && filled(config('giftcoves.connectors.ebay.client_secret'))
             // A blank marketplace means "do not ask eBay about this market",

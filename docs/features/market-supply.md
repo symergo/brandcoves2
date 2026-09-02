@@ -5,11 +5,16 @@ status: Active
 date_added: 2026-08-30
 ---
 
+
 # Market supply
 
 **One screen that answers "what sells into this market", for feed and live sources together.**
 
 `/admin/market-supply`, in the **Catalogue** group.
+
+> The grid at the top of this page also **switches sources off per market** — see
+> [source-switch.md](source-switch.md) for what off means, and for the catalogue it
+> deliberately does not retract.
 
 ## The problem it solves
 

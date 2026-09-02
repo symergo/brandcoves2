@@ -26,6 +26,68 @@
         </x-filament::section>
     @endif
 
+    {{--
+      The switches, above the diagnosis they change.
+      Deliberately its own grid rather than a control tucked into each status
+      cell: the table below says what IS happening, this says what we have
+      ASKED for, and a reader has to be able to tell those apart. A source can
+      be switched on here and still dark below — no credential, no marketplace,
+      backing off after a 429 — and that gap is the most useful thing the two
+      grids show together.
+    --}}
+    <x-filament::section heading="Sources" collapsible>
+        <x-slot name="description">
+            Off means we stop asking. It does not remove what a source already
+            stored &mdash; those offers stay in search until
+            <code class="rounded bg-gray-100 px-1 py-0.5 dark:bg-gray-800">bc:withdraw-source</code>
+            suppresses them, and that command refuses to run while the source is
+            still switched on here.
+        </x-slot>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <tr>
+                        <th class="py-2 pr-4">Source</th>
+                        @foreach (\App\Enums\Market::cases() as $market)
+                            <th class="py-2 pr-4 font-mono normal-case">{{ $market->value }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-100 dark:divide-white/10">
+                    @foreach ($sources as $source)
+                        <tr>
+                            <td class="py-2 pr-4">
+                                <span class="font-medium">{{ $source->label() }}</span>
+                                <span class="ml-1 text-xs text-gray-400 dark:text-gray-500">
+                                    {{ $source->isFeed() ? 'ingested' : 'live' }}
+                                </span>
+                            </td>
+
+                            @foreach (\App\Enums\Market::cases() as $market)
+                                @php($on = $this->isEnabled($source, $market))
+                                <td class="py-2 pr-4">
+                                    <button
+                                        type="button"
+                                        wire:click="toggle('{{ $source->value }}', '{{ $market->value }}')"
+                                        wire:loading.attr="disabled"
+                                        @class([
+                                            'rounded px-2 py-1 text-xs font-medium transition',
+                                            'bg-success-50 text-success-700 hover:bg-success-100 dark:bg-success-400/10 dark:text-success-400' => $on,
+                                            'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-white/5 dark:text-gray-400' => ! $on,
+                                        ])
+                                        title="{{ $on ? 'Switch off' : 'Switch on' }} {{ $source->label() }} for {{ $market->value }}"
+                                    >{{ $on ? 'on' : 'off' }}</button>
+                                </td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </x-filament::section>
+
     <x-filament::section>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">

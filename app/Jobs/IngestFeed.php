@@ -9,6 +9,7 @@ use App\Enums\ProductStatus;
 use App\Models\Feed;
 use App\Models\IngestionJob;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Connectors\SourceSwitch;
 use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -54,6 +55,26 @@ class IngestFeed implements ShouldQueue
         $feed = Feed::query()->find($this->feedId);
 
         if ($feed === null || ! $feed->enabled) {
+            return;
+        }
+
+        /*
+         * The per-market source switch, checked here rather than left to
+         * `supports()`.
+         *
+         * Nothing on this path ever calls `supports()`. The scheduler dispatches
+         * straight from `Feed::query()->enabled()`, and so do `bc:ingest` and the
+         * "Ingest now" button — so a source switched off for a market in the
+         * panel would keep downloading its feeds on the usual timetable, which is
+         * the one thing switching it off is meant to stop. This is the choke
+         * point all three share.
+         *
+         * Deliberately a silent return, like the disabled-feed check above it: an
+         * administrator turning a source off is not a fault, and a job that
+         * failed here would retry twice and land in the failed table for doing
+         * exactly what it was told.
+         */
+        if (! app(SourceSwitch::class)->isEnabled($feed->source, $feed->market)) {
             return;
         }
 

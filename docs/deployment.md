@@ -46,6 +46,21 @@ end the same way — production quietly serving old code while looking perfectly
 > application and rejects it on `PATCH`; it is a UI-only setting. The only proof it is off is moving
 > `main` and watching production not rebuild, which is how it was confirmed on 2026-08-31.
 
+> **DANGER: `applications/{uuid}/stop`, `/start` and `/restart` execute on a plain `GET`.** They are
+> not read-only probes. Requesting `/stop` to find out whether the route exists **stops the
+> application** — that took `giftcoves.com` down for about five minutes on 2026-08-31. Never probe an
+> action endpoint against production; use `GiftCoves-staging` if a route has to be discovered at all.
+> `/start` queues a full **rebuild** rather than starting a container, so it is not a cheap way to
+> apply changed runtime environment variables.
+
+Two smaller facts, recorded so they are not re-derived. The applications were renamed to
+`GiftCoves-*` even though renaming is documented to invalidate every issued deploy webhook; staging
+has deployed since, so its webhook survived or was re-issued, and production's is unproven because it
+has not built from a webhook since 2026-08-16 — which no longer matters, since production deploys by
+API. And `APP_NAME` is already `GiftCoves` on both hosts, verified from outside by the
+`giftcoves-session` cookie that `config/session.php` derives from `Str::slug(APP_NAME)`; there is
+nothing left to rename and nobody to log out.
+
 ## Pushing is a deploy, so pushing is asked for
 
 Nobody — and no agent — pushes `staging` or `main` on their own initiative. Work gets committed

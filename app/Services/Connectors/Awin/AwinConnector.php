@@ -10,6 +10,7 @@ use App\Enums\Source;
 use App\Models\Feed;
 use App\Services\Connectors\FeedConnector;
 use App\Services\Connectors\Offer;
+use App\Services\Connectors\SourceSwitch;
 use App\Services\Identity\Gtin;
 use Generator;
 use Illuminate\Support\Facades\Http;
@@ -83,7 +84,8 @@ class AwinConnector implements FeedConnector
 
     public function supports(Market $market): bool
     {
-        return (bool) config('giftcoves.connectors.awin.enabled')
+        return app(SourceSwitch::class)->isEnabled(Source::Awin, $market)
+            && (bool) config('giftcoves.connectors.awin.enabled')
             && filled(config('giftcoves.connectors.awin.api_token'))
             && Feed::query()->enabled()->where('market', $market->value)->exists();
     }
