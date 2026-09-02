@@ -296,7 +296,31 @@ services:
     restart: unless-stopped
     # Queues live here. Without persistence, a restart loses every queued job —
     # including a half-finished ingestion run.
-    command: ["redis-server", "--appendonly", "yes"]
+    #
+    # The memory cap is declared HERE rather than applied with CONFIG SET,
+    # because CONFIG SET does not survive a container recreate and every deploy
+    # recreates this container. That is not hypothetical: the cap was set by
+    # hand on 2026-09-02 while recovering from the incident below, and the very
+    # next production deploy silently reverted it to `maxmemory 0` /
+    # `noeviction` — the exact configuration that allowed the incident.
+    #
+    # What it prevents: 113,626 cached social cards reached 6.21GB on an 11.7GB
+    # box, exhausted memory, drove the machine into swap and took the load
+    # average to 360. With no cap, Redis has no reason to stop.
+    #
+    # volatile-lru, not allkeys-lru, and the distinction is the queue: it evicts
+    # only keys carrying a TTL. Cache entries have one; Laravel's queue lists do
+    # not, so a full Redis sheds cold cache rather than quietly dropping a
+    # half-finished ingestion run — which is the thing the line above exists to
+    # protect.
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 1gb
+      - --maxmemory-policy
+      - volatile-lru
     volumes:
       - redis_data:/data
     # Healthy means "serving commands", not "the process is up".
