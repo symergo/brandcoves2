@@ -21,9 +21,10 @@ use App\Support\CurrentMarket;
  * tokens, pair the paragraphs with their products, drop what is out of stock"
  * is three months away from a bug that exists on one page and not the other.
  *
- * What is *not* here: the archive strip and the deals column. Those are the
- * daily column's furniture, and a persona has neither an archive nor a reason
- * to sit beside today's discounts.
+ * What is *not* here: the deals column, which is the daily column's own
+ * furniture — a persona stands for a year and has no reason to sit beside this
+ * fortnight's discounts. Nor the rail and the cards under the article, which
+ * every Cove kind carries: see App\Services\Cove\CoveRail.
  */
 class EditionPresenter
 {

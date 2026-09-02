@@ -60,7 +60,7 @@ before, each answering a question someone demonstrably asked.
 
 ## The column beside the article
 
-Two cards, from `lg` up, stacking under the article below it. The article keeps
+Three cards, from `lg` up, stacking under the article below it. The article keeps
 its `max-w-2xl` measure — prose past roughly 70 characters a line is harder to
 read — and the column uses the space that cap was already leaving empty.
 
@@ -76,7 +76,9 @@ headline, a void, and then the products.
 
 With the finds and the guide inside the column it is the taller of the two
 whatever the copy does, which is the way round that cannot leave a hole. Only
-the subscribe box and the archive stay full width, below both columns.
+the cards for the recent editions and the subscribe box under them stay full width,
+below both columns — see [cove-rail.md](cove-rail.md), which is where the archive strip that used to
+run across the bottom of this page went.
 
 **Biggest drops right now.** "Newest highest discounts" is two orderings that
 fight: the deepest discount in the catalogue may be a month old, and the newest

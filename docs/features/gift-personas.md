@@ -31,12 +31,14 @@ What differs, and why:
 | Job | `BuildDailyEdition` | `BuildPersonaCove` |
 | Claims a theme slot | yes (`used_themes`) | **no** |
 | Enters the 90-day repeat memory | yes | **no** |
-| Page furniture | archive strip, deals column, subscribe box | none of it |
+| Page furniture | deals column, subscribe box | neither — but the same rail and cards |
 
 The last three are the same reasoning from three angles. A persona is not part of the daily column's
 rhythm: it does not consume a theme the rotation would otherwise use for sixty days, its products do
-not disappear from three months of editions, and it does not carry an archive because there is
-nothing to catch up on.
+not disappear from three months of editions, and it carries no subscribe box because there is
+nothing to catch up on. What it does carry, since the rail was shared out across every Cove kind, is
+the Gift Cove card, the category rail and the cards offering the other personas — see
+[cove-rail.md](cove-rail.md).
 
 `BuildPersonaCove` is a separate job rather than a flag on `BuildDailyEdition` for the same reason:
 that job also mines guide topics and seeds the seasonal ones, both of which are about the *day*. An
@@ -63,7 +65,7 @@ A persona has no drop date. So the moment the first one existed, every
 
 - the front page's "today"
 - `/daily` with no date
-- the top of the archive strip
+- the top of the recent-editions cards
 - the sitemap, which would have emitted `/{market}/daily/` with an empty segment
 
 None of those would have errored. Nothing would have looked broken. The wrong page would simply have

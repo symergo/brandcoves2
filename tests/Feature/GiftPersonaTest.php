@@ -122,8 +122,17 @@ class GiftPersonaTest extends TestCase
     }
 
     #[Test]
-    public function a_persona_is_not_in_the_daily_archive_strip(): void
+    public function a_persona_is_not_offered_as_another_edition(): void
     {
+        /*
+         * The cards under an edition offer the other editions. A persona has
+         * no drop date, and `ORDER BY drop_date DESC` sorts NULLS FIRST, so a
+         * band that forgot `daily()` would head that list with a persona —
+         * silently, and on the page the whole column is named after.
+         *
+         * This asserted the archive strip until the strip became those cards;
+         * same query, same trap, one list instead of two.
+         */
         $this->seedFinds();
 
         app(EditionBuilder::class)->build(Market::BeNl, CarbonImmutable::yesterday());

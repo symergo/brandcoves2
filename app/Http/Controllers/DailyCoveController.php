@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
+use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
@@ -34,7 +35,11 @@ class DailyCoveController extends Controller
 {
     // The presentation is shared with the gift-ideas pages: a persona is the
     // same object served at a permanent URL, and the two must look identical.
-    public function __construct(private readonly EditionPresenter $presenter) {}
+    // The rail is shared with every Cove page for the same reason.
+    public function __construct(
+        private readonly EditionPresenter $presenter,
+        private readonly CoveRail $rail,
+    ) {}
 
     public function __invoke(
         Request $request,
@@ -79,7 +84,17 @@ class DailyCoveController extends Controller
             'finds' => $this->presenter->finds($edition, $current),
             'guide' => $this->presenter->guide($edition, $current),
             'deals' => $this->deals($current),
-            'archive' => $this->archive($current, $edition),
+
+            /*
+             * Recent editions, and more products from today's categories.
+             *
+             * This replaced the archive strip that used to run across the
+             * bottom of the page. The rail's Cove band *is* that strip — the
+             * same query, the same handful of editions, the same links — so
+             * rendering both would put one list on the page twice, once beside
+             * the reading and once eight hundred pixels below it.
+             */
+            'rail' => $this->rail->for($edition, $current),
         ]);
     }
 
@@ -232,30 +247,6 @@ class DailyCoveController extends Controller
         }
 
         return redirect($current->url('daily/'.$edition->slug), 301);
-    }
-
-    /**
-     * Recent editions, for the archive strip.
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function archive(CurrentMarket $current, DailyPickSet $edition): array
-    {
-        return DailyPickSet::query()
-            ->forMarket($current->get())
-            ->daily()
-            ->published()
-            ->where('id', '!=', $edition->id)
-            ->orderByDesc('drop_date')
-            ->limit(7)
-            ->get(['drop_date', 'slug', 'theme_title'])
-            ->map(fn (DailyPickSet $set) => [
-                'date' => $set->drop_date->toDateString(),
-                'label' => $set->drop_date->format('j M'),
-                'theme' => $set->theme_title,
-                'url' => $current->url('daily/'.$set->slug),
-            ])
-            ->all();
     }
 
     private function seo(DailyPickSet $edition, CurrentMarket $current, bool $isArchive, bool $preview = false): void

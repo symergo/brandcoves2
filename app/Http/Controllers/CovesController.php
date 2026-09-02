@@ -22,7 +22,7 @@ use Inertia\Response;
  * All Coves: every Cove this market has published, in one place.
  *
  * The three Cove surfaces each had an index of their own and there was nowhere
- * that held all of them. `/daily` is today's edition with a short archive strip,
+ * that held all of them. `/daily` is today's edition with the recent ones under it,
  * `/gift-ideas` is the persona shelf and `/guides` is the article archive — so a
  * reader who had understood that "Cove" is one thing with several shapes had no
  * page that showed them the shape of the whole thing. The header said Cove five
@@ -263,8 +263,8 @@ class CovesController extends Controller
              *
              * Daily points at `/daily`, which is today's edition rather than an
              * index — that is what "all the editions" means here, because the
-             * archive strip lives on it and every past edition keeps its own
-             * URL. Naming a route that does not exist would be worse than
+             * recent editions are listed on it and every past edition keeps
+             * its own URL. Naming a route that does not exist would be worse than
              * pointing at the page that actually holds them.
              */
             'url' => $current->url(match ($key) {
@@ -283,8 +283,7 @@ class CovesController extends Controller
                  * "whatever addresses it", and for a Daily that is the slug:
                  * `/daily/{date}` exists but 301s onto `/daily/{slug}`, so
                  * linking by date would send every click on this page through a
-                 * redirect. The archive strip on `/daily` already links this
-                 * way.
+                 * redirect. The cards under `/daily` already link this way.
                  */
                 'url' => $current->url($cove->kind->path((string) $cove->slug)),
                 /*
@@ -293,9 +292,9 @@ class CovesController extends Controller
                  * current — so printing its publication date would invite the
                  * reader to treat an old one as stale.
                  *
-                 * Formatted here, as `DailyCoveController`'s archive strip does
-                 * it. With the year, because this list reaches back further than
-                 * that strip does and "3 Feb" alone is ambiguous across one.
+                 * Formatted here, as `App\Services\Cove\CoveRail` does it.
+                 * With the year, because this list reaches back further than one
+                 * and "3 Feb" alone is ambiguous across two of them.
                  */
                 'date' => $cove->drop_date?->format('j M Y'),
             ])->all(),

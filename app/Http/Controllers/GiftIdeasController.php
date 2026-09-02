@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\DailyPickSet;
+use App\Services\Cove\CoveRail;
 use App\Services\Cove\EditionPresenter;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\StructuredData;
@@ -36,7 +37,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class GiftIdeasController extends Controller
 {
-    public function __construct(private readonly EditionPresenter $presenter) {}
+    public function __construct(
+        private readonly EditionPresenter $presenter,
+        private readonly CoveRail $rail,
+    ) {}
 
     /** The shelf. */
     public function index(CurrentMarket $current, string $market): Response
@@ -116,6 +120,16 @@ class GiftIdeasController extends Controller
             ],
             'finds' => $this->presenter->finds($persona, $current),
             'guide' => $this->presenter->guide($persona, $current),
+
+            /*
+             * The other personas, and more of what this one is about.
+             *
+             * A persona used to end in one link back to the shelf it came off,
+             * which made it the narrowest dead end of the three Cove pages: a
+             * reader who arrived here from search left with six products and
+             * one link.
+             */
+            'rail' => $this->rail->for($persona, $current),
         ]);
     }
 

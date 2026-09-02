@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Services\Cove\CoveRail;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
@@ -212,6 +213,20 @@ class GuideController extends Controller
              * the page to a crawler to save the client one filter.
              */
             'items' => $items,
+
+            /*
+             * The other articles, and more products from this one's categories.
+             *
+             * This page had no onward navigation at all — no archive strip, no
+             * "back to the shelf", nothing — which matters most here of the
+             * three: an article is the Cove search actually lands people on,
+             * and it was the one that told them least about what else is here.
+             *
+             * A Shop Cove renders this page too, and gets its own band: the
+             * rail asks what kind this Cove is rather than which controller
+             * method built it.
+             */
+            'rail' => app(CoveRail::class)->for($guide, $current),
         ]);
     }
 

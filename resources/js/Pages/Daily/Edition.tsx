@@ -5,6 +5,8 @@ import { formatPrice } from '../../types'
 import PreviewBanner from '../../Components/PreviewBanner'
 import { useTranslations } from '../../useTranslations'
 import CoveSubscribe from '../../Components/CoveSubscribe'
+import CoveRail, { type Rail } from '../../Components/CoveRail'
+import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
 
 interface Find {
@@ -54,10 +56,16 @@ interface Props {
         discountPercent: number | null
         url: string
     }[]
-    archive: { date: string; label: string; theme: string; url: string }[]
+    /**
+     * Where to go next: the Gift Cove, the recent editions, more products from
+     * the categories today's finds are in. The editions band replaced the
+     * archive strip that used to run across the bottom of this page — same
+     * query, same links, one copy.
+     */
+    rail: Rail
 }
 
-export default function Edition({ preview = false, edition, finds, guide, deals, archive }: Props) {
+export default function Edition({ preview = false, edition, finds, guide, deals, rail }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -276,10 +284,23 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
         </section>
     )
 
-    const rail = (
+    const sidebar = (
         <>
             {/*
+              The Gift Cove, the rest of the column, and more of what today's
+              edition is about — the same three blocks a persona and an article
+              carry, in the same order. See Components/CoveRail.
+            */}
+            <CoveRail rail={rail} />
+
+            {/*
               The sharpest drops we have seen lately.
+
+              Below the rail's own blocks rather than above them. This is the
+              one part of the sidebar that is not about what to read next, and
+              it is the only Cove page that has it — an edition is dated, so
+              "what is cheap this fortnight" belongs beside it in a way it does
+              not beside a persona that stands for a year.
 
               "Newest highest" is two orderings that fight — the deepest
               discount may be a month old — so it is sorted by discount inside a
@@ -331,34 +352,6 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                     </ul>
                 </section>
             )}
-
-            {/*
-              The Gift Cove, next to the thing people are already reading.
-
-              It is the one part of the site a reader here has no reason to have
-              found: the nav names it and nothing explains it. Three lines and a
-              link do more than a nav entry ever did.
-            */}
-            <section className="rounded-lg border border-accent/40 bg-accent/5 p-4">
-                <h2 className="font-medium">{t('gift_cove.title')}</h2>
-                <p className="mt-1 text-sm text-ink-soft">{t('daily.gift_cove_hint')}</p>
-
-                <ul className="mt-3 space-y-1.5 text-sm">
-                    {['wishlist', 'giftlist', 'santa', 'quiz'].map((tool) => (
-                        <li key={tool} className="flex gap-2">
-                            <span aria-hidden className="text-accent">·</span>
-                            <span>{t(`gift_cove.${tool}_title`)}</span>
-                        </li>
-                    ))}
-                </ul>
-
-                <Link
-                    href={`/${market.key}/gift-cove`}
-                    className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-                >
-                    {t('daily.gift_cove_cta')}
-                </Link>
-            </section>
         </>
     )
 
@@ -409,37 +402,34 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                     {guideCard}
                 </div>
 
-                <aside className="mt-10 space-y-6 lg:sticky lg:top-6 lg:mt-0">{rail}</aside>
+                <aside className="mt-10 space-y-6 lg:sticky lg:top-6 lg:mt-0">{sidebar}</aside>
             </div>
 
             {/*
-              After the edition, before the archive.
+              The recent editions, where the archive strip used to be.
 
-              Someone who has just read today's Cove is the only person who has
-              evidence that tomorrow's is worth an inbox slot. Above the fold it
-              would be an interruption; below the archive nobody would reach it.
+              Cards instead of a row of chips, and the same cards `/coves`
+              shows, so an edition offers the next one to read at the width the
+              reading was rather than as a label in a wrapped row.
+            */}
+            <MoreCoves band={rail.coves} />
+
+            {/*
+              Last on the page, under the other editions.
+
+              Someone who has just read today's Cove is the only person with
+              evidence that tomorrow's is worth an inbox slot — and somebody
+              still reading after six more of them has given that evidence
+              twice. Above the fold it would be an interruption.
+
+              It sat between the edition and the archive strip until the strip
+              became those cards. The old placement was reasoning about a row of
+              chips nobody was going to read past; a grid of cards is where the
+              page actually ends, so the ask goes after it.
             */}
             <div className="mt-12">
                 <CoveSubscribe source="daily" />
             </div>
-
-            {archive.length > 0 && (
-                <section className="mt-10">
-                    <h2 className="text-sm font-medium text-ink-soft">{t('daily.archive')}</h2>
-                    <ul className="mt-3 flex flex-wrap gap-2">
-                        {archive.map((entry) => (
-                            <li key={entry.date}>
-                                <Link
-                                    href={entry.url}
-                                    className="block rounded border border-line px-3 py-1.5 text-sm hover:bg-card"
-                                >
-                                    <span className="text-ink-soft">{entry.label}</span> · {entry.theme}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
         </>
     )
 }

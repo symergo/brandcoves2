@@ -53,7 +53,7 @@ personas yet should not be told it has a persona section.
 
 **Editions link by slug, not by date.** `CoveKind::path()` takes "whatever addresses it" and its
 docblock says a `Y-m-d` for a Daily — but `/daily/{date}` 301s onto `/daily/{slug}`, so linking by
-date would send every click on this page through a redirect. The archive strip on `/daily` already
+date would send every click on this page through a redirect. The cards under `/daily` already
 links by slug.
 
 **A persona carries no date.** On purpose: it never stops being current, which is why it has no

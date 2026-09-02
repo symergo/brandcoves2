@@ -3,6 +3,8 @@ import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import PreviewBanner from '../../Components/PreviewBanner'
 import { useTranslations } from '../../useTranslations'
+import CoveRail, { type Rail } from '../../Components/CoveRail'
+import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
 
 interface Item {
@@ -48,6 +50,13 @@ interface Props {
     }
     /* Always the whole shortlist. What the list below renders is decided here. */
     items: Item[]
+    /**
+     * The Gift Cove, the other articles, and more products from the categories
+     * this one's shortlist is in. A Shop Cove renders this page too and gets
+     * its own band — the rail asks what kind the Cove is, not which route
+     * served it.
+     */
+    rail: Rail
 }
 
 /**
@@ -177,7 +186,7 @@ function Article({
     )
 }
 
-export default function GuideShow({ preview = false, guide, items }: Props) {
+export default function GuideShow({ preview = false, guide, items, rail }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -209,124 +218,155 @@ export default function GuideShow({ preview = false, guide, items }: Props) {
             {preview && <PreviewBanner />}
             <Head title={guide.title} />
 
-            <article className="max-w-3xl">
-                <h1 className="text-2xl font-semibold sm:text-3xl">{guide.title}</h1>
-
-                <Article
-                    blocks={guide.intro}
-                    byGroup={byGroup}
-                    className="mt-3 text-lg text-ink-soft"
-                />
-
-                <p className="mt-3 text-xs text-ink-soft">
-                    {guide.updatedAt && t('guides.updated', { date: guide.updatedAt })}
-                    {guide.searchVolume > 0 && (
-                        <> · {t('guides.why', { count: n(guide.searchVolume) })}</>
-                    )}
-                </p>
-
-                {guide.body.length > 0 && (
-                    <section className="mt-8">
-                        {/*
-                          An advice article's body IS the article, so labelling
-                          it "how to choose" would be a heading about a
-                          shortlist that is not there.
-                        */}
-                        {guide.kind === 'buying' && !bodyIsAboutProducts && (
-                            <h2 className="text-lg font-medium">{t('guides.how_to_choose')}</h2>
-                        )}
-                        <Article
-                            blocks={guide.body}
-                            byGroup={byGroup}
-                            className="mt-3 leading-relaxed"
-                        />
-                    </section>
-                )}
-            </article>
-
             {/*
-              No shortlist, no list markup. An advice article renders as an
-              article; an empty <ol> under one reads as a buying guide whose
-              products failed to load — and so does a list emptied because the
-              article covered everything, which is why this is the same test.
+              Two columns from `lg` up, one below it.
+
+              The same shape the Daily edition and the personas have. The
+              article was already capped at `max-w-3xl` — a line past about
+              seventy characters is harder to read — and the rail uses the space
+              that cap was leaving empty on a wide screen rather than adding
+              any.
+
+              Everything the article is goes in the left column, the shortlist
+              and the FAQ included, so it is the taller of the two whatever the
+              writing does. An advice article with three short paragraphs would
+              otherwise end above a rail that ran on for another screen.
             */}
-            {rest.length > 0 && (
-                <ol className="mt-10 space-y-5">
-                    {rest.map((item) => (
-                        <li
-                            key={item.rank}
-                            className={`flex flex-col gap-4 rounded-lg border border-line p-5 sm:flex-row ${
-                                item.unavailable ? 'opacity-60' : ''
-                            }`}
-                        >
-                            {item.image && (
-                                <img
-                                    src={item.image}
-                                    alt=""
-                                    className="h-32 w-32 shrink-0 self-center object-contain"
-                                    loading="lazy"
-                                />
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10">
+                <div className="min-w-0">
+                    <article className="max-w-3xl">
+                        <h1 className="text-2xl font-semibold sm:text-3xl">{guide.title}</h1>
+
+                        <Article
+                            blocks={guide.intro}
+                            byGroup={byGroup}
+                            className="mt-3 text-lg text-ink-soft"
+                        />
+
+                        <p className="mt-3 text-xs text-ink-soft">
+                            {guide.updatedAt && t('guides.updated', { date: guide.updatedAt })}
+                            {guide.searchVolume > 0 && (
+                                <> · {t('guides.why', { count: n(guide.searchVolume) })}</>
                             )}
+                        </p>
 
-                            <div className="min-w-0 flex-1">
-                                {item.verdict && (
-                                    <p className="text-xs font-medium tracking-wide text-accent uppercase">
-                                        {item.verdict}
-                                    </p>
+                        {guide.body.length > 0 && (
+                            <section className="mt-8">
+                                {/*
+                                  An advice article's body IS the article, so labelling
+                                  it "how to choose" would be a heading about a
+                                  shortlist that is not there.
+                                */}
+                                {guide.kind === 'buying' && !bodyIsAboutProducts && (
+                                    <h2 className="text-lg font-medium">{t('guides.how_to_choose')}</h2>
                                 )}
+                                <Article
+                                    blocks={guide.body}
+                                    byGroup={byGroup}
+                                    className="mt-3 leading-relaxed"
+                                />
+                            </section>
+                        )}
+                    </article>
 
-                                <h2 className="mt-1 font-medium">
-                                    <Link href={item.url} className="hover:underline">
-                                        {item.title}
-                                    </Link>
-                                </h2>
-
-                                <Prose blocks={item.copy} className="mt-2 text-sm text-ink-soft" />
-
-                                <div className="mt-3 flex flex-wrap items-center gap-4">
-                                    {/*
-                                      Live from the group, never written into the
-                                      copy. A price baked into editorial is wrong
-                                      within a week, and the copy is what a reader
-                                      trusts.
-                                    */}
-                                    <span className="font-semibold">
-                                        {item.unavailable
-                                            ? t('guides.unavailable')
-                                            : item.price === null
-                                              ? '—'
-                                              : formatPrice(item.price, market)}
-                                    </span>
-
-                                    {item.merchantCount > 1 && (
-                                        <span className="text-sm text-ink-soft">
-                                            {t('guides.shops', { count: n(item.merchantCount) })}
-                                        </span>
+                    {/*
+                      No shortlist, no list markup. An advice article renders as an
+                      article; an empty <ol> under one reads as a buying guide whose
+                      products failed to load — and so does a list emptied because the
+                      article covered everything, which is why this is the same test.
+                    */}
+                    {rest.length > 0 && (
+                        <ol className="mt-10 space-y-5">
+                            {rest.map((item) => (
+                                <li
+                                    key={item.rank}
+                                    className={`flex flex-col gap-4 rounded-lg border border-line p-5 sm:flex-row ${
+                                        item.unavailable ? 'opacity-60' : ''
+                                    }`}
+                                >
+                                    {item.image && (
+                                        <img
+                                            src={item.image}
+                                            alt=""
+                                            className="h-32 w-32 shrink-0 self-center object-contain"
+                                            loading="lazy"
+                                        />
                                     )}
 
-                                    <SaveToList groupId={item.groupId} />
-                                </div>
-                            </div>
-                        </li>
-                    ))}
-                </ol>
-            )}
+                                    <div className="min-w-0 flex-1">
+                                        {item.verdict && (
+                                            <p className="text-xs font-medium tracking-wide text-accent uppercase">
+                                                {item.verdict}
+                                            </p>
+                                        )}
 
-            {guide.faq && guide.faq.length > 0 && (
-                <section className="mt-12 max-w-3xl">
-                    <h2 className="text-lg font-medium">{t('guides.faq')}</h2>
-                    <dl className="mt-4 space-y-4">
-                        {guide.faq.map((pair, i) => (
-                            <div key={i}>
-                                <dt className="font-medium">{pair.q}</dt>
-                                <dd className="mt-1 text-ink-soft">
-                                    <Prose blocks={pair.a} />
-                                </dd>
-                            </div>
-                        ))}
-                    </dl>
-                </section>
-            )}
+                                        <h2 className="mt-1 font-medium">
+                                            <Link href={item.url} className="hover:underline">
+                                                {item.title}
+                                            </Link>
+                                        </h2>
+
+                                        <Prose blocks={item.copy} className="mt-2 text-sm text-ink-soft" />
+
+                                        <div className="mt-3 flex flex-wrap items-center gap-4">
+                                            {/*
+                                              Live from the group, never written into the
+                                              copy. A price baked into editorial is wrong
+                                              within a week, and the copy is what a reader
+                                              trusts.
+                                            */}
+                                            <span className="font-semibold">
+                                                {item.unavailable
+                                                    ? t('guides.unavailable')
+                                                    : item.price === null
+                                                      ? '—'
+                                                      : formatPrice(item.price, market)}
+                                            </span>
+
+                                            {item.merchantCount > 1 && (
+                                                <span className="text-sm text-ink-soft">
+                                                    {t('guides.shops', { count: n(item.merchantCount) })}
+                                                </span>
+                                            )}
+
+                                            <SaveToList groupId={item.groupId} />
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
+
+                    {guide.faq && guide.faq.length > 0 && (
+                        <section className="mt-12 max-w-3xl">
+                            <h2 className="text-lg font-medium">{t('guides.faq')}</h2>
+                            <dl className="mt-4 space-y-4">
+                                {guide.faq.map((pair, i) => (
+                                    <div key={i}>
+                                        <dt className="font-medium">{pair.q}</dt>
+                                        <dd className="mt-1 text-ink-soft">
+                                            <Prose blocks={pair.a} />
+                                        </dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        </section>
+                    )}
+                </div>
+
+                <aside className="mt-10 space-y-6 lg:sticky lg:top-6 lg:mt-0">
+                    <CoveRail rail={rail} />
+                </aside>
+            </div>
+
+            {/*
+              The other articles. This page had no onward navigation at all —
+              no archive strip, no "back to the shelf", nothing — which mattered
+              most here of the three: an article is the Cove search actually
+              lands people on, and it was the one that told them least about
+              what else is here.
+            */}
+            <MoreCoves band={rail.coves} />
         </>
     )
 }
