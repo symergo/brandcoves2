@@ -71,8 +71,10 @@ class SpectrumRetriever implements Retriever
                     ->whereColumn('products.group_id', 'product_groups.id')
                     ->where('products.status', 'active')
                     ->whereRaw(
-                        'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
-                        [$anchor['term']]
+                        // Bound, not read off the row. See
+                        // TopicMiner::availableProducts.
+                        'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                        [$request->market->value, $anchor['term']]
                     )),
             )
             ->orderBy('min_price')

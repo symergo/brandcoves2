@@ -64,8 +64,11 @@ class LadderSelector implements CoveSelector
                 ->whereColumn('products.group_id', 'product_groups.id')
                 ->where('products.status', 'active')
                 ->whereRaw(
-                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
-                    [implode(' OR ', $terms)]
+                    // Bound, not read off the row — a row-dependent config makes
+                    // the tsquery non-constant and puts this back on a sequential
+                    // scan. See TopicMiner::availableProducts.
+                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                    [$plan->market->value, implode(' OR ', $terms)]
                 ))
             // Comparable first: the reason to read this guide here rather than
             // anywhere else is that every entry carries several shops' prices.

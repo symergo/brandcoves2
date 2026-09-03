@@ -127,8 +127,11 @@ class SlotsRetriever implements Retriever
                     ->whereColumn('products.group_id', 'product_groups.id')
                     ->where('products.status', 'active')
                     ->whereRaw(
-                        'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
-                        [$slot['query']]
+                        // Bound, not read off the row. See
+                        // TopicMiner::availableProducts for why this one detail
+                        // decides whether the full-text index is reachable.
+                        'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                        [$request->market->value, $slot['query']]
                     ))
                 // Comparable first: a kit you can price-check part by part is a
                 // kit someone will actually buy.

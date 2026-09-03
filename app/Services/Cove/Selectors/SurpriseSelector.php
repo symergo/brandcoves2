@@ -159,8 +159,14 @@ class SurpriseSelector implements CoveSelector
                 ->whereColumn('products.group_id', 'product_groups.id')
                 ->where('products.status', 'active')
                 ->whereRaw(
-                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
-                    [$tsquery]
+                    // The config is BOUND, not read off the row. Taken from
+                    // `products.market` the tsquery is not constant, Postgres
+                    // cannot use products_search_vector_idx, and it evaluates
+                    // the match once per candidate group instead — 10s against
+                    // be-nl where the index does it in 7ms. One market is
+                    // already the scope here. See TopicMiner::availableProducts.
+                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                    [$market->value, $tsquery]
                 ))
             ->orderByDesc('surprise_score')
             ->limit($count * 2)

@@ -81,8 +81,11 @@ class ProductLookup
                 ->whereColumn('products.group_id', 'product_groups.id')
                 ->where('products.status', ProductStatus::Active->value)
                 ->whereRaw(
-                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
-                    [trim($term)],
+                    // Bound, not read off the row. See
+                    // TopicMiner::availableProducts — this is the difference
+                    // between the full-text index and a sequential scan.
+                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                    [$market->value, trim($term)],
                 ));
         }
 

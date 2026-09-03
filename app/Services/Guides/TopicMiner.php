@@ -7,7 +7,6 @@ namespace App\Services\Guides;
 use App\Enums\Market;
 use App\Models\GuideTopic;
 use App\Models\PopularRank;
-use App\Models\ProductGroup;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -343,19 +342,49 @@ class TopicMiner
      */
     private function availableProducts(Market $market, string $topic): int
     {
-        $matching = ProductGroup::query()
-            ->select('product_groups.id')
-            ->forMarket($market)
-            ->presentable()
-            ->whereExists(fn ($sub) => $sub
-                ->select(DB::raw(1))
-                ->from('products')
-                ->whereColumn('products.group_id', 'product_groups.id')
-                ->where('products.status', 'active')
-                ->whereRaw(
-                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
-                    [$topic]
-                ))
+        /*
+         * Driven from `products`, and the text config bound as a CONSTANT.
+         *
+         * Both halves matter, and the second is the whole performance story.
+         *
+         * `bc_text_config(products.market)` builds the tsquery from a per-row
+         * column, so it is not constant, so Postgres cannot use
+         * `products_search_vector_idx` — it evaluates the match once per
+         * candidate row instead. Measured on production against be-nl: 10,158ms
+         * for a topic with no matches, the plan showing a parallel sequential
+         * scan of 94,435 groups with the `@@` applied as a filter. The index
+         * existed the whole time and was never reachable.
+         *
+         * One market is already the scope here, so the config is fixed for the
+         * query and can be bound. Same query, same rows, constant tsquery:
+         * **2.67ms** for that topic, `Bitmap Index Scan on
+         * products_search_vector_idx`. A common topic goes from the same ten
+         * seconds to 292ms.
+         *
+         * The join direction follows from that: find the matching products
+         * through the index first, then check their groups are presentable —
+         * rather than walking every presentable group asking whether it matches.
+         *
+         * The ceiling stays because bounded work is still worth having, but it
+         * was never the fix. A LIMIT cannot help a query that has to exhaust the
+         * table to discover there is nothing to limit.
+         *
+         * `App\Services\Gift\SuggestionEngine` already binds its config this
+         * way. Several other callers do not — see docs/features/daily-cove.md.
+         */
+        $matching = DB::table('products as p')
+            ->join('product_groups as g', 'g.id', '=', 'p.group_id')
+            ->where('p.market', $market->value)
+            ->where('p.status', 'active')
+            ->whereRaw(
+                'p.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                [$market->value, $topic]
+            )
+            ->where('g.in_stock', true)
+            ->whereNotNull('g.min_price')
+            ->whereNotNull('g.image_url')
+            ->distinct()
+            ->select('p.group_id')
             ->limit(self::SUPPLY_SATURATION);
 
         return DB::query()->fromSub($matching, 'capped')->count();
