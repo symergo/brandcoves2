@@ -39,6 +39,16 @@ class TopicMiner
     private const MIN_PRODUCTS = 5;
 
     /**
+     * The point past which more products stop improving a topic's score.
+     *
+     * Named because it is now load-bearing twice: `score()` saturates here, and
+     * `availableProducts()` stops counting here. The second only stays correct
+     * while the first does — raise this and the count gets more expensive again,
+     * on the largest market first.
+     */
+    private const SUPPLY_SATURATION = 30;
+
+    /**
      * Words that carry no topic.
      *
      * Clustering on the head noun means a stop list per language. Kept small
@@ -307,10 +317,34 @@ class TopicMiner
         return $candidates[0];
     }
 
-    /** How many in-stock, presentable groups a guide could actually be built from. */
+    /**
+     * How many in-stock, presentable groups a guide could actually be built from,
+     * counted only as far as anything downstream can tell the difference.
+     *
+     * The ceiling is the consumer's own. {@see self::score()} rejects anything
+     * under `MIN_PRODUCTS` and then saturates — "30 products is not three times
+     * better than 10, it is the same guide with a longer shortlist" — so every
+     * number above `SUPPLY_SATURATION` was computed and immediately discarded.
+     *
+     * Counted exhaustively, it was why the Daily Cove had not built in two of
+     * five markets since 18 August. This runs once per candidate topic, and each
+     * run was a full `COUNT(*)` over the presentable catalogue with a correlated
+     * full-text `EXISTS` — 117,129 rows on be-nl. Measured on production
+     * 2026-09-02: 17 of 24 active queries were this one, the queue workers sat
+     * at 0.1% CPU waiting on Postgres, and `BuildDailyEdition` hit its
+     * 900-second timeout nightly. The cost scaled with catalogue size, which is
+     * exactly why en (16k groups) almost always succeeded, nl-nl (60k) failed
+     * intermittently, and be-nl (117k) and be-fr (103k) never finished at all.
+     *
+     * `fromSub` rather than `->limit(...)->count()`: Laravel discards the limit
+     * when it wraps a query in an aggregate, so the ceiling has to sit inside
+     * the subquery — which is also what lets Postgres stop scanning once it has
+     * found enough rows, and is the entire saving.
+     */
     private function availableProducts(Market $market, string $topic): int
     {
-        return ProductGroup::query()
+        $matching = ProductGroup::query()
+            ->select('product_groups.id')
             ->forMarket($market)
             ->presentable()
             ->whereExists(fn ($sub) => $sub
@@ -322,7 +356,9 @@ class TopicMiner
                     'products.search_vector @@ websearch_to_tsquery(bc_text_config(products.market), ?)',
                     [$topic]
                 ))
-            ->count();
+            ->limit(self::SUPPLY_SATURATION);
+
+        return DB::query()->fromSub($matching, 'capped')->count();
     }
 
     /**
@@ -347,8 +383,9 @@ class TopicMiner
         $demand = $volume > 0 ? log10($volume + 1) * 40 : 0.0;
         $gap = log10(max(1, $zeroResults) + 1) * 15;
         // Saturates: 30 products is not three times better than 10, it is the
-        // same guide with a longer shortlist.
-        $supply = min(1.0, $available / 30) * 25;
+        // same guide with a longer shortlist. `availableProducts()` stops
+        // counting at this same number, so the two must move together.
+        $supply = min(1.0, $available / self::SUPPLY_SATURATION) * 25;
 
         /*
          * Chart evidence, weighted below our own searches on purpose.
