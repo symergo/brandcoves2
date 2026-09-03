@@ -48,8 +48,12 @@ class DailyCoveController extends Controller
         string $market,
         ?string $cove = null,
         ?string $slug = null,
-    ): Response {
-        $this->assertSegmentBelongsHere($current, $cove);
+    ): Response|RedirectResponse {
+        // A retired spelling reaches its current address in one hop, carrying
+        // the slug it was asked for.
+        if ($this->isRetiredSegment($current, $cove)) {
+            return redirect($current->get()->covePath($slug ?? ''), 301);
+        }
 
         // An admin, or somebody holding a signed preview link, reads a draft —
         // including one dated tomorrow, which is the whole point of checking it.
@@ -264,8 +268,8 @@ class DailyCoveController extends Controller
      */
     public function dated(CurrentMarket $current, string $market, string $cove, string $date): RedirectResponse
     {
-        $this->assertSegmentBelongsHere($current, $cove);
-
+        // Retired or current, a dated URL resolves to the named one in a single
+        // hop — the segment it arrived on makes no difference to where it lands.
         return $this->redirectToEdition($current, $date);
     }
 
@@ -311,20 +315,20 @@ class DailyCoveController extends Controller
     }
 
     /**
-     * Refuse another market's word for this page.
+     * Is this a retired spelling of the segment?
      *
-     * The routes admit every market's segment because they are declared once
-     * under a `{market}` prefix, so `/es/cadeau-van-de-dag/...` matches the
-     * pattern. Serving it would put the Spanish edition on a Dutch address:
-     * duplicate content, carrying hreflang that contradicts it.
+     * The routes admit the current word and every word this section has used
+     * before, because they are declared once under a `{market}` prefix and the
+     * archive has to keep resolving at every address it has ever had.
      *
-     * Null is the legacy `/daily` path, which has no segment to check.
+     * A retired one is a 301 rather than a 404: those URLs were live, and the
+     * daily column's whole argument is that its past does not disappear.
+     *
+     * Null is the legacy `/daily` path, which carries no segment at all.
      */
-    private function assertSegmentBelongsHere(CurrentMarket $current, ?string $cove): void
+    private function isRetiredSegment(CurrentMarket $current, ?string $cove): bool
     {
-        if ($cove !== null && $cove !== $current->get()->coveSegment()) {
-            throw new NotFoundHttpException;
-        }
+        return $cove !== null && $cove !== $current->get()->coveSegment();
     }
 
     private function seo(DailyPickSet $edition, CurrentMarket $current, bool $isArchive, bool $preview = false): void

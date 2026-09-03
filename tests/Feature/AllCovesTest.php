@@ -103,7 +103,7 @@ class AllCovesTest extends TestCase
         $this->get('/be-nl/coves')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('sections.0.coves.0.url', '/be-nl/cadeautips/vondsten')
+                ->where('sections.0.coves.0.url', '/be-nl/tips/vondsten')
                 ->where('sections.0.coves.0.date', '20 Aug 2026')
             );
     }

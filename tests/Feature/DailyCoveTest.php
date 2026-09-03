@@ -179,9 +179,9 @@ class DailyCoveTest extends TestCase
          * nothing to link to and nothing indexed.
          *
          * Addressed by name, under the market's own word for the section:
-         * /be-nl/cadeautips/vondsten-voor-thuiswerkers.
+         * /be-nl/tips/vondsten-voor-thuiswerkers.
          */
-        $this->get('/be-nl/cadeautips/'.$edition->slug)
+        $this->get('/be-nl/tips/'.$edition->slug)
             ->assertOk()
             ->assertInertia(fn ($page) => $page->has('finds'));
 
@@ -192,36 +192,53 @@ class DailyCoveTest extends TestCase
          * equity on the way.
          */
         $this->get('/be-nl/daily/'.$edition->slug)
-            ->assertRedirect('/be-nl/cadeautips/'.$edition->slug)
+            ->assertRedirect('/be-nl/tips/'.$edition->slug)
             ->assertStatus(301);
 
         $this->get('/be-nl/daily/'.$edition->drop_date->toDateString())
-            ->assertRedirect('/be-nl/cadeautips/'.$edition->slug)
+            ->assertRedirect('/be-nl/tips/'.$edition->slug)
             ->assertStatus(301);
 
-        $this->get('/be-nl/cadeautips/'.$edition->drop_date->toDateString())
-            ->assertRedirect('/be-nl/cadeautips/'.$edition->slug)
+        $this->get('/be-nl/tips/'.$edition->drop_date->toDateString())
+            ->assertRedirect('/be-nl/tips/'.$edition->slug)
             ->assertStatus(301);
 
         // /daily with no address is today's edition, wherever it now lives.
         $this->get('/be-nl/daily')
-            ->assertRedirect('/be-nl/cadeautips')
+            ->assertRedirect('/be-nl/tips')
             ->assertStatus(301);
     }
 
     #[Test]
-    public function another_markets_word_for_the_section_is_not_an_address_here(): void
+    public function every_word_this_section_has_used_still_resolves(): void
     {
         /*
-         * The routes are declared once under a {market} prefix, so the pattern
-         * admits every market's segment and /es/cadeau-van-de-dag/... matches
-         * it. Serving that would put one market's page on another's address:
-         * duplicate content, carrying hreflang that contradicts it.
+         * The segment has been spelled three ways: `/daily`, then a localised
+         * word per market for about two hours on 2026-09-03, and now `tips`.
+         *
+         * All of them keep working, permanently and in one hop. The archive is
+         * the SEO asset the daily column exists to build, and a column whose
+         * past addresses 404 has thrown that away — which is just as true of a
+         * spelling that only ever lived for an afternoon, because the links
+         * made during it are the ones nobody can find again to fix.
          */
         $edition = $this->buildEdition();
 
-        $this->get('/be-nl/gift-of-the-day/'.$edition->slug)->assertNotFound();
-        $this->get('/be-nl/regalo-del-dia')->assertNotFound();
+        foreach (['cadeautips', 'idees-cadeaux', 'gift-tips', 'ideas-regalo'] as $retired) {
+            $this->get("/be-nl/{$retired}/{$edition->slug}")
+                ->assertRedirect('/be-nl/tips/'.$edition->slug)
+                ->assertStatus(301);
+
+            $this->get("/be-nl/{$retired}")
+                ->assertRedirect('/be-nl/tips')
+                ->assertStatus(301);
+        }
+
+        // Including the dated form on a retired segment, which still lands on
+        // the named edition rather than bouncing through a second redirect.
+        $this->get('/be-nl/cadeautips/'.$edition->drop_date->toDateString())
+            ->assertRedirect('/be-nl/tips/'.$edition->slug)
+            ->assertStatus(301);
     }
 
     #[Test]

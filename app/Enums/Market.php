@@ -214,32 +214,61 @@ enum Market: string
      */
     public function coveSegment(): string
     {
-        return match ($this) {
-            self::BeNl, self::NlNl => 'cadeautips',
-            self::BeFr => 'idees-cadeaux',
-            self::En => 'gift-tips',
-            self::Es => 'ideas-regalo',
-        };
+        return self::COVE_SEGMENT;
     }
 
     /**
-     * Every segment any market uses, for the route constraint.
+     * One word for every market: `tips`.
+     *
+     * The segment was localised per market for about two hours on 2026-09-03 —
+     * `cadeautips`, `idees-cadeaux`, `gift-tips`, `ideas-regalo` — before being
+     * collapsed to a single English word. Reverted deliberately and early: those
+     * URLs were a few hours old and barely crawled, and the same change in a
+     * month would have meant abandoning a real archive.
+     *
+     * `tips` reads in all four languages this site is written in — Dutch and
+     * French both use it, and it is short enough not to dominate the path. The
+     * gratuity sense exists in English and is not reachable from here: the
+     * segment always sits under a market and above an edition slug.
+     *
+     * {@see self::HISTORICAL_SEGMENTS} for the words that still resolve.
+     */
+    private const COVE_SEGMENT = 'tips';
+
+    /**
+     * Segments this section has used before, which must keep resolving.
+     *
+     * The archive is the SEO asset the daily column exists to build, so every
+     * address a page has ever had is kept. These 301 to the current one rather
+     * than 404ing — see DailyCoveController.
+     *
+     * Note this list is deliberately not per-market. `/es/cadeautips/...` was
+     * never a valid address, but it costs nothing to redirect it to the Spanish
+     * page and it is one fewer rule to hold.
+     *
+     * @var list<string>
+     */
+    public const HISTORICAL_SEGMENTS = [
+        'cadeautips',
+        'idees-cadeaux',
+        'gift-tips',
+        'ideas-regalo',
+    ];
+
+    /**
+     * Every segment the routes must match: the current one and the retired ones.
      *
      * The routes are declared once under a `{market}` prefix, so the segment
-     * cannot be a literal — the pattern has to admit all of them and the
-     * controller then rejects the ones that do not belong to the market in the
-     * URL. Without that check `/es/cadeau-van-de-dag/...` would resolve and put
-     * one market's page on another's address, which is duplicate content with
-     * the wrong hreflang.
+     * cannot be a literal. The pattern admits all of these and the controller
+     * permanently redirects anything that is not the current word — which is how
+     * the archive keeps every address it has ever had without a second set of
+     * routes per retired spelling.
      *
      * @return list<string>
      */
     public static function coveSegments(): array
     {
-        return array_values(array_unique(array_map(
-            static fn (self $market): string => $market->coveSegment(),
-            self::cases(),
-        )));
+        return [self::COVE_SEGMENT, ...self::HISTORICAL_SEGMENTS];
     }
 
     /**

@@ -162,7 +162,7 @@ class CovePlanCurationTest extends TestCase
 
         $soldOut->update(['in_stock' => false]);
 
-        $this->get('/be-nl/cadeautips')
+        $this->get('/be-nl/tips')
             ->assertOk()
             ->assertDontSee('Uitverkochte pers');
     }

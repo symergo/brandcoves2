@@ -58,22 +58,29 @@ corpus of indexed pages, each one a guide plus a set of products plus the writin
 Ninety days in, that is ninety pages per market that did not exist before, each answering a question
 someone demonstrably asked.
 
-### The address, and why it is in the reader's language
+### The address
 
-`/{market}/{segment}/{slug}` — `/nl-nl/cadeautips/de-laatste-vakantiedag`.
+`/{market}/tips/{slug}` — `/nl-nl/tips/de-laatste-vakantiedag`.
 
-The segment is localised per market: `cadeautips` (nl), `idees-cadeaux` (be-fr), `ideas-regalo`
-(es), `gift-tips` (en). See `Market::coveSegment()`, which is the only place they are written down.
+One word for every market. `tips` reads in all four languages the site is written in, and it is short
+enough not to dominate the path. See `Market::coveSegment()`.
 
-It used to be `/daily/` in every market. A path segment is read by a person deciding whether to click
-and by a search engine deciding what the page is about, and "daily" did neither job in four of the
-five markets. The site's own name for the section — The Daily Cove — is not the answer either:
-nobody searches for "cove". The brand keeps the page, the heading and the newsletter; the URL is the
-one place where being findable beats being on-message.
+It used to be `/daily/`, which was worse: a path segment is read by a person deciding whether to
+click and by a search engine deciding what the page is about, and "daily" did neither job outside
+`/en`. The site's own name for the section — The Daily Cove — is not the answer either, because
+nobody searches for "cove". The brand keeps the page, the heading and the newsletter.
 
-`cadeau-van-de-dag` was the first choice and was rejected for length: seventeen characters in every
-archived URL to say something the slug and the page already say. `gift-ideas` was unavailable for
-English — it is the persona shelf.
+Between those two it was localised per market — `cadeautips`, `idees-cadeaux`, `gift-tips`,
+`ideas-regalo` — for about two hours on 2026-09-03. That version optimised harder for search and paid
+for it in every other way: four strings to keep in step, a route pattern that had to admit all of
+them, a rule about one market's word appearing in another's URL, and `CoveKind::path()` needing the
+market passed through a dozen call sites. Collapsed to one word deliberately and **early**, while the
+URLs were hours old and barely crawled. The same decision a month later would have meant abandoning a
+real archive rather than an afternoon's worth of it.
+
+Two words were considered and rejected. `cadeau-van-de-dag` for length — seventeen characters in
+every archived URL to say what the slug and the page already say. `gift-ideas` because it is the
+persona shelf.
 
 ### Three names for one page
 
@@ -94,8 +101,8 @@ so the writing keeps its voice *and* the search result carries the keyword.
 appended by the Inertia title callback and is not repeated in the string.
 
 **The slug follows the headline, and is not separately keyword-stuffed.** That is a decision, not an
-omission. The address already reads `/nl-nl/cadeautips/…`, so a slug carrying the same words gives
-`/cadeautips/cadeautips-de-laatste-vakantiedag` — the keyword twice, adjacently, which is the
+omission. The address already reads `/nl-nl/tips/…`, so a slug carrying the same words gives
+`/tips/cadeautips-de-laatste-vakantiedag` — the keyword twice, adjacently, which is the
 clearest over-optimisation signal there is. The slug instead inherits whatever the headline gained.
 
 Which is where the real change is: the theme prompt now requires the title to **name something
@@ -111,17 +118,18 @@ address already say that.
 - **Everything under `/daily/` is kept forever** and redirects in **one hop** to its final address —
   not via the new dated form. Those URLs are indexed and sit in three months of digest emails, and a
   redirect chain costs link equity.
-- **Another market's word is not an address here.** The routes are declared once under a `{market}`
-  prefix, so the pattern admits every segment and `/es/cadeautips/...` matches it. The controller
-  404s it: serving it would put one market's page on another's address, carrying hreflang that
-  contradicts it.
+- **Every retired spelling still resolves.** The routes are declared once under a `{market}` prefix
+  and the pattern admits the current word plus `Market::HISTORICAL_SEGMENTS`; anything that is not
+  the current word is a 301, not a 404. That list is not per-market on purpose —
+  `/es/cadeautips/...` was never a valid address, but redirecting it costs nothing and is one fewer
+  rule to hold.
 
 Two traps worth knowing if you touch this. `CoveKind::path()` takes the market as a **required**
-argument, because a default would mean one market's word silently appearing in another's URL. And
-Laravel binds controller arguments **by position, not by name** — the localised and legacy dated
-routes carry different parameter lists, so they are two methods rather than one with an optional
-parameter. Sharing a signature hands `$date` the segment, which 404s a URL whose route is registered
-and whose regex matches.
+argument — a leftover from when the segment varied by market, kept because it makes the dependency
+explicit if it ever varies again. And Laravel binds controller arguments **by position, not by
+name** — the segment and legacy dated routes carry different parameter lists, so they are two
+methods rather than one with an optional parameter. Sharing a signature hands `$date` the segment,
+which 404s a URL whose route is registered and whose regex matches.
 
 ## The column beside the article
 

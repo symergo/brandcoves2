@@ -314,7 +314,7 @@ class SeoTest extends TestCase
             'published_at' => CarbonImmutable::parse('2026-08-08')->setTime(6, 0),
         ]);
 
-        $page = $this->get('/be-nl/cadeautips/'.$edition->slug)
+        $page = $this->get('/be-nl/tips/'.$edition->slug)
             ->assertOk()
             ->viewData('page');
 
