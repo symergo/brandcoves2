@@ -447,12 +447,34 @@ class CovePlanController extends Controller
         }
 
         /*
-         * Replace the shortlist, never merge into it.
+         * Replace the shortlist when one was sent, and only then.
          *
-         * A write says what the plan is, not what to add to it — a merge would
-         * make "remove the third product" impossible to express, and a retry
-         * after a timeout would double the list.
+         * "Replace, never merge" is the right rule for a list that arrives: a
+         * merge would make "remove the third product" impossible to express, and
+         * a retry after a timeout would double the list. Sending `items: []` is
+         * how a caller clears one.
+         *
+         * Deleting when **nothing** arrived is not a replace, though — it is a
+         * silent wipe, and it was the sharpest edge on this endpoint. `POST
+         * /coves` is a whole-plan upsert, so an author sending back a corrected
+         * paragraph and no products destroyed an afternoon of curation and got a
+         * 200 for it. The narrower endpoints exist partly to route around this;
+         * they should not have had to.
          */
+        $sentShortlist = array_key_exists('items', $data) || array_key_exists('pinnedGroupIds', $data);
+
+        if (! $sentShortlist) {
+            return response()->json([
+                'data' => $this->payload($plan),
+                'linkCheck' => $this->links->against(
+                    $plan->editorial,
+                    $market,
+                    $plan->items()->with('group')->get()->map(fn (CovePlanItem $i) => $i->group)->filter(),
+                    extraSearches: (array) $plan->queries,
+                ),
+            ], $existing === null ? 201 : 200);
+        }
+
         $plan->items()->delete();
 
         foreach ($items as $rank => $item) {

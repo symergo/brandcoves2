@@ -713,6 +713,58 @@ class EditorialApiTest extends TestCase
 
     /** @param list<string> $abilities */
     #[Test]
+    public function a_write_with_no_shortlist_leaves_the_curated_one_alone(): void
+    {
+        /*
+         * The sharpest edge on this endpoint. `POST /coves` is a whole-plan
+         * upsert whose items are replace-never-merge, and it used to delete the
+         * shortlist even when none arrived — so an author sending back a
+         * corrected paragraph and no products destroyed an afternoon of curation
+         * and got a 200 for it.
+         *
+         * Replace when a list is sent; leave it alone when none is. `items: []`
+         * stays the way to clear one, so "remove everything" is still
+         * expressible.
+         */
+        $group = $this->find('Gecureerd', 9900);
+        $date = CarbonImmutable::today()->addDays(5)->toDateString();
+
+        $key = $this->key([ApiToken::READ, ApiToken::WRITE]);
+
+        $this->withToken($key)
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'date' => $date,
+                'title' => 'Met producten',
+                'items' => [['groupId' => $group->id, 'note' => 'Met opzet gekozen.']],
+            ])
+            ->assertStatus(201);
+
+        // The same plan again, prose only.
+        $this->withToken($key)
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'date' => $date,
+                'title' => 'Met producten',
+                'editorial' => 'Een betere alinea.',
+            ])
+            ->assertOk()
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.note', 'Met opzet gekozen.');
+
+        // And an explicit empty list still clears it.
+        $this->withToken($key)
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'date' => $date,
+                'title' => 'Met producten',
+                'items' => [],
+            ])
+            ->assertOk()
+            ->assertJsonCount(0, 'data.items');
+    }
+
+    #[Test]
     public function sending_prose_marks_the_plan_as_authored(): void
     {
         /*
