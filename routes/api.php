@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\CoveBriefController;
 use App\Http\Controllers\Api\CoveDraftController;
+use App\Http\Controllers\Api\CoveItemController;
 use App\Http\Controllers\Api\CovePlanController;
 use App\Http\Controllers\Api\CoveQueueController;
 use App\Http\Controllers\Api\EditionController;
@@ -80,6 +81,16 @@ Route::prefix('editorial')
              */
             Route::get('/coves/{plan}/brief', [CoveBriefController::class, 'show']);
 
+            /*
+             * Where else this plan's products are spoken for.
+             *
+             * Advisory and never a filter. The 90-day repeat memory protects
+             * anything the engine picks and deliberately does not protect what a
+             * person picks — overriding a score is the point of curating — so
+             * telling the curator is the only defence there is.
+             */
+            Route::get('/coves/{plan}/conflicts', [CoveItemController::class, 'conflicts']);
+
             Route::get('/guides', [GuideEditorialController::class, 'index']);
             Route::get('/guides/{guide}', [GuideEditorialController::class, 'show']);
 
@@ -117,6 +128,36 @@ Route::prefix('editorial')
              * curated shortlist. This cannot touch membership or rank.
              */
             Route::post('/coves/{plan}/editorial', [CoveQueueController::class, 'store']);
+
+            /*
+             * Curating from outside the panel.
+             *
+             * Nine of the curation screen's eleven actions had no HTTP twin, so
+             * an outside author could write about a shortlist and never change
+             * one. Every route here delegates to the service the Livewire screen
+             * already calls — a second implementation of "add a product to a
+             * plan" would disagree about market scoping and about what a rank
+             * means, and only one of the two would be what the panel shows.
+             *
+             * Under `write` rather than `publish`: a shortlist on a draft is not
+             * something a reader can see. The controller refuses a plan that has
+             * already been approved, which is the same line the prose endpoints
+             * hold.
+             */
+            /*
+             * The plan's own settings, without the whole-plan upsert.
+             *
+             * `POST /coves` replaces the shortlist wholesale, so flipping
+             * `pickMode` or `writer` through it meant re-sending every product
+             * and risking somebody's curation on a client's bookkeeping.
+             */
+            Route::patch('/coves/{plan}', [CovePlanController::class, 'patch']);
+
+            Route::post('/coves/{plan}/items', [CoveItemController::class, 'store']);
+            Route::patch('/coves/{plan}/items', [CoveItemController::class, 'update']);
+            Route::delete('/coves/{plan}/items/{item}', [CoveItemController::class, 'destroy']);
+            Route::post('/coves/{plan}/suggest', [CoveItemController::class, 'suggest']);
+
             Route::post('/guides', [GuideEditorialController::class, 'store']);
         });
 

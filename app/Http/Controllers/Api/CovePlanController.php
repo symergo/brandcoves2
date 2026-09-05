@@ -104,6 +104,69 @@ class CovePlanController extends Controller
     }
 
     /**
+     * Change the plan's own settings, and nothing else.
+     *
+     * `POST /coves` is an upsert of the *whole* plan: it replaces the shortlist
+     * wholesale, so "make this one locked" through that endpoint means re-sending
+     * every product — and a client that gets that slightly wrong silently
+     * discards somebody's curation. There was no way to flip `pickMode` or
+     * `writer` without taking that risk.
+     *
+     * Only fields that are sent are touched, so this is safe to call with one
+     * key in the body. It cannot reach the prose, the shortlist or the address.
+     */
+    public function patch(Request $request, CovePlan $plan): JsonResponse
+    {
+        $data = $request->validate([
+            'title' => ['nullable', 'string', 'max:120'],
+            'blurb' => ['nullable', 'string', 'max:300'],
+            'note' => ['nullable', 'string', 'max:1000'],
+            'buildInstructions' => ['nullable', 'string', 'max:1000'],
+            'pickMode' => ['nullable', Rule::in(PickMode::values())],
+            'writer' => ['nullable', Rule::in(PlanWriter::values())],
+            'queries' => ['nullable', 'array', 'max:12'],
+            'queries.*' => ['string', 'max:60'],
+            'focusKeyphrase' => ['nullable', 'string', 'max:120'],
+            'scene' => ['nullable', Rule::in(CoveScene::values())],
+        ]);
+
+        $this->assertMayEdit($request, $plan);
+
+        if (isset($data['scene']) && ! in_array(CoveScene::from($data['scene']), CoveScene::forKind($plan->kind), true)) {
+            $allowed = array_map(fn (CoveScene $s) => $s->value, CoveScene::forKind($plan->kind));
+
+            throw ValidationException::withMessages([
+                'scene' => $allowed === []
+                    ? 'A '.$plan->kind->label().' carries no drawing, so it names no scene.'
+                    : 'A '.$plan->kind->label().' cannot be drawn as `'.$data['scene'].'`. It takes one of: '
+                        .implode(', ', $allowed).'.',
+            ]);
+        }
+
+        if (isset($data['focusKeyphrase']) && ! $plan->kind->writesBody()) {
+            throw ValidationException::withMessages([
+                'focusKeyphrase' => 'A '.$plan->kind->label().' does not carry a focus keyphrase.',
+            ]);
+        }
+
+        $plan->forceFill(array_filter([
+            'title' => HouseStyle::plain($data['title'] ?? null),
+            'blurb' => HouseStyle::plain($data['blurb'] ?? null),
+            // Neither of these is ever rendered: one is a note to whoever reads
+            // the plan, the other is direction for the writer. Stored as sent.
+            'note' => $data['note'] ?? null,
+            'build_instructions' => $data['buildInstructions'] ?? null,
+            'pick_mode' => $data['pickMode'] ?? null,
+            'writer' => $data['writer'] ?? null,
+            'queries' => $data['queries'] ?? null,
+            'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
+            'scene' => $data['scene'] ?? null,
+        ], fn ($v) => $v !== null))->save();
+
+        return response()->json(['data' => $this->payload($plan->refresh())]);
+    }
+
+    /**
      * Write or rewrite the plan for a date.
      *
      * Upsert rather than create, because the unique index allows exactly one

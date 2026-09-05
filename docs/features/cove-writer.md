@@ -180,15 +180,70 @@ Three outcomes an author must be able to tell apart, which is why an invalid bar
 rather than an empty list: a failed check digit is a misread, not a product we do not carry, and an
 author told "not found" would go looking for it in another market.
 
+## Curating from outside the panel
+
+The curation screen has eleven actions and nine of them had no HTTP twin, so an outside author could
+write *about* a shortlist and never change one. `CoveItemController` is the other half.
+
+| Call | Does |
+|---|---|
+| `POST /coves/{id}/items` | add one product, by `ean`, `groupId`, or `source`+`externalId` |
+| `PATCH /coves/{id}/items` | reorder **and** write each `note`, `verdict` and `copy`, in one call |
+| `DELETE /coves/{id}/items/{itemId}` | take one off |
+| `POST /coves/{id}/suggest` | top up from `EditionBuilder::candidates()` |
+| `GET /coves/{id}/conflicts` | where else these products are spoken for |
+| `PATCH /coves/{id}` | `pickMode`, `writer`, `buildInstructions`, `queries`, `focusKeyphrase` |
+
+Four decisions worth keeping.
+
+**Nothing here is a second implementation.** Every route delegates to the service the Livewire screen
+already calls — `PlanCurator`, `candidates()`, `ScheduleConflicts`. Two implementations of "add a
+product to a plan" would disagree about market scoping (invariant 2) and about which sources may be
+stored as a decision (invariant 6), and only one of them would be the one the panel shows. The
+service's own `InvalidArgumentException` is surfaced as the 422 it is rather than as a 500.
+
+**`PATCH /coves/{id}` exists because `POST /coves` is an upsert of the whole plan.** It replaces the
+shortlist wholesale, so flipping one switch through it meant re-sending every product — and a client
+that got its own bookkeeping slightly wrong discarded a curator's afternoon and got a 200 for it.
+
+**Reordering and annotating are one call**, because they are one editorial act: a curator decides the
+running order and the reasons together, and a client making a request per item would spend a 20/min
+write budget on a single page. An id that is not on this plan is **refused**, not skipped — it means
+the caller is working from a stale brief, and the rest of what it believes is suspect too.
+
+**The revision is optional here and required on the prose endpoint.** Reordering is idempotent in a
+way writing is not: two curators moving different products do not destroy each other's work, whereas
+two writers do. It is honoured when sent, because a client that quotes one is telling us it read the
+plan first.
+
+### `suggest` says *why* it came up short
+
+A count of zero has two very different causes and only one is about the catalogue:
+
+- the plan has **nothing to search on**. `LadderSelector` matches on `focus_keyphrase`, falling back
+  to the title, plus `queries` — and a title is a headline. "Beste koptelefoons" is not a phrase any
+  product title contains, so a plan carrying only that finds nothing however full the shelf is.
+- the market genuinely has little for this topic.
+
+The first message names the fix and the endpoint that applies it. Telling them apart is the
+difference between an author repairing the plan in one call and an author concluding the catalogue is
+empty. Same reasoning as `DraftedPlans::shortfall`.
+
+### It stops where the prose endpoints stop
+
+An **approved** plan cannot be re-curated by a write-capable key. Without that the draft/approve split
+is decoration: draft a plan, wait for a person to approve it, then change what is on it.
+
 ## Files
 
 - `app/Enums/PlanWriter.php`, `app/Enums/CoveKind.php` (`writesBody()`)
 - `app/Services/Cove/CovePrompt.php` — the one assembly
 - `app/Services/Cove/PlanRevision.php` — one hash, two endpoints
 - `app/Services/Shops/ShopDirectory.php` — membership and slug, in one place
-- `app/Http/Controllers/Api/CoveBriefController.php`
+- `app/Http/Controllers/Api/CoveBriefController.php`, `CoveItemController.php`
 - `database/migrations/2026_09_05_000600_*`, `..._000700_*`
 - `tests/Feature/CoveBriefApiTest.php` — the byte-identical test
+- `tests/Feature/CoveItemApiTest.php`
 
 ## Open
 
