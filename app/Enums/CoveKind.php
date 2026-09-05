@@ -95,6 +95,29 @@ enum CoveKind: string
     case Shop = 'shop';
 
     /**
+     * A piece about a **brand**, read above that brand's own page.
+     *
+     * The same shape as a Shop Cove — prose about an entity, then that entity's
+     * products — and the two were broken in opposite directions. The shop page
+     * was a real Cove with authored prose and no products; the brand page had
+     * the products and nowhere to put bespoke prose, because its copy came from
+     * `copy_templates` slots that read the same for every brand.
+     *
+     * It renders at `/{market}/brand/{slug}`, above the grid that is already
+     * there. `docs/features/brand-pages.md` exists to argue for one canonical
+     * indexable URL per brand per market — every brand mention on the site
+     * points at it — so a second address would split the link equity that page
+     * was built to consolidate.
+     *
+     * Prose, like Advice and Shop: its substance is the writing. The prose is
+     * about **sub-brands and product categories**, never individual products, so
+     * an entity Cove carries no shortlist at all — nothing to freeze, nothing to
+     * go stale, and no floor it can fail. The products come from live rails
+     * underneath. See docs/features/cove-entities.md.
+     */
+    case Brand = 'brand';
+
+    /**
      * Is this kind **addressed** by its date?
      *
      * Only the Daily, and the word matters now that it is not the only kind that
@@ -148,7 +171,26 @@ enum CoveKind: string
             self::Persona => 'gift-ideas/'.$address,
             self::Guide, self::Seasonal, self::Advice => 'guides/'.$address,
             self::Shop => 'shops/'.$address,
+            // The page that already exists, not a second one beside it.
+            self::Brand => 'brand/'.$address,
         };
+    }
+
+    /**
+     * Is this a Cove about an **entity** — a shop, or a brand?
+     *
+     * Both are prose about a thing that sells or makes products, followed by
+     * live rails of that thing's products. What separates them from every other
+     * kind is that they carry **no shortlist**: the prose is about sub-brands
+     * and categories rather than individual items, so there is nothing to freeze
+     * at build time and nothing that can go stale.
+     *
+     * Their slug is also not ours to choose — it names a real merchant domain or
+     * a real brand — which is the one validation rule no other kind has.
+     */
+    public function isEntity(): bool
+    {
+        return in_array($this, [self::Shop, self::Brand], true);
     }
 
     /**
@@ -169,7 +211,7 @@ enum CoveKind: string
      */
     public function writesBody(): bool
     {
-        return in_array($this, [self::Guide, self::Seasonal, self::Advice, self::Shop], true);
+        return in_array($this, [self::Guide, self::Seasonal, self::Advice, self::Shop, self::Brand], true);
     }
 
     /**
@@ -183,7 +225,9 @@ enum CoveKind: string
     public function expectsShortlist(): bool
     {
         return match ($this) {
-            self::Advice, self::Shop => false,
+            // An entity Cove's products are a live rail below the prose, not a
+            // ranked shortlist the prose argues about.
+            self::Advice, self::Shop, self::Brand => false,
             default => true,
         };
     }
@@ -200,7 +244,7 @@ enum CoveKind: string
         return match ($this) {
             self::Daily, self::Persona => (int) config('giftcoves.picks.minimum'),
             self::Guide, self::Seasonal => (int) config('giftcoves.guides.min_products'),
-            self::Advice, self::Shop => 0,
+            self::Advice, self::Shop, self::Brand => 0,
         };
     }
 
@@ -210,7 +254,7 @@ enum CoveKind: string
         return match ($this) {
             self::Daily, self::Persona => (int) config('giftcoves.picks.per_day'),
             self::Guide, self::Seasonal => (int) config('giftcoves.guides.items_per_guide'),
-            self::Advice, self::Shop => 0,
+            self::Advice, self::Shop, self::Brand => 0,
         };
     }
 
@@ -245,6 +289,7 @@ enum CoveKind: string
             self::Seasonal => 'Seasonal guide',
             self::Advice => 'Advice article',
             self::Shop => 'Shop Cove',
+            self::Brand => 'Brand Cove',
         };
     }
 

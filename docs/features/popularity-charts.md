@@ -7,7 +7,18 @@ date_added: 2026-08-10
 
 # Popularity charts
 
-**A retailer's bestseller list, used as an internal demand signal. Never republished as content.**
+**A retailer's bestseller list, used as an internal demand signal. Never republished as content —
+with one deliberate exception, below.**
+
+> **Narrowed on 2026-09-05, for entity pages only.** A shop's or a brand's own page carries a
+> `popular` rail ordered by these ranks, and there the rank **is** the label. The rule below was
+> written when a chart only ordered an internal shelf; on a page about the entity, the ordering is
+> the rail and naming it is the point. Recorded here rather than left to contradict the code,
+> because the next person to read the line would otherwise "fix" the rail back.
+>
+> The exposed case is a shop page: `/shops/bol-com` ordered by bol's own chart is close to their
+> bestseller list republished on a page about them. Everywhere else in the codebase the original
+> rule stands unchanged. See [cove-entities.md](cove-entities.md).
 
 The site had no way of knowing what people actually buy. Every "popularity" signal in the codebase
 was a proxy for one:

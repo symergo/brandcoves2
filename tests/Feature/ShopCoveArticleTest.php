@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PlanWriter;
 use App\Enums\PublishStatus;
+use App\Models\BrandStat;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Services\Cove\EditionBuilder;
@@ -87,6 +88,60 @@ class ShopCoveArticleTest extends TestCase
         // And it is readable where a Shop Cove is read, not under /guides.
         $this->get('/be-nl/shops/coolblue-be')->assertOk();
         $this->get('/be-nl/guides/coolblue-be')->assertNotFound();
+    }
+
+    #[Test]
+    public function a_brand_cove_builds_and_renders_above_the_brand_page(): void
+    {
+        /*
+         * Brand is brought onto Shop's model rather than the other way round.
+         * The shop page was a real Cove with authored prose and no products; the
+         * brand page had the products and nowhere to put bespoke prose, because
+         * its copy came from `copy_templates` slots that read the same for every
+         * brand.
+         *
+         * It renders at the address that already exists. `brand-pages.md` argues
+         * for one canonical indexable URL per brand per market — every brand
+         * mention on the site points at it — so a second address would split the
+         * link equity that page was built to consolidate.
+         */
+        BrandStat::create([
+            'market' => Market::BeNl->value,
+            'brand' => 'Sony',
+            'slug' => 'sony',
+            'product_count' => 4,
+        ]);
+
+        $plan = CovePlan::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Brand->value,
+            'slug' => 'sony',
+            'title' => 'Wat Sony maakt',
+            'status' => 'approved',
+            'writer' => PlanWriter::Authored->value,
+            'blurb' => 'Waar het over gaat.',
+            'body' => 'Eerste alinea.
+
+Tweede alinea.',
+        ]);
+
+        $edition = app(EditionBuilder::class)->buildArticle($plan);
+
+        $this->assertNotNull($edition);
+        $this->assertSame(CoveKind::Brand, $edition->kind);
+
+        // Prose about ranges rather than products, so it clears a floor of zero
+        // with no shortlist at all — nothing to freeze, nothing to go stale.
+        $this->assertSame(0, $edition->picks()->count());
+        $this->assertSame(0, CoveKind::Brand->minimumItems());
+        $this->assertFalse(CoveKind::Brand->expectsShortlist());
+        $this->assertTrue(CoveKind::Brand->isEntity());
+
+        // The page it belongs to, not a second one beside it.
+        $this->assertSame('brand/sony', CoveKind::Brand->path('sony', Market::BeNl));
+        // And it stays out of the /guides space, exactly as Shop does.
+        $this->assertFalse(CoveKind::Brand->isArticle());
+        $this->get('/be-nl/guides/sony')->assertNotFound();
     }
 
     #[Test]

@@ -15,6 +15,7 @@ use App\Http\Middleware\AuthenticateApiToken;
 use App\Jobs\BuildCove;
 use App\Jobs\BuildDailyEdition;
 use App\Models\ApiToken;
+use App\Models\BrandStat;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\ProductGroup;
@@ -293,6 +294,27 @@ class CovePlanController extends Controller
          * above — with nothing anywhere to report it, because the plan is
          * perfectly well-formed.
          */
+        /*
+         * A Brand Cove's slug names a real brand in this market.
+         *
+         * Same class of rule as the Shop one below and the same reason: an
+         * entity Cove's address is not ours to choose. `brand_stats` is keyed on
+         * `(market, slug)` and the slug is folded in PHP with `Str::slug()`,
+         * because Postgres transliterates where `lower(replace(...))` does not —
+         * so this is a lookup rather than a pattern.
+         *
+         * Without it the page would render above a grid of nothing, at an
+         * address no brand link on the site points at.
+         */
+        if ($kind === CoveKind::Brand && $slug !== null
+            && ! BrandStat::query()->where('market', $market->value)->where('slug', $slug)->exists()) {
+            throw ValidationException::withMessages([
+                'slug' => "No brand in {$market->value} is addressed by '{$slug}'. A Brand Cove renders above that "
+                    ."brand's own page, so its slug has to be one `brand_stats` already holds — check "
+                    .'/'.$market->value.'/brands.',
+            ]);
+        }
+
         if ($kind === CoveKind::Shop && $slug !== null && $this->shops->shopFor($market, $slug) === null) {
             throw ValidationException::withMessages([
                 'slug' => "No shop in {$market->value} is addressed by '{$slug}'. A Shop Cove's slug comes from the "

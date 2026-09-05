@@ -80,6 +80,7 @@ class Defaults
     public static function system(string $slot): string
     {
         return match ($slot) {
+            'cove.brand' => self::BRAND_SYSTEM,
             'cove.daily' => self::DAILY_SYSTEM,
             'cove.persona' => self::PERSONA_SYSTEM,
             'cove.guide' => self::GUIDE_SYSTEM,
@@ -95,6 +96,7 @@ class Defaults
     public static function user(string $slot): string
     {
         return match ($slot) {
+            'cove.brand' => self::BRAND_PROMPT,
             'cove.daily' => self::DAILY_PROMPT,
             'cove.persona' => self::PERSONA_PROMPT,
             'cove.guide' => self::GUIDE_PROMPT,
@@ -510,6 +512,63 @@ class Defaults
     private const SHOP_PROMPT = <<<'TXT'
         Language: {language}
         Shop: {topic}
+        Title: {title}
+
+        {direction}
+        TXT;
+
+    // ── A brand ───────────────────────────────────────────────────────────
+
+    /**
+     * A piece about a brand, read above that brand's own page.
+     *
+     * The same shape as a Shop Cove and a different subject: a shop is somewhere
+     * you buy from and a brand is who made the thing. The rules that matter are
+     * the same ones, for the same reason — this sits above a grid of that
+     * brand's products with live prices on it, and every claim the prose makes
+     * that the grid can contradict is a claim that will be wrong by next week.
+     *
+     * **It is expected to link to searches.** That is the point of the page
+     * rather than a decoration on it: `/brand/sony` is an indexable destination
+     * and the categories it names are real, crawlable market URLs. A piece that
+     * describes a brand and points nowhere leaves the page a leaf.
+     */
+    private const BRAND_SYSTEM = <<<'TXT'
+        You write a short piece about one brand, for a gift discovery site that
+        compares what the shops selling it are charging. It sits directly above
+        that brand's own products, with live prices beside them, so the reader
+        can already see what is available and what it costs. Your job is
+        everything the grid does not tell them: what this brand actually makes,
+        which of its ranges differ from each other and how, and who each one
+        suits.
+
+        Voice: plain, specific, even-handed. You are describing a brand, not
+        recommending it. We earn a commission on what people buy, so a piece
+        that reads as an advertisement is worse than no piece at all.
+
+        Rules:
+        - Never state a price, a discount, a rating or a stock claim. The grid
+          under this renders live ones, so a number in your sentence is wrong
+          within a week.
+        - Never claim the brand is best, cheapest or most reliable. Nothing on
+          this page can back that up.
+        - No invented history, no founding dates, no factory locations, no
+          revenue, no awards. If you were not told it, you do not know it.
+        - Write about ranges and categories, never about individual products.
+          The products under this change with stock, so a paragraph about one of
+          them is a paragraph about something that may be gone.
+        - Do link the categories and sub-ranges you name, with search tokens, so
+          a reader can go straight to them. That is what this piece is for.
+        - Say plainly what this brand is not for. A piece that finds nothing to
+          qualify is not describing a brand.
+        - No em dashes. Where a sentence needs a break, use a comma, a colon,
+          or a spaced hyphen - like this one.
+        - Two to four short paragraphs. This sits above a grid, not alone.
+        TXT;
+
+    private const BRAND_PROMPT = <<<'TXT'
+        Language: {language}
+        Brand: {topic}
         Title: {title}
 
         {direction}
