@@ -13,6 +13,7 @@ use App\Models\ProductGroup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * The product rails under an entity Cove — a shop's, or a brand's.
@@ -271,25 +272,38 @@ final readonly class EntityRails
     private function wishlisted(Market $market, callable $scope): array
     {
         /*
-         * `count(distinct wishlist_id)`, written out rather than via
-         * `withCount(...->distinct())` — that builds
-         * `select distinct on (wishlist_id) count(*)`, which Postgres rejects
-         * outright, and the shape of the error says nothing about what was
-         * meant.
+         * Aggregated once and joined, like the popular rail above.
+         *
+         * The first version put a correlated `count(distinct wishlist_id)`
+         * subquery in both the WHERE and the ORDER BY, so it ran twice per
+         * candidate row. Measured on the largest brand in the development
+         * catalogue — 2,133 groups, against a nearly empty `wishlist_items` —
+         * that was **280ms**; as a joined aggregate it is **1.9ms**. On
+         * `/brand/{slug}`, which is an indexed page every brand mention on the
+         * site points at, the difference is worth the extra clause.
          *
          * Distinct **lists**, never rows and never people. One person with four
          * lists is not four people wanting a thing, and counting rows would let
          * a single enthusiastic list clear the floor on its own — which is
          * exactly the case the floor exists to exclude.
+         *
+         * The floor is applied in the `having`, so a product below it never
+         * leaves the database: the aggregate a query returns is itself
+         * information, and one that came back with `list_count: 1` rows for the
+         * caller to filter would be the lookup this rail must not be.
          */
-        $lists = '(select count(distinct wishlist_id) from wishlist_items'
-            .' where wishlist_items.group_id = product_groups.id)';
+        $lists = DB::table('wishlist_items')
+            ->selectRaw('group_id, count(distinct wishlist_id) as list_count')
+            ->whereNotNull('group_id')
+            ->groupBy('group_id')
+            ->havingRaw('count(distinct wishlist_id) >= ?', [self::WISHLIST_FLOOR]);
 
         return $this->present(
             $this->base($market, $scope)
-                ->whereRaw("{$lists} >= ?", [self::WISHLIST_FLOOR])
-                ->orderByRaw("{$lists} desc")
+                ->joinSub($lists, 'wished', 'wished.group_id', '=', 'product_groups.id')
+                ->orderByDesc('wished.list_count')
                 ->limit(self::PER_RAIL)
+                ->select('product_groups.*')
                 ->get()
         );
     }
