@@ -1,7 +1,7 @@
 ---
 name: Entity Coves — shops and brands
 area: Content / Discovery
-status: Active — backend; the rails are not rendered yet
+status: Active
 date_added: 2026-09-05
 ---
 
@@ -116,27 +116,46 @@ excluding them would weaken the signal without making it safer. That is a judgem
 an obvious one — check it against the published privacy notice, because aggregate use of wishlist
 data may need a line in it. See [legal-pages.md](legal-pages.md).
 
+## The allowlist is the entity's own shelf
+
+The piece that makes the search links real rather than aspirational.
+
+An entity Cove's allowlist carries **no products** — the prose is about ranges, and the products
+under it are a live rail. So without something else it would carry nothing at all, and every
+`[[search:…]]` would render as three plain words. `EntityRails::vocabularyForBrand()` and
+`vocabularyForShop()` supply the categories that entity actually sells in, drawn from the **same
+scope as the rails** — so what the prose may link to and what the page shows are the same subjects,
+and a writer cannot link a category this brand does not stock.
+
+A token naming anything outside it renders as plain text, which is the safety property: a
+hallucinated link is an unlinked phrase rather than a 404 in the middle of an article.
+
+## Two prose regions on a brand page, with different jobs
+
+The Cove above the grid is bespoke editorial. The templated numeric copy below the grid stays and
+still serves every brand with no Cove — which is the great majority of them. They are not
+duplicates: one is written about ranges, the other is built from numbers the catalogue can back up.
+
 ## Files
 
 - `app/Enums/CoveKind.php` — `Brand`, `isEntity()`
 - `app/Services/Cove/EntityRails.php`
 - `app/Services/Ai/Prompts/Defaults.php` — `BRAND_SYSTEM`, `BRAND_PROMPT`
 - `app/Services/Shops/ShopDirectory.php` — the shop slug rule and membership
+- `app/Http/Controllers/BrandController.php` — `cove()`, and the rails prop
+- `app/Http/Controllers/GuideController.php` — `shopRails()`, `shopVocabulary()`
+- `resources/js/Components/EntityRails.tsx`
 - `database/migrations/2026_09_05_001000_a_brand_is_a_cove_too.php`
 - `tests/Feature/EntityRailsTest.php`
 
 ## Open
 
-- **The rails are not rendered yet.** `EntityRails` is built and tested; `BrandController` and
-  `ShopsController` do not call it, and no React component draws one. That is the next change.
-- **A Brand Cove is not surfaced on the brand page yet** either — the kind builds and the edition
-  exists, and `BrandController` does not yet read it.
-- **Two prose regions will co-exist on a brand page.** The Cove above the grid is bespoke editorial;
-  the templated numeric copy below the grid stays and still serves every brand with no Cove. Worth
-  saying out loud, or the two get duplicated into each other.
 - **`PlanDrafter` refuses `brand`**, like advice and shop: nothing in the catalogue proposes which
   brand is worth writing about. The candidate list is not a mystery, though — it is the brands that
   already exist in a market and have no Cove yet, and a drafter arm for that is worth considering.
+- **The popular rail includes the described shop's own chart.** Ordering `/shops/bol-com` by bol's
+  ranks is the most exposed reading of the narrowed rule. `PopularRank.source` makes excluding it a
+  one-clause change if attribution ever matters.
 
 ## See also
 

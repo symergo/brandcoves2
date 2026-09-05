@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\DailyPickSet;
-use App\Models\Guide;
 use App\Models\ProductGroup;
 use App\Services\Seo\OgImage;
 use Carbon\CarbonImmutable;
@@ -99,10 +99,14 @@ class OgImageTest extends TestCase
     #[Test]
     public function an_unpublished_guide_has_no_card(): void
     {
-        $guide = Guide::create([
+        // A guide is a `daily_pick_sets` row since the fold; the legacy
+        // `guides` table it used to be written to is gone.
+        $guide = DailyPickSet::create([
             'market' => Market::BeNl->value,
+            'kind' => CoveKind::Guide->value,
             'slug' => 'concept',
-            'title' => 'Nog niet klaar',
+            'theme_title' => 'Nog niet klaar',
+            'theme_slug' => 'concept',
             'status' => PublishStatus::Draft->value,
         ]);
 

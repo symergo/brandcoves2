@@ -181,7 +181,9 @@ class GuideTopicResource extends Resource
                         default => 'gray',
                     }),
 
-                TextColumn::make('guide.title')->label('Cove')->placeholder('—')->limit(30),
+                // Through the plan since the fold: a topic drafts a plan, and the
+                // plan carries the edition once it is built.
+                TextColumn::make('cove.theme_title')->label('Cove')->placeholder('—')->limit(30),
             ])
             ->filters([
                 SelectFilter::make('market'),

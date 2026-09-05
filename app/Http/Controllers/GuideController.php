@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveKind;
 use App\Enums\CoveScene;
 use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Services\Cove\CoveRail;
+use App\Services\Cove\EntityRails;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
+use App\Services\Shops\ShopDirectory;
 use App\Support\CurrentMarket;
 use App\Support\PreviewAccess;
 use Closure;
@@ -137,7 +140,21 @@ class GuideController extends Controller
             // The queries that justified this guide are also the searches it may
             // link to — which is the only thing an advice article has, having no
             // products to derive categories from.
-            extraSearches: (array) $guide->source_queries,
+            /*
+             * The queries that justified this guide are also the searches it may
+             * link to — which is the only thing an advice article has, having no
+             * products to derive categories from.
+             *
+             * A **Shop Cove** adds the categories that shop actually sells in.
+             * Its prose is about ranges rather than products, so without them
+             * its allowlist would be almost empty and every `[[search:…]]` would
+             * render as plain words — and passing authority to the queries the
+             * shop is about is what the piece is *for*.
+             */
+            extraSearches: [
+                ...(array) $guide->source_queries,
+                ...$this->shopVocabulary($guide, $current),
+            ],
         );
 
         /*
@@ -188,9 +205,26 @@ class GuideController extends Controller
 
         $this->seo($guide, $items->all(), $current);
 
+        /*
+         * A Shop Cove's product rails.
+         *
+         * The half that was missing: the page described a shop and showed none
+         * of what it sells. Live rather than frozen, because a page's products
+         * and its prose move at different speeds — see
+         * App\Services\Cove\EntityRails.
+         *
+         * Null for every other kind. A buying guide already carries its
+         * shortlist, and a rail underneath one would be a second, unranked
+         * answer to the question the article just answered.
+         */
+        $rails = $guide->kind === CoveKind::Shop
+            ? $this->shopRails($guide, $current)
+            : null;
+
         return Inertia::render('Guides/Show', [
             // Renders a banner, and only ever true for somebody entitled to it.
             'preview' => $preview && $guide->status !== PublishStatus::Published,
+            'rails' => $rails,
             'guide' => [
                 'title' => $guide->theme_title,
                 /*
@@ -283,6 +317,41 @@ class GuideController extends Controller
      * @param  array<string, mixed>  $allowed
      * @return list<array{q: string, a: list<string>}>|null
      */
+    /**
+     * The categories a Shop Cove's shop sells in.
+     *
+     * Empty for every other kind, and for a shop this market does not compare.
+     *
+     * @return list<string>
+     */
+    private function shopVocabulary(DailyPickSet $guide, CurrentMarket $current): array
+    {
+        if ($guide->kind !== CoveKind::Shop) {
+            return [];
+        }
+
+        $shop = app(ShopDirectory::class)->shopFor($current->get(), (string) $guide->slug);
+
+        return $shop === null ? [] : app(EntityRails::class)->vocabularyForShop($shop, $current->get());
+    }
+
+    /**
+     * The rails under a Shop Cove, if the shop is one this market compares.
+     *
+     * Matched through `ShopDirectory`, which owns both the membership question
+     * and the slug rule — a Shop Cove's slug is derived from `merchants.domain`,
+     * and that derivation is the only thing that connects this page to a
+     * merchant at all.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function shopRails(DailyPickSet $guide, CurrentMarket $current): ?array
+    {
+        $shop = app(ShopDirectory::class)->shopFor($current->get(), (string) $guide->slug);
+
+        return $shop === null ? null : app(EntityRails::class)->forShop($shop, $current->get());
+    }
+
     private function faq(DailyPickSet $guide, CurrentMarket $current, array $allowed): ?array
     {
         if (! is_array($guide->faq) || $guide->faq === []) {

@@ -159,20 +159,6 @@ class DailyPickSet extends Model
     }
 
     /**
-     * The buying guide attached to this edition.
-     *
-     * Nullable, and often the *previous* edition's guide: topics ripen at the
-     * speed of search volume, not at the speed of the calendar, and a guide a
-     * week is a healthier rate than a guide a day.
-     *
-     * @return BelongsTo<Guide, $this>
-     */
-    public function guide(): BelongsTo
-    {
-        return $this->belongsTo(Guide::class);
-    }
-
-    /**
      * Is this edition live yet?
      *
      * The same three conditions as the `published` scope, asked of one row.

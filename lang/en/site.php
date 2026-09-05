@@ -1794,4 +1794,28 @@ return [
         'shops' => '{1} 1 shop|[2,*] :count shops',
         'from_price' => 'from :price',
     ],
+
+    /*
+     * The product rails under a piece about a shop or a brand.
+     *
+     * Each caption is the claim its rail makes, and they are different
+     * claims: a discount is measured against our own median, a chart is
+     * somebody else's, and a wishlist count is our own visitors'. The
+     * blurbs say which, because a shelf that does not say where its
+     * order came from is a shelf a reader cannot weigh.
+     */
+    'entity_rails' => [
+        'discounts' => [
+            'title' => 'Down in price now',
+            'blurb' => 'Measured against the median price of the last thirty days, not against a struck-through list price.',
+        ],
+        'popular' => [
+            'title' => 'Selling well',
+            'blurb' => 'From the bestseller charts of the shops we compare.',
+        ],
+        'wishlisted' => [
+            'title' => 'Often wishlisted',
+            'blurb' => 'What visitors here put on a list. Shown only where several lists agree.',
+        ],
+    ],
 ];

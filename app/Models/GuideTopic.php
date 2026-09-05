@@ -7,7 +7,7 @@ namespace App\Models;
 use App\Enums\Market;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 /**
  * A candidate guide topic, clustered from real search queries and ranked.
@@ -55,10 +55,27 @@ class GuideTopic extends Model
             ->orWhere('last_attempt_at', '<', now()->subDays(self::RETRY_AFTER_DAYS)));
     }
 
-    /** @return BelongsTo<Guide, $this> */
-    public function guide(): BelongsTo
+    /**
+     * The Cove this topic became, if it became one.
+     *
+     * Was a `belongsTo(Guide::class)` on `guide_id`, and both went with the
+     * fold's contract migration: a guide is a `daily_pick_sets` row now, and the
+     * topic reaches it through the **plan** it drafted rather than through a
+     * second foreign key of its own. `TopicPlanner` sets `plan_id`; the plan
+     * carries `edition_id` once it is built.
+     *
+     * @return HasOneThrough<DailyPickSet, CovePlan, $this>
+     */
+    public function cove(): HasOneThrough
     {
-        return $this->belongsTo(Guide::class);
+        return $this->hasOneThrough(
+            DailyPickSet::class,
+            CovePlan::class,
+            'id',          // cove_plans.id
+            'id',          // daily_pick_sets.id
+            'plan_id',     // guide_topics.plan_id
+            'edition_id',  // cove_plans.edition_id
+        );
     }
 
     /**

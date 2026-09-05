@@ -179,3 +179,37 @@ compliance rules. Amazon forbids mirroring title, price, image and availability,
 an Amazon product cannot be displayed until something re-fetches those live at
 render. `GET /` reports this in its `sources` block. What can be written today is
 advice *about* shopping on Amazon, which needs no product data.
+
+## The stages, and the endpoints that serve them
+
+Added 2026-09-05, when the pipeline became drivable end to end. `GET /api/editorial` lists
+all of these and is authoritative; this is the map.
+
+| Stage | Endpoints |
+|---|---|
+| **plan** | `GET /calendar?market=&year=` · `POST /coves/drafts` (`occasionsOnly` for a daily run) · `POST /calendar/draft` (one named day) · `POST /seasons/{topic}/plan` |
+| **curate** | `POST /coves/{id}/items` (by `ean`, `groupId`, or `source`+`externalId`) · `PATCH /coves/{id}/items` (reorder and annotate in one call) · `DELETE /coves/{id}/items/{itemId}` · `POST /coves/{id}/suggest` · `GET /coves/{id}/conflicts` |
+| **write** | `GET /coves/{id}/brief` · `POST /coves/{id}/editorial` |
+| **approve** | `POST /coves/{id}/approve` |
+| **build** | `POST /coves/{id}/build` · read back with `GET /coves/{id}/edition` |
+| **any, in bulk** | `POST /coves/stages/{curate\|approve\|build}` with a selector, `dryRun` supported |
+| **settings** | `PATCH /coves/{id}` — `pickMode`, `writer`, `buildInstructions`, `queries`, `focusKeyphrase` |
+
+Two things to know before writing anything:
+
+**`GET /coves/{id}/brief` is the contract.** It returns the exact `system` and `user`
+prompt the built-in builder would send for that plan, panel edits included. Prefer it over
+any copy of the rules, including this file.
+
+**`POST /coves` no longer wipes a shortlist.** It replaces items when a list is sent and
+leaves them alone when none is; `items: []` still clears. Previously a prose-only write
+there deleted the curation.
+
+## The state vocabulary
+
+`GET /coves?state=` — `draft`, `written`, `approved`, `due_again`, `live`, `thin`,
+`archive`. The same names the planner screen's tabs use.
+
+`thin` means the build ran and produced no page, almost always a catalogue too thin to
+clear the kind's floor. `GET /coves/{id}/edition` carries `lastBuild.why` with the
+builder's own sentence about it.

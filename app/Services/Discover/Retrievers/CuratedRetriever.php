@@ -74,23 +74,34 @@ class CuratedRetriever implements Retriever
      */
     private function pool(DiscoveryRequest $request): array
     {
-        $picks = DB::table('daily_picks as p')
+        /*
+         * One query since the fold, and the `drop_date` clause is why it took
+         * two before.
+         *
+         * A guide is a `daily_pick_sets` row now, and an article carries **no
+         * date** — so the recency window below excluded every one of them, and a
+         * second join against the old `guides` table was carrying the other
+         * half. Two shapes for one thing, and only one of them was folded.
+         *
+         * The window is about the Daily, where it means "recent": a column from
+         * last spring is not what somebody browsing today should be shown. An
+         * article is evergreen by construction and has no date to be outside of,
+         * so it is always in.
+         */
+        $ids = DB::table('daily_picks as p')
             ->join('daily_pick_sets as s', 's.id', '=', 'p.set_id')
             ->where('s.market', $request->market->value)
             ->where('s.status', PublishStatus::Published->value)
-            ->where('s.drop_date', '>=', now()->subDays(self::WINDOW_DAYS)->toDateString())
+            ->where(fn ($q) => $q
+                ->where('s.drop_date', '>=', now()->subDays(self::WINDOW_DAYS)->toDateString())
+                ->orWhereNull('s.drop_date'))
+            // A pick dimmed because it has gone is not something to recommend.
+            ->where('p.unavailable', false)
             ->whereNotNull('p.group_id')
             ->pluck('p.group_id');
 
-        $guideItems = DB::table('guide_items as i')
-            ->join('guides as g', 'g.id', '=', 'i.guide_id')
-            ->where('g.market', $request->market->value)
-            ->where('g.status', PublishStatus::Published->value)
-            ->where('i.unavailable', false)
-            ->pluck('i.group_id');
-
         return array_values(array_diff(
-            array_unique(array_map('intval', [...$picks, ...$guideItems])),
+            array_unique(array_map('intval', $ids->all())),
             $request->excludeGroupIds,
         ));
     }

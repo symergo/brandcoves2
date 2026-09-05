@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Availability;
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
+use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Models\BrandStat;
+use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\PopularRank;
 use App\Models\Product;
@@ -224,6 +227,65 @@ class EntityRailsTest extends TestCase
 
         $this->assertContains($mine->id, $ids);
         $this->assertNotContains($theirs->id, $ids);
+    }
+
+    #[Test]
+    public function a_brand_cove_and_its_rails_render_on_the_brand_page(): void
+    {
+        /*
+         * Above the grid, on the page that already exists. Not at a second
+         * address: `/brand/{slug}` is the one canonical indexable URL per brand
+         * per market and every brand mention on the site points at it.
+         */
+        $group = $this->product('Gewilde koptelefoon', 12900, 'Sony', discount: 30);
+        $this->wish($group, EntityRails::WISHLIST_FLOOR);
+
+        $this->brand('Sony');
+
+        DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Brand->value,
+            'slug' => 'sony',
+            'theme_title' => 'Wat Sony maakt',
+            'theme_slug' => 'sony',
+            'theme_blurb' => 'Waar het over gaat.',
+            /*
+             * `audio` is the category these products are actually in, and the
+             * allowlist is built from exactly that. A token naming anything else
+             * renders as plain words — which is the safety property, and the
+             * reason the vocabulary has to come from the entity's own shelf
+             * rather than from the writer's imagination.
+             */
+            'body' => 'Kijk vooral naar [[search:audio]].',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        $this->get('/be-nl/brand/sony')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('cove.title', 'Wat Sony maakt')
+                // The prose is rendered, so a search token became a real,
+                // crawlable link into this market — which is the point of an
+                // entity Cove rather than a decoration on it.
+                ->where('cove.body', fn (string $body) => str_contains($body, '<a')
+                    && str_contains($body, '/be-nl/'))
+                ->has('rails.discounts', 1)
+                ->has('rails.wishlisted', 1)
+            );
+    }
+
+    #[Test]
+    public function a_brand_with_no_cove_renders_the_page_unchanged(): void
+    {
+        // Null for the great majority of brands, which is why the templated
+        // copy below the grid stays. The two are not duplicates.
+        $this->product('Gewone koptelefoon', 9900, 'Sony');
+        $this->brand('Sony');
+
+        $this->get('/be-nl/brand/sony')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('cove', null));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\Availability;
+use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
+use App\Services\Cove\EntityRails;
+use App\Services\Editorial\Allowlist;
+use App\Services\Guides\CoveMarkup;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\BrandContext;
 use App\Services\Pages\PageCopy;
@@ -215,7 +220,85 @@ class BrandController extends Controller
              */
             'coves' => $this->coves($stat, $current),
             'related' => $this->related($stat, $current),
+
+            /*
+             * The Brand Cove, if somebody has written one.
+             *
+             * Above the grid rather than at an address of its own: this page is
+             * the one canonical indexable URL per brand per market, and every
+             * brand mention on the site points at it — so a second page would
+             * split exactly the link equity this one exists to consolidate.
+             *
+             * Null for the great majority of brands, which is why the templated
+             * copy below the grid stays. The two are not duplicates: this is
+             * bespoke editorial and that is built from numbers the catalogue can
+             * back up.
+             */
+            'cove' => $this->cove($stat, $current),
+
+            /*
+             * The product rails: what has dropped in price here, what is
+             * selling, and what people have put on a list.
+             *
+             * Live rather than frozen, because a page's products and its prose
+             * move at different speeds — see App\Services\Cove\EntityRails and
+             * docs/features/cove-entities.md.
+             */
+            'rails' => app(EntityRails::class)->forBrand($stat, $market),
         ]);
+    }
+
+    /**
+     * The Brand Cove for this brand, if one is published.
+     *
+     * Read here rather than rendered by `GuideController` like a Shop Cove,
+     * because a Brand Cove has no page of its own: it is a section of this one.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function cove(BrandStat $stat, CurrentMarket $current): ?array
+    {
+        $cove = DailyPickSet::query()
+            ->where('market', $current->value())
+            ->where('kind', CoveKind::Brand->value)
+            ->where('slug', $stat->slug)
+            ->where('status', PublishStatus::Published->value)
+            ->first();
+
+        if ($cove === null) {
+            return null;
+        }
+
+        $markup = app(CoveMarkup::class);
+        $market = $current->get();
+
+        /*
+         * No products in the allowlist, on purpose.
+         *
+         * An entity Cove's prose is about ranges and categories rather than
+         * about individual products, because the products under it are live
+         * rails that change with stock. What it links to is searches, brands and
+         * other guides — and a `[[search:…]]` resolving to a real crawlable
+         * market URL is the point of the piece rather than a decoration on it.
+         */
+        $allowed = app(Allowlist::class)->full(
+            collect(),
+            $market,
+            excludeGuideId: $cove->id,
+            // The categories this brand actually sells in. Without them the
+            // allowlist is empty and every `[[search:…]]` renders as plain
+            // words — which is the one thing an entity Cove must not do.
+            extraSearches: app(EntityRails::class)->vocabularyForBrand($stat, $market),
+        );
+
+        return [
+            'title' => $cove->theme_title,
+            // `render()` returns html plus a link report; the page wants the
+            // html. The report is for the author, and they read it from the
+            // editorial API rather than from a visitor's page.
+            'intro' => $markup->render((string) $cove->theme_blurb, $market, $allowed)['html'],
+            'body' => $markup->render((string) $cove->body, $market, $allowed)['html'],
+        ];
     }
 
     /**

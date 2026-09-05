@@ -55,7 +55,7 @@ cannot be recovered from a diff.
 | [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
 | [cove-curation.md](cove-curation.md) | Content / Operations | Active |
 | [cove-writer.md](cove-writer.md) | Content / Operations | Active |
-| [cove-entities.md](cove-entities.md) | Content / Discovery | Active — backend; rails not rendered yet |
+| [cove-entities.md](cove-entities.md) | Content / Discovery | Active |
 | [seasonal-series.md](seasonal-series.md) | Content / Operations | Active — new 2026-09-05 |
 | [cove-calendar.md](cove-calendar.md) | Content / Operations | Active — new 2026-09-05 |
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |

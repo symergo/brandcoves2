@@ -127,7 +127,14 @@ class SeasonalTopics
             ->where('market', $market->value)
             ->where('origin', 'seasonal')
             ->whereIn('status', ['candidate', 'queued'])
-            ->whereNull('guide_id')
+            /*
+             * Not yet turned into a plan.
+             *
+             * Was `whereNull('guide_id')`, an FK into the `guides` table the fold
+             * retired. `TopicPlanner` sets `plan_id` when a topic becomes a draft
+             * plan, so that is the column that means "nobody has taken this one".
+             */
+            ->whereNull('plan_id')
             ->where('available_products', '>=', self::MIN_PRODUCTS)
             ->whereNotNull('season_from')
             ->notRecentlyAttempted()

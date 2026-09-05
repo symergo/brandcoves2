@@ -1570,4 +1570,28 @@ return [
         'shops' => '{1} 1 tienda|[2,*] :count tiendas',
         'from_price' => 'desde :price',
     ],
+
+    /*
+     * The product rails under a piece about a shop or a brand.
+     *
+     * Each caption is the claim its rail makes, and they are different
+     * claims: a discount is measured against our own median, a chart is
+     * somebody else's, and a wishlist count is our own visitors'. The
+     * blurbs say which, because a shelf that does not say where its
+     * order came from is a shelf a reader cannot weigh.
+     */
+    'entity_rails' => [
+        'discounts' => [
+            'title' => 'Ahora más barato',
+            'blurb' => 'Medido contra el precio mediano de los últimos treinta días, no contra un precio tachado.',
+        ],
+        'popular' => [
+            'title' => 'Se vende bien',
+            'blurb' => 'De las listas de más vendidos de las tiendas que comparamos.',
+        ],
+        'wishlisted' => [
+            'title' => 'Muy en listas de deseos',
+            'blurb' => 'Lo que los visitantes guardan en una lista. Solo si varias listas coinciden.',
+        ],
+    ],
 ];

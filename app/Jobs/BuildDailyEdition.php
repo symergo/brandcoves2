@@ -94,7 +94,9 @@ class BuildDailyEdition implements ShouldQueue
             'topics_in_season' => $inSeason,
             'edition' => $edition?->id,
             'picks' => $edition?->picks()->count() ?? 0,
-            'has_guide' => $edition?->guide_id !== null,
+            // The Cove this edition points a reader at. `featured_cove_id`
+            // replaced `guide_id` at the fold: a guide is a Cove now.
+            'has_guide' => $edition?->featured_cove_id !== null,
         ]);
     }
 }

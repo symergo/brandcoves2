@@ -1,14 +1,19 @@
 ---
 name: giftcoves-seed-coves
-description: Seed the GiftCoves cove planner over the editorial API — create or rewrite draft Cove plans of any kind (daily, persona, guide, seasonal, advice) with a curated product shortlist given as EAN barcodes, a topic or title, and authored editorial prose. Use when asked to seed, draft, plan, brief or write Coves, gift personas, buying guides, seasonal guides or advice articles for GiftCoves or brandcoves, or to turn a list of EANs into a cove plan.
+description: Drive the GiftCoves editorial pipeline over its API — feed the planner with topics, pick the products, write the prose from the prompt the server holds, then approve and publish. Any kind of Cove (daily, persona, guide, seasonal, advice, shop, brand), any contiguous run of those stages. Use when asked to seed, draft, plan, curate, brief, write, build or publish Coves, gift personas, buying guides, seasonal guides, advice articles, shop or brand pages for GiftCoves or brandcoves, or to turn a list of EANs into a cove plan.
 ---
 
-# Seeding the GiftCoves cove planner
+# Driving the GiftCoves editorial pipeline
 
-Create draft `cove_plans` rows through `/api/editorial`, curated with real products
-and authored prose. **Everything this skill writes is a draft.** Publishing needs the
-`editorial.publish` ability and is a separate, deliberate call — never make it unless
-the user asks in this conversation.
+Drive the whole editorial pipeline through `/api/editorial`: feed the planner with topics,
+pick the products, write the prose **from the prompt the server holds**, approve, publish.
+
+Any contiguous run of those stages. "Feed the planner and publish" is all of them; "build
+the coves for which the products are picked" starts at the writing.
+
+**Everything up to `approve` is a draft.** Publishing needs the `editorial.publish` ability
+and is a separate, deliberate call — never make it unless the user asks in this
+conversation.
 
 ## Setup, every session
 
@@ -74,71 +79,30 @@ mixing them is a correctness bug rather than a typo. A write containing one unus
 id is rejected whole, on purpose: an article whose second pick silently vanished has
 a dangling sentence.
 
-## EANs are not first-class — resolve them first
+## A barcode is a lookup
 
-There is **no EAN lookup in the editorial API**. `GET /products?q=` is full-text over
-title, brand, category and description; a barcode matches none of those and comes
-back as an empty list that reads like "we do not stock it".
+    GET /products?market=<market>&ean=<ean>
 
-EANs resolve through the **public** scan endpoint instead, which hits the
-`(market, identity_key)` unique index directly:
+Resolves against the `(market, identity_key)` index — the same hit the shopper path takes,
+normalised so a 12-digit UPC-A or a 14-digit ITF-14 finds the GTIN-13 the catalogue stores.
 
-    GET https://<host>/<market>/scan/<ean>        # no auth, 120/min
+| Reply | Means |
+|---|---|
+| `count: 1` | found. `data[0].id` is the group id for **this host** |
+| `count: 0` | no EAN-grouped product in that market |
+| **422** | the barcode failed its check digit — a misread, not a miss |
 
-`status: "found"` returns `url: /<market>/p/<groupId>/<slug>` — the group id is the
-third path segment. `status: "not_found"` means no EAN-grouped product in that
-market. `422` means the barcode failed its check digit: a misread, not a miss.
+The 422 matters: a failed check digit will fail in every market, so retrying elsewhere is
+wasted. A `count: 0` may still be recoverable — add `&includeLive=1`, which asks bol and
+ingests what comes back before re-reading the catalogue, all in the one request.
 
-**A miss is not always final.** A feed that ships no barcode leaves its products
-grouped by brand and title instead, so the site can hold a product the scan cannot
-see, and bol is queried live rather than crawled. Two recoveries, in order:
+Coverage is EAN-grouped groups only: a feed shipping no barcode leaves its products grouped
+by brand and title, so the site can hold a product this cannot see. Fall back to
+`?q=<title words>` and confirm with `GET /products/{id}`.
 
-1. `GET /products?market=…&q=<ean>&includeLive=1` — asks bol with that term and
-   ingests what comes back. Its own reply will still be empty (full-text, no EAN), so
-   **ignore the response body** and re-run the scan. Best-effort.
-2. Search by name: `GET /products?market=…&q=<title words>`, then confirm the match
-   with `GET /products/{id}`, which lists the merchants and prices behind the group.
-
-Never guess past a miss. Report the unresolved EANs and let the user decide.
-
-`scripts/seed_coves.py` does all of this. Prefer it over hand-rolled requests — it
-resolves, retries, enforces the address rules below, and prints what it would send.
-
-## Only `daily` and `persona` work on the deployed API
-
-Measured against production on 2026-08-29 by writing one and reading it back. The rest
-of this section describes the *intended* contract; the deployed `CovePlanController`
-does not implement it yet, and **fails silently rather than refusing**:
-
-- `'slug' => $kind === Persona ? $slug : null` — a guide's or seasonal's slug is
-  **discarded**. The plan is stored with no address at all.
-- `validated()` does not list `body`, `faq`, `focusKeyphrase`, `metaDescription`,
-  `seasonFrom` or `seasonTo`. Laravel returns only validated keys, so those fields are
-  **dropped without a word**. Not refused — dropped.
-- The response is **`201`**. Nothing in it says the article was thrown away.
-
-A real one: `POST /coves` with `kind: "guide"`, a slug, a body and a FAQ returned 201
-and created plan 740 with `slug: null`, `body` absent, `faq` absent, `hasEditorial:
-false`. It cannot be built, because a dateless non-persona has no address.
-
-**And it is not idempotent.** The upsert finds an existing plan by slug (personas) or
-by date (dailies). A guide has neither once its slug has been discarded, so the lookup
-returns nothing and every retry **creates another orphan row**. The same brief sent
-twice made plans 740 *and* 741. A client retrying after a timeout would fill the
-planner. This is the strongest reason not to send article kinds at this host.
-
-**So on production today, write only:**
-
-| kind | how | carries |
-|---|---|---|
-| `daily` | `date` | `title`, `blurb`, `editorial`, `queries`, `items`, `buildInstructions` |
-| `persona` | `slug` | the same, plus `pickMode: "locked"` |
-
-For a guide, use **`POST /guides`** instead — a separate, fully deployed endpoint over
-the `guides` table (title, intro, body, FAQ, meta, ranked items, 3–12 required).
-
-Everything below becomes true once the uncommitted `CovePlanController` rewrite is
-committed and deployed. Re-check with one write and a read-back before relying on it.
+**Prefer EANs in a brief.** A barcode is the same number everywhere; a group id is not — it
+is per market *and* per environment, and an id from the wrong host names a real, in-stock,
+perfectly usable **different product** that every validation the server has will accept.
 
 ## Addressing: date or slug, never both
 
@@ -151,7 +115,8 @@ committed and deployed. Re-check with one write and a read-back before relying o
 | `guide` | `slug` | the substance, 3–12 | yes |
 | `seasonal` | `slug` | yes | yes, plus `seasonFrom`/`seasonTo` as `MM-DD` |
 | `advice` | `slug` | none by design | yes |
-| `shop` | `slug` | seeded from the repo, not here | no |
+| `shop` | `slug` — must name a shop this market compares | none; live rails instead | yes |
+| `brand` | `slug` — must be a `brand_stats` slug | none; live rails instead | yes |
 
 Article fields — `focusKeyphrase`, `metaDescription`, `body`, `faq` — are **refused**
 on a non-article kind, not dropped. A Daily's or a persona's words go in `editorial`.
@@ -166,25 +131,57 @@ wholesale** — send the full list every time, or use `POST /coves/{id}/editoria
 
 ## The flow
 
-1. **What is already planned** — `GET /coves?market=…` (the calendar, so you do not
-   write over an approved plan) and `GET /coves/queue?market=…` (briefs that need
-   prose: shortlist, curator notes, link allowlist, and the `revision` string that
-   `POST /coves/{id}/editorial` requires).
-2. **What is worth writing** — `GET /topics?market=…`, clusters of queries real
-   visitors typed into this site, with how many products exist to answer each. That
-   is the demand signal; a guide written against one has an audience the day it
-   publishes.
-3. Resolve the EANs, as above.
-4. `POST /coves` — the plan, with its `items` and its prose.
-5. Read **`linkCheck.unresolved`** in the response. Those tokens will render as plain
-   text. Fix them and POST again; the same date or slug updates in place.
+An instruction is a **selector plus a target stage**, and naming a stage implies every
+earlier one not already satisfied. "Feed the planner and publish" is all five; "build the
+coves for which the products are picked" starts at the writing.
 
-> **`POST /coves/drafts` is not deployed.** Probed on production 2026-08-29: it
-> answers **405**, because the wildcard `GET /coves/{plan}` is the only thing
-> registered at that path. The controller and its service layer exist only in an
-> uncommitted working tree, so neither host has it. Do not call it, and do not treat
-> its absence as an outage. Steps 1 and 2 cover what it would have given you: think
-> up the titles yourself, grounded in `/topics`.
+| Stage | Call |
+|---|---|
+| plan | `GET /calendar` → `POST /coves/drafts` (or `POST /calendar/draft` for one named day, `POST /seasons/{topic}/plan` for a season) |
+| curate | `POST /coves/{id}/items`, `PATCH /coves/{id}/items`, `POST /coves/{id}/suggest` |
+| write | `GET /coves/{id}/brief` → write → `POST /coves/{id}/editorial` |
+| approve | `POST /coves/{id}/approve` — needs `editorial.publish` |
+| build | happens on the day, or `POST /coves/{id}/build` |
+
+`POST /coves/stages/{stage}` runs `curate`, `approve` or `build` over a **set** — writes are
+20/min per token, so a thirty-Cove run made one call at a time spends most of an hour being
+paced. `dryRun: true` answers "what would this publish" before it publishes. Every response
+is per id and never a bare count.
+
+### Write from the brief, not from these notes
+
+**`GET /coves/{id}/brief` is the contract.** It returns the exact `system` and `user`
+messages the built-in builder would send for that plan — including any edit somebody has
+made in the admin panel — plus the link allowlist, the shortlist with its notes, the
+product floor, and a `revision` to quote back.
+
+Everything below is orientation. The brief is the thing that is true.
+
+### What state a plan is in
+
+`GET /coves?state=` filters on the same vocabulary the planner screen shows:
+`draft`, `written`, `approved`, `due_again`, `live`, `thin`, `archive`. Each plan reports
+its `state` and a `nextStage`.
+
+**`thin` is the one worth knowing.** It means the build ran and produced no page, almost
+always a catalogue too thin to clear the kind's floor. It used to be indistinguishable from
+"not built yet", which is the difference between *published* and *nothing happened*.
+
+### Reading back
+
+`GET /coves/{id}/edition` — for **any** kind, not only a Daily. It reports whether a page
+exists, `themeSource` (`planned` means your plan won), and `lastBuild.why` when the last
+build came to nothing.
+
+### Who writes it
+
+`cove_plans.writer` is `builder` or `authored`. Sending prose sets `authored` for you, so a
+brief that carries words means the model never runs over them. Send `writer: "builder"` to
+file a first draft you want the builder to finish.
+
+`items[].copy` on `POST /coves/{id}/editorial` is the **sentence printed under the card**.
+`note` is the curator's reason for choosing the product and is read by the writer alone;
+the two are separate fields and writing one no longer destroys the other.
 
 ## Writing the prose
 

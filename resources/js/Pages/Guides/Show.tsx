@@ -5,6 +5,7 @@ import PreviewBanner from '../../Components/PreviewBanner'
 import { useTranslations } from '../../useTranslations'
 import CoveRail, { CoveSeries, type Rail } from '../../Components/CoveRail'
 import MoreCoves from '../../Components/MoreCoves'
+import EntityRails, { type EntityRailSet } from '../../Components/EntityRails'
 import SaveToList from '../../Components/SaveToList'
 import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
 
@@ -60,6 +61,12 @@ interface Props {
      * served it.
      */
     rail: Rail
+    /**
+     * A Shop Cove's product rails. Null on every other kind: a buying guide
+     * already carries its shortlist, and a rail under one would be a second,
+     * unranked answer to the question the article just answered.
+     */
+    rails?: EntityRailSet | null
 }
 
 /**
@@ -189,7 +196,7 @@ function Article({
     )
 }
 
-export default function GuideShow({ preview = false, guide, items, rail }: Props) {
+export default function GuideShow({ preview = false, guide, items, rail, rails = null }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
@@ -394,6 +401,15 @@ export default function GuideShow({ preview = false, guide, items, rail }: Props
                     <CoveRail rail={rail} />
                 </aside>
             </div>
+
+            {/*
+              A Shop Cove's products, under the piece about the shop.
+
+              Null on every other kind: a buying guide already carries its
+              shortlist, and a rail underneath one would be a second, unranked
+              answer to the question the article just answered.
+            */}
+            <EntityRails rails={rails} />
 
             {/*
               The other articles. This page had no onward navigation at all —

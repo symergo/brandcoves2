@@ -49,7 +49,7 @@ class EditionController extends Controller
             ->where('market', $resolved->value)
             ->daily()
             ->whereDate('drop_date', $day->toDateString())
-            ->with(['picks.group', 'guide'])
+            ->with(['picks.group', 'featured'])
             ->first();
 
         if ($edition === null) {
@@ -101,10 +101,19 @@ class EditionController extends Controller
                     ->values()
                     ->all(),
 
-                'guide' => $edition->guide === null ? null : [
-                    'id' => $edition->guide->id,
-                    'title' => $edition->guide->title,
-                    'url' => '/'.$edition->market->value.'/guides/'.$edition->guide->slug,
+                /*
+                 * The Cove this edition points a reader at.
+                 *
+                 * `featured_cove_id` replaced `guide_id` at the fold — a guide
+                 * is a `daily_pick_sets` row now — and this was the last reader
+                 * of the old relation, which is what kept the `guides` table
+                 * alive a release longer than the fold intended.
+                 */
+                'guide' => $edition->featured === null ? null : [
+                    'id' => $edition->featured->id,
+                    'title' => $edition->featured->theme_title,
+                    'url' => '/'.$edition->market->value.'/'
+                        .$edition->featured->kind->path((string) $edition->featured->slug, $edition->market),
                 ],
             ],
         ]);

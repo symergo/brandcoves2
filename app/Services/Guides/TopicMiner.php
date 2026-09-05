@@ -155,7 +155,14 @@ class TopicMiner
         return GuideTopic::query()
             ->where('market', $market->value)
             ->whereIn('status', ['candidate', 'queued'])
-            ->whereNull('guide_id')
+            /*
+             * Not yet turned into a plan.
+             *
+             * Was `whereNull('guide_id')`, an FK into the `guides` table the fold
+             * retired. `TopicPlanner` sets `plan_id` when a topic becomes a draft
+             * plan, so that is the column that means "nobody has taken this one".
+             */
+            ->whereNull('plan_id')
             // Either kind of demand evidence qualifies. A market with no search
             // log yet still has a queue, which is the point of mining charts at
             // all — but a chart-only topic still ranks below a searched-for one,

@@ -120,6 +120,57 @@ final readonly class EntityRails
     }
 
     /**
+     * The categories this entity actually sells in, for the prose to link to.
+     *
+     * The allowlist an entity Cove is written against. It carries **no
+     * products** — the prose is about ranges rather than items, because the
+     * items are a live rail that changes with stock — so without this it would
+     * carry nothing at all, and `[[search:koptelefoon]]` would render as three
+     * plain words.
+     *
+     * That would defeat the point of the page. `/brand/sony` is an indexable
+     * destination, and the categories it names are real crawlable market URLs:
+     * passing authority to the queries a brand is about is what an entity Cove
+     * is *for*, rather than a decoration on it.
+     *
+     * Drawn from the same scope as the rails, so what the prose may link to and
+     * what the page actually shows are the same set of subjects.
+     *
+     * @return list<string>
+     */
+    public function vocabularyForBrand(BrandStat $brand, Market $market): array
+    {
+        $spellings = array_values(array_unique([$brand->brand, ...(array) ($brand->aliases ?? [])]));
+
+        return $this->vocabulary($market, fn (Builder $q) => $q->whereIn('brand', $spellings));
+    }
+
+    /** @return list<string> */
+    public function vocabularyForShop(Merchant $shop, Market $market): array
+    {
+        return $this->vocabulary($market, fn (Builder $q) => $q->whereHas('offers', fn (Builder $p) => $p
+            ->where('market', $market->value)
+            ->where('merchant_id', $shop->id)
+            ->where('status', ProductStatus::Active->value)));
+    }
+
+    /**
+     * @param  callable(Builder): Builder  $scope
+     * @return list<string>
+     */
+    private function vocabulary(Market $market, callable $scope): array
+    {
+        return $this->base($market, $scope)
+            ->whereNotNull('category')
+            ->distinct()
+            ->limit(40)
+            ->pluck('category')
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
      * @param  callable(Builder): Builder  $scope
      * @return array<string, list<array<string, mixed>>>
      */
@@ -270,17 +321,28 @@ final readonly class EntityRails
      */
     private function present(Collection $groups): array
     {
+        /*
+         * The shape the rest of the site's cards already use.
+         *
+         * `image` and `price` rather than `imageUrl` and `minPriceCents`,
+         * because `DiscoveryResult` and `CoveRail` emit exactly this and the
+         * React side has one card component for it. A second shape would mean a
+         * second card, and then two places where a discount badge can be wrong.
+         *
+         * Cents, exactly as stored: the client formats for the market, so a
+         * float never enters the pipeline.
+         */
         return $groups->map(fn (ProductGroup $g) => [
             'id' => $g->id,
             'title' => $g->title,
             'brand' => $g->brand,
-            'slug' => $g->slug,
-            'imageUrl' => $g->image_url,
-            // Cents, like everywhere else. A formatted string here would be one
-            // more place the currency and the rounding could disagree.
-            'minPriceCents' => $g->min_price,
-            'discountPercent' => $g->discountPercent(),
+            'image' => $g->image_url,
+            'category' => $g->category,
+            'price' => $g->min_price,
             'merchantCount' => $g->merchant_count,
+            'inStock' => $g->in_stock,
+            'discountPercent' => $g->discountPercent(),
+            'url' => '/'.$g->market->value.'/p/'.$g->id.'/'.$g->slug,
         ])->values()->all();
     }
 }
