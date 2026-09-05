@@ -252,7 +252,7 @@ Each kind draws on the source that knows something about it, and nothing else:
 |---|---|
 | `daily` | the observance calendar — the next themed days with no plan yet |
 | `guide` | the mined topic queue, most demand first |
-| `seasonal` | the seasonal calendar, soonest window first: a season is only useful if the page is indexed *before* it opens |
+| `seasonal` | the seasonal calendar, soonest window first: a season is only useful if the page is indexed *before* it opens. **`count` means seasons, not plans** — each one comes back as several dated parts, one per subject it names |
 | `persona` | one per gift-wizard interest, carrying that interest's own product nouns from `AngleMap` |
 | `advice` | nothing. **422 with the reason** |
 | `shop` | nothing. **422 with the reason** |
@@ -260,6 +260,11 @@ Each kind draws on the source that knows something about it, and nothing else:
 Every plan comes back as a `draft` with a shortlist of real, in-stock, priced products already on
 it — the same selection the builder would have made — so the next call has ids it may link to
 without a search per product.
+
+A seasonal request can therefore return more plans than were asked for, and can return fewer seasons:
+one the catalogue cannot fill a single part of is skipped rather than fatal, and `shortfall` says
+which of the two reasons applies — an exhausted queue is fixed by mining more topics, a thin
+catalogue is not. See [seasonal-series.md](seasonal-series.md).
 
 **`shortfall` is the field a scheduled caller must read.** Fewer plans than asked for is normal:
 the topic queue runs dry, every interest already has a persona. A bare count cannot distinguish
@@ -324,7 +329,10 @@ the planner:
 
 The article kinds accept the parts of a piece that are decided before it is written —
 `focusKeyphrase`, `metaDescription`, `body`, `faq`, and `seasonFrom`/`seasonTo` on a seasonal
-guide. Left empty the builder writes them; filled they survive every rebuild. Sent with a kind that
+guide. A seasonal plan also **reads back** a `series` object (`key`, `part`) and a `date`: a season is
+laid out as a series of dated parts, and "part 2" is a fact about what the writing may assume the
+reader has already seen. Null on a season the catalogue could fill only one subject of — that is a
+page rather than a series and carries no number anywhere. Left empty the builder writes them; filled they survive every rebuild. Sent with a kind that
 has no use for them they are **refused, not dropped**: an author who sends a FAQ with a persona and
 receives a 200 has every reason to believe it was stored, and finds out when the page renders
 without one.

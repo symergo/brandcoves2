@@ -391,7 +391,20 @@ class EditionBuilder
 
             $this->writePicks($edition, $finds, $this->liveFinds($plan), $this->itemCopy($plan, $finds, $written));
 
-            $plan->forceFill(['edition_id' => $edition->id])->save();
+            /*
+             * `built_for` is what stops this running again tomorrow, and what
+             * lets it run again next spring.
+             *
+             * It records the date the plan was due when it was honoured.
+             * `PublishDueCoves` builds a plan whose `drop_date` is later than
+             * this, so a seasonal part re-dated into the coming window is due
+             * again while an unmoved one is not. Null on a plan with no date at
+             * all, which is every kind built on demand rather than by the clock.
+             */
+            $plan->forceFill([
+                'edition_id' => $edition->id,
+                'built_for' => $plan->drop_date?->toDateString(),
+            ])->save();
 
             return $edition;
         });

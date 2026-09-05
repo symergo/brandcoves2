@@ -3,7 +3,7 @@ import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import PreviewBanner from '../../Components/PreviewBanner'
 import { useTranslations } from '../../useTranslations'
-import CoveRail, { type Rail } from '../../Components/CoveRail'
+import CoveRail, { CoveSeries, type Rail } from '../../Components/CoveRail'
 import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
 import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
@@ -272,6 +272,19 @@ export default function GuideShow({ preview = false, guide, items, rail }: Props
                                 <> · {t('guides.why', { count: n(guide.searchVolume) })}</>
                             )}
                         </p>
+
+                        {/*
+                          Where this page sits in its series, on the seasonal
+                          Coves that are one.
+
+                          Above the body rather than under it, unlike everything
+                          else the rail carries: the rest of the rail is where to
+                          go afterwards, and a title reading "deel 2" raises the
+                          question of what parts one and three are before the
+                          reader has started. Renders nothing at all on a Cove
+                          that is not part of a series, which is most of them.
+                        */}
+                        <CoveSeries parts={rail.series} />
 
                         {guide.body.length > 0 && (
                             <section className="mt-8">

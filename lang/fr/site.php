@@ -1484,6 +1484,10 @@ return [
         'slug_prefix' => 'meilleur',
         'template_title' => 'Les meilleurs :topic',
         'template_intro' => ':count options pour :topic, avec le prix de chaque boutique côte à côte.',
+        // A season published as a series. See docs/features/seasonal-series.md.
+        'series_title' => ':topic, partie :part',
+        'series_slug_part' => 'partie',
+        'series_heading' => 'Dans cette série',
     ],
 
     'discover' => [

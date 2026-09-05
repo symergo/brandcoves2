@@ -9,6 +9,7 @@ use App\Models\CovePlan;
 use App\Models\GuideTopic;
 use App\Models\User;
 use App\Services\Cove\PlanSlugs;
+use App\Services\Cove\SeasonalSeries;
 use App\Services\Cove\Selectors\LadderSelector;
 use App\Services\Curation\PlanCurator;
 use Illuminate\Support\Facades\DB;
@@ -38,9 +39,34 @@ class TopicPlanner
         private readonly LadderSelector $ladder,
         private readonly PlanCurator $curator,
         private readonly PlanSlugs $slugs,
+        private readonly SeasonalSeries $series,
     ) {}
 
+    /**
+     * The first plan this topic produced.
+     *
+     * Kept as the entry point every screen already calls, and it is still one
+     * plan for a mined topic. A seasonal topic now produces several — see
+     * {@see draftAll()} — and this hands back the one the topic itself points
+     * at, which is what a caller that redirects somebody to "its plan" wants.
+     */
     public function draft(GuideTopic $topic, ?User $author = null): CovePlan
+    {
+        return $this->draftAll($topic, $author)[0];
+    }
+
+    /**
+     * Every plan this topic produces, in order.
+     *
+     * A mined topic is one buying guide, exactly as before. A **seasonal** topic
+     * is a series: a season is months long and names several subjects, so it is
+     * laid out as parts with a date each, inside its own window. See
+     * {@see SeasonalSeries}, which is where that decision lives — this method's
+     * job is only to know which topics go there.
+     *
+     * @return non-empty-list<CovePlan>
+     */
+    public function draftAll(GuideTopic $topic, ?User $author = null): array
     {
         if ($topic->plan_id !== null) {
             /*
@@ -51,17 +77,47 @@ class TopicPlanner
             throw new InvalidArgumentException('This topic already has a plan.');
         }
 
+        if ($topic->origin === 'seasonal') {
+            $parts = $this->series->lay($topic, $author);
+
+            if ($parts === []) {
+                /*
+                 * Thrown rather than returning an empty list, because every
+                 * caller of this is a person or an agent asking for a plan and
+                 * has to be told why there is not one. The season is left
+                 * un-queued on purpose: a category that is thin in April may
+                 * have an advertiser in May, and this is the same "parked, not
+                 * banned" rule the topic queue already runs on.
+                 */
+                throw new InvalidArgumentException(
+                    "The catalogue in {$topic->market->value} cannot fill a single part of \"{$topic->topic}\" yet. "
+                    .'The season stays in the queue and will be offered again once more of it is in stock.'
+                );
+            }
+
+            return $parts;
+        }
+
+        return [$this->one($topic, $author)];
+    }
+
+    /** One buying guide from one mined topic — the original path, unchanged. */
+    private function one(GuideTopic $topic, ?User $author): CovePlan
+    {
         $market = $topic->market;
         $queries = array_values(array_filter((array) $topic->member_queries, 'is_string'));
 
         /*
-         * Seasonal topics become seasonal Coves.
+         * A buying guide, always. Seasonal topics never reach here — they are
+         * laid out as a series by `SeasonalSeries`, which is the only place that
+         * knows a season has parts and dates.
          *
-         * The distinction lives on the topic and nowhere else, so this is the
-         * only moment it can be carried across — after this the plan is just a
-         * plan, and its window is what makes it findable in season.
+         * `season_from` and `season_to` are still copied below rather than
+         * dropped: they are null on every topic that reaches here today, and a
+         * copy that is always null costs nothing where a deletion would have to
+         * be noticed and undone the day a windowed non-seasonal topic exists.
          */
-        $kind = $topic->origin === 'seasonal' ? CoveKind::Seasonal : CoveKind::Guide;
+        $kind = CoveKind::Guide;
 
         $plan = DB::transaction(function () use ($topic, $market, $queries, $kind, $author): CovePlan {
             $plan = CovePlan::create([
@@ -112,8 +168,10 @@ class TopicPlanner
      */
     private function provenance(GuideTopic $topic): string
     {
+        // No seasonal arm: a seasonal topic is laid out by `SeasonalSeries`,
+        // which writes a note naming the part and its subject as well as the
+        // window. An arm here would be dead and would read as the live one.
         return match ($topic->origin) {
-            'seasonal' => "From the seasonal calendar: {$topic->topic}, in season {$topic->season_from} to {$topic->season_to}.",
             'chart' => "From the bestseller charts: {$topic->chart_entries} charting product(s) in this category.",
             default => "From the search log: {$topic->search_volume} search(es) in 30 days, {$topic->available_products} product(s) available.",
         };

@@ -610,6 +610,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Seasonal series
+    |--------------------------------------------------------------------------
+    |
+    | A season is months long and holds several distinct subjects, so it is
+    | published as a series of parts rather than as one page written once. See
+    | docs/features/seasonal-series.md.
+    |
+    */
+    'seasons' => [
+        /*
+         * The most parts one season may be split into.
+         *
+         * Four, because that is what the calendar can actually supply: a
+         * seasonal entry in config/cove_seasons.php carries three or four
+         * product nouns, and a part is one noun. Raising this does not invent a
+         * fifth subject, it only lets a mined query that happened to merge into
+         * the topic become a page — and those are phrases people typed, not
+         * subjects somebody chose.
+         *
+         * It is also roughly the most a reader will follow. "Part 7 of 9" is a
+         * table of contents, and the window is not long enough to space nine
+         * pages far enough apart to be worth indexing separately.
+         */
+        'max_parts' => 4,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Pages an article may link to
     |--------------------------------------------------------------------------
     |

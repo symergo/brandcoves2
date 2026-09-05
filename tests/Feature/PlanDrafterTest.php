@@ -129,9 +129,21 @@ class PlanDrafterTest extends TestCase
          * first — the point of a seasonal page is that it is already indexed
          * when the season starts.
          */
-        $this->assertSame('halloween', $result->plans[0]->focus_keyphrase);
+        /*
+         * The title, not the keyphrase. A seasonal plan's `focus_keyphrase` is
+         * the *subject of its part* now — a season is laid out as a page per
+         * noun it names, and the keyphrase is what that page retrieves on. Only
+         * the title still says which season it belongs to. See
+         * App\Services\Cove\SeasonalSeries.
+         */
+        $this->assertSame('Halloween', $result->plans[0]->title);
         $this->assertSame(CoveKind::Seasonal, $result->plans[0]->kind);
         $this->assertSame('09-15', $result->plans[0]->season_from);
+
+        // One noun, so one part, so no numbering anywhere: "part 1" with no
+        // part two is a promise to a reader that nothing keeps.
+        $this->assertNull($result->plans[0]->part);
+        $this->assertNotNull($result->plans[0]->drop_date, 'a season is scheduled inside its window');
     }
 
     #[Test]

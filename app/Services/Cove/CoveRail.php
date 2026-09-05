@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Cove;
 
 use App\Enums\CoveKind;
+use App\Enums\PublishStatus;
+use App\Models\CovePlan;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
@@ -79,14 +81,97 @@ class CoveRail
      * `$cove` is excluded from both lists — the page you are on is not
      * somewhere to go next, and neither are the products already printed on it.
      *
-     * @return array{coves: array<string, mixed>|null, products: list<array<string, mixed>>}
+     * @return array{coves: array<string, mixed>|null, products: list<array<string, mixed>>, series: list<array<string, mixed>>|null}
      */
     public function for(DailyPickSet $cove, CurrentMarket $current): array
     {
         return [
             'coves' => $this->coves($cove, $current),
             'products' => $this->products($cove, $current),
+            'series' => $this->series($cove, $current),
         ];
+    }
+
+    /**
+     * The other parts of this Cove's series, if it is part of one.
+     *
+     * A season is published as several pages — "Kamperen, deel 2" — and a
+     * numbered title with no way to reach the other numbers is a promise the
+     * page does not keep. The reader is told where they are and can move
+     * between the parts; without this the only route from part two to part
+     * three is the general list of articles, where they sit among everything
+     * else and in publication order.
+     *
+     * Rendered at the top of the article rather than in the rail beside it, and
+     * that is a decision about what the block is for: the rest of the rail is
+     * somewhere to go *afterwards*, and "which part am I reading" is something
+     * you need before you start. It travels in the same prop because it comes
+     * from the same service and the same request.
+     *
+     * ## Why the series lives on the plan
+     *
+     * `series_key` and `part` are columns on `cove_plans`, not on the edition —
+     * the series is a fact about how the work was *planned*, and the edition is
+     * an output every rebuild overwrites. So this reads the plan behind the
+     * page and finds its siblings through theirs.
+     *
+     * Null unless at least two parts are actually published. One part is a page,
+     * not a series, and a heading over a list of one reads as a failed load.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    private function series(DailyPickSet $cove, CurrentMarket $current): ?array
+    {
+        $plan = CovePlan::query()->where('edition_id', $cove->id)->first();
+
+        if ($plan === null || $plan->series_key === null) {
+            return null;
+        }
+
+        /*
+         * Editions joined to their plans, rather than plans with their editions
+         * eager-loaded: the ordering is `cove_plans.part` and the filter is on
+         * the edition, so one is always the other's foreign side whichever way
+         * round it is written — and this way `part` orders in SQL rather than in
+         * PHP over a set that had to be fetched whole first.
+         *
+         * Every column is qualified and `published()` is spelled out rather than
+         * called. Both tables carry `status`, `market` and `slug`, so the scope's
+         * unqualified `where('status', ...)` is ambiguous across this join — an
+         * error at the database, not a wrong answer, but only once somebody
+         * publishes a series.
+         */
+        $siblings = DailyPickSet::query()
+            ->join('cove_plans', 'cove_plans.edition_id', '=', 'daily_pick_sets.id')
+            ->where('cove_plans.market', $plan->market->value)
+            ->where('cove_plans.series_key', $plan->series_key)
+            ->where('daily_pick_sets.status', PublishStatus::Published->value)
+            ->whereNotNull('daily_pick_sets.published_at')
+            ->where('daily_pick_sets.published_at', '<=', now())
+            ->whereNotNull('daily_pick_sets.slug')
+            ->orderBy('cove_plans.part')
+            ->get([
+                'daily_pick_sets.id',
+                'daily_pick_sets.kind',
+                'daily_pick_sets.slug',
+                'daily_pick_sets.theme_title',
+            ]);
+
+        if ($siblings->count() < 2) {
+            return null;
+        }
+
+        return $siblings->map(fn (DailyPickSet $part): array => [
+            /*
+             * The edition's title, not the plan's. They are usually the same
+             * string, and where they differ the edition is what the reader is
+             * looking at — an editor who retitled the plan after it was built
+             * has not renamed the published page.
+             */
+            'title' => $part->theme_title,
+            'url' => $current->url($part->kind->path((string) $part->slug, $current->get())),
+            'current' => $part->id === $cove->id,
+        ])->values()->all();
     }
 
     /**

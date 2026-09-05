@@ -124,10 +124,17 @@ Operational commands, all idempotent and safe to re-run:
 
 ```bash
 php artisan bc:refresh-discovery      # giftability → serendipity → brand stats → today's edition
-php artisan bc:plan-coves             # draft the editorial calendar 120 days ahead, each day
-                                      # pre-filled with the products the builder would pick, for
-                                      # a person to curate. Needs bc:refresh-discovery to have run
-                                      # first, or there are no scored candidates to suggest
+php artisan bc:plan-coves             # draft the editorial calendar 120 days ahead: every themed
+                                      # day pre-filled with the products the builder would pick,
+                                      # and every season whose window opens inside the horizon laid
+                                      # out as dated parts, for a person to curate. The calendar
+                                      # recurs, so a season that already ran is RENEWED rather than
+                                      # rewritten: its parts slide onto the coming window and
+                                      # rebuild at the same URLs. Needs bc:refresh-discovery to have
+                                      # run first, or there are no scored candidates to suggest.
+                                      # --no-seasons draws only the Dailies. The year itself is at
+                                      # /admin, Content > Cove calendar. See
+                                      # docs/features/seasonal-series.md and cove-calendar.md
 php artisan bc:make-admin             # create an admin; refuses a password in argv (visible in ps)
 php artisan bc:check-bol              # prove the bol credentials; prints lengths, never values
 php artisan bc:check-ebay             # the same for eBay, plus the marketplace mapping — which

@@ -799,9 +799,28 @@ eatured_cove_id can point at it.
              * through to a create means the CHECK constraint rejects the row
              * loudly, which is the correct outcome for a malformed envelope.
              */
+            /*
+             * The kind is part of the dated key, and it has to be.
+             *
+             * `(market, drop_date)` stopped identifying one row when seasonal
+             * plans gained a due date: a Daily and a part of a season can share
+             * a Tuesday, which is why the unique index behind this is now
+             * partial on `kind = 'daily'`. Without the kind here, importing a
+             * Daily could find a seasonal part sitting on that date, fill it
+             * with the Daily's attributes and save it — the same silent
+             * overwrite described above, arrived at from the other side.
+             *
+             * Safe on the slug branch's terms too: unlike the slug namespace,
+             * which is deliberately shared across kinds, a date is only ever
+             * claimed by one kind at a time.
+             */
             return blank($row['drop_date'] ?? null)
                 ? null
-                : ['market' => $row['market'], 'drop_date' => $row['drop_date']];
+                : [
+                    'market' => $row['market'],
+                    'kind' => $kind?->value ?? CoveKind::Daily->value,
+                    'drop_date' => $row['drop_date'],
+                ];
         }
 
         return blank($row['slug'] ?? null)

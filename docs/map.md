@@ -75,7 +75,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Community/` | screening user-written posts and answers |
 | `Connectors/` | one subdirectory per vendor; `Offer` is the shared shape |
 | `Content/` | shipped editorial (advice coves), guide folding |
-| `Cove/` | the daily edition: themes, observances, digests, plan slugs |
+| `Cove/` | the daily edition: themes, observances, digests, plan slugs, seasonal series, the editorial year |
 | `Curation/` | the human pass over a drafted plan |
 | `Discover/` | discovery modes — `ModeEngine`, `Ranker`, `ModeProfile` |
 | `Discovery/` | catalogue-level signals: trends, serendipity, freshness |

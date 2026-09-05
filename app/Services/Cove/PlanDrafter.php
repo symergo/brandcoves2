@@ -118,6 +118,53 @@ final readonly class PlanDrafter
     }
 
     /**
+     * Draft the plan for one specific day, and only that day.
+     *
+     * `draft()` takes a number and walks forward filling whatever it finds,
+     * which is the right shape for topping a queue up and the wrong one for
+     * somebody looking at a year and pointing at 14 February. Asking for four
+     * months of plans to get the one you meant is not a reasonable trade, and
+     * neither is undoing the other hundred and nineteen.
+     *
+     * Null when the day is already spoken for, whatever the status of the plan
+     * on it — somebody has decided something about that date — or when the
+     * calendar has no theme for it at all, which happens only where an
+     * observance exists in the config with no copy in this market's language.
+     *
+     * Dailies only. Every other kind is addressed by a slug and a date means
+     * nothing to it; a seasonal part has a date but it comes from its season's
+     * window rather than from a click.
+     */
+    public function draftOn(CoveKind $kind, Market $market, CarbonImmutable $day, ?User $author = null): ?CovePlan
+    {
+        if ($kind !== CoveKind::Daily) {
+            return null;
+        }
+
+        $taken = CovePlan::query()
+            ->where('market', $market->value)
+            ->where('kind', CoveKind::Daily->value)
+            ->whereDate('drop_date', $day->toDateString())
+            ->exists();
+
+        if ($taken) {
+            return null;
+        }
+
+        $observance = $this->calendar->themeFor($day, $market);
+
+        if ($observance === null) {
+            return null;
+        }
+
+        $plan = $this->dailyPlan($market, $day, $observance, $author);
+
+        $this->prefill($plan, true, []);
+
+        return $plan->refresh();
+    }
+
+    /**
      * Daily Coves, from the observance calendar.
      *
      * The next unplanned themed days, in order. A day that already has a plan is
@@ -157,19 +204,7 @@ final readonly class PlanDrafter
                 continue;
             }
 
-            $plan = CovePlan::create([
-                'market' => $market->value,
-                'kind' => CoveKind::Daily->value,
-                'drop_date' => $day->toDateString(),
-                'title' => $observance->title($market),
-                'blurb' => $observance->blurb($market),
-                'queries' => $observance->queries,
-                'status' => 'draft',
-                'created_by' => $author?->id,
-                'note' => $observance->evergreen
-                    ? 'Rotation theme ('.$observance->key.') — no named day falls here. Replace it with something better if you have one.'
-                    : 'Drafted from the observance calendar ('.$observance->key.'). Edit or approve.',
-            ]);
+            $plan = $this->dailyPlan($market, $day, $observance, $author);
 
             $plans[] = $plan;
             $suggested += $this->prefill($plan, $withProducts, $plans);
@@ -197,6 +232,14 @@ final readonly class PlanDrafter
      * reasons. A search topic is worth writing in proportion to its demand; a
      * seasonal one is worth writing before its window opens, and a high score in
      * March is no reason to write the Halloween guide first.
+     *
+     * ## `$count` means topics, and a season is several plans
+     *
+     * A seasonal topic is laid out as a dated series — one part per subject the
+     * season names — so "draft 3" produces three seasons, which is usually a
+     * dozen plans. Counting plans instead would make the box mean "roughly a
+     * quarter of this many seasons, depending", which is not a number anybody
+     * can choose. The notification already reports the plans it wrote.
      */
     private function fromTopics(CoveKind $kind, Market $market, int $count, ?User $author): DraftedPlans
     {
@@ -216,22 +259,69 @@ final readonly class PlanDrafter
 
         $plans = [];
         $suggested = 0;
+        $sourced = 0;
+        $thin = 0;
 
         foreach ($topics as $topic) {
-            $plan = $this->topics->draft($topic, $author);
-            $plans[] = $plan;
-            $suggested += $plan->items()->count();
+            try {
+                $drafted = $this->topics->draftAll($topic, $author);
+            } catch (InvalidArgumentException) {
+                /*
+                 * One season the catalogue cannot fill a single part of.
+                 *
+                 * Skipped rather than fatal: this loop is a queue top-up over
+                 * several topics, and aborting the run because the fourth one is
+                 * thin throws away the three that worked. The topic stays a
+                 * candidate — parked, not banned, exactly as a failed build
+                 * leaves it — and the shortfall below says so, because
+                 * otherwise "3 drafted" out of 5 reads as an exhausted queue.
+                 */
+                $thin++;
+
+                continue;
+            }
+
+            $sourced++;
+
+            foreach ($drafted as $plan) {
+                $plans[] = $plan;
+                $suggested += $plan->items()->count();
+            }
         }
 
-        return new DraftedPlans(
-            $plans,
-            $suggested,
-            count($plans) < $count
-                ? 'The topic queue for '.$market->value.' has no more unplanned '
-                    .($seasonal ? 'seasonal windows' : 'search topics')
-                    .'. Mine more with bc:refresh-discovery and bc:pull-charts, or add one by hand under Cove topics.'
-                : null,
-        );
+        return new DraftedPlans($plans, $suggested, $this->topicShortfall($market, $seasonal, $count, $sourced, $thin));
+    }
+
+    /**
+     * Why the topic queue produced fewer than were asked for.
+     *
+     * Two different reasons and they need different answers, which is why this
+     * is not one sentence with a conditional word in it: an exhausted queue is
+     * fixed by mining more topics, and a thin catalogue is fixed by waiting or
+     * by adding an advertiser. Told the first when it is the second, the next
+     * thing anybody does is run `bc:refresh-discovery` and get the same result.
+     */
+    private function topicShortfall(Market $market, bool $seasonal, int $count, int $sourced, int $thin): ?string
+    {
+        if ($sourced + $thin >= $count && $thin === 0) {
+            return null;
+        }
+
+        $sentences = [];
+
+        if ($thin > 0) {
+            $sentences[] = $thin.' '.($seasonal ? 'season(s)' : 'topic(s)').' in '.$market->value
+                .' were skipped: the catalogue cannot fill a page there yet. They stay in the queue and will be '
+                .'offered again as stock changes.';
+        }
+
+        if ($sourced + $thin < $count) {
+            $sentences[] = 'The topic queue for '.$market->value.' has no more unplanned '
+                .($seasonal ? 'seasonal windows' : 'search topics')
+                .'. Mine more with bc:refresh-discovery and bc:pull-charts, or add one by hand under Cove topics.';
+        }
+
+        return implode(' ', $sentences);
     }
 
     /**
@@ -327,6 +417,31 @@ final readonly class PlanDrafter
             ->map(fn (string $note) => Str::before(Str::after($note, self::INTEREST_MARK), ')'))
             ->filter()
             ->flip();
+    }
+
+    /**
+     * One day's Daily plan, from the theme the calendar gives that date.
+     *
+     * Shared by the queue top-up and the single-day draft on the year calendar,
+     * because the row they write is the same row and a second copy of it would
+     * drift — the note in particular, which is the only place a curator is told
+     * whether the day is a named occasion or the rotation filling a gap.
+     */
+    private function dailyPlan(Market $market, CarbonImmutable $day, Observance $observance, ?User $author): CovePlan
+    {
+        return CovePlan::create([
+            'market' => $market->value,
+            'kind' => CoveKind::Daily->value,
+            'drop_date' => $day->toDateString(),
+            'title' => $observance->title($market),
+            'blurb' => $observance->blurb($market),
+            'queries' => $observance->queries,
+            'status' => 'draft',
+            'created_by' => $author?->id,
+            'note' => $observance->evergreen
+                ? 'Rotation theme ('.$observance->key.') — no named day falls here. Replace it with something better if you have one.'
+                : 'Drafted from the observance calendar ('.$observance->key.'). Edit or approve.',
+        ]);
     }
 
     /**

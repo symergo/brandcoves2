@@ -110,6 +110,31 @@ column — shortlist, FAQ and all — for the reason [daily-cove.md](daily-cove.
 hard way: when the column holds only the prose, a Cove published with short copy ends a few lines
 under its headline while the sticky rail runs on for another screen.
 
+## The series strip, above the article
+
+A seasonal Cove is published as a series of parts — "Kamperen, deel 2" — and a numbered title with
+nothing to number against is a promise the page does not keep. `CoveRail::series()` returns the
+published parts in part order, current one marked, and `CoveSeries` draws them.
+
+**Above the article, not in the rail**, and that is a decision about what the block is for. Everything
+else here is somewhere to go *afterwards*; "which part am I reading" is something you need before you
+start, and the title raises the question in the first line. It travels in the same prop because it
+comes from the same service and the same request — splitting it out would make the two halves look
+unrelated.
+
+Three things it is careful about:
+
+- **Null unless two parts are live.** One part is a page, not a series, and a heading over a list of
+  one reads as a block whose contents failed to load. A series with part two published and part one
+  still drafting therefore shows nothing, which is the right transient state.
+- **The current part is text, not a link.** A link to the page you are on looks like the way forward
+  and is the way nowhere. `aria-current="page"` carries the same fact to a screen reader.
+- **It reads the plan, not the edition.** `series_key` and `part` are columns on `cove_plans`,
+  because the series is a fact about how the work was *planned* and the edition is an output every
+  rebuild overwrites.
+
+See [seasonal-series.md](seasonal-series.md).
+
 ## Where it is
 
 | | |
@@ -119,8 +144,8 @@ under its headline while the sticky rail runs on for another screen.
 | Rail | [resources/js/Components/CoveRail.tsx](../../resources/js/Components/CoveRail.tsx) |
 | Pages | `Daily/Edition.tsx`, `GiftIdeas/Persona.tsx`, `Guides/Show.tsx` |
 | Controllers | `DailyCoveController`, `GiftIdeasController::show`, `GuideController::render` |
-| Copy | `site.coves.{key}_heading`, `site.coves.{key}_all`, `site.coves.rail_products`, `site.gift_cove.rail_hint`, `site.gift_cove.rail_cta` |
-| Tests | [tests/Feature/CoveRailTest.php](../../tests/Feature/CoveRailTest.php) |
+| Copy | `site.coves.{key}_heading`, `site.coves.{key}_all`, `site.coves.rail_products`, `site.gift_cove.rail_hint`, `site.gift_cove.rail_cta`, `site.guides.series_heading` |
+| Tests | [tests/Feature/CoveRailTest.php](../../tests/Feature/CoveRailTest.php), [tests/Feature/SeasonalSeriesTest.php](../../tests/Feature/SeasonalSeriesTest.php) |
 
 `GuideController::shop()` renders `Guides/Show` too, so a Shop Cove carries the rail and gets its own
 band: `sectionOf()` asks what kind the Cove is, never which controller method served it.
@@ -134,4 +159,5 @@ having already made once with `assertDontSee`.
 - [daily-cove.md](daily-cove.md) — the edition, and the archive strip this replaced
 - [gift-personas.md](gift-personas.md) — the undated Coves, and what furniture they do not carry
 - [all-coves.md](all-coves.md) — `/coves`, where the whole shelf is on show
+- [seasonal-series.md](seasonal-series.md) — the seasons the series strip is for
 - [giftability.md](giftability.md) — `giftable` against `worth_showing`

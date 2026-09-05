@@ -8,6 +8,7 @@ use App\Enums\Market;
 use App\Models\GuideTopic;
 use App\Models\ProductGroup;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 
 /**
  * Cove topics that come from the calendar rather than the search log.
@@ -140,6 +141,82 @@ class SeasonalTopics
             ->sortBy(fn (GuideTopic $topic) => $this->daysLeft($today, (string) $topic->season_to));
 
         return $open->first();
+    }
+
+    /**
+     * Every season whose window is open, or opens soon — planned or not.
+     *
+     * `ripest()` answers a different question — "which single season is most
+     * urgent" — and it was the only way to reach these rows, which suited a
+     * pipeline that wrote one guide at a time. A recurring editorial calendar
+     * needs the other question: which seasons should be on it, given how far
+     * ahead it is being drawn.
+     *
+     * **Planned ones included, deliberately.** This filtered on `plan_id IS
+     * NULL` while a season was something that happened once, and that is exactly
+     * what stopped the calendar repeating: `kamperen` was laid out one spring
+     * and never offered again, so the pages it produced were never refreshed
+     * and a subject the catalogue could not fill that year was never
+     * reconsidered. `SeasonalSeries::plan()` reads the difference and either
+     * lays the season out or renews it.
+     *
+     * Everything except `rejected`, which is a person's decision and the one
+     * status a yearly pass must not overturn.
+     *
+     * Ordered by the day each window opens inside the range, so a command that
+     * takes the first few takes the most urgent few — and so a run that is
+     * interrupted has done the work that mattered most.
+     *
+     * `available_products` is the same floor `ripest()` applies. It is a rough
+     * ILIKE count and the real test is whether the ladder can fill a part, which
+     * `SeasonalSeries` does properly; this only keeps the obviously empty ones
+     * out of a loop that would otherwise probe every facet of every season in
+     * five markets. A season that has fallen below it keeps the pages it already
+     * has — they are simply not refreshed this year, which is a better outcome
+     * for an evergreen page than being rebuilt from a catalogue that cannot
+     * fill it.
+     *
+     * @return Collection<int, GuideTopic>
+     */
+    public function opening(Market $market, CarbonImmutable $from, int $days): Collection
+    {
+        return GuideTopic::query()
+            ->where('market', $market->value)
+            ->where('origin', 'seasonal')
+            ->where('status', '!=', 'rejected')
+            ->where('available_products', '>=', self::MIN_PRODUCTS)
+            ->whereNotNull('season_from')
+            ->notRecentlyAttempted()
+            ->get()
+            ->map(function (GuideTopic $topic) use ($from, $days): array {
+                return ['topic' => $topic, 'opens' => $this->opensWithin($topic, $from, $days)];
+            })
+            ->filter(fn (array $row) => $row['opens'] !== null)
+            ->sortBy('opens')
+            ->map(fn (array $row) => $row['topic'])
+            ->values();
+    }
+
+    /**
+     * How many days from `$from` until this season is in window, within range.
+     *
+     * Null when it never is. Walked a day at a time rather than parsed into a
+     * date, because the window is `MM-DD` and may wrap the year — Valentine's
+     * runs from 27 December — and the walk gets both the wrap and the "already
+     * open" case right without a second code path. A few hundred string
+     * comparisons per market, once, in a command that then does real work.
+     */
+    private function opensWithin(GuideTopic $topic, CarbonImmutable $from, int $days): ?int
+    {
+        $window = ['from' => $topic->season_from, 'to' => $topic->season_to];
+
+        for ($day = 0; $day <= $days; $day++) {
+            if ($this->inWindow($from->addDays($day), $window)) {
+                return $day;
+            }
+        }
+
+        return null;
     }
 
     /**

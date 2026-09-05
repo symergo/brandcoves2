@@ -57,7 +57,30 @@ class CovePlan extends Model
             'pick_mode' => PickMode::class,
             // Nullable: null reads as CoveScene::defaultFor($this->kind).
             'scene' => CoveScene::class,
+            /*
+             * When this plan is due — and on a Daily, also where it is read.
+             *
+             * Two kinds carry one. On a Daily it is the address: the edition is
+             * reached at `/daily/{date}`. On a **seasonal** part it is a due
+             * date and nothing more — the published page is slug-addressed and
+             * evergreen like every other article, and the date says which day of
+             * the season's window this part is scheduled for. See
+             * `App\Services\Cove\SeasonalSeries` and the migration that relaxed
+             * `cove_plans_dated_kind_check` to allow it.
+             */
             'drop_date' => 'date',
+            /*
+             * The `drop_date` this plan was last built for.
+             *
+             * `drop_date > built_for` is the whole definition of "due", and it
+             * is what lets the calendar repeat: sliding a seasonal part onto next
+             * year's window makes it due again, at the same URL, without
+             * rewinding its status or clearing anything an editor decided.
+             */
+            'built_for' => 'date',
+            // Which part of a series this is, 1-based. Null unless `series_key`
+            // is set; a CHECK constraint keeps the two together.
+            'part' => 'integer',
             'queries' => 'array',
             'pinned_group_ids' => 'array',
             // Article kinds only — a guide's FAQ, decided before it is written

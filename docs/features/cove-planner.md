@@ -48,7 +48,13 @@ third arm for every new kind.
 **Content → Cove planner** is where a page is decided: what it is about, which
 products, why each one is on the list, and how it should be written. It was called
 "Cove calendar", which was right while a plan was a date and a title and is wrong now
-that every kind but the Daily has no date at all.
+that most kinds have no date at all.
+
+Two kinds do. A **Daily** carries the date it is *addressed by*; a **seasonal** part carries the date
+it is *due*, spread across its season's window — see
+[seasonal-series.md](seasonal-series.md). So the unique index that used to read "one dated plan per
+market per day" is now partial on `kind = 'daily'`: two Dailies for one Tuesday is an argument the
+builder cannot settle, and a season sharing that Tuesday is two pages at two addresses.
 
 It carries **the same tabs as the editorial screen**: one strip per kind, and a second strip per
 market beneath it, with a count on each. Dropdown filters for both were already there and answered
@@ -56,6 +62,11 @@ neither question the tabs answer: a filter is something you have to think to app
 that makes an empty section obvious cannot appear on one. "This market has no seasonal plans" is a
 fact worth seeing without clicking. The two screens are the same list at two points in its life, and
 an editor moving between them should not have to re-learn where things are.
+
+**Content → Cove calendar** is the year the planner is filled from: season windows month by month
+and named days on their dates, with what is planned against each and a button for what is not. It
+recurs — every entry is `MM-DD`, so 2029 is already drawn. See
+[cove-calendar.md](cove-calendar.md).
 
 **Content → Cove editorials** is everything that has been published, whatever kind,
 with the same two tab strips and filters for kind, status and date. It replaces two
@@ -137,7 +148,7 @@ and writes that many drafts. `App\Services\Cove\PlanDrafter` is the one implemen
 |---|---|---|
 | `daily` | observance calendar | the next unplanned themed days |
 | `guide` | mined topic queue | measured demand, most first |
-| `seasonal` | seasonal calendar | how soon the window opens |
+| `seasonal` | seasonal calendar | how soon the window opens — **N seasons, each several parts** |
 | `persona` | `App\Enums\Interest` + `AngleMap` | the enum's own order |
 | `advice` | — | refused, with the reason |
 | `shop` | — | refused, with the reason |
@@ -207,7 +218,8 @@ and hands over a draft plan pre-filled with the shortlist the builder would have
 chosen, for a curator to react to. `TopicPlanner` does the join.
 
 The consequence is worth stating plainly: **nothing publishes an article
-automatically any more.** `EditionBuilder` no longer builds a guide inside the Daily's
+automatically any more.** `PublishDueCoves` did not change that — it builds a plan somebody
+*approved*, on the date they scheduled it for, and a draft on a past date sits there for ever. `EditionBuilder` no longer builds a guide inside the Daily's
 06:00 job; it only features one that is already live. A market whose planner is empty
 eventually has no guide to feature.
 
@@ -260,7 +272,9 @@ clash by deleting a published page.
 - `GuideKind` survives only as the editorial API's vocabulary, where it also carries a
   deliberately lower floor (three products for an authored guide, five for a
   generated one).
-- Seasonal Coves have a window but nothing surfaces them by it yet.
+- ~~Seasonal Coves have a window but nothing surfaces them by it yet.~~ Done 2026-09-05: a season is
+  laid out as a series of dated parts on this screen, and an approved part publishes on its day. See
+  [seasonal-series.md](seasonal-series.md).
 
 ## See also
 

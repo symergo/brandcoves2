@@ -107,16 +107,45 @@ class CovePlanResource extends Resource
                         ->default(CoveKind::Daily->value)
                         ->required()
                         ->live()
-                        ->helperText('Only a Daily Cove has a date. Everything else is permanent and lives at a slug.'),
+                        ->helperText('A Daily Cove is addressed by its date and a seasonal Cove is due on one. '
+                            .'The rest are permanent and live at a slug.'),
 
+                    /*
+                     * A date on two kinds, meaning two different things.
+                     *
+                     * On a Daily it is the address — the edition is read at
+                     * `/daily/{date}`. On a seasonal part it is the due date:
+                     * the page is still slug-addressed and evergreen, and the
+                     * date says which day of the season's window this part is
+                     * scheduled to be built and published on. Editable here
+                     * because moving a part is the most likely thing an editor
+                     * wants to do to a season somebody laid out for them.
+                     */
                     DatePicker::make('drop_date')
-                        ->label('Date')
-                        ->visible(fn ($get) => $get('kind') === CoveKind::Daily->value)
+                        ->label(fn ($get) => $get('kind') === CoveKind::Daily->value ? 'Date' : 'Due')
+                        ->visible(fn ($get) => in_array(
+                            $get('kind'),
+                            [CoveKind::Daily->value, CoveKind::Seasonal->value],
+                            true,
+                        ))
                         ->required(fn ($get) => $get('kind') === CoveKind::Daily->value)
-                        ->helperText('One Daily Cove per market per day.')
-                        // The unique index covers dated rows only, so two ideas
-                        // can sit undated but one Tuesday cannot have two plans.
-                        ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule, $get) => $rule->where('market', $get('market'))),
+                        ->helperText(fn ($get) => $get('kind') === CoveKind::Daily->value
+                            ? 'One Daily Cove per market per day.'
+                            : 'When this part goes live, once it is approved. Clear it to publish on the next build instead.')
+                        /*
+                         * Checked against the Dailies only, which is what the
+                         * partial unique index enforces.
+                         *
+                         * Two Dailies for one Tuesday is an argument the builder
+                         * cannot settle. Two seasonal parts on one day is not —
+                         * they are two pages at two addresses — and a rule that
+                         * scoped itself to "the chosen kind" would refuse a
+                         * perfectly legal save the first time two seasons
+                         * overlapped.
+                         */
+                        ->unique(ignoreRecord: true, modifyRuleUsing: fn ($rule, $get) => $rule
+                            ->where('market', $get('market'))
+                            ->where('kind', CoveKind::Daily->value)),
 
                     TextInput::make('title')->required()->maxLength(120)->live(onBlur: true),
 
@@ -354,14 +383,25 @@ class CovePlanResource extends Resource
                     ->date()
                     ->sortable()
                     ->placeholder(fn (CovePlan $r) => $r->slug === null ? '— unaddressed' : '/'.$r->slug)
-                    // The observance for that date, so an editor can see what
-                    // the calendar already thinks the day is about before
-                    // overriding it.
                     ->description(function (CovePlan $record): ?string {
                         if ($record->drop_date === null) {
                             return null;
                         }
 
+                        /*
+                         * A dated row that is not a Daily has an address too,
+                         * and the date column was hiding it: the slug only
+                         * appeared as the *placeholder* for a missing date, so a
+                         * seasonal part showed a date and nothing saying which
+                         * page it is. Which part it is, and where it lives.
+                         */
+                        if (! $record->kind->isDated()) {
+                            return trim(($record->part === null ? '' : 'part '.$record->part.' · ').'/'.$record->slug);
+                        }
+
+                        // The observance for that date, so an editor can see
+                        // what the calendar already thinks the day is about
+                        // before overriding it.
                         $observance = app(ObservanceCalendar::class)->on(
                             CarbonImmutable::instance($record->drop_date),
                             $record->market,

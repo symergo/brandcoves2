@@ -1482,6 +1482,10 @@ return [
         'slug_prefix' => 'mejor',
         'template_title' => 'Los mejores :topic',
         'template_intro' => ':count opciones de :topic, con el precio de cada tienda una al lado de la otra.',
+        // A season published as a series. See docs/features/seasonal-series.md.
+        'series_title' => ':topic, parte :part',
+        'series_slug_part' => 'parte',
+        'series_heading' => 'En esta serie',
     ],
 
     'discover' => [

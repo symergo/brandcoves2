@@ -18,7 +18,9 @@ namespace App\Enums;
  *
  * **The address.** A Daily is one morning's edition and is reached by its date.
  * Everything else is permanent and is reached by a slug — a persona at
- * `/gift-ideas/{slug}`, an article at `/guides/{slug}`.
+ * `/gift-ideas/{slug}`, an article at `/guides/{slug}`. A seasonal *plan* also
+ * carries a date, and it is a due date rather than an address: see
+ * `isDated()`.
  *
  * **The shape of the page.** A Daily or a persona is a column: prose with
  * products inside it. A guide is a ranked shortlist and an argument about it. An
@@ -59,6 +61,11 @@ enum CoveKind: string
      * season, because the search log cannot know about a season before the
      * season arrives: barbecue searches peak in June, so a miner reading June's
      * log commissions the barbecue guide in July.
+     *
+     * A season is published as a **series**: one part per subject the calendar
+     * names it with, each due on a date inside the window. That is why this is
+     * the one non-Daily kind whose plans may hold a `drop_date`. See
+     * docs/features/seasonal-series.md.
      */
     case Seasonal = 'seasonal';
 
@@ -87,6 +94,17 @@ enum CoveKind: string
      */
     case Shop = 'shop';
 
+    /**
+     * Is this kind **addressed** by its date?
+     *
+     * Only the Daily, and the word matters now that it is not the only kind that
+     * can hold one. A seasonal plan carries a `drop_date` too — the day that
+     * part of the season is *due* to be built — while the page it produces is
+     * still slug-addressed and evergreen like every other article. So this
+     * answers "is the date where the page lives", which is the question every
+     * caller is actually asking, and the answer is still Daily alone. See
+     * `App\Services\Cove\SeasonalSeries` and docs/features/seasonal-series.md.
+     */
     public function isDated(): bool
     {
         return $this === self::Daily;

@@ -7,6 +7,7 @@ use App\Jobs\BuildDailyEdition;
 use App\Jobs\ClassifyGiftability;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
+use App\Jobs\PublishDueCoves;
 use App\Jobs\PullPopularCharts;
 use App\Jobs\RefreshBrandStats;
 use App\Jobs\RefreshRecentSearches;
@@ -183,6 +184,32 @@ foreach (Market::cases() as $index => $market) {
     Schedule::job(new BuildDailyEdition($market))
         ->name('build-daily-cove-'.$market->value)
         ->dailyAt(sprintf('06:%02d', $index * 6))
+        ->withoutOverlapping()
+        ->onOneServer();
+}
+
+/*
+ * Publish the approved Coves whose date has arrived.
+ *
+ * 07:00, after the last market's Daily has built. Seasonal Coves are laid out as
+ * a series of dated parts across their window, and this is what makes that date
+ * mean something — an editor approves the part and it goes live on the day they
+ * scheduled it for, rather than whenever somebody remembers to press Build.
+ *
+ * Not automatic publishing: `buildArticle()` refuses anything that is not
+ * approved, so a draft on a past date sits here for ever. See
+ * App\Jobs\PublishDueCoves and docs/features/seasonal-series.md.
+ *
+ * One pass per market rather than one for everything, for the same reason the
+ * build above is staggered: each build holds a catalogue-wide selection in
+ * memory, and five markets' worth at once is five of them.
+ */
+foreach (Market::cases() as $index => $market) {
+    Schedule::job(new PublishDueCoves($market))
+        ->name('publish-due-coves-'.$market->value)
+        ->dailyAt(sprintf('07:%02d', $index * 6))
+        // A second pass overlapping the first would dispatch every due plan
+        // twice, and two builds of one article race over the same edition row.
         ->withoutOverlapping()
         ->onOneServer();
 }

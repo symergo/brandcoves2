@@ -1489,6 +1489,16 @@ return [
         'slug_prefix' => 'beste',
         'template_title' => 'De beste :topic',
         'template_intro' => ':count opties voor :topic, met de prijs van elke winkel naast elkaar.',
+        /*
+         * A season published as a series. See docs/features/seasonal-series.md.
+         *
+         * The part word is translated in the URL as well as in the heading:
+         * `beste-kamperen-deel-2`. A Dutch address with "part" in it reads as a
+         * page somebody forgot to finish.
+         */
+        'series_title' => ':topic, deel :part',
+        'series_slug_part' => 'deel',
+        'series_heading' => 'In deze reeks',
     ],
 
     'discover' => [

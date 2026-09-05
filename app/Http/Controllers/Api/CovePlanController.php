@@ -712,6 +712,19 @@ class CovePlanController extends Controller
 
             ...($plan->kind === CoveKind::Seasonal ? [
                 'season' => ['from' => $plan->season_from, 'to' => $plan->season_to],
+                /*
+                 * Which part of the season this is.
+                 *
+                 * Null on a season the catalogue could only fill one subject of
+                 * — that is a page rather than a series, and it says so by
+                 * carrying no number anywhere. An author reading this back needs
+                 * it: "part 2" is a fact about what the piece may assume the
+                 * reader has already seen. See docs/features/seasonal-series.md.
+                 */
+                'series' => $plan->series_key === null ? null : [
+                    'key' => $plan->series_key,
+                    'part' => $plan->part,
+                ],
             ] : []),
 
             /*
@@ -738,8 +751,15 @@ class CovePlanController extends Controller
              * An approved plan outranks an observance, so an author who does
              * not know that 31 October is Halloween can override it without
              * meaning to. Showing it is cheaper than explaining it afterwards.
+             *
+             * Dailies only, not merely "anything with a date". A seasonal part
+             * carries a due date now, and reporting the day's rotation theme
+             * against it would answer a question nobody asked — that part is not
+             * competing for the day and overrides nothing.
              */
-            'calendarTheme' => $plan->drop_date === null ? null : $this->calendarTheme($plan),
+            'calendarTheme' => $plan->kind->isDated() && $plan->drop_date !== null
+                ? $this->calendarTheme($plan)
+                : null,
         ];
     }
 

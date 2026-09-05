@@ -1698,6 +1698,10 @@ return [
         'slug_prefix' => 'best',
         'template_title' => 'The best :topic',
         'template_intro' => ':count options for :topic, with every shop’s price side by side.',
+        // A season published as a series. See docs/features/seasonal-series.md.
+        'series_title' => ':topic, part :part',
+        'series_slug_part' => 'part',
+        'series_heading' => 'In this series',
     ],
 
     'discover' => [
