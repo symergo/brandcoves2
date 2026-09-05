@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\CovePlans\Pages;
 
 use App\Enums\PickMode;
+use App\Enums\PlanWriter;
 use App\Filament\Resources\CovePlans\CovePlanResource;
 use App\Jobs\BuildCove;
 use App\Models\CovePlan;
@@ -590,9 +591,37 @@ class CuratePlan extends Page
      * for a build that will not run are a field quietly doing nothing — and the
      * screen says so rather than letting somebody write a brief nobody reads.
      */
+    /**
+     * Set who writes this Cove.
+     *
+     * The switch that stops the panel being the one surface where the new model
+     * is worse than the old guess. Both API endpoints default `writer` from
+     * whether prose was sent; a person typing into a form sends nothing, so
+     * without this their article would stay marked `builder` and the next build
+     * would replace it.
+     */
+    public function setWriter(string $writer): void
+    {
+        $parsed = PlanWriter::tryFrom($writer);
+
+        if ($parsed === null) {
+            return;
+        }
+
+        $this->plan()->update(['writer' => $parsed->value]);
+        $this->refreshPlan();
+    }
+
+    /**
+     * Will anything be generated for this plan?
+     *
+     * Asked of the plan rather than of whether a box happens to be empty. It
+     * decides whether the build instructions are read by anybody, and a field
+     * quietly doing nothing is worse than no field at all.
+     */
     public function willBeWritten(): bool
     {
-        return blank($this->plan()->editorial);
+        return $this->plan()->writer->callsModel();
     }
 
     private function syncFields(): void

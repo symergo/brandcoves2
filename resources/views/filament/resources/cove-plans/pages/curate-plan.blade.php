@@ -45,6 +45,29 @@
                     >{{ $mode->value }}</button>
                 @endforeach
             </div>
+
+            {{--
+              Who writes it, beside what the engine may add, because they are
+              the same kind of decision about the same page.
+
+              This used to be inferred from whether the editorial box happened
+              to have anything in it, which is how a finished article got
+              rewritten because its blurb was blank. Saying it is the fix.
+            --}}
+            <div class="flex items-center gap-1 rounded-lg bg-gray-100 p-1 dark:bg-white/5">
+                @foreach (App\Enums\PlanWriter::cases() as $who)
+                    <button
+                        type="button"
+                        wire:click="setWriter('{{ $who->value }}')"
+                        title="{{ $who->label() }}"
+                        @class([
+                            'rounded-md px-2.5 py-1 text-xs font-medium transition',
+                            'bg-white shadow-sm dark:bg-gray-700' => $plan->writer === $who,
+                            'text-gray-500 hover:text-gray-700 dark:text-gray-400' => $plan->writer !== $who,
+                        ])
+                    >{{ $who->value }}</button>
+                @endforeach
+            </div>
         </div>
 
         <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">{{ $this->summary() }}</p>
@@ -90,8 +113,8 @@
                   nobody.
                 --}}
                 <span class="text-warning-600 dark:text-warning-400">
-                    This plan carries its own editorial, so nothing will be generated and these
-                    instructions will not be read. Clear the editorial to have it written.
+                    This plan is written by hand, so nothing will be generated and these instructions
+                    will not be read. Switch it back to “builder” to have it written.
                 </span>
             @endunless
         </div>

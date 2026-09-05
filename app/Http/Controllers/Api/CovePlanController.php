@@ -20,6 +20,7 @@ use App\Models\CovePlanItem;
 use App\Models\ProductGroup;
 use App\Services\Cove\ObservanceCalendar;
 use App\Services\Cove\PlanRevision;
+use App\Services\Cove\PlanState;
 use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\LinkCheck;
 use App\Services\Editorial\ProductLookup;
@@ -75,6 +76,17 @@ class CovePlanController extends Controller
             'market' => ['nullable', Rule::in(Market::values())],
             'kind' => ['nullable', Rule::in(CoveKind::values())],
             'status' => ['nullable', Rule::in(['draft', 'approved', 'used', 'rejected'])],
+
+            /*
+             * The vocabulary an editor and a caller actually think in.
+             *
+             * `status` has four values and answers neither "has this been
+             * written yet" nor "did the build work" — both live in other
+             * columns, and the second is the difference between a page that is
+             * coming and one that quietly did not happen. One implementation,
+             * shared with the planner screen: see App\Services\Cove\PlanState.
+             */
+            'state' => ['nullable', Rule::in(PlanState::values())],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
@@ -85,6 +97,7 @@ class CovePlanController extends Controller
             ->when(isset($data['market']), fn ($q) => $q->where('market', $data['market']))
             ->when(isset($data['kind']), fn ($q) => $q->where('kind', $data['kind']))
             ->when(isset($data['status']), fn ($q) => $q->where('status', $data['status']))
+            ->when(isset($data['state']), fn ($q) => PlanState::scope($q, PlanState::from($data['state'])))
             ->when(isset($data['from']), fn ($q) => $q->whereDate('drop_date', '>=', $data['from']))
             ->when(isset($data['to']), fn ($q) => $q->whereDate('drop_date', '<=', $data['to']))
             ->orderByRaw('drop_date is null')
@@ -786,6 +799,29 @@ class CovePlanController extends Controller
             // Who writes the prose, and therefore whether a build will call a
             // model at all. See App\Enums\PlanWriter.
             'writer' => $plan->writer->value,
+
+            /*
+             * Where this plan has got to, and what to do to it next.
+             *
+             * Derived rather than stored — a stored state goes stale the moment
+             * somebody curates from another screen — and read from the same
+             * service the planner's tab strip reads, so the API and the panel
+             * cannot disagree about what "needs writing" means.
+             */
+            'state' => PlanState::of($plan)->value,
+            'nextStage' => PlanState::of($plan)->nextStage(),
+
+            /*
+             * Why the last build produced no page, when it produced none.
+             *
+             * This used to be a log line at six in the morning: an approved plan
+             * whose catalogue had gone thin was indistinguishable from one whose
+             * date had not arrived yet, on every screen.
+             */
+            'lastBuild' => $plan->last_build_failed_at === null ? null : [
+                'failedAt' => $plan->last_build_failed_at->toIso8601String(),
+                'why' => $plan->last_build_note,
+            ],
             'curatedCount' => $plan->items()->count(),
             'hasEditorial' => filled($plan->editorial),
             'edition' => $plan->edition === null ? null : [

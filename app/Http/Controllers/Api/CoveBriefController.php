@@ -11,6 +11,7 @@ use App\Models\ProductGroup;
 use App\Services\Cove\CovePrompt;
 use App\Services\Cove\EditionBuilder;
 use App\Services\Cove\PlanRevision;
+use App\Services\Cove\PlanState;
 use App\Services\Editorial\ProductLookup;
 use Illuminate\Http\JsonResponse;
 
@@ -47,6 +48,62 @@ class CoveBriefController extends Controller
         private readonly EditionBuilder $builder,
         private readonly ProductLookup $lookup,
     ) {}
+
+    /**
+     * What this plan actually became.
+     *
+     * `GET /editions/{market}/{date}` reads back a **Daily** and nothing else,
+     * so every slug-addressed kind — persona, guide, seasonal, advice, shop —
+     * had no read-back at all: an author was told to fetch the public HTML page
+     * and look at it. That is no answer for an unattended run, and it cannot
+     * report the two things that matter most.
+     *
+     * The first is whether the build produced a page. `queued` is not `built`: a
+     * catalogue too thin to clear the kind's floor is decided inside the job,
+     * minutes later, and used to surface only as a log line.
+     *
+     * The second is `theme.source`. `planned` means the plan won; anything else
+     * means it did not, and the most likely reason is that nobody approved it.
+     */
+    public function edition(CovePlan $plan): JsonResponse
+    {
+        $edition = $plan->edition;
+        $state = PlanState::of($plan);
+
+        return response()->json([
+            'data' => [
+                'id' => $plan->id,
+                'state' => $state->value,
+                'nextStage' => $state->nextStage(),
+
+                /*
+                 * Why the last build produced nothing, when it produced nothing.
+                 *
+                 * The whole point of the read-back for a scheduled caller: this
+                 * is the difference between "published" and "nothing happened",
+                 * which every screen and every response used to report as
+                 * neither.
+                 */
+                'lastBuild' => $plan->last_build_failed_at === null ? null : [
+                    'failedAt' => $plan->last_build_failed_at->toIso8601String(),
+                    'why' => $plan->last_build_note,
+                ],
+
+                'edition' => $edition === null ? null : [
+                    'id' => $edition->id,
+                    'status' => $edition->status->value,
+                    'publishedAt' => $edition->published_at?->toIso8601String(),
+                    'url' => '/'.$plan->market->value.'/'
+                        .$plan->kind->path((string) ($edition->slug ?? $plan->slug), $plan->market),
+                    // `planned` means the plan won. Anything else means it did
+                    // not, and usually that nobody approved it.
+                    'themeSource' => $edition->theme_source,
+                    'editorialSource' => $edition->editorial_source,
+                    'picks' => $edition->picks()->count(),
+                ],
+            ],
+        ]);
+    }
 
     public function show(CovePlan $plan): JsonResponse
     {

@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\PickMode;
+use App\Enums\PlanWriter;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Filament\Resources\CovePlans\Pages\CuratePlan;
@@ -275,19 +276,44 @@ class CuratePlanScreenTest extends TestCase
     #[Test]
     public function it_says_when_instructions_will_not_be_read(): void
     {
-        // Authored prose skips the model entirely, so a brief for it is read by
-        // nobody. A field quietly doing nothing is worse than no field.
+        /*
+         * A plan written by hand skips the model entirely, so a brief for it is
+         * read by nobody. A field quietly doing nothing is worse than no field.
+         *
+         * Asked of `writer` rather than of whether the editorial box happens to
+         * be empty — inferring it is what ran the model over a finished article
+         * whose blurb was blank.
+         */
         $plan = $this->plan();
 
         $page = new CuratePlan;
         $page->mount($plan->id);
         $this->assertTrue($page->willBeWritten());
 
-        $plan->update(['editorial' => 'Al geschreven.']);
+        $plan->update(['writer' => PlanWriter::Authored->value, 'editorial' => 'Al geschreven.']);
 
         $page = new CuratePlan;
         $page->mount($plan->id);
         $this->assertFalse($page->willBeWritten());
+    }
+
+    #[Test]
+    public function the_writer_switch_saves_from_the_screen(): void
+    {
+        /*
+         * The switch that stops the panel being the one surface where the new
+         * model is worse than the old guess. Both API endpoints default `writer`
+         * from whether prose was sent; a person typing into a form sends
+         * nothing, so without this their article would stay marked `builder` and
+         * the next build would replace it.
+         */
+        $plan = $this->plan();
+
+        Livewire::actingAs($this->user(admin: true))
+            ->test(CuratePlan::class, ['record' => $plan->id])
+            ->call('setWriter', PlanWriter::Authored->value);
+
+        $this->assertSame(PlanWriter::Authored, $plan->fresh()->writer);
     }
 
     private function plan(PickMode $mode = PickMode::Open): CovePlan

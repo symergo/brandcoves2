@@ -71,6 +71,22 @@ class CoveDraftController extends Controller
              * products itself through POST /coves.
              */
             'withProducts' => ['nullable', 'boolean'],
+
+            /*
+             * Named days only, for a `daily` run.
+             *
+             * "Give me ten daily topics" almost always means ten *occasions*.
+             * `ObservanceCalendar::themeFor()` falls back to the evergreen
+             * rotation for any date with no named day, so an unfiltered walk
+             * hands back the next ten unplanned **dates** — about
+             * three-quarters of them rotation themes, which claim nothing about
+             * their date and give a curator nothing to react to. The Cove
+             * calendar screen hides all 270 of them for the same reason.
+             *
+             * Off by default, because the calendar still wants every day filled
+             * and that is what `bc:plan-coves` is for.
+             */
+            'occasionsOnly' => ['nullable', 'boolean'],
         ]);
 
         $kind = CoveKind::from($data['kind']);
@@ -82,6 +98,7 @@ class CoveDraftController extends Controller
             (int) $data['count'],
             author: null,
             withProducts: $request->boolean('withProducts', true),
+            occasionsOnly: $request->boolean('occasionsOnly'),
         );
 
         if (! $this->drafter->canDraft($kind)) {

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\CoveBriefController;
+use App\Http\Controllers\Api\CoveCalendarController;
 use App\Http\Controllers\Api\CoveDraftController;
 use App\Http\Controllers\Api\CoveItemController;
 use App\Http\Controllers\Api\CovePlanController;
 use App\Http\Controllers\Api\CoveQueueController;
+use App\Http\Controllers\Api\CoveStageController;
 use App\Http\Controllers\Api\EditionController;
 use App\Http\Controllers\Api\EditorialIndexController;
 use App\Http\Controllers\Api\GuideEditorialController;
@@ -57,6 +59,15 @@ Route::prefix('editorial')
             Route::get('/products/{group}', [CatalogueController::class, 'product']);
             Route::get('/topics', [CatalogueController::class, 'topics']);
 
+            /*
+             * The editorial year, drawn from the config rather than the database.
+             *
+             * Where a daily or seasonal run should start: it says what is coming
+             * and what is unplanned, so a caller can point at a date instead of
+             * asking for "the next N" and taking whatever the walk finds.
+             */
+            Route::get('/calendar', [CoveCalendarController::class, 'show']);
+
             Route::get('/coves', [CovePlanController::class, 'index']);
 
             /*
@@ -91,6 +102,17 @@ Route::prefix('editorial')
              */
             Route::get('/coves/{plan}/conflicts', [CoveItemController::class, 'conflicts']);
 
+            /*
+             * What this plan actually became.
+             *
+             * `/editions/{market}/{date}` reads back a Daily and nothing else,
+             * so every slug-addressed kind had no read-back at all and an author
+             * was told to go and look at the public page. It also reports the
+             * build outcome, which is the difference between "published" and
+             * "nothing happened" for a run nobody is watching.
+             */
+            Route::get('/coves/{plan}/edition', [CoveBriefController::class, 'edition']);
+
             Route::get('/guides', [GuideEditorialController::class, 'index']);
             Route::get('/guides/{guide}', [GuideEditorialController::class, 'show']);
 
@@ -119,6 +141,19 @@ Route::prefix('editorial')
              * allowed to make. Nothing it creates can reach a reader.
              */
             Route::post('/coves/drafts', [CoveDraftController::class, 'store']);
+
+            /*
+             * One named day, and one season.
+             *
+             * The two write actions the Cove calendar screen has and the API did
+             * not. `draftOn()` fills exactly the day asked for — the count form
+             * above walks forward filling whatever it finds, which is right for
+             * topping a queue up and wrong for "do 14 February". `plan()` lays a
+             * season out or brings it round; one endpoint, because they are one
+             * editorial event a year apart and the service knows which applies.
+             */
+            Route::post('/calendar/draft', [CoveCalendarController::class, 'draftDay']);
+            Route::post('/seasons/{topic}/plan', [CoveCalendarController::class, 'planSeason']);
 
             /*
              * Prose back, and only prose.
@@ -157,6 +192,21 @@ Route::prefix('editorial')
             Route::patch('/coves/{plan}/items', [CoveItemController::class, 'update']);
             Route::delete('/coves/{plan}/items/{item}', [CoveItemController::class, 'destroy']);
             Route::post('/coves/{plan}/suggest', [CoveItemController::class, 'suggest']);
+
+            /*
+             * One stage, over a set.
+             *
+             * A run to `build` costs about four writes per Cove and writes are
+             * 20/min per token, so a thirty-Cove push spent most of an hour
+             * being paced. Fewer, larger calls rather than a looser limit for
+             * the keys that can reach a reader.
+             *
+             * Registered under `write` because `curate` belongs to a writing
+             * key; the controller demands `publish` for `approve` and `build`
+             * before it does any work, because one path serves three stages and
+             * a route group cannot say that.
+             */
+            Route::post('/coves/stages/{stage}', [CoveStageController::class, 'run']);
 
             Route::post('/guides', [GuideEditorialController::class, 'store']);
         });

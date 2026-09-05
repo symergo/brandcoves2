@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Enums\PickMode;
+use App\Enums\PlanWriter;
 use App\Filament\Resources\CovePlans\Pages\CuratePlan;
 use App\Filament\Resources\CovePlans\Pages\ListCovePlans;
 use App\Jobs\BuildCove;
@@ -310,6 +311,29 @@ class CovePlanResource extends Resource
                         ->default(PickMode::Open->value)
                         ->required()
                         ->helperText('Locked publishes exactly the curated list, in order. Open lets the ranker fill the rest of the page around it.'),
+
+                    /*
+                     * Who writes the prose, said out loud.
+                     *
+                     * The builder used to infer this from whichever fields came
+                     * back filled, and typing an article into the boxes above
+                     * was how you told it. That is exactly the arrangement that
+                     * ran the model over a finished piece because its blurb
+                     * happened to be blank — so it is a switch now, and this is
+                     * the switch. Without it the panel would be the one surface
+                     * where the new model is *worse* than the old guess: prose
+                     * typed here would stay marked `builder` and the next build
+                     * would replace it.
+                     *
+                     * See App\Enums\PlanWriter and docs/features/cove-writer.md.
+                     */
+                    Select::make('writer')
+                        ->label('Who writes it')
+                        ->options(collect(PlanWriter::cases())
+                            ->mapWithKeys(fn (PlanWriter $w) => [$w->value => $w->label()])->all())
+                        ->default(PlanWriter::Builder->value)
+                        ->required()
+                        ->helperText('Set this to "by hand" when the words above are yours: the build then uses them verbatim and never calls the model. Left on "by the builder", anything you type here is replaced on the next build.'),
 
                     /*
                      * The drawing, and only where there is one to choose.

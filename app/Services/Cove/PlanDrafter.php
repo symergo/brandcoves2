@@ -88,13 +88,14 @@ final readonly class PlanDrafter
         int $count,
         ?User $author = null,
         bool $withProducts = true,
+        bool $occasionsOnly = false,
     ): DraftedPlans {
         if ($count < 1) {
             throw new InvalidArgumentException('Ask for at least one plan.');
         }
 
         return match ($kind) {
-            CoveKind::Daily => $this->fromCalendar($market, $count, $author, $withProducts),
+            CoveKind::Daily => $this->fromCalendar($market, $count, $author, $withProducts, $occasionsOnly),
             CoveKind::Guide, CoveKind::Seasonal => $this->fromTopics($kind, $market, $count, $author),
             CoveKind::Persona => $this->fromInterests($market, $count, $author, $withProducts),
 
@@ -172,8 +173,13 @@ final readonly class PlanDrafter
      * the unique index on dated rows means a second plan for one date cannot be
      * inserted anyway.
      */
-    private function fromCalendar(Market $market, int $count, ?User $author, bool $withProducts): DraftedPlans
-    {
+    private function fromCalendar(
+        Market $market,
+        int $count,
+        ?User $author,
+        bool $withProducts,
+        bool $occasionsOnly = false,
+    ): DraftedPlans {
         // From tomorrow: today's edition has already been built, and a plan for
         // it would be read too late to change anything.
         $date = CarbonImmutable::tomorrow();
@@ -204,6 +210,24 @@ final readonly class PlanDrafter
                 continue;
             }
 
+            /*
+             * "Ten daily topics" almost always means ten *occasions*.
+             *
+             * `themeFor()` falls back to the evergreen rotation for any date
+             * with no named day — which is why the null above is very nearly
+             * unreachable — so an unfiltered walk hands back the next ten
+             * unplanned **dates**, about three-quarters of them rotation themes.
+             * A rotation theme claims nothing about its date and gives a curator
+             * nothing to react to, which is exactly why the Cove calendar screen
+             * hides all 270 of them.
+             *
+             * Off by default: the calendar still wants every day filled, and
+             * that is what `bc:plan-coves` is for.
+             */
+            if ($occasionsOnly && $observance->evergreen) {
+                continue;
+            }
+
             $plan = $this->dailyPlan($market, $day, $observance, $author);
 
             $plans[] = $plan;
@@ -215,7 +239,9 @@ final readonly class PlanDrafter
             $suggested,
             count($plans) < $count
                 ? 'The next '.self::DAILY_HORIZON_DAYS.' days in '.$market->value
-                    .' are planned as far as the observance calendar reaches.'
+                    .($occasionsOnly
+                        ? ' hold no more unplanned named days. Drop occasionsOnly to draft the evergreen rotation days too.'
+                        : ' are planned as far as the observance calendar reaches.')
                 : null,
         );
     }

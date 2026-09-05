@@ -109,6 +109,17 @@ class EditionBuilder
                 'found' => count($finds),
             ]);
 
+            // Recorded on the plan where there is one, for the same reason the
+            // article path records it: a quiet morning and a broken pipeline
+            // look identical from every screen otherwise.
+            if ($plan !== null) {
+                $this->recordFailedBuild($plan, sprintf(
+                    '%d of the %d finds a Cove needs. The catalogue could not fill it.',
+                    count($finds) + count($liveFinds),
+                    (int) config('giftcoves.picks.minimum'),
+                ));
+            }
+
             return null;
         }
 
@@ -186,7 +197,11 @@ class EditionBuilder
              * describe the past as well as the future, and it is why every
              * edition can be re-curated. See CovePlan::recordFor().
              */
-            CovePlan::recordFor($edition);
+            $record = CovePlan::recordFor($edition);
+
+            // This build worked, so whatever the last one reported about a thin
+            // catalogue no longer applies to this plan.
+            $this->clearFailedBuild($record);
 
             DB::table('used_themes')->insertOrIgnore([
                 'market' => $market->value,
@@ -353,6 +368,21 @@ class EditionBuilder
                 'needed' => $plan->kind->minimumItems(),
             ]);
 
+            /*
+             * Recorded on the plan, not only in the log.
+             *
+             * This refusal is correct and it was invisible: an approved plan
+             * whose catalogue had gone thin looked exactly like one whose date
+             * had not arrived yet, on every screen and in every API response.
+             * For an unattended run that is the difference between "published"
+             * and "nothing happened", reported as neither.
+             */
+            $this->recordFailedBuild($plan, sprintf(
+                '%d of the %d products this kind needs. The catalogue could not fill it.',
+                count($finds),
+                $plan->kind->minimumItems(),
+            ));
+
             return null;
         }
 
@@ -413,6 +443,14 @@ class EditionBuilder
             $plan->forceFill([
                 'edition_id' => $edition->id,
                 'built_for' => $plan->drop_date?->toDateString(),
+                /*
+                 * This build worked, so whatever the last one reported no longer
+                 * applies. A plan that was too thin in March and published in
+                 * April must not still be showing April's editor a warning about
+                 * March.
+                 */
+                'last_build_failed_at' => null,
+                'last_build_note' => null,
             ])->save();
 
             return $edition;
@@ -685,6 +723,32 @@ class EditionBuilder
      * @param  list<ProductGroup>  $finds
      * @return list<array{copy: string|null, verdict: string|null}>
      */
+    /**
+     * Note that a build ran and produced no page.
+     *
+     * Cleared by the next build that works, so the column means "the last
+     * attempt came to nothing" rather than "an attempt failed once". A plan that
+     * was thin in March and published in April is not still carrying a warning
+     * about March.
+     */
+    private function recordFailedBuild(CovePlan $plan, string $why): void
+    {
+        $plan->forceFill([
+            'last_build_failed_at' => now(),
+            'last_build_note' => Str::limit($why, 300, ''),
+        ])->save();
+    }
+
+    /** A build worked, so whatever the last one said no longer applies. */
+    private function clearFailedBuild(CovePlan $plan): void
+    {
+        if ($plan->last_build_failed_at === null) {
+            return;
+        }
+
+        $plan->forceFill(['last_build_failed_at' => null, 'last_build_note' => null])->save();
+    }
+
     private function itemCopy(CovePlan $plan, array $finds, Written $written): array
     {
         $items = $plan->items()->whereNotNull('group_id')->get();

@@ -77,6 +77,10 @@ class CovePlan extends Model
              * `cove_plans_dated_kind_check` to allow it.
              */
             'drop_date' => 'date',
+            // The last build that produced no page. Cleared by the next build
+            // that works, so it means "the last attempt came to nothing" rather
+            // than "an attempt failed once". See App\Services\Cove\PlanState.
+            'last_build_failed_at' => 'datetime',
             /*
              * The `drop_date` this plan was last built for.
              *
