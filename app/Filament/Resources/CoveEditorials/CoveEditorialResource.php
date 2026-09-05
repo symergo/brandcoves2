@@ -73,6 +73,35 @@ class CoveEditorialResource extends Resource
 
     protected static ?string $modelLabel = 'Cove';
 
+    /**
+     * Not in the navigation any more. Reached from the plan it belongs to.
+     *
+     * This screen and the Cove planner were **the same list at two points in
+     * its life** — the planner's own docblock said so, and they already shared
+     * one set of tabs to make moving between them bearable. The planner now
+     * carries the state axis that answers both questions at once, so a second
+     * entry offers a second place to look for one thing.
+     *
+     * The deeper reason is what this screen let you edit. Its form reaches
+     * `theme_title`, `theme_blurb`, `editorial`, `body` and `faq` **on the
+     * edition** — and an edition is an *output* that every rebuild overwrites.
+     * So the panel invited an editor to type an article into fields the next
+     * build would silently replace, which is the exact trap `cove_plans.writer`
+     * and the plan-level prose fields exist to close.
+     *
+     * Kept rather than deleted, and reached by the "Published page" action on a
+     * plan, because two things here are genuinely about the edition and have
+     * nowhere better to live: dimming a pick that has gone (`unavailable`), and
+     * fixing the sentence under one card on a live page without waiting for a
+     * rebuild. Those are output being corrected, not source being written.
+     *
+     * See docs/features/cove-writer.md.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     protected static ?string $recordTitleAttribute = 'theme_title';
 
     /**
@@ -92,7 +121,24 @@ class CoveEditorialResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
+            /*
+             * Editing prose here writes to an **output**.
+             *
+             * `daily_pick_sets` is rebuilt routinely — the scheduler retries, a
+             * redeploy interrupts, an editor presses Build — and every one of
+             * those regenerates these fields from the plan. So an article typed
+             * into the boxes below survives exactly until the next rebuild, and
+             * then vanishes with nothing anywhere reporting it. That is why
+             * authored prose lives on `cove_plans` and why `writer` says who
+             * wrote it.
+             *
+             * Said on the screen rather than only in the docs, because the boxes
+             * look like the place to write and the failure is silent.
+             */
             Section::make('Copy')
+                ->description('These are the built page, not the source. A rebuild regenerates them from the plan — '
+                    .'so lasting edits go on the plan, under Cove planner → Curate. Fix something here when you want '
+                    .'it right on the live page now and the plan is already correct.')
                 ->schema([
                     TextInput::make('theme_title')
                         ->label('Title')

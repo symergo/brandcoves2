@@ -9,6 +9,7 @@ use App\Enums\Market;
 use App\Filament\Resources\CovePlans\Pages\ListCovePlans;
 use App\Models\CovePlan;
 use App\Models\User;
+use App\Services\Cove\PlanState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,10 +18,14 @@ use Tests\TestCase;
 /**
  * The planner screen: one tab per kind, and a button that fills the one you are on.
  *
- * Two strips: kind, then market. They narrow each other, which is the part
+ * Two strips: **state**, then market. They narrow each other, which is the part
  * worth a test — a second axis that silently replaced the first would look
  * exactly like one that composed with it, on any screen with one plan per
  * market.
+ *
+ * State rather than kind since this screen absorbed the editorial list. Kind is
+ * what a page *is*; state is what to do to it next, and only the second is a
+ * work queue. Kind stayed as the dropdown filter it already had.
  *
  * Smoke-level, like the curation screen's test and for the same reason — the
  * decisions worth pinning hard live in `PlanDrafter`, which is tested directly.
@@ -33,24 +38,47 @@ class CovePlannerScreenTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function each_kind_has_a_tab_that_filters_to_it(): void
+    public function each_state_has_a_tab_that_filters_to_it(): void
     {
-        $daily = $this->plan(CoveKind::Daily, ['drop_date' => today()->addDay()]);
-        $guide = $this->plan(CoveKind::Guide, ['slug' => 'beste-koptelefoon']);
+        $draft = $this->plan(CoveKind::Guide, ['slug' => 'nog-niet-geschreven']);
+        $written = $this->plan(CoveKind::Guide, ['slug' => 'al-geschreven', 'editorial' => 'Geschreven.']);
 
         $component = Livewire::actingAs($this->admin())->test(ListCovePlans::class);
 
-        // Every kind, plus an "All" that means it. The set has to follow the
-        // enum, or a kind added later is a section of the planner nobody can
-        // reach.
+        // Every state, plus an "All" that means it. The set follows the enum, or
+        // a state added later is a section of the planner nobody can reach.
         $this->assertSame(
-            ['all', ...CoveKind::values()],
+            ['all', ...PlanState::values()],
             array_keys($component->instance()->getTabs()),
         );
 
-        $component->set('activeTab', CoveKind::Guide->value)
-            ->assertCanSeeTableRecords([$guide])
-            ->assertCanNotSeeTableRecords([$daily]);
+        $component->set('activeTab', PlanState::Written->value)
+            ->assertCanSeeTableRecords([$written])
+            ->assertCanNotSeeTableRecords([$draft]);
+    }
+
+    #[Test]
+    public function a_build_that_produced_nothing_has_a_tab_of_its_own(): void
+    {
+        /*
+         * The tab that could not exist before. An approved plan whose catalogue
+         * had gone thin was indistinguishable from one whose date had not
+         * arrived, so the work it needed was invisible on every screen.
+         */
+        $thin = $this->plan(CoveKind::Guide, [
+            'slug' => 'te-dun',
+            'status' => 'approved',
+            'last_build_failed_at' => now(),
+            'last_build_note' => '3 of the 5 products this kind needs.',
+        ]);
+
+        $waiting = $this->plan(CoveKind::Guide, ['slug' => 'wacht-nog', 'status' => 'approved']);
+
+        Livewire::actingAs($this->admin())
+            ->test(ListCovePlans::class)
+            ->set('activeTab', PlanState::Thin->value)
+            ->assertCanSeeTableRecords([$thin])
+            ->assertCanNotSeeTableRecords([$waiting]);
     }
 
     #[Test]
@@ -82,16 +110,16 @@ class CovePlannerScreenTest extends TestCase
 
         $component = Livewire::actingAs($this->admin())
             ->test(ListCovePlans::class)
-            ->set('activeTab', CoveKind::Guide->value)
+            ->set('activeTab', PlanState::Draft->value)
             ->set('activeMarket', Market::NlNl->value)
-            ->assertCanSeeTableRecords([$dutchGuide])
-            ->assertCanNotSeeTableRecords([$dutchDaily, $belgianGuide]);
+            ->assertCanSeeTableRecords([$dutchGuide, $dutchDaily])
+            ->assertCanNotSeeTableRecords([$belgianGuide]);
 
-        // The badges have to agree with what a click produces. A kind count
+        // The badges have to agree with what a click produces. A state count
         // that ignored the chosen market would be a number no view can show.
         $tabs = $component->instance()->getTabs();
-        $this->assertSame('1', $tabs[CoveKind::Guide->value]->getBadge());
-        $this->assertSame('1', $tabs[CoveKind::Daily->value]->getBadge());
+        $this->assertSame('2', $tabs[PlanState::Draft->value]->getBadge());
+        $this->assertSame('0', $tabs[PlanState::Live->value]->getBadge());
     }
 
     #[Test]
@@ -129,9 +157,9 @@ class CovePlannerScreenTest extends TestCase
          * from the form rather than present and always failing. An option that
          * never works is a worse answer than an option that is not there.
          */
-        // It still gets a tab: you have to be able to see the advice articles
-        // somebody wrote, whether or not a machine can suggest one.
-        $this->assertArrayHasKey(CoveKind::Advice->value, $component->instance()->getTabs());
+        // The kind filter still offers it: you have to be able to see the
+        // advice articles somebody wrote, whether or not a machine can suggest
+        // one. Only the *drafting* form leaves it out.
 
         $component->callAction('draft', [
             'kind' => CoveKind::Advice->value,

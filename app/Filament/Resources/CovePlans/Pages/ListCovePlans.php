@@ -10,6 +10,7 @@ use App\Filament\Concerns\HasMarketTabs;
 use App\Filament\Resources\CovePlans\CovePlanResource;
 use App\Models\User;
 use App\Services\Cove\PlanDrafter;
+use App\Services\Cove\PlanState;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -19,7 +20,6 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 /**
  * One tab per kind, one per market, and a button that fills the pair you are on.
@@ -143,21 +143,38 @@ class ListCovePlans extends ListRecords
         ];
     }
 
-    /** @return array<string, Tab> */
+    /**
+     * One tab per **state**, not per kind.
+     *
+     * The axis changed when this screen absorbed the editorial list. Kind is
+     * what a page *is* and state is what to do to it next, and only the second
+     * is a work queue — "three need writing, two are ready to build, one is too
+     * thin to publish" is the sentence somebody opens this screen for. Kind
+     * stayed as the dropdown filter it already had, because three tab strips is
+     * more chrome than any screen can carry.
+     *
+     * `Thin` is the tab that could not exist before. An approved plan whose
+     * catalogue had gone thin was indistinguishable from one whose date had not
+     * arrived, so the work it needs was invisible.
+     *
+     * @return array<string, Tab>
+     */
     public function getTabs(): array
     {
         $tabs = ['all' => Tab::make('All')];
 
-        foreach (CoveKind::cases() as $kind) {
-            $tabs[$kind->value] = Tab::make(Str::plural($kind->label()))
-                ->modifyQueryUsing(fn ($query) => $query->where('kind', $kind->value))
-                // The count is the point on the empty ones: a market with no
-                // seasonal plans is a fact you want on the tab, not one you
-                // discover by clicking through to an empty table. Counted
-                // inside the chosen market, or the number belongs to a view
-                // that no click reproduces.
+        foreach (PlanState::cases() as $state) {
+            $tabs[$state->value] = Tab::make($state->label())
+                ->modifyQueryUsing(fn ($query) => PlanState::scope($query, $state))
+                /*
+                 * The count is the point on the empty ones: "nothing needs
+                 * writing in the Netherlands" is a fact you want on the tab
+                 * rather than one you discover by clicking through to an empty
+                 * table. Counted inside the chosen market, or the number belongs
+                 * to a view that no click reproduces.
+                 */
                 ->badge(fn () => $this->scopeToActiveMarket(static::getResource()::getEloquentQuery())
-                    ->where('kind', $kind->value)
+                    ->tap(fn ($q) => PlanState::scope($q, $state))
                     ->count());
         }
 
@@ -183,10 +200,19 @@ class ListCovePlans extends ListRecords
             ->all();
     }
 
-    /** The kind the current tab is showing, when that kind can be drafted. */
+    /**
+     * The kind "Draft some" starts on.
+     *
+     * It used to read the active tab, which was a kind. The tab is a state now,
+     * so it reads the `kind` filter instead — the same idea, from wherever the
+     * kind is currently expressed: ten plans drafted into the wrong kind is ten
+     * rows to undo by hand.
+     */
     private function defaultKind(): string
     {
-        $kind = CoveKind::tryFrom((string) $this->activeTab);
+        $filtered = data_get($this->tableFilters, 'kind.value');
+
+        $kind = CoveKind::tryFrom((string) $filtered);
 
         return $kind !== null && app(PlanDrafter::class)->canDraft($kind)
             ? $kind->value

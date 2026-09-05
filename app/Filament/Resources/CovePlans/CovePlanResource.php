@@ -9,12 +9,15 @@ use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Enums\PickMode;
 use App\Enums\PlanWriter;
+use App\Enums\PublishStatus;
+use App\Filament\Resources\CoveEditorials\CoveEditorialResource;
 use App\Filament\Resources\CovePlans\Pages\CuratePlan;
 use App\Filament\Resources\CovePlans\Pages\ListCovePlans;
 use App\Jobs\BuildCove;
 use App\Jobs\RedoCove;
 use App\Models\CovePlan;
 use App\Services\Cove\ObservanceCalendar;
+use App\Services\Cove\PlanState;
 use BackedEnum;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
@@ -443,14 +446,30 @@ class CovePlanResource extends Resource
                 TextColumn::make('market')->badge()->sortable(),
                 TextColumn::make('title')->searchable()->limit(40),
 
-                TextColumn::make('status')
+                /*
+                 * Where this plan has got to — not the raw `status` column.
+                 *
+                 * `status` has four values and answers neither question an
+                 * editor has: has this been written, and did the build work.
+                 * The second is the one that used to be invisible: an approved
+                 * plan whose catalogue had gone thin looked exactly like one
+                 * whose date had not arrived. Same vocabulary the API filters
+                 * on, from the same service. See App\Services\Cove\PlanState.
+                 */
+                TextColumn::make('state')
+                    ->label('State')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'approved' => 'success',
-                        'used' => 'gray',
-                        'rejected' => 'danger',
+                    ->state(fn (CovePlan $r) => PlanState::of($r)->label())
+                    ->color(fn (CovePlan $r) => match (PlanState::of($r)) {
+                        PlanState::Live => 'success',
+                        PlanState::Thin => 'danger',
+                        PlanState::Approved, PlanState::DueAgain => 'info',
+                        PlanState::Archive => 'gray',
                         default => 'warning',
-                    }),
+                    })
+                    // The builder's own sentence about why nothing published.
+                    // It was a log line at six in the morning.
+                    ->tooltip(fn (CovePlan $r) => $r->last_build_note),
 
                 TextColumn::make('curated')
                     ->label('Curated')
@@ -499,6 +518,52 @@ class CovePlanResource extends Resource
                     ->url(fn (CovePlan $record) => CovePlanResource::getUrl('curate', ['record' => $record])),
 
                 EditAction::make(),
+
+                /*
+                 * The published page, for the plans that have one.
+                 *
+                 * Came from the editorial screen, which this merges. That screen
+                 * and this one were the same list at two points in its life —
+                 * and the other one let you edit the *edition*, which is an
+                 * output every rebuild overwrites. Merging deletes that trap
+                 * rather than documenting around it.
+                 */
+                Action::make('view')
+                    ->label('View')
+                    ->icon(Heroicon::OutlinedArrowTopRightOnSquare)
+                    ->visible(fn (CovePlan $r) => $r->edition !== null
+                        && $r->edition->status === PublishStatus::Published)
+                    ->url(fn (CovePlan $r) => '/'.$r->market->value.'/'
+                        .$r->kind->path((string) ($r->edition->slug ?? $r->slug), $r->market))
+                    ->openUrlInNewTab(),
+
+                /*
+                 * The built page's own record, for the two things that are
+                 * genuinely about the edition: dimming a pick that has gone, and
+                 * fixing one card's sentence on a live page without waiting for
+                 * a rebuild. Both are output being corrected rather than source
+                 * being written — which is why the screen it opens no longer has
+                 * a navigation entry of its own.
+                 */
+                Action::make('published')
+                    ->label('Published page')
+                    ->icon(Heroicon::OutlinedNewspaper)
+                    ->visible(fn (CovePlan $r) => $r->edition !== null)
+                    ->url(fn (CovePlan $r) => CoveEditorialResource::getUrl('edit', ['record' => $r->edition_id])),
+
+                Action::make('unpublish')
+                    ->label('Unpublish')
+                    ->icon(Heroicon::OutlinedEyeSlash)
+                    ->color('warning')
+                    ->visible(fn (CovePlan $r) => $r->edition !== null
+                        && $r->edition->status === PublishStatus::Published)
+                    ->requiresConfirmation()
+                    ->modalDescription('Takes the page off the site. The plan and its shortlist are untouched, so building again puts it back at the same URL.')
+                    ->action(function (CovePlan $record): void {
+                        $record->edition?->update(['status' => PublishStatus::Draft->value]);
+
+                        Notification::make()->title('Unpublished')->success()->send();
+                    }),
 
                 Action::make('approve')
                     ->icon(Heroicon::OutlinedCheck)
