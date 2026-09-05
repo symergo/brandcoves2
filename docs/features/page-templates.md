@@ -85,15 +85,19 @@ added next year without touching a block, the schema or the admin.
 | `:term` `:brand` `:count` `:shown` `:shops` `:comparable` `:reduced` `:percent` `:low` `:high` `:brands` `:shop` `:category` `:categories` | inline | text | Read off the products **on this page**, never the whole result set — a reader can check a claim about twenty-four visible products and cannot check one about four hundred they will never see. `:count` is the one exception and says so. |
 | `:brand_links` | inline | links | The brands in these results, each to its own page. Only brands that have one: a brand needs three products before it earns a page, and a link to a 404 from a sentence on every search page is the worst possible place for one. |
 | `:term_links` | inline | links | The vocabulary of the results, each to a narrower search. Also rendered as chips above the grid, so putting it in `above_grid` shows the same words twice. |
-| `:related_searches` | **block** | chips | "Verwante zoekopdrachten". A paragraph containing nothing else. |
 | `:term_page_link` `:brand_page_link` | inline | links | The subject of the page, linked to the canonical page for it — and plain text on the page it would link to, because a self-link is noise for a reader and a wasted signal for a crawler. |
 | `:search_link` `:brands_link` `:coves_link` `:guides_link` `:shops_link` `:gift_finder_link` `:search_help_link` | inline | links | Another part of the site, market-prefixed and labelled from the navigation's own strings. A hand-typed `/be-nl/coves` is right in one market and a 404 in four — and it is a 404 nobody notices. |
 
 ### A widget is not a third block kind
 
-`:related_searches` draws a row of pills, which cannot legally nest inside a `<p>`. So a block-level
+A function whose output is a row of pills cannot legally nest inside a `<p>`. So a block-level
 function is used as **a paragraph containing nothing else**, and the two-kind rule survives intact.
 The admin validates it and `Parts.tsx` enforces it again at render.
+
+**No placeholder is block-level today.** `:related_searches` was the only one and was removed on
+2026-09-05 — see [seo.md](seo.md) for why. The rule, the `chips` shape and the `isWidget` branch are
+kept for the next function that draws a row rather than a sentence; nothing about them is
+related-search-specific, and re-deriving them would cost more than leaving them.
 
 ### Editors never write markup
 

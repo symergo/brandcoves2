@@ -192,20 +192,6 @@ class PageTemplateAdminTest extends TestCase
     }
 
     #[Test]
-    public function it_refuses_a_widget_that_is_not_alone_in_its_paragraph(): void
-    {
-        $component = Livewire::actingAs($this->admin())->test(EditPageTemplate::class);
-
-        $blocks = $component->get('data.blocks');
-        $first = array_key_first($blocks);
-        $variant = array_key_first($blocks[$first]['variants']);
-
-        $blocks[$first]['variants'][$variant]['body'] = 'Kijk ook: :related_searches en meer.';
-
-        $component->set('data.blocks', $blocks)->call('save')->assertHasErrors();
-    }
-
-    #[Test]
     public function the_palette_lists_what_the_region_offers(): void
     {
         $component = Livewire::actingAs($this->admin())->test(EditPageTemplate::class);
@@ -214,7 +200,6 @@ class PageTemplateAdminTest extends TestCase
 
         $this->assertContains(':term', $tokens);
         $this->assertContains(':brand_links', $tokens);
-        $this->assertContains(':related_searches', $tokens);
         $this->assertContains(':coves_link', $tokens);
         // A brand-page fact, and not on offer here.
         $this->assertNotContains(':shop', $tokens);

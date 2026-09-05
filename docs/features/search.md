@@ -173,11 +173,10 @@ search folds live offers in and moves `merchant_count`.
 ### What this cost elsewhere
 
 Lowering the session threshold to 0.45 widens **every** `<%` in the codebase, not just search's.
-`SpectrumRetriever::anchor()` and `RelatedSearchQuery::for()` were written against Postgres' 0.6 and
-now re-check against `trigram_threshold_strict` explicitly. Both answer "what is near this?", where a
-loose match is a wrong neighbour rather than a forgiving typo — and the narrative's chips are rendered
-as related searches on an indexable page, so a bad one is a link promising something the target does
-not answer. The `<%` still drives the index; the re-check only narrows what survives.
+`SpectrumRetriever::anchor()` re-checks against `trigram_threshold_strict` explicitly, having been
+written against Postgres' 0.6. It answers "what is near this?", where a loose match is a wrong
+neighbour rather than a forgiving typo. The `<%` still drives the index; the re-check only narrows
+what survives. `RelatedSearchQuery::for()` did the same until it was removed on 2026-09-05.
 
 The `word_similarity()` calls in `ORDER BY` — `orderByRelevance()`, `GuideBuilder`, `SlotsRetriever`,
 `KeywordRetriever` — are unaffected. The GUC sets the operator's cutoff, never the function's return
@@ -474,51 +473,37 @@ Decisions worth keeping:
   rendered empty rather than unmounted — a live region must exist *before* its content changes for a
   screen reader to announce it.
 
-## `search_log` buckets per day
+## `search_log` buckets per hour
 
-Changed from per clock-hour on 2026-09-05. The table is upserted on
-`(query_hash, hour_bucket)`, so hourly meant a term searched around the clock
-occupied up to 2,160 rows inside the ninety days `RelatedSearchQuery` scans — all
-of them fetched, re-checked with `word_similarity()`, then collapsed to one chip
-by the `GROUP BY`. Per day the ceiling is 90.
+One row per query per hour, upserted on `(query_hash, hour_bucket)`.
 
-That scan is what made the canonical search page take 6.8-8.0s on production
-(measured 2026-09-04) while staging, on the identical commit, served the same
-terms in 0.5s. Dev never showed it: `search_log` there held 48 rows. The
-isolating measurement is `?q=watch` at 7.9s against `?q=watch&min=1` at 0.6s —
-a EUR0.01 floor excluding nothing, same 3,042 results, but any filter trips
-`isThin()` and skips the copy block whole.
+It was **daily** for a few hours on 2026-09-05, to shrink the trigram scan that
+drew the related-search chips: hourly meant a term searched round the clock held
+up to 2,160 rows inside the ninety days that scan read. Then the chips were
+removed outright and the scan with them, so the reason to coarsen the bucket
+disappeared and the finer resolution — the one that is a one-way door, since days
+never come back apart into hours — was restored.
 
-Nothing was reading the hourly resolution. `TopicMiner` sums over a rolling
-window, `RelatedSearchQuery` and `PrunePersonalDataCommand` use the bucket as a
-date cutoff, and no admin screen touches it. The single exception was
-`RecentSearches`, which ordered by the bucket for recency; it orders by
-`updated_at` now, which the upsert maintains on every conflict and which is exact
-at any resolution. `search_log_market_updated_at_index` covers that sort.
+> **The rows folded during that deploy stay folded.** The migration summed each
+> day's hours into one row, forward-only, so history before 2026-09-05 is
+> day-resolution and everything after it is hourly. Nothing reads the intra-day
+> shape today — `TopicMiner` sums over a rolling window, the rest use the bucket
+> as a date cutoff — so this is a gap in a signal nobody consumes rather than a
+> defect. The column is named `hour_bucket` and means it again.
 
-**Not monthly**, which would compress another thirty-fold. Every consumer filters
-with a day-precise cutoff, and month-start buckets make those windows lumpy — the
-guide-topic queue would lurch as each month rolled over, and the published
-365-day retention could only be honoured to the nearest month. It is also a
-one-way door: days aggregate up to months whenever we want, months never come
-back apart. The extra compression would be bought on a path that is no longer
-hot, since the same change caches the scan for an hour.
-
-> **Outstanding: the column is still named `hour_bucket` and holds a day.** The
-> rename is a breaking schema change and `migrate` runs as a one-shot service
-> while the previous containers are still serving, so it cannot ride along with
-> the change that made it wrong. It ships as its own later deploy — migrations
-> are forward-only and expand/contract, and this is the contract half.
+`search_log_query_trgm_idx` was dropped in the same change. Nothing queries
+`search_log` by similarity any more, and a GIN index on a table written on every
+search is not free.
 
 ## Files
 
 - `database/migrations/2026_08_07_000700_add_search_indexes.php`
-- `database/migrations/2026_09_05_000100_search_log_buckets_by_day.php`
+- `database/migrations/2026_09_05_000100_search_log_buckets_by_day.php` (superseded)
+- `database/migrations/2026_09_05_000200_the_related_search_chips_come_out.php`
 - `config/giftcoves.php` (`search.*`)
 - `resources/js/Pages/Search.tsx` (the box, its scanner beam, the term chips)
 - `app/Services/Seo/ResultTerms.php` (what the term chips are built from)
-- `app/Services/Seo/RelatedSearchQuery.php` (the related-search chips, cached)
-- `app/Models/SearchLog.php` (the daily upsert)
+- `app/Models/SearchLog.php` (the hourly upsert)
 - `resources/css/app.css` (`--animate-scan`)
 
 ## Verification

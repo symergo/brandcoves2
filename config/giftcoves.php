@@ -144,18 +144,81 @@ return [
         // behind. Five minutes keeps that invisible in practice.
         'facet_cache_ttl' => 300,
 
-        // Related-search chips are cached this long.
-        //
-        // An hour rather than the facets' five minutes: these come from a
-        // trigram scan over ninety days of `search_log`, so a new term has to
-        // out-rank a quarter of accumulated volume before it belongs in the row
-        // at all. Staleness costs a chip that arrives up to an hour late, on a
-        // block that decorates the page rather than navigating it.
-        //
-        // It is the cache that matters most on the page. Uncached, that scan was
-        // the bulk of a 6.8-8.0s canonical search page on production while
-        // staging served the same terms in 0.5s — see RelatedSearchQuery.
-        'related_cache_ttl' => 3600,
+        /*
+         * The public "what people search for" page.
+         *
+         * It replaced the related-search chips, removed for cost on 2026-09-05 —
+         * one cached aggregate on one page instead of a trigram scan under every
+         * result set. See App\Services\Search\PopularSearches.
+         */
+        'popular' => [
+            // Ninety days: long enough that a market with modest traffic has a
+            // page at all, short enough that last winter's terms are not still
+            // presented as what people are looking for.
+            'window_days' => 90,
+
+            /*
+             * A term must have been searched this many times to be listed.
+             *
+             * A privacy floor, not a tuning knob. The log carries no identity,
+             * which is what makes it non-personal — but one unusual query on a
+             * public page can still be about one identifiable person, and
+             * somebody who typed a name into a gift site did not publish it.
+             * Raise it freely; never lower it to where a listed term could be a
+             * single visitor.
+             */
+            'min_volume' => 5,
+
+            /*
+             * Twenty per column.
+             *
+             * It was 100 in one list for a day. A hundred rows is a keyword dump
+             * — which is what a search engine would call it too — and nobody
+             * reads past the first screen of a ranked list.
+             */
+            'limit' => 20,
+
+            // Three periods side by side, newest on the left.
+            'columns' => 3,
+
+            /*
+             * 'week' or 'month'.
+             *
+             * Months were the first shape and weeks won on the data: the log
+             * held 26 days when this shipped, which fills three weekly columns
+             * and leaves the third monthly one empty. An empty column teaches a
+             * reader that the page is broken. Switch to 'month' once the log
+             * reaches back four of them — the third column needs a fourth period
+             * behind it for its arrows.
+             */
+            'period' => 'week',
+
+            // The trending and latest lists. Short on purpose: they are read as
+            // a glance beside the long popular list, and a second hundred-row
+            // table underneath it would be read as nothing at all.
+            'short_list' => 20,
+
+            /*
+             * The recent slice trending measures against the rest of the window.
+             *
+             * Seven days: long enough to survive a quiet Tuesday, short enough
+             * that a term which started moving this week still reads as news
+             * rather than being averaged into the quarter behind it.
+             */
+            'trending_days' => 7,
+
+            /*
+             * A day.
+             *
+             * Every list here is an aggregate over three months, and the
+             * up/down/new arrows compare one three-month window against the one
+             * before it. None of that changes meaningfully between one hour and
+             * the next, and refreshing hourly only means more visitors paying
+             * for the rebuild. A day also gives the arrows a stable meaning: the
+             * page a reader sees in the morning says the same thing at night.
+             */
+            'cache_ttl' => 86400,
+        ],
     ],
 
     /*

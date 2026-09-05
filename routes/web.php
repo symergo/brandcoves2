@@ -37,6 +37,7 @@ use App\Http\Controllers\MarketPreferenceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\PickReactionController;
+use App\Http\Controllers\PopularSearchesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\RecipientProfileController;
@@ -187,6 +188,16 @@ Route::prefix('{market}')->group(function () {
     // document about the company, and the only pages that link to it are the
     // ones with a search field on them.
     Route::get('/search-help', SearchHelpController::class)->name('search-help');
+
+    /*
+     * What people search for here, as one page.
+     *
+     * The internal-linking hub that replaced the related-search chips under
+     * every result set — one cached aggregate instead of a trigram scan per
+     * page. Next to /search-help for the same reason that is here: it is about
+     * the search box rather than about the company.
+     */
+    Route::get('/popular-searches', PopularSearchesController::class)->name('popular-searches');
 
     /*
      * Tell us what is wrong.

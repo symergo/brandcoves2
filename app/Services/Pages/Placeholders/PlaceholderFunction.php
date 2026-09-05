@@ -28,13 +28,18 @@ use App\Services\Pages\Context\PageContext;
  * ## Resolved lazily, and at most once
  *
  * `resolve()` is called only when a block that survived its conditions actually
- * names this function, and its result is memoised on the context. Otherwise
- * `:related_searches` would run its query on every page that has the block
+ * names this function, and its result is memoised on the context. Otherwise a
+ * function that costs something — `:brand_links` resolving every brand on the
+ * page to its page — would pay that cost on every page holding a block that is
  * switched off.
+ *
+ * This mattered most for `:related_searches`, removed 2026-09-05: it ran a
+ * trigram scan over ninety days of `search_log`, and laziness was the only
+ * reason switching the block off cost nothing.
  */
 interface PlaceholderFunction
 {
-    /** The token, without the colon: `term`, `brand_links`, `related_searches`. */
+    /** The token, without the colon: `term`, `brand_links`, `term_links`. */
     public function name(): string;
 
     /** What the admin palette calls it. */

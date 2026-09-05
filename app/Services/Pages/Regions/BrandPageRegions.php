@@ -43,7 +43,7 @@ final class BrandPageRegions
         // No :brand_links. A brand page's results are one brand by
         // construction, so the list would be a link back to the page you are on.
         $links = [
-            'term_links', 'related_searches', 'brand_page_link',
+            'term_links', 'brand_page_link',
             ...array_keys(SiteLink::all()),
         ];
 
@@ -96,7 +96,7 @@ final class BrandPageRegions
                 // No products, so no facts about them — but a reader at a dead
                 // end still needs somewhere to go.
                 placeholders: [
-                    'brand', 'brand_page_link', 'related_searches',
+                    'brand', 'brand_page_link',
                     ...array_keys(SiteLink::all()),
                 ],
                 conditions: [],

@@ -1040,6 +1040,32 @@ return [
         'thanks' => 'Bedankt — dit is aangekomen en iemand leest het.',
     ],
 
+    /*
+     * What this market searches for, as a page.
+     *
+     * Replaced the related-search chips under every result set, which were
+     * removed for cost on 2026-09-05. Linked from the footer of every page.
+     */
+    'popular_searches' => [
+        'title' => 'Waar mensen naar zoeken',
+        'empty' => 'Nog niets te tonen — er is in deze markt nog te weinig gezocht om een patroon te laten zien.',
+        'empty_link' => 'Probeer een zoekopdracht',
+        'note' => 'Alleen zoekopdrachten die iets vonden, en alleen die vaak genoeg zijn uitgevoerd om een patroon te zijn in plaats van één persoon.',
+        'seo_title' => 'Waar mensen naar zoeken',
+        'seo_description' => 'De meest uitgevoerde zoekopdrachten op deze site van de afgelopen drie maanden, elk met een link naar de resultaten.',
+        'popular_heading' => 'Meest gezocht',
+        'trending_heading' => 'Snelst stijgend',
+        'trending_intro' => 'Deze week vaker gezocht dan hun eigen recente gemiddelde, niet simpelweg het vaakst gezocht.',
+        'latest_heading' => 'Recent gezocht',
+        'latest_intro' => 'Gevestigde zoekopdrachten die de afgelopen dagen weer langskwamen.',
+        'movement_up' => 'Hoger dan de periode ervoor',
+        'movement_down' => 'Lager dan de periode ervoor',
+        'movement_new' => 'Nieuw in deze periode',
+        'movement_new_short' => 'Nieuw',
+        'movement_same' => 'Onveranderd',
+        'period_empty' => 'Nog niets.',
+    ],
+
     'search_help' => [
         'seo_title' => 'Zo zoek je: woorden, streepjescodes en Amazon-links',
         'seo_description' => 'Wat het zoekvak begrijpt — productnamen, merken, streepjescodes en geplakte Amazon-links — en hoe je resultaten terugbrengt tot de juiste aanbieding.',

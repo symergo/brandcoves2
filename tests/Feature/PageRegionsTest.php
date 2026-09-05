@@ -141,32 +141,6 @@ class PageRegionsTest extends TestCase
         );
     }
 
-    /** The related-searches block survived the move, as content. */
-    #[Test]
-    public function related_searches_is_a_block_an_editor_can_move(): void
-    {
-        foreach (['search', 'brand'] as $page) {
-            foreach (Market::languages() as $language) {
-                $widget = PageBlock::query()
-                    ->where('page', $page)
-                    ->where('region', 'below_grid')
-                    ->where('language', $language)
-                    ->whereHas('variants', fn ($q) => $q->where('body', ':related_searches'))
-                    ->first();
-
-                $this->assertNotNull(
-                    $widget,
-                    "{$page}/{$language} lost its related-searches block. It is content now, not markup, and it is seeded.",
-                );
-
-                // A widget draws a block of its own, so it must be a paragraph
-                // holding nothing else — which is also what the admin validates.
-                $this->assertSame(PageBlock::PARAGRAPH, $widget->kind);
-                $this->assertSame(':related_searches', $widget->variants->first()->body);
-            }
-        }
-    }
-
     /*
      * -----------------------------------------------------------------
      * The two lists that have to agree.

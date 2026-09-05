@@ -16,7 +16,6 @@ use App\Models\Merchant;
 use App\Models\PageBlock;
 use App\Models\Product;
 use App\Models\ProductGroup;
-use App\Models\SearchLog;
 use App\Services\Pages\PageCopy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -348,48 +347,6 @@ class PageCopyRenderTest extends TestCase
 
         $this->assertNotNull($intro);
         $this->assertSame('Alles over koptelefoon op één pagina.', $intro[0]['parts'][0]['v']);
-    }
-
-    /*
-     * -----------------------------------------------------------------
-     * Related searches, and the FAQ that is not there any more.
-     * -----------------------------------------------------------------
-     */
-
-    /**
-     * "Verwante zoekopdrachten" survived becoming content.
-     *
-     * It used to be markup at the bottom of the component with its heading in a
-     * language file, which made it the one thing on the page an editor could see
-     * and not touch. Now it is a heading block, an intro paragraph and a widget
-     * paragraph — and this asserts the reader still gets all three.
-     */
-    #[Test]
-    public function the_related_searches_block_still_renders(): void
-    {
-        $this->seedBrand('Aurex');
-
-        foreach (['draadloze koptelefoon', 'gaming koptelefoon', 'koptelefoon'] as $query) {
-            SearchLog::create([
-                'query' => $query,
-                'query_hash' => hash('sha256', $query.'be-nl'),
-                'market' => Market::BeNl->value,
-                'hour_bucket' => now()->startOfHour(),
-                'search_count' => 12,
-                'result_count' => 8,
-            ]);
-        }
-
-        PageCopy::flush();
-
-        $narrative = $this->props('/be-nl/search?q=koptelefoon')['narrative'];
-        $encoded = (string) json_encode($narrative, JSON_UNESCAPED_UNICODE);
-
-        $this->assertStringContainsString('Verwante zoekopdrachten', $encoded);
-        $this->assertStringContainsString('"t":"chips"', $encoded);
-        $this->assertStringContainsString('draadloze koptelefoon', $encoded);
-        // The page never links to itself.
-        $this->assertStringNotContainsString('"label":"koptelefoon"', $encoded);
     }
 
     /**

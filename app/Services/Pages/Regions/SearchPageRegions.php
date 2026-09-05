@@ -45,7 +45,7 @@ final class SearchPageRegions
          * page: every brand in the results, each linked.
          */
         $links = [
-            'brand_links', 'term_links', 'related_searches', 'term_page_link',
+            'brand_links', 'term_links', 'term_page_link',
             ...array_keys(SiteLink::all()),
         ];
 
@@ -115,7 +115,7 @@ final class SearchPageRegions
                  * is exactly where a way out belongs.
                  */
                 placeholders: [
-                    'term', 'term_page_link', 'related_searches',
+                    'term', 'term_page_link',
                     ...array_keys(SiteLink::all()),
                 ],
                 conditions: [],

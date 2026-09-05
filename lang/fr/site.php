@@ -1037,6 +1037,32 @@ return [
         'thanks' => 'Merci — c’est bien arrivé et quelqu’un le lira.',
     ],
 
+    /*
+     * What this market searches for, as a page.
+     *
+     * Replaced the related-search chips under every result set, which were
+     * removed for cost on 2026-09-05. Linked from the footer of every page.
+     */
+    'popular_searches' => [
+        'title' => 'Ce que les gens recherchent',
+        'empty' => 'Rien à afficher pour l\'instant — ce marché n\'a pas encore été assez consulté pour qu\'une tendance se dégage.',
+        'empty_link' => 'Faire une recherche',
+        'note' => 'Uniquement les recherches qui ont donné des résultats, et seulement celles effectuées assez souvent pour représenter une tendance plutôt qu\'une seule personne.',
+        'seo_title' => 'Ce que les gens recherchent',
+        'seo_description' => 'Les recherches les plus fréquentes sur ce site ces trois derniers mois, chacune menant à ses résultats.',
+        'popular_heading' => 'Les plus recherchées',
+        'trending_heading' => 'En plus forte hausse',
+        'trending_intro' => 'Plus recherchées cette semaine que leur propre moyenne récente, et non simplement les plus recherchées.',
+        'latest_heading' => 'Recherchées récemment',
+        'latest_intro' => 'Des recherches installées qui sont revenues ces derniers jours.',
+        'movement_up' => 'En hausse par rapport à la période précédente',
+        'movement_down' => 'En baisse par rapport à la période précédente',
+        'movement_new' => 'Nouveau sur cette période',
+        'movement_new_short' => 'Nouveau',
+        'movement_same' => 'Inchangé',
+        'period_empty' => 'Rien pour le moment.',
+    ],
+
     'search_help' => [
         'seo_title' => 'Comment chercher : mots, codes-barres, Amazon',
         'seo_description' => "Ce que le champ de recherche comprend — noms de produits, marques, codes-barres et liens Amazon collés — et comment affiner jusqu'à la bonne offre.",

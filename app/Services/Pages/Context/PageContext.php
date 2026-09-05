@@ -17,8 +17,9 @@ use Illuminate\Support\Number;
  *
  * The old copy bank passed `['term' => …, 'count' => …]` — a snapshot of what
  * the caller happened to precompute. That is enough for scalars and nothing
- * else. `:brand_links` needs a URL builder and a market; `:related_searches`
- * needs to run a query. Handing a function the *page* rather than a snapshot of
+ * else. `:brand_links` needs a URL builder and a market, and `:term_links`
+ * needs the products actually on the page. Handing a function the *page* rather
+ * than a snapshot of
  * it is what lets a function added next year need something nobody thought to
  * precompute today, which is the entire point of making placeholders extensible.
  *

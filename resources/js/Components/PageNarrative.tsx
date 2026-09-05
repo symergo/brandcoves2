@@ -20,11 +20,13 @@ export interface Narrative {
  * some paragraphs; which sections exist, what they say, in what order, and
  * whether they appear at all is the editor's, in `/admin` → Page templates.
  *
- * That is why the FAQ `<dl>` and the related-searches markup are gone from here.
- * A question is a heading and its answer is the paragraph under it, so an editor
- * builds one out of the two block kinds they already have — and the chips are a
- * paragraph containing a single `:related_searches` placeholder, which they can
- * retitle, move above the questions, or delete.
+ * That is why the FAQ `<dl>` is gone from here. A question is a heading and its
+ * answer is the paragraph under it, so an editor builds one out of the two block
+ * kinds they already have.
+ *
+ * The related-searches chips lived here the same way until 2026-09-05, when they
+ * were removed outright — the trigram scan that drew them cost seconds on a cold
+ * term. See docs/features/seo.md.
  *
  * A heading with no paragraphs under it never reaches this component: the server
  * drops the section, because a heading standing over nothing is not a shorter

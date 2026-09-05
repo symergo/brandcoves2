@@ -630,6 +630,16 @@ function Chrome({ children }: PropsWithChildren) {
                             {t('search_help.footer_link')}
                         </Link>
 
+                        {/* What this market searches for. The hub that replaced
+                            the related-search chips under every result set when
+                            those were removed for cost — the outbound links a
+                            results page used to carry are concentrated here
+                            instead, which is also the only place a crawler can
+                            reach them from an arbitrary page. */}
+                        <Link href={`/${market.key}/popular-searches`} className="hover:text-accent">
+                            {t('popular_searches.title')}
+                        </Link>
+
                         {/* Belgian law wants the operator's details reachable
                             from every page. The footer is that. */}
                         <Link href={`/${market.key}/about`} className="hover:text-accent">

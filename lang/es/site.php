@@ -1036,6 +1036,32 @@ return [
         'thanks' => 'Gracias: ha llegado y alguien lo leerá.',
     ],
 
+    /*
+     * What this market searches for, as a page.
+     *
+     * Replaced the related-search chips under every result set, which were
+     * removed for cost on 2026-09-05. Linked from the footer of every page.
+     */
+    'popular_searches' => [
+        'title' => 'Lo que la gente busca',
+        'empty' => 'Todavía no hay nada que mostrar: en este mercado aún no se ha buscado lo suficiente como para ver un patrón.',
+        'empty_link' => 'Haz una búsqueda',
+        'note' => 'Solo búsquedas que encontraron algo, y solo las realizadas con la frecuencia suficiente para ser un patrón y no una sola persona.',
+        'seo_title' => 'Lo que la gente busca',
+        'seo_description' => 'Las búsquedas más frecuentes en este sitio durante los últimos tres meses, cada una enlazada a sus resultados.',
+        'popular_heading' => 'Las más buscadas',
+        'trending_heading' => 'Las que más suben',
+        'trending_intro' => 'Más buscadas esta semana que su propia media reciente, no simplemente las más buscadas.',
+        'latest_heading' => 'Buscadas recientemente',
+        'latest_intro' => 'Búsquedas asentadas que han vuelto a aparecer estos días.',
+        'movement_up' => 'Sube respecto al periodo anterior',
+        'movement_down' => 'Baja respecto al periodo anterior',
+        'movement_new' => 'Nueva en este periodo',
+        'movement_new_short' => 'Nueva',
+        'movement_same' => 'Sin cambios',
+        'period_empty' => 'Nada todavía.',
+    ],
+
     'search_help' => [
         'seo_title' => 'Cómo buscar: palabras, códigos de barras, Amazon',
         'seo_description' => 'Qué entiende el buscador — nombres de productos, marcas, códigos de barras y enlaces de Amazon pegados — y cómo afinar hasta la oferta que quieres.',

@@ -9,7 +9,6 @@ use App\Models\BrandStat;
 use App\Models\PageBlock;
 use App\Models\PageBlockVariant;
 use App\Models\ProductGroup;
-use App\Models\SearchLog;
 use App\Services\Pages\Context\PageContext;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
@@ -145,30 +144,6 @@ class PlaceholderFunctionTest extends TestCase
 
         // No brands in the results, so there is no list — and a sentence
         // introducing an empty one is worse than no sentence.
-        $this->assertSame([], $this->render($this->context()));
-    }
-
-    #[Test]
-    public function a_widget_is_its_own_part(): void
-    {
-        $this->seedSearchLog('draadloze koptelefoon');
-        $this->block(':related_searches');
-
-        $blocks = $this->render($this->context());
-
-        $this->assertCount(1, $blocks);
-        $this->assertCount(1, $blocks[0]['parts']);
-        $this->assertSame('chips', $blocks[0]['parts'][0]['t']);
-        $this->assertSame('draadloze koptelefoon', $blocks[0]['parts'][0]['items'][0]['label']);
-    }
-
-    #[Test]
-    public function a_widget_with_nothing_to_show_hides_its_block(): void
-    {
-        $this->block(':related_searches');
-
-        // Nothing in the log, so no neighbours — and an empty pill row is a gap
-        // in the page rather than a shorter one.
         $this->assertSame([], $this->render($this->context()));
     }
 
@@ -431,22 +406,6 @@ class PlaceholderFunctionTest extends TestCase
         $this->assertFalse(Absence::Blank->hides([['label' => 'x', 'url' => '/x']]));
     }
 
-    #[Test]
-    public function related_searches_excludes_the_query_itself(): void
-    {
-        $this->seedSearchLog('koptelefoon');
-        $this->seedSearchLog('draadloze koptelefoon');
-
-        $this->block(':related_searches');
-
-        $blocks = $this->render($this->context());
-
-        $labels = array_column($blocks[0]['parts'][0]['items'], 'label');
-
-        $this->assertContains('draadloze koptelefoon', $labels);
-        $this->assertNotContains('koptelefoon', $labels, 'the page linked to itself');
-    }
-
     /**
      * A page that mentions a brand without being that brand's page.
      *
@@ -564,18 +523,6 @@ class PlaceholderFunctionTest extends TestCase
             // Three, because a brand needs that many before it earns a page —
             // and BrandLinks defers to that rule rather than slugifying names.
             'product_count' => 3,
-        ]);
-    }
-
-    private function seedSearchLog(string $query): void
-    {
-        SearchLog::create([
-            'market' => Market::BeNl->value,
-            'query' => $query,
-            'query_hash' => hash('sha256', $query.'be-nl'),
-            'hour_bucket' => now()->subDay(),
-            'search_count' => 5,
-            'result_count' => 12,
         ]);
     }
 }

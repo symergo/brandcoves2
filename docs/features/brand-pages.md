@@ -208,8 +208,9 @@ had already chosen. A word under a brand heading reads as a filter, so it now be
 And each click **adds** its word rather than swapping the last one out — `?q=hogedrukreiniger`, then
 `?q=hogedrukreiniger accu`. The next page's suggestions come off the titles that survived the
 previous click, so every one of them is a word the current result set can still answer: the path
-narrows and cannot dead-end in zero results. Widening is what the search box, the related-search
-chips under the narrative, and every card's own links are for.
+narrows and cannot dead-end in zero results. Widening is what the search box and every card's own
+links are for. The related-search chips under the narrative used to be part of that answer; they were
+removed on 2026-09-05 — see [seo.md](seo.md).
 
 The same change applies to the search page, where the base is the query instead of the brand:
 `?q=koptelefoon` plus `over-ear` becomes `?q=koptelefoon over-ear`.
@@ -458,8 +459,9 @@ that product's model name the page's defining vocabulary.
 the second half only makes sense against the first.
 
 `PageNarrative::forBrand()` adds ~350–450 words below the articles: three sections — about the brand,
-where it is sold, how to choose one — plus an FAQ and a strip of related searches. Every line of it
-is a fact the catalogue can back up or a true explanation of how the site works.
+where it is sold, how to choose one — plus an FAQ. Every line of it is a fact the catalogue can back
+up or a true explanation of how the site works. A strip of related searches closed it until
+2026-09-05, when the scan behind it was removed for cost.
 
 **Why it went.** Not because it was false; the [copy rule](#the-copy-rule) is what makes that
 impossible. Because it was **arithmetic about the grid directly above it, written in sentences**, and

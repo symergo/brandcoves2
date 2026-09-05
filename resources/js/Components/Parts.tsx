@@ -39,20 +39,19 @@ export function isWidget(parts: Paragraph): boolean {
  * comma-separated sentence — which is the only reason these are worth having on
  * an indexable page at all.
  *
- * ## Why they are nofollow
+ * ## Nothing produces this shape today
  *
- * The targets are generated `/search?q=…` URLs, and every one a crawler follows
- * logs itself: `SearchLog::record()` writes the term, and `RelatedSearches` draws
- * the next page's chips from a trigram scan over that same table. Followed, the
- * row feeds the query that renders it — more chips, more crawlable URLs, more
- * rows, a slower scan. Measured on production 2026-09-04, that scan had grown to
- * ~7s on the canonical search page and ~5s on a brand page, against 0.5s on
- * staging running the identical commit; dev never shows it because `search_log`
- * there holds 48 rows.
+ * `:related_searches` was its only producer and was removed on 2026-09-05: it
+ * drew the row from a trigram scan over ninety days of `search_log`, which cost
+ * 9.7-11.1s on a cold term on production even after the scan was cached, because
+ * every first visitor on a term still paid it in full. See docs/features/seo.md.
  *
- * `nofollow` is a hint rather than a directive — Google has said so since 2019 —
- * so this slows the loop rather than closing it. It is the cheap half; caching
- * the placeholder per (market, rotation key) is the half that fixes the latency.
+ * The shape is kept rather than deleted. `Value` describes four shapes as the
+ * vocabulary of the block system, and this is the only block-level one — a
+ * future placeholder that draws a row of links needs this branch and the
+ * `isWidget` rule below it, and re-deriving both would be more work than leaving
+ * them. `rel="nofollow"` stays for the same reason: whatever produces chips next
+ * will point them somewhere, and the default should be the cautious one.
  */
 function Chips({ items }: { items: { label: string; url: string }[] }) {
     return (

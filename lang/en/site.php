@@ -1242,6 +1242,32 @@ return [
         'thanks' => 'Thank you — this has arrived and somebody will read it.',
     ],
 
+    /*
+     * What this market searches for, as a page.
+     *
+     * Replaced the related-search chips under every result set, which were
+     * removed for cost on 2026-09-05. Linked from the footer of every page.
+     */
+    'popular_searches' => [
+        'title' => 'What people search for',
+        'empty' => 'Nothing to show yet — this market has not been searched enough for a pattern to be worth printing.',
+        'empty_link' => 'Try a search',
+        'note' => 'Only searches that found something, and only those run often enough to be a pattern rather than one person.',
+        'seo_title' => 'What people search for',
+        'seo_description' => 'The most-run searches on this site over the last three months, each linking to its results.',
+        'popular_heading' => 'Most searched',
+        'trending_heading' => 'Rising fastest',
+        'trending_intro' => 'Searched more this week than their own recent average, not simply searched most.',
+        'latest_heading' => 'Searched recently',
+        'latest_intro' => 'Established searches that came round again in the last few days.',
+        'movement_up' => 'Higher than the period before',
+        'movement_down' => 'Lower than the period before',
+        'movement_new' => 'New in this period',
+        'movement_new_short' => 'New',
+        'movement_same' => 'Unchanged',
+        'period_empty' => 'Nothing yet.',
+    ],
+
     'search_help' => [
         'seo_title' => 'How to search: words, barcodes and Amazon links',
         'seo_description' => 'What the search box understands — product names, brands, barcodes and pasted Amazon links — and how to narrow results down to the offer you want.',
