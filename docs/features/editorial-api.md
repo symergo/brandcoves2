@@ -493,12 +493,37 @@ personas want `"pickMode": "locked"`, which publishes exactly the shortlist. See
 Write in the market's language (`GET /api/editorial` lists them). `queries` are product words —
 "hondenmand" finds products, "cadeau voor hondenliefhebbers" finds nothing.
 
-`scene` names the drawing on the card — one of `App\Enums\PersonaScene`: `coffee`, `cooking`,
-`racing`, `has_everything`, `dog`, `photography`, `diy`, `outdoors`, `someone`. Optional, and
-omitting it means `someone`, a featureless figure. It is validated against the enum, so a value that
-is not on that list is a 422 rather than a silent drop. Read it back on the plan to confirm what
-landed. See [gift-personas.md](gift-personas.md) for why it is a field rather than a lookup on the
+`scene` names the drawing on the card — one of `App\Enums\CoveScene`. Optional, and omitting it
+means the kind's default: `someone` (a featureless figure) for a persona, `article` for a guide or
+an advice piece.
+
+**Validated against the kind, not against the whole enum.** One column holds two vocabularies that
+do not overlap — a persona names a *kind of person*, an article names a *subject* — so `customs` on
+a persona is a **422**, and so is any scene at all on a Daily or a Shop Cove, which name none. The
+error names the values that kind does take. This is stricter than it was: a scene used to be stored
+on any kind on the argument that it was harmless there, which stopped being true the moment there
+was a second vocabulary to be wrong in.
+
+| Kind | May name |
+|---|---|
+| `persona` | `coffee` `cooking` `racing` `has_everything` `dog` `photography` `diy` `outdoors` `gardening` `plants` `music` `reading` `gaming` `fitness` `travel` `baking` `someone` |
+| `guide` `seasonal` `advice` | `rights` `price_history` `seller` `reviews` `refurbished` `shop_check` `phishing` `customs` `gift_return` `missing_parcel` `article` |
+| `daily` `shop` | nothing |
+
+> **A scene the deployed server does not know is a 422, and that is a deploy gate.** The API checks
+> against the enum in the running build and the database against the CHECK in the running schema, so
+> content naming a new scene cannot be written until the code carrying it is live. Measured on
+> 2026-09-05: 13 of 30 persona writes came back `The selected scene is invalid` against a host still
+> running the previous nine. Deploy, then write.
+
+Read it back on the plan to confirm what landed. See [cove-scenes.md](cove-scenes.md) for the
+drawings and [gift-personas.md](gift-personas.md) for why it is a field rather than a lookup on the
 slug.
+
+> **Setting `scene` on a plan does not change a page that is already published.**
+> `EditionBuilder::buildPersona()` copies it onto the edition at build time, so a live persona keeps
+> the drawing it was built with until it is rebuilt — which is a separate call, and on an `open`
+> persona also re-runs the ranker.
 
 > **`POST /coves` replaces the plan, not just the fields you send.** To add a scene to a persona that
 > already has prose, read the plan first and send it back whole with `scene` added — a body carrying

@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use App\Enums\CoveScene;
 use App\Services\Guides\CoveMarkup;
 
 /**
@@ -16,6 +17,17 @@ use App\Services\Guides\CoveMarkup;
  * 280 pages of Amazon and online-shopping writing accumulated since 2016. This
  * file is what is left after reading them: eight subjects that are still worth
  * publishing, rewritten from scratch against sources checked in August 2026.
+ *
+ * Two more were added on 2026-09-05 and came from nowhere but this site.
+ * `gift-returns` and `parcel-never-arrived` have no ancestor in the estate,
+ * because the estate was written by shops about shopping: the question of who
+ * may return a present, and the question of what "delivered" means when the
+ * doorstep is empty, are both about the gap between the person who paid and the
+ * person holding the thing. That gap is what a gift site is *for*, and it is
+ * the reason both are keyed to the three markets the shelves were being filled
+ * out in rather than to all four. `be-fr` carries the original eight and will
+ * carry these when somebody writes them in French; a partial set is the
+ * intended state of this file, not a gap in it.
  *
  * **Nothing here is ported text.** Not one sentence, and the reason is not
  * fastidiousness — it is that the old text was substantially wrong. The
@@ -67,7 +79,22 @@ use App\Services\Guides\CoveMarkup;
  *
  * ## Structure
  *
- *   topic key => market => [slug, title, blurb, body, meta_description, faq]
+ *   topic key => 'scene' => the drawing
+ *             => market  => [slug, title, blurb, body, meta_description, faq]
+ *
+ * `scene` sits beside the markets rather than inside each of them because it
+ * belongs to the **subject**, and the subject is what the markets share.
+ * `kopen-buiten-de-eu` and `buying-from-outside-the-eu` are one article about
+ * customs duty wearing two languages; a scene per market would be the same
+ * decision made four times, and forgotten in one of them. It is one of
+ * {@see CoveScene}'s article cases, and the seeder reports a value
+ * that is not — because a misspelling that silently fell back to the default
+ * drawing would be found by a reader rather than by a run.
+ *
+ * `/guides` is a shelf of writing and writing has no photograph, so before
+ * these existed the page was eight identical rectangles of text. The drawing is
+ * how a returning reader finds the piece they half-remember without reading
+ * eight titles.
  *
  * `es` is absent throughout. It is an unpublished market with no supply, and an
  * untranslated Cove is worse than an absent one.
@@ -91,6 +118,8 @@ return [
      * saying two.
      */
     'consumer-rights' => [
+
+        'scene' => 'rights',
 
         'be-nl' => [
             'slug' => 'je-rechten-bij-een-online-aankoop',
@@ -158,6 +187,8 @@ return [
      */
     'who-sells-this' => [
 
+        'scene' => 'seller',
+
         'be-nl' => [
             'slug' => 'wie-verkoopt-dit-eigenlijk',
             'title' => 'Wie verkoopt dit eigenlijk?',
@@ -218,6 +249,8 @@ return [
      * with no way back, and a price that implies a business losing money.
      */
     'trustworthy-shop' => [
+
+        'scene' => 'shop_check',
 
         'be-nl' => [
             'slug' => 'is-deze-webshop-te-vertrouwen',
@@ -281,6 +314,8 @@ return [
      */
     'parcel-phishing' => [
 
+        'scene' => 'phishing',
+
         'be-nl' => [
             'slug' => 'dat-bericht-over-je-pakje-klopt-waarschijnlijk-niet',
             'title' => 'Dat bericht over je pakje klopt waarschijnlijk niet',
@@ -343,6 +378,8 @@ return [
      */
     'crossed-out-prices' => [
 
+        'scene' => 'price_history',
+
         'be-nl' => [
             'slug' => 'wat-is-een-doorgestreepte-prijs-waard',
             'title' => 'Wat is een doorgestreepte prijs waard?',
@@ -404,6 +441,8 @@ return [
      */
     'second-hand' => [
 
+        'scene' => 'refurbished',
+
         'be-nl' => [
             'slug' => 'tweedehands-refurbished-of-open-doos',
             'title' => 'Tweedehands, refurbished of open doos',
@@ -464,6 +503,8 @@ return [
      * reviews real" from a hunch into something the page is required to answer.
      */
     'reading-reviews' => [
+
+        'scene' => 'reviews',
 
         'be-nl' => [
             'slug' => 'reviews-lezen-zonder-je-te-laten-sturen',
@@ -527,6 +568,8 @@ return [
      */
     'buying-outside-the-eu' => [
 
+        'scene' => 'customs',
+
         'be-nl' => [
             'slug' => 'kopen-buiten-de-eu',
             'title' => 'Kopen buiten de EU',
@@ -576,6 +619,133 @@ return [
                 ['q' => 'Do I pay customs duty on a cheap parcel?', 'a' => 'Since 1 July 2026, yes. The EU exemption for consignments under 150 euros was removed and a temporary flat rate per product category applies. VAT was already due from the first euro.'],
                 ['q' => 'How do I avoid a bill on delivery?', 'a' => 'Buy from a shop that collects VAT at checkout through the EU scheme. If no VAT appears on a non-EU order at checkout, the bill follows later.'],
                 ['q' => 'Can I return something to a shop outside the EU?', 'a' => 'On paper usually yes, but postage to another continent mounts up fast and reclaiming duty you paid is a separate procedure. Budget for that before you order.'],
+            ],
+        ],
+    ],
+
+    /*
+     * The one subject on this list that only a gift site would write.
+     *
+     * Every other article here is about a purchase with one person at both
+     * ends. A gift has two, and almost every complaint that follows comes from
+     * the same root: the withdrawal right and the guarantee are contractual,
+     * the contract is between the shop and whoever paid, and the person holding
+     * the object is not a party to it. That is not a shop being difficult - it
+     * is the shape of the law, and knowing it changes what you ask for.
+     *
+     * Which is why the second half is about what shops do *voluntarily*. Gift
+     * receipts, December windows and credit notes are the only route that does
+     * not run through the giver, and they are policy rather than right: exactly
+     * as good as the terms say, worth reading before the purchase and useless
+     * to read after it.
+     *
+     * No dates on the goodwill half, deliberately. "Until 31 January" is the
+     * kind of fact this file exists to keep out.
+     */
+    'gift-returns' => [
+
+        'scene' => 'gift_return',
+
+        'be-nl' => [
+            'slug' => 'een-cadeau-terugsturen',
+            'title' => 'Een cadeau terugsturen',
+            'blurb' => 'Het recht om iets terug te sturen hoort bij wie betaalde, niet bij wie het uitpakt. Wat de wet regelt, wat de winkel er vrijwillig bovenop doet, en waarom dat verschil juist in december telt.',
+            'meta_description' => 'Een cadeau ruilen of terugsturen vanuit Belgie: wie het herroepingsrecht heeft, wat een cadeaubon van de winkel waard is, en hoe de garantie loopt op iets dat je kreeg.',
+            'body' => "Een cadeau dat niet past, dubbel is of gewoon niet klopt, is een van de weinige aankopen waarbij de koper en de gebruiker niet dezelfde persoon zijn. Het recht ziet dat verschil, en daaruit volgt bijna alles wat er daarna misgaat.\n\nBegin bij de kern: **het herroepingsrecht hoort bij wie het contract sloot.** Veertien dagen bedenktijd, zonder reden, geldt voor de consument die bestelde en betaalde. Wie het pakje kreeg, is geen partij bij die koop. Dat is geen regeltje van de winkel maar hoe de wet in elkaar zit, en er volgen twee praktische dingen uit. De gever moet de annulering doen. En het geld gaat terug naar de rekening waarmee betaald is, dus naar de gever.\n\nDezelfde lijn geldt voor de wettelijke garantie. Werkt het niet zoals je mocht verwachten, dan is dat een claim van de koper op de verkoper: twee jaar, en in Belgie wordt sinds 1 juni 2022 gedurende die volledige twee jaar vermoed dat het gebrek er al bij de levering was. Wat je precies kunt eisen staat in [[guide:je-rechten-bij-een-online-aankoop]]. De ontvanger die zelf aanklopt, staat formeel met lege handen - ook al is hij degene die het defecte toestel in huis heeft.\n\nEn dan is er alles wat winkels **vrijwillig** aanbieden, en dat is meestal waarmee een cadeau in de praktijk geregeld wordt. Een verlengde retourtermijn rond de feestdagen, een cadeaubon in plaats van geld, ruilen zonder de kassabon, een retourlabel op naam van de ontvanger: niets daarvan staat in de wet. Het zijn contractuele beloftes, en een belofte is precies zoveel waard als wat er in de voorwaarden staat. Grote winkels zoals [[amazon:cadeaubon|Amazon]] zetten hun termijn ergens op de site; kleinere winkels vaak nergens, en dan is het geen recht maar een gunst die per medewerker anders uitvalt.\n\nDrie dingen die het in de praktijk redden. Bewaar de verpakking tot de termijn voorbij is: een artikel waarvan je de verzegeling verbrak - software, een game, muziek - valt sowieso buiten de bedenktijd. Kijk voor de feestdagen wat de termijn is en niet erna, want een verlengde termijn is bedoeld om voor de aankoop gelezen te worden. En koop bij een marktplaats bewust, omdat je claim tegen de verkoper achter de aanbieding loopt en niet tegen het platform; zie [[guide:wie-verkoopt-dit-eigenlijk]].\n\nTot slot het ongemakkelijke deel. Het herroepingsrecht uitoefenen betekent dat de gever het merkt: hij dient de aanvraag in en hij krijgt het geld. Wie dat wil vermijden, komt uit bij ruilen of een tegoedbon bij de winkel zelf, en dat is precies het spoor dat niet in de wet staat. Dat is de echte reden om te weten wat een winkel bovenop de wet doet. Niet omdat het meer is, maar omdat het het enige spoor is dat buiten de gever om loopt.",
+            'faq' => [
+                ['q' => 'Mag de ontvanger een cadeau zelf terugsturen?', 'a' => 'Niet op grond van het herroepingsrecht: dat hoort bij wie de bestelling plaatste. Veel winkels laten het toch toe via een ruilprocedure of een tegoedbon, maar dat is beleid van de winkel en geen recht.'],
+                ['q' => 'Naar wie gaat het geld bij een terugbetaling?', 'a' => 'Naar de betaalwijze waarmee besteld is, dus naar de gever. Een terugbetaling aan de ontvanger bestaat wettelijk niet; een tegoedbon op naam is wat winkels daarvoor in de plaats aanbieden.'],
+                ['q' => 'Geldt de garantie ook voor iets dat ik cadeau kreeg?', 'a' => 'De claim loopt formeel van de koper naar de verkoper. In de praktijk helpen veel winkels de ontvanger meteen, maar wie tegenwerking krijgt, laat de aanvraag beter door de gever indienen.'],
+            ],
+        ],
+
+        'nl-nl' => [
+            'slug' => 'een-cadeau-terugsturen',
+            'title' => 'Een cadeau terugsturen',
+            'blurb' => 'De bedenktijd hoort bij wie betaalde, niet bij wie het uitpakt. Wat de wet regelt, wat de winkel er vrijwillig bovenop doet, en waarom dat verschil juist in december telt.',
+            'meta_description' => 'Een cadeau ruilen of terugsturen in Nederland: wie de bedenktijd heeft, wat een cadeaubon van de winkel waard is, en hoe de garantie loopt op iets dat je kreeg.',
+            'body' => "Een cadeau dat niet past, dubbel is of gewoon niet klopt, is een van de weinige aankopen waarbij de koper en de gebruiker niet dezelfde persoon zijn. Het recht ziet dat verschil, en daaruit volgt bijna alles wat er daarna misgaat.\n\nBegin bij de kern: **de bedenktijd hoort bij wie de koop sloot.** Veertien dagen, zonder reden, geldt voor de consument die bestelde en betaalde. Wie het pakket kreeg, is geen partij bij die koop. Dat is geen regeltje van de webshop maar hoe de wet in elkaar zit, en er volgen twee praktische dingen uit. De gever moet de ontbinding doen. En het geld gaat terug naar de betaalwijze waarmee besteld is, dus naar de gever.\n\nDezelfde lijn geldt voor de wettelijke garantie, en die is in Nederland ruimer dan mensen denken. Er staat geen termijn in de wet: het gaat om wat je van dit product voor die prijs redelijkerwijs mocht verwachten, wat bij een duurder apparaat langer is dan twee jaar. Zie [[guide:je-rechten-bij-een-online-aankoop]]. Maar de claim loopt van de koper naar de verkoper, dus de ontvanger die zelf aanklopt staat formeel met lege handen - ook al is hij degene die het defecte apparaat in huis heeft.\n\nEn dan is er alles wat winkels **vrijwillig** aanbieden, en dat is meestal waarmee een cadeau in de praktijk geregeld wordt. Een verlengde retourtermijn rond de feestdagen, een cadeaubon in plaats van geld, ruilen zonder de bon, een retourlabel op naam van de ontvanger: niets daarvan staat in de wet. Het zijn contractuele beloftes, en een belofte is precies zoveel waard als wat er in de voorwaarden staat. Grote winkels zoals [[amazon:cadeaubon|Amazon]] en bol zetten hun termijn ergens op de site; kleinere winkels vaak nergens, en dan is het geen recht maar een gunst die per medewerker anders uitvalt.\n\nDrie dingen die het in de praktijk redden. Bewaar de verpakking tot de termijn voorbij is: een artikel waarvan je de verzegeling verbrak - software, een game, muziek - valt sowieso buiten de bedenktijd. Kijk voor de feestdagen wat de termijn is en niet erna, want een verlengde termijn is bedoeld om voor de aankoop gelezen te worden. En koop bij een marktplaats bewust, omdat je claim tegen de verkoper achter de aanbieding loopt en niet tegen het platform; zie [[guide:wie-verkoopt-dit-eigenlijk]].\n\nTot slot het ongemakkelijke deel. De bedenktijd gebruiken betekent dat de gever het merkt: hij dient de ontbinding in en hij krijgt het geld. Wie dat wil vermijden, komt uit bij ruilen of een tegoedbon bij de winkel zelf, en dat is precies het spoor dat niet in de wet staat. Dat is de echte reden om te weten wat een winkel bovenop de wet doet. Niet omdat het meer is, maar omdat het het enige spoor is dat buiten de gever om loopt.",
+            'faq' => [
+                ['q' => 'Mag de ontvanger een cadeau zelf terugsturen?', 'a' => 'Niet op grond van de bedenktijd: die hoort bij wie de bestelling plaatste. Veel webshops laten het toch toe via een ruilprocedure of een tegoedbon, maar dat is beleid van de winkel en geen recht.'],
+                ['q' => 'Naar wie gaat het geld bij een terugbetaling?', 'a' => 'Naar de betaalwijze waarmee besteld is, dus naar de gever. Een terugbetaling aan de ontvanger bestaat wettelijk niet; een tegoedbon op naam is wat winkels daarvoor in de plaats aanbieden.'],
+                ['q' => 'Geldt de garantie ook voor iets dat ik cadeau kreeg?', 'a' => 'De claim loopt formeel van de koper naar de verkoper. In de praktijk helpen veel winkels de ontvanger meteen, maar wie tegenwerking krijgt, laat de melding beter door de gever doen.'],
+            ],
+        ],
+
+        'en' => [
+            'slug' => 'returning-a-gift',
+            'title' => 'Returning a gift',
+            'blurb' => 'The right to send something back belongs to whoever paid, not to whoever unwraps it. What the law covers, what the shop adds voluntarily, and why the difference matters in December.',
+            'meta_description' => 'Exchanging or returning a gift: who holds the withdrawal right, what a shop gift receipt is actually worth, and how the guarantee works on something you were given.',
+            'body' => "A gift that does not fit, is a duplicate or is simply wrong is one of the few purchases where the buyer and the user are not the same person. The law sees that difference, and almost everything that goes wrong afterwards follows from it.\n\nStart with the core of it: **the right to withdraw belongs to whoever entered into the contract.** Fourteen days, no reason required, for the consumer who ordered and paid. The person who received the parcel is not a party to that purchase. This is not shop policy but the shape of the law, and two practical things follow. The giver has to make the request. And the money goes back to the payment method it came from, which is the giver's.\n\nThe same line runs through the legal guarantee. If it does not work as you were entitled to expect, that is a claim by the buyer against the seller - see [[guide:your-rights-when-you-buy-online]] for what you can actually demand. The recipient who contacts the shop directly is formally empty handed, even though they are the one with the faulty device in the house.\n\nThen there is everything shops offer **voluntarily**, which is usually what actually resolves a gift. An extended return window over the holidays, a credit note instead of money, an exchange without the till receipt, a return label in the recipient's name: none of that is in the law. They are contractual promises, and a promise is worth exactly what the terms say. Large retailers such as [[amazon:gift card|Amazon]] publish their window somewhere on the site; smaller shops often publish it nowhere, and then it is not a right but a favour that varies by whoever answers.\n\nThree things that save it in practice. Keep the packaging until the window has passed, because an item whose seal you have broken - software, a game, music - falls outside the withdrawal right regardless. Check the window before the holidays rather than after, since an extended window is written to be read before the purchase. And buy from a marketplace deliberately, because your claim runs against the seller behind the listing and not against the platform; see [[guide:who-actually-sells-this]].\n\nAnd then the awkward part. Exercising the withdrawal right means the giver finds out: they make the request and they receive the money. Anyone who wants to avoid that ends up at an exchange or a credit note in the shop itself, which is precisely the route that is not in the law. That is the real reason to know what a shop does on top of it. Not because it is more, but because it is the only route that does not run through the giver.",
+            'faq' => [
+                ['q' => 'Can the recipient return a gift themselves?', 'a' => 'Not under the withdrawal right, which belongs to whoever placed the order. Many shops allow it anyway through an exchange or a credit note, but that is shop policy rather than a right.'],
+                ['q' => 'Who gets the money back?', 'a' => 'The payment method the order was made with, so the giver. A refund to the recipient does not exist in law; a credit note in their name is what shops offer instead.'],
+                ['q' => 'Does the guarantee cover something I was given?', 'a' => 'The claim formally runs from the buyer to the seller. In practice many shops help the recipient straight away, but if you meet resistance it is the giver who should make the request.'],
+            ],
+        ],
+    ],
+
+    /*
+     * "Delivered" is a carrier's record, not a fact about your hallway.
+     *
+     * The load-bearing rule is that risk passes to the consumer when they, or a
+     * third party *they* named, take physical possession - EU Consumer Rights
+     * Directive article 20, in force 13 June 2014, and in national law at art.
+     * VI.44 WER in Belgium and art. 7:11 BW in the Netherlands. Everything the
+     * reader needs follows from it: a parcel left with a neighbour the courier
+     * picked has not been delivered to them, and the counterparty is the shop
+     * rather than the carrier they have no contract with.
+     *
+     * Distinct from `parcel-phishing`, which is about a message that is a lie.
+     * This one is about a message that is true and still does not mean what the
+     * shop says it means.
+     *
+     * No carrier is named and no timescale beyond the statutory thirty days is
+     * given. Both would date, and the second is the "how long until it counts
+     * as lost" question every source article answered with a number it had
+     * made up.
+     */
+    'parcel-never-arrived' => [
+
+        'scene' => 'missing_parcel',
+
+        'be-nl' => [
+            'slug' => 'het-pakje-is-geleverd-en-het-is-er-niet',
+            'title' => 'Het pakje is geleverd en het is er niet',
+            'blurb' => 'Track en trace zegt bezorgd, de deurmat zegt iets anders. Tot jij het in handen hebt, ligt het risico bij de verkoper - en dat is zelden het eerste wat een winkel vertelt.',
+            'meta_description' => 'Pakje kwijt of bij de buren afgegeven: waarom het risico bij de verkoper ligt tot jij het hebt, waarom je bij de winkel moet zijn en niet bij de koerier, en wat je vastlegt.',
+            'body' => "Er is een moment waarop een online aankoop van jou wordt, en dat moment staat in de wet. **Het risico gaat over wanneer jij het pakje fysiek in handen krijgt**, of iemand die jij daarvoor hebt aangewezen. Niet wanneer de winkel het afgeeft, niet wanneer de koerier op verzonden drukt, en niet wanneer track en trace bezorgd zegt. Die regel staat sinds 13 juni 2014 in de Europese richtlijn consumentenrechten en in het Belgische recht in artikel VI.44 van het Wetboek van economisch recht.\n\nUit die ene zin volgt de rest. Ligt het pakje bij een buur die de koerier zelf uitkoos, dan is het niet aan jou geleverd. Is het achtergelaten op een plek waar jij nooit om gevraagd hebt - achter de poort, in de tuin, bij de voordeur - dan evenmin. Koos jij bij het bestellen zelf een afhaalpunt, dan wordt het anders: dat is een derde die jij hebt aangewezen, en vanaf dat punt draag jij het risico.\n\nHet tweede punt is minstens zo belangrijk en gaat vaker mis: **jij hebt een contract met de winkel, niet met de koerier.** De vervoerder is door de verkoper ingehuurd. Een winkel die zegt dat je het maar met de bezorgdienst moet regelen, stuurt je naar een partij die jou niets verschuldigd is. Kort en beleefd terugleggen bij de winkel is het hele antwoord: de bestelling is niet ontvangen, en de verkoper zoekt zelf uit wat er bij zijn vervoerder gebeurd is.\n\nDe scan die bezorgd zegt, is bewijs van wat de koerier heeft ingevoerd. Meer niet. Vraag om het leveringsbewijs: bij een pakje van enige waarde hoort een handtekening of ten minste een foto van de plek, en het gebeurt geregeld dat die foto een deur laat zien die niet de jouwe is. Is de foto wel van jouw deur en ligt er niets, dan is dat een zaak tussen de winkel en zijn vervoerder, en niet tussen jou en je geheugen.\n\nEr loopt daarnaast een termijn die hier los van staat. Werd er geen leverdatum afgesproken, dan moet er binnen dertig dagen geleverd zijn. Gebeurt dat niet, dan geef je de verkoper schriftelijk een redelijke extra termijn; verloopt ook die, dan mag je de koop ontbinden en heb je recht op terugbetaling. Zie [[guide:je-rechten-bij-een-online-aankoop]] voor hoe die terugbetaling verder loopt.\n\nDrie dingen die het verschil maken. Zet het op schrift, want een chat in een app van de winkel is over drie maanden weg en een e-mail niet. Klop eerst bij de buren aan voordat je iets verstuurt, omdat dat de uitkomst is die iedereen liever heeft. En let op bij een marktplaats: je claim loopt tegen de verkoper achter de aanbieding, wat bij een verkoper van ver weg een heel ander gesprek is dan bij [[amazon:pakketbrievenbus|een grote winkel]]. Zie [[guide:wie-verkoopt-dit-eigenlijk]].\n\nEn tot slot iets wat geen recht is maar wel helpt: een bericht dat om betaling vraagt om je verdwenen pakje vrij te geven, komt niet van de vervoerder. Zie [[guide:dat-bericht-over-je-pakje-klopt-waarschijnlijk-niet]].",
+            'faq' => [
+                ['q' => 'Het pakje is bij de buren afgegeven en die zijn op reis. Van wie is het risico?', 'a' => 'Van de verkoper, tenzij jij die buur zelf had aangewezen. Een buur die de koerier uitkoos is geen derde die jij hebt aangeduid, dus de bestelling is niet aan jou geleverd.'],
+                ['q' => 'Moet ik bij de koerier of bij de winkel zijn?', 'a' => 'Bij de winkel. Je contract is met de verkoper; de vervoerder is door hem ingehuurd en is jou niets verschuldigd. Een winkel die je doorverwijst naar de bezorgdienst, stuurt je naar de verkeerde partij.'],
+                ['q' => 'Hoe lang moet ik wachten voordat een pakje kwijt is?', 'a' => 'Daar staat geen termijn voor in de wet. Wel geldt: zonder afgesproken leverdatum moet er binnen dertig dagen geleverd zijn, en daarna geef je schriftelijk een redelijke extra termijn voordat je mag ontbinden.'],
+            ],
+        ],
+
+        'nl-nl' => [
+            'slug' => 'het-pakket-is-bezorgd-en-het-is-er-niet',
+            'title' => 'Het pakket is bezorgd en het is er niet',
+            'blurb' => 'Track en trace zegt bezorgd, de deurmat zegt iets anders. Tot jij het in handen hebt, ligt het risico bij de verkoper - en dat is zelden het eerste wat een webshop vertelt.',
+            'meta_description' => 'Pakket kwijt of bij de buren afgegeven: waarom het risico bij de verkoper ligt tot jij het hebt, waarom je bij de webshop moet zijn en niet bij de bezorger, en wat je vastlegt.',
+            'body' => "Er is een moment waarop een online aankoop van jou wordt, en dat moment staat in de wet. **Het risico gaat over op het moment dat jij het pakket fysiek in handen krijgt**, of iemand die jij daarvoor hebt aangewezen. Niet wanneer de webshop het afgeeft, niet wanneer de bezorger op verzonden drukt, en niet wanneer track en trace bezorgd zegt. Die regel staat sinds 13 juni 2014 in de Europese richtlijn consumentenrechten en in Nederland in artikel 7:11 van het Burgerlijk Wetboek.\n\nUit die ene zin volgt de rest. Ligt het pakket bij een buurman die de bezorger zelf uitkoos, dan is het niet aan jou bezorgd. Is het achtergelaten op een plek waar jij nooit om gevraagd hebt - achter de schutting, in de container, bij de voordeur - dan evenmin. Koos jij bij het bestellen zelf een afhaalpunt, dan ligt het anders: dat is een derde die jij hebt aangewezen, en vanaf dat punt draag jij het risico.\n\nHet tweede punt is minstens zo belangrijk en gaat vaker mis: **jij hebt een overeenkomst met de webshop, niet met de bezorger.** De vervoerder is door de verkoper ingeschakeld. Een winkel die zegt dat je het maar met de bezorgdienst moet opnemen, stuurt je naar een partij die jou niets verschuldigd is. Kort en beleefd terugleggen bij de webshop is het hele antwoord: de bestelling is niet ontvangen, en de verkoper zoekt zelf uit wat er bij zijn vervoerder is gebeurd.\n\nDe scan die bezorgd zegt, is bewijs van wat de bezorger heeft ingevoerd. Meer niet. Vraag om het bezorgbewijs: bij een pakket van enige waarde hoort een handtekening of op zijn minst een foto van de locatie, en het komt geregeld voor dat die foto een deur laat zien die niet de jouwe is. Is de foto wel van jouw deur en ligt er niets, dan is dat een zaak tussen de webshop en zijn vervoerder, en niet tussen jou en je geheugen.\n\nEr loopt daarnaast een termijn die hier los van staat. Is er geen bezorgdatum afgesproken, dan moet er binnen dertig dagen geleverd zijn. Gebeurt dat niet, dan geef je de verkoper schriftelijk een redelijke extra termijn; verloopt ook die, dan mag je de koop ontbinden en heb je recht op terugbetaling. Zie [[guide:je-rechten-bij-een-online-aankoop]] voor hoe die terugbetaling verder loopt.\n\nDrie dingen die het verschil maken. Leg het schriftelijk vast, want een chat in de app van de winkel is over drie maanden weg en een e-mail niet. Loop eerst bij de buren langs voordat je iets verstuurt, omdat dat de uitkomst is die iedereen liever heeft. En let op bij een marktplaats: je claim loopt tegen de verkoper achter de advertentie, wat bij een verkoper van ver weg een heel ander gesprek is dan bij [[amazon:pakketbrievenbus|een grote winkel]]. Zie [[guide:wie-verkoopt-dit-eigenlijk]].\n\nEn tot slot iets wat geen recht is maar wel helpt: een bericht dat om betaling vraagt om je verdwenen pakket vrij te geven, komt niet van de vervoerder. Zie [[guide:dat-bericht-over-je-pakje-klopt-waarschijnlijk-niet]].",
+            'faq' => [
+                ['q' => 'Het pakket is bij de buren afgegeven en die zijn op vakantie. Van wie is het risico?', 'a' => 'Van de verkoper, tenzij jij die buur zelf had aangewezen. Een buurman die de bezorger uitkoos is geen derde die jij hebt aangewezen, dus de bestelling is niet aan jou bezorgd.'],
+                ['q' => 'Moet ik bij de bezorger of bij de webshop zijn?', 'a' => 'Bij de webshop. Je overeenkomst is met de verkoper; de vervoerder is door hem ingeschakeld en is jou niets verschuldigd. Een winkel die je doorverwijst naar de bezorgdienst, stuurt je naar de verkeerde partij.'],
+                ['q' => 'Hoe lang moet ik wachten voordat een pakket als kwijt geldt?', 'a' => 'Daar staat geen termijn voor in de wet. Wel geldt: zonder afgesproken bezorgdatum moet er binnen dertig dagen geleverd zijn, en daarna geef je schriftelijk een redelijke extra termijn voordat je mag ontbinden.'],
+            ],
+        ],
+
+        'en' => [
+            'slug' => 'it-says-delivered-and-it-is-not-here',
+            'title' => 'It says delivered and it is not here',
+            'blurb' => 'Tracking says delivered, the doorstep says otherwise. Until you have it in your hands the risk is the seller\'s, which is rarely the first thing a shop tells you.',
+            'meta_description' => 'A parcel that never arrived or was left with a neighbour: why the risk stays with the seller until you have it, why you deal with the shop and not the courier, and what to put in writing.',
+            'body' => "There is a moment at which an online purchase becomes yours, and it is written down. **The risk passes when you physically take possession of the parcel**, or someone you named for that purpose does. Not when the shop hands it over, not when the courier presses dispatched, and not when tracking says delivered. That rule has been in the EU Consumer Rights Directive since 13 June 2014 and sits in the national law of every member state.\n\nEverything else follows from that one sentence. If the parcel is with a neighbour the courier chose, it has not been delivered to you. If it was left somewhere you never asked for - behind the gate, in the garden, on the step - the same applies. If you picked a collection point yourself at checkout it is different: that is a third party you named, and from that point the risk is yours.\n\nThe second point matters just as much and goes wrong more often: **your contract is with the shop, not with the courier.** The carrier was hired by the seller. A shop telling you to take it up with the delivery company is sending you to a party that owes you nothing. Putting it back to the shop, briefly and politely, is the whole of the answer: the order was not received, and it is for the seller to find out what happened at their carrier.\n\nThe scan that says delivered is evidence of what the courier entered. Nothing more. Ask for the proof of delivery: anything of value should carry a signature or at least a photograph of the location, and it is not rare for that photograph to show a door that is not yours. If it is your door and there is nothing there, that is a matter between the shop and its carrier, not between you and your memory.\n\nThere is a separate deadline running alongside all of this. Where no delivery date was agreed, delivery is due within thirty days. If that passes, you give the seller a reasonable additional period in writing; if that passes too, you may terminate the contract and are entitled to a refund. See [[guide:your-rights-when-you-buy-online]] for how the refund itself works.\n\nThree things that make the difference. Put it in writing, because a chat inside the shop's own app is gone in three months and an email is not. Knock on next door before you send anything, because that is the outcome everybody would rather have. And take care on a marketplace: your claim runs against the seller behind the listing, which with a seller far away is a very different conversation from one with [[amazon:parcel box|a large retailer]]. See [[guide:who-actually-sells-this]].\n\nAnd finally, something that is not a right but helps anyway: a message asking for a payment to release your missing parcel did not come from the carrier. See [[guide:that-message-about-your-parcel-is-probably-fake]].",
+            'faq' => [
+                ['q' => 'It was left with a neighbour who is away. Whose risk is it?', 'a' => 'The risk stays with the seller, unless you had named that neighbour yourself. A neighbour the courier picked is not a third party you designated, so the order has not been delivered to you.'],
+                ['q' => 'Do I deal with the courier or the shop?', 'a' => 'The shop. Your contract is with the seller; the carrier was hired by them and owes you nothing. A shop that refers you to the delivery company is sending you to the wrong party.'],
+                ['q' => 'How long before a parcel counts as lost?', 'a' => 'No period is set for that in law. What is set: where no delivery date was agreed, delivery is due within thirty days, after which you give a reasonable additional period in writing before you may terminate.'],
             ],
         ],
     ],

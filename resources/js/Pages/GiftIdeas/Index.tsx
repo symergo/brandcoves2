@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react'
-import PersonaIllustration, { type PersonaSceneKey } from '../../Components/PersonaIllustration'
+import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
 import { useTranslations } from '../../useTranslations'
 
 interface Persona {
@@ -8,7 +8,7 @@ interface Persona {
     blurb: string | null
     url: string
     /** Null until a curator picks one; the component draws a figure. */
-    scene: PersonaSceneKey | null
+    scene: SceneKey | null
     findCount: number
 }
 
@@ -53,7 +53,7 @@ export default function Index({ personas }: Props) {
                               redrawn.
                             */}
                             <Link href={persona.url} className="group text-ink hover:text-accent">
-                                <PersonaIllustration
+                                <SceneIllustration
                                     name={persona.scene}
                                     className="h-28 w-full text-ink-soft transition group-hover:text-accent"
                                 />

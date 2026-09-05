@@ -1,7 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
-import PersonaIllustration, { type PersonaSceneKey } from '../../Components/PersonaIllustration'
+import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
 import PreviewBanner from '../../Components/PreviewBanner'
 import { useTranslations } from '../../useTranslations'
 import CoveRail, { type Rail } from '../../Components/CoveRail'
@@ -29,7 +29,7 @@ interface Props {
         title: string
         blurb: string | null
         /** Null until a curator picks one; the component draws a figure. */
-        scene: PersonaSceneKey | null
+        scene: SceneKey | null
         /**
          * Paragraphs of HTML, links already resolved server-side, each
          * carrying the ids of the products that paragraph names.
@@ -114,7 +114,7 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                             {persona.blurb && <p className="mt-2 text-ink-soft">{persona.blurb}</p>}
                         </div>
 
-                        <PersonaIllustration
+                        <SceneIllustration
                             name={persona.scene}
                             className="h-16 w-24 shrink-0 text-ink-soft sm:h-24 sm:w-32"
                         />

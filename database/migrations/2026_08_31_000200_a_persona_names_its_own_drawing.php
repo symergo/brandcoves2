@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Enums\PersonaScene;
+use App\Enums\CoveScene;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +17,9 @@ use Illuminate\Support\Facades\Schema;
  * same persona wearing a different face from one week to the next, for a reason
  * no reader can see and no editor chose.
  *
- * So the persona names a scene and `PersonaIllustration` draws it, in the same
- * language as the homepage cards. See {@see PersonaScene} for why there are
- * nine of them rather than one per persona.
+ * So the persona names a scene and `SceneIllustration` draws it, in the same
+ * language as the homepage cards. See {@see CoveScene} for why
+ * there are a handful of them rather than one per persona.
  *
  * ## Both tables, because the plan is the source and the edition is the page
  *
@@ -34,12 +34,22 @@ use Illuminate\Support\Facades\Schema;
  *
  * Every persona written before this has no scene, and none of them should have
  * been blocked from rendering over a drawing. Null reads as
- * {@see PersonaScene::Someone} — a portrait — so the shelf never shows a hole.
+ * {@see CoveScene::Someone} — a portrait — so the shelf never shows
+ * a hole.
  *
  * String plus a CHECK rather than a native PG enum, per CLAUDE.md: `ALTER TYPE
  * ... ADD VALUE` cannot run inside a transaction, which would make every future
- * scene a deploy hazard. The constraint is generated from the enum so the two
- * cannot drift.
+ * scene a deploy hazard.
+ *
+ * **The nine values are written out rather than read from the enum, and that
+ * is a correction.** This migration originally generated the list from
+ * `PersonaScene::values()`, which meant its meaning changed every time
+ * somebody added a case: a fresh `migrate` would build a constraint the
+ * deployed databases had never had, so the schema a test ran against and the
+ * schema production held would silently disagree — and the disagreement would
+ * be invisible until a row that passed locally was refused on deploy. A
+ * migration is a record of what was done on a day. Widening is what the next
+ * migration is for; see `2026_09_05_000300_the_articles_get_a_picture_too`.
  *
  * Not constrained to `kind = 'persona'`. A scene is meaningless on a Daily and
  * harmless there, and a conditional CHECK would have to be rewritten the first
@@ -74,11 +84,12 @@ return new class extends Migration
         }
     }
 
-    /** The enum, quoted for SQL, so the CHECK and the PHP enum cannot disagree. */
+    /** The nine scenes that existed on 2026-08-31, frozen. See the class note. */
     private function allowedList(): string
     {
-        return collect(PersonaScene::values())
-            ->map(fn (string $v) => "'".str_replace("'", "''", $v)."'")
-            ->implode(', ');
+        return collect([
+            'coffee', 'cooking', 'racing', 'has_everything', 'dog',
+            'photography', 'diy', 'outdoors', 'someone',
+        ])->map(fn (string $v) => "'".$v."'")->implode(', ');
     }
 };

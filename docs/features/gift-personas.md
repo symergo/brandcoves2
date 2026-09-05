@@ -1,7 +1,7 @@
 ---
 name: Gift personas
 area: Discovery / Content
-status: Active
+status: Active — 10 per market in be-nl, nl-nl, en
 date_added: 2026-08-29
 ---
 
@@ -119,24 +119,33 @@ Or the same three steps through [the editorial API](editorial-api.md), with `kin
 
 ## The picture is drawn, and the persona names it
 
-Added 2026-08-30. `cove_plans.scene` and `daily_pick_sets.scene`, nullable, string plus a CHECK
-generated from `App\Enums\PersonaScene`, cast to that enum on both models.
+Added 2026-08-30. `cove_plans.scene` and `daily_pick_sets.scene`, nullable, string plus a CHECK,
+cast to `App\Enums\CoveScene` on both models.
 
 **The cover used to be a photograph of a product** — the first buyable find on the shelf. Wrong
 picture twice over. It made a shelf of *people* look like a shelf of product categories, and the
 cover moved whenever stock did: the same persona wearing a different face from one week to the next,
 for a reason no reader could see and no editor chose.
 
-`PersonaIllustration` draws it instead, in the same language as `CoveIllustration` and
+`SceneIllustration` draws it instead, in the same language as `CoveIllustration` and
 `ListIllustration` — one `160x116` viewBox, one stroke weight, `currentColor` for every line, the
 accent only as a translucent wash. That is what lets the card change colour on hover and take the
 drawing with it, and it is why these survive a palette change without being redrawn.
 
-**Nine scenes, not one per persona.** A drawing per persona makes artwork a gate on the writing.
-These are *kinds of person* — coffee, cooking, sim racing, has-everything, dogs, photography, DIY,
-outdoors — so a new persona almost always finds one that fits, and the ones that do not get
-`someone`, a featureless figure. Null means `someone`: every persona written before the field
-existed has no scene, and a missing drawing must not be a missing page.
+**A handful of scenes, not one per persona.** A drawing per persona makes artwork a gate on the
+writing. These are *kinds of person* — coffee, cooking, sim racing, has-everything, dogs,
+photography, DIY, outdoors — so a new persona almost always finds one that fits, and the ones that
+do not get `someone`, a featureless figure. Null means `someone`: every persona written before the
+field existed has no scene, and a missing drawing must not be a missing page.
+
+> **Nine became seventeen on 2026-09-05, and the enum stopped being about personas.** Filling the
+> shelves out to ten per market put six kinds of person past the original nine — gardeners, plant
+> owners, readers, listeners, gamers, travellers — and every one of them would have fallen back to
+> `someone`. Six identical portraits on one shelf is a shelf that looks unfinished. At the same time
+> `/guides` needed drawings of its own, so `PersonaScene` became `App\Enums\CoveScene`: one column,
+> one cast, one component, and `CoveScene::forKind()` deciding which half of the vocabulary a kind
+> may name. See [cove-scenes.md](cove-scenes.md) — including why the API now **refuses** a scene the
+> kind cannot mean rather than storing it.
 
 **A field, not a lookup keyed on the slug.** Slugs are per market. `de-koffiefanaat` and
 `le-fanatique-de-cafe` are one persona wearing two addresses, so a table keyed on the slug would be
@@ -148,14 +157,25 @@ about someone who cooks is already in the planner.
 buildPersona()` copies it across with the title and the blurb. On the plan alone it would be a field
 you could set and never see; on the edition alone a rebuild would overwrite it.
 
-Set it in **Admin → Cove planner → Drawing** (visible only on the persona kind — nothing reads a
-scene on a Daily), or send `scene` to `POST /api/editorial/coves`.
+Set it in **Admin → Cove planner → Drawing** (the options follow the kind, and the field is hidden
+on a kind with no vocabulary — a Daily, a Shop Cove), or send `scene` to
+`POST /api/editorial/coves`.
 
-> **Three of the nine were redrawn before they shipped.** The first `coffee` was a grinder and read
-> at card size as a phone with a cup beside it; `cooking` was a pan from above and read as an
-> artist's palette; `racing`'s pedals were a small detached parallelogram that read as a stray shape.
-> All three were found by rendering the shelf and looking at it, which is the only way this class of
-> mistake is ever found — an SVG that is geometrically fine and semantically wrong throws no error.
+> **Three of the nine were redrawn before they shipped**, and eight of the nineteen added later.
+> The first `coffee` was a grinder and read at card size as a phone with a cup beside it; `cooking`
+> was a pan from above and read as an artist's palette; `racing`'s pedals were a small detached
+> parallelogram that read as a stray shape. Later: `baking` read as a plant in a bowl, `fitness` as
+> two dumbbells, `reading` as a stack of boxes. All of them were found by rendering the shelf and
+> looking at it, which is the only way this class of mistake is ever found — an SVG that is
+> geometrically fine and semantically wrong throws no error. The full list is in
+> [cove-scenes.md](cove-scenes.md).
+
+> **A scene on the plan is not a scene on the page.** `EditionBuilder::buildPersona()` copies it
+> across at build time, so a persona that is already **published** keeps whatever drawing its
+> edition was built with until it is rebuilt. Setting the field on four live `be-nl` personas
+> therefore changed nothing a reader could see; the rebuild is a separate, deliberate act, and on a
+> `pick_mode = open` persona it also re-runs the ranker and may change which products are on the
+> shelf. That is a bigger change than "add an icon", which is why the two are not done together.
 
 ## hreflang: paired on the slug, and only when the twin exists
 
@@ -183,8 +203,8 @@ identical or the two stop being twins.
 
 ## Files
 
-- `app/Enums/CoveKind.php`, `app/Enums/PersonaScene.php`, `app/Jobs/BuildPersonaCove.php`
-- `resources/js/Components/PersonaIllustration.tsx` — the nine drawings
+- `app/Enums/CoveKind.php`, `app/Enums/CoveScene.php`, `app/Jobs/BuildPersonaCove.php`
+- `resources/js/Components/SceneIllustration.tsx` — every drawing; see [cove-scenes.md](cove-scenes.md)
 - `database/migrations/2026_08_31_000200_a_persona_names_its_own_drawing.php`
 - `app/Services/Cove/EditionBuilder.php` — `buildPersona()`
 - `app/Services/Cove/EditionPresenter.php` — shared with the Daily Cove
@@ -216,7 +236,61 @@ identical or the two stop being twins.
   fix is a `persona()` call per URL, which is exactly the two-queries-per-URL shape that once took
   the product sitemap past the proxy's thirty-second timeout; it needs a batched lookup like
   `Alternates::forProducts()`.
-- **`en` and `es` have no personas.** `be-nl`, `nl-nl` and `be-fr` were seeded on 2026-08-29 with six
-  drafts each. Nothing is market-specific about the mechanism; a persona is written per market like
-  everything else. Note the sets deliberately differ where the catalogue does — see the hreflang
-  section for why that is safe.
+- **`es` has no personas, and `be-fr` still has six.** `be-nl`, `nl-nl` and `en` were filled out to
+  **ten planned personas each** on 2026-09-05. Nothing is market-specific about the mechanism; a
+  persona is written per market like everything else, and the sets deliberately differ where the
+  catalogue does — see the hreflang section for why that is safe.
+- **Only one of the thirty is published.** The set is ten *plans* per market, and a plan is an
+  intention. Four `be-nl` personas are live from an earlier pass; the rest are drafts awaiting
+  approval and a build in the planner, which is the intended shape — the editorial API writes
+  drafts and a person publishes.
+- **`de-hondenmens` cannot be rewritten until somebody re-curates it.** Its locked shortlist holds
+  `8390126`, a bol feeding bowl that has since gone out of stock and lost its price, and
+  `POST /coves` refuses a write containing an unusable id — rightly, and whole, because an article
+  whose second pick silently vanished has a dangling sentence. It is the one persona that did not
+  get its scene on 2026-09-05. Drop or replace that item in the planner and the write goes through.
+
+## The set, per market
+
+Ten each, and the scenes are what the sets are organised around — no market repeats one.
+
+| | `be-nl` | `nl-nl` | `en` |
+|---|---|---|---|
+| coffee | `de-koffiefanaat` | `de-koffiefanaat` | `coffee` |
+| cooking | `de-thuiskok` | `de-thuiskok` | `cooking` |
+| photography | `de-fotograaf` | `de-fotograaf` | `photography` |
+| racing | `de-simracer` | `de-simracer` | — |
+| has_everything | `wie-alles-al-heeft` | `wie-alles-al-heeft` | `has-everything` |
+| dog | `de-hondenmens` | — | — |
+| gardening | `de-tuinier` | — | — |
+| plants | `de-plantenouder` | — | — |
+| diy | — | `de-klusser` | — |
+| reading | `de-lezer` | `de-lezer` | `reading` |
+| music | `de-muziekliefhebber` | `de-muziekliefhebber` | `music` |
+| baking | — | `de-bakker` | — |
+| outdoors | — | `de-wandelaar` | `outdoors` |
+| gaming | — | — | `gaming` |
+| travel | — | — | `travel` |
+| fitness | — | — | `fitness` |
+
+The Dutch slugs are shared across `be-nl` and `nl-nl` wherever both carry the persona, which is what
+makes them hreflang twins. `de-hondenmens` is still `be-nl` only for the documented reason — `nl-nl`
+has a fraction of the dog catalogue — and `de-klusser` is still its `nl-nl` counterpart.
+
+**The `en` slugs are bare nouns** (`coffee`, `has-everything`) where the titles are not
+("The coffee obsessive"). They arrived that way from `POST /coves/drafts` and were kept: the plans
+already existed at those addresses, and minting better ones would have left six unreachable orphan
+drafts in the planner to buy a prettier URL on a page nothing has linked yet. A slug is suggested
+from a title and never rewritten from it, so the mismatch is the normal state and not a defect.
+
+**Every one is `pick_mode = open`**, matching the fourteen written before them. The prose links with
+`[[search:…]]` rather than `[[product:N]]` and the builder fills the shelf from `queries`. That is
+what lets a persona survive a feed changing under it, which a locked list of ids does not — and it
+is why `de-hondenmens`, the one locked shelf among them, is also the one that broke.
+
+**`en` themes were chosen against measured supply, not guessed.** Probing the catalogue first killed
+three candidates outright: `baking` returned nothing at all in `en` (`stand mixer` 0, `baking tin` 0,
+`rolling pin` 0), and `cooking` and `reading` only became viable on broader words — `pan`, `kitchen`,
+`oven`, `book`, `lamp`, `notebook` — where the specific ones (`cutting board`, `bookends`,
+`ereader case`) returned zero. Writing a persona a market cannot fill is writing a page that will
+never clear `CoveKind::minimumItems()` and so will never publish, and nothing would have said so.

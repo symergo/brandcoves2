@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Resources\CovePlans;
 
 use App\Enums\CoveKind;
+use App\Enums\CoveScene;
 use App\Enums\Market;
-use App\Enums\PersonaScene;
 use App\Enums\PickMode;
 use App\Filament\Resources\CovePlans\Pages\CuratePlan;
 use App\Filament\Resources\CovePlans\Pages\ListCovePlans;
@@ -292,16 +292,26 @@ class CovePlanResource extends Resource
                      * screen — it is about who the Cove is for, not about which
                      * products ended up on it.
                      *
-                     * Hidden on every other kind. Nothing reads a scene on a
-                     * Daily or a guide, and an always-visible select for a field
-                     * with no effect is a question the form cannot answer.
+                     * The options follow the kind, and so does whether the field
+                     * appears at all. A persona names a kind of *person* and an
+                     * article names a *subject*; the two share one column and
+                     * share none of their values, so a single flat list would
+                     * offer "coffee" to somebody writing about customs duty and
+                     * "customs" to somebody writing about a barista. A Daily and
+                     * a Shop Cove name nothing — `forKind()` returns an empty
+                     * list — and an always-visible select for a field with no
+                     * effect is a question the form cannot answer.
                      */
                     Select::make('scene')
                         ->label('Drawing')
-                        ->options(PersonaScene::options())
-                        ->visible(fn ($get) => $get('kind') === CoveKind::Persona->value)
+                        ->options(fn ($get) => ($kind = CoveKind::tryFrom((string) $get('kind'))) === null
+                            ? []
+                            : CoveScene::options($kind))
+                        ->visible(fn ($get) => CoveScene::forKind(
+                            CoveKind::tryFrom((string) $get('kind')) ?? CoveKind::Daily
+                        ) !== [])
                         ->placeholder('A figure, until you choose')
-                        ->helperText('The illustration on the shelf, the hub and the persona\'s own page. Pick the interest, not the person.'),
+                        ->helperText('The illustration on the shelf, the hub and the Cove\'s own page. Pick what the Cove is about, not who wrote it.'),
 
                     Placeholder::make('curated')
                         ->label('Curated products')

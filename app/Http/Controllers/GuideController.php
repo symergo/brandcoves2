@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveScene;
 use App\Enums\PublishStatus;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
@@ -53,6 +54,17 @@ class GuideController extends Controller
                 // surface is already a link is a target fighting its parent.
                 'intro' => app(CoveMarkup::class)->plain($guide->theme_blurb),
                 'kind' => $guide->kind->value,
+                /*
+                 * The drawing, and never null.
+                 *
+                 * This shelf is a shelf of writing, so nothing on it has a
+                 * photograph — it rendered as a grid of identical text
+                 * rectangles until each article named its own subject. A guide
+                 * that names none still gets `article`, because half a grid of
+                 * drawings and half a grid of blanks reads as images that
+                 * failed to load rather than as a deliberate difference.
+                 */
+                'scene' => ($guide->scene ?? CoveScene::defaultFor($guide->kind))->value,
                 'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
                 'publishedAt' => $guide->published_at?->toDateString(),
             ]);
@@ -193,6 +205,10 @@ class GuideController extends Controller
                  * changed no component props.
                  */
                 'kind' => $guide->kind->expectsShortlist() ? 'buying' : 'advice',
+                // The same drawing the shelf card carried, so arriving on the
+                // article confirms you opened the one you clicked. See the
+                // index method for why it is never null.
+                'scene' => ($guide->scene ?? CoveScene::defaultFor($guide->kind))->value,
                 'intro' => $intro,
                 'body' => $body,
                 'faq' => $this->faq($guide, $current, $allowed),

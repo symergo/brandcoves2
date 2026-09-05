@@ -79,7 +79,7 @@ class GiftIdeasController extends Controller
                  * new for a reason no reader could see and no editor chose.
                  *
                  * Null until a curator picks one; the component reads that as
-                 * `someone` and draws a figure. See App\Enums\PersonaScene.
+                 * `someone` and draws a figure. See App\Enums\CoveScene.
                  */
                 'scene' => $set->scene?->value,
                 'findCount' => $set->picks

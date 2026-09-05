@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\CoveKind;
+use App\Enums\CoveScene;
 use App\Enums\Market;
-use App\Enums\PersonaScene;
 use App\Enums\PickMode;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -55,8 +55,8 @@ class CovePlan extends Model
             'market' => Market::class,
             'kind' => CoveKind::class,
             'pick_mode' => PickMode::class,
-            // Persona only, and nullable: null reads as PersonaScene::Someone.
-            'scene' => PersonaScene::class,
+            // Nullable: null reads as CoveScene::defaultFor($this->kind).
+            'scene' => CoveScene::class,
             'drop_date' => 'date',
             'queries' => 'array',
             'pinned_group_ids' => 'array',

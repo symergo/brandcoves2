@@ -1,14 +1,15 @@
 ---
 name: Advice Coves
 area: Content / Editorial
-status: Active — 8 subjects × 4 markets seeded
+status: Active — 10 subjects; 8 in four markets, 2 in three
 date_added: 2026-08-30
 ---
 
 # Advice Coves
 
-**Eight articles about how to shop, in four markets, salvaged from three
-WordPress sites and rewritten from nothing.**
+**Ten articles about how to shop. Eight salvaged from three WordPress sites
+and rewritten from nothing, two written here because only a gift site would
+write them.**
 
 `bstore.be`, `bstore.nl` and `webprice.eu` are the v1 estate: roughly 280 pages
 of Amazon and online-shopping writing accumulated since 2016, most of it last
@@ -82,6 +83,61 @@ describes the world before it, and it gives the phishing piece a genuinely new
 angle — small, *real* customs charges on cheap parcels began in exactly the
 month that "pay €2.99 to release your parcel" stopped being implausible.
 
+## The two that came from here
+
+Added 2026-09-05, in `be-nl`, `nl-nl` and `en`. Neither has an ancestor in the
+estate, because the estate was written by shops about shopping — and both of
+these are about the gap between the person who paid and the person holding the
+thing, which is what a gift site is *for*.
+
+- **`gift-returns`** — the withdrawal right and the legal guarantee are
+  contractual, and the contract is between the shop and whoever paid. The
+  recipient is not a party to it. Everything a reader actually needs follows
+  from that one fact: the giver has to make the request, the refund goes to the
+  giver's card, and the only route that does *not* run through the giver is the
+  one the law says nothing about — gift receipts, December windows, credit
+  notes. Which is why half the article is about shop policy, and why it says so
+  plainly rather than presenting goodwill as a right.
+- **`parcel-never-arrived`** — risk passes to the consumer when they, or a third
+  party *they* named, take physical possession. EU Consumer Rights Directive
+  article 20, in force **13 June 2014**; art. VI.44 WER in Belgium, art. 7:11 BW
+  in the Netherlands. So a parcel left with a neighbour the courier chose has
+  not been delivered, and the counterparty is the shop rather than the carrier
+  the reader has no contract with. The thirty-day rule (CRD art. 18) is the only
+  other number in it.
+
+`parcel-never-arrived` is deliberately distinct from `parcel-phishing`: that one
+is about a message that is a lie, this one about a message that is true and
+still does not mean what the shop says it means. Each links to the other.
+
+**Three markets, not four.** `be-fr` carries the original eight and will carry
+these when somebody writes them in French. A partial set is the intended state
+of the file — it is keyed by market precisely so a market can differ — and the
+seeder, the guides index and the hreflang pairing all already handle a subject
+one market does not have.
+
+## Every article names its drawing
+
+`resources/content/advice-coves.php` gained a `scene` key per topic, and
+`/guides` now puts that drawing on every card and at the top of every advice
+article. See [cove-scenes.md](cove-scenes.md).
+
+**It sits beside the market keys, not inside each of them**, because it belongs
+to the *subject* and the subject is what the markets share.
+`kopen-buiten-de-eu` and `buying-from-outside-the-eu` are one article about
+customs duty wearing two languages; a scene per market would be the same
+decision made four times and forgotten in one of them — a shelf with a hole in
+it, in exactly one market, found by a reader.
+
+So the seeder lifts `scene` out before it walks the markets (or it would be
+reported as a market typo), and reports a value that is not an article scene
+rather than falling back to the default drawing — because a silent fallback is
+how a misspelling survives.
+
+This is what made the shelf worth drawing at all: in all three of these markets
+`/guides` is **entirely** Advice Coves, so it was eight identical rectangles of
+text.
+
 ## Amazon links
 
 The first substantive Amazon mention in each article carries an
@@ -110,6 +166,21 @@ and never moves, or every re-run would re-date the whole section to the top of
 `2026_09_03_000100_the_advice_coves_move_in` calls the same service, so the
 articles arrive on production during the next deploy's `migrate` step without
 anybody logging in to run anything.
+
+**A change to the file needs a new migration, not an edit to that one.**
+`2026_09_05_000400_two_more_advice_coves_and_a_drawing_on_each` is the same call
+again, and it is what carries the two new subjects and the ten scenes onto
+production. Migrations are forward-only here: the first one has already run
+everywhere, so editing it would change nothing on any deployed database and
+would quietly diverge a fresh `migrate` from a live one.
+
+Re-running is safe by construction, and that is exactly the property the seeder
+was built around — the second migration rewrites the eight existing articles in
+place to add their drawing, leaving prose, URLs and `published_at` untouched. A
+drawing is not a republication. It also prints its `kept` list rather than only
+counting it: those are the articles a person has edited, which the run
+deliberately did *not* draw and which somebody now has to set by hand in the
+planner. Silence there would read as success.
 
 **And it skips the `testing` environment.** This is the decision in the change
 worth recording. `RefreshDatabase` migrates and *then* opens its transaction, so

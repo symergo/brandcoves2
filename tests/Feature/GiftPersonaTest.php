@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Availability;
+use App\Enums\CoveScene;
 use App\Enums\Market;
-use App\Enums\PersonaScene;
 use App\Enums\PickMode;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
@@ -194,7 +194,7 @@ class GiftPersonaTest extends TestCase
     #[Test]
     public function the_shelf_and_the_page_carry_the_personas_scene(): void
     {
-        $this->persona('de-koffiefanaat', 'De koffiefanaat', Market::BeNl, scene: PersonaScene::Coffee);
+        $this->persona('de-koffiefanaat', 'De koffiefanaat', Market::BeNl, scene: CoveScene::Coffee);
 
         $this->get('/be-nl/gift-ideas')
             ->assertOk()
@@ -279,12 +279,12 @@ class GiftPersonaTest extends TestCase
     public function the_builder_carries_the_scene_from_the_plan_to_the_edition(): void
     {
         $plan = $this->plan();
-        $plan->update(['scene' => PersonaScene::Coffee->value]);
+        $plan->update(['scene' => CoveScene::Coffee->value]);
 
         $edition = app(EditionBuilder::class)->buildPersona($plan->fresh());
 
         $this->assertNotNull($edition);
-        $this->assertSame(PersonaScene::Coffee, $edition->scene);
+        $this->assertSame(CoveScene::Coffee, $edition->scene);
     }
 
     #[Test]
@@ -352,7 +352,7 @@ class GiftPersonaTest extends TestCase
         string $title,
         Market $market,
         bool $published = true,
-        ?PersonaScene $scene = null,
+        ?CoveScene $scene = null,
     ): DailyPickSet {
         return DailyPickSet::create([
             'market' => $market->value,

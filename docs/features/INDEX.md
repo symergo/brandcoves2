@@ -25,6 +25,7 @@ cannot be recovered from a diff.
 | [social-cards.md](social-cards.md) | SEO / Brand | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
+| [popular-searches.md](popular-searches.md) | Search / SEO | Active |
 | [search-help.md](search-help.md) | Search / Content | Active |
 | [feedback.md](feedback.md) | Core / Quality | Active |
 | [copy-cull.md](copy-cull.md) | Core / Content | Done — 2026-09-03, 45 keys removed |
@@ -48,7 +49,7 @@ cannot be recovered from a diff.
 | [all-coves.md](all-coves.md) | Discovery / Content | Active |
 | [cove-rail.md](cove-rail.md) | Discovery / Content | Active — replaced the Daily's archive strip |
 | [shop-coves.md](shop-coves.md) | Discovery / Content | Built — withheld from the header menu |
-| [advice-coves.md](advice-coves.md) | Content / Editorial | Active — 8 subjects × 4 markets seeded |
+| [advice-coves.md](advice-coves.md) | Content / Editorial | Active — 10 subjects; 8 in four markets, 2 in three |
 | [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
 | [cove-curation.md](cove-curation.md) | Content / Operations | Active |
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |
@@ -57,7 +58,8 @@ cannot be recovered from a diff.
 | [email-templates.md](email-templates.md) | Content / Operations | Active — 4 of 6 mails editable |
 | [product-cards-in-prose.md](product-cards-in-prose.md) | Content / Frontend | Active |
 | [scheduled-writing.md](scheduled-writing.md) | Content / Operations | Active |
-| [gift-personas.md](gift-personas.md) | Discovery / Content | Active — not in the nav yet |
+| [gift-personas.md](gift-personas.md) | Discovery / Content | Active — 10 per market in be-nl, nl-nl, en |
+| [cove-scenes.md](cove-scenes.md) | Content / Frontend | Active — 28 scenes; personas and articles |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [editorial-api.md](editorial-api.md) | Content / Operations | Active |
 | [content-promotion.md](content-promotion.md) | Content / Operations | Active |

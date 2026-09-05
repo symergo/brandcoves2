@@ -6,6 +6,7 @@ namespace App\Services\Content;
 
 use App\Console\Commands\SeedShopCovesCommand;
 use App\Enums\CoveKind;
+use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\CovePlan;
@@ -80,6 +81,34 @@ class AdviceCoveSeeder
         $skipped = [];
 
         foreach ($content as $topic => $markets) {
+            /*
+             * The topic's drawing, lifted out before the markets are walked.
+             *
+             * It sits beside the market keys rather than inside each one
+             * because it belongs to the *subject*, not to a language:
+             * `kopen-buiten-de-eu` and `buying-from-outside-the-eu` are one
+             * article about customs duty, and a scene per market would be the
+             * same decision made four times and forgotten in one of them —
+             * which is a shelf with a hole in it, in exactly one market,
+             * discovered by a reader.
+             *
+             * So `scene` is not a market and must not reach the loop below,
+             * which would otherwise report it as a typo. A value that is not a
+             * scene at all *is* reported: silently drawing the default is how
+             * a misspelling survives.
+             */
+            $scene = null;
+
+            if (isset($markets['scene'])) {
+                $scene = CoveScene::tryFrom((string) $markets['scene']);
+
+                if ($scene === null || ! in_array($scene, CoveScene::forKind(CoveKind::Advice), true)) {
+                    $skipped[] = "{$topic} — `{$markets['scene']}` is not a scene an article can name";
+                }
+
+                unset($markets['scene']);
+            }
+
             foreach ($markets as $marketValue => $article) {
                 $market = Market::tryFrom((string) $marketValue);
 
@@ -134,7 +163,7 @@ class AdviceCoveSeeder
                     continue;
                 }
 
-                DB::transaction(function () use ($market, $slug, $article, $existing): void {
+                DB::transaction(function () use ($market, $slug, $article, $existing, $scene): void {
                     $cove = DailyPickSet::query()->updateOrCreate(
                         [
                             'market' => $market->value,
@@ -169,6 +198,20 @@ class AdviceCoveSeeder
                                 ], $article['faq'])
                                 : null,
                             'meta_description' => HouseStyle::plain($article['meta_description'] ?? null),
+                            /*
+                             * The drawing, and it belongs to the topic rather
+                             * than to the market.
+                             *
+                             * `kopen-buiten-de-eu` and `buying-from-outside-the-eu`
+                             * are one article in two languages, so a scene set
+                             * per market would be the same choice made four
+                             * times and forgotten in one of them. Read from the
+                             * topic's own `scene` key — see the file's header
+                             * for where it sits — and null-safe, so an article
+                             * added without one still publishes and falls back
+                             * to `article`.
+                             */
+                            'scene' => $scene,
                             'editorial_source' => self::SOURCE,
                             'status' => PublishStatus::Published->value,
                             // Stamped once — see the class note.

@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
-import PersonaIllustration, { type PersonaSceneKey } from '../Components/PersonaIllustration'
+import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -25,7 +25,7 @@ interface Persona {
     intro: string | null
     url: string
     /** Null until a curator picks one; the component draws a figure. */
-    scene: PersonaSceneKey | null
+    scene: SceneKey | null
 }
 
 interface Props {
@@ -397,7 +397,7 @@ export default function DiscoverCove({
                                     href={persona.url}
                                     className="group flex h-full flex-row items-center gap-4 rounded-card border border-line bg-card p-5 transition hover:border-ink"
                                 >
-                                    <PersonaIllustration
+                                    <SceneIllustration
                                         name={persona.scene}
                                         className="h-14 w-20 shrink-0 text-ink-soft transition group-hover:text-accent"
                                     />

@@ -5,7 +5,7 @@ import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import HomeIllustration from '../Components/HomeIllustration'
 import ListIllustration, { type ListSceneKey } from '../Components/ListIllustration'
-import PersonaIllustration, { type PersonaSceneKey } from '../Components/PersonaIllustration'
+import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
 import { formatPrice, type SharedProps } from '../types'
@@ -23,7 +23,7 @@ interface Persona {
     blurb: string | null
     url: string
     /** Null until a curator picks one; the component draws a figure. */
-    scene: PersonaSceneKey | null
+    scene: SceneKey | null
     findCount: number
 }
 
@@ -781,7 +781,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                   without being redrawn.
                                 */}
                                 <Link href={persona.url} className="group text-ink hover:text-accent">
-                                    <PersonaIllustration
+                                    <SceneIllustration
                                         name={persona.scene}
                                         className="h-24 w-full text-ink-soft transition group-hover:text-accent"
                                     />

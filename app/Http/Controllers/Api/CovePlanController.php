@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Enums\CoveKind;
+use App\Enums\CoveScene;
 use App\Enums\Market;
-use App\Enums\PersonaScene;
 use App\Enums\PickMode;
 use App\Enums\Source;
 use App\Http\Controllers\Controller;
@@ -172,6 +172,34 @@ class CovePlanController extends Controller
         }
 
         /*
+         * A scene has to be one this kind can mean.
+         *
+         * The two vocabularies share one column and do not overlap: a persona
+         * names a kind of person, an article names a subject. So `customs` on a
+         * persona is not a harmless spare field — it is a drawing of a parcel at
+         * a border at the top of a page about somebody who likes coffee, and
+         * nothing downstream would ever report it. Refused here for the same
+         * reason the article fields above are: the write returns 200 either way,
+         * and the author finds out when the page renders.
+         *
+         * A kind with no vocabulary — a Daily, a Shop Cove — refuses every
+         * scene, which is `forKind()` returning an empty list rather than a
+         * separate rule to keep in step.
+         */
+        $scene = $data['scene'] ?? null;
+
+        if ($scene !== null && ! in_array(CoveScene::from($scene), CoveScene::forKind($kind), true)) {
+            $allowed = array_map(fn (CoveScene $s) => $s->value, CoveScene::forKind($kind));
+
+            throw ValidationException::withMessages([
+                'scene' => $allowed === []
+                    ? 'A '.$kind->label().' carries no drawing, so it names no scene.'
+                    : 'A '.$kind->label().' cannot be drawn as `'.$scene.'`. It takes one of: '
+                        .implode(', ', $allowed).'.',
+            ]);
+        }
+
+        /*
          * A season is a scheduling fact about a seasonal guide and nothing else.
          *
          * A window on a kind nothing reads it from would be a decision that
@@ -223,14 +251,8 @@ class CovePlanController extends Controller
             'drop_date' => $kind->isDated() ? $date : null,
             'slug' => $kind->isDated() ? null : $slug,
             'pick_mode' => $data['pickMode'] ?? PickMode::Open->value,
-            /*
-             * The drawing on a persona. Meaningless on every other kind
-             * and stored anyway rather than refused: a Daily carrying a
-             * scene renders exactly as before, and a validation error
-             * over a field nothing reads would be a rule to explain
-             * rather than a mistake to prevent. See App\Enums\PersonaScene.
-             */
-            'scene' => $data['scene'] ?? null,
+            // The drawing. Checked against the kind's own vocabulary above.
+            'scene' => $scene,
             /*
              * House style on everything a reader sees. `prose` where the field
              * is rendered by CoveMarkup, `plain` where it is printed as a text
@@ -466,7 +488,7 @@ class CovePlanController extends Controller
             'kind' => ['nullable', Rule::in(CoveKind::values())],
             'slug' => ['nullable', 'string', 'max:80', 'alpha_dash'],
             'pickMode' => ['nullable', Rule::in(PickMode::values())],
-            'scene' => ['nullable', Rule::in(PersonaScene::values())],
+            'scene' => ['nullable', Rule::in(CoveScene::values())],
 
             /*
              * Article fields. Optional every one of them: an empty field is the

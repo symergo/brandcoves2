@@ -6,6 +6,7 @@ import { useTranslations } from '../../useTranslations'
 import CoveRail, { type Rail } from '../../Components/CoveRail'
 import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
+import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
 
 interface Item {
     rank: number
@@ -42,6 +43,8 @@ interface Props {
     guide: {
         title: string
         kind: 'buying' | 'advice'
+        /** Never null — the server sends the kind's default. See GuideController. */
+        scene: SceneKey
         intro: Block[]
         body: Block[]
         faq: { q: string; a: string[] }[] | null
@@ -235,6 +238,26 @@ export default function GuideShow({ preview = false, guide, items, rail }: Props
             <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10">
                 <div className="min-w-0">
                     <article className="max-w-3xl">
+                        {/*
+                          The drawing, on an advice article only.
+
+                          Not a rule about page shape but about what else is on
+                          the page: a buying guide opens onto a shortlist of
+                          photographed products a screen further down, and a
+                          generic mark above its title would be decoration
+                          competing with them. An advice piece has no product
+                          and therefore no picture at all, and it is the one
+                          that arrives cold from search — the same mark it wore
+                          on the shelf is what says you opened the one you
+                          clicked.
+                        */}
+                        {guide.kind === 'advice' && (
+                            <SceneIllustration
+                                name={guide.scene}
+                                className="mb-4 h-24 w-auto text-accent"
+                            />
+                        )}
+
                         <h1 className="text-2xl font-semibold sm:text-3xl">{guide.title}</h1>
 
                         <Article
