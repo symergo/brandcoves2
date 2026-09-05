@@ -136,9 +136,54 @@ class ProductGrouper
                 GROUP BY p.group_id
             ),
             best AS (
+                -- Which offer to LINK TO. Cheapest in-stock, and nothing else
+                -- may influence it: this is the "best offer" the page sends a
+                -- shopper to, and re-ranking it on anything cosmetic would send
+                -- them to a dearer one.
                 SELECT DISTINCT ON (p.group_id)
                     p.group_id,
-                    p.id         AS best_offer_id,
+                    p.id AS best_offer_id
+                FROM products p
+                WHERE p.group_id IS NOT NULL
+                  AND p.market = ?
+                  AND p.status = 'active'
+                ORDER BY
+                    p.group_id,
+                    -- In stock beats cheap: an unbuyable price is not an offer.
+                    (p.availability = 'in_stock') DESC,
+                    p.price ASC NULLS LAST,
+                    p.id ASC
+            ),
+            display AS (
+                /*
+                 * Which offer to QUOTE. A separate question from which to link
+                 * to, and it used to share an answer with it.
+                 *
+                 * One CTE supplied both, ordered on stock and price, so the
+                 * title on 302,133 product pages was written by whichever
+                 * merchant undercut the others this morning — and it arrived
+                 * carrying that merchant's feed conventions. Measured on
+                 * production 2026-09-05: 18,593 groups titled in ALL CAPS, and
+                 * 38,495 whose brand was known and absent from the title. Both
+                 * are the title *and* the <h1> *and* the schema.org name.
+                 *
+                 * Splitting the two lets the ordering below prefer a well-formed
+                 * title without ever moving the offer a shopper is sent to. The
+                 * price still breaks the tie, so among equally well-formed
+                 * titles the cheapest seller still supplies it.
+                 *
+                 * Booleans sort false-first in Postgres, so each test is phrased
+                 * as the defect and ordered ASC — the offers without it come
+                 * first.
+                 *
+                 * Language is deliberately not one of the tests. ~4.5% of be-fr
+                 * titles are Dutch, and telling one language from another in SQL
+                 * needs a word list per market that would be wrong at the edges
+                 * in a way these two mechanical tests are not.
+                 * App\Services\Catalogue\ProductTitle cleans what survives.
+                 */
+                SELECT DISTINCT ON (p.group_id)
+                    p.group_id,
                     p.title,
                     p.brand,
                     p.image_url,
@@ -149,7 +194,16 @@ class ProductGrouper
                   AND p.status = 'active'
                 ORDER BY
                     p.group_id,
-                    -- In stock beats cheap: an unbuyable price is not an offer.
+                    -- Shouting. Four or more capitals, so a title that is only
+                    -- "LG" or "JBL" is not mistaken for one.
+                    (p.title = upper(p.title) AND p.title ~ '[A-Z]{4}') ASC,
+                    -- Brand known and missing from the title. A substring test,
+                    -- not the slug fold Str::slug() does — this only has to
+                    -- order the candidates, and ProductTitle prefixes whatever
+                    -- still lacks its brand at render.
+                    (p.brand IS NOT NULL AND position(lower(p.brand) in lower(p.title)) = 0) ASC,
+                    -- An out-of-stock offer's title is still a title, but a live
+                    -- listing is likelier to be maintained.
                     (p.availability = 'in_stock') DESC,
                     p.price ASC NULLS LAST,
                     p.id ASC
@@ -185,13 +239,14 @@ class ProductGrouper
                 median_price   = median.median_price,
                 in_stock       = stats.in_stock,
                 best_offer_id  = best.best_offer_id,
-                title          = best.title,
-                brand          = best.brand,
-                image_url      = best.image_url,
-                category       = best.merchant_category,
+                title          = display.title,
+                brand          = display.brand,
+                image_url      = display.image_url,
+                category       = display.merchant_category,
                 updated_at     = now()
             FROM stats
             JOIN best ON best.group_id = stats.group_id
+            JOIN display ON display.group_id = stats.group_id
             LEFT JOIN median ON median.group_id = stats.group_id
             WHERE g.id = stats.group_id
         SQL;
@@ -203,7 +258,7 @@ class ProductGrouper
          */
         $sql = str_replace('%TRACKABLE_SOURCES%', $this->trackableSources(), $sql);
 
-        DB::statement($sql, [$market->value, $market->value, $market->value]);
+        DB::statement($sql, [$market->value, $market->value, $market->value, $market->value]);
 
         // Groups whose every offer vanished from the feeds. Zeroed rather than
         // deleted: a wishlist item or a published guide may still point here,

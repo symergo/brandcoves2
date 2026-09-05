@@ -16,6 +16,7 @@ use App\Models\ProductGroup;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route as RouteFacade;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -127,37 +128,165 @@ class SeoTest extends TestCase
      * of nothing — a shared link rendered as a bare card with the URL on it.
      * The Gift Cove and the Discover Cove had the same gap.
      *
-     * Every static page a crawler is allowed to index is listed here, because
-     * the gap is invisible in the browser: the page looks finished, and only the
-     * listing and the social card are empty.
+     * ## The list is derived, not maintained
+     *
+     * It used to be six hard-coded paths, under a docblock claiming it walked
+     * "every static indexable page". It did not, and on 2026-09-05 `/lists`,
+     * `/santa` and `/login` were all serving `index, follow` with no title and
+     * no description — none of them on the list, all of them added to the route
+     * table long after it was written.
+     *
+     * A hand-kept list of pages cannot catch the page nobody remembered to add
+     * to it, which is the only kind that ever has this bug. So the routes are
+     * the list: every GET route under `{market}/` taking no other parameter.
+     * Adding a page adds it here.
+     *
+     * Only pages that actually answer 200 and actually ask to be indexed are
+     * asserted on. A redirect, an auth wall or a deliberate `noindex` is a
+     * different page with a different contract — `/login` is `noindex` on
+     * purpose and is meant to fall out here.
      */
     #[Test]
     public function every_indexable_static_page_carries_a_title_and_a_description(): void
     {
-        foreach ([
-            '/be-nl',
-            '/be-nl/gift-cove',
-            '/be-nl/discover-cove',
-            '/be-nl/brands',
-            '/be-nl/guides',
-            '/be-nl/search-help',
-        ] as $path) {
-            $html = (string) $this->get($path)->getContent();
+        /*
+         * The suite runs with ROBOTS_ALLOW unset, which makes the Blade shell
+         * stamp `noindex, nofollow` on everything — staging must never be
+         * indexed. That would make this sweep skip every page and pass by
+         * testing nothing, so indexing is switched on for the duration and the
+         * robots tag then reports what each page asked for.
+         */
+        config(['giftcoves.robots_allow' => true]);
+
+        $checked = 0;
+
+        foreach ($this->staticMarketPaths() as $path) {
+            $response = $this->get($path);
+
+            // Not a page a crawler will ever index and grade us on: a redirect,
+            // an auth wall, a 404.
+            if ($response->getStatusCode() !== 200) {
+                continue;
+            }
+
+            // JSON endpoints and generated images live under the same prefix and
+            // carry no <head> to assert on. Decided by what came back rather
+            // than by a list of paths to skip, so a new one needs no edit here.
+            if (! str_contains((string) $response->headers->get('content-type'), 'text/html')) {
+                continue;
+            }
+
+            $html = (string) $response->getContent();
+
+            preg_match('/<meta name="robots" content="([^"]*)"/', $html, $robots);
+
+            if (! str_contains($robots[1] ?? '', 'index') || str_contains($robots[1] ?? '', 'noindex')) {
+                continue;
+            }
 
             preg_match('/<meta name="description" content="([^"]*)"/', $html, $description);
             preg_match('/<meta property="og:title" content="([^"]*)"/', $html, $title);
 
-            $this->assertNotEmpty($description[1] ?? '', "no meta description on {$path}");
-            $this->assertNotEmpty($title[1] ?? '', "no og:title on {$path}");
+            $this->assertNotEmpty(
+                $description[1] ?? '',
+                "no meta description on {$path}, which is indexable",
+            );
+            $this->assertNotEmpty(
+                $title[1] ?? '',
+                "no og:title on {$path}, which is indexable",
+            );
 
             foreach ([$description[1], $title[1]] as $value) {
+                /*
+                 * Laravel returns a translation key unchanged when it cannot
+                 * resolve one, so `site.search.seo_term` written as
+                 * `search.seo_term` shipped the literal string into a meta
+                 * description on production.
+                 */
                 $this->assertDoesNotMatchRegularExpression(
                     '/^(site\.)?[a-z_]+\.[a-z_]+$/',
                     $value,
                     "unresolved translation key on {$path}: {$value}",
                 );
             }
+
+            $checked++;
         }
+
+        // A route table that stops producing candidates would turn this test
+        // green by testing nothing at all.
+        $this->assertGreaterThanOrEqual(6, $checked, 'the route sweep found almost no indexable pages');
+    }
+
+    /**
+     * Every page under a market prefix that a crawler can reach without an id.
+     *
+     * `{market}` is substituted; anything taking a second parameter is a keyed
+     * page — a product, a brand, a guide — with its own tests and its own
+     * fixtures.
+     *
+     * @return list<string>
+     */
+    private function staticMarketPaths(): array
+    {
+        $paths = [];
+
+        foreach (RouteFacade::getRoutes() as $route) {
+            if (! in_array('GET', $route->methods(), true)) {
+                continue;
+            }
+
+            $uri = $route->uri();
+
+            if ($uri !== '{market}' && ! str_starts_with($uri, '{market}/')) {
+                continue;
+            }
+
+            // One placeholder, and it is the market.
+            if (substr_count($uri, '{') !== 1) {
+                continue;
+            }
+
+            // Generated images: a card render each, several seconds apiece, and
+            // covered by their own tests. Skipped by prefix rather than by name.
+            if (str_starts_with($uri, '{market}/og/')) {
+                continue;
+            }
+
+            $paths[] = '/'.rtrim(str_replace('{market}', 'be-nl', $uri), '/');
+        }
+
+        sort($paths);
+
+        return array_values(array_unique($paths));
+    }
+
+    /**
+     * SSR is dispatched to, rather than skipped because a file is missing.
+     *
+     * Inertia's `ensure_bundle_exists` defaults to true: before calling the SSR
+     * service it checks for `bootstrap/ssr/ssr.js` on the local filesystem and
+     * returns null — no log line, no exception — when it is absent. This
+     * deployment splits `app` and `ssr` into separate containers, so the PHP
+     * container has no bundle and never will, and that guard fired on every
+     * request while the SSR service sat healthy and unused.
+     *
+     * Every page on production and staging shipped as `<div id="app"></div>`:
+     * no `<title>`, no `<h1>`, no body copy, for every crawler, for as long as
+     * the split has existed. Nothing looked wrong in a browser, because the
+     * client hydrates.
+     *
+     * The suite itself runs with `INERTIA_SSR_ENABLED=false` (phpunit.xml), so
+     * this cannot be asserted through a rendered page — the config value is the
+     * thing that broke and the thing worth pinning.
+     */
+    #[Test]
+    public function inertia_does_not_look_for_an_ssr_bundle_the_app_container_never_has(): void
+    {
+        $this->assertFalse(
+            (bool) config('inertia.ssr.ensure_bundle_exists'),
+            'ensure_bundle_exists is on again; app has no bootstrap/ssr and SSR will silently stop',
+        );
     }
 
     #[Test]

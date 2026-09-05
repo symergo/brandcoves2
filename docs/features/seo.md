@@ -21,6 +21,17 @@ scrapers, LLM crawlers) is far less forgiving.
 container dies, Laravel falls back to client rendering and the site stays up,
 losing only the pre-rendered HTML.
 
+> **That graceful fallback hid a total outage of it for months.** Inertia v3's
+> `ensure_bundle_exists` defaults to true and checks for the SSR bundle on the
+> *local* filesystem before dispatching — which the `app` container, by the
+> design directly above, does not have. So it never dispatched, and every page
+> on production and staging shipped as `<div id="app"></div>`: no `<title>`, no
+> `<h1>`, no body copy, for every crawler. No log line, no exception, and
+> nothing wrong in a browser because the client hydrates. Found and fixed
+> 2026-09-05 in `config/inertia.php`; the whole account is in
+> [page-titles.md](page-titles.md#ssr-was-never-dispatched-to). If SSR ever
+> appears to be off again, check that value before anything else.
+
 Two things that cost time getting this working, both worth knowing:
 
 - **`ssr: { noExternal: true }` in `vite.config.js`.** Vite externalises
@@ -145,6 +156,11 @@ the search listing. Those readers are not the same person. An `<h1>` sits above
 the page it names and can say "Brands"; a search result has to tell someone who
 has never heard of this site what they would be clicking.
 
+> The strings themselves — the search, brand, product and persona templates, the
+> 48/155 budgets and the tests that now enforce them — moved to
+> [page-titles.md](page-titles.md) on 2026-09-05, when all four were rewritten.
+> What stays here is the rule about why they exist at all.
+
 So indexable pages carry `seo_title` and `seo_description` next to `title`.
 `title` stays short and keeps the H1 and the nav label; `seo_*` is what
 `PageMeta` and the Inertia `<Head>` use, so the `<title>` and `og:title` are the
@@ -210,7 +226,7 @@ that actually compares offers is the better landing page.
 
 ## Guardrails
 
-`SeoTest` pins the behaviour, including three tests that exist because the
+`SeoTest` pins the behaviour, including four tests that exist because the
 corresponding bug already happened once:
 
 - Metadata never leaks between requests.
@@ -219,6 +235,17 @@ corresponding bug already happened once:
   written as `search.seo_term` shipped a literal `search.seo_term` into
   production's meta description.
 - A title-grouped product never claims a `gtin13`.
+- Inertia is not told to look for an SSR bundle the `app` container never has.
+
+**The indexable-page sweep is derived from the route table, not listed.** It used
+to be six hard-coded paths under a docblock claiming it walked every static
+indexable page; it did not, and `/lists`, `/santa` and `/login` were all serving
+`index, follow` with no title and no description. A hand-kept list cannot catch
+the page nobody remembered to add to it, which is the only kind that ever has
+this bug. See [page-titles.md](page-titles.md#the-test-that-was-supposed-to-catch-this).
+
+`LocalisationTest` gates the two length budgets, beside the parity check that
+already walks the same four language files.
 
 ## Not done yet
 
@@ -226,3 +253,8 @@ corresponding bug already happened once:
   count would convert better on social.
 - **Guide and pick pages** (Phases 5–6) will need `Article` / `ItemList` markup.
 - **Core Web Vitals** have not been measured; the Lighthouse pass is Phase 7.
+- **Cross-language product titles.** ~4.5% of `be-fr` titles are Dutch. The
+  honest fix is at ingestion, where the offer still knows its feed — see
+  [product-titles.md](product-titles.md#language-is-not-one-of-the-tests).
+- **`en` has no multi-merchant groups**, 0 of 16,531, so the comparison
+  proposition and its `AggregateOffer` never appear in the English market.

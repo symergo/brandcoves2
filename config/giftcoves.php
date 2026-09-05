@@ -217,6 +217,105 @@ return [
              * for the rebuild. A day also gives the arrows a stable meaning: the
              * page a reader sees in the morning says the same thing at night.
              */
+
+            /*
+             * Terms that may never be published, however often they are logged.
+             *
+             * ## Why this is needed at all
+             *
+             * `search_log` is not a record of what people searched for. Until
+             * 2026-09-05 the term chips under every result set were crawlable
+             * links that narrowed cumulatively, and `SearchLog::record()` wrote
+             * every term a crawler minted. The chips are gone; three months of
+             * what they generated is not. Production held 907,067 searches in
+             * the `en` market across 790,536 distinct terms, a ratio no human
+             * traffic produces, and the nl-nl top ten read: pro, bluetooth,
+             * geschikt, liter, camera, draadloze, ps5, ssd, usb-c, smart.
+             *
+             * Those are adjectives and spec fragments harvested out of product
+             * titles, and `/popular-searches` was publishing them under the
+             * heading "what people search for", each one a followed link to an
+             * indexable search URL.
+             *
+             * ## Why a list and not a rule
+             *
+             * `min_volume` is a privacy floor and cannot do this job — "pro" was
+             * logged 158 times. Length cannot either: "ps5" and "ssd" are three
+             * characters and real. What separates the two sets is part of
+             * speech, which is not something to infer in SQL, so the modifiers
+             * are named. It is maintained by hand on purpose; a term that gets
+             * through is a line to add, not a heuristic to tune.
+             *
+             * Keyed by language rather than by market — be-nl and nl-nl share
+             * their vocabulary, as they share their translation file.
+             */
+            'stop_terms' => [
+                'nl' => [
+                    'pro', 'geschikt', 'liter', 'draadloze', 'draadloos', 'smart',
+                    'slimme', 'rvs', 'full', 'zilver', 'grijs', 'blauw', 'roze',
+                    'zwart', 'wit', 'rood', 'groen', 'geel', 'bruin', 'paars',
+                    'oranje', 'goud', 'mini', 'maxi', 'ultra', 'plus', 'max',
+                    'accu', 'jaar', 'core', 'universeel', 'compatible',
+                    'alternatief', 'extra', 'groot', 'klein', 'nieuw', 'set',
+                    'stuks', 'stuk', 'pack', 'met', 'voor', 'van', 'zonder',
+                    'incl', 'inclusief', 'serie', 'series', 'model', 'type',
+                    'kleur', 'maat', 'verstelbare', 'opvouwbare', 'oplaadbare',
+                    'vaatwasserbestendige', 'kinderen', 'dames', 'heren',
+                ],
+                'fr' => [
+                    'pro', 'sans', 'avec', 'pour', 'bleu', 'noir', 'blanc',
+                    'rouge', 'vert', 'rose', 'gris', 'jaune', 'marron', 'violet',
+                    'orange', 'mini', 'maxi', 'ultra', 'plus', 'max', 'grand',
+                    'petit', 'nouveau', 'neuf', 'serie', 'série', 'series',
+                    'modele', 'modèle', 'type', 'couleur', 'taille', 'extra',
+                    'lot', 'pieces', 'pièces', 'piece', 'pièce', 'compatible',
+                    'universel', 'reglable', 'réglable', 'pliable',
+                    'rechargeable', 'intelligent', 'enfant', 'enfants',
+                    'femme', 'homme',
+                ],
+                'en' => [
+                    'pro', 'with', 'for', 'without', 'blue', 'black', 'white',
+                    'red', 'green', 'pink', 'grey', 'gray', 'yellow', 'brown',
+                    'purple', 'orange', 'gold', 'silver', 'mini', 'maxi',
+                    'ultra', 'plus', 'max', 'large', 'small', 'new', 'series',
+                    'model', 'type', 'colour', 'color', 'size', 'extra', 'pack',
+                    'pcs', 'piece', 'pieces', 'set', 'compatible', 'universal',
+                    'adjustable', 'foldable', 'rechargeable', 'wireless',
+                    'smart', 'full', 'core', 'year', 'kids', 'women', 'men',
+                ],
+                'es' => [
+                    'pro', 'con', 'para', 'sin', 'azul', 'negro', 'blanco',
+                    'rojo', 'verde', 'rosa', 'gris', 'amarillo', 'marron',
+                    'marrón', 'morado', 'naranja', 'dorado', 'plateado', 'mini',
+                    'ultra', 'plus', 'max', 'grande', 'pequeno', 'pequeño',
+                    'nuevo', 'serie', 'modelo', 'tipo', 'color', 'talla',
+                    'extra', 'pack', 'piezas', 'pieza', 'juego', 'compatible',
+                    'universal', 'ajustable', 'plegable', 'recargable',
+                    'inalambrico', 'inalámbrico', 'inteligente', 'ninos',
+                    'niños', 'mujer', 'hombre',
+                ],
+            ],
+
+            /*
+             * A term that is only a measurement, whatever the units.
+             *
+             * "256gb", "18v", "1.5l", "40mm", "2000" — every one of them logged,
+             * none of them a thing anybody shops for. Named as a pattern rather
+             * than listed because the list would be infinite, and matched in
+             * Postgres so the filter stays inside the query the page already
+             * runs. Case-insensitive; the optional unit is what makes a bare
+             * number match too.
+             */
+            'spec_pattern' => '^[0-9]+([.,][0-9]+)? ?(gb|tb|mb|kb|ml|cl|dl|l|v|w|kw|mm|cm|m|km|inch|in|k|hz|khz|mhz|ghz|mah|ah|pk|st|x)?$',
+
+            /*
+             * Two characters is never a search, in any of these languages.
+             *
+             * Three is: "ps5", "ssd", "tv". The floor sits under the stop list
+             * rather than replacing it — length alone cannot tell "ps5" from
+             * "rvs".
+             */
+            'min_length' => 3,
             'cache_ttl' => 86400,
         ],
     ],

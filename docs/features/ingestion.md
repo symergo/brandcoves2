@@ -173,6 +173,20 @@ from a half-loaded catalogue is simply wrong.
 equally priced would flip `best_offer_id` on every run, churning caches and
 making the UI visibly jump between merchants for no reason.
 
+**Which offer to link to and which title to quote are two questions.** They
+shared one answer until 2026-09-05: a single `best` CTE ordered on stock then
+price supplied `best_offer_id` *and* `title`, `brand`, `image_url`, `category`.
+So the string on 302,133 product pages was written by whichever merchant
+undercut the others that morning — 18,593 groups titled in ALL CAPS, 38,495 whose
+brand was known and absent from the title.
+
+There is a second `display` CTE now, ordered on those two defects before falling
+through to the same stock-and-price ordering. `best` is untouched and supplies
+only `best_offer_id`, because that is the offer a shopper is sent to and nothing
+cosmetic may move it to a dearer seller. Full reasoning, and what the render layer
+still has to clean up afterwards, in
+[product-titles.md](product-titles.md).
+
 ## Prices
 
 Integer cents throughout. Feed values arrive as `12.99`, `12,99` and

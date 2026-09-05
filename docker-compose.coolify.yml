@@ -162,6 +162,11 @@ x-app: &app
     ROBOTS_ALLOW: ${ROBOTS_ALLOW:-false}
     # Server-side rendering, in its own container. If it is unreachable Laravel
     # falls back to client rendering rather than erroring.
+    #
+    # INERTIA_SSR_ENSURE_BUNDLE_EXISTS is deliberately absent: Inertia's default
+    # of true made `app` look for a bundle that only ever exists in `ssr`, and
+    # skip server rendering entirely without saying so. config/inertia.php
+    # defaults it to false; setting it here would only invite it back on.
     INERTIA_SSR_ENABLED: "true"
     INERTIA_SSR_URL: http://ssr:13714
     # GIT_COMMIT_SHA is deliberately NOT set here, and must not be added to the

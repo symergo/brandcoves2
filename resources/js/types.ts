@@ -75,6 +75,11 @@ export interface SharedProps {
      * address bar, so a stale one shares the wrong page. See `app.tsx`.
      */
     canonical: string
+    /**
+     * The <title> the server chose, so it matches the og:title Blade rendered.
+     * Null on pages that set no metadata; those set their own `<Head title>`.
+     */
+    seoTitle: string | null
     market: CurrentMarket
     markets: SwitcherCountry[]
     translations: Translations

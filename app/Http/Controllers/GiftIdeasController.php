@@ -12,6 +12,7 @@ use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use App\Support\PreviewAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -133,12 +134,37 @@ class GiftIdeasController extends Controller
         ]);
     }
 
+    /**
+     * A persona's listing title, which its heading cannot be.
+     *
+     * "The one who reads" and "De wandelaar" are good headings and unsearchable
+     * listings: they contain no word anybody types into a search box. The query
+     * is "gift for someone who reads", and this page is exactly that answer — so
+     * the <h1> keeps the editorial title and the listing says what the page is
+     * for.
+     *
+     * Falls back to the bare title when the two together run past the 48
+     * characters a listing leaves after " · GiftCoves". That is not a rare edge:
+     * "The one who is always going somewhere" needs it, and it is a real
+     * published persona.
+     */
+    private function listingTitle(DailyPickSet $persona): string
+    {
+        $titled = __('site.gift_ideas.persona_seo_title', [
+            // Lowercased so the article reads as part of the sentence the
+            // template makes: "Cadeau voor de wandelaar", not "voor De".
+            'persona' => Str::lcfirst($persona->theme_title),
+        ]);
+
+        return mb_strlen($titled) <= 48 ? $titled : $persona->theme_title;
+    }
+
     private function seo(DailyPickSet $persona, CurrentMarket $current): void
     {
         $url = url($current->url('gift-ideas/'.$persona->slug));
 
         app(PageMeta::class)->set(
-            title: $persona->theme_title,
+            title: $this->listingTitle($persona),
             description: $persona->theme_blurb ?? __('site.gift_ideas.description'),
             canonical: $url,
         );

@@ -14,6 +14,7 @@ use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
+use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\AddingMode;
 use App\Services\Wishlist\Board;
 use App\Services\Wishlist\ContributionView;
@@ -132,6 +133,21 @@ class WishlistController extends Controller
             default => $this->rows($owned, $owner, $current, owned: true)
                 ->concat($this->rows($sharedWithMe, $owner, $current, owned: false)),
         };
+
+        /*
+         * Public, and indexable, and until 2026-09-05 it carried no <title> and
+         * no meta description at all — it never called PageMeta.
+         *
+         * It is indexable because a signed-out visitor gets a page explaining
+         * what a list is for, which is the version a crawler sees; the personal
+         * dashboard only exists once somebody is signed in. Both live at one
+         * URL, so the copy describes the public half.
+         */
+        app(PageMeta::class)->set(
+            title: __('site.lists.seo_title'),
+            description: __('site.lists.seo_description'),
+            canonical: url($current->url('lists')),
+        );
 
         return Inertia::render('Lists/Index', [
             'lists' => $lists,

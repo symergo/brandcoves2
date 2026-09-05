@@ -82,14 +82,22 @@ function reportClick(offer: Offer): void {
 }
 
 export default function Product({ product, offers, alert, amazonSearch, description }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const { market, seoTitle } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
     const buyable = offers.filter((o) => o.isBuyable)
 
     return (
         <>
-            <Head title={product.title} />
+            {/*
+              The listing title, which is not the heading.
+
+              `product.title` is the cleaned <h1> — full length, no shop count.
+              The tab and the search listing get the server's cut-to-fit version
+              with "at N shops" on the end, so this tag and the og:title Blade
+              rendered are the same string. See ProductTitle.
+            */}
+            <Head title={seoTitle ?? product.title} />
 
             <div className="grid gap-10 lg:grid-cols-2">
                 <div className="rounded-card border border-line bg-card p-8">

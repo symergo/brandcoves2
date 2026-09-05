@@ -187,10 +187,70 @@ class SearchTermStats
      */
     private function scoped(Market $market): Builder
     {
-        return DB::table('search_log')
+        $query = DB::table('search_log')
             ->where('market', $market->value)
             ->where('result_count', '>', 0)
             ->whereRaw('length(query) <= ?', [60]);
+
+        return $this->publishable($query, $market);
+    }
+
+    /**
+     * Drop the terms that were never typed by a person.
+     *
+     * ## What this is defending against
+     *
+     * `search_log` is not a record of what people searched for. Until
+     * 2026-09-05 the term chips under every result set were crawlable links
+     * that narrowed cumulatively — `watch`, then `watch Smartwatch`, then
+     * `watch Smartwatch 44mm` — and `SearchLog::record()` wrote every term a
+     * crawler minted on the way through. The chips are gone; what they
+     * generated is still in the table, and this page was publishing it under
+     * the heading "what people search for", each row a followed link to an
+     * indexable search URL.
+     *
+     * The nl-nl top ten read: pro, bluetooth, geschikt, liter, camera,
+     * draadloze, ps5, ssd, usb-c, smart. Half of those are adjectives lifted
+     * out of product titles.
+     *
+     * ## Why it is not `min_volume`
+     *
+     * That floor is a privacy guard and it cannot do this job — "pro" was
+     * logged 158 times, well clear of it. The two filters answer different
+     * questions: `min_volume` asks whether a term is a *pattern* rather than
+     * one identifiable person, this asks whether it is a *thing* rather than a
+     * word that happened to be in a title. Both apply, neither substitutes.
+     *
+     * ## Applied to the ranks as well as to the lists
+     *
+     * `ranksIn()` narrows the same base, and should: a movement arrow computed
+     * against a ranking full of terms that can never be published would report
+     * a term as risen because the junk above it was filtered out of the list
+     * and not out of the comparison.
+     */
+    private function publishable(Builder $query, Market $market): Builder
+    {
+        $stop = array_map(
+            mb_strtolower(...),
+            (array) config('giftcoves.search.popular.stop_terms.'.$market->language(), []),
+        );
+
+        $query
+            ->whereRaw('length(btrim(query)) >= ?', [
+                (int) config('giftcoves.search.popular.min_length'),
+            ])
+            // Measurements and bare numbers: "256gb", "18v", "1.5l", "2000".
+            ->whereRaw('btrim(query) !~* ?', [
+                (string) config('giftcoves.search.popular.spec_pattern'),
+            ]);
+
+        // Folded to lower case on both sides rather than with ILIKE: this is an
+        // equality test against a list, and `lower()` is what the list is in.
+        if ($stop !== []) {
+            $query->whereNotIn(DB::raw('lower(btrim(query))'), $stop);
+        }
+
+        return $query;
     }
 
     /** The published top of one period. */

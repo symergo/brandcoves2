@@ -174,6 +174,23 @@ return [
         'submit' => 'Search',
         'searching' => 'Searching…',
         'results_for' => 'Results for ":term"',
+
+        /*
+         * The browser tab and the search listing, which is NOT `results_for`.
+         *
+         * `results_for` stays where it belongs: a live region announcing a new
+         * result set to a screen reader. It is a poor listing title — the first
+         * twelve characters, the ones weighted hardest, spend themselves on
+         * "Results for", and the quotation marks read as an exact-match
+         * citation rather than as a page about the thing.
+         *
+         * The term leads instead, capitalised, followed by the phrase this
+         * market actually shops in. SearchController::seo() drops the modifier
+         * for a long term: a four-word query already carries its own intent,
+         * and the suffix would only push it past the ~60 characters a listing
+         * shows.
+         */
+        'seo_title_term' => ':term — compare prices',
         'empty' => 'Nothing matched ":term".',
         'empty_filters' => 'No products match these filters.',
         'clear_filters' => 'Clear all filters',
@@ -213,7 +230,7 @@ return [
         'previous' => 'Previous',
         'next' => 'Next',
         'page_of' => 'Page :current of :last',
-        'seo_term' => 'Search bol, Amazon and hundreds of shops for :term, and see what each of them is asking.',
+        'seo_term' => 'Compare :term at bol, Amazon and hundreds of shops. One card per product, with the price at every shop that sells it.',
 
         /*
          * The vocabulary of the results, above the grid.
@@ -240,12 +257,12 @@ return [
      * `and` stays: `PageNarrative` joins its category lists with it.
      */
     'brand' => [
-        'title' => ':brand',
+        'title' => ':brand offers and discounts',
         'heading' => ':brand',
-        'seo_description' => 'Everything from :brand we have found, with the price at every shop we track.',
+        'seo_description' => 'Every :brand product with the price at each shop that sells it. Compare the offers and see where :brand costs least right now.',
         'crumb' => 'Brands',
         'index_title' => 'Brands',
-        'index_seo_title' => 'Every brand in the catalogue, and the shops that stock them',
+        'index_seo_title' => 'Every brand, A to Z',
         'index_seo_description' => 'Every brand in the catalogue, with live prices from bol, Amazon and hundreds of shops that stock them.',
         'index_intro' => 'Every brand in the catalogue, with live prices from the shops that stock it.',
         'index_empty' => 'No brands in this market yet.',
@@ -319,8 +336,22 @@ return [
         'price_as_of' => 'Price and availability as of the time shown and may change.',
         'disclosure' => 'We may earn a commission if you buy through this link. The price you pay is unchanged.',
         'unavailable' => 'This product is not currently available from any shop we track.',
-        'seo_compare' => ':title from :price, with the offer from each of :count shops.',
-        'seo_single' => ':title from :price, with the price history before you buy.',
+        'seo_compare' => 'From :price at :count shops. Compare every seller of :title and see where it is cheapest right now.',
+        'seo_single' => 'From :price, with the price history before you buy. :title',
+        // Nothing is priced yet, so neither of the two above will do:
+        // both open with a price and would print an empty gap where it goes.
+        'seo_unpriced' => ':title — the shops that stock it, with the price as soon as one lists it.',
+
+        /*
+         * The shop count goes in the title; the price stays in the description.
+         *
+         * Both are ours to claim and only one of them is safe up there. A
+         * cached snippet quoting a price we no longer offer is a trust problem,
+         * and the price is the number most likely to have moved since the last
+         * crawl. A merchant count barely moves. The JSON-LD AggregateOffer
+         * remains the honest machine-readable copy of both.
+         */
+        'seo_title_multi' => ':title — at :count shops',
     ],
 
     /*
@@ -367,7 +398,7 @@ return [
     ],
 
     'coves' => [
-        'seo_title' => 'Every Cove: daily editions, gift ideas by person, and long reads',
+        'seo_title' => 'Gift ideas, guides and reading',
         'seo_description' => 'The full shelf. A new edition every morning, gift ideas built around a person, and long reads around one subject with live prices inside them.',
         'title' => 'All Coves',
         'intro' => 'Everything we have written here, by the shape it takes. One arrives every morning, one is built around a person, and one is built around a subject.',
@@ -584,6 +615,12 @@ return [
     ],
 
     'lists' => [
+
+        // Public, and it explains itself to a visitor with no account,
+        // so it is indexable. It shipped with no title and no description
+        // at all until 2026-09-05.
+        'seo_title' => 'Wish lists you can share',
+        'seo_description' => 'Keep a wish list, share it with the people buying for you, and let them claim a gift without you seeing who claimed what.',
         'title' => 'My lists',
         'subtitle' => 'Everything you are saving, and everything other people have shared with you.',
         'shared_subtitle' => 'Lists people have shared with you. This is how you shop for them.',
@@ -827,6 +864,12 @@ return [
     | shopping for, and the rest is the gift page you already know.
     */
     'santa' => [
+
+        // Public, and it explains itself to a visitor with no account,
+        // so it is indexable. It shipped with no title and no description
+        // at all until 2026-09-05.
+        'seo_title' => 'Secret Friend, drawn online',
+        'seo_description' => 'Set up a group, draw the names online, and everybody sees only who they are buying for. No hat, no spreadsheet, no accidental spoilers.',
         'title' => 'Secret Friend',
         'subtitle' => 'One group, one draw, nobody knows who has who.',
         'create' => 'Start a group',
@@ -1227,7 +1270,7 @@ return [
     |
     */
     'feedback' => [
-        'seo_title' => 'Tell us what could be better, or pay us a compliment',
+        'seo_title' => 'Tell us what could be better',
         'seo_description' => 'Say what could be better — a price that is out of date, a link that goes nowhere — or tell us what you like. You do not need an account.',
         'title' => 'Tell us what could be better, or pay us a compliment',
         'message_label' => 'Your message',
@@ -1367,6 +1410,18 @@ return [
      * shopping for" is the question most visitors actually arrive with.
      */
     'gift_ideas' => [
+
+        /*
+         * A persona's listing title, which its theme_title cannot be.
+         *
+         * "The one who reads" is a good heading and an unsearchable
+         * listing: it holds no word anybody types. The query is "gift for
+         * someone who reads" and this page is exactly that answer, so the
+         * H1 keeps the editorial title and the listing gets this one.
+         * GiftIdeasController falls back to the bare theme_title when the
+         * two together would run past what a listing shows.
+         */
+        'persona_seo_title' => 'Gift ideas for :persona',
 
         /*
          * The placeholder title a drafted persona wears.

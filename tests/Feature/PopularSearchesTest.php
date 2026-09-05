@@ -320,4 +320,94 @@ class PopularSearchesTest extends TestCase
             'the footer stopped linking to the popular searches page',
         );
     }
+
+    /**
+     * The crawler-minted vocabulary never reaches the page.
+     *
+     * Until the term chips were removed on 2026-09-05 they were crawlable links
+     * that narrowed cumulatively, and `SearchLog::record()` wrote every term a
+     * crawler minted on its way through. What that left behind is still in the
+     * table and still passes the privacy floor: "pro" was logged 158 times in
+     * nl-nl, "geschikt" 56, "liter" 44. All three were being published under
+     * the heading "what people search for", each a followed link to an
+     * indexable search URL.
+     *
+     * These are the exact terms production was showing.
+     */
+    #[Test]
+    public function it_does_not_publish_terms_lifted_out_of_product_titles(): void
+    {
+        foreach (['pro', 'geschikt', 'liter', 'zilver', 'grijs', 'draadloze'] as $junk) {
+            $this->log($junk, 40);
+        }
+
+        $terms = $this->publishedTerms();
+
+        foreach (['pro', 'geschikt', 'liter', 'zilver', 'grijs', 'draadloze'] as $junk) {
+            $this->assertNotContains($junk, $terms, "'{$junk}' is a modifier, not a search");
+        }
+    }
+
+    /** "256gb" and "18v" are specifications. Nobody shops for a unit. */
+    #[Test]
+    public function it_does_not_publish_bare_measurements(): void
+    {
+        foreach (['256gb', '18v', '1.5l', '2000', '40mm'] as $spec) {
+            $this->log($spec, 40);
+        }
+
+        $terms = $this->publishedTerms();
+
+        foreach (['256gb', '18v', '1.5l', '2000', '40mm'] as $spec) {
+            $this->assertNotContains($spec, $terms, "'{$spec}' is a measurement, not a search");
+        }
+    }
+
+    /**
+     * The filter has to leave the real terms alone, and the tempting shortcuts
+     * would not: "ps5" and "ssd" are three characters, which rules out a length
+     * floor on its own, and "bluetooth" is a modifier by grammar and a genuine
+     * query by behaviour.
+     */
+    #[Test]
+    public function it_still_publishes_the_terms_people_really_type(): void
+    {
+        foreach (['ps5', 'ssd', 'bluetooth', 'koptelefoon', 'robotstofzuiger', 'nintendo switch'] as $real) {
+            $this->log($real, 40);
+        }
+
+        $terms = $this->publishedTerms();
+
+        foreach (['ps5', 'ssd', 'bluetooth', 'koptelefoon', 'robotstofzuiger', 'nintendo switch'] as $real) {
+            $this->assertContains($real, $terms, "'{$real}' is a real search and was filtered out");
+        }
+    }
+
+    /**
+     * Every list on the page, not only the ranked columns.
+     *
+     * `trending` and `latest` are built from separate queries, and a filter
+     * applied to one of the three would leave the junk visible in the others —
+     * which is exactly the shape of bug that put it there in the first place.
+     *
+     * @return list<string>
+     */
+    private function publishedTerms(): array
+    {
+        $lists = app(SearchTermStats::class)->for(Market::BeNl);
+
+        $terms = [];
+
+        foreach ($lists['months'] as $column) {
+            foreach ($column['terms'] as $row) {
+                $terms[] = $row['term'];
+            }
+        }
+
+        foreach ([...$lists['trending'], ...$lists['latest']] as $row) {
+            $terms[] = $row['term'];
+        }
+
+        return array_values(array_unique($terms));
+    }
 }

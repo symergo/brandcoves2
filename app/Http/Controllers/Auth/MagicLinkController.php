@@ -11,6 +11,7 @@ use App\Models\AnonymousIdentity;
 use App\Models\LoginToken;
 use App\Models\User;
 use App\Services\Auth\IdentityMerger;
+use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,24 @@ class MagicLinkController extends Controller
 {
     public function show(): Response
     {
+        /*
+         * `noindex, follow`, which it was not until 2026-09-05.
+         *
+         * A sign-in form served `index, follow, max-image-preview:large` with no
+         * title and no description — an indexable page with nothing on it worth
+         * ranking, spending crawl budget that belongs to products and guides.
+         * `follow`, never `nofollow`, for the same reason every other thin page
+         * here keeps it: the site chrome is still the way out.
+         *
+         * No title or description set on purpose. A page that must not be
+         * indexed does not need a listing written for it, and writing one
+         * invites somebody to wonder later why it never appears.
+         */
+        app(PageMeta::class)->set(
+            title: __('site.auth.title'),
+            robots: 'noindex, follow',
+        );
+
         return Inertia::render('Auth/Login', [
             // Staging may legitimately run without OAuth credentials, and a
             // button that leads to an exception is worse than no button.

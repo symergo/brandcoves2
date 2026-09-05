@@ -126,6 +126,23 @@ return [
         'submit' => 'Zoeken',
         'searching' => 'Bezig met zoeken…',
         'results_for' => 'Resultaten voor ":term"',
+
+        /*
+         * The browser tab and the search listing, which is NOT `results_for`.
+         *
+         * `results_for` stays where it belongs: a live region announcing a new
+         * result set to a screen reader. It is a poor listing title — the first
+         * twelve characters, the ones weighted hardest, spend themselves on
+         * "Results for", and the quotation marks read as an exact-match
+         * citation rather than as a page about the thing.
+         *
+         * The term leads instead, capitalised, followed by the phrase this
+         * market actually shops in. SearchController::seo() drops the modifier
+         * for a long term: a four-word query already carries its own intent,
+         * and the suffix would only push it past the ~60 characters a listing
+         * shows.
+         */
+        'seo_title_term' => ':term prijzen vergelijken',
         'empty' => 'Niets gevonden voor ":term".',
         'empty_filters' => 'Geen producten voldoen aan deze filters.',
         'clear_filters' => 'Alle filters wissen',
@@ -152,7 +169,7 @@ return [
         'previous' => 'Vorige',
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',
-        'seo_term' => 'Zoek :term op bol, Amazon en honderden winkels, en zie wat elke winkel ervoor vraagt.',
+        'seo_term' => 'Vergelijk :term bij bol, Amazon en honderden webshops. Één kaart per product, met de prijs van elke winkel die het verkoopt.',
 
         /*
          * De woordenschat van de resultaten, boven het raster. Verving vier
@@ -169,12 +186,12 @@ return [
      * bestaat, zie App\Services\Seo\BrandCopy.
      */
     'brand' => [
-        'title' => ':brand',
+        'title' => ':brand aanbiedingen en kortingen',
         'heading' => ':brand',
-        'seo_description' => 'Alles van :brand dat we gevonden hebben, met de prijs bij elke winkel die we volgen.',
+        'seo_description' => 'Alle producten van :brand met de prijs bij elke winkel die ze verkoopt. Vergelijk het aanbod en zie waar :brand nu het goedkoopst is.',
         'crumb' => 'Merken',
         'index_title' => 'Merken',
-        'index_seo_title' => 'Elk merk in de catalogus, en de winkels die het verkopen',
+        'index_seo_title' => 'Alle merken van A tot Z',
         'index_seo_description' => 'Elk merk in de catalogus, met actuele prijzen van bol, Amazon en honderden winkels die het verkopen.',
         'index_intro' => 'Alle merken in de catalogus, met actuele prijzen van de winkels die ze verkopen.',
         'index_empty' => 'Nog geen merken in deze regio.',
@@ -223,8 +240,22 @@ return [
         'price_as_of' => 'Prijs en beschikbaarheid gelden op het getoonde moment en kunnen wijzigen.',
         'disclosure' => 'We verdienen mogelijk commissie als je via deze link koopt. Wat jij betaalt verandert niet.',
         'unavailable' => 'Dit product is nu bij geen enkele winkel die we volgen verkrijgbaar.',
-        'seo_compare' => ':title vanaf :price, met het aanbod van elk van :count winkels.',
-        'seo_single' => ':title vanaf :price, met de prijsgeschiedenis voordat je koopt.',
+        'seo_compare' => 'Vanaf :price bij :count winkels. Vergelijk alle aanbieders van :title en zie waar het nu het goedkoopst is.',
+        'seo_single' => 'Vanaf :price, met de prijsgeschiedenis voordat je koopt. :title',
+        // Nothing is priced yet, so neither of the two above will do:
+        // both open with a price and would print an empty gap where it goes.
+        'seo_unpriced' => ':title — de winkels die het verkopen, met de prijs zodra er één bekend is.',
+
+        /*
+         * The shop count goes in the title; the price stays in the description.
+         *
+         * Both are ours to claim and only one of them is safe up there. A
+         * cached snippet quoting a price we no longer offer is a trust problem,
+         * and the price is the number most likely to have moved since the last
+         * crawl. A merchant count barely moves. The JSON-LD AggregateOffer
+         * remains the honest machine-readable copy of both.
+         */
+        'seo_title_multi' => ':title — bij :count winkels',
     ],
 
     /*
@@ -258,7 +289,7 @@ return [
     ],
 
     'coves' => [
-        'seo_title' => 'Alle Coves: dagelijkse edities, cadeau-ideeën per persoon en lange verhalen',
+        'seo_title' => 'Cadeau-ideeën, gidsen en verhalen',
         'seo_description' => 'De hele plank. Elke ochtend een nieuwe editie, cadeau-ideeën rond één persoon, en lange verhalen rond één onderwerp met live prijzen erin.',
         'title' => 'Alle Coves',
         'intro' => 'Alles wat we hier geschreven hebben, op vorm gesorteerd. De ene komt elke ochtend, de andere is rond een persoon gebouwd, de derde rond een onderwerp.',
@@ -467,6 +498,12 @@ return [
     ],
 
     'lists' => [
+
+        // Public, and it explains itself to a visitor with no account,
+        // so it is indexable. It shipped with no title and no description
+        // at all until 2026-09-05.
+        'seo_title' => 'Verlanglijstjes die je kunt delen',
+        'seo_description' => 'Hou een verlanglijstje bij, deel het met wie voor je koopt, en laat ze een cadeau claimen zonder dat jij ziet wie wat koos.',
         'title' => 'Mijn lijstjes',
         'subtitle' => 'Alles wat jij bewaart, en alles wat anderen met jou gedeeld hebben.',
         'shared_subtitle' => 'Lijsten die anderen met je gedeeld hebben. Zo koop je iets voor hen.',
@@ -680,6 +717,12 @@ return [
         'ask_them_hint' => 'Stuur deze link. Zij vullen hun eigen voorkeuren in en zien nooit wat jij hebt uitgekozen.',
     ],
     'santa' => [
+
+        // Public, and it explains itself to a visitor with no account,
+        // so it is indexable. It shipped with no title and no description
+        // at all until 2026-09-05.
+        'seo_title' => 'Geheime Vriend, online geloot',
+        'seo_description' => 'Maak een groep, loot de namen online, en iedereen ziet alleen voor wie hij koopt. Geen hoed, geen spreadsheet, geen uitgelekte namen.',
         'title' => 'Geheime Vriend',
         'subtitle' => 'Een groep, een trekking, niemand weet wie wie heeft.',
         'create' => 'Start een groep',
@@ -1067,7 +1110,7 @@ return [
     ],
 
     'search_help' => [
-        'seo_title' => 'Zo zoek je: woorden, streepjescodes en Amazon-links',
+        'seo_title' => 'Zo zoek je: woorden, codes en links',
         'seo_description' => 'Wat het zoekvak begrijpt — productnamen, merken, streepjescodes en geplakte Amazon-links — en hoe je resultaten terugbrengt tot de juiste aanbieding.',
         'title' => 'Zoeken en scannen',
         'intro' => 'Wat het zoekveld begrijpt, hoe je een resultatenlijst versmalt, en wat er gebeurt als je een camera op een barcode richt.',
@@ -1155,6 +1198,18 @@ return [
     ],
 
     'gift_ideas' => [
+
+        /*
+         * A persona's listing title, which its theme_title cannot be.
+         *
+         * "The one who reads" is a good heading and an unsearchable
+         * listing: it holds no word anybody types. The query is "gift for
+         * someone who reads" and this page is exactly that answer, so the
+         * H1 keeps the editorial title and the listing gets this one.
+         * GiftIdeasController falls back to the bare theme_title when the
+         * two together would run past what a listing shows.
+         */
+        'persona_seo_title' => 'Cadeau voor :persona',
 
         /*
          * The placeholder title a drafted persona wears.

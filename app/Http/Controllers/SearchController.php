@@ -23,6 +23,7 @@ use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -332,6 +333,38 @@ class SearchController extends Controller
     }
 
     /**
+     * What a search result shows for this page, which is not what a screen
+     * reader announces.
+     *
+     * `search.results_for` — "Results for :term" — stays where it belongs, on
+     * the live region above the grid. As a listing title it spent its first
+     * twelve characters, the ones weighted hardest, on the word "Results", and
+     * wrapped the visitor's own word in quotation marks that read as an
+     * exact-match citation.
+     *
+     * The term leads instead, capitalised because it arrives as raw user input
+     * and a title opening lowercase reads as broken, followed by the phrase this
+     * market actually shops in — "prijzen vergelijken" in Dutch, which is how
+     * every Dutch and Belgian comparison site titles a category page.
+     *
+     * ## The modifier is dropped for a long term
+     *
+     * A listing shows about 60 characters and `app.tsx` appends " · GiftCoves",
+     * so 48 are ours. Measured against the rendered string rather than against
+     * a character count of the term, because the modifier is a different length
+     * in each of the four languages and a hard-coded limit would be right in one
+     * of them. A four-word query already carries its own intent; the suffix
+     * would only push the words that matter past the cut.
+     */
+    private function listingTitle(string $term): string
+    {
+        $term = Str::ucfirst($term);
+        $titled = __('site.search.seo_title_term', ['term' => $term]);
+
+        return mb_strlen($titled) <= 48 ? $titled : $term;
+    }
+
+    /**
      * Search-page SEO.
      *
      * Crawl budget is the real concern here, not ranking. Every filter
@@ -354,7 +387,7 @@ class SearchController extends Controller
         app(PageMeta::class)
             ->set(
                 title: $query->hasTerm()
-                    ? __('site.search.results_for', ['term' => $query->term])
+                    ? $this->listingTitle($query->term)
                     : __('site.search.title'),
                 /*
                  * No count in the description either.

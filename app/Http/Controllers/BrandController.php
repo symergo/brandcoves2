@@ -673,6 +673,28 @@ class BrandController extends Controller
     }
 
     /**
+     * The brand page's listing title, which the bare brand name cannot be.
+     *
+     * `brand.title` was ':brand' — the name and nothing else, sharing its string
+     * with the <h1> and leaving 45 of the 60 characters a listing shows unspent.
+     * A bare brand name is also the one query where the brand's own site, its
+     * retailers and its encyclopedia entry all outrank us, and it says nothing
+     * about what is on the page. `brand.heading` keeps the <h1>; this is what a
+     * searcher reads.
+     *
+     * Guarded the same way the search title is, and for the same reason: the
+     * modifier is a different length in each language, so the test is against
+     * the rendered string. 14 of the 2,480 pageworthy brands are long enough to
+     * need it — measured, rather than assumed away.
+     */
+    private function listingTitle(string $brand): string
+    {
+        $titled = __('site.brand.title', ['brand' => $brand]);
+
+        return mb_strlen($titled) <= 48 ? $titled : $brand;
+    }
+
+    /**
      * Brand-page SEO.
      *
      * The whole reason this route exists rather than a filtered search URL: one
@@ -689,7 +711,7 @@ class BrandController extends Controller
 
         app(PageMeta::class)
             ->set(
-                title: __('site.brand.title', ['brand' => $stat->brand]),
+                title: $this->listingTitle($stat->brand),
                 // No count. `$total` was passed in for this one line and is
                 // gone with it — see the note in `SearchController::seo()`.
                 description: __('site.brand.seo_description', ['brand' => $stat->brand]),

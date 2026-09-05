@@ -105,7 +105,39 @@ not a rise however popular it once was.
 Deliberately *not* "recently typed": see the privacy floor, which is the whole
 reason this list can be published at all.
 
-## Three rules, and why each is not a preference
+## Four rules, and why each is not a preference
+
+**A term must look like a thing somebody shops for.** Added 2026-09-05, when the
+page was found publishing `pro`, `geschikt`, `liter`, `rvs`, `zilver`, `grijs`,
+`jaar` and `256gb` in nl-nl — each one an indexed page's worth of followed link
+into a search URL, under the heading "what people search for".
+
+None of them were. Until 2026-09-05 the term chips under every result set were
+crawlable links that narrowed cumulatively, and `SearchLog::record()` wrote every
+term a crawler minted on the way through. The chips are gone; three months of
+what they generated is not. Production held **907,067 searches in the `en` market
+across 790,536 distinct terms** — a ratio no human traffic produces — and what
+survived into the top ten were adjectives and spec fragments lifted out of
+product titles.
+
+Three filters, all in `SearchTermStats::publishable()` so every list narrows the
+same base:
+
+- a per-language **stop list** in `config/giftcoves.php`, maintained by hand
+- a **spec pattern** for bare measurements: `256gb`, `18v`, `1.5l`, `2000`
+- a **minimum length** of 3
+
+The stop list is named terms rather than a rule because what separates the two
+sets is part of speech, and that is not something to infer in SQL. The two
+tempting shortcuts both fail on real data: `min_volume` cannot do it because
+"pro" was logged 158 times, well clear of the floor, and a length floor cannot
+because `ps5` and `ssd` are three characters and real. A term that gets through
+is a line to add, not a heuristic to tune.
+
+It applies to the rank baseline as well as to the lists. A movement arrow
+computed against a ranking still full of unpublishable terms would report a term
+as risen because the junk above it was filtered out of one and not the other.
+
 
 **A term must have been searched `min_volume` times to appear in any published
 list.** This is a privacy floor, not a tuning knob. `search_log` carries no
@@ -165,7 +197,8 @@ morning says the same thing that night.
 ## Knobs
 
 `config/giftcoves.php` → `search.popular`: `columns` (3), `period` (`week`),
-`limit` (20 per column), `min_volume` (5), `window_days` (90, for the two lists),
+`limit` (20 per column), `min_volume` (5), `stop_terms` (per language),
+`spec_pattern`, `min_length` (3), `window_days` (90, for the two lists),
 `short_list` (20), `trending_days` (7), `cache_ttl` (86400 — a day).
 
 ## Files

@@ -115,6 +115,23 @@ class HandleInertiaRequests extends Middleware
             'canonical' => fn (): string => app(PageMeta::class)->toArray()['canonical']
                 ?? url($request->path()),
 
+            /*
+             * The title the server chose, so a page's <Head> and its og:title
+             * cannot drift apart.
+             *
+             * Two tags, two sources: <title> comes from Inertia's <Head> in the
+             * React page, og:title from PageMeta via Blade. Where both are built
+             * from the same translation key they agree by luck. Where the server
+             * computes something the client cannot — a product title cut to fit
+             * and carrying a shop count, a search title whose modifier is
+             * dropped for a long term — they silently disagreed, and the tag a
+             * person sees in a result listing was not the tag a scraper read.
+             *
+             * Null on a page that sets no metadata; those pages keep their own
+             * <Head title>.
+             */
+            'seoTitle' => fn (): ?string => app(PageMeta::class)->toArray()['title'],
+
             'market' => [
                 'key' => $market->value,
                 'label' => $market->label(),

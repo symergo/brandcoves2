@@ -12,6 +12,7 @@ use App\Models\ProductGroup;
 use App\Models\RestockAlert;
 use App\Services\Alerts\AlertEligibility;
 use App\Services\Catalogue\ProductDescription;
+use App\Services\Catalogue\ProductTitle;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
@@ -62,7 +63,17 @@ class ProductController extends Controller
         return Inertia::render('Product', [
             'product' => [
                 'id' => $productGroup->id,
-                'title' => $productGroup->title,
+                /*
+                 * The cleaned heading, not the stored title.
+                 *
+                 * `product_groups.title` is whichever cheapest in-stock offer
+                 * won the last regrouping, so it arrives shouting, or missing
+                 * its own brand, or both — 18,593 and 38,495 rows respectively
+                 * on production. The stored string stays as the feed sent it,
+                 * because search indexing and the slug want the merchant's own
+                 * words; only what a person reads is cleaned.
+                 */
+                'title' => ProductTitle::heading($productGroup),
                 'brand' => $productGroup->brand,
                 /*
                  * Null when the brand has no page of its own — which is most of
@@ -163,21 +174,39 @@ class ProductController extends Controller
         $market = $current->get();
         $url = url($current->url("p/{$group->id}/{$group->slug}"));
 
-        $description = $group->min_price !== null && $group->merchant_count > 1
-            ? __('site.product.seo_compare', [
-                'title' => $group->title,
+        $heading = ProductTitle::heading($group);
+
+        /*
+         * Three shapes, because two of them lead with the price and there is
+         * not always one.
+         *
+         * `seo_single` used to be the fallback for both "one seller" and "no
+         * price", and it interpolated an empty string into the price slot —
+         * "Foo from , with the price history" shipped on every unpriced group.
+         * Leading with the price is deliberate: PageMeta truncates at 155 and
+         * `:title` can be 250 characters on its own, so a description that
+         * opened with the title lost the only number worth reading.
+         */
+        $description = match (true) {
+            $group->min_price !== null && $group->merchant_count > 1 => __('site.product.seo_compare', [
+                'title' => $heading,
                 'price' => $this->money($group->min_price, $market),
                 'count' => $group->merchant_count,
-            ])
-            : __('site.product.seo_single', [
-                'title' => $group->title,
-                'price' => $group->min_price === null ? '' : $this->money($group->min_price, $market),
-            ]);
+            ]),
+            $group->min_price !== null => __('site.product.seo_single', [
+                'title' => $heading,
+                'price' => $this->money($group->min_price, $market),
+            ]),
+            default => __('site.product.seo_unpriced', ['title' => $heading]),
+        };
 
         $meta = app(PageMeta::class);
 
         $meta->set(
-            title: $group->title,
+            // The listing title, not the heading and not the stored string: cut
+            // to what a search result shows, and carrying the shop count. See
+            // App\Services\Catalogue\ProductTitle.
+            title: ProductTitle::listing($group),
             description: $description,
             /*
              * Our card, not the merchant's photograph.
@@ -200,7 +229,7 @@ class ProductController extends Controller
         $meta->addJsonLd(StructuredData::breadcrumbs([
             ['name' => 'GiftCoves', 'url' => url($current->url())],
             ['name' => __('site.search.title'), 'url' => url($current->url('search'))],
-            ['name' => $group->title, 'url' => $url],
+            ['name' => $heading, 'url' => $url],
         ]));
     }
 

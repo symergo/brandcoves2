@@ -127,6 +127,23 @@ return [
         'submit' => 'Rechercher',
         'searching' => 'Recherche en cours…',
         'results_for' => 'Résultats pour « :term »',
+
+        /*
+         * The browser tab and the search listing, which is NOT `results_for`.
+         *
+         * `results_for` stays where it belongs: a live region announcing a new
+         * result set to a screen reader. It is a poor listing title — the first
+         * twelve characters, the ones weighted hardest, spend themselves on
+         * "Results for", and the quotation marks read as an exact-match
+         * citation rather than as a page about the thing.
+         *
+         * The term leads instead, capitalised, followed by the phrase this
+         * market actually shops in. SearchController::seo() drops the modifier
+         * for a long term: a four-word query already carries its own intent,
+         * and the suffix would only push it past the ~60 characters a listing
+         * shows.
+         */
+        'seo_title_term' => ':term — comparer les prix',
         'empty' => 'Aucun résultat pour « :term ».',
         'empty_filters' => 'Aucun produit ne correspond à ces filtres.',
         'clear_filters' => 'Effacer tous les filtres',
@@ -153,7 +170,7 @@ return [
         'previous' => 'Précédent',
         'next' => 'Suivant',
         'page_of' => 'Page :current sur :last',
-        'seo_term' => 'Cherchez :term sur bol, Amazon et des centaines de boutiques, et voyez le prix demandé par chacune.',
+        'seo_term' => 'Comparez :term sur bol, Amazon et des centaines de boutiques. Une fiche par produit, avec le prix de chaque boutique qui le vend.',
 
         /*
          * Le vocabulaire des résultats, au-dessus de la grille. Il a remplacé
@@ -170,12 +187,12 @@ return [
      * existe, voir App\Services\Seo\BrandCopy.
      */
     'brand' => [
-        'title' => ':brand',
+        'title' => ':brand offres et promotions',
         'heading' => ':brand',
-        'seo_description' => 'Tous les produits :brand que nous avons trouvés, avec le prix dans chaque boutique que nous suivons.',
+        'seo_description' => 'Tous les produits :brand avec le prix de chaque boutique qui les vend. Comparez les offres et voyez où :brand coûte le moins cher.',
         'crumb' => 'Marques',
         'index_title' => 'Marques',
-        'index_seo_title' => 'Toutes les marques du catalogue, et les boutiques qui les vendent',
+        'index_seo_title' => 'Toutes les marques de A à Z',
         'index_seo_description' => 'Toutes les marques du catalogue, avec les prix actuels de bol, Amazon et des centaines de boutiques qui les vendent.',
         'index_intro' => 'Toutes les marques du catalogue, avec les prix actuels des boutiques qui les vendent.',
         'index_empty' => 'Encore aucune marque dans cette région.',
@@ -220,8 +237,22 @@ return [
         'price_as_of' => 'Prix et disponibilité au moment indiqué, susceptibles de changer.',
         'disclosure' => 'Nous pouvons percevoir une commission si vous achetez via ce lien. Le prix que vous payez ne change pas.',
         'unavailable' => "Ce produit n'est actuellement disponible dans aucune boutique que nous suivons.",
-        'seo_compare' => ':title à partir de :price, avec l\'offre de chacune des :count boutiques.',
-        'seo_single' => ":title à partir de :price. Consultez l'historique des prix avant d'acheter.",
+        'seo_compare' => 'À partir de :price chez :count boutiques. Comparez tous les vendeurs de :title et voyez où il est le moins cher.',
+        'seo_single' => 'À partir de :price, avec l’historique des prix avant d’acheter. :title',
+        // Nothing is priced yet, so neither of the two above will do:
+        // both open with a price and would print an empty gap where it goes.
+        'seo_unpriced' => ':title — les boutiques qui le vendent, avec le prix dès qu’il est connu.',
+
+        /*
+         * The shop count goes in the title; the price stays in the description.
+         *
+         * Both are ours to claim and only one of them is safe up there. A
+         * cached snippet quoting a price we no longer offer is a trust problem,
+         * and the price is the number most likely to have moved since the last
+         * crawl. A merchant count barely moves. The JSON-LD AggregateOffer
+         * remains the honest machine-readable copy of both.
+         */
+        'seo_title_multi' => ':title — chez :count boutiques',
     ],
 
     /*
@@ -241,7 +272,7 @@ return [
     ],
 
     'shops' => [
-        'seo_title' => 'Les boutiques en ligne vers lesquelles nous renvoyons',
+        'seo_title' => 'Les boutiques en ligne partenaires',
         'seo_description' => 'Chaque boutique dont les offres apparaissent ici, les plus récentes mises en avant. Pas de totaux, juste la liste.',
         'title' => 'Coves Boutiques',
         'intro' => "Chaque offre sur ce site nomme la boutique d'où elle vient. Voici ces boutiques — celles qui desservent cette région.",
@@ -255,8 +286,8 @@ return [
     ],
 
     'coves' => [
-        'seo_title' => 'Toutes les Coves : éditions quotidiennes, idées par personne et longs formats',
-        'seo_description' => "L'étagère complète. Une nouvelle édition chaque matin, des idées cadeaux construites autour d'une personne, et des longs formats autour d'un sujet avec les prix en direct.",
+        'seo_title' => 'Idées cadeaux, guides et lectures',
+        'seo_description' => 'L’étagère complète : une nouvelle édition chaque matin, des idées cadeaux autour d’une personne, et des longs formats avec les prix en direct.',
         'title' => 'Toutes les Coves',
         'intro' => "Tout ce que nous avons écrit ici, classé par forme. L'une arrive chaque matin, l'autre est construite autour d'une personne, la troisième autour d'un sujet.",
         'empty' => 'Rien de publié dans cette région pour le moment. Les premières Coves arrivent.',
@@ -464,6 +495,12 @@ return [
     ],
 
     'lists' => [
+
+        // Public, and it explains itself to a visitor with no account,
+        // so it is indexable. It shipped with no title and no description
+        // at all until 2026-09-05.
+        'seo_title' => 'Des listes d’envies à partager',
+        'seo_description' => 'Tenez une liste d’envies, partagez-la avec ceux qui vous offrent quelque chose, et laissez-les réserver un cadeau sans savoir qui a pris quoi.',
         'title' => 'Mes listes',
         'subtitle' => 'Tout ce que vous gardez, et tout ce que les autres ont partagé avec vous.',
         'shared_subtitle' => 'Les listes qu’on a partagées avec vous. C’est ainsi que vous leur trouvez un cadeau.',
@@ -677,6 +714,12 @@ return [
         'ask_them_hint' => 'Envoyez ce lien. Ils remplissent leurs propres goûts et ne voient jamais ce que vous avez choisi.',
     ],
     'santa' => [
+
+        // Public, and it explains itself to a visitor with no account,
+        // so it is indexable. It shipped with no title and no description
+        // at all until 2026-09-05.
+        'seo_title' => 'Ami Secret, tiré au sort en ligne',
+        'seo_description' => 'Créez un groupe, tirez les noms en ligne, et chacun ne voit que la personne pour qui il achète. Sans chapeau, sans tableur, sans fuite.',
         'title' => 'Ami Secret',
         'subtitle' => 'Un groupe, un tirage, personne ne sait qui a qui.',
         'create' => 'Créer un groupe',
@@ -1022,8 +1065,8 @@ return [
 
     // Voir l'explication de ces clés dans lang/en/site.php.
     'feedback' => [
-        'seo_title' => 'Dites-nous ce qui pourrait être mieux, ou faites-nous un compliment',
-        'seo_description' => 'Dites ce qui pourrait être mieux — un prix qui n’est plus à jour, un lien qui ne mène nulle part — ou dites-nous ce qui vous plaît. Aucun compte n’est nécessaire.',
+        'seo_title' => 'Dites-nous ce qui pourrait être mieux',
+        'seo_description' => 'Dites ce qui pourrait être mieux — un prix qui n’est plus à jour, un lien qui ne mène nulle part — ou ce qui vous plaît. Aucun compte nécessaire.',
         'title' => 'Dites-nous ce qui pourrait être mieux, ou faites-nous un compliment',
         'message_label' => 'Votre message',
         'message_placeholder' => 'Qu’est-ce qui ne va pas, qu’est-ce qui manque, que feriez-vous autrement ? Ou dites-nous simplement ce que vous aimez chez GiftCoves :D',
@@ -1152,6 +1195,18 @@ return [
     ],
 
     'gift_ideas' => [
+
+        /*
+         * A persona's listing title, which its theme_title cannot be.
+         *
+         * "The one who reads" is a good heading and an unsearchable
+         * listing: it holds no word anybody types. The query is "gift for
+         * someone who reads" and this page is exactly that answer, so the
+         * H1 keeps the editorial title and the listing gets this one.
+         * GiftIdeasController falls back to the bare theme_title when the
+         * two together would run past what a listing shows.
+         */
+        'persona_seo_title' => 'Idées cadeaux pour :persona',
 
         /*
          * The placeholder title a drafted persona wears.
@@ -1415,7 +1470,7 @@ return [
          * It replaced "Coves Inspiration" on 2026-09-01, which named a mood
          * where this shelf gives advice — see navigation.md.
          */
-        'seo_title' => 'Guides d’achat avec un prix en direct sur chaque produit',
+        'seo_title' => 'Guides d’achat avec prix en direct',
         'title' => 'Acheter malin',
         'subtitle' => "Conseils d'achat et guides, écrits à partir de ce que les gens cherchent ici plutôt que d'un outil de mots-clés.",
         'seo_description' => 'Des guides d’achat bâtis sur une demande réelle, avec les prix en direct de toutes les boutiques qui vendent chaque produit.',

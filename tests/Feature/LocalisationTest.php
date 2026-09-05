@@ -269,6 +269,69 @@ class LocalisationTest extends TestCase
         }
     }
 
+    /**
+     * Every listing title fits what a search result actually shows.
+     *
+     * A title gets about 60 characters before Google truncates it, and
+     * `app.tsx` appends " · GiftCoves" — twelve of them — to every title that
+     * does not already carry the name. So 48 are ours.
+     *
+     * docs/features/seo.md has stated that rule since the day it was written,
+     * and on 2026-09-05 fifteen of the forty-four static titles were over it,
+     * `coves.seo_title` by 39 characters in French. Nothing was enforcing it,
+     * and the failure is invisible: the page renders, the tab looks fine, and
+     * the only place it shows is the one nobody on the team ever looks at — a
+     * search listing, where the part that gets dropped is the brand name.
+     *
+     * Interpolations are counted at their placeholder width, which understates
+     * a long brand or a long term. The controllers that build those titles
+     * carry their own guard against the rendered string; this one pins the copy.
+     */
+    #[Test]
+    public function every_seo_title_fits_the_sixty_character_listing(): void
+    {
+        foreach (['en', 'nl', 'fr', 'es'] as $language) {
+            foreach ($this->flatten(require base_path("lang/{$language}/site.php")) as $key => $value) {
+                if (! str_contains($key, 'seo_title')) {
+                    continue;
+                }
+
+                $this->assertLessThanOrEqual(
+                    48,
+                    mb_strlen($value),
+                    "{$language}.{$key} is ".mb_strlen($value).' characters; a listing shows 48 '
+                    ."before ' · GiftCoves' is appended, so the brand is what gets dropped: {$value}",
+                );
+            }
+        }
+    }
+
+    /**
+     * Every meta description ends where its author ended it.
+     *
+     * `PageMeta` truncates at 155 on a word boundary, so an over-long one is
+     * never broken — it is merely cut somewhere nobody chose, which is worse in
+     * a quiet way: the sentence still reads, and the half that made the case
+     * for clicking is gone.
+     */
+    #[Test]
+    public function every_meta_description_survives_pagemeta_untruncated(): void
+    {
+        foreach (['en', 'nl', 'fr', 'es'] as $language) {
+            foreach ($this->flatten(require base_path("lang/{$language}/site.php")) as $key => $value) {
+                if (! str_contains($key, 'seo_description')) {
+                    continue;
+                }
+
+                $this->assertLessThanOrEqual(
+                    155,
+                    mb_strlen($value),
+                    "{$language}.{$key} is ".mb_strlen($value).' characters and PageMeta cuts at 155',
+                );
+            }
+        }
+    }
+
     /** @return array<string, string> */
     private function flatten(array $items, string $prefix = ''): array
     {

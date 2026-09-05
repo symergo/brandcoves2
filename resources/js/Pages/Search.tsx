@@ -70,7 +70,7 @@ export default function Search({
     intro,
     emptyCopy,
 }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const { market, seoTitle } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [term, setTerm] = useState(q)
     const [filtersOpen, setFiltersOpen] = useState(false)
@@ -159,7 +159,15 @@ export default function Search({
 
     return (
         <>
-            <Head title={q ? t('search.results_for', { term: q }) : t('search.title')} />
+            {/*
+              The server's title, not one rebuilt here.
+
+              It carries the market's own buying phrase and drops it again for a
+              long term, and that rule lives in SearchController::seo(). Building
+              a second copy of it in TypeScript is how <title> and og:title come
+              to disagree — see the note on `seoTitle` in HandleInertiaRequests.
+            */}
+            <Head title={seoTitle ?? (q ? q : t('search.title'))} />
 
             <form
                 onSubmit={(e) => {
@@ -361,6 +369,23 @@ export default function Search({
                   `document.body.scrollWidth` 1204.
                 */}
                 <section className="min-w-0">
+                    {/*
+                      The heading this template shipped without.
+
+                      Search was the only top-level page with no <h1> — the
+                      highest-volume indexable template on the site, opening at
+                      <h2>, with nothing naming what the page was about. It is
+                      the term itself: a heading over a page of results for
+                      "koptelefoon" has no better thing to say, and dressing it
+                      up as a sentence would only push the first row down.
+
+                      Capitalised because the term arrives as raw user input and
+                      a heading that opens lowercase reads as broken.
+                    */}
+                    <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
+                        {q ? q.charAt(0).toUpperCase() + q.slice(1) : t('search.title')}
+                    </h1>
+
                     {view === 'store' && (
                         /*
                           The shops are the control.

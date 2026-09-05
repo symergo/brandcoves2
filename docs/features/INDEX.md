@@ -18,8 +18,10 @@ cannot be recovered from a diff.
 | [market-supply.md](market-supply.md) | Catalogue / Operations | Active |
 | [source-switch.md](source-switch.md) | Catalogue / Operations | Active |
 | [product-identity.md](product-identity.md) | Catalogue | Active |
+| [product-titles.md](product-titles.md) | Catalogue / SEO | Active |
 | [search.md](search.md) | Search | Active |
 | [seo.md](seo.md) | SEO / Frontend | Active |
+| [page-titles.md](page-titles.md) | SEO / Frontend | Active |
 | [analytics.md](analytics.md) | SEO / Compliance | Active — production only, behind a consent banner |
 | [brand-mark.md](brand-mark.md) | Brand / Frontend | Active |
 | [social-cards.md](social-cards.md) | SEO / Brand | Active |

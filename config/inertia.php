@@ -31,7 +31,33 @@ return [
 
         'hot_url' => env('INERTIA_SSR_HOT_URL'),
 
-        'ensure_bundle_exists' => (bool) env('INERTIA_SSR_ENSURE_BUNDLE_EXISTS', true),
+        /*
+        |--------------------------------------------------------------------------
+        | Bundle check — DEFAULTED OFF, and it must stay off
+        |--------------------------------------------------------------------------
+        |
+        | Inertia's default is `true`: before dispatching to the SSR service it
+        | checks that `bootstrap/ssr/ssr.js` exists on the *local* filesystem,
+        | and returns null without a log line or an exception if it does not.
+        |
+        | That check assumes one container runs both PHP and Node. This
+        | deployment splits them on purpose — the Dockerfile copies the bundle
+        | into the `ssr` stage only, so the PHP image stays lean — so the `app`
+        | container has no `bootstrap/ssr/` directory at all and the guard fired
+        | on every request while the SSR service sat healthy and unused beside
+        | it. Every page shipped as `<div id="app"></div>`: no `<title>`, no
+        | `<h1>`, no body copy, for every crawler, on production and staging
+        | alike. Nothing looks wrong in a browser, because the client hydrates.
+        |
+        | Defaulted here rather than set as an environment variable because the
+        | split is a property of this repository, not of one deployment: a new
+        | environment would otherwise inherit the same silent failure.
+        |
+        | The fallback is still safe when SSR is genuinely down — the HTTP call
+        | fails, `handleSsrFailure()` catches it, and the page renders
+        | client-side, which is the documented behaviour we actually want.
+        */
+        'ensure_bundle_exists' => (bool) env('INERTIA_SSR_ENSURE_BUNDLE_EXISTS', false),
 
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 

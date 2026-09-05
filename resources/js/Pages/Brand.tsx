@@ -101,7 +101,7 @@ export default function Brand({
     intro,
     emptyCopy,
 }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const { market, seoTitle } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const [filtersOpen, setFiltersOpen] = useState(false)
     const base = `/${market.key}/brand/${brand.slug}`
@@ -139,7 +139,12 @@ export default function Brand({
 
     return (
         <>
-            <Head title={t('brand.title', { brand: brand.name })} />
+            {/*
+              The server's title, which drops the modifier for a long brand name.
+              Rebuilding it from the key here would lose that guard and put the
+              <title> and the og:title out of step. See BrandController.
+            */}
+            <Head title={seoTitle ?? brand.name} />
 
             <nav aria-label="Breadcrumb" className="text-sm text-ink-soft">
                 <Link href={`/${market.key}/brands`} className="hover:text-accent">

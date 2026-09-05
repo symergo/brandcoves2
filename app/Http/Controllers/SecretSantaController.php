@@ -15,6 +15,7 @@ use App\Services\Gift\DrawImpossible;
 use App\Services\Gift\GiftTarget;
 use App\Services\Gift\SantaRepair;
 use App\Services\Gift\SecretSantaDraw;
+use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -67,6 +68,17 @@ class SecretSantaController extends Controller
                 ->withCount('members')
                 ->latest()
                 ->get();
+
+        /*
+         * The same gap `/lists` had: public, indexable, and calling no PageMeta
+         * at all, so it shipped with an empty og:title and no description. The
+         * copy describes the signed-out page, which is the one a crawler reads.
+         */
+        app(PageMeta::class)->set(
+            title: __('site.santa.seo_title'),
+            description: __('site.santa.seo_description'),
+            canonical: url($current->url('santa')),
+        );
 
         return Inertia::render('Santa/Index', [
             'groups' => $groups->map(fn (SecretSantaGroup $group) => [

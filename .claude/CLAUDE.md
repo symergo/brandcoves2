@@ -330,15 +330,14 @@ in `.claude/coolify_api.api` (gitignored) as `KEY=<token>`, and the API base is
 > files, so a clean-tree gate would never pass. Git will happily ship commit A while B and C sit on
 > the laptop, and the failure mode is not a missing deploy but an incoherent one.
 
-> **One thing is still outstanding: production does not redirect to a canonical host.**
-> `giftcoves.com`, `www.giftcoves.com` and `brandcoves.com` all serve directly — nothing 301s — so
-> the same site is live on three domains with `ROBOTS_ALLOW=true`, which is a duplicate-content
-> problem. The fix is one deploy setting three variables together on `GiftCoves-prod`:
-> `APP_URL=https://giftcoves.com`, `CANONICAL_HOST=giftcoves.com`,
-> `LEGACY_HOSTS=brandcoves.com,www.brandcoves.com,www.giftcoves.com`. `APP_URL` still points at
-> `brandcoves.com`, which is why the sitemap served from `giftcoves.com` emits `brandcoves.com`
-> URLs. Keep `giftcoves.com` **out** of `LEGACY_HOSTS` — the canonical host redirecting to itself is
-> a loop. See [docs/features/rebrand.md](docs/features/rebrand.md).
+> **The canonical host is done.** Verified by behaviour on 2026-09-05:
+> `www.giftcoves.com` and `brandcoves.com` both 301 to `giftcoves.com`, and the canonical tag
+> served from either names `giftcoves.com`. This paragraph used to say it was outstanding, and
+> kept sending sessions to re-fix it. If it regresses, the three variables that settle it are
+> `APP_URL=https://giftcoves.com`, `CANONICAL_HOST=giftcoves.com` and
+> `LEGACY_HOSTS=brandcoves.com,www.brandcoves.com,www.giftcoves.com`, set together on
+> `GiftCoves-prod` — and `giftcoves.com` stays **out** of `LEGACY_HOSTS`, because the canonical
+> host redirecting to itself is a loop. See [docs/features/rebrand.md](docs/features/rebrand.md).
 
 > **After any deploy, read `/health` on the host you changed.** `commit` says which code is serving
 > and `started` says whether the container actually restarted; `built` is cacheable and a stale
