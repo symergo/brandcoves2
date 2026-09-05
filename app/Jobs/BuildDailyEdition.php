@@ -66,6 +66,27 @@ class BuildDailyEdition implements ShouldQueue
          * The mining below is deliberately outside the gate: it is a fact about
          * the day rather than about the column, and the topic queue should keep
          * advancing in a market that has paused its Daily.
+         *
+         * ## Known: this gate fails closed
+         *
+         * `AutomationSettingsStore::stored()` catches `Throwable` and answers
+         * "every switch off", which is right where it came from — during a
+         * Docker build or a `migrate` against a fresh schema there is no
+         * reachable database, and a provider that throws there takes out the one
+         * command that would fix it.
+         *
+         * Here it means a database or Redis failure at exactly this moment would
+         * **skip the column and log it**, where before this gate existed the job
+         * would have thrown and been retried. The risk is low — everything above
+         * has already queried the database, so the connection is proven — but
+         * the failure is quiet, and a quietly missing Daily is one this codebase
+         * has been bitten by: `/be-nl/daily` 404'd on production for weeks while
+         * `/health` reported `ok`.
+         *
+         * If it needs tightening, the fix is to tell the two cases apart:
+         * "switched off" is a legitimate empty result and "could not read the
+         * switches" is not, and only the first should skip a build. See
+         * docs/features/cove-automation.md.
          */
         // Mine first: the edition asks for the ripest topic, and yesterday's
         // searches are what ripen one.
