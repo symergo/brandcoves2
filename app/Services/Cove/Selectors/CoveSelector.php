@@ -19,7 +19,8 @@ use Illuminate\Support\Collection;
  *
  * A Daily is a column. Its remaining slots want variety and surprise: things
  * that rank badly everywhere else, spread across categories, never repeating
- * last month.
+ * last month — but drawn from the day's own theme, and left empty rather than
+ * filled from the market at large when the theme runs out.
  *
  * A guide is a comparison. Its remaining slots want one product per brand,
  * ordered by price, all of them carrying several shops — because the reader is
@@ -30,9 +31,10 @@ use Illuminate\Support\Collection;
  * can change safely.
  *
  * The curated lead is passed in rather than concatenated afterwards because both
- * strategies have to *account* for it: the column trims for category variety
- * across the whole page, and the guide's one-per-brand rule has to know which
- * brands a person already spent.
+ * strategies have to *account* for it: the column spends its category variety
+ * around what a person already chose, and the guide's one-per-brand rule has to
+ * know which brands a person already spent. Neither may drop a curated product
+ * to satisfy its own rule.
  */
 interface CoveSelector
 {

@@ -92,14 +92,20 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
         'personas_heading' => 'Cadeau-ideeën, per type',
-        'personas_intro' => 'Cadeaus gekozen rond een persoon in plaats van een datum: de kruidenliefhebber, de vader die alles al heeft, de vriend die leest.',
         'personas_all' => 'Alle cadeau-ideeën',
 
         'coves_heading' => 'Coves',
         'coves_intro' => 'Lange verhalen rond één thema, waarbij elk merk en elk product doorlinkt naar een live zoekopdracht.',
         'coves_all' => 'Alle Coves',
         'coves_volume' => ':count zoekopdrachten per maand',
-        'organise_intro' => 'Eén plek voor wat jij wilt, wat je voor anderen zoekt, en wat jullie samen kopen.',
+        /*
+         * The card for your own lists, which used to say nothing at all: the
+         * band's opening sentence covered all five cards and this one was the
+         * only card left leaning on it. With that sentence gone the card has to
+         * say what it is, and privacy is the part a first-time visitor is
+         * actually unsure about.
+         */
+        'organise_mine_hint' => 'Wat je zelf wilt hebben, op één plek en privé tot je iemand de link stuurt.',
         'organise_group_hint' => 'Eén cadeau, meerdere mensen, en niemand hoeft achter het geld aan.',
         'organise_occasion' => 'Gelegenheid',
         'organise_occasion_hint' => 'Zet een datum op een lijst — een verjaardag, een huwelijk, Kerst — en iedereen met de link weet waarvoor hij is.',
@@ -120,7 +126,6 @@ return [
         'submit' => 'Zoeken',
         'searching' => 'Bezig met zoeken…',
         'results_for' => 'Resultaten voor ":term"',
-        'browse' => 'Blader door de catalogus',
         'empty' => 'Niets gevonden voor ":term".',
         'empty_filters' => 'Geen producten voldoen aan deze filters.',
         'clear_filters' => 'Alle filters wissen',
@@ -1041,6 +1046,12 @@ return [
         'title' => 'Zoeken en scannen',
         'intro' => 'Wat het zoekveld begrijpt, hoe je een resultatenlijst versmalt, en wat er gebeurt als je een camera op een barcode richt.',
         'link' => 'Waarop kun je hier zoeken?',
+        /*
+         * The footer's own label. `link` is a question — it works beside a
+         * search box that has just disappointed somebody, and reads oddly in a
+         * row of nouns at the bottom of every page.
+         */
+        'footer_link' => 'Zoektips',
 
         'searching_heading' => 'Waarop je kunt zoeken',
         'searching_intro' => 'Eén veld, vier soorten invoer. Het ziet eruit als elk ander zoekveld en het neemt heel wat meer aan.',
@@ -1146,7 +1157,6 @@ return [
         // appended by the Inertia title callback, so it is not repeated here.
         'seo_title' => ':theme — cadeautips',
         'seo_description' => 'Een handvol dingen waarvan je niet wist dat ze bestonden, en een koopgids gebouwd op wat mensen hier echt zochten.',
-        'see_offers' => 'Bekijk de aanbiedingen',
         'finds_title' => 'De vondsten van vandaag',
         'guide_title' => 'De gids van vandaag',
         'guide_why' => 'Geschreven omdat :count zoekopdrachten hier erom vroegen.',

@@ -619,6 +619,17 @@ function Chrome({ children }: PropsWithChildren) {
                             {t('nav.surprise')}
                         </Link>
 
+                        {/* The search help, which until now was reachable only
+                            from the two pages that carry a search field —
+                            useless to somebody who has wandered off them and
+                            still does not know the box takes a barcode. Under
+                            its short name: the question it is titled with on
+                            those pages is aimed at a search that just failed,
+                            not at a row of nouns on every page. */}
+                        <Link href={`/${market.key}/search-help`} className="hover:text-accent">
+                            {t('search_help.footer_link')}
+                        </Link>
+
                         {/* Belgian law wants the operator's details reachable
                             from every page. The footer is that. */}
                         <Link href={`/${market.key}/about`} className="hover:text-accent">

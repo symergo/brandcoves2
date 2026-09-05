@@ -220,12 +220,6 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                 {t('nav.search')}
                             </button>
                         </form>
-
-                        <p className="mt-3 text-sm text-ink-soft">
-                            <Link href={`${base}/search-help`} className="underline hover:text-accent">
-                                {t('search_help.link')}
-                            </Link>
-                        </p>
                     </div>
 
                     <HomeIllustration className="hidden w-72 shrink-0 text-ink-soft md:block lg:w-80" />
@@ -361,7 +355,6 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                         {t('nav.cove')} →
                     </Link>
                 </div>
-                <p className="mt-1 max-w-2xl text-ink-soft">{t('home.organise_intro')}</p>
 
                 {/*
                   Making a list, offered as an action rather than only as a
@@ -469,14 +462,16 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                 key: 'mine',
                                 href: gifting.urls.lists,
                                 name: t('nav.lists'),
-                                // Nothing when there is nothing to say. The
-                                // fallback here was "keep things for yourself
-                                // or share them with others" under a card
-                                // called Lists, which is the card's own name
-                                // at greater length.
+                                // A count once there are lists, and what the
+                                // card is for until then — the same shape the
+                                // Secret Friend card below uses. The earlier
+                                // fallback here was nothing at all, which was
+                                // right while the band opened with a sentence
+                                // covering all five cards; that sentence is
+                                // gone, so this card carries its own.
                                 hint: gifting.lists > 0
                                     ? t('home.gifting_lists_count', { count: n(gifting.lists) })
-                                    : null,
+                                    : t('home.organise_mine_hint'),
                             },
                             {
                                 key: 'shared',
@@ -597,7 +592,6 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                         {t('nav.discover_cove')} →
                     </Link>
                 </div>
-                <p className="mt-1 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
 
                 <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {(
@@ -772,7 +766,6 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                             {t('home.personas_all')} →
                         </Link>
                     </div>
-                    <p className="mt-1 max-w-2xl text-ink-soft">{t('home.personas_intro')}</p>
 
                     <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {personas.map((persona) => (
@@ -830,7 +823,6 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                             {t('home.coves_all')} →
                         </Link>
                     </div>
-                    <p className="mt-1 max-w-2xl text-ink-soft">{t('home.coves_intro')}</p>
 
                     <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {coves.map((cove) => (

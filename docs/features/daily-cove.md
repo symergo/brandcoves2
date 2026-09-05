@@ -188,6 +188,58 @@ astonish you" did not. `Reaction`'s case names and the `mindblown_count` /
 data migration across `pick_reactions` and two counters for a change nobody can
 see, and `Reaction::emoji()` is the one place the two spellings have to meet.
 
+### The theme fills the page, and the curator's picks are not trimmed — 2026-09-04/05
+
+Until now the theme was **a bias, not a filter**: themed finds led, and every slot they did not fill
+was topped up from the general surprise pool, ordered by `surprise_score` across the whole market.
+The argument for it was that a page that did not appear is worse than one where two of six finds are
+off-theme.
+
+That is a fair trade at two of six and a different thing entirely at four of six, which is what
+nl-nl published on 4 September 2026. The plan was a home-gym theme with a five-product shortlist and
+45 matching products in the market; the edition carried two dumbbells and then a party game, a
+children's laptop, a pizza peel and a set of skate wheels — the four highest-scoring oddities in the
+catalogue that morning. A reader who opened an article about home gyms found four things with no
+relation to it, which does not read as serendipity. It reads as a page assembled by nobody.
+
+**Two rules were doing this together, and both changed.**
+
+1. `spread()` allowed **one product per category** and applied that to the curated shortlist as
+   well. The feed's categories are leaf labels, so a themed day is one or two of them: the curator's
+   five products were three *Dumbbells* and two *Hometrainer*, and three of the five were dropped
+   before the engine added anything. **Curated products are now the trim's `lead`** — on the page
+   whatever it decides, in the curator's order. Their categories still count as spent, so the engine
+   does not pile a fourth dumbbell onto a shortlist already three deep in them, but nothing a person
+   chose is discarded by a ranking rule. Curation exists to override the engine's judgement, and
+   "one per category" *is* the engine's judgement.
+2. Everything `spread()` could not fill from the theme came from the general pool. Now the trim
+   **backfills from the remaining themed candidates** instead, so a Cove returns what its own theme
+   can carry, however short that is.
+
+Together they turn the gym edition into the curator's three dumbbell sets, their two exercise bikes,
+and one more gym product — instead of one dumbbell set, one bike and four strangers.
+
+Worth knowing if you are reproducing this: the first fault needs a **rich** candidate pool to appear
+at all. `spread()` ends with a backfill pass, so on a thin day the products its variety pass skipped
+came straight back and the shortlist survived by accident. It only lost products when the page filled
+before the backfill ran — which is exactly what a market-wide surprise pool guarantees.
+
+**The pool survives as the floor that keeps the column publishing at all**, and the threshold is
+`picks.minimum` — the same number the builder refuses to publish under. Below it there is no edition,
+so an off-theme find is the difference between a padded page and no page, which is the one trade
+where padding wins. That floor is load-bearing rather than theoretical: the observance calendar's
+queries are **Dutch**, deliberately (`config/observances.php` says so), so on an unplanned day in
+`en` or `es` the themed lane matches nothing at all and the whole edition is the pool.
+
+**Gift personas too**, since 2026-09-05 — `SurpriseSelector` fills both. The reason is sharper
+there than on a Tuesday: a persona page is titled after a person, so a high-scoring stranger under
+*The herbalist* is not serendipity, it is a page that does not know who it is about. Buying guides
+are unaffected; they use `LadderSelector`, which never had a surprise lane.
+
+Locked plans are unaffected — they never reached the selector. Nor is the guide side: `LadderSelector`
+already treated the shortlist as an untrimmed lead and spent its one-per-brand rule around it, which
+is where the shape of the fix came from.
+
 ### Only what you can buy
 
 An edition is built once and served all day, and forever after in the archive.
@@ -352,7 +404,7 @@ The three things it changed here:
   Curated products still lead and are still exempt from the 90-day repeat memory, for the unchanged
   reason: the point of curation is to override a score, so a pick the ranker could veto would not be
   curation.
-- **`pick_mode` decides what the engine may add.** `open` tops the edition up to `picks.per_day`;
+- **`pick_mode` decides what the engine may add.** `open` tops the edition up to `picks.per_day`, from the theme alone unless that leaves the page under `picks.minimum` (above);
   `locked` publishes exactly the shortlist, in order, with `spread()` skipped so the variety trim
   cannot reorder a hand-built list. The publish floor is now `picks.minimum` in config rather than a
   literal 3, so the curation screen can warn about a short locked plan before 06:00.

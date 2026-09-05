@@ -8,6 +8,7 @@ use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
+use App\Models\CovePlan;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\Product;
@@ -239,6 +240,148 @@ class DailyCoveTest extends TestCase
         $this->get('/be-nl/cadeautips/'.$edition->drop_date->toDateString())
             ->assertRedirect('/be-nl/tips/'.$edition->slug)
             ->assertStatus(301);
+    }
+
+    // ── The theme is the page, not a bias on it ──────────────────────────
+
+    #[Test]
+    public function a_themed_edition_publishes_nothing_off_theme(): void
+    {
+        /*
+         * The off-theme finds here outscore every themed one, which is exactly
+         * the shape that used to fill the page with them: the general pool is
+         * ordered by surprise score, and a themed day's products are ordinary
+         * enough to rank below whatever is strangest in the catalogue that
+         * morning. nl-nl's 4 Sep 2026 home-gym edition published four such
+         * strangers under an article about home gyms.
+         */
+        $this->seedFinds();
+
+        /*
+         * Two categories between six products, which is what a theme looks
+         * like: the feed's categories are leaf labels, so "the gym in the spare
+         * room" is Hometrainer and Halterset and nothing else. The variety rule
+         * in `spread` therefore runs out after two, and what happens next is
+         * the whole of this test.
+         */
+        foreach ([
+            'Hometrainer compact' => 'Hometrainer',
+            'Hometrainer opvouwbaar' => 'Hometrainer',
+            'Hometrainer met display' => 'Hometrainer',
+            'Halterset gietijzer' => 'Halterset',
+            'Halterset vinyl' => 'Halterset',
+            'Halterset verstelbaar' => 'Halterset',
+        ] as $i => $title) {
+            $this->find($i, 4000 + strlen($i) * 90, $title, 40);
+        }
+
+        CovePlan::create([
+            'market' => Market::BeNl->value,
+            'drop_date' => CarbonImmutable::today()->toDateString(),
+            'title' => 'De sportschool op de logeerkamer',
+            'queries' => ['hometrainer', 'halterset', 'dumbbell'],
+            'status' => 'approved',
+        ]);
+
+        $edition = app(EditionBuilder::class)->build(Market::BeNl);
+        $this->assertNotNull($edition);
+
+        $titles = $edition->picks()->with('group')->get()->map(fn ($pick) => $pick->group->title);
+
+        $this->assertCount(6, $titles);
+
+        foreach ($titles as $title) {
+            $this->assertStringNotContainsString(
+                'Bijzonder apparaat',
+                $title,
+                "an off-theme find reached a themed edition: {$title}",
+            );
+        }
+    }
+
+    #[Test]
+    public function a_curated_shortlist_survives_the_variety_trim(): void
+    {
+        /*
+         * Three products from one category, which is what curating a narrow
+         * theme looks like. The variety trim used to drop two of them without
+         * saying so — nl-nl's home-gym edition published one of the curator's
+         * three dumbbell sets and one of their two exercise bikes — and a rule
+         * that silently discards a person's decision is not a variety rule, it
+         * is a bug with a rationale.
+         */
+        $this->seedFinds();
+
+        $plan = CovePlan::create([
+            'market' => Market::BeNl->value,
+            'drop_date' => CarbonImmutable::today()->toDateString(),
+            'title' => 'Alles in één hoek',
+            'queries' => ['halterset', 'hometrainer'],
+            'status' => 'approved',
+        ]);
+
+        $shortlist = ['Halterset gietijzer', 'Halterset vinyl', 'Halterset verstelbaar'];
+
+        foreach ($shortlist as $i => $title) {
+            $plan->items()->create([
+                'group_id' => $this->find($title, 4000 + $i * 500, 'Halterset', 20)->id,
+                'rank' => $i + 1,
+            ]);
+        }
+
+        /*
+         * Five themed products in five categories, which is more than the page
+         * has room for once the shortlist is on it. That surplus is the whole
+         * test: the trim's first pass could fill the edition on its own, so a
+         * curated product it skipped never came back through the backfill —
+         * which is why the production failure needed a rich pool to appear at
+         * all, and why a thin fixture would pass either way.
+         */
+        foreach ([
+            'Hometrainer compact' => 'Hometrainers',
+            'Hometrainer met display' => 'Cardiotoestellen',
+            'Hometrainer opvouwbaar' => 'Fitnessapparatuur',
+            'Hometrainer voor thuis' => 'Fitness',
+            'Hometrainer met weerstand' => 'Cardio',
+        ] as $title => $category) {
+            $this->find($title, 9000, $category, 40);
+        }
+
+        $edition = app(EditionBuilder::class)->build(Market::BeNl);
+        $this->assertNotNull($edition);
+
+        $titles = $edition->picks()->with('group')->get()->map(fn ($pick) => $pick->group->title)->all();
+
+        foreach ($shortlist as $title) {
+            $this->assertContains($title, $titles, "the variety trim dropped a curated product: {$title}");
+        }
+    }
+
+    #[Test]
+    public function a_theme_too_thin_to_publish_is_filled_rather_than_dropped(): void
+    {
+        /*
+         * The floor under the rule above, and it is load-bearing rather than
+         * theoretical: the observance calendar's queries are Dutch, so on an
+         * unplanned day in `en` or `es` the themed lane matches nothing at all.
+         * Below `picks.minimum` the builder refuses to publish, so an off-theme
+         * find there is the difference between a padded page and no page —
+         * which is the one trade where padding wins.
+         */
+        $this->seedFinds();
+        $this->find('Hometrainer compact', 4000, 'Fitness', 40);
+
+        CovePlan::create([
+            'market' => Market::BeNl->value,
+            'drop_date' => CarbonImmutable::today()->toDateString(),
+            'title' => 'Eén product diep',
+            'queries' => ['hometrainer'],
+            'status' => 'approved',
+        ]);
+
+        $edition = app(EditionBuilder::class)->build(Market::BeNl);
+        $this->assertNotNull($edition, 'a thin theme dropped the edition instead of filling it');
+        $this->assertSame(6, $edition->picks()->count());
     }
 
     #[Test]

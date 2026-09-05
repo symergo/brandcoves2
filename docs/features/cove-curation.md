@@ -224,12 +224,17 @@ is right changes by the day.
 
 | Mode | Behaviour |
 |---|---|
-| `open` (default) | Curated products lead and are exempt from the 90-day repeat memory; the engine tops the edition up to `picks.per_day` from the themed and surprise lanes |
+| `open` (default) | Curated products lead, in the curator's order, exempt from the 90-day repeat memory **and from the variety trim**; the engine tops the edition up to `picks.per_day` from the themed lane, stopping short when the theme runs out ([daily-cove.md](daily-cove.md)) |
 | `locked` | The curated products *are* the edition, in the curator's order. The engine adds nothing |
 
-Under `locked` the variety trim (`spread()`) is skipped rather than applied to a shorter list. It
-drops one-per-category, which on a hand-built plan would remove the fourth of four candles somebody
-deliberately chose, and reorder the rest on the way past.
+Under `locked` the variety trim (`spread()`) is skipped outright, because there is nothing for it to
+trim: the shortlist is the page.
+
+Under `open` it runs, but **only over what the engine wants to add**. Until 2026-09-05 it ran over
+the curated products too and dropped one-per-category, which removed three of the five products a
+person had chosen for nl-nl's 4 September home-gym edition — a rule meant to keep a page varied,
+silently overruling the person the whole screen exists to serve. Their categories still count as
+spent, so the engine does not add a fourth of something the shortlist already has three of.
 
 `locked` still respects the publish floor (`picks.minimum`, 3). The floor is about the reader, not
 about who chose the products — a two-item page teaches a returning visitor that the column is not

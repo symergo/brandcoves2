@@ -93,14 +93,20 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
         'personas_heading' => 'Idées cadeaux, par profil',
-        'personas_intro' => "Des cadeaux choisis autour d'une personne plutôt que d'une date : l'herboriste, le père qui a déjà tout, l'ami qui lit.",
         'personas_all' => 'Toutes les idées cadeaux',
 
         'coves_heading' => 'Coves',
         'coves_intro' => "Des dossiers autour d'un thème, où chaque marque et chaque produit renvoie vers une recherche en direct.",
         'coves_all' => 'Toutes les Coves',
         'coves_volume' => ':count recherches par mois',
-        'organise_intro' => 'Un endroit pour ce que vous voulez, ce que vous cherchez pour les autres, et ce que vous achetez à plusieurs.',
+        /*
+         * The card for your own lists, which used to say nothing at all: the
+         * band's opening sentence covered all five cards and this one was the
+         * only card left leaning on it. With that sentence gone the card has to
+         * say what it is, and privacy is the part a first-time visitor is
+         * actually unsure about.
+         */
+        'organise_mine_hint' => 'Ce que vous voulez pour vous, à un seul endroit et privé tant que vous n’envoyez le lien à personne.',
         'organise_group_hint' => 'Un cadeau, plusieurs personnes, et personne ne court après l’argent.',
         'organise_occasion' => 'Occasion',
         'organise_occasion_hint' => 'Mettez une date sur une liste — un anniversaire, un mariage, Noël — et tous ceux qui ont le lien savent à quoi elle sert.',
@@ -121,7 +127,6 @@ return [
         'submit' => 'Rechercher',
         'searching' => 'Recherche en cours…',
         'results_for' => 'Résultats pour « :term »',
-        'browse' => 'Parcourir le catalogue',
         'empty' => 'Aucun résultat pour « :term ».',
         'empty_filters' => 'Aucun produit ne correspond à ces filtres.',
         'clear_filters' => 'Effacer tous les filtres',
@@ -1038,6 +1043,12 @@ return [
         'title' => 'Rechercher et scanner',
         'intro' => 'Ce que le champ de recherche comprend, comment affiner une liste de résultats, et ce qui se passe quand vous pointez une caméra sur un code-barres.',
         'link' => 'Que peut-on rechercher ici ?',
+        /*
+         * The footer's own label. `link` is a question — it works beside a
+         * search box that has just disappointed somebody, and reads oddly in a
+         * row of nouns at the bottom of every page.
+         */
+        'footer_link' => 'Aide à la recherche',
 
         'searching_heading' => 'Ce que vous pouvez rechercher',
         'searching_intro' => 'Un seul champ, quatre types de saisie. Il ressemble à n\'importe quel champ de recherche et il accepte bien davantage.',
@@ -1139,7 +1150,6 @@ return [
         'title' => 'La Cove Quotidienne',
         'seo_title' => ':theme — idées cadeaux',
         'seo_description' => 'Une poignée de choses dont vous ignoriez l’existence, et un guide d’achat bâti sur ce que les gens ont réellement cherché ici.',
-        'see_offers' => 'Voir les offres',
         'finds_title' => 'Les trouvailles du jour',
         'guide_title' => 'Le guide du jour',
         'guide_why' => 'Écrit parce que :count recherches ici l’ont demandé.',

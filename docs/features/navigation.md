@@ -315,6 +315,13 @@ account.
 **The bell only appears when something is unread.** A permanent icon that is almost always empty
 teaches people to ignore it, and then the one that matters is ignored too.
 
+**The search help is in the footer, not the header.** Added there 2026-09-04, under its short name
+`search_help.footer_link` rather than the question the two search fields link it with. It is
+documentation of a control, not a section of the site, so it does not earn a header entry — but the
+two surfaces carrying a search field are the only places it could be reached from, and a visitor who
+has given up on a search and moved on has left both behind. See
+[search-help.md](search-help.md).
+
 ## Files
 
 - `resources/js/Components/AccountMenu.tsx`

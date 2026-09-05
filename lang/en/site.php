@@ -137,14 +137,20 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
         'personas_heading' => 'Gift ideas, by person',
-        'personas_intro' => 'Presents chosen around a person rather than a date - the herbalist, the dad who has everything, the friend who reads.',
         'personas_all' => 'All gift ideas',
 
         'coves_heading' => 'Coves',
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',
         'coves_all' => 'All Coves',
         'coves_volume' => ':count searches a month',
-        'organise_intro' => 'Somewhere to keep what you want, what you are getting other people, and what several of you are buying together.',
+        /*
+         * The card for your own lists, which used to say nothing at all: the
+         * band's opening sentence covered all five cards and this one was the
+         * only card left leaning on it. With that sentence gone the card has to
+         * say what it is, and privacy is the part a first-time visitor is
+         * actually unsure about.
+         */
+        'organise_mine_hint' => 'What you want yourself, kept in one place and private until you send somebody the link.',
         'organise_group_hint' => 'One present, several people, and nobody has to chase anyone for the money.',
         // The card says what a registry IS to somebody who has none, and which
         // one theirs is to somebody who has. Never how much of it has been
@@ -168,7 +174,6 @@ return [
         'submit' => 'Search',
         'searching' => 'Searching…',
         'results_for' => 'Results for ":term"',
-        'browse' => 'Browse the catalogue',
         'empty' => 'Nothing matched ":term".',
         'empty_filters' => 'No products match these filters.',
         'clear_filters' => 'Clear all filters',
@@ -1243,6 +1248,12 @@ return [
         'title' => 'Searching and scanning',
         'intro' => 'What the search box understands, how to narrow a set of results, and what happens when you point a camera at a barcode.',
         'link' => 'What can I search for?',
+        /*
+         * The footer's own label. `link` is a question — it works beside a
+         * search box that has just disappointed somebody, and reads oddly in a
+         * row of nouns at the bottom of every page.
+         */
+        'footer_link' => 'Search tips',
 
         'searching_heading' => 'What you can search for',
         'searching_intro' => 'One box, four kinds of input. It looks like an ordinary search field and it accepts rather more than one.',
@@ -1354,7 +1365,6 @@ return [
         'title' => 'The Daily Cove',
         'seo_title' => ':theme — gift tips',
         'seo_description' => 'A handful of things you did not know existed, and a buying guide built from what people actually searched for.',
-        'see_offers' => 'See the offers',
         'finds_title' => "Today's finds",
         'guide_title' => "Today's guide",
         'guide_why' => 'Written because :count searches here asked for it.',

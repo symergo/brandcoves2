@@ -486,8 +486,15 @@ export default function Search({
                               count is still computed — pagination needs it, and
                               the empty state below branches on it — it is just
                               not something to say out loud.
+
+                              Empty rather than unmounted when there is no term:
+                              this is a live region, and it has to be in the DOM
+                              before its content changes for a screen reader to
+                              announce the first search. It said "Browse the
+                              catalogue" there until 2026-09-04, over a grid the
+                              visitor is already looking at.
                             */}
-                            {q ? t('search.results_for', { term: q }) : t('search.browse')}
+                            {q ? t('search.results_for', { term: q }) : ''}
                         </p>
 
                         <div className="ml-auto flex items-center gap-2">

@@ -367,6 +367,51 @@ class GiftPersonaTest extends TestCase
         ]);
     }
 
+    #[Test]
+    public function a_persona_is_filled_from_its_own_theme(): void
+    {
+        /*
+         * The same rule the Daily got on 2026-09-04, and for a sharper reason:
+         * a persona page is titled after a person — the herbalist, the dad who
+         * has everything — so a high-scoring stranger under that heading is not
+         * a surprise, it is a page that does not know who it is about. The
+         * `Bijzonder apparaat` finds here outscore every themed one, which is
+         * exactly what used to put them on the page.
+         */
+        $this->seedFinds();
+
+        $plan = CovePlan::create([
+            'market' => Market::BeNl->value,
+            'kind' => 'persona',
+            'slug' => 'de-kruidenliefhebber',
+            'title' => 'De kruidenliefhebber',
+            'queries' => ['kruidenmolen', 'vijzel', 'droogrek'],
+            'status' => 'approved',
+        ]);
+
+        foreach ([
+            'Kruidenmolen van hout' => 'Molens',
+            'Kruidenmolen elektrisch' => 'Molens',
+            'Vijzel van marmer' => 'Vijzels',
+            'Vijzel van graniet' => 'Vijzels',
+            'Droogrek voor kruiden' => 'Droogrekken',
+            'Droogrek staand' => 'Droogrekken',
+        ] as $title => $category) {
+            $this->find($title, 2500, $category, 30);
+        }
+
+        $edition = app(EditionBuilder::class)->buildPersona($plan);
+        $this->assertNotNull($edition);
+
+        foreach ($edition->picks()->with('group')->get() as $pick) {
+            $this->assertStringNotContainsString(
+                'Bijzonder apparaat',
+                $pick->group->title,
+                "an off-theme find reached a persona: {$pick->group->title}",
+            );
+        }
+    }
+
     private function buildPersona(): CovePlan
     {
         $plan = $this->plan();

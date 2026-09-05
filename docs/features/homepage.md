@@ -96,8 +96,38 @@ everyone else saw another. Two strings for one control drift apart the moment on
 edited; the field now labels itself with its placeholder, as the search page's already did.
 
 **`home.gifting_lists_hint`** was the zero-state line under the Lists card: *"Keep things for
-yourself or share them with others"*, under a card called **Lists**. The card now shows its count
-when there is one and nothing when there is not.
+yourself or share them with others"*, under a card called **Lists**. The card showed its count when
+there was one and nothing when there was not — until the band intros went too, below.
+
+### The four band intros went as well — 2026-09-04
+
+`home.organise_intro`, `discover_cove.intro` on the homepage, `home.personas_intro` and
+`home.coves_intro`. Each was one sentence between a band's heading and its cards, and each was doing
+the same job the cards under it were already doing at greater length: *"Somewhere to keep what you
+want, what you are getting other people, and what several of you are buying together"* is the
+Organise band's five card titles rewritten as a list.
+
+They cost more than their words. Five bands each opening heading-sentence-cards is a rhythm that
+teaches a reader to skip, and on a phone the sentence is two or three lines above the first thing
+they can tap. The heading names the band; the cards say what each one is; the sentence in between
+had to invent a reason to exist, and what it invented was a summary.
+
+`discover_cove.intro` and `home.coves_intro` still exist — `/discover-cove` opens with the first and
+uses the second over its own articles band, and there the sentence sits under an `h1` rather than
+between a heading and the cards it describes, with no five-band rhythm around it. Only the two keys
+nothing else rendered, `home.organise_intro` and `home.personas_intro`, were deleted.
+
+**The hero's search-help link went with them.** `search_help.link` — *"What can I search for?"* —
+sat under the search form, offering to explain a disappointment nobody had had yet: on the front page
+that question is answered by typing, and the hero exists to get somebody into the box. The link stays
+on `/search`, where it arrives after a result set, and it is now in the footer of every page under a
+shorter name. See [search-help.md](search-help.md).
+
+**One card needed a line as a result.** *My lists* was the only card in the Organise band with no
+hint of its own when the visitor has no lists yet — it had been leaning on the band intro. It now
+carries `home.organise_mine_hint` in that state, the same count-or-description shape the Secret
+Friend card uses, and it says the part a first-time visitor is actually unsure about: the list is
+private until they send somebody the link.
 
 ## What it does not end on: catalogue counters
 
@@ -214,7 +244,7 @@ Every route to a new list ran through a product first — search, save, and the 
 underneath — which works for somebody who already knows what they want and not at all for somebody
 starting a birthday.
 
-So the band now opens with a **Make a new list** button, between its intro and the cards.
+So the band now opens with a **Make a new list** button, between its heading and the cards.
 
 **It asks which kind before it goes anywhere.** The three kinds differ in who may claim, who may
 vote and who sees the money ([list-taxonomy.md](list-taxonomy.md)), and none of that is recoverable
@@ -343,7 +373,7 @@ consumer-rights blog.
 **Its own band, above the articles one.** The articles band promises "long reads around a theme" and
 prints a monthly search volume on each card; a persona is neither — it is a person to shop for, it
 has no search volume, and it is drawn rather than described. Folding them in would have meant the
-intro could no longer say what the cards are. Placing it *above* is the argument: the page has just
+band could no longer say what its cards are with one name. Placing it *above* is the argument: the page has just
 asked who the visitor is shopping for, and a persona answers that question where a buying guide
 answers a different one.
 

@@ -255,9 +255,6 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                                                 ? '—'
                                                 : formatPrice(find.price, market)}
                                         </span>
-                                        <a href={find.url} className="text-sm text-accent underline">
-                                            {t('daily.see_offers')}
-                                        </a>
                                         <span className="ml-auto flex items-center gap-2">
                                             {reactionButtons(find)}
                                             <SaveToList groupId={find.groupId} />

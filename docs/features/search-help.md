@@ -60,12 +60,31 @@ registered.
 
 ## Where it is linked from
 
-Both places with a search field on them, and nowhere else:
+The search page, and the footer:
 
 | Surface | Link |
 |---|---|
-| Homepage hero | Under the search form, `search_help.link` |
-| Search page | Under the box, above the results |
+| Search page | Under the box, above the results, `search_help.link` |
+| Footer, every page | In the explore row, `search_help.footer_link` |
+
+Both changed on 2026-09-04. **The footer was added** because a search field is the right place to
+*offer* the page and the wrong place to *find* it later: somebody who read the results, gave up and
+wandered onto a product page has left the link behind, and the thing they most likely still do not
+know — that the box takes a barcode — is the reason they gave up. The footer is the one row that
+survives that walk.
+
+**The homepage hero lost its copy of the link** in the same pass, in the copy cull described in
+[homepage.md](homepage.md). It sat under a search box nobody had typed into yet, offering to explain
+a disappointment that had not happened: on the front page the question *"What can I search for?"* is
+answered by trying, and the hero's own job is to get somebody into the box. On `/search` the same
+line arrives after a result set, which is where somebody actually wants it. One offer beside a search
+that has run, plus a permanent footer entry, is the whole of it.
+
+It links under a second, shorter name. `search_help.link` is a question ("What can I search for?"),
+which works directly under a box that has just disappointed somebody and reads oddly in a row of
+nouns beside *Brands* and *Privacy*; `search_help.footer_link` is the noun ("Search tips"). Two names
+for one page is normally the confusion this codebase keeps removing — it is allowed here because the
+two never appear on screen together, and because a footer row is scanned rather than read.
 
 **Not in the header.** Scanning was removed from the top nav on 2026-08-10 for the reason that
 applies here too: this is not a *section* of the site, it is documentation of a control, and it
@@ -80,6 +99,7 @@ until somebody types.
 - `app/Http/Controllers/SearchHelpController.php`
 - `resources/js/Pages/SearchHelp.tsx` — three definition lists, because a reader arrives with one
   specific question and scans for the line that answers it
-- `lang/{en,nl,fr,es}/site.php` — `search_help.*`, 47 keys, identical in all four
+- `lang/{en,nl,fr,es}/site.php` — `search_help.*`, 48 keys, identical in all four
 - `routes/web.php` — beside `/search`, not with the legal pages
 - `app/Http/Controllers/SitemapController.php`
+- `resources/js/Layouts/SiteLayout.tsx` — the footer link

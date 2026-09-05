@@ -176,9 +176,6 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                                                                 ? '—'
                                                                 : formatPrice(find.price, market)}
                                                         </span>
-                                                        <a href={find.url} className="text-sm text-accent underline">
-                                                            {t('daily.see_offers')}
-                                                        </a>
                                                         <span className="ml-auto">
                                                             <SaveToList groupId={find.groupId} />
                                                         </span>
