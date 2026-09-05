@@ -143,6 +143,19 @@ return [
         // folds live offers in and moves merchant_count, so a count may be one
         // behind. Five minutes keeps that invisible in practice.
         'facet_cache_ttl' => 300,
+
+        // Related-search chips are cached this long.
+        //
+        // An hour rather than the facets' five minutes: these come from a
+        // trigram scan over ninety days of `search_log`, so a new term has to
+        // out-rank a quarter of accumulated volume before it belongs in the row
+        // at all. Staleness costs a chip that arrives up to an hour late, on a
+        // block that decorates the page rather than navigating it.
+        //
+        // It is the cache that matters most on the page. Uncached, that scan was
+        // the bulk of a 6.8-8.0s canonical search page on production while
+        // staging served the same terms in 0.5s — see RelatedSearchQuery.
+        'related_cache_ttl' => 3600,
     ],
 
     /*

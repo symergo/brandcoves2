@@ -407,6 +407,18 @@ The long copy *below* the grid is untouched and still carries the page's facts. 
 several hundred words between a shopper and the first product is a worse page for them, and Google
 has said for years that it is a worse page for it too.
 
+### The results line says nothing when there is no term — 2026-09-04
+
+The small line beside the sort control reads *Results for "koptelefoon"* once something has been
+searched for, and until now read **"Browse the catalogue"** when nothing had. That was a label on a
+grid of products, above a grid of products — the same fault as the four statistics paragraphs this
+section replaced, at one line instead of five.
+
+The `<p>` still renders, empty. It is `aria-live="polite"`, and a live region has to be in the
+document before its content changes or the first search is announced to nobody — the same reason the
+`role="status"` paragraph higher up the page is rendered empty rather than unmounted. `search.browse`
+was deleted from all four language files with it.
+
 ## The order of the filter rail
 
 *Changed 2026-08-16.* Brand first, then shop, then the two switches — discounted, and in-stock last.
@@ -462,12 +474,51 @@ Decisions worth keeping:
   rendered empty rather than unmounted — a live region must exist *before* its content changes for a
   screen reader to announce it.
 
+## `search_log` buckets per day
+
+Changed from per clock-hour on 2026-09-05. The table is upserted on
+`(query_hash, hour_bucket)`, so hourly meant a term searched around the clock
+occupied up to 2,160 rows inside the ninety days `RelatedSearchQuery` scans — all
+of them fetched, re-checked with `word_similarity()`, then collapsed to one chip
+by the `GROUP BY`. Per day the ceiling is 90.
+
+That scan is what made the canonical search page take 6.8-8.0s on production
+(measured 2026-09-04) while staging, on the identical commit, served the same
+terms in 0.5s. Dev never showed it: `search_log` there held 48 rows. The
+isolating measurement is `?q=watch` at 7.9s against `?q=watch&min=1` at 0.6s —
+a EUR0.01 floor excluding nothing, same 3,042 results, but any filter trips
+`isThin()` and skips the copy block whole.
+
+Nothing was reading the hourly resolution. `TopicMiner` sums over a rolling
+window, `RelatedSearchQuery` and `PrunePersonalDataCommand` use the bucket as a
+date cutoff, and no admin screen touches it. The single exception was
+`RecentSearches`, which ordered by the bucket for recency; it orders by
+`updated_at` now, which the upsert maintains on every conflict and which is exact
+at any resolution. `search_log_market_updated_at_index` covers that sort.
+
+**Not monthly**, which would compress another thirty-fold. Every consumer filters
+with a day-precise cutoff, and month-start buckets make those windows lumpy — the
+guide-topic queue would lurch as each month rolled over, and the published
+365-day retention could only be honoured to the nearest month. It is also a
+one-way door: days aggregate up to months whenever we want, months never come
+back apart. The extra compression would be bought on a path that is no longer
+hot, since the same change caches the scan for an hour.
+
+> **Outstanding: the column is still named `hour_bucket` and holds a day.** The
+> rename is a breaking schema change and `migrate` runs as a one-shot service
+> while the previous containers are still serving, so it cannot ride along with
+> the change that made it wrong. It ships as its own later deploy — migrations
+> are forward-only and expand/contract, and this is the contract half.
+
 ## Files
 
 - `database/migrations/2026_08_07_000700_add_search_indexes.php`
+- `database/migrations/2026_09_05_000100_search_log_buckets_by_day.php`
 - `config/giftcoves.php` (`search.*`)
-- `resources/js/Pages/Search.tsx` (the box, its scanner beam, the term links)
-- `app/Services/Seo/ResultTerms.php` (what the term links are built from)
+- `resources/js/Pages/Search.tsx` (the box, its scanner beam, the term chips)
+- `app/Services/Seo/ResultTerms.php` (what the term chips are built from)
+- `app/Services/Seo/RelatedSearchQuery.php` (the related-search chips, cached)
+- `app/Models/SearchLog.php` (the daily upsert)
 - `resources/css/app.css` (`--animate-scan`)
 
 ## Verification

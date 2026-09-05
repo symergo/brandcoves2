@@ -68,9 +68,19 @@ final class RecentSearches
         /*
          * Recent, deduplicated, and only searches that found something.
          *
-         * `search_log` is bucketed per clock-hour, so the same term appears
-         * once per hour it was searched in — pulling a wider window and then
-         * uniquing is what stops one popular term filling the whole band.
+         * Ordered by `updated_at`, not by the bucket.
+         *
+         * `search_log` is bucketed per day (it was per clock-hour until
+         * 2026-09-05), and a bucket cannot order anything finer than itself:
+         * every term searched today carries the same value, so `orderByDesc` on
+         * it would rank today's terms by whatever the plan happened to return.
+         * `updated_at` is written on every upsert, so it is the moment a term was
+         * last searched — exact at any resolution, and it survives the next
+         * change of one. `search_log_market_updated_at_index` covers this sort.
+         *
+         * The same term still appears once per day it was searched in, so pulling
+         * a wide window and uniquing is still what stops one popular term filling
+         * the whole band.
          *
          * `result_count > 0` matters twice: a term that found nothing has no
          * image to show, and `zero_result_count` exists precisely because those
@@ -79,7 +89,7 @@ final class RecentSearches
         $terms = SearchLog::query()
             ->where('market', $market->value)
             ->where('result_count', '>', 0)
-            ->orderByDesc('hour_bucket')
+            ->orderByDesc('updated_at')
             ->limit(60)
             ->pluck('query')
             ->map(fn (string $q) => SearchLog::normalise($q))

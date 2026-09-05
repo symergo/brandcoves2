@@ -47,11 +47,31 @@ class SearchLog extends Model
     }
 
     /**
-     * Upsert into the current hour's bucket.
+     * Upsert into the current day's bucket.
      *
-     * One row per query per hour keeps the table small enough to aggregate over
-     * 30 days without a warehouse, while still preserving the time shape that
-     * makes seasonal topics visible.
+     * One row per query per day. It was per *hour* until 2026-09-05, and that
+     * resolution was buying nothing: no consumer reads the intra-day shape.
+     * `TopicMiner` sums over a rolling window, `RelatedSearchQuery` and the
+     * retention prune use the bucket as a date cutoff, and no admin screen reads
+     * it at all. The one consumer that did depend on it, `RecentSearches`, now
+     * orders by `updated_at` — which this upsert maintains on every conflict, and
+     * which is exact at any bucket size.
+     *
+     * What it cost: a term searched every hour occupied up to 2,160 rows inside
+     * the ninety days `RelatedSearchQuery` scans, every one of them fetched and
+     * re-checked before the `GROUP BY` collapsed them to a single chip. That scan
+     * is what made the canonical search page take seven seconds on production.
+     * Per day the ceiling is 90.
+     *
+     * Not monthly, which would compress another thirty-fold: every consumer
+     * filters with a day-precise cutoff, and month-start buckets make those
+     * windows lumpy and the published 365-day retention enforceable only to the
+     * nearest month. Days aggregate up to months later; months do not come back
+     * apart.
+     *
+     * The column is still named `hour_bucket` and now holds a day boundary. The
+     * rename is a breaking schema change and `migrate` runs while the previous
+     * containers are still serving, so it ships as its own deploy.
      */
     public static function record(string $query, Market $market, int $resultCount): void
     {
@@ -65,7 +85,7 @@ class SearchLog extends Model
                 'query' => $normalised,
                 'query_hash' => self::hashFor($query, $market),
                 'market' => $market->value,
-                'hour_bucket' => now()->startOfHour(),
+                'hour_bucket' => now()->startOfDay(),
                 'search_count' => 1,
                 'result_count' => $resultCount,
                 'zero_result_count' => $resultCount === 0 ? 1 : 0,

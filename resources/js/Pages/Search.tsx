@@ -460,14 +460,46 @@ export default function Search({
                         <nav className="mb-5" aria-label={t('search.terms_heading')}>
                             <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>
                             <ul className="flex flex-wrap gap-2">
+                                {/*
+                                  Buttons, not links, and that is the point.
+
+                                  Each chip narrows the search by *adding* its word to the
+                                  query — `watch`, then `watch Smartwatch`, then `watch
+                                  Smartwatch 44mm`. As anchors that was a combinatorial
+                                  supply of crawlable URLs, and each one a crawler followed
+                                  logged a brand-new term in `search_log` — the table the
+                                  related-search chips are drawn from by trigram scan. The
+                                  links fed the query that renders them. They were indexable
+                                  as well: no filter, page 1, default sort, so `seo()` marked
+                                  every combination `index, follow`.
+
+                                  A button navigates for a visitor and does not exist for a
+                                  crawler. Narrowing behaviour is unchanged. The URL is the
+                                  server's own, not rebuilt here: the rule for joining a word
+                                  onto a query lives in `SearchContext::narrowUrl()`, and a
+                                  second copy of it would drift. See docs/features/seo.md.
+                                */}
                                 {terms.map((item) => (
                                     <li key={item.term}>
-                                        <Link
-                                            href={item.url}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.get(
+                                                    item.url,
+                                                    {},
+                                                    {
+                                                        preserveScroll: true,
+                                                        preserveState: true,
+                                                        onStart: () => setSearching(true),
+                                                        onFinish: () => setSearching(false),
+                                                    },
+                                                )
+                                            }
                                             className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink"
                                         >
                                             {item.term}
-                                        </Link>
+
+                                        </button>
                                     </li>
                                 ))}
                             </ul>

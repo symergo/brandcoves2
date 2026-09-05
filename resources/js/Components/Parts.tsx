@@ -38,6 +38,21 @@ export function isWidget(parts: Paragraph): boolean {
  * Server-rendered through SSR, so a crawler receives real anchors rather than a
  * comma-separated sentence — which is the only reason these are worth having on
  * an indexable page at all.
+ *
+ * ## Why they are nofollow
+ *
+ * The targets are generated `/search?q=…` URLs, and every one a crawler follows
+ * logs itself: `SearchLog::record()` writes the term, and `RelatedSearches` draws
+ * the next page's chips from a trigram scan over that same table. Followed, the
+ * row feeds the query that renders it — more chips, more crawlable URLs, more
+ * rows, a slower scan. Measured on production 2026-09-04, that scan had grown to
+ * ~7s on the canonical search page and ~5s on a brand page, against 0.5s on
+ * staging running the identical commit; dev never shows it because `search_log`
+ * there holds 48 rows.
+ *
+ * `nofollow` is a hint rather than a directive — Google has said so since 2019 —
+ * so this slows the loop rather than closing it. It is the cheap half; caching
+ * the placeholder per (market, rotation key) is the half that fixes the latency.
  */
 function Chips({ items }: { items: { label: string; url: string }[] }) {
     return (
@@ -46,6 +61,7 @@ function Chips({ items }: { items: { label: string; url: string }[] }) {
                 <li key={item.url}>
                     <Link
                         href={item.url}
+                        rel="nofollow"
                         className="block rounded-full border border-line px-3 py-1.5 text-sm hover:border-ink"
                     >
                         {item.label}

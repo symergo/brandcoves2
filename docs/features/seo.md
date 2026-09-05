@@ -84,6 +84,46 @@ filtered pages and never reaches the products and guides worth ranking.
 those links. Filtered searches canonicalise to the bare term so any ranking
 signal consolidates onto one URL.
 
+### The one exception: link-level `nofollow` on the chip rows
+
+The *page* directive stays `follow`. The exception is link-level and narrow: the
+related-search chips and the term chips point at generated `/search?q=…` URLs,
+and those links feed themselves. `SearchLog::record()` writes every term that is
+crawled, and `RelatedSearches` draws the next page's chips from a trigram scan
+over that same table — so each crawl mints rows that become more crawlable URLs,
+and the scan that renders the row gets slower the more of it there is.
+
+Measured on production 2026-09-04: the canonical search page took 6.8–8.0s and a
+brand page up to 5.0s, against 0.5s on staging running the identical commit, and
+0.2–0.6s for every other page type on the same host. The isolating measurement is
+`?q=watch` at 7.9s against `?q=watch&min=1` at 0.6s — a €0.01 price floor that
+excludes nothing, the same 3042 results — because any filter trips `isThin()` and
+skips the copy block whole. Dev never shows it: `search_log` there holds 48 rows.
+
+Two rows, treated differently, because they generate different damage.
+
+**The term chips are no longer links.** They narrowed *cumulatively* — `watch`,
+then `watch Smartwatch`, then `watch Smartwatch 44mm` — so as anchors they were a
+combinatorial supply of URLs, each crawl minting a brand-new term in
+`search_log`. Worse, each was `index, follow` by the table above: no filter, page
+1, default sort. `nofollow` would only have been a hint against that. They are
+`<button>`s calling `router.get()` instead, so they navigate for a visitor and do
+not exist for a crawler. The narrowing behaviour is unchanged, and the URL is the
+server's own — `SearchContext::narrowUrl()` stays the only place that rule lives.
+
+**The related-search chips stay links, with `rel="nofollow"`.** They point at
+terms already in the log rather than minting new ones, and they are the outbound
+half of the page — the reason `Chips` is server-rendered at all is that a page
+with no outbound links is a leaf. `nofollow` is a hint rather than a directive,
+which Google has said since 2019, so this discourages the loop rather than
+closing it.
+
+Neither change helps a visitor's latency by itself; the chips still render and
+the scan still runs. `RelatedSearchQuery` is cached for `related_cache_ttl` (one
+hour) for that, and `search_log` now buckets per day rather than per hour so the
+scan has up to 24x fewer rows to reject. Product, brand and guide links are
+untouched.
+
 `robots.txt` blocks `/*/go/`: crawling an outbound affiliate hop burns budget on
 redirects and looks like link-selling to a search engine.
 
