@@ -137,12 +137,22 @@ return [
          * citation rather than as a page about the thing.
          *
          * The term leads instead, capitalised, followed by the phrase this
-         * market actually shops in. SearchController::seo() drops the modifier
-         * for a long term: a four-word query already carries its own intent,
-         * and the suffix would only push it past the ~60 characters a listing
-         * shows.
+         * market actually shops in.
+         *
+         * ## This one is allowed past 60 characters, and that is the trade
+         *
+         * The phrase alone is 39-48 characters, so it cannot share the ~60 a
+         * listing shows with a real search term — there is no wording of "at
+         * the best price - offers and discounts" that leaves room for
+         * "koptelefoon". Chosen deliberately on 2026-09-05: the words that earn
+         * the click are all in front, and what a search engine drops off the
+         * end is " · GiftCoves" and possibly the last word of the phrase.
+         *
+         * Every other interpolated title on the site still measures itself and
+         * degrades. This one only guards the term: past 30 characters the query
+         * is a sentence, already carries its own intent, and stands alone.
          */
-        'seo_title_term' => ':term — comparar precios',
+        'seo_title_term' => ':term al mejor precio - ofertas y descuentos',
         'empty' => 'No hay resultados para «:term».',
         'empty_filters' => 'Ningún producto coincide con estos filtros.',
         'clear_filters' => 'Borrar todos los filtros',
@@ -169,7 +179,7 @@ return [
         'previous' => 'Anterior',
         'next' => 'Siguiente',
         'page_of' => 'Página :current de :last',
-        'seo_term' => 'Compara :term en bol, Amazon y cientos de tiendas. Una ficha por producto, con el precio de cada tienda que lo vende.',
+        'seo_term' => 'Encuentra :term en bol, Amazon y cientos de tiendas. Una ficha por producto, con el mejor precio y los descuentos.',
 
         /*
          * El vocabulario de los resultados, encima de la cuadrícula. Sustituyó a

@@ -284,8 +284,17 @@ class LocalisationTest extends TestCase
      * search listing, where the part that gets dropped is the brand name.
      *
      * Interpolations are counted at their placeholder width, which understates
-     * a long brand or a long term. The controllers that build those titles
-     * carry their own guard against the rendered string; this one pins the copy.
+     * a long brand or a long term. Most controllers that build an interpolated
+     * title carry their own guard against the rendered string; this one pins
+     * the copy.
+     *
+     * `search.seo_title_term` is the deliberate exception and passes here on
+     * placeholder width alone: "at the best price - offers and discounts" is
+     * 39-48 characters by itself, so with a real term in front it runs a little
+     * past sixty and a search engine drops the appended brand. That was chosen
+     * over shortening the phrase — see SearchController::listingTitle(). The
+     * assertion still earns its place: it is what keeps the *fixed* half from
+     * growing any further.
      */
     #[Test]
     public function every_seo_title_fits_the_sixty_character_listing(): void

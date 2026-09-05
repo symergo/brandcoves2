@@ -137,12 +137,22 @@ return [
          * citation rather than as a page about the thing.
          *
          * The term leads instead, capitalised, followed by the phrase this
-         * market actually shops in. SearchController::seo() drops the modifier
-         * for a long term: a four-word query already carries its own intent,
-         * and the suffix would only push it past the ~60 characters a listing
-         * shows.
+         * market actually shops in.
+         *
+         * ## This one is allowed past 60 characters, and that is the trade
+         *
+         * The phrase alone is 39-48 characters, so it cannot share the ~60 a
+         * listing shows with a real search term — there is no wording of "at
+         * the best price - offers and discounts" that leaves room for
+         * "koptelefoon". Chosen deliberately on 2026-09-05: the words that earn
+         * the click are all in front, and what a search engine drops off the
+         * end is " · GiftCoves" and possibly the last word of the phrase.
+         *
+         * Every other interpolated title on the site still measures itself and
+         * degrades. This one only guards the term: past 30 characters the query
+         * is a sentence, already carries its own intent, and stands alone.
          */
-        'seo_title_term' => ':term prijzen vergelijken',
+        'seo_title_term' => ':term beste prijs - aanbiedingen en kortingen',
         'empty' => 'Niets gevonden voor ":term".',
         'empty_filters' => 'Geen producten voldoen aan deze filters.',
         'clear_filters' => 'Alle filters wissen',
@@ -169,7 +179,7 @@ return [
         'previous' => 'Vorige',
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',
-        'seo_term' => 'Vergelijk :term bij bol, Amazon en honderden webshops. Één kaart per product, met de prijs van elke winkel die het verkoopt.',
+        'seo_term' => 'Vind :term bij bol, Amazon en honderden webshops. Één kaart per product, met de laagste prijs en elke korting erbij.',
 
         /*
          * De woordenschat van de resultaten, boven het raster. Verving vier

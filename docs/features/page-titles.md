@@ -39,8 +39,8 @@ files:
 - `every_meta_description_survives_pagemeta_untruncated`
 
 Interpolations are counted at placeholder width, which understates a long brand or a long
-search term. The three controllers that build interpolated titles carry their own guard
-against the *rendered* string — see below.
+search term. Brand, persona and product carry their own guard against the *rendered* string;
+search deliberately does not, and the next two sections say why.
 
 ## Measure the rendered string, never assume a length
 
@@ -48,15 +48,20 @@ Every title built from a template is measured after interpolation and falls back
 subject when it does not fit. The rule is the same in four places and it exists because the
 modifier is a different length in each language:
 
-| Where | Method | Falls back to |
+| Where | Guards | Falls back to |
 |---|---|---|
-| Search | `SearchController::listingTitle()` | the term alone |
+| Search | the term only — see below | the term alone |
 | Brand | `BrandController::listingTitle()` | the brand name alone |
 | Persona | `GiftIdeasController::listingTitle()` | `theme_title` alone |
 | Product | `ProductTitle::listing()` | the title, cut to what is left |
 
 A hard-coded character limit would be correct in one language and wrong in three. `" — at 5
 shops"` and `" — chez 12 boutiques"` differ by eight characters on their own.
+
+**Search is the exception, on purpose.** Its phrase is 39–48 characters before the term is
+added, so measuring the rendered string would mean the phrase never appeared at all — in Dutch
+it left exactly zero characters for the query. The phrase was kept and the cap given up; only
+the term is guarded now, at 30 characters. See below.
 
 ---
 
@@ -75,15 +80,25 @@ The listing title is `search.seo_title_term`, and it leads with the term:
 
 | | |
 |---|---|
-| en | `:term — compare prices` |
-| nl | `:term prijzen vergelijken` |
-| fr | `:term — comparer les prix` |
-| es | `:term — comparar precios` |
+| en | `:term at the best price - offers and discounts` |
+| nl | `:term beste prijs - aanbiedingen en kortingen` |
+| fr | `:term au meilleur prix - offres et promotions` |
+| es | `:term al mejor precio - ofertas y descuentos` |
 
-*Prijzen vergelijken* is not a translation of "compare prices" chosen for symmetry — it is the
-phrase the Dutch and Belgian comparison market is built on, and how Beslist, Kieskeurig and
-Tweakers' Pricewatch title a category page. The term is capitalised because it arrives as raw
-user input and a title opening in lower case reads as broken.
+The term is capitalised because it arrives as raw user input and a title opening in lower case
+reads as broken. A spaced hyphen rather than an em dash, because that is house style — see
+`HouseStyle`, which rewrites `—` to ` - ` in prose for the same reason.
+
+**This title runs past sixty characters, and that is the trade.** With a one-word query it
+renders at 58–63 including ` · GiftCoves`, so the phrase itself always survives and what a
+search engine drops is the brand name; past a term of about nineteen characters the tail of the
+phrase begins to clip too. It replaced `:term — compare prices` on 2026-09-05, which fitted the
+cap comfortably and said less. Both facts were on the table when it was chosen.
+
+Two things worth knowing if it is revisited. A fixed phrase repeated across thousands of search
+URLs is the pattern a search engine is most willing to rewrite a title for. And the
+48-character assertion in `LocalisationTest` still passes only because it counts `:term` at
+placeholder width — it pins the fixed half now, not the whole.
 
 **The search page had no `<h1>`.** It was the only top-level page without one, opening at
 `<h2>`, on the template that most needs to say what it is about. It carries the term now.

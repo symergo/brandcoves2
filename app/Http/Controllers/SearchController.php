@@ -343,25 +343,39 @@ class SearchController extends Controller
      * exact-match citation.
      *
      * The term leads instead, capitalised because it arrives as raw user input
-     * and a title opening lowercase reads as broken, followed by the phrase this
-     * market actually shops in — "prijzen vergelijken" in Dutch, which is how
-     * every Dutch and Belgian comparison site titles a category page.
+     * and a title opening lowercase reads as broken, followed by the buying
+     * phrase for this market.
      *
-     * ## The modifier is dropped for a long term
+     * ## This title is deliberately allowed past sixty characters
      *
-     * A listing shows about 60 characters and `app.tsx` appends " · GiftCoves",
-     * so 48 are ours. Measured against the rendered string rather than against
-     * a character count of the term, because the modifier is a different length
-     * in each of the four languages and a hard-coded limit would be right in one
-     * of them. A four-word query already carries its own intent; the suffix
-     * would only push the words that matter past the cut.
+     * Every other interpolated title here measures its rendered self and drops
+     * its modifier rather than be truncated. This one cannot: the phrase alone
+     * is 39-48 characters depending on the language, and a listing shows about
+     * 60 of which `app.tsx` takes twelve for " · GiftCoves". There is no
+     * wording of "at the best price - offers and discounts" that leaves room
+     * for "koptelefoon" in front of it.
+     *
+     * So the choice was the cap or the phrase, and the phrase won on 2026-09-05.
+     * Everything that earns the click sits in the first half, and what a search
+     * engine drops off the end is the brand name and at worst the last word of
+     * the phrase. Two things to know if this is ever revisited: a title Google
+     * judges to be boilerplate repeated across thousands of URLs is a title it
+     * may rewrite for us, and the fallback below is the whole of the guard.
+     *
+     * ## What is still guarded
+     *
+     * Only the term. Past 30 characters a query is a sentence — it carries its
+     * own intent, and bolting a fixed phrase onto it would push the words the
+     * visitor actually typed off the end of the listing, which is the one thing
+     * this must never do.
      */
     private function listingTitle(string $term): string
     {
         $term = Str::ucfirst($term);
-        $titled = __('site.search.seo_title_term', ['term' => $term]);
 
-        return mb_strlen($titled) <= 48 ? $titled : $term;
+        return mb_strlen($term) <= 30
+            ? __('site.search.seo_title_term', ['term' => $term])
+            : $term;
     }
 
     /**

@@ -185,12 +185,22 @@ return [
          * citation rather than as a page about the thing.
          *
          * The term leads instead, capitalised, followed by the phrase this
-         * market actually shops in. SearchController::seo() drops the modifier
-         * for a long term: a four-word query already carries its own intent,
-         * and the suffix would only push it past the ~60 characters a listing
-         * shows.
+         * market actually shops in.
+         *
+         * ## This one is allowed past 60 characters, and that is the trade
+         *
+         * The phrase alone is 39-48 characters, so it cannot share the ~60 a
+         * listing shows with a real search term — there is no wording of "at
+         * the best price - offers and discounts" that leaves room for
+         * "koptelefoon". Chosen deliberately on 2026-09-05: the words that earn
+         * the click are all in front, and what a search engine drops off the
+         * end is " · GiftCoves" and possibly the last word of the phrase.
+         *
+         * Every other interpolated title on the site still measures itself and
+         * degrades. This one only guards the term: past 30 characters the query
+         * is a sentence, already carries its own intent, and stands alone.
          */
-        'seo_title_term' => ':term — compare prices',
+        'seo_title_term' => ':term at the best price - offers and discounts',
         'empty' => 'Nothing matched ":term".',
         'empty_filters' => 'No products match these filters.',
         'clear_filters' => 'Clear all filters',
@@ -230,7 +240,7 @@ return [
         'previous' => 'Previous',
         'next' => 'Next',
         'page_of' => 'Page :current of :last',
-        'seo_term' => 'Compare :term at bol, Amazon and hundreds of shops. One card per product, with the price at every shop that sells it.',
+        'seo_term' => 'Find :term at bol, Amazon and hundreds of shops. One card per product, with the lowest price and any discount marked.',
 
         /*
          * The vocabulary of the results, above the grid.
