@@ -112,7 +112,7 @@ class CoveCalendarTest extends TestCase
         $first->forceFill(['edition_id' => null, 'built_for' => $first->drop_date])->save();
 
         $this->travelTo(CarbonImmutable::parse('2027-06-01')->setTime(7, 0));
-        (new PublishDueCoves(Market::BeNl))->handle();
+        app()->call([new PublishDueCoves(Market::BeNl), 'handle']);
 
         Queue::assertNotPushed(BuildCove::class, fn (BuildCove $job) => $job->planId === $first->id);
 
@@ -124,7 +124,7 @@ class CoveCalendarTest extends TestCase
         $this->assertSame('approved', $first->fresh()->status);
 
         $this->travelTo(CarbonImmutable::parse('2028-03-16')->setTime(7, 0));
-        (new PublishDueCoves(Market::BeNl))->handle();
+        app()->call([new PublishDueCoves(Market::BeNl), 'handle']);
 
         Queue::assertPushed(BuildCove::class, fn (BuildCove $job) => $job->planId === $first->id);
     }

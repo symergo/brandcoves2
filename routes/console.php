@@ -12,6 +12,7 @@ use App\Jobs\PullPopularCharts;
 use App\Jobs\RefreshBrandStats;
 use App\Jobs\RefreshRecentSearches;
 use App\Jobs\RefreshWishlistedProducts;
+use App\Jobs\RunEditorialAutomation;
 use App\Jobs\ScoreSerendipity;
 use App\Jobs\SendCoveDigest;
 use App\Jobs\SendOccasionReminders;
@@ -184,6 +185,36 @@ foreach (Market::cases() as $index => $market) {
     Schedule::job(new BuildDailyEdition($market))
         ->name('build-daily-cove-'.$market->value)
         ->dailyAt(sprintf('06:%02d', $index * 6))
+        ->withoutOverlapping()
+        ->onOneServer();
+}
+
+/*
+ * The editorial pipeline, walked once per market.
+ *
+ * The same stages an instruction drives — plan, curate, write, approve, build —
+ * on the scheduler instead of on somebody asking. Which of them run is a switch
+ * per market and per kind, and the grid ships seeded to reproduce exactly what
+ * the entries above already do, so the first deploy changes nothing. See
+ * App\Services\Settings\AutomationSettingsStore.
+ *
+ * One job per market that walks the enabled stages **in order**, rather than one
+ * per stage: staggered stages mean a plan drafted at 03:50 waits until tomorrow
+ * to be curated, where a sequential walk takes a plan from nothing to approved
+ * in a single run.
+ *
+ * 05:00, before the Daily builds above and well before `PublishDueCoves` at
+ * 07:00 — so anything this approves is honoured the same morning rather than
+ * waiting a day. Staggered per market for the same reason everything else here
+ * is: each build holds a catalogue-wide selection in memory.
+ *
+ * It cannot publish on its own. `buildArticle()` refuses a plan nobody
+ * approved, and `approve` ships off for every kind.
+ */
+foreach (Market::cases() as $index => $market) {
+    Schedule::job(new RunEditorialAutomation($market))
+        ->name('editorial-automation-'.$market->value)
+        ->dailyAt(sprintf('05:%02d', $index * 6))
         ->withoutOverlapping()
         ->onOneServer();
 }

@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Models\CovePlan;
+use App\Services\Settings\AutomationSettingsStore;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -62,7 +63,7 @@ class PublishDueCoves implements ShouldQueue
 
     public function __construct(public Market $market) {}
 
-    public function handle(): void
+    public function handle(AutomationSettingsStore $automation): void
     {
         $today = CarbonImmutable::today();
 
@@ -97,6 +98,25 @@ class PublishDueCoves implements ShouldQueue
 
         foreach ($due as $plan) {
             if (! $this->inSeason($plan, $today)) {
+                continue;
+            }
+
+            /*
+             * The kind's `build` switch gates this, per market.
+             *
+             * Gated rather than absorbed into the automation walk: what this job
+             * knows is about **seasons** rather than about automation —
+             * `built_for` so a re-dated part comes round without rebuilding
+             * nightly, the window guard so an approved Halloween part cannot
+             * appear in December, and series order on a catch-up after an
+             * outage. Rebuilding that inside a generic walk would be a second,
+             * worse copy of it.
+             *
+             * Off ships for every non-daily kind, so nothing here publishes
+             * until somebody switches it on — and it still refuses anything a
+             * person has not approved, which is the real guard.
+             */
+            if (! $automation->enabled('build', $plan->market, $plan->kind)) {
                 continue;
             }
 

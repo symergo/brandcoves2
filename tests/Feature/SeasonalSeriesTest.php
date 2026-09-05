@@ -253,12 +253,12 @@ class SeasonalSeriesTest extends TestCase
         }
 
         // Part one is due tomorrow and part two at the end of May.
-        (new PublishDueCoves(Market::BeNl))->handle();
+        app()->call([new PublishDueCoves(Market::BeNl), 'handle']);
 
         Queue::assertNothingPushed();
 
         $this->travelTo(CarbonImmutable::parse('2027-04-16')->setTime(7, 0));
-        (new PublishDueCoves(Market::BeNl))->handle();
+        app()->call([new PublishDueCoves(Market::BeNl), 'handle']);
 
         Queue::assertPushed(BuildCove::class, fn (BuildCove $job) => $job->planId === $parts[0]->id);
         Queue::assertPushed(BuildCove::class, 1);
@@ -280,7 +280,7 @@ class SeasonalSeriesTest extends TestCase
          * the planner would be a publishing pipeline with a calendar bolted on.
          */
         $this->travelTo(CarbonImmutable::parse('2027-06-01')->setTime(7, 0));
-        (new PublishDueCoves(Market::BeNl))->handle();
+        app()->call([new PublishDueCoves(Market::BeNl), 'handle']);
 
         Queue::assertNothingPushed();
     }
@@ -303,7 +303,7 @@ class SeasonalSeriesTest extends TestCase
          * a missing one. It keeps its approval for next year.
          */
         $this->travelTo(CarbonImmutable::parse('2027-11-01')->setTime(7, 0));
-        (new PublishDueCoves(Market::BeNl))->handle();
+        app()->call([new PublishDueCoves(Market::BeNl), 'handle']);
 
         Queue::assertNothingPushed();
         $this->assertSame('approved', $parts[0]->fresh()->status);
