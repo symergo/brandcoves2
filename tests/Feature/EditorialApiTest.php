@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PlanWriter;
 use App\Enums\ProductStatus;
 use App\Enums\PublishStatus;
 use App\Enums\Source;
@@ -432,6 +433,7 @@ class EditorialApiTest extends TestCase
             'drop_date' => CarbonImmutable::today()->toDateString(),
             'title' => 'Geschreven door een mens',
             'editorial' => $prose,
+            'writer' => PlanWriter::Authored->value,
             'status' => 'approved',
         ]);
 
@@ -469,6 +471,7 @@ class EditorialApiTest extends TestCase
             'drop_date' => CarbonImmutable::today()->toDateString(),
             'title' => 'Met een kapotte link',
             'editorial' => "Zie [[product:{$pinned->id}|dit]] en [[brand:Verzonnen BV]].",
+            'writer' => PlanWriter::Authored->value,
             'status' => 'approved',
         ]);
 
@@ -709,6 +712,83 @@ class EditorialApiTest extends TestCase
     // ── Helpers ───────────────────────────────────────────────────────────
 
     /** @param list<string> $abilities */
+    #[Test]
+    public function sending_prose_marks_the_plan_as_authored(): void
+    {
+        /*
+         * The contract every key deployed before `writer` existed depends on.
+         *
+         * The builder used to infer "somebody wrote this" from whichever fields
+         * came back filled. Now the plan states it — and a client that has been
+         * POSTing an article for months must not suddenly find the model
+         * rewriting it, so supplying prose still means what it always meant.
+         */
+        $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'date' => CarbonImmutable::today()->addDays(2)->toDateString(),
+                'title' => 'Door een mens geschreven',
+                'editorial' => 'Twee alinea\'s die af zijn.',
+            ])
+            ->assertStatus(201)
+            ->assertJsonPath('data.writer', 'authored');
+
+        // And a plan with no prose is still the builder's to write, which is
+        // what keeps drafting an idea separate from writing it.
+        $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
+            ->postJson('/api/editorial/coves', [
+                'market' => Market::BeNl->value,
+                'date' => CarbonImmutable::today()->addDays(3)->toDateString(),
+                'title' => 'Alleen een idee',
+            ])
+            ->assertStatus(201)
+            ->assertJsonPath('data.writer', 'builder');
+    }
+
+    #[Test]
+    public function a_barcode_resolves_to_the_product_in_that_market(): void
+    {
+        /*
+         * The gap the seed skill was built around.
+         *
+         * `q` runs against `search_vector`, which holds title, brand, category
+         * and description and no EAN at all — so a barcode came back as an empty
+         * list that reads like "we don't stock it". The only route through was
+         * the *public* scan endpoint and then parsing a group id out of the URL
+         * it returned.
+         */
+        $group = $this->find('Sony koptelefoon', 24900);
+        $group->update(['identity_key' => '4548736132580']);
+
+        $this->withToken($this->key([ApiToken::READ]))
+            ->getJson('/api/editorial/products?market=be-nl&ean=4548736132580')
+            ->assertOk()
+            ->assertJsonPath('count', 1)
+            ->assertJsonPath('ean', '4548736132580')
+            ->assertJsonPath('data.0.id', $group->id);
+
+        // The same barcode in another market is a different question with its
+        // own answer, and "not here" is a real answer rather than an error.
+        $this->withToken($this->key([ApiToken::READ]))
+            ->getJson('/api/editorial/products?market=nl-nl&ean=4548736132580')
+            ->assertOk()
+            ->assertJsonPath('count', 0);
+    }
+
+    #[Test]
+    public function a_misread_barcode_is_refused_rather_than_reported_as_missing(): void
+    {
+        /*
+         * A failed check digit is not a product we do not carry — it is a
+         * misread, and an author told "not found" would go looking for it in
+         * another market, or worse, search by name and pin something else.
+         */
+        $this->withToken($this->key([ApiToken::READ]))
+            ->getJson('/api/editorial/products?market=be-nl&ean=4548736132581')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('ean');
+    }
+
     private function key(array $abilities): string
     {
         return ApiToken::issue('test key', $abilities)['token'];

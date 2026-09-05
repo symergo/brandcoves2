@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Enums\Availability;
 use App\Enums\Market;
 use App\Enums\PickMode;
+use App\Enums\PlanWriter;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Models\CovePlan;
@@ -401,6 +402,9 @@ class CovePlanCurationTest extends TestCase
         $plan->update([
             'build_instructions' => 'Kort houden.',
             'editorial' => 'Dit is al geschreven.',
+            // The plan says who writes it. `writer` replaced the builder's old
+            // habit of inferring that from which fields happened to be filled.
+            'writer' => PlanWriter::Authored->value,
         ]);
 
         $prompts = $this->captureAiPrompts();

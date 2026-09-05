@@ -388,6 +388,12 @@ eatured_cove_id can point at it.
                             'external_id' => $item->external_id,
                             'rank' => $item->rank,
                             'note' => $item->note,
+                            // The sentence under the card, distinct from `note`
+                            // above, which is the reason it was chosen. Both
+                            // travel: leaving `copy` behind would promote an
+                            // authored article whose cards are blank on the far
+                            // side, which is exactly the state it looks fine in.
+                            'copy' => $item->copy,
                             'verdict' => $item->verdict,
                         ];
                     })
@@ -721,6 +727,11 @@ eatured_cove_id can point at it.
                     'external_id' => $item['external_id'] ?? null,
                     'rank' => $item['rank'] ?? $rank,
                     'note' => $item['note'] ?? null,
+                    // Absent from an envelope written before the column existed,
+                    // which is the ordinary case for a while yet — and null is
+                    // the right answer there, because those plans were written
+                    // by the builder and it supplies the copy at build time.
+                    'copy' => $item['copy'] ?? null,
                     'verdict' => $item['verdict'] ?? null,
                 ];
             }

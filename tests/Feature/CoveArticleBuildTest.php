@@ -8,10 +8,12 @@ use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PickMode;
+use App\Enums\PlanWriter;
 use App\Enums\ProductStatus;
 use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Models\CovePlan;
+use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\Product;
@@ -331,6 +333,7 @@ class CoveArticleBuildTest extends TestCase
         $this->shelf();
         $plan = $this->plan();
         $plan->update([
+            'writer' => PlanWriter::Authored->value,
             'blurb' => 'Wat je moet weten voor je er een koopt.',
             'body' => 'Let op pasvorm en ruisonderdrukking.',
         ]);
@@ -344,6 +347,91 @@ class CoveArticleBuildTest extends TestCase
         $this->assertSame('Let op pasvorm en ruisonderdrukking.', $edition->body);
         $this->assertSame('planned', $edition->editorial_source);
         $this->assertSame([], $prompts->getArrayCopy());
+    }
+
+    #[Test]
+    public function an_authored_guide_with_no_blurb_still_skips_the_model(): void
+    {
+        $this->shelf();
+        $plan = $this->plan();
+
+        /*
+         * The bug `writer` exists to end.
+         *
+         * `article()` short-circuited on `filled(body) && filled(blurb)`, so an
+         * author who sent a finished body and left the blurb to us got the model
+         * run over their article anyway: real spend against `guide_copy`, and a
+         * generated title replacing the one they chose, reported nowhere.
+         */
+        $plan->update([
+            'writer' => PlanWriter::Authored->value,
+            'blurb' => null,
+            'body' => 'Let op pasvorm en ruisonderdrukking.',
+        ]);
+
+        $prompts = $this->captureAiPrompts();
+
+        $edition = app(EditionBuilder::class)->buildArticle($plan->fresh());
+
+        $this->assertSame('Let op pasvorm en ruisonderdrukking.', $edition->body);
+        $this->assertSame('planned', $edition->editorial_source);
+        $this->assertSame([], $prompts->getArrayCopy());
+    }
+
+    #[Test]
+    public function an_authored_article_prints_the_curators_own_card_copy(): void
+    {
+        $this->shelf();
+
+        $plan = $this->plan(PickMode::Locked);
+        $plan->update([
+            'writer' => PlanWriter::Authored->value,
+            'body' => 'Let op pasvorm en ruisonderdrukking.',
+        ]);
+
+        /*
+         * Card copy used to come only from the model's own output, so a fully
+         * authored article published with **blank cards** under the paragraphs
+         * that discussed them — `$written` is empty precisely when somebody else
+         * has done the writing.
+         *
+         * Five products, because a locked guide is judged against the article
+         * floor and a shorter one would not publish at all.
+         */
+        $chosen = collect([
+            $this->product('Studiokoptelefoon', 39900, 'Beyer'),
+            $this->product('Reiskoptelefoon', 24900, 'Bose'),
+            $this->product('Sportkoptelefoon', 19900, 'Jabra'),
+            $this->product('Kinderkoptelefoon', 9900, 'Puro'),
+            $this->product('Budgetkoptelefoon', 4900, 'Koss'),
+        ]);
+
+        foreach ($chosen as $rank => $group) {
+            $plan->items()->create([
+                'group_id' => $group->id,
+                'rank' => $rank + 1,
+                'note' => 'Waarom deze erbij hoort.',
+            ]);
+        }
+
+        $second = $plan->items()->orderBy('rank')->skip(1)->first();
+        $second->update(['copy' => 'Zit stevig, ook na een uur.', 'verdict' => 'Beste pasvorm']);
+
+        app(EditionBuilder::class)->buildArticle($plan->fresh());
+
+        $pick = DailyPick::query()->where('group_id', $second->group_id)->firstOrFail();
+
+        /*
+         * Matched by group id, not by position. The shortlist leads the edition
+         * but the engine's additions follow it, so item N of the plan is not
+         * find N — reading it positionally attaches one product's sentence to
+         * another product's card.
+         */
+        $this->assertSame('Zit stevig, ook na een uur.', $pick->blurb);
+        $this->assertSame('Beste pasvorm', $pick->verdict);
+
+        // And the brief that asked for it is still the brief, not the output.
+        $this->assertSame('Waarom deze erbij hoort.', $second->fresh()->note);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

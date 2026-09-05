@@ -53,12 +53,14 @@ class EditorialIndexController extends Controller
 
             'endpoints' => [
                 'GET  /api/editorial/products?market=&q=' => 'Find real products to write about. Every id you use must come from here.',
+                'GET  /api/editorial/products?market=&ean=' => 'Resolve a barcode to the product in that market. A 422 means the barcode failed its check digit — a misread, not a product we do not carry.',
                 'GET  /api/editorial/products?market=&q=&includeLive=1' => 'Also ask the live sources (bol). Slower, and the results come back as ordinary catalogue products with ids.',
                 'GET  /api/editorial/products/{id}' => 'One product, with the compliance flags that decide where it may appear.',
                 'GET  /api/editorial/topics?market=' => 'Guide topics ripened by what visitors actually searched for.',
                 'GET  /api/editorial/coves?market=&kind=' => 'The editorial calendar: planned Coves of every kind, and whether they were built.',
                 'POST /api/editorial/coves/drafts' => 'Ask for N draft plans of one kind, from the sources that know what is worth writing here: the observance calendar, the mined topic queue, the gift-wizard interests. Each arrives with a shortlist of real products. Start here rather than inventing titles.',
                 'GET  /api/editorial/coves/queue?market=&kinds[]=' => 'The Coves that need prose, each with its shortlist and its link allowlist. One call per writing run.',
+                'GET  /api/editorial/coves/{id}/brief' => 'The prompt this Cove would be written from — the assembled system and user messages the builder itself would send, including any edit made in the admin panel, plus the allowlist, the shortlist, the product floor and a revision you can quote back. Prefer it over any copy of the rules.',
                 'POST /api/editorial/coves' => 'Write or rewrite one plan whole — kind, address, shortlist and all. Creates a draft.',
                 'POST /api/editorial/coves/{id}/editorial' => 'Send the prose back for one plan. Cannot touch the shortlist, and needs the revision from the queue.',
                 'POST /api/editorial/coves/{id}/approve' => 'Approve a plan so the builder will use it. Pass build=1 to queue the build in the same call.',
@@ -91,9 +93,25 @@ class EditorialIndexController extends Controller
                 '4. publish' => 'POST /coves/{id}/approve with build=1 — needs the editorial.publish ability. Without it, a person approves in the admin panel and that is the intended shape.',
             ],
 
+            /*
+             * Orientation, not the contract.
+             *
+             * These four lines were the contract, hand-copied here and into two
+             * docs and a skill — and they had drifted: this block omitted the
+             * one-paragraph-per-product rule that `ProseCards` exists to make
+             * undroppable, so a client following the server's own description of
+             * itself wrote prose that publishes with bare cards at the foot of
+             * the page. The authoritative version is now served per plan by
+             * `GET /coves/{id}/brief`, assembled by the same code the builder
+             * uses. `paragraphs` is restated here anyway, because the one thing
+             * worse than a second copy is a second copy missing the rule that
+             * decides whether the page renders.
+             */
             'writing' => [
-                'links' => 'Never write a URL, a markdown link or an HTML tag. Link with tokens: [[product:1234|label]], [[brand:Sony]], [[search:draadloze koptelefoon]]. Anything outside the piece\'s own allowlist is stripped to plain text, so a made-up link becomes an unlinked phrase rather than a 404.',
-                'products' => 'Only products returned by /products exist. Ids are per market: the same product in another market is a different id with different offers, and mixing them lets a foreign price masquerade as the cheapest.',
+                'authority' => 'These lines orient you. The contract for a specific Cove is GET /coves/{id}/brief, which returns the exact prompt the builder would use — including any edit made in the admin panel. Prefer it.',
+                'paragraphs' => 'Write about EVERY product on the shortlist, each in its own paragraph, naming it with its link token. Its card is rendered directly under the paragraph that names it, so a product no paragraph names gets no writing at all and drops to the foot of the page as a bare card. One product per paragraph.',
+                'links' => 'Never write a URL, a markdown link or an HTML tag. Link with tokens: [[product:1234|label]], [[brand:Sony]], [[search:draadloze koptelefoon]]. Anything outside the piece\'s own allowlist is stripped to plain text, so a made-up link becomes an unlinked phrase rather than a 404. A product token must carry a label — [[product:1234]] alone renders as a number in your sentence.',
+                'products' => 'Only products returned by /products exist. Ids are per market and per environment: the same product elsewhere is a different id with different offers, and mixing them lets a foreign price masquerade as the cheapest. A barcode is the same number everywhere — prefer /products?ean=.',
                 'prices' => 'Never state a price, a rating or a stock claim in prose. Prices move and the page renders live ones; a number in a sentence is wrong within a week.',
             ],
         ]);

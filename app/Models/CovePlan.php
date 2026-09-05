@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Enums\PickMode;
+use App\Enums\PlanWriter;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -47,6 +48,10 @@ class CovePlan extends Model
      */
     protected $attributes = [
         'kind' => CoveKind::Daily->value,
+        // Same reason as `kind` above: a model returned by create() without one
+        // carries null until something reloads it, and `writer` is asked three
+        // times inside a single build.
+        'writer' => PlanWriter::Builder->value,
     ];
 
     protected function casts(): array
@@ -55,6 +60,9 @@ class CovePlan extends Model
             'market' => Market::class,
             'kind' => CoveKind::class,
             'pick_mode' => PickMode::class,
+            // Who writes the prose. Was inferred from which fields happened to
+            // be filled, in three places that disagreed. See App\Enums\PlanWriter.
+            'writer' => PlanWriter::class,
             // Nullable: null reads as CoveScene::defaultFor($this->kind).
             'scene' => CoveScene::class,
             /*

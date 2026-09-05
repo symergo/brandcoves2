@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PlanWriter;
 use App\Enums\ProductStatus;
 use App\Enums\Reaction;
 use App\Enums\Source;
@@ -150,6 +151,7 @@ class CoveRedoTest extends TestCase
         $plan->update([
             'blurb' => 'Wat je moet weten.',
             'body' => 'Dit heeft iemand zelf geschreven.',
+            'writer' => PlanWriter::Authored->value,
         ]);
 
         $before = app(EditionBuilder::class)->buildArticle($plan->fresh());
@@ -165,6 +167,42 @@ class CoveRedoTest extends TestCase
         $this->assertNull($plan->fresh()->body);
         $this->assertSame('ai', $after->editorial_source);
         $this->assertSame('Let op pasvorm.', $after->body);
+    }
+
+    #[Test]
+    public function a_redo_discards_the_card_copy_but_keeps_the_brief(): void
+    {
+        $this->shelf(12);
+        $plan = $this->plan();
+        $plan->update(['writer' => PlanWriter::Authored->value, 'body' => 'Zelf geschreven.']);
+
+        $item = $plan->items()->create([
+            'group_id' => $this->product('Reiskoptelefoon', 24900, 'Bose')->id,
+            'rank' => 1,
+            'note' => 'Vouwt plat.',
+            'verdict' => 'Beste voor de trein',
+            'copy' => 'Past in elke rugzak.',
+        ]);
+
+        // Rewrite, not reselect: the shortlist stays, so this is the case where
+        // authored card copy could survive into a page written by somebody else.
+        app(EditionBuilder::class)->redo($plan->fresh(), RedoOptions::rewrite());
+
+        $item->refresh();
+
+        /*
+         * `copy` is the sentence printed under the card — authored output,
+         * exactly like `body`, and redoing the article while keeping last
+         * month's captions is the quiet half of "the button changed nothing".
+         */
+        $this->assertNull($item->copy);
+
+        // The curator's own decisions are not output and are not discarded.
+        $this->assertSame('Vouwt plat.', $item->note);
+        $this->assertSame('Beste voor de trein', $item->verdict);
+
+        // And the plan is the builder's to write again.
+        $this->assertSame(PlanWriter::Builder, $plan->fresh()->writer);
     }
 
     #[Test]

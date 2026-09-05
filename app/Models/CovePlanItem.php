@@ -41,6 +41,23 @@ class CovePlanItem extends Model
         ];
     }
 
+    /**
+     * The sentence a reader sees under this product's card.
+     *
+     * Distinct from `note`, which is why the product was chosen and is read by
+     * the writer alone. Both exist because both are written, by different people
+     * at different moments: the curator says "the only one with a real grinder"
+     * while choosing, and the article says something a reader can enjoy.
+     *
+     * Null for the ordinary case — the builder writes the card copy at build
+     * time and never stores it here. Filled when a person or an external author
+     * wrote it, and then it wins: see `EditionBuilder::itemCopy()`.
+     */
+    public function hasAuthoredCopy(): bool
+    {
+        return filled($this->copy);
+    }
+
     /** @return BelongsTo<CovePlan, $this> */
     public function plan(): BelongsTo
     {

@@ -50,7 +50,15 @@ class BuildCove implements ShouldQueue
         }
 
         $edition = match (true) {
-            $plan->kind->isArticle() => $builder->buildArticle($plan),
+            /*
+             * `writesBody()` covers the Shop Cove that `isArticle()` excluded.
+             *
+             * Shop answers false to `isArticle()` deliberately — that asks about
+             * the /guides URL space — so it fell through to the Daily arm, found
+             * no drop_date and returned null. A Shop plan was planned, curated,
+             * approved and then silently did nothing.
+             */
+            $plan->kind->writesBody() => $builder->buildArticle($plan),
             $plan->isPersona() => $builder->buildPersona($plan),
             // A Daily is addressed by its date, and it is the plan's own date
             // that matters: dispatching without one built today's edition from a

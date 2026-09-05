@@ -11,9 +11,11 @@ use App\Models\GuideTopic;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Services\Editorial\ProductLookup;
+use App\Services\Identity\Gtin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -59,9 +61,32 @@ class CatalogueController extends Controller
             'minPriceCents' => ['nullable', 'integer', 'min:0'],
             'maxPriceCents' => ['nullable', 'integer', 'min:0'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+
+            /*
+             * A barcode, which is not a search term.
+             *
+             * `q` runs against `products.search_vector`, which is weighted title
+             * / brand / category / description and contains **no EAN at all**.
+             * So an author holding a list of barcodes — the most natural way to
+             * hand over a shortlist, and how a merchant's own export is keyed —
+             * got an empty array back, which reads as "we don't stock it" rather
+             * than "you asked the wrong way".
+             *
+             * The catalogue answers this perfectly well and the shopper path
+             * already does it: normalise, then hit the `(market, identity_key)`
+             * unique index. Until now the only way through the editorial API was
+             * the *public* scan endpoint plus parsing a group id out of the URL
+             * it returned, which is what the seed skill spends most of its words
+             * on.
+             */
+            'ean' => ['nullable', 'string', 'max:20'],
         ]);
 
         $market = Market::from($data['market']);
+
+        if (filled($data['ean'] ?? null)) {
+            return $this->byBarcode($market, (string) $data['ean'], $request->boolean('includeLive'));
+        }
 
         $groups = $this->lookup->search(
             market: $market,
@@ -78,6 +103,64 @@ class CatalogueController extends Controller
             'market' => $market->value,
             'count' => $groups->count(),
             'data' => $groups->map(fn (ProductGroup $g) => $this->lookup->describe($g))->all(),
+        ]);
+    }
+
+    /**
+     * One product by its barcode, in this market.
+     *
+     * Deliberately shaped like the rest of `/products` — `data` is a list, empty
+     * on a miss — so a client can treat it as the same call with a different
+     * question rather than a special case with its own parsing.
+     *
+     * Three outcomes an author has to be able to tell apart, which is why the
+     * invalid case is a 422 rather than an empty list:
+     *
+     *   - **invalid**: the barcode failed its check digit. A misread, not a miss,
+     *     and retrying it in another market will fail too.
+     *   - **not found**: no EAN-grouped product here. Note that a feed shipping
+     *     no barcode leaves its products grouped by brand and title instead, so
+     *     the site can hold a product this cannot see.
+     *   - **found**: exactly one group, because `(market, identity_key)` is
+     *     unique.
+     *
+     * `includeLive` asks the live sources first, for the case above: bol is
+     * queried rather than crawled, so a product nobody has ingested can be
+     * fetched, grouped and then found here in the same request.
+     */
+    private function byBarcode(Market $market, string $barcode, bool $includeLive): JsonResponse
+    {
+        $gtin = Gtin::normalise($barcode);
+
+        if ($gtin === null) {
+            throw ValidationException::withMessages([
+                'ean' => "'{$barcode}' is not a valid barcode — it fails its check digit. "
+                    .'That is a misread rather than a product we do not carry, so trying another market will not help.',
+            ]);
+        }
+
+        if ($includeLive) {
+            /*
+             * The body of a live lookup is useless and its side effect is not.
+             *
+             * `SearchService` treats a GTIN as an identity and will ingest and
+             * group what bol returns — but its own reply is filtered by the same
+             * full-text query that cannot match a barcode, so it comes back
+             * empty either way. Run it for the ingest, then ask the catalogue.
+             */
+            $this->lookup->search(market: $market, term: $gtin, limit: 1, includeLive: true);
+        }
+
+        $group = ProductGroup::query()
+            ->forMarket($market)
+            ->where('identity_key', $gtin)
+            ->first();
+
+        return response()->json([
+            'market' => $market->value,
+            'ean' => $gtin,
+            'count' => $group === null ? 0 : 1,
+            'data' => $group === null ? [] : [$this->lookup->describe($group)],
         ]);
     }
 

@@ -152,6 +152,27 @@ enum CoveKind: string
     }
 
     /**
+     * Does this kind's page carry a long-form `body`, written as an article?
+     *
+     * The build question, and deliberately not `isArticle()`, which asks whether
+     * a kind lives in the `/guides` URL space. A Shop Cove answers **false**
+     * there on purpose — it is read at `/shops/{slug}` and must stay out of the
+     * guides index, sitemap and hreflang pairing — and it is nonetheless written
+     * exactly like an advice article, by the same writer, into the same column,
+     * against the same budget.
+     *
+     * Asking the URL-space question at the top of `buildArticle()` is what left
+     * `CoveKind::Shop` with no build path at all: `BuildCove` fell through to the
+     * Daily arm, found no `drop_date`, and returned null. A Shop plan could be
+     * planned, curated and approved, and then quietly did nothing — while
+     * `Defaults::SHOP_SYSTEM` sat in the prompt bank with no caller.
+     */
+    public function writesBody(): bool
+    {
+        return in_array($this, [self::Guide, self::Seasonal, self::Advice, self::Shop], true);
+    }
+
+    /**
      * Does the page expect a ranked shortlist under the prose?
      *
      * The one thing the React page branches on. An advice article or a Shop

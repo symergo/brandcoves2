@@ -54,6 +54,7 @@ cannot be recovered from a diff.
 | [advice-coves.md](advice-coves.md) | Content / Editorial | Active — 10 subjects; 8 in four markets, 2 in three |
 | [cove-planner.md](cove-planner.md) | Content / Operations | Active — `guides` tables retire a release later |
 | [cove-curation.md](cove-curation.md) | Content / Operations | Active |
+| [cove-writer.md](cove-writer.md) | Content / Operations | Active — panel `writer` switch still to come |
 | [seasonal-series.md](seasonal-series.md) | Content / Operations | Active — new 2026-09-05 |
 | [cove-calendar.md](cove-calendar.md) | Content / Operations | Active — new 2026-09-05 |
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |

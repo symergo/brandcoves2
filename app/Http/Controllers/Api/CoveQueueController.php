@@ -6,9 +6,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PlanWriter;
 use App\Http\Controllers\Controller;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
+use App\Services\Cove\PlanRevision;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\LinkCheck;
@@ -129,6 +131,18 @@ class CoveQueueController extends Controller
             'items.*.id' => ['required', 'integer'],
             'items.*.copy' => ['nullable', 'string', 'max:500'],
             'items.*.verdict' => ['nullable', 'string', 'max:80'],
+
+            /*
+             * Say who wrote this, so the builder does not write it again.
+             *
+             * Defaults to `authored` because that is what posting prose to this
+             * endpoint *means* — an agent that has just written an article and
+             * left the plan marked `builder` would have the model rewrite it on
+             * the next build, spending budget to replace the words it was
+             * given. Sending `builder` explicitly is the way to file a draft for
+             * the model to finish.
+             */
+            'writer' => ['nullable', Rule::in(PlanWriter::values())],
         ]);
 
         if ($data['revision'] !== $this->revision($plan)) {
@@ -185,16 +199,29 @@ class CoveQueueController extends Controller
                         'a' => HouseStyle::prose($p['answer']),
                     ], $data['faq'])
                     : null,
+                // Posting prose here means you wrote it. See the validation note.
+                'writer' => $data['writer'] ?? PlanWriter::Authored->value,
             ], fn ($v) => $v !== null))->save();
 
             foreach ($items as $id => $item) {
                 // Membership and rank are untouched. Only what is *said* about a
                 // product can be written here.
                 CovePlanItem::query()->whereKey($id)->update(array_filter([
-                    // `note` is a brief for the model and never reaches a
-                    // reader, so it is left as sent. `verdict` is printed on
-                    // the card.
-                    'note' => $item['copy'] ?? null,
+                    /*
+                     * The card's sentence, into `copy` — not into `note`.
+                     *
+                     * This wrote `note`, which is the curator's reason for
+                     * choosing the product and a brief for the writer. So an
+                     * author sending back the sentence they had just written
+                     * destroyed the instruction that produced it, and the next
+                     * rewrite of that plan was briefed with its own output.
+                     *
+                     * Through `prose`, unlike `note`: this one is rendered by
+                     * CoveMarkup under the card, so it may carry link tokens and
+                     * has to obey house style like every other reader-facing
+                     * field.
+                     */
+                    'copy' => HouseStyle::prose($item['copy'] ?? null),
                     'verdict' => HouseStyle::plain($item['verdict'] ?? null),
                 ], fn ($v) => $v !== null));
             }
@@ -238,6 +265,9 @@ class CoveQueueController extends Controller
             'id' => $plan->id,
             'revision' => $this->revision($plan),
             'kind' => $plan->kind->value,
+            // Who this plan expects to write it. A queue entry is normally
+            // `builder` until an author claims it by posting prose back.
+            'writer' => $plan->writer->value,
             'market' => $plan->market->value,
             'language' => $plan->market->language(),
             'date' => $plan->drop_date?->toDateString(),
@@ -256,6 +286,10 @@ class CoveQueueController extends Controller
                 // The reason a person put this product on the list, and the most
                 // useful sentence a writer gets.
                 'note' => $item->note,
+                // What has already been written about it, if anything. Read back
+                // so a second pass revises rather than starting again — and so
+                // `note` and `copy` are visibly two different things.
+                'copy' => $item->copy,
                 'verdict' => $item->verdict,
                 'product' => $item->group === null ? null : $this->lookup->describe($item->group),
             ])->values()->all(),
@@ -278,16 +312,15 @@ class CoveQueueController extends Controller
     /**
      * What this plan looked like when it was handed out.
      *
-     * A scheduled agent retries, and two runs must not overwrite each other or a
-     * person's edit. Covers the plan's own timestamp and its item ids, because
-     * both "somebody rewrote the brief" and "somebody removed a product" make
-     * whatever is being written about it stale.
+     * Delegated to {@see PlanRevision} rather than computed here, because
+     * `GET /coves/{id}` now issues one too — this endpoint lists only plans with
+     * no prose yet, so it could never hand out a revision for the plan somebody
+     * wanted to revise. Two callers hashing the same thing separately is how
+     * they come to hash it differently, and the symptom is every write refused
+     * with a message about an edit nobody made.
      */
     private function revision(CovePlan $plan): string
     {
-        return substr(hash('sha256', implode('|', [
-            $plan->updated_at?->toIso8601String() ?? '',
-            $plan->items()->orderBy('id')->pluck('id')->implode(','),
-        ])), 0, 16);
+        return PlanRevision::of($plan);
     }
 }

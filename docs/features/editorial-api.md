@@ -90,43 +90,46 @@ silently skipped pick at build time.
 typed into this site. A guide written against one of those has an audience before it is published,
 which is the entire reason guides rank.
 
-### A barcode is not a lookup here
+### A barcode is a lookup
 
-`/products?q=` is full-text against `products.search_vector`, and that vector is
-title A / brand B / category C / description D. **No EAN is in it.** So an author holding a list of
-barcodes — the most natural way to hand over a shortlist, and the way a merchant's own catalogue
-export is keyed — gets an empty array back, which reads as "we don't stock it" rather than "you
-asked the wrong way".
+`GET /products?market=…&ean=4548736132580` resolves a barcode against the `(market, identity_key)`
+unique index — the same one hit the shopper path takes, normalised through `Gtin::normalise()` so a
+12-digit UPC-A or a 14-digit ITF-14 finds the GTIN-13 the catalogue stores.
 
-The catalogue can answer the question perfectly well; the shopper path already does. `SearchService`
-normalises the term with `Gtin::normalise()` and matches `identity_key` exactly, which is one hit on
-the `(market, identity_key)` unique index, and `/{market}/scan/{barcode}` exposes that as JSON.
-`ProductLookup` does not, because it was written to answer "what could I write about" and a barcode
-is not that question.
+It needs saying why this is a separate parameter rather than something `q` should have handled.
+`/products?q=` is full-text against `products.search_vector`, and that vector is title A / brand B /
+category C / description D. **No EAN is in it.** So an author holding a list of barcodes — the most
+natural way to hand over a shortlist, and the way a merchant's own catalogue export is keyed — got an
+empty array back, which reads as "we don't stock it" rather than "you asked the wrong way". Until
+this existed the route through was the *public* `/{market}/scan/{barcode}` endpoint followed by
+parsing a group id out of the URL it returned, which is what the seed skill spent most of its words
+on.
 
-Until the editorial API grows the lookup, the two-step is the public scan endpoint followed by the
-group id in its `url`:
+Three outcomes, and telling them apart is the point:
 
-```
-GET /be-nl/scan/4548736132580
-{"status":"found","title":"Sony WH-1000XM5 Zwart","url":"/be-nl/p/3921/wh-1000xm5-koptelefoon-zwart"}
-```
+| Reply | Means |
+|---|---|
+| `count: 1` | found — exactly one, because `(market, identity_key)` is unique |
+| `count: 0` | no EAN-grouped product in this market |
+| **422** | the barcode failed its check digit |
 
-The id in that URL is **per environment as well as per market**. Measured on 2026-08-29, one barcode
-in one market: `4548736132580` is group `3210` on production, `3921` on staging and `21214` on a
-local dev database. Ingestion order assigns them and nothing reconciles them across environments, so
-an id resolved on staging and written to production names a real, in-stock, perfectly usable
-*different product* — the one class of mistake `rejectUnusable()` cannot catch, because nothing about
-the row is wrong. Resolve against the host being written to, every time.
+The 422 is deliberate rather than an empty list. A failed check digit is a **misread, not a miss**,
+and an author told "not found" would go looking in another market, or worse, search by name and pin
+something else.
 
-Two more limits worth naming rather than discovering. Coverage is **EAN-grouped groups only** — a feed row
+**Ids are per environment as well as per market.** Measured on 2026-08-29, one barcode in one market:
+`4548736132580` is group `3210` on production, `3921` on staging and `21214` on a local dev database.
+Ingestion order assigns them and nothing reconciles them, so an id resolved on staging and written to
+production names a real, in-stock, perfectly usable *different product* — the one class of mistake
+`rejectUnusable()` cannot catch, because nothing about the row is wrong. Resolve against the host you
+are writing to, every time. A barcode is the same number everywhere; an id is not, which is the
+strongest argument for preferring EANs in a brief.
+
+Two limits worth naming rather than discovering. Coverage is **EAN-grouped groups only** — a feed row
 with no barcode is grouped as `brand|normalised-title` instead and its `identity_key` is not a GTIN,
-so the site holds a product the scan cannot see. And `includeLive=1` on `/products` with an EAN
-*does* reach bol (the live term is the term, and `SearchService` treats a GTIN as an identity), so it
-can ingest a product the scan just missed — but its own response is still empty, because the reply is
-filtered by the same full-text query. The body is useless; the side effect is not. Scan again.
-
-`.claude/skills/giftcoves-seed-coves` is the client that does all of this, for handing to Claude.
+so the site holds a product this cannot see. And `includeLive=1` alongside `ean=` asks bol first and
+then re-reads the catalogue in the same request, so a product nobody has ingested can be fetched,
+grouped and found in one call.
 
 ### Where products come from
 
@@ -350,6 +353,46 @@ Tuesday should not advance the topic queue.
 
 `readBack` follows the kind too: a Daily points at the API endpoint that reports what the builder
 actually managed to put on the page, and every permanent kind points at its own URL.
+
+### The plan says who writes it
+
+`cove_plans.writer` is `builder` or `authored`, and it is the one question the build asks. It
+replaced an inference from whichever fields happened to be filled — which got it wrong for an author
+who sent a finished `body` and left the `blurb` to us, running the model over their article and
+replacing their title, reported nowhere. See [cove-writer.md](cove-writer.md).
+
+Nothing changes for a client that has been writing here for months: **sending prose still means you
+wrote it.** `POST /coves` sets `authored` when the body carries `editorial` or `body`, and
+`POST /coves/{id}/editorial` sets it unconditionally. Send `writer: "builder"` to go the other way —
+to file a first draft you want the model to finish.
+
+### The prompt is served, not described
+
+`GET /coves/{id}/brief` returns the assembled `system` and `user` messages the builder would send for
+that plan, **prompt-bank override included**, plus the link allowlist, the shortlist with its notes
+and card copy, the kind's product floor, and a `revision` you can quote straight back.
+
+That last one matters on its own: `GET /coves/queue` lists only plans with **no prose yet**, so it
+could never hand out a revision for the plan you wanted to *revise*. The only way back was the
+whole-plan upsert, which replaces the shortlist.
+
+Use it instead of working from a copy of the rules. Four hand-maintained copies of the writing
+contract exist — the `writing` block below, `docs/publishing-guide.md`,
+[scheduled-writing.md](scheduled-writing.md) and the seed skill — and they had already drifted apart:
+the API root omits the one-paragraph-per-product rule that `ProseCards` exists to make undroppable.
+
+One caveat, and it decides how you plan: the brief is exact for a **locked** plan, because the
+shortlist *is* the edition. For an `open` one the engine tops the list up on the day, so the
+allowlist may widen later. An authored Cove usually wants `pickMode: "locked"`.
+
+### `items[].copy` is the card's sentence, not the curator's reason
+
+`POST /coves/{id}/editorial` writes `items[].copy` into `cove_plan_items.copy`. It used to write it
+into `note` — the reason a person chose the product — so an author posting back the sentence they had
+just written destroyed the instruction that produced it, and the next rewrite was briefed with its
+own output.
+
+The two are read back separately, and only `copy` and `verdict` reach a reader.
 
 ### Authored prose wins outright, and skips the model
 

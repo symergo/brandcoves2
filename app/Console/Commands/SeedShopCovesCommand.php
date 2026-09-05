@@ -6,16 +6,12 @@ namespace App\Console\Commands;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
-use App\Enums\ProductStatus;
 use App\Enums\PublishStatus;
+use App\Models\CovePlan;
 use App\Models\DailyPickSet;
-use App\Models\Merchant;
-use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Editorial\HouseStyle;
+use App\Services\Shops\ShopDirectory;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 /**
  * Publish the shipped Shop Coves into the markets that have those shops.
@@ -58,7 +54,12 @@ class SeedShopCovesCommand extends Command
      */
     private const SOURCE = 'seed';
 
-    public function handle(ConnectorRegistry $registry): int
+    public function __construct(private readonly ShopDirectory $shops)
+    {
+        parent::__construct();
+    }
+
+    public function handle(): int
     {
         $only = $this->option('market');
 
@@ -87,7 +88,7 @@ class SeedShopCovesCommand extends Command
                 continue;
             }
 
-            foreach ($this->shopsIn($market, $registry) as $shop) {
+            foreach ($this->shops->in($market) as $shop) {
                 $text = $content[$shop->domain ?? ''][$market->language()] ?? null;
 
                 if ($text === null) {
@@ -98,14 +99,8 @@ class SeedShopCovesCommand extends Command
                     continue;
                 }
 
-                /*
-                 * Dots become separators, not nothing. `Str::slug('bol.com')`
-                 * is "bolcom" — the dot is stripped rather than replaced —
-                 * which reads as a typo in a URL and in a `[[guide:...]]`
-                 * token. Replacing it first gives `bol-com`, `coolblue-be`,
-                 * `shop-action-com`.
-                 */
-                $slug = Str::slug(str_replace('.', '-', (string) $shop->domain));
+                // One rule, in one place: see ShopDirectory::slugFor().
+                $slug = ShopDirectory::slugFor($shop);
 
                 $existing = DailyPickSet::query()
                     ->where('market', $market->value)
@@ -133,7 +128,7 @@ class SeedShopCovesCommand extends Command
                     continue;
                 }
 
-                DailyPickSet::query()->updateOrCreate(
+                $cove = DailyPickSet::query()->updateOrCreate(
                     [
                         'market' => $market->value,
                         'kind' => CoveKind::Shop->value,
@@ -160,6 +155,22 @@ class SeedShopCovesCommand extends Command
                         'published_at' => $existing?->published_at ?? now(),
                     ],
                 );
+
+                /*
+                 * Give it a plan, so the planner describes it like everything else.
+                 *
+                 * `AdviceCoveSeeder` already does this and this one did not, so
+                 * the shipped Shop Coves were the only published pages on the
+                 * site with no `cove_plans` row: invisible to the planner,
+                 * impossible to re-curate, and unbuildable even after
+                 * `writesBody()` gave the kind a build path — because nothing
+                 * existed to build *from*.
+                 *
+                 * `recordFor()` mints it as `used`, never `approved`, which is
+                 * what keeps it a record of what happened rather than an
+                 * instruction the next rebuild obeys.
+                 */
+                CovePlan::recordFor($cove);
             }
         }
 
@@ -173,37 +184,6 @@ class SeedShopCovesCommand extends Command
         ));
 
         return self::SUCCESS;
-    }
-
-    /**
-     * The shops a market carries.
-     *
-     * Deliberately the same question `ShopsController` asks, so a Cove and its
-     * directory entry appear together. Duplicated as a query rather than shared
-     * through a service because the two callers want different columns and this
-     * one runs once per market in a console command — the day a third caller
-     * needs it is the day it earns a home of its own.
-     *
-     * @return Collection<int, Merchant>
-     */
-    private function shopsIn(Market $market, ConnectorRegistry $registry): Collection
-    {
-        $live = $registry->liveSourcesFor($market);
-
-        return Merchant::query()
-            ->where('enabled', true)
-            ->whereNotNull('domain')
-            ->where(function (Builder $q) use ($market, $live): void {
-                $q->whereHas('products', fn (Builder $p) => $p
-                    ->where('market', $market->value)
-                    ->where('status', ProductStatus::Active->value));
-
-                if ($live !== []) {
-                    $q->orWhereIn('source', array_map(fn ($s) => $s->value, $live));
-                }
-            })
-            ->orderBy('name')
-            ->get(['id', 'name', 'domain', 'source']);
     }
 
     private function confirmReplacement(): bool

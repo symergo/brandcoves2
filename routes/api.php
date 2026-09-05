@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\CatalogueController;
+use App\Http\Controllers\Api\CoveBriefController;
 use App\Http\Controllers\Api\CoveDraftController;
 use App\Http\Controllers\Api\CovePlanController;
 use App\Http\Controllers\Api\CoveQueueController;
@@ -66,6 +67,18 @@ Route::prefix('editorial')
             Route::get('/coves/queue', [CoveQueueController::class, 'index']);
 
             Route::get('/coves/{plan}', [CovePlanController::class, 'show']);
+
+            /*
+             * The prompt this Cove would be written from.
+             *
+             * What makes "write it from the prompt in the database" real: the
+             * assembled system and user messages `EditionBuilder` would send,
+             * prompt-bank override included, so an edit to the voice in
+             * Operations → Prompts governs an external author too. Registered
+             * after `/coves/{plan}` because it is a longer path and binds no
+             * word the wildcard could swallow.
+             */
+            Route::get('/coves/{plan}/brief', [CoveBriefController::class, 'show']);
 
             Route::get('/guides', [GuideEditorialController::class, 'index']);
             Route::get('/guides/{guide}', [GuideEditorialController::class, 'show']);

@@ -7,6 +7,7 @@ namespace App\Services\Cove;
 use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PickMode;
+use App\Enums\PlanWriter;
 use App\Enums\PublishStatus;
 use App\Enums\Source;
 use App\Models\CovePlan;
@@ -22,7 +23,6 @@ use App\Services\Cove\Writers\GuideWriter;
 use App\Services\Cove\Writers\Written;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\HouseStyle;
-use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -63,6 +63,7 @@ class EditionBuilder
         private readonly Selectors $selectors,
         private readonly GuideWriter $writer,
         private readonly PromptBank $prompts,
+        private readonly CovePrompt $prompt,
     ) {}
 
     /**
@@ -314,8 +315,16 @@ class EditionBuilder
      */
     public function buildArticle(CovePlan $plan, array $exclude = []): ?DailyPickSet
     {
-        if (! $plan->kind->isArticle() || blank($plan->slug)) {
-            Log::warning('Article build skipped: not an article kind, or no slug', ['plan' => $plan->id]);
+        /*
+         * `writesBody()`, not `isArticle()`.
+         *
+         * A Shop Cove is written exactly like an advice article and deliberately
+         * answers false to the URL-space question, so asking that one here left
+         * it with no build path at all — planned, curated, approved, and then
+         * nothing. See CoveKind::writesBody().
+         */
+        if (! $plan->kind->writesBody() || blank($plan->slug)) {
+            Log::warning('Article build skipped: kind writes no body, or no slug', ['plan' => $plan->id]);
 
             return null;
         }
@@ -462,8 +471,8 @@ class EditionBuilder
         $written = $this->writer->write(
             $plan,
             $finds->all(),
-            $this->linkAllowlist($edition->market, $finds->all()),
-            $this->curationBrief($edition->plan),
+            $this->prompt->allowlist($edition->market, $finds->all()),
+            $this->prompt->brief($edition->plan),
         );
 
         if (! $written->isFromModel()) {
@@ -555,16 +564,39 @@ class EditionBuilder
             'editorial' => null,
             'body' => null,
             'faq' => null,
+
+            /*
+             * And the writer goes back to the builder, because redo means
+             * "write it again" and there is now nobody else to do that.
+             *
+             * Leaving it `authored` would say the plan is waiting on a person
+             * who has already had their turn, and the prose it referred to has
+             * just been deleted — so the page would rebuild with nothing in it.
+             */
+            'writer' => PlanWriter::Builder->value,
         ])->save();
 
         if ($options->reselect) {
             $plan->items()->delete();
+        } else {
+            /*
+             * The shortlist stays, but what was *written* about it does not.
+             *
+             * `copy` is authored output exactly like `body` above — the sentence
+             * printed under the card — so leaving it would redo the article and
+             * publish it with last month's captions underneath. `note` and
+             * `verdict` are the curator's, not the writer's, and they survive
+             * for the same reason the title and the build instructions do.
+             */
+            $plan->items()->update(['copy' => null]);
         }
 
         $plan->refresh();
 
         return match (true) {
-            $plan->kind->isArticle() => $this->buildArticle($plan, $exclude),
+            // `writesBody()`, so a Shop Cove can be redone like every other
+            // prose kind — `isArticle()` excludes it by design.
+            $plan->kind->writesBody() => $this->buildArticle($plan, $exclude),
             $plan->isPersona() => $this->buildPersona($plan, $exclude),
             default => $plan->drop_date === null
                 ? null
@@ -579,19 +611,48 @@ class EditionBuilder
      * for a Cove: if someone wrote the piece, generating a second one and
      * throwing it away is spend with no output.
      *
+     * **The plan says who writes it; `body` is only a floor.** This used to read
+     * `filled($plan->body) && filled($plan->blurb)`, and the `&& blurb` half was
+     * a bug — an author who sent a finished article and left the one-line blurb
+     * to us got the model run over it anyway, spending against `guide_copy` and
+     * replacing the title they chose, reported nowhere. The `writer` field is
+     * the decision now. `filled($plan->body)` survives as a guard rather than as
+     * the question: a plan marked authored *before* anybody has written it would
+     * otherwise publish a page with nothing on it, and a generated article is a
+     * far better answer to that than an empty one.
+     *
      * @param  list<ProductGroup>  $finds
      */
     private function article(CovePlan $plan, array $finds): Written
     {
-        if (filled($plan->body) && filled($plan->blurb)) {
+        /*
+         * The plan says who writes it, rather than the builder guessing.
+         *
+         * This read `filled($plan->body) && filled($plan->blurb)`, and the
+         * `&& blurb` half was the bug: an author who sent a finished body and no
+         * blurb got the model run over their article anyway — real spend against
+         * `guide_copy`, and a generated title replacing the one they chose, with
+         * nothing anywhere reporting it. See App\Enums\PlanWriter.
+         */
+        if (! $plan->writer->callsModel() && filled($plan->body)) {
             return Written::planned('');
         }
 
         return $this->writer->write(
             $plan,
             $finds,
-            $this->linkAllowlist($plan->market, $finds),
-            $this->curationBrief($plan),
+            /*
+             * The article's own page is not linkable from inside it.
+             *
+             * On a first build the edition does not exist yet, so this changed
+             * nothing; on every rebuild after that the guide was offered its own
+             * slug and could link to itself — a loop for a reader and a dead end
+             * for a crawler. Found by the test that asserts the served prompt and
+             * the sent prompt are the same string, which is exactly the class of
+             * bug that test exists for.
+             */
+            $this->prompt->allowlist($plan->market, $finds, excludeGuideId: $plan->edition_id),
+            $this->prompt->brief($plan),
         );
     }
 
@@ -604,24 +665,39 @@ class EditionBuilder
      * product. Everywhere else on a plan the curator wins; there is no reason
      * this is the exception.
      *
-     * Positional, matching `writePicks()`: entry N describes find N.
+     * The same is now true of the copy itself. `cove_plan_items.copy` is the
+     * sentence a person or an external author wrote for that card, and when it
+     * is there the model has not run at all — `article()` short-circuits on an
+     * authored plan, `$written->items` comes back empty, and without this every
+     * `daily_picks.blurb` was null. A guide written entirely by hand published
+     * with blank cards under the paragraphs discussing them.
+     *
+     * **Curated values are looked up by group id; the model's by position.**
+     * `$written->items` is positional and matches `$finds` because the model was
+     * handed that list in that order. A plan's items are not: the shortlist
+     * leads the edition but the engine's additions follow it, so entry N of
+     * `$finds` is not item N of the plan. Reading the authored copy positionally
+     * would attach one product's sentence to another's card, which is worse than
+     * having none.
+     *
+     * Positional output, matching `writePicks()`: entry N describes find N.
      *
      * @param  list<ProductGroup>  $finds
      * @return list<array{copy: string|null, verdict: string|null}>
      */
     private function itemCopy(CovePlan $plan, array $finds, Written $written): array
     {
-        $curated = $plan->items()
-            ->whereNotNull('group_id')
-            ->whereNotNull('verdict')
-            ->pluck('verdict', 'group_id');
+        $items = $plan->items()->whereNotNull('group_id')->get();
+
+        $verdicts = $items->whereNotNull('verdict')->pluck('verdict', 'group_id');
+        $authored = $items->whereNotNull('copy')->pluck('copy', 'group_id');
 
         $copy = [];
 
         foreach ($finds as $index => $group) {
             $copy[] = [
-                'copy' => $written->items[$index]['copy'] ?? null,
-                'verdict' => $curated[$group->id] ?? ($written->items[$index]['verdict'] ?? null),
+                'copy' => $authored[$group->id] ?? ($written->items[$index]['copy'] ?? null),
+                'verdict' => $verdicts[$group->id] ?? ($written->items[$index]['verdict'] ?? null),
             ];
         }
 
@@ -893,7 +969,7 @@ class EditionBuilder
          * It also means an authored Cove costs nothing in AI spend, which is
          * the invariant working in the direction it was meant to.
          */
-        if ($plan !== null && filled($plan->editorial)) {
+        if ($plan !== null && ! $plan->writer->callsModel() && filled($plan->editorial)) {
             return [
                 /*
                  * House style applies to authored prose too, and that is not a
@@ -919,13 +995,29 @@ class EditionBuilder
             return ['text' => null, 'source' => 'none'];
         }
 
-        $allowed = $this->linkAllowlist($market, $finds);
-        $brief = $this->curationBrief($plan);
+        /*
+         * The observance is deliberately not passed here.
+         *
+         * `allowlist()` accepts one and would add its queries to the linkable
+         * searches, and no caller has ever supplied it — so the parameter is
+         * dead and the observance's own words are not linkable. That may well be
+         * worth changing; it is not worth changing inside a refactor whose whole
+         * value is that the prompt served over HTTP is the prompt used here.
+         */
+        $allowed = $this->prompt->allowlist($market, $finds);
+        $brief = $this->prompt->brief($plan);
 
         $kind = $plan?->kind ?? CoveKind::Daily;
 
-        $system = $this->editorialSystem($kind, $brief !== [])."\n\n".$this->markup->promptContract($allowed);
-        $prompt = $this->editorialPrompt($kind, $market, $finds, $observance, $title, $brief, $plan);
+        /*
+         * Assembled by `CovePrompt`, which the editorial API also asks.
+         *
+         * One implementation, so an external author can be handed the prompt the
+         * builder would have used — including a prompt-bank override — instead
+         * of a copy of it maintained by hand in four files.
+         */
+        $system = $this->prompt->system($kind, $brief !== [], $allowed);
+        $prompt = $this->prompt->user($kind, $market, $finds, $observance, $title, $brief, $plan);
 
         $text = $this->write($system, $prompt);
 
@@ -1006,37 +1098,6 @@ class EditionBuilder
     }
 
     /**
-     * What the curator wants covered, in the order they chose it.
-     *
-     * This is the point of curating a Cove before it is written: the shortlist
-     * is not a set of candidates for the model to choose from, it is the
-     * subject of the article. The per-item note is the part no ranking function
-     * could supply — "why this one is here" is a judgement, and it is what
-     * turns a product grid into writing.
-     *
-     * @return list<array{id: int, title: string, note: string|null}>
-     */
-    private function curationBrief(?CovePlan $plan): array
-    {
-        if ($plan === null) {
-            return [];
-        }
-
-        return $plan->items()
-            ->whereNotNull('group_id')
-            ->with('group')
-            ->get()
-            ->filter(fn (CovePlanItem $item) => $item->group !== null)
-            ->map(fn (CovePlanItem $item) => [
-                'id' => (int) $item->group_id,
-                'title' => (string) $item->group->title,
-                'note' => $item->note,
-            ])
-            ->values()
-            ->all();
-    }
-
-    /**
      * Did the article actually name any of these products?
      *
      * Tested on the link token, not on the title. The token is the only
@@ -1056,191 +1117,6 @@ class EditionBuilder
         }
 
         return false;
-    }
-
-    /**
-     * What the model is allowed to link to.
-     *
-     * Everything in today's edition, plus the brands behind it and the
-     * observance's own queries. Nothing else — a token outside this list is
-     * stripped to plain text by CoveMarkup, so the worst a hallucination costs
-     * is an unlinked phrase.
-     *
-     * @param  list<ProductGroup>  $finds
-     * @return array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>, guides: list<string>}
-     */
-    private function linkAllowlist(Market $market, array $finds, ?Observance $observance = null): array
-    {
-        $products = [];
-        $brands = [];
-
-        foreach ($finds as $group) {
-            $products[$group->id] = ['slug' => $group->slug, 'title' => $group->title];
-
-            if ($group->brand !== null) {
-                $brands[] = $group->brand;
-            }
-        }
-
-        $searches = array_values(array_unique(array_filter([
-            ...($observance?->queries ?? []),
-            ...array_map(fn (ProductGroup $g) => $g->category, $finds),
-        ])));
-
-        return [
-            'brands' => array_values(array_unique($brands)),
-            'searches' => $searches,
-            'products' => $products,
-            // The guides this market has published. Offered to the model for
-            // the same reason the page resolves them: an edition that can send
-            // a reader to the guide for what it just showed them is the link
-            // between the daily half of the site and the evergreen half.
-            'guides' => app(Allowlist::class)->guideSlugs($market),
-        ];
-    }
-
-    /**
-     * @param  bool  $curated  Whether a person chose the products this is written about.
-     *                         Adds the order and the notes; it does not decide
-     *                         whether every product is covered. See below.
-     */
-    private function editorialSystem(CoveKind $kind, bool $curated = false): string
-    {
-        /*
-         * The editable half, per kind.
-         *
-         * A Daily and a persona no longer share one: a persona written by the
-         * column's prompt says "this week" on a page that is undated,
-         * evergreen and read for years. See App\Services\Ai\Prompts\Defaults.
-         */
-        $base = $this->prompts->system('cove.'.$kind->value);
-
-        /*
-         * Every product gets written about. Curation adds two rules on top; it
-         * no longer decides whether the rule exists.
-         *
-         * This used to flip. An engine-picked edition was told "pick two or
-         * three worth a sentence and let the rest speak for themselves", and
-         * that was right while the page was prose and then a grid: the grid
-         * carried whatever the prose skipped, and writing about all seven read
-         * as a catalogue with adjectives.
-         *
-         * It stopped being right when the card moved under the paragraph that
-         * names it. A product no paragraph mentions now has nothing written
-         * about it anywhere — it drops to the foot of the page as a bare card,
-         * which is the shape the pairing exists to get away from. So the floor
-         * is one passage per product whoever chose them, and what curation adds
-         * is the order and the reasons.
-         *
-         * The paragraph rules themselves live on ProseCards, next to the walk
-         * that makes them true, because the guide writer needs the same ones.
-         * The curated pair below stays here: it is a fact about the plan in
-         * front of the builder, which ProseCards knows nothing about.
-         */
-        $every = ProseCards::promptContract();
-
-        return $base."\n".($curated
-            ? $every."\n".<<<'TXT'
-            - Take them in the order given: somebody chose that order.
-            - The note beside a product is the reason it was chosen. Use it. Do not quote it.
-            TXT
-            : $every);
-    }
-
-    /**
-     * @param  list<ProductGroup>  $finds
-     * @param  list<array{id: int, title: string, note: string|null}>  $brief
-     */
-    private function editorialPrompt(
-        CoveKind $kind,
-        Market $market,
-        array $finds,
-        ?Observance $observance,
-        string $title,
-        array $brief = [],
-        ?CovePlan $plan = null,
-    ): string {
-        $curatedIds = array_column($brief, 'id');
-        $lines = [];
-
-        foreach ($finds as $group) {
-            // The engine's own finds only. A curated product is described
-            // below, with its note, and listing it twice invites the model to
-            // treat the two entries as two products.
-            if (in_array($group->id, $curatedIds, true)) {
-                continue;
-            }
-
-            /*
-             * `id %d`, not `[[product:%d]]`. This list is the strongest example
-             * the model ever sees of what a product token looks like, and while
-             * it showed the bare form that is what came back in the prose — a
-             * number in the middle of a sentence, because an unlabelled token
-             * rendered as its id. Handing over the id as a plain fact leaves
-             * `promptContract()` the only place the token shape is stated, and
-             * there it is stated with its label required.
-             */
-            $lines[] = sprintf(
-                '- id %d: %s (%s)',
-                $group->id,
-                $group->title,
-                $group->category ?? 'uncategorised',
-            );
-        }
-
-        $curated = array_map(
-            fn (array $item, int $i) => sprintf(
-                '%d. id %d: %s%s',
-                $i + 1,
-                $item['id'],
-                $item['title'],
-                $item['note'] === null ? '' : ' — why it is here: '.$item['note'],
-            ),
-            $brief,
-            array_keys($brief),
-        );
-
-        return $this->prompts->user('cove.'.$kind->value, [
-            'language' => $market->language(),
-            'title' => $title,
-
-            /*
-             * An evergreen theme is NOT an occasion, and saying so matters:
-             * told "the occasion: cosy", the model writes "today we celebrate
-             * cosiness", inventing a holiday that does not exist.
-             *
-             * A persona never binds this at all — it is undated, so its
-             * template does not offer the placeholder.
-             */
-            'occasion' => match (true) {
-                $observance === null => null,
-                $observance->evergreen => "Today's angle: {$observance->key}. This is NOT a named day or holiday — do not imply the date has any significance.",
-                default => "The occasion: {$observance->key}.",
-            },
-
-            /*
-             * The editor's direction for this build.
-             *
-             * In the user prompt rather than the system message, and that is
-             * the point: the system message carries the rules that may not be
-             * traded away — no prices, no invented claims, only the products
-             * listed. An instruction arrives as part of the brief the writer
-             * works to, underneath those, so "mention how cheap it is" cannot
-             * become permission to.
-             */
-            'direction' => blank($plan?->build_instructions)
-                ? null
-                : "The editor's direction for this piece — follow it within the rules above:\n"
-                    .trim((string) $plan->build_instructions),
-
-            'curated' => $curated === []
-                ? null
-                : "The curated list — write about all of these, in this order:\n".implode("\n", $curated),
-
-            'finds' => $lines === []
-                ? null
-                : ($curated === [] ? "Today's finds:\n" : "Also in the edition, if you want them:\n").implode("\n", $lines),
-        ]);
     }
 
     /**

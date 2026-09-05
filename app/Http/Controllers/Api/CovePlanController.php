@@ -8,6 +8,7 @@ use App\Enums\CoveKind;
 use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Enums\PickMode;
+use App\Enums\PlanWriter;
 use App\Enums\Source;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\AuthenticateApiToken;
@@ -18,9 +19,11 @@ use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\ProductGroup;
 use App\Services\Cove\ObservanceCalendar;
+use App\Services\Cove\PlanRevision;
 use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\LinkCheck;
 use App\Services\Editorial\ProductLookup;
+use App\Services\Shops\ShopDirectory;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -62,6 +65,7 @@ class CovePlanController extends Controller
     public function __construct(
         private readonly ProductLookup $lookup,
         private readonly LinkCheck $links,
+        private readonly ShopDirectory $shops,
     ) {}
 
     /** The calendar: what is planned, and what became of it. */
@@ -155,7 +159,7 @@ class CovePlanController extends Controller
          * sends a FAQ with a persona and gets a 200 has every reason to believe
          * it was stored, and finds out when the page renders without one.
          */
-        if (! $kind->isArticle()) {
+        if (! $kind->writesBody()) {
             $stray = array_keys(array_filter([
                 'focusKeyphrase' => $data['focusKeyphrase'] ?? null,
                 'metaDescription' => $data['metaDescription'] ?? null,
@@ -165,8 +169,8 @@ class CovePlanController extends Controller
 
             if ($stray !== []) {
                 throw ValidationException::withMessages([
-                    $stray[0] => 'Only a buying guide, a seasonal guide or an advice article carries '
-                        .implode(', ', $stray).'. A '.$kind->label().' is a column: its words go in `editorial`.',
+                    $stray[0] => 'A '.$kind->label().' does not carry '
+                        .implode(', ', $stray).'. It is a column: its words go in `editorial`.',
                 ]);
             }
         }
@@ -196,6 +200,28 @@ class CovePlanController extends Controller
                     ? 'A '.$kind->label().' carries no drawing, so it names no scene.'
                     : 'A '.$kind->label().' cannot be drawn as `'.$scene.'`. It takes one of: '
                         .implode(', ', $allowed).'.',
+            ]);
+        }
+
+        /*
+         * A Shop Cove's slug has to name a shop this market actually compares.
+         *
+         * Every other rule about a slug is about shape — length, characters,
+         * whether the namespace is free. This one is about meaning, and it is
+         * the only kind whose address is not ours to choose: the slug is derived
+         * from `merchants.domain`, which is what lets the same shop keep one
+         * address in every market it trades in and be paired for hreflang.
+         *
+         * A hand-written or API-supplied slug bypasses that derivation, and the
+         * result is an article about a shop absent from the directory it sits
+         * above — with nothing anywhere to report it, because the plan is
+         * perfectly well-formed.
+         */
+        if ($kind === CoveKind::Shop && $slug !== null && $this->shops->shopFor($market, $slug) === null) {
+            throw ValidationException::withMessages([
+                'slug' => "No shop in {$market->value} is addressed by '{$slug}'. A Shop Cove's slug comes from the "
+                    ."shop's own domain — bol.com is `bol-com`, coolblue.be is `coolblue-be` — and the shop has to "
+                    .'have active offers in this market or be a live source here.',
             ]);
         }
 
@@ -265,6 +291,21 @@ class CovePlanController extends Controller
             'title' => HouseStyle::plain($data['title']),
             'blurb' => HouseStyle::plain($data['blurb'] ?? null),
             'editorial' => HouseStyle::prose($data['editorial'] ?? null),
+
+            /*
+             * Sending prose means you wrote it.
+             *
+             * The builder used to infer this from whichever fields came back
+             * filled, and every key deployed against that behaviour depends on
+             * it: a client that POSTs a guide with a `body` expects the model
+             * not to rewrite it. Defaulting here keeps that contract exactly
+             * while making it a stored fact rather than a guess, and an author
+             * who wants the model to finish a draft they started says so.
+             */
+            'writer' => $data['writer']
+                ?? (filled($data['editorial'] ?? null) || filled($data['body'] ?? null)
+                    ? PlanWriter::Authored->value
+                    : PlanWriter::Builder->value),
             'build_instructions' => $data['buildInstructions'] ?? null,
             'queries' => $data['queries'] ?? [],
             'note' => $data['note'] ?? null,
@@ -276,7 +317,7 @@ class CovePlanController extends Controller
              * did and the reason its keyphrase and FAQ were nobody's decision.
              * Sent here they survive every rebuild — that is the whole contract.
              */
-            ...($kind->isArticle() ? [
+            ...($kind->writesBody() ? [
                 'focus_keyphrase' => $data['focusKeyphrase'] ?? null,
                 'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null),
                 'body' => HouseStyle::prose($data['body'] ?? null),
@@ -491,6 +532,14 @@ class CovePlanController extends Controller
             'scene' => ['nullable', Rule::in(CoveScene::values())],
 
             /*
+             * Who writes the prose. Defaults from whether prose was sent — see
+             * the attribute list — so this only has to be stated to go against
+             * that: `builder` on a plan carrying a first draft somebody wants
+             * the model to finish.
+             */
+            'writer' => ['nullable', Rule::in(PlanWriter::values())],
+
+            /*
              * Article fields. Optional every one of them: an empty field is the
              * builder's to write, a filled one is the author's and is never
              * overwritten.
@@ -671,6 +720,9 @@ class CovePlanController extends Controller
             'scene' => $plan->scene?->value,
             'title' => $plan->title,
             'status' => $plan->status,
+            // Who writes the prose, and therefore whether a build will call a
+            // model at all. See App\Enums\PlanWriter.
+            'writer' => $plan->writer->value,
             'curatedCount' => $plan->items()->count(),
             'hasEditorial' => filled($plan->editorial),
             'edition' => $plan->edition === null ? null : [
@@ -691,6 +743,20 @@ class CovePlanController extends Controller
     {
         return [
             ...$this->summary($plan),
+
+            /*
+             * The concurrency token, same one `POST /coves/{id}/editorial`
+             * demands.
+             *
+             * It was only ever handed out by `GET /coves/queue`, and that
+             * endpoint excludes anything that already has prose — so a plan
+             * could be written once and then never revised through the narrow
+             * endpoint, because there was nowhere left to obtain a revision for
+             * it. The only route back was the whole-plan upsert, which replaces
+             * the shortlist.
+             */
+            'revision' => PlanRevision::of($plan),
+
             'blurb' => $plan->blurb,
             'editorial' => $plan->editorial,
             'buildInstructions' => $plan->build_instructions,
@@ -703,7 +769,7 @@ class CovePlanController extends Controller
              * Only for the kinds that carry them — a persona reading back a null
              * `faq` invites an agent to fill it in, and it would be refused.
              */
-            ...($plan->kind->isArticle() ? [
+            ...($plan->kind->writesBody() ? [
                 'focusKeyphrase' => $plan->focus_keyphrase,
                 'metaDescription' => $plan->meta_description,
                 'body' => $plan->body,

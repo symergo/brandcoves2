@@ -58,25 +58,13 @@ class GuideWriter
             return $fallback;
         }
 
+        $assembled = $this->promptFor($plan, $finds, $allowed, $brief);
+
         try {
             $response = $this->ai->json(
                 $plan->kind->aiFeature(),
-                /*
-                 * The editable half, then the contract.
-                 *
-                 * Two contracts, both appended in code and neither
-                 * overridable. The link-token one: an edited system prompt that
-                 * dropped it would stop every `[[product:…]]` being produced,
-                 * and the only symptom would be articles quietly losing their
-                 * links. The paragraph one: an article's cards are placed by
-                 * the tokens in its own prose, so a prompt that stopped asking
-                 * for a paragraph per product would empty the article of
-                 * products and push all seven back into the list beneath it.
-                 */
-                $this->prompts->system('cove.'.$plan->kind->value)
-                    ."\n\n".ProseCards::promptContract()
-                    .($allowed === [] ? '' : "\n\n".$this->markup->promptContract($allowed)),
-                $this->prompt($market, $topic, $finds, $brief, $plan),
+                $assembled['system'],
+                $assembled['user'],
                 schemaHint: [
                     'title' => '...',
                     'intro' => '...',
@@ -137,6 +125,39 @@ class GuideWriter
      * written to answer, where the title is a headline and may be nothing anyone
      * types.
      */
+    /**
+     * The prompt this article would be written from, both halves.
+     *
+     * Public because the editorial API serves it: an author writing a guide from
+     * outside is held to the same rules as the model, and the only way to be
+     * sure of that is to hand them the same strings. `CovePrompt::forPlan()`
+     * delegates here for every kind that writes a body, and `write()` above uses
+     * it too — so there is one assembly rather than one per caller, which is how
+     * the two came to differ in the first place.
+     *
+     * **Two contracts are appended in code and neither is overridable.** The
+     * link-token one: an edited system prompt that dropped it would stop every
+     * `[[product:…]]` being produced, and the only symptom would be articles
+     * quietly losing their links. The paragraph one: an article's cards are
+     * placed by the tokens in its own prose, so a prompt that stopped asking for
+     * a paragraph per product would empty the article of products and push all
+     * seven back into the list beneath it.
+     *
+     * @param  list<ProductGroup>  $finds
+     * @param  array<string, mixed>  $allowed
+     * @param  list<array{id: int, title: string, note: string|null}>  $brief
+     * @return array{system: string, user: string}
+     */
+    public function promptFor(CovePlan $plan, array $finds, array $allowed = [], array $brief = []): array
+    {
+        return [
+            'system' => $this->prompts->system('cove.'.$plan->kind->value)
+                ."\n\n".ProseCards::promptContract()
+                .($allowed === [] ? '' : "\n\n".$this->markup->promptContract($allowed)),
+            'user' => $this->prompt($plan->market, $this->topic($plan), $finds, $brief, $plan),
+        ];
+    }
+
     private function topic(CovePlan $plan): string
     {
         return filled($plan->focus_keyphrase)

@@ -6,8 +6,11 @@ namespace Tests\Feature;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PlanWriter;
 use App\Enums\PublishStatus;
+use App\Models\CovePlan;
 use App\Models\DailyPickSet;
+use App\Services\Cove\EditionBuilder;
 use App\Services\Seo\Alternates;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -45,6 +48,45 @@ class ShopCoveArticleTest extends TestCase
             'status' => $status->value,
             'published_at' => '2026-08-20',
         ]);
+    }
+
+    #[Test]
+    public function an_approved_shop_plan_builds(): void
+    {
+        /*
+         * The kind had no build path at all until `writesBody()` existed.
+         *
+         * `buildArticle()` guarded on `isArticle()`, which Shop answers **false**
+         * deliberately — that asks about the `/guides` URL space — so `BuildCove`
+         * fell through to its Daily arm, found no `drop_date` and returned null.
+         * A Shop plan could be planned, curated and approved, and then quietly
+         * did nothing: no page, no error, and `Defaults::SHOP_SYSTEM` sitting in
+         * the prompt bank with no caller.
+         */
+        $plan = CovePlan::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Shop->value,
+            'slug' => 'coolblue-be',
+            'title' => 'Kopen bij Coolblue',
+            'status' => 'approved',
+            'writer' => PlanWriter::Authored->value,
+            'blurb' => 'Waar het over gaat.',
+            'body' => "Eerste alinea.\n\nTweede alinea.",
+        ]);
+
+        $edition = app(EditionBuilder::class)->buildArticle($plan);
+
+        $this->assertNotNull($edition);
+        $this->assertSame(CoveKind::Shop, $edition->kind);
+        $this->assertSame('coolblue-be', $edition->slug);
+
+        // Prose, so it clears a floor of zero with no products at all.
+        $this->assertSame(0, $edition->picks()->count());
+        $this->assertSame(PublishStatus::Published, $edition->status);
+
+        // And it is readable where a Shop Cove is read, not under /guides.
+        $this->get('/be-nl/shops/coolblue-be')->assertOk();
+        $this->get('/be-nl/guides/coolblue-be')->assertNotFound();
     }
 
     #[Test]
