@@ -13,6 +13,8 @@ interface Notice {
     price: Cents | null
     baseline: Cents | null
     readAt: string | null
+    /** How many, on a watched-search notification. */
+    count: number | null
     createdAt: string
     /** Day and month, formatted on the server in the market's language. */
     createdAtLabel: string
@@ -74,6 +76,10 @@ export default function Notifications({ notifications, watching }: Props) {
             return t('notifications.back_in_stock')
         }
 
+        if (notice.kind === 'search_match') {
+            return t('notifications.search_match', { count: String(notice.count ?? 0) })
+        }
+
         if (notice.kind === 'price_drop') {
             return t('notifications.dropped_to', {
                 price: notice.price === null ? '-' : formatPrice(notice.price, market),
@@ -116,6 +122,8 @@ export default function Notifications({ notifications, watching }: Props) {
                                 <span aria-hidden>
                                     {notice.kind === 'restock'
                                         ? '📦'
+                                        : notice.kind === 'search_match'
+                                          ? '🔎'
                                         : notice.kind.startsWith('occasion.')
                                           ? '🎁'
                                           : /*

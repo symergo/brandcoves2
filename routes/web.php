@@ -48,6 +48,7 @@ use App\Http\Controllers\RecipientController;
 use App\Http\Controllers\RecipientProfileController;
 use App\Http\Controllers\SaveIntentController;
 use App\Http\Controllers\ScanController;
+use App\Http\Controllers\SearchAlertController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SearchHelpController;
 use App\Http\Controllers\SecretSantaController;
@@ -690,6 +691,13 @@ Route::prefix('{market}')->group(function () {
         Route::delete('/alerts/{group}', [AlertController::class, 'destroy'])
             ->whereNumber('group')
             ->name('alerts.destroy');
+
+        // A watched search: the same machinery pointed at a query rather than
+        // a product. See docs/features/search-alerts.md.
+        Route::post('/search-alerts', [SearchAlertController::class, 'store'])->name('search-alerts.store');
+        Route::delete('/search-alerts/{alert}', [SearchAlertController::class, 'destroy'])
+            ->whereNumber('alert')
+            ->name('search-alerts.destroy');
 
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
         Route::post('/notifications/read', [NotificationController::class, 'markAllRead'])

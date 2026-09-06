@@ -32,6 +32,7 @@ cannot be recovered from a diff.
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
 | [popular-searches.md](popular-searches.md) | Search / SEO | Active |
 | [search-help.md](search-help.md) | Search / Content | Active |
+| [search-alerts.md](search-alerts.md) | Search / Alerts | Active — new 2026-09-06; in-app only |
 | [feedback.md](feedback.md) | Core / Quality | Active |
 | [copy-cull.md](copy-cull.md) | Core / Content | Done — 2026-09-03, 45 keys removed |
 | [product-description.md](product-description.md) | Catalogue / Frontend | Active |

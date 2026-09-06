@@ -9,6 +9,7 @@ import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCt
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
+import WatchSearch, { type WatchState } from '../Components/WatchSearch'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -45,6 +46,8 @@ interface Props {
      * Associates tag for the market. Built server-side — see AmazonSearchLink.
      */
     amazonSearch: AmazonSearch | null
+    /** Null without a term. See SearchController::watch(). */
+    watch: WatchState | null
     /** Words that recur in these results, each a search of its own. Empty on thin pages. */
     terms: { term: string; url: string }[]
     activeTerms: { term: string; url: string }[]
@@ -135,6 +138,7 @@ export default function Search({
     lanes,
     emptyBecauseOfFilters,
     amazonSearch,
+    watch,
     pastedLink,
     terms,
     activeTerms,
@@ -544,6 +548,14 @@ export default function Search({
                     <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
                         {q ? q.charAt(0).toUpperCase() + q.slice(1) : t('search.title')}
                     </h1>
+
+                    {/* Watch this search — the intent is expressed here, so the
+                        control is here. Null on the landing, where there is no term. */}
+                    {q && watch && (
+                        <div className="mb-4">
+                            <WatchSearch term={q} watch={watch} />
+                        </div>
+                    )}
 
                     {view === 'store' && (
                         /*

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\AlertState;
 use App\Models\AmazonProduct;
 use App\Models\Event;
 use App\Models\Merchant;
 use App\Models\ProductGroup;
+use App\Models\SearchAlert;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
@@ -31,6 +33,32 @@ class SearchController extends Controller
 {
     /** Built once per request; three regions ask for the same facts. */
     private ?SearchContext $context = null;
+
+    /**
+     * @return array{watching: bool, id: int|null, maxPrice: int|null, requiresAccount: bool}|null
+     */
+    private function watch(Request $request, SearchQuery $query, CurrentMarket $current): ?array
+    {
+        if (! $query->hasTerm()) {
+            return null;
+        }
+
+        $user = $request->user();
+
+        $alert = $user === null ? null : SearchAlert::query()
+            ->where('user_id', $user->id)
+            ->where('market', $current->value())
+            ->where('term', SearchAlert::normalise($query->term))
+            ->where('state', AlertState::Active->value)
+            ->first(['id', 'max_price']);
+
+        return [
+            'watching' => $alert !== null,
+            'id' => $alert?->id,
+            'maxPrice' => $alert?->max_price,
+            'requiresAccount' => $user === null,
+        ];
+    }
 
     public function __invoke(Request $request, CurrentMarket $current, SearchService $search): Response|RedirectResponse
     {
@@ -80,6 +108,13 @@ class SearchController extends Controller
             'terms' => $this->terms($query, $result, $current),
             'activeTerms' => $this->activeTerms($query, $current),
             'emptyBecauseOfFilters' => $result->emptyBecauseOfFilters(),
+
+            /*
+             * Whether this search is being watched by the person reading it.
+             * Null without a term: there is nothing to watch on the landing.
+             * See docs/features/search-alerts.md.
+             */
+            'watch' => $this->watch($request, $query, $current),
 
             /*
              * The one shop we do not carry, offered on purpose.

@@ -67,6 +67,24 @@ class SearchService
     }
 
     /** @return Builder<ProductGroup> */
+    /**
+     * The ids the stored catalogue would return for this query, and nothing else.
+     *
+     * For a watched search (App\Jobs\CheckSearchAlerts): no live connectors, no
+     * pagination, no facets, no logging — the question is only "which groups
+     * match right now", asked once a day per watch.
+     *
+     * @return list<int>
+     */
+    public function matchingGroupIds(SearchQuery $query, int $limit): array
+    {
+        return $this->storedQuery($query)
+            ->limit($limit)
+            ->pluck('product_groups.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
     private function storedQuery(SearchQuery $query): Builder
     {
         $groups = ProductGroup::query()

@@ -38,6 +38,7 @@ class NotificationController extends Controller
                 'url' => $n->url,
                 'price' => $n->payload['price'] ?? null,
                 'baseline' => $n->payload['baseline'] ?? null,
+                'count' => $n->payload['count'] ?? null,
                 'readAt' => $n->read_at?->toIso8601String(),
                 'createdAt' => $n->created_at->toIso8601String(),
                 // Formatted here, not in the browser: the SSR container and

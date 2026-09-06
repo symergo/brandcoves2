@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Market;
 use App\Jobs\BuildDailyEdition;
+use App\Jobs\CheckSearchAlerts;
 use App\Jobs\ClassifyGiftability;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
@@ -274,6 +275,16 @@ foreach (Market::cases() as $index => $market) {
  * the aggregates an alert compares against. Running more often than the data
  * changes would burn queries to re-read the same numbers.
  */
+/*
+ * Watched searches. Once a day, after the overnight grouping (05:00) has
+ * landed: the catalogue changes with ingestion, and a check between two
+ * ingests re-reads the same rows. See App\Jobs\CheckSearchAlerts.
+ */
+Schedule::job(new CheckSearchAlerts)
+    ->name('check-search-alerts')
+    ->dailyAt('06:30')
+    ->onOneServer();
+
 Schedule::job(new RefreshWishlistedProducts)
     ->name('refresh-wishlisted')
     ->twiceDailyAt(5, 17, 20)
