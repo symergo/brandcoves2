@@ -99,6 +99,10 @@ class SecretSantaController extends Controller
         $me = $this->membership($request, $santa);
         $isOrganiser = $santa->isOrganiser($request->user());
 
+        // Never indexed, like every page under a group id: who is in a draw
+        // and who drew whom is nobody else's business. See SharedListController.
+        app(PageMeta::class)->set(title: $santa->title, robots: 'noindex, nofollow');
+
         return Inertia::render('Santa/Group', [
             'group' => [
                 'id' => $santa->id,
@@ -199,6 +203,8 @@ class SecretSantaController extends Controller
         }
 
         $user = $request->user();
+
+        app(PageMeta::class)->set(title: $santa->title, robots: 'noindex, nofollow');
 
         return Inertia::render('Santa/Join', [
             'group' => [
@@ -494,6 +500,8 @@ class SecretSantaController extends Controller
         if ($member === null) {
             throw new NotFoundHttpException;
         }
+
+        app(PageMeta::class)->set(title: $santa->title, robots: 'noindex, nofollow');
 
         return Inertia::render('Santa/Me', [
             'group' => [

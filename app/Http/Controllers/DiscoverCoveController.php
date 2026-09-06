@@ -94,7 +94,7 @@ class DiscoverCoveController extends Controller
 
         return Inertia::render('DiscoverCove', [
             'urls' => [
-                'daily' => $current->url('daily'),
+                'daily' => $current->get()->covePath(),
                 'surprise' => $current->url('surprise'),
                 'guides' => $current->url('guides'),
                 'giftIdeas' => $current->url('gift-ideas'),
@@ -260,7 +260,7 @@ class DiscoverCoveController extends Controller
             'blurb' => $edition->theme_blurb,
             'date' => $edition->drop_date->toDateString(),
             'label' => $edition->drop_date->format('j M'),
-            'url' => $current->url('daily'),
+            'url' => $current->get()->covePath(),
             'finds' => $edition->picks
                 ->filter(fn (DailyPick $pick) => $pick->group !== null && $pick->group->in_stock)
                 ->take(self::FINDS)

@@ -121,7 +121,7 @@ class CoveSubscriptionController extends Controller
             ->first();
 
         if ($subscriber === null || ! $subscriber->confirmTokenIsFresh()) {
-            return redirect($current->url('daily'))
+            return redirect($current->get()->covePath())
                 ->with('status', __('site.cove.confirm_invalid'));
         }
 
@@ -133,7 +133,7 @@ class CoveSubscriptionController extends Controller
             'unsubscribed_at' => null,
         ])->save();
 
-        return redirect($current->url('daily'))
+        return redirect($current->get()->covePath())
             ->with('status', __('site.cove.confirm_done'));
     }
 
@@ -163,7 +163,7 @@ class CoveSubscriptionController extends Controller
         // Unknown token gets the same page. A 404 here would confirm which
         // tokens are real, and there is nothing useful to tell someone whose
         // link is malformed anyway.
-        return redirect($current->url('daily'))
+        return redirect($current->get()->covePath())
             ->with('status', __('site.cove.unsubscribed'));
     }
 }

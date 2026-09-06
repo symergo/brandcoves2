@@ -213,7 +213,7 @@ class AskController extends Controller
          * already shared, and canonicalises itself on the way through.
          */
         if ($slug !== $found->slug()) {
-            return redirect()->to($current->url("ask/{$found->id}/{$found->slug()}"));
+            return redirect()->to($current->url("ask/{$found->id}/{$found->slug()}"), 301);
         }
 
         app(PageMeta::class)->set(

@@ -56,12 +56,24 @@ class Alternates
         // segments[0] is the market prefix on every public route.
         $kind = $segments[1] ?? null;
 
+        /*
+         * The Daily Cove segment is a word, not a literal: `tips` today, four
+         * retired spellings that still resolve, and the legacy `daily`. This
+         * arm read `'daily'` after the rename, so every edition fell through to
+         * `swap()` and declared four cross-market twins that 404 — the exact
+         * failure the class docblock warns about, on the one page type
+         * published every day, in the head and in the sitemap both. Matched
+         * against `Market::coveSegments()` so the next rename cannot repeat it.
+         */
+        if ($kind === 'daily' || ($kind !== null && in_array($kind, Market::coveSegments(), true))) {
+            return $this->daily($segments, $current);
+        }
+
         return match ($kind) {
             'p' => $this->product($segments, $current),
             'guides' => $this->guide($segments, $current),
             'shops' => $this->shop($segments, $current),
             'gift-ideas' => $this->persona($segments, $current),
-            'daily' => $this->daily($segments, $current),
             // Home, search, discover, gift, surprise, lists: the same page in
             // another market, and the segment swap is exactly right.
             default => $this->swap($path),

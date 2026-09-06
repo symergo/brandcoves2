@@ -242,7 +242,7 @@ class HomeController extends Controller
             'blurb' => $edition->theme_blurb,
             'date' => $edition->drop_date->toDateString(),
             'label' => $edition->drop_date->format('j M'),
-            'url' => $current->url('daily'),
+            'url' => $current->get()->covePath(),
             // A few, not all: the front page is an invitation to the edition,
             // not a copy of it.
             'finds' => $edition->picks

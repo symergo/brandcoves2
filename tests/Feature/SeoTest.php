@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\CoveKind;
+use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Enums\Source;
@@ -13,6 +14,9 @@ use App\Jobs\IngestFeed;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
 use App\Models\ProductGroup;
+use App\Models\User;
+use App\Models\Wishlist;
+use App\Services\Seo\Alternates;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -316,6 +320,9 @@ class SeoTest extends TestCase
     #[Test]
     public function filtered_and_paginated_searches_are_kept_out_of_the_index(): void
     {
+        // Indexing on: with it off the environment stamps `noindex, nofollow`
+        // on every page, and the page's own `follow` is never consulted.
+        config(['giftcoves.robots_allow' => true]);
         $this->seedCatalogue();
 
         // A facet UI generates a combinatorial explosion of URLs. Left
@@ -556,6 +563,7 @@ class SeoTest extends TestCase
     #[Test]
     public function an_unstocked_product_is_noindexed_but_still_followed(): void
     {
+        config(['giftcoves.robots_allow' => true]);
         $group = $this->seedCatalogue();
         $group->offers()->update(['status' => 'stale']);
 
@@ -563,5 +571,124 @@ class SeoTest extends TestCase
         // following — hence follow, not nofollow.
         $this->get("/be-nl/p/{$group->id}/{$group->slug}")
             ->assertSee('name="robots" content="noindex, follow"', escape: false);
+    }
+
+    #[Test]
+    public function a_product_whose_shops_have_all_sold_out_is_noindexed_too(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+        $group = $this->seedCatalogue();
+
+        // Still active rows, so the old `$offers === []` test said "indexable"
+        // — of a page with no price on it and no AggregateOffer in its markup.
+        $group->offers()->update(['availability' => 'out_of_stock']);
+
+        $this->get("/be-nl/p/{$group->id}/{$group->slug}")
+            ->assertOk()
+            ->assertSee('name="robots" content="noindex, follow"', escape: false);
+    }
+
+    #[Test]
+    public function a_daily_edition_pairs_with_the_same_date_elsewhere_and_claims_nothing_it_lacks(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+
+        /*
+         * Two markets published that day, two did not. The alternates must
+         * name exactly the two — under each market's own slug, because an
+         * edition's slug is written in its own language and `/be-fr/tips/<the
+         * Dutch slug>` is a 404. After the segment rename the resolver stopped
+         * recognising the path and fell back to the blind segment swap, which
+         * emitted all four and put the two 404s in the head and the sitemap.
+         */
+        foreach ([[Market::BeNl, 'de-laatste-vakantiedag'], [Market::BeFr, 'dernier-jour-de-vacances']] as [$market, $slug]) {
+            DailyPickSet::create([
+                'market' => $market->value,
+                'kind' => CoveKind::Daily->value,
+                'drop_date' => '2026-08-08',
+                'slug' => $slug,
+                'theme_title' => 'De laatste vakantiedag',
+                'theme_slug' => 'vakantie',
+                'theme_source' => 'theme',
+                'status' => PublishStatus::Published->value,
+                'published_at' => CarbonImmutable::parse('2026-08-08')->setTime(6, 0),
+            ]);
+        }
+
+        $this->assertSame([
+            'fr-BE' => url('/be-fr/tips/dernier-jour-de-vacances'),
+            'nl-BE' => url('/be-nl/tips/de-laatste-vakantiedag'),
+        ], app(Alternates::class)->for('/be-nl/tips/de-laatste-vakantiedag', Market::BeNl));
+
+        $html = (string) $this->get('/be-nl/tips/de-laatste-vakantiedag')->assertOk()->getContent();
+
+        $this->assertStringContainsString(url('/be-fr/tips/dernier-jour-de-vacances'), $html);
+        $this->assertStringNotContainsString('/nl-nl/tips/', $html);
+        $this->assertStringNotContainsString('/en/tips/', $html);
+    }
+
+    #[Test]
+    public function staging_hides_even_a_page_that_asks_to_be_indexed(): void
+    {
+        config(['giftcoves.robots_allow' => false]);
+
+        // The surprise page sets `index, follow` explicitly, and the shell used
+        // to honour it here — one crawlable page on a host whose robots.txt
+        // says the opposite.
+        $this->get('/be-nl/surprise')
+            ->assertOk()
+            ->assertSee('name="robots" content="noindex, nofollow"', escape: false);
+    }
+
+    #[Test]
+    public function a_shared_list_is_never_indexable(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+
+        $list = Wishlist::create([
+            'owner_user_id' => User::factory()->create()->id,
+            'title' => 'Wedding',
+            'market' => Market::BeNl,
+            'kind' => ListKind::Mine,
+            'visibility' => 'link',
+        ]);
+
+        // The token is the access. A crawler that finds the link anywhere
+        // would otherwise list the family's gift list under a real name.
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertSee('name="robots" content="noindex, nofollow"', escape: false);
+    }
+
+    #[Test]
+    public function editorial_urls_are_listed_once_in_the_first_chunk_only(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+
+        $first = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+        $second = (string) $this->get('/sitemap/be-nl/2.xml')->assertOk()->getContent();
+
+        // A market with eight product chunks used to list its editorial URLs
+        // eight times — which a crawler reads as a sitemap it cannot trust.
+        foreach (['/be-nl/search', '/be-nl/ask', '/be-nl/popular-searches', '/be-nl/lists-help', '/be-nl/guides'] as $path) {
+            $this->assertStringContainsString('<loc>'.url($path).'</loc>', $first);
+            $this->assertStringNotContainsString(url($path), $second);
+        }
+    }
+
+    #[Test]
+    public function robots_keeps_crawlers_off_capability_urls_and_array_facets(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+
+        $body = (string) $this->get('/robots.txt')->assertOk()->getContent();
+
+        foreach (['Disallow: /*/l/', 'Disallow: /*/for/', 'Disallow: /*/q/', 'Disallow: /*/santa/', 'Disallow: /*?*brand%5B'] as $line) {
+            $this->assertStringContainsString($line, $body);
+        }
+
+        // `brand=` never appears in a URL this site generates — the parameter
+        // is an array — so the rule that used to read that way matched nothing.
+        $this->assertStringNotContainsString('Disallow: /*?*brand=', $body);
     }
 }

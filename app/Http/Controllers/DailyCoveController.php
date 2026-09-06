@@ -352,6 +352,16 @@ class DailyCoveController extends Controller
              */
             image: SocialCard::versioned(url($current->url('og/daily/'.$edition->drop_date->toDateString().'.png'))),
             canonical: $url,
+            /*
+             * A draft is never indexed, whatever else the page would say.
+             *
+             * `$preview` arrived here and was never read: the suite runs with
+             * indexing off, where the shell stamps `noindex` on everything, so
+             * the gap only existed on production — where a crawler following a
+             * shared preview link would put tomorrow's unpublished edition in
+             * the index at the address the finished one will use.
+             */
+            robots: $preview ? 'noindex, nofollow' : null,
         );
 
         /*

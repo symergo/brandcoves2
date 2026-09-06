@@ -314,4 +314,24 @@ Tweede alinea.',
             'nl-BE' => url('/be-nl/shops/bol-com'),
         ], $alternates);
     }
+
+    #[Test]
+    public function a_shop_cove_canonicalises_to_its_own_address_and_has_a_card(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+        $this->cove('bol-com', 'Kopen bij bol');
+
+        $html = (string) $this->get('/be-nl/shops/bol-com')->assertOk()->getContent();
+
+        /*
+         * It used to name `/guides/bol-com`, which `show()` scopes to articles
+         * and 404s. A canonical pointing at a 404 tells the crawler to drop the
+         * page, so every Shop Cove was de-indexing itself.
+         */
+        $this->assertStringContainsString('rel="canonical" href="'.url('/be-nl/shops/bol-com').'"', $html);
+        $this->assertStringNotContainsString(url('/be-nl/guides/bol-com'), $html);
+
+        // The card the page names, from a route that used to filter shops out.
+        $this->get('/be-nl/og/guide/bol-com.png')->assertOk();
+    }
 }

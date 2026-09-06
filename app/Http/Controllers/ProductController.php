@@ -220,9 +220,20 @@ class ProductController extends Controller
              */
             image: SocialCard::versioned(url($current->url("og/p/{$group->id}.png"))),
             canonical: $url,
-            // A product nobody stocks is a thin page; keep it out of the index
-            // but keep following its links.
-            robots: $offers === [] ? 'noindex, follow' : null,
+            /*
+             * A product nobody stocks is a thin page; keep it out of the index
+             * but keep following its links.
+             *
+             * "Nobody stocks" means no *buyable* offer, not no offer row. The
+             * list above is every active row, out-of-stock included, so a
+             * group whose shops had all sold out still rendered `index` with
+             * no price on the page and no AggregateOffer in its markup — the
+             * soft-404 shape the sitemap's `presentable()` filter exists to
+             * keep crawlers away from, reached by the front door instead.
+             */
+            robots: array_any($offers, fn (Product $offer) => $offer->availability->isBuyable())
+                ? null
+                : 'noindex, follow',
         );
 
         $meta->addJsonLd(StructuredData::product($group, $offers, $market, $url));

@@ -141,7 +141,7 @@ class CoveSubscriptionTest extends TestCase
 
         $token = CoveSubscriber::query()->value('confirm_token');
 
-        $this->get("/be-nl/coves/confirm/{$token}")->assertRedirect('/be-nl/daily');
+        $this->get("/be-nl/coves/confirm/{$token}")->assertRedirect('/be-nl/tips');
 
         $subscriber = CoveSubscriber::query()->firstOrFail();
         $this->assertNotNull($subscriber->confirmed_at);
@@ -149,7 +149,7 @@ class CoveSubscriptionTest extends TestCase
         // Cleared, so a link in an abandoned mailbox cannot re-confirm an
         // address that has since left.
         $this->assertNull($subscriber->getAttribute('confirm_token'));
-        $this->get("/be-nl/coves/confirm/{$token}")->assertRedirect('/be-nl/daily');
+        $this->get("/be-nl/coves/confirm/{$token}")->assertRedirect('/be-nl/tips');
     }
 
     #[Test]
@@ -309,7 +309,7 @@ class CoveSubscriptionTest extends TestCase
         // GET, because an email client cannot POST from a footer link and a
         // reader who cannot leave marks the mail as spam instead.
         $this->get('/be-nl/coves/unsubscribe/'.$subscriber->getAttribute('unsubscribe_token'))
-            ->assertRedirect('/be-nl/daily');
+            ->assertRedirect('/be-nl/tips');
 
         SendCoveDigest::dispatchSync(Market::BeNl, '2026-08-08');
 

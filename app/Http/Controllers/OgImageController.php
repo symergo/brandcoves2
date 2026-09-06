@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveKind;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
@@ -108,7 +109,19 @@ class OgImageController extends Controller
     {
         $guide = DailyPickSet::query()
             ->forMarket($current->get())
-            ->articles()
+            /*
+             * Articles and Shop Coves both. A Shop Cove's page names this
+             * route for its card — `GuideController::seo()` serves both kinds
+             * — and filtering on `articles()` alone made every shop's social
+             * card a 404.
+             */
+            ->whereIn('kind', array_map(
+                fn (CoveKind $k) => $k->value,
+                array_values(array_filter(
+                    CoveKind::cases(),
+                    fn (CoveKind $k) => $k->isArticle() || $k === CoveKind::Shop,
+                )),
+            ))
             ->published()
             ->where('slug', $slug)
             ->firstOrFail();

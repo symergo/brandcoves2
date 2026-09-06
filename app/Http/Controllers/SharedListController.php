@@ -12,6 +12,7 @@ use App\Models\WishlistItem;
 use App\Services\Notifications\ListActivity;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
+use App\Services\Seo\PageMeta;
 use App\Services\Social\Friends;
 use App\Services\Social\ShareReferral;
 use App\Services\Wishlist\Board;
@@ -205,6 +206,17 @@ class SharedListController extends Controller
          * Mirrored, never trusted: the POST asks the same question again.
          */
         $canVote = $list->allowsVotingFrom($owner);
+
+        /*
+         * Never indexed. The share link is the access, and a crawler that finds
+         * one — from a forum post, a chat preview, anywhere — would list a
+         * family's gift list under the recipient's name. Nothing here set
+         * `PageMeta`, so the shell defaulted this page to `index, follow`.
+         */
+        app(PageMeta::class)->set(
+            title: $list->displayTitle(),
+            robots: 'noindex, nofollow',
+        );
 
         return Inertia::render('Lists/Shared', [
             'list' => [

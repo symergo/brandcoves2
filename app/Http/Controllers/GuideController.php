@@ -206,7 +206,10 @@ class GuideController extends Controller
             ])
             ->values();
 
-        $this->seo($guide, $items->all(), $current);
+        // A draft read through a preview link is the real page at the real
+        // URL, and must say `noindex` there. The flag was computed above and
+        // never handed on, so `seo()`'s own default of `false` always won.
+        $this->seo($guide, $items->all(), $current, $preview && ! $guide->isPublished());
 
         /*
          * A Shop Cove's product rails.
@@ -474,7 +477,16 @@ class GuideController extends Controller
     /** @param list<array<string, mixed>> $items */
     private function seo(DailyPickSet $guide, array $items, CurrentMarket $current, bool $preview = false): void
     {
-        $url = url($current->url("guides/{$guide->slug}"));
+        /*
+         * The kind's own path, not `guides/` for everything.
+         *
+         * `shop()` renders `/shops/{slug}` through this same method, and the
+         * URL was a literal `guides/{slug}` — so every Shop Cove's canonical
+         * tag, breadcrumb and ItemList pointed at a `/guides/` address that
+         * `show()` scopes to `articles()` and 404s. A canonical to a 404 is a
+         * page telling the crawler to drop it.
+         */
+        $url = url($current->url($guide->kind->path((string) $guide->slug, $current->get())));
         $meta = app(PageMeta::class);
 
         $markup = app(CoveMarkup::class);
@@ -537,9 +549,16 @@ class GuideController extends Controller
             ], $guide->faq)));
         }
 
+        // The parent is the directory the kind is read under — a Shop Cove sits
+        // in `/shops`, and a trail through `/guides` would name a section the
+        // page is not in.
+        $parent = $guide->kind === CoveKind::Shop
+            ? ['name' => __('site.shops.title'), 'url' => url($current->url('shops'))]
+            : ['name' => __('site.guides.title'), 'url' => url($current->url('guides'))];
+
         $meta->addJsonLd(StructuredData::breadcrumbs([
             ['name' => 'GiftCoves', 'url' => url($current->url())],
-            ['name' => __('site.guides.title'), 'url' => url($current->url('guides'))],
+            $parent,
             ['name' => $guide->theme_title, 'url' => $url],
         ]));
     }

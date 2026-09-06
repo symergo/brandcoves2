@@ -95,8 +95,14 @@
     @else
         {{-- Staging must never be indexed: a full duplicate of the site would
              outrank the real one on some queries. Filtered and paginated search
-             pages set their own noindex to keep thin variants out of the index. --}}
-        <meta name="robots" content="{{ $meta['robots'] ?? 'noindex, nofollow' }}">
+             pages set their own noindex to keep thin variants out of the index.
+
+             The environment wins outright. This used to fall back to the page's
+             own value, so a controller asking for `index, follow` explicitly
+             (the surprise page does) was honoured on staging — one crawlable
+             page on a host whose robots.txt says the opposite. A page's value
+             is read only where indexing is allowed at all. --}}
+        <meta name="robots" content="{{ config('giftcoves.robots_allow') ? ($meta['robots'] ?? 'noindex, nofollow') : 'noindex, nofollow' }}">
     @endif
 
     @isset($meta['description'])

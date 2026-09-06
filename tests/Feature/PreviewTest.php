@@ -129,6 +129,13 @@ class PreviewTest extends TestCase
     #[Test]
     public function a_preview_is_never_indexable(): void
     {
+        /*
+         * Indexing on, or the assertion tests nothing: the suite runs with
+         * ROBOTS_ALLOW unset, where the shell stamps `noindex` on every page
+         * regardless — which is how the guide controller computed the preview
+         * flag and never passed it on without a test noticing.
+         */
+        config(['giftcoves.robots_allow' => true]);
         $this->draftGuide();
 
         $response = $this->actingAs(User::factory()->create(['is_admin' => true]))
@@ -141,6 +148,21 @@ class PreviewTest extends TestCase
          * going to use.
          */
         $this->assertStringContainsString('noindex', $response->getContent());
+    }
+
+    #[Test]
+    public function a_daily_preview_is_never_indexable(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+        $edition = $this->draftEdition(now()->addDay()->toDateString());
+
+        $html = (string) $this->actingAs(User::factory()->create(['is_admin' => true]))
+            ->get("/be-nl/tips/{$edition->slug}")
+            ->assertOk()
+            ->getContent();
+
+        // The flag reached the SEO method and was never read there.
+        $this->assertStringContainsString('name="robots" content="noindex, nofollow"', $html);
     }
 
     #[Test]

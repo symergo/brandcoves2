@@ -11,6 +11,7 @@ use App\Models\ListQuizAttempt;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Services\Gift\QuizBuilder;
+use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -97,6 +98,12 @@ class ListQuizController extends Controller
         $hash = $owner->identityHash('quiz');
 
         $attempt = $hash === null ? null : $this->attemptFor($quiz, $owner);
+
+        // Never indexed: the token is the access. See SharedListController.
+        app(PageMeta::class)->set(
+            title: $quiz->wishlist->displayTitle(),
+            robots: 'noindex, nofollow',
+        );
 
         return Inertia::render('Quiz/Play', [
             'quiz' => [

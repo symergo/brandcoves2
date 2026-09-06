@@ -14,6 +14,7 @@ use App\Models\WishlistItem;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\SuggestionProfile;
 use App\Services\Gift\TasteBrief;
+use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -76,6 +77,13 @@ class RecipientProfileController extends Controller
     private function page(Request $request, CurrentMarket $current, Recipient $recipient): array
     {
         $owner = Owner::fromRequest($request);
+
+        // Never indexed: the token is the access, and the page is one named
+        // person's taste profile. See SharedListController.
+        app(PageMeta::class)->set(
+            title: $recipient->name,
+            robots: 'noindex, nofollow',
+        );
 
         $list = $this->theirList($recipient, $owner, $current);
 

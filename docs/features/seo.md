@@ -215,14 +215,76 @@ whose segment is missing from that `match` falls through to the blind swap**.
 That is how personas shipped claiming five twins each: `gift-ideas` was not in
 the list. It is the failure mode to check for when adding a new keyed page type.
 
+It happened a second time, from the other direction: the Daily Cove segment was
+renamed from `daily` to `tips` and the `match` arm kept the old word, so every
+edition fell through to the swap and claimed four twins that 404, in the head
+and in the sitemap both (found 2026-09-06). The arm now matches
+`Market::coveSegments()`, so a rename cannot repeat it, and `SeoTest` pins that
+an edition names only the markets that published that day, under each market's
+own slug.
+
+**The canonical is the kind's path, not `guides/` for everything.** `GuideController`
+renders Shop Coves at `/shops/{slug}` through the same method as guides, and its
+canonical, breadcrumb and social-card URLs were literals under `/guides/` — an
+address the guide route scopes to articles and 404s. A canonical pointing at a
+404 tells the crawler to drop the page, so every Shop Cove was quietly
+de-indexing itself. The URL now comes from `CoveKind::path()`, and the OG route
+accepts both kinds.
+
+**Private pages say `noindex`, and robots.txt stops the fetch.** A shared list,
+a quiz, a recipient's self-describe page and a Secret Santa group are reached by
+a token that *is* the access. None of them set `PageMeta`, and the shell
+defaults a page with no robots value to `index, follow` — so a share link
+posted anywhere public would have listed a family's gift list under a real
+name. Each sets `noindex, nofollow` now, and `/l/`, `/for/`, `/q/`, `/santa/`
+and `/invitations/` are disallowed in `robots.txt` as well, because a `noindex`
+only works on a page that gets fetched.
+
+**The environment wins over the page.** With `ROBOTS_ALLOW` off, the shell used
+to fall back to the page's own robots value, so a controller that asked for
+`index, follow` explicitly (the surprise page) was honoured on staging. It now
+emits `noindex, nofollow` unconditionally there. The consequence for tests:
+anything asserting a page's *own* robots value must switch `robots_allow` on
+first, or it is asserting the staging stamp.
+
+**A preview is `noindex` — and the suite could not see that it was not.** Both
+the guide and the daily controller computed the preview flag; one never passed
+it to its SEO method and the other never read it. With indexing off in tests,
+every page carried `noindex` anyway, so `PreviewTest` passed while production
+would have indexed an unpublished draft at the finished piece's address. The
+preview tests now switch indexing on.
+
 ## Sitemaps
 
-An index plus per-market files, 20,000 URLs each (the format caps at 50,000 and
-the catalogue will pass that in one market alone). Only products worth landing
-on are listed — in stock, priced, with an image. Submitting URLs that render as
-"currently unavailable" wastes crawl budget and teaches the crawler that the
-sitemap is unreliable. Multi-shop products get a higher priority, because a page
-that actually compares offers is the better landing page.
+An index plus per-market files, 5,000 URLs each (the format caps at 50,000 and
+the catalogue will pass that in one market alone; the smaller chunk is a memory
+ceiling, explained on the constant). Only products worth landing on are listed —
+in stock, priced, with an image. Submitting URLs that render as "currently
+unavailable" wastes crawl budget and teaches the crawler that the sitemap is
+unreliable. Multi-shop products get a higher priority, because a page that
+actually compares offers is the better landing page.
+
+**Everything that is not a product is in the first chunk only.** The brand block
+was gated that way from the start; the statics, the discovery modes, the guides,
+the Shop Coves, the personas and four hundred dailies were not, so a market with
+eight product chunks listed its editorial URLs eight times and rebuilt them,
+alternates included, eight times over. Gated together since 2026-09-06.
+
+**The board's answered questions, the popular-searches hub and the list help
+are listed.** All three were linked from the header or footer and in no sitemap.
+Questions are the one URL space here that grows from what visitors write, and
+the index shows only the newest twenty — so without the sitemap the rest had no
+discovery path at all. Answered questions only, because `AskController`
+noindexes one nobody has answered.
+
+The `robots.txt` facet rules read `brand=` and `merchant=` until the same date,
+and matched nothing: both parameters are arrays, so the URL carries
+`brand%5B0%5D=`. They now match the bracket, encoded and bare.
+
+**A product with no buyable offer is `noindex, follow`.** The check used to be
+"no offer rows", which an out-of-stock row satisfies — so a group whose shops had
+all sold out rendered `index` with no price on the page and no `AggregateOffer`
+in its markup, the soft-404 shape the sitemap's filter exists to avoid.
 
 ## Guardrails
 
