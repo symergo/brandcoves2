@@ -20,6 +20,7 @@ use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\ProductGroup;
 use App\Services\Cove\ObservanceCalendar;
+use App\Services\Cove\PlanLinks;
 use App\Services\Cove\PlanRevision;
 use App\Services\Cove\PlanState;
 use App\Services\Editorial\HouseStyle;
@@ -470,7 +471,7 @@ class CovePlanController extends Controller
                     $plan->editorial,
                     $market,
                     $plan->items()->with('group')->get()->map(fn (CovePlanItem $i) => $i->group)->filter(),
-                    extraSearches: (array) $plan->queries,
+                    extraSearches: app(PlanLinks::class)->extraSearches($plan),
                 ),
             ], $existing === null ? 201 : 200);
         }
@@ -497,7 +498,7 @@ class CovePlanController extends Controller
                 $plan->editorial,
                 $market,
                 $curated,
-                extraSearches: (array) $plan->queries,
+                extraSearches: app(PlanLinks::class)->extraSearches($plan),
             ),
         ], $existing === null ? 201 : 200);
     }

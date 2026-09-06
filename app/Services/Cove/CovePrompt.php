@@ -6,7 +6,6 @@ namespace App\Services\Cove;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
-use App\Models\BrandStat;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\ProductGroup;
@@ -15,7 +14,6 @@ use App\Services\Cove\Writers\GuideWriter;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
-use App\Services\Shops\ShopDirectory;
 use Carbon\CarbonImmutable;
 
 /**
@@ -327,7 +325,10 @@ final readonly class CovePrompt
          * absent nothing changes.
          */
         if ($plan !== null && $plan->kind->isEntity()) {
-            $searches = $this->entityVocabulary($plan);
+            $searches = array_values(array_unique([
+                ...$searches,
+                ...app(PlanLinks::class)->extraSearches($plan),
+            ]));
         }
 
         return [
@@ -340,36 +341,6 @@ final readonly class CovePrompt
             // between the daily half of the site and the evergreen half.
             'guides' => $this->allowlist->guideSlugs($market, $excludeGuideId),
         ];
-    }
-
-    /**
-     * The categories this brand or shop actually sells in.
-     *
-     * The same call the page makes, so what a writer is offered and what a
-     * reader can click are one list. Empty for a slug naming no shop this market
-     * compares or no brand it carries, which is the honest answer: there is
-     * nothing to link to, and a token naming a category the entity does not
-     * stock would render as plain words anyway.
-     *
-     * @return list<string>
-     */
-    private function entityVocabulary(CovePlan $plan): array
-    {
-        $rails = app(EntityRails::class);
-        $slug = (string) $plan->slug;
-
-        if ($plan->kind === CoveKind::Shop) {
-            $shop = app(ShopDirectory::class)->shopFor($plan->market, $slug);
-
-            return $shop === null ? [] : $rails->vocabularyForShop($shop, $plan->market);
-        }
-
-        $brand = BrandStat::query()
-            ->forMarket($plan->market)
-            ->where('slug', $slug)
-            ->first();
-
-        return $brand === null ? [] : $rails->vocabularyForBrand($brand, $plan->market);
     }
 
     /**

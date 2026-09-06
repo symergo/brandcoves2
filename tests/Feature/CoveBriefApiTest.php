@@ -19,6 +19,7 @@ use App\Models\ProductGroup;
 use App\Models\PromptTemplate;
 use App\Services\Ai\AiClient;
 use App\Services\Cove\EditionBuilder;
+use App\Services\Cove\PlanRevision;
 use ArrayObject;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -307,5 +308,27 @@ class CoveBriefApiTest extends TestCase
             ->getJson("/api/editorial/coves/{$plan->id}/brief")
             ->assertOk()
             ->assertJsonPath('data.allowlist.searches', ['Koptelefoons']);
+
+        /*
+         * And the link check agrees with the brief.
+         *
+         * These were separate computations: the brief derived searches one way
+         * and the write endpoint another, so a writer could follow the brief
+         * exactly and be told all seven of their tokens were unresolved. That
+         * happened, on the first Shop Cove written by hand, and it read as bad
+         * writing rather than as a broken contract.
+         */
+        // A write key: `key()` is read-only, which is right for the brief.
+        $writer = ApiToken::issue('writer', [ApiToken::READ, ApiToken::WRITE])['token'];
+
+        $this->withToken($writer)
+            ->postJson("/api/editorial/coves/{$plan->id}/editorial", [
+                'revision' => app(PlanRevision::class)->of($plan->fresh()),
+                'writer' => PlanWriter::Authored->value,
+                'blurb' => 'Waar het over gaat.',
+                'body' => 'Veel [[search:Koptelefoons]] hier.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('linkCheck.unresolved', []);
     }
 }

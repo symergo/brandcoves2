@@ -10,6 +10,7 @@ use App\Enums\PlanWriter;
 use App\Http\Controllers\Controller;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
+use App\Services\Cove\PlanLinks;
 use App\Services\Cove\PlanRevision;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\HouseStyle;
@@ -247,7 +248,7 @@ class CoveQueueController extends Controller
                 ],
                 $plan->market,
                 $plan->items->map(fn (CovePlanItem $item) => $item->group)->filter(),
-                extraSearches: (array) $plan->queries,
+                extraSearches: app(PlanLinks::class)->extraSearches($plan),
             ),
         ]);
     }
@@ -304,7 +305,7 @@ class CoveQueueController extends Controller
             'allowlist' => $this->allowlist->full(
                 $groups,
                 $plan->market,
-                extraSearches: (array) $plan->queries,
+                extraSearches: app(PlanLinks::class)->extraSearches($plan),
             ),
         ];
     }
