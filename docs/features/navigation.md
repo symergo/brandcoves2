@@ -336,3 +336,11 @@ has given up on a search and moved on has left both behind. See
 
 - [wishlists.md](wishlists.md) — why lists exist before accounts do
 - [localisation.md](localisation.md) — the market switcher and why it reloads the page
+
+## Internal links are Inertia links (2026-09-06)
+
+Nine product links across the Daily, Surprise, persona, wizard, discover, quiz and Santa pages
+were plain `<a>` elements to in-app routes, while identical destinations in the same files used
+`<Link>`. A plain anchor discards the SPA: a full document load, the saved-items store refetched,
+the scroll position lost. They are all `<Link>` now. The rule: an `<a>` is for a URL that leaves
+the site (an affiliate hop, an external page), and `<Link>` for everything under `/{market}/`.

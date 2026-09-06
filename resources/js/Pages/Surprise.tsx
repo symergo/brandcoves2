@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -61,7 +61,7 @@ export default function Surprise({ finds, seen }: Props) {
                             key={find.id}
                             className="flex flex-col rounded-lg border border-line bg-card p-4"
                         >
-                            <a href={find.url} className="block">
+                            <Link href={find.url} className="block">
                                 {find.image && (
                                     <img
                                         src={find.image}
@@ -71,7 +71,7 @@ export default function Surprise({ finds, seen }: Props) {
                                     />
                                 )}
                                 <h2 className="mt-3 line-clamp-2 font-medium">{find.title}</h2>
-                            </a>
+                            </Link>
 
                             {/*
                               What it is, not why we picked it.

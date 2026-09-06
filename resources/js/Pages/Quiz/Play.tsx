@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import ShareMenu from '../../Components/ShareMenu'
 import type { SharedProps } from '../../types'
@@ -109,7 +109,7 @@ ${result.grid}`}
                       which is the whole commercial point of the game.
                     */}
                     <p className="mt-8 text-sm text-ink-soft">{t('quiz.missed_hint')}</p>
-                    <a
+                    <Link
                         href={`/${market.key}/l/${token}`}
                         className="mt-2 inline-block rounded-lg border border-line px-4 py-2 text-sm"
                     >
@@ -117,7 +117,7 @@ ${result.grid}`}
                             `lists.share` is the name of a different control on
                             a different page, and it was labelling this one. */}
                         {t('lists.view_list')}
-                    </a>
+                    </Link>
                 </section>
             ) : (
                 <form

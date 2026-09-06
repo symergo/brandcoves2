@@ -146,6 +146,19 @@ export default function Search({
     const { t, n } = useTranslations()
     const [term, setTerm] = useState(q)
     const [filtersOpen, setFiltersOpen] = useState(false)
+
+    /*
+     * The box follows the query, not only the first one.
+     *
+     * Every visit made by `go()` keeps this component mounted, so the state
+     * seeded above never saw a second `q`: narrow by a chip and the heading
+     * and the grid showed the narrowed query while the box still held the
+     * words typed before it — and Enter then searched the stale text, quietly
+     * throwing the narrowing away.
+     */
+    useEffect(() => {
+        setTerm(q)
+    }, [q])
     const [searching, setSearching] = useState(false)
     const base = `/${market.key}/search`
 
@@ -250,7 +263,13 @@ export default function Search({
              * unnoticed. Worth chasing only if the URLs matter.
              */
             queryStringArrayFormat: 'brackets',
-            preserveScroll: true,
+            /*
+             * Keep the scroll for a filter, a sort or a submitted query — the
+             * control that was pressed should stay under the finger. Not for
+             * a page: the next page used to arrive with the viewport parked at
+             * the bottom of the previous one, past every card it had brought.
+             */
+            preserveScroll: !('page' in changes),
             preserveState: true,
             onStart: () => setSearching(true),
             onFinish: () => setSearching(false),
@@ -883,7 +902,7 @@ export default function Search({
                                                 <div className="absolute top-1.5 right-1.5 z-10">
                                                     <SaveToList groupId={g.id} compact />
                                                 </div>
-                                                <a
+                                                <Link
                                                     href={`/${market.key}/p/${g.id}/${g.slug}`}
                                                     className="flex gap-3 p-3 pr-14 transition hover:bg-cream"
                                                 >
@@ -953,7 +972,7 @@ export default function Search({
                                                             )}
                                                         </span>
                                                     </span>
-                                                </a>
+                                                </Link>
                                             </li>
                                         ))}
                                     </ul>

@@ -332,12 +332,28 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                       search on every page. Two buttons for one intention made
                       the header compete with the page under it.
                     */}
-                    <button
-                        onClick={() => setCreating((v) => !v)}
-                        className="rounded-lg border border-line px-4 py-2 font-medium hover:border-ink"
-                    >
-                        {t('lists.new_list')}
-                    </button>
+                    {/*
+                      Signed out, the button is the sign-in. `POST /lists` is
+                      behind `auth`, so the form used to open, take a title, a
+                      person and a birthday, and bounce to the login page with
+                      all of it gone — announcing the precondition at the last
+                      step instead of the first.
+                    */}
+                    {isSignedIn ? (
+                        <button
+                            onClick={() => setCreating((v) => !v)}
+                            className="rounded-lg border border-line px-4 py-2 font-medium hover:border-ink"
+                        >
+                            {t('lists.new_list')}
+                        </button>
+                    ) : (
+                        <SignInLink
+                            hint={t('lists.sign_in_hint')}
+                            className="rounded-lg border border-line px-4 py-2 font-medium hover:border-ink"
+                        >
+                            {t('lists.new_list')}
+                        </SignInLink>
+                    )}
                 </div>
             </header>
 
@@ -375,8 +391,18 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                         autoFocus
                         value={form.data.title}
                         onChange={(e) => form.setData('title', e.target.value)}
+                        aria-invalid={form.errors.title ? true : undefined}
                         className="w-full rounded-lg border border-line bg-cream px-3 py-2"
                     />
+                    {/*
+                      What the server refused, said next to the field. Nothing
+                      on this form rendered `form.errors`, so a rejected title
+                      or name closed nothing and said nothing — it looked like a
+                      button that did not fire.
+                    */}
+                    {form.errors.title && (
+                        <p className="text-sm text-accent" role="alert">{form.errors.title}</p>
+                    )}
 
                     {/*
                       Who it is for, asked as a choice rather than left implied
@@ -533,8 +559,12 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                                         maxLength={80}
                                         value={form.data.new_recipient}
                                         onChange={(e) => form.setData('new_recipient', e.target.value)}
+                                        aria-invalid={form.errors.new_recipient ? true : undefined}
                                         className="w-full rounded-lg border border-line bg-cream px-3 py-2"
                                     />
+                                    {form.errors.new_recipient && (
+                                        <p className="text-sm text-accent" role="alert">{form.errors.new_recipient}</p>
+                                    )}
 
                                     {/*
                                       Their birthday, day and month, optional.
@@ -625,6 +655,17 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                         </>
                     )}
 
+                    {/*
+                      Anything refused that has no field of its own above — the
+                      recipient or friend picked, the birthday, or a rule about
+                      the combination.
+                    */}
+                    {Object.entries(form.errors)
+                        .filter(([field]) => !['title', 'new_recipient'].includes(field))
+                        .map(([field, message]) => (
+                            <p key={field} className="text-sm text-accent" role="alert">{message}</p>
+                        ))}
+
                     <div className="flex gap-2">
                         <button
                             disabled={form.processing}
@@ -656,6 +697,23 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                     */}
                     {view === 'shared' ? (
                         <p className="font-medium">{t('lists.shared_empty')}</p>
+                    ) : !isSignedIn ? (
+                        <>
+                            {/*
+                              Keeping anything needs an account now, so "find
+                              things to add" led to a bookmark that opened the
+                              sign-in dialog anyway — a loop that named its
+                              precondition at the last step. Say it here.
+                            */}
+                            <p className="font-medium">{t('lists.sign_in_to_keep')}</p>
+                            <p className="mt-1 text-sm text-ink-soft">{t('lists.sign_in_hint')}</p>
+                            <SignInLink
+                                hint={t('lists.sign_in_hint')}
+                                className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+                            >
+                                {t('nav.sign_in')}
+                            </SignInLink>
+                        </>
                     ) : (
                         <>
                             <p className="font-medium">{t('lists.empty')}</p>

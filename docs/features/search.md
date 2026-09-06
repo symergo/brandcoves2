@@ -572,3 +572,13 @@ on the page you are standing on.
 
 `extract()` no longer takes a `Market`. It took one only to pick the stopword list, and picking one
 was the bug.
+
+## The box follows the query (2026-09-06)
+
+Every visit made by `go()` keeps the page mounted (`preserveState`), so the search field, seeded
+once from `q`, never saw a second query: narrow by a vocabulary chip and the heading and the grid
+showed the narrowed query while the box still held the words typed before it — and Enter then
+searched the stale text, quietly throwing the narrowing away. The field resyncs on every `q`.
+
+`preserveScroll` is now off for a page change only. It was on for every visit, so page two
+arrived with the viewport parked at the bottom of page one, past every card it had brought.

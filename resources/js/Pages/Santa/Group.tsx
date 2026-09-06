@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import ShareRow from '../../Components/ShareRow'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -82,11 +82,11 @@ export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
 
             {me && (
                 <p className="mt-6 max-w-2xl rounded-card border border-line bg-card p-4 text-sm">
-                    <a href={`/${market.key}/santa/${group.id}/me/${me.joinToken}`} className="underline">
+                    <Link href={`/${market.key}/santa/${group.id}/me/${me.joinToken}`} className="underline">
                         {group.drawn && me.giftee
                             ? t('santa.you_have', { name: me.giftee.name })
                             : t('santa.not_drawn')}
-                    </a>
+                    </Link>
                 </p>
             )}
 
@@ -181,12 +181,25 @@ export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
                         {!group.drawn && (
                             <button
                                 type="button"
-                                onClick={() => router.post(`/${market.key}/santa/${group.id}/draw`)}
+                                // Asked first, like every other consequential press
+                                // on this page: the draw emails everybody a name,
+                                // and there is no un-sending that.
+                                onClick={() => {
+                                    if (confirm(t('santa.draw_confirm', { count: String(members.length) }))) {
+                                        router.post(`/${market.key}/santa/${group.id}/draw`)
+                                    }
+                                }}
                                 disabled={members.length < 2}
                                 className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50"
                             >
                                 {t('santa.draw')}
                             </button>
+                        )}
+
+                        {/* Why the button is off, rather than a button that
+                            simply does nothing. */}
+                        {!group.drawn && members.length < 2 && (
+                            <span className="text-sm text-ink-soft">{t('santa.draw_needs_two')}</span>
                         )}
 
                         {/*

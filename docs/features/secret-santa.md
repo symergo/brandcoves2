@@ -228,3 +228,10 @@ pairings, and storing them as plain JSON would put the whole game in the clear a
 encryption on `assigned_member_id` decorative — the exact defect this document records v1 having. It
 waits for an encrypted history column, and members are asked to retype it by hand in the meantime
 (the exclusions hint says "whoever you had last year").
+
+## The draw asks first, and says why it is off (2026-09-06)
+
+The draw emails everybody a name and nothing can unsend that. Every other consequential control
+on the group page confirmed, and this one did not. It confirms now (`santa.draw_confirm`, with
+the member count), and under two members the disabled button is accompanied by a sentence
+saying so (`santa.draw_needs_two`) rather than a button that simply does nothing.

@@ -662,7 +662,15 @@ export default function ListTools({
                                     {list.shareUrl && access.isOwner && (
                                         <button
                                             type="button"
-                                            onClick={() => setting({ visibility: 'private' })}
+                                            // Asked first: this is the one press on the
+                                            // panel that cannot be undone. Every link
+                                            // already sent dies with it, and the next
+                                            // share mints a different one.
+                                            onClick={() => {
+                                                if (confirm(t('lists.disable_sharing_confirm'))) {
+                                                    setting({ visibility: 'private' })
+                                                }
+                                            }}
                                             className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-soft hover:border-ink hover:text-ink"
                                         >
                                             {t('lists.disable_sharing')}

@@ -1,4 +1,4 @@
-import { Head, router, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
@@ -150,7 +150,7 @@ export default function GiftWizard({ options, recipients, picks, brief }: Props)
                                     key={pick.id}
                                     className="flex flex-col rounded-lg border border-line bg-card p-4"
                                 >
-                                    <a href={pick.url}>
+                                    <Link href={pick.url}>
                                         {pick.image && (
                                             <img
                                                 src={pick.image}
@@ -160,7 +160,7 @@ export default function GiftWizard({ options, recipients, picks, brief }: Props)
                                             />
                                         )}
                                         <h3 className="mt-3 line-clamp-2 font-medium">{pick.title}</h3>
-                                    </a>
+                                    </Link>
 
                                     {/* One reason. Three read as a machine justifying itself. */}
                                     <p className="mt-2 text-sm text-ink-soft">{reason(pick)}</p>

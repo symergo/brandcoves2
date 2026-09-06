@@ -121,6 +121,15 @@ export default function SantaIndex({ groups, isSignedIn }: Props) {
                                 />
                             </label>
 
+                            {/*
+                              What the server refused. The form rendered none of
+                              `form.errors`, so a bad budget or a date in the
+                              past looked like a button that did not fire.
+                            */}
+                            {Object.entries(form.errors).map(([field, message]) => (
+                                <p key={field} className="text-sm text-accent" role="alert">{message}</p>
+                            ))}
+
                             <button
                                 type="submit"
                                 disabled={form.processing}

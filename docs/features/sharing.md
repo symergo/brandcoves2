@@ -170,3 +170,10 @@ shareable, and a private list simply has no share URL to give it.
 - [social-cards.md](social-cards.md) — what the shared link renders as once it lands
 - [list-quiz.md](list-quiz.md) — the score being shared
 - [secret-santa.md](secret-santa.md) — the invite being shared
+
+## Revoking a link asks first (2026-09-06)
+
+"Stop sharing" is the one press on the panel that cannot be undone: every link already sent
+dies with it, and the next share mints a different one. It posted straight from the click while
+deleting the whole list and removing a Secret Santa member both confirmed. It confirms now
+(`lists.disable_sharing_confirm`).

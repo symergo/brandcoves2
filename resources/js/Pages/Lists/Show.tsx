@@ -11,7 +11,7 @@ import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
-import { markRemoved } from '../../savedItems'
+import { invalidate, markRemoved } from '../../savedItems'
 import { useTranslations } from '../../useTranslations'
 
 interface Item {
@@ -398,7 +398,12 @@ export default function ListShow({
                         <button
                             onClick={() => {
                                 if (confirm(t('lists.delete_confirm'))) {
-                                    router.delete(`${base}/lists/${list.id}`)
+                                    // The store cannot infer a deleted list: every
+                                    // bookmark on the next page would still report
+                                    // its products as saved, into a list that is
+                                    // gone. This is the caller `invalidate()` was
+                                    // written for.
+                                    router.delete(`${base}/lists/${list.id}`, { onSuccess: () => invalidate() })
                                 }
                             }}
                             aria-label={t('lists.delete_list')}

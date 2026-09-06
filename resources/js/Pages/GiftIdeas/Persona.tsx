@@ -150,7 +150,7 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                                                 key={find.id}
                                                 className="my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row"
                                             >
-                                                <a href={find.url} className="shrink-0">
+                                                <Link href={find.url} className="shrink-0">
                                                     {find.image && (
                                                         <img
                                                             src={find.image}
@@ -159,12 +159,12 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                                                             className="mx-auto h-32 w-32 object-contain"
                                                         />
                                                     )}
-                                                </a>
+                                                </Link>
 
                                                 <figcaption className="min-w-0 flex-1">
-                                                    <a href={find.url} className="font-medium hover:underline">
+                                                    <Link href={find.url} className="font-medium hover:underline">
                                                         {find.title}
-                                                    </a>
+                                                    </Link>
 
                                                     {find.blurb && (
                                                         <p className="mt-1 text-sm text-ink-soft">{find.blurb}</p>
@@ -198,7 +198,7 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                                         key={find.id}
                                         className="flex flex-col rounded-lg border border-line bg-card p-4"
                                     >
-                                        <a href={find.url}>
+                                        <Link href={find.url}>
                                             {find.image && (
                                                 <img
                                                     src={find.image}
@@ -208,7 +208,7 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                                                 />
                                             )}
                                             <h3 className="mt-3 line-clamp-2 font-medium">{find.title}</h3>
-                                        </a>
+                                        </Link>
 
                                         {find.blurb && <p className="mt-2 text-sm text-ink-soft">{find.blurb}</p>}
 

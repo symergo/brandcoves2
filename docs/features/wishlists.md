@@ -1051,3 +1051,17 @@ falls back to `Accept-Language`.
 
 Worth recording because it was invisible until the first auth-gated route existed: Phase 3 added the
 first one.
+
+## Signed out, the door says so (2026-09-06)
+
+`GET /lists` is public and `POST /lists` is behind `auth`. The page used to show a signed-out
+visitor the whole "New list" form: a title, a person, a birthday, and a Create button that
+bounced to the login page with all of it gone. Now the button *is* the sign-in (`SignInLink`,
+which opens the dialog and keeps the page), and the empty state says "sign in to keep a list"
+rather than sending the visitor to search for things they cannot save. The form also renders
+`form.errors` beside the fields now — a rejected title or name used to close nothing and say
+nothing, which looked like a button that did not fire. `Santa/Index` got the same error display.
+
+**Deleting a list invalidates the saved-items store.** `savedItems.invalidate()` was written for
+exactly that and had no caller, so every bookmark on the next page still reported its products
+as saved, into a list that was gone.

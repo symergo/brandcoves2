@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react'
+import { Head, Link, usePage } from '@inertiajs/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Cents, SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -127,16 +127,44 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
      * requests rather than sixty, and short enough that the surface still feels
      * like it is responding to the drag rather than to the release.
      */
+    /*
+     * Not on arrival. The page lands with `items` the server just ranked for
+     * exactly these dial values, and this effect used to fire anyway — one
+     * redundant ranking run per visit, 180 ms after a page that already had
+     * its results. Skipped once; a later change to the dial, the box or the
+     * mode still fetches.
+     */
+    const arrived = useRef(false)
+
     useEffect(() => {
+        if (!arrived.current) {
+            arrived.current = true
+
+            return
+        }
+
         const timer = setTimeout(() => run(dial, surpriseDial, term), 180)
 
         return () => clearTimeout(timer)
     }, [dial, surpriseDial, run])
 
     const react = (item: DiscoverItem, reaction: 'meh' | 'hide') => {
-        setResults(results.filter((r) => r.id !== item.id))
+        // Optimistic, and put back where it was if the request fails: a card
+        // that vanished from the page while the ranking still holds it would
+        // otherwise be a product that silently reappears on the next visit.
+        const index = results.findIndex((r) => r.id === item.id)
+        setResults((prev) => prev.filter((r) => r.id !== item.id))
 
-        void fetch(`/${market.key}/discover/react`, {
+        const restore = () =>
+            setResults((prev) => {
+                if (prev.some((r) => r.id === item.id)) return prev
+                const next = [...prev]
+                next.splice(Math.min(index, next.length), 0, item)
+
+                return next
+            })
+
+        fetch(`/${market.key}/discover/react`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -154,6 +182,10 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                 factor: item.reason,
             }),
         })
+            .then((response) => {
+                if (!response.ok) restore()
+            })
+            .catch(restore)
     }
 
     const nearestStop = stops.reduce((best, stop) =>
@@ -364,12 +396,12 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                                     )}
 
                                     <div className={asRow ? 'min-w-0 flex-1' : 'contents'}>
-                                        <a
+                                        <Link
                                             href={item.url}
                                             className="line-clamp-2 font-medium hover:underline"
                                         >
                                             {item.title}
-                                        </a>
+                                        </Link>
 
                                         {/* Required of every mode: why this is here. */}
                                         {item.reason && (
