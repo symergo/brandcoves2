@@ -188,7 +188,17 @@ Route::pattern('market', implode('|', array_map('preg_quote', Market::values()))
 Route::prefix('{market}')->group(function () {
     Route::get('/', HomeController::class)->name('home');
 
-    Route::get('/search', SearchController::class)->name('search');
+    /*
+     * Throttled, for the reason `/list-search` gives below: the live half of a
+     * search costs real requests to bol and Amazon, and the Amazon one cannot
+     * be cached. This route had no ceiling at all while the signed-in one did,
+     * so an anonymous loop over `?q=<random>` could spend the PA-API quota and
+     * write a `search_log` row per term. Sixty a minute is far more than a
+     * person types and far less than a script does.
+     */
+    Route::get('/search', SearchController::class)
+        ->middleware('throttle:60,1')
+        ->name('search');
 
     // What the box accepts and how the camera does it. Next to /search rather
     // than with about/privacy/terms: it is documentation of a tool, not a
@@ -432,6 +442,24 @@ Route::prefix('{market}')->group(function () {
          */
         Route::get('/lists/{list}/add', [WishlistController::class, 'add'])->name('lists.add');
         Route::get('/done-adding', [WishlistController::class, 'doneAdding'])->name('lists.done_adding');
+
+        /*
+         * The people a list is about, and handing a list to one of them.
+         *
+         * Behind `auth` since 2026-09-06. They sat outside it with only an
+         * `Owner::exists()` check, which every request passes — the identity
+         * middleware manufactures an anonymous owner for anyone without a
+         * cookie — so an unauthenticated caller could create recipients
+         * without limit. Keeping a list needs an account now, so nothing a
+         * visitor can reach creates one of these without being signed in.
+         */
+        Route::post('/recipients', [RecipientController::class, 'store'])->name('recipients.store');
+        Route::patch('/recipients/{recipient}', [RecipientController::class, 'update'])->name('recipients.update');
+        Route::delete('/recipients/{recipient}', [RecipientController::class, 'destroy'])->name('recipients.destroy');
+
+        // Hand a list to the person it was built for. It stops being research
+        // and becomes theirs — which is what makes it claimable.
+        Route::post('/lists/{list}/handover', [HandoverController::class, 'store'])->name('lists.handover');
     });
 
     /*
@@ -459,18 +487,6 @@ Route::prefix('{market}')->group(function () {
         ->where('token', '[0-9a-f-]{36}')
         ->middleware('throttle:30,1')
         ->name('invitations.show');
-
-    Route::post('/recipients', [RecipientController::class, 'store'])->name('recipients.store');
-    Route::patch('/recipients/{recipient}', [RecipientController::class, 'update'])->name('recipients.update');
-    Route::delete('/recipients/{recipient}', [RecipientController::class, 'destroy'])->name('recipients.destroy');
-
-    /*
-     * Hand a list to the person it was built for.
-     *
-     * It stops being research and becomes theirs — which is what makes it
-     * claimable, and therefore useful to everybody else.
-     */
-    Route::post('/lists/{list}/handover', [HandoverController::class, 'store'])->name('lists.handover');
 
     /*
     |----------------------------------------------------------------------

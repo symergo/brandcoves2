@@ -495,6 +495,20 @@ never come back apart into hours — was restored.
 `search_log` by similarity any more, and a GIN index on a table written on every
 search is not free.
 
+## Bounds on the public route (2026-09-06)
+
+- **`/search` is throttled at 60 a minute per client.** `/list-search` had that ceiling from the
+  start, with the reason written beside it — the live half of a search costs real requests to bol
+  and Amazon, and the Amazon one cannot be cached. The public route had none, so an anonymous loop
+  over `?q=<random>` could spend the PA-API quota and write a `search_log` row per term.
+- **`page` is capped at `SearchQuery::MAX_PAGE` (200).** `?page=500000` was a deep OFFSET over the
+  whole match set. Nothing a person scrolls to lives past two hundred pages, and crawlers are told
+  not to follow `page=` at all.
+- **`SearchQuery::$discountedOnly` defaults to `false`.** It defaulted to `true`, which no caller
+  wanted: the request parser reads the box explicitly and all seven internal callers overrode it
+  with a comment saying the default was wrong. The eighth to forget would have silently searched
+  only discounted products.
+
 ## Files
 
 - `database/migrations/2026_08_07_000700_add_search_indexes.php`

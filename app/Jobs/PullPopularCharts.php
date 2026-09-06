@@ -14,6 +14,7 @@ use App\Services\Charts\ChartPuller;
 use App\Services\Charts\ChartPullResult;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\PopularityConnector;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -33,12 +34,16 @@ use Throwable;
  * rather than restarting, which matters because restarting would spend the whole
  * budget re-pulling the charts it already has.
  */
-class PullPopularCharts implements ShouldQueue
+class PullPopularCharts implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /** Generous: a bounded crawl at 2 requests/second still takes minutes. */
     public int $timeout = 1800;
+
+    // The lock behind `uniqueId()`, which only counts on a ShouldBeUnique job
+    // — see the note on IngestFeed. Matched to the timeout.
+    public int $uniqueFor = 1800;
 
     /**
      * One retry. A chart run that fails twice is a credential or upstream

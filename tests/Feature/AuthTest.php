@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Market;
+use App\Enums\Source;
 use App\Mail\MagicLinkMail;
 use App\Models\AnonymousIdentity;
+use App\Models\GiftPledge;
+use App\Models\ListItemVote;
 use App\Models\LoginToken;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
@@ -177,10 +181,46 @@ class AuthTest extends TestCase
             'market' => Market::BeNl,
         ]);
 
-        ['token' => $token] = LoginToken::issue('merge@example.test');
-        $this->withCookie('bc_visitor', $anon->id)->get("/be-nl/auth/magic/{$token}");
+        /*
+         * And things done on somebody else's list: a pledge towards a group
+         * gift, a vote on which one to buy. Until 2026-09-06 these stayed on
+         * the cookie identity, which is never resolved again after sign-in —
+         * so the pledge became money the person could not see or withdraw.
+         */
+        $theirs = Wishlist::create([
+            'owner_user_id' => User::factory()->create()->id,
+            'title' => 'Office gift',
+            'market' => Market::BeNl,
+        ]);
+        $item = WishlistItem::create([
+            'wishlist_id' => $theirs->id,
+            'source' => Source::Manual,
+            'snapshot_title' => 'Espresso machine',
+            'accepted_at' => now(),
+        ]);
+        $other = WishlistItem::create([
+            'wishlist_id' => $theirs->id,
+            'source' => Source::Manual,
+            'snapshot_title' => 'Grinder',
+            'accepted_at' => now(),
+        ]);
+        $pledge = GiftPledge::create([
+            'wishlist_id' => $theirs->id,
+            'anon_id' => $anon->id,
+            'display_name' => 'Me',
+            'amount' => 2500,
+        ]);
+        $vote = ListItemVote::create(['item_id' => $item->id, 'anon_id' => $anon->id]);
+        $duplicate = ListItemVote::create(['item_id' => $other->id, 'anon_id' => $anon->id]);
 
-        $user = User::query()->where('email', 'merge@example.test')->firstOrFail();
+        ['token' => $token] = LoginToken::issue('merge@example.test');
+
+        // The account has already voted on the grinder from another device,
+        // so the anonymous vote there is a duplicate of one it holds.
+        $user = User::factory()->create(['email' => 'merge@example.test']);
+        ListItemVote::create(['item_id' => $other->id, 'user_id' => $user->id]);
+
+        $this->withCookie('bc_visitor', $anon->id)->get("/be-nl/auth/magic/{$token}");
 
         // Losing a list someone built themselves is the worst moment this
         // product can produce.
@@ -188,6 +228,13 @@ class AuthTest extends TestCase
         $this->assertNull($list->fresh()->owner_anon_id);
         $this->assertSame($user->id, $recipient->fresh()->owner_user_id);
         $this->assertNotNull($anon->fresh()->merged_at);
+
+        $this->assertSame($user->id, $pledge->fresh()->user_id);
+        $this->assertNull($pledge->fresh()->anon_id);
+        $this->assertSame($user->id, $vote->fresh()->user_id);
+        // Dropped rather than re-parented into a unique-index collision.
+        $this->assertNull($duplicate->fresh());
+        $this->assertSame(1, ListItemVote::query()->where('item_id', $other->id)->count());
     }
 
     #[Test]

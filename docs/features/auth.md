@@ -83,6 +83,20 @@ lists attach to that. On sign-in, `IdentityMerger` moves that work onto the real
 regenerates, the anonymous cookie is no longer the thing identifying this browser, and the window to
 resolve it has closed.
 
+**Everything with an `anon_id` moves, not only lists.** Until 2026-09-06 the merger moved
+recipients, wishlists and events, and left pledges, votes, quiz attempts and daily-challenge
+attempts on the cookie identity — which is never resolved again once the person is signed in. A
+pledge made before signing up was money the person could no longer see or withdraw. Pledges and
+votes carry a one-row-per-person unique index, so where the account already holds its own row for
+the same item the anonymous vote is dropped, and the anonymous pledge is left in place and still
+counted rather than deleted or doubled on the quiet. Claims are still deliberately not merged; the
+docblock on `IdentityMerger` says why.
+
+**Machine routes get no identity.** `TrackAnonymousIdentity` skips `robots.txt`, the sitemaps, the
+social cards, `/health` and the webhooks. A crawler keeps no cookies, so every fetch of those used to
+insert an `anonymous_identities` row — one per product page for a full crawl — and the `Set-Cookie`
+it queued made the sitemap and the cards uncacheable by any shared cache.
+
 ## Google: the redirect URI is unprefixed, and has to be
 
 Every other public route lives under `/{market}/`. The OAuth callback does not, and this is the one

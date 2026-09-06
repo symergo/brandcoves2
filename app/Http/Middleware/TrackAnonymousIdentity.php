@@ -28,11 +28,37 @@ class TrackAnonymousIdentity
     /** Long-lived on purpose: gift lists are built over weeks, not minutes. */
     private const LIFETIME_MINUTES = 60 * 24 * 365;
 
+    /**
+     * Routes that are read by machines, not people, and get no identity.
+     *
+     * A crawler keeps no cookies, so every fetch of robots.txt, a sitemap
+     * chunk or a social card arrived without one and inserted a fresh
+     * `anonymous_identities` row — one per product page for a full crawl of
+     * the sitemap. The `Set-Cookie` it queued also made those responses
+     * uncacheable by any shared cache. Nothing on these routes reads the
+     * identity, so they simply skip it. Patterns as `Request::is()` takes them.
+     *
+     * @var list<string>
+     */
+    private const MACHINE_PATHS = [
+        'robots.txt',
+        'sitemap.xml',
+        'sitemap/*',
+        '*/og/*',
+        'health',
+        'up',
+        'webhooks/*',
+    ];
+
     public function handle(Request $request, Closure $next): Response
     {
         // A signed-in user has a real identity; a second anonymous one would
         // only fragment their data.
         if ($request->user() !== null) {
+            return $next($request);
+        }
+
+        if ($request->is(...self::MACHINE_PATHS)) {
             return $next($request);
         }
 

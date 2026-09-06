@@ -53,19 +53,78 @@ class IdentityMerger
                 ->where('anon_id', $anon->getKey())
                 ->update(['user_id' => $user->id]);
 
+            /*
+             * Pledges, votes and game attempts follow the person too.
+             *
+             * Until 2026-09-06 only the three tables above moved, so a pledge
+             * made before signing up was money the person could no longer see
+             * or withdraw: once signed in, the cookie identity is never
+             * resolved again. The same for a vote on a group list and a quiz
+             * score.
+             *
+             * All four carry a one-row-per-person rule (a partial unique
+             * index each: per item, per list, per quiz, per edition). Where
+             * the account already holds its own row for the same thing, the
+             * anonymous vote or attempt is dropped — it is a duplicate of one
+             * the person has — and the anonymous pledge is left where it is,
+             * still counted in the pot: money is not something to delete or
+             * double on the quiet.
+             */
+            $this->dropDuplicates('list_item_votes', 'item_id', $anon, $user);
+            $this->dropDuplicates('list_quiz_attempts', 'quiz_id', $anon, $user);
+            $this->dropDuplicates('challenge_attempts', 'set_id', $anon, $user);
+
+            $votes = $this->reparent('list_item_votes', $anon, $user);
+            $this->reparent('list_quiz_attempts', $anon, $user);
+            $this->reparent('challenge_attempts', $anon, $user);
+
+            $pledges = DB::table('gift_pledges as anon')
+                ->where('anon.anon_id', $anon->getKey())
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))
+                    ->from('gift_pledges as mine')
+                    ->where('mine.user_id', $user->id)
+                    ->whereColumn('mine.wishlist_id', 'anon.wishlist_id'))
+                ->update(['user_id' => $user->id, 'anon_id' => null, 'updated_at' => now()]);
+
             $anon->update([
                 'merged_into_user_id' => $user->id,
                 'merged_at' => now(),
             ]);
 
-            if ($recipients > 0 || $wishlists > 0) {
+            if ($recipients > 0 || $wishlists > 0 || $votes > 0 || $pledges > 0) {
                 Log::info('Anonymous identity merged', [
                     'user_id' => $user->id,
                     'recipients' => $recipients,
                     'wishlists' => $wishlists,
+                    'votes' => $votes,
+                    'pledges' => $pledges,
                 ]);
             }
         });
+    }
+
+    /**
+     * Delete the anonymous rows that would collide with one the account holds.
+     *
+     * @param  string  $key  the column that, with the person, is unique
+     */
+    private function dropDuplicates(string $table, string $key, AnonymousIdentity $anon, User $user): void
+    {
+        DB::table("{$table} as anon")
+            ->where('anon.anon_id', $anon->getKey())
+            ->whereExists(fn ($q) => $q->select(DB::raw(1))
+                ->from("{$table} as mine")
+                ->where('mine.user_id', $user->id)
+                ->whereColumn("mine.{$key}", "anon.{$key}"))
+            ->delete();
+    }
+
+    /** @return int rows moved */
+    private function reparent(string $table, AnonymousIdentity $anon, User $user): int
+    {
+        return DB::table($table)
+            ->where('anon_id', $anon->getKey())
+            ->update(['user_id' => $user->id, 'anon_id' => null, 'updated_at' => now()]);
     }
 
     /**

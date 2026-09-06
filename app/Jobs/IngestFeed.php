@@ -11,6 +11,7 @@ use App\Models\IngestionJob;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\SourceSwitch;
 use App\Services\Ingestion\OfferUpserter;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
@@ -27,12 +28,25 @@ use Throwable;
  * its position, so the stored cursor always trails committed work — never leads
  * it, which would silently skip rows if the process died in between.
  */
-class IngestFeed implements ShouldQueue
+class IngestFeed implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     /** Long, because a large feed legitimately takes a while. */
     public int $timeout = 3600;
+
+    /**
+     * How long the uniqueness lock outlives a job that never released it.
+     *
+     * `uniqueId()` was here from the start and did nothing: Laravel only reads
+     * it on a job that implements `ShouldBeUnique`, and this one did not. Two
+     * runs for one feed would interleave their cursor writes and skip or
+     * replay rows. The scheduler's `withoutOverlapping()` did not help — it
+     * guards the closure that dispatches, which is done in milliseconds.
+     * Matched to the timeout, so a crashed worker frees the feed within the
+     * hour rather than blocking it until somebody notices.
+     */
+    public int $uniqueFor = 3600;
 
     /**
      * One retry. A feed that fails twice is a configuration or upstream
@@ -175,8 +189,22 @@ class IngestFeed implements ShouldQueue
 
     public function failed(Throwable $e): void
     {
+        /*
+         * The tracker is keyed on `Feed::jobKey()` — `source:external_id:
+         * market` — and this used to match `%:{feedId}:%` against it. The feed
+         * id is the primary key, which never appears in that string, so a
+         * permanently failed run marked nothing as failed; or, where some
+         * advertiser's external id happened to equal this feed's internal
+         * one, marked the wrong feed's tracker.
+         */
+        $feed = Feed::query()->find($this->feedId);
+
+        if ($feed === null) {
+            return;
+        }
+
         IngestionJob::query()
-            ->where('job_key', 'like', '%:'.$this->feedId.':%')
+            ->where('job_key', $feed->jobKey())
             ->update(['status' => JobStatus::Failed->value, 'last_error' => mb_substr($e->getMessage(), 0, 500)]);
     }
 }

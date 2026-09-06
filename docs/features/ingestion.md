@@ -148,6 +148,19 @@ lose the work.
 > re-reads a chunk rather than skipping one. Re-reading is harmless because the
 > writes are upserts; skipping would silently lose rows with nothing to detect it.
 
+**One run per feed at a time is enforced by `ShouldBeUnique`, since 2026-09-06.** `IngestFeed`,
+`GroupProducts` and `PullPopularCharts` all defined `uniqueId()` from the start and none implemented
+the interface that makes Laravel read it, so the guarantee was a comment. Two runs for one feed would
+have interleaved their cursor writes. The scheduler's `withoutOverlapping()` on those entries never
+covered it either — it guards the closure that *dispatches*, which is over in milliseconds. Each job's
+`uniqueFor` matches its timeout, so a worker that dies without releasing the lock frees the feed
+within the hour. `JobUniquenessTest` pins all three.
+
+**`failed()` matches the tracker by `Feed::jobKey()`.** It used to `LIKE '%:{feed id}:%'` against a
+key that is `source:external_id:market` — the internal id never appears in it, so a permanently
+failed run marked nothing, or another feed's tracker where an external id happened to equal this
+feed's primary key.
+
 ## Rows that disappear are retired, not deleted
 
 Anything this run did not touch is marked `stale`. A wishlist item or a

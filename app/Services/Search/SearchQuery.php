@@ -28,7 +28,14 @@ final readonly class SearchQuery
         public array $merchantIds = [],
         public array $brands = [],
         public bool $inStockOnly = true,
-        public bool $discountedOnly = true,
+        /*
+         * False, as of 2026-09-06. It defaulted to true, which no caller
+         * wanted: the request parser reads the box explicitly and every one
+         * of the seven internal callers overrode it with a comment saying the
+         * default was wrong. The eighth caller to forget would have silently
+         * searched only discounted products.
+         */
+        public bool $discountedOnly = false,
         public bool $comparableOnly = false,
         public string $sort = 'relevance',
         public int $page = 1,
@@ -70,6 +77,9 @@ final readonly class SearchQuery
         public ?string $liveTerm = null,
     ) {}
 
+    /** The deepest page a request may ask for. */
+    public const MAX_PAGE = 200;
+
     public static function fromRequest(Request $request, Market $market): self
     {
         return new self(
@@ -94,7 +104,13 @@ final readonly class SearchQuery
             sort: in_array($request->query('sort'), ['relevance', 'price_asc', 'price_desc', 'discount', 'newest'], true)
                 ? (string) $request->query('sort')
                 : 'relevance',
-            page: max(1, (int) $request->query('page', 1)),
+            /*
+             * Bounded above as well as below. `?page=500000` is a deep OFFSET
+             * over the whole match set on a route anyone can hit; nothing a
+             * person scrolls to lives past a couple of hundred pages, and a
+             * crawler is told not to follow `page=` at all.
+             */
+            page: min(self::MAX_PAGE, max(1, (int) $request->query('page', 1))),
             view: $request->query('view') === 'store' ? 'store' : 'grid',
         );
     }

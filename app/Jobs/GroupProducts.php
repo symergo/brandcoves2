@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\Market;
 use App\Services\Ingestion\ProductGrouper;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -18,11 +19,15 @@ use Illuminate\Support\Facades\Log;
  * than doing it per chunk, where a group's "cheapest offer" would be computed
  * from a catalogue that is still half-loaded.
  */
-class GroupProducts implements ShouldQueue
+class GroupProducts implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
     public int $timeout = 900;
+
+    // One grouping per market at a time. `uniqueId()` below only counts on a
+    // job that implements ShouldBeUnique — see the note on IngestFeed.
+    public int $uniqueFor = 900;
 
     public function __construct(
         public readonly Market $market,
