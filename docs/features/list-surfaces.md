@@ -238,6 +238,41 @@ The new page is deliberately **data-free** — no queries, no identity, nothing 
 two visitors. The hub personalises and needs an owner; this explains the tools to somebody who has
 none of them yet, which is exactly who reads it.
 
+## The Gift Cove: a wizard on top, the whole site under it (2026-09-06)
+
+The page called "everything you can do here" opened on a title and a grid of the nine list tools, which
+described a third of the site and started nothing. A grid of explanations is a reference, and nobody
+arrives wanting a reference: they arrive with a person and an occasion, and the thing to do with those
+is make a list.
+
+**The hero is the wizard** (`ListWizard`): four questions, each explained before it is asked. *Who for*
+(the three kinds, with what each can do and why it cannot be changed later), *name and occasion* (the
+person, picked from friends or typed; the occasion and date, with what a date does: registry, reminders,
+delivery address), *sharing* (private or link, explained per kind; "anyone can add" for building a list
+together; voting on a group list; share with named friends; the privacy rule), *done* (a summary and
+the button). Signed out, the button is the sign-in, and the answers survive it: the draft is kept in
+`localStorage` for a day, because the magic link opens in a new tab where session storage is empty,
+and restored on the "done" step once signed in.
+
+It posts to the same `store()` as the form on My Lists. That endpoint learned `event_type`,
+`event_date`, `visibility` (private or link), `link_can_add`, `voting_enabled` and `share_with`,
+because a wizard that explains an option and then sends you to the list page to turn it on has
+explained it to nobody. Each is optional and follows `update()`'s rule for the same column; voting is
+dropped on any kind but group; friends are shared with through `ListSharer`, which keeps only friends
+and refuses a private list. A freshly `create()`d model does not carry the database's default
+visibility, so the list is refreshed before sharing.
+
+**Under it, five bands with a button each**: your own list (share it, a registry, suggestions), a
+list for somebody (the private research list, buying separately with the other givers, handover), with
+other people (build a list together, buy together, the board, Secret Santa, the quiz, friends), find a
+present (Whisperer, search and barcode, Ask, notifications), get inspired (daily Cove, guides, ideas,
+surprise). A card is one sentence and a button that starts the thing, and the grid takes its column
+count from the band (three or four) so every band is full rows. Coves keep their `CoveIcon` drawings;
+`ToolIcon` gained `search`, `alerts`, `friends`, `guides`, `split`, `build` and `board`.
+
+The privacy rule is said once, on the sharing step, where the decision it governs is made. The SEO
+description no longer counts "nine tools".
+
 ## The front page stopped calling a gift list a registry
 
 `HomeController::registry()` has always looked for `event_type` rather than for a kind, on the sound

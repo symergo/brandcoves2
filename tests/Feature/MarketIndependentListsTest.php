@@ -48,6 +48,42 @@ class MarketIndependentListsTest extends TestCase
     }
 
     #[Test]
+    public function a_product_from_another_market_can_be_saved(): void
+    {
+        /*
+         * The fifth place this filter broke, found in the browser: "some items
+         * don't work".
+         *
+         * `store()` looked the product up with `forMarket($current->get())` —
+         * whichever market the URL carried — and 404'd otherwise. A list holds
+         * products from every market its owner has browsed, so on a shared list
+         * read under `/be-nl/` the bookmark saved the `be-nl` items and
+         * silently failed on the `nl-nl` ones. Half a list worked.
+         *
+         * A group id is a global key. Invariant #2 is about never *merging* two
+         * markets' products into one row; it does not stop a list referring to
+         * one, which it must, because that is where the person saw it.
+         */
+        $user = User::factory()->create();
+        $elsewhere = $this->group(Market::NlNl);
+
+        $this->actingAs($user)
+            ->post('/be-nl/list-items', ['group_id' => $elsewhere->id])
+            ->assertRedirect();
+
+        $item = WishlistItem::query()->where('group_id', $elsewhere->id)->first();
+
+        $this->assertNotNull($item, 'Saved from a market that is not the one in the URL.');
+
+        /*
+         * And the stored link points at the product's own market. It was built
+         * from `$current`, so this row would have held `/be-nl/p/{an nl-nl
+         * id}/…` — an address that is not a page.
+         */
+        $this->assertSame("/nl-nl/p/{$elsewhere->id}/sony-wh-1000xm5", $item->snapshot_url);
+    }
+
+    #[Test]
     public function the_save_picker_offers_a_list_made_in_another_market(): void
     {
         $user = User::factory()->create();

@@ -158,7 +158,6 @@ export default function ManualItem({
 
             {/* Said plainly rather than discovered: nothing is fetched from the
                 link, so the title is the only thing that will ever show. */}
-            <p className="text-xs text-ink-soft">{t('lists.manual_no_preview')}</p>
 
             {error && <p className="text-sm text-accent">{error}</p>}
 

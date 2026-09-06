@@ -18,6 +18,8 @@ use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistCollaborator;
 use App\Models\WishlistItem;
+use App\Services\Social\Friends;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
@@ -305,9 +307,92 @@ class WishlistTest extends TestCase
                 ->where('isOwner', false)
                 ->where('items.0.claimed', false));
 
-        $this->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")->assertRedirect();
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+            ->assertRedirect();
 
         $this->assertNotNull($item->fresh()->claimed_by_hash);
+    }
+
+    #[Test]
+    public function claiming_asks_for_an_account_rather_than_taking_a_cookie(): void
+    {
+        /*
+         * Reversed deliberately, and this test is where the reversal lives.
+         *
+         * Claiming was open to anonymous visitors, and the argument was sound
+         * about the press: somebody followed a link once. It was wrong about
+         * everything after it. The claim is hashed from the claimer's identity
+         * and an anonymous identity is a *cookie*, so the person who claimed
+         * the scarf could not see they had from their phone, could not release
+         * it there, and lost the claim entirely by clearing the browser — while
+         * the item stayed spoken for by nobody reachable.
+         */
+        [$list, $item] = $this->sharedGiftList();
+
+        $this->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+            ->assertForbidden();
+
+        $this->assertNull($item->fresh()->claimed_by_hash);
+
+        /*
+         * And the page offers the account instead of drawing a dead button.
+         * `canClaim` false with `claimNeedsAccount` true is the whole of the
+         * signed-out state; the two are not each other's inverse, which is why
+         * both are asserted.
+         */
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertInertia(fn ($page) => $page
+                ->where('canClaim', false)
+                ->where('claimNeedsAccount', true));
+    }
+
+    #[Test]
+    public function a_claim_pressed_before_signing_in_is_applied_afterwards(): void
+    {
+        // The whole point of asking for an account: the decision — this item,
+        // on this list — must survive the detour through an inbox, or the
+        // person lands back on a fifty-item list and gives up finding the row.
+        [$list, $item] = $this->sharedGiftList();
+
+        $this->post('/be-nl/claim-intent', [
+            'token' => $list->share_token,
+            'item' => $item->id,
+            'return_to' => "/be-nl/l/{$list->share_token}",
+        ])->assertOk();
+
+        $claimer = User::factory()->create();
+        $this->actingAs($claimer);
+        event(new Login('web', $claimer, false));
+
+        $this->assertSame(
+            WishlistItem::identityHash($claimer->claimIdentity()),
+            $item->fresh()->claimed_by_hash,
+        );
+    }
+
+    #[Test]
+    public function a_pending_claim_is_dropped_when_the_account_turns_out_to_own_the_list(): void
+    {
+        /*
+         * Signing in changes the answers, which is why the replay asks every
+         * guard again rather than trusting the press. The commonest way it
+         * matters: somebody opens their own share link signed out, presses
+         * claim, and signs in — at which point they are the owner of a wish
+         * list and a claim would tell them what is taken.
+         */
+        [$list, $item] = $this->sharedGiftList();
+
+        $this->post('/be-nl/claim-intent', [
+            'token' => $list->share_token,
+            'item' => $item->id,
+        ])->assertOk();
+
+        $owner = $list->owner;
+        $this->actingAs($owner);
+        event(new Login('web', $owner, false));
+
+        $this->assertNull($item->fresh()->claimed_by_hash);
     }
 
     #[Test]
@@ -324,9 +409,14 @@ class WishlistTest extends TestCase
             ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
             ->assertRedirect();
 
+        /*
+         * No flash to assert on: marking it sent turns the row into the sent
+         * strip in place, so the endpoint says nothing. The `sent` prop below
+         * is the assertion that matters, and it is the one the page reads.
+         */
         $this->actingAs($claimer)
             ->post("/be-nl/l/{$list->share_token}/sent/{$item->id}")
-            ->assertSessionHas('success');
+            ->assertRedirect();
 
         /*
          * Claiming used to be a dead end in the interface: you said you would
@@ -445,10 +535,31 @@ class WishlistTest extends TestCase
             'snapshot_price' => 32999,
         ]);
 
-        // The response itself would otherwise tell them whether it was taken.
+        /*
+         * The response itself would otherwise tell them whether it was taken.
+         *
+         * Two guards refuse this now — claiming needs an account, and the owner
+         * of a wish list may not claim on it — and this one reaches the first.
+         * The owner half is covered on its own by
+         * `the_owner_of_a_wish_list_cannot_claim_on_it`, which signs in.
+         */
         $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $identity->getKey())
             ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
             ->assertForbidden();
+    }
+
+    #[Test]
+    public function the_owner_of_a_wish_list_cannot_claim_on_it(): void
+    {
+        // Signed in, so the account gate is satisfied and what refuses this is
+        // the rule that matters: the owner learning what is taken.
+        [$list, $item] = $this->sharedGiftList();
+
+        $this->actingAs($list->owner)
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+            ->assertForbidden();
+
+        $this->assertNull($item->fresh()->claimed_by_hash);
     }
 
     #[Test]
@@ -471,7 +582,8 @@ class WishlistTest extends TestCase
          */
         [$list, $item] = $this->giftListForSomeone();
 
-        $this->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
             ->assertRedirect();
 
         $this->assertNotNull($item->fresh()->claimed_by_hash);
@@ -485,7 +597,10 @@ class WishlistTest extends TestCase
         // is not a thing anybody means. Pledges are the mechanism here.
         [$list, $item] = $this->giftListForSomeone(ListKind::Group);
 
-        $this->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
+        // Signed in, so this measures the kind rather than the account gate
+        // that now sits in front of it.
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
             ->assertForbidden();
 
         $this->assertNull($item->fresh()->claimed_by_hash);
@@ -694,9 +809,10 @@ class WishlistTest extends TestCase
          */
         [$anon, $anonItem] = $this->giftListForSomeone();
 
-        $this->post("/be-nl/l/{$anon->share_token}/claim/{$anonItem->id}", [
-            'display_name' => 'Anna',
-        ])->assertRedirect();
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$anon->share_token}/claim/{$anonItem->id}", [
+                'display_name' => 'Anna',
+            ])->assertRedirect();
 
         $this->assertNull(
             $anonItem->fresh()->claimed_by_name,
@@ -706,9 +822,10 @@ class WishlistTest extends TestCase
         [$named, $namedItem] = $this->giftListForSomeone();
         $named->update(['claim_visibility' => ClaimVisibility::Named]);
 
-        $this->post("/be-nl/l/{$named->share_token}/claim/{$namedItem->id}", [
-            'display_name' => 'Anna',
-        ])->assertRedirect();
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$named->share_token}/claim/{$namedItem->id}", [
+                'display_name' => 'Anna',
+            ])->assertRedirect();
 
         $this->assertSame('Anna', $namedItem->fresh()->claimed_by_name);
     }
@@ -833,15 +950,35 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
-    public function claims_cannot_be_undone_after_the_window(): void
+    public function a_claim_can_be_undone_however_long_ago_it_was_made(): void
     {
+        /*
+         * Reversed deliberately. This test used to be
+         * `claims_cannot_be_undone_after_the_window`, holding a 24-hour limit
+         * on the grounds that releasing a claim weeks later leaves nobody
+         * buying the thing.
+         *
+         * It reads the wrong way round. The only person who can release a claim
+         * is the one holding it, and what they are saying is "I am not getting
+         * this after all" — information the list needs, and needs most when the
+         * occasion is close. A claim nobody can retract is not a present
+         * secured; it is an item marked as covered that nobody is buying.
+         *
+         * The page also drew the undo button with no notion of a window, so
+         * after a day it was a live-looking button that answered with an error
+         * naming a rule nobody had been told about.
+         */
         [$list, $item] = $this->sharedGiftList();
         $item->claim(WishlistItem::identityHash('anon:alice'));
-        $item->forceFill(['claimed_at' => now()->subDays(3)])->save();
+        $item->forceFill(['claimed_at' => now()->subDays(30)])->save();
 
-        // Otherwise someone could quietly release a claim weeks later and
-        // nobody buys the thing.
-        $this->assertFalse($item->fresh()->release(WishlistItem::identityHash('anon:alice')));
+        $this->assertTrue($item->fresh()->release(WishlistItem::identityHash('anon:alice')));
+
+        // And it is still nobody else's to release, whatever the age.
+        $item->fresh()->claim(WishlistItem::identityHash('anon:alice'));
+        $item->forceFill(['claimed_at' => now()->subDays(30)])->save();
+
+        $this->assertFalse($item->fresh()->release(WishlistItem::identityHash('anon:bob')));
     }
 
     #[Test]
@@ -940,5 +1077,82 @@ class WishlistTest extends TestCase
         ]);
 
         return [$list, $item];
+    }
+
+    #[Test]
+    public function a_list_can_be_born_with_the_settings_the_wizard_asks_about(): void
+    {
+        /*
+         * The Gift Cove wizard explains occasion, sharing, adding and voting
+         * before the list exists, so `store()` has to take them: a wizard that
+         * explains an option and then sends you to the list page to turn it
+         * on has explained it to nobody. Each is optional and each follows
+         * the rule `update()` applies to the same column.
+         */
+        $owner = $this->user();
+
+        $this->actingAs($owner)->post('/be-nl/lists', [
+            'title' => 'My thirtieth',
+            'event_type' => 'birthday',
+            'event_date' => '2027-03-14',
+            'visibility' => 'link',
+            'link_can_add' => true,
+            // Voting is a group mechanism; on a wish list it is dropped, not
+            // stored — the column would say "voting" on a page with no vote.
+            'voting_enabled' => true,
+        ])->assertRedirect();
+
+        $list = Wishlist::query()->where('title', 'My thirtieth')->firstOrFail();
+
+        $this->assertSame('birthday', $list->event_type?->value);
+        $this->assertSame('2027-03-14', $list->event_date?->toDateString());
+        $this->assertSame('link', $list->visibility->value);
+        $this->assertTrue((bool) $list->link_can_add);
+        $this->assertNull($list->voting_enabled);
+
+        // And a list made without any of them is exactly what it was before:
+        // the kind defaults, untouched.
+        $this->actingAs($owner)->post('/be-nl/lists', ['title' => 'Plain'])->assertRedirect();
+
+        $plain = Wishlist::query()->where('title', 'Plain')->firstOrFail();
+
+        $this->assertSame('private', $plain->visibility->value);
+        $this->assertNull($plain->event_type);
+        $this->assertNull($plain->link_can_add);
+    }
+
+    #[Test]
+    public function the_wizard_can_share_a_new_list_with_friends_straight_away(): void
+    {
+        $owner = $this->user();
+        $friend = $this->user('friend@example.test');
+        $stranger = $this->user('stranger@example.test');
+        app(Friends::class)->link($owner, $friend);
+
+        $this->actingAs($owner)->post('/be-nl/lists', [
+            'title' => 'For Dad',
+            'new_recipient' => 'Dad',
+            'visibility' => 'link',
+            // A stranger's id in the same request is dropped, not an error:
+            // `ListSharer` keeps only friends, and an error would answer "is
+            // this person your friend" to whoever asked.
+            'share_with' => [$friend->id, $stranger->id],
+        ])->assertRedirect();
+
+        $list = Wishlist::query()->where('title', 'For Dad')->firstOrFail();
+
+        $this->assertDatabaseHas('wishlist_shares', ['wishlist_id' => $list->id, 'user_id' => $friend->id]);
+        $this->assertDatabaseMissing('wishlist_shares', ['wishlist_id' => $list->id, 'user_id' => $stranger->id]);
+
+        // Sharing a private list is refused by `ListSharer`, and the wizard
+        // sends nobody for one; a hand-built request gets the same nothing.
+        $this->actingAs($owner)->post('/be-nl/lists', [
+            'title' => 'Quiet',
+            'share_with' => [$friend->id],
+        ])->assertRedirect();
+
+        $quiet = Wishlist::query()->where('title', 'Quiet')->firstOrFail();
+
+        $this->assertDatabaseMissing('wishlist_shares', ['wishlist_id' => $quiet->id]);
     }
 }

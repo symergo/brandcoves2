@@ -68,7 +68,16 @@ class ItemSaver
                 },
                 'snapshot_image_url' => $group->image_url,
                 'snapshot_price' => $group->min_price,
-                'snapshot_url' => $current->url("p/{$group->id}/{$group->slug}"),
+                /*
+                 * The product's own market, not the reader's.
+                 *
+                 * `$current` is whichever market the URL carried, and a list is
+                 * not scoped to one: saving an `nl-nl` product while reading a
+                 * shared list under `/be-nl/` stored `/be-nl/p/{an nl-nl id}/…`,
+                 * which is not a page. `ProductGroup::path()` is the one place
+                 * that answers this.
+                 */
+                'snapshot_url' => $group->path(),
                 // Kept for the same reason as the title, and it was already
                 // being lost: every save from a product card posts no note, so
                 // re-saving something you had annotated erased the annotation.

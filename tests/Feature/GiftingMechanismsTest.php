@@ -10,8 +10,6 @@ use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\Market;
 use App\Enums\RecipientStatus;
-use App\Http\Middleware\TrackAnonymousIdentity;
-use App\Models\AnonymousIdentity;
 use App\Models\GiftPledge;
 use App\Models\LoginToken;
 use App\Models\ProductGroup;
@@ -494,14 +492,16 @@ class GiftingMechanismsTest extends TestCase
         auth()->logout();
 
         // One identity across both requests: the gate reads the visitor's own
-        // claim hash, and the test client does not carry cookies between calls.
-        $visitor = AnonymousIdentity::create(['last_seen_at' => now()]);
+        // claim hash. An account rather than a cookie, because claiming needs
+        // one now — and because the test client does not carry cookies between
+        // calls, which used to make this a measurement of the harness.
+        $visitor = User::factory()->create();
 
-        $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $visitor->getKey())
+        $this->actingAs($visitor)
             ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
             ->assertRedirect();
 
-        $props = $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $visitor->getKey())
+        $props = $this->actingAs($visitor)
             ->get("/be-nl/l/{$list->share_token}")
             ->assertOk()
             ->viewData('page')['props'];
@@ -521,13 +521,13 @@ class GiftingMechanismsTest extends TestCase
 
         auth()->logout();
 
-        $claimer = AnonymousIdentity::create(['last_seen_at' => now()]);
-        $bystander = AnonymousIdentity::create(['last_seen_at' => now()]);
+        $claimer = User::factory()->create();
+        $bystander = User::factory()->create();
 
-        $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $claimer->getKey())
+        $this->actingAs($claimer)
             ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}");
 
-        $props = $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $bystander->getKey())
+        $props = $this->actingAs($bystander)
             ->get("/be-nl/l/{$list->share_token}")
             ->assertOk()
             ->viewData('page')['props'];
@@ -549,16 +549,15 @@ class GiftingMechanismsTest extends TestCase
 
         auth()->logout();
 
-        $visitor = AnonymousIdentity::create(['last_seen_at' => now()]);
-        $cookie = (string) $visitor->getKey();
+        $visitor = User::factory()->create();
 
-        $this->withCookie(TrackAnonymousIdentity::COOKIE, $cookie)
+        $this->actingAs($visitor)
             ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}");
 
-        $this->withCookie(TrackAnonymousIdentity::COOKIE, $cookie)
+        $this->actingAs($visitor)
             ->delete("/be-nl/l/{$list->share_token}/claim/{$item->id}");
 
-        $props = $this->withCookie(TrackAnonymousIdentity::COOKIE, $cookie)
+        $props = $this->actingAs($visitor)
             ->get("/be-nl/l/{$list->share_token}")
             ->assertOk()
             ->viewData('page')['props'];

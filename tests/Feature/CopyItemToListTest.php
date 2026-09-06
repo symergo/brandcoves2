@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Enums\Market;
+use App\Enums\Source;
 use App\Models\ProductGroup;
 use App\Models\Recipient;
 use App\Models\User;
@@ -28,6 +29,92 @@ use Tests\TestCase;
 class CopyItemToListTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    public function a_hand_written_item_on_a_shared_list_can_be_copied_too(): void
+    {
+        /*
+         * The gap the aligned control closed.
+         *
+         * The shared page drew `SaveToList`, which works from a `group_id`, so
+         * an item somebody had **typed** offered nothing at all — while
+         * `ItemTransferController::fromShared` had been able to copy one the
+         * whole time. A note somebody typed is often the most copyable thing on
+         * a list: it is the idea rather than the product.
+         */
+        $owner = User::factory()->create();
+        $theirs = $this->list($owner, title: 'Theirs');
+        $theirs->update(['visibility' => ListVisibility::Link]);
+
+        $typed = WishlistItem::create([
+            'wishlist_id' => $theirs->id,
+            'source' => Source::Manual,
+            'snapshot_title' => 'Iets zelfgemaakts',
+            'accepted_at' => now(),
+        ]);
+
+        $visitor = User::factory()->create();
+        $mine = $this->list($visitor, title: 'Mine');
+
+        $this->actingAs($visitor)
+            ->post("/be-nl/l/{$theirs->share_token}/items/{$typed->id}/copy", ['to' => $mine->id])
+            ->assertRedirect();
+
+        $this->assertSame(
+            'Iets zelfgemaakts',
+            $mine->items()->first()?->snapshot_title,
+            'A hand-written item copies like any other.',
+        );
+    }
+
+    #[Test]
+    public function a_copy_can_name_a_new_list(): void
+    {
+        /*
+         * What let the copy menu become the save picker.
+         *
+         * Without it the menu could only file into a list that already existed,
+         * so somebody with none met a panel with nothing in it — and that,
+         * rather than any deliberate choice, is why two different controls sat
+         * in the same corner of two pages showing the same list.
+         *
+         * `ListMaker` makes it, the same service the save picker and the form
+         * on My Lists use: the kind decision lives there, and a third copy of it
+         * here is how a list whose kind disagrees with its recipient gets made.
+         */
+        $owner = User::factory()->create();
+        $from = $this->list($owner, title: 'Mine');
+
+        $item = WishlistItem::create([
+            'wishlist_id' => $from->id,
+            'source' => Source::Manual,
+            'snapshot_title' => 'Iets zelfgemaakts',
+            'accepted_at' => now(),
+        ]);
+
+        $this->actingAs($owner)
+            ->post("/be-nl/lists/{$from->id}/items/{$item->id}/copy", ['new_list' => 'Kerst'])
+            ->assertRedirect();
+
+        $made = Wishlist::where('owner_user_id', $owner->id)->where('title', 'Kerst')->first();
+
+        $this->assertNotNull($made, 'The named list is created.');
+        $this->assertSame('Iets zelfgemaakts', $made->items()->first()?->snapshot_title);
+    }
+
+    #[Test]
+    public function a_copy_still_needs_a_destination(): void
+    {
+        // One or the other, never neither: a copy with nowhere to go is a
+        // request the menu cannot produce.
+        $owner = User::factory()->create();
+        $from = $this->list($owner, title: 'Mine');
+        $item = WishlistItem::factory()->create(['wishlist_id' => $from->id]);
+
+        $this->actingAs($owner)
+            ->post("/be-nl/lists/{$from->id}/items/{$item->id}/copy", [])
+            ->assertSessionHasErrors('to');
+    }
 
     private function list(User $owner, ListKind $kind = ListKind::Mine, string $title = 'Mine'): Wishlist
     {

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GiftPledge;
 use App\Models\Wishlist;
+use App\Services\Notifications\ListActivity;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -70,6 +71,10 @@ class GiftPledgeController extends Controller
                 'display_name' => $validated['display_name'],
             ],
         );
+
+        // The organiser is the one who fronts the money and collects it, so a
+        // pledge is addressed to them. One insert, on a deliberate action.
+        app(ListActivity::class)->pledged($list, $owner);
 
         return back()->with('success', __('site.pledges.added'));
     }

@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\Market;
 use App\Mail\OccasionReminderMail;
+use App\Models\Friendship;
 use App\Models\Notification;
 use App\Models\Recipient;
 use App\Models\SecretSantaGroup;
@@ -67,6 +68,17 @@ use Illuminate\Support\Facades\Mail;
  */
 class SendOccasionReminders implements ShouldQueue
 {
+    /**
+     * When a friend's birthday is announced: a fortnight, five days, and the day.
+     *
+     * A constant rather than config: these are not an operator's dial, they are
+     * the shape of the feature. Two weeks is enough to think of something, five
+     * days is enough to order it and have it arrive, and the morning itself is
+     * the one nobody wants to miss. See `handle()` for why they are not the
+     * shared `lead_days`.
+     */
+    private const FRIEND_BIRTHDAY_LEADS = [14, 5, 0];
+
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
@@ -82,6 +94,25 @@ class SendOccasionReminders implements ShouldQueue
             $this->remindBirthdays($target, $lead);
             $this->remindExchanges($target, $lead);
             $this->remindListOccasions($target, $lead);
+        }
+
+        /*
+         * A friend's birthday runs on its own windows, not the shared ones.
+         *
+         * `leadDays()` is an administrator setting covering recipients, Secret
+         * Santa and list occasions — things somebody is *organising*, where one
+         * early warning is the whole job. A friend's birthday is different in
+         * two ways: it is the one date people genuinely forget, and it stays
+         * useful right up to the morning of.
+         *
+         * So: two weeks to think, five days to actually order something, and
+         * the day itself. `leadDays()` also filters `0` away — with good reason
+         * for a shared setting somebody might type by hand — while these are
+         * keyed per year and per lead, so the day-of reminder fires once and
+         * not every morning.
+         */
+        foreach (self::FRIEND_BIRTHDAY_LEADS as $lead) {
+            $this->remindFriendBirthdays($today->addDays($lead), $lead);
         }
     }
 
@@ -136,6 +167,86 @@ class SendOccasionReminders implements ShouldQueue
                         url: '/'.$market.'/gift',
                         language: $language,
                         tokens: ['name' => $recipient->name, 'days' => $lead],
+                    );
+                }
+            });
+    }
+
+    /**
+     * A friend's birthday, from either of the two places one can be written.
+     *
+     * `friendships` carries the date **you** wrote down about them (day and
+     * month, no year), and `users.birthday` carries the one they published
+     * themselves — which wins, and only if they left `friends_see_birthday` on.
+     * See docs/features/friends.md: they are two different facts and a date
+     * somebody guessed must not outrank the person's own.
+     *
+     * One query for the whole sweep. This runs on the scheduler, so it costs a
+     * request nothing — and it is the only place these two columns are read for
+     * anything, which is what makes them worth having.
+     */
+    private function remindFriendBirthdays(CarbonImmutable $target, int $lead): void
+    {
+        Friendship::query()
+            ->with('friend')
+            ->where(fn ($q) => $q
+                // The date you wrote down.
+                ->where(fn ($q) => $q
+                    ->where('friend_birthday_month', $target->month)
+                    ->where('friend_birthday_day', $target->day))
+                // Or the one they published, if they show it.
+                ->orWhereHas('friend', fn ($q) => $q
+                    ->where('friends_see_birthday', true)
+                    ->whereNotNull('birthday')
+                    ->whereRaw('EXTRACT(MONTH FROM birthday) = ? AND EXTRACT(DAY FROM birthday) = ?', [
+                        $target->month,
+                        $target->day,
+                    ])))
+            ->chunkById(200, function ($friendships) use ($target, $lead): void {
+                foreach ($friendships as $friendship) {
+                    $friend = $friendship->friend;
+
+                    if ($friend === null) {
+                        continue;
+                    }
+
+                    /*
+                     * Their own date wins when they publish one. Otherwise the
+                     * note — and if the note is what matched, it is already the
+                     * right day.
+                     */
+                    $publishes = $friend->friends_see_birthday && $friend->birthday !== null;
+
+                    if ($publishes && ($friend->birthday->month !== $target->month
+                        || $friend->birthday->day !== $target->day)) {
+                        continue;
+                    }
+
+                    $market = (string) (Wishlist::query()
+                        ->where('owner_user_id', $friendship->user_id)
+                        ->value('market') ?? 'en');
+                    $language = self::languageOf($market);
+                    $name = $friend->displayName();
+
+                    $this->notifyOnce(
+                        userId: (int) $friendship->user_id,
+                        kind: 'occasion.friend_birthday',
+                        key: $friendship->friend_id.':'.$target->year.':'.$lead,
+                        title: $lead === 0
+                            ? __('site.reminders.birthday_today_title', ['name' => $name], $language)
+                            : __('site.reminders.birthday_title', ['name' => $name], $language),
+                        /*
+                         * "Nog 0 dagen" is not a sentence anybody wrote on
+                         * purpose. The day itself gets its own line, which is
+                         * also the only one that has nothing to suggest doing
+                         * about it in advance.
+                         */
+                        body: $lead === 0
+                            ? __('site.reminders.birthday_today', ['name' => $name], $language)
+                            : __('site.reminders.lead', ['days' => $lead, 'name' => $name], $language),
+                        url: '/'.$market.'/friends',
+                        language: $language,
+                        tokens: ['name' => $name, 'days' => $lead],
                     );
                 }
             });

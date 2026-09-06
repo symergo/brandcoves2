@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Wishlist\ItemMover;
+use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
 use App\Support\Owner;
@@ -70,9 +71,9 @@ class ItemTransferController extends Controller
             throw new NotFoundHttpException;
         }
 
-        $validated = $request->validate(['to' => ['required', 'uuid']]);
+        $validated = $request->validate($this->destinationRules());
 
-        $to = $this->writable($validated['to'], $owner);
+        $to = $this->destination($validated, $owner, $current);
 
         // Copying a row onto the list it is already on is a duplicate somebody
         // would have to tidy.
@@ -113,9 +114,9 @@ class ItemTransferController extends Controller
             throw new NotFoundHttpException;
         }
 
-        $validated = $request->validate(['to' => ['required', 'uuid']]);
+        $validated = $request->validate($this->destinationRules());
 
-        $to = $this->writable($validated['to'], $owner);
+        $to = $this->destination($validated, $owner, $current);
 
         $this->mover->copy($item, $to);
 
@@ -141,6 +142,48 @@ class ItemTransferController extends Controller
      * uuid names a real list is not something an endpoint should confirm to
      * somebody who cannot see it.
      */
+    /**
+     * Where a copy may go: a list you already have, or one named on the spot.
+     *
+     * `new_list` exists so the copy control can be the same control as the save
+     * picker, which has always been able to create a list mid-save. Without it,
+     * somebody with no lists yet met a menu with nothing in it — the copy
+     * control could only ever file into a list that already existed, so the two
+     * pages had to draw two different things.
+     *
+     * @return array<string, mixed>
+     */
+    private function destinationRules(): array
+    {
+        return [
+            'to' => ['required_without:new_list', 'nullable', 'uuid'],
+            'new_list' => ['required_without:to', 'nullable', 'string', 'max:120'],
+        ];
+    }
+
+    /**
+     * Resolve that into a list this person may write to.
+     *
+     * A named list is made through {@see ListMaker}, which is what the save
+     * picker and the form on My Lists both use — the kind decision and the
+     * recipient resolution live there, and a third copy of them here is how a
+     * list whose kind disagrees with its recipient gets created.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function destination(array $validated, Owner $owner, CurrentMarket $current): Wishlist
+    {
+        if (filled($validated['new_list'] ?? null)) {
+            return app(ListMaker::class)->make(
+                owner: $owner,
+                current: $current,
+                title: $validated['new_list'],
+            );
+        }
+
+        return $this->writable($validated['to'], $owner);
+    }
+
     private function writable(string $id, Owner $owner): Wishlist
     {
         $list = $this->readable($id, $owner);

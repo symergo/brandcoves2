@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ListMessage;
 use App\Models\Wishlist;
+use App\Services\Notifications\ListActivity;
 use App\Services\Wishlist\Board;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -83,6 +84,17 @@ class ListMessageController extends Controller
             'display_name' => $validated['display_name'],
             'body' => $validated['body'],
         ]);
+
+        /*
+         * And the owner hears — unless the board is hidden from them.
+         *
+         * `ListActivity::posted()` asks `Board::visibleTo()` for the owner, so
+         * on a wish list nothing is written: a board is claim state in prose,
+         * and an inbox row saying "there is a new message on your list" is that
+         * prose leaking through a channel that goes and finds the person the
+         * list is meant to surprise.
+         */
+        app(ListActivity::class)->posted($list, $viewer, $this->board);
 
         if ($request->expectsJson()) {
             return response()->json([

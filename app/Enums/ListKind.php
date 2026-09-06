@@ -157,6 +157,23 @@ enum ListKind: string
         return $this === self::Group;
     }
 
+    /*
+     * There is deliberately no `canShowToFriends()` here any more.
+     *
+     * A `wishlists.show_to_friends` boolean existed for a day, meaning
+     * "everybody I am connected to sees this", with a per-kind default because
+     * one default could not be right for all three. It never shipped. A
+     * friendship is made by opening any share link, so that switch published to
+     * a set nobody had chosen and nobody could see — and a boolean cannot
+     * express consent to an audience.
+     *
+     * Sharing is now a row per person you picked (`wishlist_shares`), or the
+     * fact that you sent them the link and they opened it (`list_opens`). Both
+     * are acts, not settings, and neither needs the kind's opinion — which is
+     * why a group gift needs no special case here either. See
+     * docs/features/friends.md.
+     */
+
     public function isForSomeoneElse(): bool
     {
         return $this === self::ForSomeone || $this === self::Group;

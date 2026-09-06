@@ -341,9 +341,23 @@ class WishlistItemController extends Controller
         abort_unless(ListAccess::canEdit($list, $owner), 403);
 
         if (! empty($validated['group_id'])) {
-            $group = ProductGroup::query()
-                ->forMarket($current->get())
-                ->find($validated['group_id']);
+            /*
+             * By id, and **not** scoped to the market in the URL.
+             *
+             * A list belongs to a person, not to a market — see
+             * docs/features/wishlists.md, which lists four places that filter
+             * broke and this was a fifth. Saving was scoped to whichever market
+             * the request carried, so the bookmark on a shared list simply
+             * 404'd for every item whose product came from a different one: on
+             * `/be-nl/l/{code}` the `be-nl` items saved and the `nl-nl` ones
+             * did not, which reads as "some items don't work".
+             *
+             * A group id is a global key, so `find()` is unambiguous. Invariant
+             * #2 is about never *merging* two markets' products into one row —
+             * it does not stop a list referring to a product in another market,
+             * which it must, because that is where the person saw it.
+             */
+            $group = ProductGroup::query()->find($validated['group_id']);
 
             if ($group === null) {
                 throw new NotFoundHttpException;
@@ -462,6 +476,28 @@ class WishlistItemController extends Controller
         return __('site.lists.added_to', ['list' => $list->displayTitle()]);
     }
 
+    /**
+     * Change something about an item already on a list.
+     *
+     * Two different things, and the difference is the whole of the method.
+     *
+     * **Your note and your priority** belong to you and apply to any item: they
+     * are what you wrote about somebody else's product.
+     *
+     * **The title, link and price** are only editable on a **hand-written**
+     * item — one you typed, with no `group_id` behind it. There the snapshot is
+     * not a snapshot of anything: it *is* the item, so a typo in it was
+     * previously uncorrectable and the only fix was to delete the row and type
+     * it again, losing the note and any claim on it.
+     *
+     * On a catalogue item those same columns are a **record of what the feed
+     * said when it was saved** — the thing "you saved it at €329, it is €279
+     * now" is measured against. Letting anybody rewrite that would turn a price
+     * history into a free-text field and quietly break every comparison drawn
+     * from it. So the fields are accepted and then dropped for such an item
+     * rather than refused: the form does not offer them, so a request carrying
+     * them was not sent by the page.
+     */
     public function update(Request $request, CurrentMarket $current, string $market, string $item): RedirectResponse
     {
         $wishlistItem = $this->findOwned($request, $item);
@@ -469,16 +505,63 @@ class WishlistItemController extends Controller
         $validated = $request->validate([
             'note' => ['nullable', 'string', 'max:500'],
             'priority' => ['nullable', 'integer', 'between:-2,2'],
+
+            // Only read on a hand-written item; see the docblock.
+            'title' => ['sometimes', 'string', 'max:500'],
+            'url' => ['sometimes', 'nullable', 'string', 'max:2048', new SafeExternalUrl],
+            'price' => ['sometimes', 'nullable', 'integer', 'min:0'],
         ]);
 
-        $wishlistItem->update($validated);
+        $changes = array_intersect_key($validated, ['note' => null, 'priority' => null]);
+
+        if ($wishlistItem->isManual()) {
+            if (array_key_exists('title', $validated)) {
+                $changes['snapshot_title'] = trim($validated['title']);
+            }
+
+            if (array_key_exists('price', $validated)) {
+                $changes['snapshot_price'] = $validated['price'];
+            }
+
+            if (array_key_exists('url', $validated)) {
+                /*
+                 * Re-checked here rather than trusted from the request, exactly
+                 * as `ItemSaver::saveManual()` does it. `SafeExternalUrl` has
+                 * already run; this is the model's own rule, and the two places
+                 * a manual URL is written should not disagree about it.
+                 */
+                $changes['snapshot_url'] = WishlistItem::isSafeExternalUrl($validated['url'])
+                    ? trim((string) $validated['url'])
+                    : null;
+            }
+        }
+
+        $wishlistItem->update($changes);
 
         return back();
     }
 
     public function destroy(Request $request, CurrentMarket $current, string $market, string $item): RedirectResponse|JsonResponse
     {
-        $this->findOwned($request, $item)->delete();
+        $wishlistItem = $this->findOwned($request, $item);
+
+        /*
+         * Adding is a contributor's job. Removing is the owner's.
+         *
+         * `findOwned()` asks `canEdit()`, which is true for a legacy editor
+         * collaborator as well as the owner — so somebody invited to help fill
+         * a list could take things off it, including things the owner had put
+         * there and things other people had already claimed. The three roles on
+         * a list are owner, contributor and recipient, and only the first of
+         * them owns what is on it.
+         *
+         * A contributor who added something by mistake asks; the alternative is
+         * a list that quietly loses items and an owner with no way of knowing
+         * which, because a deletion leaves nothing behind to notice.
+         */
+        abort_unless(ListAccess::isOwner($wishlistItem->wishlist, Owner::fromRequest($request)), 403);
+
+        $wishlistItem->delete();
 
         // Both shapes, for the same reason as `saved()` — and this is also the
         // path an Undo takes, which is an XHR by definition.

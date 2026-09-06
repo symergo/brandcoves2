@@ -1,6 +1,9 @@
-import { Head, Link, router, usePage } from '@inertiajs/react'
+import { Head, router, usePage } from '@inertiajs/react'
 import { useState } from 'react'
-import ListKindBadge, { type ListKind } from '../../Components/ListKindBadge'
+import { type ListKind } from '../../Components/ListKindBadge'
+import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
+import ListItemCard from '../../Components/ListItemCard'
+import ListPills from '../../Components/ListPills'
 import ManualItem from '../../Components/ManualItem'
 import SaveToList from '../../Components/SaveToList'
 import Pledge, { type Contributions } from '../../Components/Pledge'
@@ -10,6 +13,8 @@ import { formatOccasionDate, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ScanButton from '../../Components/ScanButton'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
+import { send } from '../../http'
+import { useSignIn } from '../../signIn'
 
 interface Item {
     id: number
@@ -72,6 +77,17 @@ interface Props {
      * co-giver like anybody else and may claim.
      */
     canClaim: boolean
+    /**
+     * The same button, for somebody who has not signed in yet.
+     *
+     * Claiming needs an account — a claim hangs off a hash of the claimer's
+     * identity, and a cookie identity cannot be reached from a second device
+     * or handed back after clearing the browser. So this draws the same
+     * control, which stashes the press and opens the sign-in dialog instead of
+     * posting. Not the inverse of `canClaim`: on a group list there is nothing
+     * to sign in for. Decided on the server, so the rule lives in one place.
+     */
+    claimNeedsAccount: boolean
     /** Whether claims are being withheld from this viewer, so the page can say
      *  so rather than looking like it forgot to render something. */
     hideClaims: boolean
@@ -80,6 +96,8 @@ interface Props {
     /** null for anybody who may not see claims — a count is claim state too. */
     progress: { claimed: number; total: number } | null
     items: Item[]
+    /** Lists this viewer may copy an item into. Empty for a visitor with none. */
+    copyTargets: CopyTarget[]
     canSuggest: boolean
     /** Whether what a visitor adds lands on the list or in the owner's queue. */
     addsDirectly: boolean
@@ -121,10 +139,12 @@ export default function SharedList({
     list,
     isOwner,
     canClaim,
+    claimNeedsAccount,
     hideClaims,
     claimNames,
     progress,
     items,
+    copyTargets,
     canSuggest,
     addsDirectly,
     suggestTerm,
@@ -161,6 +181,49 @@ export default function SharedList({
      * question ten times.
      */
     const [claimName, setClaimName] = useState(page.props.auth.user?.name ?? '')
+
+    const signIn = useSignIn()
+
+    /*
+     * "I'll get this" — one handler, two endings.
+     *
+     * Signed in, it posts the claim. Signed out, it stashes the press and opens
+     * the sign-in dialog over the list, rather than navigating to a login page
+     * that would take the list away at the moment somebody was reaching for it.
+     *
+     * The intent is stashed server-side first and it matters: a magic link goes
+     * out by email, so the round trip happens in another tab or another hour,
+     * and `PendingClaim` is what finishes the claim when they come back. The
+     * dialog shortens the journey; it does not remove it.
+     *
+     * The button looks identical in both cases on purpose. "Sign in to claim"
+     * as a label asks for the account first and the decision second, which is
+     * the wrong order — the decision is the thing the person came to make.
+     */
+    async function claim(itemId: number): Promise<void> {
+        if (canClaim) {
+            router.post(
+                `${base}/l/${token}/claim/${itemId}`,
+                claimNames ? { display_name: claimName } : {},
+                { preserveScroll: true },
+            )
+
+            return
+        }
+
+        try {
+            await send(`${base}/claim-intent`, 'POST', {
+                token,
+                item: itemId,
+                return_to: window.location.pathname + window.location.search,
+            })
+        } catch {
+            // Losing the intent makes for a worse sign-in, not a broken one:
+            // they land back here and press again.
+        }
+
+        signIn.open(t('lists.claim_sign_in_hint'))
+    }
 
     /*
      * The shortlist settles on load, and stops moving while you use it.
@@ -220,39 +283,61 @@ export default function SharedList({
                 <meta name="robots" content="noindex, nofollow" />
             </Head>
 
+            {/*
+              Two columns from `lg` up, one below it — header included.
+
+              The header used to sit *above* the grid, on the argument that the
+              title and badges are about the whole page and should take the full
+              measure. What that actually produced was a right column beginning
+              level with the first product: on a group gift, where the header
+              carries an intro box and the pot, the conversation started a
+              screen down with a tall empty rectangle beside two paragraphs.
+
+              The board is the second thing people come to a group list to do,
+              and it was the last thing they could see. So the whole left column
+              starts at the top and the rail starts with it. The title is capped
+              to that column, which is what a title in a column does.
+
+              The whole list stays in the left column so it is the taller of the
+              two whatever the conversation does; a rail longer than the thing it
+              is beside is what makes a sticky sidebar run on past the end of the
+              page.
+
+              No rail at all when there is no board — `board` is null for
+              anybody who may not see one, which on a wish list of your own is
+              you, because a board is claim state in prose. See
+              App\Services\Wishlist\Board.
+            */}
+            <div
+                className={
+                    board !== null
+                        ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10'
+                        : ''
+                }
+            >
+                <div className="min-w-0">
                 <header>
-                    {/*
-                      Who sent this, above everything.
-
-                      This is the one screen always opened cold — from a message, by
-                      somebody with no context at all — and the first thing they
-                      want is who it is from. The page named the *recipient* on a
-                      gift list and the owner nowhere, so a reader could learn who
-                      the presents were for while never learning who was asking them
-                      to buy one.
-
-                      Above the title rather than under it, because it is the frame
-                      the title is read inside: "Anna shared" then "Birthday" is a
-                      sentence, and the other order is two labels.
-                    */}
-                    {list.sharedBy && (
-                        <p className="text-sm text-ink-soft">
-                            {t('lists.shared_by', { name: list.sharedBy })}
-                        </p>
-                    )}
-
                     {/* Whose list it is, not what they filed it under. */}
-                    <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <h1 className="text-xl sm:text-2xl font-semibold">{list.heading}</h1>
-                        {/*
-                          What kind of page this is, on the one screen that is
-                          always opened cold — from a message, by somebody with no
-                          context at all. The three kinds want three different
-                          things from that person, and until now the page asked all
-                          three the same way.
-                        */}
-                        <ListKindBadge kind={list.kind as ListKind} />
-                    </div>
+                    <h1 className="text-xl font-semibold sm:text-2xl">{list.heading}</h1>
+
+                    {/*
+                      What this is and what you are on it, on the one screen
+                      that is always opened cold — from a message, by somebody
+                      with no context at all.
+
+                      This used to be a kind badge here and a line of prose
+                      above the title saying "Bvandoveren shared this list".
+                      That is the same fact in two shapes on one screen, which
+                      reads as two facts; the pill carries it now, in the order
+                      and the colours the other two pages already use.
+                    */}
+                    <ListPills
+                        className="mt-2"
+                        kind={list.kind as ListKind}
+                        role={isOwner ? 'owner' : 'contributor'}
+                        ownerName={list.sharedBy}
+                        canAdd={addsDirectly}
+                    />
                     {/* One caption line: what this is for, and when. */}
                     {occasion !== null && (
                         <p className="mt-1 text-sm text-ink-soft">
@@ -297,55 +382,53 @@ export default function SharedList({
                       told visitors that "Saved items" would not see who claimed
                       what, and an anonymous owner genuinely has no name to give.
                     */}
-                    {!isOwner && (
-                        <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm">
-                            {list.kind === 'mine'
-                                ? list.for
-                                    ? t('lists.shared_intro', { name: list.for })
-                                    : t('lists.shared_intro_anon')
-                                : list.kind === 'group'
-                                  ? t('lists.shared_intro_group')
-                                  : t('lists.shared_intro_gift')}
-                        </p>
-                    )}
-
-
                     {/*
-                      "3 of 11 claimed". The server has sent this since the strip
-                      was specced and the page never drew it, so a visitor arriving
-                      late had no way to tell a list that was mostly spoken for from
-                      one nobody had touched — which is the difference between
-                      choosing carefully and choosing quickly.
+                      One box, two sentences: what this page is, and what
+                      pressing the button will disclose.
 
-                      Null for the owner, never zero: the moment a zero stops being
-                      zero they have learnt something.
-                    */}
-                    {/*
-                      What a claim will disclose, said BEFORE the press.
+                      They were a bordered card and a loose grey line below it,
+                      and they are one thought — "several of you are buying from
+                      this list, and nobody will see which part was you". Split
+                      across two blocks the second read as a footnote to the
+                      items rather than as the reassurance that makes somebody
+                      press at all.
 
-                      A name shown to other people is a consent decision, and
-                      consent given inside a settings panel that somebody else
-                      opened is not consent. This is the one place on the page a
-                      claimer can learn what pressing the button reveals, so it sits
-                      above the items rather than under any one of them — and it is
-                      shown in the anonymous case too, because "nobody will see it
-                      was you" is the reassurance that makes people press at all.
+                      Still above the items, because both have to be read before
+                      the first claim. A name shown to other people is a consent
+                      decision, and consent given after the press is not consent.
                     */}
-                    {/*
-                      What a claim discloses, said before the press — as one line,
-                      not a card.
+                    {(!isOwner || canClaim || claimNeedsAccount) && (
+                        <div className="mt-4 rounded-card border border-line bg-card p-4 text-sm">
+                            {/*
+                              The wish-list branch names the person, or says
+                              nothing about a person at all — falling back to the
+                              list *title* once told visitors that "Saved items"
+                              would not see who claimed what, and an anonymous
+                              owner genuinely has no name to give.
+                            */}
+                            {!isOwner && (
+                                <p>
+                                    {list.kind === 'mine'
+                                        ? list.for
+                                            ? t('lists.shared_intro', { name: list.for })
+                                            : t('lists.shared_intro_anon')
+                                        : list.kind === 'group'
+                                          ? t('lists.shared_intro_group')
+                                          : t('lists.shared_intro_gift')}
+                                </p>
+                            )}
 
-                      It has to be read before somebody claims, so it stays above
-                      the items. It does not have to be a bordered box with a form
-                      in it: on a phone that was a third block of chrome between the
-                      heading and the first product, and the name field inside it
-                      was asking for something before anybody had decided to give
-                      it. The field appears with the first claim instead.
-                    */}
-                    {canClaim && (
-                        <p className="mt-2 text-sm text-ink-soft">
-                            {claimNames ? t('lists.claim_named_note') : t('lists.claim_anonymous_note')}
-                        </p>
+                            {/* Shown to a signed-out visitor too: what a claim
+                                discloses has to be readable before the press,
+                                and the press is what asks them to sign in. */}
+                            {(canClaim || claimNeedsAccount) && (
+                                <p className={isOwner ? 'text-ink-soft' : 'mt-2 text-ink-soft'}>
+                                    {claimNames
+                                        ? t('lists.claim_named_note')
+                                        : t('lists.claim_anonymous_note')}
+                                </p>
+                            )}
+                        </div>
                     )}
 
                     {canClaim && claimNames && (
@@ -387,22 +470,16 @@ export default function SharedList({
                     )}
 
                     {/*
-                      Under the intro rather than in a block of its own: "what this
-                      page is" and "how much of it is already handled" are one
-                      thought, and two bordered cards for two sentences is how the
-                      first screen filled up with chrome.
+                      The "3 of 11 spoken for" strip used to sit here and is gone.
+                      Every row already says whether it is taken, so the count was
+                      the same information a second time, in a weaker form — and
+                      on a one-item list it read "0 of 1 spoken for", which is a
+                      sentence nobody needed.
+
+                      `progress` is still computed and still withheld from anyone
+                      who may not see claims; see ClaimView and the tests that
+                      pin it. Nothing renders it.
                     */}
-                    {progress !== null && progress.total > 0 && (
-                        <p className="mt-2 text-sm text-ink-soft">
-                            {t(
-                                list.kind === 'mine' ? 'lists.progress' : 'lists.progress_gift',
-                                {
-                                    claimed: String(progress.claimed),
-                                    total: String(progress.total),
-                                },
-                            )}
-                        </p>
-                    )}
 
                     {/*
                       The occasion, and where to send it.
@@ -436,141 +513,100 @@ export default function SharedList({
                     )}
                 </header>
 
-            {/*
-              Two columns from `lg` up, one below it — and the header is not in
-              them.
-
-              The board is a conversation *about* the list, so it stands beside
-              the list rather than under it. The title, the badges, who it is
-              for and the note under them are about the whole page: capped to
-              the left column they ran to two-thirds width and stopped under a
-              sidebar that has nothing to do with them, so they sit above the
-              grid and take the full measure.
-
-              The whole list goes in the left column so that column is the
-              taller of the two whatever the conversation does; a rail longer
-              than the thing it is beside is what makes a sticky sidebar run on
-              past the end of the page.
-
-              No rail at all when there is no board — `board` is null for
-              anybody who may not see one, which on a wish list of your own is
-              you, because a board is claim state in prose. See
-              App\Services\Wishlist\Board.
-            */}
-            <div
-                className={
-                    board !== null
-                        ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10'
-                        : ''
-                }
-            >
-                <div className="min-w-0">
-
-
                     {/*
-                      A group list is a SHORTLIST, and it has to read as one.
+                      No heading over the grid.
 
-                      This is the biggest misreading risk on the page: five product
-                      cards, and a visitor concludes five presents are being bought. One
-                      line above the grid, plus the tally ordering the cards, is what
-                      turns a pile into a set of candidates for one present.
+                      There was one — "Vote on what we should buy" — added
+                      because a group list is a SHORTLIST and five product cards
+                      read as five presents being bought. That risk is real and
+                      it is already answered twice over on this page: the intro
+                      box says "you are buying one present together" in the
+                      first paragraph, and every card carries a vote button with
+                      a tally under it. A third statement of the same thing, in
+                      a grey line between them, was the one nobody needed.
                     */}
-                    {canVote && items.length > 0 && (
-                        <h2 className="mt-8 text-sm font-medium text-ink-soft">{t('votes.heading')}</h2>
-                    )}
-
-                    <ul className="mt-3 grid gap-4 sm:grid-cols-2">
+                    <ul className="mt-6 grid gap-4 sm:grid-cols-2">
                         {ordered.map((item) => (
-                            <li
+                            <ListItemCard
                                 key={item.id}
-                                /*
-                                  Opacity was the only signal that an item was taken.
-                                  There is a text label beside it, so it was not broken
-                                  — but a 40% fade is doing the work of a state, and it
-                                  is the first thing lost to a bright screen outdoors or
-                                  to anyone who does not perceive the difference. The
-                                  border carries it now; the fade reinforces.
-                                */
-                                className={`flex flex-col rounded-card border bg-card p-4 ${
-                                    item.claimed && !item.claimedByMe
-                                        ? 'border-dashed border-ink-soft/40 opacity-70'
-                                        : 'border-line'
-                                }`}
-                            >
-                                <div className="flex gap-4">
-                                    {item.image && (
-                                        <img
-                                            src={item.image}
-                                            alt=""
-                                            className="h-20 w-20 rounded object-contain"
-                                            onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
-                                        />
-                                    )}
-
-                                    <div className="min-w-0 flex-1">
-                                        {/*
-                                          Clamped, because a feed title is written for a
-                                          search engine rather than a person: "OneOne
-                                          25W super snellader met 2 poorten + 1,5m
-                                          sterke USB C kabel. PD lader. Oplader adapter
-                                          past op Sony WH-1000XM3, WH-1000XM4, …" ran to
-                                          ten lines on a phone and made one card four
-                                          times the height of its neighbours. Three
-                                          lines is enough to recognise a thing you have
-                                          already seen, which is what this list is for.
-                                        */}
-                                        {item.url ? (
-                                            <Link href={item.url} className="line-clamp-3 font-medium hover:underline">
-                                                {item.title}
-                                            </Link>
-                                        ) : item.externalUrl ? (
-                                            /*
-                                              Somebody else's link, on a page strangers
-                                              open. `noopener` so the destination cannot
-                                              reach back through `window.opener`,
-                                              `noreferrer` so it is not told which list
-                                              sent the visitor, and `nofollow` because
-                                              we are not vouching for it. The scheme was
-                                              settled server-side; this is the rest.
-                                            */
-                                            <a
-                                                href={item.externalUrl}
-                                                target="_blank"
-                                                rel="nofollow noopener noreferrer"
-                                                className="line-clamp-3 font-medium hover:underline"
-                                            >
-                                                {item.title}
-                                            </a>
-                                        ) : (
-                                            <span className="line-clamp-3 font-medium">{item.title}</span>
-                                        )}
-                                        {item.note && <p className="mt-1 text-sm text-ink-soft">{item.note}</p>}
-                                        {item.price !== null && (
-                                            <p className="mt-1 font-semibold">{formatPrice(item.price, market)}</p>
-                                        )}
-                                    </div>
-
-                                    {/*
+                                title={item.title}
+                                image={item.image}
+                                url={item.url}
+                                externalUrl={item.externalUrl}
+                                note={item.note}
+                                price={item.price}
+                                market={market}
+                                // Spoken for by somebody else: the card steps back
+                                // without disappearing.
+                                muted={Boolean(item.claimed && !item.claimedByMe)}
+                                aside={
+                                    /*
                                       Keep it for myself.
-                              
-                                      Somebody looking at a friend's list is looking at
-                                      a page full of things chosen for a person they
-                                      also know, and had no way to note one down for
-                                      later. It reads *my* lists and writes to *my*
-                                      list; the owner's list is untouched and learns
-                                      nothing, so this is not a claim and invariant #4
-                                      is not involved.
-                              
-                                      Hidden from the owner for a different reason: on
-                                      their own list everything here is already theirs,
-                                      so the control would do nothing but confuse.
-                                    */}
-                                    {!isOwner && item.groupId !== null && (
-                                        <div className="shrink-0 self-start">
-                                            <SaveToList groupId={item.groupId} compact />
-                                        </div>
-                                    )}
-                                </div>
+
+                                      Somebody looking at a friend's list is looking
+                                      at a page full of things chosen for a person
+                                      they also know, and had no way to note one down
+                                      for later. It reads *my* lists and writes to
+                                      *my* list; the owner's list is untouched and
+                                      learns nothing, so this is not a claim and
+                                      invariant #4 is not involved.
+
+                                      **The save picker whenever there is a product**,
+                                      which is the same control this site uses on
+                                      every product card and on the owner's own list.
+                                      One bookmark, one menu, one habit.
+
+                                      `CopyToList` only for a **hand-written** item,
+                                      because there is no `group_id` to save: somebody
+                                      typed a title and maybe a link, so the row
+                                      itself has to be copied. It draws the same
+                                      bookmark and the same menu, and the endpoint
+                                      underneath is the only difference.
+
+                                      Hidden from the owner entirely: on their own
+                                      list everything here is already theirs.
+                                    */
+                                    isOwner ? undefined : item.groupId !== null ? (
+                                        <SaveToList groupId={item.groupId} compact />
+                                    ) : (
+                                        <CopyToList
+                                            action={`${base}/l/${token}/items/${item.id}/copy`}
+                                            targets={copyTargets}
+                                            groupId={null}
+                                        />
+                                    )
+                                }
+                            >
+                                {/*
+                                  Back this one, on a group gift.
+
+                                  Everything about voting existed except this: the
+                                  endpoint, the tally in the payload, the setting in
+                                  the panel, the ordering by most-backed, and a
+                                  heading above the grid announcing a vote — with no
+                                  button under any card. The page said "choose
+                                  together" and offered no way to choose. The
+                                  component was even imported here and never used.
+
+                                  Driven by the payload exactly as `claimed` is
+                                  below: `votes` is absent unless this is a group
+                                  list with voting switched on, so the key's presence
+                                  IS the permission and there is no second copy of
+                                  that question here to drift from the server's.
+
+                                  `Vote` renders the tally on its own for somebody
+                                  who cannot vote, which is why it is not gated on
+                                  `canVote` here — a member without an identity yet
+                                  should still see where the group has landed.
+                                */}
+                                {item.votes !== undefined && (
+                                    <Vote
+                                        action={`${base}/l/${token}/vote/${item.id}`}
+                                        votes={item.votes}
+                                        votedByMe={item.votedByMe ?? false}
+                                        canVote={canVote}
+                                    />
+                                )}
 
                                 {/*
                                   Driven by the payload, not by who is looking.
@@ -660,15 +696,9 @@ export default function SharedList({
                                                     ? t('lists.claimed_by', { name: item.claimedBy })
                                                     : t('lists.claimed_by_someone')}
                                             </p>
-                                        ) : canClaim ? (
+                                        ) : canClaim || claimNeedsAccount ? (
                                             <button
-                                                onClick={() =>
-                                                    router.post(
-                                                        `${base}/l/${token}/claim/${item.id}`,
-                                                        claimNames ? { display_name: claimName } : {},
-                                                        { preserveScroll: true },
-                                                    )
-                                                }
+                                                onClick={() => void claim(item.id)}
                                                 className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
                                             >
                                                 {t('lists.claim')}
@@ -677,7 +707,7 @@ export default function SharedList({
                                     </div>
                                 )}
 
-                            </li>
+                            </ListItemCard>
                         ))}
                     </ul>
 

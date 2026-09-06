@@ -1,6 +1,7 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
-import ListKindBadge, { type ListKind } from '../../Components/ListKindBadge'
+import { type ListKind } from '../../Components/ListKindBadge'
+import ListPills from '../../Components/ListPills'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
@@ -28,6 +29,8 @@ interface ListSummary {
      * can be changed out from under me by the person who owns it.
      */
     sharedWithMe: boolean
+    /** May somebody who is not the owner put things on it? From `summarise()`. */
+    linkCanAdd: boolean
     /** Who owns it. Null on my own rows, where the answer is me. */
     ownerName: string | null
     /** `viewer` or `editor`, on a list shared with me. */
@@ -40,6 +43,14 @@ interface Props {
     lists: ListSummary[]
     view: ListsView
     recipients: { id: string; name: string; relationship: string | null }[]
+    /**
+     * Friends who are not already a recipient.
+     *
+     * Picking one links the profile to their account, so what they say about
+     * their own taste outranks what the list's owner guessed. Empty for an
+     * anonymous owner, and the group is hidden rather than shown empty.
+     */
+    friends: { id: number; name: string }[]
     isSignedIn: boolean
 }
 
@@ -137,24 +148,20 @@ function ListCard({ list }: { list: ListSummary }) {
                       are no sections — said nothing about what could be done
                       with it.
                     */}
-                    <ListKindBadge kind={list.kind as ListKind} />
                     {/*
-                      Whose it is, first and in colour. On a page that mixes my
-                      lists with lists I was invited to, this is the fact that
-                      decides how to read everything else on the card.
+                      Kind, whose it is, and what you may do — one component,
+                      the same order and the same colours as the list page and
+                      the shared page. These three pills were built here and
+                      copied outward by hand, which is how the same list came to
+                      describe itself differently depending on which page you
+                      reached it from.
                     */}
-                    {theirs && (
-                        <span className="rounded-full bg-amber/20 px-2 py-0.5 font-medium">
-                            {list.ownerName
-                                ? t('lists.owned_by', { name: list.ownerName })
-                                : t('lists.shared_with_me')}
-                        </span>
-                    )}
-                    {theirs && list.role && (
-                        <span className="rounded-full bg-line/60 px-2 py-0.5 text-ink-soft">
-                            {list.role === 'editor' ? t('lists.role_editor') : t('lists.role_viewer')}
-                        </span>
-                    )}
+                    <ListPills
+                        kind={list.kind as ListKind}
+                        role={theirs ? 'contributor' : 'owner'}
+                        ownerName={theirs ? list.ownerName : null}
+                        canAdd={list.visibility !== 'private' && list.linkCanAdd}
+                    />
                     {list.isDefault && (
                         <span className="rounded-full bg-line/60 px-2 py-0.5">{t('lists.default_badge')}</span>
                     )}
@@ -196,7 +203,7 @@ function ListCard({ list }: { list: ListSummary }) {
     )
 }
 
-export default function ListsIndex({ lists, view, recipients, isSignedIn }: Props) {
+export default function ListsIndex({ lists, view, recipients, friends, isSignedIn }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -229,6 +236,9 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
         title: '',
         recipient_id: '',
         new_recipient: '',
+        // Set instead of `new_recipient` when the person picked is a friend.
+        // The server makes the linked profile; see WishlistController::store.
+        friend_id: '' as string | number,
         together: false,
         // Day and month only, as strings because a select's value is one.
         // Empty means "not given", which the server reads as null.
@@ -424,6 +434,7 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                                         if (choice.value === 'mine') {
                                             form.setData('recipient_id', '')
                                             form.setData('new_recipient', '')
+                                            form.setData('friend_id', '')
                                         }
                                     }}
                                     className={`rounded-card border p-3 text-left ${
@@ -449,21 +460,69 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
 
                     {forSomeone && (
                         <>
-                            {recipients.length > 0 && (
+                            {/*
+                              One dropdown, three kinds of answer.
+
+                              Somebody you have made a list for before, one of
+                              your friends, or a name you are about to type.
+                              The friends group is the useful new one: picking
+                              there links the profile to a real account, so what
+                              *they* say about their own taste outranks what you
+                              guessed — the same link the "this is me" flow
+                              makes, reached from a name you already have.
+
+                              A friend is encoded as `friend:{id}` rather than
+                              given its own control, because these are three
+                              answers to one question and a second control would
+                              let somebody answer it twice.
+                            */}
+                            {(recipients.length > 0 || friends.length > 0) && (
                                 <select
                                     aria-label={t('lists.for_whom')}
-                                    value={form.data.recipient_id}
-                                    onChange={(e) => form.setData('recipient_id', e.target.value)}
+                                    value={
+                                        form.data.friend_id === ''
+                                            ? form.data.recipient_id
+                                            : `friend:${form.data.friend_id}`
+                                    }
+                                    onChange={(e) => {
+                                        const value = e.target.value
+
+                                        if (value.startsWith('friend:')) {
+                                            form.setData('friend_id', Number(value.slice(7)))
+                                            form.setData('recipient_id', '')
+                                            // Their name comes from their account
+                                            // on the server; typing one here would
+                                            // be a second answer to the same
+                                            // question.
+                                            form.setData('new_recipient', '')
+
+                                            return
+                                        }
+
+                                        form.setData('friend_id', '')
+                                        form.setData('recipient_id', value)
+                                    }}
                                     className="w-full rounded-lg border border-line bg-cream px-3 py-2"
                                 >
                                     <option value="">{t('lists.someone_new')}</option>
+
                                     {recipients.map((r) => (
                                         <option key={r.id} value={r.id}>{r.name}</option>
                                     ))}
+
+                                    {friends.length > 0 && (
+                                        <optgroup label={t('lists.from_your_friends')}>
+                                            {friends.map((friend) => (
+                                                <option key={friend.id} value={`friend:${friend.id}`}>
+                                                    {friend.name}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    )}
                                 </select>
                             )}
 
-                            {form.data.recipient_id === '' && (
+                            {form.data.recipient_id === '' && form.data.friend_id === '' && (
                                 <>
                                     <label className="block text-sm font-medium" htmlFor="new-recipient">
                                         {t('lists.person_name')}

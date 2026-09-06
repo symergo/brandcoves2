@@ -165,7 +165,21 @@ class WishlistItem extends Model
             return null;
         }
 
-        return '/'.$this->group->market->value."/p/{$this->group_id}/{$this->group->slug}";
+        return $this->group->path();
+    }
+
+    /**
+     * Did somebody type this item, rather than save it from the catalogue?
+     *
+     * `source` rather than `group_id === null`: a catalogue item whose product
+     * has since been deleted also has a null group — `group_id` is
+     * `nullOnDelete` so losing the product does not lose the entry — and that
+     * item's snapshot is still a record of what a feed said, not something its
+     * owner wrote and may correct.
+     */
+    public function isManual(): bool
+    {
+        return $this->source === Source::Manual;
     }
 
     public function isClaimed(): bool
@@ -228,15 +242,36 @@ class WishlistItem extends Model
         return false;
     }
 
-    /** Only the person who claimed it may release it, and only within the undo window. */
+    /**
+     * Hand it back. Only the person who claimed it may.
+     *
+     * ## There is no time limit, and there used to be one
+     *
+     * `claim_undo_hours` was 24: release worked for a day and then stopped. The
+     * argument was that somebody quietly releasing a claim weeks later leaves
+     * nobody buying the thing.
+     *
+     * That reads the wrong way round. The only person who can release a claim
+     * is the person holding it, and what they are saying is *I am not getting
+     * this after all* — which is information the list needs, and needs most
+     * when the occasion is close. A claim nobody can retract is not a present
+     * secured; it is an item marked as covered that nobody is buying, and the
+     * recipient is the one who finds out.
+     *
+     * It also failed badly. The page draws the undo button whenever the claim
+     * is yours, with no notion of a window, so after a day it was a live-looking
+     * button that answered with an error naming a rule nobody had been told
+     * about. Removed 2026-09-06; see docs/features/wishlists.md.
+     *
+     * `markSent()` is the honest half of the old worry: an item claimed weeks
+     * ago by somebody who then forgot reads as covered and is not, and the fix
+     * for that is asking whether it was bought, not forbidding the answer.
+     */
     public function release(string $identityHash): bool
     {
-        $undoHours = (int) config('giftcoves.wishlist.claim_undo_hours');
-
         return static::query()
             ->whereKey($this->getKey())
             ->where('claimed_by_hash', $identityHash)
-            ->where('claimed_at', '>=', now()->subHours($undoHours))
             ->update([
                 'claimed_by_hash' => null,
                 // The name belonged to that claim, not to the item. Leaving it

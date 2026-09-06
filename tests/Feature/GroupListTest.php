@@ -463,7 +463,7 @@ class GroupListTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => '25.50',
-                'display_name' => 'Bob',
+                'display_name' => 'Zzyzx',
             ])
             ->assertRedirect();
 
@@ -521,7 +521,7 @@ class GroupListTest extends TestCase
         $list = $this->groupList($organiser);
         $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
 
-        foreach (['Bob' => 25, 'Cara' => 30] as $name => $amount) {
+        foreach (['Zzyzx' => 25, 'Cara' => 30] as $name => $amount) {
             $this->actingAs(User::factory()->create())
                 ->post("/be-nl/l/{$list->share_token}/pledge", [
                     'amount' => $amount,
@@ -536,7 +536,7 @@ class GroupListTest extends TestCase
         $this->assertSame(5500, $contributions['total']);
         $this->assertSame(2, $contributions['count']);
         $this->assertSame(
-            ['Cara', 'Bob'],
+            ['Cara', 'Zzyzx'],
             array_column($contributions['breakdown'], 'name'),
         );
     }
@@ -556,7 +556,7 @@ class GroupListTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25,
-                'display_name' => 'Bob',
+                'display_name' => 'Zzyzx',
             ]);
 
         auth()->logout();
@@ -578,7 +578,16 @@ class GroupListTest extends TestCase
         $this->assertArrayNotHasKey('breakdown', $contributions);
 
         // And nowhere else in the payload either.
-        $this->assertStringNotContainsString('Bob', json_encode($props));
+        /*
+         * A name no generator will produce.
+         *
+         * This asserted on "Bob" and searched the whole serialised payload for
+         * it — which also contains faker-generated user names, so the test
+         * failed whenever one of them happened to contain the word. Rare enough
+         * to look like a real leak when it fired, and it fired more often as
+         * more names were added to the payload.
+         */
+        $this->assertStringNotContainsString('Zzyzx', json_encode($props));
     }
 
     #[Test]
@@ -604,14 +613,14 @@ class GroupListTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25,
-                'display_name' => 'Bob',
+                'display_name' => 'Zzyzx',
             ]);
 
         $response = $this->actingAs($mate)->get("/be-nl/lists/{$list->id}")->assertOk();
         $props = $this->props($response);
 
         $this->assertArrayNotHasKey('breakdown', $props['pot']);
-        $this->assertStringNotContainsString('Bob', json_encode($props));
+        $this->assertStringNotContainsString('Zzyzx', json_encode($props));
     }
 
     #[Test]
@@ -624,7 +633,7 @@ class GroupListTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25,
-                'display_name' => 'Bob',
+                'display_name' => 'Zzyzx',
             ]);
 
         // Off by default: `pledgers_visible` is null, which is "never asked".
@@ -635,7 +644,7 @@ class GroupListTest extends TestCase
         );
 
         $this->assertArrayNotHasKey('names', $props['pot']);
-        $this->assertStringNotContainsString('Bob', json_encode($props));
+        $this->assertStringNotContainsString('Zzyzx', json_encode($props));
     }
 
     #[Test]
@@ -655,7 +664,7 @@ class GroupListTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25,
-                'display_name' => 'Bob',
+                'display_name' => 'Zzyzx',
             ]);
 
         $this->actingAs($organiser)
@@ -667,7 +676,7 @@ class GroupListTest extends TestCase
                 ->assertOk(),
         );
 
-        $this->assertSame(['Bob'], $props['pot']['names']);
+        $this->assertSame(['Zzyzx'], $props['pot']['names']);
         // The name, and not the number beside it.
         $this->assertArrayNotHasKey('breakdown', $props['pot']);
     }
@@ -691,7 +700,7 @@ class GroupListTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 40,
-                'display_name' => 'Bob',
+                'display_name' => 'Zzyzx',
             ]);
 
         // Euros in, cents stored — invariant #7.
@@ -733,7 +742,7 @@ class GroupListTest extends TestCase
         $this->actingAs(User::factory()->create())
             ->post("/be-nl/l/{$list->share_token}/pledge", [
                 'amount' => 25.50,
-                'display_name' => 'Bob',
+                'display_name' => 'Zzyzx',
             ]);
 
         $this->assertSame(2550, GiftPledge::query()->firstOrFail()->amount);

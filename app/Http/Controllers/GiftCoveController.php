@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\EventType;
 use App\Enums\ListKind;
+use App\Models\Friendship;
 use App\Models\Recipient;
 use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Services\Seo\PageMeta;
+use App\Services\Social\Friends;
 use App\Services\Wishlist\DefaultList;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
@@ -140,6 +143,10 @@ class GiftCoveController extends Controller
                 'santa' => $user === null
                     ? 0
                     : SecretSantaMember::query()->where('user_id', $user->id)->count(),
+                // One indexed count; `friendships` is keyed on `user_id`.
+                'friends' => $user === null
+                    ? 0
+                    : Friendship::query()->where('user_id', $user->id)->count(),
                 'suggestions' => $owner->exists()
                     ? Wishlist::query()
                         ->whereIn('id', $lists->pluck('id'))
@@ -148,6 +155,53 @@ class GiftCoveController extends Controller
                         ->sum('suggestions_count')
                     : 0,
             ],
+
+            /*
+             * What the wizard can offer, and only to somebody who can use it.
+             *
+             * The same three sources the create form on My Lists draws from:
+             * people you already made a list for, friends who are not one of
+             * those yet, and the occasions a list can carry. Empty for a
+             * visitor, who still walks through every step — that walk *is* the
+             * explanation — and signs in at the last one.
+             */
+            'recipients' => $owner->exists()
+                ? $owner->scope(Recipient::query())
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                    ->map(fn (Recipient $r) => ['id' => $r->id, 'name' => $r->name])
+                    ->all()
+                : [],
+
+            'friends' => $user === null ? [] : app(Friends::class)
+                ->forUser($user)
+                ->reject(fn ($friendship) => Recipient::query()
+                    ->where('owner_user_id', $user->id)
+                    ->where('user_id', $friendship->friend_id)
+                    ->exists())
+                ->map(fn ($friendship) => [
+                    'id' => $friendship->friend_id,
+                    'name' => $friendship->friend->displayName(),
+                ])
+                ->values()
+                ->all(),
+
+            // Every friend, for the "share with" step; the list above leaves
+            // out the ones who are already a recipient, which is right for
+            // "who is it for" and wrong for "who may see it".
+            'allFriends' => $user === null ? [] : app(Friends::class)
+                ->forUser($user)
+                ->map(fn ($friendship) => [
+                    'id' => $friendship->friend_id,
+                    'name' => $friendship->friend->displayName(),
+                ])
+                ->values()
+                ->all(),
+
+            'occasions' => array_map(
+                fn (EventType $type) => ['value' => $type->value, 'label' => $type->label()],
+                EventType::cases(),
+            ),
 
             'santaGroups' => $user === null
                 ? []
@@ -168,11 +222,27 @@ class GiftCoveController extends Controller
                     ])
                     ->all(),
 
+            /*
+             * The rest of the site, for the two bands that are not list tools.
+             *
+             * Built here rather than on the client, so there is one place that
+             * knows the route table — the same reason `lists` and `santa` are
+             * here. A page that says "here is everything you can do" and then
+             * guesses at half the addresses is a page whose links rot.
+             */
             'urls' => [
                 // "How each one works" is its own page rather than the bottom
                 // half of this one; see GiftCoveManualController.
                 'manual' => $current->url('gift-cove/how-it-works'),
                 'gift' => $current->url('gift'),
+                'search' => $current->url('search'),
+                'ask' => $current->url('ask'),
+                'notifications' => $current->url('notifications'),
+                'friends' => $current->url('friends'),
+                'daily' => $current->url('daily'),
+                'guides' => $current->url('guides'),
+                'ideas' => $current->url('gift-ideas'),
+                'surprise' => $current->url('surprise'),
                 'lists' => $current->url('lists'),
                 'santa' => $current->url('santa'),
             ],

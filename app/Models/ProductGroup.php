@@ -33,6 +33,24 @@ class ProductGroup extends Model
 
     protected $guarded = [];
 
+    /**
+     * Where this product lives, in **its own** market.
+     *
+     * Never the reader's. `product_groups` is unique on `(market,
+     * identity_key)` — invariant #2 — so a group id belongs to exactly one
+     * market, and a wish list holds ids from as many markets as the person has
+     * browsed. Building the path from whichever market the URL happened to
+     * carry produced `/en/p/{an nl-nl group id}/…`, which is not a page.
+     *
+     * Following it switches market, which is correct: `SetMarket` reads the
+     * prefix, and only the switcher writes the `bc_market` cookie, so it does
+     * not repoint anybody's home market. See docs/features/market-routing.md.
+     */
+    public function path(): string
+    {
+        return '/'.$this->market->value."/p/{$this->id}/{$this->slug}";
+    }
+
     protected function casts(): array
     {
         return [

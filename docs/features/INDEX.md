@@ -73,7 +73,8 @@ cannot be recovered from a diff.
 | [editorial-api.md](editorial-api.md) | Content / Operations | Active |
 | [content-promotion.md](content-promotion.md) | Content / Operations | Active |
 | [config-contract.md](config-contract.md) | Core / Operations | Active |
-| [wishlists.md](wishlists.md) | Wishlist / Alerts | Active — registry address gated on a claim |
+| [wishlists.md](wishlists.md) | Wishlist / Alerts | Active — claiming needs an account |
+| [friends.md](friends.md) | Wishlist / Accounts | Active |
 | [list-taxonomy.md](list-taxonomy.md) | Wishlist / Gifting | Phases 1–4 built |
 | [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | In progress |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |

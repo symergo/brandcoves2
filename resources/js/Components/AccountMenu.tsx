@@ -93,13 +93,17 @@ export default function AccountMenu() {
                     >
                         {t('nav.lists')}
                     </Link>
+                    {/* Beside Lists rather than under it: the people are not a
+                        property of any one list, and the commonest reason to
+                        open this page — where is that registry again — starts
+                        with a person's name, not a list's. */}
                     <Link
-                        href={`/${market.key}/gift-cove`}
+                        href={`/${market.key}/friends`}
                         role="menuitem"
                         onClick={() => setOpen(false)}
                         className="block rounded px-3 py-2 text-sm hover:bg-line/40"
                     >
-                        {t('nav.cove')}
+                        {t('nav.friends')}
                     </Link>
                     <Link
                         href={`/${market.key}/notifications`}

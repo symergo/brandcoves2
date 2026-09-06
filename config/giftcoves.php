@@ -709,7 +709,6 @@ return [
         // Dedicated secret rather than APP_KEY, so rotating APP_KEY does not
         // orphan every existing claim.
         'claim_hash_secret' => env('CLAIM_HASH_SECRET', ''),
-        'claim_undo_hours' => 24,
     ],
 
     /*

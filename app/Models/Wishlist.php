@@ -13,13 +13,13 @@ use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultTitle;
 use App\Support\ListAccess;
 use App\Support\Owner;
+use App\Support\ShareCode;
 use Database\Factories\WishlistFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 /**
  * A list, either for yourself or for a specific recipient.
@@ -48,7 +48,12 @@ class Wishlist extends Model
         // here rather than at the call site means no code path can create a list
         // that cannot be shared.
         static::creating(function (self $list): void {
-            $list->share_token ??= (string) Str::uuid();
+            /*
+             * A ten-character code, not a uuid: the token is a credential
+             * people read out and paste into messages, and 36 characters bought
+             * nothing that 50 bits does not. See App\Support\ShareCode.
+             */
+            $list->share_token ??= ShareCode::make();
         });
     }
 
@@ -175,6 +180,34 @@ class Wishlist extends Model
     public function collaborators(): HasMany
     {
         return $this->hasMany(WishlistCollaborator::class);
+    }
+
+    /**
+     * The friends this list has been shared with, by name, one row each.
+     *
+     * An act rather than a setting: created by picking somebody in "Share with
+     * friends". Not a permission — see the migration — and not the only way a
+     * list reaches a friends page; opening its link is the other.
+     *
+     * @return HasMany<WishlistShare, $this>
+     */
+    public function shares(): HasMany
+    {
+        return $this->hasMany(WishlistShare::class);
+    }
+
+    /**
+     * Who has followed the link to this list.
+     *
+     * A bookmark, not a grant — see {@see ListOpen}. Read by the friend list to
+     * answer "which of their lists do I already hold", and by nothing that
+     * decides whether somebody may look.
+     *
+     * @return HasMany<ListOpen, $this>
+     */
+    public function opens(): HasMany
+    {
+        return $this->hasMany(ListOpen::class);
     }
 
     /**

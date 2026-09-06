@@ -8,13 +8,18 @@ use App\Enums\ClaimVisibility;
 use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Enums\ListVisibility;
+use App\Enums\RecipientStatus;
+use App\Models\Friendship;
 use App\Models\ListQuiz;
 use App\Models\Recipient;
 use App\Models\SecretSantaMember;
+use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
 use App\Services\Seo\PageMeta;
+use App\Services\Social\Friends;
+use App\Services\Social\ListSharer;
 use App\Services\Wishlist\AddingMode;
 use App\Services\Wishlist\Board;
 use App\Services\Wishlist\ContributionView;
@@ -164,6 +169,33 @@ class WishlistController extends Controller
             'recipients' => $owner->scope(Recipient::query())
                 ->orderBy('name')
                 ->get(['id', 'name', 'relationship', 'occasion']),
+
+            /*
+             * Friends who are not already a recipient, for the new-list form.
+             *
+             * Picking one links the profile to their account, so what they say
+             * about their own taste outranks what you guessed. Already-linked
+             * friends are filtered out because they are in `recipients` above
+             * under their own name — offering them twice would make two ways to
+             * choose the same person, one of which quietly makes a second
+             * profile.
+             *
+             * Empty for an anonymous owner: a friendship is between two
+             * accounts, and the form hides the group rather than showing it
+             * empty.
+             */
+            'friends' => $owner->user === null ? [] : app(Friends::class)
+                ->forUser($owner->user)
+                ->reject(fn ($friendship) => Recipient::query()
+                    ->where('owner_user_id', $owner->user->id)
+                    ->where('user_id', $friendship->friend_id)
+                    ->exists())
+                ->map(fn ($friendship) => [
+                    'id' => $friendship->friend_id,
+                    'name' => $friendship->friend->displayName(),
+                ])
+                ->values(),
+
             'isSignedIn' => $owner->isSignedIn(),
         ]);
     }
@@ -210,7 +242,51 @@ class WishlistController extends Controller
              * client-supplied kind could disagree with it. See `ListMaker`.
              */
             'together' => ['boolean'],
+
+            /*
+             * "The list is for one of my friends."
+             *
+             * A third way to name the recipient, beside picking an existing one
+             * and typing a new name — and the only one that links the profile to
+             * a real account. That link is what lets what *they* say about their
+             * own taste outrank what you guessed, and it is the same `user_id`
+             * the "this is me" flow sets when somebody claims a profile you made
+             * for them.
+             *
+             * Typing their name instead still works and makes an unlinked stub,
+             * which is the right outcome for somebody who is not on the site.
+             */
+            'friend_id' => ['nullable', 'integer'],
+
+            /*
+             * What the wizard on the Gift Cove asks about, step by step.
+             *
+             * Every one of these has always been settable, on the list page,
+             * after the list existed. The wizard's whole point is to explain
+             * the options *before* somebody has a list — and a wizard that
+             * explains an option and then makes you go somewhere else to turn
+             * it on has explained it to nobody. So creation accepts them, each
+             * optional, each with the same rule as `update()`.
+             */
+            'event_type' => ['nullable', 'string', 'in:'.implode(',', EventType::values())],
+            'event_date' => ['nullable', 'date'],
+            'visibility' => ['sometimes', 'string', 'in:private,link'],
+            'link_can_add' => ['sometimes', 'nullable', 'boolean'],
+            'voting_enabled' => ['sometimes', 'nullable', 'boolean'],
+            'share_with' => ['sometimes', 'array', 'max:50'],
+            'share_with.*' => ['integer'],
         ]);
+
+        /*
+         * A friend becomes a recipient before the list is made.
+         *
+         * Checked against `friendships` rather than trusted from the form, and
+         * dropped in silence when it is not one: the picker offers nobody else,
+         * so a stranger's id arrived by hand, and a validation error here would
+         * answer "is this person your friend" to whoever asked. The list is
+         * still created — under whatever name was typed, or for the owner.
+         */
+        $forFriend = $this->recipientForFriend($owner, $validated['friend_id'] ?? null);
 
         // The recipient decides the kind and `together` adds one bit; both
         // creation paths go through the one service so they cannot drift.
@@ -218,7 +294,7 @@ class WishlistController extends Controller
             owner: $owner,
             current: $current,
             title: $validated['title'],
-            recipientId: $validated['recipient_id'] ?? null,
+            recipientId: $forFriend?->id ?? ($validated['recipient_id'] ?? null),
             newRecipient: $validated['new_recipient'] ?? null,
             together: (bool) ($validated['together'] ?? false),
             birthday: Recipient::birthdayFrom(
@@ -227,7 +303,100 @@ class WishlistController extends Controller
             ),
         );
 
+        $this->applyWizardSettings($list, $owner, $validated, $current);
+
         return redirect()->to($current->url("lists/{$list->id}"));
+    }
+
+    /**
+     * The settings a list can be born with, from the wizard.
+     *
+     * Only what was sent. The kind defaults (`link_can_add` null, voting on
+     * for a group) stay the kind defaults for a list made without the wizard,
+     * and a key that is not in the payload leaves the column alone, exactly as
+     * `update()` treats it.
+     *
+     * Voting is a group mechanism and is dropped on any other kind: the wizard
+     * never offers it there, so a value arriving is a hand-built request, and
+     * the column would otherwise say "voting enabled" on a list with no vote
+     * button.
+     *
+     * Friends are shared with last, because `ListSharer` refuses a private
+     * list — the wizard only offers the picker once sharing is on, and this is
+     * the same rule in the same order.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function applyWizardSettings(Wishlist $list, Owner $owner, array $validated, CurrentMarket $current): void
+    {
+        $settings = array_intersect_key($validated, array_flip([
+            'event_type', 'event_date', 'visibility', 'link_can_add', 'voting_enabled',
+        ]));
+
+        if ($list->kind !== ListKind::Group) {
+            unset($settings['voting_enabled']);
+        }
+
+        if ($settings !== []) {
+            $list->update($settings);
+        }
+
+        $friendIds = $validated['share_with'] ?? [];
+
+        // `create()` hands back the attributes it was given, not the row: the
+        // visibility the database defaulted is not on the model yet, and
+        // `ListSharer` asks it. One read, only when there is somebody to share
+        // with.
+        if ($friendIds !== []) {
+            $list->refresh();
+        }
+
+        if ($friendIds !== [] && $owner->user !== null) {
+            app(ListSharer::class)->share($list, $owner->user, $friendIds, $current);
+        }
+    }
+
+    /**
+     * The recipient profile for a friend, made once and reused after.
+     *
+     * `firstOrCreate` on `(owner, user_id)` rather than on the name: a friend
+     * who changes their display name is the same person, and a second profile
+     * for them would split their taste in half — the engine reads one row.
+     *
+     * Null whenever the id is not this person's friend, or there is no id at
+     * all. See the caller for why that is silent.
+     */
+    private function recipientForFriend(Owner $owner, ?int $friendId): ?Recipient
+    {
+        if ($friendId === null || $owner->user === null) {
+            return null;
+        }
+
+        $connected = Friendship::query()
+            ->where('user_id', $owner->user->id)
+            ->where('friend_id', $friendId)
+            ->exists();
+
+        if (! $connected) {
+            return null;
+        }
+
+        $friend = User::query()->find($friendId);
+
+        if ($friend === null) {
+            return null;
+        }
+
+        return Recipient::query()->firstOrCreate(
+            ['owner_user_id' => $owner->user->id, 'user_id' => $friend->id],
+            [
+                'name' => $friend->displayName(),
+                // Linked, not a stub: there is an account behind this one, and
+                // `RecipientStatus` is what decides whose answers about their
+                // taste are believed.
+                'status' => RecipientStatus::Linked,
+            ],
+        );
     }
 
     public function show(
@@ -277,6 +446,10 @@ class WishlistController extends Controller
          */
         $pot = $contributor->forList($wishlist, $owner, ListAccess::isOwner($wishlist, $owner));
 
+        // For the "Share with friends" picker, which needs to know who already
+        // has it. Only this page draws one, so only this page loads it.
+        $wishlist->load('shares');
+
         return Inertia::render('Lists/Show', [
             'list' => $this->summarise($wishlist, $current),
             'pot' => $pot,
@@ -323,6 +496,41 @@ class WishlistController extends Controller
                 'isOwner' => ListAccess::isOwner($wishlist, $owner),
                 'canEdit' => ListAccess::canEdit($wishlist, $owner),
             ],
+
+            /*
+             * Which of the three roles this reader has, said once.
+             *
+             * Owner, contributor, recipient. The page used to carry `isOwner`
+             * and `canEdit` and let each surface work out what to call the
+             * reader, which is how the same list ended up describing itself
+             * differently on three pages. `ListPills` renders this and nothing
+             * else decides it.
+             *
+             * The recipient is not resolvable here — a `for_someone` list is
+             * about a `Recipient`, who may have no account at all — so this
+             * page only ever answers owner or contributor. The shared page
+             * knows more and says so.
+             */
+            'role' => ListAccess::isOwner($wishlist, $owner) ? 'owner' : 'contributor',
+            'ownerName' => ListAccess::isOwner($wishlist, $owner)
+                ? null
+                : $wishlist->owner?->displayName(),
+
+            /*
+             * Who "Share with friends" can offer, and only to the owner.
+             *
+             * Empty for everybody else: a list's collaborators have no business
+             * reading the owner's address book, and the picker is hidden rather
+             * than shown empty. Empty too for an owner with no friends yet,
+             * which hides it for the same reason — a control with nothing in it
+             * is a dead end.
+             */
+            'friends' => ! ListAccess::isOwner($wishlist, $owner) || $owner->user === null
+                ? []
+                : app(Friends::class)->forUser($owner->user)->map(fn ($friendship) => [
+                    'id' => $friendship->friend_id,
+                    'name' => $friendship->friend->displayName(),
+                ])->values(),
 
             // Only the owner manages the roster, so only the owner is shown it.
             'collaborators' => ListAccess::isOwner($wishlist, $owner)
@@ -464,6 +672,20 @@ class WishlistController extends Controller
                     'groupId' => $item->group_id,
 
                     /*
+                     * Did somebody type this, rather than save it?
+                     *
+                     * Only a hand-written item may have its title, link and
+                     * price edited — on a catalogue item those columns are a
+                     * record of what the feed said, and the price history is
+                     * measured against them. `source`, not `groupId === null`:
+                     * a catalogue item whose product was deleted also has no
+                     * group, and its snapshot is still not its owner's to
+                     * rewrite. `WishlistItemController::update()` asks the same
+                     * question again.
+                     */
+                    'manual' => $item->isManual(),
+
+                    /*
                      * The path, built rather than assembled on the client.
                      *
                      * It used to send `slug` and let `Lists/Show` prefix it
@@ -507,6 +729,84 @@ class WishlistController extends Controller
                      */
                 ]),
         ]);
+    }
+
+    /**
+     * "Share with friends" — pick names, they get an email and the list.
+     *
+     * Replaced a `show_to_friends` switch that meant *everybody I am connected
+     * to*. A friendship here is made by opening any share link, so that switch
+     * published to a set the owner had never chosen and could not see; a
+     * boolean cannot express consent to an audience. See
+     * App\Services\Social\ListSharer.
+     *
+     * Owned-by-you, exactly as `update()` above: the scope is the check, so a
+     * list somebody else owns is a 404 rather than a 403 — this endpoint should
+     * not confirm that a list id exists.
+     */
+    public function shareWithFriends(
+        Request $request,
+        CurrentMarket $current,
+        string $market,
+        string $list,
+        ListSharer $sharer,
+    ): RedirectResponse {
+        $owner = Owner::fromRequest($request);
+        $wishlist = $owner->scope(Wishlist::query())->with('recipient')->find($list);
+
+        if ($wishlist === null) {
+            throw new NotFoundHttpException;
+        }
+
+        $validated = $request->validate([
+            'friend_ids' => ['required', 'array', 'max:200'],
+            'friend_ids.*' => ['integer'],
+        ]);
+
+        /*
+         * Ids are not checked for being friends here.
+         *
+         * `ListSharer` reads `friendships` and keeps only the ones that are,
+         * dropping the rest in silence. Validating it here as well would mean
+         * answering "is this person your friend" to whoever asked, which is a
+         * question a form error should not settle.
+         */
+        $shared = $sharer->share($wishlist, $request->user(), $validated['friend_ids'], $current);
+
+        /*
+         * Silent when it works: the names you picked come back ticked and
+         * green, in the panel you are looking at, and the count on the button
+         * goes up. The page has already said it.
+         *
+         * The nothing-happened case still speaks. "Nobody new to send it to"
+         * is not visible anywhere — the chips look exactly as they did — and
+         * without it a press that did nothing is indistinguishable from one
+         * that worked.
+         */
+        return $shared > 0
+            ? back()
+            : back()->with('error', __('site.lists.shared_with_nobody'));
+    }
+
+    /** Take it off one friend's page again. Their link, if they have one, still works. */
+    public function unshareFromFriend(
+        Request $request,
+        string $market,
+        string $list,
+        int $friend,
+        ListSharer $sharer,
+    ): RedirectResponse {
+        $owner = Owner::fromRequest($request);
+        $wishlist = $owner->scope(Wishlist::query())->find($list);
+
+        if ($wishlist === null) {
+            throw new NotFoundHttpException;
+        }
+
+        $sharer->unshare($wishlist, $friend);
+
+        // Their chip goes back to being one you can pick. Nothing to announce.
+        return back();
     }
 
     public function update(Request $request, CurrentMarket $current, string $market, string $list): RedirectResponse
@@ -788,6 +1088,26 @@ class WishlistController extends Controller
                 'covers' => $list->items->pluck('snapshot_image_url')->all(),
 
                 /*
+                 * Somebody else's list opens the page built for a reader.
+                 *
+                 * `summarise()` produces `lists/{id}`, which is the owner's
+                 * page — and `ListAccess::scope()` puts every list you have
+                 * ever *opened by link* into this section, so following a card
+                 * landed a reader on the owner's view of somebody else's wish
+                 * list: the organiser's tools, and **no claim buttons at all**,
+                 * because claiming lives on the shared page. The one thing they
+                 * came to do was the one thing missing.
+                 *
+                 * An editing collaborator keeps the owner's page, which is the
+                 * point of being one. Everybody else gets `l/{token}` — the
+                 * same page the link in the message opens, and the only one
+                 * that knows how to claim.
+                 */
+                ...$owned || ListAccess::canEdit($list, $owner) ? [] : [
+                    'url' => $current->url("l/{$list->share_token}"),
+                ],
+
+                /*
                  * Whose list this is, said on the card rather than by which
                  * page you happened to open.
                  *
@@ -858,6 +1178,19 @@ class WishlistController extends Controller
                 'name' => $list->recipient->name,
                 'relationship' => $list->recipient->relationship,
             ],
+            /*
+             * Who it has already been shared with, so the picker can tick them
+             * and stop offering to send a second email.
+             *
+             * Guarded on the relation being loaded, because `summarise()` also
+             * builds the cards on My Lists — dozens at a time, where the picker
+             * does not exist and a share query per card would be pure waste.
+             * Lazy loading is disabled in this application, so an unguarded
+             * read there is a 500 rather than an N+1.
+             */
+            'sharedWith' => $list->relationLoaded('shares')
+                ? $list->shares->pluck('user_id')->all()
+                : [],
             'url' => $current->url("lists/{$list->id}"),
             // Only meaningful once the list is shareable; the UI hides it
             // otherwise rather than offering a link that 404s.

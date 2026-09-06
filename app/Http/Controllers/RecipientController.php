@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\RecipientStatus;
 use App\Enums\TasteSource;
 use App\Http\Requests\RecipientTasteRequest;
+use App\Models\Friendship;
 use App\Models\Recipient;
+use App\Models\User;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
@@ -31,17 +34,68 @@ class RecipientController extends Controller
         $owner = Owner::fromRequest($request);
         abort_unless($owner->exists(), 403);
 
-        $request->validate(['name' => ['required', 'string', 'max:80']]);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+            /*
+             * "This person is one of my friends."
+             *
+             * Optional, and it does something quite different from typing the
+             * same name: it links the profile to a real account, so what *they*
+             * say about their own taste outranks what you guessed. That is the
+             * same `user_id` the "this is me" link sets when somebody claims a
+             * profile you made for them — see `RecipientProfileController` —
+             * and reaching it from a name you already have saves the round trip
+             * through a token entirely.
+             */
+            'friend_id' => ['nullable', 'integer'],
+        ]);
+
+        /*
+         * Only an actual friend, checked here rather than trusted.
+         *
+         * The picker offers nobody else, so an id that is not one arrived by
+         * hand — and it is dropped in silence, because a validation error here
+         * would answer "is this person your friend" to whoever asked. The
+         * profile is still created, under the name they typed.
+         */
+        $friend = $this->friendOf($owner, $validated['friend_id'] ?? null);
 
         $recipient = Recipient::create([
             ...$owner->attributes(),
             ...$request->context(),
+            ...$friend === null ? [] : [
+                'user_id' => $friend->id,
+                // Linked, not a stub: there is a person behind this one, and
+                // `RecipientStatus` is what the taste engine reads to know
+                // whose answers to prefer.
+                'status' => RecipientStatus::Linked,
+            ],
         ]);
 
         // Anything the creator already knows is a guess, however confident.
         $recipient->describeTaste($request->taste(), TasteSource::Suggested);
 
         return back()->with('success', __('site.lists.recipient_added'));
+    }
+
+    /**
+     * That id, if it belongs to somebody this person is actually connected to.
+     *
+     * Reads `friendships` rather than the form. Null for an anonymous owner,
+     * who has no friends to pick from — a friendship is between two accounts.
+     */
+    private function friendOf(Owner $owner, ?int $friendId): ?User
+    {
+        if ($friendId === null || $owner->user === null) {
+            return null;
+        }
+
+        $connected = Friendship::query()
+            ->where('user_id', $owner->user->id)
+            ->where('friend_id', $friendId)
+            ->exists();
+
+        return $connected ? User::query()->find($friendId) : null;
     }
 
     public function update(RecipientTasteRequest $request, CurrentMarket $current, string $market, string $recipient): RedirectResponse

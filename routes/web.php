@@ -8,6 +8,7 @@ use App\Http\Controllers\AskController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\ClaimIntentController;
 use App\Http\Controllers\ClickBeaconController;
 use App\Http\Controllers\ClickOutController;
 use App\Http\Controllers\CookieConsentController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\DiscoverController;
 use App\Http\Controllers\DiscoverCoveController;
 use App\Http\Controllers\Ebay\AccountDeletionController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\FriendController;
 use App\Http\Controllers\GiftController;
 use App\Http\Controllers\GiftCoveController;
 use App\Http\Controllers\GiftCoveManualController;
@@ -59,6 +61,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
 use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
+use App\Support\ShareCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -221,15 +224,6 @@ Route::prefix('{market}')->group(function () {
     Route::get('/help', HelpController::class)->name('help');
 
     /*
-     * How the site works, and where to say it does not, on one page.
-     *
-     * The how-to pages were reachable only from the screen each explains, so a
-     * visitor who had already given up on that screen had nowhere to go. This
-     * gathers them and puts the report form under them.
-     */
-    Route::get('/help', HelpController::class)->name('help');
-
-    /*
      * Kept as a redirect, not a page.
      *
      * The form lives on `/help` now, with the how-to pages above it. This
@@ -304,9 +298,12 @@ Route::prefix('{market}')->group(function () {
     | and has no address a reminder could ever be sent to — so it looks like a
     | feature and behaves like a draft.
     |
-    | Reading stays open, and so does claiming on somebody else's shared list:
-    | the person claiming followed a link once, and making them register to say
-    | "I will get this" is how a gift list stops working as a coordination tool.
+    | Reading stays open. Claiming no longer does — a claim is hashed from the
+    | claimer's identity, and an anonymous identity is a cookie, so an anonymous
+    | claim could not be seen from a second device, could not be released from
+    | one, and vanished with the browser's storage while the item stayed spoken
+    | for. The press is not lost to the sign-in: `/claim-intent` stashes it and
+    | `ReplayPendingClaim` finishes it. See App\Services\Wishlist\PendingClaim.
     */
     /*
      * How lists work, with pictures.
@@ -339,9 +336,74 @@ Route::prefix('{market}')->group(function () {
         ->middleware('throttle:20,1')
         ->name('items.intent');
 
+    /*
+     * A claim pressed before there was an account to hang it on.
+     *
+     * The sibling of `/save-intent` above, and unauthenticated for the same
+     * reason: it exists for people who have not signed up. It writes only to
+     * the caller's own session — nothing is claimed here — and it deliberately
+     * does not check that the token names a real list, because answering that
+     * would make it an oracle for guessing share tokens.
+     */
+    Route::post('/claim-intent', [ClaimIntentController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('lists.claim.intent');
+
     Route::middleware('auth')->group(function () {
+        /*
+         * The people you share lists with.
+         *
+         * Made by following somebody's share link and having an account at the
+         * end of it — see App\Services\Social\Friends. Behind `auth` because
+         * a friendship is between two accounts and there is nothing to show
+         * somebody who is not one of them.
+         */
+        Route::get('/friends', [FriendController::class, 'index'])->name('friends');
+
+        /*
+         * Adding somebody by their address.
+         *
+         * Throttled harder than the page it sits on, because the interesting
+         * abuse is volume: the endpoint answers identically whether or not an
+         * address has an account here — see App\Services\Social\FriendInvites
+         * — and the rate limit is the second half of that defence. A caller
+         * cannot tell one address from another, and cannot walk a list of them.
+         */
+        Route::post('/friends', [FriendController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('friends.store');
+
+        // What your friends see of you. Not a permission — see the controller.
+        Route::patch('/friends/settings', [FriendController::class, 'settings'])->name('friends.settings');
+
+        // The birthday you wrote down about somebody, on your side only.
+        Route::patch('/friends/{friend}', [FriendController::class, 'note'])
+            ->whereNumber('friend')
+            ->name('friends.note');
+
+        Route::delete('/friends/{friend}', [FriendController::class, 'destroy'])
+            ->whereNumber('friend')
+            ->name('friends.destroy');
+
         Route::post('/lists', [WishlistController::class, 'store'])->name('lists.store');
         Route::patch('/lists/{list}', [WishlistController::class, 'update'])->name('lists.update');
+
+        /*
+         * "Share with friends": pick names, they get an email and the list on
+         * their friends page.
+         *
+         * Throttled because it sends mail on somebody else's behalf, which is
+         * the half of this that could be abused at volume — the recipients are
+         * the caller's own friends, so the ceiling is low on purpose and a
+         * person sharing one list with everybody they know stays well under it.
+         */
+        Route::post('/lists/{list}/share-with-friends', [WishlistController::class, 'shareWithFriends'])
+            ->middleware('throttle:20,1')
+            ->name('lists.share-with-friends');
+
+        Route::delete('/lists/{list}/share-with-friends/{friend}', [WishlistController::class, 'unshareFromFriend'])
+            ->whereNumber('friend')
+            ->name('lists.unshare-from-friend');
         Route::delete('/lists/{list}', [WishlistController::class, 'destroy'])->name('lists.destroy');
 
         Route::post('/list-items', [WishlistItemController::class, 'store'])->name('items.store');
@@ -428,8 +490,10 @@ Route::prefix('{market}')->group(function () {
         ->whereNumber('item')
         ->name('items.copy');
 
+    // A wishlist share token, so the same pattern as the shared-view group
+    // below. It is a ten-character code now, not a uuid — App\Support\ShareCode.
     Route::post('/l/{token}/items/{item}/copy', [ItemTransferController::class, 'fromShared'])
-        ->where('token', '[0-9a-fA-F-]{36}')
+        ->where('token', ShareCode::pattern())
         ->whereNumber('item')
         ->name('items.copy.shared');
 
@@ -437,11 +501,18 @@ Route::prefix('{market}')->group(function () {
     Route::post('/suggestions/{item}/accept', [SuggestionController::class, 'accept'])->name('suggestions.accept');
     Route::delete('/suggestions/{item}', [SuggestionController::class, 'destroy'])->name('suggestions.destroy');
 
-    // The shared, claimable view. Rate-limited because it is unauthenticated
-    // and the token is the only thing guarding it — and constrained to a uuid,
-    // on the group so it cannot be forgotten on the next route added here. See
-    // UUID_TOKEN for what an unconstrained segment did.
-    Route::middleware('throttle:60,1')->where(['token' => '[0-9a-fA-F-]{36}'])->group(function () {
+    /*
+     * The shared, claimable view. Rate-limited because it is unauthenticated
+     * and the token is the only thing guarding it.
+     *
+     * `wishlists.share_token` is a ten-character code now rather than a uuid,
+     * so the constraint is a courtesy rather than a load-bearing guard: it was
+     * a native `uuid` column, where a stray `/l/suggest` raised `22P02` and
+     * 500'd. On text it is simply zero rows. The pattern lives in `ShareCode`
+     * so the format is stated once — and it stays generous, so an old link
+     * reaches the controller and gets an honest 404 rather than a route miss.
+     */
+    Route::middleware('throttle:60,1')->where(['token' => ShareCode::pattern()])->group(function () {
         Route::get('/l/{token}', [SharedListController::class, 'show'])->name('lists.shared');
         Route::post('/l/{token}/claim/{item}', [SharedListController::class, 'claim'])->name('lists.claim');
         Route::delete('/l/{token}/claim/{item}', [SharedListController::class, 'unclaim'])->name('lists.unclaim');

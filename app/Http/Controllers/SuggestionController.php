@@ -9,6 +9,7 @@ use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Rules\SafeExternalUrl;
+use App\Services\Notifications\ListActivity;
 use App\Services\Wishlist\ItemSaver;
 use App\Support\CurrentMarket;
 use App\Support\ListAccess;
@@ -116,7 +117,7 @@ class SuggestionController extends Controller
 
             // Free text waits, on every kind of list. See the class docblock:
             // this is the one channel with unmoderated words in it.
-            return $this->pending($request, $item);
+            return $this->pending($request, $list, $item);
         }
 
         $group = ProductGroup::query()
@@ -166,10 +167,14 @@ class SuggestionController extends Controller
             // that two people quietly delete for each other.
             $item->forceFill(['suggested_by_user_id' => $request->user()?->id])->save();
 
+            // Their list changed without them doing it. One insert, on an
+            // action somebody took deliberately — nothing on a read path.
+            app(ListActivity::class)->itemAdded($list, Owner::fromRequest($request), $item->snapshot_title);
+
             return back()->with('success', __('site.suggestions.added'));
         }
 
-        return $this->pending($request, $item);
+        return $this->pending($request, $list, $item);
     }
 
     /**
@@ -184,12 +189,19 @@ class SuggestionController extends Controller
      * an accepted row and only this turns it into a message. A second copy is
      * how the manual path would eventually stop being pending.
      */
-    private function pending(Request $request, WishlistItem $item): RedirectResponse
+    private function pending(Request $request, Wishlist $list, WishlistItem $item): RedirectResponse
     {
         $item->forceFill([
             'suggested_by_user_id' => $request->user()?->id,
             'accepted_at' => null,
         ])->save();
+
+        /*
+         * A suggestion waits for a decision, so it is the one kind of list
+         * activity that is useless unless the owner hears about it: an accept
+         * row nobody knows exists is a message in a drawer.
+         */
+        app(ListActivity::class)->suggested($list, Owner::fromRequest($request), $item->snapshot_title);
 
         return back()->with('success', __('site.suggestions.sent'));
     }

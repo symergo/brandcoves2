@@ -1,9 +1,10 @@
 import { Head, Link, usePage } from '@inertiajs/react'
+import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
+import ListWizard from '../Components/ListWizard'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import type { SharedProps } from '../types'
 import { formatOccasionDate } from '../types'
 import { useTranslations } from '../useTranslations'
-import SignInLink from '../Components/SignInLink'
 
 interface Wishlist {
     id: string
@@ -29,14 +30,36 @@ interface Props {
      */
     wishlists: Wishlist[]
     counts: {
+        /** Group gifts you are on. Counted server-side since they became
+         *  creatable, and read by nothing until now. */
+        groupLists: number
         giftLists: number
         people: number
         registries: number
         santa: number
         suggestions: number
+        friends: number
     }
     santaGroups: { title: string; drawn: boolean; url: string }[]
-    urls: { manual: string; gift: string; lists: string; santa: string }
+    urls: {
+        manual: string
+        gift: string
+        lists: string
+        santa: string
+        search: string
+        ask: string
+        notifications: string
+        friends: string
+        daily: string
+        guides: string
+        ideas: string
+        surprise: string
+    }
+    /** What the wizard can offer; empty for a visitor. */
+    recipients: { id: string; name: string }[]
+    friends: { id: number; name: string }[]
+    allFriends: { id: number; name: string }[]
+    occasions: { value: string; label: string }[]
 }
 
 /**
@@ -47,114 +70,163 @@ interface Props {
  * so they were individually findable and collectively invisible — nobody could
  * see they were parts of one thing.
  *
- * The explanations are the point. "Secret Santa" needs none; "a list you build
- * for somebody and then hand over to them" needs one, and a tool nobody
- * understands is a tool nobody opens.
+ * ## The wizard is the hero
+ *
+ * The page used to open on a title and a grid. A grid of sixteen explanations
+ * is a reference, and nobody arrives wanting a reference: they arrive with a
+ * person and an occasion, and the thing to do with those is make a list. So
+ * the top of the page *is* making one — four questions, each explained before
+ * it is asked, so that by the end the reader has met every option a list has
+ * and has one. The grid underneath is for afterwards: what else is here, each
+ * with a button that starts it.
  *
  * ## Two layers, and why the second one exists
  *
  * A card answers *what is this for*, in one sentence, because that is the
- * question somebody scanning nine cards is asking. The manual below answers
+ * question somebody scanning cards is asking. The manual (its own page) answers
  * *how do I do it*, which is a different question asked by a different person —
  * one who has already decided and now needs to know which button starts it.
- *
- * Answering both on the card was tried and is worse: nine tools each with four
- * lines of instructions is a wall, and the reader who wanted the one-line
- * version has to read past all of it. So the sentence stays on the card, the
- * steps go below, and the icon is the join — the same drawing in both places is
- * what tells you the manual entry you scrolled to is the card you pressed.
- *
- * Three steps each, and nothing else. Caveats, exceptions and the privacy rules
- * were drafted in beside them and taken back out: a manual entry that runs past
- * the point where the reader could have started is one they stop reading. The
- * rules the tools enforce are enforced whether or not this page explains them.
- *
- * The steps name what is actually on the screen ("press Share", "press
- * People"), never a paraphrase. A manual that describes a button by its purpose
- * rather than its label sends people hunting for a control they are looking
- * straight at.
+ * The icon is the join: the same drawing in both places is what tells you the
+ * manual entry you scrolled to is the card you pressed.
  */
-export default function GiftCove({ signedIn, wishlists, counts, santaGroups, urls }: Props) {
+
+/**
+ * The five questions somebody arrives with.
+ *
+ * Five one-line headings, no prose. The grouping is the explanation, and the
+ * order is the order somebody arrives in: my own list, a list for somebody,
+ * doing it with other people, finding a present, getting inspired. A band is
+ * three or four cards, and the grid takes its column count from the band, so
+ * every band is full rows and nothing sits alone under the others.
+ */
+type Band = 'own' | 'someone' | 'together' | 'find' | 'inspire'
+
+const BANDS: Band[] = ['own', 'someone', 'together', 'find', 'inspire']
+
+/**
+ * A card is a list tool or a corner of the site; the icon says which set it is
+ * from. Coves keep their own `CoveIcon` drawings — the vocabulary readers met in
+ * the nav — and a second version here would be two pictures for one thing.
+ */
+interface Card {
+    key: string
+    icon: { tool: ToolKey } | { cove: CoveKey }
+    href: string
+    badge: string | null
+    band: Band
+}
+
+export default function GiftCove({
+    signedIn,
+    wishlists,
+    counts,
+    santaGroups,
+    urls,
+    recipients,
+    friends,
+    allFriends,
+    occasions,
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
-    const base = `/${market.key}`
 
     /*
-     * Each card starts its tool, rather than describing it and then dropping
-     * you on an index.
+     * Where a card's button goes.
      *
-     * Six of the nine used to point at `urls.lists`, so reading "a list you
-     * build for somebody and then hand over to them" and pressing it got you a
-     * page of your existing lists and no clue which button began that. The three
-     * that begin with a list *for someone* now open the create form on that
-     * shape; the ones that act on a list you already have open that list.
+     * A card that describes a tool and then drops you on an index leaves the
+     * reader to work out which of five buttons begins the thing they just
+     * read about. So "for someone else" opens the create form on that shape,
+     * and everything about my own list opens the first of them — the default
+     * one, the list a save lands in without being asked.
      */
     const forSomeone = `${urls.lists}?new=for_someone`
-
-    /*
-     * The list a tool acts on when it acts on "your wishlist".
-     *
-     * The default one, which the server puts first — it is where a save lands
-     * without being asked about, so it is the one somebody means when they have
-     * not said which. The cards above reach every other one.
-     */
     const first = wishlists[0] ?? null
 
-    const tools: { key: ToolKey; href: string; badge: string | null }[] = [
-        {
-            key: 'wishlist',
-            href: first?.url ?? urls.lists,
-            badge:
-                wishlists.length > 1
-                    ? t('gift_cove.lists_count', { count: n(wishlists.length) })
-                    : first
-                      ? t('gift_cove.items_count', { count: n(first.items) })
-                      : null,
-        },
-        { key: 'giftlist', href: forSomeone, badge: counts.giftLists ? n(counts.giftLists) : null },
+    /*
+     * Every badge is a bare count of the thing the card is about — how many
+     * of these you have. A number in a circle is read without being parsed,
+     * and it means the same thing on every card.
+     */
+    const cards: Card[] = [
+        { key: 'wishlist', icon: { tool: 'wishlist' }, href: first?.url ?? `${urls.lists}?new=mine`, badge: wishlists.length ? n(wishlists.length) : null, band: 'own' },
+        { key: 'registry', icon: { tool: 'registry' }, href: first?.url ?? urls.lists, badge: counts.registries ? n(counts.registries) : null, band: 'own' },
+        { key: 'suggestions', icon: { tool: 'suggestions' }, href: first?.url ?? urls.lists, badge: counts.suggestions ? n(counts.suggestions) : null, band: 'own' },
+
+        { key: 'giftlist', icon: { tool: 'giftlist' }, href: forSomeone, badge: counts.giftLists ? n(counts.giftLists) : null, band: 'someone' },
+        /*
+         * Buying separately for one person is a list for someone, shared:
+         * everybody claims what they take, nobody doubles up. It is the
+         * other use of the same shape, and the one most people mean when
+         * they say "let's coordinate".
+         */
+        { key: 'split', icon: { tool: 'split' }, href: forSomeone, badge: null, band: 'someone' },
+        /*
+         * Handover acts on a list you already have, and there is no single such
+         * list — so this goes to My Lists, where they are.
+         */
+        { key: 'handover', icon: { tool: 'handover' }, href: urls.lists, badge: null, band: 'someone' },
+
+        // Building a list together is "adding allowed" on a shared list —
+        // any kind — so it starts from the lists you have.
+        { key: 'build', icon: { tool: 'build' }, href: urls.lists, badge: null, band: 'together' },
         /*
          * Buying together genuinely *starts* with a new list, and since group
          * lists became creatable that list is a group one — so the card, the
-         * form it opens and the step that describes it now all say the same
-         * thing. It used to open the "for someone else" shape while its first
-         * step said "open a list you made for someone else".
+         * form it opens and the step that describes it all say the same thing.
          */
-        { key: 'collab', href: `${urls.lists}?new=group`, badge: null },
-        /*
-         * Handover acts on a list you already have, and there is no single such
-         * list — so this goes to My Lists, where they are. It used to open a
-         * *create* form while its first step said "open the list".
-         */
-        { key: 'handover', href: urls.lists, badge: null },
-        { key: 'santa', href: urls.santa, badge: counts.santa ? n(counts.santa) : null },
-        { key: 'registry', href: first?.url ?? urls.lists, badge: counts.registries ? n(counts.registries) : null },
-        { key: 'quiz', href: first?.url ?? urls.lists, badge: null },
-        { key: 'suggestions', href: urls.lists, badge: counts.suggestions ? n(counts.suggestions) : null },
-        { key: 'whisperer', href: urls.gift, badge: counts.people ? n(counts.people) : null },
+        { key: 'collab', icon: { tool: 'collab' }, href: `${urls.lists}?new=group`, badge: counts.groupLists ? n(counts.groupLists) : null, band: 'together' },
+        { key: 'board', icon: { tool: 'board' }, href: urls.lists, badge: null, band: 'together' },
+        { key: 'santa', icon: { tool: 'santa' }, href: urls.santa, badge: counts.santa ? n(counts.santa) : null, band: 'together' },
+        { key: 'quiz', icon: { tool: 'quiz' }, href: first?.url ?? urls.lists, badge: null, band: 'together' },
+        { key: 'friends', icon: { tool: 'friends' }, href: urls.friends, badge: counts.friends ? n(counts.friends) : null, band: 'together' },
+
+        { key: 'whisperer', icon: { tool: 'whisperer' }, href: urls.gift, badge: counts.people ? n(counts.people) : null, band: 'find' },
+        { key: 'search', icon: { tool: 'search' }, href: urls.search, badge: null, band: 'find' },
+        { key: 'ask', icon: { cove: 'ask' }, href: urls.ask, badge: null, band: 'find' },
+        { key: 'alerts', icon: { tool: 'alerts' }, href: urls.notifications, badge: null, band: 'find' },
+
+        { key: 'daily', icon: { cove: 'daily' }, href: urls.daily, badge: null, band: 'inspire' },
+        { key: 'guides', icon: { tool: 'guides' }, href: urls.guides, badge: null, band: 'inspire' },
+        { key: 'ideas', icon: { cove: 'persona' }, href: urls.ideas, badge: null, band: 'inspire' },
+        { key: 'surprise', icon: { cove: 'surprise' }, href: urls.surprise, badge: null, band: 'inspire' },
     ]
 
     return (
         <>
             <Head title={t('gift_cove.seo_title')} />
 
-            <header className="max-w-2xl">
+            <header>
                 <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{t('gift_cove.title')}</h1>
                 <p className="mt-3 text-lg text-ink-soft">{t('gift_cove.intro')}</p>
             </header>
 
             {/*
-              Your own lists first, and with their state on them. "3 things
-              saved, not shared yet" is a next action; a link labelled "My
-              wishlist" is a filing cabinet.
+              The wizard, first and for everybody.
 
-              Plural, because you may keep several: the default one a save lands
-              in, and any number beside it — a wedding, a birthday, a list of
-              things you want some day. Only the first is highlighted, because
-              it is the one a save reaches without being asked about, and the
-              rest read as what they are rather than as competing defaults.
+              Signed in with lists already, it makes the next one; signed out,
+              it is the explanation, and its last button is the sign-in. Nothing
+              on this page is more useful to a first visit than making a list,
+              and a page that explains lists above the place you make one has
+              its two halves the wrong way round.
+            */}
+            <div className="mt-8">
+                <ListWizard
+                    signedIn={signedIn}
+                    recipients={recipients}
+                    friends={friends}
+                    allFriends={allFriends}
+                    occasions={occasions}
+                />
+            </div>
+
+            {/*
+              Your own lists, with their state on them. "3 things saved, not
+              shared yet" is a next action; a link labelled "My wishlist" is a
+              filing cabinet. Only the first is highlighted, because it is the
+              one a save reaches without being asked about.
             */}
             {wishlists.length > 0 && (
-                <section className="mt-8 max-w-2xl">
+                <section className="mt-10">
                     <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
                         {t('gift_cove.my_wishlists')}
                     </h2>
@@ -165,7 +237,7 @@ export default function GiftCove({ signedIn, wishlists, counts, santaGroups, url
                                 key={list.id}
                                 className={
                                     i === 0
-                                        ? 'rounded-card border border-accent/40 bg-accent/5 p-6'
+                                        ? 'rounded-card border border-accent/40 bg-accent/5 p-5'
                                         : 'rounded-card border border-line bg-card p-4'
                                 }
                             >
@@ -180,10 +252,7 @@ export default function GiftCove({ signedIn, wishlists, counts, santaGroups, url
                                             {list.occasionDate
                                                 ? t('registry.occasion_on', {
                                                       occasion: list.occasion,
-                                                      date: formatOccasionDate(
-                                                          list.occasionDate,
-                                                          market,
-                                                      ),
+                                                      date: formatOccasionDate(list.occasionDate, market),
                                                   })
                                                 : list.occasion}
                                         </span>
@@ -200,7 +269,7 @@ export default function GiftCove({ signedIn, wishlists, counts, santaGroups, url
                                     href={list.url}
                                     className={
                                         i === 0
-                                            ? 'mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white'
+                                            ? 'mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white'
                                             : 'mt-2 inline-block text-sm text-accent underline'
                                     }
                                 >
@@ -209,77 +278,86 @@ export default function GiftCove({ signedIn, wishlists, counts, santaGroups, url
                             </li>
                         ))}
                     </ul>
-
-                    {/*
-                      A second list for yourself, started from here.
-
-                      `?new=mine` opens the create form on the right shape, the
-                      same way the cards below open it on theirs — otherwise
-                      this points at an index and leaves the reader to work out
-                      which button begins the thing they just read about.
-                    */}
-                    <Link
-                        href={`${urls.lists}?new=mine`}
-                        className="mt-3 inline-block text-sm text-accent underline"
-                    >
-                        + {t('gift_cove.another_list')}
-                    </Link>
                 </section>
-            )}
-
-            {!signedIn && (
-                <p className="mt-6 max-w-2xl rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
-                    {t('lists.sign_in_hint')}{' '}
-                    <SignInLink hint={t('lists.sign_in_hint')} className="underline">
-                        {t('nav.sign_in')}
-                    </SignInLink>
-                </p>
             )}
 
             <section className="mt-12">
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
-                    <h2 className="text-lg font-medium">{t('gift_cove.tools')}</h2>
+                    <div>
+                        <h2 className="text-lg font-medium">{t('gift_cove.tools')}</h2>
+                        <p className="mt-1 text-sm text-ink-soft">{t('gift_cove.tools_intro')}</p>
+                    </div>
                     {/*
                       A real page now, not an anchor into the bottom of this
-                      one. The manual is nine entries of three steps, and it was
-                      sitting underneath the dashboard most visits come for —
-                      two readers wanting opposite things on one page. Moving it
-                      also gives the explanation an address that an email or a
-                      search result can point at.
+                      one: the manual is nine entries of three steps, and it
+                      wants an address an email or a search result can point at.
                     */}
-                    <Link
-                        href={urls.manual}
-                        className="text-sm text-ink-soft underline hover:text-ink"
-                    >
+                    <Link href={urls.manual} className="text-sm text-ink-soft underline hover:text-ink">
                         {t('gift_cove.manual_link')}
                     </Link>
                 </div>
 
-                <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {tools.map((tool) => (
-                        <li key={tool.key}>
-                            <Link
-                                href={tool.href}
-                                className="group flex h-full flex-col rounded-card border border-line bg-card p-6 transition hover:border-ink"
-                            >
-                                <div className="flex items-start justify-between gap-3">
-                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white">
-                                        <ToolIcon name={tool.key} className="h-5 w-5" />
-                                    </span>
-                                    {tool.badge && (
-                                        <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                                            {tool.badge}
-                                        </span>
-                                    )}
-                                </div>
-                                <h3 className="mt-4 font-medium">{t(`gift_cove.${tool.key}_title`)}</h3>
-                                <p className="mt-2 text-sm text-ink-soft">
-                                    {t(`gift_cove.${tool.key}_body`)}
-                                </p>
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
+                {BANDS.map((band) => {
+                    const inBand = cards.filter((card) => card.band === band)
+
+                    if (inBand.length === 0) {
+                        return null
+                    }
+
+                    // Four across when the band divides by four, three
+                    // otherwise: 3, 3, 6, 4, 4 all come out as full rows.
+                    const columns = inBand.length % 4 === 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
+
+                    return (
+                        <div key={band} className="mt-8">
+                            <h3 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
+                                {t(`gift_cove.band_${band}`)}
+                            </h3>
+
+                            <ul className={`mt-3 grid gap-4 sm:grid-cols-2 ${columns}`}>
+                                {inBand.map((card) => (
+                                    <li key={card.key}>
+                                        <Link
+                                            href={card.href}
+                                            className="group flex h-full flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent transition group-hover:bg-accent group-hover:text-white">
+                                                    {'tool' in card.icon ? (
+                                                        <ToolIcon name={card.icon.tool} className="h-5 w-5" />
+                                                    ) : (
+                                                        <CoveIcon name={card.icon.cove} className="h-5 w-5" />
+                                                    )}
+                                                </span>
+                                                {/*
+                                                  A circle, sized like the icon opposite it, so
+                                                  it reads as a badge; `tabular-nums` keeps 8
+                                                  and 11 the same width across a grid.
+                                                */}
+                                                {card.badge && (
+                                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-base font-semibold text-accent tabular-nums">
+                                                        {card.badge}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h4 className="mt-4 font-medium">{t(`gift_cove.${card.key}_title`)}</h4>
+                                            <p className="mt-2 text-sm text-ink-soft">{t(`gift_cove.${card.key}_body`)}</p>
+                                            {/*
+                                              The button, last and pushed to the bottom so a
+                                              row of cards has its buttons on one line. It is
+                                              part of the same link as the card: one target,
+                                              two ways to see it.
+                                            */}
+                                            <span className="mt-auto pt-4 text-sm font-medium text-accent group-hover:underline">
+                                                {t(`gift_cove.${card.key}_cta`)} →
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )
+                })}
             </section>
 
             {santaGroups.length > 0 && (
@@ -302,10 +380,6 @@ export default function GiftCove({ signedIn, wishlists, counts, santaGroups, url
                     </ul>
                 </section>
             )}
-
-            <p className="mt-12 max-w-2xl rounded-card border border-line bg-card p-4 text-sm text-ink-soft">
-                {t('gift_cove.privacy')}
-            </p>
         </>
     )
 }

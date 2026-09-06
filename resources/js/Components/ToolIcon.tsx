@@ -11,6 +11,13 @@ export type ToolKey =
     | 'quiz'
     | 'suggestions'
     | 'whisperer'
+    | 'search'
+    | 'alerts'
+    | 'friends'
+    | 'guides'
+    | 'split'
+    | 'build'
+    | 'board'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -128,6 +135,79 @@ const paths: Record<ToolKey, ReactNode> = {
         <>
             <path d="M20 14.5a2.5 2.5 0 0 1-2.5 2.5H9l-4.5 3.5V6.5A2.5 2.5 0 0 1 7 4h10.5A2.5 2.5 0 0 1 20 6.5z" />
             <path d="M12.2 7.5v6M9.2 10.5h6" />
+        </>
+    ),
+
+    /*
+     * The four that are not list tools.
+     *
+     * The Gift Cove used to show the nine list tools and nothing else, which
+     * described a third of the site. These are the rest of it — finding a
+     * product, being told when its price moves, the people you share with, and
+     * the guides — drawn in the same set so the page reads as one map rather
+     * than a toolbox with a footer stapled on. The Coves themselves (daily,
+     * surprise, ideas) keep their own `CoveIcon` drawings: those are the
+     * vocabulary readers already met in the nav, and a second version here
+     * would be two pictures for one thing.
+     */
+
+    // A magnifier. Search and the barcode scanner share one card and one glyph:
+    // both answer "is this sold here, and for how much".
+    search: (
+        <>
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="m20.5 20.5-5.2-5.2" />
+        </>
+    ),
+
+    // A bell — the one tool that comes to you instead of waiting to be opened.
+    alerts: (
+        <>
+            <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" />
+            <path d="M10 20.5a2 2 0 0 0 4 0" />
+        </>
+    ),
+
+    // One person and a plus: a connection you make, as opposed to `collab`'s
+    // two people already on one list.
+    friends: (
+        <>
+            <circle cx="9.5" cy="8" r="3.5" />
+            <path d="M3 20v-1.5a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5V20" />
+            <path d="M19 8v6M16 11h6" />
+        </>
+    ),
+
+    // An open book: the guides are the one thing here you read rather than use.
+    guides: (
+        <>
+            <path d="M12 6.5c-1.6-1.4-4-2-7.5-2v13c3.5 0 5.9.6 7.5 2 1.6-1.4 4-2 7.5-2v-13c-3.5 0-5.9.6-7.5 2z" />
+            <path d="M12 6.5v13" />
+        </>
+    ),
+
+    // Two boxes, one ticked: several givers, each marking what they take.
+    split: (
+        <>
+            <rect x="3.5" y="4.5" width="7" height="7" rx="1.5" />
+            <rect x="13.5" y="12.5" width="7" height="7" rx="1.5" />
+            <path d="m5.5 8 1.5 1.5L10 6.5" />
+        </>
+    ),
+
+    // A list with a plus at the corner: other people adding to it.
+    build: (
+        <>
+            <path d="M5 5.5h9M5 10h9M5 14.5h6" />
+            <path d="M17 13v6M14 16h6" />
+        </>
+    ),
+
+    // Two speech bubbles: a conversation about the list, not on it.
+    board: (
+        <>
+            <path d="M4 5.5h10v7H8l-3 2.5v-2.5H4z" />
+            <path d="M14 9.5h6v6h-1v2.5l-3-2.5h-2v-2" />
         </>
     ),
 

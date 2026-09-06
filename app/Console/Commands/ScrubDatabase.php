@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Support\ShareCode;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -45,8 +46,23 @@ class ScrubDatabase extends Command
                 UPDATE users
                 SET email = 'user-' || id || '@scrubbed.invalid',
                     name  = 'Test User ' || id,
-                    avatar_url = NULL
+                    avatar_url = NULL,
+                    -- A real date of birth, and the one column here that is
+                    -- special-category-adjacent rather than merely identifying.
+                    birthday = NULL
             SQL);
+
+            /*
+             * Friendships and the birthdays people wrote down about each other.
+             *
+             * The graph itself is personal data — who knows whom — and the
+             * dates on it are second-hand facts about people who never typed
+             * them here. Deleted rather than anonymised: nothing joins to a
+             * friendship, and a scrubbed one would be a random pair of test
+             * users pretending to know each other.
+             */
+            DB::statement('DELETE FROM friendships');
+            DB::statement('DELETE FROM friend_invites');
 
             DB::statement(<<<'SQL'
                 UPDATE recipients
@@ -56,11 +72,19 @@ class ScrubDatabase extends Command
                     share_token = gen_random_uuid()
             SQL);
 
-            DB::statement(<<<'SQL'
-                UPDATE wishlists
-                SET description = NULL,
-                    share_token = gen_random_uuid()
-            SQL);
+            DB::statement('UPDATE wishlists SET description = NULL');
+
+            /*
+             * A fresh share code per list, minted in PHP.
+             *
+             * `gen_random_uuid()` used to do this, and the column is not a uuid
+             * any more — see App\Support\ShareCode. Rotating them is the point:
+             * a production dump on a laptop must not carry links that still
+             * open the real lists.
+             */
+            foreach (DB::table('wishlists')->pluck('id') as $id) {
+                DB::table('wishlists')->where('id', $id)->update(['share_token' => ShareCode::make()]);
+            }
 
             DB::statement('UPDATE wishlist_items SET note = NULL');
 

@@ -3,9 +3,12 @@ import { useEffect, useRef, useState } from 'react'
 import AddProduct from '../../Components/AddProduct'
 import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
-import { formatPrice } from '../../types'
 import ListTools, { type Panel } from '../../Components/ListTools'
-import ListKindBadge, { type ListKind } from '../../Components/ListKindBadge'
+import { type ListKind } from '../../Components/ListKindBadge'
+import EditManualItem from '../../Components/EditManualItem'
+import SaveToList from '../../Components/SaveToList'
+import ListItemCard from '../../Components/ListItemCard'
+import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
 import { markRemoved } from '../../savedItems'
@@ -21,6 +24,9 @@ interface Item {
     groupId: number | null
     /** Off-site, for a hand-written item. Never an Inertia visit. */
     externalUrl: string | null
+    /** Typed by somebody rather than saved from the catalogue, so its title,
+     *  link and price are theirs to correct. */
+    manual: boolean
     /**
      * Our page for it — already carrying the market the *product* is in, which
      * is not necessarily the one this page is being read in. A list is not
@@ -69,6 +75,17 @@ interface Suggestion {
 }
 
 interface Props {
+    /**
+     * The owner's friends, for "Share with friends".
+     *
+     * Empty for anybody who is not the owner. Sharing is a row per person you
+     * picked, not a switch. See the ListSharer service.
+     */
+    friends: { id: number; name: string }[]
+    /** Which of the three roles this reader has. Decided on the server. */
+    role: ListRole
+    /** Whose list it is, when it is not yours. Null for an anonymous owner. */
+    ownerName: string | null
     access: { isOwner: boolean; canEdit: boolean }
     suggestions: Suggestion[]
     canHandOver: boolean
@@ -97,6 +114,8 @@ interface Props {
         claimVisibility: string
         ownerSeesClaims: boolean
         linkCanAdd: boolean
+        /** Who this list has already been shared with, by id. */
+        sharedWith: number[]
         pledgersVisible: boolean
         /** Cents per person on a group gift, or null for "everyone names their own". */
         pledgeAmount: number | null
@@ -124,6 +143,9 @@ interface Props {
 
 export default function ListShow({
     list,
+    friends,
+    role,
+    ownerName,
     items,
     pot,
     target,
@@ -143,6 +165,10 @@ export default function ListShow({
 }: Props) {
     const { market, flash } = usePage<SharedProps>().props
     const { t } = useTranslations()
+
+    // Which hand-written item has its correction form open. One at a time: it
+    // is a small fix, not a mode.
+    const [editingItem, setEditingItem] = useState<number | null>(null)
     const base = `/${market.key}`
 
     /*
@@ -209,7 +235,12 @@ export default function ListShow({
                               may claim, who may vote and who sees the money, and
                               which this page has never said out loud.
                             */}
-                            <ListKindBadge kind={list.kind as ListKind} />
+                            <ListPills
+                                kind={list.kind as ListKind}
+                                role={role}
+                                ownerName={ownerName}
+                                canAdd={list.shareUrl !== null && list.linkCanAdd}
+                            />
                             {/*
                               Shared or private, as a chip rather than the two
                               sentences that used to sit under the title — one
@@ -444,6 +475,7 @@ export default function ListShow({
                     <ListTools
                         base={base}
                         list={list}
+                        friends={friends}
                         access={access}
                         collaborators={collaborators}
                         suggestions={suggestions}
@@ -553,117 +585,155 @@ export default function ListShow({
                                 </div>
                             )}
 
-                            <ul className="mt-3 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
+                            {/*
+                              The same grid of cards the shared page uses.
+
+                              This was a column of rows inside one bordered box,
+                              with 56px thumbnails, while `/l/{code}` showed the
+                              identical items as 80px cards in two columns.
+                              Nothing chose that — the two pages were written
+                              months apart and drifted — and a person meets both
+                              sides of their own list within minutes of sharing
+                              it, so the mismatch reads as two different lists.
+
+                              `ListItemCard` holds the product half. The actions
+                              stay here, because the owner's two are genuinely
+                              not the visitor's four.
+                            */}
+                            <ul className="mt-3 grid gap-4 sm:grid-cols-2">
                                 {items.map((item) => (
-                                    <li
+                                    <ListItemCard
                                         key={item.id}
-                                        ref={item.id === fresh ? freshRow : undefined}
-                                        className={`p-4 transition-colors duration-1000 ${
-                                            item.id === fresh ? 'bg-sage/15' : ''
-                                        }`}
+                                        innerRef={item.id === fresh ? freshRow : undefined}
+                                        className={
+                                            item.id === fresh
+                                                ? 'bg-sage/15 transition-colors duration-1000'
+                                                : 'transition-colors duration-1000'
+                                        }
+                                        title={item.title}
+                                        image={item.image}
+                                        url={item.url}
+                                        externalUrl={item.externalUrl}
+                                        note={item.note}
+                                        price={item.currentPrice}
+                                        was={item.price}
+                                        market={market}
+                                        aside={
+                                            <>
+                                                {/*
+                                                  Copy to another list, beside remove.
+
+                                                  The two together are also the move:
+                                                  copy, then remove. That is the whole
+                                                  argument for not having a move — a
+                                                  second verb whose only failure mode is
+                                                  destroying the original, for something
+                                                  the page can already do in two
+                                                  deliberate presses.
+                                                */}
+                                                {/*
+                                                  Put it on another of my lists.
+
+                                                  The save picker when there is a
+                                                  product behind the row — the same
+                                                  control as every product card and
+                                                  as the shared page, so it is one
+                                                  habit rather than three.
+
+                                                  `CopyToList` only for a
+                                                  hand-written item, which has no
+                                                  `group_id` to save and must have
+                                                  the row itself copied. Same
+                                                  bookmark, same menu; a different
+                                                  endpoint underneath.
+                                                */}
+                                                {access.canEdit && (
+                                                    item.groupId !== null ? (
+                                                        <SaveToList groupId={item.groupId} compact />
+                                                    ) : (
+                                                        <CopyToList
+                                                            action={`${base}/lists/${list.id}/items/${item.id}/copy`}
+                                                            targets={copyTargets}
+                                                            groupId={null}
+                                                        />
+                                                    )
+                                                )}
+
+                                                {/*
+                                                  `isOwner`, not `canEdit`.
+
+                                                  A contributor adds; only the owner
+                                                  takes things off. `canEdit` is also
+                                                  true for a legacy editor collaborator,
+                                                  and a helper able to delete is a list
+                                                  that quietly loses items — including
+                                                  ones somebody has already claimed and
+                                                  bought. Mirrored, never trusted:
+                                                  `WishlistItemController::destroy()`
+                                                  asks the same question again.
+                                                */}
+                                                {/*
+                                                  Correct what you typed.
+
+                                                  Only on a hand-written item:
+                                                  on a catalogue one those
+                                                  columns record what the feed
+                                                  said, and the price history is
+                                                  measured against them.
+                                                  `update()` drops the fields
+                                                  server-side for such an item,
+                                                  so this is the reason that
+                                                  branch is never reached rather
+                                                  than the thing preventing it.
+                                                */}
+                                                {access.isOwner && item.manual && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setEditingItem(
+                                                                editingItem === item.id ? null : item.id,
+                                                            )
+                                                        }
+                                                        aria-label={t('lists.edit_item')}
+                                                        title={t('lists.edit_item')}
+                                                        className="rounded p-2 text-ink-soft hover:text-accent"
+                                                    >
+                                                        ✎
+                                                    </button>
+                                                )}
+
+                                                {access.isOwner && (
+                                                    <button
+                                                        onClick={() =>
+                                                            router.delete(`${base}/list-items/${item.id}`, {
+                                                                preserveScroll: true,
+                                                                // Otherwise the bookmark on the
+                                                                // product page still reads as
+                                                                // saved after the item has gone.
+                                                                onSuccess: () =>
+                                                                    item.groupId !== null
+                                                                    && markRemoved(item.groupId),
+                                                            })
+                                                        }
+                                                        aria-label={t('lists.remove')}
+                                                        className="rounded p-2 text-ink-soft hover:text-accent"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                )}
+                                            </>
+                                        }
                                     >
-                                      <div className="flex items-center gap-4">
-                                        {item.image && (
-                                            <img
-                                                src={item.image}
-                                                alt=""
-                                                className="h-14 w-14 rounded object-contain"
-                                                onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
+                                        {editingItem === item.id && (
+                                            <EditManualItem
+                                                action={`${base}/list-items/${item.id}`}
+                                                title={item.title}
+                                                url={item.externalUrl}
+                                                price={item.price}
+                                                onDone={() => setEditingItem(null)}
                                             />
                                         )}
-
-                                        <div className="min-w-0 flex-1">
-                                            {item.url ? (
-                                                <Link href={item.url} className="line-clamp-3 font-medium hover:underline">
-                                                    {item.title}
-                                                </Link>
-                                            ) : item.externalUrl ? (
-                                                // A link the owner typed. Still `noopener
-                                                // noreferrer nofollow`: this list gets
-                                                // shared, and by then the link is being
-                                                // followed by people who did not type it.
-                                                <a
-                                                    href={item.externalUrl}
-                                                    target="_blank"
-                                                    rel="nofollow noopener noreferrer"
-                                                    className="line-clamp-3 font-medium hover:underline"
-                                                >
-                                                    {item.title}
-                                                </a>
-                                            ) : (
-                                                <span className="line-clamp-3 font-medium">{item.title}</span>
-                                            )}
-                                            {item.note && <p className="text-sm text-ink-soft">{item.note}</p>}
-
-                                            {/*
-                                              Price under the title, not in a column
-                                              beside it — the shape `AddProduct`'s
-                                              search rows already use, so a product
-                                              looks the same when you pick it and after
-                                              it is on the list.
-
-                                              The old right-aligned column cost the
-                                              title a third of a narrow screen and set
-                                              the price on its own baseline, so a long
-                                              feed title wrapped past a price floating
-                                              level with its first line.
-                                            */}
-                                            {item.currentPrice !== null && (
-                                                <p className="mt-0.5 text-sm">
-                                                    <span className="font-semibold">
-                                                        {t('lists.price_now', {
-                                                            price: formatPrice(item.currentPrice, market),
-                                                        })}
-                                                    </span>
-
-                                                    {/* Only when it actually moved — otherwise it is noise. */}
-                                                    {item.price !== null && item.price !== item.currentPrice && (
-                                                        <span className="ml-2 text-xs text-ink-soft line-through">
-                                                            {formatPrice(item.price, market)}
-                                                        </span>
-                                                    )}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/*
-                                          Copy to another list, beside remove.
-
-                                          The two per-row actions together are
-                                          also the move: copy, then remove. That
-                                          is the whole argument for not having a
-                                          move — a second verb whose only failure
-                                          mode is destroying the original, for
-                                          something the page can already do in
-                                          two deliberate presses.
-                                        */}
-                                        {access.canEdit && (
-                                            <CopyToList
-                                                action={`${base}/lists/${list.id}/items/${item.id}/copy`}
-                                                targets={copyTargets}
-                                                groupId={item.groupId}
-                                            />
-                                        )}
-
-                                        <button
-                                            onClick={() =>
-                                                router.delete(`${base}/list-items/${item.id}`, {
-                                                    preserveScroll: true,
-                                                    // Otherwise the bookmark on the product
-                                                    // page still reads as saved after the
-                                                    // item has gone.
-                                                    onSuccess: () =>
-                                                        item.groupId !== null && markRemoved(item.groupId),
-                                                })
-                                            }
-                                            aria-label={t('lists.remove')}
-                                            className="rounded p-2 text-ink-soft hover:text-accent"
-                                        >
-                                            ✕
-                                        </button>
-                                      </div>
-
-                                    </li>
+                                    </ListItemCard>
                                 ))}
                             </ul>
                         </>

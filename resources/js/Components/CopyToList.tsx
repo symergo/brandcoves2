@@ -1,5 +1,6 @@
 import { router } from '@inertiajs/react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import ShareIcon from './ShareIcon'
 import { markSaved } from '../savedItems'
 import { useTranslations } from '../useTranslations'
@@ -36,6 +37,36 @@ export interface CopyTarget {
  * The claim never travels, and that is enforced server-side rather than here:
  * carrying one would announce on another list's page that something has been
  * bought.
+ *
+ * ## Why this is not just `SaveToList`
+ *
+ * It nearly is, and for a product from the catalogue it **is**: both pages use
+ * the save picker for those, because saving a product to one of your lists is
+ * exactly the errand and that control already does it well.
+ *
+ * A **hand-written** item is the exception, and the reason this exists. There is
+ * no `group_id` behind it — somebody typed a title, maybe a link, maybe a price
+ * — so there is no product to save. The row itself has to be copied, which is
+ * what `ItemTransferController` does and what `SaveToList` has no way to ask
+ * for.
+ *
+ * So: same bookmark, same menu, same "+ new list" — a different endpoint
+ * underneath, for the one kind of item that needs it. If a reader can tell
+ * which of the two they are looking at, something has drifted again.
+ *
+ * ## Why the menu is a portal
+ *
+ * The same reason `SaveToList`'s is, found the same way — by it being invisible.
+ * The items on a list page sit in a `<ul>` with `overflow-hidden` on it, for the
+ * rounded corners, so an absolutely positioned panel inside a row is clipped at
+ * the edge of that box. On a long list the clipping is off-screen and nobody
+ * notices; on a **short** one the menu is taller than the remaining rows and
+ * most of it is simply cut away.
+ *
+ * Rendering into `document.body` escapes every `overflow-hidden` ancestor and
+ * every stacking context at once, which no amount of z-index can do. The cost
+ * is that fixed positioning does not follow the page, so it is recomputed on
+ * scroll and resize and closed on neither.
  */
 export default function CopyToList({
     action,
@@ -60,7 +91,75 @@ export default function CopyToList({
     const { t } = useTranslations()
     const [open, setOpen] = useState(false)
     const [sending, setSending] = useState(false)
+
+    // Naming a new list, inside the menu. Closed again whenever the menu is.
+    const [creating, setCreating] = useState(false)
+    const [name, setName] = useState('')
     const box = useRef<HTMLDivElement>(null)
+    const trigger = useRef<HTMLButtonElement>(null)
+    const panel = useRef<HTMLDivElement>(null)
+
+    // Where the portal puts the menu, in viewport coordinates. Null until it
+    // has been measured, which is also what stops it flashing at 0,0.
+    const [place, setPlace] = useState<{ top: number; left: number; maxHeight: number } | null>(null)
+
+    /*
+     * Measure from the button, and keep the panel on screen.
+     *
+     * The same arithmetic `SaveToList` does, and for the same two failures: a
+     * control at the right edge pushes a fixed panel off the viewport, and one
+     * near the bottom opens below the fold. The last row of a short list is
+     * both at once, which is exactly where this was reported.
+     */
+    const position = useCallback(() => {
+        const button = trigger.current
+
+        if (! button) return
+
+        const rect = button.getBoundingClientRect()
+        const width = 224 // w-56
+        const edge = 8
+
+        const left = Math.min(
+            Math.max(edge, rect.right - width),
+            window.innerWidth - width - edge,
+        )
+
+        const below = window.innerHeight - rect.bottom - edge - 6
+        const above = rect.top - edge - 6
+
+        // Flip above the trigger when there is more room there, and cap either
+        // way so somebody with twenty lists gets a panel that scrolls rather
+        // than one that runs off the screen.
+        const flipped = below < 200 && above > below
+
+        setPlace({
+            top: flipped ? Math.max(edge, rect.top - 6 - Math.min(above, 320)) : rect.bottom + 6,
+            left,
+            maxHeight: Math.max(160, Math.min(flipped ? above : below, 320)),
+        })
+    }, [])
+
+    useLayoutEffect(() => {
+        if (open) position()
+    }, [open, position])
+
+    /*
+     * Fixed positioning does not follow the page, so it is recomputed rather
+     * than left behind. `true` on the scroll listener catches scrolling inside
+     * any container, not just the window.
+     */
+    useEffect(() => {
+        if (! open) return
+
+        window.addEventListener('scroll', position, true)
+        window.addEventListener('resize', position)
+
+        return () => {
+            window.removeEventListener('scroll', position, true)
+            window.removeEventListener('resize', position)
+        }
+    }, [open, position])
 
     /*
      * Close on a click away, and on Escape.
@@ -74,7 +173,14 @@ export default function CopyToList({
         if (! open) return
 
         const away = (e: MouseEvent) => {
-            if (! box.current?.contains(e.target as Node)) setOpen(false)
+            // Both, because the menu is no longer inside `box`: it is rendered
+            // into `document.body`, so a click on it is a click outside the
+            // wrapper and would otherwise close the panel before the button
+            // inside it could fire.
+            if (box.current?.contains(e.target as Node)) return
+            if (panel.current?.contains(e.target as Node)) return
+
+            setOpen(false)
         }
 
         const escape = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
@@ -94,11 +200,15 @@ export default function CopyToList({
         return null
     }
 
-    const copy = (to: string) => {
+    /**
+     * @param to       an existing list, or null when one is being named
+     * @param newList  a list to create and copy into, as the save picker does
+     */
+    const copy = (to: string | null, newList?: string) => {
         setSending(true)
         router.post(
             action,
-            { to },
+            newList === undefined ? { to } : { new_list: newList },
             {
                 preserveScroll: true,
                 /*
@@ -116,6 +226,8 @@ export default function CopyToList({
                 onFinish: () => {
                     setSending(false)
                     setOpen(false)
+                    setCreating(false)
+                    setName('')
                 },
             },
         )
@@ -153,6 +265,7 @@ export default function CopyToList({
               else. Same treatment the board's delete gets.
             */}
             <button
+                ref={trigger}
                 type="button"
                 onClick={() => (only ? copy(only.id) : setOpen((v) => !v))}
                 // Only when it opens something. Announcing a collapsed panel on
@@ -168,11 +281,39 @@ export default function CopyToList({
                         : 'text-xs text-ink-soft underline hover:text-ink disabled:opacity-50'
                 }
             >
-                {label ?? <ShareIcon name="copy" />}
+                {label ?? (
+                    /*
+                      The same bookmark `SaveToList` draws, at the same size.
+
+                      It was a copy glyph, which made the two controls look like
+                      two different offers sitting in the same corner of two
+                      pages that show the same list. The verb underneath differs
+                      — this copies a row, that saves a product — and the person
+                      pressing it wants the identical thing either way: put this
+                      on one of my lists.
+                    */
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
+                        <path
+                            d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinejoin="round"
+                        />
+                    </svg>
+                )}
             </button>
 
-            {open && only === null && (
-                <div className="absolute right-0 z-40 mt-1 w-56 rounded-card border border-line bg-card p-1 shadow-xl">
+            {open && only === null && place !== null && createPortal(
+                <div
+                    ref={panel}
+                    style={{
+                        position: 'fixed',
+                        top: place.top,
+                        left: place.left,
+                        maxHeight: place.maxHeight,
+                    }}
+                    className="z-50 w-56 overflow-y-auto rounded-card border border-line bg-card p-1 shadow-xl">
                     <p className="px-3 py-2 text-xs text-ink-soft">{t('lists.copy_to_which')}</p>
 
                     {/*
@@ -196,7 +337,58 @@ export default function CopyToList({
                             </li>
                         ))}
                     </ul>
-                </div>
+
+                    {/*
+                      A list named on the spot, exactly as the save picker
+                      offers.
+
+                      Without it this menu could only file into a list that
+                      already existed, so somebody with none met a panel with
+                      nothing in it — and that, rather than any deliberate
+                      choice, is why the shared page had to draw a different
+                      control for a visitor who had not started a list yet.
+                    */}
+                    {creating ? (
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault()
+
+                                if (name.trim() === '') {
+                                    return
+                                }
+
+                                copy(null, name.trim())
+                            }}
+                            className="p-1"
+                        >
+                            <input
+                                autoFocus
+                                required
+                                maxLength={120}
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder={t('lists.list_name')}
+                                className="w-full rounded border border-line bg-cream px-2 py-1.5 text-sm"
+                            />
+                            <button
+                                type="submit"
+                                disabled={sending}
+                                className="mt-1 w-full rounded bg-accent px-2 py-1.5 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
+                            >
+                                {t('lists.create')}
+                            </button>
+                        </form>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setCreating(true)}
+                            className="block w-full rounded px-3 py-2 text-left text-sm text-accent hover:bg-line/40"
+                        >
+                            + {t('lists.new_list')}
+                        </button>
+                    )}
+                </div>,
+                document.body,
             )}
         </div>
     )

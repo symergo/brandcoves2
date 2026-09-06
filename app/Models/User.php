@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Market;
+use App\Services\Social\Friends;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
@@ -17,7 +18,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'preferred_market', 'email_opt_in', 'avatar_url'])]
+#[Fillable(['name', 'email', 'password', 'preferred_market', 'email_opt_in', 'avatar_url', 'birthday', 'friends_see_birthday'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, HasName
 {
@@ -37,6 +38,10 @@ class User extends Authenticatable implements FilamentUser, HasName
             'preferred_market' => Market::class,
             'is_admin' => 'boolean',
             'email_opt_in' => 'boolean',
+            // A date, never a datetime: a birthday has no time of day, and
+            // casting it as one makes it move across timezones.
+            'birthday' => 'date',
+            'friends_see_birthday' => 'boolean',
         ];
     }
 
@@ -56,6 +61,19 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function inbox(): HasMany
     {
         return $this->hasMany(Notification::class)->latest();
+    }
+
+    /**
+     * The people this person shares lists with.
+     *
+     * One direction of a symmetric pair; {@see Friends}
+     * is the only thing that writes both. Not a permission — see the migration.
+     *
+     * @return HasMany<Friendship, $this>
+     */
+    public function friendships(): HasMany
+    {
+        return $this->hasMany(Friendship::class);
     }
 
     /**

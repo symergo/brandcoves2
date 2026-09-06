@@ -54,6 +54,44 @@ class ListBoardTest extends TestCase
     }
 
     #[Test]
+    public function asking_to_see_claims_does_not_open_the_board(): void
+    {
+        /*
+         * The board is not covered by the claims setting, and must not be
+         * reachable through it.
+         *
+         * `owner_sees_claims` is a choice about your own surprise, item by
+         * item, that you can weigh before making it. A board is other people
+         * talking — "I've got the scarf, someone take the boots", "is this too
+         * much?", "he already has one" — half of it about you and none of it
+         * addressed to you. Consenting to see a tick beside an item is not
+         * consenting to read the conversation.
+         *
+         * It used to be one switch, so ticking the box handed the recipient the
+         * whole thread. The rule now: the person a wish list is for never sees
+         * its board, whatever else they have turned on.
+         */
+        $owner = User::factory()->create();
+        $list = $this->list($owner, ListKind::Mine);
+
+        $list->update(['owner_sees_claims' => true]);
+
+        $this->actingAs($owner)
+            ->get("/be-nl/lists/{$list->id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('board', null));
+
+        $props = $this->props($this->actingAs($owner)->get("/be-nl/l/{$list->share_token}")->assertOk());
+        $this->assertNull($props['board'], 'The share link is the same page for them.');
+
+        // And they still cannot post to it, which was already true and stays so
+        // through the setting.
+        $this->actingAs($owner)
+            ->postJson("/be-nl/l/{$list->share_token}/messages", ['body' => 'Hello?'])
+            ->assertForbidden();
+    }
+
+    #[Test]
     public function everybody_else_on_that_wish_list_does(): void
     {
         // The people buying need somewhere to coordinate; it is only its owner

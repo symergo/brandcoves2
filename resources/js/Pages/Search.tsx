@@ -1068,6 +1068,11 @@ function FilterPanel({
             {showShops && facets.merchants.length > 0 && (
                 <Facet
                     title={t('search.shop')}
+                    /* Open, like Brand above it. Two facets side by side, one
+                       collapsed and one not, reads as an accident rather than a
+                       distinction — and a shop list short enough to sit under a
+                       heading is not worth a press to reveal. */
+                    collapsible={false}
                     items={facets.merchants.map((m) => ({
                         key: String(m.id),
                         label: m.name,

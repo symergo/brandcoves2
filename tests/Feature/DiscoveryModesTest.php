@@ -113,7 +113,17 @@ class DiscoveryModesTest extends TestCase
             'category' => 'B',
         ]);
 
-        $result = $this->engine()->discover('deals', $this->request());
+        /*
+         * Seeded, because the ranker explores.
+         *
+         * `Ranker::diversify()` is ε-greedy: with probability ε it puts a
+         * random candidate in the next slot, on purpose, so that something
+         * outside the current top slice can ever collect a reaction. Unseeded
+         * that uses `mt_rand()`, so asserting on position 0 was a coin flip —
+         * it failed roughly one run in twenty and looked like a scoring bug.
+         * The seed is what that method exists to accept.
+         */
+        $result = $this->engine()->discover('deals', $this->request(), seed: 1);
 
         $ids = array_map(fn ($i) => $i->group->id, $result->items);
 

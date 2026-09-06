@@ -9,7 +9,9 @@ export type ListKind = 'mine' | 'for_someone' | 'group'
  * The badge was three words in three identically grey pills, which is exactly
  * the shape you cannot tell apart at a glance — and a card is read at a glance,
  * on an index where every row carries one. A mark is recognised before a word
- * is read.
+ * is read, and a colour before a mark; the badge now carries all three. See
+ * {@link kindColours} for which colour and why the word is not the coloured
+ * part.
  *
  * Drawn from `ToolIcon` rather than newly: the heart, the clipboard and the two
  * figures are what the Gift Cove's tool grid already calls a wish list, a list
@@ -21,6 +23,36 @@ export const kindIcons: Record<ListKind, ToolKey> = {
     mine: 'wishlist',
     for_someone: 'giftlist',
     group: 'collab',
+}
+
+/**
+ * A colour per kind, from the three the palette already has.
+ *
+ * Three grey pills with three different drawings in them still take a moment to
+ * tell apart on an index where every row carries one — the mark is recognised
+ * before the word, and the colour before the mark. `sage`, `amber` and `accent`
+ * are the only three that are defined once and left alone by the dark theme, so
+ * a badge means the same thing in both.
+ *
+ * The assignment is not arbitrary: sage for your own list, the calm one that is
+ * simply yours; amber for a list about somebody else, warmer because it is about
+ * a person; accent for a group gift, the loudest, because it is the one with
+ * other people and their money in it.
+ *
+ * ## Why the tint and the border carry it, and not the text
+ *
+ * `amber` is #c4956a — about 2.4:1 against white, which is unreadable as body
+ * text and would have made one badge of three fail on contrast while the other
+ * two passed. So the word stays `text-ink`, which is near-black and flips with
+ * the theme, and the colour lives in the background wash, the border and the
+ * icon. Colour is then a *second* signal rather than the only one, which is
+ * also what keeps the badge legible to somebody who cannot separate these three
+ * hues.
+ */
+export const kindColours: Record<ListKind, { pill: string; icon: string }> = {
+    mine: { pill: 'border-sage/40 bg-sage/10', icon: 'text-sage' },
+    for_someone: { pill: 'border-amber/60 bg-amber/15', icon: 'text-amber' },
+    group: { pill: 'border-accent/40 bg-accent/10', icon: 'text-accent' },
 }
 
 /**
@@ -83,10 +115,11 @@ export default function ListKindBadge({
     className?: string
 }) {
     const { label } = useListKindWords()
+    const colours = kindColours[kind]
 
     return (
         <span
-            className={`inline-flex items-center gap-1 rounded-full bg-line/60 px-2 py-0.5 text-[11px] font-medium text-ink-soft ${className}`}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium text-ink ${colours.pill} ${className}`}
         >
             {/*
               The mark, then the word. Both, not one: the icon is what makes a
@@ -95,7 +128,7 @@ export default function ListKindBadge({
               `aria-hidden` throughout, so a screen reader hears the label alone
               — which is the whole of the information.
             */}
-            <ToolIcon name={kindIcons[kind]} className="h-3.5 w-3.5" />
+            <ToolIcon name={kindIcons[kind]} className={`h-3.5 w-3.5 ${colours.icon}`} />
             {label(kind)}
         </span>
     )

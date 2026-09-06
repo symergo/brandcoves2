@@ -70,18 +70,100 @@ a list belonging to a cookie cannot be opened on a second device, does not
 survive clearing the browser, and has no address a reminder could ever reach.
 It looked like a feature and behaved like a draft.
 
-Two things stay open to anonymous visitors, because requiring a login there
+One thing stays open to anonymous visitors, because requiring a login there
 breaks the feature rather than improving it:
 
-- **Claiming on a shared list.** That person followed a link once. Making them
-  register to say "I'll get this" is how a gift list stops working as a
-  coordination tool.
 - **`/for/{token}`.** The token *is* the credential; describing yourself needs
   no account. Adding products does, and "This is me" is the short path.
 
-`Owner`, `AnonymousIdentity` and `IdentityMerger` all remain — claiming, quiz
-attempts and pick reactions still hang off a cookie identity, and a list built
-before the rule changed still merges into an account at sign-in.
+Claiming used to be the second. It is not any more — see below.
+
+`Owner`, `AnonymousIdentity` and `IdentityMerger` all remain — quiz attempts and
+pick reactions still hang off a cookie identity, and a list built before the
+rule changed still merges into an account at sign-in.
+
+## Claiming needs an account too, 2026-09-06
+
+**Reversed deliberately, and for the same reason keeping a list was.** The
+argument for leaving claiming open was sound about the press — somebody followed
+a link once, and making them register to say "I'll get this" is how a gift list
+stops working as a coordination tool. It was wrong about everything after the
+press.
+
+A claim hangs off `WishlistItem::identityHash($owner->claimIdentity())`, and an
+anonymous identity is a **cookie**. So the person who claimed the scarf:
+
+- could not open the link on their phone and see that they had — the phone is a
+  different cookie, and the list showed the scarf as taken by a stranger;
+- could not release it from that phone, because `release()` matches on the hash;
+- lost the claim outright by clearing the browser, leaving an item marked as
+  spoken for, by nobody reachable, that nobody could hand back.
+
+Re-parenting those hashes at sign-in is not the way out, and
+[`IdentityMerger::claimsAreIntentionallyNotMerged()`](../../app/Services/Auth/IdentityMerger.php)
+has always said why: recomputing a claim hash for a person we can now name is
+the one thing the hash exists to prevent. An account is the only identity that
+survives a second device.
+
+**The press is not lost to the sign-in.** `POST /{market}/claim-intent` stashes
+the item in the session, exactly as `/save-intent` does for a save, and
+[`ReplayPendingClaim`](../../app/Listeners/ReplayPendingClaim.php) applies it on
+`Login` — both sign-in paths, so it cannot work on the magic link and not on
+Google. The page opens the sign-in dialog over the list rather than navigating
+away, because the list is what the person came for. See
+[`PendingClaim`](../../app/Services/Wishlist/PendingClaim.php).
+
+The replay asks **every guard again**, against the account rather than the
+anonymous visitor who pressed the button, because signing in changes the
+answers. The case that matters: somebody opens their own share link signed out,
+presses claim, and signs in — at which point they are the owner of a wish list
+and a claim would tell them what is taken. `a_pending_claim_is_dropped_when_the_
+account_turns_out_to_own_the_list` holds it.
+
+### Undo has no time limit, 2026-09-06
+
+`claim_undo_hours` was 24: releasing a claim worked for a day and then stopped,
+on the grounds that somebody quietly releasing weeks later leaves nobody buying
+the thing.
+
+That reads the wrong way round. The only person who can release a claim is the
+person holding it, and what they are saying is *I am not getting this after
+all* — information the list needs, and needs most when the occasion is close. A
+claim nobody can retract is not a present secured; it is an item marked as
+covered that nobody is buying, and the recipient is the one who finds out.
+
+It also failed badly in the interface. The page draws the undo button whenever
+the claim is yours, with no notion of a window, so after a day it was a
+live-looking button that answered with an error naming a rule nobody had ever
+been told about. That message no longer names one.
+
+`markSent()` is the honest half of the old worry: an item claimed weeks ago by
+somebody who then forgot reads as covered and is not, and the fix for that is
+asking whether it was bought, not forbidding the answer.
+
+The config key is gone rather than set to a large number, so nothing reads a
+window that is not enforced.
+
+### What stayed permissive
+
+`unclaim()` and `markSent()` still accept a cookie identity. Claims made before
+this rule exist and are hashed from a cookie; the browser holding it is the only
+thing on earth that can release them, and locking it out would strand every one
+of them as spoken for by nobody. New claims all belong to accounts, so this
+gradually stops mattering — and taking something back is the direction to be
+permissive in.
+
+### The page has two states, and they are not each other's inverse
+
+`canClaim` posts the claim; `claimNeedsAccount` stashes the intent and opens the
+dialog. Both are decided on the server, because a client-side `auth.user` check
+would put the account rule in two places. Neither is `! isOwner`: on a group list
+there is nothing to claim and therefore nothing to sign in *for*, and offering an
+account to somebody who still could not claim is a bounce dressed as an
+invitation.
+
+The button looks identical in both states. "Sign in to claim" as a label asks for
+the account first and the decision second, which is the wrong order.
 
 ### The original reasoning, kept for the record
 
@@ -101,6 +183,20 @@ row owned by nobody is readable by nobody and deletable by nobody.
 
 Requiring a login before someone can press Save is how you lose the visit — the person came to
 compare a price, not to sign up.
+
+## Sharing with a named friend is not a fourth visibility
+
+`wishlists.visibility` is the permission: private, link or public, and it decides who can reach a
+list at all. "Share with friends" sits beside it on the same panel and does something narrower —
+it writes a `wishlist_shares` row per person you picked, emails them the link, and makes the list
+appear on their friends page. Un-picking somebody takes it off that page and leaves their link
+working.
+
+The distinction is worth keeping sharp, because a control on the same panel that reads "share"
+invites being treated as a way to unshare something. It is not one. There was a
+`show_to_friends` **switch** here briefly and it was removed for a related reason: a friendship is
+made by opening any share link, so "my friends can see this" published to a set nobody had chosen.
+See [friends.md](friends.md#sharing-is-an-act-not-a-setting).
 
 ## A list belongs to a person, not to a market
 

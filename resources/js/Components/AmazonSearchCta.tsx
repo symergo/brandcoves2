@@ -108,10 +108,18 @@ export default function AmazonSearchCta({
                   after it. A Belgian visitor sent to amazon.com.be and a Dutch
                   one sent to amazon.nl are both getting the right shop, and
                   neither can tell that from the word "Amazon" alone.
+
+                  The host alone, with no verb in front of it. It read "Opent
+                  amazon.nl" under a label that already says what pressing does
+                  — the whole control is a link, and saying "opens" on it is the
+                  kind of narration that only reads as necessary to whoever
+                  wrote it. A domain on its own is unmistakably a destination,
+                  and it survives translation without a verb that has to agree
+                  with anything.
                 */}
                 <span className="mt-1 block text-xs text-white/80">
                     {detail !== null && <span>{detail} · </span>}
-                    {t('search.amazon_search_host', { host: link.host })}
+                    {link.host}
                 </span>
             </span>
 

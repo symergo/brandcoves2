@@ -9,13 +9,17 @@ use App\Models\ListOpen;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Notifications\ListActivity;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
+use App\Services\Social\Friends;
+use App\Services\Social\ShareReferral;
 use App\Services\Wishlist\Board;
 use App\Services\Wishlist\ClaimView;
 use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultTitle;
 use App\Support\CurrentMarket;
+use App\Support\ListAccess;
 use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,6 +45,8 @@ class SharedListController extends Controller
         SearchService $search,
         ContributionView $contributor,
         ClaimView $claims,
+        Friends $friends,
+        ShareReferral $referral,
     ): Response {
         $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
@@ -75,6 +81,40 @@ class SharedListController extends Controller
          */
         if (! $isOwner) {
             ListOpen::record($list, $owner);
+
+            /*
+             * And remember who sent it, so the two people know each other after.
+             *
+             * Sharing is a link, which made it frictionless and left both ends
+             * anonymous to each other: you claim something off a friend's
+             * registry and neither of you ends up with any record that the
+             * other exists, so the next occasion starts with a hunt through a
+             * chat history for a URL.
+             *
+             * Two paths, because a visitor is in one of two states and only one
+             * of them can be connected to anybody right now:
+             *
+             * - Signed in already: connect them here, on the read. The link has
+             *   been followed and both ends are accounts; there is nothing left
+             *   to wait for.
+             * - Not signed in: hold the referral in the session, and
+             *   `LinkSharerAsFriend` applies it if and when an account appears.
+             *   Claiming now asks for one, so this is the ordinary journey.
+             *
+             * Nothing is recorded against an anonymous visitor who never signs
+             * in. A friendship is between two accounts, and half of one is a
+             * cookie that will be cleared.
+             *
+             * Only for a list with a real account behind it: an anonymous
+             * owner is nobody to be connected to.
+             */
+            if ($list->owner !== null) {
+                if ($owner->user !== null) {
+                    $friends->link($owner->user, $list->owner);
+                } else {
+                    $referral->remember($list->owner->id);
+                }
+            }
         }
 
         /*
@@ -242,7 +282,24 @@ class SharedListController extends Controller
              * one buying the scarf; it is only the owner of a *wish* list who
              * must be kept out, and `$hideClaims` is what says so.
              */
-            'canClaim' => $claimable && ! $hideClaims && $identity !== null,
+            'canClaim' => $claimable && ! $hideClaims && $owner->isSignedIn(),
+
+            /*
+             * The same button, for somebody who has not signed in yet.
+             *
+             * Two props rather than one because they draw two different
+             * controls: `canClaim` posts the claim, this one stashes the intent
+             * and opens the sign-in dialog. Collapsing them into
+             * `canClaim: true` plus a client-side check of `auth.user` would
+             * put the account rule in two places, and the page's copy is
+             * already the half that drifts.
+             *
+             * Note it is not simply `! canClaim`: on a group list, or where
+             * claims are withheld, there is nothing to sign in *for*, and
+             * offering an account to somebody who still could not claim is a
+             * bounce dressed as an invitation.
+             */
+            'claimNeedsAccount' => $claimable && ! $hideClaims && ! $owner->isSignedIn(),
 
             /*
              * Whether claims are being withheld from this viewer, so the page
@@ -262,6 +319,37 @@ class SharedListController extends Controller
              * given in a panel somebody else opened is not consent.
              */
             'claimNames' => $claimable && $list->claim_visibility->namesClaimers(),
+            /*
+             * Lists this viewer may copy an item into.
+             *
+             * The same payload the owner's page sends, so both pages can draw
+             * the same control. It used to be `SaveToList` here and `CopyToList`
+             * there — two icons, two menus and two verbs for one errand ("put
+             * this on one of my lists"), and the difference was an accident of
+             * which page was written first.
+             *
+             * It also closes a gap. `SaveToList` works from a `group_id`, so a
+             * **hand-written** item on somebody's shared list had no control at
+             * all — while `ItemTransferController::fromShared` had been able to
+             * copy one the whole time. A note somebody typed is often the most
+             * copyable thing on a list.
+             *
+             * Empty for a visitor with no lists, and for an anonymous one:
+             * `ListAccess::scope()` gives an anonymous owner plain ownership,
+             * and they own nothing. The page falls back to `SaveToList` there,
+             * which is the only control that can make somebody's first list.
+             */
+            'copyTargets' => ListAccess::scope(Wishlist::query(), $owner)
+                ->whereKeyNot($list->id)
+                ->orderBy('title')
+                ->get(['id', 'title', 'owner_user_id', 'owner_anon_id'])
+                ->filter(fn (Wishlist $other): bool => ListAccess::canEdit($other, $owner))
+                ->map(fn (Wishlist $other): array => [
+                    'id' => $other->id,
+                    'title' => $other->displayTitle(),
+                ])
+                ->values(),
+
             'canSuggest' => $canSuggest,
 
             /*
@@ -462,11 +550,33 @@ class SharedListController extends Controller
     {
         $list = $this->findShared($token);
         $owner = Owner::fromRequest($request);
-        $identity = $owner->claimIdentity();
 
-        // Anonymous visitors can claim: requiring an account here would mean
-        // most people simply do not, and the list stops working as a
-        // coordination tool.
+        /*
+         * Claiming needs an account, and this is the one guard that says so.
+         *
+         * It did not, for most of this feature's life, and the argument was a
+         * good one: somebody followed a link once, and making them register to
+         * say "I'll get this" is how a gift list stops working as a
+         * coordination tool. That was right about the press and wrong about
+         * everything after it. A claim hangs off a hash of the claimer's
+         * identity, and an anonymous identity is a *cookie* — so the person who
+         * claimed the scarf could not open the link on their phone and see that
+         * they had, could not release it from there, and lost the claim outright
+         * by clearing the browser. The item stayed spoken for, by nobody
+         * reachable, and nobody could hand it back.
+         *
+         * Re-parenting those hashes at sign-in is not the way out; see
+         * App\Services\Auth\IdentityMerger for why. An account is the only
+         * identity that survives a second device.
+         *
+         * The press itself is still not lost: the page stashes the intent
+         * through `ClaimIntentController` and `ReplayPendingClaim` applies it
+         * the moment the account exists, so the sign-in is a detour rather than
+         * a dead end. See App\Services\Wishlist\PendingClaim.
+         */
+        abort_unless($owner->isSignedIn(), 403);
+
+        $identity = $owner->claimIdentity();
         abort_if($identity === null, 403);
 
         // Only a `mine` list is a registry. Hiding the button is not enough —
@@ -513,11 +623,36 @@ class SharedListController extends Controller
          * else: the row simply shows as taken, and without a word the tap looks
          * like a control that does not work.
          */
+        if ($claimed) {
+            /*
+             * And the organiser hears, on the kinds where they may.
+             *
+             * `ListActivity::claimed()` asks `shouldHideClaimsFrom()` — the same
+             * question this method asked two guards ago — so a wish list's owner
+             * is never written to. That gate lives there rather than here on
+             * purpose: an inbox row is the one channel that goes and finds
+             * somebody, and the rule it must obey should sit beside every other
+             * notification, not in the controller that happens to emit one.
+             */
+            app(ListActivity::class)->claimed($list, $owner, $wishlistItem->snapshot_title);
+        }
+
         return $claimed
             ? back()
             : back()->with('error', __('site.lists.already_claimed'));
     }
 
+    /**
+     * Hand it back.
+     *
+     * Note this asks for an *identity*, not an account, where `claim()` now
+     * insists on one. Claims made before that rule existed are hashed from a
+     * cookie, and the browser holding that cookie is the only thing on earth
+     * that can release them — locking it out would strand every one of them as
+     * spoken for by nobody. New claims all belong to accounts, so this
+     * gradually stops mattering; until then, taking something back is the
+     * direction to be permissive in.
+     */
     public function unclaim(Request $request, CurrentMarket $current, string $market, string $token, string $item): RedirectResponse
     {
         $list = $this->findShared($token);
@@ -529,13 +664,25 @@ class SharedListController extends Controller
             throw new NotFoundHttpException;
         }
 
-        // Only the person who claimed it, and only inside the undo window.
+        // Only the person who claimed it.
         $released = $wishlistItem->release(WishlistItem::identityHash($identity));
 
-        return back()->with(
-            $released ? 'success' : 'error',
-            __($released ? 'site.lists.unclaimed' : 'site.lists.cannot_unclaim'),
-        );
+        /*
+         * Nothing is announced when it works — the same rule `claim()` follows,
+         * a few lines up, and for the same reason.
+         *
+         * The row you just pressed goes back to offering "I'll get this", in
+         * place, under the finger that pressed it. A banner at the top of the
+         * document saying so is a second copy of that answer, further from the
+         * question, and on a long list it scrolls the page away from the item.
+         *
+         * The failure still speaks, because that one is visible nowhere else:
+         * the row simply stays claimed, and without a word the tap looks like a
+         * control that does not work.
+         */
+        return $released
+            ? back()
+            : back()->with('error', __('site.lists.cannot_unclaim'));
     }
 
     /**
@@ -566,10 +713,19 @@ class SharedListController extends Controller
         // cannot mark somebody else's errand done.
         $marked = $wishlistItem->markSent(WishlistItem::identityHash($identity));
 
-        return back()->with(
-            $marked ? 'success' : 'error',
-            __($marked ? 'site.lists.marked_sent' : 'site.lists.cannot_mark_sent'),
-        );
+        /*
+         * Silent when it works, like `claim()` and `unclaim()` above.
+         *
+         * The row turns into the sent strip in place. A banner at the top of
+         * the document saying the same thing is a second copy of an answer the
+         * page has already given, further from the question.
+         *
+         * The failure speaks, because a row that simply does not change is
+         * indistinguishable from a control that does not work.
+         */
+        return $marked
+            ? back()
+            : back()->with('error', __('site.lists.cannot_mark_sent'));
     }
 
     /**

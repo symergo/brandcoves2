@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Enums\ListVisibility;
 use App\Models\Wishlist;
 use App\Models\WishlistCollaborator;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,7 +24,9 @@ use Illuminate\Database\Eloquent\Builder;
 final class ListAccess
 {
     /**
-     * Lists this person may open: their own, plus any they were invited to.
+     * Lists this person may open: their own, plus any they were invited to —
+     * by an old collaborator row, by a link they followed, or by somebody
+     * picking their name in "Share with friends".
      *
      * @param  Builder<Wishlist>  $query
      * @return Builder<Wishlist>
@@ -48,6 +51,8 @@ final class ListAccess
         }
 
         return $query->where(fn (Builder $q) => $q
+            // Your own, whatever state they are in. A private list of your own
+            // is the ordinary case, not an exception.
             ->where('owner_user_id', $user->id)
 
             /*
@@ -56,6 +61,13 @@ final class ListAccess
              * writes this table any more, but real people were granted real
              * access through it before that and dropping the union would
              * silently revoke it.
+             *
+             * Deliberately **not** subject to the visibility test below. A
+             * collaborator was invited by address rather than handed a link, so
+             * their access does not depend on the list being link-shared: a
+             * private list with collaborators on it is exactly what the feature
+             * was, and `a_collaborator_can_open_a_private_list` says so by
+             * name. Folding them in with the two bookmark routes broke that.
              */
             ->orWhereExists(fn ($sub) => $sub
                 ->selectRaw('1')
@@ -64,19 +76,38 @@ final class ListAccess
                 ->where('wishlist_collaborators.user_id', $user->id))
 
             /*
-             * Lists they have opened by link, which is how a shared list is
-             * found again once the message carrying it is gone.
+             * The two **bookmark** routes, and only while the list is still
+             * shared.
              *
-             * A bookmark, not a grant: the list still has to be shared for the
-             * token to resolve, so turning sharing off takes it away from
-             * everybody who ever opened it. That is what turning sharing off
-             * has to mean, and it is why this union is safe.
+             * That condition was missing, and the bug it caused is the one the
+             * `list_opens` comment had claimed to prevent since long before
+             * "Share with friends" existed: an owner set a list back to private
+             * and it went on appearing under Shared on My Lists for the friend
+             * they had shared it with.
+             *
+             * Neither of these is a grant. One says "I followed your link", the
+             * other "you sent it to me" — both are ways of finding a list
+             * again, and both depend on the list still being findable at all.
+             * Turning sharing off has to actually take it away, or it is only
+             * hiding the link.
+             *
+             * Wrapped around both rather than repeated in each, so the next
+             * bookmark route added here inherits it instead of forgetting it.
              */
-            ->orWhereExists(fn ($sub) => $sub
-                ->selectRaw('1')
-                ->from('list_opens')
-                ->whereColumn('list_opens.wishlist_id', 'wishlists.id')
-                ->where('list_opens.user_id', $user->id)));
+            ->orWhere(fn (Builder $q) => $q
+                ->where('visibility', '!=', ListVisibility::Private->value)
+                ->where(fn (Builder $q) => $q
+                    ->whereExists(fn ($sub) => $sub
+                        ->selectRaw('1')
+                        ->from('list_opens')
+                        ->whereColumn('list_opens.wishlist_id', 'wishlists.id')
+                        ->where('list_opens.user_id', $user->id))
+
+                    ->orWhereExists(fn ($sub) => $sub
+                        ->selectRaw('1')
+                        ->from('wishlist_shares')
+                        ->whereColumn('wishlist_shares.wishlist_id', 'wishlists.id')
+                        ->where('wishlist_shares.user_id', $user->id)))));
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Wishlist;
 
+use App\Enums\ListKind;
 use App\Enums\ListVisibility;
 use App\Models\ListMessage;
 use App\Models\Wishlist;
@@ -28,14 +29,21 @@ use Illuminate\Support\Collection;
  * | the list | its owner | anybody with the link |
  * |---|---|---|
  * | a wish list, claims hidden (the default) | **no board at all** | reads and writes |
- * | a wish list, owner asked to see claims | reads and writes | reads and writes |
+ * | a wish list, owner asked to see claims | **still no board at all** | reads and writes |
  * | about somebody else | reads and writes | reads and writes |
  * | a group gift | reads and writes — they are the organiser | reads and writes |
  *
- * The first row is the one that matters. The owner of a wish list is the person
- * being surprised; showing them a thread in which their friends divide up the
- * shopping would undo the feature the list exists for, and it would do it in
- * prose that no claim-hiding code path inspects.
+ * The first two rows are the ones that matter, and they are the same row on
+ * purpose. The owner of a wish list is the person being surprised; showing them
+ * a thread in which their friends divide up the shopping would undo the feature
+ * the list exists for, in prose that no claim-hiding code path can inspect.
+ *
+ * **The claims setting does not open it.** `owner_sees_claims` is a choice about
+ * your own surprise, item by item, that you can weigh before making it. A board
+ * is other people talking — half of it about you, none of it to you — and
+ * consenting to see a tick beside an item is not consenting to read the
+ * conversation. It used to be the same switch, and that handed the recipient the
+ * whole thread the moment they ticked a box about something else.
  *
  * The last row needed saying out loud, because `shouldHideClaimsFrom()` alone
  * gets it wrong — see `visibleTo()`.
@@ -67,6 +75,32 @@ class Board
      */
     public function visibleTo(Wishlist $list, Owner $viewer): bool
     {
+        /*
+         * The person a wish list is *for* never sees its board. Ever.
+         *
+         * Stronger than the claim rule beside it, and deliberately not the same
+         * question. `owner_sees_claims` lets somebody say "show me what has been
+         * taken" — a choice about their own surprise, item by item, that they
+         * can weigh. A board is not that. It is other people talking: "I've got
+         * the scarf, someone take the boots", "is this too much?", "he already
+         * has one". Half of it is about the reader, none of it is addressed to
+         * them, and it is prose that no claim-hiding code path can inspect or
+         * redact.
+         *
+         * So the board is not covered by the claims setting and must not be
+         * reachable through it. Turning claims on used to turn the board on too,
+         * which handed the recipient the whole conversation the moment they
+         * ticked a box about something else.
+         *
+         * `mine` only. On a `for_someone` list the owner is a co-giver
+         * organising the buying and the recipient never opens the page; on a
+         * `group` list they are the organiser running the conversation. Neither
+         * is the person being surprised.
+         */
+        if ($list->kind === ListKind::Mine && $list->isOwnedBy($viewer)) {
+            return false;
+        }
+
         return $list->visibility !== ListVisibility::Private
             && (
                 /*

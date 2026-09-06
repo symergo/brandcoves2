@@ -399,6 +399,18 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
 
                 <aside className="mt-10 space-y-6 lg:sticky lg:top-6 lg:mt-0">
                     <CoveRail rail={rail} />
+
+                    {/*
+                      The other articles, beside the reading rather than under
+                      it.
+
+                      They were a full-width band at the very bottom, which is
+                      the one place a reader who has stopped reading will not
+                      look — and on a long guide that is most of them. In the
+                      rail they are visible from the first screen and stay there
+                      while the article scrolls past.
+                    */}
+                    <MoreCoves band={rail.coves} rail />
                 </aside>
             </div>
 
@@ -411,14 +423,6 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
             */}
             <EntityRails rails={rails} />
 
-            {/*
-              The other articles. This page had no onward navigation at all —
-              no archive strip, no "back to the shelf", nothing — which mattered
-              most here of the three: an article is the Cove search actually
-              lands people on, and it was the one that told them least about
-              what else is here.
-            */}
-            <MoreCoves band={rail.coves} />
         </>
     )
 }

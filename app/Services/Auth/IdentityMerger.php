@@ -77,6 +77,16 @@ class IdentityMerger
      * the hash is that the list owner can never learn who claimed what. Leaving
      * them alone costs the claimer the ability to un-claim from a fresh account,
      * which is a far smaller harm than leaking the surprise.
+     *
+     * **That cost is why claiming now needs an account** (2026-09-06). This
+     * method was the honest answer to a question that should not have been
+     * asked: a claim that cannot follow its claimer to a second device is a
+     * claim they cannot revisit or release. New claims are hashed from a user
+     * id, which is stable forever, so there is nothing left to merge. The rows
+     * this refuses to touch are the anonymous ones already in the database, and
+     * `SharedListController::unclaim()` stays open to a cookie identity so
+     * their owners can still hand them back. See
+     * docs/features/wishlists.md and App\Services\Wishlist\PendingClaim.
      */
     public function claimsAreIntentionallyNotMerged(): bool
     {

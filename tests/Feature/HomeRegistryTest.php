@@ -32,10 +32,18 @@ class HomeRegistryTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function registry(User $owner, ?string $date, EventType $type = EventType::Wedding): Wishlist
+    /**
+     * @param  string|null  $title  Name it when the test compares two of them.
+     *                              The factory titles a list `fake()->words(2)`,
+     *                              so two registries in one test can collide and
+     *                              turn an `assertNotSame` on titles into a
+     *                              failure that has nothing to do with ranking.
+     */
+    private function registry(User $owner, ?string $date, EventType $type = EventType::Wedding, ?string $title = null): Wishlist
     {
         return Wishlist::factory()->create([
             'owner_user_id' => $owner->id,
+            ...$title === null ? [] : ['title' => $title],
             'kind' => ListKind::Mine,
             'market' => Market::BeNl,
             'visibility' => ListVisibility::Link,
@@ -111,8 +119,8 @@ class HomeRegistryTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $far = $this->registry($user, now()->addYear()->toDateString());
-        $soon = $this->registry($user, now()->addWeek()->toDateString(), EventType::Baby);
+        $far = $this->registry($user, now()->addYear()->toDateString(), title: 'Far registry');
+        $soon = $this->registry($user, now()->addWeek()->toDateString(), EventType::Baby, 'Soon registry');
 
         $card = $this->card($this->actingAs($user)->get('/be-nl')->assertOk());
 
@@ -128,8 +136,8 @@ class HomeRegistryTest extends TestCase
         // would sort the null first on Postgres defaults.
         $user = User::factory()->create();
 
-        $undated = $this->registry($user, null);
-        $dated = $this->registry($user, now()->addMonth()->toDateString(), EventType::Housewarming);
+        $undated = $this->registry($user, null, title: 'Undated registry');
+        $dated = $this->registry($user, now()->addMonth()->toDateString(), EventType::Housewarming, 'Dated registry');
 
         $card = $this->card($this->actingAs($user)->get('/be-nl')->assertOk());
 
@@ -149,7 +157,10 @@ class HomeRegistryTest extends TestCase
         $list = $this->registry($user, now()->addMonth()->toDateString());
         $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
 
-        $this->post("/be-nl/l/{$list->share_token}/claim/{$item->id}");
+        // Somebody else, signed in: claiming needs an account now, and it must
+        // not be the owner — who is the person this test keeps in the dark.
+        $this->actingAs(User::factory()->create())
+            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}");
 
         $card = $this->card($this->actingAs($user)->get('/be-nl')->assertOk());
 

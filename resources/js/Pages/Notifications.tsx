@@ -57,6 +57,36 @@ export default function Notifications({ notifications, watching }: Props) {
         month: 'short',
     })
 
+    /**
+     * The second line under a notification's title, or null when it has none.
+     *
+     * `body` wins wherever it is set — a reminder writes its sentence in the
+     * recipient's language at the time it is created, which is the only moment
+     * that knows which language that is. Price alerts write no body and have
+     * their line built from the payload here instead.
+     *
+     * Everything else returns null rather than falling through to the price
+     * line, which is what put "dropped to - (was -)" under list activity.
+     */
+    function detailOf(notice: Notice): string | null {
+        if (notice.body !== null) {
+            return notice.body
+        }
+
+        if (notice.kind === 'restock') {
+            return t('notifications.back_in_stock')
+        }
+
+        if (notice.kind === 'price_drop') {
+            return t('notifications.dropped_to', {
+                price: notice.price === null ? '-' : formatPrice(notice.price, market),
+                was: notice.baseline === null ? '-' : formatPrice(notice.baseline, market),
+            })
+        }
+
+        return null
+    }
+
     return (
         <>
             <Head title={t('notifications.title')} />
@@ -91,7 +121,19 @@ export default function Notifications({ notifications, watching }: Props) {
                                         ? '📦'
                                         : notice.kind.startsWith('occasion.')
                                           ? '🎁'
-                                          : '↓'}
+                                          : /*
+                                              List activity: somebody shared,
+                                              suggested, added, wrote or chipped
+                                              in. A fourth family, and without
+                                              its own mark every one of them
+                                              arrived wearing the price-drop
+                                              arrow — which is how the two kinds
+                                              that are not price drops already
+                                              got here.
+                                            */
+                                            notice.kind.startsWith('list.')
+                                            ? '📋'
+                                            : '↓'}
                                 </span>
                                 <div className="min-w-0 flex-1">
                                     {notice.url ? (
@@ -101,36 +143,31 @@ export default function Notifications({ notifications, watching }: Props) {
                                     ) : (
                                         <span className="font-medium">{notice.title}</span>
                                     )}
-                                    <p className="text-ink-soft">
-                                        {/*
-                                          A notification that wrote its own
-                                          sentence gets to keep it.
+                                    {/*
+                                      A second line, only when there is one.
 
-                                          The price alerts store `body: null` and
-                                          have their line computed from the
-                                          payload; a reminder stores the finished
-                                          sentence, already in the recipient's
-                                          language. Reading `body` first is what
-                                          lets a new kind arrive without a third
-                                          branch here — and it is why a reminder
-                                          used to render as "dropped to - (was
-                                          -)": its text was on the row all along
-                                          and nothing looked at it.
-                                        */}
-                                        {notice.body
-                                            ?? (notice.kind === 'restock'
-                                                ? t('notifications.back_in_stock')
-                                                : t('notifications.dropped_to', {
-                                                      price:
-                                                          notice.price === null
-                                                              ? '-'
-                                                              : formatPrice(notice.price, market),
-                                                      was:
-                                                          notice.baseline === null
-                                                              ? '-'
-                                                              : formatPrice(notice.baseline, market),
-                                                  }))}
-                                    </p>
+                                      Three cases, and the third was missing.
+                                      A reminder stores its finished sentence in
+                                      `body`. A price alert stores `body: null`
+                                      and has its line computed from the payload.
+                                      **List activity has neither** — the title
+                                      is the whole message ("Somebody added
+                                      something to Wedding") — and it fell into
+                                      the price branch, rendering "Nu -, was -"
+                                      under every one of them.
+
+                                      This is the same bug the previous comment
+                                      here described happening to reminders, and
+                                      the fix it applied only covered kinds that
+                                      write a body. So the price line is now
+                                      asked for **by kind** rather than used as a
+                                      fallback for everything, and a kind that
+                                      says everything in its title renders no
+                                      paragraph at all.
+                                    */}
+                                    {detailOf(notice) !== null && (
+                                        <p className="text-ink-soft">{detailOf(notice)}</p>
+                                    )}
                                 </div>
                                 <time className="shrink-0 text-xs text-ink-soft" dateTime={notice.createdAt}>
                                     {dateFormat.format(new Date(notice.createdAt))}
