@@ -26,6 +26,7 @@ use App\Http\Controllers\GiftPledgeController;
 use App\Http\Controllers\GuideController;
 use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ItemTransferController;
 use App\Http\Controllers\LegalController;
@@ -209,6 +210,15 @@ Route::prefix('{market}')->group(function () {
      * throttled request must answer like a successful one rather than with a
      * 429 that tells a script exactly where the line is.
      */
+    /*
+     * How the site works, and where to say it does not, on one page.
+     *
+     * The how-to pages were reachable only from the screen each explains, so a
+     * visitor who had already given up on that screen had nowhere to go. This
+     * gathers them and puts the report form under them.
+     */
+    Route::get('/help', HelpController::class)->name('help');
+
     Route::get('/feedback', [FeedbackController::class, 'show'])->name('feedback');
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
 

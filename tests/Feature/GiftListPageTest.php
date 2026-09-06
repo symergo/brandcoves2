@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Wishlist;
+use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -48,6 +49,37 @@ class GiftListPageTest extends TestCase
                 ->has('target')
                 ->has('items')
                 ->has('list'));
+    }
+
+    #[Test]
+    public function the_newest_thing_on_a_list_is_at_the_top_of_it(): void
+    {
+        $user = User::factory()->create();
+        $list = Wishlist::factory()->create(['owner_user_id' => $user->id]);
+
+        // The add panel sits above the list, so a save that appends puts the
+        // thing you just added below everything you added before it — off the
+        // screen on any list worth having, which reads as a save that failed.
+        $old = WishlistItem::factory()->create([
+            'wishlist_id' => $list->id,
+            'created_at' => now()->subWeek(),
+        ]);
+        $new = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
+
+        // Priority still outranks age: a starred item stays where it was put.
+        $starred = WishlistItem::factory()->create([
+            'wishlist_id' => $list->id,
+            'priority' => 2,
+            'created_at' => now()->subMonth(),
+        ]);
+
+        $this->actingAs($user)
+            ->get("/be-nl/lists/{$list->id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('items.0.id', $starred->id)
+                ->where('items.1.id', $new->id)
+                ->where('items.2.id', $old->id));
     }
 
     #[Test]

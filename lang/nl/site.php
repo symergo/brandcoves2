@@ -118,8 +118,9 @@ return [
     ],
 
     'search' => [
+        'view' => 'Weergave',
+        'filters_and_sort' => 'Filters en sorteren',
         'remove_term' => ':term weglaten',
-        'active_terms_heading' => 'Zoekopdracht verfijnd met',
         'title' => 'Zoeken',
         'placeholder' => 'Zoek een cadeau of scan een streepjescode',
         'pasted_searched' => 'Dat is een Amazon-link. We lezen er :terms in en zochten daarnaar bij de winkels die we volgen.',
@@ -213,7 +214,6 @@ return [
         'empty' => 'Er is momenteel niets van :brand op voorraad.',
         'and' => 'en',
         // Aanbiedingen van een bron die we wel mogen tonen maar niet bewaren.
-        'narrowed_to' => 'Beperkt tot',
         'live_heading' => 'Meer van :brand, zojuist opgehaald',
         'live_note' => 'Live opgehaald bij een winkel waarvan we de prijzen niet mogen bewaren, dus dit zijn losse aanbiedingen en geen volledige productpagina.',
     ],
@@ -1678,5 +1678,24 @@ return [
 
         'cta_search' => 'Zoek iets om te bewaren',
         'cta_lists' => 'Naar mijn lijstjes',
+    ],
+
+    /*
+     * Hoe de site werkt, en waar je zegt dat hij dat niet doet. Uitleg eerst,
+     * want wie hier komt zit meestal vast in plaats van iets te melden.
+     */
+    'help' => [
+        'seo_title' => 'Help',
+        'seo_description' => 'Hoe je zoekt, hoe lijstjes werken, en waar je ons vertelt dat er iets mis is.',
+        'title' => 'Help',
+        'intro' => 'Hoe je uit deze site haalt wat je zoekt, en waar je het zegt als dat niet lukt.',
+        'guides_heading' => 'Hoe het werkt',
+        'search_title' => 'Zoeken',
+        'search_blurb' => 'Wat het zoekvak aankan, hoe de scanner werkt, en waarom een typfout toch iets vindt.',
+        'lists_title' => 'Lijstjes',
+        'lists_blurb' => 'Iets bewaren, een lijstje maken, en wie het ziet zodra je het deelt.',
+        'report_heading' => 'Iets mis?',
+        'report_intro' => 'Een prijs die niet meer klopt, een dode link, een zin die klinkt alsof een machine hem schreef. Laat het weten en we kijken ernaar.',
+        'link' => 'Help',
     ],
 ];

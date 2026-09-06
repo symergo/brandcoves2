@@ -118,8 +118,9 @@ return [
     ],
 
     'search' => [
+        'view' => 'Vista',
+        'filters_and_sort' => 'Filtros y orden',
         'remove_term' => 'Quitar :term',
-        'active_terms_heading' => 'Afinada con',
         'title' => 'Buscar',
         'placeholder' => 'Busca un regalo o escanea un código de barras',
         'pasted_searched' => 'Es un enlace de Amazon. Hemos leído :terms y lo hemos buscado en las tiendas que seguimos.',
@@ -213,7 +214,6 @@ return [
         'empty' => 'Ahora mismo no hay nada de :brand en stock.',
         'and' => 'y',
         // Ofertas de una fuente que podemos mostrar pero no almacenar.
-        'narrowed_to' => 'Acotado a',
         'live_heading' => 'Más de :brand, recuperado ahora mismo',
         'live_note' => 'Consultado en directo en una tienda cuyos precios no podemos conservar, así que son ofertas sueltas y no una ficha de producto completa.',
     ],
@@ -1665,5 +1665,24 @@ return [
 
         'cta_search' => 'Buscar algo que guardar',
         'cta_lists' => 'Ir a mis listas',
+    ],
+
+    /*
+     * Cómo funciona el sitio y dónde decir que no funciona. Primero las guías:
+     * quien llega aquí suele estar atascado, no reportando un fallo.
+     */
+    'help' => [
+        'seo_title' => 'Ayuda',
+        'seo_description' => 'Cómo buscar, cómo funcionan las listas y dónde decirnos que algo va mal.',
+        'title' => 'Ayuda',
+        'intro' => 'Cómo sacar de este sitio lo que buscas, y dónde decirlo cuando no sale.',
+        'guides_heading' => 'Cómo funciona',
+        'search_title' => 'Buscar',
+        'search_blurb' => 'Qué acepta el buscador, cómo funciona el escáner y por qué una errata encuentra igual.',
+        'lists_title' => 'Listas',
+        'lists_blurb' => 'Guardar un producto, crear una lista y quién la ve cuando la compartes.',
+        'report_heading' => '¿Algo va mal?',
+        'report_intro' => 'Un precio desactualizado, un enlace roto, una frase que suena a máquina. Dinoslo y lo miramos.',
+        'link' => 'Ayuda',
     ],
 ];

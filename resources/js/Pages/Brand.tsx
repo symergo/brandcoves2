@@ -24,7 +24,6 @@ interface Props {
     }
     /** Words that recur across this brand's products, each a search of its own. */
     terms: { term: string; url: string }[]
-    activeTerms: { term: string; url: string }[]
     filters: Record<string, unknown>
     sort: string
     view: 'grid' | 'store'
@@ -98,7 +97,6 @@ interface Props {
 export default function Brand({
     brand,
     terms,
-    activeTerms,
     filters,
     sort,
     facets,
@@ -189,7 +187,6 @@ export default function Brand({
                 */}
                 {narrowedTo.length > 0 && (
                     <div className="mt-4 flex flex-wrap items-center gap-2">
-                        <span className="text-sm text-ink-soft">{t('brand.narrowed_to')}</span>
                         {/*
                           Every active word is removable on its own, and the
                           whole thing clears back to the brand. Without this the
@@ -203,9 +200,13 @@ export default function Brand({
                                 onClick={() => go({ q: narrowedTo.filter((w) => w !== word).join(' ') })}
                                 className="inline-flex items-center gap-1.5 rounded-full border border-ink bg-card px-3 py-1 text-sm transition hover:border-accent hover:text-accent"
                             >
-                                {word}
                                 <span aria-hidden>×</span>
-                                <span className="sr-only">{t('search.clear_filters')}</span>
+                                {word}
+                                {/* Names the word it drops, not "clear filters":
+                                    this button removes one, and a screen reader
+                                    reading four identical labels cannot tell
+                                    which is which. */}
+                                <span className="sr-only">{t('search.remove_term', { term: word })}</span>
                             </button>
                         ))}
                     </div>
@@ -221,54 +222,22 @@ export default function Brand({
                 */}
                 <PageBlocks blocks={intro} className="mt-4 max-w-3xl" />
 
-                {activeTerms.length > 0 && (
-                    <nav className="mt-4" aria-label={t('search.active_terms_heading')}>
-                        <ul className="flex flex-wrap gap-2">
-                            {/*
-                              What is already narrowing this search, and the
-                              way back off it.
-
-                              A suggestion disappears once its word is in the
-                              query - re-offering it would do nothing - so
-                              without these the narrowing was a one-way door:
-                              three clicks and the only way back was the
-                              browser's back button or retyping.
-
-                              Filled rather than outlined, so the row reads
-                              as "chosen" against the suggestions under it,
-                              and the URL is the server's own, exactly as the
-                              adding pills are.
-                            */}
-                            {activeTerms.map((item) => (
-                                <li key={item.term}>
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        router.get(
-                                            item.url,
-                                            {},
-                                            // No busy state here: the brand page
-                                            // has none, and its own suggestion
-                                            // pills navigate the same way.
-                                            { preserveScroll: true, preserveState: true },
-                                        )
-                                    }
-                                    aria-label={t('search.remove_term', { term: item.term })}
-                                    className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 text-sm text-card transition hover:opacity-85"
-                                >
-                                    {item.term}
-                                    <span aria-hidden="true" className="text-xs opacity-70">&times;</span>
-                                </button>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
-                )}
-
                 {terms.length > 0 && (
                     <nav className="mt-4" aria-label={t('search.terms_heading')}>
                         <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>
-                        <ul className="flex flex-wrap gap-2">
+                        {/*
+                          One row, whatever the width.
+
+                          `ResultTerms` returns as many as it finds worth
+                          offering and a narrow window wrapped them into
+                          three or four lines, which pushed the products
+                          down the page to make room for suggestions
+                          about them. Clipped rather than capped at a
+                          number, because how many fit is a question
+                          about the window: `flex-wrap` puts whole pills
+                          on the next line and the overflow hides it.
+                        */}
+                        <ul className="flex max-h-9 flex-wrap gap-2 overflow-hidden">
                             {/*
                               Buttons, not links, and that is the point.
 
@@ -304,6 +273,7 @@ export default function Brand({
                                         }
                                         className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink"
                                     >
+                                        <span aria-hidden className="mr-1">+</span>
                                         {item.term}
 
                                     </button>

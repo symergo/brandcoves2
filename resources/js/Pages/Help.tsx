@@ -1,0 +1,71 @@
+import { Head, Link } from '@inertiajs/react'
+import FeedbackForm from '../Components/FeedbackForm'
+import { useTranslations } from '../useTranslations'
+
+interface Props {
+    guides: { key: string; url: string }[]
+    path: string | null
+}
+
+/**
+ * How the site works, and where to say it does not.
+ *
+ * ## The order is the odds
+ *
+ * Guides first, form second. Most people arriving here are stuck rather than
+ * reporting a fault, and a form at the top of a help page asks them to describe
+ * a problem they would rather just solve. Whoever the guides did not help
+ * scrolls past two cards to reach it, which is a fair price for putting the
+ * likely answer first.
+ *
+ * ## The form is the real one
+ *
+ * `FeedbackForm` is the component `/feedback` renders, not a copy of it. Two
+ * forms posting to one endpoint drift: the honeypot gets added to one, the line
+ * explaining what the address is for gets rewritten on the other.
+ */
+export default function Help({ guides, path }: Props) {
+    const { t } = useTranslations()
+
+    return (
+        <>
+            <Head title={t('help.title')} />
+
+            <div className="mx-auto max-w-2xl px-4 py-10">
+                <h1 className="text-3xl font-semibold tracking-tight text-ink">{t('help.title')}</h1>
+                <p className="mt-3 text-ink-soft">{t('help.intro')}</p>
+
+                <h2 className="mt-10 text-lg font-semibold text-ink">{t('help.guides_heading')}</h2>
+
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {guides.map((guide) => (
+                        <li key={guide.key}>
+                            <Link
+                                href={guide.url}
+                                className="block h-full rounded-lg border border-line bg-card p-4 transition hover:border-ink"
+                            >
+                                <span className="font-medium text-ink">{t(`help.${guide.key}_title`)}</span>
+                                <span className="mt-1 block text-sm text-ink-soft">
+                                    {t(`help.${guide.key}_blurb`)}
+                                </span>
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+
+                {/*
+                  A rule, not just space. Everything above answers "how does this
+                  work"; everything below is for when the answer is "it does not".
+                  Two different kinds of help stacked on one page need the seam
+                  drawn, the same way the search rail draws it.
+                */}
+                <div className="mt-12 border-t border-line pt-10">
+                    <h2 className="text-lg font-semibold text-ink">{t('help.report_heading')}</h2>
+                    <p className="mt-2 mb-6 text-ink-soft">{t('help.report_intro')}</p>
+
+                    <FeedbackForm path={path} />
+                </div>
+            </div>
+        </>
+    )
+}

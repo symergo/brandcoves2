@@ -119,8 +119,9 @@ return [
     ],
 
     'search' => [
+        'view' => 'Affichage',
+        'filters_and_sort' => 'Filtres et tri',
         'remove_term' => 'Retirer :term',
-        'active_terms_heading' => 'Recherche affinée avec',
         'title' => 'Recherche',
         'placeholder' => 'Cherchez un cadeau ou scannez un code-barres',
         'pasted_searched' => "C'est un lien Amazon. Nous y lisons :terms et avons cherché ce produit chez les boutiques que nous suivons.",
@@ -214,7 +215,6 @@ return [
         'empty' => 'Rien de :brand n\'est en stock pour le moment.',
         'and' => 'et',
         // Offres d'une source que nous pouvons afficher mais pas conserver.
-        'narrowed_to' => 'Affiné sur',
         'live_heading' => 'Plus de :brand, récupéré à l\'instant',
         'live_note' => 'Récupéré en direct chez une boutique dont nous n\'avons pas le droit de conserver les prix : ce sont donc des offres isolées et non une fiche produit complète.',
     ],
@@ -1667,5 +1667,24 @@ return [
 
         'cta_search' => 'Trouver quelque chose à enregistrer',
         'cta_lists' => 'Voir mes listes',
+    ],
+
+    /*
+     * Comment le site fonctionne, et où dire qu'il ne fonctionne pas. Les
+     * explications d'abord : qui arrive ici est bloqué plutôt que rapporteur.
+     */
+    'help' => [
+        'seo_title' => 'Aide',
+        'seo_description' => 'Comment chercher, comment fonctionnent les listes, et où nous dire que quelque chose ne va pas.',
+        'title' => 'Aide',
+        'intro' => 'Comment obtenir de ce site ce que vous cherchez, et où le dire quand ça ne marche pas.',
+        'guides_heading' => 'Comment ça marche',
+        'search_title' => 'Rechercher',
+        'search_blurb' => 'Ce que le champ accepte, comment fonctionne le scanner, et pourquoi une faute de frappe trouve quand même.',
+        'lists_title' => 'Listes',
+        'lists_blurb' => 'Enregistrer un produit, créer une liste, et qui la voit une fois partagée.',
+        'report_heading' => 'Quelque chose ne va pas ?',
+        'report_intro' => "Un prix qui n'est plus à jour, un lien mort, une phrase qui sonne comme écrite par une machine. Dites-le nous et nous regardons.",
+        'link' => 'Aide',
     ],
 ];

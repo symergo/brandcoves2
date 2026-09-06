@@ -155,10 +155,10 @@ export default function ListShow({
      * happened. The tint fades out on its own; nothing about the row depends on
      * it, so missing it costs nothing.
      *
-     * New items sort to the bottom of an existing list, which can be below the
-     * fold, so the row is also brought into view — otherwise the confirmation
-     * is on a part of the page nobody is looking at, which is the problem the
-     * banner had.
+     * The row is also brought into view. New items sort to the top, directly
+     * under the add panel, so it is normally already there — but a list can be
+     * scrolled anywhere, and a confirmation on a part of the page nobody is
+     * looking at is the problem the banner had.
      */
     const [fresh, setFresh] = useState<number | null>(null)
     const freshRow = useRef<HTMLLIElement | null>(null)

@@ -139,6 +139,11 @@ class SharedListController extends Controller
             ->when(
                 $list->votingEnabled(),
                 fn ($q) => $q->withCount('votes')->orderByDesc('votes_count')->latest(),
+                // Newest first everywhere else, which is the order the owner's
+                // own page shows. Unordered meant oldest first, so somebody who
+                // opened a shared link twice a week met the same nine things at
+                // the top and had to scroll for what had changed.
+                fn ($q) => $q->latest(),
             )
             ->get();
 

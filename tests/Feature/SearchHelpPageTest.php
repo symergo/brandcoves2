@@ -71,20 +71,20 @@ class SearchHelpPageTest extends TestCase
     }
 
     #[Test]
-    public function the_search_page_and_the_footer_link_to_it(): void
+    public function the_footer_links_to_it(): void
     {
         /*
          * A source check, for the reason LegalPagesTest gives for the footer:
          * SSR does not run in the suite, so the links are not in the rendered
          * HTML and asserting on the page would pass for the wrong reason.
          *
-         * These two are the whole of its discoverability: the search page
-         * offers it where a search has just come back wrong, and the footer
-         * carries it everywhere else. The homepage hero linked it too until
-         * 2026-09-04 — see docs/features/search-help.md. It is deliberately not
-         * in the header.
+         * The footer is now the whole of its discoverability. The search page
+         * carried a link under the box until 2026-09-06, when it came off: it
+         * sat between the query and the results on every search, including the
+         * overwhelming majority that went fine. The homepage hero linked it
+         * until 2026-09-04. It is deliberately not in the header.
          */
-        foreach (['js/Pages/Search.tsx', 'js/Layouts/SiteLayout.tsx'] as $page) {
+        foreach (['js/Layouts/SiteLayout.tsx'] as $page) {
             $this->assertStringContainsString(
                 '/search-help',
                 file_get_contents(resource_path($page)),

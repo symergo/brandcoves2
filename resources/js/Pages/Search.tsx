@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { preferred as preferredView, remember as rememberView } from '../viewPreference'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
@@ -54,6 +55,75 @@ interface Props {
     emptyCopy: BlockPayload[] | null
 }
 
+/**
+ * How the results are ordered, and which shape they take.
+ *
+ * In the rail with the filters rather than above the grid, because all three
+ * answer one question - "show me this differently" - and the row above the
+ * products was competing with the products for the first line of the page. On a
+ * phone that rail is the collapsed panel, so sorting arrives there too, which is
+ * where somebody looking for it goes.
+ *
+ * Rendered in both rails. The grid view and the by-store view each have their
+ * own, and a control that existed in only one of them would be a control you
+ * lose by using the feature next to it.
+ */
+function ResultControls({
+    sort,
+    view,
+    go,
+}: {
+    sort: string
+    view: string
+    go: (changes: Record<string, unknown>) => void
+}) {
+    const { t } = useTranslations()
+
+    return (
+        <div className="space-y-3">
+            <div>
+                <label className="mb-1 block text-xs font-semibold tracking-wide text-ink-soft uppercase" htmlFor="sort">
+                    {t('search.sort')}
+                </label>
+                <select
+                    id="sort"
+                    value={sort}
+                    onChange={(e) => go({ sort: e.target.value })}
+                    className="w-full rounded border border-line bg-card px-2 py-1.5 text-sm"
+                >
+                    <option value="relevance">{t('search.sort_relevance')}</option>
+                    <option value="price_asc">{t('search.sort_price_asc')}</option>
+                    <option value="price_desc">{t('search.sort_price_desc')}</option>
+                    <option value="discount">{t('search.sort_discount')}</option>
+                    <option value="newest">{t('search.sort_newest')}</option>
+                </select>
+            </div>
+
+            <div>
+                <span className="mb-1 block text-xs font-semibold tracking-wide text-ink-soft uppercase">
+                    {t('search.view')}
+                </span>
+                <div className="flex overflow-hidden rounded border border-line text-sm">
+                    {(['grid', 'store'] as const).map((v) => (
+                        <button
+                            key={v}
+                            type="button"
+                            onClick={() => {
+                                rememberView(v)
+                                go({ view: v === 'grid' ? null : v })
+                            }}
+                            aria-pressed={view === v}
+                            className={`flex-1 px-3 py-1.5 ${view === v ? 'bg-ink text-cream' : ''}`}
+                        >
+                            {t(`search.view_${v}`)}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}
+
 export default function Search({
     q,
     filters,
@@ -78,6 +148,34 @@ export default function Search({
     const [filtersOpen, setFiltersOpen] = useState(false)
     const [searching, setSearching] = useState(false)
     const base = `/${market.key}/search`
+
+    /*
+     * The view the visitor last chose, restored when the URL does not say.
+     *
+     * Applied by navigating rather than by rendering: the two views are not two
+     * arrangements of the same payload - the by-store one is served `lanes`,
+     * which the grid never asks for - so the server has to be told. Once, on
+     * first mount, and only when the URL is silent, because a link carrying
+     * `?view=` means something its sender chose and must show them the same page
+     * it shows anyone else.
+     */
+    const restored = useRef(false)
+
+    useEffect(() => {
+        if (restored.current) return
+        restored.current = true
+
+        if (filters.view !== undefined && filters.view !== null) return
+
+        const wanted = preferredView()
+
+        if (wanted !== null && wanted !== view) {
+            go({ view: wanted === 'grid' ? null : wanted })
+        }
+        // Mount only: this restores a preference, it does not enforce one, so a
+        // visitor switching view mid-session must not be pulled back.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     /*
      * How many filters are narrowing the results.
@@ -172,6 +270,17 @@ export default function Search({
             <Head title={seoTitle ?? (q ? q : t('search.title'))} />
 
             <form
+                /*
+                  A real GET form underneath the handler.
+
+                  Without `action`, `method` and a named field, an Enter pressed
+                  before React hydrates submitted the current URL with no query
+                  at all - the page appeared to ignore the key. The handler below
+                  takes over the moment it is attached; until then the browser
+                  does the same search by itself.
+                */
+                action={base}
+                method="get"
                 onSubmit={(e) => {
                     e.preventDefault()
                     go({ q: term })
@@ -193,6 +302,7 @@ export default function Search({
                 <div className="relative flex-1">
                     <input
                         type="search"
+                        name="q"
                         value={term}
                         onChange={(e) => setTerm(e.target.value)}
                         placeholder={t('search.placeholder')}
@@ -258,12 +368,7 @@ export default function Search({
               than three lines of placeholder text: the field stays a field, and
               the answer is somewhere it can be read properly.
             */}
-            <p className="mt-2 text-sm text-ink-soft">
-                <Link href={`/${market.key}/search-help`} className="underline hover:text-accent">
-                    {t('search_help.link')}
-                </Link>
-            </p>
-
+            
             {/*
               What we made of a pasted Amazon link.
 
@@ -314,7 +419,7 @@ export default function Search({
                             onClick={() => setFiltersOpen(!filtersOpen)}
                         >
                             <span>
-                                {t('search.filters')}
+                                {t('search.filters_and_sort')}
                                 {activeFilterCount > 0 && (
                                     <span className="ml-2 rounded-full bg-accent px-2 py-0.5 text-xs text-white">
                                         {n(activeFilterCount)}
@@ -329,6 +434,8 @@ export default function Search({
                             aria-label={t('search.filters')}
                             className={`space-y-6 text-sm lg:block ${filtersOpen ? 'block' : 'hidden'}`}
                         >
+                            <ResultControls sort={sort} view={view} go={go} />
+
                             <FilterPanel
                                 facets={facets}
                                 filters={filters}
@@ -445,6 +552,8 @@ export default function Search({
                                     aria-label={t('search.filters')}
                                     className={`absolute right-0 top-full z-20 mt-2 w-72 space-y-5 rounded-lg border border-line bg-card p-4 text-sm shadow-lg ${filtersOpen ? 'block' : 'hidden'}`}
                                 >
+                                    <ResultControls sort={sort} view={view} go={go} />
+
                                     <FilterPanel
                                         facets={facets}
                                         filters={filters}
@@ -483,56 +592,64 @@ export default function Search({
                     */}
                     <PageBlocks blocks={intro} className="mb-5 max-w-3xl" />
 
+                    {/*
+                      What is already narrowing this search, and the way off it.
+
+                      The same row the brand page has carried since it gained
+                      sub-search, down to the label: it is one control, and two
+                      spellings of it would read as two features.
+                    */}
                     {activeTerms.length > 0 && (
-                        <nav className="mb-3" aria-label={t('search.active_terms_heading')}>
-                            <ul className="flex flex-wrap gap-2">
-                                {/*
-                                  What is already narrowing this search, and the
-                                  way back off it.
-
-                                  A suggestion disappears once its word is in the
-                                  query - re-offering it would do nothing - so
-                                  without these the narrowing was a one-way door:
-                                  three clicks and the only way back was the
-                                  browser's back button or retyping.
-
-                                  Filled rather than outlined, so the row reads
-                                  as "chosen" against the suggestions under it,
-                                  and the URL is the server's own, exactly as the
-                                  adding pills are.
-                                */}
-                                {activeTerms.map((item) => (
-                                    <li key={item.term}>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                router.get(
-                                                    item.url,
-                                                    {},
-                                                    {
-                                                        preserveScroll: true,
-                                                        preserveState: true,
-                                                        onStart: () => setSearching(true),
-                                                        onFinish: () => setSearching(false),
-                                                    },
-                                                )
-                                            }
-                                            aria-label={t('search.remove_term', { term: item.term })}
-                                            className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 text-sm text-card transition hover:opacity-85"
-                                        >
-                                            {item.term}
-                                            <span aria-hidden="true" className="text-xs opacity-70">&times;</span>
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </nav>
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                            {activeTerms.map((item) => (
+                                <button
+                                    key={item.term}
+                                    type="button"
+                                    onClick={() =>
+                                        router.get(
+                                            item.url,
+                                            {},
+                                            {
+                                                preserveScroll: true,
+                                                preserveState: true,
+                                                onStart: () => setSearching(true),
+                                                onFinish: () => setSearching(false),
+                                            },
+                                        )
+                                    }
+                                    // Green, so a chosen word is distinguishable from a
+                                    // suggestion at a glance rather than by reading it.
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-sage bg-card px-3 py-1 text-sm text-sage transition hover:border-accent hover:text-accent"
+                                >
+                                    <span aria-hidden>×</span>
+                                    {item.term}
+                                    <span className="sr-only">{t('search.remove_term', { term: item.term })}</span>
+                                </button>
+                            ))}
+                        </div>
                     )}
 
+                    {/*
+                      No heading over the suggestions. The pills are
+                      self-explanatory next to a search box, and a line of label
+                      above them was one more thing between the query and the
+                      products.
+                    */}
                     {terms.length > 0 && (
                         <nav className="mb-5" aria-label={t('search.terms_heading')}>
-                            <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>
-                            <ul className="flex flex-wrap gap-2">
+                            {/*
+                              One row, whatever the width.
+
+                              `ResultTerms` returns as many as it finds worth
+                              offering and a narrow window wrapped them into
+                              three or four lines, which pushed the products
+                              down the page to make room for suggestions
+                              about them. Clipped rather than capped at a
+                              number, because how many fit is a question
+                              about the window: `flex-wrap` puts whole pills
+                              on the next line and the overflow hides it.
+                            */}
+                            <ul className="flex max-h-9 flex-wrap gap-2 overflow-hidden">
                                 {/*
                                   Buttons, not links, and that is the point.
 
@@ -570,8 +687,8 @@ export default function Search({
                                             }
                                             className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink"
                                         >
+                                            <span aria-hidden className="mr-1 text-ink-soft">+</span>
                                             {item.term}
-
                                         </button>
                                     </li>
                                 ))}
@@ -611,34 +728,6 @@ export default function Search({
                             {q ? t('search.results_for', { term: q }) : ''}
                         </p>
 
-                        <div className="ml-auto flex items-center gap-2">
-                            <label className="sr-only" htmlFor="sort">{t('search.sort')}</label>
-                            <select
-                                id="sort"
-                                value={sort}
-                                onChange={(e) => go({ sort: e.target.value })}
-                                className="rounded border border-line bg-card px-2 py-1.5 text-sm"
-                            >
-                                <option value="relevance">{t('search.sort_relevance')}</option>
-                                <option value="price_asc">{t('search.sort_price_asc')}</option>
-                                <option value="price_desc">{t('search.sort_price_desc')}</option>
-                                <option value="discount">{t('search.sort_discount')}</option>
-                                <option value="newest">{t('search.sort_newest')}</option>
-                            </select>
-
-                            <div className="flex rounded border border-line text-sm">
-                                {(['grid', 'store'] as const).map((v) => (
-                                    <button
-                                        key={v}
-                                        onClick={() => go({ view: v === 'grid' ? null : v })}
-                                        aria-pressed={view === v}
-                                        className={`px-3 py-1.5 ${view === v ? 'bg-ink text-cream' : ''}`}
-                                    >
-                                        {t(`search.view_${v}`)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
                     </div>
 
                     {results.total === 0 ? (

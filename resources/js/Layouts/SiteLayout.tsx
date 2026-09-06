@@ -630,6 +630,15 @@ function Chrome({ children }: PropsWithChildren) {
                             {t('search_help.footer_link')}
                         </Link>
 
+                        {/* Help, which gathers the how-to pages and the report
+                            form. Beside the search tips rather than replacing
+                            them: somebody looking for "how do I search" scans
+                            for that phrase, and a single "Help" would make them
+                            open a page to find out whether it is the right one. */}
+                        <Link href={`/${market.key}/help`} className="hover:text-accent">
+                            {t('help.link')}
+                        </Link>
+
                         {/* What this market searches for. The hub that replaced
                             the related-search chips under every result set when
                             those were removed for cost — the outbound links a

@@ -166,8 +166,9 @@ return [
     ],
 
     'search' => [
+        'view' => 'View',
+        'filters_and_sort' => 'Filters and sorting',
         'remove_term' => 'Remove :term',
-        'active_terms_heading' => 'Narrowed with',
         'title' => 'Search',
         'placeholder' => 'Search for a gift or scan a barcode',
         'pasted_searched' => 'That is an Amazon link. We read the product as :terms and looked for it at the shops we cover.',
@@ -289,7 +290,6 @@ return [
          * are single listings rather than full product pages, and saying so is
          * more honest than a heading that implies otherwise.
          */
-        'narrowed_to' => 'Narrowed to',
         'live_heading' => 'More :brand, fetched just now',
         'live_note' => 'Listed live from a shop whose prices we are not allowed to keep, so these are single offers rather than a full product page.',
     ],
@@ -1889,5 +1889,24 @@ return [
 
         'cta_search' => 'Find something to save',
         'cta_lists' => 'Go to my lists',
+    ],
+
+    /*
+     * How the site works, and where to say it does not. Guides first because
+     * most people arriving are stuck rather than reporting a fault.
+     */
+    'help' => [
+        'seo_title' => 'Help',
+        'seo_description' => 'How to search, how lists work, and where to tell us something is wrong.',
+        'title' => 'Help',
+        'intro' => 'How to get what you want out of this site, and where to say when it does not work.',
+        'guides_heading' => 'How it works',
+        'search_title' => 'Searching',
+        'search_blurb' => 'What the box accepts, how the scanner works, and why a typo still finds things.',
+        'lists_title' => 'Lists',
+        'lists_blurb' => 'Saving a product, making a list, and who can see it once you share it.',
+        'report_heading' => 'Something wrong?',
+        'report_intro' => 'A price that is out of date, a dead link, a sentence that reads like a machine wrote it. Tell us and we will look.',
+        'link' => 'Help',
     ],
 ];

@@ -439,9 +439,21 @@ class WishlistController extends Controller
                     ->all()
                 : [],
 
-            // Lane two: what I found. The existing items, unchanged.
+            /*
+             * Lane two: what I found. The existing items, unchanged.
+             *
+             * Priority first, then **newest first** within a priority. The
+             * tiebreak used to be whatever order the rows came back in, which
+             * is oldest first — so the thing just added landed at the bottom of
+             * a list somebody had been filling for weeks, below the fold, and
+             * the add panel sits at the top. Adding something and not seeing it
+             * reads as a save that failed.
+             */
             'items' => $wishlist->items
-                ->sortByDesc('priority')
+                ->sortByDesc(fn (WishlistItem $item) => [
+                    $item->priority ?? 0,
+                    $item->created_at?->getTimestamp() ?? 0,
+                ])
                 ->values()
                 ->map(fn ($item) => [
                     'id' => $item->id,
