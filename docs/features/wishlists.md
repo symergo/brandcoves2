@@ -164,7 +164,9 @@ one of three lists letting go does not change that answer.
 Saving names its destination — `lists.added_to`, "Saved to Camping". A save can land in the default
 list, in one chosen from the menu, or in a list created in the same click, and "Saved to your list"
 is equally true of all three, so it confirms nothing. Naming it is what makes the default worth
-accepting without opening the menu.
+accepting without opening the menu. The exception is a save made on the list's own page, where the
+destination is the page you are reading — see *[The save that needed no
+sentence](#the-save-that-needed-no-sentence-2026-09-06)*.
 
 ## The confirmation nobody could read
 
@@ -211,6 +213,34 @@ gone. What remained was the real cost — the same bookmark meaning "save it" on
 variants now follow one rule, **not saved → save; saved → open the picker**, and the card keeps a
 narrow chevron so that filing straight into a named list does not first cost a save into the wrong
 one.
+
+### What order a list is in (2026-09-06)
+
+Priority first, then **newest first**. `WishlistController` sorts by `priority` and breaks the tie on
+`created_at` descending; `SharedListController` orders `latest()` for a list that is not voting, so
+the owner and the person the link was sent to see the same thing at the top.
+
+The tiebreak used to be whatever order the rows came back in, which is oldest first. The add panel is
+above the list, so on a list somebody had been filling for weeks the thing they had just added went
+to the bottom, below the fold — an add that looks like an add that failed. Priority still wins,
+because a starred item is a deliberate placement and being new is not.
+
+A shared link is usually opened more than once, and there the same order answers the question the
+second visit is asking: what is new since I last looked.
+
+### The save that needed no sentence (2026-09-06)
+
+`AddProduct` — the search-and-add panel on a list — went through the `back()` branch and therefore
+raised the same banner: "Bewaard in test", at the top of the page called *test*, about a row that had
+just appeared on the list below it. Every word of it was already on screen.
+
+That save now sends `on_list_page: true`, and `report()` answers with the new row's id in
+`flash.savedItem` rather than a message. `Lists/Show` tints that row (`bg-sage/15`, the same green
+`FlashMessage` uses for a success) for four seconds and scrolls it into view.
+
+The tint is decoration only: nothing about the row depends on having seen it, so a missed animation
+costs nothing, and there is no message to miss. Saves from anywhere else are untouched — from a
+search grid the list's name is the whole news, and the toast still carries Undo.
 
 ### And it saves where the last one went (2026-08-31)
 
