@@ -158,7 +158,7 @@ export default function MarketSwitcher({
                     </label>
                     <select
                         id={`${id}-language`}
-                        className="min-w-0 rounded border border-line bg-card px-2 py-1 text-sm"
+                        className="min-w-0 rounded-card border border-line bg-card px-2 py-1 text-sm"
                         value={currentLanguage?.market ?? current.languages[0].market}
                         onChange={(e) => go(e.target.value)}
                     >

@@ -59,7 +59,7 @@ export default function Surprise({ finds, seen }: Props) {
                     {finds.map((find) => (
                         <li
                             key={find.id}
-                            className="flex flex-col rounded-lg border border-line bg-card p-4"
+                            className="flex flex-col rounded-card border border-line bg-card p-4"
                         >
                             <Link href={find.url} className="block">
                                 {find.image && (

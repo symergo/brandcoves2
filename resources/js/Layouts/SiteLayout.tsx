@@ -9,10 +9,57 @@ import SignInLink from '../Components/SignInLink'
 import MarketSwitcher from '../Components/MarketSwitcher'
 import NavMenu, { type NavMenuItem } from '../Components/NavMenu'
 import ToolIcon from '../Components/ToolIcon'
-import { type PropsWithChildren, useState } from 'react'
+import { type PropsWithChildren, useEffect, useState } from 'react'
 import { SignInProvider } from '../signIn'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+
+/**
+ * A beam along the top edge while a page is on its way.
+ *
+ * The search box already has one (the scanner sweep under the field), and it
+ * was the only loading signal on the site: every other Inertia visit showed
+ * nothing between the click and the new page, so a slow one read as a link
+ * that did nothing and got clicked again. Same idiom, site-wide — the beam and
+ * its reduced-motion fallback are the ones `app.css` defines for the search
+ * field.
+ *
+ * Shown only after 150 ms. Most visits land inside that, and a beam that
+ * flashes for a frame on every click is noise rather than a signal.
+ */
+function NavigationBeam() {
+    const [visible, setVisible] = useState(false)
+
+    useEffect(() => {
+        let timer: number | undefined
+
+        const start = () => {
+            window.clearTimeout(timer)
+            timer = window.setTimeout(() => setVisible(true), 150)
+        }
+        const stop = () => {
+            window.clearTimeout(timer)
+            setVisible(false)
+        }
+
+        const offStart = router.on('start', start)
+        const offFinish = router.on('finish', stop)
+
+        return () => {
+            window.clearTimeout(timer)
+            offStart()
+            offFinish()
+        }
+    }, [])
+
+    if (!visible) return null
+
+    return (
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5 overflow-hidden" aria-hidden="true">
+            <div className="h-full w-1/4 bg-accent animate-scan" />
+        </div>
+    )
+}
 
 /**
  * The site chrome, and the one sign-in dialog underneath it.
@@ -278,6 +325,8 @@ function Chrome({ children }: PropsWithChildren) {
                 {t('nav.skip')}
             </a>
 
+            <NavigationBeam />
+
             <header className="border-b border-line">
                 <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4">
                     <Link href={base} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
@@ -368,7 +417,7 @@ function Chrome({ children }: PropsWithChildren) {
                                 aria-label={`${t('nav.notifications')} (${unreadCount})`}
                             >
                                 <span aria-hidden>🔔</span>
-                                <span className="absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-[11px] leading-4 font-semibold text-white">
+                                <span className="absolute -top-2 -right-2 rounded-full bg-accent px-1.5 text-2xs leading-4 font-semibold text-white">
                                     {unreadCount > 9 ? '9+' : unreadCount}
                                 </span>
                             </Link>

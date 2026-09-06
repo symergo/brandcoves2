@@ -89,7 +89,7 @@ function ResultControls({
                     id="sort"
                     value={sort}
                     onChange={(e) => go({ sort: e.target.value })}
-                    className="w-full rounded border border-line bg-card px-2 py-1.5 text-sm"
+                    className="w-full rounded-card border border-line bg-card px-2 py-1.5 text-sm"
                 >
                     <option value="relevance">{t('search.sort_relevance')}</option>
                     <option value="price_asc">{t('search.sort_price_asc')}</option>
@@ -327,7 +327,7 @@ export default function Search({
                         placeholder={t('search.placeholder')}
                         aria-label={t('search.title')}
                         aria-busy={searching}
-                        className="w-full rounded-lg border border-line bg-card px-4 py-3"
+                        className="w-full rounded-card border border-line bg-card px-4 py-3"
                     />
                     {searching && (
                         <span
@@ -569,7 +569,7 @@ export default function Search({
                                 <aside
                                     id="search-filters"
                                     aria-label={t('search.filters')}
-                                    className={`absolute right-0 top-full z-20 mt-2 w-72 space-y-5 rounded-lg border border-line bg-card p-4 text-sm shadow-lg ${filtersOpen ? 'block' : 'hidden'}`}
+                                    className={`absolute right-0 top-full z-20 mt-2 w-72 space-y-5 rounded-card border border-line bg-card p-4 text-sm shadow-lg ${filtersOpen ? 'block' : 'hidden'}`}
                                 >
                                     <ResultControls sort={sort} view={view} go={go} />
 
@@ -827,7 +827,7 @@ export default function Search({
                                 */
                                 <section
                                     key={shop}
-                                    className="w-56 shrink-0 snap-start overflow-hidden rounded-lg border border-line bg-card sm:w-64"
+                                    className="w-56 shrink-0 snap-start overflow-hidden rounded-card border border-line bg-card sm:w-64"
                                     aria-label={shop}
                                 >
                                     {/*
@@ -996,7 +996,7 @@ export default function Search({
                             <button
                                 disabled={results.currentPage <= 1}
                                 onClick={() => go({ page: results.currentPage - 1 })}
-                                className="rounded border border-line px-3 py-1.5 disabled:opacity-40"
+                                className="rounded border border-line px-3 py-1.5 disabled:opacity-50"
                             >
                                 {t('search.previous')}
                             </button>
@@ -1006,7 +1006,7 @@ export default function Search({
                             <button
                                 disabled={results.currentPage >= results.lastPage}
                                 onClick={() => go({ page: results.currentPage + 1 })}
-                                className="rounded border border-line px-3 py-1.5 disabled:opacity-40"
+                                className="rounded border border-line px-3 py-1.5 disabled:opacity-50"
                             >
                                 {t('search.next')}
                             </button>

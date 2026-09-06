@@ -347,7 +347,7 @@ export default function BarcodeScanner({ autoStart = false, onFound, onCode }: P
                         type="button"
                         onClick={start}
                         disabled={loading}
-                        className="w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-60"
+                        className="w-full rounded bg-accent px-5 py-3 font-medium text-white disabled:opacity-50"
                     >
                         {loading ? t('scan.preparing') : t('scan.start')}
                     </button>
@@ -410,7 +410,7 @@ export default function BarcodeScanner({ autoStart = false, onFound, onCode }: P
             </div>
 
             {hit && (
-                <section className="mt-8 max-w-md rounded-lg border border-line bg-card p-5">
+                <section className="mt-8 max-w-md rounded-card border border-line bg-card p-5">
                     {hit.status === 'found' ? (
                         <a href={hit.url} className="flex gap-4">
                             {hit.image && (

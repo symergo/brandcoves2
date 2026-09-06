@@ -439,7 +439,7 @@ export default function Brand({
                                 id="brand-sort"
                                 value={sort}
                                 onChange={(e) => go({ sort: e.target.value })}
-                                className="rounded border border-line bg-card px-2 py-1.5 text-sm"
+                                className="rounded-card border border-line bg-card px-2 py-1.5 text-sm"
                             >
                                 <option value="relevance">{t('search.sort_relevance')}</option>
                                 <option value="price_asc">{t('search.sort_price_asc')}</option>
@@ -488,7 +488,7 @@ export default function Brand({
                             <button
                                 disabled={results.currentPage <= 1}
                                 onClick={() => go({ page: results.currentPage - 1 })}
-                                className="rounded border border-line px-3 py-1.5 disabled:opacity-40"
+                                className="rounded border border-line px-3 py-1.5 disabled:opacity-50"
                             >
                                 {t('search.previous')}
                             </button>
@@ -501,7 +501,7 @@ export default function Brand({
                             <button
                                 disabled={results.currentPage >= results.lastPage}
                                 onClick={() => go({ page: results.currentPage + 1 })}
-                                className="rounded border border-line px-3 py-1.5 disabled:opacity-40"
+                                className="rounded border border-line px-3 py-1.5 disabled:opacity-50"
                             >
                                 {t('search.next')}
                             </button>
@@ -614,7 +614,7 @@ export default function Brand({
                                                         : t('product.out_of_stock')}
                                                 </div>
                                                 {offer.needsPriceTimestamp && (
-                                                    <div className="mt-0.5 text-[11px] text-ink-soft/70">
+                                                    <div className="mt-0.5 text-2xs text-ink-soft">
                                                         {t('product.price_as_of')}
                                                     </div>
                                                 )}

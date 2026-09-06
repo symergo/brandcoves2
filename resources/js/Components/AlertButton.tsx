@@ -115,7 +115,7 @@ export default function AlertButton({ groupId, alert, currentPrice, inStock }: P
             </button>
 
             {open && (
-                <div className="space-y-2 rounded border border-line bg-card p-3 text-sm">
+                <div className="space-y-2 rounded-card border border-line bg-card p-3 text-sm">
                     <label className="block" htmlFor={`target-${groupId}`}>
                         {t('alerts.target_label')}
                     </label>

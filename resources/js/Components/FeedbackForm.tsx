@@ -66,7 +66,7 @@ export default function FeedbackForm({ path }: { path: string | null }) {
                             className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
                         />
                     </label>
-                    {form.errors.message && <p className="text-sm text-accent">{form.errors.message}</p>}
+                    {form.errors.message && <p className="text-sm text-danger">{form.errors.message}</p>}
 
                     {/*
                       Where they came from is recorded and not asked for.
@@ -94,7 +94,7 @@ export default function FeedbackForm({ path }: { path: string | null }) {
                             {t('feedback.email_hint')}
                         </span>
                     </label>
-                    {form.errors.email && <p className="text-sm text-accent">{form.errors.email}</p>}
+                    {form.errors.email && <p className="text-sm text-danger">{form.errors.email}</p>}
 
                     {/* The honeypot. See the component docblock. */}
                     <div className="hidden" aria-hidden>

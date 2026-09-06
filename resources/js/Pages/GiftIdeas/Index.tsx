@@ -43,7 +43,7 @@ export default function Index({ personas }: Props) {
                     {personas.map((persona) => (
                         <li
                             key={persona.slug}
-                            className="flex flex-col rounded-lg border border-line bg-card p-4"
+                            className="flex flex-col rounded-card border border-line bg-card p-4"
                         >
                             {/*
                               The drawing takes the card's text colour, so the

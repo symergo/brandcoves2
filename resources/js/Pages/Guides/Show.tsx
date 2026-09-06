@@ -107,7 +107,7 @@ function InlineCard({ item }: { item: Item }) {
 
     return (
         <figure
-            className={`my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row ${
+            className={`my-5 flex flex-col gap-4 rounded-card border border-line bg-card p-4 sm:flex-row ${
                 item.unavailable ? 'opacity-60' : ''
             }`}
         >

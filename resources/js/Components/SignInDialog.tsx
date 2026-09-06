@@ -140,7 +140,7 @@ export default function SignInDialog({
                 />
 
                 {form.errors.email && (
-                    <p id="signin-email-error" className="text-sm text-accent" role="alert">
+                    <p id="signin-email-error" className="text-sm text-danger" role="alert">
                         {form.errors.email}
                     </p>
                 )}
@@ -148,7 +148,7 @@ export default function SignInDialog({
                 <button
                     type="submit"
                     disabled={form.processing}
-                    className="w-full rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-60"
+                    className="w-full rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50"
                 >
                     {t('auth.send')}
                 </button>

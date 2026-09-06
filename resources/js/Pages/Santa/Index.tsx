@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
+import Button from '../../Components/Button'
 
 interface Group {
     id: string
@@ -127,16 +128,12 @@ export default function SantaIndex({ groups, isSignedIn }: Props) {
                               past looked like a button that did not fire.
                             */}
                             {Object.entries(form.errors).map(([field, message]) => (
-                                <p key={field} className="text-sm text-accent" role="alert">{message}</p>
+                                <p key={field} className="text-sm text-danger" role="alert">{message}</p>
                             ))}
 
-                            <button
-                                type="submit"
-                                disabled={form.processing}
-                                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-                            >
+                            <Button type="submit" busy={form.processing}>
                                 {t('santa.create')}
-                            </button>
+                            </Button>
                         </form>
                     )}
                 </div>

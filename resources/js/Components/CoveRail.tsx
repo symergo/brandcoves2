@@ -70,7 +70,7 @@ export function CoveSeries({ parts }: { parts: SeriesPart[] | null }) {
     return (
         <nav
             aria-label={t('guides.series_heading')}
-            className="mt-4 rounded-lg border border-line bg-card p-3 text-sm"
+            className="mt-4 rounded-card border border-line bg-card p-3 text-sm"
         >
             <h2 className="text-xs font-medium uppercase tracking-wide text-ink-soft">
                 {t('guides.series_heading')}
@@ -152,7 +152,7 @@ export default function CoveRail({ rail }: { rail: Rail }) {
               used for the shelf, in the language the page is being read in.
             */}
             {rail.products.length > 0 && (
-                <section className="rounded-lg border border-line bg-card p-4">
+                <section className="rounded-card border border-line bg-card p-4">
                     <h2 className="text-sm font-medium text-ink-soft">
                         {t('coves.rail_products')}
                     </h2>

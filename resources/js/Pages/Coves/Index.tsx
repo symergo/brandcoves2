@@ -81,7 +81,7 @@ export default function CovesIndex({ sections }: Props) {
 
                         <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {section.coves.map((cove) => (
-                                <li key={cove.url} className="rounded-lg border border-line bg-card p-5">
+                                <li key={cove.url} className="rounded-card border border-line bg-card p-5">
                                     {cove.date && (
                                         <p className="text-xs text-ink-soft">{cove.date}</p>
                                     )}

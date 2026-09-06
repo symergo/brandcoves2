@@ -26,6 +26,7 @@ cannot be recovered from a diff.
 | [page-titles.md](page-titles.md) | SEO / Frontend | Active |
 | [analytics.md](analytics.md) | SEO / Compliance | Active — production only, behind a consent banner |
 | [brand-mark.md](brand-mark.md) | Brand / Frontend | Active |
+| [design-system.md](design-system.md) | Brand / Frontend | Active — new 2026-09-06; migration of call sites ongoing |
 | [social-cards.md](social-cards.md) | SEO / Brand | Active |
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |

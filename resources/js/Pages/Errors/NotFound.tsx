@@ -85,7 +85,7 @@ export default function NotFound({ urls }: Props) {
                         // rewritten.
                         aria-label={t('not_found.search_placeholder')}
                         placeholder={t('not_found.search_placeholder')}
-                        className="w-full min-w-0 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none sm:w-auto sm:flex-1"
+                        className="w-full min-w-0 rounded-card border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft focus:border-ink sm:w-auto sm:flex-1"
                     />
                     <button
                         type="submit"
@@ -104,7 +104,7 @@ export default function NotFound({ urls }: Props) {
                         <li key={destination.href}>
                             <Link
                                 href={destination.href}
-                                className="block h-full rounded-lg border border-line bg-card p-4 transition hover:border-ink"
+                                className="block h-full rounded-card border border-line bg-card p-4 transition hover:border-ink"
                             >
                                 <span className="font-medium text-ink">{destination.title}</span>
                                 <span className="mt-1 block text-sm text-ink-soft">{destination.blurb}</span>

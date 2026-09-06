@@ -66,7 +66,7 @@ export default function MoreCoves({ band, rail = false }: { band: CoveBand | nul
                 {band.coves.map((cove) => (
                     <li
                         key={cove.url}
-                        className={`rounded-lg border border-line bg-card ${rail ? 'p-4' : 'p-5'}`}
+                        className={`rounded-card border border-line bg-card ${rail ? 'p-4' : 'p-5'}`}
                     >
                         {/*
                           Only an edition carries a date, and the card simply

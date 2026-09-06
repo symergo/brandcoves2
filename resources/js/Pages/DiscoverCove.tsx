@@ -258,7 +258,7 @@ export default function DiscoverCove({
                         <h2 id="surprise-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
                             {t('nav.surprise')}
                         </h2>
-                        <Link href={urls.surprise} className="text-sm font-medium text-accent hover:text-accent-dark">
+                        <Link href={urls.surprise} className="text-sm font-medium text-accent-dark hover:text-ink">
                             {t('surprise.reroll')} →
                         </Link>
                     </div>
@@ -318,7 +318,7 @@ export default function DiscoverCove({
                         <h2 id="questions-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
                             {t('ask.title')}
                         </h2>
-                        <Link href={askUrl} className="text-sm font-medium text-accent hover:text-accent-dark">
+                        <Link href={askUrl} className="text-sm font-medium text-accent-dark hover:text-ink">
                             {t('ask.all')} →
                         </Link>
                     </div>
@@ -383,7 +383,7 @@ export default function DiscoverCove({
                         </h2>
                         <Link
                             href={urls.giftIdeas}
-                            className="text-sm font-medium text-accent hover:text-accent-dark"
+                            className="text-sm font-medium text-accent-dark hover:text-ink"
                         >
                             {t('discover_cove.persona_all')} →
                         </Link>
@@ -424,7 +424,7 @@ export default function DiscoverCove({
                         </h2>
                         <Link
                             href={urls.guides}
-                            className="text-sm font-medium text-accent hover:text-accent-dark"
+                            className="text-sm font-medium text-accent-dark hover:text-ink"
                         >
                             {t('home.coves_all')} →
                         </Link>
@@ -443,7 +443,7 @@ export default function DiscoverCove({
                                         <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{cove.intro}</p>
                                     )}
                                     {cove.searches > 0 && (
-                                        <span className="mt-auto pt-3 text-xs text-ink-soft/70">
+                                        <span className="mt-auto pt-3 text-xs text-ink-soft">
                                             {t('home.coves_volume', { count: n(cove.searches) })}
                                         </span>
                                     )}

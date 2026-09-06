@@ -204,7 +204,7 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
             </header>
 
             {/* ── The dial ──────────────────────────────────────────────── */}
-            <section className="mt-6 rounded-lg border border-line bg-card p-5">
+            <section className="mt-6 rounded-card border border-line bg-card p-5">
                 <label htmlFor="dial" className="block text-sm font-medium">
                     {t('discover.dial_label')}
                 </label>
@@ -373,7 +373,7 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                                     className={
                                         asRow
                                             ? 'flex items-center gap-4 p-4'
-                                            : 'flex flex-col rounded-lg border border-line bg-card p-4'
+                                            : 'flex flex-col rounded-card border border-line bg-card p-4'
                                     }
                                 >
                                     {activeLayout === 'compare' && (

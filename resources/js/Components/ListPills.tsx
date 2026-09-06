@@ -54,7 +54,7 @@ export default function ListPills({
     const { t } = useTranslations()
 
     return (
-        <div className={`flex flex-wrap items-center gap-2 text-[11px] ${className}`}>
+        <div className={`flex flex-wrap items-center gap-2 text-2xs ${className}`}>
             <ListKindBadge kind={kind} />
 
             {/*

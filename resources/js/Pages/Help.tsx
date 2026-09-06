@@ -49,7 +49,7 @@ export default function Help({ guides, path }: Props) {
                         <li key={guide.key}>
                             <Link
                                 href={guide.url}
-                                className="block h-full rounded-lg border border-line bg-card p-4 transition hover:border-ink"
+                                className="block h-full rounded-card border border-line bg-card p-4 transition hover:border-ink"
                             >
                                 <span className="font-medium text-ink">{t(`help.${guide.key}_title`)}</span>
                                 <span className="mt-1 block text-sm text-ink-soft">

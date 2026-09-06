@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import PreviewBanner from '../../Components/PreviewBanner'
+import Badge from '../../Components/Badge'
 import { useTranslations } from '../../useTranslations'
 import CoveSubscribe from '../../Components/CoveSubscribe'
 import CoveRail, { type Rail } from '../../Components/CoveRail'
@@ -161,7 +162,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                 {rest.map((find) => (
                     <li
                         key={find.id}
-                        className="flex flex-col rounded-lg border border-line bg-card p-4"
+                        className="flex flex-col rounded-card border border-line bg-card p-4"
                     >
                         <Link href={find.url}>
                             {find.image && (
@@ -230,7 +231,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                         .map((find) => (
                             <figure
                                 key={find.id}
-                                className="my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row"
+                                className="my-5 flex flex-col gap-4 rounded-card border border-line bg-card p-4 sm:flex-row"
                             >
                                 <Link href={find.url} className="shrink-0">
                                     {find.image && (
@@ -314,7 +315,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
               never a shop's crossed-out price.
             */}
             {deals.length > 0 && (
-                <section className="rounded-lg border border-line bg-card p-4">
+                <section className="rounded-card border border-line bg-card p-4">
                     <h2 className="text-sm font-medium text-ink-soft">{t('daily.deals_title')}</h2>
                     <p className="mt-1 text-xs text-ink-soft">{t('daily.deals_hint')}</p>
 
@@ -348,9 +349,9 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                                         </span>
                                     </span>
                                     {deal.discountPercent !== null && (
-                                        <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+                                        <Badge tone="accent" className="shrink-0">
                                             −{n(deal.discountPercent)}%
-                                        </span>
+                                        </Badge>
                                     )}
                                 </Link>
                             </li>

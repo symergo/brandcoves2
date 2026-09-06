@@ -145,7 +145,7 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
                             {question.tags.map((tag) => (
                                 <li
                                     key={tag}
-                                    className="rounded-full bg-line/60 px-2 py-0.5 text-[11px] text-ink-soft"
+                                    className="rounded-full bg-line/60 px-2 py-0.5 text-2xs text-ink-soft"
                                 >
                                     {tag}
                                 </li>
@@ -252,7 +252,7 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
                             className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
                         />
                     </label>
-                    {form.errors.title && <p className="text-sm text-accent">{form.errors.title}</p>}
+                    {form.errors.title && <p className="text-sm text-danger">{form.errors.title}</p>}
 
                     <label className="block text-sm font-medium">
                         {t('ask.detail_label')}
@@ -379,7 +379,7 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
                                 </label>
                             </div>
                             {form.errors.budget_max && (
-                                <p className="text-sm text-accent">{form.errors.budget_max}</p>
+                                <p className="text-sm text-danger">{form.errors.budget_max}</p>
                             )}
                         </div>
                     )}
@@ -388,7 +388,7 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
                         <button
                             type="submit"
                             disabled={form.processing}
-                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-60"
+                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-50"
                         >
                             {t('ask.submit')}
                         </button>

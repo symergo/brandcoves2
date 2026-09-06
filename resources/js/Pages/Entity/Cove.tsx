@@ -100,7 +100,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                       rather than as a link to nothing.
                     */}
                     <div
-                        className="prose-cove mt-6 max-w-2xl text-lg leading-relaxed text-ink"
+                        className="mt-6 max-w-2xl text-lg leading-relaxed text-ink"
                         dangerouslySetInnerHTML={{ __html: cove.intro }}
                     />
                     {/*
@@ -108,7 +108,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                       lines and resolves tokens within each, so a piece written
                       in three paragraphs reads as three.
                     */}
-                    <div className="prose-cove mt-6 max-w-2xl space-y-4 leading-relaxed text-ink">
+                    <div className="mt-6 max-w-2xl space-y-4 leading-relaxed text-ink">
                         {cove.body.map((paragraph, index) => (
                             <p key={index} dangerouslySetInnerHTML={{ __html: paragraph }} />
                         ))}

@@ -148,7 +148,7 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                                         .map((find) => (
                                             <figure
                                                 key={find.id}
-                                                className="my-5 flex flex-col gap-4 rounded-lg border border-line bg-card p-4 sm:flex-row"
+                                                className="my-5 flex flex-col gap-4 rounded-card border border-line bg-card p-4 sm:flex-row"
                                             >
                                                 <Link href={find.url} className="shrink-0">
                                                     {find.image && (
@@ -196,7 +196,7 @@ export default function Persona({ preview = false, persona, finds, guide, rail }
                                 {rest.map((find) => (
                                     <li
                                         key={find.id}
-                                        className="flex flex-col rounded-lg border border-line bg-card p-4"
+                                        className="flex flex-col rounded-card border border-line bg-card p-4"
                                     >
                                         <Link href={find.url}>
                                             {find.image && (

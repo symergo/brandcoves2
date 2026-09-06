@@ -254,8 +254,8 @@ export default function ListShow({
                             <span
                                 className={
                                     shared
-                                        ? 'rounded-full bg-sage/15 px-2 py-0.5 text-[11px] text-sage'
-                                        : 'rounded-full bg-line/60 px-2 py-0.5 text-[11px] text-ink-soft'
+                                        ? 'rounded-full bg-sage/15 px-2 py-0.5 text-2xs text-sage'
+                                        : 'rounded-full bg-line/60 px-2 py-0.5 text-2xs text-ink-soft'
                                 }
                             >
                                 {shared ? t('lists.shared_short') : t('lists.private_short')}
@@ -550,7 +550,7 @@ export default function ListShow({
                                     <li key={step} className="flex gap-3 text-sm text-ink-soft">
                                         <span
                                             aria-hidden
-                                            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-[11px] font-medium text-ink"
+                                            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-2xs font-medium text-ink"
                                         >
                                             {step}
                                         </span>

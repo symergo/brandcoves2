@@ -336,7 +336,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                 value={form.data.title}
                                 onChange={(e) => form.setData('title', e.target.value)}
                                 placeholder={t(`wizard.title_placeholder_${kind}`)}
-                                className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2"
+                                className="mt-1 w-full rounded-card border border-line bg-card px-3 py-2"
                             />
                             {form.errors.title && <p className="mt-1 text-sm text-red-700">{form.errors.title}</p>}
                         </div>
@@ -364,7 +364,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                             form.setData('friend_id', '')
                                             form.setData('recipient_id', value)
                                         }}
-                                        className="mt-2 w-full rounded-lg border border-line bg-card px-3 py-2"
+                                        className="mt-2 w-full rounded-card border border-line bg-card px-3 py-2"
                                     >
                                         <option value="">{t('lists.someone_new')}</option>
                                         {recipients.map((r) => (
@@ -403,7 +403,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                                     maxLength={80}
                                                     value={form.data.new_recipient}
                                                     onChange={(e) => form.setData('new_recipient', e.target.value)}
-                                                    className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2"
+                                                    className="mt-1 w-full rounded-card border border-line bg-card px-3 py-2"
                                                 />
                                             </div>
                                         )}
@@ -415,7 +415,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                                     aria-label={t('lists.birthday_day')}
                                                     value={form.data.birthday_day}
                                                     onChange={(e) => form.setData('birthday_day', e.target.value)}
-                                                    className="w-1/2 rounded-lg border border-line bg-card px-2 py-2"
+                                                    className="w-1/2 rounded-card border border-line bg-card px-2 py-2"
                                                 >
                                                     <option value="">{t('lists.birthday_day')}</option>
                                                     {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
@@ -426,7 +426,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                                     aria-label={t('lists.birthday_month')}
                                                     value={form.data.birthday_month}
                                                     onChange={(e) => form.setData('birthday_month', e.target.value)}
-                                                    className="w-1/2 rounded-lg border border-line bg-card px-2 py-2"
+                                                    className="w-1/2 rounded-card border border-line bg-card px-2 py-2"
                                                 >
                                                     <option value="">{t('lists.birthday_month')}</option>
                                                     {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
@@ -474,7 +474,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                             form.setData('event_date', '')
                                             setOwnDate(false)
                                         }}
-                                        className="mt-1 block w-full rounded-lg border border-line bg-card px-3 py-2 text-base text-ink"
+                                        className="mt-1 block w-full rounded-card border border-line bg-card px-3 py-2 text-base text-ink"
                                     >
                                         <option value="">{t('registry.none')}</option>
                                         {occasions.map((o) => (
@@ -501,7 +501,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                             type="date"
                                             value={form.data.event_date}
                                             onChange={(e) => form.setData('event_date', e.target.value)}
-                                            className="mt-1 block w-full rounded-lg border border-line bg-card px-3 py-2 text-base text-ink"
+                                            className="mt-1 block w-full rounded-card border border-line bg-card px-3 py-2 text-base text-ink"
                                         />
                                     </label>
                                 )}

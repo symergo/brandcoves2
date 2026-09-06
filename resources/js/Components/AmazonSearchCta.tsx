@@ -77,7 +77,15 @@ export default function AmazonSearchCta({
             // one of these on every result does not read as link-selling.
             rel="sponsored noopener nofollow"
             target="_blank"
-            className="group flex items-center gap-3 rounded-card bg-accent p-4 text-white shadow-sm transition hover:bg-accent-dark"
+            /*
+              Outlined, not filled. Solid accent belongs to the one primary
+              action on a view, and on the product page that is the shop
+              button beside each offer we actually carry — a fallback to a
+              store we do not, drawn as the loudest block on the page, read
+              as the page's main action. Same card, same favicon, same arrow;
+              the ink and the border say "also".
+            */
+            className="group flex items-center gap-3 rounded-card border border-line bg-card p-4 text-ink shadow-sm transition hover:border-accent"
         >
             {/*
               The storefront's own favicon, on a white tile so a dark mark stays
@@ -117,7 +125,7 @@ export default function AmazonSearchCta({
                   and it survives translation without a verb that has to agree
                   with anything.
                 */}
-                <span className="mt-1 block text-xs text-white/80">
+                <span className="mt-1 block text-xs text-ink-soft">
                     {detail !== null && <span>{detail} · </span>}
                     {link.host}
                 </span>

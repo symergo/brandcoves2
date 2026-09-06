@@ -3,6 +3,8 @@ import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
+import Badge from '../Components/Badge'
+import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
 import AlertButton from '../Components/AlertButton'
 import type { AlertState } from '../Components/AlertButton'
@@ -105,7 +107,19 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                         <img
                             src={product.image}
                             alt={product.title}
-                            className="mx-auto max-h-96 w-full object-contain"
+                            /*
+                              The largest thing on the page and the first the
+                              eye lands on, so it is fetched first and given
+                              its box up front: without a size the layout
+                              shifted as it landed, on the site's highest-intent
+                              template. 4:3, capped at the same 24rem as
+                              before; `object-contain` keeps any feed image
+                              inside it.
+                            */
+                            width={512}
+                            height={384}
+                            fetchPriority="high"
+                            className="mx-auto aspect-[4/3] max-h-96 w-full object-contain"
                         />
                     )}
                 </div>
@@ -128,17 +142,24 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                             )}
                         </div>
                     )}
-                    <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{product.title}</h1>
+                    <h1 className="mt-1 text-xl font-semibold sm:text-2xl">{product.title}</h1>
 
+                    {/*
+                      The price is the fact, so it is the biggest thing here.
+                      It used to share the title's size and weight exactly, on
+                      a page whose whole job is to answer "what does it cost" —
+                      one step up, one step down, and tabular figures so a
+                      price does not jog when it changes.
+                    */}
                     {product.minPrice !== null && (
                         <div className="mt-5 flex flex-wrap items-baseline gap-3">
-                            <span className="text-2xl sm:text-3xl font-semibold">{formatPrice(product.minPrice, market)}</span>
+                            <span className="text-3xl font-semibold tabular-nums sm:text-4xl">{formatPrice(product.minPrice, market)}</span>
 
                             {product.discountPercent !== null && product.medianPrice && (
                                 <>
-                                    <span className="rounded bg-accent px-2 py-1 text-sm font-medium text-white">
+                                    <Badge tone="accent">
                                         {t('product.off', { percent: product.discountPercent })}
-                                    </span>
+                                    </Badge>
                                     {/*
                                       Against our own 30-day median, never a
                                       merchant's "was" price — those are
@@ -246,7 +267,7 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                                       of being allowed to show it at all.
                                     */}
                                     {offer.needsPriceTimestamp && (
-                                        <div className="mt-0.5 text-[11px] text-ink-soft/70">
+                                        <div className="mt-0.5 text-2xs text-ink-soft">
                                             {t('product.price_as_of')}
                                         </div>
                                     )}
@@ -260,11 +281,11 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                                     rel="sponsored noopener nofollow"
                                     target="_blank"
                                     onMouseDown={() => reportClick(offer)}
-                                    className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                                    className={
                                         offer.isBuyable
-                                            ? 'bg-accent text-white hover:bg-accent-dark'
-                                            : 'pointer-events-none border border-line text-ink-soft opacity-50'
-                                    }`}
+                                            ? buttonClasses('primary', 'md')
+                                            : buttonClasses('secondary', 'md', 'pointer-events-none opacity-50')
+                                    }
                                 >
                                     {t('product.go_to_shop')}
                                 </a>
@@ -296,7 +317,13 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                     </h2>
 
                     <div className="rounded-card border border-line bg-card p-6">
-                        <div className="space-y-3 text-ink-soft">
+                        {/*
+                          A measure. Every editorial page caps its prose near
+                          seventy characters and this one ran the full column
+                          — about 140 a line on a desktop, for up to 1800
+                          characters of a shop's marketing copy.
+                        */}
+                        <div className="max-w-2xl space-y-3 leading-relaxed text-ink-soft">
                             {description.paragraphs.map((paragraph, i) => (
                                 <p key={i}>{paragraph}</p>
                             ))}

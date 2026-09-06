@@ -119,7 +119,7 @@ export default function ListKindBadge({
 
     return (
         <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium text-ink ${colours.pill} ${className}`}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-2xs font-medium text-ink ${colours.pill} ${className}`}
         >
             {/*
               The mark, then the word. Both, not one: the icon is what makes a

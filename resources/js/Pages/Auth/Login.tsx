@@ -76,11 +76,11 @@ export default function Login({ googleEnabled }: Props) {
                         onChange={(e) => form.setData('email', e.target.value)}
                         aria-invalid={form.errors.email ? true : undefined}
                         aria-describedby={form.errors.email ? 'email-error' : undefined}
-                        className="w-full rounded-lg border border-line bg-card px-4 py-3"
+                        className="w-full rounded-card border border-line bg-card px-4 py-3"
                     />
 
                     {form.errors.email && (
-                        <p id="email-error" className="text-sm text-accent" role="alert">
+                        <p id="email-error" className="text-sm text-danger" role="alert">
                             {form.errors.email}
                         </p>
                     )}
@@ -88,7 +88,7 @@ export default function Login({ googleEnabled }: Props) {
                     <button
                         type="submit"
                         disabled={form.processing}
-                        className="w-full rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-60"
+                        className="w-full rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50"
                     >
                         {t('auth.send')}
                     </button>

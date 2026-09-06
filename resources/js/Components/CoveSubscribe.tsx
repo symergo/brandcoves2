@@ -73,13 +73,13 @@ export default function CoveSubscribe({ source = 'daily' }: { source?: string })
                     />
                     <button
                         disabled={form.processing}
-                        className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-dark disabled:opacity-60"
+                        className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-dark disabled:opacity-50"
                     >
                         {t('cove.subscribe_button')}
                     </button>
 
                     {form.errors.email && (
-                        <p id="cove-email-error" className="w-full text-sm text-accent">
+                        <p id="cove-email-error" className="w-full text-sm text-danger">
                             {form.errors.email}
                         </p>
                     )}

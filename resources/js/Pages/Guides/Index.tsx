@@ -47,7 +47,7 @@ export default function GuidesIndex({ guides }: Props) {
                     {guides.map((guide) => (
                         <li
                             key={guide.url}
-                            className="flex flex-col rounded-lg border border-line bg-card p-4"
+                            className="flex flex-col rounded-card border border-line bg-card p-4"
                         >
                             <Link href={guide.url} className="group text-ink hover:text-accent">
                                 <SceneIllustration

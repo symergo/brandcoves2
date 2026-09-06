@@ -8,6 +8,7 @@ import ListIllustration, { type ListSceneKey } from '../Components/ListIllustrat
 import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
+import { buttonClasses } from '../Components/Button'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -196,7 +197,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                 // screen offered to scan a barcode.
                                 aria-label={t('home.search_placeholder')}
                                 placeholder={t('home.search_placeholder')}
-                                className="w-full min-w-0 rounded-lg border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft/70 focus:border-ink focus:outline-none sm:w-auto sm:flex-1"
+                                className="w-full min-w-0 rounded-card border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft focus:border-ink sm:w-auto sm:flex-1"
                             />
                             {/*
                               The camera, beside the field, on the first screen
@@ -212,11 +213,8 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                               so a home page nobody scans from still loads
                               nothing extra.
                             */}
-                            <ScanButton className="shrink-0 rounded-lg border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" />
-                            <button
-                                type="submit"
-                                className="flex-1 rounded-lg bg-accent px-5 py-3 font-medium text-white transition hover:bg-accent-dark sm:flex-none"
-                            >
+                            <ScanButton className="shrink-0 rounded-card border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" />
+                            <button type="submit" className={buttonClasses('primary', 'lg', 'flex-1 sm:flex-none')}>
                                 {t('nav.search')}
                             </button>
                         </form>
@@ -350,7 +348,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                     </h2>
                     <Link
                         href={`${base}/gift-cove`}
-                        className="text-sm font-medium text-accent hover:text-accent-dark"
+                        className="text-sm font-medium text-accent-dark hover:text-ink"
                     >
                         {t('nav.cove')} →
                     </Link>
@@ -383,7 +381,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                           everything else in this band is full width anyway.
                           `py-2.5` at 16px keeps the tap target at 44px.
                         */
-                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card px-4 py-2.5 font-medium text-ink transition hover:border-ink sm:inline-flex sm:w-auto"
+                        className="flex w-full items-center justify-center gap-2 rounded-card border border-line bg-card px-4 py-2.5 font-medium text-ink transition hover:border-ink sm:inline-flex sm:w-auto"
                     >
                         <svg
                             viewBox="0 0 20 20"
@@ -587,7 +585,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                     </h2>
                     <Link
                         href={`${base}/discover-cove`}
-                        className="text-sm font-medium text-accent hover:text-accent-dark"
+                        className="text-sm font-medium text-accent-dark hover:text-ink"
                     >
                         {t('nav.discover_cove')} →
                     </Link>
@@ -721,7 +719,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
 
                         <Link
                             href={today.url}
-                            className="mt-6 inline-block font-medium text-accent hover:text-accent-dark"
+                            className="mt-6 inline-block font-medium text-accent-dark hover:text-ink"
                         >
                             {t('home.today_cta')} →
                         </Link>
@@ -761,7 +759,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                         </h2>
                         <Link
                             href={`${base}/gift-ideas`}
-                            className="text-sm font-medium text-accent hover:text-accent-dark"
+                            className="text-sm font-medium text-accent-dark hover:text-ink"
                         >
                             {t('home.personas_all')} →
                         </Link>
@@ -796,7 +794,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                     </p>
                                 )}
 
-                                <p className="mt-auto pt-4 text-xs text-ink-soft/70">
+                                <p className="mt-auto pt-4 text-xs text-ink-soft">
                                     {t('gift_ideas.find_count', { count: n(persona.findCount) })}
                                 </p>
                             </li>
@@ -819,7 +817,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                           "All Coves" and landing in different places is the
                           drift this codebase keeps writing about.
                         */}
-                        <Link href={`${base}/coves`} className="text-sm font-medium text-accent hover:text-accent-dark">
+                        <Link href={`${base}/coves`} className="text-sm font-medium text-accent-dark hover:text-ink">
                             {t('home.coves_all')} →
                         </Link>
                     </div>
@@ -836,7 +834,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                         <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{cove.intro}</p>
                                     )}
                                     {cove.searches > 0 && (
-                                        <span className="mt-auto pt-3 text-xs text-ink-soft/70">
+                                        <span className="mt-auto pt-3 text-xs text-ink-soft">
                                             {t('home.coves_volume', { count: n(cove.searches) })}
                                         </span>
                                     )}

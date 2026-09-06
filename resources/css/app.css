@@ -22,7 +22,28 @@
     --color-line: #e5ded4;
     --color-card: #ffffff;
 
+    /*
+     * Something went wrong, in its own colour.
+     *
+     * Validation errors used to be painted `text-accent` — the same terracotta
+     * as the submit button directly beneath them, so a refused field and the
+     * call to action were one colour. A red that is clearly not the brand,
+     * 6.4:1 on cream so it reads at `text-sm`.
+     */
+    --color-danger: #b42318;
+
     --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+    /*
+     * One step below `text-xs`, on the scale rather than beside it.
+     *
+     * Thirteen call sites wrote `text-[11px]` for the same thing — a price
+     * footnote, a pill, a count — which is a size the design has and the
+     * token set did not admit. 11px, matched to the legacy value so nothing
+     * moves.
+     */
+    --text-2xs: 0.6875rem;
+    --text-2xs--line-height: 1rem;
 
     --radius-card: 0.75rem;
 
@@ -118,6 +139,15 @@
 @layer base {
     html {
         -webkit-text-size-adjust: 100%;
+
+        /*
+         * The page is light, whatever the OS says. Without this a dark-OS
+         * device paints native controls — the sort select, every checkbox in
+         * the filter rail, scrollbars — in dark chrome against a cream page.
+         * The dark tokens above switch on `data-theme`, not on the OS, and
+         * this is the same decision stated to the browser.
+         */
+        color-scheme: light;
     }
 
     body {

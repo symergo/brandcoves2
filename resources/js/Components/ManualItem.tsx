@@ -159,7 +159,7 @@ export default function ManualItem({
             {/* Said plainly rather than discovered: nothing is fetched from the
                 link, so the title is the only thing that will ever show. */}
 
-            {error && <p className="text-sm text-accent">{error}</p>}
+            {error && <p className="text-sm text-danger">{error}</p>}
 
             <div className="flex gap-2">
                 <button type="submit" className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white">

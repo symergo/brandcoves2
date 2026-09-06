@@ -352,7 +352,7 @@ export default function AddProduct({
                         <button
                             type="submit"
                             disabled={searching}
-                            className="shrink-0 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+                            className="shrink-0 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
                         >
                             {t('search.submit')}
                         </button>
@@ -392,7 +392,7 @@ export default function AddProduct({
                         </p>
                     )}
 
-                    {error && <p className="mt-3 text-sm text-accent">{error}</p>}
+                    {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
                     {/*
                       Always present, never a consolation prize.
@@ -498,13 +498,13 @@ export default function AddProduct({
                         />
                     </label>
 
-                    {error && <p className="text-sm text-accent">{error}</p>}
+                    {error && <p className="text-sm text-danger">{error}</p>}
 
                     <div className="flex gap-2">
                         <button
                             type="submit"
                             disabled={busy}
-                            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                         >
                             {t('lists.manual_save')}
                         </button>

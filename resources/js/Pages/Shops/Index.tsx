@@ -32,7 +32,7 @@ interface Props {
  */
 function ShopCard({ shop, newLabel }: { shop: Shop; newLabel: string }) {
     return (
-        <li className="rounded-lg border border-line bg-card p-4">
+        <li className="rounded-card border border-line bg-card p-4">
             <Link href={shop.url} className="flex items-center gap-3 group">
                 {shop.logo && (
                     <img
@@ -58,7 +58,7 @@ function ShopCard({ shop, newLabel }: { shop: Shop; newLabel: string }) {
                 </span>
 
                 {shop.isNew && (
-                    <span className="ml-auto shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent">
+                    <span className="ml-auto shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-2xs font-medium text-accent">
                         {newLabel}
                     </span>
                 )}
@@ -99,7 +99,7 @@ export default function ShopsIndex({ coves, newShops, shops }: Props) {
 
                     <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {coves.map((cove) => (
-                            <li key={cove.url} className="rounded-lg border border-line bg-card p-5">
+                            <li key={cove.url} className="rounded-card border border-line bg-card p-5">
                                 <Link href={cove.url} className="font-medium hover:underline">
                                     {cove.title}
                                 </Link>

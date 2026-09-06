@@ -69,10 +69,10 @@ export default function EntityRails({ rails }: { rails: EntityRailSet | null }) 
         <div className="mt-12 space-y-10">
             {sections.map((section) => (
                 <section key={section.key}>
-                    <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+                    <h2 className="text-lg font-semibold text-ink">
                         {t(`entity_rails.${section.key}.title`)}
                     </h2>
-                    <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+                    <p className="mt-1 text-sm text-ink-soft">
                         {t(`entity_rails.${section.key}.blurb`)}
                     </p>
 
@@ -149,7 +149,7 @@ export function RailCard({
                                 {formatPrice(product.price, market)}
                             </span>
                             {product.discountPercent !== null && (
-                                <span className="rounded bg-emerald-50 px-1 py-px text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                                <span className="rounded-full bg-accent/10 px-1.5 py-px text-2xs font-semibold text-accent-dark">
                                     -{product.discountPercent}%
                                 </span>
                             )}
@@ -162,7 +162,7 @@ export function RailCard({
 
     return (
         <Link href={product.url} className="group block">
-            <div className="aspect-square overflow-hidden rounded-lg bg-stone-100 dark:bg-stone-800">
+            <div className="aspect-square overflow-hidden rounded-lg bg-cream">
                 {product.image && (
                     <img
                         src={product.image}
@@ -173,10 +173,10 @@ export function RailCard({
                 )}
             </div>
 
-            <p className="mt-2 line-clamp-2 text-sm text-stone-800 dark:text-stone-200">{product.title}</p>
+            <p className="mt-2 line-clamp-2 text-sm text-ink">{product.title}</p>
 
             {product.price !== null && (
-                <p className="mt-1 text-sm font-medium text-stone-900 dark:text-stone-100">
+                <p className="mt-1 text-sm font-medium text-ink">
                     {formatPrice(product.price, market)}
                     {/*
                       The badge is the claim the discount rail makes, so it is
@@ -185,7 +185,7 @@ export function RailCard({
                       shelf it turned up on.
                     */}
                     {product.discountPercent !== null && (
-                        <span className="ml-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                        <span className="ml-2 text-xs font-semibold text-accent-dark">
                             -{product.discountPercent}%
                         </span>
                     )}

@@ -129,7 +129,7 @@ export default function SantaJoin({ group, members, you }: Props) {
                                 className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2"
                             />
                             {form.errors.display_name && (
-                                <p className="mt-1 text-sm text-accent">{form.errors.display_name}</p>
+                                <p className="mt-1 text-sm text-danger">{form.errors.display_name}</p>
                             )}
                         </div>
 
@@ -147,7 +147,7 @@ export default function SantaJoin({ group, members, you }: Props) {
                             />
                             <p className="mt-1 text-xs text-ink-soft">{t('santa.email_hint')}</p>
                             {form.errors.email && (
-                                <p className="mt-1 text-sm text-accent">{form.errors.email}</p>
+                                <p className="mt-1 text-sm text-danger">{form.errors.email}</p>
                             )}
                         </div>
 
@@ -166,7 +166,7 @@ export default function SantaJoin({ group, members, you }: Props) {
 
                         <button
                             disabled={form.processing}
-                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-60"
+                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-50"
                         >
                             {t('santa.join')}
                         </button>

@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react'
+import Badge from './Badge'
 import SaveToList from './SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -66,9 +67,9 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                 ) : null}
 
                 {group.discountPercent !== null && (
-                    <span className="absolute top-2 left-2 rounded bg-accent px-2 py-1 text-xs font-medium text-white">
+                    <Badge tone="accent" className="absolute top-2 left-2">
                         {t('product.off', { percent: group.discountPercent })}
-                    </span>
+                    </Badge>
                 )}
 
                 {!group.inStock && (

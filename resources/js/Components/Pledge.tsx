@@ -245,7 +245,7 @@ export default function Pledge({
                                 )}
                             </div>
 
-                            {error && <p className="text-xs text-accent">{error}</p>}
+                            {error && <p className="text-xs text-danger">{error}</p>}
 
                             <div className="flex gap-2">
                                 <button

@@ -5,6 +5,7 @@ import ListPills from '../../Components/ListPills'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
+import Button from '../../Components/Button'
 
 interface ListSummary {
     id: string
@@ -138,7 +139,7 @@ function ListCard({ list }: { list: ListSummary }) {
                     </p>
                 )}
 
-                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-2xs">
                     {/*
                       What kind of list this is.
 
@@ -401,7 +402,7 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                       button that did not fire.
                     */}
                     {form.errors.title && (
-                        <p className="text-sm text-accent" role="alert">{form.errors.title}</p>
+                        <p className="text-sm text-danger" role="alert">{form.errors.title}</p>
                     )}
 
                     {/*
@@ -563,7 +564,7 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                                         className="w-full rounded-lg border border-line bg-cream px-3 py-2"
                                     />
                                     {form.errors.new_recipient && (
-                                        <p className="text-sm text-accent" role="alert">{form.errors.new_recipient}</p>
+                                        <p className="text-sm text-danger" role="alert">{form.errors.new_recipient}</p>
                                     )}
 
                                     {/*
@@ -663,23 +664,16 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                     {Object.entries(form.errors)
                         .filter(([field]) => !['title', 'new_recipient'].includes(field))
                         .map(([field, message]) => (
-                            <p key={field} className="text-sm text-accent" role="alert">{message}</p>
+                            <p key={field} className="text-sm text-danger" role="alert">{message}</p>
                         ))}
 
                     <div className="flex gap-2">
-                        <button
-                            disabled={form.processing}
-                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-60"
-                        >
+                        <Button type="submit" busy={form.processing}>
                             {t('lists.create')}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setCreating(false)}
-                            className="rounded-lg border border-line px-4 py-2 text-sm"
-                        >
+                        </Button>
+                        <Button variant="secondary" onClick={() => setCreating(false)}>
                             {t('lists.cancel')}
-                        </button>
+                        </Button>
                     </div>
                 </form>
             )}

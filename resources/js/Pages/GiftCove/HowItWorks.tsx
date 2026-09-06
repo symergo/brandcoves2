@@ -85,7 +85,7 @@ export default function HowItWorks({ backUrl }: { backUrl: string }) {
                                 >
                                     <span
                                         aria-hidden
-                                        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-[11px] font-medium text-ink"
+                                        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-line text-2xs font-medium text-ink"
                                     >
                                         {n(step)}
                                     </span>

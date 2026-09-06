@@ -1,0 +1,93 @@
+---
+name: Design system
+area: Frontend / Brand
+status: Active — tokens, Button, Badge, the navigation beam; migration of call sites ongoing
+date_added: 2026-09-06
+---
+
+# Design system
+
+The tokens live in [resources/css/app.css](../../resources/css/app.css) and the two primitives in
+`resources/js/Components/Button.tsx` and `Badge.tsx`. This page records the rules that were
+implicit before the 2026-09-06 review measured how often they were broken, and what was changed.
+
+## What the review found
+
+The token set was small and well used — 36 arbitrary-value utilities in the whole tree, three hex
+literals outside icon files — but it was being *diluted* rather than ignored:
+
+- 56 accent buttons in 41 distinct class strings; 32 without a hover state, 50 without a
+  transition. Pressing around the site, some primary buttons responded and some were inert.
+- The card radius token lost 42% of the time: 68 cards used `rounded-card`, 33 `rounded-lg`, 9
+  bare `rounded`. The same visual object had three radii a page apart.
+- Thirteen `text-[11px]` and one `text-[10px]`, below the smallest size the scale admitted.
+- Three disabled opacities (40, 50, 60), none changing the cursor.
+- Errors painted `text-accent` — the same terracotta as the submit button beneath them.
+- `text-ink-soft/70` on cream at 3.4:1 and `text-accent` as link text at 4.1:1, both under the
+  4.5:1 AA floor, on the price footnote of every product page and the "see all" link of every
+  home band.
+- `EntityRails` in `stone-*`/`emerald-*` with `dark:` variants that fired on the OS preference,
+  which `app.css` says at length is not how dark mode is decided here.
+- No loading affordance anywhere but the search field's beam.
+- Two search fields with `focus:outline-none`, switching off the site's only focus ring.
+
+## The rules, now written down
+
+**One button recipe.** `Button` takes `variant` (`primary`, `secondary`, `ghost`, `danger`) and
+`size` (`sm`, `md`, `lg`), and `busy` renders a spinner over a dimmed label. `buttonClasses()`
+is for the anchors that look like buttons — an outbound shop link, a sign-in link — which cannot
+be a `<button>`. A new button is one of these; a new class string is a regression.
+
+**One badge recipe.** `Badge` takes `tone` (`accent`, `sage`, `neutral`, `amber`) and `size`.
+The accent tone is a *wash* (`bg-accent/10 text-accent-dark`), never a fill: solid accent belongs
+to the one primary action on a view, and a badge that shouts as loudly as the button beside it
+dilutes both. The discount was drawn four ways; it is the accent badge everywhere now.
+
+**Solid accent is the primary action, once per view.** The Amazon fallback on the product page
+was a solid accent block above the shop buttons for the offers we actually carry, and read as the
+page's main action. It is outlined now.
+
+**Accent is for fills; accent-dark is for text.** `--color-accent` (#c9503a) is 4.1:1 on cream,
+under AA for text. `--color-accent-dark` (#a83f2c) is 6:1. The link recipe
+`font-medium text-accent hover:text-accent-dark` became `text-accent-dark hover:text-ink` in ten
+places; `hover:text-accent` on a transient state is fine.
+
+**Errors are `text-danger`.** A new token, `--color-danger` (#b42318, 6.4:1 on cream), clearly
+not the brand. Nineteen error lines moved to it.
+
+**Muted text is `text-ink-soft`, never `/70`.** Full strength is 6.9:1 and looks nearly the same.
+
+**`text-2xs` is the floor.** A new token at 11px, matched to the legacy value so nothing moved,
+so the size is on the scale rather than beside it.
+
+**Cards are `rounded-card`.** Forty surfaces swept.
+
+**Disabled is `opacity-50` plus `cursor-not-allowed`**, from `Button`; the sweep unified the
+opacity elsewhere.
+
+**`color-scheme: light`** is declared on `html`, so a dark-OS device does not paint native
+controls — the sort select, every checkbox in the filter rail — in dark chrome on a cream page.
+The dark tokens switch on `data-theme`, not on the OS; this states the same decision to the
+browser.
+
+**Every Inertia visit shows a beam.** `NavigationBeam` in `SiteLayout` reuses the search field's
+scanner sweep along the top edge, after 150 ms so a fast visit never flashes it. `Button`'s
+`busy` covers form submits.
+
+**The product page's price is the biggest thing on it.** Title and price shared a size and a
+weight exactly; the price is one step up with tabular figures, the title one step down, the hero
+image carries `width`, `height` and `fetchpriority="high"` so it neither shifts the layout nor
+waits its turn, and the description has the same ~70-character measure as every editorial page.
+
+## Still open
+
+- Migrating the remaining hand-rolled buttons and pills to the primitives. Done so far: the
+  product page, the home search, the list and Santa create forms, the product card and daily
+  deal badges.
+- Three h1 tiers with no rule for which page gets which; two prose measures on editorial pages.
+- Four icon stroke widths, and glyph characters (`☰ ✕ ▲ ▼ ×`, one emoji) standing in for icons.
+- Self-hosting Inter: the TTFs are vendored for the social cards and the site still loads a
+  render-blocking stylesheet from bunny.net.
+- The footer carries no mark; the social card palette (teal and amber) and the site palette
+  (cream and terracotta) are strangers — a decision to make, not a bug.
+- A sticky header, and tap targets under 40px on the picker chevron, pagination and chips.

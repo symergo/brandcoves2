@@ -233,7 +233,7 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                             placeholder={t('ask.answer_placeholder')}
                             className="w-full rounded-lg border border-line bg-cream px-3 py-2"
                         />
-                        {form.errors.body && <p className="text-sm text-accent">{form.errors.body}</p>}
+                        {form.errors.body && <p className="text-sm text-danger">{form.errors.body}</p>}
 
                         <div className="border-t border-line pt-4">
                             <h3 className="text-sm font-medium">{t('ask.picks_heading')}</h3>
@@ -386,7 +386,7 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                         <button
                             type="submit"
                             disabled={form.processing}
-                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-60"
+                            className="rounded-lg bg-accent px-4 py-2 font-medium text-white disabled:opacity-50"
                         >
                             {t('ask.answer_submit')}
                         </button>

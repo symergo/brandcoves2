@@ -106,7 +106,7 @@ export default function SaveToast() {
                         type="button"
                         onClick={() => void undo()}
                         disabled={undoing}
-                        className="shrink-0 font-medium text-accent hover:text-accent-dark disabled:opacity-60"
+                        className="shrink-0 font-medium text-accent-dark hover:text-ink disabled:opacity-50"
                     >
                         {t('lists.undo')}
                     </button>

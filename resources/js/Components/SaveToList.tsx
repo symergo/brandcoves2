@@ -586,7 +586,7 @@ export default function SaveToList({
                 className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm ${
                     on
                         ? 'border border-sage bg-sage/15 font-semibold text-sage'
-                        : 'border border-transparent hover:bg-line/40 disabled:opacity-60'
+                        : 'border border-transparent hover:bg-line/40 disabled:opacity-50'
                 }`}
             >
                 <span className="min-w-0 flex-1 truncate">{label}</span>
@@ -662,7 +662,7 @@ export default function SaveToList({
                     <button
                         type="submit"
                         disabled={busy}
-                        className="rounded bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+                        className="rounded bg-accent px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                     >
                         {t('lists.save')}
                     </button>
@@ -702,7 +702,7 @@ export default function SaveToList({
                             title={t('lists.remove_from', {
                                 list: holder.kind === 'mine' ? holder.title : (holder.recipient ?? holder.title),
                             })}
-                            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-ink-soft hover:bg-line/40 hover:text-accent disabled:opacity-60"
+                            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-ink-soft hover:bg-line/40 hover:text-accent disabled:opacity-50"
                         >
                             <span aria-hidden className="text-xs">
                                 ✕
@@ -817,7 +817,7 @@ export default function SaveToList({
                         aria-pressed={saved}
                         aria-label={saved ? t('lists.saved') : destination}
                         title={saved ? t('lists.saved') : destination}
-                        className={`flex h-9 w-9 items-center justify-center rounded-l-full border shadow-sm backdrop-blur transition disabled:opacity-60 ${
+                        className={`flex h-9 w-9 items-center justify-center rounded-l-full border shadow-sm backdrop-blur transition disabled:opacity-50 ${
                             saved
                                 ? 'border-sage bg-sage text-white'
                                 : 'border-line bg-card/90 text-ink hover:border-ink hover:bg-card'
@@ -853,7 +853,7 @@ export default function SaveToList({
                         aria-expanded={open}
                         aria-haspopup="menu"
                         aria-label={t('lists.save_to_list')}
-                        className="-ml-px flex h-9 w-5 items-center justify-center rounded-r-full border border-line bg-card/90 text-[10px] text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink"
+                        className="-ml-px flex h-9 w-5 items-center justify-center rounded-r-full border border-line bg-card/90 text-2xs text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink"
                     >
                         ▾
                     </button>
@@ -873,7 +873,7 @@ export default function SaveToList({
                 onClick={() => (saved ? openPicker() : void save())}
                 disabled={busy}
                 aria-pressed={saved}
-                className={`rounded-l-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-60 ${
+                className={`rounded-l-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
                     saved ? 'border-sage bg-sage/10 text-sage' : 'border-line hover:border-ink'
                 }`}
             >
