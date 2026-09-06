@@ -344,8 +344,10 @@ class PageRegionsTest extends TestCase
              */
             'brand_cove.above_prose' => [null, 'copy.above_prose'],
             'brand_cove.below_prose' => [null, 'copy.below_prose'],
+            'brand_cove.sidebar' => [null, 'copy.sidebar'],
             'shop_cove.above_prose' => [null, 'copy.above_prose'],
             'shop_cove.below_prose' => [null, 'copy.below_prose'],
+            'shop_cove.sidebar' => [null, 'copy.sidebar'],
         ];
 
         foreach (RegionRegistry::all() as $region) {

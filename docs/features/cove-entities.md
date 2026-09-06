@@ -187,12 +187,20 @@ somebody's ability to write a real sentence there without a deploy. The words ar
 
 ## Both entity pages are templated
 
-Four regions, editable at *Admin → Page templates* with no deploy:
+Six regions, editable at *Admin → Page templates* with no deploy — three on each page, and the same
+three on both:
 
-| Page | Region | Renders |
-|---|---|---|
-| `brand_cove` | `above_prose`, `below_prose` | around the writing on a written brand page |
-| `shop_cove` | `above_prose`, `below_prose` | the same on a written shop page |
+| Region | Renders |
+|---|---|
+| `above_prose` | between the heading and the first paragraph |
+| `below_prose` | after the last paragraph, above the wish-listed rail |
+| `sidebar` | between the product lists and the "see all" link |
+
+`sidebar` is the narrowest column on the page and its blurb says so: two lines read well there and a
+paragraph does not. It is where a note about the *products* belongs — that a discount is measured
+against our own 30-day median rather than a crossed-out price, or where a popularity ranking came
+from — which is a claim worth making beside the numbers it qualifies rather than three hundred
+pixels away under the article.
 
 Two page keys rather than one, although the layout is identical: the words differ even where the
 shape does not. A band above a shop piece talks about buying from somebody; above a brand piece it
@@ -222,13 +230,14 @@ shop page would be a sentence about the wrong kind of thing.
 - `app/Http/Controllers/ShopsController.php` — `coveSlugs()`, and where a directory row points
 - `app/Http/Controllers/GuideController.php` — `entityPage()`, `shopRails()`, `shopVocabulary()`
 - `app/Services/Shops/ShopDirectory.php` — the slug rule, membership, and `productCount()`
-- `app/Services/Pages/Regions/EntityCoveRegions.php` — the four editable regions
+- `app/Services/Pages/Regions/EntityCoveRegions.php` — the six editable regions
 - `app/Services/Pages/Context/EntityCoveContext.php` — the facts they may state
 - `resources/js/Pages/Entity/Cove.tsx` — the page both kinds render
 - `resources/js/Components/EntityRails.tsx` — the shelf, and `RailCard`'s row layout
 - `database/migrations/2026_09_05_001000_a_brand_is_a_cove_too.php`
 - `database/migrations/2026_09_06_000200_a_brand_page_stops_explaining_itself.php`
 - `tests/Feature/EntityRailsTest.php`, `tests/Feature/BrandPageTest.php`
+- `tests/Feature/EntityCoveTemplateAdminTest.php` — the pages reach the admin screen
 
 ## Open
 

@@ -12,7 +12,11 @@ interface Props {
     /** Where "see all" goes: the search page, filtered to this entity. */
     searchUrl: string
     /** Admin-editable copy, keyed by region. */
-    copy: { above_prose: BlockPayload[] | null; below_prose: BlockPayload[] | null }
+    copy: {
+        above_prose: BlockPayload[] | null
+        below_prose: BlockPayload[] | null
+        sidebar: BlockPayload[] | null
+    }
 }
 
 /**
@@ -134,6 +138,14 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                             </ul>
                         </section>
                     ))}
+
+                    {/*
+                      A note about the products above it — what a discount is
+                      measured against, where a ranking came from. Under the
+                      lists because it explains them, and above the link out
+                      because that stays the last thing in the column.
+                    */}
+                    <PageBlocks blocks={copy.sidebar} className="mb-6 text-sm text-ink-soft" />
 
                     {/*
                       The way back to everything. An article about a brand that

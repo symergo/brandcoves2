@@ -313,11 +313,42 @@ class BrandPageTest extends TestCase
             'the block did not render, or :entity was never filled',
         );
 
+        $sidebar = PageBlock::create([
+            'page' => EntityCoveRegions::BRAND,
+            'region' => 'sidebar',
+            'language' => 'nl',
+            'kind' => PageBlock::PARAGRAPH,
+            'position' => 1,
+            'enabled' => true,
+        ]);
+
+        $sidebar->variants()->create([
+            'body' => 'Kortingen zijn gemeten tegen onze eigen mediaanprijs.',
+            'weight' => 1,
+        ]);
+
+        PageCopy::flush();
+
+        $props = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
+
         /*
-         * And the other region is separately addressable rather than one bag.
-         * Empty rather than null:  answers for every region the page
-         * declares, so a region nobody has written is an empty list — which the
-         * component renders as nothing.
+         * The sidebar is the render site easiest to forget to wire: it is the
+         * one that lives inside a component rather than beside the prose, so a
+         * region could be declared, offered in admin, saved happily and drawn
+         * by nothing.
+         */
+        $this->assertStringContainsString(
+            'Kortingen zijn gemeten tegen onze eigen mediaanprijs.',
+            (string) json_encode($props['copy']['sidebar'] ?? null),
+            'the sidebar region never reached the page',
+        );
+
+        /*
+         * Each region is separately addressable rather than one bag.
+         *
+         * Empty rather than null: `PageCopy::forPage()` answers for every region
+         * the page declares, so one nobody has written is an empty list — which
+         * the component renders as nothing.
          */
         $this->assertSame([], $props['copy']['below_prose'] ?? null);
     }

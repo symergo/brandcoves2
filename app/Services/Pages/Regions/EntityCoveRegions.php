@@ -101,6 +101,20 @@ final class EntityCoveRegions
                 placeholders: $placeholders,
                 conditions: $conditions,
             ),
+            new Region(
+                page: $page,
+                key: 'sidebar',
+                label: 'In the sidebar, under the products',
+                blurb: 'Between the product lists and the "see all" link. Ships empty, and it is the '
+                    .'narrowest column on the page — two lines read well here and a paragraph does not. '
+                    .'The place for a note about the products beside it: that a discount is measured '
+                    .'against our own 30-day median rather than a crossed-out price, or where a '
+                    .'popularity ranking came from.',
+                layout: Region::FLOW,
+                requiresContent: false,
+                placeholders: $placeholders,
+                conditions: $conditions,
+            ),
         ];
     }
 }
