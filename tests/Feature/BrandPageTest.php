@@ -213,6 +213,47 @@ class BrandPageTest extends TestCase
     }
 
     #[Test]
+    public function a_written_brand_cove_replaces_the_templated_copy(): void
+    {
+        $this->seedBrand('Aurex');
+
+        // Without one, the generated sections are the page. This is the half of
+        // the rule that is easy to break by accident while implementing the
+        // other half.
+        $before = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
+        $this->assertNotNull($before['narrative'] ?? null, 'the fallback copy is missing');
+        $this->assertNull($before['cove'] ?? null);
+
+        DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Brand->value,
+            'slug' => 'aurex',
+            'theme_title' => 'Wat Aurex maakt',
+            'theme_slug' => 'aurex',
+            'theme_blurb' => 'Waar het over gaat.',
+            'body' => 'Eerste alinea.',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        $after = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
+
+        /*
+         * The rule, stated 2026-09-06: the existing brand page is the fallback
+         * for a brand nobody has written about. Running both puts two
+         * introductions to one brand on one page, and the weaker of them is the
+         * one nobody chose to write.
+         */
+        $this->assertNotNull($after['cove'] ?? null, 'the written piece did not reach the page');
+        $this->assertNull($after['narrative'] ?? null, 'the templated copy is still under a written Cove');
+        $this->assertNull($after['intro'] ?? null, 'the templated intro is still above a written Cove');
+
+        // The rails are not editorial and stay either way: they are this
+        // brand's live products, and the Cove deliberately names none of them.
+        $this->assertArrayHasKey('rails', $after);
+    }
+
+    #[Test]
     public function the_page_opens_with_its_vocabulary_rather_than_with_statistics(): void
     {
         $this->seedBrand('Aurex');

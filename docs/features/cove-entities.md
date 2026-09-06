@@ -130,11 +130,27 @@ and a writer cannot link a category this brand does not stock.
 A token naming anything outside it renders as plain text, which is the safety property: a
 hallucinated link is an unlinked phrase rather than a 404 in the middle of an article.
 
-## Two prose regions on a brand page, with different jobs
+## The existing page is the fallback
 
-The Cove above the grid is bespoke editorial. The templated numeric copy below the grid stays and
-still serves every brand with no Cove — which is the great majority of them. They are not
-duplicates: one is written about ranges, the other is built from numbers the catalogue can back up.
+**Where an entity Cove exists it is the page. Where none exists, what was already there stands.**
+Stated as a rule on 2026-09-06, and it settles two places that had drifted apart.
+
+On a **brand page**, the templated copy — a sentence slot above the grid, six generated sections
+below it, assembled from the catalogue's own numbers — renders only when no Brand Cove is published.
+`BrandController` resolves the Cove before the payload and suppresses both regions when it finds one.
+
+On the **shops directory**, each row links to that shop's Cove when there is one and to a search
+filtered to that shop when there is not. `ShopsController::coveSlugs()` reads the published slugs
+once for the whole directory rather than once per row.
+
+This paragraph used to argue the opposite: that the two brand regions were not duplicates because
+one is prose and the other is arithmetic, so both should render. The objection to that is simpler
+than the defence — a page carrying two introductions to one brand is worse than either alone, and
+the one a reader meets second is the one nobody chose to write. Recorded rather than quietly
+reversed, because the earlier reasoning is not wrong on its own terms and will be rediscovered.
+
+The rails are **not** editorial and are unaffected: they are the entity's own live products, the Cove
+deliberately names none of them, and they render whether or not anybody has written a word.
 
 ## Files
 
@@ -142,7 +158,8 @@ duplicates: one is written about ranges, the other is built from numbers the cat
 - `app/Services/Cove/EntityRails.php`
 - `app/Services/Ai/Prompts/Defaults.php` — `BRAND_SYSTEM`, `BRAND_PROMPT`
 - `app/Services/Shops/ShopDirectory.php` — the shop slug rule and membership
-- `app/Http/Controllers/BrandController.php` — `cove()`, and the rails prop
+- `app/Http/Controllers/BrandController.php` — `cove()`, the rails prop, and the fallback rule
+- `app/Http/Controllers/ShopsController.php` — `coveSlugs()`, and where a directory row points
 - `app/Http/Controllers/GuideController.php` — `shopRails()`, `shopVocabulary()`
 - `resources/js/Components/EntityRails.tsx`
 - `database/migrations/2026_09_05_001000_a_brand_is_a_cove_too.php`

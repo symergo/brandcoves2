@@ -139,6 +139,24 @@ class BrandController extends Controller
 
         $this->seo($stat, $current, $query);
 
+        /*
+         * The Brand Cove, resolved before the payload because two other regions
+         * depend on whether it exists.
+         *
+         * **The templated copy is the fallback.** A brand page has always
+         * carried copy assembled from the catalogue's own numbers, above and
+         * below the grid, and for the great majority of brands that is still
+         * the whole page. When somebody writes a Brand Cove it takes over:
+         * running both puts two introductions on one page, and the weaker one
+         * is the one nobody chose to write.
+         *
+         * Decided 2026-09-06. `docs/features/cove-entities.md` argued the
+         * opposite — that the two were not duplicates because one is prose and
+         * the other is arithmetic — and that reasoning is recorded there with
+         * the reason it was overruled.
+         */
+        $cove = $this->cove($stat, $current);
+
         return Inertia::render('Brand', [
             'brand' => [
                 'name' => $stat->brand,
@@ -193,9 +211,10 @@ class BrandController extends Controller
             /*
              * The long copy, below the grid and drawn from the editable bank
              * rather than straight from the language files. Null on any variant
-             * that is noindex — see narrative().
+             * that is noindex — see narrative() — and null whenever a Brand Cove
+             * has been written, because that is what this stands in for.
              */
-            'narrative' => $this->narrative($stat, $result, $query, $market),
+            'narrative' => $this->narrative($stat, $result, $query, $market, $cove),
 
             /*
              * A sentence or two above the products, if an editor wrote one.
@@ -205,7 +224,7 @@ class BrandController extends Controller
              * on every brand. This is a place, not a comeback: it ships empty,
              * nothing generates it, and it is gated exactly as the long copy is.
              */
-            'intro' => $this->intro($stat, $result, $query, $market),
+            'intro' => $this->intro($stat, $result, $query, $market, $cove),
 
             /*
              * What to read when the brand has nothing to show.
@@ -229,12 +248,11 @@ class BrandController extends Controller
              * brand mention on the site points at it — so a second page would
              * split exactly the link equity this one exists to consolidate.
              *
-             * Null for the great majority of brands, which is why the templated
-             * copy below the grid stays. The two are not duplicates: this is
-             * bespoke editorial and that is built from numbers the catalogue can
-             * back up.
+             * Null for the great majority of brands, and that is the case the
+             * templated copy exists for. Where this is not null the templated
+             * copy is suppressed — see the note where it is resolved.
              */
-            'cove' => $this->cove($stat, $current),
+            'cove' => $cove,
 
             /*
              * The product rails: what has dropped in price here, what is
@@ -525,9 +543,10 @@ class BrandController extends Controller
      *
      * @return array{sections: list<array{heading: string, body: list<list<array<string, mixed>>>}>}|null
      */
-    private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
+    private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market, ?array $cove): ?array
     {
-        if ($this->isThin($query) || $result->isEmpty()) {
+        // Written editorial wins. See the note where $cove is resolved.
+        if ($cove !== null || $this->isThin($query) || $result->isEmpty()) {
             return null;
         }
 
@@ -543,9 +562,10 @@ class BrandController extends Controller
      *
      * @return list<array{kind: string, parts: list<array<string, mixed>>}>|null
      */
-    private function intro(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
+    private function intro(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market, ?array $cove): ?array
     {
-        if ($this->isThin($query) || $result->isEmpty()) {
+        // Written editorial wins. See the note where $cove is resolved.
+        if ($cove !== null || $this->isThin($query) || $result->isEmpty()) {
             return null;
         }
 

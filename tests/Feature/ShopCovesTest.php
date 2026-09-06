@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
+use App\Enums\PublishStatus;
 use App\Enums\Source;
+use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\Product;
+use App\Services\Shops\ShopDirectory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -159,6 +163,65 @@ class ShopCovesTest extends TestCase
     {
         $shop = $this->shop('Coolblue', Market::BeNl);
 
+        // The fallback, and the case that covers nearly every row: nobody has
+        // written about this shop, so the directory offers the next best thing.
+        $this->get('/be-nl/shops')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('shops.0.url', "/be-nl/search?merchant%5B%5D={$shop->id}")
+            );
+    }
+
+    #[Test]
+    public function a_shop_that_has_been_written_about_links_to_the_writing(): void
+    {
+        $shop = $this->shop('Coolblue', Market::BeNl);
+
+        DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Shop->value,
+            // Derived from the domain, which is what makes the same shop
+            // pairable across markets — never hand-typed.
+            'slug' => ShopDirectory::slugFor($shop),
+            'theme_title' => 'Kopen bij Coolblue',
+            'theme_slug' => ShopDirectory::slugFor($shop),
+            'theme_blurb' => 'Waar het over gaat.',
+            'body' => 'Eerste alinea.',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        /*
+         * The rule, stated 2026-09-06: the filtered search is the *fallback*.
+         * A directory that keeps pointing at search once somebody has written
+         * the page leaves that writing reachable only by scrolling past the
+         * band above it.
+         */
+        $this->get('/be-nl/shops')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('shops.0.url', '/be-nl/shops/coolblue-be')
+            );
+    }
+
+    #[Test]
+    public function another_markets_writing_does_not_redirect_this_markets_row(): void
+    {
+        $shop = $this->shop('Coolblue', Market::BeNl);
+
+        DailyPickSet::create([
+            'market' => Market::NlNl->value,
+            'kind' => CoveKind::Shop->value,
+            'slug' => ShopDirectory::slugFor($shop),
+            'theme_title' => 'Kopen bij Coolblue',
+            'theme_slug' => ShopDirectory::slugFor($shop),
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        // Invariant 2 reaches the directory too: a Cove written for nl-nl is
+        // not this market's page, and linking to it would send a Belgian
+        // reader to Dutch prices.
         $this->get('/be-nl/shops')
             ->assertOk()
             ->assertInertia(fn ($page) => $page

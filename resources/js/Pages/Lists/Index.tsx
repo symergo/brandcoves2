@@ -307,17 +307,17 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {/*
-                      A list is empty until something goes in it, and nothing
-                      goes in it from this page — every save starts at a product.
-                      Leaving "New list" as the only action here sent people to a
-                      list they then had no route out of.
+                      "New list" is the only action in this header, deliberately.
+
+                      A "find things to add" button stood beside it, on the
+                      reasoning that nothing goes into a list from this page —
+                      every save starts at a product — so somebody arriving here
+                      needed a way onward. It was removed on 2026-09-06: the
+                      empty state already offers exactly that link, at the moment
+                      it is the only thing to do, and the site header carries
+                      search on every page. Two buttons for one intention made
+                      the header compete with the page under it.
                     */}
-                    <Link
-                        href={`/${market.key}/search`}
-                        className="rounded-lg bg-accent px-4 py-2 font-medium text-white hover:bg-accent-dark"
-                    >
-                        {t('lists.find_things')}
-                    </Link>
                     <button
                         onClick={() => setCreating((v) => !v)}
                         className="rounded-lg border border-line px-4 py-2 font-medium hover:border-ink"

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveKind;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Models\DailyPickSet;
@@ -11,6 +12,7 @@ use App\Models\Merchant;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
+use App\Services\Shops\ShopDirectory;
 use App\Support\CurrentMarket;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -182,6 +184,8 @@ class ShopsController extends Controller
      */
     private function present(Collection $shops, CurrentMarket $current, Carbon $since): array
     {
+        $written = $this->coveSlugs($current);
+
         return $shops->map(fn (Merchant $shop) => [
             'id' => $shop->id,
             'name' => $shop->displayName(),
@@ -191,15 +195,44 @@ class ShopsController extends Controller
             'logo' => $shop->faviconUrl(),
             'isNew' => $shop->created_at !== null && $shop->created_at->greaterThanOrEqualTo($since),
             /*
-             * Into search, filtered to this shop.
+             * The shop's own page where somebody has written one, and a search
+             * filtered to that shop where nobody has.
              *
-             * `?merchant[]=` is a filter the search page already takes, and with
-             * no term the stored query still runs — so this lands on that shop's
+             * **The filtered search is the fallback.** It lands on the shop's
              * catalogue in this market rather than on a page that needs typing
-             * into first. A shop page of its own, mirroring `/brand/{slug}`,
-             * is the next step and needs a slug column merchants do not have.
+             * into first, which is a decent answer to "show me what they sell"
+             * and no answer at all to "what are they like to buy from". Where a
+             * Shop Cove exists it answers the second question and links on to
+             * the first, so the directory should send people to the better page
+             * — a row that keeps pointing at search makes the writing reachable
+             * only by scrolling past the band above.
              */
-            'url' => $current->url('search').'?merchant%5B%5D='.$shop->id,
+            'url' => isset($written[ShopDirectory::slugFor($shop)])
+                ? $written[ShopDirectory::slugFor($shop)]
+                : $current->url('search').'?merchant%5B%5D='.$shop->id,
         ])->values()->all();
+    }
+
+    /**
+     * Published Shop Cove URLs in this market, keyed by slug.
+     *
+     * One query for the whole directory rather than one per row: the page
+     * renders every shop a market carries, and a lookup per row is the shape
+     * that turns a six-row directory into a six-query one and a sixty-row
+     * directory into a problem.
+     *
+     * @return array<string, string>
+     */
+    private function coveSlugs(CurrentMarket $current): array
+    {
+        return DailyPickSet::query()
+            ->forMarket($current->get())
+            ->shops()
+            ->published()
+            ->pluck('slug')
+            ->mapWithKeys(fn (string $slug): array => [
+                $slug => $current->url(CoveKind::Shop->path($slug, $current->get())),
+            ])
+            ->all();
     }
 }
