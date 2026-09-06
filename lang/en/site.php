@@ -31,6 +31,9 @@ return [
         'main' => 'Main',
         'account' => 'Account',
         'skip' => 'Skip to content',
+        'dial' => 'Browse by mood',
+        'hint_dial' => 'One dial from safe bets to wild cards',
+        'share' => 'Share',
         'close' => 'Close',
         'choose_market' => 'Choose your market',
         'choose_language' => 'Choose your language',
@@ -130,6 +133,7 @@ return [
         // it; the same line in a modal with no camera is a broken promise.
         'search_placeholder' => 'Search for a gift or scan a barcode',
         'recent_heading' => 'Recently searched',
+        'recently_viewed' => 'You looked at',
         'cta_gift' => 'Find a gift',
         'today_badge' => "Today's Cove",
         'today_cta' => "See today's finds",

@@ -177,3 +177,9 @@ shareable, and a private list simply has no share URL to give it.
 dies with it, and the next share mints a different one. It posted straight from the click while
 deleting the whole list and removing a Secret Santa member both confirmed. It confirms now
 (`lists.disable_sharing_confirm`).
+
+## The share sheet is on the pages people send (2026-09-06)
+
+`ShareMenu` existed on the quiz alone. It is on the product page, the Daily Cove edition and every
+guide now, sharing the canonical URL rather than the address bar so a retitled page's link still
+resolves.

@@ -94,6 +94,10 @@ export default function MarketSwitcher({
         for (const [name, value] of [
             ['market', marketKey],
             ['_token', token ?? ''],
+            // Where the visitor is now. A language change inside the same
+            // country lands on this page's twin rather than the market home;
+            // the server decides whether one exists.
+            ['path', window.location.pathname],
         ]) {
             const field = document.createElement('input')
             field.type = 'hidden'

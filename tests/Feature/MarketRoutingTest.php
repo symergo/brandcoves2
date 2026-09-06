@@ -69,6 +69,41 @@ class MarketRoutingTest extends TestCase
     }
 
     #[Test]
+    public function a_language_change_inside_a_country_keeps_the_page(): void
+    {
+        /*
+         * be-nl and be-fr are the same catalogue. Reading a product in Dutch
+         * and wanting it in French used to cost the product: the switch always
+         * landed on the market home. A page with a twin in the chosen market
+         * lands on the twin; the market home is the answer for everything
+         * else, exactly as before.
+         */
+        $this->post('/market', ['market' => 'be-fr', 'path' => '/be-nl/search'])
+            ->assertRedirect(url('/be-fr/search'))
+            ->assertCookie(MarketPreference::COOKIE, 'be-fr');
+
+        // Across a border the catalogue changes, so the home it is.
+        $this->post('/market', ['market' => 'nl-nl', 'path' => '/be-nl/search'])
+            ->assertRedirect('/nl-nl');
+
+        // A product with no French twin has nowhere to land but the home.
+        $this->post('/market', ['market' => 'be-fr', 'path' => '/be-nl/p/999999/nothing'])
+            ->assertRedirect('/be-fr');
+    }
+
+    #[Test]
+    public function the_path_can_never_send_anybody_off_the_site(): void
+    {
+        // Resolved through Alternates, never redirected to as given: a
+        // protocol-relative path has no market segment and lands on the home.
+        $this->post('/market', ['market' => 'be-fr', 'path' => '//evil.example/x'])
+            ->assertRedirect('/be-fr');
+
+        $this->post('/market', ['market' => 'be-fr', 'path' => 'https://evil.example/x'])
+            ->assertSessionHasErrors('path');
+    }
+
+    #[Test]
     public function a_chosen_market_beats_the_browser_language(): void
     {
         // The whole point. The header still says the Netherlands and the

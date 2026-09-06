@@ -227,22 +227,19 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                 </div>
 
                 {/*
-                  The numbers that produced the page, shown rather than hidden.
+                  Which mode the dial has landed on, in words.
 
-                  A surface that visibly reorganises as a control moves is
-                  otherwise mystifying — showing alpha and beta changing is what
-                  turns "the results jumped about" into "I moved the dial".
+                  This used to print the scoring weights and the retriever mix
+                  beside it — α, β, γ, λ, ε in a mono font — on the reasoning
+                  that showing the numbers change is what makes the surface
+                  legible. To a shopper they are a tuning readout, and the mode
+                  name carries the same news. The numbers are still in
+                  `meta.scoring` for anybody debugging the ranking.
                 */}
-                <p className="mt-3 font-mono text-xs text-ink-soft">
+                <p className="mt-3 text-xs text-ink-soft">
                     {t('discover.now_showing', {
                         mode: t(`discover.modes.${meta.key}.title`),
                     })}
-                    {' · '}α {meta.scoring.alpha} · β {meta.scoring.beta} · γ {meta.scoring.gamma} · λ{' '}
-                    {meta.scoring.lambda} · ε {meta.scoring.epsilon}
-                    {' · '}
-                    {Object.entries(meta.retrievers)
-                        .map(([key, weight]) => `${key} ${weight}`)
-                        .join(' · ')}
                 </p>
 
                 <div className="mt-4 flex flex-wrap items-center gap-4">

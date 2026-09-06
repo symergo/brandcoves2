@@ -250,3 +250,12 @@ curl -s http://localhost:8000/sitemap.xml | grep -c '/sitemap/es/'
 curl -s http://localhost:8000/robots.txt | grep 'Disallow: /es/'
 # Disallow: /es/   (when ROBOTS_ALLOW=true)
 ```
+
+## A language change keeps the page (2026-09-06)
+
+The switcher posts the current path beside the chosen market. When the chosen market is in the
+same country — be-nl to be-fr, the same catalogue — `MarketPreferenceController` asks
+`Alternates::for()` whether the page has a twin there and lands on it; a product with no French
+twin, or any switch across a border, lands on the market home as before. The path is only ever
+resolved through `Alternates`, never redirected to as given, so it cannot send anybody off the
+site; `MarketRoutingTest` pins both.

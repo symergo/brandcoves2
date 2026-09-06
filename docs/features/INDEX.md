@@ -48,6 +48,7 @@ cannot be recovered from a diff.
 | [recipient-birthday.md](recipient-birthday.md) | Gifting / Notifications | Active — day and month, never a year |
 | [copying-items.md](copying-items.md) | Wishlist / Gifting | Active — copy only, never move |
 | [serendipity.md](serendipity.md) | Discovery | Active |
+| [recently-viewed.md](recently-viewed.md) | Discovery / Frontend | Active — new 2026-09-06 |
 | [ask-others.md](ask-others.md) | Discovery / Community | Active — not in the sitemap yet |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |

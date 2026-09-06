@@ -9,6 +9,7 @@ import CoveSubscribe from '../../Components/CoveSubscribe'
 import CoveRail, { type Rail } from '../../Components/CoveRail'
 import MoreCoves from '../../Components/MoreCoves'
 import SaveToList from '../../Components/SaveToList'
+import ShareMenu from '../../Components/ShareMenu'
 
 interface Find {
     id: number
@@ -73,7 +74,7 @@ interface Props {
 }
 
 export default function Edition({ preview = false, edition, finds, guide, deals, rail }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const { market, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
     const [reactions, setReactions] = useState<Record<number, string>>({})
@@ -201,6 +202,10 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
             </p>
             <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">{edition.theme}</h1>
             {edition.blurb && <p className="mt-2 text-ink-soft">{edition.blurb}</p>}
+            {/* The share sheet, on a page written to be sent on. */}
+            <div className="mt-4">
+                <ShareMenu url={canonical} text={edition.theme} label={t('nav.share')} />
+            </div>
         </header>
     )
 

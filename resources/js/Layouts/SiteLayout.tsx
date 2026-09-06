@@ -243,6 +243,18 @@ function Chrome({ children }: PropsWithChildren) {
                 icon: <CoveIcon name="persona" className="h-5 w-5" />,
             },
             /*
+             * The dial. Indexable, in the sitemap per mode, and until
+             * 2026-09-06 reachable from nothing on the site — no menu entry,
+             * no link from the hub. A page a crawler can find and a visitor
+             * cannot is the wrong way round.
+             */
+            {
+                href: `${base}/discover`,
+                label: t('nav.dial'),
+                hint: t('nav.hint_dial'),
+                icon: <CoveIcon name="idea" className="h-5 w-5" />,
+            },
+            /*
              * Brand Coves (`/brands`) and Shop Coves (`/shops`) are withheld
              * from this menu for now, deliberately — not removed.
              *

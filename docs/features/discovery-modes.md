@@ -258,3 +258,10 @@ page, which is what makes it not an explanation. Excluded too.
    pipeline, which was the claim Phase 1 existed to test.
 3. Overlays (image/voice modality, social retriever), reaction-driven per-mode weight tuning, and the
    two modes above once embeddings land.
+
+## A door, and no readout (2026-09-06)
+
+`/discover` was reachable from nothing — no nav entry, no link from the hub — while being
+indexable and in the sitemap. It has an entry in the Discover menu now. The line under the dial
+printed the scoring weights and retriever mix (α, β, γ, λ, ε) to every visitor; it names the mode
+alone now. The numbers are still in `modeMeta.scoring` for anybody debugging the ranking.

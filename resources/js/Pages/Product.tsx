@@ -1,10 +1,14 @@
 import { Head, Link, usePage } from '@inertiajs/react'
+import { useEffect } from 'react'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import Badge from '../Components/Badge'
 import { buttonClasses } from '../Components/Button'
+import RecentlyViewed from '../Components/RecentlyViewed'
+import ShareMenu from '../Components/ShareMenu'
+import { record as recordView } from '../recentlyViewed'
 import SaveToList from '../Components/SaveToList'
 import AlertButton from '../Components/AlertButton'
 import type { AlertState } from '../Components/AlertButton'
@@ -84,8 +88,20 @@ function reportClick(offer: Offer): void {
 }
 
 export default function Product({ product, offers, alert, amazonSearch, description }: Props) {
-    const { market, seoTitle } = usePage<SharedProps>().props
+    const { market, seoTitle, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
+
+    // Remembered on this device, for the "you looked at" band. After mount,
+    // because storage does not exist on the SSR container.
+    useEffect(() => {
+        recordView(market.key, {
+            id: product.id,
+            title: product.title,
+            image: product.image,
+            price: product.minPrice,
+            url: `/${market.key}/p/${product.id}`,
+        })
+    }, [market.key, product.id, product.title, product.image, product.minPrice])
 
     const buyable = offers.filter((o) => o.isBuyable)
 
@@ -189,6 +205,13 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                             currentPrice={product.minPrice}
                             inStock={product.inStock}
                         />
+                        {/*
+                          The share sheet, on the page people actually send to
+                          a group chat. It existed on the quiz alone; the
+                          canonical URL is what gets shared, never the address
+                          bar, so a retitled product's link still resolves.
+                        */}
+                        <ShareMenu url={canonical} text={product.title} label={t('nav.share')} />
                     </div>
 
                     {product.ean && (
@@ -341,6 +364,9 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                     </div>
                 </section>
             )}
+
+            {/* What this visitor looked at before this one. Client-side only. */}
+            <RecentlyViewed excludeId={product.id} className="mt-12" />
         </>
     )
 }

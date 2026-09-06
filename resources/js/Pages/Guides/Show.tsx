@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import PreviewBanner from '../../Components/PreviewBanner'
+import ShareMenu from '../../Components/ShareMenu'
 import { useTranslations } from '../../useTranslations'
 import CoveRail, { CoveSeries, type Rail } from '../../Components/CoveRail'
 import MoreCoves from '../../Components/MoreCoves'
@@ -197,7 +198,7 @@ function Article({
 }
 
 export default function GuideShow({ preview = false, guide, items, rail, rails = null }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const { market, canonical } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
 
     const byGroup: Record<number, Item> = Object.fromEntries(items.map((i) => [i.groupId, i]))
@@ -279,6 +280,11 @@ export default function GuideShow({ preview = false, guide, items, rail, rails =
                                 <> · {t('guides.why', { count: n(guide.searchVolume) })}</>
                             )}
                         </p>
+
+                        {/* The share sheet, on a page written to be sent on. */}
+                        <div className="mt-4">
+                            <ShareMenu url={canonical} text={guide.title} label={t('nav.share')} />
+                        </div>
 
                         {/*
                           Where this page sits in its series, on the seasonal

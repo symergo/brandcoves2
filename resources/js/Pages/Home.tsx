@@ -9,6 +9,7 @@ import SceneIllustration, { type SceneKey } from '../Components/SceneIllustratio
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
 import { buttonClasses } from '../Components/Button'
+import RecentlyViewed from '../Components/RecentlyViewed'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -802,6 +803,13 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                     </ul>
                 </section>
             )}
+
+            {/*
+              What this visitor looked at, from the device's own memory. A
+              returning visitor deciding between two things wants the two
+              things back; the band is empty until there is something in it.
+            */}
+            <RecentlyViewed className="mt-10 sm:mt-14" />
 
             {coves.length > 0 && (
                 <section className="mt-10 sm:mt-14" aria-labelledby="coves-heading">
