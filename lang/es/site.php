@@ -1626,4 +1626,40 @@ return [
         'popular' => 'Búsquedas populares',
         'shops' => 'Tiendas',
     ],
+
+    /*
+     * Cómo funcionan las listas. En el orden en que uno se las encuentra —
+     * buscar, guardar, consultar — y no en el orden en que están construidas:
+     * nadie crea una lista vacía y luego sale a buscar.
+     */
+    'lists_help' => [
+        'seo_title' => 'Guardar productos en una lista',
+        'seo_description' => 'Guarda lo que encuentres aquí en una lista de deseos, crea una lista para otra persona y lleva la cuenta de lo que regalas. Tres pasos, con imágenes.',
+        'title' => 'Cómo funcionan las listas',
+        'intro' => 'Una lista es donde guardas lo que encuentras aquí — para ti, o para alguien a quien vas a regalar. No hace falta crearla antes: al guardar algo se te ofrece.',
+        'link' => '¿Cómo funcionan las listas?',
+
+        'step_find' => 'Encuentra algo que quieras guardar',
+        'step_find_body' => 'Busca, o recorre una guía. Cada ficha de producto lleva un marcador, abajo a la derecha de la imagen.',
+        'step_find_alt' => 'Dos fichas de producto, cada una con un botón de marcador en la esquina de su imagen.',
+
+        'step_save' => 'Guárdalo y elige una lista',
+        'step_save_body' => 'Toca el marcador para guardarlo directamente, o la flecha pequeña de al lado para elegir la lista. Ahí mismo creas una nueva.',
+        'step_save_alt' => 'El panel abierto junto a un producto, con las listas donde guardar y la opción de crear una nueva.',
+
+        'step_open' => 'Abre tus listas',
+        'step_open_body' => 'Todo lo que guardaste está en Mis listas. Cada lista muestra lo que contiene, si es privada y para quién es.',
+        'step_open_alt' => 'La página de mis listas, con dos listas y el botón que crea otra.',
+
+        'making_title' => 'Crear una lista',
+        'making_body' => 'De dos maneras, y la primera es la que usa casi todo el mundo.',
+        'making_from_save' => 'Mientras guardas un producto: abre el panel junto al marcador y elige crear una lista nueva. Lo que estabas guardando entra directamente en ella.',
+        'making_from_lists' => 'Desde Mis listas: el botón de arriba a la derecha. Útil cuando ya sabes para qué es la lista antes de haber encontrado nada.',
+
+        'private_title' => 'Quién puede verla',
+        'private_body' => 'Una lista es privada hasta que la compartes. Si la compartes con quienes te van a regalar algo, pueden marcar lo que se llevan — y tu no ves quién se llevó qué, así que la sorpresa se mantiene.',
+
+        'cta_search' => 'Buscar algo que guardar',
+        'cta_lists' => 'Ir a mis listas',
+    ],
 ];

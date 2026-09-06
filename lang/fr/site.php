@@ -1628,4 +1628,40 @@ return [
         'popular' => 'Recherches populaires',
         'shops' => 'Boutiques',
     ],
+
+    /*
+     * Comment fonctionnent les listes. Dans l'ordre où on les rencontre —
+     * chercher, enregistrer, consulter — et non dans l'ordre où elles sont
+     * construites : personne ne crée une liste vide avant d'aller chercher.
+     */
+    'lists_help' => [
+        'seo_title' => 'Enregistrer des produits dans une liste',
+        'seo_description' => "Enregistrez ce que vous trouvez ici dans une liste de souhaits, créez-en une pour quelqu'un d'autre et suivez ce que vous offrez. En images.",
+        'title' => 'Comment fonctionnent les listes',
+        'intro' => "Une liste, c'est là où vous gardez ce que vous trouvez ici — pour vous, ou pour quelqu'un à qui vous offrez. Pas besoin d'en créer une d'abord : enregistrer un produit vous le propose.",
+        'link' => 'Comment fonctionnent les listes ?',
+
+        'step_find' => 'Trouvez quelque chose à garder',
+        'step_find_body' => "Cherchez, ou parcourez un guide. Chaque fiche produit porte un marque-page, en bas à droite de l'image.",
+        'step_find_alt' => 'Deux fiches produit, chacune avec un bouton marque-page dans le coin de son image.',
+
+        'step_save' => 'Enregistrez-le et choisissez une liste',
+        'step_save_body' => "Touchez le marque-page pour enregistrer directement, ou la petite flèche à côté pour choisir la liste. C'est aussi là que vous en créez une nouvelle.",
+        'step_save_alt' => "Le panneau ouvert à côté d'un produit, avec les listes disponibles et l'option d'en créer une nouvelle.",
+
+        'step_open' => 'Ouvrez vos listes',
+        'step_open_body' => "Tout ce que vous avez enregistré se trouve dans Mes listes. Chaque liste indique ce qu'elle contient, si elle est privée et pour qui elle est.",
+        'step_open_alt' => 'La page mes listes, avec deux listes et le bouton qui en crée une autre.',
+
+        'making_title' => 'Créer une liste',
+        'making_body' => 'De deux façons, et la première est celle que presque tout le monde utilise.',
+        'making_from_save' => 'Pendant que vous enregistrez : ouvrez le panneau à côté du marque-page et choisissez de créer une liste. Ce que vous enregistriez y est placé aussitôt.',
+        'making_from_lists' => "Depuis Mes listes : le bouton en haut à droite. Pratique quand vous savez à quoi sert la liste avant d'avoir trouvé quoi que ce soit.",
+
+        'private_title' => 'Qui peut la voir',
+        'private_body' => "Une liste est privée tant que vous ne la partagez pas. Si vous la partagez avec ceux qui vous offrent quelque chose, ils peuvent cocher ce qu'ils prennent — et vous ne voyez pas qui a pris quoi, la surprise reste entière.",
+
+        'cta_search' => 'Trouver quelque chose à enregistrer',
+        'cta_lists' => 'Voir mes listes',
+    ],
 ];

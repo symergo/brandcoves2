@@ -626,6 +626,20 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
                     </section>
                 ))
             )}
+        
+            {/*
+              Under the lists rather than over them.
+
+              Somebody who already has lists does not need to be told how they
+              work, and putting the explanation above their own content makes
+              the page about the instructions. Somebody who has none reaches it
+              in a couple of lines because the empty state is short.
+            */}
+            <p className="mt-12 border-t border-line pt-6 text-sm text-ink-soft">
+                <Link href={`/${market.key}/lists-help`} className="underline hover:text-ink">
+                    {t('lists_help.link')}
+                </Link>
+            </p>
         </>
     )
 }

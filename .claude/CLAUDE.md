@@ -170,6 +170,8 @@ php artisan bc:seed-advice-coves      # publish the shipped advice articles from
                                       # never overwrites a Cove a person edited — --replace does,
                                       # and asks first. The deploy migration runs this too, so
                                       # this is for after you have edited the file
+php artisan bc:seed-help-demo         # local only: a throwaway account with a list, for the
+                                      # /lists-help screenshots. Then: node scripts/help-screenshots.mjs
 php artisan bc:scrub --force          # MANDATORY after restoring a production dump
 ```
 

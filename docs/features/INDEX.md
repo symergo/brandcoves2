@@ -7,6 +7,7 @@ cannot be recovered from a diff.
 |---|---|---|
 | [market-routing.md](market-routing.md) | Core | Active |
 | [not-found.md](not-found.md) | Core / Frontend | Active |
+| [list-help.md](list-help.md) | Core / Frontend | Active |
 | [auth.md](auth.md) | Core / Accounts | Active — Google needs credentials per environment |
 | [localisation.md](localisation.md) | Core / Frontend | Active |
 | [navigation.md](navigation.md) | Core / Frontend | Active |

@@ -1639,4 +1639,40 @@ return [
         'popular' => 'Populaire zoekopdrachten',
         'shops' => 'Winkels',
     ],
+
+    /*
+     * Hoe lijstjes werken. In de volgorde waarin iemand het tegenkomt — zoeken,
+     * bewaren, bekijken — en niet in de volgorde waarin het gebouwd is, want
+     * niemand maakt eerst een leeg lijstje en gaat daarna pas zoeken.
+     */
+    'lists_help' => [
+        'seo_title' => 'Producten bewaren in een lijstje',
+        'seo_description' => 'Bewaar alles wat je hier vindt in een verlanglijstje, maak een lijstje voor iemand anders en hou bij wat je geeft. Drie stappen, met beeld.',
+        'title' => 'Hoe lijstjes werken',
+        'intro' => 'In een lijstje bewaar je wat je hier vindt — voor jezelf, of voor iemand voor wie je iets koopt. Je hoeft er niet eerst een te maken: bij het bewaren wordt het aangeboden.',
+        'link' => 'Hoe werken lijstjes?',
+
+        'step_find' => 'Vind iets dat je wilt bewaren',
+        'step_find_body' => 'Zoek, of blader door een gids. Op elke productkaart staat rechtsonder in de foto een bladwijzer.',
+        'step_find_alt' => 'Twee productkaarten, elk met een bladwijzerknop in de hoek van de foto.',
+
+        'step_save' => 'Bewaar het en kies een lijstje',
+        'step_save_body' => 'Tik op de bladwijzer om het meteen te bewaren, of op het pijltje ernaast om te kiezen in welk lijstje. In datzelfde venster maak je ook een nieuw lijstje.',
+        'step_save_alt' => 'Het geopende venster naast een product, met de lijstjes om in te bewaren en de optie om een nieuw lijstje te beginnen.',
+
+        'step_open' => 'Open je lijstjes',
+        'step_open_body' => 'Alles wat je bewaarde staat onder Mijn lijstjes. Je ziet per lijstje wat erin zit, of het privé is en voor wie het bedoeld is.',
+        'step_open_alt' => 'De pagina met mijn lijstjes, met twee lijstjes en de knop waarmee je er een maakt.',
+
+        'making_title' => 'Een lijstje maken',
+        'making_body' => 'Op twee manieren, en de eerste gebruikt bijna iedereen.',
+        'making_from_save' => 'Tijdens het bewaren: open het venster naast de bladwijzer en kies voor een nieuw lijstje. Wat je aan het bewaren was staat er meteen in.',
+        'making_from_lists' => 'Vanuit Mijn lijstjes: de knop rechtsboven. Handig als je al weet waarvoor het lijstje is voordat je er iets voor gevonden hebt.',
+
+        'private_title' => 'Wie het kan zien',
+        'private_body' => 'Een lijstje is privé tot je het deelt. Deel je het met de mensen die iets voor je kopen, dan kunnen zij aanvinken wat ze nemen — en jij ziet niet wie wat genomen heeft, dus de verrassing blijft.',
+
+        'cta_search' => 'Zoek iets om te bewaren',
+        'cta_lists' => 'Naar mijn lijstjes',
+    ],
 ];

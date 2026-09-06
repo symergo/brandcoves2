@@ -29,6 +29,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ItemTransferController;
 use App\Http\Controllers\LegalController;
+use App\Http\Controllers\ListHelpController;
 use App\Http\Controllers\ListInvitationController;
 use App\Http\Controllers\ListItemVoteController;
 use App\Http\Controllers\ListMessageController;
@@ -274,6 +275,16 @@ Route::prefix('{market}')->group(function () {
     | the person claiming followed a link once, and making them register to say
     | "I will get this" is how a gift list stops working as a coordination tool.
     */
+    /*
+     * How lists work, with pictures.
+     *
+     * `/lists-help` rather than `/lists/help`, because `/lists/{list}` is right
+     * underneath and a list whose id happened to be "help" would shadow it.
+     * It mirrors `/search-help`, which sits beside `/search` for the same
+     * reason: it documents a tool rather than the company.
+     */
+    Route::get('/lists-help', ListHelpController::class)->name('lists-help');
+
     Route::get('/lists', [WishlistController::class, 'index'])->name('lists');
     Route::get('/lists/{list}', [WishlistController::class, 'show'])->name('lists.show');
 
