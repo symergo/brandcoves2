@@ -207,6 +207,15 @@ export default function AddProduct({
             wishlist_id: listId,
             title: title.trim(),
             note: note.trim() || null,
+
+            /*
+             * This panel only ever sits on the list being added to, so the
+             * server answers with the new row's id rather than "Saved to
+             * Camping" — a banner naming the page you are on, about a row that
+             * appears under it a moment later. `Lists/Show` tints that row
+             * instead.
+             */
+            on_list_page: true,
         }
 
         const payload =

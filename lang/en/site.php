@@ -632,7 +632,6 @@ return [
         'seo_title' => 'Wish lists you can share',
         'seo_description' => 'Keep a wish list, share it with the people buying for you, and let them claim a gift without you seeing who claimed what.',
         'title' => 'My lists',
-        'subtitle' => 'Everything you are saving, and everything other people have shared with you.',
         'shared_subtitle' => 'Lists people have shared with you. This is how you shop for them.',
         'shared_empty' => 'Nobody has shared a list with you yet. When they do, it appears here — with what they want on it.',
         'shop_for' => 'Claim something for :name',
@@ -1810,7 +1809,7 @@ return [
             'blurb' => 'Measured against the median price of the last thirty days, not against a struck-through list price.',
         ],
         'popular' => [
-            'title' => 'Selling well',
+            'title' => 'Frequently bought',
             'blurb' => 'From the bestseller charts of the shops we compare.',
         ],
         'wishlisted' => [

@@ -125,8 +125,8 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                     </h2>
 
                     {sidebar.map((rail) => (
-                        <section key={rail.key} className="mb-8">
-                            <h3 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
+                        <section key={rail.key} className="mb-10">
+                            <h3 className="mb-1 text-xs font-semibold tracking-wide text-ink-soft uppercase">
                                 {t(`entity_rails.${rail.key}.title`)}
                             </h3>
 
@@ -135,7 +135,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                               under an article. Eight cards scrolling sideways in
                               an 18rem sidebar would hide most of themselves.
                             */}
-                            <ul className="mt-3 space-y-4">
+                            <ul className="mt-2 space-y-1">
                                 {rail.products.slice(0, 4).map((product) => (
                                     <li key={product.id}>
                                         <RailCard product={product} layout="row" />

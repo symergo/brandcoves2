@@ -290,8 +290,12 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
         group: t('nav.group_lists'),
     }[view]
 
+    // "My lists" carries no subtitle: the groups below it are already labelled
+    // ("For me", "Shared with me"), so a sentence restating that was saying
+    // nothing the page did not show. The other two views are reached from the
+    // nav without that context and still explain themselves.
     const subtitle = {
-        mine: t('lists.subtitle'),
+        mine: null,
         shared: t('lists.shared_subtitle'),
         group: t('lists.group_subtitle'),
     }[view]
@@ -303,7 +307,7 @@ export default function ListsIndex({ lists, view, recipients, isSignedIn }: Prop
             <header className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h1 className="text-xl sm:text-2xl font-semibold">{heading}</h1>
-                    <p className="mt-1 text-ink-soft">{subtitle}</p>
+                    {subtitle && <p className="mt-1 text-ink-soft">{subtitle}</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {/*

@@ -113,27 +113,43 @@ export function RailCard({
 
     if (layout === 'row') {
         return (
-            <Link href={product.url} className="group flex gap-3">
-                <div className="h-14 w-14 shrink-0 overflow-hidden rounded bg-stone-100 dark:bg-stone-800">
+            <Link
+                href={product.url}
+                /*
+                  A card, not a line in a list.
+
+                  The first version was a 56px thumbnail against the page's own
+                  cream, with the title wrapping into the price - four of them
+                  read as a cramped column rather than as four products. The
+                  picture now sits on white inside its own tile, which is what
+                  most product photography is shot against, and the row has a
+                  border to stand on so the eye can find where one product ends.
+                */
+                className="group flex gap-3 rounded-lg border border-transparent p-2 transition hover:border-line hover:bg-card"
+            >
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-line bg-white">
                     {product.image && (
                         <img
                             src={product.image}
                             alt=""
                             loading="lazy"
-                            className="h-full w-full object-contain"
+                            className="h-full w-full object-contain p-1"
                         />
                     )}
                 </div>
 
-                <div className="min-w-0">
-                    <p className="line-clamp-2 text-sm text-stone-800 group-hover:underline dark:text-stone-200">
+                <div className="flex min-w-0 flex-col justify-center">
+                    <p className="line-clamp-2 text-sm leading-snug text-ink group-hover:underline">
                         {product.title}
                     </p>
+
                     {product.price !== null && (
-                        <p className="mt-0.5 text-sm font-medium text-stone-900 dark:text-stone-100">
-                            {formatPrice(product.price, market)}
+                        <p className="mt-1 flex items-baseline gap-1.5">
+                            <span className="text-sm font-semibold text-ink">
+                                {formatPrice(product.price, market)}
+                            </span>
                             {product.discountPercent !== null && (
-                                <span className="ml-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                <span className="rounded bg-emerald-50 px-1 py-px text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
                                     -{product.discountPercent}%
                                 </span>
                             )}

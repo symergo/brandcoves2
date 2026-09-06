@@ -511,7 +511,6 @@ return [
         'seo_title' => 'Listas de deseos para compartir',
         'seo_description' => 'Guarda una lista de deseos, compártela con quien te hace regalos y deja que reserven uno sin que tú veas quién eligió qué.',
         'title' => 'Mis listas',
-        'subtitle' => 'Todo lo que guardas, y todo lo que otras personas han compartido contigo.',
         'shared_subtitle' => 'Listas que otros han compartido contigo. Así es como les compras algo.',
         'shared_empty' => 'Todavía no te han compartido ninguna lista. Cuando lo hagan, aparecerá aquí — con lo que les gustaría.',
         'shop_for' => 'Reserva algo para :name',
@@ -1586,7 +1585,7 @@ return [
             'blurb' => 'Medido contra el precio mediano de los últimos treinta días, no contra un precio tachado.',
         ],
         'popular' => [
-            'title' => 'Se vende bien',
+            'title' => 'Muy vendido',
             'blurb' => 'De las listas de más vendidos de las tiendas que comparamos.',
         ],
         'wishlisted' => [

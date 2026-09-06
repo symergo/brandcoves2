@@ -88,7 +88,11 @@ export interface SharedProps {
     savingTo: SavingTo | null
     /** Empty while signed out — the picker is unreachable there anyway. */
     lists: ListOption[]
-    flash: { success?: string; error?: string; status?: string }
+    /**
+     * `savedItem` is the odd one out: an id rather than a sentence, for a page
+     * that can show the row it just gained instead of describing it.
+     */
+    flash: { success?: string; error?: string; status?: string; savedItem?: number | null }
     [key: string]: unknown
 }
 

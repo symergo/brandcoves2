@@ -512,7 +512,6 @@ return [
         'seo_title' => 'Des listes d’envies à partager',
         'seo_description' => 'Tenez une liste d’envies, partagez-la avec ceux qui vous offrent quelque chose, et laissez-les réserver un cadeau sans savoir qui a pris quoi.',
         'title' => 'Mes listes',
-        'subtitle' => 'Tout ce que vous gardez, et tout ce que les autres ont partagé avec vous.',
         'shared_subtitle' => 'Les listes qu’on a partagées avec vous. C’est ainsi que vous leur trouvez un cadeau.',
         'shared_empty' => 'Personne ne vous a encore partagé de liste. Dès que ce sera le cas, elle apparaîtra ici — avec ce qui leur ferait plaisir.',
         'shop_for' => 'Réservez quelque chose pour :name',
@@ -1588,7 +1587,7 @@ return [
             'blurb' => 'Mesuré par rapport au prix médian des trente derniers jours, pas à un prix barré.',
         ],
         'popular' => [
-            'title' => 'Ça se vend bien',
+            'title' => 'Souvent vendu',
             'blurb' => "D'après les classements des boutiques que nous comparons.",
         ],
         'wishlisted' => [

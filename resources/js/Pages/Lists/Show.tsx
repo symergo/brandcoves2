@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import AddProduct from '../../Components/AddProduct'
 import Pledge, { type Contributions } from '../../Components/Pledge'
 import type { SharedProps } from '../../types'
@@ -141,9 +141,50 @@ export default function ListShow({
     board,
     copyTargets,
 }: Props) {
-    const { market } = usePage<SharedProps>().props
+    const { market, flash } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
+
+    /*
+     * The row that just arrived, tinted for a few seconds.
+     *
+     * Adding from the panel above answered with "Saved to Camping" in a banner
+     * at the top of the page — the name of the list you are already reading,
+     * for a row that is now on it. The server sends the id instead (see
+     * `WishlistItemController::report()`) and the change is shown where it
+     * happened. The tint fades out on its own; nothing about the row depends on
+     * it, so missing it costs nothing.
+     *
+     * New items sort to the bottom of an existing list, which can be below the
+     * fold, so the row is also brought into view — otherwise the confirmation
+     * is on a part of the page nobody is looking at, which is the problem the
+     * banner had.
+     */
+    const [fresh, setFresh] = useState<number | null>(null)
+    const freshRow = useRef<HTMLLIElement | null>(null)
+
+    const savedItem = flash.savedItem ?? null
+
+    useEffect(() => {
+        if (savedItem === null) return
+
+        setFresh(savedItem)
+
+        const timer = window.setTimeout(() => setFresh(null), 4000)
+
+        return () => window.clearTimeout(timer)
+    }, [savedItem])
+
+    useEffect(() => {
+        if (fresh === null) return
+
+        freshRow.current?.scrollIntoView({
+            block: 'nearest',
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                ? 'auto'
+                : 'smooth',
+        })
+    }, [fresh])
 
     const shared = list.visibility !== 'private'
     const [panel, setPanel] = useState<Panel | null>(null)
@@ -514,7 +555,13 @@ export default function ListShow({
 
                             <ul className="mt-3 divide-y divide-line overflow-hidden rounded-card border border-line bg-card">
                                 {items.map((item) => (
-                                    <li key={item.id} className="p-4">
+                                    <li
+                                        key={item.id}
+                                        ref={item.id === fresh ? freshRow : undefined}
+                                        className={`p-4 transition-colors duration-1000 ${
+                                            item.id === fresh ? 'bg-sage/15' : ''
+                                        }`}
+                                    >
                                       <div className="flex items-center gap-4">
                                         {item.image && (
                                             <img

@@ -515,7 +515,6 @@ return [
         'seo_title' => 'Verlanglijstjes die je kunt delen',
         'seo_description' => 'Hou een verlanglijstje bij, deel het met wie voor je koopt, en laat ze een cadeau claimen zonder dat jij ziet wie wat koos.',
         'title' => 'Mijn lijstjes',
-        'subtitle' => 'Alles wat jij bewaart, en alles wat anderen met jou gedeeld hebben.',
         'shared_subtitle' => 'Lijsten die anderen met je gedeeld hebben. Zo koop je iets voor hen.',
         'shared_empty' => 'Nog niemand heeft een lijst met je gedeeld. Zodra dat gebeurt, staat hij hier — met wat ze graag willen.',
         'shop_for' => 'Reserveer iets voor :name',
@@ -1599,7 +1598,7 @@ return [
             'blurb' => 'Gemeten tegen de mediaanprijs van de afgelopen dertig dagen, niet tegen een doorgestreepte adviesprijs.',
         ],
         'popular' => [
-            'title' => 'Dit loopt goed',
+            'title' => 'Veel verkocht',
             'blurb' => 'Uit de bestsellerlijsten van de winkels waarmee we vergelijken.',
         ],
         'wishlisted' => [
