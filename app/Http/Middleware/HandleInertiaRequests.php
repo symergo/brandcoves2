@@ -231,6 +231,11 @@ class HandleInertiaRequests extends Middleware
                 // the same thing however it went, so it is neither a success nor
                 // an error and calling it either would leak which one it was.
                 'status' => fn () => $request->session()->get('status'),
+
+                // Not a message: the id of a row a page can point at itself.
+                // A save made from a list's own page answers with this instead
+                // of a sentence — see `WishlistItemController::report()`.
+                'savedItem' => fn () => $request->session()->get('saved_item'),
             ],
         ];
     }

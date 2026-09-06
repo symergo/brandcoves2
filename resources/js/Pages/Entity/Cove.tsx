@@ -6,7 +6,7 @@ import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface Props {
-    entity: { name: string; kind: 'brand' | 'shop'; total: number; logo: string | null }
+    entity: { name: string; kind: 'brand' | 'shop'; total: number | null; logo: string | null }
     cove: { title: string; intro: string; body: string[] }
     rails: EntityRailSet | null
     /** Where "see all" goes: the search page, filtered to this entity. */
@@ -62,7 +62,7 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
      * is formatted from `market.hrefLang` — see `formatPrice` — and this is the
      * one that had quietly opted out.
      */
-    const total = new Intl.NumberFormat(market.hrefLang).format(entity.total)
+    const total = entity.total === null ? null : new Intl.NumberFormat(market.hrefLang).format(entity.total)
 
     const sidebar = rails
         ? [
@@ -162,10 +162,9 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                         href={searchUrl}
                         className="block rounded-lg border border-line px-4 py-3 text-sm font-medium hover:border-ink"
                     >
-                        {t('entity_rails.see_all', {
-                            count: total,
-                            entity: entity.name,
-                        })}
+                        {total === null
+                            ? t('entity_rails.see_all_uncounted', { entity: entity.name })
+                            : t('entity_rails.see_all', { count: total, entity: entity.name })}
                     </Link>
                 </aside>
             </div>

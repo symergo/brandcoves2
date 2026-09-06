@@ -8,9 +8,11 @@ use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PlanWriter;
 use App\Enums\PublishStatus;
+use App\Enums\Source;
 use App\Models\BrandStat;
 use App\Models\CovePlan;
 use App\Models\DailyPickSet;
+use App\Models\Merchant;
 use App\Services\Cove\EditionBuilder;
 use App\Services\Seo\Alternates;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -147,6 +149,20 @@ Tweede alinea.',
     #[Test]
     public function it_renders_at_its_own_path(): void
     {
+        /*
+         * A real merchant on a live source, so the assertion below exercises
+         * the branch it names. Without one `shopFor()` returns null and
+         * `entity.total` is null for the wrong reason - the test would pass on
+         * a shop that does not exist rather than on one that cannot be counted.
+         */
+        Merchant::create([
+            'source' => Source::Bol->value,
+            'external_id' => 'bol-1',
+            'name' => 'bol.com',
+            'domain' => 'bol.com',
+            'enabled' => true,
+        ]);
+
         $this->cove('bol-com', 'Kopen bij bol');
 
         /*
@@ -177,6 +193,15 @@ Tweede alinea.',
                 // The way back to what the shop sells, which is the same place
                 // the shops directory sends an unwritten shop.
                 ->has('searchUrl')
+                /*
+                 * No count for a shop whose offers are fetched at render.
+                 *
+                 * bol is a live connector: rows exist for it in `products` -
+                 * enough to say we compare it, nowhere near its range - so a
+                 * count of them is a confident number that is simply wrong. The
+                 * page offers "all offers" instead, and null is how it knows to.
+                 */
+                ->where('entity.total', null)
             );
     }
 

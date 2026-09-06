@@ -118,6 +118,8 @@ return [
     ],
 
     'search' => [
+        'remove_term' => ':term weglaten',
+        'active_terms_heading' => 'Zoekopdracht verfijnd met',
         'title' => 'Zoeken',
         'placeholder' => 'Zoek een cadeau of scan een streepjescode',
         'pasted_searched' => 'Dat is een Amazon-link. We lezen er :terms in en zochten daarnaar bij de winkels die we volgen.',
@@ -187,7 +189,7 @@ return [
          * op het scherm stond. De woorden zijn hier het bruikbare deel, en als
          * link zijn ze meteen navigatie.
          */
-        'terms_heading' => 'Komt vaak voor in deze resultaten',
+        'terms_heading' => 'Verfijn je zoekopdracht met',
         'seo_default' => 'Ontdek producten en merken op bol, Amazon en honderden winkels tegelijk, met een link naar elke winkel die ze verkoopt.',
     ],
 
@@ -1607,6 +1609,7 @@ return [
         ],
         'sidebar_heading' => 'Producten van dit merk of deze winkel',
         'see_all' => 'Bekijk alle :count producten van :entity',
+        'see_all_uncounted' => 'Alle :entity aanbiedingen',
     ],
 
     /*

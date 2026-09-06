@@ -180,6 +180,7 @@ class BrandController extends Controller
              * of templated statistics — see terms() below.
              */
             'terms' => $this->terms($stat, $result, $query, $market, $current),
+            'activeTerms' => $this->activeTerms($stat, $query, $current),
             'filters' => $query->toArray(),
             'sort' => $query->sort,
             'view' => $query->view,
@@ -520,6 +521,38 @@ class BrandController extends Controller
      *
      * @return list<array{term: string, url: string}>
      */
+    /**
+     * The words narrowing this brand page, each with the URL that drops it.
+     *
+     * Same reasoning as `SearchController::activeTerms()`: a suggestion vanishes
+     * once it is in the query, so without this there is no way back off a
+     * sub-search except the browser's back button.
+     *
+     * The brand itself is never in this list. It is the page, not a filter, and
+     * a pill offering to remove it would be offering to leave.
+     *
+     * @return list<array{term: string, url: string}>
+     */
+    private function activeTerms(BrandStat $stat, SearchQuery $query, CurrentMarket $current): array
+    {
+        $words = array_values(array_filter(preg_split('/\s+/u', trim($query->term)) ?: []));
+
+        if ($words === []) {
+            return [];
+        }
+
+        $base = $current->url("brand/{$stat->slug}");
+
+        return array_map(function (string $word, int $index) use ($words, $base): array {
+            $rest = array_values(array_diff_key($words, [$index => null]));
+
+            return [
+                'term' => $word,
+                'url' => $rest === [] ? $base : $base.'?q='.urlencode(implode(' ', $rest)),
+            ];
+        }, $words, array_keys($words));
+    }
+
     private function terms(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market, CurrentMarket $current): array
     {
         if ($query->page > 1 || $result->isEmpty()) {

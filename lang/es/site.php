@@ -118,6 +118,8 @@ return [
     ],
 
     'search' => [
+        'remove_term' => 'Quitar :term',
+        'active_terms_heading' => 'Afinada con',
         'title' => 'Buscar',
         'placeholder' => 'Busca un regalo o escanea un código de barras',
         'pasted_searched' => 'Es un enlace de Amazon. Hemos leído :terms y lo hemos buscado en las tiendas que seguimos.',
@@ -187,7 +189,7 @@ return [
          * contaban lo que ya estaba en pantalla. Las palabras son la parte útil
          * y, como enlaces, también son navegación.
          */
-        'terms_heading' => 'Frecuente en estos resultados',
+        'terms_heading' => 'Afina tu búsqueda con',
         'seo_default' => 'Descubre productos y marcas en bol, Amazon y cientos de tiendas a la vez, con un enlace a cada tienda que los vende.',
     ],
 
@@ -1594,6 +1596,7 @@ return [
         ],
         'sidebar_heading' => 'Productos de esta marca o tienda',
         'see_all' => 'Ver los :count productos de :entity',
+        'see_all_uncounted' => 'Todas las ofertas de :entity',
     ],
 
     /*

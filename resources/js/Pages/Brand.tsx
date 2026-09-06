@@ -24,6 +24,7 @@ interface Props {
     }
     /** Words that recur across this brand's products, each a search of its own. */
     terms: { term: string; url: string }[]
+    activeTerms: { term: string; url: string }[]
     filters: Record<string, unknown>
     sort: string
     view: 'grid' | 'store'
@@ -97,6 +98,7 @@ interface Props {
 export default function Brand({
     brand,
     terms,
+    activeTerms,
     filters,
     sort,
     facets,
@@ -218,6 +220,50 @@ export default function Brand({
                   ships empty — a place, not a comeback.
                 */}
                 <PageBlocks blocks={intro} className="mt-4 max-w-3xl" />
+
+                {activeTerms.length > 0 && (
+                    <nav className="mt-4" aria-label={t('search.active_terms_heading')}>
+                        <ul className="flex flex-wrap gap-2">
+                            {/*
+                              What is already narrowing this search, and the
+                              way back off it.
+
+                              A suggestion disappears once its word is in the
+                              query - re-offering it would do nothing - so
+                              without these the narrowing was a one-way door:
+                              three clicks and the only way back was the
+                              browser's back button or retyping.
+
+                              Filled rather than outlined, so the row reads
+                              as "chosen" against the suggestions under it,
+                              and the URL is the server's own, exactly as the
+                              adding pills are.
+                            */}
+                            {activeTerms.map((item) => (
+                                <li key={item.term}>
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        router.get(
+                                            item.url,
+                                            {},
+                                            // No busy state here: the brand page
+                                            // has none, and its own suggestion
+                                            // pills navigate the same way.
+                                            { preserveScroll: true, preserveState: true },
+                                        )
+                                    }
+                                    aria-label={t('search.remove_term', { term: item.term })}
+                                    className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 text-sm text-card transition hover:opacity-85"
+                                >
+                                    {item.term}
+                                    <span aria-hidden="true" className="text-xs opacity-70">&times;</span>
+                                </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </nav>
+                )}
 
                 {terms.length > 0 && (
                     <nav className="mt-4" aria-label={t('search.terms_heading')}>

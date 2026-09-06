@@ -282,6 +282,34 @@ class SaveToListTest extends TestCase
     }
 
     #[Test]
+    public function a_save_made_on_the_list_page_points_at_the_row_instead(): void
+    {
+        $user = User::factory()->create();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'title' => 'Camping',
+            'market' => Market::BeNl,
+        ]);
+
+        /*
+         * The add panel sits on the list itself, so naming the list says
+         * nothing the reader cannot see — and the banner appears at the top of
+         * the page, away from the row that just arrived. The id is what lets
+         * the page tint that row instead.
+         */
+        $this->actingAs($user)
+            ->post('/be-nl/list-items', [
+                'group_id' => $this->group()->id,
+                'wishlist_id' => $list->id,
+                'on_list_page' => true,
+            ])
+            ->assertSessionMissing('success')
+            ->assertSessionHas('saved_item', $list->items()->sole()->id);
+    }
+
+    #[Test]
     public function you_cannot_attach_someone_elses_person_to_your_list(): void
     {
         $stranger = Recipient::factory()->create([

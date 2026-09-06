@@ -66,6 +66,24 @@ final readonly class ShopDirectory
     }
 
     /**
+     * Are this shop's offers fetched at render rather than stored?
+     *
+     * The question decides whether anything about this shop can be counted. A
+     * live connector answers per request, so what is in `products` for it is
+     * whatever happened to be written down, not the shop's range - see the note
+     * in `ShopsController` about comparing bol's prices while holding almost
+     * nothing of bol's.
+     */
+    public function servesLive(Merchant $shop, Market $market): bool
+    {
+        return in_array(
+            $shop->source,
+            $this->registry->liveSourcesFor($market),
+            strict: false,
+        );
+    }
+
+    /**
      * How many products this shop has in this market.
      *
      * For the "see all N products" link on a written shop page, so the number a
@@ -74,13 +92,19 @@ final readonly class ShopDirectory
      * one thing, and a shop with three sizes of the same kettle has one product
      * on the shelf, not three.
      *
-     * Zero for a live source such as bol, whose offers are fetched per request
-     * rather than stored (invariant 6 is the same story for Amazon). The link
-     * still works; it is the count beside it that has nothing behind it, and the
-     * page hides the number rather than printing a confident nought.
+     * **Null for a live source such as bol**, whose offers are fetched per
+     * request rather than stored (invariant 6 is the same story for Amazon).
+     * Rows exist for one in `products` - enough to say "we compare this shop"
+     * and nowhere near its range - so counting them produces a confident number
+     * that is simply wrong. Null means "no honest count", and the page says
+     * "all offers" instead of inventing one.
      */
-    public function productCount(Merchant $shop, Market $market): int
+    public function productCount(Merchant $shop, Market $market): ?int
     {
+        if ($this->servesLive($shop, $market)) {
+            return null;
+        }
+
         return (int) Product::query()
             ->where('merchant_id', $shop->id)
             ->where('market', $market->value)

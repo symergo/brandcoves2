@@ -45,6 +45,7 @@ interface Props {
     amazonSearch: AmazonSearch | null
     /** Words that recur in these results, each a search of its own. Empty on thin pages. */
     terms: { term: string; url: string }[]
+    activeTerms: { term: string; url: string }[]
     /** Lowercase brand name → brand page URL, for brands that have one. */
     brandLinks: Record<string, string>
     /** Long-form copy below the grid. Null on pages that are noindex anyway. */
@@ -65,6 +66,7 @@ export default function Search({
     amazonSearch,
     pastedLink,
     terms,
+    activeTerms,
     brandLinks,
     narrative,
     intro,
@@ -481,6 +483,52 @@ export default function Search({
                     */}
                     <PageBlocks blocks={intro} className="mb-5 max-w-3xl" />
 
+                    {activeTerms.length > 0 && (
+                        <nav className="mb-3" aria-label={t('search.active_terms_heading')}>
+                            <ul className="flex flex-wrap gap-2">
+                                {/*
+                                  What is already narrowing this search, and the
+                                  way back off it.
+
+                                  A suggestion disappears once its word is in the
+                                  query - re-offering it would do nothing - so
+                                  without these the narrowing was a one-way door:
+                                  three clicks and the only way back was the
+                                  browser's back button or retyping.
+
+                                  Filled rather than outlined, so the row reads
+                                  as "chosen" against the suggestions under it,
+                                  and the URL is the server's own, exactly as the
+                                  adding pills are.
+                                */}
+                                {activeTerms.map((item) => (
+                                    <li key={item.term}>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                router.get(
+                                                    item.url,
+                                                    {},
+                                                    {
+                                                        preserveScroll: true,
+                                                        preserveState: true,
+                                                        onStart: () => setSearching(true),
+                                                        onFinish: () => setSearching(false),
+                                                    },
+                                                )
+                                            }
+                                            aria-label={t('search.remove_term', { term: item.term })}
+                                            className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1 text-sm text-card transition hover:opacity-85"
+                                        >
+                                            {item.term}
+                                            <span aria-hidden="true" className="text-xs opacity-70">&times;</span>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    )}
+
                     {terms.length > 0 && (
                         <nav className="mb-5" aria-label={t('search.terms_heading')}>
                             <h2 className="mb-2 text-sm text-ink-soft">{t('search.terms_heading')}</h2>
@@ -532,7 +580,16 @@ export default function Search({
                     )}
 
                     <div className="mb-4 flex flex-wrap items-center gap-3">
-                        <p className="text-sm text-ink-soft" aria-live="polite">
+                        {/*
+                          Announced, not shown.
+
+                          "Resultaten voor X" repeated the search box directly
+                          above it and the heading beside it. It stays in the DOM
+                          as a live region because that is how a screen reader
+                          learns a new search has landed - `sr-only` keeps the
+                          announcement and takes back the line.
+                        */}
+                        <p className="sr-only" aria-live="polite">
                             {/*
                               No total.
 

@@ -422,11 +422,22 @@ class WishlistItemController extends Controller
      *
      * `back()` stays for ordinary form posts — `ManualItem` and the list pages
      * submit through Inertia and do want the page to come back.
+     *
+     * ## Why a save from the list's own page says nothing
+     *
+     * `AddProduct` sends `on_list_page`, and then the answer is the row's id
+     * rather than a sentence. "Saved to Camping" is worth reading from a search
+     * result, where the list is elsewhere and its name is the whole news — but
+     * on the page called Camping it names what you are standing on, about a row
+     * that is now visible a few centimetres below the banner. The page lights
+     * that row up for a moment instead; see `Lists/Show`.
      */
     private function report(Request $request, WishlistItem $item, Wishlist $list): RedirectResponse|JsonResponse
     {
         if (! $request->expectsJson()) {
-            return back()->with('success', $this->confirm($list));
+            return $request->boolean('on_list_page')
+                ? back()->with('saved_item', $item->id)
+                : back()->with('success', $this->confirm($list));
         }
 
         return response()->json([

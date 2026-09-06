@@ -119,6 +119,8 @@ return [
     ],
 
     'search' => [
+        'remove_term' => 'Retirer :term',
+        'active_terms_heading' => 'Recherche affinée avec',
         'title' => 'Recherche',
         'placeholder' => 'Cherchez un cadeau ou scannez un code-barres',
         'pasted_searched' => "C'est un lien Amazon. Nous y lisons :terms et avons cherché ce produit chez les boutiques que nous suivons.",
@@ -188,7 +190,7 @@ return [
          * ils comptaient ce qui était déjà à l'écran. Les mots sont la partie
          * utile, et en tant que liens ils servent aussi de navigation.
          */
-        'terms_heading' => 'Souvent dans ces résultats',
+        'terms_heading' => 'Affinez votre recherche avec',
         'seo_default' => 'Découvrez des produits et des marques sur bol, Amazon et des centaines de boutiques à la fois, avec un lien vers chaque boutique qui les vend.',
     ],
 
@@ -1596,6 +1598,7 @@ return [
         ],
         'sidebar_heading' => 'Produits de cette marque ou de cette boutique',
         'see_all' => 'Voir les :count produits de :entity',
+        'see_all_uncounted' => 'Toutes les offres :entity',
     ],
 
     /*

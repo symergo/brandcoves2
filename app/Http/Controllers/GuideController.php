@@ -377,7 +377,7 @@ class GuideController extends Controller
         $context = new EntityCoveContext(
             market: $market,
             items: [],
-            total: $shop === null ? 0 : app(ShopDirectory::class)->productCount($shop, $market),
+            total: $shop === null ? 0 : (app(ShopDirectory::class)->productCount($shop, $market) ?? 0),
             page: EntityCoveRegions::SHOP,
             entity: $shop?->displayName() ?? (string) $guide->theme_title,
             slug: (string) $guide->slug,
@@ -389,7 +389,13 @@ class GuideController extends Controller
             'entity' => [
                 'name' => $shop?->displayName() ?? (string) $guide->theme_title,
                 'kind' => 'shop',
-                'total' => $context->total,
+                /*
+                 * Null where no count can be trusted: a live connector answers
+                 * per request, so the rows stored for it are not its range. The
+                 * page then offers "all offers" rather than a number that
+                 * happens to be wrong.
+                 */
+                'total' => $shop === null ? null : app(ShopDirectory::class)->productCount($shop, $market),
                 // Their own mark, never the affiliate network's — the same rule
                 // the directory follows.
                 'logo' => $shop?->faviconUrl(),

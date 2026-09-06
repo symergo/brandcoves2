@@ -166,6 +166,8 @@ return [
     ],
 
     'search' => [
+        'remove_term' => 'Remove :term',
+        'active_terms_heading' => 'Narrowed with',
         'title' => 'Search',
         'placeholder' => 'Search for a gift or scan a barcode',
         'pasted_searched' => 'That is an Amazon link. We read the product as :terms and looked for it at the shops we cover.',
@@ -251,7 +253,7 @@ return [
          * screen is not a reason to stop scrolling. The words are the half that
          * was doing work, and as links they are also navigation.
          */
-        'terms_heading' => 'Often in these results',
+        'terms_heading' => 'Narrow your search with',
         'seo_default' => 'Discover products and brands across bol, Amazon and hundreds of shops at once, with a link to every shop that sells them.',
     ],
 
@@ -1818,6 +1820,7 @@ return [
         ],
         'sidebar_heading' => 'Products from this brand or shop',
         'see_all' => 'See all :count products from :entity',
+        'see_all_uncounted' => 'All :entity offers',
     ],
 
     /*
