@@ -1594,4 +1594,36 @@ return [
             'blurb' => 'Lo que los visitantes guardan en una lista. Solo si varias listas coinciden.',
         ],
     ],
+
+    /*
+     * La página detrás de cada dirección que no existe.
+     *
+     * Escrita como indicación, no como disculpa: quien llega aquí buscaba algo
+     * concreto y no lo encontró, y le sirve más el siguiente paso que una
+     * explicación del código de error.
+     */
+    'not_found' => [
+        'seo_title' => 'Página no encontrada',
+        'seo_description' => 'Esa dirección no existe. Busca lo que querías o sigue en otro punto de GiftCoves.',
+        'title' => 'Esta página no está aquí',
+        'intro' => 'Puede que la dirección haya cambiado o que la página ya no exista. Busca lo que querías o empieza por otro sitio.',
+        'search_placeholder' => 'Busca un regalo o escanea un código de barras',
+        'search_button' => 'Buscar',
+        'elsewhere' => 'O empieza por otro sitio',
+        'gift' => 'Buscador de regalos',
+        'gift_blurb' => 'Responde a unas preguntas y recibe ideas que encajan con la persona.',
+        'daily' => 'Cove Diaria',
+        'daily_blurb' => 'Una selección nueva cada día.',
+        'guides' => 'Guías de compra',
+        'guides_blurb' => 'En qué fijarse y qué merece la pena pagar.',
+        'surprise' => 'Cove Sorpresa',
+        'surprise_blurb' => 'Algo que no sabías que existía.',
+        'brands' => 'Marcas',
+        'brands_blurb' => 'Todas las marcas que seguimos y en qué destacan.',
+        'lists' => 'Listas de deseos',
+        'lists_blurb' => 'Guarda lo que quieres y compártelo con quien te lo va a regalar.',
+        'home' => 'Inicio',
+        'popular' => 'Búsquedas populares',
+        'shops' => 'Tiendas',
+    ],
 ];

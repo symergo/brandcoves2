@@ -1607,4 +1607,36 @@ return [
             'blurb' => 'Wat bezoekers hier op een lijstje zetten. Alleen als meerdere lijstjes het delen.',
         ],
     ],
+
+    /*
+     * De pagina achter elk adres dat niet bestaat.
+     *
+     * Geschreven als wegwijzer, niet als excuus: wie hier komt zocht iets
+     * specifieks en vond het niet, en dan helpt de volgende stap meer dan uitleg
+     * over een foutcode.
+     */
+    'not_found' => [
+        'seo_title' => 'Pagina niet gevonden',
+        'seo_description' => 'Dit adres bestaat niet. Zoek waar je naar op zoek was, of ga verder op een andere plek op GiftCoves.',
+        'title' => 'Deze pagina is er niet',
+        'intro' => 'Het adres is misschien veranderd, of de pagina bestaat niet meer. Zoek waar je naar op zoek was, of begin ergens anders.',
+        'search_placeholder' => 'Zoek een cadeau of scan een streepjescode',
+        'search_button' => 'Zoeken',
+        'elsewhere' => 'Of begin ergens anders',
+        'gift' => 'Cadeauzoeker',
+        'gift_blurb' => 'Beantwoord een paar vragen en krijg ideeën die bij de persoon passen.',
+        'daily' => 'Cove van de dag',
+        'daily_blurb' => 'Elke dag een nieuwe selectie.',
+        'guides' => 'Koopgidsen',
+        'guides_blurb' => 'Waar je op let, en waar je voor betaalt.',
+        'surprise' => 'Verrassingscove',
+        'surprise_blurb' => 'Iets waarvan je niet wist dat het bestond.',
+        'brands' => 'Merken',
+        'brands_blurb' => 'Alle merken die we voeren, en waar ze goed in zijn.',
+        'lists' => 'Verlanglijstjes',
+        'lists_blurb' => 'Bewaar wat je wilt en deel het met wie voor je koopt.',
+        'home' => 'Home',
+        'popular' => 'Populaire zoekopdrachten',
+        'shops' => 'Winkels',
+    ],
 ];

@@ -1818,4 +1818,36 @@ return [
             'blurb' => 'What visitors here put on a list. Shown only where several lists agree.',
         ],
     ],
+
+    /*
+     * The page behind every address that does not exist.
+     *
+     * Written as directions rather than as an apology: everyone reading it
+     * wanted something specific and did not get it, and the useful response is
+     * the next move, not an explanation of the status code.
+     */
+    'not_found' => [
+        'seo_title' => 'Page not found',
+        'seo_description' => 'That address does not exist. Search for what you were after, or carry on somewhere else on GiftCoves.',
+        'title' => 'That page is not here',
+        'intro' => 'The address may have changed, or the page may have been retired. Search for what you were looking for, or pick up somewhere else.',
+        'search_placeholder' => 'Search for a gift or scan a barcode',
+        'search_button' => 'Search',
+        'elsewhere' => 'Or start somewhere else',
+        'gift' => 'Gift Finder',
+        'gift_blurb' => 'Answer a few questions, get ideas that suit the person.',
+        'daily' => 'Daily Cove',
+        'daily_blurb' => 'A fresh set of picks, every day.',
+        'guides' => 'Buying guides',
+        'guides_blurb' => 'What to look for, and what is worth paying for.',
+        'surprise' => 'Surprise Cove',
+        'surprise_blurb' => 'Something you did not know existed.',
+        'brands' => 'Brands',
+        'brands_blurb' => 'Every brand we carry, and what it is good at.',
+        'lists' => 'Wish lists',
+        'lists_blurb' => 'Keep what you want, share it with whoever is buying.',
+        'home' => 'Home',
+        'popular' => 'Popular searches',
+        'shops' => 'Shops',
+    ],
 ];

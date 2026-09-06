@@ -1596,4 +1596,36 @@ return [
             'blurb' => 'Ce que les visiteurs ajoutent à une liste. Affiché seulement si plusieurs listes concordent.',
         ],
     ],
+
+    /*
+     * La page derrière chaque adresse qui n'existe pas.
+     *
+     * Écrite comme une indication de route, pas comme des excuses : celui qui
+     * arrive ici cherchait quelque chose de précis et ne l'a pas trouvé, et
+     * l'étape suivante lui sert plus qu'une explication de code d'erreur.
+     */
+    'not_found' => [
+        'seo_title' => 'Page introuvable',
+        'seo_description' => "Cette adresse n'existe pas. Cherchez ce que vous vouliez, ou continuez ailleurs sur GiftCoves.",
+        'title' => "Cette page n'est pas ici",
+        'intro' => "L'adresse a peut-être changé, ou la page n'existe plus. Cherchez ce que vous vouliez, ou repartez d'ailleurs.",
+        'search_placeholder' => 'Cherchez un cadeau ou scannez un code-barres',
+        'search_button' => 'Rechercher',
+        'elsewhere' => 'Ou commencez ailleurs',
+        'gift' => 'Trouver un cadeau',
+        'gift_blurb' => 'Quelques questions, et des idées qui correspondent à la personne.',
+        'daily' => 'Cove Quotidienne',
+        'daily_blurb' => 'Une nouvelle sélection chaque jour.',
+        'guides' => "Guides d'achat",
+        'guides_blurb' => "Ce qu'il faut regarder, et ce qui vaut son prix.",
+        'surprise' => 'Cove Surprise',
+        'surprise_blurb' => "Quelque chose dont vous ignoriez l'existence.",
+        'brands' => 'Marques',
+        'brands_blurb' => 'Toutes les marques que nous suivons, et leurs points forts.',
+        'lists' => 'Listes de souhaits',
+        'lists_blurb' => 'Gardez ce que vous voulez et partagez-le avec ceux qui achètent.',
+        'home' => 'Accueil',
+        'popular' => 'Recherches populaires',
+        'shops' => 'Boutiques',
+    ],
 ];

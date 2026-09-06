@@ -34,6 +34,7 @@ use App\Http\Controllers\ListItemVoteController;
 use App\Http\Controllers\ListMessageController;
 use App\Http\Controllers\ListQuizController;
 use App\Http\Controllers\MarketPreferenceController;
+use App\Http\Controllers\NotFoundController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OgImageController;
 use App\Http\Controllers\PickReactionController;
@@ -953,4 +954,35 @@ Route::prefix('{market}')->group(function () {
         ->name('scan.resolve');
     //   /{market}/daily                      today's picks
     //   /{market}/guides                     buying guides
+
+    /*
+     * Anything else under a real market.
+     *
+     * Last in the group, because a fallback matches whatever the routes above
+     * did not. It exists so a dead address keeps its market: the global
+     * fallback below cannot, since the URL it matches has no {market} segment
+     * for SetMarket to read, and a Dutch visitor following a dead Dutch link
+     * should not land on an English page.
+     *
+     * `Route::pattern('market', ...)` still applies, so this catches
+     * `/be-nl/anything` and never `/anything/else`.
+     */
+    Route::fallback(NotFoundController::class)->name('not-found');
 });
+
+/*
+ * Everything else on the site.
+ *
+ * Registered after every group, and Laravel keeps a fallback last however it is
+ * ordered. It runs the web middleware, which is the whole reason the 404 page is
+ * reached through a route rather than rendered from the exception handler: an
+ * unmatched URL never reaches middleware, so `CurrentMarket` would be unbound
+ * and the Inertia layout would have no market, language or navigation.
+ *
+ * The market here is `Market::default()` — there is no segment to read one from.
+ *
+ * It also carries the v1 redirect check that used to live in the exception
+ * handler, because a fallback route means unmatched URLs no longer raise
+ * NotFoundHttpException at all. See NotFoundController.
+ */
+Route::fallback(NotFoundController::class)->name('not-found.unprefixed');

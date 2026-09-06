@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Market;
+use App\Http\Controllers\NotFoundController;
 use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -11,6 +12,7 @@ use App\Http\Middleware\RequireApiAbility;
 use App\Http\Middleware\SetMarket;
 use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Services\Seo\LegacyRedirects;
+use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -167,6 +169,29 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // 301, not 302: the move is permanent, and a 302 tells a crawler to
             // keep the old URL indexed.
-            return $destination === null ? null : redirect()->away($destination, 301);
+            if ($destination !== null) {
+                return redirect()->away($destination, 301);
+            }
+
+            /*
+             * A route matched and the controller gave up — a retired guide, a
+             * product that stopped being carried, a Cove that never published.
+             * That is the common 404 on this site, and it arrives here rather
+             * than at the fallback routes, which only catch URLs no route
+             * matched at all.
+             *
+             * Middleware has run in this case, so the market is bound and the
+             * page can render with the site's own header, footer and language.
+             * When it is not bound the request never reached the web group —
+             * a POST to an unknown URL, since a fallback route answers GET —
+             * and there is no market to render in, so the framework's own page
+             * stands. Rendering ours anyway would fail while trying to explain
+             * a failure.
+             */
+            if (! app()->bound(CurrentMarket::class)) {
+                return null;
+            }
+
+            return app(NotFoundController::class)->page($request);
         });
     })->create();
