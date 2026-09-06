@@ -14,6 +14,8 @@ interface Notice {
     baseline: Cents | null
     readAt: string | null
     createdAt: string
+    /** Day and month, formatted on the server in the market's language. */
+    createdAtLabel: string
 }
 
 interface Watched {
@@ -51,11 +53,6 @@ export default function Notifications({ notifications, watching }: Props) {
             )
         }
     }, [unreadCount, market.key])
-
-    const dateFormat = new Intl.DateTimeFormat(market.hrefLang, {
-        day: 'numeric',
-        month: 'short',
-    })
 
     /**
      * The second line under a notification's title, or null when it has none.
@@ -170,7 +167,7 @@ export default function Notifications({ notifications, watching }: Props) {
                                     )}
                                 </div>
                                 <time className="shrink-0 text-xs text-ink-soft" dateTime={notice.createdAt}>
-                                    {dateFormat.format(new Date(notice.createdAt))}
+                                    {notice.createdAtLabel}
                                 </time>
                             </li>
                         ))}

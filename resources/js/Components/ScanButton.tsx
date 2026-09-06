@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslations } from '../useTranslations'
 import BarcodeScanner from './BarcodeScanner'
 
@@ -94,6 +94,31 @@ function ScanIcon({ className = 'h-5 w-5' }: { className?: string }) {
 export default function ScanButton({ className = 'rounded-lg border border-line px-4 py-3', onScan }: Props) {
     const { t } = useTranslations()
     const [open, setOpen] = useState(false)
+    const trigger = useRef<HTMLButtonElement | null>(null)
+    const closer = useRef<HTMLButtonElement | null>(null)
+
+    /*
+     * What a native <dialog> would do for free, done by hand because this one
+     * is hand-rolled: Escape closes it, focus moves into it when it opens and
+     * back to the button that opened it when it closes. Without these a
+     * keyboard user could open the camera and not leave it.
+     */
+    useEffect(() => {
+        if (!open) return
+
+        const opener = trigger.current
+        closer.current?.focus()
+
+        const escape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setOpen(false)
+        }
+        document.addEventListener('keydown', escape)
+
+        return () => {
+            document.removeEventListener('keydown', escape)
+            opener?.focus()
+        }
+    }, [open])
 
     return (
         <>
@@ -102,6 +127,7 @@ export default function ScanButton({ className = 'rounded-lg border border-line 
                 // <form method="get">: the default `submit` would run an empty
                 // search instead of opening the camera.
                 type="button"
+                ref={trigger}
                 onClick={() => setOpen(true)}
                 className={`inline-flex items-center justify-center ${className}`}
                 aria-label={t('scan.title')}
@@ -127,6 +153,7 @@ export default function ScanButton({ className = 'rounded-lg border border-line 
                             <h2 className="font-medium">{t('scan.title')}</h2>
                             <button
                                 type="button"
+                                ref={closer}
                                 onClick={() => setOpen(false)}
                                 className="text-sm text-ink-soft underline"
                             >

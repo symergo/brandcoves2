@@ -124,7 +124,7 @@ export default function SaveToast() {
                 <button
                     type="button"
                     onClick={() => dismiss(toast.key)}
-                    aria-label="×"
+                    aria-label={t('nav.close')}
                     className="shrink-0 text-ink-soft hover:text-ink"
                 >
                     ×

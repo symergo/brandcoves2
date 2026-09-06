@@ -40,6 +40,11 @@ class NotificationController extends Controller
                 'baseline' => $n->payload['baseline'] ?? null,
                 'readAt' => $n->read_at?->toIso8601String(),
                 'createdAt' => $n->created_at->toIso8601String(),
+                // Formatted here, not in the browser: the SSR container and
+                // the visitor's device sit in different timezones, and a
+                // timestamp near midnight rendered as two different days —
+                // one on the server, one after hydration.
+                'createdAtLabel' => $n->created_at->locale(app()->getLocale())->translatedFormat('j M'),
             ]);
 
         return Inertia::render('Notifications', [

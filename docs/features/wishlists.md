@@ -1065,3 +1065,8 @@ nothing, which looked like a button that did not fire. `Santa/Index` got the sam
 **Deleting a list invalidates the saved-items store.** `savedItems.invalidate()` was written for
 exactly that and had no caller, so every bookmark on the next page still reported its products
 as saved, into a list that was gone.
+
+**Removing an item asks first (2026-09-06).** Saving has an undo toast; removing had nothing, so
+the destructive half was the cheaper press. It confirms, naming the item. On a shared list, the
+claim button carries a pending state and the name field is checked before the post — its
+`required` enforced nothing, because it is not inside a form.

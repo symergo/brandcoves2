@@ -668,6 +668,7 @@ export default function SaveToList({
                     </button>
                     <button
                         type="button"
+                        role="menuitem"
                         onClick={() => setCreating(null)}
                         className="rounded border border-line px-3 py-1.5 text-xs"
                     >
@@ -719,6 +720,7 @@ export default function SaveToList({
                 {mine.map((l) => row(l, l.title))}
                 <button
                     type="button"
+                    role="menuitem"
                     onClick={() => setCreating('mine')}
                     className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
                 >
@@ -731,6 +733,7 @@ export default function SaveToList({
                 {forOthers.map((l) => row(l, l.recipient ?? l.title))}
                 <button
                     type="button"
+                    role="menuitem"
                     onClick={() => setCreating('for_someone')}
                     className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
                 >
@@ -750,6 +753,7 @@ export default function SaveToList({
                 {groups.map((l) => row(l, l.recipient ?? l.title))}
                 <button
                     type="button"
+                    role="menuitem"
                     onClick={() => setCreating('group')}
                     className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
                 >

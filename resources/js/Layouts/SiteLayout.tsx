@@ -84,6 +84,19 @@ function Chrome({ children }: PropsWithChildren) {
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
 
+    // Escape closes the panel that covers the whole phone screen, as it does
+    // the two desktop menus. It was the one surface without it.
+    useEffect(() => {
+        if (!menuOpen) return
+
+        const escape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setMenuOpen(false)
+        }
+        document.addEventListener('keydown', escape)
+
+        return () => document.removeEventListener('keydown', escape)
+    }, [menuOpen])
+
     /*
      * Which section you are in.
      *

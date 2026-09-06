@@ -235,3 +235,6 @@ The draw emails everybody a name and nothing can unsend that. Every other conseq
 on the group page confirmed, and this one did not. It confirms now (`santa.draw_confirm`, with
 the member count), and under two members the disabled button is accompanied by a sentence
 saying so (`santa.draw_needs_two`) rather than a button that simply does nothing.
+
+The group card on the hub reads ":count people" rather than a bare number, and no longer prints a
+dangling separator when there is no exchange date (2026-09-06).

@@ -1,5 +1,6 @@
 import { Head, router, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import Button from '../../Components/Button'
 import { type ListKind } from '../../Components/ListKindBadge'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
 import ListItemCard from '../../Components/ListItemCard'
@@ -181,6 +182,8 @@ export default function SharedList({
      * question ten times.
      */
     const [claimName, setClaimName] = useState(page.props.auth.user?.name ?? '')
+    const [claiming, setClaiming] = useState<number | null>(null)
+    const nameField = useRef<HTMLInputElement | null>(null)
 
     const signIn = useSignIn()
 
@@ -202,10 +205,25 @@ export default function SharedList({
      */
     async function claim(itemId: number): Promise<void> {
         if (canClaim) {
+            // The `required` on the name field enforces nothing: the field is
+            // not inside a form. Ask here, and put the cursor where the
+            // answer goes.
+            if (claimNames && claimName.trim() === '') {
+                nameField.current?.focus()
+
+                return
+            }
+
             router.post(
                 `${base}/l/${token}/claim/${itemId}`,
                 claimNames ? { display_name: claimName } : {},
-                { preserveScroll: true },
+                {
+                    preserveScroll: true,
+                    // A pending state, so a slow claim cannot be pressed twice
+                    // and does not read as a button that did nothing.
+                    onStart: () => setClaiming(itemId),
+                    onFinish: () => setClaiming(null),
+                },
             )
 
             return
@@ -435,6 +453,7 @@ export default function SharedList({
                         <label className="mt-3 block text-xs font-medium">
                             {t('pledges.your_name')}
                             <input
+                                ref={nameField}
                                 required
                                 maxLength={80}
                                 value={claimName}
@@ -697,12 +716,13 @@ export default function SharedList({
                                                     : t('lists.claimed_by_someone')}
                                             </p>
                                         ) : canClaim || claimNeedsAccount ? (
-                                            <button
+                                            <Button
                                                 onClick={() => void claim(item.id)}
-                                                className="w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                                                busy={claiming === item.id}
+                                                className="w-full"
                                             >
                                                 {t('lists.claim')}
-                                            </button>
+                                            </Button>
                                         ) : null}
                                     </div>
                                 )}

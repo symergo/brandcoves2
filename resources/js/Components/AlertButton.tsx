@@ -85,7 +85,7 @@ export default function AlertButton({ groupId, alert, currentPrice, inStock }: P
                 type,
                 // Blank means "any drop". Sent as a decimal amount because that
                 // is what the person typed; the server converts to cents.
-                target_price: type === 'price' && target !== '' ? target : null,
+                target_price: type === 'price' && target.trim() !== '' ? target.trim().replace(',', '.') : null,
             },
             { preserveScroll: true, onSuccess: () => setOpen(false) },
         )
@@ -120,11 +120,18 @@ export default function AlertButton({ groupId, alert, currentPrice, inStock }: P
                         {t('alerts.target_label')}
                     </label>
                     <div className="flex gap-2">
+                        {/*
+                          A text field with a decimal keyboard, not type="number".
+                          A Dutch or French keyboard writes 19,99 and a number
+                          input in most browsers turns that into an empty
+                          string — which the submit below then sent as "any
+                          drop", with nothing telling the shopper their €20
+                          ceiling had been thrown away. The comma is normalised
+                          on the way out, as AddProduct already does.
+                        */}
                         <input
                             id={`target-${groupId}`}
-                            type="number"
-                            min="0"
-                            step="0.01"
+                            inputMode="decimal"
                             className="w-32 rounded border border-line px-2 py-1"
                             placeholder={
                                 currentPrice === null ? '' : formatPrice(currentPrice, market)

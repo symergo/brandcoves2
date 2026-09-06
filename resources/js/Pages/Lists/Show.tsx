@@ -709,7 +709,13 @@ export default function ListShow({
 
                                                 {access.isOwner && (
                                                     <button
-                                                        onClick={() =>
+                                                        // Asked first. Saving has an undo
+                                                        // toast; removing had nothing, and
+                                                        // the destructive half was the
+                                                        // cheaper press.
+                                                        onClick={() => {
+                                                            if (!confirm(t('lists.remove_confirm', { title: item.title }))) return
+
                                                             router.delete(`${base}/list-items/${item.id}`, {
                                                                 preserveScroll: true,
                                                                 // Otherwise the bookmark on the
@@ -719,7 +725,7 @@ export default function ListShow({
                                                                     item.groupId !== null
                                                                     && markRemoved(item.groupId),
                                                             })
-                                                        }
+                                                        }}
                                                         aria-label={t('lists.remove')}
                                                         className="rounded p-2 text-ink-soft hover:text-accent"
                                                     >

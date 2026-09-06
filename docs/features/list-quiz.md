@@ -126,3 +126,9 @@ without an account.
 Separately, the "back to the list" link on the result screen was labelled `lists.share` — "Share",
 the name of a different control on a different page. It uses `lists.view_list`, which already
 existed in all four languages.
+
+## The submit button says what it does (2026-09-06)
+
+It read "Share your score" — the label of the real share control on the result screen — on a form
+nobody had finished, and it was disabled with nothing saying why. It says "See how you did" now
+(`quiz.submit`), with "3 of 5 answered" beside it while it is off.

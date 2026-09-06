@@ -344,3 +344,13 @@ were plain `<a>` elements to in-app routes, while identical destinations in the 
 `<Link>`. A plain anchor discards the SPA: a full document load, the saved-items store refetched,
 the scroll position lost. They are all `<Link>` now. The rule: an `<a>` is for a URL that leaves
 the site (an affiliate hop, an external page), and `<Link>` for everything under `/{market}/`.
+
+## Keyboard and screen-reader fixes (2026-09-06)
+
+The mobile menu and the scan dialog close on Escape; the dialog moves focus in when it opens and
+back to the button when it closes, which a native `<dialog>` does for free and a hand-rolled one
+has to do itself. The toast and flash close buttons announce "Close" rather than the multiplication
+sign, and the save picker's create buttons carry `menuitem` roles inside its `menu`, so a reader in
+menu mode no longer skips the only way to make a list from there. Notification dates are formatted
+on the server in the market's language, so the SSR container and the visitor's device cannot
+disagree about the day.

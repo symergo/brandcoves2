@@ -6,6 +6,7 @@ import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
+import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
 import type { SharedProps } from '../types'
@@ -385,9 +386,15 @@ export default function Search({
               The box accepts a barcode and an Amazon URL as readily as it
               accepts words, and nothing about it says so. One quiet link rather
               than three lines of placeholder text: the field stays a field, and
-              the answer is somewhere it can be read properly.
+              the answer is somewhere it can be read properly. The link had
+              gone missing under this comment; it is back.
             */}
-            
+            <p className="mt-2 text-xs text-ink-soft">
+                <Link href={`/${market.key}/search-help`} className="underline hover:text-ink">
+                    {t('search_help.footer_link')}
+                </Link>
+            </p>
+
             {/*
               What we made of a pasted Amazon link.
 
@@ -448,11 +455,35 @@ export default function Search({
                             <span aria-hidden>{filtersOpen ? '▲' : '▼'}</span>
                         </button>
 
+                        {/*
+                          A sheet on a phone, a rail on a desktop.
+
+                          Opened in the flow it pushed every result off the
+                          screen, and closed it hid the sort, the shops, the
+                          brands and the Amazon fallback behind one toggle — the
+                          risk docs/TODO.md recorded. As a sheet the grid stays
+                          where it was, and "show results" is one press away.
+                        */}
                         <aside
                             id="search-filters"
                             aria-label={t('search.filters')}
-                            className={`space-y-6 text-sm lg:block ${filtersOpen ? 'block' : 'hidden'}`}
+                            className={`text-sm lg:block lg:space-y-6 ${
+                                filtersOpen
+                                    ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 lg:static lg:inset-auto lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0'
+                                    : 'hidden'
+                            }`}
                         >
+                            <div className="flex items-center justify-between lg:hidden">
+                                <h2 className="font-medium">{t('search.filters_and_sort')}</h2>
+                                <button
+                                    type="button"
+                                    onClick={() => setFiltersOpen(false)}
+                                    className={buttonClasses('primary', 'sm')}
+                                >
+                                    {t('search.show_results')}
+                                </button>
+                            </div>
+
                             <ResultControls sort={sort} view={view} go={go} />
 
                             <FilterPanel

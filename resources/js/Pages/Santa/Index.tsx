@@ -148,8 +148,11 @@ export default function SantaIndex({ groups, isSignedIn }: Props) {
                                 className="block rounded-card border border-line bg-card p-6 transition hover:border-ink"
                             >
                                 <h2 className="font-medium">{group.title}</h2>
+                                {/* A labelled count, and no dangling separator
+                                    when there is no date. */}
                                 <p className="mt-1 text-sm text-ink-soft">
-                                    {group.members} · {group.exchangeDate}
+                                    {t('santa.members_count', { count: String(group.members) })}
+                                    {group.exchangeDate && ` · ${group.exchangeDate}`}
                                     {group.drawn && ` · ${t('santa.drawn')}`}
                                 </p>
                             </Link>

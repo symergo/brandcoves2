@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
+import { useTranslations } from '../useTranslations'
 
 /**
  * What the server just said.
@@ -17,6 +18,7 @@ import type { SharedProps } from '../types'
  */
 export default function FlashMessage() {
     const { flash } = usePage<SharedProps>().props
+    const { t } = useTranslations()
     const message = flash.error ?? flash.success ?? flash.status
     const isError = Boolean(flash.error)
 
@@ -44,7 +46,7 @@ export default function FlashMessage() {
             <button
                 type="button"
                 onClick={() => setDismissed(true)}
-                aria-label="×"
+                aria-label={t('nav.close')}
                 className="shrink-0 text-ink-soft hover:text-ink"
             >
                 ×

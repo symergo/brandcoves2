@@ -592,3 +592,10 @@ closure on first read; the search and brand pages, the two with a filter rail, a
 readers. Two indexes were added for the sorts under a market filter, `product_groups
 (market, min_price)` and `(market, first_seen_at)`; see
 `2026_09_06_000700_indexes_for_the_hot_paths`.
+
+## Filters are a sheet on a phone (2026-09-06)
+
+Below `lg` the rail — sort, view, shops, brands, price and the Amazon fallback — was a collapsed
+disclosure that pushed every result down when opened. It is a full-screen sheet now, on the search
+and brand pages both, with "show results" one press away, so the grid stays where it was. The
+search-help link is back under the box: the comment describing it had outlived the link.

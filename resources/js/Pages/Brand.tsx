@@ -9,6 +9,7 @@ import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
+import { buttonClasses } from '../Components/Button'
 
 interface Props {
     brand: {
@@ -310,11 +311,27 @@ export default function Brand({
                     <span aria-hidden>{filtersOpen ? '▲' : '▼'}</span>
                 </button>
 
+                {/* A sheet on a phone, a rail on a desktop — see Search.tsx. */}
                 <aside
                     id="brand-filters"
                     aria-label={t('search.filters')}
-                    className={`space-y-6 text-sm lg:col-start-1 lg:row-start-1 lg:block ${filtersOpen ? 'block' : 'hidden'}`}
+                    className={`text-sm lg:col-start-1 lg:row-start-1 lg:block lg:space-y-6 ${
+                        filtersOpen
+                            ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 lg:static lg:inset-auto lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0'
+                            : 'hidden'
+                    }`}
                 >
+                    <div className="flex items-center justify-between lg:hidden">
+                        <h2 className="font-medium">{t('search.filters')}</h2>
+                        <button
+                            type="button"
+                            onClick={() => setFiltersOpen(false)}
+                            className={buttonClasses('primary', 'sm')}
+                        >
+                            {t('search.show_results')}
+                        </button>
+                    </div>
+
                     {/*
                       First in the rail, above the facets.
 

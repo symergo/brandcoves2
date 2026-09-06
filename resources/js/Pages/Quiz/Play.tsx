@@ -168,13 +168,29 @@ ${result.grid}`}
                         </fieldset>
                     ))}
 
-                    <button
-                        type="submit"
-                        disabled={answered < quiz.rounds.length}
-                        className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white disabled:opacity-50"
-                    >
-                        {t('quiz.share')}
-                    </button>
+                    {/*
+                      "See how you did", not "Share your score" — that label
+                      belongs to the real share control on the result screen,
+                      and on a form nobody has finished it read as broken. The
+                      sentence beside it says why the button is off.
+                    */}
+                    <div className="flex flex-wrap items-center gap-4">
+                        <button
+                            type="submit"
+                            disabled={answered < quiz.rounds.length}
+                            className="rounded-lg bg-accent px-5 py-2.5 font-medium text-white transition hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {t('quiz.submit')}
+                        </button>
+                        {answered < quiz.rounds.length && (
+                            <span className="text-sm text-ink-soft">
+                                {t('quiz.answered_of', {
+                                    answered: String(answered),
+                                    total: String(quiz.rounds.length),
+                                })}
+                            </span>
+                        )}
+                    </div>
                 </form>
             )}
         </>
