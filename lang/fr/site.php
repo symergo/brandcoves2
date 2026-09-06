@@ -1083,8 +1083,6 @@ return [
         'title' => 'Dites-nous ce qui pourrait être mieux, ou faites-nous un compliment',
         'message_label' => 'Votre message',
         'message_placeholder' => 'Qu’est-ce qui ne va pas, qu’est-ce qui manque, que feriez-vous autrement ? Ou dites-nous simplement ce que vous aimez chez GiftCoves :D',
-        'path_label' => 'Quelle page ?',
-        'path_placeholder' => '/be-fr/p/1234/…',
         'email_label' => 'Votre e-mail (facultatif)',
         'email_placeholder' => 'vous@exemple.be',
         'email_hint' => 'Uniquement pour vous répondre. Rien d’autre n’y sera jamais envoyé.',
@@ -1685,8 +1683,6 @@ return [
         'search_blurb' => 'Ce que le champ accepte, comment fonctionne le scanner, et pourquoi une faute de frappe trouve quand même.',
         'lists_title' => 'Listes',
         'lists_blurb' => 'Enregistrer un produit, créer une liste, et qui la voit une fois partagée.',
-        'report_heading' => 'Quelque chose ne va pas ?',
-        'report_intro' => "Un prix qui n'est plus à jour, un lien mort, une phrase qui sonne comme écrite par une machine. Dites-le nous et nous regardons.",
         'link' => 'Aide',
     ],
 ];

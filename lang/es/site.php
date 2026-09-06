@@ -1082,8 +1082,6 @@ return [
         'title' => 'Cuéntanos qué se puede mejorar, o mándanos un piropo',
         'message_label' => 'Tu mensaje',
         'message_placeholder' => '¿Qué falla, qué falta, qué harías de otra manera? O cuéntanos sin más qué te gusta de GiftCoves :D',
-        'path_label' => '¿Qué página?',
-        'path_placeholder' => '/es/p/1234/…',
         'email_label' => 'Tu correo (opcional)',
         'email_placeholder' => 'tu@ejemplo.es',
         'email_hint' => 'Solo para responderte. Nunca se envía nada más a esa dirección.',
@@ -1683,8 +1681,6 @@ return [
         'search_blurb' => 'Qué acepta el buscador, cómo funciona el escáner y por qué una errata encuentra igual.',
         'lists_title' => 'Listas',
         'lists_blurb' => 'Guardar un producto, crear una lista y quién la ve cuando la compartes.',
-        'report_heading' => '¿Algo va mal?',
-        'report_intro' => 'Un precio desactualizado, un enlace roto, una frase que suena a máquina. Dinoslo y lo miramos.',
         'link' => 'Ayuda',
     ],
 ];

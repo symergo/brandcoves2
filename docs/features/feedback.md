@@ -2,8 +2,10 @@
 
 One page, in the main menu: **tell us what is wrong**. No account, one required field.
 
-- Page: [`Feedback.tsx`](../../resources/js/Pages/Feedback.tsx),
-  [`FeedbackController`](../../app/Http/Controllers/FeedbackController.php)
+- Page: [`Help.tsx`](../../resources/js/Pages/Help.tsx) and the form it renders,
+  [`FeedbackForm.tsx`](../../resources/js/Components/FeedbackForm.tsx);
+  [`FeedbackController`](../../app/Http/Controllers/FeedbackController.php) still takes the POST.
+  `Pages/Feedback.tsx` is gone and `GET /feedback` 301s to `/help`.
 - Model / table: [`Feedback`](../../app/Models/Feedback.php), `feedback`
 - Admin queue: [`FeedbackResource`](../../app/Filament/Resources/Feedback/FeedbackResource.php)
 - Tests: [`FeedbackTest`](../../tests/Feature/FeedbackTest.php)
@@ -109,3 +111,22 @@ The placeholder carries the examples the paragraph used to: *"Wat loopt er mis, 
 zou je anders doen? Of laat ons gewoon weten wat je goed vindt aan GiftCoves :D"*. `seo_title` and
 `seo_description` moved with it — a meta description promising to fix wrong prices, on a page
 inviting compliments, is a page that disagrees with its own search result.
+
+## Nothing between the seam and the box (2026-09-06)
+
+Moving the form onto `/help` gave it a heading and a paragraph again — *"Iets mis?"* over *"Een prijs
+die niet meer klopt, een dode link, een zin die klinkt alsof een machine hem schreef."* — which is
+the same three-pieces-of-copy-for-one-field the section above records removing from the old page, put
+back by a different route. Both are gone. The rule under the how-to cards still draws the seam, and
+the placeholder still carries the examples.
+
+The textarea keeps its `sr-only` label. It used to be justified by the heading standing in as the
+visible name; with no heading it is the only name the field has, and a placeholder is not a label —
+it disappears the moment somebody types.
+
+**"Welke pagina?" is recorded and no longer asked.** `path` was an editable box prefilled with
+something like `/be-nl/p/1234/…`, sitting between the message and the address: a URL to proofread
+rather than a question anybody can answer, for a fact the page already knows — `refererPath()` put it
+there. It stays in `form.data` and is posted from there, so every report still says which page it is
+about and the form is one field shorter. `feedback.path_label` and `path_placeholder` are deleted in
+all four languages.

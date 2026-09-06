@@ -1288,8 +1288,6 @@ return [
         'title' => 'Tell us what could be better, or pay us a compliment',
         'message_label' => 'Your message',
         'message_placeholder' => 'What is going wrong, what is missing, what would you do differently? Or just tell us what you like about GiftCoves :D',
-        'path_label' => 'Which page?',
-        'path_placeholder' => '/en/p/1234/…',
         'email_label' => 'Your email (optional)',
         'email_placeholder' => 'you@example.com',
         'email_hint' => 'Only so we can reply to this. Nothing else is ever sent to it.',
@@ -1907,8 +1905,6 @@ return [
         'search_blurb' => 'What the box accepts, how the scanner works, and why a typo still finds things.',
         'lists_title' => 'Lists',
         'lists_blurb' => 'Saving a product, making a list, and who can see it once you share it.',
-        'report_heading' => 'Something wrong?',
-        'report_intro' => 'A price that is out of date, a dead link, a sentence that reads like a machine wrote it. Tell us and we will look.',
         'link' => 'Help',
     ],
 ];

@@ -65,11 +65,17 @@ export default function Help({ guides, path }: Props) {
                   work"; everything below is for when the answer is "it does not".
                   Two different kinds of help stacked on one page need the seam
                   drawn, the same way the search rail draws it.
+
+                  No heading and no preamble over the form. "Something wrong? A
+                  price that is out of date, a dead link…" listed examples of
+                  what to write directly above a box whose placeholder asks the
+                  same question — two invitations for one field, and the reader
+                  has to read both before typing a word. The placeholder does
+                  the asking; the textarea keeps its screen-reader label, which
+                  is the part a heading was carrying for people who cannot see
+                  the box.
                 */}
                 <div className="mt-12 border-t border-line pt-10">
-                    <h2 className="text-lg font-semibold text-ink">{t('help.report_heading')}</h2>
-                    <p className="mt-2 mb-6 text-ink-soft">{t('help.report_intro')}</p>
-
                     <FeedbackForm path={path} />
                 </div>
             </div>

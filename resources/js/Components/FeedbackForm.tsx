@@ -44,14 +44,14 @@ export default function FeedbackForm({ path }: { path: string | null }) {
     }
 
     return (
-        <form onSubmit={submit} className="mt-8 space-y-5">
+        <form onSubmit={submit} className="space-y-5">
                     <label className="block text-sm font-medium">
                         {/*
-                          Named for a screen reader, and only for one. A single
-                          textarea directly under the heading needs no visible
-                          label — the heading is the label — but an unlabelled
-                          field is not a field anybody can fill in without
-                          sight.
+                          Named for a screen reader, and only for one. The
+                          placeholder says what to write, so a visible label
+                          above the box would ask the same question twice — but
+                          a placeholder is not a label, and an unlabelled field
+                          is not a field anybody can fill in without sight.
                         */}
                         <span className="sr-only">{t('feedback.message_label')}</span>
                         <textarea
@@ -68,17 +68,17 @@ export default function FeedbackForm({ path }: { path: string | null }) {
                     </label>
                     {form.errors.message && <p className="text-sm text-accent">{form.errors.message}</p>}
 
-                    <label className="block text-sm font-medium">
-                        {t('feedback.path_label')}
-                        <input
-                            type="text"
-                            maxLength={2048}
-                            value={form.data.path}
-                            onChange={(e) => form.setData('path', e.target.value)}
-                            placeholder={t('feedback.path_placeholder')}
-                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 font-normal"
-                        />
-                    </label>
+                    {/*
+                      Where they came from is recorded and not asked for.
+
+                      "Which page?" sat between the message and the address as
+                      an editable box prefilled with something like
+                      `/be-nl/p/1234/…`, which is a URL to check rather than a
+                      question to answer — and the answer was already known:
+                      `path` is the page the reporter pressed Help on. It rides
+                      in `form.data` and is posted from there, so there is no
+                      field on screen and nothing lost in the report.
+                    */}
 
                     <label className="block text-sm font-medium">
                         {t('feedback.email_label')}

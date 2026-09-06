@@ -1086,8 +1086,6 @@ return [
         'title' => 'Vertel ons wat beter kan of geef een pluimpje',
         'message_label' => 'Je bericht',
         'message_placeholder' => 'Wat loopt er mis, wat ontbreekt, wat zou je anders doen? Of laat ons gewoon weten wat je goed vindt aan GiftCoves :D',
-        'path_label' => 'Welke pagina?',
-        'path_placeholder' => '/be-nl/p/1234/…',
         'email_label' => 'Je e-mailadres (optioneel)',
         'email_placeholder' => 'jij@voorbeeld.be',
         'email_hint' => 'Alleen om hierop te antwoorden. Er wordt nooit iets anders naartoe gestuurd.',
@@ -1696,8 +1694,6 @@ return [
         'search_blurb' => 'Wat het zoekvak aankan, hoe de scanner werkt, en waarom een typfout toch iets vindt.',
         'lists_title' => 'Lijstjes',
         'lists_blurb' => 'Iets bewaren, een lijstje maken, en wie het ziet zodra je het deelt.',
-        'report_heading' => 'Iets mis?',
-        'report_intro' => 'Een prijs die niet meer klopt, een dode link, een zin die klinkt alsof een machine hem schreef. Laat het weten en we kijken ernaar.',
         'link' => 'Help',
     ],
 ];
