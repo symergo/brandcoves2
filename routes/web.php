@@ -57,6 +57,7 @@ use App\Http\Controllers\SuggestionController;
 use App\Http\Controllers\WishlistCollaboratorController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
+use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -219,7 +220,29 @@ Route::prefix('{market}')->group(function () {
      */
     Route::get('/help', HelpController::class)->name('help');
 
-    Route::get('/feedback', [FeedbackController::class, 'show'])->name('feedback');
+    /*
+     * How the site works, and where to say it does not, on one page.
+     *
+     * The how-to pages were reachable only from the screen each explains, so a
+     * visitor who had already given up on that screen had nowhere to go. This
+     * gathers them and puts the report form under them.
+     */
+    Route::get('/help', HelpController::class)->name('help');
+
+    /*
+     * Kept as a redirect, not a page.
+     *
+     * The form lives on `/help` now, with the how-to pages above it. This
+     * address has been in the menu and the footer for months and is in people's
+     * history, so it goes on answering - 301, because the move is permanent and
+     * a 302 would leave crawlers holding the old one.
+     *
+     * The POST below stays exactly where it is: it is where the form submits
+     * from either page, and moving it would be a change to a working endpoint
+     * for the sake of tidiness.
+     */
+    Route::get('/feedback', fn (CurrentMarket $current) => redirect($current->url('help'), 301))
+        ->name('feedback');
     Route::post('/feedback', [FeedbackController::class, 'store'])->name('feedback.store');
 
     // The slug is decoration; the id is identity. A stale slug redirects rather

@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Feedback;
-use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
  * Tell us what is wrong.
@@ -53,31 +50,6 @@ class FeedbackController extends Controller
     /** Enough for a real report and a follow-up; useless as a submission tool. */
     private const PER_HOUR = 5;
 
-    public function show(Request $request, CurrentMarket $current): Response
-    {
-        app(PageMeta::class)->set(
-            title: __('site.feedback.seo_title'),
-            description: __('site.feedback.seo_description'),
-            canonical: url($current->url('feedback')),
-            // Indexable: it is a real page of the site, and "how do I report a
-            // wrong price on giftcoves" should find it.
-            robots: null,
-        );
-
-        return Inertia::render('Feedback', [
-            /*
-             * Where they came from, prefilled and editable.
-             *
-             * "The price is wrong" with no page attached is unanswerable, and
-             * asking somebody to paste a URL after they have already navigated
-             * away is asking them to go back and get it. The referer covers the
-             * common path — they were on the page, they clicked Feedback — and
-             * is only trusted as far as being shown back to them for correction.
-             */
-            'path' => $this->refererPath($request),
-        ]);
-    }
-
     public function store(Request $request, CurrentMarket $current): RedirectResponse
     {
         $validated = $request->validate([
@@ -113,32 +85,5 @@ class FeedbackController extends Controller
         ]);
 
         return back()->with('status', __('site.feedback.thanks'));
-    }
-
-    /**
-     * The path of the page they came from, if it was one of ours.
-     *
-     * Host-checked, because `Referer` is visitor-controlled: without this, an
-     * off-site link could put any string it liked into a field we render back.
-     * The query string is dropped — it adds nothing to a bug report and can
-     * carry whatever the visitor typed somewhere else on the site.
-     */
-    private function refererPath(Request $request): ?string
-    {
-        $referer = (string) $request->headers->get('referer');
-
-        if ($referer === '') {
-            return null;
-        }
-
-        $parts = parse_url($referer);
-
-        if (($parts['host'] ?? null) !== $request->getHost()) {
-            return null;
-        }
-
-        $path = (string) ($parts['path'] ?? '');
-
-        return $path === '' ? null : $path;
     }
 }

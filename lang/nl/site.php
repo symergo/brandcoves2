@@ -664,6 +664,8 @@ return [
         'claimed_by' => ':name koopt dit',
         'claim_anonymous_note' => 'Niemand ziet dat jij het was — ook niet degene die deze lijst beheert.',
         'claim_named_note' => 'Je naam is zichtbaar voor de anderen op deze lijst, zodat ze weten wie wat koopt.',
+        'claim_sign_in_hint' => 'Log in en het blijft van jou: je ziet op elk apparaat wat je koopt, en je kunt het teruggeven als je van plan verandert.',
+        'claimed_item' => 'Jij koopt :item.',
         'claim_names_visible' => 'Namen van wie wat koopt zijn zichtbaar (behalve voor de ontvanger)',
         'claim_mine_show_hint_mine' => 'Standaard uit: een verlanglijst werkt juist doordat je niet weet wat eraan komt. Zet het aan als je het liever wel ziet.',
         'claim_mine_show' => 'Laat mij zien wat er gereserveerd is',

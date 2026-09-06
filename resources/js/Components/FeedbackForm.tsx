@@ -5,8 +5,9 @@ import { useTranslations } from '../useTranslations'
 /**
  * The report form, wherever it is asked for.
  *
- * Lifted out of `Pages/Feedback.tsx` on 2026-09-06 so `/help` could carry the
- * same form rather than a second one. Two forms posting to one endpoint is how
+ * Lifted out of the feedback page on 2026-09-06 so `/help` could carry the
+ * same form rather than a second one. That page has since become a redirect to
+ * `/help`, and this is what survived it. Two forms posting to one endpoint is how
  * a honeypot ends up on one of them and not the other, and how the field that
  * says "only to reply to this" loses that line on the copy nobody re-read.
  *

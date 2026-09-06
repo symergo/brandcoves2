@@ -791,6 +791,8 @@ return [
         'claimed_by' => ':name is getting this',
         'claim_anonymous_note' => 'Nobody will see it was you — not even the person organising this list.',
         'claim_named_note' => 'Your name will be shown to the others on this list, so they know who is getting what.',
+        'claim_sign_in_hint' => 'Sign in and this stays yours: you can see what you are getting from any device, and hand it back if your plans change.',
+        'claimed_item' => 'You are getting :item.',
         'claim_names_visible' => 'Names of who is buying what are visible (except to the recipient)',
         'claim_mine_show_hint_mine' => 'Off by default: a wish list works because you do not know what is coming. Turn it on if you would rather see.',
         'claim_mine_show' => 'Show me what has been claimed',

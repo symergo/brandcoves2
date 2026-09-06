@@ -98,12 +98,16 @@ class SitemapController extends Controller
                 ['loc' => url("/{$resolved->value}/search-help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
 
                 /*
-                 * The feedback form. Low priority and listed anyway: it is a
-                 * real page with real copy, and the alternative — a page in the
-                 * header that no crawler is told about — is the shape of a page
-                 * somebody forgot rather than one deliberately kept private.
+                 * Help: the how-to pages gathered, with the report form under
+                 * them. Listed for the reason the feedback form was listed
+                 * before it took this address - a page in the menu that no
+                 * crawler is told about is the shape of a page somebody forgot
+                 * rather than one deliberately kept private. `/feedback` is a
+                 * 301 to here now and is deliberately not listed: a sitemap
+                 * naming a redirect asks a crawler to discover the same page
+                 * twice.
                  */
-                ['loc' => url("/{$resolved->value}/feedback"), 'priority' => '0.3', 'changefreq' => 'yearly'],
+                ['loc' => url("/{$resolved->value}/help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
 
                 ['loc' => url($resolved->covePath()), 'priority' => '0.9', 'changefreq' => 'daily'],
                 ['loc' => url("/{$resolved->value}/gift-ideas"), 'priority' => '0.8', 'changefreq' => 'weekly'],

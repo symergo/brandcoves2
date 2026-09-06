@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
+use App\Support\RefererPath;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -63,23 +64,7 @@ class HelpController extends Controller
              * browser may withhold, so this is a hint rather than a fact - the
              * field is editable and the form works with it empty.
              */
-            'path' => $this->camefrom($request),
+            'path' => RefererPath::of($request),
         ]);
-    }
-
-    private function camefrom(Request $request): ?string
-    {
-        $referer = (string) $request->headers->get('referer');
-
-        if ($referer === '') {
-            return null;
-        }
-
-        $path = parse_url($referer, PHP_URL_PATH);
-
-        // Only our own paths: a referer from somewhere else is not a page we
-        // can do anything about, and echoing it back into a form is repeating
-        // an external URL to ourselves.
-        return is_string($path) && str_starts_with($path, '/') ? $path : null;
     }
 }

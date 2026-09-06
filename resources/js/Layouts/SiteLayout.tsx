@@ -218,7 +218,14 @@ function Chrome({ children }: PropsWithChildren) {
      */
     const nav = [
         { href: `${base}/search`, label: t('nav.search') },
-        { href: `${base}/feedback`, label: t('nav.feedback') },
+        /*
+          Help, not Feedback.
+
+          The menu offered the report form and nothing else, so "how do I do
+          this" had no entry anywhere in the chrome while "this is broken" had a
+          top-level one. `/help` answers both and carries the same form.
+        */
+        { href: `${base}/help`, label: t('help.link') },
     ]
 
     /*

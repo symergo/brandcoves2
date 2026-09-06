@@ -116,25 +116,34 @@ class FeedbackTest extends TestCase
     #[Test]
     public function it_prefills_the_page_only_from_our_own_referer(): void
     {
-        $this->get('/be-nl/feedback', ['referer' => url('/be-nl/p/99/thing').'?q=x'])
+        // On `/help` since 2026-09-06: the form moved there and `/feedback`
+        // became a redirect. The check itself is unchanged and still matters.
+        $this->get('/be-nl/help', ['referer' => url('/be-nl/p/99/thing').'?q=x'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('path', '/be-nl/p/99/thing'));
 
-        $this->get('/be-nl/feedback', ['referer' => 'https://evil.test/be-nl/p/99/thing'])
+        $this->get('/be-nl/help', ['referer' => 'https://evil.test/be-nl/p/99/thing'])
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('path', null));
     }
 
     #[Test]
-    public function the_page_is_in_the_main_menu_and_the_sitemap(): void
+    public function the_form_is_reachable_from_the_menu_and_the_sitemap(): void
     {
-        // The nav is rendered client-side, so what is asserted here is the
-        // route the menu points at — a menu entry to a 404 is the failure.
-        $this->get('/be-nl/feedback')->assertOk();
+        /*
+         * The menu points at `/help` now, which carries this form under the
+         * how-to pages. The nav is rendered client-side, so what is asserted is
+         * the route behind it - a menu entry to a 404 is the failure.
+         */
+        $this->get('/be-nl/help')->assertOk();
+
+        // And the old address keeps answering: it was in the menu and the
+        // footer for months and is in people's history.
+        $this->get('/be-nl/feedback')->assertRedirect('/be-nl/help');
 
         $this->get('/sitemap/be-nl/1.xml')
             ->assertOk()
-            ->assertSee('/be-nl/feedback', escape: false);
+            ->assertSee('/be-nl/help', escape: false);
     }
 
     /**

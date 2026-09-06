@@ -32,8 +32,15 @@ export default function Help({ guides, path }: Props) {
             <Head title={t('help.title')} />
 
             <div className="mx-auto max-w-2xl px-4 py-10">
+                {/*
+                  The heading is the whole invitation.
+
+                  A sentence under it restated what the two cards and the form
+                  heading already say, in front of the answers somebody came for.
+                  Same reasoning the feedback page recorded when its own three
+                  pieces of preamble came off.
+                */}
                 <h1 className="text-3xl font-semibold tracking-tight text-ink">{t('help.title')}</h1>
-                <p className="mt-3 text-ink-soft">{t('help.intro')}</p>
 
                 <h2 className="mt-10 text-lg font-semibold text-ink">{t('help.guides_heading')}</h2>
 
