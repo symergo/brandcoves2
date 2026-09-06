@@ -35,7 +35,16 @@ class HandleInertiaRequests extends Middleware
      */
     private function translationVersion(): string
     {
-        return (string) filemtime(lang_path(app()->getLocale().'/site.php'));
+        /*
+         * Once per process per locale. The file's mtime changes only on a
+         * deploy, which restarts the process, so a stat on every request was
+         * paying for a fact that cannot change while the process lives.
+         */
+        static $versions = [];
+
+        $locale = app()->getLocale();
+
+        return $versions[$locale] ??= (string) filemtime(lang_path($locale.'/site.php'));
     }
 
     /**

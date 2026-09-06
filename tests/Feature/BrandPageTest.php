@@ -410,6 +410,10 @@ class BrandPageTest extends TestCase
     #[Test]
     public function the_page_is_indexable_and_its_filtered_variants_are_not(): void
     {
+        // Indexing on, or the environment stamps `noindex, nofollow` on
+        // every page and the page's own value is never consulted.
+        config(['giftcoves.robots_allow' => true]);
+
         $this->seedBrand('Aurex');
 
         /*
@@ -912,6 +916,10 @@ class BrandPageTest extends TestCase
     #[Test]
     public function a_sub_searched_brand_page_is_not_indexable(): void
     {
+        // Indexing on, or the environment stamps `noindex, nofollow` on
+        // every page and the page's own value is never consulted.
+        config(['giftcoves.robots_allow' => true]);
+
         $this->seedBrand('Aurex');
 
         /*

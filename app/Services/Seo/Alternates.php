@@ -129,6 +129,138 @@ class Alternates
     }
 
     /**
+     * Alternates for a whole sitemap file's worth of non-product paths.
+     *
+     * `for()` per URL costs a query or two each; a chunk carries five hundred
+     * editorial URLs, and it resolved every one of them on a cold cache. The
+     * paths are sorted by kind and each kind is answered in one query — the
+     * same shape `forProducts()` takes, for the same reason.
+     *
+     * @param  list<string>  $paths
+     * @return array<string, array<string, string>> path => (hreflang => URL)
+     */
+    public function forPaths(array $paths, Market $current): array
+    {
+        $bySegment = [];
+
+        foreach ($paths as $path) {
+            $segments = explode('/', trim($path, '/'));
+            $bySegment[$segments[1] ?? ''][] = [$path, $segments[2] ?? null];
+        }
+
+        $out = [];
+
+        foreach ($bySegment as $kind => $entries) {
+            $slugs = array_values(array_filter(array_column($entries, 1)));
+
+            $paired = match (true) {
+                $kind === 'guides' => $this->forCoves(['guide', 'seasonal', 'advice'], 'guides', $slugs),
+                $kind === 'shops' => $this->forCoves([CoveKind::Shop->value], 'shops', $slugs),
+                $kind === 'gift-ideas' => $this->forCoves([CoveKind::Persona->value], 'gift-ideas', $slugs),
+                $kind === 'daily' || in_array($kind, Market::coveSegments(), true) => $this->forDailies($current, $slugs),
+                default => [],
+            };
+
+            foreach ($entries as [$path, $slug]) {
+                // A slugless path is the index of its section, and a kind this
+                // method does not batch is a swap: both are the per-path answer,
+                // which costs no query.
+                $out[$path] = $slug === null || ! array_key_exists($slug, $paired)
+                    ? $this->for($path, $current)
+                    : $paired[$slug];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Cove alternates for a list of slugs, in one query — the batched twin of
+     * guide(), shop() and persona(), with their rule: the same slug in another
+     * published market is the same Cove.
+     *
+     * @param  list<string>  $kinds
+     * @param  list<string>  $slugs
+     * @return array<string, array<string, string>> slug => (hreflang => URL)
+     */
+    public function forCoves(array $kinds, string $prefix, array $slugs): array
+    {
+        if ($slugs === []) {
+            return [];
+        }
+
+        $bySlug = [];
+
+        DB::table('daily_pick_sets')
+            ->whereIn('slug', $slugs)
+            ->whereIn('kind', $kinds)
+            ->where('status', PublishStatus::Published->value)
+            ->orderBy('market')
+            ->get(['market', 'slug'])
+            ->each(function ($row) use (&$bySlug, $prefix): void {
+                $market = Market::tryFrom((string) $row->market);
+
+                if ($market !== null && $market->isPublished()) {
+                    $bySlug[(string) $row->slug][$market->hrefLang()] = url("/{$market->value}/{$prefix}/{$row->slug}");
+                }
+            });
+
+        $out = [];
+
+        foreach ($slugs as $slug) {
+            $alternates = $bySlug[$slug] ?? [];
+            $out[$slug] = count($alternates) > 1 ? $alternates : [];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Daily alternates for a list of this market's slugs, in two queries — the
+     * batched twin of daily(): paired by date, addressed by each market's slug.
+     *
+     * @param  list<string>  $slugs
+     * @return array<string, array<string, string>> slug => (hreflang => URL)
+     */
+    public function forDailies(Market $current, array $slugs): array
+    {
+        if ($slugs === []) {
+            return [];
+        }
+
+        $dateOf = DB::table('daily_pick_sets')
+            ->where('market', $current->value)
+            ->whereIn('slug', $slugs)
+            ->pluck('drop_date', 'slug')
+            ->map(fn ($date) => (string) $date);
+
+        $byDate = [];
+
+        DB::table('daily_pick_sets')
+            ->whereIn('drop_date', array_values(array_unique($dateOf->all())))
+            ->where('status', PublishStatus::Published->value)
+            ->whereNotNull('slug')
+            ->orderBy('market')
+            ->get(['market', 'slug', 'drop_date'])
+            ->each(function ($row) use (&$byDate): void {
+                $market = Market::tryFrom((string) $row->market);
+
+                if ($market !== null && $market->isPublished()) {
+                    $byDate[(string) $row->drop_date][$market->hrefLang()] = url($market->covePath((string) $row->slug));
+                }
+            });
+
+        $out = [];
+
+        foreach ($slugs as $slug) {
+            $alternates = isset($dateOf[$slug]) ? ($byDate[$dateOf[$slug]] ?? []) : [];
+            $out[$slug] = count($alternates) > 1 ? $alternates : [];
+        }
+
+        return $out;
+    }
+
+    /**
      * The same physical product in other markets.
      *
      * Joined on `identity_key`, which is what "the same product" means here —

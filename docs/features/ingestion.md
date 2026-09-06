@@ -264,3 +264,9 @@ Scheduled: ingest hourly, group at :40, prune price history nightly.
 merchants sharing an EAN, placeholder EANs (`0`, `N/A`), a too-short title, an
 unbranded row, a European-format price, and a `javascript:` URL that is asserted
 never to reach the database.
+
+**Indexes for the write path (2026-09-06).** `markStaleProducts()` filters on `feed_id` and
+`status` at the end of every ingest and had no index leading on the feed; the 30-day median CTE
+in `ProductGrouper` filters `price_history` on `captured_on` and both existing indexes led on
+`product_id`. `2026_09_06_000700_indexes_for_the_hot_paths` adds both, built `CONCURRENTLY` so
+the migrate step locks nothing while the site is already down for the deploy.

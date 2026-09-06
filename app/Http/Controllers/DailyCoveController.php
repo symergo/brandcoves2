@@ -15,6 +15,7 @@ use App\Support\CurrentMarket;
 use App\Support\PreviewAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -135,6 +136,22 @@ class DailyCoveController extends Controller
      * @return list<array<string, mixed>>
      */
     private function deals(CurrentMarket $current): array
+    {
+        /*
+         * Cached per market for half an hour. Nothing in it is per visitor,
+         * and it ran on every Cove page view — a scoring query with a computed
+         * discount expression and a sixty-row over-fetch, for a sidebar column
+         * that moves when the catalogue is regrouped, twice a day.
+         */
+        return Cache::remember(
+            'bc:deals:'.$current->value(),
+            1800,
+            fn (): array => $this->computeDeals($current),
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function computeDeals(CurrentMarket $current): array
     {
         $config = (array) config('giftcoves.deals');
         $discount = '((median_price - min_price)::numeric / median_price) * 100';

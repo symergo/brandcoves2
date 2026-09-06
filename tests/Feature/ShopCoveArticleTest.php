@@ -334,4 +334,21 @@ Tweede alinea.',
         // The card the page names, from a route that used to filter shops out.
         $this->get('/be-nl/og/guide/bol-com.png')->assertOk();
     }
+
+    #[Test]
+    public function the_sitemap_pairs_a_shop_cove_across_markets_in_one_pass(): void
+    {
+        config(['giftcoves.robots_allow' => true]);
+        $this->cove('bol-com', 'Kopen bij bol', market: Market::BeNl);
+        $this->cove('bol-com', 'Acheter chez bol', market: Market::BeFr);
+        $this->cove('coolblue', 'Kopen bij Coolblue', market: Market::BeNl);
+
+        $xml = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
+
+        // Batched through Alternates::forPaths(), so it must say what the
+        // per-page resolver says: the pair for bol, nothing for a lone shop.
+        $this->assertStringContainsString('<loc>'.url('/be-nl/shops/bol-com').'</loc>', $xml);
+        $this->assertStringContainsString('hreflang="fr-BE" href="'.url('/be-fr/shops/bol-com').'"', $xml);
+        $this->assertStringNotContainsString(url('/be-fr/shops/coolblue'), $xml);
+    }
 }

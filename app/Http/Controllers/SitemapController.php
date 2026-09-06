@@ -366,7 +366,22 @@ class SitemapController extends Controller
                 ];
             });
 
-            $body = implode('', array_map(function (array $url) use ($alternates, $resolved): string {
+            /*
+             * Alternates for everything that did not arrive with its own,
+             * resolved per kind rather than per URL. On a cold cache the
+             * editorial block used to cost a query or two for each of its
+             * five hundred URLs — the failure the product block's docblock
+             * describes, left in place for everything else.
+             */
+            $batched = $alternates->forPaths(
+                array_values(array_map(
+                    fn (array $url) => parse_url($url['loc'], PHP_URL_PATH) ?: '/',
+                    array_filter($urls, fn (array $url) => ! isset($url['alternates'])),
+                )),
+                $resolved,
+            );
+
+            $body = implode('', array_map(function (array $url) use ($batched): string {
                 $xml = '<url><loc>'.e($url['loc']).'</loc>';
                 if (! empty($url['lastmod'])) {
                     $xml .= '<lastmod>'.$url['lastmod'].'</lastmod>';
@@ -384,7 +399,8 @@ class SitemapController extends Controller
                  * product's alternates were four links to 404s in both places.
                  */
                 $links = $url['alternates']
-                    ?? $alternates->for(parse_url($url['loc'], PHP_URL_PATH) ?? '/', $resolved);
+                    ?? $batched[parse_url($url['loc'], PHP_URL_PATH) ?: '/']
+                    ?? [];
 
                 foreach ($links as $hrefLang => $href) {
                     $xml .= '<xhtml:link rel="alternate" hreflang="'.$hrefLang.'" href="'.e($href).'"/>';

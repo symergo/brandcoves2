@@ -320,3 +320,12 @@ already walks the same four language files.
   [product-titles.md](product-titles.md#language-is-not-one-of-the-tests).
 - **`en` has no multi-merchant groups**, 0 of 16,531, so the comparison
   proposition and its `AggregateOffer` never appear in the English market.
+
+## Alternates are batched wherever a list is rendered (2026-09-06)
+
+The product page hands its own alternates to the shell through `PageMeta::setAlternates()`, so
+the shell does not re-fetch the group the controller just loaded. The sitemap resolves every
+non-product URL through `Alternates::forPaths()`, which sorts paths by kind and answers each
+kind in one query — the same batching the product block had, now for guides, Shop Coves,
+personas and dailies. Per-URL resolution on a cold cache was a query or two for each of five
+hundred editorial URLs, per chunk.

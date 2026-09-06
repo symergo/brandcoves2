@@ -14,6 +14,7 @@ use App\Services\Alerts\AlertEligibility;
 use App\Services\Catalogue\ProductDescription;
 use App\Services\Catalogue\ProductTitle;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Seo\Alternates;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\SocialCard;
@@ -234,6 +235,13 @@ class ProductController extends Controller
             robots: array_any($offers, fn (Product $offer) => $offer->availability->isBuyable())
                 ? null
                 : 'noindex, follow',
+        );
+
+        // From the row in hand, not from the path: resolving by path re-fetches
+        // this group before finding its siblings. One query instead of two, on
+        // the page a crawler asks for most.
+        $meta->setAlternates(
+            app(Alternates::class)->forProducts([$group->id => $group->identity_key])[$group->id] ?? [],
         );
 
         $meta->addJsonLd(StructuredData::product($group, $offers, $market, $url));

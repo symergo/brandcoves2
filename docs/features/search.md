@@ -582,3 +582,13 @@ searched the stale text, quietly throwing the narrowing away. The field resyncs 
 
 `preserveScroll` is now off for a page change only. It was on for every visit, so page two
 arrived with the viewport parked at the bottom of page one, past every card it had brought.
+
+## Facets are computed only when a page asks (2026-09-06)
+
+`SearchService::search()` computed the three facet aggregates for every call. Seven of its eight
+callers — the board, a shared list's suggestion box, the list picker, curation, the retrievers,
+the recent-searches refresh — read only the groups. `SearchResult::facets()` now resolves a
+closure on first read; the search and brand pages, the two with a filter rail, are the only
+readers. Two indexes were added for the sorts under a market filter, `product_groups
+(market, min_price)` and `(market, first_seen_at)`; see
+`2026_09_06_000700_indexes_for_the_hot_paths`.

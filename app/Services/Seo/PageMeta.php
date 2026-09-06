@@ -35,6 +35,27 @@ class PageMeta
     private array $jsonLd = [];
 
     /**
+     * hreflang alternates the page already knows, or null to resolve them.
+     *
+     * The shell resolves alternates from the path on every full page load,
+     * and for a product that meant `Alternates::product()` re-fetching the
+     * group the controller had just loaded plus the sibling query — two extra
+     * queries on the most-crawled page type. A controller holding the row
+     * hands its alternates over here instead; a null leaves the shell to ask.
+     *
+     * @var array<string, string>|null
+     */
+    private ?array $alternates = null;
+
+    /** @param array<string, string> $alternates hreflang => absolute URL */
+    public function setAlternates(array $alternates): self
+    {
+        $this->alternates = $alternates;
+
+        return $this;
+    }
+
+    /**
      * @param  string|null  $robots  e.g. 'noindex, follow' for thin or filtered pages
      */
     public function set(
@@ -80,6 +101,7 @@ class PageMeta
         $this->canonical = null;
         $this->robots = null;
         $this->jsonLd = [];
+        $this->alternates = null;
 
         return $this;
     }
@@ -93,6 +115,7 @@ class PageMeta
             'image' => $this->image,
             'canonical' => $this->canonical,
             'robots' => $this->robots,
+            'alternates' => $this->alternates,
         ];
     }
 

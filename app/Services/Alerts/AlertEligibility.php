@@ -24,6 +24,23 @@ use Illuminate\Support\Collection;
 class AlertEligibility
 {
     /**
+     * What an offer row has to carry to answer "may this be watched".
+     *
+     * Everything except `description` — and, by not being `*`, the stored
+     * `search_vector` — which are the two largest columns on the table and
+     * were pulled three times per product page (eligible, excluded, and the
+     * baseline on create) to read `source`, `price` and `availability`.
+     *
+     * @var list<string>
+     */
+    private const COLUMNS = [
+        'id', 'source', 'external_id', 'market', 'merchant_id', 'feed_id', 'group_id',
+        'title', 'brand', 'price', 'reference_price', 'currency', 'image_url',
+        'affiliate_url', 'availability', 'ean', 'status', 'first_seen_at', 'last_seen_at',
+        'created_at', 'updated_at',
+    ];
+
+    /**
      * Whether an alert can be offered at all.
      *
      * True when at least one offer comes from a source that permits it — the
@@ -34,6 +51,7 @@ class AlertEligibility
     public function isEligible(ProductGroup $group): bool
     {
         return $group->offers()
+            ->select(self::COLUMNS)
             ->where('status', ProductStatus::Active->value)
             ->get()
             ->contains(fn ($offer) => $offer->source->allowsPriceAlerts());
@@ -51,6 +69,7 @@ class AlertEligibility
     public function watchableOffers(ProductGroup $group): Collection
     {
         return $group->offers()
+            ->select(self::COLUMNS)
             ->where('status', ProductStatus::Active->value)
             ->get()
             ->filter(fn ($offer) => $offer->source->allowsPriceAlerts())
@@ -61,6 +80,7 @@ class AlertEligibility
     public function excludedSources(ProductGroup $group): array
     {
         return $group->offers()
+            ->select(self::COLUMNS)
             ->where('status', ProductStatus::Active->value)
             ->get()
             ->reject(fn ($offer) => $offer->source->allowsPriceAlerts())

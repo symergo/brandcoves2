@@ -6,13 +6,14 @@ namespace App\Services\Search;
 
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
+use Closure;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-final readonly class SearchResult
+final class SearchResult
 {
     /**
      * @param  LengthAwarePaginator<int, ProductGroup>  $groups
-     * @param  array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, count: int}>, price: array{min: int|null, max: int|null}}  $facets
+     * @param  Closure(): array|array  $facets  resolved on first read — see facets()
      * @param  list<Offer>  $liveOffers  Live sources that may not be mirrored — Amazon.
      *                                   They are absent from `$groups` by construction: nothing
      *                                   wrote them, so no SQL query can return them, and a page
@@ -20,12 +21,33 @@ final readonly class SearchResult
      *                                   docs/features/amazon-compliance.md.
      */
     public function __construct(
-        public LengthAwarePaginator $groups,
-        public SearchQuery $query,
-        public int $liveOffersAdded,
-        public array $facets,
-        public array $liveOffers = [],
+        public readonly LengthAwarePaginator $groups,
+        public readonly SearchQuery $query,
+        public readonly int $liveOffersAdded,
+        private Closure|array $facets,
+        public readonly array $liveOffers = [],
     ) {}
+
+    /**
+     * The facet counts, computed the first time somebody asks.
+     *
+     * They were computed for every search: three aggregates plus a merchant
+     * hydration, cached per term so a fresh term was always a miss — and seven
+     * of the eight callers of `SearchService::search()` (the board, a shared
+     * list's suggestion box, the list picker, curation, the retrievers, the
+     * recent-searches refresh) read only the groups and threw the facets away.
+     * Only the search and brand pages render a filter rail.
+     *
+     * @return array{brands: list<array{value: string, count: int}>, merchants: list<array{id: int, name: string, logo: string|null, count: int}>, price: array{min: int|null, max: int|null}}
+     */
+    public function facets(): array
+    {
+        if ($this->facets instanceof Closure) {
+            $this->facets = ($this->facets)();
+        }
+
+        return $this->facets;
+    }
 
     /**
      * The facets, with their counts left behind.
@@ -44,10 +66,12 @@ final readonly class SearchResult
      */
     public function facetsWithoutCounts(): array
     {
+        $facets = $this->facets();
+
         return [
             'brands' => array_map(
                 fn (array $f) => ['value' => $f['value']],
-                $this->facets['brands'] ?? [],
+                $facets['brands'] ?? [],
             ),
             'merchants' => array_map(
                 // `logo` is read with a fallback because facets are cached for
@@ -55,10 +79,10 @@ final readonly class SearchResult
                 // still in Redis and would otherwise be an undefined index for
                 // five minutes after a deploy.
                 fn (array $f) => ['id' => $f['id'], 'name' => $f['name'], 'logo' => $f['logo'] ?? null],
-                $this->facets['merchants'] ?? [],
+                $facets['merchants'] ?? [],
             ),
             // The price range is a filter bound, not a count of anything.
-            'price' => $this->facets['price'] ?? ['min' => null, 'max' => null],
+            'price' => $facets['price'] ?? ['min' => null, 'max' => null],
         ];
     }
 

@@ -6,6 +6,7 @@ namespace App\Services\Catalogue;
 
 use App\Enums\Market;
 use App\Models\BrandStat;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -166,6 +167,35 @@ class BrandStats
             ];
         }
 
+        /*
+         * Two set-based queries for the whole market, then folded per slug.
+         *
+         * This used to be three grouped queries *per slug* — top shop,
+         * categories, top category — so a market with a few thousand brands
+         * ran ten thousand aggregates a night. The same facts come out of one
+         * pass over products and one over groups, grouped by spelling, and the
+         * per-slug work below is a sum over that brand's spellings in memory.
+         */
+        $merchantsByBrand = DB::table('products')
+            ->join('product_groups', 'product_groups.id', '=', 'products.group_id')
+            ->where('product_groups.market', $market->value)
+            ->whereNotNull('product_groups.brand')
+            ->whereNotNull('products.merchant_id')
+            ->selectRaw('product_groups.brand, products.merchant_id, count(*) AS offers')
+            ->groupBy('product_groups.brand', 'products.merchant_id')
+            ->get()
+            ->groupBy('brand');
+
+        $categoriesByBrand = DB::table('product_groups')
+            ->where('market', $market->value)
+            ->whereNotNull('brand')
+            ->whereNotNull('category')
+            ->where('category', '<>', '')
+            ->selectRaw('brand, category, count(*) AS n')
+            ->groupBy('brand', 'category')
+            ->get()
+            ->groupBy('brand');
+
         $out = [];
 
         foreach ($bySlug as $slug => $variants) {
@@ -204,11 +234,11 @@ class BrandStats
                 'discounted_count' => array_sum(array_column($variants, 'discounted_count')),
                 'in_stock_count' => array_sum(array_column($variants, 'in_stock_count')),
                 'best_discount_percent' => $discounts === [] ? null : max($discounts),
-                'top_merchant_id' => $this->topMerchant($market, $aliases),
-                'categories' => $this->categories($market, $aliases),
+                'top_merchant_id' => $this->topMerchant($merchantsByBrand, $aliases),
+                'categories' => $categories = $this->categories($categoriesByBrand, $aliases),
                 // Kept as its own column: it is the one the page's heading and
                 // the related-brands query read, and both want a plain string.
-                'top_category' => $this->topCategory($market, $aliases),
+                'top_category' => $categories[0]['category'] ?? null,
             ];
         }
 
@@ -222,21 +252,30 @@ class BrandStats
      * the copy answers is "who stocks the most of it" and one group can be sold
      * by several shops.
      */
-    /** @param list<string> $brands every spelling folding to this slug */
-    private function topMerchant(Market $market, array $brands): ?int
+    /**
+     * @param  Collection<string, Collection<int, object>>  $merchantsByBrand  spelling => (merchant_id, offers) rows
+     * @param  list<string>  $brands  every spelling folding to this slug
+     */
+    private function topMerchant(Collection $merchantsByBrand, array $brands): ?int
     {
-        $row = DB::table('products')
-            ->join('product_groups', 'product_groups.id', '=', 'products.group_id')
-            ->where('product_groups.market', $market->value)
-            ->whereIn('product_groups.brand', $brands)
-            ->whereNotNull('products.merchant_id')
-            ->selectRaw('products.merchant_id, count(*) AS offers')
-            ->groupBy('products.merchant_id')
-            ->orderByDesc('offers')
-            ->limit(1)
-            ->first();
+        $offers = [];
 
-        return $row === null ? null : (int) $row->merchant_id;
+        foreach ($brands as $brand) {
+            foreach ($merchantsByBrand->get($brand, collect()) as $row) {
+                $offers[(int) $row->merchant_id] = ($offers[(int) $row->merchant_id] ?? 0) + (int) $row->offers;
+            }
+        }
+
+        if ($offers === []) {
+            return null;
+        }
+
+        // Highest offer count; ties to the lower id so the choice is stable
+        // between runs rather than following hash order.
+        ksort($offers);
+        arsort($offers, SORT_NUMERIC);
+
+        return array_key_first($offers);
     }
 
     /**
@@ -249,38 +288,25 @@ class BrandStats
      * @param  list<string>  $brands
      * @return list<array{category: string, count: int}>
      */
-    private function categories(Market $market, array $brands): array
+    private function categories(Collection $categoriesByBrand, array $brands): array
     {
-        return DB::table('product_groups')
-            ->where('market', $market->value)
-            ->whereIn('brand', $brands)
-            ->whereNotNull('category')
-            ->where('category', '<>', '')
-            ->selectRaw('category, count(*) AS n')
-            ->groupBy('category')
-            // Then by name, so a tie does not reshuffle the sentence between two
-            // nightly runs and read as a page that keeps changing its mind.
-            ->orderByDesc('n')
-            ->orderBy('category')
-            ->limit(4)
-            ->get()
-            ->map(fn ($row) => ['category' => (string) $row->category, 'count' => (int) $row->n])
-            ->all();
-    }
+        $counts = [];
 
-    /** @param list<string> $brands */
-    private function topCategory(Market $market, array $brands): ?string
-    {
-        $row = DB::table('product_groups')
-            ->where('market', $market->value)
-            ->whereIn('brand', $brands)
-            ->whereNotNull('category')
-            ->selectRaw('category, count(*) AS n')
-            ->groupBy('category')
-            ->orderByDesc('n')
-            ->limit(1)
-            ->first();
+        foreach ($brands as $brand) {
+            foreach ($categoriesByBrand->get($brand, collect()) as $row) {
+                $counts[(string) $row->category] = ($counts[(string) $row->category] ?? 0) + (int) $row->n;
+            }
+        }
 
-        return $row === null ? null : (string) $row->category;
+        // Most first, then by name, so a tie does not reshuffle the sentence
+        // between two nightly runs and read as a page that keeps changing its
+        // mind. The first entry is also `top_category`.
+        uksort($counts, fn (string $a, string $b) => [$counts[$b], $a] <=> [$counts[$a], $b]);
+
+        return array_slice(
+            array_map(fn (string $category, int $n) => ['category' => $category, 'count' => $n], array_keys($counts), $counts),
+            0,
+            4,
+        );
     }
 }

@@ -326,7 +326,7 @@ class SearchController extends Controller
     {
         $brands = array_map(fn (ProductGroup $group) => $group->brand, $result->groups->items());
 
-        foreach ($result->facets['brands'] ?? [] as $facet) {
+        foreach ($result->facets()['brands'] ?? [] as $facet) {
             $brands[] = $facet['value'] ?? null;
         }
 

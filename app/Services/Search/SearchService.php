@@ -59,7 +59,9 @@ class SearchService
             groups: $groups,
             query: $query,
             liveOffersAdded: $live['written'],
-            facets: $this->facets($query),
+            // Deferred: only the pages with a filter rail read these. See
+            // SearchResult::facets().
+            facets: fn (): array => $this->facets($query),
             liveOffers: $live['unstored'],
         );
     }

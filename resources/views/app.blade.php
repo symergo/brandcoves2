@@ -120,7 +120,9 @@
          404s — and Google discards a whole hreflang cluster when one member is
          missing, taking the genuine translations down with it. See
          App\Services\Seo\Alternates. --}}
-    @php($alternates = app(App\Services\Seo\Alternates::class)->for(request()->path(), $market))
+    {{-- A controller that already holds the row hands its alternates over
+         through PageMeta; everything else is resolved from the path. --}}
+    @php($alternates = $meta['alternates'] ?? app(App\Services\Seo\Alternates::class)->for(request()->path(), $market))
     @foreach ($alternates as $hrefLang => $href)
         <link rel="alternate" hreflang="{{ $hrefLang }}" href="{{ $href }}">
     @endforeach

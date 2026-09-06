@@ -716,3 +716,11 @@ php artisan bc:refresh-discovery --market=be-nl   # includes brand stats
 ```
 
 Scheduled twice daily at 05:30 and 17:30, after grouping and serendipity.
+
+## The nightly aggregate is two queries, not three per brand (2026-09-06)
+
+`BrandStats::aggregate()` ran a grouped query for the top shop, one for the categories and one
+for the top category, per slug — ten thousand aggregates a night on a market with a few thousand
+brands. It now takes one pass over `products` grouped by spelling and merchant, one over
+`product_groups` grouped by spelling and category, and folds per slug in memory. Same facts;
+the tie-breaks (lowest merchant id, then category name) are stable between runs.
