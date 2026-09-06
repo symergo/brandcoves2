@@ -161,9 +161,29 @@ final readonly class EntityRails
      */
     private function vocabulary(Market $market, callable $scope): array
     {
+        /*
+         * The forty categories this entity sells in MOST, not the first forty
+         * alphabetically.
+         *
+         * `distinct()->limit(40)` read in index order, so bol.com offered a
+         * writer "3D-pen", "AB-trainer" and "Aardappelstamper" while Televisie,
+         * Koptelefoon and Laptop sat outside the list - and a token naming
+         * anything outside it renders as plain words. The effect was a page
+         * whose entire purpose is to link into the search being able to link
+         * almost nothing, silently, with the allowlist reporting success.
+         *
+         * Found 2026-09-06 writing the first entity Coves by hand: a Samsung
+         * piece linking [[search:televisie]] rendered three flat words.
+         *
+         * Ordered by how many products sit in each category, which is also the
+         * order a reader would rank them in: what this shop or brand is known
+         * for comes first.
+         */
         return $this->base($market, $scope)
             ->whereNotNull('category')
-            ->distinct()
+            ->select('category')
+            ->groupBy('category')
+            ->orderByRaw('count(*) desc')
             ->limit(40)
             ->pluck('category')
             ->filter()

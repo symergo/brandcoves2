@@ -297,6 +297,35 @@ class EntityRailsTest extends TestCase
                 ->missing('rails'));
     }
 
+    #[Test]
+    public function the_link_vocabulary_leads_with_what_the_brand_actually_sells(): void
+    {
+        // Two categories, one of them far later in the alphabet and much larger.
+        foreach (range(1, 6) as $n) {
+            $this->product("Sony koptelefoon {$n}", 9900 + $n, 'Sony', category: 'Koptelefoons');
+        }
+
+        $this->product('Sony adapter', 1900, 'Sony', category: 'Aansluitsnoer');
+        $this->brand('Sony');
+
+        $vocabulary = app(EntityRails::class)->vocabularyForBrand(
+            BrandStat::query()->forMarket(Market::BeNl)->where('slug', 'sony')->firstOrFail(),
+            Market::BeNl,
+        );
+
+        /*
+         * The order is the feature, not a detail.
+         *
+         * This list is capped at forty, and a token naming anything outside it
+         * renders as plain words. Read in index order the cap returned an
+         * alphabetical slice: bol.com offered "3D-pen" and "Aardappelstamper"
+         * while Koptelefoon and Laptop fell off the end, so the one kind of page
+         * built to link into search could link almost nothing.
+         */
+        $this->assertSame('Koptelefoons', $vocabulary[0]);
+        $this->assertContains('Aansluitsnoer', $vocabulary);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     /**
@@ -374,6 +403,7 @@ class EntityRailsTest extends TestCase
         string $brand,
         ?int $discount = null,
         ?Merchant $merchant = null,
+        string $category = 'audio',
     ): ProductGroup {
         $group = ProductGroup::create([
             'market' => Market::BeNl,
@@ -382,7 +412,7 @@ class EntityRailsTest extends TestCase
             'title' => $title,
             'slug' => 'p-'.bin2hex(random_bytes(3)),
             'brand' => $brand,
-            'category' => 'audio',
+            'category' => $category,
             'image_url' => 'https://img.test/x.jpg',
             'min_price' => $price,
             /*
