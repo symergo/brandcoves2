@@ -13,7 +13,6 @@ use App\Models\Friendship;
 use App\Models\ListQuiz;
 use App\Models\Recipient;
 use App\Models\SecretSantaMember;
-use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use App\Services\Gift\GiftTarget;
@@ -25,7 +24,9 @@ use App\Services\Wishlist\Board;
 use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ListMaker;
+use App\Services\Wishlist\OccasionDate;
 use App\Support\CurrentMarket;
+use App\Support\DayAndMonth;
 use App\Support\ListAccess;
 use App\Support\Owner;
 use Illuminate\Database\Eloquent\Builder;
@@ -333,6 +334,53 @@ class WishlistController extends Controller
             'event_type', 'event_date', 'visibility', 'link_can_add', 'voting_enabled',
         ]));
 
+        /*
+         * A birthday the owner typed for somebody they already had.
+         *
+         * `ListMaker` writes it when it mints a person, and until now that was
+         * the only way one could arrive: picking an existing person and saying
+         * when their birthday is threw the answer away. It is one column, read
+         * by the reminders and by the occasion date below, and it is only ever
+         * filled in when it is blank -- this is somebody adding what they know,
+         * not correcting what is there.
+         */
+        $recipient = $list->recipient_id === null
+            ? null
+            : Recipient::query()->find($list->recipient_id);
+
+        $typed = Recipient::birthdayFrom(
+            $validated['birthday_day'] ?? null,
+            $validated['birthday_month'] ?? null,
+        );
+
+        if ($recipient !== null && $typed !== null && $recipient->birthday === null) {
+            $recipient->update(['birthday' => $typed]);
+        }
+
+        /*
+         * The date an occasion falls on, when the occasion already knows it.
+         *
+         * Asking "when is the birthday?" beside a field that says "Birthday" is
+         * asking somebody to look up something we hold, and Christmas has not
+         * moved in some time. Only when the wizard sent no date of its own:
+         * a wedding still has to be told, and a date typed by hand always wins.
+         */
+        $occasion = ($settings['event_type'] ?? null) === null
+            ? null
+            : EventType::from((string) $settings['event_type']);
+
+        if ($occasion !== null && ($settings['event_date'] ?? null) === null) {
+            $birthday = $recipient !== null
+                ? DayAndMonth::fromDate($recipient->birthday)
+                // A list of my own with a birthday on it is mine, so the
+                // birthday that answers it is the one on my account.
+                : DayAndMonth::fromDate($owner->user?->birthday);
+
+            $settings['event_date'] = app(OccasionDate::class)
+                ->for($occasion, $current->get(), $birthday)
+                ?->toDateString();
+        }
+
         if ($list->kind !== ListKind::Group) {
             unset($settings['voting_enabled']);
         }
@@ -372,25 +420,43 @@ class WishlistController extends Controller
             return null;
         }
 
-        $connected = Friendship::query()
+        $friendship = Friendship::query()
+            ->with('friend')
             ->where('user_id', $owner->user->id)
             ->where('friend_id', $friendId)
-            ->exists();
+            ->first();
 
-        if (! $connected) {
+        if ($friendship === null) {
             return null;
         }
 
-        $friend = User::query()->find($friendId);
+        $friend = $friendship->friend;
 
         if ($friend === null) {
             return null;
         }
 
+        /*
+         * Their birthday travels with them into the profile.
+         *
+         * The Friends page already holds one -- published by them, or noted by
+         * me -- and without this the profile made from that friend arrives
+         * blank, so the reminders miss the date and the wizard cannot fill in
+         * "Birthday" for a person whose birthday is on the previous screen.
+         * Theirs wins over my note, the same order the Friends page reads them.
+         */
+        $birthday = $friend->friends_see_birthday && $friend->birthday !== null
+            ? DayAndMonth::fromDate($friend->birthday)
+            : DayAndMonth::fromColumns(
+                $friendship->friend_birthday_day,
+                $friendship->friend_birthday_month,
+            );
+
         return Recipient::query()->firstOrCreate(
             ['owner_user_id' => $owner->user->id, 'user_id' => $friend->id],
             [
                 'name' => $friend->displayName(),
+                'birthday' => Recipient::birthdayFrom($birthday?->day, $birthday?->month),
                 // Linked, not a stub: there is an account behind this one, and
                 // `RecipientStatus` is what decides whose answers about their
                 // taste are believed.

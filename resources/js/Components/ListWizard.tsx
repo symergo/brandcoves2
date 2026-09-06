@@ -1,19 +1,38 @@
 import { useForm, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
+import { formatOccasionDate } from '../types'
 import { useTranslations } from '../useTranslations'
 import SignInLink from './SignInLink'
 
 type Kind = 'mine' | 'for_someone' | 'group'
 
+/** Somebody a list can be for: a friend, or a person I made a profile for. */
+interface Person {
+    name: string
+    /**
+     * When their birthday next falls, resolved by the server, or null when
+     * nobody has said. The wizard shows it and never computes it: the date on
+     * the list is the server's answer, and two answers would eventually differ.
+     */
+    birthday: string | null
+}
+
+interface Friend extends Person {
+    id: number
+    /**
+     * The profile this friend already has with me, if any. Picking them then
+     * means picking that profile rather than minting a second one, which is
+     * what lets every friend stay in the list.
+     */
+    recipientId: string | null
+}
+
 interface Props {
     signedIn: boolean
-    recipients: { id: string; name: string }[]
-    /** Friends who are not a recipient yet: the "who is it for" answers. */
-    friends: { id: number; name: string }[]
-    /** Every friend: the "who may see it" answers. */
-    allFriends: { id: number; name: string }[]
-    occasions: { value: string; label: string }[]
+    recipients: (Person & { id: string })[]
+    friends: Friend[]
+    occasions: { value: string; label: string; date: string | null }[]
 }
 
 /**
@@ -46,12 +65,23 @@ type Step = (typeof STEPS)[number]
  * afterwards; `store()` now takes them too, because a wizard that explains an
  * option and then sends you elsewhere to turn it on has explained it to nobody.
  */
-export default function ListWizard({ signedIn, recipients, friends, allFriends, occasions }: Props) {
+export default function ListWizard({ signedIn, recipients, friends, occasions }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
 
     const [step, setStep] = useState<Step>('kind')
+
+    /*
+     * "That date is not our date."
+     *
+     * A filled-in date has to be arguable. Christmas Day is the 25th and plenty
+     * of families here hand out presents on the evening of the 24th; a birthday
+     * is a birthday and the party is on the Saturday. So the wizard says what
+     * it will put on the list and offers to take a different date instead,
+     * rather than either asking everybody or deciding for everybody.
+     */
+    const [ownDate, setOwnDate] = useState(false)
     const [kind, setKind] = useState<Kind>('mine')
 
     const form = useForm({
@@ -166,17 +196,66 @@ export default function ListWizard({ signedIn, recipients, friends, allFriends, 
         form.post(`${base}/lists`, { onSuccess: forget })
     }
 
-    const personName = (() => {
+    /*
+     * The person this list is about, whichever way they were named.
+     *
+     * A friend can arrive as a friend id or as the profile they already have,
+     * so both spellings are looked up here and the rest of the step asks this
+     * one question instead of three.
+     */
+    const person: Person | null = (() => {
         if (form.data.friend_id !== '') {
-            return friends.find((f) => f.id === Number(form.data.friend_id))?.name ?? ''
+            return friends.find((f) => f.id === Number(form.data.friend_id)) ?? null
         }
 
         if (form.data.recipient_id !== '') {
-            return recipients.find((r) => r.id === form.data.recipient_id)?.name ?? ''
+            return (
+                friends.find((f) => f.recipientId === form.data.recipient_id)
+                ?? recipients.find((r) => r.id === form.data.recipient_id)
+                ?? null
+            )
         }
 
-        return form.data.new_recipient
+        return null
     })()
+
+    const personName = person?.name ?? form.data.new_recipient
+    const occasion = occasions.find((o) => o.value === form.data.event_type) ?? null
+    const isBirthday = occasion?.value === 'birthday'
+    const typedBirthday = form.data.birthday_day !== '' && form.data.birthday_month !== ''
+
+    /*
+     * The date this occasion falls on, when it is not a question.
+     *
+     * A birthday is the person's birthday and Christmas is the 25th, so a date
+     * field beside either is asking somebody to look up something already on
+     * the screen. Null means we genuinely do not know: a wedding, or a birthday
+     * nobody has told us. The server derives the same date on the way in, from
+     * the same sources; this is what the reader sees while deciding.
+     */
+    const settledDate = isBirthday ? person?.birthday ?? null : occasion?.date ?? null
+
+    /*
+     * The birthday pair belongs to the person, and is asked for whenever it is
+     * missing and wanted: for somebody new, and for anybody at all once the
+     * occasion is their birthday. It used to appear only for a new person, so
+     * choosing "Birthday" for somebody already on file left nothing to answer
+     * it with. What is typed here is stored on their profile, so the reminders
+     * and the next list both have it.
+     */
+    const isNewPerson = form.data.recipient_id === '' && form.data.friend_id === ''
+    const asksForBirthday = forSomeone && (isNewPerson || (isBirthday && person?.birthday == null))
+
+    // A birthday being typed in above answers it too, but only the server can
+    // say which year it lands in, so the wizard promises rather than prints.
+    const fromBirthday = isBirthday && settledDate === null && typedBirthday
+    /*
+     * One question at a time: when the birthday pair below is what answers
+     * this occasion, the date field would be a second way to answer it, and a
+     * screen with both asks the reader to choose which one counts.
+     */
+    const asksForDate = ownDate || (occasion !== null && settledDate === null && !fromBirthday && !(isBirthday && asksForBirthday))
+
 
     /*
      * One paragraph per kind, written for this step rather than borrowed
@@ -294,28 +373,41 @@ export default function ListWizard({ signedIn, recipients, friends, allFriends, 
                                         {friends.length > 0 && (
                                             <optgroup label={t('lists.from_your_friends')}>
                                                 {friends.map((f) => (
-                                                    <option key={f.id} value={`friend:${f.id}`}>{f.name}</option>
+                                                    /*
+                                                      A friend who already has a profile is offered
+                                                      as that profile: one person, one entry, and no
+                                                      second profile made by picking them here.
+                                                    */
+                                                    <option
+                                                        key={f.id}
+                                                        value={f.recipientId ?? `friend:${f.id}`}
+                                                    >
+                                                        {f.name}
+                                                    </option>
                                                 ))}
                                             </optgroup>
                                         )}
                                     </select>
                                 )}
 
-                                {form.data.recipient_id === '' && form.data.friend_id === '' && (
+                                {(isNewPerson || asksForBirthday) && (
                                     <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                                        <div>
-                                            <label className="block text-sm" htmlFor="wizard-person">
-                                                {t('lists.person_name')}
-                                            </label>
-                                            <input
-                                                id="wizard-person"
-                                                type="text"
-                                                maxLength={80}
-                                                value={form.data.new_recipient}
-                                                onChange={(e) => form.setData('new_recipient', e.target.value)}
-                                                className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2"
-                                            />
-                                        </div>
+                                        {isNewPerson && (
+                                            <div>
+                                                <label className="block text-sm" htmlFor="wizard-person">
+                                                    {t('lists.person_name')}
+                                                </label>
+                                                <input
+                                                    id="wizard-person"
+                                                    type="text"
+                                                    maxLength={80}
+                                                    value={form.data.new_recipient}
+                                                    onChange={(e) => form.setData('new_recipient', e.target.value)}
+                                                    className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2"
+                                                />
+                                            </div>
+                                        )}
+                                        {asksForBirthday && (
                                         <div>
                                             <p className="text-sm">{t('lists.birthday_optional')}</p>
                                             <div className="mt-1 flex gap-2">
@@ -344,7 +436,15 @@ export default function ListWizard({ signedIn, recipients, friends, allFriends, 
                                             </div>
                                             <p className="mt-1 text-xs text-ink-soft">{t('lists.birthday_why')}</p>
                                         </div>
+                                        )}
                                     </div>
+                                )}
+
+                                {/* Their birthday, when they brought one with them. */}
+                                {person?.birthday && (
+                                    <p className="mt-2 text-sm text-ink-soft">
+                                        🎂 {formatOccasionDate(person.birthday, market)}
+                                    </p>
                                 )}
                             </div>
                         )}
@@ -354,27 +454,89 @@ export default function ListWizard({ signedIn, recipients, friends, allFriends, 
                             <p className="mt-1 text-sm text-ink-soft">
                                 {t(kind === 'mine' ? 'wizard.occasion_hint_mine' : 'wizard.occasion_hint_other')}
                             </p>
-                            <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                                <select
-                                    aria-label={t('registry.occasion')}
-                                    value={form.data.event_type}
-                                    onChange={(e) => form.setData('event_type', e.target.value)}
-                                    className="w-full rounded-lg border border-line bg-card px-3 py-2"
-                                >
-                                    <option value="">{t('registry.none')}</option>
-                                    {occasions.map((o) => (
-                                        <option key={o.value} value={o.value}>{o.label}</option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="date"
-                                    aria-label={t('registry.date')}
-                                    value={form.data.event_date}
-                                    disabled={form.data.event_type === ''}
-                                    onChange={(e) => form.setData('event_date', e.target.value)}
-                                    className="w-full rounded-lg border border-line bg-card px-3 py-2 disabled:opacity-50"
-                                />
+            {/*
+                              Both fields carry their label, which is also what
+                              keeps them the same height: a bare select beside a
+                              labelled input stretches to the taller cell and
+                              the pair reads as two different controls.
+                            */}
+                            <div className="mt-2 grid items-start gap-3 sm:grid-cols-2">
+                                <label className="block text-sm">
+                                    {t('registry.occasion')}
+                                    <select
+                                        aria-label={t('registry.occasion')}
+                                        value={form.data.event_type}
+                                        onChange={(e) => {
+                                            form.setData('event_type', e.target.value)
+                                            // A date typed for the occasion
+                                            // before this one is not an answer
+                                            // about this one.
+                                            form.setData('event_date', '')
+                                            setOwnDate(false)
+                                        }}
+                                        className="mt-1 block w-full rounded-lg border border-line bg-card px-3 py-2 text-base text-ink"
+                                    >
+                                        <option value="">{t('registry.none')}</option>
+                                        {occasions.map((o) => (
+                                            <option key={o.value} value={o.value}>{o.label}</option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                {/*
+                                  The date, and only when it is a question.
+
+                                  It used to sit here always, greyed out until
+                                  an occasion was chosen and then demanding one
+                                  next to "Birthday" -- a field asking for
+                                  something the screen above already knew. Now
+                                  it appears for the occasions nobody can look
+                                  up, with a label of its own rather than a bare
+                                  box wearing a placeholder.
+                                */}
+                                {asksForDate && (
+                                    <label className="block text-sm">
+                                        {t('wizard.date_label')}
+                                        <input
+                                            type="date"
+                                            value={form.data.event_date}
+                                            onChange={(e) => form.setData('event_date', e.target.value)}
+                                            className="mt-1 block w-full rounded-lg border border-line bg-card px-3 py-2 text-base text-ink"
+                                        />
+                                    </label>
+                                )}
                             </div>
+
+                            {settledDate !== null && !ownDate && (
+                                <p className="mt-2 text-sm text-ink-soft">
+                                    {t('wizard.date_known', {
+                                        date: formatOccasionDate(settledDate, market),
+                                    })}{' '}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            // Starts from the date it was
+                                            // going to use, because most
+                                            // corrections are a day or two.
+                                            form.setData('event_date', settledDate)
+                                            setOwnDate(true)
+                                        }}
+                                        className="underline hover:text-ink"
+                                    >
+                                        {t('wizard.date_other')}
+                                    </button>
+                                </p>
+                            )}
+
+                            {fromBirthday && (
+                                <p className="mt-2 text-sm text-ink-soft">{t('wizard.date_from_birthday')}</p>
+                            )}
+
+                            {isBirthday && settledDate === null && !typedBirthday && (
+                                <p className="mt-2 text-sm text-ink-soft">
+                                    {t(forSomeone ? 'wizard.date_needs_birthday' : 'wizard.date_needs_mine')}
+                                </p>
+                            )}
                         </div>
                     </div>
                 )}
@@ -440,11 +602,11 @@ export default function ListWizard({ signedIn, recipients, friends, allFriends, 
                                 <div>
                                     <p className="text-sm font-medium">{t('lists.share_with_friends')}</p>
                                     <p className="text-xs text-ink-soft">
-                                        {allFriends.length > 0 ? t('wizard.friends_hint') : t('wizard.friends_none')}
+                                        {friends.length > 0 ? t('wizard.friends_hint') : t('wizard.friends_none')}
                                     </p>
-                                    {allFriends.length > 0 && (
+                                    {friends.length > 0 && (
                                         <div className="mt-2 flex flex-wrap gap-2">
-                                            {allFriends.map((f) => {
+                                            {friends.map((f) => {
                                                 const on = form.data.share_with.includes(f.id)
 
                                                 return (
@@ -486,12 +648,18 @@ export default function ListWizard({ signedIn, recipients, friends, allFriends, 
                             <dd>{choices.find((c) => c.value === kind)?.label}{forSomeone && personName ? `: ${personName}` : ''}</dd>
                             <dt className="text-ink-soft">{t('lists.list_name')}</dt>
                             <dd>{form.data.title || '…'}</dd>
-                            {form.data.event_type && (
+                            {occasion && (
                                 <>
                                     <dt className="text-ink-soft">{t('registry.occasion')}</dt>
                                     <dd>
-                                        {occasions.find((o) => o.value === form.data.event_type)?.label}
-                                        {form.data.event_date ? ` · ${form.data.event_date}` : ''}
+                                        {occasion.label}
+                                        {form.data.event_date
+                                            ? ` · ${formatOccasionDate(form.data.event_date, market)}`
+                                            : settledDate !== null
+                                              ? ` · ${formatOccasionDate(settledDate, market)}`
+                                              : fromBirthday
+                                                ? ` · ${t('wizard.date_from_birthday')}`
+                                                : ''}
                                     </dd>
                                 </>
                             )}

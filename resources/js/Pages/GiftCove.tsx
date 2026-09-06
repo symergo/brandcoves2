@@ -55,11 +55,16 @@ interface Props {
         ideas: string
         surprise: string
     }
-    /** What the wizard can offer; empty for a visitor. */
-    recipients: { id: string; name: string }[]
-    friends: { id: number; name: string }[]
-    allFriends: { id: number; name: string }[]
-    occasions: { value: string; label: string }[]
+    /**
+     * What the wizard can offer; empty for a visitor.
+     *
+     * One list of friends for both the person picker and the sharing step:
+     * they were two lists for a while, and the picker's copy left out anybody
+     * who already had a profile, which emptied it.
+     */
+    recipients: { id: string; name: string; birthday: string | null }[]
+    friends: { id: number; name: string; recipientId: string | null; birthday: string | null }[]
+    occasions: { value: string; label: string; date: string | null }[]
 }
 
 /**
@@ -124,7 +129,6 @@ export default function GiftCove({
     urls,
     recipients,
     friends,
-    allFriends,
     occasions,
 }: Props) {
     const { market } = usePage<SharedProps>().props
@@ -214,7 +218,6 @@ export default function GiftCove({
                     signedIn={signedIn}
                     recipients={recipients}
                     friends={friends}
-                    allFriends={allFriends}
                     occasions={occasions}
                 />
             </div>

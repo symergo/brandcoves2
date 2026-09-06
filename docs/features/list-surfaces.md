@@ -273,6 +273,49 @@ count from the band (three or four) so every band is full rows. Coves keep their
 The privacy rule is said once, on the sharing step, where the decision it governs is made. The SEO
 description no longer counts "nine tools".
 
+### The picker that emptied itself, and the date nobody should be asked for
+
+Three things the wizard got wrong, found by using it.
+
+**A friend stopped being offered the moment you used them.** The person picker drew its friends group
+from friends who were *not* already one of your people, on the reasoning that a friend with a profile
+is listed under their own name and offering them twice makes two profiles. True for the list, wrong
+for the group: making one list for a friend removed them from "from your friends" for good, and
+somebody whose only friend already had a profile opened a heading with nothing under it. Now the
+group holds **every** friend, and a friend who already has a profile is offered *as* that profile, so
+one person is one entry and picking them still cannot mint a second. `GiftCoveController` sends one
+`friends` list for both the picker and the sharing step; the two lists it sent before are how they
+came to disagree.
+
+**A date field next to "Birthday" asks for something the screen above already knows.**
+`App\Services\Wishlist\OccasionDate` answers when an occasion falls, from two sources: the person (a
+birthday is theirs and nothing else can answer it) and the calendar, for the days that are a number
+rather than a custom — Christmas and Valentine's. A wedding, a baby, a graduation are null on
+purpose. Always the next occurrence, today included, and 29 February lands on the 28th in a common
+year.
+
+**Mother's Day and Father's Day are deliberately not answered.** They were, from the editorial
+`ObservanceCalendar`, and that was wrong: those days move by *region*, not only by country. Father's
+Day is the second Sunday of June in Flanders and the second Sunday of March in Wallonia; Mother's Day
+is 15 August in Antwerp. A market is not a region, so a single date would be confidently wrong for a
+chunk of the people reading it, on a day they care about. The editorial calendar keeps its
+market-level date, because stocking a themed Cove a week early costs nothing like as much.
+
+A filled-in date is always arguable: the wizard says what it will put on the list and offers **a
+different date** beside it, prefilled with the one it was going to use. Christmas Day is the 25th and
+plenty of families here hand out presents on the evening of the 24th.
+
+The server derives it on the way in, so the date on the list is one answer rather than two, and only
+when the wizard sent none: a date typed by hand always wins. Two things had to arrive for that to
+work. A friend's birthday now travels into the profile made from them (theirs if published, else my
+note, the same order the Friends page reads them), which the reminders wanted anyway. And a birthday
+typed for somebody who already has a profile is now kept rather than dropped, filled in only when
+that profile has none.
+
+The field itself only appears when the date is genuinely a question, with a label of its own beside
+the labelled occasion select. It used to sit there always, greyed out until an occasion was chosen,
+then demanding a date for Christmas, and stretching its unlabelled neighbour to the taller cell.
+
 ## The front page stopped calling a gift list a registry
 
 `HomeController::registry()` has always looked for `event_type` rather than for a kind, on the sound
