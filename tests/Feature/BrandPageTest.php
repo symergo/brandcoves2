@@ -26,6 +26,7 @@ use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
 use App\Services\Pages\PageCopy;
+use App\Services\Pages\Regions\EntityCoveRegions;
 use App\Services\Seo\BrandCopy;
 use App\Services\Seo\BrandLinker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -260,6 +261,65 @@ class BrandPageTest extends TestCase
                 // grid is not removing the catalogue.
                 ->where('searchUrl', '/be-nl/search?brand%5B0%5D=Aurex')
                 ->has('rails'));
+    }
+
+    #[Test]
+    public function copy_written_in_the_admin_reaches_the_written_brand_page(): void
+    {
+        $this->seedBrand('Aurex');
+
+        DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Brand->value,
+            'slug' => 'aurex',
+            'theme_title' => 'Wat Aurex maakt',
+            'theme_slug' => 'aurex',
+            'theme_blurb' => 'Waar het over gaat.',
+            'body' => 'Eerste alinea.',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
+
+        /*
+         * The round trip, which is the only thing that proves "templated".
+         *
+         * `PageRegionsTest` checks the region is declared and that this test
+         * knows which prop draws it — a map of names agreeing with a map of
+         * names. Neither notices if the controller never asks `PageCopy` for
+         * them, which is exactly the failure the retired `brand_intro` surface
+         * shipped: an admin screen that saved happily and changed no page.
+         */
+        $block = PageBlock::create([
+            'page' => EntityCoveRegions::BRAND,
+            'region' => 'above_prose',
+            'language' => 'nl',
+            'kind' => PageBlock::PARAGRAPH,
+            'position' => 1,
+            'enabled' => true,
+        ]);
+
+        // With a placeholder in it, so the context is exercised too: a region
+        // may offer `:entity` and still have nothing answering it.
+        $block->variants()->create(['body' => 'Alles van :entity op een rij.', 'weight' => 1]);
+
+        PageCopy::flush();
+
+        $props = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
+
+        $this->assertNotNull($props['copy']['above_prose'] ?? null, 'the region never reached the page');
+        $this->assertStringContainsString(
+            'Alles van Aurex op een rij.',
+            (string) json_encode($props['copy']['above_prose']),
+            'the block did not render, or :entity was never filled',
+        );
+
+        /*
+         * And the other region is separately addressable rather than one bag.
+         * Empty rather than null:  answers for every region the page
+         * declares, so a region nobody has written is an empty list — which the
+         * component renders as nothing.
+         */
+        $this->assertSame([], $props['copy']['below_prose'] ?? null);
     }
 
     #[Test]
