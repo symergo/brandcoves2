@@ -6,6 +6,7 @@ namespace App\Services\Cove;
 
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Models\BrandStat;
 use App\Models\CovePlan;
 use App\Models\CovePlanItem;
 use App\Models\ProductGroup;
@@ -14,6 +15,7 @@ use App\Services\Cove\Writers\GuideWriter;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
+use App\Services\Shops\ShopDirectory;
 use Carbon\CarbonImmutable;
 
 /**
@@ -88,7 +90,7 @@ final readonly class CovePrompt
          * from the built one on every rebuild — at first build the page does not
          * exist yet, so the difference only appeared the second time.
          */
-        $allowed = $this->allowlist($plan->market, $finds, excludeGuideId: $plan->edition_id);
+        $allowed = $this->allowlist($plan->market, $finds, excludeGuideId: $plan->edition_id, plan: $plan);
 
         /*
          * A body-writing kind is written by `GuideWriter`, which assembles its
@@ -289,7 +291,7 @@ final readonly class CovePrompt
      * @param  list<ProductGroup>  $finds
      * @return array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>, guides: list<string>}
      */
-    public function allowlist(Market $market, array $finds, ?Observance $observance = null, ?int $excludeGuideId = null): array
+    public function allowlist(Market $market, array $finds, ?Observance $observance = null, ?int $excludeGuideId = null, ?CovePlan $plan = null): array
     {
         $products = [];
         $brands = [];
@@ -307,6 +309,27 @@ final readonly class CovePrompt
             ...array_map(fn (ProductGroup $g) => $g->category, $finds),
         ])));
 
+        /*
+         * An entity Cove's links come from the entity, not from a shortlist.
+         *
+         * Every other kind draws its `[[search:…]]` vocabulary out of the
+         * categories of the products it curated. A Brand or Shop Cove curates
+         * nothing on purpose - its prose is about ranges and the products beside
+         * it are a live rail - so that derivation yields an empty list, and the
+         * brief told a writer that nothing on the page could be linked, on the
+         * one kind of page whose whole purpose is to carry links into search.
+         *
+         * The rendered page never agreed: `BrandController::cove()` and
+         * `GuideController` both build theirs from the entity's own categories.
+         *
+         * Found 2026-09-06 writing the first Shop Cove by hand. The plan is
+         * optional because `EditionBuilder` calls this without one; where it is
+         * absent nothing changes.
+         */
+        if ($plan !== null && $plan->kind->isEntity()) {
+            $searches = $this->entityVocabulary($plan);
+        }
+
         return [
             'brands' => array_values(array_unique($brands)),
             'searches' => $searches,
@@ -317,6 +340,36 @@ final readonly class CovePrompt
             // between the daily half of the site and the evergreen half.
             'guides' => $this->allowlist->guideSlugs($market, $excludeGuideId),
         ];
+    }
+
+    /**
+     * The categories this brand or shop actually sells in.
+     *
+     * The same call the page makes, so what a writer is offered and what a
+     * reader can click are one list. Empty for a slug naming no shop this market
+     * compares or no brand it carries, which is the honest answer: there is
+     * nothing to link to, and a token naming a category the entity does not
+     * stock would render as plain words anyway.
+     *
+     * @return list<string>
+     */
+    private function entityVocabulary(CovePlan $plan): array
+    {
+        $rails = app(EntityRails::class);
+        $slug = (string) $plan->slug;
+
+        if ($plan->kind === CoveKind::Shop) {
+            $shop = app(ShopDirectory::class)->shopFor($plan->market, $slug);
+
+            return $shop === null ? [] : $rails->vocabularyForShop($shop, $plan->market);
+        }
+
+        $brand = BrandStat::query()
+            ->forMarket($plan->market)
+            ->where('slug', $slug)
+            ->first();
+
+        return $brand === null ? [] : $rails->vocabularyForBrand($brand, $plan->market);
     }
 
     /**

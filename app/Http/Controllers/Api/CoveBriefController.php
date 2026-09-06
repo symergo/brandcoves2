@@ -176,7 +176,13 @@ class CoveBriefController extends Controller
                         'product' => $item->group === null ? null : $this->lookup->describe($item->group),
                     ])->all(),
 
-                'allowlist' => $this->prompt->allowlist($plan->market, $finds),
+                /*
+                 * The same call `forPlan()` makes, plan included. Without the
+                 * plan this reported one allowlist while the prompt above
+                 * carried another - two computations of the thing this endpoint
+                 * exists to state exactly once.
+                 */
+                'allowlist' => $this->prompt->allowlist($plan->market, $finds, plan: $plan),
             ],
         ]);
     }

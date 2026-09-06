@@ -246,4 +246,66 @@ class CoveBriefApiTest extends TestCase
 
         return $group;
     }
+
+    #[Test]
+    public function an_entity_cove_is_offered_the_links_its_page_will_resolve(): void
+    {
+        $shop = Merchant::create([
+            'source' => Source::Awin->value,
+            'external_id' => 'aw-coolblue',
+            'name' => 'Coolblue',
+            'domain' => 'coolblue.be',
+            'enabled' => true,
+        ]);
+
+        // `presentable()` gates every shelf on the site: in stock, priced and
+        // pictured. The vocabulary is read through the same gate, so a fixture
+        // missing any of the three yields an empty list and this test would
+        // pass on the bug it exists to catch.
+        $group = ProductGroup::factory()->create([
+            'market' => Market::BeNl->value,
+            'category' => 'Koptelefoons',
+            'in_stock' => true,
+            'min_price' => 9900,
+            'image_url' => 'https://example.test/a.jpg',
+        ]);
+
+        Product::create([
+            'source' => Source::Awin->value,
+            'external_id' => 'p-1',
+            'market' => Market::BeNl->value,
+            'merchant_id' => $shop->id,
+            'group_id' => $group->id,
+            'title' => 'Een koptelefoon',
+            'price' => 9900,
+            'affiliate_url' => 'https://example.test/p',
+            'status' => ProductStatus::Active->value,
+        ]);
+
+        $plan = CovePlan::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Shop->value,
+            'slug' => 'coolblue-be',
+            'title' => 'Kopen bij Coolblue',
+            'status' => 'draft',
+        ]);
+
+        /*
+         * The bug this pins, found writing the first Shop Cove by hand.
+         *
+         * Every other kind draws its search vocabulary from the categories of
+         * the products it curated. An entity Cove curates nothing on purpose,
+         * so that derivation returned an empty list and the brief told a writer
+         * that nothing on the page could be linked - on the one kind of page
+         * whose whole purpose is to carry links into the search.
+         *
+         * The rendered page never agreed: it builds the same list from the
+         * entity's own categories. The brief exists to be the string the page
+         * uses, so a disagreement here is the one failure it cannot have.
+         */
+        $this->withToken($this->key())
+            ->getJson("/api/editorial/coves/{$plan->id}/brief")
+            ->assertOk()
+            ->assertJsonPath('data.allowlist.searches', ['Koptelefoons']);
+    }
 }
