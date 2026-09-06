@@ -8,8 +8,15 @@ date_added: 2026-08-08
 # Brand pages and on-page editorial
 
 **Every brand with three or more products gets one canonical, indexable page: a search with the
-brand preselected, with the brand's own vocabulary above the grid as links and prose below it built
-entirely from numbers the catalogue can back up.**
+brand preselected, with the brand's own vocabulary above the grid as links.**
+
+
+> **The layout of this page now forks.** Where a Brand Cove is published, the landing URL renders an
+> article with the brand's products in a sidebar instead of the facets-and-grid listing; any filtered,
+> sorted or paginated URL still renders the listing. The address, the canonical tag and the hreflang
+> cluster are unchanged — which is the property this document exists to protect. The generated
+> sections that used to sit below the grid were removed on 2026-09-06. See
+> [cove-entities.md](cove-entities.md).
 
 ## The problem this solves
 

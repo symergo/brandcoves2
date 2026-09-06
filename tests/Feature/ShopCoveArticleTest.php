@@ -149,15 +149,25 @@ Tweede alinea.',
     {
         $this->cove('bol-com', 'Kopen bij bol');
 
+        /*
+         * The entity page, not the buying-guide layout.
+         *
+         * A Shop Cove and a written Brand Cove are one page shape — the writing
+         * with the entity's products beside it — so they render the same
+         * component. It carries no shortlist at all: the prose is about ranges,
+         * and an empty <ol> would read as a broken buying guide rather than as
+         * a finished piece.
+         */
         $this->get('/be-nl/shops/bol-com')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Guides/Show')
-                ->where('guide.title', 'Kopen bij bol')
-                // Prose, so the page renders no shortlist. An empty <ol> reads
-                // as a broken buying guide rather than as a finished piece.
-                ->where('guide.kind', 'advice')
-                ->has('items', 0)
+                ->component('Entity/Cove')
+                ->where('cove.title', 'Kopen bij bol')
+                ->where('entity.kind', 'shop')
+                ->missing('items')
+                // The way back to what the shop sells, which is the same place
+                // the shops directory sends an unwritten shop.
+                ->has('searchUrl')
             );
     }
 

@@ -7,6 +7,7 @@ namespace App\Services\Shops;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Models\Merchant;
+use App\Models\Product;
 use App\Services\Connectors\ConnectorRegistry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -62,6 +63,31 @@ final readonly class ShopDirectory
             })
             ->orderBy('name')
             ->get($columns);
+    }
+
+    /**
+     * How many products this shop has in this market.
+     *
+     * For the "see all N products" link on a written shop page, so the number a
+     * reader is offered is the number the search will show them. Counts
+     * **groups**, not offer rows — invariant 3: one row is one merchant selling
+     * one thing, and a shop with three sizes of the same kettle has one product
+     * on the shelf, not three.
+     *
+     * Zero for a live source such as bol, whose offers are fetched per request
+     * rather than stored (invariant 6 is the same story for Amazon). The link
+     * still works; it is the count beside it that has nothing behind it, and the
+     * page hides the number rather than printing a confident nought.
+     */
+    public function productCount(Merchant $shop, Market $market): int
+    {
+        return (int) Product::query()
+            ->where('merchant_id', $shop->id)
+            ->where('market', $market->value)
+            ->where('status', ProductStatus::Active->value)
+            ->whereNotNull('group_id')
+            ->distinct()
+            ->count('group_id');
     }
 
     /**

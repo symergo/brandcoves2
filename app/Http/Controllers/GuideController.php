@@ -14,6 +14,9 @@ use App\Services\Cove\EntityRails;
 use App\Services\Editorial\Allowlist;
 use App\Services\Editorial\ProseCards;
 use App\Services\Guides\CoveMarkup;
+use App\Services\Pages\Context\EntityCoveContext;
+use App\Services\Pages\PageCopy;
+use App\Services\Pages\Regions\EntityCoveRegions;
 use App\Services\Seo\PageMeta;
 use App\Services\Seo\SocialCard;
 use App\Services\Seo\StructuredData;
@@ -221,6 +224,22 @@ class GuideController extends Controller
             ? $this->shopRails($guide, $current)
             : null;
 
+        /*
+         * A Shop Cove is an entity page, not an article with a shortlist.
+         *
+         * Same shape as a written brand page and rendered by the same component:
+         * the writing is the page, the shop's products sit beside it, and "see
+         * all" leads to a search filtered to that shop — which is exactly where
+         * the shops directory sends a shop nobody has written about. One
+         * destination for "show me what they sell", reached two ways.
+         *
+         * Everything above this line still runs, because the piece is written,
+         * linked and SEO'd the way every other Cove is. Only the layout forks.
+         */
+        if ($guide->kind === CoveKind::Shop) {
+            return $this->entityPage($guide, $current, $allowed, $rails);
+        }
+
         return Inertia::render('Guides/Show', [
             // Renders a banner, and only ever true for somebody entitled to it.
             'preview' => $preview && $guide->status !== PublishStatus::Published,
@@ -317,6 +336,77 @@ class GuideController extends Controller
      * @param  array<string, mixed>  $allowed
      * @return list<array{q: string, a: list<string>}>|null
      */
+    /**
+     * The written shop page: the piece, with the shop's products beside it.
+     *
+     * @param  array<string, mixed>|null  $rails
+     */
+    private function entityPage(
+        DailyPickSet $guide,
+        CurrentMarket $current,
+        array $allowed,
+        ?array $rails,
+    ): Response {
+        $market = $current->get();
+
+        /*
+         * Rendered as one string, not as prose blocks.
+         *
+         * `ProseCards` splits a buying guide into blocks so a product card can
+         * be dropped in beside the paragraph that argues for it. An entity Cove
+         * carries no shortlist — its prose is about ranges, and the products are
+         * a live rail — so there is never a card to place, and the block shape
+         * would be structure with nothing to hold. Same call the brand side
+         * makes, so both halves of one page component get one shape.
+         */
+        $markup = app(CoveMarkup::class);
+        $shop = app(ShopDirectory::class)->shopFor($market, (string) $guide->slug);
+
+        /*
+         * A shop this market no longer compares.
+         *
+         * The Cove survives its shop: a merchant can be switched off or drop out
+         * of a market long after somebody wrote about buying from them. There is
+         * then no directory row, no rail and nowhere for "see all" to lead, so
+         * the page renders without them rather than pointing at an empty search.
+         */
+        $searchUrl = $shop === null
+            ? $current->url('search')
+            : $current->url('search').'?'.http_build_query(['merchant' => [$shop->id]]);
+
+        $context = new EntityCoveContext(
+            market: $market,
+            items: [],
+            total: $shop === null ? 0 : app(ShopDirectory::class)->productCount($shop, $market),
+            page: EntityCoveRegions::SHOP,
+            entity: $shop?->displayName() ?? (string) $guide->theme_title,
+            slug: (string) $guide->slug,
+            searchUrl: $searchUrl,
+            categories: $this->shopVocabulary($guide, $current),
+        );
+
+        return Inertia::render('Entity/Cove', [
+            'entity' => [
+                'name' => $shop?->displayName() ?? (string) $guide->theme_title,
+                'kind' => 'shop',
+                'total' => $context->total,
+                // Their own mark, never the affiliate network's — the same rule
+                // the directory follows.
+                'logo' => $shop?->faviconUrl(),
+            ],
+            'cove' => [
+                'title' => $guide->theme_title,
+                'intro' => $markup->render((string) $guide->theme_blurb, $market, $allowed)['html'],
+                'body' => $markup->render((string) $guide->body, $market, $allowed)['html'],
+                'metaDescription' => $guide->meta_description
+                    ?: $markup->plain((string) $guide->theme_blurb),
+            ],
+            'rails' => $rails,
+            'searchUrl' => $searchUrl,
+            'copy' => app(PageCopy::class)->forPage($context),
+        ]);
+    }
+
     /**
      * The categories a Shop Cove's shop sells in.
      *

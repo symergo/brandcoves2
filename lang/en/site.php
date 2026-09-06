@@ -1817,6 +1817,8 @@ return [
             'title' => 'Often wishlisted',
             'blurb' => 'What visitors here put on a list. Shown only where several lists agree.',
         ],
+        'sidebar_heading' => 'Products from this brand or shop',
+        'see_all' => 'See all :count products from :entity',
     ],
 
     /*

@@ -7,10 +7,12 @@ namespace Tests\Feature;
 use App\Enums\Market;
 use App\Models\PageBlock;
 use App\Services\Pages\Context\BrandContext;
+use App\Services\Pages\Context\EntityCoveContext;
 use App\Services\Pages\Context\PageContext;
 use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\Placeholders\PlaceholderRegistry;
 use App\Services\Pages\Placeholders\Value;
+use App\Services\Pages\Regions\EntityCoveRegions;
 use App\Services\Pages\Regions\Region;
 use App\Services\Pages\Regions\RegionRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,6 +65,26 @@ class PageRegionsTest extends TestCase
                 slug: 'sony',
                 topShop: 'Coolblue',
                 topCategory: 'Koptelefoons',
+                categories: ['Koptelefoons', 'Speakers'],
+            ),
+            /*
+             * The two written entity pages. One context class serves both, so
+             * the fixture differs only in which page it says it is — which is
+             * the property worth exercising: a region declared on `shop_cove`
+             * must be answerable by the same computation `brand_cove` uses.
+             */
+            EntityCoveRegions::BRAND, EntityCoveRegions::SHOP => new EntityCoveContext(
+                market: Market::BeNl,
+                // Empty on purpose. The sidebar is where this page's products
+                // are, and a fact computed off an empty one is exactly the case
+                // that has to not throw — a brand with no discounted stock is
+                // an ordinary Tuesday.
+                items: [],
+                total: 0,
+                page: $page,
+                entity: 'Sony',
+                slug: 'sony',
+                searchUrl: '/be-nl/search?brand%5B0%5D=Sony',
                 categories: ['Koptelefoons', 'Speakers'],
             ),
             default => throw new \RuntimeException("No context fixture for the page '{$page}'. Add one when you add a page."),
@@ -312,6 +334,18 @@ class PageRegionsTest extends TestCase
             'brand.above_grid' => [null, 'intro'],
             'brand.below_grid' => [null, 'narrative'],
             'brand.empty_state' => [null, 'emptyCopy'],
+            /*
+             * Both entity regions arrive inside one `copy` prop rather than as
+             * a prop each: the page asks `PageCopy::forPage()` for everything
+             * its regions hold in one call, so adding a third region there is
+             * a region declaration and a line of JSX, with no controller change.
+             * The URL is null because reaching them needs a published Cove,
+             * which `EntityRailsTest` and `ShopCoveArticleTest` set up properly.
+             */
+            'brand_cove.above_prose' => [null, 'copy.above_prose'],
+            'brand_cove.below_prose' => [null, 'copy.below_prose'],
+            'shop_cove.above_prose' => [null, 'copy.above_prose'],
+            'shop_cove.below_prose' => [null, 'copy.below_prose'],
         ];
 
         foreach (RegionRegistry::all() as $region) {

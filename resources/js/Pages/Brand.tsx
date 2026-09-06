@@ -4,7 +4,6 @@ import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
-import EntityRails, { type EntityRailSet } from '../Components/EntityRails'
 import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -70,8 +69,6 @@ interface Props {
      * editorial about ranges and sub-brands; that is built from numbers the
      * catalogue can back up.
      */
-    cove: { title: string; intro: string; body: string } | null
-    rails: EntityRailSet | null
     related: { name: string; url: string }[]
     /**
      * The tagged Amazon search for this brand, narrowed by any term chips.
@@ -108,8 +105,6 @@ export default function Brand({
     amazonSearch,
     coves,
     related,
-    cove = null,
-    rails = null,
     narrative,
     intro,
     emptyCopy,
@@ -664,30 +659,6 @@ export default function Brand({
                   second page would split exactly the link equity this one exists
                   to consolidate.
                 */}
-                {cove && (
-                    <section className="lg:col-start-1 lg:row-start-2 lg:self-start" aria-labelledby="brand-cove">
-                        <h2 id="brand-cove" className="text-lg font-semibold tracking-tight">
-                            {cove.title}
-                        </h2>
-
-                        <div
-                            className="prose prose-stone mt-2 max-w-none text-sm dark:prose-invert"
-                            dangerouslySetInnerHTML={{ __html: cove.intro }}
-                        />
-                        <div
-                            className="prose prose-stone mt-3 max-w-none text-sm dark:prose-invert"
-                            dangerouslySetInnerHTML={{ __html: cove.body }}
-                        />
-
-                        {/*
-                          The rails belong with the Cove, not with the grid: they
-                          are the products the piece is about in aggregate, where
-                          the grid is everything this brand sells.
-                        */}
-                        <EntityRails rails={rails} />
-                    </section>
-                )}
-
                 {coves.length > 0 && (
                     <aside
                         className="lg:col-start-1 lg:row-start-2 lg:self-start"

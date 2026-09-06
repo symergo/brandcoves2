@@ -152,15 +152,30 @@ class PageCopyRenderTest extends TestCase
     }
 
     #[Test]
-    public function a_brand_page_carries_enough_prose_too(): void
+    public function a_brand_page_with_nobody_writing_it_carries_no_prose_at_all(): void
     {
         $this->seedBrand('Aurex');
 
-        $narrative = $this->props('/be-nl/brand/aurex')['narrative'];
+        /*
+         * The reverse of what this asserted until 2026-09-06, and the reversal
+         * is the decision rather than a regression.
+         *
+         * It used to require three hundred words below the grid, and it got
+         * them: six headed sections whose every clause was assembled from the
+         * numbers in the grid above. Checkable, which is why they were
+         * publishable — never worth reading, which is the test that decides
+         * whether a page should carry them.
+         *
+         * The brand page now splits. Written, it is an article of its own with
+         * the products beside it; unwritten, it is a search filtered to one
+         * brand — and a listing does not need prose to justify itself. So this
+         * asserts the floor is gone, and `PageRegionsTest` still asserts the
+         * *place* survives for a real sentence somebody chooses to write.
+         */
+        $props = $this->props('/be-nl/brand/aurex');
 
-        $this->assertNotNull($narrative);
-        $this->assertGreaterThan(300, $this->words($narrative));
-        $this->assertGreaterThanOrEqual(3, count($narrative['sections']));
+        $this->assertNull($props['narrative'] ?? null, 'generated sections are back below the grid');
+        $this->assertNull($props['intro'] ?? null, 'something is filling the intro that nobody wrote');
     }
 
     #[Test]
@@ -168,7 +183,12 @@ class PageCopyRenderTest extends TestCase
     {
         $this->seedBrand('Aurex');
 
-        foreach (['/be-nl/search?q=koptelefoon', '/be-nl/brand/aurex'] as $url) {
+        /*
+         * The search page only. The brand page's generated sections were
+         * removed — see the test above — so there is no longer any copy there
+         * for an unfilled placeholder to hide in.
+         */
+        foreach (['/be-nl/search?q=koptelefoon'] as $url) {
             $narrative = $this->props($url)['narrative'];
 
             foreach ($narrative['sections'] as $section) {

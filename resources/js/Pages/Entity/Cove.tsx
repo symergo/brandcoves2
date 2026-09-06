@@ -1,0 +1,156 @@
+import { Head, Link, usePage } from '@inertiajs/react'
+import EntityRails, { RailCard, type EntityRailSet } from '../../Components/EntityRails'
+import PageBlocks from '../../Components/PageBlocks'
+import type { BlockPayload } from '../../Components/Parts'
+import type { SharedProps } from '../../types'
+import { useTranslations } from '../../useTranslations'
+
+interface Props {
+    entity: { name: string; kind: 'brand' | 'shop'; total: number; logo: string | null }
+    cove: { title: string; intro: string; body: string }
+    rails: EntityRailSet | null
+    /** Where "see all" goes: the search page, filtered to this entity. */
+    searchUrl: string
+    /** Admin-editable copy, keyed by region. */
+    copy: { above_prose: BlockPayload[] | null; below_prose: BlockPayload[] | null }
+}
+
+/**
+ * A written page about a brand or a shop.
+ *
+ * ## It is an article, not a result set
+ *
+ * This is the fork the whole entity design turns on. Where nobody has written
+ * about a brand, `/brand/{slug}` is a filtered search — facets down the left, a
+ * grid of everything. Where somebody *has*, the writing is the page: no facets,
+ * no grid, and a sidebar carrying the handful of products worth putting beside a
+ * paragraph.
+ *
+ * Two things follow, and both are the reason for the shape rather than
+ * decoration on it:
+ *
+ * - **The grid has to stay reachable**, so the sidebar ends in a link to the
+ *   filtered search — the same destination a word in the prose narrows to. One
+ *   answer to "show me the rest", not two that differ by which control was used.
+ * - **The prose names ranges, never products.** A page's words and its products
+ *   move at different speeds; a frozen "biggest discounts" list is wrong within
+ *   days. So the writing talks about categories and sub-brands, which do not
+ *   move, and the sidebar talks about products, which do.
+ *
+ * ## Why wish-listed sits under the writing and the other two do not
+ *
+ * Discounts and popularity are a shelf: eight small cards read fine in a narrow
+ * column beside a paragraph. Wish-listed is a *claim about our own visitors* —
+ * the only rail here that is first-party — and burying it in a sidebar column
+ * with the two borrowed from merchants states it more quietly than it deserves.
+ * It gets the full width under the article.
+ */
+export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Props) {
+    const { t } = useTranslations()
+    const { market } = usePage<SharedProps>().props
+
+    /*
+     * The market's separators, not the browser's.
+     *
+     * `toLocaleString()` with no argument reads the *reader's* locale, so a
+     * Dutch page opened on an English-configured laptop offered "2,051
+     * producten" where the market writes 2.051. Every other number on the site
+     * is formatted from `market.hrefLang` — see `formatPrice` — and this is the
+     * one that had quietly opted out.
+     */
+    const total = new Intl.NumberFormat(market.hrefLang).format(entity.total)
+
+    const sidebar = rails
+        ? [
+              { key: 'discounts', products: rails.discounts },
+              { key: 'popular', products: rails.popular },
+          ].filter((rail) => rail.products.length > 0)
+        : []
+
+    // Only the wish-listed rail goes below; the component renders nothing when
+    // it is empty, which is most entities most of the time — see its floor.
+    const below: EntityRailSet | null = rails
+        ? { discounts: [], popular: [], wishlisted: rails.wishlisted }
+        : null
+
+    return (
+        <>
+            <Head title={cove.title} />
+
+            <div className="mt-8 grid gap-x-10 gap-y-10 lg:grid-cols-[1fr_18rem]">
+                <div className="min-w-0">
+                    <header>
+                        {entity.logo && (
+                            <img src={entity.logo} alt="" className="mb-4 h-10 w-10 rounded" loading="lazy" />
+                        )}
+                        <h1 className="text-2xl font-semibold text-ink sm:text-3xl">{cove.title}</h1>
+                    </header>
+
+                    <PageBlocks blocks={copy.above_prose} className="mt-6 max-w-2xl" />
+
+                    {/*
+                      `intro` and `body` arrive as HTML because the link tokens
+                      in them — [[search:…]], [[brand:…]] — are resolved server
+                      side against an allowlist. Anything the writer named that
+                      the entity does not actually sell came back as plain text
+                      rather than as a link to nothing.
+                    */}
+                    <div
+                        className="prose-cove mt-6 max-w-2xl text-lg leading-relaxed text-ink"
+                        dangerouslySetInnerHTML={{ __html: cove.intro }}
+                    />
+                    <div
+                        className="prose-cove mt-6 max-w-2xl leading-relaxed text-ink"
+                        dangerouslySetInnerHTML={{ __html: cove.body }}
+                    />
+
+                    <PageBlocks blocks={copy.below_prose} className="mt-10 max-w-2xl" />
+
+                    <EntityRails rails={below} />
+                </div>
+
+                <aside className="lg:sticky lg:top-6 lg:self-start" aria-labelledby="entity-sidebar">
+                    <h2 id="entity-sidebar" className="sr-only">
+                        {t('entity_rails.sidebar_heading')}
+                    </h2>
+
+                    {sidebar.map((rail) => (
+                        <section key={rail.key} className="mb-8">
+                            <h3 className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
+                                {t(`entity_rails.${rail.key}.title`)}
+                            </h3>
+
+                            {/*
+                              A column, not the horizontal shelf the rail uses
+                              under an article. Eight cards scrolling sideways in
+                              an 18rem sidebar would hide most of themselves.
+                            */}
+                            <ul className="mt-3 space-y-4">
+                                {rail.products.slice(0, 4).map((product) => (
+                                    <li key={product.id}>
+                                        <RailCard product={product} layout="row" />
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    ))}
+
+                    {/*
+                      The way back to everything. An article about a brand that
+                      offers no route to that brand's products is an article on
+                      a shopping site that forgot what it was for.
+                    */}
+                    <Link
+                        href={searchUrl}
+                        className="block rounded-lg border border-line px-4 py-3 text-sm font-medium hover:border-ink"
+                    >
+                        {t('entity_rails.see_all', {
+                            count: total,
+                            entity: entity.name,
+                        })}
+                    </Link>
+                </aside>
+            </div>
+        </>
+    )
+}

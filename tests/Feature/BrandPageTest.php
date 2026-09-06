@@ -178,15 +178,25 @@ class BrandPageTest extends TestCase
     {
         $this->seedBrand('Aurex');
 
-        PageBlock::query()
-            ->where('page', 'brand')
-            ->where('region', 'below_grid')
-            ->where('language', 'nl')
-            ->where('kind', PageBlock::PARAGRAPH)
-            ->first()
-            ->variants()
-            ->first()
-            ->update(['body' => 'Deze zin komt uit de blokkeneditor.']);
+        /*
+         * The block is written by the test now, where it used to edit one that
+         * shipped. `2026_09_06_000200` deleted the six generated sections that
+         * used to fill this region — the fallback brand page is a filtered
+         * search and a listing does not need prose to justify itself — so the
+         * region is registered, editable and **empty** until somebody writes
+         * something. Which is exactly the capability worth pinning: a place is
+         * a deploy, text is not.
+         */
+        $block = PageBlock::create([
+            'page' => 'brand',
+            'region' => 'below_grid',
+            'language' => 'nl',
+            'kind' => PageBlock::PARAGRAPH,
+            'position' => 1,
+            'enabled' => true,
+        ]);
+
+        $block->variants()->create(['body' => 'Deze zin komt uit de blokkeneditor.', 'weight' => 1]);
 
         PageCopy::flush();
 
@@ -213,16 +223,14 @@ class BrandPageTest extends TestCase
     }
 
     #[Test]
-    public function a_written_brand_cove_replaces_the_templated_copy(): void
+    public function a_written_brand_cove_replaces_the_page_rather_than_joining_it(): void
     {
         $this->seedBrand('Aurex');
 
-        // Without one, the generated sections are the page. This is the half of
-        // the rule that is easy to break by accident while implementing the
-        // other half.
-        $before = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
-        $this->assertNotNull($before['narrative'] ?? null, 'the fallback copy is missing');
-        $this->assertNull($before['cove'] ?? null);
+        // Unwritten: a search filtered to one brand, and nothing else.
+        $this->get('/be-nl/brand/aurex')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Brand'));
 
         DailyPickSet::create([
             'market' => Market::BeNl->value,
@@ -236,21 +244,48 @@ class BrandPageTest extends TestCase
             'published_at' => now(),
         ]);
 
-        $after = $this->get('/be-nl/brand/aurex')->assertOk()->viewData('page')['props'];
+        /*
+         * Written: the piece is the page. Not the grid with an article bolted
+         * above it — two introductions to one brand on one page is worse than
+         * either alone, and the one a reader meets second is the one nobody
+         * chose to write.
+         */
+        $this->get('/be-nl/brand/aurex')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Entity/Cove')
+                ->where('entity.kind', 'brand')
+                ->where('cove.title', 'Wat Aurex maakt')
+                // The way back to the products, and the reason removing the
+                // grid is not removing the catalogue.
+                ->where('searchUrl', '/be-nl/search?brand%5B0%5D=Aurex')
+                ->has('rails'));
+    }
+
+    #[Test]
+    public function a_filtered_url_still_shows_the_products_even_where_a_cove_exists(): void
+    {
+        $this->seedBrand('Aurex');
+
+        DailyPickSet::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Brand->value,
+            'slug' => 'aurex',
+            'theme_title' => 'Wat Aurex maakt',
+            'theme_slug' => 'aurex',
+            'status' => PublishStatus::Published->value,
+            'published_at' => now(),
+        ]);
 
         /*
-         * The rule, stated 2026-09-06: the existing brand page is the fallback
-         * for a brand nobody has written about. Running both puts two
-         * introductions to one brand on one page, and the weaker of them is the
-         * one nobody chose to write.
+         * The rule that keeps the grid reachable. A sort, a filter, a page 2 or
+         * a sub-search all say the reader wants results rather than an article,
+         * and on any of them the page is a listing again. Without this, writing
+         * about a brand would silently delete that brand's facets.
          */
-        $this->assertNotNull($after['cove'] ?? null, 'the written piece did not reach the page');
-        $this->assertNull($after['narrative'] ?? null, 'the templated copy is still under a written Cove');
-        $this->assertNull($after['intro'] ?? null, 'the templated intro is still above a written Cove');
-
-        // The rails are not editorial and stay either way: they are this
-        // brand's live products, and the Cove deliberately names none of them.
-        $this->assertArrayHasKey('rails', $after);
+        $this->get('/be-nl/brand/aurex?sort=price_asc')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Brand'));
     }
 
     #[Test]

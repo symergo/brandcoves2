@@ -22,10 +22,12 @@ curated (trivially — see below), written, approved and built like every other 
 
 ## It renders on the page that already exists
 
-`/{market}/brand/{slug}`, above the grid. [brand-pages.md](brand-pages.md) exists to argue for **one
-canonical indexable URL per brand per market** — every brand mention on the site, on cards, in
+`/{market}/brand/{slug}` — the address that already exists, never a second one beside it.
+[brand-pages.md](brand-pages.md) exists to argue for **one canonical indexable URL per brand per
+market** — every brand mention on the site, on cards, in
 facets, in generated Cove prose, points there — so a second address would split exactly the link
-equity that page was built to consolidate.
+equity that page was built to consolidate. What changes on that URL is the *layout*, not the
+address: see "The filtered search is the fallback" below.
 
 `CoveKind::isEntity()` is the new predicate. Like `isArticle()` and `expectsShortlist()` before it,
 it exists because the questions are genuinely different: `isArticle()` asks about the `/guides` URL
@@ -130,27 +132,85 @@ and a writer cannot link a category this brand does not stock.
 A token naming anything outside it renders as plain text, which is the safety property: a
 hallucinated link is an unlinked phrase rather than a 404 in the middle of an article.
 
-## The existing page is the fallback
+## The filtered search is the fallback, and a written page is an article
 
-**Where an entity Cove exists it is the page. Where none exists, what was already there stands.**
-Stated as a rule on 2026-09-06, and it settles two places that had drifted apart.
+**Where somebody has written about a brand or a shop, the writing is the page. Where nobody has,
+the page is a search filtered to that entity.** Stated as a rule on 2026-09-06; it replaced a
+first attempt the same day that merely suppressed the templated copy under a Cove.
 
-On a **brand page**, the templated copy — a sentence slot above the grid, six generated sections
-below it, assembled from the catalogue's own numbers — renders only when no Brand Cove is published.
-`BrandController` resolves the Cove before the payload and suppresses both regions when it finds one.
+| | Written | Unwritten |
+|---|---|---|
+| `/brand/{slug}` | the piece, products in a right sidebar | facets and a grid, no prose at all |
+| `/shops/{slug}` | the same page shape | 404 — the directory row links to the filtered search |
 
-On the **shops directory**, each row links to that shop's Cove when there is one and to a search
-filtered to that shop when there is not. `ShopsController::coveSlugs()` reads the published slugs
-once for the whole directory rather than once per row.
+The two render one component, `resources/js/Pages/Entity/Cove.tsx`, which is what makes them one
+page shape rather than two that resemble each other.
 
-This paragraph used to argue the opposite: that the two brand regions were not duplicates because
-one is prose and the other is arithmetic, so both should render. The objection to that is simpler
-than the defence — a page carrying two introductions to one brand is worse than either alone, and
-the one a reader meets second is the one nobody chose to write. Recorded rather than quietly
-reversed, because the earlier reasoning is not wrong on its own terms and will be rediscovered.
+### The grid stays reachable, and that is the constraint
 
-The rails are **not** editorial and are unaffected: they are the entity's own live products, the Cove
-deliberately names none of them, and they render whether or not anybody has written a word.
+Removing the grid from a written brand page would be indefensible on a shopping site if there were
+no way back to the products. There are two, and they lead to the same place:
+
+- the sidebar ends in **"see all N products"**, pointing at the search filtered to that entity;
+- any narrowing word in the prose resolves to the same filtered search.
+
+And `BrandController` only renders the article on the brand's **landing** URL. `isThin()` already
+meant "this URL is not the landing page" — a filter, a sort, a page 2, a sub-search — and on any of
+those the reader asked for results rather than for an article, so they get the grid. Without that
+rule, writing about a brand would silently delete that brand's facets.
+
+The search page filters on the brand **name**, so the link is built from `brandSpellings()`, not
+from the slug: feeds disagree about punctuation, and a link built from `audio-technica` would land a
+reader on an empty search from a page about a brand with hundreds of products.
+
+### Where each rail goes
+
+Decided by what each one claims rather than by how it looks.
+
+| Rail | Where | Why |
+|---|---|---|
+| Biggest discounts | sidebar | a shelf beside the writing; eight small rows read fine in a column |
+| Most popular | sidebar | the same, and it is a retailer's chart rather than our claim |
+| On wish lists | **under the writing, full width** | the only first-party claim on the page — what *our* visitors want. Putting it in a column beside two rails borrowed from merchants states it more quietly than it deserves |
+
+### The six generated sections are gone
+
+`brand.below_grid` shipped six headed sections per language — *Over Samsung*, *Wat kosten
+Samsung-producten?*, and four more — every clause assembled from the numbers in the grid above them,
+identical in shape on every brand page. They were checkable, which is why they were publishable at
+all; they were never worth reading, which is the test that decides whether a page should carry them.
+
+`2026_09_06_000200_a_brand_page_stops_explaining_itself` deletes them. **The region survives and
+now ships empty**, like `above_grid` beside it, because removing the *place* would take away
+somebody's ability to write a real sentence there without a deploy. The words are still in
+`database/migrations/data/page-blocks-2026-09.php` if they are ever wanted back.
+
+## Both entity pages are templated
+
+Four regions, editable at *Admin → Page templates* with no deploy:
+
+| Page | Region | Renders |
+|---|---|---|
+| `brand_cove` | `above_prose`, `below_prose` | around the writing on a written brand page |
+| `shop_cove` | `above_prose`, `below_prose` | the same on a written shop page |
+
+Two page keys rather than one, although the layout is identical: the words differ even where the
+shape does not. A band above a shop piece talks about buying from somebody; above a brand piece it
+talks about what somebody makes. One key would force a sentence true of both, and the sentence true
+of both is the sentence worth nothing.
+
+**What is templated is the chrome, not the piece.** The Cove's own prose is written per entity, in
+the planner or over the editorial API, and that is the reason the page exists. These regions are the
+parts that are the same on every entity page in a market — a note on how the shortlist beside the
+writing is chosen, a standing line about affiliate links — so they can change without editing forty
+Coves. A place is a deploy; text is not.
+
+`EntityCoveContext` supplies the facts, and its `$items` are **the sidebar**, not a page of results:
+this page has none. The house rule holds and matters more here than anywhere — a claim is about what
+the reader can see. `:count` stays the one exception, and it is what the "see all" link needs.
+
+`:entity` is a new placeholder, deliberately one name for both kinds: a block naming `:brand` on a
+shop page would be a sentence about the wrong kind of thing.
 
 ## Files
 
@@ -158,12 +218,17 @@ deliberately names none of them, and they render whether or not anybody has writ
 - `app/Services/Cove/EntityRails.php`
 - `app/Services/Ai/Prompts/Defaults.php` — `BRAND_SYSTEM`, `BRAND_PROMPT`
 - `app/Services/Shops/ShopDirectory.php` — the shop slug rule and membership
-- `app/Http/Controllers/BrandController.php` — `cove()`, the rails prop, and the fallback rule
+- `app/Http/Controllers/BrandController.php` — `cove()`, `covePage()`, and the landing-page rule
 - `app/Http/Controllers/ShopsController.php` — `coveSlugs()`, and where a directory row points
-- `app/Http/Controllers/GuideController.php` — `shopRails()`, `shopVocabulary()`
-- `resources/js/Components/EntityRails.tsx`
+- `app/Http/Controllers/GuideController.php` — `entityPage()`, `shopRails()`, `shopVocabulary()`
+- `app/Services/Shops/ShopDirectory.php` — the slug rule, membership, and `productCount()`
+- `app/Services/Pages/Regions/EntityCoveRegions.php` — the four editable regions
+- `app/Services/Pages/Context/EntityCoveContext.php` — the facts they may state
+- `resources/js/Pages/Entity/Cove.tsx` — the page both kinds render
+- `resources/js/Components/EntityRails.tsx` — the shelf, and `RailCard`'s row layout
 - `database/migrations/2026_09_05_001000_a_brand_is_a_cove_too.php`
-- `tests/Feature/EntityRailsTest.php`
+- `database/migrations/2026_09_06_000200_a_brand_page_stops_explaining_itself.php`
+- `tests/Feature/EntityRailsTest.php`, `tests/Feature/BrandPageTest.php`
 
 ## Open
 

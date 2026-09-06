@@ -18,7 +18,9 @@ use App\Services\Editorial\Allowlist;
 use App\Services\Guides\CoveMarkup;
 use App\Services\Pages\BlockSections;
 use App\Services\Pages\Context\BrandContext;
+use App\Services\Pages\Context\EntityCoveContext;
 use App\Services\Pages\PageCopy;
+use App\Services\Pages\Regions\EntityCoveRegions;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
@@ -137,25 +139,28 @@ class BrandController extends Controller
 
         $result = $search->search($query);
 
-        $this->seo($stat, $current, $query);
+        $cove = $this->cove($stat, $current);
 
         /*
-         * The Brand Cove, resolved before the payload because two other regions
-         * depend on whether it exists.
+         * The fork the entity design turns on.
          *
-         * **The templated copy is the fallback.** A brand page has always
-         * carried copy assembled from the catalogue's own numbers, above and
-         * below the grid, and for the great majority of brands that is still
-         * the whole page. When somebody writes a Brand Cove it takes over:
-         * running both puts two introductions on one page, and the weaker one
-         * is the one nobody chose to write.
+         * Where somebody has written about this brand, the writing **is** the
+         * page: no facets, no grid, and a sidebar carrying the products worth
+         * putting beside a paragraph. Where nobody has, the page is what it has
+         * always been — a search filtered to one brand.
          *
-         * Decided 2026-09-06. `docs/features/cove-entities.md` argued the
-         * opposite — that the two were not duplicates because one is prose and
-         * the other is arithmetic — and that reasoning is recorded there with
-         * the reason it was overruled.
+         * `isThin()` is what keeps the grid reachable. It already means "this
+         * URL is not the brand's landing page" — a filter, a sort, a page 2, a
+         * sub-search — and on any of those the reader asked for results rather
+         * than for an article, so they get them. The sidebar's "see all" link
+         * and every narrowing word in the prose lead to the filtered search,
+         * which is the same place.
          */
-        $cove = $this->cove($stat, $current);
+        if ($cove !== null && ! $this->isThin($query)) {
+            return $this->covePage($stat, $cove, $current, $result);
+        }
+
+        $this->seo($stat, $current, $query);
 
         return Inertia::render('Brand', [
             'brand' => [
@@ -214,7 +219,7 @@ class BrandController extends Controller
              * that is noindex — see narrative() — and null whenever a Brand Cove
              * has been written, because that is what this stands in for.
              */
-            'narrative' => $this->narrative($stat, $result, $query, $market, $cove),
+            'narrative' => $this->narrative($stat, $result, $query, $market),
 
             /*
              * A sentence or two above the products, if an editor wrote one.
@@ -224,7 +229,7 @@ class BrandController extends Controller
              * on every brand. This is a place, not a comeback: it ships empty,
              * nothing generates it, and it is gated exactly as the long copy is.
              */
-            'intro' => $this->intro($stat, $result, $query, $market, $cove),
+            'intro' => $this->intro($stat, $result, $query, $market),
 
             /*
              * What to read when the brand has nothing to show.
@@ -252,18 +257,92 @@ class BrandController extends Controller
              * templated copy exists for. Where this is not null the templated
              * copy is suppressed — see the note where it is resolved.
              */
-            'cove' => $cove,
 
-            /*
-             * The product rails: what has dropped in price here, what is
-             * selling, and what people have put on a list.
-             *
-             * Live rather than frozen, because a page's products and its prose
-             * move at different speeds — see App\Services\Cove\EntityRails and
-             * docs/features/cove-entities.md.
-             */
-            'rails' => app(EntityRails::class)->forBrand($stat, $market),
         ]);
+    }
+
+    /**
+     * The written page: an article about the brand, with its products beside it.
+     *
+     * Rendered instead of the grid rather than above it. Two introductions to
+     * one brand on one page is worse than either alone, and the one a reader
+     * meets second is the one nobody chose to write.
+     *
+     * @param  array<string, mixed>  $cove
+     */
+    private function covePage(BrandStat $stat, array $cove, CurrentMarket $current, SearchResult $result): Response
+    {
+        $market = $current->get();
+
+        /*
+         * Where "see all" goes, and where a narrowing word in the prose goes.
+         *
+         * The search page filters on the brand *name*, and a brand has several
+         * spellings — feeds disagree about punctuation, so "Audio-Technica" and
+         * "Audio Technica" are one brand with two names. Passing the slug would
+         * filter on a string no product carries and land the reader on an empty
+         * search from a page about a brand with two thousand products.
+         */
+        $searchUrl = $current->url('search').'?'.http_build_query([
+            'brand' => $stat->brandSpellings(),
+        ]);
+
+        $rails = app(EntityRails::class)->forBrand($stat, $market);
+
+        $context = new EntityCoveContext(
+            market: $market,
+            // The sidebar, not a page of results: these are the products the
+            // reader can actually see next to the writing.
+            items: [],
+            total: $result->groups->total(),
+            page: EntityCoveRegions::BRAND,
+            entity: $stat->brand,
+            slug: $stat->slug,
+            searchUrl: $searchUrl,
+            categories: $this->categoryNames($stat),
+        );
+
+        app(PageMeta::class)
+            ->set(
+                // The Cove's own title, not the listing title. This page is an
+                // article now and a result-listing title would describe a grid
+                // that is not on it.
+                title: $cove['title'],
+                description: $cove['metaDescription'] ?? __('site.brand.seo_description', ['brand' => $stat->brand]),
+                image: SocialCard::versioned(url($current->url("og/brand/{$stat->slug}.png"))),
+                canonical: url($current->url("brand/{$stat->slug}")),
+                robots: null,
+            )
+            ->addJsonLd(StructuredData::brand(
+                $stat->brand,
+                url($current->url("brand/{$stat->slug}")),
+            ));
+
+        return Inertia::render('Entity/Cove', [
+            'entity' => [
+                'name' => $stat->brand,
+                'kind' => 'brand',
+                'total' => $result->groups->total(),
+                'logo' => null,
+            ],
+            'cove' => $cove,
+            'rails' => $rails,
+            'searchUrl' => $searchUrl,
+            'copy' => app(PageCopy::class)->forPage($context),
+        ]);
+    }
+
+    /**
+     * The categories this brand appears in, most first.
+     *
+     * @return list<string>
+     */
+    private function categoryNames(BrandStat $stat): array
+    {
+        return array_values(array_filter(array_map(
+            fn ($row) => is_array($row) ? ($row['category'] ?? null) : null,
+            (array) $stat->categories,
+        )));
     }
 
     /**
@@ -316,6 +395,15 @@ class BrandController extends Controller
             // editorial API rather than from a visitor's page.
             'intro' => $markup->render((string) $cove->theme_blurb, $market, $allowed)['html'],
             'body' => $markup->render((string) $cove->body, $market, $allowed)['html'],
+            /*
+             * For the page's <meta description>, and stripped of link tokens.
+             *
+             * `plain()` rather than the rendered html: a description is read by
+             * a crawler as text, and an anchor tag in it is markup in a snippet.
+             * Falls back to the brand's generic line when the Cove has none.
+             */
+            'metaDescription' => $cove->meta_description
+                ?: $markup->plain((string) $cove->theme_blurb),
         ];
     }
 
@@ -543,10 +631,9 @@ class BrandController extends Controller
      *
      * @return array{sections: list<array{heading: string, body: list<list<array<string, mixed>>>}>}|null
      */
-    private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market, ?array $cove): ?array
+    private function narrative(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
     {
-        // Written editorial wins. See the note where $cove is resolved.
-        if ($cove !== null || $this->isThin($query) || $result->isEmpty()) {
+        if ($this->isThin($query) || $result->isEmpty()) {
             return null;
         }
 
@@ -562,10 +649,9 @@ class BrandController extends Controller
      *
      * @return list<array{kind: string, parts: list<array<string, mixed>>}>|null
      */
-    private function intro(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market, ?array $cove): ?array
+    private function intro(BrandStat $stat, SearchResult $result, SearchQuery $query, Market $market): ?array
     {
-        // Written editorial wins. See the note where $cove is resolved.
-        if ($cove !== null || $this->isThin($query) || $result->isEmpty()) {
+        if ($this->isThin($query) || $result->isEmpty()) {
             return null;
         }
 

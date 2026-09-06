@@ -45,6 +45,7 @@ final class RegionRegistry
     private const PAGES = [
         SearchPageRegions::class,
         BrandPageRegions::class,
+        EntityCoveRegions::class,
     ];
 
     /** @var array<string, Region>|null */

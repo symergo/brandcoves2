@@ -42,6 +42,10 @@ final readonly class Fact implements PlaceholderFunction
         $facts = [
             new self('term', 'The search term', 'What the visitor typed.', 'koptelefoon', Absence::Never),
             new self('brand', 'The brand', 'The brand this page is about.', 'Sony', Absence::Never),
+            // A written brand or shop page. One name for both, because the
+            // two are one page shape and a block naming `:brand` on a shop
+            // page would be a sentence about the wrong kind of thing.
+            new self('entity', 'The brand or shop', 'Whichever this written page is about.', 'Sony', Absence::Never),
             new self('count', 'Total results', 'Every match, not only the ones on screen.', '2.931'),
             new self('shown', 'Products on this page', 'How many cards are visible.', '24'),
             new self('shops', 'Shop offers on this page', 'Offers summed across the visible products.', '61'),

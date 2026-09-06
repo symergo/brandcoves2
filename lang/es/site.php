@@ -1593,6 +1593,8 @@ return [
             'title' => 'Muy en listas de deseos',
             'blurb' => 'Lo que los visitantes guardan en una lista. Solo si varias listas coinciden.',
         ],
+        'sidebar_heading' => 'Productos de esta marca o tienda',
+        'see_all' => 'Ver los :count productos de :entity',
     ],
 
     /*

@@ -94,8 +94,55 @@ export default function EntityRails({ rails }: { rails: EntityRailSet | null }) 
     )
 }
 
-function RailCard({ product }: { product: RailProduct }) {
+/**
+ * One product, as a card or as a row.
+ *
+ * Two layouts because there are two places: a shelf under an article, where a
+ * square picture over a title is right, and a sidebar 18rem wide beside one,
+ * where the same card would be a column of stamps. Exported for the second —
+ * the entity Cove page draws its own list rather than a scrolling shelf.
+ */
+export function RailCard({
+    product,
+    layout = 'card',
+}: {
+    product: RailProduct
+    layout?: 'card' | 'row'
+}) {
     const { market } = usePage<SharedProps>().props
+
+    if (layout === 'row') {
+        return (
+            <Link href={product.url} className="group flex gap-3">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded bg-stone-100 dark:bg-stone-800">
+                    {product.image && (
+                        <img
+                            src={product.image}
+                            alt=""
+                            loading="lazy"
+                            className="h-full w-full object-contain"
+                        />
+                    )}
+                </div>
+
+                <div className="min-w-0">
+                    <p className="line-clamp-2 text-sm text-stone-800 group-hover:underline dark:text-stone-200">
+                        {product.title}
+                    </p>
+                    {product.price !== null && (
+                        <p className="mt-0.5 text-sm font-medium text-stone-900 dark:text-stone-100">
+                            {formatPrice(product.price, market)}
+                            {product.discountPercent !== null && (
+                                <span className="ml-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                                    -{product.discountPercent}%
+                                </span>
+                            )}
+                        </p>
+                    )}
+                </div>
+            </Link>
+        )
+    }
 
     return (
         <Link href={product.url} className="group block">

@@ -276,16 +276,25 @@ class EntityRailsTest extends TestCase
     }
 
     #[Test]
-    public function a_brand_with_no_cove_renders_the_page_unchanged(): void
+    public function a_brand_with_no_cove_is_a_filtered_search_and_carries_no_rails(): void
     {
-        // Null for the great majority of brands, which is why the templated
-        // copy below the grid stays. The two are not duplicates.
         $this->product('Gewone koptelefoon', 9900, 'Sony');
         $this->brand('Sony');
 
+        /*
+         * The fallback, and what almost every brand page is.
+         *
+         * It is a search filtered to one brand: facets, a grid, and no
+         * editorial of any kind. The rails belong to the *written* page — they
+         * are the shelf beside a paragraph — so a listing that already shows
+         * every product does not repeat eight of them in a shelf above itself.
+         */
         $this->get('/be-nl/brand/sony')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('cove', null));
+            ->assertInertia(fn ($page) => $page
+                ->component('Brand')
+                ->missing('cove')
+                ->missing('rails'));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

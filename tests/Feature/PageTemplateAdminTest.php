@@ -141,8 +141,23 @@ class PageTemplateAdminTest extends TestCase
 
         $this->assertSame('above_grid', $component->get('region'));
 
-        // `brand.above_grid` ships empty on purpose.
+        // Both brand regions ship empty now. `above_grid` always did; the six
+        // generated sections came out of `below_grid` on 2026-09-06, when the
+        // unwritten brand page became a plain filtered search.
         $this->assertSame([], $component->get('data.blocks'));
+
+        $component->set('data.region', 'below_grid');
+
+        $this->assertSame([], $component->get('data.blocks'));
+
+        /*
+         * Switching to a page that *does* ship copy, so this still proves the
+         * screen loads blocks rather than only ever showing none — which is
+         * what the assertion above would otherwise pass on.
+         */
+        $component->set('data.pageKey', 'search');
+
+        $this->assertSame('above_grid', $component->get('region'));
 
         $component->set('data.region', 'below_grid');
 

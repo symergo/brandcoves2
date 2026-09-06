@@ -80,7 +80,16 @@ final class BrandPageRegions
                     .'Hidden on page 2, on a sub-search, and on any filtered or re-sorted URL — those are all '
                     .'noindex, and repeating the copy across them is the doorway-page pattern.',
                 layout: Region::SECTIONS,
-                requiresContent: true,
+                // Ships empty since 2026-09-06.
+                //
+                // It held six generated sections — every clause assembled from
+                // the numbers in the grid above them, the same on every brand
+                // page. They came off when the brand page split in two: a
+                // written brand is now an article of its own, and an unwritten
+                // one is a search filtered to a brand, which is a listing and
+                // does not need prose to justify itself. The place stays so a
+                // real sentence can be written here without a deploy.
+                requiresContent: false,
                 placeholders: [...$facts, ...$links],
                 conditions: $conditions,
             ),
