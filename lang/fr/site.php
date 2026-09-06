@@ -1039,6 +1039,12 @@ return [
         'created' => 'Nous vous préviendrons.',
         'removed' => 'Suivi arrêté.',
         'not_available' => 'Nous ne pouvons pas suivre celui-ci.',
+        'mail_subject_drop' => ':title est moins cher',
+        'mail_subject_restock' => ':title est de retour en stock',
+        'mail_body_drop' => 'Maintenant :price, au lieu de :was.',
+        'mail_body_restock' => 'Il est de retour en stock.',
+        'mail_button' => 'Voir les offres',
+        'mail_why' => 'Vous nous avez demandé de surveiller ce produit. Vous pouvez arrêter depuis sa page.',
     ],
 
     'notifications' => [

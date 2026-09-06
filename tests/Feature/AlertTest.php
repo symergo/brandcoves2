@@ -10,6 +10,7 @@ use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Jobs\RefreshWishlistedProducts;
+use App\Mail\AlertMail;
 use App\Models\Merchant;
 use App\Models\Notification;
 use App\Models\PriceAlert;
@@ -17,7 +18,11 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\RestockAlert;
 use App\Models\User;
+use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Connectors\LiveConnector;
+use App\Services\Connectors\Offer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -326,5 +331,128 @@ class AlertTest extends TestCase
         $this->actingAs($this->user())
             ->get('/be-nl/notifications')
             ->assertInertia(fn ($page) => $page->has('notifications', 0));
+    }
+
+    #[Test]
+    public function a_fired_alert_re_arms_when_the_price_recovers_and_fires_again(): void
+    {
+        Mail::fake();
+        $group = $this->group();
+        $offer = $this->offer($group, Source::Awin, 27999);
+
+        $alert = PriceAlert::create([
+            'group_id' => $group->id,
+            'user_id' => $this->user()->id,
+            'baseline_price' => 32999,
+            'state' => AlertState::Active->value,
+        ]);
+
+        (new RefreshWishlistedProducts)->handle();
+        $this->assertSame(AlertState::Triggered, $alert->fresh()->state);
+
+        /*
+         * A fired alert used to stay triggered forever: one notification,
+         * ever, unless the person pressed "watch" again by hand. Back above
+         * what it was watching, it is watching again — from today's price.
+         */
+        $offer->update(['price' => 34999]);
+        (new RefreshWishlistedProducts)->handle();
+
+        $this->assertSame(AlertState::Active, $alert->fresh()->state);
+        $this->assertSame(34999, $alert->fresh()->baseline_price);
+
+        // And the next drop is a second notification, measured from there.
+        $offer->update(['price' => 29999]);
+        (new RefreshWishlistedProducts)->handle();
+
+        $this->assertSame(2, Notification::query()->where('kind', 'price_drop')->count());
+        $this->assertSame(34999, Notification::query()->latest('id')->firstOrFail()->payload['baseline']);
+    }
+
+    #[Test]
+    public function a_drop_also_arrives_by_email(): void
+    {
+        Mail::fake();
+        $group = $this->group();
+        $this->offer($group, Source::Awin, 27999);
+
+        PriceAlert::create([
+            'group_id' => $group->id,
+            'user_id' => $this->user()->id,
+            'baseline_price' => 32999,
+            'state' => AlertState::Active->value,
+        ]);
+
+        (new RefreshWishlistedProducts)->handle();
+
+        // The channel the compliance rules argued from, and did not have.
+        Mail::assertSent(AlertMail::class, fn (AlertMail $mail) => $mail->hasTo('watcher@example.test')
+            && $mail->kind === 'price_drop'
+            && str_contains($mail->url, "/be-nl/p/{$group->id}/"));
+    }
+
+    #[Test]
+    public function a_live_offer_is_re_fetched_before_the_alert_is_judged(): void
+    {
+        Mail::fake();
+        $group = $this->group();
+        $offer = $this->offer($group, Source::Bol, 32999);
+
+        $alert = PriceAlert::create([
+            'group_id' => $group->id,
+            'user_id' => $this->user()->id,
+            'baseline_price' => 32999,
+            'state' => AlertState::Active->value,
+        ]);
+
+        /*
+         * fetchById() was implemented by every live connector and called by
+         * nothing, so a product whose only offer came from bol had a price
+         * that changed only when somebody happened to search for it.
+         */
+        app(ConnectorRegistry::class)->registerLive(new class($offer->external_id) implements LiveConnector
+        {
+            public function __construct(private string $known) {}
+
+            public function source(): Source
+            {
+                return Source::Bol;
+            }
+
+            public function supports(Market $market): bool
+            {
+                return true;
+            }
+
+            public function isCoolingDown(): bool
+            {
+                return false;
+            }
+
+            public function search(string $query, Market $market, int $limit = 24): array
+            {
+                return [];
+            }
+
+            public function fetchById(string $externalId, Market $market): ?Offer
+            {
+                return $externalId === $this->known ? new Offer(
+                    source: Source::Bol,
+                    externalId: $externalId,
+                    market: $market,
+                    title: 'Sony WH-1000XM5',
+                    affiliateUrl: 'https://example.test/buy',
+                    price: 25000,
+                    availability: Availability::InStock,
+                ) : null;
+            }
+        });
+
+        (new RefreshWishlistedProducts)->handle();
+
+        $this->assertSame(25000, $offer->fresh()->price);
+        $this->assertSame($group->id, $offer->fresh()->group_id, 'a refresh must not unhook the offer from its group');
+        $this->assertSame(AlertState::Triggered, $alert->fresh()->state);
+        $this->assertSame(25000, Notification::query()->firstOrFail()->payload['price']);
     }
 }

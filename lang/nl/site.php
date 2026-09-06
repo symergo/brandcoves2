@@ -1042,6 +1042,12 @@ return [
         'created' => 'We laten het je weten.',
         'removed' => 'Niet meer gevolgd.',
         'not_available' => 'Deze kunnen we niet volgen.',
+        'mail_subject_drop' => ':title is goedkoper',
+        'mail_subject_restock' => ':title is weer op voorraad',
+        'mail_body_drop' => 'Nu :price, was :was.',
+        'mail_body_restock' => 'Het is weer op voorraad.',
+        'mail_button' => 'Bekijk de aanbiedingen',
+        'mail_why' => 'Je vroeg ons dit product in de gaten te houden. Stoppen kan op de productpagina.',
     ],
 
     'notifications' => [

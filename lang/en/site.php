@@ -1210,6 +1210,12 @@ return [
         'created' => 'We will let you know.',
         'removed' => 'No longer watching.',
         'not_available' => 'We cannot watch this one.',
+        'mail_subject_drop' => ':title is cheaper',
+        'mail_subject_restock' => ':title is back in stock',
+        'mail_body_drop' => 'Now :price, down from :was.',
+        'mail_body_restock' => 'It is back in stock.',
+        'mail_button' => 'See the offers',
+        'mail_why' => 'You asked us to watch this product. Stop watching from its page.',
     ],
 
     'notifications' => [

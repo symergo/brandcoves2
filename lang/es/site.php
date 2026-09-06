@@ -1038,6 +1038,12 @@ return [
         'created' => 'Te avisaremos.',
         'removed' => 'Ya no lo vigilamos.',
         'not_available' => 'Este no lo podemos vigilar.',
+        'mail_subject_drop' => ':title está más barato',
+        'mail_subject_restock' => ':title vuelve a estar disponible',
+        'mail_body_drop' => 'Ahora :price, antes :was.',
+        'mail_body_restock' => 'Vuelve a estar disponible.',
+        'mail_button' => 'Ver las ofertas',
+        'mail_why' => 'Nos pediste vigilar este producto. Puedes dejar de hacerlo desde su página.',
     ],
 
     'notifications' => [

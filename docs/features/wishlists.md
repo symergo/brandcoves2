@@ -1070,3 +1070,25 @@ as saved, into a list that was gone.
 the destructive half was the cheaper press. It confirms, naming the item. On a shared list, the
 claim button carries a pending state and the name field is checked before the post — its
 `required` enforced nothing, because it is not inside a form.
+
+## Alerts refresh, re-arm and email (2026-09-06)
+
+Three gaps the review found in the alert machinery, closed in `RefreshWishlistedProducts`:
+
+- **Live offers are re-fetched.** `LiveConnector::fetchById()` was implemented by every live
+  connector and called by nothing, so a product whose only offers came from bol had a price that
+  changed only when somebody happened to search for it, and a watched item could sit at an
+  unchanging number forever. The job now asks each live source for today's offer on every watched
+  product before judging the alerts, capped at 500 fetches a run, skipping a source that is
+  cooling down. A fetch that answers nothing leaves the row alone: "the API did not answer" and
+  "the product is gone" are different facts, and only ingestion's stale sweep decides the second.
+- **A fired alert re-arms.** It used to stay `triggered` forever — one notification, ever, unless
+  the person pressed "watch" again. A price alert goes back to `active` when the price is back at
+  or above what it was watching, with today's price as the new baseline so the next drop is
+  measured from there; a restock alert re-arms when the product is out of stock again.
+- **Email.** `Source::allowsPriceAlerts()` argued from email delivery, and the channel did not
+  exist. `App\Mail\AlertMail` sends the title, the price, what it was and our own product page —
+  never a shop's link. The price comes from `trackablePrice()`, which reads trackable sources
+  only, so a source whose programme forbids product data in email cannot reach the template.
+
+`AlertTest` pins all three.
