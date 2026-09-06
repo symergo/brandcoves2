@@ -260,6 +260,11 @@ These are the rules the product depends on. Breaking one is a bug even when test
   panel. Adding, not replacing: `viteTheme()` would swap Filament's stylesheet out and needs
   `vendor/filament` at CSS-build time, which the Dockerfile's frontend stage does not have.
 - Strict types everywhere: `declare(strict_types=1);`.
+- **Write plainly, in chat and in docs.** Prefer the ordinary word to the in-house one, and when a
+  term genuinely earns its place — *fold*, *expand/contract*, *cove* — say what it means the first
+  time it appears in a document or a conversation rather than assuming it landed. A sentence nobody
+  has to decode is worth more than a precise one nobody reads. This applies to commit messages and
+  code comments too: the reader a year from now has no more context than the reader today.
 - Comment the *why*, especially for a threshold, a weight, or a workaround. A number with no
   justification will be "cleaned up" by someone later.
 
