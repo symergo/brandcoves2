@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Content;
 
 use App\Enums\CoveKind;
+use Closure;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -35,19 +37,70 @@ use Illuminate\Support\Facades\Schema;
 class GuideFold
 {
     /**
-     * @return array{editions: int, picks: int, skipped: int, renamed: list<string>}
+     * Move every guide into the editorial table.
+     *
+     * Idempotent: a guide that already has a folded Cove is skipped, so this can
+     * be re-run after a partial move or after one that did nothing at all.
+     *
+     * ## It used to be able to do nothing and say so to nobody
+     *
+     * The two preconditions below returned an **empty report**, which inside a
+     * migration body is indistinguishable from a successful fold of an empty
+     * table. On production that is exactly what happened: the migration recorded
+     * itself as run, and 61 published buying guides stayed in `guides` while
+     * `/guides` — which reads `daily_pick_sets` now — served only the advice
+     * articles. For a week, and nothing anywhere said so.
+     *
+     * So the reason travels in the report. A caller that finds `did_nothing`
+     * populated has been told, rather than having to infer it from a zero.
+     *
+     * ## Not every guide is worth moving
+     *
+     * `$only` narrows the set. It exists because the fold's own failure proved
+     * something about the rows it was meant to save: see `hasAnArticle()`.
+     * Passing nothing moves everything, which is what the tests assert and what
+     * the original migration intended.
+     *
+     * @param  (Closure(Builder): void)|null  $only  narrows which guides are moved
+     * @return array{editions: int, picks: int, skipped: int, renamed: list<string>, did_nothing: string|null}
      */
-    public function run(): array
+    public function run(?Closure $only = null): array
     {
-        $report = ['editions' => 0, 'picks' => 0, 'skipped' => 0, 'renamed' => []];
+        $report = ['editions' => 0, 'picks' => 0, 'skipped' => 0, 'renamed' => [], 'did_nothing' => null];
 
-        if (! Schema::hasTable('guides') || ! Schema::hasColumn('daily_pick_sets', 'folded_from_guide_id')) {
+        if (! Schema::hasTable('guides')) {
+            // Already contracted, or a database that never had one. Both are
+            // fine and both mean there is nothing here to move.
+            $report['did_nothing'] = 'There is no `guides` table on this database, so there is nothing to fold.';
+
             return $report;
         }
 
-        $guides = DB::table('guides')
+        if (! Schema::hasColumn('daily_pick_sets', 'folded_from_guide_id')) {
+            /*
+             * The condition that fired on production and cost a week.
+             *
+             * The column is added by the same migration that calls this, a
+             * hundred lines earlier — so a false here means the schema this
+             * process is reading is not the schema it just wrote, which is a
+             * cached column listing rather than a missing column.
+             */
+            $report['did_nothing'] = 'daily_pick_sets.folded_from_guide_id is not visible to this process. '
+                .'The column is added by the same migration that calls this, so if it exists in the database '
+                .'this is a stale schema cache: clear it and run the fold again.';
+
+            return $report;
+        }
+
+        $query = DB::table('guides')
             ->leftJoin('guide_topics', 'guide_topics.guide_id', '=', 'guides.id')
-            ->orderBy('guides.id')
+            ->orderBy('guides.id');
+
+        if ($only !== null) {
+            $only($query);
+        }
+
+        $guides = $query
             ->get([
                 'guides.*',
                 'guide_topics.origin as topic_origin',
@@ -92,6 +145,32 @@ class GuideFold
         }
 
         return $report;
+    }
+
+    /**
+     * Guides that have an article in them.
+     *
+     * ## Measured, not guessed
+     *
+     * When the fold silently did nothing on production it left 65 guides
+     * behind, and reading them settled what they were worth. All 61 *published*
+     * ones had `body_md` of length **zero** — a title built from one mined
+     * search token over a list of products, and no prose at all. Several were
+     * titled in the wrong language for their own market: `/en` carried "The best
+     * hoofdtelefoons", `/be-fr` carried "Les meilleurs kamperen".
+     *
+     * The four drafts were the opposite: ~2,000 characters of hand-written
+     * advice in three languages.
+     *
+     * So the fold's failure un-published 61 pages that should never have been
+     * published, and restoring them would put a Dutch headline back on the
+     * English market. This scope moves what somebody wrote and abandons what a
+     * template emitted. The gap is total — 0 characters against 137 and up — so
+     * it needs no threshold to argue about, only the presence of a body.
+     */
+    public static function hasAnArticle(): Closure
+    {
+        return static fn (Builder $query) => $query->whereRaw("coalesce(guides.body_md, '') <> ''");
     }
 
     /**

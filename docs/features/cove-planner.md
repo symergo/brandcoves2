@@ -248,6 +248,47 @@ and it keeps `[[guide:slug]]` unambiguous about which page it means. The fold
 suffixes rather than drops on a collision — `ON CONFLICT DO NOTHING` would answer a
 clash by deleting a published page.
 
+## When the fold did nothing
+
+The August fold copied every guide into `daily_pick_sets`. On production it copied **nothing**, and
+that was not discovered for a week.
+
+`GuideFold::run()` began with two preconditions, and each returned an empty report. Inside a
+migration an empty report is indistinguishable from a successful fold of an empty table, so the
+migration recorded itself as run. Meanwhile `/guides` had already switched to reading
+`daily_pick_sets`, so **61 published buying guides became 404** the moment the readers moved over.
+Nothing on the site linked to them any more, so nothing looked broken.
+
+Three things came out of it, and only the first is about this feature:
+
+1. **A silent precondition is a bug, not a safeguard.** The report now carries a `did_nothing`
+   reason, and every caller either surfaces it or logs it. A caller that gets a zero has been told
+   why, rather than having to infer it.
+2. **A one-shot migration needs a front door.** Migrations run once, so when one does the wrong
+   thing there is no supported way to run it again. `bc:fold-guides` is that door: idempotent, dry
+   by default, and it reports what is outstanding rather than what it attempted.
+3. **On this deployment a migration that throws is an outage.** The first attempt at the drop
+   guarded instead of repairing: it counted unfolded guides and threw. The guard was *correct* — it
+   is the only reason those 61 rows still existed — and it cost 55 minutes of downtime, because
+   Coolify tears the old containers down before migrations run. The replacement folds first and
+   drops regardless. See [../deployment.md](../deployment.md).
+
+### Why 61 pages were then abandoned on purpose
+
+Reading the leftovers settled what they were worth. All 61 published ones had an **empty** `body_md`
+and a title assembled from a single mined search word — "De beste blauw", "De beste jaar", "The best
+cancelling" — and in 14 cases the word was in the wrong language for the market: `/en` carried "The
+best hoofdtelefoons", `/be-fr` carried "Les meilleurs kamperen". The queries behind them were
+bag-of-words strings, not anything a person typed.
+
+The four drafts were the opposite: ~2,000 characters of hand-written advice in three languages.
+
+So the retire migration folds by `GuideFold::hasAnArticle()` — anything with prose in it — and logs
+the rest by slug before dropping them. The gap was total (0 characters against 137 and up), so the
+rule needs no threshold to argue about. **The fold's failure had un-published 61 pages that should
+never have been published**, and restoring them would have put a Dutch headline back on the English
+market. Their slugs are free again, so a real article can claim any of those addresses later.
+
 ## Files
 
 - `app/Enums/CoveKind.php` — the kinds, and every difference between them
@@ -260,15 +301,15 @@ clash by deleting a published page.
 - `app/Services/Cove/PlanSlugs.php` — the one place that respects the slug namespace
 - `app/Services/Guides/TopicPlanner.php` — topic → draft plan
 - `app/Http/Controllers/Api/CoveDraftController.php` — the same thing over HTTP
-- `app/Services/Content/GuideFold.php` — the one-time data move
+- `app/Services/Content/GuideFold.php` — the one-time data move, and `hasAnArticle()`
+- `app/Console/Commands/FoldGuidesCommand.php` — `bc:fold-guides`, the front door it needed
 - `database/migrations/2026_08_30_0001*` … `0004*`
 
 ## Open
 
-- `guides` and `guide_items` still exist, unread. The contract migration that drops
-  them is deliberately **not** in this change: shipping it alongside the expand would
-  destroy the source rows in the same deploy that folds them, which is the failure
-  expand/contract exists to prevent. Drop them a release later.
+- ~~`guides` and `guide_items` still exist, unread.~~ Dropped 2026-09-06 by
+  `2026_09_06_000100_the_guides_tables_retire`. What that took to finish is worth reading
+  before writing another data move — see **When the fold did nothing** above.
 - `GuideKind` survives only as the editorial API's vocabulary, where it also carries a
   deliberately lower floor (three products for an authored guide, five for a
   generated one).

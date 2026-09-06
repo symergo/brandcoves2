@@ -157,6 +157,9 @@ php artisan bc:pull-charts            # pull bestseller charts — the demand si
 php artisan bc:pull-charts --market=be-nl --discover   # prove the endpoint and the response
                                       # envelope in one request. Writes nothing
 php artisan bc:refresh-guide-copy     # re-write guides that have no editorial, then stale ones
+php artisan bc:fold-guides            # move any leftover `guides` row into the editorial table.
+                                      # Dry unless --write; skips rows with no prose in them
+                                      # (--all overrides). A no-op once the tables are dropped
 php artisan bc:tidy-prose             # bring published prose into house style: em dashes out,
                                       # stray ** off the fields that cannot render it. New writing
                                       # is already correct (App\Services\Editorial\HouseStyle runs
