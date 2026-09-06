@@ -164,6 +164,15 @@ Tweede alinea.',
                 ->component('Entity/Cove')
                 ->where('cove.title', 'Kopen bij bol')
                 ->where('entity.kind', 'shop')
+                /*
+                 * Paragraph by paragraph. The first published Shop Cove was
+                 * written in three paragraphs and rendered as one wall of
+                 * prose: the entity page resolved its tokens with `render()`,
+                 * which leaves the text as it found it, where every other
+                 * written page splits on blank lines first. Nothing reported
+                 * it, because the links were all fine.
+                 */
+                ->where('cove.body', ['Eerste alinea.', 'Tweede alinea.'])
                 ->missing('items')
                 // The way back to what the shop sells, which is the same place
                 // the shops directory sends an unwritten shop.

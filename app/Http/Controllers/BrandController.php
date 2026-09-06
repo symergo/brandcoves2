@@ -394,7 +394,18 @@ class BrandController extends Controller
             // html. The report is for the author, and they read it from the
             // editorial API rather than from a visitor's page.
             'intro' => $markup->render((string) $cove->theme_blurb, $market, $allowed)['html'],
-            'body' => $markup->render((string) $cove->body, $market, $allowed)['html'],
+            /*
+                 * Paragraph by paragraph, not one string.
+                 *
+                 * `render()` resolves tokens and leaves the text as it found
+                 * it, so a piece written in three paragraphs arrived as one
+                 * wall of prose - and nothing reported it, because the tokens
+                 * all resolved. `paragraphs()` splits on blank lines first,
+                 * which is what every other written page here already does.
+                 *
+                 * Found 2026-09-06 reading the first published Shop Cove.
+                 */
+            'body' => $markup->paragraphs((string) $cove->body, $market, $allowed)['html'],
             /*
              * For the page's <meta description>, and stripped of link tokens.
              *

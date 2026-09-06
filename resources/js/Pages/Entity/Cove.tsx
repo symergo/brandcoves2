@@ -7,7 +7,7 @@ import { useTranslations } from '../../useTranslations'
 
 interface Props {
     entity: { name: string; kind: 'brand' | 'shop'; total: number; logo: string | null }
-    cove: { title: string; intro: string; body: string }
+    cove: { title: string; intro: string; body: string[] }
     rails: EntityRailSet | null
     /** Where "see all" goes: the search page, filtered to this entity. */
     searchUrl: string
@@ -103,10 +103,16 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                         className="prose-cove mt-6 max-w-2xl text-lg leading-relaxed text-ink"
                         dangerouslySetInnerHTML={{ __html: cove.intro }}
                     />
-                    <div
-                        className="prose-cove mt-6 max-w-2xl leading-relaxed text-ink"
-                        dangerouslySetInnerHTML={{ __html: cove.body }}
-                    />
+                    {/*
+                      One element per paragraph. The server splits on blank
+                      lines and resolves tokens within each, so a piece written
+                      in three paragraphs reads as three.
+                    */}
+                    <div className="prose-cove mt-6 max-w-2xl space-y-4 leading-relaxed text-ink">
+                        {cove.body.map((paragraph, index) => (
+                            <p key={index} dangerouslySetInnerHTML={{ __html: paragraph }} />
+                        ))}
+                    </div>
 
                     <PageBlocks blocks={copy.below_prose} className="mt-10 max-w-2xl" />
 

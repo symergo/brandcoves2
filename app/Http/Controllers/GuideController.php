@@ -397,7 +397,18 @@ class GuideController extends Controller
             'cove' => [
                 'title' => $guide->theme_title,
                 'intro' => $markup->render((string) $guide->theme_blurb, $market, $allowed)['html'],
-                'body' => $markup->render((string) $guide->body, $market, $allowed)['html'],
+                /*
+                 * Paragraph by paragraph, not one string.
+                 *
+                 * `render()` resolves tokens and leaves the text as it found
+                 * it, so a piece written in three paragraphs arrived as one
+                 * wall of prose - and nothing reported it, because the tokens
+                 * all resolved. `paragraphs()` splits on blank lines first,
+                 * which is what every other written page here already does.
+                 *
+                 * Found 2026-09-06 reading the first published Shop Cove.
+                 */
+                'body' => $markup->paragraphs((string) $guide->body, $market, $allowed)['html'],
                 'metaDescription' => $guide->meta_description
                     ?: $markup->plain((string) $guide->theme_blurb),
             ],

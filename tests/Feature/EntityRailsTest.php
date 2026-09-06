@@ -268,8 +268,12 @@ class EntityRailsTest extends TestCase
                 // The prose is rendered, so a search token became a real,
                 // crawlable link into this market — which is the point of an
                 // entity Cove rather than a decoration on it.
-                ->where('cove.body', fn (string $body) => str_contains($body, '<a')
-                    && str_contains($body, '/be-nl/'))
+                // A list of paragraphs, not one string: the piece keeps the
+                // shape somebody wrote it in.
+                // A Collection, not an array: Laravel's fluent assertion hands
+                // the closure whatever the prop decoded to.
+                ->where('cove.body', fn ($body) => str_contains($body->implode(''), '<a')
+                    && str_contains($body->implode(''), '/be-nl/'))
                 ->has('rails.discounts', 1)
                 ->has('rails.wishlisted', 1)
             );
