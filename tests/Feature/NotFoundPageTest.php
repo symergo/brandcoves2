@@ -92,6 +92,10 @@ class NotFoundPageTest extends TestCase
     #[Test]
     public function it_is_never_indexed(): void
     {
+        // Indexing on, or the environment stamps `noindex, nofollow` on every
+        // page and the page's own `follow` is never consulted.
+        config(['giftcoves.robots_allow' => true]);
+
         $response = $this->get('/be-nl/niets-hier');
 
         // `follow`, not `nofollow`: the links on it are the point, and a
