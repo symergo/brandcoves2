@@ -364,7 +364,9 @@ export default function Search({
                   only place someone standing in a shop will look for it — and
                   the home page has the same button, for the same reason.
                 */}
-                <ScanButton />
+                {/* Half the row each: two buttons of equal weight under the
+                    field, rather than a small square beside a wide bar. */}
+                <ScanButton className="flex-1 rounded-lg border border-line px-4 py-3" />
 
                 {/*
                   Dimmed, not disabled. A disabled button loses focus mid-search

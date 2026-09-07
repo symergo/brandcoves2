@@ -214,7 +214,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                               so a home page nobody scans from still loads
                               nothing extra.
                             */}
-                            <ScanButton className="shrink-0 rounded-card border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" />
+                            <ScanButton className="flex-1 rounded-card border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" />
                             <button type="submit" className={buttonClasses('primary', 'lg', 'flex-1 md:flex-none')}>
                                 {t('nav.search')}
                             </button>
