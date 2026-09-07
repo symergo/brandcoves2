@@ -198,7 +198,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                 // screen offered to scan a barcode.
                                 aria-label={t('home.search_placeholder')}
                                 placeholder={t('home.search_placeholder')}
-                                className="w-full min-w-0 rounded-card border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft focus:border-ink sm:w-auto sm:flex-1"
+                                className="w-full min-w-0 rounded-card border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft focus:border-ink md:w-auto md:flex-1"
                             />
                             {/*
                               The camera, beside the field, on the first screen
@@ -215,7 +215,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                               nothing extra.
                             */}
                             <ScanButton className="shrink-0 rounded-card border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" />
-                            <button type="submit" className={buttonClasses('primary', 'lg', 'flex-1 sm:flex-none')}>
+                            <button type="submit" className={buttonClasses('primary', 'lg', 'flex-1 md:flex-none')}>
                                 {t('nav.search')}
                             </button>
                         </form>

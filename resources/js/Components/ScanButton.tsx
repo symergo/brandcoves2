@@ -129,7 +129,11 @@ export default function ScanButton({ className = 'rounded-lg border border-line 
                 type="button"
                 ref={trigger}
                 onClick={() => setOpen(true)}
-                className={`inline-flex items-center justify-center ${className}`}
+                // Phones only. A laptop's webcam pointed at a barcode is a
+                // party trick; the button earned its place on the device that
+                // is held up to a shelf, and on a desktop it was one more
+                // control beside the field for nobody.
+                className={`inline-flex items-center justify-center md:hidden ${className}`}
                 aria-label={t('scan.title')}
                 title={t('scan.title')}
             >
@@ -138,7 +142,9 @@ export default function ScanButton({ className = 'rounded-lg border border-line 
 
             {open && (
                 <div
-                    className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 sm:items-center"
+                    // The whole screen on a phone: the camera is the page
+                    // while it is open. A card with a margin from `sm` up.
+                    className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 sm:items-center sm:p-4"
                     role="dialog"
                     aria-modal="true"
                     aria-label={t('scan.title')}
@@ -148,7 +154,7 @@ export default function ScanButton({ className = 'rounded-lg border border-line 
                         if (e.target === e.currentTarget) setOpen(false)
                     }}
                 >
-                    <div className="w-full max-w-md rounded-lg bg-cream p-5 shadow-lg">
+                    <div className="flex h-full w-full flex-col overflow-y-auto bg-cream p-5 sm:h-auto sm:max-w-md sm:rounded-lg sm:shadow-lg">
                         <div className="mb-3 flex items-baseline justify-between gap-4">
                             <h2 className="font-medium">{t('scan.title')}</h2>
                             <button

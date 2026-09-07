@@ -309,7 +309,11 @@ export default function Search({
                     e.preventDefault()
                     go({ q: term })
                 }}
-                className="flex gap-2"
+                // The field on its own row on a phone, the scan and search
+                // buttons sharing the next; one row from `md`, where the scan
+                // button is gone and the field and the button fit beside each
+                // other.
+                className="flex flex-wrap gap-2"
                 role="search"
             >
                 {/*
@@ -323,7 +327,7 @@ export default function Search({
                   page-wide Inertia bar at the top of the window — the answer
                   being replaced is on this screen, so the signal belongs on it.
                 */}
-                <div className="relative flex-1">
+                <div className="relative w-full min-w-0 md:w-auto md:flex-1">
                     <input
                         type="search"
                         name="q"
@@ -370,7 +374,7 @@ export default function Search({
                 */}
                 <button
                     aria-busy={searching}
-                    className={`rounded-lg bg-accent px-5 py-3 font-medium text-white transition-opacity hover:bg-accent-dark ${searching ? 'opacity-70' : ''}`}
+                    className={`flex-1 rounded-lg bg-accent px-5 py-3 font-medium text-white transition-opacity hover:bg-accent-dark md:flex-none ${searching ? 'opacity-70' : ''}`}
                 >
                     {t('search.submit')}
                 </button>

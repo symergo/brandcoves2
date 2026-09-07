@@ -341,7 +341,7 @@ export default function BarcodeScanner({ autoStart = false, onFound, onCode }: P
 
     return (
         <>
-            <div className="max-w-md">
+            <div className="sm:max-w-md">
                 {!scanning ? (
                     <button
                         type="button"
@@ -365,7 +365,10 @@ export default function BarcodeScanner({ autoStart = false, onFound, onCode }: P
                         */}
                         <video
                             ref={videoRef}
-                            className="h-40 w-full rounded-lg border border-line bg-black object-cover sm:h-48"
+                            // Most of a phone screen, since the dialog is the
+                            // screen there; the small steady frame from `sm` up,
+                            // where the dialog is a card.
+                            className="h-[60vh] w-full rounded-lg border border-line bg-black object-cover sm:h-48"
                             muted
                             playsInline
                         />
