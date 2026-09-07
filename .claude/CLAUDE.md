@@ -394,3 +394,38 @@ when something surprises you, not on every session.
 
 `.env`, `*.dump`, `*.sql`, `*.pem`, `*.ppk`, `PAAPICredentials.csv`, `Amazon-tags.txt`.
 Rotating `CLAIM_HASH_SECRET` orphans every existing wishlist claim — treat it as permanent.
+
+## Publishing content (coves, personas, dailies, advice)
+
+**Coves are written in the session and published over the production editorial API. The AI writer
+is never run on production.** Decided 2026-09-07. An authored plan builds without touching the
+model (`EditionBuilder::buildArticle()` and `buildEdition()` use `body`/`editorial` verbatim), so
+"write it here, send it authored" costs nothing in AI spend and nothing in surprise.
+
+Read these before writing anything; they answer the questions that cost an hour of discovery:
+
+- `.claude/skills/giftcoves-seed-coves/SKILL.md` — the flow, addressing per kind, link tokens, voice
+- `.claude/skills/giftcoves-seed-coves/reference/api.md` — the endpoint contract, `POST /coves` body
+- `docs/features/editorial-api.md` — the long form, plus the lessons under "Learned the hard way"
+- `docs/features/advice-coves.md` and the header of `resources/content/advice-coves.php` — what an
+  advice article may and may not say (no prices, no superlatives, dated legal claims)
+- `docs/features/cove-entities.md` — brand and shop coves: ranges, never products
+- `app/Services/Ai/Prompts/Defaults.php` — the house voice per kind (`ADVICE_SYSTEM`, `BRAND_SYSTEM`)
+
+The key is `.claude/giftcoves_api.api` (`KEY=…`, production, gitignored), base
+`https://giftcoves.com/api/editorial`. Reads 120/min, writes 20/min: pace a batch at ~3 s a write.
+
+Facts the docs could not hold, all measured on 2026-09-07:
+
+- **What a plan may link is in its brief.** `GET /coves/{id}/brief` returns `allowlist.searches`
+  (a brand cove's top-40 categories; a daily's or persona's item categories) and `allowlist.guides`.
+  A `[[search:X]]` outside that list renders as plain words. File the draft first, then read the
+  brief, then write.
+- **`POST /coves` replaces the whole plan**, not the fields you send: editorial, blurb, pickMode and
+  writer all reset. To grow an approved shortlist, send everything again, then re-send the copy
+  lines through `POST /coves/{id}/editorial` using the item ids the brief reports.
+- **Approved plans refuse `POST /coves/{id}/items`** regardless of ability (403). A plan with
+  status `used` can be neither approved nor built again: file a fresh slug instead.
+- Item ids are not in `GET /coves/{id}`; they are in the brief and in `GET /coves/queue`.
+- House rules from the owner: **eight products minimum** on a daily or a persona, and every product
+  paragraph ends with a search-for-more link on its category (`Meer [[search:Cat|noun]].`).

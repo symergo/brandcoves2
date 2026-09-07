@@ -633,3 +633,24 @@ nobody approved it.
   the admin panel's "Build now" button on a plan for next Tuesday appear to do nothing.
 - The Cove calendar in Filament shows and edits the `editorial` field, because reviewing what an
   automated writer produced before approving it is the entire point of the draft/approve split.
+
+## Learned the hard way (2026-09-07, the first hundred authored pieces)
+
+A session published 20 dailies, 39 personas, 28 advice articles and 35 brand coves on production in
+one day, all authored here and none through the model. What the docs above did not say:
+
+- **`POST /coves` replaces the plan.** Upserting an approved daily with three more items reset its
+  `editorial`, `blurb`, `pickMode` and `writer` to the defaults, and the daily would have gone to
+  the model at 06:00. Send every field, every time; then re-send `items[].copy` through
+  `POST /coves/{id}/editorial`, because the copy lines are on the items the upsert replaced.
+- **Item ids live in the brief** (`GET /coves/{id}/brief`, `items[].id`) and in the queue, not in
+  `GET /coves/{id}`, which describes items by product only.
+- **Approved plans refuse item changes** (`assertOpenForCuration`, 403 whatever the ability). A
+  `used` plan refuses both `approve` and `build`; the three leftover "verlanglijstjes" plans (678,
+  679, 680) were republished under fresh slugs for that reason and still sit there as `used`.
+- **A brand cove can only link what its brief lists.** `allowlist.searches` is the brand's top-40
+  categories in that market; LEGO's allowlist on be-nl is two entries long, so its piece links one.
+- **The daily allowlist is the item categories**, so a "search for more" link on a product paragraph
+  has to name the product's category string exactly (`[[search:Toetsenbord gaming pc|…]]`), read
+  from `GET /products/{id}`.
+- `metaDescription` is capped at 160 characters and `blurb` at 300; the 422 names the field.
