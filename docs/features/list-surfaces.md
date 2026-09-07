@@ -262,6 +262,13 @@ already open (`AddProduct defaultOpen`), because an empty list has one thing to 
 so was a step between the person and it. The private choice is labelled "Private (or share later)",
 so choosing it does not read as closing a door.
 
+**The replayed draft lost its title (fixed 2026-09-07).** The title auto-fill effect ("For Anna" until
+somebody types) runs on mount with its empty initial values, in the same pass as the draft restore, and
+its unconditional write of an empty title landed after the restore. Every list made by signing in at
+the end of the wizard arrived with no title and was refused. The effect now writes only when the value
+actually changes, so the mount run is a no-op. Reproduced and verified signed out, where the restore
+path is the same.
+
 It posts to the same `store()` as the form on My Lists. That endpoint learned `event_type`,
 `event_date`, `visibility` (private or link), `link_can_add`, `voting_enabled` and `share_with`,
 because a wizard that explains an option and then sends you to the list page to turn it on has

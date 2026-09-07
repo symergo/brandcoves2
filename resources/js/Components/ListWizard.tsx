@@ -285,7 +285,18 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
         if (titleTouched) return
 
         const name = personName.trim()
-        form.setData('title', forSomeone && name !== '' ? t('wizard.title_for', { name }) : '')
+        const next = forSomeone && name !== '' ? t('wizard.title_for', { name }) : ''
+
+        /*
+         * Only a real change is written. This effect runs on mount too, with
+         * the empty initial values, in the same pass as the draft restore
+         * above — and an unconditional write of '' there landed after the
+         * restore and wiped the title out of every replayed draft. Found by
+         * signing in at the end of the wizard and arriving without one.
+         */
+        if (next !== form.data.title) {
+            form.setData('title', next)
+        }
         // The form object is stable per render; personName is what changes.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [personName, forSomeone, titleTouched])
