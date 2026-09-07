@@ -372,3 +372,13 @@ and the phone panel opened in the flow at 911px tall with its only close control
   the friends page had no door on a phone.
 - **Every row is 44px**, the hamburger and close are `ToolIcon`s rather than the ☰ and ✕
   characters, and the dial has its own `CoveIcon` instead of borrowing the guides one.
+
+## One row design, and the dial is gone (2026-09-07)
+
+The phone sheet's Search and Help rows were bare text links and its account block a third style;
+they are section rows now — icon in the accent, label, 44px — under "Search and help" and
+"Account" headings drawn like Organise and Discover. The desktop header's Search and Help links
+and every row of the desktop account menu carry the same icons (`ToolIcon`: `search`, `help`,
+`friends`, `alerts`, `admin`, `signout`, `signin`), so a row with an icon beside a row without
+one no longer reads as two kinds of thing. The dial entry added the day before went with the
+feature it pointed at; see [discovery-modes.md](discovery-modes.md).

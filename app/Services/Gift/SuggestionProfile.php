@@ -13,7 +13,8 @@ namespace App\Services\Gift;
  * would have been invisible if this class did not exist — see
  * {@see budgetFit()}.
  *
- * Deliberately shaped like a Mode Profile from `config/discovery.php` (named
+ * Deliberately shaped like the Mode Profiles the discovery modes used until
+ * they were removed on 2026-09-07 (named
  * weights, a λ, a presentation hint) so that folding these into the discovery
  * dial later is a data change rather than a rewrite.
  */

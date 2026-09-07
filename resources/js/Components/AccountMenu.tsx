@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import SignInLink from './SignInLink'
+import ToolIcon from './ToolIcon'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -91,7 +92,10 @@ export default function AccountMenu() {
                         onClick={() => setOpen(false)}
                         className="block rounded px-3 py-2 text-sm hover:bg-line/40"
                     >
-                        {t('nav.lists')}
+                        <span className="flex items-center gap-2.5">
+                            <span className="text-accent"><ToolIcon name="wishlist" className="h-5 w-5" /></span>
+                            {t('nav.lists')}
+                        </span>
                     </Link>
                     {/* Beside Lists rather than under it: the people are not a
                         property of any one list, and the commonest reason to
@@ -103,7 +107,10 @@ export default function AccountMenu() {
                         onClick={() => setOpen(false)}
                         className="block rounded px-3 py-2 text-sm hover:bg-line/40"
                     >
-                        {t('nav.friends')}
+                        <span className="flex items-center gap-2.5">
+                            <span className="text-accent"><ToolIcon name="friends" className="h-5 w-5" /></span>
+                            {t('nav.friends')}
+                        </span>
                     </Link>
                     <Link
                         href={`/${market.key}/notifications`}
@@ -111,7 +118,10 @@ export default function AccountMenu() {
                         onClick={() => setOpen(false)}
                         className="block rounded px-3 py-2 text-sm hover:bg-line/40"
                     >
-                        {t('nav.notifications')}
+                        <span className="flex items-center gap-2.5">
+                            <span className="text-accent"><ToolIcon name="alerts" className="h-5 w-5" /></span>
+                            {t('nav.notifications')}
+                        </span>
                     </Link>
 
                     {auth.user.isAdmin && (
@@ -120,7 +130,10 @@ export default function AccountMenu() {
                             role="menuitem"
                             className="block rounded px-3 py-2 text-sm hover:bg-line/40"
                         >
-                            {t('nav.admin')}
+                            <span className="flex items-center gap-2.5">
+                                <span className="text-accent"><ToolIcon name="admin" className="h-5 w-5" /></span>
+                                {t('nav.admin')}
+                            </span>
                         </a>
                     )}
 
@@ -132,7 +145,10 @@ export default function AccountMenu() {
                         onClick={() => router.post(`/${market.key}/logout`)}
                         className="mt-1 block w-full rounded border-t border-line px-3 py-2 text-left text-sm hover:bg-line/40"
                     >
-                        {t('nav.sign_out')}
+                        <span className="flex items-center gap-2.5">
+                            <span className="text-accent"><ToolIcon name="signout" className="h-5 w-5" /></span>
+                            {t('nav.sign_out')}
+                        </span>
                     </button>
                 </div>
             )}

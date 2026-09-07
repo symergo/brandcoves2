@@ -51,7 +51,7 @@ cannot be recovered from a diff.
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [recently-viewed.md](recently-viewed.md) | Discovery / Frontend | Active — new 2026-09-06 |
 | [ask-others.md](ask-others.md) | Discovery / Community | Active — not in the sitemap yet |
-| [discovery-modes.md](discovery-modes.md) | Core / Discovery | Phase 2 active — 7 of 9 modes |
+| [discovery-modes.md](discovery-modes.md) | Core / Discovery | Removed 2026-09-07 |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
 | [all-coves.md](all-coves.md) | Discovery / Content | Active |
 | [cove-rail.md](cove-rail.md) | Discovery / Content | Active — replaced the Daily's archive strip |

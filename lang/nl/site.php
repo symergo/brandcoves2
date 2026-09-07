@@ -25,8 +25,7 @@ return [
         'main' => 'Hoofdmenu',
         'account' => 'Account',
         'skip' => 'Naar de inhoud',
-        'dial' => 'Bladeren op stemming',
-        'hint_dial' => 'Eén knop van veilige keuzes tot verrassingen',
+        'search_and_help' => 'Zoeken en hulp',
         'share' => 'Delen',
         'close' => 'Sluiten',
         'choose_market' => 'Kies je regio',
@@ -1656,66 +1655,6 @@ return [
         'series_title' => ':topic, deel :part',
         'series_slug_part' => 'deel',
         'series_heading' => 'In deze reeks',
-    ],
-
-    'discover' => [
-        'dial_label' => 'Hoeveel weet je al?',
-        'dial_low' => 'Ik weet precies wat ik wil',
-        'dial_high' => 'Verras me',
-        'surprise_label' => 'Verrassing',
-        'query_placeholder' => 'Een product, een merk, of helemaal niets',
-        'go' => 'Zoek',
-        'thinking' => 'Bezig met herschikken…',
-        'considered' => ':shown van :considered kandidaten getoond.',
-        'empty' => 'Hier is nog niets te tonen.',
-        'shops' => ':count winkels',
-        'not_for_me' => 'Niets voor mij',
-        'goal_placeholder' => 'Wat richt je in? bv. thuiswerkplek, koffiehoek',
-        'kit_total' => ':count onderdelen · :total in totaal',
-        'now_showing' => 'Nu: :mode',
-
-        // Required of every mode: the dominant scoring factor, in words.
-        'why' => [
-            'relevance' => 'Ligt het dichtst bij wat je vroeg',
-            'unexpectedness' => 'Je hebt dit waarschijnlijk nog nooit gezien',
-            'novelty' => 'Nieuw hier',
-            'quality' => 'Goed verkrijgbaar en makkelijk te vergelijken',
-        ],
-
-        'modes' => [
-            'search' => [
-                'title' => 'Zoeken',
-                'description' => 'Je weet wat je wilt. De prijs van elke winkel, één kaart per product.',
-            ],
-            'guides' => [
-                'title' => 'Gidsen',
-                'description' => 'Iemand deed het denkwerk al, shortlists op basis van wat mensen hier zoeken.',
-            ],
-            'compare' => [
-                'title' => 'Vergelijken',
-                'description' => 'De hele categorie, van goedkoop naar duur, met de lookalikes aangeduid.',
-            ],
-            'deals' => [
-                'title' => 'Koopjes',
-                'description' => 'Echte kortingen, gemeten tegen onze eigen prijsgeschiedenis en tegen de andere winkels, nooit tegen een “van”-prijs van de winkel zelf.',
-            ],
-            'projects' => [
-                'title' => 'Projecten',
-                'description' => 'Vertel ons de situatie en een budget. Wij zetten de onderdelen bij elkaar en tellen ze op.',
-            ],
-            'trends' => [
-                'title' => 'Nieuw en in opkomst',
-                'description' => 'Net binnen, of deze twee weken door meer winkels opgepikt.',
-            ],
-            'follow' => [
-                'title' => 'De huissmaak',
-                'description' => 'Een rustige stroom van alles wat we recent hebben uitgekozen.',
-            ],
-            'serendipity' => [
-                'title' => 'Verras me',
-                'description' => 'Dingen waarvan je niet wist dat ze bestonden, precies daarop gerangschikt.',
-            ],
-        ],
     ],
 
     'og' => [

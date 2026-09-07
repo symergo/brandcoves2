@@ -25,8 +25,7 @@ return [
         'main' => 'Menú principal',
         'account' => 'Cuenta',
         'skip' => 'Ir al contenido',
-        'dial' => 'Explorar según el ánimo',
-        'hint_dial' => 'Un dial de apuestas seguras a sorpresas',
+        'search_and_help' => 'Buscar y ayuda',
         'share' => 'Compartir',
         'close' => 'Cerrar',
         'choose_market' => 'Elige tu región',
@@ -1643,66 +1642,6 @@ return [
         'series_title' => ':topic, parte :part',
         'series_slug_part' => 'parte',
         'series_heading' => 'En esta serie',
-    ],
-
-    'discover' => [
-        'dial_label' => '¿Cuánto sabes ya?',
-        'dial_low' => 'Sé exactamente lo que quiero',
-        'dial_high' => 'Sorpréndeme',
-        'surprise_label' => 'Sorpresa',
-        'query_placeholder' => 'Un producto, una marca o nada',
-        'go' => 'Buscar',
-        'thinking' => 'Reorganizando…',
-        'considered' => 'Mostrando :shown de :considered candidatos.',
-        'empty' => 'Aquí todavía no hay nada que mostrar.',
-        'shops' => ':count tiendas',
-        'not_for_me' => 'No es para mí',
-        'goal_placeholder' => '¿Qué estás montando? p. ej. oficina en casa, rincón del café',
-        'kit_total' => ':count piezas · :total en total',
-        'now_showing' => 'Ahora: :mode',
-
-        // Required of every mode: the dominant scoring factor, in words.
-        'why' => [
-            'relevance' => 'Lo más cercano a lo que pediste',
-            'unexpectedness' => 'Es poco probable que hayas visto esto',
-            'novelty' => 'Nuevo aquí',
-            'quality' => 'Bien disponible y fácil de comparar',
-        ],
-
-        'modes' => [
-            'search' => [
-                'title' => 'Búsqueda',
-                'description' => 'Sabes lo que quieres. El precio de cada tienda, una ficha por producto.',
-            ],
-            'guides' => [
-                'title' => 'Guías',
-                'description' => 'Alguien ya lo pensó: selecciones construidas con lo que la gente busca aquí.',
-            ],
-            'compare' => [
-                'title' => 'Comparar',
-                'description' => 'Toda la categoría, de lo más barato a lo más caro, con los equivalentes señalados.',
-            ],
-            'deals' => [
-                'title' => 'Ofertas',
-                'description' => 'Rebajas de verdad, medidas contra nuestro propio historial y contra las demás tiendas, nunca contra el precio «antes» del comercio.',
-            ],
-            'projects' => [
-                'title' => 'Proyectos',
-                'description' => 'Cuéntanos la situación y un presupuesto. Reunimos las piezas y las sumamos.',
-            ],
-            'trends' => [
-                'title' => 'Nuevo y en alza',
-                'description' => 'Recién llegado, o incorporado por más tiendas en estas dos semanas.',
-            ],
-            'follow' => [
-                'title' => 'El gusto de la casa',
-                'description' => 'Un flujo tranquilo de todo lo que hemos elegido últimamente.',
-            ],
-            'serendipity' => [
-                'title' => 'Sorpréndeme',
-                'description' => 'Cosas que no sabías que existían, clasificadas exactamente para eso.',
-            ],
-        ],
     ],
 
     'og' => [

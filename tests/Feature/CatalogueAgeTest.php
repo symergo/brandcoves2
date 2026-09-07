@@ -6,8 +6,6 @@ namespace Tests\Feature;
 
 use App\Enums\Market;
 use App\Models\ProductGroup;
-use App\Services\Discover\DiscoveryRequest;
-use App\Services\Discover\ModeEngine;
 use App\Services\Discovery\CatalogueAge;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -122,30 +120,5 @@ class CatalogueAgeTest extends TestCase
         // silence another's genuinely new arrivals.
         $this->assertNotNull($this->age()->bulkImportedThrough(Market::BeNl));
         $this->assertNull($this->age()->bulkImportedThrough(Market::Es));
-    }
-
-    #[Test]
-    public function trends_stays_empty_rather_than_showing_a_bulk_import(): void
-    {
-        $importDay = CarbonImmutable::now()->subDays(3);
-
-        for ($i = 0; $i < 30; $i++) {
-            $this->group($importDay);
-        }
-
-        Cache::flush();
-
-        /*
-         * "Nothing is new yet" is the honest answer on a young catalogue, and a
-         * short page is how to say it. Returning forty thousand products that
-         * all score zero novelty would be a page of old stock labelled new.
-         */
-        $items = app(ModeEngine::class)
-            ->discover('trends', new DiscoveryRequest(
-                market: Market::BeNl,
-                limit: 8,
-            ), seed: 1)->items;
-
-        $this->assertSame([], $items);
     }
 }

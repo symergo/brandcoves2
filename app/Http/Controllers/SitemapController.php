@@ -10,7 +10,6 @@ use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\CommunityQuestion;
 use App\Models\ProductGroup;
-use App\Services\Discover\ModeRegistry;
 use App\Services\Seo\Alternates;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
@@ -182,17 +181,6 @@ class SitemapController extends Controller
                     ['loc' => url("/{$resolved->value}/discover-cove"), 'priority' => '0.7', 'changefreq' => 'weekly'],
                     ['loc' => url("/{$resolved->value}/surprise"), 'priority' => '0.6', 'changefreq' => 'daily'],
                 ];
-
-                // One landing per discovery mode. Each is a distinct answer to a
-                // distinct question, which is exactly what makes them worth
-                // indexing separately rather than as query strings on one page.
-                foreach (array_keys(app(ModeRegistry::class)->all()) as $mode) {
-                    $urls[] = [
-                        'loc' => url("/{$resolved->value}/discover/{$mode}"),
-                        'priority' => '0.6',
-                        'changefreq' => 'weekly',
-                    ];
-                }
 
                 // Published guides and every past edition. The archive is the point:
                 // a daily page whose history 404s has nothing accumulating.

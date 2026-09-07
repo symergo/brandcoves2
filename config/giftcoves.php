@@ -436,7 +436,7 @@ return [
         | affordable thing to the bottom — and look exactly like a working
         | feature while doing it.
         |
-        | Keys mirror the shape of a Mode Profile in config/discovery.php on
+        | Keys mirror the shape the discovery modes' profiles had (removed 2026-09-07) on
         | purpose, so folding these into the discovery dial later is a data
         | change rather than a rewrite.
         */
@@ -659,7 +659,6 @@ return [
     'linkable_pages' => [
         'home' => '',
         'search' => 'search',
-        'discover' => 'discover',
         'daily' => 'daily',
         'guides' => 'guides',
         'brands' => 'brands',

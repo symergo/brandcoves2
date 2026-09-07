@@ -20,6 +20,10 @@ export type ToolKey =
     | 'board'
     | 'menu'
     | 'close'
+    | 'help'
+    | 'signin'
+    | 'signout'
+    | 'admin'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -49,6 +53,42 @@ const paths: Record<ToolKey, ReactNode> = {
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
 
     close: <path d="m6 6 12 12M18 6 6 18" />,
+
+    /*
+     * The header's own rows: search and help beside the two menus, and the
+     * account block. Drawn here so the desktop links, the desktop account
+     * menu and the phone sheet all carry the same marks as the section
+     * items — a row with an icon beside a row without one reads as two
+     * different kinds of thing, and they are not.
+     */
+    help: (
+        <>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7" />
+            <path d="M12 17h.01" />
+        </>
+    ),
+
+    signin: (
+        <>
+            <circle cx="12" cy="8" r="3.5" />
+            <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
+        </>
+    ),
+
+    signout: (
+        <>
+            <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+            <path d="M14 8l4 4-4 4M18 12H9" />
+        </>
+    ),
+
+    admin: (
+        <>
+            <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" />
+            <path d="m9.5 12 1.8 1.8L15 10" />
+        </>
+    ),
 
     // A heart — the one thing on this page that is about wanting rather than
     // organising.

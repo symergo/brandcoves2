@@ -31,8 +31,7 @@ return [
         'main' => 'Main',
         'account' => 'Account',
         'skip' => 'Skip to content',
-        'dial' => 'Browse by mood',
-        'hint_dial' => 'One dial from safe bets to wild cards',
+        'search_and_help' => 'Search and help',
         'share' => 'Share',
         'close' => 'Close',
         'choose_market' => 'Choose your market',
@@ -1861,69 +1860,6 @@ return [
         'series_title' => ':topic, part :part',
         'series_slug_part' => 'part',
         'series_heading' => 'In this series',
-    ],
-
-    'discover' => [
-        'dial_label' => 'How much do you already know?',
-        'dial_low' => 'I know exactly what I want',
-        'dial_high' => 'Surprise me',
-        'surprise_label' => 'Surprise',
-        'query_placeholder' => 'A product, a brand, or nothing at all',
-        'go' => 'Go',
-        'thinking' => 'Rearranging…',
-        'considered' => 'Showing :shown of :considered candidates.',
-        'empty' => 'Nothing to show here yet.',
-        'shops' => ':count shops',
-        'not_for_me' => 'Not for me',
-        'goal_placeholder' => 'What are you setting up? e.g. home office, coffee corner',
-        'kit_total' => ':count parts · :total in total',
-        'now_showing' => 'Now: :mode',
-
-        // Required of every mode: the dominant scoring factor, in words. A
-        // surface that reorganises as a dial moves is incomprehensible without
-        // it, the same product has to be able to say it is here for a
-        // different reason than it was a moment ago.
-        'why' => [
-            'relevance' => 'Closest to what you asked for',
-            'unexpectedness' => 'You are unlikely to have seen this',
-            'novelty' => 'New here',
-            'quality' => 'Well stocked and easy to compare',
-        ],
-
-        'modes' => [
-            'search' => [
-                'title' => 'Search',
-                'description' => 'You know what you want. Every shop’s price, one card per product.',
-            ],
-            'guides' => [
-                'title' => 'Guides',
-                'description' => 'Someone already did the thinking, shortlists built from what people search for here.',
-            ],
-            'compare' => [
-                'title' => 'Compare',
-                'description' => 'The whole category, cheapest to dearest, with the lookalikes marked.',
-            ],
-            'deals' => [
-                'title' => 'Deals',
-                'description' => 'Real savings, measured against our own price history and against the other shops, never against a merchant’s “was” price.',
-            ],
-            'projects' => [
-                'title' => 'Projects',
-                'description' => 'Tell us the situation and a budget. We will put the parts together and add them up.',
-            ],
-            'trends' => [
-                'title' => 'New and rising',
-                'description' => 'Just arrived, or picked up by more shops this fortnight.',
-            ],
-            'follow' => [
-                'title' => 'The house taste',
-                'description' => 'A slow stream of everything we have chosen lately.',
-            ],
-            'serendipity' => [
-                'title' => 'Surprise me',
-                'description' => 'Things you did not know existed, ranked for exactly that.',
-            ],
-        ],
     ],
 
     /*

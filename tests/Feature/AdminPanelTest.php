@@ -229,7 +229,6 @@ class AdminPanelTest extends TestCase
 
         foreach ([
             '/admin/cove-editorials',
-            '/admin/mode-profiles',
             '/admin/cove-plans',
             '/admin/guide-topics',
             '/admin/ai-usage',

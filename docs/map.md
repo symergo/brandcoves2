@@ -55,7 +55,7 @@ Grouped by what a visitor is doing, not by file order:
 - **Find** — `/search`, `/search-help`, `/scan`, `/scan/{barcode}`, `/brands`, `/brand/{slug}`,
   `/shops`, `/shops/{slug}`, `/p/{group}/{slug?}`, `/go/{offer}` (every outbound link),
   `/track/click`
-- **Discover** — `/daily`, `/daily/{date}`, `/discover/{mode?}`, `/discover-cove`, `/surprise`,
+- **Discover** — `/daily`, `/daily/{date}`, `/discover-cove`, `/surprise`,
   `/coves`, `/guides`, `/guides/{slug}`, `/gift-ideas`, `/gift-cove`, `/ask`
 - **Organize** — `/lists`, `/lists/{list}`, `/list-options`, `/saved-items`, `/l/{token}` (shared
   list: claim, pledge, vote, suggest), `/for/{token}`, `/q/{token}` (quiz), `/santa/**`
@@ -77,7 +77,6 @@ Grouped by what a visitor is doing, not by file order:
 | `Content/` | shipped editorial (advice coves), guide folding |
 | `Cove/` | the daily edition: themes, observances, digests, plan slugs, seasonal series, the editorial year |
 | `Curation/` | the human pass over a drafted plan |
-| `Discover/` | discovery modes — `ModeEngine`, `Ranker`, `ModeProfile` |
 | `Discovery/` | catalogue-level signals: trends, serendipity, freshness |
 | `Editorial/` | the API's view of products; link checking; allowlist |
 | `Gift/` | giftability, suggestions, Secret Santa draw, quizzes, taste briefs |
