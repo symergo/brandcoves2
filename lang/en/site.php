@@ -1143,7 +1143,7 @@ return [
     ],
 
     'wizard' => [
-        'title' => 'Make a list in four steps',
+        'title' => 'Make a list in three steps',
         'step_of' => 'Step :step of :total',
         'step_kind' => 'Who for',
         'step_details' => 'Name and occasion',

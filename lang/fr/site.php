@@ -972,7 +972,7 @@ return [
     ],
 
     'wizard' => [
-        'title' => 'Créez une liste en quatre étapes',
+        'title' => 'Créez une liste en trois étapes',
         'step_of' => 'Étape :step sur :total',
         'step_kind' => 'Pour qui',
         'step_details' => 'Nom et occasion',

@@ -971,7 +971,7 @@ return [
     ],
 
     'wizard' => [
-        'title' => 'Crea una lista en cuatro pasos',
+        'title' => 'Crea una lista en tres pasos',
         'step_of' => 'Paso :step de :total',
         'step_kind' => 'Para quién',
         'step_details' => 'Nombre y ocasión',

@@ -975,7 +975,7 @@ return [
     ],
 
     'wizard' => [
-        'title' => 'Maak een lijstje in vier stappen',
+        'title' => 'Maak een lijstje in drie stappen',
         'step_of' => 'Stap :step van :total',
         'step_kind' => 'Voor wie',
         'step_details' => 'Naam en gelegenheid',
