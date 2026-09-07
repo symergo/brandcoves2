@@ -365,7 +365,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                                         </span>
                                     </span>
                                     {deal.discountPercent !== null && (
-                                        <Badge tone="accent" className="shrink-0">
+                                        <Badge tone="discount" className="shrink-0">
                                             −{n(deal.discountPercent)}%
                                         </Badge>
                                     )}

@@ -84,7 +84,7 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                     170px card; the sign and the percent say the same thing
                     at a glance and in every language. */}
                 {group.discountPercent !== null && (
-                    <Badge tone="accent" className="absolute top-2 left-2 tabular-nums">
+                    <Badge tone="discount" className="absolute top-2 left-2 tabular-nums">
                         −{n(group.discountPercent)}%
                     </Badge>
                 )}

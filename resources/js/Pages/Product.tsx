@@ -173,7 +173,7 @@ export default function Product({ product, offers, alert, amazonSearch, descript
 
                             {product.discountPercent !== null && product.medianPrice && (
                                 <>
-                                    <Badge tone="accent">
+                                    <Badge tone="discount">
                                         {t('product.off', { percent: product.discountPercent })}
                                     </Badge>
                                     {/*

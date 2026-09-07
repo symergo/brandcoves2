@@ -12,8 +12,14 @@ import { type ReactNode } from 'react'
  * `accent` is a wash, not a fill: solid accent is reserved for the one primary
  * action on a view, and a badge that shouts as loudly as the button it sits
  * beside dilutes both.
+ *
+ * `discount` is the one solid tone, and it is green (2026-09-07). A discount
+ * is good news, and the accent wash it wore was the colour of the buy button
+ * — a price cut reading as a call to action rather than as a fact. Solid
+ * rather than a wash because it sits over product photographs, where a
+ * translucent pill takes on whatever is behind it.
  */
-export type BadgeTone = 'accent' | 'sage' | 'neutral' | 'amber'
+export type BadgeTone = 'accent' | 'sage' | 'neutral' | 'amber' | 'discount'
 export type BadgeSize = 'xs' | 'sm'
 
 const tones: Record<BadgeTone, string> = {
@@ -21,6 +27,7 @@ const tones: Record<BadgeTone, string> = {
     sage: 'bg-sage/10 text-sage',
     neutral: 'bg-cream text-ink-soft',
     amber: 'bg-amber/15 text-ink',
+    discount: 'bg-sage text-white',
 }
 
 const sizes: Record<BadgeSize, string> = {

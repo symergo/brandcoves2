@@ -41,7 +41,10 @@ be a `<button>`. A new button is one of these; a new class string is a regressio
 **One badge recipe.** `Badge` takes `tone` (`accent`, `sage`, `neutral`, `amber`) and `size`.
 The accent tone is a *wash* (`bg-accent/10 text-accent-dark`), never a fill: solid accent belongs
 to the one primary action on a view, and a badge that shouts as loudly as the button beside it
-dilutes both. The discount was drawn four ways; it is the accent badge everywhere now.
+dilutes both. The discount was drawn four ways; it is one badge everywhere now — the `discount`
+tone since 2026-09-07: solid sage with white text. Green because a discount is good news, and the
+accent wash it wore was the buy button's colour, so a price cut read as a call to action. Solid
+because it sits over product photographs, where a translucent pill takes on whatever is behind it.
 
 **Solid accent is the primary action, once per view.** The Amazon fallback on the product page
 was a solid accent block above the shop buttons for the offers we actually carry, and read as the
