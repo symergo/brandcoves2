@@ -719,7 +719,6 @@ return [
         'already_shared' => 'al gedeeld',
         'shared_with_nobody' => 'Niemand nieuws om het naar te sturen.',
         'someones_wishlist' => 'Wenslijst van :name',
-        'gift_list_for' => 'Cadeaulijst voor :name',
         'shared_by' => ':name deelde dit lijstje',
         'note_add' => 'Voeg een tekst toe',
         'note_edit' => 'Bewerk',

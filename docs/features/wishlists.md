@@ -1062,6 +1062,10 @@ rather than sending the visitor to search for things they cannot save. The form 
 `form.errors` beside the fields now — a rejected title or name used to close nothing and say
 nothing, which looked like a button that did not fire. `Santa/Index` got the same error display.
 
+*Superseded on 2026-09-07:* the form is gone and the button opens the list wizard for everybody,
+signed in or not; the wizard carries the sign-in itself, at the last step. See
+[list-surfaces.md](list-surfaces.md), "One door to a new list".
+
 **Deleting a list invalidates the saved-items store.** `savedItems.invalidate()` was written for
 exactly that and had no caller, so every bookmark on the next page still reported its products
 as saved, into a list that was gone.

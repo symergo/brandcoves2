@@ -716,7 +716,6 @@ return [
         'already_shared' => 'déjà partagée',
         'shared_with_nobody' => 'Personne de nouveau à qui l\'envoyer.',
         'someones_wishlist' => 'La liste de :name',
-        'gift_list_for' => 'Liste cadeaux pour :name',
         'shared_by' => ':name a partagé cette liste',
         'note_add' => 'Ajouter un mot',
         'note_edit' => 'Modifier',

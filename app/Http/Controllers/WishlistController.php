@@ -25,6 +25,7 @@ use App\Services\Wishlist\ContributionView;
 use App\Services\Wishlist\DefaultList;
 use App\Services\Wishlist\ListMaker;
 use App\Services\Wishlist\OccasionDate;
+use App\Services\Wishlist\WizardOffer;
 use App\Support\CurrentMarket;
 use App\Support\DayAndMonth;
 use App\Support\ListAccess;
@@ -39,7 +40,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class WishlistController extends Controller
 {
-    public function index(Request $request, CurrentMarket $current): Response
+    public function index(Request $request, CurrentMarket $current, WizardOffer $offer): Response
     {
         $owner = Owner::fromRequest($request);
 
@@ -167,35 +168,14 @@ class WishlistController extends Controller
              * nothing about which one they asked.
              */
             'view' => $view,
-            'recipients' => $owner->scope(Recipient::query())
-                ->orderBy('name')
-                ->get(['id', 'name', 'relationship', 'occasion']),
-
             /*
-             * Friends who are not already a recipient, for the new-list form.
-             *
-             * Picking one links the profile to their account, so what they say
-             * about their own taste outranks what you guessed. Already-linked
-             * friends are filtered out because they are in `recipients` above
-             * under their own name — offering them twice would make two ways to
-             * choose the same person, one of which quietly makes a second
-             * profile.
-             *
-             * Empty for an anonymous owner: a friendship is between two
-             * accounts, and the form hides the group rather than showing it
-             * empty.
+             * Everything the list wizard offers — people, friends, occasions —
+             * in the same shape the Gift Cove sends it. "New list" here used to
+             * open a one-screen form with its own copies of these, and one of
+             * them dropped friends who already had a profile: the bug the
+             * wizard had just fixed. One source now, see WizardOffer.
              */
-            'friends' => $owner->user === null ? [] : app(Friends::class)
-                ->forUser($owner->user)
-                ->reject(fn ($friendship) => Recipient::query()
-                    ->where('owner_user_id', $owner->user->id)
-                    ->where('user_id', $friendship->friend_id)
-                    ->exists())
-                ->map(fn ($friendship) => [
-                    'id' => $friendship->friend_id,
-                    'name' => $friendship->friend->displayName(),
-                ])
-                ->values(),
+            ...$offer->for($owner, $owner->user, $current->get()),
 
             'isSignedIn' => $owner->isSignedIn(),
         ]);

@@ -240,4 +240,52 @@ class ListWizardTest extends TestCase
         $this->assertNull($dates->for(EventType::Wedding, Market::BeNl, null, $today));
         $this->assertNull($dates->for(EventType::Baby, Market::BeNl, null, $today));
     }
+
+    #[Test]
+    public function my_lists_offers_the_wizard_the_same_people_as_the_gift_cove(): void
+    {
+        /*
+         * "New list" on My Lists opens the wizard since 2026-09-07, and the
+         * page used to send it a hand-made copy of the friends list that
+         * dropped anybody who already had a profile — the bug the Gift Cove
+         * had fixed a day earlier. Both pages read WizardOffer now, and this
+         * holds them to the same answer.
+         */
+        $owner = $this->user();
+        $friend = $this->user('friend@example.test');
+        app(Friends::class)->link($owner, $friend);
+
+        $this->actingAs($owner)->post('/be-nl/lists', [
+            'title' => 'For my friend',
+            'friend_id' => $friend->id,
+        ])->assertRedirect();
+
+        $props = fn (string $path) => $this->actingAs($owner)->get($path)->assertOk()
+            ->viewData('page')['props'];
+
+        $cove = $props('/be-nl/gift-cove');
+        $lists = $props('/be-nl/lists');
+
+        $this->assertSame($cove['friends'], $lists['friends']);
+        $this->assertSame($cove['recipients'], $lists['recipients']);
+        $this->assertSame($cove['occasions'], $lists['occasions']);
+
+        // The friend is offered once, as the profile the list made for them.
+        $this->assertCount(1, $lists['friends']);
+        $this->assertNotNull($lists['friends'][0]['recipientId']);
+        $this->assertSame([], $lists['recipients']);
+    }
+
+    #[Test]
+    public function signed_out_my_lists_still_gives_the_wizard_its_occasions(): void
+    {
+        // The page renders for a stranger, and the wizard on it has what it
+        // needs to walk them through: the walk is the explanation, and the
+        // sign-in is the last button.
+        $anonymous = $this->get('/be-nl/lists')->assertOk()->viewData('page')['props'];
+
+        $this->assertSame([], $anonymous['friends']);
+        $this->assertSame([], $anonymous['recipients']);
+        $this->assertNotEmpty($anonymous['occasions']);
+    }
 }

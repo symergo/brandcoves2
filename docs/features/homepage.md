@@ -255,7 +255,7 @@ three sentences — `lists.new_mine_body`, `lists.new_for_someone_body`, `lists.
 the two surfaces cannot describe the choice differently.
 
 **Each choice is a link to `?new=<kind>`, not a second create form.** `Lists/Index` already reads
-that parameter to open its form pre-set to a shape; it was added so the Gift Cove's cards could land
+that parameter to open the list wizard with the kind answered (a one-screen form until 2026-09-07); it was added so the Gift Cove's cards could land
 on the thing they had just described. There is one `POST /lists` and one `ListMaker`, and this is a
 shortcut into them rather than a parallel path that can drift.
 

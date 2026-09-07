@@ -851,7 +851,6 @@ return [
         'already_shared' => 'already shared',
         'shared_with_nobody' => 'Nobody new to send it to.',
         'someones_wishlist' => ":name's wishlist",
-        'gift_list_for' => 'Gift list for :name',
         'shared_by' => ':name shared this list',
         'note_add' => 'Add a note',
         'note_edit' => 'Edit',

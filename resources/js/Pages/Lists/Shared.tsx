@@ -13,6 +13,7 @@ import type { SharedProps } from '../../types'
 import { formatOccasionDate, formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import ScanButton from '../../Components/ScanButton'
+import ToolIcon from '../../Components/ToolIcon'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import { send } from '../../http'
 import { useSignIn } from '../../signIn'
@@ -805,8 +806,12 @@ export default function SharedList({
                                         )
                                     }}
                                 />
-                                <button type="submit" className="rounded-lg border border-line px-4 py-2 text-sm hover:border-ink">
-                                    {t('search.submit')}
+                                <button
+                                    type="submit"
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark"
+                                >
+                                    <ToolIcon name="search" className="h-5 w-5" />
+                                    <span className="sr-only">{t('search.submit')}</span>
                                 </button>
                             </form>
 

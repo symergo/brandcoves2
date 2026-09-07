@@ -29,11 +29,24 @@ interface Friend extends Person {
     recipientId: string | null
 }
 
-interface Props {
-    signedIn: boolean
+/** What the server offers the wizard; see App\Services\Wishlist\WizardOffer. */
+export interface WizardOffer {
     recipients: (Person & { id: string })[]
     friends: Friend[]
     occasions: { value: string; label: string; date: string | null }[]
+}
+
+interface Props extends WizardOffer {
+    signedIn: boolean
+    /**
+     * A kind already chosen — by the link that opened the page, as the Gift
+     * Cove's cards and the home page do with `?new=<kind>`. The first
+     * question is then answered, so the wizard opens on the second; the
+     * back button still leads to it.
+     */
+    initialKind?: Kind
+    /** Offered where the wizard was opened by a button and can be put away again. */
+    onCancel?: () => void
 }
 
 /**
@@ -53,6 +66,25 @@ const STEPS = ['kind', 'details', 'sharing', 'done'] as const
 type Step = (typeof STEPS)[number]
 
 /**
+ * Is there a draft waiting to be replayed? My Lists asks on arrival, so a
+ * sign-in that lands there rather than on the Gift Cove still finishes the
+ * list it was started for.
+ */
+export function hasListDraft(): boolean {
+    try {
+        const raw = localStorage.getItem(DRAFT)
+
+        if (!raw) {
+            return false
+        }
+
+        return Date.now() - (JSON.parse(raw) as { at: number }).at <= DRAFT_TTL
+    } catch {
+        return false
+    }
+}
+
+/**
  * A list, made in four questions.
  *
  * The create form on My Lists asks the same things on one screen and assumes
@@ -66,12 +98,12 @@ type Step = (typeof STEPS)[number]
  * afterwards; `store()` now takes them too, because a wizard that explains an
  * option and then sends you elsewhere to turn it on has explained it to nobody.
  */
-export default function ListWizard({ signedIn, recipients, friends, occasions }: Props) {
+export default function ListWizard({ signedIn, recipients, friends, occasions, initialKind, onCancel }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
 
-    const [step, setStep] = useState<Step>('kind')
+    const [step, setStep] = useState<Step>(initialKind === undefined ? 'kind' : 'details')
 
     /*
      * "That date is not our date."
@@ -83,14 +115,14 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
      * rather than either asking everybody or deciding for everybody.
      */
     const [ownDate, setOwnDate] = useState(false)
-    const [kind, setKind] = useState<Kind>('mine')
+    const [kind, setKind] = useState<Kind>(initialKind ?? 'mine')
 
     const form = useForm({
         title: '',
         recipient_id: '',
         new_recipient: '',
         friend_id: '' as string | number,
-        together: false,
+        together: initialKind === 'group',
         birthday_day: '',
         birthday_month: '',
         event_type: '',
@@ -732,14 +764,21 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
             </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                <button
-                    type="button"
-                    onClick={back}
-                    disabled={index === 0}
-                    className="text-sm text-ink-soft underline disabled:invisible"
-                >
-                    ← {t('wizard.back')}
-                </button>
+                <div className="flex items-center gap-4">
+                    <button
+                        type="button"
+                        onClick={back}
+                        disabled={index === 0}
+                        className="text-sm text-ink-soft underline disabled:invisible"
+                    >
+                        ← {t('wizard.back')}
+                    </button>
+                    {onCancel && (
+                        <button type="button" onClick={onCancel} className="text-sm text-ink-soft underline">
+                            {t('lists.cancel')}
+                        </button>
+                    )}
+                </div>
 
                 {step !== 'done' ? (
                     <button

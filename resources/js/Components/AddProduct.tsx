@@ -4,6 +4,7 @@ import { formatPrice } from '../types'
 import type { CurrentMarket } from '../types'
 import { useTranslations } from '../useTranslations'
 import ScanButton from './ScanButton'
+import ToolIcon from './ToolIcon'
 
 interface GroupHit {
     id: number
@@ -347,14 +348,16 @@ export default function AddProduct({
                                 search(gtin)
                             }}
                         />
-                        {/* Named as well as pressable: nothing else on screen
-                            says that typing here does not search by itself. */}
+                        {/* The magnifier, as on every search field of the site:
+                            the one glyph that says typing here does not search
+                            by itself. The word stays for screen readers. */}
                         <button
                             type="submit"
                             disabled={searching}
-                            className="shrink-0 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark disabled:opacity-50"
                         >
-                            {t('search.submit')}
+                            <ToolIcon name="search" className="h-5 w-5" />
+                            <span className="sr-only">{t('search.submit')}</span>
                         </button>
 
                     </form>

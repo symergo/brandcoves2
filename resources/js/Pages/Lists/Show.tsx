@@ -223,8 +223,8 @@ export default function ListShow({
         <>
             <Head title={list.title} />
 
-                <header className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
+                <header className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
                         <Link href={`${base}/lists`} className="text-sm text-ink-soft hover:text-ink">
                             ← {t('lists.title')}
                         </Link>
@@ -261,22 +261,6 @@ export default function ListShow({
                                 {shared ? t('lists.shared_short') : t('lists.private_short')}
                             </span>
                         </div>
-                        {/*
-                          "Gift list for Anna", not "Anna".
-
-                          A bare name under a title is ambiguous in the one way that
-                          matters here: on a list called "Birthday", "Anna" reads
-                          just as easily as who made it as who it is for. Naming the
-                          relationship costs two words and removes the guess — and
-                          it is the fact that decides who may claim, so it is worth
-                          saying rather than implying.
-                        */}
-                        {list.recipient && (
-                            <p className="mt-1 text-ink-soft">
-                                {t('lists.gift_list_for', { name: list.recipient.name })}
-                            </p>
-                        )}
-
                         {/*
                           A note, under the name, in the owner's own words.
 
@@ -408,7 +392,7 @@ export default function ListShow({
                             }}
                             aria-label={t('lists.delete_list')}
                             title={t('lists.delete_list')}
-                            className="shrink-0 rounded-lg border border-line p-1.5 text-ink-soft transition hover:border-accent hover:text-accent"
+                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-ink-soft transition hover:border-accent hover:text-accent sm:h-9 sm:w-9"
                         >
                             {/*
                               An icon, not the words "Delete this list".
@@ -419,6 +403,12 @@ export default function ListShow({
                               is on the list. Small and cornered is the right
                               weight for something you should have to go and find.
                               The words survive as the label and the tooltip.
+
+                              Top right on every width. The header used to wrap,
+                              so on a phone the icon dropped under the title and
+                              the pills, where the eye had to hunt for it; the
+                              title column now shrinks and the icon keeps the
+                              corner. 44px on a phone, the site's minimum target.
                             */}
                             <svg
                                 aria-hidden
@@ -426,7 +416,7 @@ export default function ListShow({
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="1.5"
-                                className="h-4 w-4"
+                                className="h-5 w-5"
                             >
                                 <path
                                     strokeLinecap="round"

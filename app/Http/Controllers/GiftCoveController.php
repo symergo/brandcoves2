@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\EventType;
 use App\Enums\ListKind;
 use App\Models\Friendship;
 use App\Models\Recipient;
@@ -12,14 +11,11 @@ use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Services\Seo\PageMeta;
-use App\Services\Social\Friends;
 use App\Services\Wishlist\DefaultList;
-use App\Services\Wishlist\OccasionDate;
+use App\Services\Wishlist\WizardOffer;
 use App\Support\CurrentMarket;
-use App\Support\DayAndMonth;
 use App\Support\Owner;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -42,7 +38,7 @@ use Inertia\Response;
  */
 class GiftCoveController extends Controller
 {
-    public function __invoke(Request $request, CurrentMarket $current): Response
+    public function __invoke(Request $request, CurrentMarket $current, WizardOffer $offer): Response
     {
         app(PageMeta::class)->set(
             title: __('site.gift_cove.seo_title'),
@@ -59,23 +55,6 @@ class GiftCoveController extends Controller
         if ($owner->isSignedIn()) {
             app(DefaultList::class)->for($owner, $current);
         }
-
-        /*
-         * The people and dates the wizard offers, gathered once.
-         *
-         * `$linked` is my people keyed by the account behind them, which makes
-         * "does this friend already have a profile" a lookup rather than a
-         * query per friend.
-         */
-        $dates = app(OccasionDate::class);
-        $recipients = $owner->exists()
-            ? $owner->scope(Recipient::query())->orderBy('name')->get()
-            : collect();
-        $friendships = $user === null ? collect() : app(Friends::class)->forUser($user);
-        $linked = $recipients->whereNotNull('user_id')->keyBy('user_id');
-        $nextBirthday = fn (?DayAndMonth $birthday) => $birthday === null
-            ? null
-            : $dates->for(EventType::Birthday, $current->get(), $birthday)?->toDateString();
 
         $lists = $owner->exists()
             ? $owner->scope(Wishlist::query())
@@ -176,63 +155,10 @@ class GiftCoveController extends Controller
                     : 0,
             ],
 
-            /*
-             * Who the wizard can make a list for, and who it can share with.
-             *
-             * **Every** friend, always, and that is the fix to a picker that
-             * emptied itself: friends who already had a profile with me were
-             * dropped from the group on the reasoning that they were listed
-             * under their own name among my people. So using a friend once
-             * removed them from "from your friends" for good, and somebody
-             * whose only friend already had a profile saw a heading with
-             * nothing under it. They keep one entry either way: a friend who
-             * has a profile is offered *as* that profile, so picking them can
-             * never make a second one.
-             *
-             * Birthdays ride along, so the wizard can fill in the date for
-             * "Birthday" rather than ask for something it is holding.
-             */
-            'friends' => $friendships
-                ->map(fn (Friendship $friendship) => [
-                    'id' => $friendship->friend_id,
-                    'name' => $friendship->friend->displayName(),
-                    'recipientId' => $linked->get($friendship->friend_id)?->id,
-                    'birthday' => $nextBirthday($this->birthdayOf($friendship, $linked)),
-                ])
-                ->values()
-                ->all(),
-
-            // The people who are not one of those friends. Somebody with both
-            // an account and a profile is one person, and belongs in one list.
-            'recipients' => $recipients
-                ->reject(fn (Recipient $r) => $r->user_id !== null
-                    && $friendships->contains('friend_id', $r->user_id))
-                ->map(fn (Recipient $r) => [
-                    'id' => $r->id,
-                    'name' => $r->name,
-                    'birthday' => $nextBirthday(DayAndMonth::fromDate($r->birthday)),
-                ])
-                ->values()
-                ->all(),
-
-            /*
-             * Each occasion with the date it falls on, where that is knowable.
-             *
-             * Christmas is the 25th, and Mother's Day is a rule this market
-             * either keeps or does not; see OccasionDate. Null means the wizard
-             * has to ask, which is the honest answer for a wedding. A birthday
-             * is null here too and answered by the person instead.
-             */
-            'occasions' => array_map(
-                fn (EventType $type) => [
-                    'value' => $type->value,
-                    'label' => $type->label(),
-                    'date' => $type === EventType::Birthday
-                        ? null
-                        : $dates->for($type, $current->get())?->toDateString(),
-                ],
-                EventType::cases(),
-            ),
+            // The people a list can be for, the friends it can be shared
+            // with, and the occasions with their dates. Shared with My Lists,
+            // which mounts the same wizard; see WizardOffer.
+            ...$offer->for($owner, $user, $current->get()),
 
             'santaGroups' => $user === null
                 ? []
@@ -278,26 +204,5 @@ class GiftCoveController extends Controller
                 'santa' => $current->url('santa'),
             ],
         ]);
-    }
-
-    /**
-     * A friend's birthday, from whichever of the three places holds one.
-     *
-     * What they published wins over my note about them, the same order the
-     * Friends page reads them in. The profile I already made for them is the
-     * last resort, and carries whatever was true when it was made.
-     */
-    private function birthdayOf(Friendship $friendship, Collection $linked): ?DayAndMonth
-    {
-        $friend = $friendship->friend;
-
-        if ($friend?->friends_see_birthday === true && $friend->birthday !== null) {
-            return DayAndMonth::fromDate($friend->birthday);
-        }
-
-        return DayAndMonth::fromColumns(
-            $friendship->friend_birthday_day,
-            $friendship->friend_birthday_month,
-        ) ?? DayAndMonth::fromDate($linked->get($friendship->friend_id)?->birthday);
     }
 }

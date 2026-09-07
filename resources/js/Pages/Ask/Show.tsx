@@ -6,6 +6,7 @@ import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
 import ScanButton from '../../Components/ScanButton'
+import ToolIcon from '../../Components/ToolIcon'
 
 interface Pick {
     id: number
@@ -314,9 +315,10 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                                             { preserveState: true, preserveScroll: true },
                                         )
                                     }
-                                    className="rounded-lg border border-line px-4 py-2 text-sm hover:border-ink"
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-dark"
                                 >
-                                    {t('search.submit')}
+                                    <ToolIcon name="search" className="h-5 w-5" />
+                                    <span className="sr-only">{t('search.submit')}</span>
                                 </button>
                             </div>
 

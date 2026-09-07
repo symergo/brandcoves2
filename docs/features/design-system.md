@@ -123,3 +123,12 @@ so on the field); an empty-state sentence ("you have no friends yet") is a state
 explanation, and stays visible; choice cards carry their labels and one (i) on the legend lists
 what each choice means. The list wizard is the reference implementation. New forms follow it;
 existing ones move over as they are touched.
+
+## A search button is a magnifier (2026-09-07)
+
+Every field that searches ends in the same button: a square the height of the field, the accent
+colour, the `search` glyph from `ToolIcon`, and the word ("Zoeken") kept for screen readers only.
+The home page, the search page, the 404 page, the add-a-product panel on a list, the suggestion
+search on a shared list and the picks search on a question all use it. The word was set four
+different ways across those six and was the widest thing on the row on a phone; the glyph is
+recognised faster than the word and reads the same in four languages.

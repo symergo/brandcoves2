@@ -1,11 +1,11 @@
-import { Head, Link, useForm, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { Head, Link, usePage } from '@inertiajs/react'
+import { useEffect, useState } from 'react'
 import { type ListKind } from '../../Components/ListKindBadge'
 import ListPills from '../../Components/ListPills'
 import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
-import Button from '../../Components/Button'
+import ListWizard, { hasListDraft, type WizardOffer } from '../../Components/ListWizard'
 
 interface ListSummary {
     id: string
@@ -40,18 +40,13 @@ interface ListSummary {
 
 type ListsView = 'mine' | 'shared' | 'group'
 
-interface Props {
+/**
+ * The page's own props, plus everything the list wizard needs — people,
+ * friends, occasions — in the shape the Gift Cove already sends it.
+ */
+interface Props extends WizardOffer {
     lists: ListSummary[]
     view: ListsView
-    recipients: { id: string; name: string; relationship: string | null }[]
-    /**
-     * Friends who are not already a recipient.
-     *
-     * Picking one links the profile to their account, so what they say about
-     * their own taste outranks what the list's owner guessed. Empty for an
-     * anonymous owner, and the group is hidden rather than shown empty.
-     */
-    friends: { id: number; name: string }[]
     isSignedIn: boolean
 }
 
@@ -204,7 +199,7 @@ function ListCard({ list }: { list: ListSummary }) {
     )
 }
 
-export default function ListsIndex({ lists, view, recipients, friends, isSignedIn }: Props) {
+export default function ListsIndex({ lists, view, recipients, friends, occasions, isSignedIn }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -212,40 +207,23 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
     /*
      * The Gift Cove describes nine tools and six of its cards used to land here,
      * on an index, leaving the reader to work out which button started the thing
-     * they had just read about. `?new=for_someone` opens this form on the right
-     * shape instead.
+     * they had just read about. `?new=for_someone` opens the wizard with that
+     * question answered instead.
      */
     const intent = new URLSearchParams(page.url.split('?')[1] ?? '').get('new')
+    const initialKind = intent === 'mine' || intent === 'for_someone' || intent === 'group' ? intent : undefined
     const [creating, setCreating] = useState(intent !== null)
 
     /*
-     * Three choices, one piece of state.
-     *
-     * `for_me` and `for_someone` differ by whether a recipient is named;
-     * `group` differs from `for_someone` by one further bit, `together`. Held as
-     * one value rather than two booleans so the buttons cannot express a fourth
-     * combination that means nothing — "for me, together" is not a list.
+     * A draft the wizard remembered across a sign-in is finished here too.
+     * The magic link lands wherever it lands; if that is this page, the
+     * wizard has to be open for the draft to be replayed.
      */
-    const [audience, setAudience] = useState<'mine' | 'for_someone' | 'group'>(
-        intent === 'group' ? 'group' : intent === 'for_someone' ? 'for_someone' : 'mine',
-    )
-    const forSomeone = audience !== 'mine'
-
-    // The recipient decides the kind and `together` adds one bit; the server
-    // derives both in `ListMaker` so nothing here can contradict it.
-    const form = useForm({
-        title: '',
-        recipient_id: '',
-        new_recipient: '',
-        // Set instead of `new_recipient` when the person picked is a friend.
-        // The server makes the linked profile; see WishlistController::store.
-        friend_id: '' as string | number,
-        together: false,
-        // Day and month only, as strings because a select's value is one.
-        // Empty means "not given", which the server reads as null.
-        birthday_day: '',
-        birthday_month: '',
-    })
+    useEffect(() => {
+        if (isSignedIn && hasListDraft()) {
+            setCreating(true)
+        }
+    }, [isSignedIn])
 
     /*
      * Three views, and only one of them splits.
@@ -334,27 +312,22 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
                       the header compete with the page under it.
                     */}
                     {/*
-                      Signed out, the button is the sign-in. `POST /lists` is
-                      behind `auth`, so the form used to open, take a title, a
-                      person and a birthday, and bounce to the login page with
-                      all of it gone — announcing the precondition at the last
-                      step instead of the first.
+                      One button for everybody. The wizard behind it is the
+                      same one the Gift Cove opens with: it walks a signed-out
+                      visitor through the four questions as the explanation,
+                      and its last button is the sign-in, which remembers the
+                      answers and replays them on return. Before 2026-09-07 this
+                      opened a one-screen form that asked the same things with
+                      none of the explanation, and a second copy of the picker
+                      that had already been fixed once elsewhere.
                     */}
-                    {isSignedIn ? (
-                        <button
-                            onClick={() => setCreating((v) => !v)}
-                            className="rounded-lg border border-line px-4 py-2 font-medium hover:border-ink"
-                        >
-                            {t('lists.new_list')}
-                        </button>
-                    ) : (
-                        <SignInLink
-                            hint={t('lists.sign_in_hint')}
-                            className="rounded-lg border border-line px-4 py-2 font-medium hover:border-ink"
-                        >
-                            {t('lists.new_list')}
-                        </SignInLink>
-                    )}
+                    <button
+                        onClick={() => setCreating((v) => !v)}
+                        aria-expanded={creating}
+                        className="rounded-lg border border-line px-4 py-2 font-medium hover:border-ink"
+                    >
+                        {t('lists.new_list')}
+                    </button>
                 </div>
             </header>
 
@@ -376,306 +349,16 @@ export default function ListsIndex({ lists, view, recipients, friends, isSignedI
             )}
 
             {creating && (
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault()
-                        form.post(`/${market.key}/lists`, { onSuccess: () => setCreating(false) })
-                    }}
-                    className="mt-6 space-y-3 rounded-card border border-line bg-card p-5"
-                >
-                    <label className="block text-sm font-medium" htmlFor="title">
-                        {t('lists.list_name')}
-                    </label>
-                    <input
-                        id="title"
-                        required
-                        autoFocus
-                        value={form.data.title}
-                        onChange={(e) => form.setData('title', e.target.value)}
-                        aria-invalid={form.errors.title ? true : undefined}
-                        className="w-full rounded-lg border border-line bg-cream px-3 py-2"
+                <div className="mt-6">
+                    <ListWizard
+                        signedIn={isSignedIn}
+                        recipients={recipients}
+                        friends={friends}
+                        occasions={occasions}
+                        initialKind={initialKind}
+                        onCancel={() => setCreating(false)}
                     />
-                    {/*
-                      What the server refused, said next to the field. Nothing
-                      on this form rendered `form.errors`, so a rejected title
-                      or name closed nothing and said nothing — it looked like a
-                      button that did not fire.
-                    */}
-                    {form.errors.title && (
-                        <p className="text-sm text-danger" role="alert">{form.errors.title}</p>
-                    )}
-
-                    {/*
-                      Who it is for, asked as a choice rather than left implied
-                      by a dropdown that only appears once you already have
-                      people in it. Before this the form could only make a list
-                      for yourself: the sole place to name a new person was the
-                      picker on a product card.
-                    */}
-                    {/*
-                      Three cards, each naming what will HAPPEN on the list.
-
-                      They were three pills — "For me", "For someone else",
-                      "Together" — which name who the list is *about*. That is
-                      not the choice being made: the three kinds differ in who
-                      may claim, who may vote and who sees the money, and none of
-                      that is recoverable from the audience. A hint appeared for
-                      the group option alone, on the stated grounds that three
-                      permanent hints is a paragraph nobody reads. True of a
-                      paragraph; not true of three cards, where the sentence is
-                      what is being compared and the eye reads across rather than
-                      down.
-
-                      This is also the only cheap moment to explain any of it.
-                      The choice is free to change here and awkward to change
-                      afterwards, and somebody who picks wrong finds out weeks
-                      later when the mechanism they wanted is not on the page.
-
-                      Neither of the first two promises an audience — most lists
-                      of both kinds stay private, and a card that says "people
-                      claim them" describes readers who do not exist. Only the
-                      group card does, because a group gift with nobody else on
-                      it is not a thing at all, which is exactly why that kind is
-                      chosen up front rather than derived.
-                    */}
-                    <fieldset>
-                        <legend className="text-sm font-medium">{t('lists.for_whom')}</legend>
-                        <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                            {([
-                                { value: 'mine', label: t('lists.for_me'), body: t('lists.new_mine_body') },
-                                { value: 'for_someone', label: t('lists.for_someone_else'), body: t('lists.new_for_someone_body') },
-                                { value: 'group', label: t('lists.for_group'), body: t('lists.new_group_body') },
-                            ] as const).map((choice) => (
-                                <button
-                                    key={choice.value}
-                                    type="button"
-                                    aria-pressed={audience === choice.value}
-                                    onClick={() => {
-                                        setAudience(choice.value)
-
-                                        // Only a group list pools money, and the
-                                        // server re-derives this from the same
-                                        // bit — this just keeps the form honest.
-                                        form.setData('together', choice.value === 'group')
-
-                                        if (choice.value === 'mine') {
-                                            form.setData('recipient_id', '')
-                                            form.setData('new_recipient', '')
-                                            form.setData('friend_id', '')
-                                        }
-                                    }}
-                                    className={`rounded-card border p-3 text-left ${
-                                        audience === choice.value
-                                            ? 'border-accent bg-accent/10'
-                                            : 'border-line hover:border-ink'
-                                    }`}
-                                >
-                                    <span
-                                        className={`block text-sm font-medium ${
-                                            audience === choice.value ? 'text-accent' : ''
-                                        }`}
-                                    >
-                                        {choice.label}
-                                    </span>
-                                    <span className="mt-1 block text-xs text-ink-soft">
-                                        {choice.body}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </fieldset>
-
-                    {forSomeone && (
-                        <>
-                            {/*
-                              One dropdown, three kinds of answer.
-
-                              Somebody you have made a list for before, one of
-                              your friends, or a name you are about to type.
-                              The friends group is the useful new one: picking
-                              there links the profile to a real account, so what
-                              *they* say about their own taste outranks what you
-                              guessed — the same link the "this is me" flow
-                              makes, reached from a name you already have.
-
-                              A friend is encoded as `friend:{id}` rather than
-                              given its own control, because these are three
-                              answers to one question and a second control would
-                              let somebody answer it twice.
-                            */}
-                            {(recipients.length > 0 || friends.length > 0) && (
-                                <select
-                                    aria-label={t('lists.for_whom')}
-                                    value={
-                                        form.data.friend_id === ''
-                                            ? form.data.recipient_id
-                                            : `friend:${form.data.friend_id}`
-                                    }
-                                    onChange={(e) => {
-                                        const value = e.target.value
-
-                                        if (value.startsWith('friend:')) {
-                                            form.setData('friend_id', Number(value.slice(7)))
-                                            form.setData('recipient_id', '')
-                                            // Their name comes from their account
-                                            // on the server; typing one here would
-                                            // be a second answer to the same
-                                            // question.
-                                            form.setData('new_recipient', '')
-
-                                            return
-                                        }
-
-                                        form.setData('friend_id', '')
-                                        form.setData('recipient_id', value)
-                                    }}
-                                    className="w-full rounded-lg border border-line bg-cream px-3 py-2"
-                                >
-                                    <option value="">{t('lists.someone_new')}</option>
-
-                                    {recipients.map((r) => (
-                                        <option key={r.id} value={r.id}>{r.name}</option>
-                                    ))}
-
-                                    {friends.length > 0 && (
-                                        <optgroup label={t('lists.from_your_friends')}>
-                                            {friends.map((friend) => (
-                                                <option key={friend.id} value={`friend:${friend.id}`}>
-                                                    {friend.name}
-                                                </option>
-                                            ))}
-                                        </optgroup>
-                                    )}
-                                </select>
-                            )}
-
-                            {form.data.recipient_id === '' && form.data.friend_id === '' && (
-                                <>
-                                    <label className="block text-sm font-medium" htmlFor="new-recipient">
-                                        {t('lists.person_name')}
-                                    </label>
-                                    <input
-                                        id="new-recipient"
-                                        required
-                                        maxLength={80}
-                                        value={form.data.new_recipient}
-                                        onChange={(e) => form.setData('new_recipient', e.target.value)}
-                                        aria-invalid={form.errors.new_recipient ? true : undefined}
-                                        className="w-full rounded-lg border border-line bg-cream px-3 py-2"
-                                    />
-                                    {form.errors.new_recipient && (
-                                        <p className="text-sm text-danger" role="alert">{form.errors.new_recipient}</p>
-                                    )}
-
-                                    {/*
-                                      Their birthday, day and month, optional.
-
-                                      Asked here because here is where somebody
-                                      already has the person in mind — going and
-                                      finding them again later to add a date is a
-                                      trip nobody makes, which is why
-                                      `recipients.birthday` sat empty on almost
-                                      every row while the reminder job that reads
-                                      it was already running.
-
-                                      **No year.** Every reader matches on month
-                                      and day, because a birthday recurs; a year
-                                      would be a piece of personal data with no
-                                      use, and asking for one invites the
-                                      arithmetic nobody wants done. The hint says
-                                      so, because a date field with no year is
-                                      unusual enough to need explaining.
-
-                                      Only on a person being *created*. Picking
-                                      somebody who already exists leaves their
-                                      details alone — a blank field quietly
-                                      overwriting a date entered months ago is an
-                                      edit nobody would find.
-                                    */}
-                                    <fieldset className="mt-1">
-                                        <legend className="text-sm font-medium">
-                                            {t('lists.birthday_optional')}
-                                        </legend>
-                                        <p className="mt-1 text-xs text-ink-soft">
-                                            {t('lists.birthday_why')}
-                                        </p>
-
-                                        <div className="mt-2 flex gap-2">
-                                            <select
-                                                aria-label={t('lists.birthday_day')}
-                                                value={form.data.birthday_day}
-                                                onChange={(e) =>
-                                                    form.setData('birthday_day', e.target.value)
-                                                }
-                                                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                                            >
-                                                <option value="">{t('lists.birthday_day')}</option>
-                                                {Array.from({ length: 31 }, (_, i) => i + 1).map(
-                                                    (day) => (
-                                                        <option key={day} value={day}>
-                                                            {day}
-                                                        </option>
-                                                    ),
-                                                )}
-                                            </select>
-
-                                            <select
-                                                aria-label={t('lists.birthday_month')}
-                                                value={form.data.birthday_month}
-                                                onChange={(e) =>
-                                                    form.setData('birthday_month', e.target.value)
-                                                }
-                                                className="rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                                            >
-                                                <option value="">{t('lists.birthday_month')}</option>
-                                                {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                                                    (month) => (
-                                                        <option key={month} value={month}>
-                                                            {/*
-                                                              The month's name in
-                                                              the reader's own
-                                                              market, not a
-                                                              number: "3" is
-                                                              March here and
-                                                              nowhere else in the
-                                                              world reliably.
-                                                            */}
-                                                            {new Date(2000, month - 1, 1)
-                                                                .toLocaleDateString(
-                                                                    market.hrefLang,
-                                                                    { month: 'long' },
-                                                                )}
-                                                        </option>
-                                                    ),
-                                                )}
-                                            </select>
-                                        </div>
-                                    </fieldset>
-                                </>
-                            )}
-                        </>
-                    )}
-
-                    {/*
-                      Anything refused that has no field of its own above — the
-                      recipient or friend picked, the birthday, or a rule about
-                      the combination.
-                    */}
-                    {Object.entries(form.errors)
-                        .filter(([field]) => !['title', 'new_recipient'].includes(field))
-                        .map(([field, message]) => (
-                            <p key={field} className="text-sm text-danger" role="alert">{message}</p>
-                        ))}
-
-                    <div className="flex gap-2">
-                        <Button type="submit" busy={form.processing}>
-                            {t('lists.create')}
-                        </Button>
-                        <Button variant="secondary" onClick={() => setCreating(false)}>
-                            {t('lists.cancel')}
-                        </Button>
-                    </div>
-                </form>
+                </div>
             )}
 
             {lists.length === 0 ? (

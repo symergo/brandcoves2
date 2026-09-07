@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react'
 import { useTranslations } from '../../useTranslations'
+import ToolIcon from '../../Components/ToolIcon'
 
 interface Props {
     urls: {
@@ -75,7 +76,7 @@ export default function NotFound({ urls }: Props) {
                 <h1 className="text-3xl font-semibold text-ink sm:text-4xl">{t('not_found.title')}</h1>
                 <p className="mt-3 max-w-xl text-ink-soft">{t('not_found.intro')}</p>
 
-                <form action={urls.search} method="get" role="search" className="mt-8 flex max-w-xl flex-wrap gap-2">
+                <form action={urls.search} method="get" role="search" className="mt-8 flex max-w-xl gap-2">
                     <input
                         type="search"
                         name="q"
@@ -85,13 +86,14 @@ export default function NotFound({ urls }: Props) {
                         // rewritten.
                         aria-label={t('not_found.search_placeholder')}
                         placeholder={t('not_found.search_placeholder')}
-                        className="w-full min-w-0 rounded-card border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft focus:border-ink sm:w-auto sm:flex-1"
+                        className="h-12 min-w-0 flex-1 rounded-card border border-line bg-card px-4 text-ink placeholder:text-ink-soft focus:border-ink"
                     />
                     <button
                         type="submit"
-                        className="shrink-0 rounded-lg bg-ink px-5 py-3 font-medium text-card transition hover:opacity-90"
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-accent text-white transition hover:bg-accent-dark"
                     >
-                        {t('not_found.search_button')}
+                        <ToolIcon name="search" className="h-5 w-5" />
+                        <span className="sr-only">{t('not_found.search_button')}</span>
                     </button>
                 </form>
 

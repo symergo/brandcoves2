@@ -483,6 +483,34 @@ exactly the sort of thing that stops being derived.
   `lists.shared_empty`, `lists.tool_on`, `lists.shared_short` / `private_short`. `lists.about_*`,
   `lists.shared_badge` and `lists.private_badge` are kept but no longer rendered
 
+## One door to a new list: the wizard (2026-09-07)
+
+"New list" on My Lists opens `ListWizard` — the same four questions the Gift Cove opens with —
+and the one-screen create form that used to sit there is gone. Two reasons.
+
+The form asked the same things with none of the explanation. Its three kind cards carried a
+sentence each; the wizard explains a kind before it asks, the sharing before it is chosen, and
+lets a signed-out visitor walk the whole thing as the explanation, with the sign-in as the last
+button and the answers replayed on return. A page that had both was two ways of doing one thing,
+and the poorer one was behind the more prominent button.
+
+The form also had its own copy of the people picker, and it had already drifted: it dropped friends
+who had a profile, the bug the wizard fixed the day before. `App\Services\Wishlist\WizardOffer`
+now builds friends, recipients and occasions for both pages, and `ListWizardTest` holds the two to
+the same answer.
+
+What the wizard learned for this: `initialKind`, so `?new=<kind>` — the Gift Cove's cards, the home
+page's disclosure — opens on the second question with the first answered (back still leads to it);
+`onCancel`, so a wizard opened by a button can be put away by one; and `hasListDraft()`, so My
+Lists opens the wizard on arrival when a draft is waiting, because a magic link does not promise to
+land on the Gift Cove.
+
+Two smaller things on the list page the same day. The "Gift list for Anna" subtitle under the
+title is gone: the recipient is on the kind pill beside the title and in the title itself now that
+the wizard names a list "For Anna", so the line said it a third time. And the delete icon keeps the
+top-right corner on every width — the header used to wrap on a phone and drop the icon under the
+pills — at 44px, the site's minimum target.
+
 ## See also
 
 - [list-taxonomy.md](list-taxonomy.md) — the three kinds, and why they are three
