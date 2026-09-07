@@ -146,7 +146,11 @@ advertisers you are joined to — the same shape as `connectors.awin.advertisers
 **Blocked on:** somebody opening `staging.giftcoves.com` on a handset. Nothing else — this is the
 one item here whose missing input is a person rather than a credential.
 
-**Status:** everything below ships and is tested. What is untested is what it *looks* like at 390px,
+**Status (2026-09-07):** rendered at 390px with Playwright against the dev server — see the phone pass in
+[features/design-system.md](features/design-system.md). `document.body.scrollWidth` was 390 on every page except two, both fixed.
+What a script cannot judge is whether it *looks* right, so the handset check still stands.
+
+**Status before that:** everything below ships and is tested. What is untested is what it *looks* like at 390px,
 and no test in this suite can answer that: the frontend has no visual regression coverage, `tsc`
 type-checks the props and the PHP suite asserts the props arrive. A layout that wraps into nonsense
 passes all of it.

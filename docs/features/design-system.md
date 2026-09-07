@@ -91,3 +91,20 @@ waits its turn, and the description has the same ~70-character measure as every 
 - The footer carries no mark; the social card palette (teal and amber) and the site palette
   (cream and terracotta) are strangers — a decision to make, not a bug.
 - A sticky header, and tap targets under 40px on the picker chevron, pagination and chips.
+
+## The phone pass (2026-09-07)
+
+Every public page rendered at 390×844 with Playwright against the dev server, measuring body
+width, tap targets under 40px, text under 12px and images without a size. Two pages scrolled
+sideways — the discover search row (a `flex-1` form beside the surprise slider that could not
+shrink) and the list-help screenshots (`ml-10` plus `w-full`) — both fixed. The brands index was a
+single column 18,600px tall; two columns and a sticky letter bar with 40px targets took it to
+13,300px with a way back from Z to B. Below `sm`, every `Button` is 44px, chips and reaction
+pills 40px, footer rows and band "see all" links 44px, the save picker's bookmark 40px and its
+chevron 32px wide (it was 20). A card whose feed image is missing or broken shows a gift outline
+in the line colour rather than a blank square (`ImagePlaceholder`). What remains under 40px is
+inline text inside a larger card — a brand name, a title — where the card is the target.
+
+The audit script is not in the repo; it is fifty lines of Playwright over the sitemap's first
+URL of each kind, and worth re-running after any layout change. The numbers it printed are in
+the commit that landed this section.

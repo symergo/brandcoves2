@@ -259,7 +259,11 @@ export default function Discover({ mode, stops, query, surprise, items, layout, 
                     </div>
 
                     <form
-                        className="flex flex-1 gap-2"
+                        // Its own row on a phone. As a flex-1 item beside the
+                        // surprise slider it could not shrink below the field
+                        // plus two buttons, and the page scrolled sideways by
+                        // 15px — the failure docs/TODO.md item 3 describes.
+                        className="flex w-full min-w-0 gap-2 sm:w-auto sm:flex-1"
                         onSubmit={(e) => {
                             e.preventDefault()
                             run(dial, surpriseDial, term)

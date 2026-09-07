@@ -86,7 +86,11 @@ export default function ListHelp({ shots, urls }: Props) {
                                 src={step.shot}
                                 alt={step.alt}
                                 loading="lazy"
-                                className="mt-4 ml-10 w-full rounded-lg border border-line shadow-sm"
+                                // Indented under the step number from `sm` up;
+                                // `ml-10 w-full` together were 100% plus 40px,
+                                // which is the 8px of sideways scroll every
+                                // phone reader of this page got.
+                                className="mt-4 w-full rounded-lg border border-line shadow-sm sm:ml-10 sm:w-[calc(100%-2.5rem)]"
                             />
                         </li>
                     ))}

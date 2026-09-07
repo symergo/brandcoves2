@@ -157,7 +157,7 @@ export default function PopularSearches({ months, trending, latest, urls }: Prop
                                         <li key={item.term}>
                                             <Link
                                                 href={item.url}
-                                                className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm transition hover:border-ink hover:text-accent"
+                                                className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 transition hover:border-ink hover:text-accent"
                                             >
                                                 {item.term}
                                             </Link>
@@ -180,7 +180,7 @@ export default function PopularSearches({ months, trending, latest, urls }: Prop
                                         <li key={item.term}>
                                             <Link
                                                 href={item.url}
-                                                className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm transition hover:border-ink hover:text-accent"
+                                                className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 transition hover:border-ink hover:text-accent"
                                             >
                                                 {item.term}
                                             </Link>

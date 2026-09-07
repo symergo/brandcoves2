@@ -821,7 +821,7 @@ export default function SaveToList({
                         aria-pressed={saved}
                         aria-label={saved ? t('lists.saved') : destination}
                         title={saved ? t('lists.saved') : destination}
-                        className={`flex h-9 w-9 items-center justify-center rounded-l-full border shadow-sm backdrop-blur transition disabled:opacity-50 ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-l-full border shadow-sm backdrop-blur transition disabled:opacity-50 sm:h-9 sm:w-9 ${
                             saved
                                 ? 'border-sage bg-sage text-white'
                                 : 'border-line bg-card/90 text-ink hover:border-ink hover:bg-card'
@@ -857,7 +857,10 @@ export default function SaveToList({
                         aria-expanded={open}
                         aria-haspopup="menu"
                         aria-label={t('lists.save_to_list')}
-                        className="-ml-px flex h-9 w-5 items-center justify-center rounded-r-full border border-line bg-card/90 text-2xs text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink"
+                        // 20px wide on a desktop, where a pointer is precise;
+                        // 32px on a phone, where it was the smallest target on
+                        // the site's busiest surface.
+                        className="-ml-px flex h-10 w-8 items-center justify-center rounded-r-full sm:h-9 border border-line bg-card/90 text-2xs text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink sm:w-5"
                     >
                         ▾
                     </button>

@@ -394,7 +394,7 @@ export default function Search({
               gone missing under this comment; it is back.
             */}
             <p className="mt-2 text-xs text-ink-soft">
-                <Link href={`/${market.key}/search-help`} className="underline hover:text-ink">
+                <Link href={`/${market.key}/search-help`} className="inline-flex min-h-11 items-center underline hover:text-ink sm:min-h-0">
                     {t('search_help.footer_link')}
                 </Link>
             </p>
@@ -585,7 +585,7 @@ export default function Search({
                             <div className="relative ml-auto">
                                 <button
                                     type="button"
-                                    className="flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm transition hover:border-ink"
+                                    className="flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm min-h-10 sm:min-h-0 transition hover:border-ink"
                                     aria-expanded={filtersOpen}
                                     aria-controls="search-filters"
                                     onClick={() => setFiltersOpen(!filtersOpen)}
@@ -681,7 +681,7 @@ export default function Search({
                                     }
                                     // Green, so a chosen word is distinguishable from a
                                     // suggestion at a glance rather than by reading it.
-                                    className="inline-flex items-center gap-1.5 rounded-full border border-sage bg-card px-3 py-1 text-sm text-sage transition hover:border-accent hover:text-accent"
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-sage bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 text-sage transition hover:border-accent hover:text-accent"
                                 >
                                     <span aria-hidden>×</span>
                                     {item.term}
@@ -747,7 +747,7 @@ export default function Search({
                                                     },
                                                 )
                                             }
-                                            className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink"
+                                            className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 text-ink-soft transition hover:border-ink hover:text-ink"
                                         >
                                             <span aria-hidden className="mr-1 text-ink-soft">+</span>
                                             {item.term}
@@ -1220,7 +1220,7 @@ function ShopChips({
      * shops` is the one filled chip.
      */
     const chip = (state: 'on' | 'off' | 'resting') =>
-        `flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
+        `flex min-h-10 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition sm:min-h-0 ${
             {
                 on: 'border-ink bg-ink text-cream',
                 resting: 'border-line bg-card text-ink hover:border-ink',

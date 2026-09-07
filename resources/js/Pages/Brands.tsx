@@ -55,12 +55,22 @@ export default function Brands({ brands }: Props) {
                 </p>
             ) : (
                 <>
-                    <nav aria-label={t('brand.index_title')} className="mt-6 flex flex-wrap gap-2 text-sm">
+                    {/*
+                      The letter bar stays on screen. Five hundred brands in
+                      one column was 18,600px of page on a phone, and the only
+                      way from Z back to B was the scrollbar; sticky, the bar is
+                      the index it was drawn to be. Each letter is a 40px
+                      target, which the old `px-2 py-1` was not.
+                    */}
+                    <nav
+                        aria-label={t('brand.index_title')}
+                        className="sticky top-0 z-10 -mx-4 mt-6 flex flex-wrap gap-1.5 bg-cream px-4 py-2 text-sm"
+                    >
                         {letters.map((letter) => (
                             <a
                                 key={letter}
                                 href={`#letter-${letter}`}
-                                className="rounded border border-line px-2 py-1 hover:border-ink"
+                                className="flex h-10 min-w-10 items-center justify-center rounded border border-line bg-card px-2 hover:border-ink"
                             >
                                 {letter}
                             </a>
@@ -69,12 +79,15 @@ export default function Brands({ brands }: Props) {
 
                     <div className="mt-8 space-y-8">
                         {letters.map((letter) => (
-                            <section key={letter} id={`letter-${letter}`}>
+                            <section key={letter} id={`letter-${letter}`} className="scroll-mt-16">
                                 <h2 className="border-b border-line pb-2 text-lg font-semibold">{letter}</h2>
-                                <ul className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                                {/* Two columns from the narrowest screen: names
+                                    are short, and one column made the page four
+                                    times as tall as it needed to be. */}
+                                <ul className="mt-3 grid grid-cols-2 gap-x-6 lg:grid-cols-3">
                                     {(groups.get(letter) ?? []).map((brand) => (
                                         <li key={brand.url}>
-                                            <Link href={brand.url} className="flex gap-2 py-0.5 hover:text-accent">
+                                            <Link href={brand.url} className="flex min-h-10 items-center gap-2 hover:text-accent">
                                                 <span className="flex-1 truncate">{brand.name}</span>
                                             </Link>
                                         </li>

@@ -4,6 +4,7 @@ import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import PreviewBanner from '../../Components/PreviewBanner'
 import Badge from '../../Components/Badge'
+import ImagePlaceholder from '../../Components/ImagePlaceholder'
 import { useTranslations } from '../../useTranslations'
 import CoveSubscribe from '../../Components/CoveSubscribe'
 import CoveRail, { type Rail } from '../../Components/CoveRail'
@@ -132,7 +133,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                 key={kind}
                 type="button"
                 aria-pressed={reactions[find.id] === kind}
-                className={`rounded-full border px-3 py-1 text-sm ${
+                className={`min-h-10 rounded-full border px-3 py-1 text-sm sm:min-h-0 ${
                     reactions[find.id] === kind ? 'border-accent' : 'border-line'
                 }`}
                 onClick={() => react(find.id, kind)}
@@ -166,14 +167,24 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
                         className="flex flex-col rounded-card border border-line bg-card p-4"
                     >
                         <Link href={find.url}>
-                            {find.image && (
-                                <img
-                                    src={find.image}
-                                    alt=""
-                                    className="mx-auto h-36 object-contain"
-                                    loading="lazy"
-                                />
-                            )}
+                            {/* The picture, or a placeholder in its place: a
+                                find with no image left a 144px blank above its
+                                title. */}
+                            <div className="h-36">
+                                {find.image ? (
+                                    <img
+                                        src={find.image}
+                                        alt=""
+                                        className="mx-auto h-36 object-contain"
+                                        loading="lazy"
+                                        onError={(e) => {
+                                            e.currentTarget.replaceWith(Object.assign(document.createElement('div'), { className: 'h-36' }))
+                                        }}
+                                    />
+                                ) : (
+                                    <ImagePlaceholder />
+                                )}
+                            </div>
                             <h3 className="mt-3 line-clamp-2 font-medium">{find.title}</h3>
                         </Link>
 

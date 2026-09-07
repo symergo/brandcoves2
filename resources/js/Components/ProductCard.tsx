@@ -1,5 +1,7 @@
 import { Link, usePage } from '@inertiajs/react'
+import { useState } from 'react'
 import Badge from './Badge'
+import ImagePlaceholder from './ImagePlaceholder'
 import SaveToList from './SaveToList'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -46,25 +48,29 @@ export interface GroupCard {
 export default function ProductCard({ group, brandUrl }: { group: GroupCard; brandUrl?: string | null }) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
+    const [broken, setBroken] = useState(false)
 
     const comparable = group.merchantCount > 1
 
     return (
         <article className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30">
             <div className="relative aspect-square overflow-hidden bg-cream">
-                {group.image ? (
+                {group.image && !broken ? (
                     <img
                         src={group.image}
                         alt=""
                         loading="lazy"
                         className="h-full w-full object-contain p-4 transition group-hover:scale-[1.02]"
-                        // Feed images 404 constantly. Hiding the broken image is
-                        // less jarring than a browser's broken-image glyph.
-                        onError={(e) => {
-                            e.currentTarget.style.visibility = 'hidden'
-                        }}
+                        // Feed images 404 constantly. A placeholder is less
+                        // jarring than a browser's broken-image glyph — and
+                        // than the blank square this used to leave, which read
+                        // as a card that failed to load rather than a product
+                        // with no picture.
+                        onError={() => setBroken(true)}
                     />
-                ) : null}
+                ) : (
+                    <ImagePlaceholder />
+                )}
 
                 {group.discountPercent !== null && (
                     <Badge tone="accent" className="absolute top-2 left-2">

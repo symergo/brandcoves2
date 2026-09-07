@@ -769,19 +769,19 @@ function Chrome({ children }: PropsWithChildren) {
                             header entry for this to agree with, and a footer
                             link is not the place to introduce a name the rest
                             of the site is not yet using. */}
-                        <Link href={`/${market.key}/brands`} className="hover:text-accent">
+                        <Link href={`/${market.key}/brands`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('brand.index_title')}
                         </Link>
                         {/* Same name as the header uses. Two links to one page
                             under two different words is the exact confusion the
                             Cove naming pass set out to remove. */}
-                        <Link href={`/${market.key}/guides`} className="hover:text-accent">
+                        <Link href={`/${market.key}/guides`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('nav.smart')}
                         </Link>
-                        <Link href={`/${market.key}/${market.coveSegment}`} className="hover:text-accent">
+                        <Link href={`/${market.key}/${market.coveSegment}`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('nav.daily')}
                         </Link>
-                        <Link href={`/${market.key}/surprise`} className="hover:text-accent">
+                        <Link href={`/${market.key}/surprise`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('nav.surprise')}
                         </Link>
 
@@ -792,7 +792,7 @@ function Chrome({ children }: PropsWithChildren) {
                             its short name: the question it is titled with on
                             those pages is aimed at a search that just failed,
                             not at a row of nouns on every page. */}
-                        <Link href={`/${market.key}/search-help`} className="hover:text-accent">
+                        <Link href={`/${market.key}/search-help`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('search_help.footer_link')}
                         </Link>
 
@@ -801,7 +801,7 @@ function Chrome({ children }: PropsWithChildren) {
                             them: somebody looking for "how do I search" scans
                             for that phrase, and a single "Help" would make them
                             open a page to find out whether it is the right one. */}
-                        <Link href={`/${market.key}/help`} className="hover:text-accent">
+                        <Link href={`/${market.key}/help`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('help.link')}
                         </Link>
 
@@ -811,19 +811,19 @@ function Chrome({ children }: PropsWithChildren) {
                             results page used to carry are concentrated here
                             instead, which is also the only place a crawler can
                             reach them from an arbitrary page. */}
-                        <Link href={`/${market.key}/popular-searches`} className="hover:text-accent">
+                        <Link href={`/${market.key}/popular-searches`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('popular_searches.title')}
                         </Link>
 
                         {/* Belgian law wants the operator's details reachable
                             from every page. The footer is that. */}
-                        <Link href={`/${market.key}/about`} className="hover:text-accent">
+                        <Link href={`/${market.key}/about`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('legal.about')}
                         </Link>
-                        <Link href={`/${market.key}/privacy`} className="hover:text-accent">
+                        <Link href={`/${market.key}/privacy`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('legal.privacy')}
                         </Link>
-                        <Link href={`/${market.key}/terms`} className="hover:text-accent">
+                        <Link href={`/${market.key}/terms`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
                             {t('legal.terms')}
                         </Link>
                         {/* Withdrawing consent has to be as easy as giving it
@@ -837,7 +837,7 @@ function Chrome({ children }: PropsWithChildren) {
                             <button
                                 type="button"
                                 onClick={() => window.dispatchEvent(new Event('bc:cookie-settings'))}
-                                className="hover:text-accent"
+                                className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0"
                             >
                                 {t('legal.cookies')}
                             </button>

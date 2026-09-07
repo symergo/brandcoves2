@@ -349,7 +349,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                     </h2>
                     <Link
                         href={`${base}/gift-cove`}
-                        className="text-sm font-medium text-accent-dark hover:text-ink"
+                        className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
                     >
                         {t('nav.cove')} →
                     </Link>
@@ -586,7 +586,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                     </h2>
                     <Link
                         href={`${base}/discover-cove`}
-                        className="text-sm font-medium text-accent-dark hover:text-ink"
+                        className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
                     >
                         {t('nav.discover_cove')} →
                     </Link>
@@ -760,7 +760,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                         </h2>
                         <Link
                             href={`${base}/gift-ideas`}
-                            className="text-sm font-medium text-accent-dark hover:text-ink"
+                            className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
                         >
                             {t('home.personas_all')} →
                         </Link>
@@ -825,7 +825,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                           "All Coves" and landing in different places is the
                           drift this codebase keeps writing about.
                         */}
-                        <Link href={`${base}/coves`} className="text-sm font-medium text-accent-dark hover:text-ink">
+                        <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
                             {t('home.coves_all')} →
                         </Link>
                     </div>

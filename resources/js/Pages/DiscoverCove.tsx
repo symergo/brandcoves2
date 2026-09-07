@@ -258,7 +258,7 @@ export default function DiscoverCove({
                         <h2 id="surprise-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
                             {t('nav.surprise')}
                         </h2>
-                        <Link href={urls.surprise} className="text-sm font-medium text-accent-dark hover:text-ink">
+                        <Link href={urls.surprise} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
                             {t('surprise.reroll')} →
                         </Link>
                     </div>
@@ -318,7 +318,7 @@ export default function DiscoverCove({
                         <h2 id="questions-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
                             {t('ask.title')}
                         </h2>
-                        <Link href={askUrl} className="text-sm font-medium text-accent-dark hover:text-ink">
+                        <Link href={askUrl} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
                             {t('ask.all')} →
                         </Link>
                     </div>
@@ -383,7 +383,7 @@ export default function DiscoverCove({
                         </h2>
                         <Link
                             href={urls.giftIdeas}
-                            className="text-sm font-medium text-accent-dark hover:text-ink"
+                            className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
                         >
                             {t('discover_cove.persona_all')} →
                         </Link>
@@ -424,7 +424,7 @@ export default function DiscoverCove({
                         </h2>
                         <Link
                             href={urls.guides}
-                            className="text-sm font-medium text-accent-dark hover:text-ink"
+                            className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
                         >
                             {t('home.coves_all')} →
                         </Link>

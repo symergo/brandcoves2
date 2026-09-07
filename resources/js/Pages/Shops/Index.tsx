@@ -33,7 +33,7 @@ interface Props {
 function ShopCard({ shop, newLabel }: { shop: Shop; newLabel: string }) {
     return (
         <li className="rounded-card border border-line bg-card p-4">
-            <Link href={shop.url} className="flex items-center gap-3 group">
+            <Link href={shop.url} className="group flex min-h-11 items-center gap-3 sm:min-h-0">
                 {shop.logo && (
                     <img
                         src={shop.logo}

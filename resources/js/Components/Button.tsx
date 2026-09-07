@@ -26,10 +26,15 @@ const variants: Record<ButtonVariant, string> = {
     danger: 'border border-line text-danger hover:border-danger',
 }
 
+/*
+ * 44px tall below `sm`, whatever the size: the floor `app.css` gives fields
+ * on a phone, applied to the thing a finger presses most. The desktop keeps
+ * the compact heights — 38px at `md` is right beside a 14px label there.
+ */
 const sizes: Record<ButtonSize, string> = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-5 py-3',
+    sm: 'min-h-11 px-3 py-1.5 text-sm sm:min-h-0',
+    md: 'min-h-11 px-4 py-2 text-sm sm:min-h-0',
+    lg: 'min-h-11 px-5 py-3 sm:min-h-0',
 }
 
 export function buttonClasses(

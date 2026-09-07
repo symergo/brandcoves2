@@ -199,7 +199,7 @@ export default function Brand({
                                 key={word}
                                 type="button"
                                 onClick={() => go({ q: narrowedTo.filter((w) => w !== word).join(' ') })}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-ink bg-card px-3 py-1 text-sm transition hover:border-accent hover:text-accent"
+                                className="inline-flex items-center gap-1.5 rounded-full border border-ink bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 transition hover:border-accent hover:text-accent"
                             >
                                 <span aria-hidden>×</span>
                                 {word}
@@ -272,7 +272,7 @@ export default function Brand({
                                                 },
                                             )
                                         }
-                                        className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm text-ink-soft transition hover:border-ink hover:text-ink"
+                                        className="inline-block rounded-full border border-line bg-card px-3 py-1 text-sm min-h-10 sm:min-h-0 text-ink-soft transition hover:border-ink hover:text-ink"
                                     >
                                         <span aria-hidden className="mr-1">+</span>
                                         {item.term}
