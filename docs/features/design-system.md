@@ -108,3 +108,18 @@ inline text inside a larger card — a brand name, a title — where the card is
 The audit script is not in the repo; it is fifty lines of Playwright over the sitemap's first
 URL of each kind, and worth re-running after any layout change. The numbers it printed are in
 the commit that landed this section.
+
+## Explanations go behind an (i) (2026-09-07, the standard from here on)
+
+A control shows its label and, where there is something to explain, `InfoTip` beside it: an (i)
+that reveals the explanation in the flow on a tap. The words are one tap away for whoever wants
+them and cost nothing for whoever does not. This replaces the sentence under every label, the
+paragraph in every choice card and the note at the foot of a form — each true, each a line, and
+on a phone a step of the list wizard was a screen of explanation with the controls between the
+paragraphs.
+
+Rules: the explanation is never the only place a *requirement* is stated (a required field says
+so on the field); an empty-state sentence ("you have no friends yet") is a statement, not an
+explanation, and stays visible; choice cards carry their labels and one (i) on the legend lists
+what each choice means. The list wizard is the reference implementation. New forms follow it;
+existing ones move over as they are touched.

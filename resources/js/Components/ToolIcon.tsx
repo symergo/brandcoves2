@@ -24,6 +24,7 @@ export type ToolKey =
     | 'signin'
     | 'signout'
     | 'admin'
+    | 'info'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -87,6 +88,14 @@ const paths: Record<ToolKey, ReactNode> = {
         <>
             <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" />
             <path d="m9.5 12 1.8 1.8L15 10" />
+        </>
+    ),
+
+    // The (i) that InfoTip draws beside a label.
+    info: (
+        <>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 11v5M12 8h.01" />
         </>
     ),
 

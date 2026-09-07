@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
 import { formatOccasionDate } from '../types'
 import { useTranslations } from '../useTranslations'
+import InfoTip from './InfoTip'
 import SignInLink from './SignInLink'
 
 type Kind = 'mine' | 'for_someone' | 'group'
@@ -220,6 +221,25 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
     })()
 
     const personName = person?.name ?? form.data.new_recipient
+
+    /*
+     * The title follows the person until somebody types one.
+     *
+     * "For Anna" is what nine lists in ten would be called, so it is
+     * written for them the moment a name is known; a title the person
+     * has edited is theirs and is never overwritten, and a list for
+     * yourself keeps the placeholder's suggestions instead.
+     */
+    const [titleTouched, setTitleTouched] = useState(false)
+
+    useEffect(() => {
+        if (titleTouched) return
+
+        const name = personName.trim()
+        form.setData('title', forSomeone && name !== '' ? t('wizard.title_for', { name }) : '')
+        // The form object is stable per render; personName is what changes.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [personName, forSomeone, titleTouched])
     const occasion = occasions.find((o) => o.value === form.data.event_type) ?? null
     const isBirthday = occasion?.value === 'birthday'
     const typedBirthday = form.data.birthday_day !== '' && form.data.birthday_month !== ''
@@ -299,8 +319,17 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
             <div className="mt-5">
                 {step === 'kind' && (
                     <fieldset>
-                        <legend className="font-medium">{t('lists.for_whom')}</legend>
-                        <p className="mt-1 text-sm text-ink-soft">{t('wizard.kind_hint')}</p>
+                        <legend className="font-medium">
+                            {t('lists.for_whom')}
+                            <InfoTip className="ml-1">
+                                <span className="block">{t('wizard.kind_hint')}</span>
+                                {choices.map((choice) => (
+                                    <span key={choice.value} className="mt-2 block">
+                                        <span className="font-medium text-ink">{choice.label}</span> — {choice.body}
+                                    </span>
+                                ))}
+                            </InfoTip>
+                        </legend>
 
                         <div className="mt-3 grid gap-3 sm:grid-cols-3">
                             {choices.map((choice) => (
@@ -316,7 +345,6 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                     <span className={`block font-medium ${kind === choice.value ? 'text-accent' : ''}`}>
                                         {choice.label}
                                     </span>
-                                    <span className="mt-1 block text-sm text-ink-soft">{choice.body}</span>
                                 </button>
                             ))}
                         </div>
@@ -325,26 +353,13 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
 
                 {step === 'details' && (
                     <div className="grid gap-5 sm:grid-cols-2">
-                        <div className="sm:col-span-2">
-                            <label className="block font-medium" htmlFor="wizard-title-field">
-                                {t('lists.list_name')}
-                            </label>
-                            <input
-                                id="wizard-title-field"
-                                type="text"
-                                maxLength={120}
-                                value={form.data.title}
-                                onChange={(e) => form.setData('title', e.target.value)}
-                                placeholder={t(`wizard.title_placeholder_${kind}`)}
-                                className="mt-1 w-full rounded-card border border-line bg-card px-3 py-2"
-                            />
-                            {form.errors.title && <p className="mt-1 text-sm text-red-700">{form.errors.title}</p>}
-                        </div>
 
                         {forSomeone && (
                             <div className="sm:col-span-2">
-                                <p className="font-medium">{t('wizard.person')}</p>
-                                <p className="mt-1 text-sm text-ink-soft">{t('wizard.person_hint')}</p>
+                                <p className="font-medium">
+                                    {t('wizard.person')}
+                                    <InfoTip className="ml-1">{t('wizard.person_hint')}</InfoTip>
+                                </p>
 
                                 {(recipients.length > 0 || friends.length > 0) && (
                                     <select
@@ -409,7 +424,10 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                         )}
                                         {asksForBirthday && (
                                         <div>
-                                            <p className="text-sm">{t('lists.birthday_optional')}</p>
+                                            <p className="text-sm">
+                                                {t('lists.birthday_optional')}
+                                                <InfoTip className="ml-1">{t('lists.birthday_why')}</InfoTip>
+                                            </p>
                                             <div className="mt-1 flex gap-2">
                                                 <select
                                                     aria-label={t('lists.birthday_day')}
@@ -434,7 +452,6 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                                     ))}
                                                 </select>
                                             </div>
-                                            <p className="mt-1 text-xs text-ink-soft">{t('lists.birthday_why')}</p>
                                         </div>
                                         )}
                                     </div>
@@ -448,11 +465,31 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                 )}
                             </div>
                         )}
+                        <div className="sm:col-span-2">
+                            <label className="block font-medium" htmlFor="wizard-title-field">
+                                {t('lists.list_name')}
+                            </label>
+                            <input
+                                id="wizard-title-field"
+                                type="text"
+                                maxLength={120}
+                                value={form.data.title}
+                                onChange={(e) => {
+                                    setTitleTouched(true)
+                                    form.setData('title', e.target.value)
+                                }}
+                                placeholder={t(`wizard.title_placeholder_${kind}`)}
+                                className="mt-1 w-full rounded-card border border-line bg-card px-3 py-2"
+                            />
+                            {form.errors.title && <p className="mt-1 text-sm text-danger">{form.errors.title}</p>}
+                        </div>
 
                         <div className="sm:col-span-2">
-                            <p className="font-medium">{t('wizard.occasion')}</p>
-                            <p className="mt-1 text-sm text-ink-soft">
-                                {t(kind === 'mine' ? 'wizard.occasion_hint_mine' : 'wizard.occasion_hint_other')}
+                            <p className="font-medium">
+                                {t('wizard.occasion')}
+                                <InfoTip className="ml-1">
+                                    {t(kind === 'mine' ? 'wizard.occasion_hint_mine' : 'wizard.occasion_hint_other')}
+                                </InfoTip>
                             </p>
             {/*
                               Both fields carry their label, which is also what
@@ -544,8 +581,19 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                 {step === 'sharing' && (
                     <div>
                         <fieldset>
-                            <legend className="font-medium">{t('wizard.sharing')}</legend>
-                            <p className="mt-1 text-sm text-ink-soft">{t(`wizard.sharing_hint_${kind}`)}</p>
+                            <legend className="font-medium">
+                                {t('wizard.sharing')}
+                                <InfoTip className="ml-1">
+                                    <span className="block">{t(`wizard.sharing_hint_${kind}`)}</span>
+                                    {(['private', 'link'] as const).map((choice) => (
+                                        <span key={choice} className="mt-2 block">
+                                            <span className="font-medium text-ink">{t(`wizard.visibility_${choice}`)}</span> —{' '}
+                                            {t(`wizard.visibility_${choice}_${kind}`)}
+                                        </span>
+                                    ))}
+                                    <span className="mt-2 block">{t('wizard.rule')}</span>
+                                </InfoTip>
+                            </legend>
 
                             <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                 {(['private', 'link'] as const).map((choice) => (
@@ -560,9 +608,6 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                     >
                                         <span className={`block font-medium ${form.data.visibility === choice ? 'text-accent' : ''}`}>
                                             {t(`wizard.visibility_${choice}`)}
-                                        </span>
-                                        <span className="mt-1 block text-sm text-ink-soft">
-                                            {t(`wizard.visibility_${choice}_${kind}`)}
                                         </span>
                                     </button>
                                 ))}
@@ -579,8 +624,10 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                         className="mt-1"
                                     />
                                     <span>
-                                        <span className="block text-sm font-medium">{t('lists.anyone_can_add')}</span>
-                                        <span className="block text-xs text-ink-soft">{t('wizard.can_add_hint')}</span>
+                                        <span className="block text-sm font-medium">
+                                            {t('lists.anyone_can_add')}
+                                            <InfoTip className="ml-1">{t('wizard.can_add_hint')}</InfoTip>
+                                        </span>
                                     </span>
                                 </label>
 
@@ -593,17 +640,20 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                                             className="mt-1"
                                         />
                                         <span>
-                                            <span className="block text-sm font-medium">{t('lists.voting_enabled')}</span>
-                                            <span className="block text-xs text-ink-soft">{t('lists.voting_enabled_hint')}</span>
+                                            <span className="block text-sm font-medium">
+                                                {t('lists.voting_enabled')}
+                                                <InfoTip className="ml-1">{t('lists.voting_enabled_hint')}</InfoTip>
+                                            </span>
                                         </span>
                                     </label>
                                 )}
 
                                 <div>
-                                    <p className="text-sm font-medium">{t('lists.share_with_friends')}</p>
-                                    <p className="text-xs text-ink-soft">
-                                        {friends.length > 0 ? t('wizard.friends_hint') : t('wizard.friends_none')}
+                                    <p className="text-sm font-medium">
+                                        {t('lists.share_with_friends')}
+                                        {friends.length > 0 && <InfoTip className="ml-1">{t('wizard.friends_hint')}</InfoTip>}
                                     </p>
+                                    {friends.length === 0 && <p className="text-xs text-ink-soft">{t('wizard.friends_none')}</p>}
                                     {friends.length > 0 && (
                                         <div className="mt-2 flex flex-wrap gap-2">
                                             {friends.map((f) => {
@@ -636,7 +686,6 @@ export default function ListWizard({ signedIn, recipients, friends, occasions }:
                             </div>
                         )}
 
-                        <p className="mt-4 text-xs text-ink-soft">{t('wizard.rule')}</p>
                     </div>
                 )}
 
