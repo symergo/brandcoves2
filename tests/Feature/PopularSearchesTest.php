@@ -8,6 +8,7 @@ use App\Enums\Market;
 use App\Models\SearchLog;
 use App\Services\Search\SearchTermStats;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -29,6 +30,15 @@ class PopularSearchesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        /*
+         * A Wednesday. The periods are calendar weeks starting Monday, and
+         * the fixtures below say "this week" as `daysAgo: 1` and "last
+         * week" as `daysAgo: 8` — true six days out of seven and false on a
+         * Monday, when yesterday is last week. The suite failed on Monday
+         * 2026-09-07 for exactly that, on a push carrying no PHP at all.
+         */
+        Carbon::setTestNow(Carbon::parse('2026-09-02 12:00:00'));
 
         Cache::flush();
     }
