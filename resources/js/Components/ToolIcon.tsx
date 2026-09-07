@@ -18,6 +18,8 @@ export type ToolKey =
     | 'split'
     | 'build'
     | 'board'
+    | 'menu'
+    | 'close'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -39,6 +41,15 @@ export type ToolKey =
  * for someone else" adds a puzzle rather than information.
  */
 const paths: Record<ToolKey, ReactNode> = {
+    /*
+     * The two chrome glyphs. They were the characters ☰ and ✕, which render
+     * at the font's metrics and sat off the baseline beside the real icons
+     * in the same header. Same grid, same stroke as everything else here.
+     */
+    menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+
+    close: <path d="m6 6 12 12M18 6 6 18" />,
+
     // A heart — the one thing on this page that is about wanting rather than
     // organising.
     wishlist: (

@@ -354,3 +354,21 @@ sign, and the save picker's create buttons carry `menuitem` roles inside its `me
 menu mode no longer skips the only way to make a list from there. Notification dates are formatted
 on the server in the market's language, so the SSR container and the visitor's device cannot
 disagree about the day.
+
+## The phone menu is a sheet, and the phone header reaches 768px (2026-09-07)
+
+Measured with Playwright against the dev server: between 640px and about 800px the desktop
+header overflowed the viewport by 100px (the switcher, Lists and the account menu did not fit),
+and the phone panel opened in the flow at 911px tall with its only close control at the top.
+
+- **The phone header now serves up to `md` (768px)**, and between `md` and `lg` the desktop
+  header drops the Lists link (it is inside Organise anyway), which is what makes it fit at 800px.
+- **A search icon sits beside the hamburger.** Search was a text link inside the menu, two taps
+  from every page but the home, for the site's primary action.
+- **The panel is a full-screen sheet** with its own top bar and a close at the bottom as well; the
+  page behind it does not scroll; Escape closes it; any navigation closes it, including the back
+  button, which fires no click and used to leave the panel open over the page it arrived on.
+- **Friends and Admin are in the account block.** They were in the desktop account menu only, so
+  the friends page had no door on a phone.
+- **Every row is 44px**, the hamburger and close are `ToolIcon`s rather than the ☰ and ✕
+  characters, and the dial has its own `CoveIcon` instead of borrowing the guides one.

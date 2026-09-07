@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import AccountMenu from '../Components/AccountMenu'
 import AddingToBar from '../Components/AddingToBar'
+import { buttonClasses } from '../Components/Button'
 import CookieBanner from '../Components/CookieBanner'
 import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
@@ -84,8 +85,12 @@ function Chrome({ children }: PropsWithChildren) {
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
 
-    // Escape closes the panel that covers the whole phone screen, as it does
-    // the two desktop menus. It was the one surface without it.
+    /*
+     * While the phone panel is open: Escape closes it, the page under it does
+     * not scroll, and any navigation closes it — including the back button,
+     * which fires no click. It used to close on link clicks only, so a back
+     * press left the panel open over the page just arrived at.
+     */
     useEffect(() => {
         if (!menuOpen) return
 
@@ -93,8 +98,16 @@ function Chrome({ children }: PropsWithChildren) {
             if (e.key === 'Escape') setMenuOpen(false)
         }
         document.addEventListener('keydown', escape)
+        const offNavigate = router.on('navigate', () => setMenuOpen(false))
 
-        return () => document.removeEventListener('keydown', escape)
+        const previous = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+
+        return () => {
+            document.removeEventListener('keydown', escape)
+            offNavigate()
+            document.body.style.overflow = previous
+        }
     }, [menuOpen])
 
     /*
@@ -252,7 +265,7 @@ function Chrome({ children }: PropsWithChildren) {
                 href: `${base}/discover`,
                 label: t('nav.dial'),
                 hint: t('nav.hint_dial'),
-                icon: <CoveIcon name="idea" className="h-5 w-5" />,
+                icon: <CoveIcon name="dial" className="h-5 w-5" />,
             },
             /*
              * Brand Coves (`/brands`) and Shop Coves (`/shops`) are withheld
@@ -376,7 +389,7 @@ function Chrome({ children }: PropsWithChildren) {
                     </Link>
 
                     <nav
-                        className="hidden items-center gap-5 text-sm text-ink-soft sm:flex"
+                        className="hidden items-center gap-5 text-sm text-ink-soft md:flex"
                         aria-label={t('nav.main')}
                     >
                         <NavMenu
@@ -421,18 +434,35 @@ function Chrome({ children }: PropsWithChildren) {
                       happened to land on, and there was no way to reach Search,
                       the Cove or the market switcher at all.
                     */}
-                    <button
-                        type="button"
-                        className="ml-auto rounded border border-line px-3 py-2 text-sm sm:hidden"
-                        aria-expanded={menuOpen}
-                        aria-controls="mobile-menu"
-                        onClick={() => setMenuOpen(!menuOpen)}
-                    >
-                        <span aria-hidden>{menuOpen ? '✕' : '☰'}</span>
-                        <span className="sr-only">{t('nav.main')}</span>
-                    </button>
+                    {/*
+                      Search, one tap from any page. It was a text link inside
+                      the menu — two taps from everywhere but the home — for the
+                      site's primary action. Both controls are 44px: the floor
+                      the stylesheet applies to fields below `sm` applied to
+                      nothing here.
+                    */}
+                    <div className="ml-auto flex items-center gap-1 md:hidden">
+                        <Link
+                            href={`${base}/search`}
+                            aria-label={t('nav.search')}
+                            aria-current={isCurrent(`${base}/search`) ? 'page' : undefined}
+                            className="flex h-11 w-11 items-center justify-center rounded-lg text-ink hover:bg-line/40"
+                        >
+                            <ToolIcon name="search" className="h-5 w-5" />
+                        </Link>
+                        <button
+                            type="button"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-ink"
+                            aria-expanded={menuOpen}
+                            aria-controls="mobile-menu"
+                            onClick={() => setMenuOpen(!menuOpen)}
+                        >
+                            <ToolIcon name={menuOpen ? 'close' : 'menu'} className="h-5 w-5" />
+                            <span className="sr-only">{t('nav.main')}</span>
+                        </button>
+                    </div>
 
-                    <div className="ml-auto hidden items-center gap-3 sm:flex">
+                    <div className="ml-auto hidden items-center gap-3 md:flex">
                         <MarketSwitcher id="header" />
 
                         {auth.user && unreadCount > 0 && (
@@ -458,7 +488,7 @@ function Chrome({ children }: PropsWithChildren) {
                         <Link
                             href={`${base}/lists`}
                             aria-current={isCurrent(`${base}/lists`) ? 'page' : undefined}
-                            className={`text-sm ${isCurrent(`${base}/lists`) ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}`}
+                            className={`hidden text-sm lg:block ${isCurrent(`${base}/lists`) ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}`}
                         >
                             {t('nav.lists')}
                         </Link>
@@ -476,8 +506,35 @@ function Chrome({ children }: PropsWithChildren) {
                   control that changes the catalogue, the currency and the
                   language.
                 */}
+                {/*
+                  A sheet, not a block in the flow.
+
+                  It used to open under the header and push the page down, at
+                  about two screens tall, with the only close control at the
+                  top — scrolled out of reach by the time the switcher at the
+                  bottom was read. Fixed under the header now, scrolling on its
+                  own while the page behind holds still, with a close at the
+                  bottom as well as the top.
+                */}
                 {menuOpen && (
-                    <div id="mobile-menu" className="border-t border-line px-4 py-4 sm:hidden">
+                    <div
+                        id="mobile-menu"
+                        className="fixed inset-0 z-50 overflow-y-auto bg-cream px-4 pb-4 md:hidden"
+                    >
+                        {/* Its own top bar, so the sheet does not have to know
+                            how tall the header under it is. */}
+                        <div className="mb-2 flex h-[4.75rem] items-center justify-between border-b border-line">
+                            <span className="text-lg font-semibold tracking-tight">GiftCoves</span>
+                            <button
+                                type="button"
+                                onClick={() => setMenuOpen(false)}
+                                aria-label={t('nav.close')}
+                                className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-ink"
+                            >
+                                <ToolIcon name="close" className="h-5 w-5" />
+                            </button>
+                        </div>
+
                         <nav className="text-sm" aria-label={t('nav.main')}>
                             {sections.map((section) => (
                                 <div key={section.href} className="mb-4 border-b border-line pb-4">
@@ -494,7 +551,7 @@ function Chrome({ children }: PropsWithChildren) {
                                         href={section.href}
                                         aria-current={isHere(section.href) ? 'page' : undefined}
                                         onClick={() => setMenuOpen(false)}
-                                        className={`flex items-center justify-between py-1 text-base font-semibold ${
+                                        className={`flex min-h-11 items-center justify-between py-1 text-base font-semibold ${
                                             isHere(section.href) ? 'text-accent' : 'text-ink'
                                         }`}
                                     >
@@ -519,12 +576,12 @@ function Chrome({ children }: PropsWithChildren) {
                                                     // left open would cover the
                                                     // page just arrived at.
                                                     onClick={() => setMenuOpen(false)}
-                                                    className={`flex gap-2.5 py-2 ${
+                                                    className={`flex min-h-11 items-center gap-2.5 py-2 ${
                                                         isHere(item.href) ? 'font-medium text-accent' : ''
                                                     }`}
                                                 >
                                                     {item.icon ? (
-                                                        <span className="mt-0.5 shrink-0 text-accent">
+                                                        <span className="shrink-0 text-accent">
                                                             {item.icon}
                                                         </span>
                                                     ) : null}
@@ -554,14 +611,14 @@ function Chrome({ children }: PropsWithChildren) {
                                 saying so by leaving them ungrouped is more
                                 honest than inventing a third heading for two
                                 links. */}
-                            <div className="mb-4 flex flex-col gap-1 border-b border-line pb-4">
+                            <div className="mb-4 flex flex-col border-b border-line pb-4">
                                 {nav.map((item) => (
                                     <Link
                                         key={item.href}
                                         href={item.href}
                                         aria-current={isHere(item.href) ? 'page' : undefined}
                                         onClick={() => setMenuOpen(false)}
-                                        className={`py-1 ${isHere(item.href) ? 'font-medium text-accent' : ''}`}
+                                        className={`flex min-h-11 items-center ${isHere(item.href) ? 'font-medium text-accent' : ''}`}
                                     >
                                         {item.label}
                                     </Link>
@@ -579,38 +636,55 @@ function Chrome({ children }: PropsWithChildren) {
                               under the identical link inside Organise, which
                               reads as two different destinations.
                             */}
-                            <div className="flex flex-col gap-1">
+                            {/*
+                              The same links as the wide header's account menu.
+                              Friends and Admin were missing here, so on a phone
+                              the friends page had no door at all.
+                            */}
+                            <div className="flex flex-col">
                                 {auth.user ? (
                                     <>
+                                        <span className="py-1 text-xs text-ink-soft">
+                                            {auth.user.name?.trim() || auth.user.email}
+                                        </span>
+                                        <Link
+                                            href={`${base}/friends`}
+                                            aria-current={isHere(`${base}/friends`) ? 'page' : undefined}
+                                            onClick={() => setMenuOpen(false)}
+                                            className={`flex min-h-11 items-center ${isHere(`${base}/friends`) ? 'font-medium text-accent' : ''}`}
+                                        >
+                                            {t('nav.friends')}
+                                        </Link>
                                         <Link
                                             href={`${base}/notifications`}
+                                            aria-current={isHere(`${base}/notifications`) ? 'page' : undefined}
                                             onClick={() => setMenuOpen(false)}
-                                            className="py-1"
+                                            className={`flex min-h-11 items-center ${isHere(`${base}/notifications`) ? 'font-medium text-accent' : ''}`}
                                         >
                                             {t('nav.notifications')}
                                             {unreadCount > 0 && ` (${unreadCount})`}
                                         </Link>
-
-                                        {/* The same reachability problem as the
-                                            wide header had, and worse on a phone,
-                                            which is the device most likely to be
-                                            handed to someone else. */}
-                                        <span className="text-xs text-ink-soft">
-                                            {auth.user.name?.trim() || auth.user.email}
-                                        </span>
+                                        {auth.user.isAdmin && (
+                                            <a href="/admin" className="flex min-h-11 items-center">
+                                                {t('nav.admin')}
+                                            </a>
+                                        )}
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 setMenuOpen(false)
                                                 router.post(`${base}/logout`)
                                             }}
-                                            className="py-1 text-left"
+                                            className="flex min-h-11 items-center text-left"
                                         >
                                             {t('nav.sign_out')}
                                         </button>
                                     </>
                                 ) : (
-                                    <SignInLink onNavigate={() => setMenuOpen(false)}>
+                                    <SignInLink
+                                        onNavigate={() => setMenuOpen(false)}
+                                        className="flex min-h-11 items-center"
+                                    >
                                         {t('nav.sign_in')}
                                     </SignInLink>
                                 )}
@@ -628,6 +702,17 @@ function Chrome({ children }: PropsWithChildren) {
                             withNames
                             className="mt-4 flex flex-col gap-3"
                         />
+
+                        {/* A way out at the end as well as the start: the ✕ in
+                            the header is a screen away by the time the switcher
+                            has been read. */}
+                        <button
+                            type="button"
+                            onClick={() => setMenuOpen(false)}
+                            className={buttonClasses('secondary', 'lg', 'mt-6 w-full')}
+                        >
+                            {t('nav.close')}
+                        </button>
                     </div>
                 )}
             </header>

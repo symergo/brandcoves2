@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type CoveKey = 'daily' | 'surprise' | 'idea' | 'persona' | 'brand' | 'shop' | 'all' | 'ask'
+export type CoveKey = 'daily' | 'surprise' | 'idea' | 'persona' | 'brand' | 'shop' | 'all' | 'ask' | 'dial'
 
 /**
  * The discovery surfaces, drawn.
@@ -103,6 +103,19 @@ const paths: Record<CoveKey, ReactNode> = {
             <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" />
             <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" />
             <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
+        </>
+    ),
+
+    dial: (
+        <>
+            {/* A knob with its needle past the midpoint: the slider from safe
+                bets to wild cards, drawn as the thing it is named after. It
+                borrowed the guides icon when the entry was added, so two rows
+                in the Discover menu wore the same mark. */}
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="M12 12l4.5-4.5" />
+            <circle cx="12" cy="12" r="1.2" />
+            <path d="M5.5 15.5h1M17.5 15.5h1M12 3.5v1" />
         </>
     ),
 

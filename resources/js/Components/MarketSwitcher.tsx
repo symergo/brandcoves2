@@ -132,7 +132,10 @@ export default function MarketSwitcher({
                         <label
                             key={country.country}
                             title={country.name}
-                            className="flex cursor-pointer items-center gap-1.5"
+                            // With names it is a row in the phone sheet, so it
+                            // gets the 44px a finger expects; in the header it
+                            // is a flag beside other flags.
+                            className={`flex cursor-pointer items-center gap-1.5 ${withNames ? 'min-h-11 pr-2' : ''}`}
                         >
                             <input
                                 type="radio"
