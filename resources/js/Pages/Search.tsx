@@ -387,17 +387,11 @@ export default function Search({
             </p>
 
             {/*
-              The box accepts a barcode and an Amazon URL as readily as it
-              accepts words, and nothing about it says so. One quiet link rather
-              than three lines of placeholder text: the field stays a field, and
-              the answer is somewhere it can be read properly. The link had
-              gone missing under this comment; it is back.
+              No link to the search help under the box. One was restored here
+              on 2026-09-06 and removed again the next day at the owner's
+              request: the help is in the footer and the phone sheet, and a
+              line under the field is a line between the field and the results.
             */}
-            <p className="mt-2 text-xs text-ink-soft">
-                <Link href={`/${market.key}/search-help`} className="inline-flex min-h-11 items-center underline hover:text-ink sm:min-h-0">
-                    {t('search_help.footer_link')}
-                </Link>
-            </p>
 
             {/*
               What we made of a pasted Amazon link.
