@@ -273,7 +273,7 @@ worth landing on. Building it before that means scanning into an empty result.
 ## Phones only, full screen, under the field (2026-09-07)
 
 The scan button renders below `md` only: a laptop's webcam pointed at a barcode is a party trick,
-and on a desktop it was one more control beside the field for nobody. On a phone the search field
-takes its own row and the scan and search buttons share the next, on the home page and the search
-page alike. The dialog is the whole screen there, with the camera preview at 60% of it; from `sm`
+and on a desktop it was one more control beside the field for nobody. The search button is a magnifier
+icon now, so on a phone the field, the camera and the magnifier sit on one row, on the home page
+and the search page alike. The dialog is the whole screen there, with the camera preview at 60% of it; from `sm`
 up it is the card it was, with the small steady frame.

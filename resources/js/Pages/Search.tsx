@@ -9,6 +9,7 @@ import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCt
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
+import ToolIcon from '../Components/ToolIcon'
 import WatchSearch, { type WatchState } from '../Components/WatchSearch'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
@@ -309,11 +310,12 @@ export default function Search({
                     e.preventDefault()
                     go({ q: term })
                 }}
-                // The field on its own row on a phone, the scan and search
-                // buttons sharing the next; one row from `md`, where the scan
-                // button is gone and the field and the button fit beside each
-                // other.
-                className="flex flex-wrap gap-2"
+                // One row: the field, then two square buttons of the same
+                // height — the camera (phones only) and the magnifier. The
+                // search button was a wide bar of text; as an icon it fits
+                // beside the field on a phone without pushing it onto its own
+                // row.
+                className="flex gap-2"
                 role="search"
             >
                 {/*
@@ -327,7 +329,7 @@ export default function Search({
                   page-wide Inertia bar at the top of the window — the answer
                   being replaced is on this screen, so the signal belongs on it.
                 */}
-                <div className="relative w-full min-w-0 md:w-auto md:flex-1">
+                <div className="relative min-w-0 flex-1">
                     <input
                         type="search"
                         name="q"
@@ -336,7 +338,7 @@ export default function Search({
                         placeholder={t('search.placeholder')}
                         aria-label={t('search.title')}
                         aria-busy={searching}
-                        className="w-full rounded-card border border-line bg-card px-4 py-3"
+                        className="h-12 w-full rounded-card border border-line bg-card px-4"
                     />
                     {searching && (
                         <span
@@ -364,9 +366,7 @@ export default function Search({
                   only place someone standing in a shop will look for it — and
                   the home page has the same button, for the same reason.
                 */}
-                {/* Half the row each: two buttons of equal weight under the
-                    field, rather than a small square beside a wide bar. */}
-                <ScanButton className="flex-1 rounded-lg border border-line px-4 py-3" />
+                <ScanButton className="h-12 w-12 shrink-0 rounded-lg border border-line bg-card" />
 
                 {/*
                   Dimmed, not disabled. A disabled button loses focus mid-search
@@ -376,9 +376,10 @@ export default function Search({
                 */}
                 <button
                     aria-busy={searching}
-                    className={`flex-1 rounded-lg bg-accent px-5 py-3 font-medium text-white transition-opacity hover:bg-accent-dark md:flex-none ${searching ? 'opacity-70' : ''}`}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition-opacity hover:bg-accent-dark ${searching ? 'opacity-70' : ''}`}
                 >
-                    {t('search.submit')}
+                    <ToolIcon name="search" className="h-5 w-5" />
+                    <span className="sr-only">{t('search.submit')}</span>
                 </button>
             </form>
 

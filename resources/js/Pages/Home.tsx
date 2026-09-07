@@ -8,7 +8,7 @@ import ListIllustration, { type ListSceneKey } from '../Components/ListIllustrat
 import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
-import { buttonClasses } from '../Components/Button'
+import ToolIcon from '../Components/ToolIcon'
 import RecentlyViewed from '../Components/RecentlyViewed'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -186,7 +186,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                               was the part cut off. The field now takes its own
                               line and the two buttons share the next.
                             */
-                            className="mt-8 flex max-w-xl flex-wrap gap-2"
+                            className="mt-8 flex max-w-xl gap-2"
                         >
                             <input
                                 type="search"
@@ -198,7 +198,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                 // screen offered to scan a barcode.
                                 aria-label={t('home.search_placeholder')}
                                 placeholder={t('home.search_placeholder')}
-                                className="w-full min-w-0 rounded-card border border-line bg-card px-4 py-3 text-ink placeholder:text-ink-soft focus:border-ink md:w-auto md:flex-1"
+                                className="h-12 min-w-0 flex-1 rounded-card border border-line bg-card px-4 text-ink placeholder:text-ink-soft focus:border-ink"
                             />
                             {/*
                               The camera, beside the field, on the first screen
@@ -214,9 +214,13 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                               so a home page nobody scans from still loads
                               nothing extra.
                             */}
-                            <ScanButton className="flex-1 rounded-card border border-line bg-card px-4 py-3 text-ink transition hover:border-ink" />
-                            <button type="submit" className={buttonClasses('primary', 'lg', 'flex-1 md:flex-none')}>
-                                {t('nav.search')}
+                            <ScanButton className="h-12 w-12 shrink-0 rounded-card border border-line bg-card text-ink transition hover:border-ink" />
+                            <button
+                                type="submit"
+                                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-accent text-white transition hover:bg-accent-dark"
+                            >
+                                <ToolIcon name="search" className="h-5 w-5" />
+                                <span className="sr-only">{t('nav.search')}</span>
                             </button>
                         </form>
                     </div>
