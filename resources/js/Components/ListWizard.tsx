@@ -52,9 +52,9 @@ interface Props extends WizardOffer {
 /**
  * What the wizard remembers between a sign-in and the return.
  *
- * A visitor walks all four steps signed out — the walk is the explanation —
+ * A visitor walks all three steps signed out — the walk is the explanation —
  * and signs in at the last one. The sign-in leaves the page, and a wizard that
- * comes back empty has thrown away four steps of answers at the moment they
+ * comes back empty has thrown away three steps of answers at the moment they
  * were about to be used. Local storage rather than session: a magic link is
  * opened from the mail, in a new tab, and a new tab has no session storage.
  * A day is the limit — a draft list is not something to find again next week.
@@ -62,7 +62,7 @@ interface Props extends WizardOffer {
 const DRAFT = 'bc.list-wizard'
 const DRAFT_TTL = 24 * 60 * 60 * 1000
 
-const STEPS = ['kind', 'details', 'sharing', 'done'] as const
+const STEPS = ['kind', 'details', 'sharing'] as const
 type Step = (typeof STEPS)[number]
 
 /**
@@ -85,7 +85,7 @@ export function hasListDraft(): boolean {
 }
 
 /**
- * A list, made in four questions.
+ * A list, made in three questions.
  *
  * The create form on My Lists asks the same things on one screen and assumes
  * the reader already knows what a group list is, what sharing does to a wish
@@ -116,6 +116,8 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
      */
     const [ownDate, setOwnDate] = useState(false)
     const [kind, setKind] = useState<Kind>(initialKind ?? 'mine')
+    const [replay, setReplay] = useState(false)
+    const [titleTouched, setTitleTouched] = useState(false)
 
     const form = useForm({
         title: '',
@@ -155,9 +157,18 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
 
             setKind(draft.kind)
             form.setData(draft.data)
+            // The title in the draft is the one they left with, typed or not;
+            // the auto-fill must not write over it on the way back in.
+            setTitleTouched(true)
 
+            /*
+             * Signed in on the way back: the button they pressed was "sign in
+             * and make the list", so make it. Deferred one render, because
+             * the data set just above is not readable until then.
+             */
             if (signedIn) {
-                setStep('done')
+                setStep('sharing')
+                setReplay(true)
             }
         } catch {
             // A private window or cleared storage: start fresh, which is what
@@ -229,6 +240,14 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
         form.post(`${base}/lists`, { onSuccess: forget })
     }
 
+    useEffect(() => {
+        if (!replay) return
+
+        setReplay(false)
+        submit()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [replay])
+
     /*
      * The person this list is about, whichever way they were named.
      *
@@ -262,8 +281,6 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
      * has edited is theirs and is never overwritten, and a list for
      * yourself keeps the placeholder's suggestions instead.
      */
-    const [titleTouched, setTitleTouched] = useState(false)
-
     useEffect(() => {
         if (titleTouched) return
 
@@ -721,47 +738,13 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
                     </div>
                 )}
 
-                {step === 'done' && (
-                    <div>
-                        <p className="font-medium">{t('wizard.summary')}</p>
-                        <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
-                            <dt className="text-ink-soft">{t('lists.for_whom')}</dt>
-                            <dd>{choices.find((c) => c.value === kind)?.label}{forSomeone && personName ? `: ${personName}` : ''}</dd>
-                            <dt className="text-ink-soft">{t('lists.list_name')}</dt>
-                            <dd>{form.data.title || '…'}</dd>
-                            {occasion && (
-                                <>
-                                    <dt className="text-ink-soft">{t('registry.occasion')}</dt>
-                                    <dd>
-                                        {occasion.label}
-                                        {form.data.event_date
-                                            ? ` · ${formatOccasionDate(form.data.event_date, market)}`
-                                            : settledDate !== null
-                                              ? ` · ${formatOccasionDate(settledDate, market)}`
-                                              : fromBirthday
-                                                ? ` · ${t('wizard.date_from_birthday')}`
-                                                : ''}
-                                    </dd>
-                                </>
-                            )}
-                            <dt className="text-ink-soft">{t('wizard.sharing')}</dt>
-                            <dd>
-                                {t(`wizard.visibility_${form.data.visibility}`)}
-                                {shared && form.data.link_can_add ? ` · ${t('lists.anyone_can_add')}` : ''}
-                                {shared && form.data.share_with.length > 0
-                                    ? ` · ${t('wizard.shared_with_count', { count: String(form.data.share_with.length) })}`
-                                    : ''}
-                            </dd>
-                        </dl>
-
-                        <p className="mt-3 text-sm text-ink-soft">{t('wizard.after')}</p>
-
-                        {Object.keys(form.errors).length > 0 && (
-                            <p className="mt-3 text-sm text-red-700">{Object.values(form.errors)[0]}</p>
-                        )}
-                    </div>
-                )}
             </div>
+
+            {/* What the server refused, on whichever step the reader is: a
+                replayed draft can be refused on the last one. */}
+            {Object.keys(form.errors).length > 0 && (
+                <p className="mt-3 text-sm text-danger" role="alert">{Object.values(form.errors)[0]}</p>
+            )}
 
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-4">
@@ -780,7 +763,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
                     )}
                 </div>
 
-                {step !== 'done' ? (
+                {step !== 'sharing' ? (
                     <button
                         type="button"
                         onClick={next}

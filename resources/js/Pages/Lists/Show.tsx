@@ -556,7 +556,7 @@ export default function ListShow({
                             */}
                             {access.canEdit && (
                                 <div className="mt-4 flex flex-wrap items-start justify-center gap-2">
-                                    <AddProduct base={base} listId={list.id} market={market} />
+                                    <AddProduct base={base} listId={list.id} market={market} defaultOpen />
                                 </div>
                             )}
                         </div>

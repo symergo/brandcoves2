@@ -245,14 +245,22 @@ described a third of the site and started nothing. A grid of explanations is a r
 arrives wanting a reference: they arrive with a person and an occasion, and the thing to do with those
 is make a list.
 
-**The hero is the wizard** (`ListWizard`): four questions, each explained before it is asked. *Who for*
+**The hero is the wizard** (`ListWizard`): three questions since 2026-09-07 (four before), each explained before it is asked. *Who for*
 (the three kinds, with what each can do and why it cannot be changed later), *name and occasion* (the
 person, picked from friends or typed; the occasion and date, with what a date does: registry, reminders,
 delivery address), *sharing* (private or link, explained per kind; "anyone can add" for building a list
-together; voting on a group list; share with named friends; the privacy rule), *done* (a summary and
-the button). Signed out, the button is the sign-in, and the answers survive it: the draft is kept in
-`localStorage` for a day, because the magic link opens in a new tab where session storage is empty,
-and restored on the "done" step once signed in.
+together; voting on a group list; share with named friends; the privacy rule). The third step ends
+in the Create button. Signed out, that button is the sign-in, and the answers survive it: the draft is
+kept in `localStorage` for a day, because the magic link opens in a new tab where session storage is
+empty, and once signed in it is restored and submitted without asking again — the button they pressed
+was "sign in and make the list".
+
+*Until 2026-09-07 there was a fourth step*, a summary of the answers with the Create button under it.
+It was removed: every answer is one step back and the summary restated a screen the reader had just
+filled in. The list page is the summary. It opens on the empty state with the add-a-product panel
+already open (`AddProduct defaultOpen`), because an empty list has one thing to do and a button saying
+so was a step between the person and it. The private choice is labelled "Private (or share later)",
+so choosing it does not read as closing a door.
 
 It posts to the same `store()` as the form on My Lists. That endpoint learned `event_type`,
 `event_date`, `visibility` (private or link), `link_can_add`, `voting_enabled` and `share_with`,

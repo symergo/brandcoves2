@@ -61,14 +61,21 @@ export default function AddProduct({
     base,
     listId,
     market,
+    defaultOpen = false,
 }: {
     base: string
     listId: string
     market: CurrentMarket
+    /**
+     * Open on arrival rather than behind its button. An empty list — the one
+     * the wizard has just made — has exactly one thing to do, and a button
+     * that says so is a step between the person and it.
+     */
+    defaultOpen?: boolean
 }) {
     const { t } = useTranslations()
 
-    const [open, setOpen] = useState(false)
+    const [open, setOpen] = useState(defaultOpen)
     const [term, setTerm] = useState('')
     const [groups, setGroups] = useState<GroupHit[]>([])
     const [live, setLive] = useState<LiveHit[]>([])
