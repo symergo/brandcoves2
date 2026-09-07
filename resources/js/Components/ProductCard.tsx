@@ -54,13 +54,21 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
 
     return (
         <article className="group relative flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30">
-            <div className="relative aspect-square overflow-hidden bg-cream">
+            <div className="relative aspect-square overflow-hidden bg-card">
                 {group.image && !broken ? (
                     <img
                         src={group.image}
                         alt=""
                         loading="lazy"
-                        className="h-full w-full object-contain p-4 transition group-hover:scale-[1.02]"
+                        /*
+                          Edge to edge. It was `object-contain` inside 16px of
+                          padding, so a feed photo — most arrive on white — sat
+                          as a small object in a cream frame, and on a phone,
+                          where a card is 170px wide, the frame was a third of
+                          it. Cover fills the square; the crop is the photo's
+                          own margin, which is what a product shot has to spare.
+                        */
+                        className="h-full w-full object-cover transition group-hover:scale-[1.02]"
                         // Feed images 404 constantly. A placeholder is less
                         // jarring than a browser's broken-image glyph — and
                         // than the blank square this used to leave, which read
@@ -72,9 +80,12 @@ export default function ProductCard({ group, brandUrl }: { group: GroupCard; bra
                     <ImagePlaceholder />
                 )}
 
+                {/* The number alone. "16% off" as words is a sentence on a
+                    170px card; the sign and the percent say the same thing
+                    at a glance and in every language. */}
                 {group.discountPercent !== null && (
-                    <Badge tone="accent" className="absolute top-2 left-2">
-                        {t('product.off', { percent: group.discountPercent })}
+                    <Badge tone="accent" className="absolute top-2 left-2 tabular-nums">
+                        −{n(group.discountPercent)}%
                     </Badge>
                 )}
 
