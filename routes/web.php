@@ -323,7 +323,12 @@ Route::prefix('{market}')->group(function () {
      * It mirrors `/search-help`, which sits beside `/search` for the same
      * reason: it documents a tool rather than the company.
      */
-    Route::get('/lists-help', ListHelpController::class)->name('lists-help');
+    Route::get('/lists-help', [ListHelpController::class, 'index'])->name('lists-help');
+    // One page per capability. The allowlist is the controller's; the
+    // pattern keeps anything that is not a plain word out of the log.
+    Route::get('/lists-help/{topic}', [ListHelpController::class, 'topic'])
+        ->where('topic', '[a-z]+')
+        ->name('lists-help.topic');
 
     Route::get('/lists', [WishlistController::class, 'index'])->name('lists');
     Route::get('/lists/{list}', [WishlistController::class, 'show'])->name('lists.show');

@@ -156,6 +156,14 @@ class SitemapController extends Controller
                     ['loc' => url("/{$resolved->value}/ask"), 'priority' => '0.6', 'changefreq' => 'daily'],
                     ['loc' => url("/{$resolved->value}/popular-searches"), 'priority' => '0.5', 'changefreq' => 'weekly'],
                     ['loc' => url("/{$resolved->value}/lists-help"), 'priority' => '0.4', 'changefreq' => 'monthly'],
+                    // The eight topics under it, since 2026-09-08. "How do I
+                    // share a wish list" is a query, and the index alone would
+                    // make a search engine guess which page answers it.
+                    ...array_map(fn (string $topic) => [
+                        'loc' => url("/{$resolved->value}/lists-help/{$topic}"),
+                        'priority' => '0.4',
+                        'changefreq' => 'monthly',
+                    ], ListHelpController::TOPICS),
 
                     /*
                      * An about page is a trust signal a search engine looks for, and

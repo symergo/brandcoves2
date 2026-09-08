@@ -1719,39 +1719,9 @@ return [
      * construites : personne ne crée une liste vide avant d'aller chercher.
      */
     'lists_help' => [
-        'seo_title' => 'Enregistrer des produits dans une liste',
-        'seo_description' => "Enregistrez ce que vous trouvez ici dans une liste de souhaits, créez-en une pour quelqu'un d'autre et suivez ce que vous offrez. En images.",
-        'title' => 'Comment fonctionnent les listes',
-        'intro' => 'Une liste garde ce que vous trouvez ici : pour vous, ou pour quelqu’un à qui vous offrez. Pas besoin d’en créer une d’abord. L’enregistrement le propose, et la page d’accueil a un bouton qui en crée une en trois étapes.',
+        // Only the link stays here; the pages' own words are in help_lists.php,
+        // read on the server, so they do not ride along with every page.
         'link' => 'Comment fonctionnent les listes ?',
-
-        'step_find' => 'Trouvez quelque chose à garder',
-        'step_find_body' => 'Cherchez, ou parcourez une Cove. Chaque fiche produit porte un marque-page sur sa photo.',
-        'step_find_alt' => 'Deux fiches produit, chacune avec un bouton marque-page dans le coin de son image.',
-
-        'step_save' => 'Enregistrez-le et choisissez une liste',
-        'step_save_body' => 'Touchez le marque-page et c’est dans votre liste. Touchez encore pour choisir une autre liste ou en commencer une. Sur un ordinateur, une petite flèche à côté du marque-page ouvre ce volet directement.',
-        'step_save_alt' => "Le panneau ouvert à côté d'un produit, avec les listes disponibles et l'option d'en créer une nouvelle.",
-
-        'step_open' => 'Ouvrez vos listes',
-        'step_open_body' => 'Tout ce que vous avez enregistré est sous Mes listes. Chaque liste montre ce qu’elle contient, si elle est privée et pour qui elle est. Quand un prix baisse, la fiche le dit.',
-        'step_open_alt' => 'La page mes listes, avec deux listes et le bouton qui en crée une autre.',
-
-        'making_title' => 'Créer une liste',
-        'making_body' => 'De deux façons, et la première est celle que presque tout le monde utilise.',
-        'making_from_save' => 'En enregistrant : touchez le marque-page et choisissez une nouvelle liste. Ce que vous enregistriez y va tout de suite.',
-        'making_from_lists' => 'Avec le bouton « Créer une nouvelle liste » sur la page d’accueil ou « Nouvelle liste » sous Mes listes : trois étapes, pour qui, quelle occasion, et si elle reste privée ou si vous la partagez plus tard.',
-
-        'private_title' => 'Qui peut la voir',
-        'private_body' => 'Une liste est privée tant que vous ne la partagez pas, par un lien ou avec des amis par leur nom. Qui l’ouvre peut cocher ce qu’il achète. Vous ne voyez pas qui a pris quoi, sauf si vous l’activez pour la liste, donc la surprise tient.',
-
-        'more_title' => 'Ce que vous pouvez faire d’autre',
-        'more_own' => 'Ajouter quelque chose qui n’est pas sur ce site : votre propre article avec un nom, et si vous voulez un lien et un prix.',
-        'more_copy' => 'Copier un produit d’une liste qu’on a partagée avec vous vers une de vos listes.',
-        'more_friends' => 'Ajouter des amis, partager une liste avec eux par leur nom, et être prévenu à temps quand un anniversaire approche.',
-
-        'cta_search' => 'Trouver quelque chose à enregistrer',
-        'cta_lists' => 'Voir mes listes',
     ],
 
     /*
@@ -1767,7 +1737,7 @@ return [
         'search_title' => 'Rechercher',
         'search_blurb' => 'Ce que le champ accepte, comment fonctionne le scanner, et pourquoi une faute de frappe trouve quand même.',
         'lists_title' => 'Listes',
-        'lists_blurb' => 'Enregistrer un produit, créer une liste, et qui la voit une fois partagée.',
+        'lists_blurb' => 'Enregistrer, partager, offrir à plusieurs, Ami secret, amis et rappels. Neuf pages courtes.',
         'link' => 'Aide',
     ],
 

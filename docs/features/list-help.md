@@ -5,26 +5,75 @@ status: Active
 date_added: 2026-09-06
 ---
 
-# The list help page
+# The list help pages
 
-**`/{market}/lists-help` — three steps, three screenshots, in the reader's language.**
+**`/{market}/lists-help` is an index of nine topics; `/{market}/lists-help/{topic}` is one short
+page per capability, in the reader's language, with the prose kept out of the shared translation
+payload.**
 
 Saving a product is one tap on a bookmark, and the bookmark sits on a card among a dozen other
 things to tap. People do not find it; the ones who do find it do not always realise a list has to
 exist first. So the question arrives as *"how do I use this"* rather than as a question about any one
 control, and there was nowhere to send it.
 
-Linked from underneath `/lists`, and from nowhere else.
+Linked from underneath `/lists`, from the help hub at `/help`, and, since 2026-09-08, from the
+sitemap for every topic.
 
-## The order is the order it happens in
+## One page became nine (2026-09-08)
 
-A list has to exist before anything can go on it, so the tidy explanation begins with "make a list".
-Nobody does that. People find something they like and *then* want to keep it, and the interface is
-built for that order — the save panel offers to create a list at the moment one is needed.
+The first version, 2026-09-06, was one page: three steps with screenshots. Two days later a list
+could be shared with friends by name, bought from, voted on, chipped in to, talked over, quizzed
+and reminded about, Secret Santa drew names beside it, and none of that was explained anywhere.
+The owner asked for all of it, on one page or several with an index. One page with all of it would
+be a manual nobody scrolls, so it is an index and nine topics, in the order somebody meets the
+features:
 
-So the page follows the same order, and **"how do I make a list" is answered inside step two** rather
-than parked in front of it as homework. There is a section on making one further down for the person
-who came looking for exactly that, and it names both routes.
+| Topic | What it covers |
+|---|---|
+| `saving` | the three steps with screenshots, the wizard, starting signed out |
+| `kinds` | wish list, gift list, group gift; the one fixed choice; occasions and dates |
+| `items` | the bookmark, adding from the list, own items, copying, price drops, removing |
+| `sharing` | private by default, link, friends by name, who may add, who sees claims, address |
+| `claiming` | reserving, releasing, bought, suggesting, the quiz |
+| `group` | group gift, voting, chipping in, the discussion board |
+| `santa` | Secret Santa: group, invite, draw, repair, attach a list, reminders |
+| `friends` | becoming friends, what a friend sees, birthdays, reminders, notifications |
+| `alerts` | price drop on the card, back in stock, following a search |
+
+Secret Santa was one section under group gifts in the first draft; the owner asked "what about
+secret friend?" and it became a topic of its own, because it is a page of its own on the site and
+people search for it by name.
+
+## The prose is in `lang/{language}/help_lists.php`, not `site.php`
+
+`site.php` is shipped whole to the browser with every page. Nine pages of prose would have ridden
+along with the product grid. The help texts live in their own language file, are read on the server
+by `ListHelpController`, and reach the page as props, so a topic's words reach only the visitor who
+opened it. `lists_help.link` is the one key that stayed in `site.php`, because `Lists/Index`
+renders it client-side.
+
+A body is plain text: paragraphs separated by a blank line, and a paragraph whose lines all start
+with `- ` is a list. That is the whole markup, and `HelpTopic.tsx` renders it; anything richer would
+be an argument for a different tool.
+
+## Keyword anchors
+
+The owner asked for "SEO links: keywords as anchors". A link is written `[words](path)` in the
+language file, with a market-relative path (`lists`, `friends`, `santa`, `notifications`, `search`,
+`lists-help/sharing`), and the controller turns it into the market's URL, so one Dutch file serves
+`be-nl` and `nl-nl` with the right prefix. The special path `cove` resolves to the market's own
+Cove segment, which differs per language. The words linked are the ones a person would search for
+(*verlanglijstje*, *Geheime Vriend*, *delen*, *Meldingen*) and the target is the page that answers
+them. The topics also link each other where one mentions what another explains. Tests assert that
+every resolved link on a `be-nl` page starts with `/be-nl/` and that every `lists-help/x` link in
+the four files names a topic that exists.
+
+## The four languages are checked against each other
+
+The Dutch file is the original. A test requires English, French and Spanish to carry the same
+topics, the same number of sections per topic, the same `shot` keys and no empty strings. That is
+what catches a translation that fell behind after the Dutch text grew a section, which is the way
+multi-language help pages usually rot.
 
 ## The screenshots are taken by a committed script
 
@@ -42,17 +91,17 @@ Three decisions inside it are worth knowing, because each was a wrong screenshot
 
 - **It photographs a throwaway account**, created by `bc:seed-help-demo` (local only, refuses in
   production). The only accounts on a development machine are the developer's own, carrying real
-  gift lists — invariant 4 — and committing pictures of those would publish them.
+  gift lists, invariant 4, and committing pictures of those would publish them.
 - **It re-seeds per market.** The save panel lists every list an account has, whatever market it was
   made in, so seeding three markets in turn and photographing the third produced a panel reading
   "Mijn verlanglijstje / My wish list / Anniversaire de Lea": three languages illustrating one step.
 - **It starts from a card whose picture actually loaded**, tested with `naturalWidth` rather than
-  `:has(img)` — the markup carries an `img` either way, and the first result for "koptelefoon" has
-  one whose file 404s. The first version opened on an empty grey square, which reads as a broken page
-  rather than as an instruction.
+  `:has(img)`.
 
-It also crops. Full-page screenshots were the first attempt and they are close to useless here: at
-1280 wide, the thing being pointed at is one small button in a picture of a whole shop.
+One thing it needs: a development database that is up to date. On 2026-09-08 the signed-in search
+page 500'd on a missing `search_alerts` table because four migrations had not been run locally, and
+the script reported "no save control on this page", which reads like an empty catalogue. Run
+`php artisan migrate` first.
 
 ## Languages, and the one that borrows
 
@@ -67,43 +116,24 @@ where *nouvelle liste* is.
 | Spanish | **the English set** |
 
 `es` has no catalogue, so there is no product page in that market to photograph, and inventing one
-would put a picture on the site of something that does not exist. Wrong-language images are the
-lesser of the two failures — a step with no picture beside two that have one reads as a page that
-failed to load — and a test pins the fallback so it stays deliberate.
-
-One thing the English set shows honestly: `en` product titles arrive from Dutch-language feeds, so
-the English screenshots contain Dutch product names. That is what an English visitor genuinely sees
-today. It is a catalogue problem rather than a screenshot problem, and faking it here would hide it.
-
-## Two questions answered on the page
-
-Both are the reason somebody hesitates at this exact moment, so they are answered here rather than
-left to the privacy page: **who can see a list**, and **whether the person it is for finds out what
-has been bought**. The second is invariant 4 stated in plain words — claims are hidden from the
-owner unless they asked otherwise.
-
-## Brought up to date on 2026-09-08
-
-The text described the interface of 2026-09-06. Since then the compact save control lost its
-chevron on phones (one tap saves, a second opens the sheet; the arrow is a desktop thing), the
-"new list" button became the three-step wizard on the home page and under My lists, sharing
-gained friends by name, the list card shows a price drop, and the owner may switch on seeing
-claims. The seven affected strings were rewritten in four languages and a short "what else you
-can do" section was added: your own items, copying from a shared list, friends and birthdays. The
-screenshots were re-taken with the committed script the same day.
+would put a picture on the site of something that does not exist. A test pins the fallback so it
+stays deliberate.
 
 ## Files
 
-- `app/Http/Controllers/ListHelpController.php`
-- `resources/js/Pages/Lists/Help.tsx`
+- `app/Http/Controllers/ListHelpController.php` — `TOPICS`, the link resolver, the screenshot map
+- `resources/js/Pages/Lists/HelpIndex.tsx`, `HelpTopic.tsx`
+- `lang/{nl,en,fr,es}/help_lists.php` — the prose
 - `app/Console/Commands/SeedHelpDemoCommand.php` — the demo account, local only
 - `scripts/help-screenshots.mjs`
 - `public/help/lists/{nl,fr,en}/` — the images
-- `lang/{en,nl,fr,es}/site.php` — `lists_help.*`
-- `tests/Feature/ListHelpPageTest.php` — including one that fails if an image referenced is missing
+- `tests/Feature/ListHelpPageTest.php`
 
 ## See also
 
-- [wishlists.md](wishlists.md) — what the page is explaining
+- [wishlists.md](wishlists.md), [sharing.md](sharing.md), [friends.md](friends.md),
+  [secret-santa.md](secret-santa.md), [list-board.md](list-board.md), [list-quiz.md](list-quiz.md),
+  [copying-items.md](copying-items.md), [occasion-reminders.md](occasion-reminders.md),
+  [search-alerts.md](search-alerts.md) — what the pages are explaining
 - [search-help.md](search-help.md) — the same idea for the search box, and the reason this sits
   beside `/lists` rather than with the legal pages

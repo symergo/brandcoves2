@@ -1717,39 +1717,9 @@ return [
      * nadie crea una lista vacía y luego sale a buscar.
      */
     'lists_help' => [
-        'seo_title' => 'Guardar productos en una lista',
-        'seo_description' => 'Guarda lo que encuentres aquí en una lista de deseos, crea una lista para otra persona y lleva la cuenta de lo que regalas. Tres pasos, con imágenes.',
-        'title' => 'Cómo funcionan las listas',
-        'intro' => 'Una lista guarda lo que encuentras aquí: para ti, o para alguien a quien le regalas. No hace falta crearla antes. Al guardar se te ofrece, y la portada tiene un botón que crea una en tres pasos.',
+        // Only the link stays here; the pages' own words are in help_lists.php,
+        // read on the server, so they do not ride along with every page.
         'link' => '¿Cómo funcionan las listas?',
-
-        'step_find' => 'Encuentra algo que quieras guardar',
-        'step_find_body' => 'Busca, o recorre una Cove. Cada ficha de producto lleva un marcador sobre su foto.',
-        'step_find_alt' => 'Dos fichas de producto, cada una con un botón de marcador en la esquina de su imagen.',
-
-        'step_save' => 'Guárdalo y elige una lista',
-        'step_save_body' => 'Toca el marcador y ya está en tu lista. Toca otra vez para elegir otra lista o empezar una nueva. En un ordenador, una flecha pequeña junto al marcador abre ese panel directamente.',
-        'step_save_alt' => 'El panel abierto junto a un producto, con las listas donde guardar y la opción de crear una nueva.',
-
-        'step_open' => 'Abre tus listas',
-        'step_open_body' => 'Todo lo que guardaste está en Mis listas. Cada lista muestra qué contiene, si es privada y para quién es. Cuando baja un precio, la ficha lo dice.',
-        'step_open_alt' => 'La página de mis listas, con dos listas y el botón que crea otra.',
-
-        'making_title' => 'Crear una lista',
-        'making_body' => 'De dos maneras, y la primera es la que usa casi todo el mundo.',
-        'making_from_save' => 'Al guardar: toca el marcador y elige una lista nueva. Lo que estabas guardando entra en ella al momento.',
-        'making_from_lists' => 'Con el botón «Crear una lista nueva» en la portada o «Nueva lista» en Mis listas: tres pasos, para quién es, qué ocasión, y si se queda privada o la compartes después.',
-
-        'private_title' => 'Quién puede verla',
-        'private_body' => 'Una lista es privada hasta que la compartes, con un enlace o con amigos por su nombre. Quien la abre puede marcar lo que compra. Tú no ves quién cogió qué, salvo que lo actives en la lista, así la sorpresa se mantiene.',
-
-        'more_title' => 'Qué más puedes hacer',
-        'more_own' => 'Añadir algo que no está en este sitio: un artículo propio con un nombre, y si quieres un enlace y un precio.',
-        'more_copy' => 'Copiar un producto de una lista que compartieron contigo a una lista tuya.',
-        'more_friends' => 'Añadir amigos, compartir una lista con ellos por su nombre, y recibir un aviso a tiempo cuando se acerca un cumpleaños.',
-
-        'cta_search' => 'Buscar algo que guardar',
-        'cta_lists' => 'Ir a mis listas',
     ],
 
     /*
@@ -1765,7 +1735,7 @@ return [
         'search_title' => 'Buscar',
         'search_blurb' => 'Qué acepta el buscador, cómo funciona el escáner y por qué una errata encuentra igual.',
         'lists_title' => 'Listas',
-        'lists_blurb' => 'Guardar un producto, crear una lista y quién la ve cuando la compartes.',
+        'lists_blurb' => 'Guardar, compartir, regalar entre varios, Amigo invisible, amigos y recordatorios. Nueve páginas cortas.',
         'link' => 'Ayuda',
     ],
 

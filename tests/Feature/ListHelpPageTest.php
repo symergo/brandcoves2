@@ -4,104 +4,230 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\ListHelpController;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * The page that explains how lists work.
+ * The list help: an index and nine topic pages.
  *
- * The assertions worth having are about the screenshots rather than the prose:
- * the images are files on disk referenced by a computed path, which is the one
- * arrangement that can break silently. A missing translation shows up as a
- * visible key; a missing image shows up as a gap somebody has to notice.
+ * The prose lives in lang/{language}/help_lists.php and reaches the page as
+ * props, so most of what can go wrong here is a language file that fell
+ * behind, a link to a topic that does not exist, or a screenshot that was
+ * renamed. All three are asserted.
  */
 class ListHelpPageTest extends TestCase
 {
     use RefreshDatabase;
 
     #[Test]
-    public function it_renders_for_a_visitor_with_no_account(): void
+    public function the_index_renders_for_a_visitor_with_no_account(): void
     {
         // No sign-in required. Somebody deciding whether this site is worth
         // making an account for is exactly who needs to read it.
         $this->get('/be-nl/lists-help')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Lists/Help'));
+            ->assertInertia(fn ($page) => $page
+                ->component('Lists/HelpIndex')
+                ->has('topics', count(ListHelpController::TOPICS))
+                ->where('topics.0.key', 'saving')
+                ->where('topics.0.url', '/be-nl/lists-help/saving')
+                ->where('copy.title', 'Hoe lijstjes werken'));
+    }
+
+    #[Test]
+    public function every_topic_renders_in_every_published_market(): void
+    {
+        foreach (['be-nl', 'nl-nl', 'be-fr', 'en'] as $market) {
+            foreach (ListHelpController::TOPICS as $topic) {
+                $this->get("/{$market}/lists-help/{$topic}")
+                    ->assertOk()
+                    ->assertInertia(fn ($page) => $page
+                        ->component('Lists/HelpTopic')
+                        ->where('topic', $topic)
+                        ->has('sections'));
+            }
+        }
+    }
+
+    #[Test]
+    public function an_unknown_topic_is_a_404(): void
+    {
+        $this->get('/be-nl/lists-help/nope')->assertNotFound();
+    }
+
+    #[Test]
+    public function the_topics_link_to_each_other_in_order(): void
+    {
+        $this->get('/be-nl/lists-help/saving')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('next.key', 'kinds')
+                ->where('next.url', '/be-nl/lists-help/kinds')
+                ->where('index', '/be-nl/lists-help'));
+
+        $last = ListHelpController::TOPICS[count(ListHelpController::TOPICS) - 1];
+
+        $this->get("/be-nl/lists-help/{$last}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('next', null));
+    }
+
+    #[Test]
+    public function only_the_saving_topic_carries_screenshots(): void
+    {
+        $this->get('/be-nl/lists-help/saving')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('numbered', true)
+                ->where('sections.0.shot.src', '/help/lists/nl/1-find.png')
+                ->where('sections.1.shot.src', '/help/lists/nl/2-choose-list.png')
+                ->where('sections.2.shot.src', '/help/lists/nl/3-your-lists.png')
+                ->where('sections.3.shot', null));
+
+        $this->get('/be-nl/lists-help/sharing')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('numbered', false)
+                ->where('sections.0.shot', null));
     }
 
     #[Test]
     public function each_market_is_shown_screenshots_in_its_own_language(): void
     {
         foreach (['be-nl' => 'nl', 'nl-nl' => 'nl', 'be-fr' => 'fr', 'en' => 'en'] as $market => $language) {
-            $this->get("/{$market}/lists-help")
+            $this->get("/{$market}/lists-help/saving")
                 ->assertOk()
-                ->assertInertia(fn ($page) => $page
-                    ->where('shots.find', "/help/lists/{$language}/1-find.png")
-                    ->where('shots.choose', "/help/lists/{$language}/2-choose-list.png")
-                    ->where('shots.lists', "/help/lists/{$language}/3-your-lists.png"));
+                ->assertInertia(fn ($page) => $page->where('sections.0.shot.src', "/help/lists/{$language}/1-find.png"));
         }
     }
 
     #[Test]
-    public function spanish_falls_back_to_the_english_screenshots(): void
+    public function every_screenshot_a_page_can_reference_exists(): void
     {
-        /*
-         * Deliberate: `es` has no catalogue, so there is no product page in
-         * that market to photograph. English images are wrong-language and a
-         * step with no image at all is a page that looks broken — this is the
-         * lesser of the two, and it is recorded rather than accidental.
-         */
-        $this->get('/es/lists-help')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('shots.find', '/help/lists/en/1-find.png'));
-    }
-
-    #[Test]
-    public function every_screenshot_it_points_at_exists(): void
-    {
+        // The images are generated by scripts/help-screenshots.mjs and
+        // committed. A reference to one that is missing is a broken picture
+        // on a page whose whole point is the pictures.
         foreach (['nl', 'fr', 'en'] as $language) {
             foreach (['1-find', '2-choose-list', '3-your-lists'] as $shot) {
                 $path = public_path("help/lists/{$language}/{$shot}.png");
 
-                $this->assertFileExists(
-                    $path,
-                    "Missing {$language}/{$shot}. Re-take them: node scripts/help-screenshots.mjs",
-                );
+                $this->assertFileExists($path, "Missing screenshot: {$path}");
             }
         }
     }
 
     #[Test]
-    public function the_lists_page_has_what_it_needs_to_link_here(): void
+    public function the_links_in_the_prose_point_at_the_market(): void
     {
         /*
-         * The link is built in the browser from the market key, so it is not in
-         * the server's HTML and there is no URL here to assert on. What *is*
-         * assertable is the label: without it the anchor renders as the raw key
-         * `lists_help.link`, which is the failure this catches.
+         * The language files write [words](path) with a market-relative path
+         * and the controller resolves it. Every link on a be-nl page has to
+         * come out under /be-nl/, and the same file served on nl-nl under
+         * /nl-nl/, or the anchor sends a Dutch reader to the wrong market.
          */
-        $this->get('/be-nl/lists')
+        foreach (['be-nl', 'nl-nl'] as $market) {
+            foreach (ListHelpController::TOPICS as $topic) {
+                $sections = $this->get("/{$market}/lists-help/{$topic}")
+                    ->assertOk()
+                    ->viewData('page')['props']['sections'];
+
+                foreach ($sections as $section) {
+                    preg_match_all('/\]\(([^)]+)\)/', $section['body'], $links);
+
+                    foreach ($links[1] as $href) {
+                        $this->assertStringStartsWith("/{$market}/", $href, "{$topic}: {$href}");
+                    }
+                }
+            }
+        }
+
+        // The Cove segment differs per language; "cove" resolves to it.
+        $this->get('/be-nl/lists-help/saving')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where(
+                'sections.0.body',
+                fn (string $body) => str_contains($body, '](/be-nl/search)') && preg_match('#\]\(/be-nl/[a-z-]+\)#', $body) === 1,
+            ));
+    }
+
+    #[Test]
+    public function every_topic_link_in_the_language_files_names_a_topic_that_exists(): void
+    {
+        foreach (['nl', 'en', 'fr', 'es'] as $language) {
+            $source = file_get_contents(lang_path("{$language}/help_lists.php"));
+
+            preg_match_all('#\]\(lists-help/([a-z]+)\)#', (string) $source, $matches);
+
+            foreach (array_unique($matches[1]) as $topic) {
+                $this->assertContains($topic, ListHelpController::TOPICS, "{$language}: link to unknown topic {$topic}");
+            }
+        }
+    }
+
+    #[Test]
+    public function the_four_language_files_carry_the_same_topics_and_sections(): void
+    {
+        /*
+         * The Dutch file is the original. Every other language has to carry
+         * the same topics with the same number of sections, the same
+         * screenshot keys, and no empty strings — which is what catches a
+         * translation that fell behind after the Dutch text grew a section.
+         */
+        $reference = require lang_path('nl/help_lists.php');
+
+        $this->assertSame(ListHelpController::TOPICS, array_keys($reference['topics']));
+
+        foreach (['en', 'fr', 'es'] as $language) {
+            $file = require lang_path("{$language}/help_lists.php");
+
+            $this->assertSame(array_keys($reference['index']), array_keys($file['index']), "{$language}: index keys");
+            $this->assertSame(array_keys($reference['topics']), array_keys($file['topics']), "{$language}: topics");
+
+            foreach ($reference['topics'] as $topic => $original) {
+                $translated = $file['topics'][$topic];
+
+                $this->assertCount(count($original['sections']), $translated['sections'], "{$language}: {$topic} sections");
+                $this->assertSame($original['numbered'], $translated['numbered'], "{$language}: {$topic} numbered");
+
+                foreach ($original['sections'] as $i => $section) {
+                    $this->assertSame($section['shot'] ?? null, $translated['sections'][$i]['shot'] ?? null, "{$language}: {$topic} section {$i} shot");
+                    $this->assertNotSame('', trim($translated['sections'][$i]['title']), "{$language}: {$topic} section {$i} title");
+                    $this->assertNotSame('', trim($translated['sections'][$i]['body']), "{$language}: {$topic} section {$i} body");
+                }
+            }
+        }
+    }
+
+    #[Test]
+    public function the_lists_page_still_has_its_link_here(): void
+    {
+        /*
+         * `Lists/Index` renders `lists_help.link` from site.php. The rest of
+         * the help strings moved to help_lists.php on 2026-09-08; this is the
+         * one that had to stay behind, and the one a tidy-up would remove.
+         */
+        $this->get('/be-nl/lists-help')
             ->assertOk()
             ->assertInertia(fn ($page) => $page->has('translations.lists_help.link'));
     }
 
     #[Test]
-    public function it_is_indexable(): void
+    public function they_are_indexable_and_in_the_sitemap(): void
     {
-        /*
-         * "How do I make a wish list" is a real query, and a noindex here would
-         * make the page answer nobody who has not already found the site.
-         *
-         * The flag has to be turned on for the assertion: the suite runs with
-         * `robots_allow` false so that a test environment can never be indexed,
-         * which makes every page noindex regardless of what its controller
-         * asked for.
-         */
-        config()->set('giftcoves.robots_allow', true);
+        // The robots tag is "noindex" everywhere the flag is off, which is
+        // every environment but production; the flag is what this asserts
+        // through.
+        config(['giftcoves.robots_allow' => true]);
 
-        $this->get('/be-nl/lists-help')
+        $this->get('/be-nl/lists-help')->assertOk()->assertSee('index, follow', escape: false);
+        $this->get('/be-nl/lists-help/sharing')->assertOk()->assertSee('index, follow', escape: false);
+
+        $this->get('/sitemap/be-nl/1.xml')
             ->assertOk()
-            ->assertSee('index, follow', escape: false);
+            ->assertSee('/be-nl/lists-help<', escape: false)
+            ->assertSee('/be-nl/lists-help/sharing', escape: false)
+            ->assertSee('/be-nl/lists-help/santa', escape: false);
     }
 }
