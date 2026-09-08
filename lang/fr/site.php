@@ -627,7 +627,7 @@ return [
         'copied' => 'Lien copié',
         'claim' => 'Je m\'en occupe',
         'claimed' => 'Je m’en occupe',
-        'claimed_by_someone' => 'Quelqu\'un s\'en occupe déjà',
+        'claimed_by_someone' => 'Quelqu\'un s\'en occupe',
         'unclaim' => 'Finalement non',
         'already_claimed' => 'Quelqu\'un vient de le prendre.',
         'cannot_unclaim' => 'Vous ne pouvez annuler que votre propre choix.',

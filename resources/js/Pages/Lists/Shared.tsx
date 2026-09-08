@@ -650,7 +650,7 @@ export default function SharedList({
                                               the strip above could never finish.
                                             */
                                             item.sent ? (
-                                                <p className="w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-center text-sm font-medium text-sage">
+                                                <p className="w-full truncate rounded-lg border border-sage bg-sage/10 px-2 py-2 text-center text-xs font-medium text-sage lg:px-4 lg:text-sm">
                                                     {t('lists.sent')}
                                                 </p>
                                             ) : (
@@ -674,7 +674,7 @@ export default function SharedList({
                                                       and the two follow-ups sit under
                                                       it as the small print they are.
                                                     */}
-                                                    <p className="w-full rounded-lg border border-sage bg-sage/10 px-4 py-2 text-center text-sm font-medium text-sage">
+                                                    <p className="w-full truncate rounded-lg border border-sage bg-sage/10 px-2 py-2 text-center text-xs font-medium text-sage lg:px-4 lg:text-sm">
                                                         {t('lists.claimed')}
                                                     </p>
                                                     <div className="flex items-center justify-center gap-4 text-xs text-ink-soft">
@@ -704,8 +704,15 @@ export default function SharedList({
                                                 </div>
                                             )
                                         ) : item.claimed ? (
-                                            <p className="w-full rounded-lg border border-line px-4 py-2 text-center text-sm text-ink-soft">
+                                            <p className="w-full truncate rounded-lg border border-line px-2 py-2 text-center text-xs text-ink-soft lg:px-4 lg:text-sm">
                                                 {/*
+                                                  One line, on every width. On a phone the
+                                                  tile gives this strip 149px, and "Iemand
+                                                  koopt dit al" at 14px wrapped onto two
+                                                  (2026-09-08). So 12px there with narrower
+                                                  padding, and `truncate` for the name
+                                                  nobody can predict the length of.
+
                                                   Who has it, when the list shows names.
                                                   `claimedBy` is null on a claim made
                                                   before the setting was turned on —
