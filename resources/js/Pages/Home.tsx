@@ -157,13 +157,13 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                           and 120px of the first screen goes to the wrapping
                           rather than the words.
                         */}
-                        <div className="flex items-center gap-4 md:block">
+                        <div className="flex items-center gap-3 md:block">
                             <h1 className="min-w-0 flex-1 text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
                                 {t('home.headline_1')}
                                 <br />
                                 {t('home.headline_2')}
                             </h1>
-                            <HomeIllustration className="w-24 shrink-0 text-ink-soft sm:w-32 md:hidden" />
+                            <HomeIllustration compact className="w-32 shrink-0 text-ink-soft sm:w-40 md:hidden" />
                         </div>
 
                         {/*

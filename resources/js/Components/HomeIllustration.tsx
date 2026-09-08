@@ -26,6 +26,17 @@
  *
  * `aria-hidden`, like every other drawing on the site. The headline next to it
  * says what the page is; a description here would only repeat it.
+ *
+ * **`compact` is the phone's version, and it is the icon's own idea drawn
+ * once more.** At 128px the scene above turns into texture: the arc is a
+ * hairline, the gift a smudge and the tile a dot, and the owner asked for
+ * something that reads as the mark (2026-09-08). So the compact drawing
+ * keeps the icon's composition rather than the scene's: the headland arc at
+ * the icon's own stroke weight, and in the mouth of the cove, where the icon
+ * moors its buoy, the gift in the buoy's orange. The owner's own reading of
+ * the mark, in four words: "the buoy is the gift". No miniature tile; at
+ * this size the drawing *is* the tile's idea, and a logo inside a logo is
+ * noise.
  */
 
 /* The logo's own three values. See docs/features/brand-mark.md. */
@@ -33,7 +44,46 @@ const TILE = '#12232B'
 const COVE = '#EFE6D6'
 const BUOY = '#F2A93B'
 
-export default function HomeIllustration({ className }: { className?: string }) {
+export default function HomeIllustration({ className, compact = false }: { className?: string; compact?: boolean }) {
+    if (compact) {
+        return (
+            <svg
+                viewBox="0 0 200 176"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                focusable="false"
+                className={className ?? 'h-auto w-full'}
+            >
+                {/* The sheltered water. */}
+                <circle cx="100" cy="88" r="52" className="fill-accent/10" stroke="none" />
+
+                {/*
+                  The headland at the icon's weight: 8.5 of a 15 radius there,
+                  scaled to a 60 radius here and then eased, because a stroke
+                  that is a third of the radius reads as a ring at 128px.
+                */}
+                <path d="M134.4 38.85A60 60 0 1 0 134.4 137.15" strokeWidth={14} />
+
+                {/*
+                  The gift, moored where the icon keeps its buoy: 12 of 15 units
+                  right of centre there, 48 of 60 here. Filled in the buoy's
+                  orange, so the eye that knows the icon finds the same dot of
+                  warmth in the same place.
+                */}
+                <g transform="translate(148 88)" strokeWidth={3}>
+                    <rect x="-20" y="-6" width="40" height="30" rx="4" fill={BUOY} fillOpacity={0.9} />
+                    <rect x="-24" y="-18" width="48" height="13" rx="3" fill={BUOY} />
+                    <path d="M0 -5v29" stroke={TILE} strokeOpacity={0.5} />
+                    <path d="M-1 -18c-5-9-10-12-15-10a6 6 0 0 0 2 11" />
+                    <path d="M1 -18c5-10 10-13 15-11a6 6 0 0 1-2 11" />
+                </g>
+            </svg>
+        )
+    }
+
     return (
         <svg
             viewBox="0 0 200 176"
