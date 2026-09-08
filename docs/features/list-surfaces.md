@@ -526,6 +526,16 @@ the wizard names a list "For Anna", so the line said it a third time. And the de
 top-right corner on every width — the header used to wrap on a phone and drop the icon under the
 pills — at 44px, the site's minimum target.
 
+## The item card gives the title the width (2026-09-08)
+
+On a phone the save control and its chevron sat beside the title and took eighty pixels of a
+390px screen; with the image, the padding and the gaps, the title had 141px, four words a line
+for three lines, and "Originele Apple EarPods Oortjes MYQY3ZM/A…" was cut before it said what it
+was. `ListItemCard` now wraps the controls to a row of their own below the product until `lg`,
+where the card is wide enough for all three. Measured: the title has 232px on a 390px phone and
+200px in the two-column grid at 700px, against 141 and 125 before; the desktop card is unchanged.
+One `aside` element moved by `flex-wrap`, not two copies, because the save control carries state.
+
 ## See also
 
 - [list-taxonomy.md](list-taxonomy.md) — the three kinds, and why they are three

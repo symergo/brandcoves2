@@ -92,7 +92,21 @@ export default function ListItemCard({
                 muted ? 'border-dashed border-ink-soft/40 opacity-70' : 'border-line'
             } ${className}`}
         >
-            <div className="flex gap-4">
+            {/*
+              On a phone the controls drop under the product instead of beside it.
+
+              Beside the title, the save control and its chevron took eighty
+              pixels of a 390px screen, the image eighty more, and the padding
+              and gaps another sixty: the title was left 141px, four words a
+              line, three lines, and "Originele Apple EarPods Oortjes
+              MYQY3ZM/A…" was cut before it said what it was. Wrapping the
+              controls to a row of their own gives the title the width of the
+              card minus the image, which is what a card is for. The two-column
+              grid from `sm` leaves a card no wider than a phone, so the same
+              applies until `lg`, where the controls sit beside the title as
+              before. One `aside`, moved by flex-wrap, not two.
+            */}
+            <div className="flex flex-wrap gap-3 lg:flex-nowrap lg:gap-4">
                 {image && (
                     <img
                         src={image}
@@ -169,7 +183,11 @@ export default function ListItemCard({
                     )}
                 </div>
 
-                {aside && <div className="flex shrink-0 items-start gap-1 self-start">{aside}</div>}
+                {aside && (
+                    <div className="flex basis-full shrink-0 items-start justify-end gap-1 self-start lg:basis-auto lg:justify-start">
+                        {aside}
+                    </div>
+                )}
             </div>
 
             {children}
