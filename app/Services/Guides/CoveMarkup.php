@@ -112,7 +112,7 @@ class CoveMarkup
     public function __construct(private readonly BrandLinker $brands) {}
 
     /**
-     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
      * @return array{html: string, links: int, rejected: list<string>}
      */
     public function render(string $text, Market $market, array $allowed): array
@@ -212,7 +212,7 @@ class CoveMarkup
      * where a product token is not expected. Pass it wherever the text can name
      * a product, or an unlabelled one falls back to its id here as it used to.
      *
-     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
      */
     public function plain(?string $text, array $allowed = []): string
     {
@@ -237,7 +237,7 @@ class CoveMarkup
     /**
      * Paragraphs, with tokens resolved.
      *
-     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
      * @return array{html: list<string>, links: int, rejected: list<string>}
      */
     public function paragraphs(string $text, Market $market, array $allowed): array
@@ -339,10 +339,21 @@ class CoveMarkup
      * anyway, and inventing a name for a product this page may not link to
      * would be worse than showing the writer their own broken reference.
      *
-     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
      */
     private function fallbackLabel(string $kind, string $value, array $allowed): string
     {
+        /*
+         * A guide is addressed by slug, and a slug is not words either:
+         * `[[guide:je-rechten-bij-een-online-aankoop]]` rendered as exactly
+         * that, hyphens included, in the middle of a Dutch sentence. The
+         * allowlist carries the titles since 2026-09-08; an unknown slug falls
+         * through to itself for the same reason an unknown product id does.
+         */
+        if ($kind === 'guide') {
+            return $allowed['guideTitles'][mb_strtolower(trim($value))] ?? $value;
+        }
+
         if ($kind !== 'product') {
             return $value;
         }
@@ -446,7 +457,7 @@ class CoveMarkup
      * hand-offs go" is not a judgement to hand to a model that is also being
      * asked to sound helpful. Authored Coves use it; generated ones do not.
      *
-     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>}  $allowed
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
      */
     public function promptContract(array $allowed): string
     {

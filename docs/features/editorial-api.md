@@ -194,6 +194,9 @@ article being a leaf:
     [[guide:beste-koptelefoons]]   → /{market}/guides/beste-koptelefoons
     [[page:gift-whisperer]]        → /{market}/gift
 
+A `guide` token without a label renders the guide's **title** as the anchor text (since 2026-09-08;
+before that it rendered the slug, hyphens and all). A label still wins when one is given.
+
 `guide` is allowlisted like everything else, from **published guides in this market, excluding the
 one being rendered** — a link to a draft is a 404 for a reader and an indexed dead end for a crawler,
 a slug that exists in `be-nl` need not exist in `es`, and an article linking to itself is a loop.

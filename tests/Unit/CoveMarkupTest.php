@@ -27,6 +27,8 @@ class CoveMarkupTest extends TestCase
             'brands' => ['Sony', 'JBL'],
             'searches' => ['draadloze koptelefoon'],
             'products' => [1234 => ['slug' => 'sony-wh-1000xm5', 'title' => 'Sony WH-1000XM5']],
+            'guides' => ['je-rechten-bij-een-online-aankoop'],
+            'guideTitles' => ['je-rechten-bij-een-online-aankoop' => 'Je rechten bij een online aankoop'],
         ];
     }
 
@@ -105,6 +107,38 @@ class CoveMarkupTest extends TestCase
         $this->assertStringContainsString('href="/be-nl/p/1234/sony-wh-1000xm5"', $result['html']);
         $this->assertStringContainsString('>Sony WH-1000XM5</a>', $result['html']);
         $this->assertStringNotContainsString('>1234<', $result['html']);
+    }
+
+    #[Test]
+    public function a_guide_token_without_a_label_renders_the_guide_title(): void
+    {
+        /*
+         * Reported 2026-09-08: the advice articles link each other with bare
+         * `[[guide:slug]]` tokens, and every one of them read as the slug,
+         * hyphens and all, in the middle of a sentence. A slug is an address,
+         * like a product id; the title is the words.
+         */
+        $result = $this->render('Zie [[guide:je-rechten-bij-een-online-aankoop]] voor de termijnen.');
+
+        $this->assertStringContainsString('href="/be-nl/guides/je-rechten-bij-een-online-aankoop"', $result['html']);
+        $this->assertStringContainsString('>Je rechten bij een online aankoop</a>', $result['html']);
+        $this->assertStringNotContainsString('>je-rechten-bij-een-online-aankoop<', $result['html']);
+    }
+
+    #[Test]
+    public function a_guide_label_still_wins_over_the_title(): void
+    {
+        $result = $this->render('Zie [[guide:je-rechten-bij-een-online-aankoop|je rechten]].');
+
+        $this->assertStringContainsString('>je rechten</a>', $result['html']);
+    }
+
+    #[Test]
+    public function plain_text_gives_an_unlabelled_guide_its_title_too(): void
+    {
+        $plain = $this->markup()->plain('Zie [[guide:je-rechten-bij-een-online-aankoop]].', $this->allowed());
+
+        $this->assertSame('Zie Je rechten bij een online aankoop.', $plain);
     }
 
     #[Test]

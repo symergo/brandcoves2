@@ -68,7 +68,7 @@ class Allowlist
      *
      * @param  Collection<int, ProductGroup>|list<ProductGroup>  $groups
      * @param  list<string>  $extraSearches  the article's own queries
-     * @return array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>, guides: list<string>}
+     * @return array{brands: list<string>, searches: list<string>, products: array<int, array{slug: string, title: string}>, guides: list<string>, guideTitles: array<string, string>}
      */
     public function full($groups, Market $market, ?int $excludeGuideId = null, array $extraSearches = []): array
     {
@@ -84,7 +84,15 @@ class Allowlist
                 ...array_filter($extraSearches, 'is_string'),
             ]))),
             'products' => $base['products'],
-            'guides' => $this->guideSlugs($market, $excludeGuideId),
+            'guides' => array_keys($guides = $this->guideTitles($market, $excludeGuideId)),
+            /*
+             * The same guides, with the words a reader sees. A `[[guide:slug]]`
+             * written without a label used to render the slug itself, hyphens
+             * and all, in the middle of a sentence; the title is what the
+             * writer meant. Keyed by slug so `CoveMarkup::fallbackLabel()` is a
+             * lookup rather than a query. Reported 2026-09-08.
+             */
+            'guideTitles' => $guides,
         ];
     }
 
@@ -114,6 +122,16 @@ class Allowlist
     /** @return list<string> */
     public function guideSlugs(Market $market, ?int $excludeGuideId = null): array
     {
+        return array_keys($this->guideTitles($market, $excludeGuideId));
+    }
+
+    /**
+     * Published guides in this market, slug => title, newest first.
+     *
+     * @return array<string, string>
+     */
+    public function guideTitles(Market $market, ?int $excludeGuideId = null): array
+    {
         return DailyPickSet::query()
             ->where('market', $market->value)
             ->articles()
@@ -124,7 +142,8 @@ class Allowlist
             // unbounded one would eat the context it needs for the writing.
             ->orderByDesc('published_at')
             ->limit(200)
-            ->pluck('slug')
+            ->get(['slug', 'theme_title'])
+            ->mapWithKeys(fn (DailyPickSet $set) => [(string) $set->slug => (string) ($set->theme_title ?: $set->slug)])
             ->all();
     }
 }
