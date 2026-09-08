@@ -82,6 +82,16 @@ left to the privacy page: **who can see a list**, and **whether the person it is
 has been bought**. The second is invariant 4 stated in plain words — claims are hidden from the
 owner unless they asked otherwise.
 
+## Brought up to date on 2026-09-08
+
+The text described the interface of 2026-09-06. Since then the compact save control lost its
+chevron on phones (one tap saves, a second opens the sheet; the arrow is a desktop thing), the
+"new list" button became the three-step wizard on the home page and under My lists, sharing
+gained friends by name, the list card shows a price drop, and the owner may switch on seeing
+claims. The seven affected strings were rewritten in four languages and a short "what else you
+can do" section was added: your own items, copying from a shared list, friends and birthdays. The
+screenshots were re-taken with the committed script the same day.
+
 ## Files
 
 - `app/Http/Controllers/ListHelpController.php`

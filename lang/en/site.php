@@ -1943,28 +1943,35 @@ return [
         'seo_title' => 'How to save products to a list',
         'seo_description' => 'Save anything you find to a wish list, make a list for somebody else, and keep track of what you are giving. Three steps, with pictures.',
         'title' => 'How lists work',
-        'intro' => 'A list is where you keep the things you find here — for yourself, or for somebody you are buying for. You do not have to make one first: saving anything offers to.',
+        'intro' => 'A list keeps what you find here: for yourself, or for someone you are buying for. You do not have to make one first. Saving offers to create one, and the home page has a button that makes one in three steps.',
         'link' => 'How do lists work?',
 
         'step_find' => 'Find something worth keeping',
-        'step_find_body' => 'Search, or browse a guide. Every product card has a bookmark on it, bottom right of the picture.',
+        'step_find_body' => 'Search, or browse a Cove. Every product card carries a bookmark on its picture.',
         'step_find_alt' => 'Two product cards, each with a bookmark button in the corner of its picture.',
 
         'step_save' => 'Save it, and pick a list',
-        'step_save_body' => 'Tap the bookmark to save it straight away, or the small arrow beside it to choose which list. That panel is also where you make a new one.',
+        'step_save_body' => 'Tap the bookmark and it is on your list. Tap again to pick another list or start a new one. On a computer a small arrow next to the bookmark opens that panel straight away.',
         'step_save_alt' => 'The panel open beside a product, listing the lists to save to and an option to start a new one.',
 
         'step_open' => 'Open your lists',
-        'step_open_body' => 'Everything you saved is under My lists. Each list shows what is on it, whether it is private, and who it is for.',
+        'step_open_body' => 'Everything you saved is under My lists. Each list shows what is on it, whether it is private and who it is for. When a price drops, the card says so.',
         'step_open_alt' => 'The my-lists page, with two lists and the button that makes another.',
 
         'making_title' => 'Making a list',
         'making_body' => 'Two ways, and the first is the one most people use.',
-        'making_from_save' => 'While saving a product: open the panel beside the bookmark and choose to start a new list. What you were saving goes straight onto it.',
-        'making_from_lists' => 'From My lists: the button at the top right. Useful when you know what the list is for before you have found anything for it.',
+        'making_from_save' => 'While saving: tap the bookmark and choose a new list. What you were saving goes straight onto it.',
+        'making_from_lists' => 'With the “Make a new list” button on the home page or under My lists: three steps, who it is for, which occasion, and whether it stays private or you share it later.',
 
         'private_title' => 'Who can see it',
-        'private_body' => 'A list is private until you share it. If you share one with the people buying for you, they can mark something as taken — and you will not see who took what, so nothing is spoiled.',
+        'private_body' => 'A list is private until you share it, with a link or with friends by name. Whoever opens it can tick what they are buying. You do not see who took what, unless you switch that on for the list, so the surprise holds.',
+
+
+
+        'more_title' => 'What else you can do',
+        'more_own' => 'Add something that is not on this site: your own item with a name, and a link and a price if you want.',
+        'more_copy' => 'Copy a product from a list someone shared with you onto a list of your own.',
+        'more_friends' => 'Add friends, share a list with them by name, and hear in time when someone\'s birthday is close.',
 
         'cta_search' => 'Find something to save',
         'cta_lists' => 'Go to my lists',

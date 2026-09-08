@@ -114,6 +114,19 @@ export default function ListHelp({ shots, urls }: Props) {
                 <h2 className="mt-12 text-lg font-semibold text-ink">{t('lists_help.private_title')}</h2>
                 <p className="mt-2 text-ink-soft">{t('lists_help.private_body')}</p>
 
+                {/*
+                  What grew around the list since the page was written: your
+                  own items, copying from a shared list, friends. Three lines,
+                  not three sections; each is a thing to know exists, and the
+                  interface explains itself once you are there.
+                */}
+                <h2 className="mt-12 text-lg font-semibold text-ink">{t('lists_help.more_title')}</h2>
+                <ul className="mt-4 list-disc space-y-2 pl-5 text-ink-soft">
+                    <li>{t('lists_help.more_own')}</li>
+                    <li>{t('lists_help.more_copy')}</li>
+                    <li>{t('lists_help.more_friends')}</li>
+                </ul>
+
                 <div className="mt-12 flex flex-wrap gap-3">
                     <Link
                         href={urls.search}

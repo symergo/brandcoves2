@@ -1733,28 +1733,35 @@ return [
         'seo_title' => 'Producten bewaren in een lijstje',
         'seo_description' => 'Bewaar alles wat je hier vindt in een verlanglijstje, maak een lijstje voor iemand anders en hou bij wat je geeft. Drie stappen, met beeld.',
         'title' => 'Hoe lijstjes werken',
-        'intro' => 'In een lijstje bewaar je wat je hier vindt — voor jezelf, of voor iemand voor wie je iets koopt. Je hoeft er niet eerst een te maken: bij het bewaren wordt het aangeboden.',
+        'intro' => 'In een lijstje bewaar je wat je hier vindt: voor jezelf, of voor iemand voor wie je iets koopt. Je hoeft er niet eerst een te maken. Bij het bewaren wordt het aangeboden, en op de startpagina staat een knop die er in drie stappen een maakt.',
         'link' => 'Hoe werken lijstjes?',
 
         'step_find' => 'Vind iets dat je wilt bewaren',
-        'step_find_body' => 'Zoek, of blader door een gids. Op elke productkaart staat rechtsonder in de foto een bladwijzer.',
+        'step_find_body' => 'Zoek, of blader door een Cove. Op elke productkaart staat in de foto een bladwijzer.',
         'step_find_alt' => 'Twee productkaarten, elk met een bladwijzerknop in de hoek van de foto.',
 
         'step_save' => 'Bewaar het en kies een lijstje',
-        'step_save_body' => 'Tik op de bladwijzer om het meteen te bewaren, of op het pijltje ernaast om te kiezen in welk lijstje. In datzelfde venster maak je ook een nieuw lijstje.',
+        'step_save_body' => 'Tik op de bladwijzer en het staat in je lijstje. Tik nog eens om een ander lijstje te kiezen of een nieuw te beginnen. Op een computer staat naast de bladwijzer een pijltje dat dat venster meteen opent.',
         'step_save_alt' => 'Het geopende venster naast een product, met de lijstjes om in te bewaren en de optie om een nieuw lijstje te beginnen.',
 
         'step_open' => 'Open je lijstjes',
-        'step_open_body' => 'Alles wat je bewaarde staat onder Mijn lijstjes. Je ziet per lijstje wat erin zit, of het privé is en voor wie het bedoeld is.',
+        'step_open_body' => 'Alles wat je bewaarde staat onder Mijn lijstjes. Je ziet per lijstje wat erin zit, of het privé is en voor wie het bedoeld is. Zakt de prijs van iets, dan zie je dat op de kaart.',
         'step_open_alt' => 'De pagina met mijn lijstjes, met twee lijstjes en de knop waarmee je er een maakt.',
 
         'making_title' => 'Een lijstje maken',
         'making_body' => 'Op twee manieren, en de eerste gebruikt bijna iedereen.',
-        'making_from_save' => 'Tijdens het bewaren: open het venster naast de bladwijzer en kies voor een nieuw lijstje. Wat je aan het bewaren was staat er meteen in.',
-        'making_from_lists' => 'Vanuit Mijn lijstjes: de knop rechtsboven. Handig als je al weet waarvoor het lijstje is voordat je er iets voor gevonden hebt.',
+        'making_from_save' => 'Tijdens het bewaren: tik op de bladwijzer en kies voor een nieuw lijstje. Wat je aan het bewaren was staat er meteen in.',
+        'making_from_lists' => 'Met de knop “Maak een nieuw lijstje” op de startpagina of onder Mijn lijstjes: drie stappen, voor wie het is, welke gelegenheid, en of het privé blijft of je het later deelt.',
 
         'private_title' => 'Wie het kan zien',
-        'private_body' => 'Een lijstje is privé tot je het deelt. Deel je het met de mensen die iets voor je kopen, dan kunnen zij aanvinken wat ze nemen — en jij ziet niet wie wat genomen heeft, dus de verrassing blijft.',
+        'private_body' => 'Een lijstje is privé tot je het deelt, met een link of met vrienden op naam. Wie het opent, kan aanvinken wat hij koopt. Jij ziet niet wie wat genomen heeft, tenzij je dat zelf aanzet bij het lijstje, dus de verrassing blijft.',
+
+
+
+        'more_title' => 'Wat er nog kan',
+        'more_own' => 'Iets toevoegen dat hier niet te vinden is: een eigen item met een naam, en als je wilt een link en een prijs.',
+        'more_copy' => 'Een product van een gedeeld lijstje kopiëren naar een lijstje van jou.',
+        'more_friends' => 'Vrienden toevoegen, een lijstje op naam met hen delen, en een seintje krijgen als iemand bijna jarig is.',
 
         'cta_search' => 'Zoek iets om te bewaren',
         'cta_lists' => 'Naar mijn lijstjes',
