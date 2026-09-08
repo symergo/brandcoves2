@@ -355,7 +355,14 @@ function Chrome({ children }: PropsWithChildren) {
 
             <header className="border-b border-line">
                 <div className="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4">
-                    <Link href={base} className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+                    {/*
+                      The name at the mark's height. It was 18px beside a 28px
+                      mark, which made the mark the logo and the word its
+                      caption; the owner wanted the name as big as the icon
+                      (2026-09-08). 28px, with the line height pulled in so the
+                      header does not grow.
+                    */}
+                    <Link href={base} className="flex items-center gap-2 text-[1.75rem] leading-none font-semibold tracking-tight">
                         {/*
                           Decorative, so it is hidden from screen readers: the
                           word next to it already names the link, and a reader
@@ -515,7 +522,7 @@ function Chrome({ children }: PropsWithChildren) {
                         {/* Its own top bar, so the sheet does not have to know
                             how tall the header under it is. */}
                         <div className="mb-2 flex h-[4.75rem] items-center justify-between border-b border-line">
-                            <span className="text-lg font-semibold tracking-tight">GiftCoves</span>
+                            <span className="text-[1.75rem] leading-none font-semibold tracking-tight">GiftCoves</span>
                             <button
                                 type="button"
                                 onClick={() => setMenuOpen(false)}
@@ -851,17 +858,16 @@ function Chrome({ children }: PropsWithChildren) {
                     </div>
 
                     {/*
-                      The name at body size, the way the header writes it, and
-                      the copyright line before the disclosure. The year is the
+                      The copyright line before the disclosure. The year is the
                       one the page is rendered in; a notice that says 2026 in
-                      2028 reads as an abandoned site.
+                      2028 reads as an abandoned site. The name stood in front
+                      of this for an hour on 2026-09-08 and came out again: the
+                      copyright line already says it, and the header is where
+                      the name belongs.
                     */}
-                    <div className="mt-3 flex flex-col gap-1 border-t border-line/60 pt-3 sm:flex-row sm:items-baseline sm:gap-4">
-                        <span className="shrink-0 text-base font-semibold tracking-tight text-ink">GiftCoves</span>
-                        <span className="text-2xs">
-                            {t('footer.copyright', { year: String(new Date().getFullYear()) })} {t('footer.affiliate')}
-                        </span>
-                    </div>
+                    <p className="mt-3 border-t border-line/60 pt-3 text-2xs">
+                        {t('footer.copyright', { year: String(new Date().getFullYear()) })} {t('footer.affiliate')}
+                    </p>
                 </div>
             </footer>
 

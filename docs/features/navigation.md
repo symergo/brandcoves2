@@ -390,8 +390,10 @@ It was one wrapped row of eleven links at body size with 44px rows on a phone, w
 to go (brands, guides, the Daily, surprise, popular searches, search tips, help) and what the law
 wants reachable from every page (about, privacy, terms, cookies). On a desktop the two share one
 row with the legal group at the right edge; on a phone they stack at 40px a row, so a thumb still
-has a target. The affiliate disclosure sits under a hairline in the smallest size with the name
-"GiftCoves" before it at body size, and "© :year GiftCoves." opening the small print, the year
-taken from the clock at render. Measured: 305px to 246px on a 390px phone, 105px to 90px on a
+has a target. The affiliate disclosure sits under a hairline in the smallest size, opened by "© :year
+GiftCoves.", the year taken from the clock at render. The name stood in front of that line for an
+hour and came out again at the owner's word: the copyright already says it, and the header is
+where the name belongs. The header wordmark went from 18px to 28px the same day, the height of the
+mark beside it, with the line height pulled in so the header does not grow. Measured: 305px to 246px on a 390px phone, 105px to 90px on a
 desktop. Nothing was removed and nothing was added; the disclosure sentence is the one the law
 requires and is untouched.
