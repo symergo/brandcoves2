@@ -522,7 +522,23 @@ function Chrome({ children }: PropsWithChildren) {
                         {/* Its own top bar, so the sheet does not have to know
                             how tall the header under it is. */}
                         <div className="mb-2 flex h-[4.75rem] items-center justify-between border-b border-line">
-                            <span className="text-[1.75rem] leading-none font-semibold tracking-tight">GiftCoves</span>
+                            {/* The mark and the name, as the header writes
+                                them, so the sheet's top bar reads as the same
+                                header and not a page of its own. The name
+                                stood here alone until 2026-09-08, and once it
+                                was 28px the missing mark was the first thing
+                                the owner saw. */}
+                            <span className="flex items-center gap-2 text-[1.75rem] leading-none font-semibold tracking-tight">
+                                <img
+                                    src="/icons/giftcoves.svg"
+                                    alt=""
+                                    aria-hidden="true"
+                                    width={28}
+                                    height={28}
+                                    className="h-7 w-7 rounded-md"
+                                />
+                                GiftCoves
+                            </span>
                             <button
                                 type="button"
                                 onClick={() => setMenuOpen(false)}
