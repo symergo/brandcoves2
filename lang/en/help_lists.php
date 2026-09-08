@@ -233,8 +233,8 @@ return [
                     'body' => 'Remove them from the group, or redraw for one person. Only the pairs it touches are redrawn, and only those people get a new email.',
                 ],
                 [
-                    'title' => 'A list to go with it',
-                    'body' => 'Anyone with a [wish list](lists) attaches it to the group with “Use this list” on the list itself. That way whoever drew you knows what you would like. How to share it is under [Sharing a list](lists-help/sharing).',
+                    'title' => 'Attaching my wish list to the group',
+                    'body' => 'If you have a [wish list](lists), attach it to the group: open your list and choose “Use this list”. Whoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in three steps.',
                 ],
                 [
                     'title' => 'A reminder ahead',

@@ -233,8 +233,8 @@ return [
                     'body' => 'Retirez cette personne du groupe, ou retirez au sort pour une seule personne. Seules les paires concernées sont retirées au sort, et seules ces personnes reçoivent un nouvel e-mail.',
                 ],
                 [
-                    'title' => 'Une liste avec',
-                    'body' => 'Qui a une [liste de souhaits](lists) la rattache au groupe avec « Utiliser cette liste » sur la liste elle-même. Ainsi la personne qui vous a tiré sait ce qui vous ferait plaisir. Comment la partager est sous [Partager une liste](lists-help/sharing).',
+                    'title' => 'Rattacher ma liste de souhaits au groupe',
+                    'body' => 'Si vous avez une [liste de souhaits](lists), rattachez-la au groupe : ouvrez votre liste et choisissez « Utiliser cette liste ». La personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.',
                 ],
                 [
                     'title' => 'Un rappel avant',

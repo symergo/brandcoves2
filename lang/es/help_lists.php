@@ -233,8 +233,8 @@ return [
                     'body' => 'Quítalo del grupo, o vuelve a sortear para una sola persona. Solo se vuelven a sortear las parejas afectadas, y solo esas personas reciben un correo nuevo.',
                 ],
                 [
-                    'title' => 'Una lista para acompañar',
-                    'body' => 'Quien tenga una [lista de deseos](lists) la une al grupo con «Usar esta lista» en la propia lista. Así quien te tocó sabe qué te gustaría. Cómo compartirla está en [Compartir una lista](lists-help/sharing).',
+                    'title' => 'Unir mi lista de deseos al grupo',
+                    'body' => 'Si tienes una [lista de deseos](lists), únela al grupo: abre tu lista y elige «Usar esta lista». Quien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en tres pasos.',
                 ],
                 [
                     'title' => 'Un recordatorio antes',

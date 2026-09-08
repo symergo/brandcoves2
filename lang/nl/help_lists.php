@@ -245,8 +245,8 @@ return [
                     'body' => 'Haal die persoon uit de groep, of trek voor één persoon opnieuw. Alleen de koppels die het raakt worden opnieuw getrokken, en alleen die mensen krijgen een nieuwe mail.',
                 ],
                 [
-                    'title' => 'Een lijstje erbij',
-                    'body' => 'Wie een [verlanglijstje](lists) heeft, koppelt het aan de groep met “Gebruik dit lijstje” op het lijstje zelf. Zo weet wie jou trok wat je graag hebt. Hoe je het deelt, staat bij [Een lijstje delen](lists-help/sharing).',
+                    'title' => 'Mijn verlanglijst koppelen aan de groep',
+                    'body' => 'Heb je een [verlanglijst](lists), koppel hem dan aan de groep: open je lijstje en kies “Gebruik dit lijstje”. Wie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijstje? [Maak er een](lists-help/saving) in drie stappen.',
                 ],
                 [
                     'title' => 'Een herinnering vooraf',
