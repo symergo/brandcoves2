@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 /**
  * The list help pages, in English. See lang/nl/help_lists.php for the shape,
- * the [words](path) link syntax, and why this is not in site.php.
+ * the [words](path) link syntax, the "1. " steps, and why this is not in
+ * site.php.
  */
 return [
     'index' => [
         'title' => 'How lists work',
         'seo_title' => 'How lists work',
-        'seo_description' => 'Everything a list can do: saving, sharing, buying together, Secret Santa, friends and reminders. Explained by topic.',
-        'intro' => 'A list keeps what you find here, for yourself or for someone else. Below, what you can do with one, by topic. Start with the first if you have never saved anything.',
+        'seo_description' => 'Everything a list can do: saving, sharing, buying together, Secret Santa, friends and reminders. Step by step, with pictures.',
+        'intro' => 'A list keeps what you find here, for yourself or for someone else. Below, what you can do with one and how, by topic, with pictures. Start with the first if you have never saved anything.',
         'back' => 'All topics',
         'next' => 'Next',
         'cta_search' => 'Find something to save',
@@ -21,7 +22,7 @@ return [
     'topics' => [
         'saving' => [
             'title' => 'Saving and making a list',
-            'blurb' => 'Three steps, with pictures: find something, save it, open your lists.',
+            'blurb' => 'Find something, save it, open your lists, and make a list in three steps.',
             'seo_description' => 'Save anything you find here to a wish list and make one in three steps. With pictures.',
             'intro' => 'You do not have to make a list first. Saving offers to create one, and the home page has a button that makes one in three steps.',
             'numbered' => true,
@@ -45,8 +46,10 @@ return [
                     'alt' => 'The My lists page, with two lists and the button that makes one.',
                 ],
                 [
-                    'title' => 'Making a list',
-                    'body' => "Two ways, and nearly everyone uses the first.\n\n- While saving: tap the bookmark and choose a new list. What you were saving goes straight onto it.\n- With the “Make a new list” button on the home page or “New list” under [My lists](lists): three steps, who it is for, name and occasion, and whether it stays private or you share it later.\n\nOne choice is then fixed: who it is for. Everything else you can still change. What the three kinds can do is under [Wish list, gift list or group gift](lists-help/kinds).",
+                    'title' => 'Making a list in three steps',
+                    'body' => "1. Tap “New list” under [My lists](lists), or “Make a new list” on the home page.\n2. Choose who it is for: “For me”, “For someone else” or “Together, for someone”. Tap “Next”.\n3. Give the list a name and an occasion. Tap “Next”.\n4. Choose “Private (or share later)” or “Share with a link”, and tap “Create list”.\n\nOr skip this: while saving, tap the bookmark and choose a new list there. What you were saving goes straight onto it.\n\nOne choice is then fixed: who it is for. Everything else you can still change. What the three kinds can do is under [Wish list, gift list or group gift](lists-help/kinds).",
+                    'shot' => 'wizard',
+                    'alt' => 'The first step of a new list, with the three choices of who it is for.',
                 ],
                 [
                     'title' => 'You do not need to be signed in to start',
@@ -98,15 +101,17 @@ return [
                 ],
                 [
                     'title' => 'Adding from the list itself',
-                    'body' => 'A list page has “Add a product”. Search there, or scan a barcode, and what you pick goes straight onto that list.',
+                    'body' => "1. Open your list under [My lists](lists).\n2. Tap “+ Add a product”.\n3. Type what you are looking for and press Enter, or tap the scan icon and point your camera at the barcode.\n4. Tap the product in the results. It is on your list straight away.",
+                    'shot' => 'add',
+                    'alt' => 'The search field at the top of a list for adding a product, with the link below it to write something in yourself.',
                 ],
                 [
                     'title' => 'Something that is not on this site',
-                    'body' => 'Under “Add a product”, choose “Put it on yourself”. A name is enough; a link, a price and a note such as “size M, in blue” may go with it. Your own items can be edited later. Catalogue products cannot: their title and price come from the shop.',
+                    'body' => "1. Tap “+ Add a product”.\n2. Under the search field, choose “Write it in yourself”.\n3. Fill in what it is. A link, a price and a note such as “size M, in blue” may go with it.\n4. Save it.\n\nYour own items can be changed later with “Edit”. Catalogue products cannot: their title and price come from the shop.",
                 ],
                 [
                     'title' => 'Copying, not moving',
-                    'body' => 'Every item has “Copy to another list”. On someone else’s [shared list](lists-help/claiming) it is “Put on my list”. The original stays; the note and the price come along, whoever is buying it does not.',
+                    'body' => 'Every item has “Copy to another list”. On someone else’s [shared list](lists-help/claiming) it is “Add to my list”. The original stays; the note and the price come along, whoever is buying it does not.',
                 ],
                 [
                     'title' => 'When the price drops',
@@ -114,7 +119,7 @@ return [
                 ],
                 [
                     'title' => 'Removing',
-                    'body' => 'Only whoever manages the list can remove an item, and it asks first. The newest is at the top.',
+                    'body' => 'Tap the cross on the item and confirm. Only whoever manages the list can remove an item. The newest is at the top.',
                 ],
             ],
         ],
@@ -132,11 +137,13 @@ return [
                 ],
                 [
                     'title' => 'With a link',
-                    'body' => 'Copy the link, or a short message with the link in it, or send it through WhatsApp, Telegram, email and more. Everyone with the link sees the list. “Stop sharing” makes every link you sent invalid; share again and you get a new one.',
+                    'body' => "1. Open your list and tap “Share”.\n2. Set it to “Share with a link” if it is still private.\n3. Tap “Copy link” and paste it into a message. Or tap “Copy message and link” for a ready-made message, or “Share” to pick WhatsApp, Telegram, email or another app.\n\nEveryone with the link sees the list. “Stop sharing” makes every link you sent invalid; share again and you get a new one.",
+                    'shot' => 'share',
+                    'alt' => 'The share panel of a list, with the link, the button to copy it and the button to stop sharing.',
                 ],
                 [
                     'title' => 'With friends by name',
-                    'body' => 'Pick [friends](friends) and send. They get an email with the link, without the contents, and the list appears on their [friends page](friends). “Stop sharing with …” takes it off there; a link they already had keeps working until you stop sharing. How you become friends is under [Friends, birthdays and reminders](lists-help/friends).',
+                    'body' => "1. Tap “Share”, then “Share with friends”.\n2. Pick the [friends](friends) who may see it.\n3. Tap “Send”.\n\nThey get an email with the link, without the contents, and the list appears on their [friends page](friends). “Stop sharing with …” takes it off there; a link they already had keeps working until you stop sharing. How you become friends is under [Friends, birthdays and reminders](lists-help/friends).",
                 ],
                 [
                     'title' => 'Who may add',
@@ -144,7 +151,7 @@ return [
                 ],
                 [
                     'title' => 'Who sees what has been bought',
-                    'body' => 'On a [wish list](lists-help/kinds) you do not see what has been reserved. That is off by default and you switch it on per list with “Show me what has been reserved”. On a gift list it is on, because you are giving too. Names of who is buying what are hidden by default; switch them on and it applies to new reservations only.',
+                    'body' => 'On a [wish list](lists-help/kinds) you do not see what has been reserved. That is off by default and you switch it on per list with “Show me what has been claimed”. On a gift list it is on, because you are giving too. Names of who is buying what are hidden by default; switch them on and it applies to new reservations only.',
                 ],
                 [
                     'title' => 'Delivery address',
@@ -162,19 +169,21 @@ return [
             'sections' => [
                 [
                     'title' => 'Reserving',
-                    'body' => '“I’ll get this” reserves it for you, so nobody else buys it too. You need an account for that; sign in and your tap is carried out anyway. The person the list is for sees nothing of it.',
+                    'body' => "1. Open the link you were sent.\n2. Tap “I'll get this” on the gift you are buying.\n3. Sign in if asked; your tap is carried out afterwards.\n\nThat way nobody else buys it too. The person the list is for sees nothing of it.",
+                    'shot' => 'shared',
+                    'alt' => 'Two gifts on a shared list, each with the button to say you will get it.',
                 ],
                 [
                     'title' => 'Changed your mind, or bought',
-                    'body' => '“Not after all” lets it go again, whenever you like. “I have bought it” marks it bought. At the top you see how much is already reserved.',
+                    'body' => '“Actually, no” lets it go again, whenever you like. “I have bought it” marks it bought. At the top you see how much is already reserved.',
                 ],
                 [
                     'title' => 'Suggesting something yourself',
-                    'body' => 'Search at the foot of the list and choose “Suggest it”, or “Add to the list” where that is allowed straight away. You can also describe something yourself. Whoever manages the list sees your suggestion and decides. Whether it is allowed straight away is under [Sharing a list](lists-help/sharing).',
+                    'body' => "1. Search at the foot of the list for what you want to suggest, or describe it yourself.\n2. Tap “Suggest something”, or “Add to the list” where that is allowed straight away.\n\nWhoever manages the list sees your suggestion and decides. Whether it is allowed straight away is under [Sharing a list](lists-help/sharing).",
                 ],
                 [
                     'title' => 'Keep it for yourself too',
-                    'body' => 'Every item has a bookmark and “Put on my list”. What you copy lands on [your list](lists) without the reservation.',
+                    'body' => 'Every item has a bookmark and “Add to my list”. What you copy lands on [your list](lists) without the reservation.',
                 ],
                 [
                     'title' => 'The quiz: how well do you know them?',
@@ -192,7 +201,7 @@ return [
             'sections' => [
                 [
                     'title' => 'A group gift',
-                    'body' => 'When [making](lists-help/saving) the list, choose “Together, for someone”. Everyone with the link can add ideas and vote on them. There is nothing to reserve: it is one gift from all of you. Drawing names is something else; that is under [Secret Santa](lists-help/santa).',
+                    'body' => "1. Make a [new list](lists-help/saving) and choose “Together, for someone” in the first step.\n2. Say who it is for and give it a name.\n3. Share the link with everyone in.\n\nEveryone with the link can add ideas and vote on them. There is nothing to reserve: it is one gift from all of you. Drawing names is something else; that is under [Secret Santa](lists-help/santa).",
                 ],
                 [
                     'title' => 'Voting',
@@ -200,7 +209,7 @@ return [
                 ],
                 [
                     'title' => 'Chipping in',
-                    'body' => 'Under “How everyone contributes” you choose: everyone picks their own amount, or everyone the same. Whoever joins taps “Count me in” and sees their own share and the total. Only the organiser sees who gives what, unless they switch on “Everyone sees who contributes”. No money moves here; you settle that between you.',
+                    'body' => 'Under “How everyone contributes” you choose: everyone picks their own amount, or everyone the same. Whoever joins taps “I am in” and sees their own share and the total. Only the organiser sees who gives what, unless they switch on “Everyone sees who is chipping in”. No money moves here; you settle that between you.',
                 ],
                 [
                     'title' => 'Talking it over',
@@ -218,23 +227,25 @@ return [
             'sections' => [
                 [
                     'title' => 'Starting a group',
-                    'body' => 'Go to [Secret Santa](santa) and choose “Start a group”. Give it a name, a budget and the date you give the gifts. You are the organiser.',
+                    'body' => "1. Go to [Secret Santa](santa).\n2. Tap “Start a group”.\n3. Give the group a name, a budget and the date you give the gifts.\n\nYou are the organiser.",
+                    'shot' => 'santa',
+                    'alt' => 'The Secret Santa page, with the button to start a group.',
                 ],
                 [
                     'title' => 'Inviting everyone',
-                    'body' => 'Pass the invite link round. Joining takes a name and an email address; no account needed.',
+                    'body' => "1. Copy the group’s invite link.\n2. Send it to everyone taking part.\n3. Whoever opens it fills in a name and an email address. No account needed.",
                 ],
                 [
                     'title' => 'Drawing',
-                    'body' => 'Once there are at least two people, choose “Draw”. Everyone gets one name by email. The organiser never sees the pairs, so you stay surprised too.',
+                    'body' => "1. Wait until everyone is in, at least two people.\n2. Tap “Do the draw”.\n\nEveryone gets one name by email. The organiser never sees the pairs, so you stay surprised too.",
                 ],
                 [
                     'title' => 'If someone drops out',
-                    'body' => 'Remove them from the group, or redraw for one person. Only the pairs it touches are redrawn, and only those people get a new email.',
+                    'body' => 'Remove them from the group, or choose “Redraw this person”. Only the pairs it touches are redrawn, and only those people get a new email.',
                 ],
                 [
                     'title' => 'Attaching my wish list to the group',
-                    'body' => 'If you have a [wish list](lists), attach it to the group: open your list and choose “Use this list”. Whoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in three steps.',
+                    'body' => "1. Open your [wish list](lists).\n2. Tap “Use this list” next to the group.\n\nWhoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in three steps.",
                 ],
                 [
                     'title' => 'A reminder ahead',
@@ -252,7 +263,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Becoming friends',
-                    'body' => 'When someone opens your share link while signed in, you are [friends](friends). You can also add someone by email address; they get no email about it.',
+                    'body' => "When someone opens your share link while signed in, you are [friends](friends). To add someone yourself:\n\n1. Go to [Friends](friends).\n2. Under “Add a person”, fill in an email address, and the birthday if you like.\n3. Tap “Add”.\n\nThey get no email about it. If they already have an account you are connected at once; otherwise as soon as they sign in.",
+                    'shot' => 'friends',
+                    'alt' => 'The friends page, with the form to add someone by email address.',
                 ],
                 [
                     'title' => 'What a friend sees',
@@ -286,11 +299,13 @@ return [
                 ],
                 [
                     'title' => 'Back in stock',
-                    'body' => 'When no shop has a product any more, its page says “Tell me when it is back”. You get a nudge as soon as a shop has it again. Stop in the same place.',
+                    'body' => "1. Open the product page of something no shop has any more.\n2. Tap “Tell me when it is back”.\n\nYou get a nudge as soon as a shop has it again. Stop in the same place with “Stop watching”.",
                 ],
                 [
                     'title' => 'Following a search',
-                    'body' => '[Search](search) for something and choose “Keep me posted”, with a maximum price if you like. Every morning we check whether something new matches, and you see it under [Notifications](notifications). Stop on the same search page.',
+                    'body' => "1. [Search](search) for what you want to follow.\n2. Above the results, tap “Tell me about new finds”.\n3. Fill in a maximum price if you like and tap “Watch this search”.\n\nEvery morning we check whether something new matches, and you see it under [Notifications](notifications). Stop on the same search page with “Stop”.",
+                    'shot' => 'watch',
+                    'alt' => 'The button to follow a search, with the field for a maximum price and the button to confirm below it.',
                 ],
             ],
         ],

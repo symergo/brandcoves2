@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 /**
  * The list help pages, in French. See lang/nl/help_lists.php for the shape,
- * the [words](path) link syntax, and why this is not in site.php.
+ * the [words](path) link syntax, the "1. " steps, and why this is not in
+ * site.php.
  */
 return [
     'index' => [
         'title' => 'Comment fonctionnent les listes',
         'seo_title' => 'Comment fonctionnent les listes',
-        'seo_description' => 'Tout ce qu’une liste permet : enregistrer, partager, offrir à plusieurs, Ami secret, amis et rappels. Expliqué par sujet.',
-        'intro' => 'Une liste garde ce que vous trouvez ici, pour vous ou pour quelqu’un d’autre. Ci-dessous, ce qu’on peut en faire, sujet par sujet. Commencez par le premier si vous n’avez encore rien enregistré.',
+        'seo_description' => 'Tout ce qu’une liste permet : enregistrer, partager, offrir à plusieurs, Ami secret, amis et rappels. Pas à pas, en images.',
+        'intro' => 'Une liste garde ce que vous trouvez ici, pour vous ou pour quelqu’un d’autre. Ci-dessous, ce qu’on peut en faire et comment, sujet par sujet, en images. Commencez par le premier si vous n’avez encore rien enregistré.',
         'back' => 'Tous les sujets',
         'next' => 'Suivant',
         'cta_search' => 'Trouver quelque chose à enregistrer',
@@ -21,7 +22,7 @@ return [
     'topics' => [
         'saving' => [
             'title' => 'Enregistrer et créer une liste',
-            'blurb' => 'Trois étapes, en images : trouver, enregistrer, ouvrir ses listes.',
+            'blurb' => 'Trouver, enregistrer, ouvrir ses listes, et créer une liste en trois étapes.',
             'seo_description' => 'Enregistrez tout ce que vous trouvez ici dans une liste de souhaits et créez-en une en trois étapes. En images.',
             'intro' => 'Pas besoin de créer une liste d’abord. L’enregistrement le propose, et la page d’accueil a un bouton qui en crée une en trois étapes.',
             'numbered' => true,
@@ -45,8 +46,10 @@ return [
                     'alt' => 'La page Mes listes, avec deux listes et le bouton pour en créer une.',
                 ],
                 [
-                    'title' => 'Créer une liste',
-                    'body' => "De deux façons, et presque tout le monde utilise la première.\n\n- En enregistrant : touchez le marque-page et choisissez une nouvelle liste. Ce que vous enregistriez y va tout de suite.\n- Avec le bouton « Créer une nouvelle liste » sur la page d’accueil ou « Nouvelle liste » sous [Mes listes](lists) : trois étapes, pour qui, nom et occasion, et si elle reste privée ou si vous la partagez plus tard.\n\nUn choix est ensuite fixé : pour qui elle est. Tout le reste se change encore. Ce que permettent les trois sortes est sous [Liste de souhaits, liste cadeau ou cadeau de groupe](lists-help/kinds).",
+                    'title' => 'Créer une liste en trois étapes',
+                    'body' => "1. Touchez « Nouvelle liste » sous [Mes listes](lists), ou « Créer une nouvelle liste » sur la page d’accueil.\n2. Choisissez pour qui elle est : « Pour moi », « Pour quelqu’un d’autre » ou « À plusieurs, pour quelqu’un ». Touchez « Suivant ».\n3. Donnez un nom et une occasion à la liste. Touchez « Suivant ».\n4. Choisissez « Privée (ou partager plus tard) » ou « Partager par un lien », et touchez « Créer la liste ».\n\nOu sautez tout cela : en enregistrant, touchez le marque-page et choisissez-y une nouvelle liste. Ce que vous enregistriez y va tout de suite.\n\nUn choix est ensuite fixé : pour qui elle est. Tout le reste se change encore. Ce que permettent les trois sortes est sous [Liste de souhaits, liste cadeau ou cadeau de groupe](lists-help/kinds).",
+                    'shot' => 'wizard',
+                    'alt' => 'La première étape d’une nouvelle liste, avec les trois choix de pour qui elle est.',
                 ],
                 [
                     'title' => 'Pas besoin d’être connecté pour commencer',
@@ -98,15 +101,17 @@ return [
                 ],
                 [
                     'title' => 'Ajouter depuis la liste',
-                    'body' => 'La page d’une liste a « Ajouter un produit ». Cherchez là, ou scannez un code-barres, et ce que vous choisissez va tout de suite sur cette liste.',
+                    'body' => "1. Ouvrez votre liste sous [Mes listes](lists).\n2. Touchez « + Ajouter un produit ».\n3. Tapez ce que vous cherchez et appuyez sur Entrée, ou touchez l’icône de scan et visez le code-barres avec votre appareil photo.\n4. Touchez le produit dans les résultats. Il est tout de suite sur votre liste.",
+                    'shot' => 'add',
+                    'alt' => 'Le champ de recherche en haut d’une liste pour ajouter un produit, avec en dessous le lien pour l’ajouter vous-même.',
                 ],
                 [
                     'title' => 'Quelque chose qui n’est pas sur ce site',
-                    'body' => 'Sous « Ajouter un produit », choisissez « L’ajouter vous-même ». Un nom suffit ; un lien, un prix et une note comme « taille M, en bleu » peuvent l’accompagner. Vos propres articles se modifient plus tard. Les produits du catalogue non : leur titre et leur prix viennent de la boutique.',
+                    'body' => "1. Touchez « + Ajouter un produit ».\n2. Sous le champ de recherche, choisissez « Ajoutez-le vous-même ».\n3. Indiquez ce que c’est. Un lien, un prix et une note comme « taille M, en bleu » peuvent l’accompagner.\n4. Enregistrez.\n\nVos propres articles se modifient plus tard avec « Modifier ». Les produits du catalogue non : leur titre et leur prix viennent de la boutique.",
                 ],
                 [
                     'title' => 'Copier, pas déplacer',
-                    'body' => 'Chaque article a « Copier vers une autre liste ». Sur la [liste partagée](lists-help/claiming) de quelqu’un d’autre, c’est « Mettre sur ma liste ». L’original reste ; la note et le prix suivent, la personne qui l’achète non.',
+                    'body' => 'Chaque article a « Copier vers une autre liste ». Sur la [liste partagée](lists-help/claiming) de quelqu’un d’autre, c’est « Ajouter à ma liste ». L’original reste ; la note et le prix suivent, la personne qui l’achète non.',
                 ],
                 [
                     'title' => 'Quand le prix baisse',
@@ -114,7 +119,7 @@ return [
                 ],
                 [
                     'title' => 'Retirer',
-                    'body' => 'Seule la personne qui gère la liste peut retirer un article, et on lui demande d’abord. Le plus récent est en haut.',
+                    'body' => 'Touchez la croix sur l’article et confirmez. Seule la personne qui gère la liste peut retirer un article. Le plus récent est en haut.',
                 ],
             ],
         ],
@@ -132,11 +137,13 @@ return [
                 ],
                 [
                     'title' => 'Par un lien',
-                    'body' => 'Copiez le lien, ou un petit message avec le lien dedans, ou envoyez-le par WhatsApp, Telegram, e-mail et plus. Toute personne avec le lien voit la liste. « Arrêter le partage » rend chaque lien envoyé invalide ; partagez de nouveau et vous en recevez un nouveau.',
+                    'body' => "1. Ouvrez votre liste et touchez « Partager ».\n2. Mettez-la sur « Partager par un lien » si elle est encore privée.\n3. Touchez « Copier le lien » et collez-le dans un message. Ou touchez « Copier le message et le lien » pour un petit message tout prêt, ou « Partager » pour choisir WhatsApp, Telegram, l’e-mail ou une autre application.\n\nToute personne avec le lien voit la liste. « Arrêter le partage » rend chaque lien envoyé invalide ; partagez de nouveau et vous en recevez un nouveau.",
+                    'shot' => 'share',
+                    'alt' => 'Le volet de partage d’une liste, avec le lien, le bouton pour le copier et le bouton pour arrêter le partage.',
                 ],
                 [
                     'title' => 'Avec des amis par leur nom',
-                    'body' => 'Choisissez des [amis](friends) et envoyez. Ils reçoivent un e-mail avec le lien, sans le contenu, et la liste apparaît sur leur [page d’amis](friends). « Ne plus partager avec … » l’en retire ; un lien qu’ils avaient déjà continue de marcher jusqu’à ce que vous arrêtiez le partage. Comment on devient amis est sous [Amis, anniversaires et rappels](lists-help/friends).',
+                    'body' => "1. Touchez « Partager », puis « Partager avec des amis ».\n2. Choisissez les [amis](friends) qui peuvent la voir.\n3. Touchez « Envoyer ».\n\nIls reçoivent un e-mail avec le lien, sans le contenu, et la liste apparaît sur leur [page d’amis](friends). « Ne plus partager avec … » l’en retire ; un lien qu’ils avaient déjà continue de marcher jusqu’à ce que vous arrêtiez le partage. Comment on devient amis est sous [Amis, anniversaires et rappels](lists-help/friends).",
                 ],
                 [
                     'title' => 'Qui peut ajouter',
@@ -144,7 +151,7 @@ return [
                 ],
                 [
                     'title' => 'Qui voit ce qui a été acheté',
-                    'body' => 'Sur une [liste de souhaits](lists-help/kinds), vous ne voyez pas ce qui est réservé. C’est désactivé par défaut et vous l’activez par liste avec « Me montrer ce qui est réservé ». Sur une liste cadeau c’est activé, puisque vous offrez aussi. Les noms de qui achète quoi sont cachés par défaut ; si vous les activez, cela vaut pour les nouvelles réservations seulement.',
+                    'body' => 'Sur une [liste de souhaits](lists-help/kinds), vous ne voyez pas ce qui est réservé. C’est désactivé par défaut et vous l’activez par liste avec « Montrez-moi ce qui est réservé ». Sur une liste cadeau c’est activé, puisque vous offrez aussi. Les noms de qui achète quoi sont cachés par défaut ; si vous les activez, cela vaut pour les nouvelles réservations seulement.',
                 ],
                 [
                     'title' => 'Adresse de livraison',
@@ -162,7 +169,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Réserver',
-                    'body' => '« Je m’en occupe » le réserve pour vous, pour que personne d’autre ne l’achète aussi. Il faut un compte pour cela ; connectez-vous et votre geste est quand même exécuté. La personne pour qui est la liste n’en voit rien.',
+                    'body' => "1. Ouvrez le lien que vous avez reçu.\n2. Touchez « Je m'en occupe » sur le cadeau que vous achetez.\n3. Connectez-vous si on vous le demande ; votre geste est exécuté ensuite.\n\nAinsi personne d’autre ne l’achète aussi. La personne pour qui est la liste n’en voit rien.",
+                    'shot' => 'shared',
+                    'alt' => 'Deux cadeaux sur une liste partagée, chacun avec le bouton pour dire que vous vous en occupez.',
                 ],
                 [
                     'title' => 'Finalement non, ou acheté',
@@ -170,11 +179,11 @@ return [
                 ],
                 [
                     'title' => 'Proposer quelque chose',
-                    'body' => 'Cherchez au bas de la liste et choisissez « Proposer », ou « Ajouter à la liste » là où c’est permis directement. Vous pouvez aussi décrire quelque chose vous-même. La personne qui gère la liste voit votre proposition et décide. Si c’est permis directement ou non est expliqué sous [Partager une liste](lists-help/sharing).',
+                    'body' => "1. Cherchez au bas de la liste ce que vous voulez proposer, ou décrivez-le vous-même.\n2. Touchez « Proposer quelque chose », ou « Ajouter à la liste » là où c’est permis directement.\n\nLa personne qui gère la liste voit votre proposition et décide. Si c’est permis directement ou non est expliqué sous [Partager une liste](lists-help/sharing).",
                 ],
                 [
                     'title' => 'Gardez-le aussi pour vous',
-                    'body' => 'Chaque article a un marque-page et « Mettre sur ma liste ». Ce que vous copiez arrive sur [votre liste](lists) sans la réservation.',
+                    'body' => 'Chaque article a un marque-page et « Ajouter à ma liste ». Ce que vous copiez arrive sur [votre liste](lists) sans la réservation.',
                 ],
                 [
                     'title' => 'Le quiz : les connaissez-vous bien ?',
@@ -192,15 +201,15 @@ return [
             'sections' => [
                 [
                     'title' => 'Un cadeau de groupe',
-                    'body' => 'En [créant](lists-help/saving) la liste, choisissez « À plusieurs, pour quelqu’un ». Toute personne avec le lien peut ajouter des idées et voter. Rien à réserver : c’est un seul cadeau de vous tous. Tirer les noms au sort est autre chose ; c’est sous [Ami secret](lists-help/santa).',
+                    'body' => "1. Créez une [nouvelle liste](lists-help/saving) et choisissez « À plusieurs, pour quelqu’un » à la première étape.\n2. Dites pour qui elle est et donnez-lui un nom.\n3. Partagez le lien avec ceux qui participent.\n\nToute personne avec le lien peut ajouter des idées et voter. Rien à réserver : c’est un seul cadeau de vous tous. Tirer les noms au sort est autre chose ; c’est sous [Ami secret](lists-help/santa).",
                 ],
                 [
                     'title' => 'Voter',
-                    'body' => 'Chaque idée a « Voter pour ceci » et un compteur. L’ordre ne change pas pendant que vous regardez ; les compteurs, si.',
+                    'body' => 'Chaque idée a « Voter pour » et un compteur. L’ordre ne change pas pendant que vous regardez ; les compteurs, si.',
                 ],
                 [
                     'title' => 'Contribuer',
-                    'body' => 'Sous « Comment chacun contribue », vous choisissez : chacun choisit son montant, ou tout le monde le même. Qui participe touche « Je participe » et voit sa part et le total. Seul l’organisateur voit qui donne quoi, sauf s’il active « Tout le monde voit qui contribue ». Aucun argent ne circule ici ; vous réglez cela entre vous.',
+                    'body' => 'Sous « Comment chacun contribue », vous choisissez : chacun choisit son montant, ou tout le monde le même. Qui participe touche « J\'en suis » et voit sa part et le total. Seul l’organisateur voit qui donne quoi, sauf s’il active « Tout le monde voit qui participe ». Aucun argent ne circule ici ; vous réglez cela entre vous.',
                 ],
                 [
                     'title' => 'En discuter',
@@ -218,23 +227,25 @@ return [
             'sections' => [
                 [
                     'title' => 'Créer un groupe',
-                    'body' => 'Allez sur [Ami secret](santa) et choisissez « Créer un groupe ». Donnez-lui un nom, un budget et la date où vous offrez les cadeaux. Vous êtes l’organisateur.',
+                    'body' => "1. Allez sur [Ami secret](santa).\n2. Touchez « Créer un groupe ».\n3. Donnez au groupe un nom, un budget et la date où vous offrez les cadeaux.\n\nVous êtes l’organisateur.",
+                    'shot' => 'santa',
+                    'alt' => 'La page Ami secret, avec le bouton pour créer un groupe.',
                 ],
                 [
                     'title' => 'Inviter tout le monde',
-                    'body' => 'Faites passer le lien d’invitation. On rejoint avec un nom et une adresse e-mail ; pas besoin de compte.',
+                    'body' => "1. Copiez le lien d’invitation du groupe.\n2. Envoyez-le à tous ceux qui participent.\n3. Qui l’ouvre remplit un nom et une adresse e-mail. Pas besoin de compte.",
                 ],
                 [
                     'title' => 'Tirer au sort',
-                    'body' => 'Dès qu’il y a au moins deux personnes, choisissez « Tirage ». Chacun reçoit un nom par e-mail. L’organisateur ne voit jamais les paires, donc vous aussi restez surpris.',
+                    'body' => "1. Attendez que tout le monde soit là, au moins deux personnes.\n2. Touchez « Lancer le tirage ».\n\nChacun reçoit un nom par e-mail. L’organisateur ne voit jamais les paires, donc vous aussi restez surpris.",
                 ],
                 [
                     'title' => 'Si quelqu’un se retire',
-                    'body' => 'Retirez cette personne du groupe, ou retirez au sort pour une seule personne. Seules les paires concernées sont retirées au sort, et seules ces personnes reçoivent un nouvel e-mail.',
+                    'body' => 'Retirez cette personne du groupe, ou choisissez « Retirer au sort pour cette personne ». Seules les paires concernées sont retirées au sort, et seules ces personnes reçoivent un nouvel e-mail.',
                 ],
                 [
                     'title' => 'Rattacher ma liste de souhaits au groupe',
-                    'body' => 'Si vous avez une [liste de souhaits](lists), rattachez-la au groupe : ouvrez votre liste et choisissez « Utiliser cette liste ». La personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.',
+                    'body' => "1. Ouvrez votre [liste de souhaits](lists).\n2. Touchez « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.",
                 ],
                 [
                     'title' => 'Un rappel avant',
@@ -252,7 +263,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Devenir amis',
-                    'body' => 'Quand quelqu’un ouvre votre lien de partage en étant connecté, vous êtes [amis](friends). Vous pouvez aussi ajouter quelqu’un par son adresse e-mail ; cette personne ne reçoit pas d’e-mail pour cela.',
+                    'body' => "Quand quelqu’un ouvre votre lien de partage en étant connecté, vous êtes [amis](friends). Pour ajouter quelqu’un vous-même :\n\n1. Allez sur [Amis](friends).\n2. Sous « Ajouter une personne », indiquez une adresse e-mail, et l’anniversaire si vous voulez.\n3. Touchez « Ajouter ».\n\nCette personne ne reçoit pas d’e-mail pour cela. Si elle a déjà un compte, vous êtes reliés tout de suite ; sinon dès qu’elle se connecte.",
+                    'shot' => 'friends',
+                    'alt' => 'La page des amis, avec le formulaire pour ajouter quelqu’un par son adresse e-mail.',
                 ],
                 [
                     'title' => 'Ce qu’un ami voit',
@@ -286,11 +299,13 @@ return [
                 ],
                 [
                     'title' => 'De retour en stock',
-                    'body' => 'Quand plus aucune boutique n’a un produit, sa page dit « Me prévenir quand il revient ». Vous recevez un signe dès qu’une boutique l’a de nouveau. Arrêtez au même endroit.',
+                    'body' => "1. Ouvrez la page d’un produit que plus aucune boutique n’a.\n2. Touchez « Prévenez-moi de son retour ».\n\nVous recevez un signe dès qu’une boutique l’a de nouveau. Arrêtez au même endroit avec « Ne plus suivre ».",
                 ],
                 [
                     'title' => 'Suivre une recherche',
-                    'body' => '[Cherchez](search) quelque chose et choisissez « Me tenir au courant », avec un prix maximum si vous voulez. Chaque matin nous regardons s’il y a du nouveau qui correspond, et vous le voyez sous [Notifications](notifications). Arrêtez sur la même page de recherche.',
+                    'body' => "1. [Cherchez](search) ce que vous voulez suivre.\n2. Au-dessus des résultats, touchez « Prévenez-moi des nouveautés ».\n3. Indiquez un prix maximum si vous voulez et touchez « Suivre cette recherche ».\n\nChaque matin nous regardons s’il y a du nouveau qui correspond, et vous le voyez sous [Notifications](notifications). Arrêtez sur la même page de recherche avec « Arrêter ».",
+                    'shot' => 'watch',
+                    'alt' => 'Le bouton pour suivre une recherche, avec en dessous le champ pour un prix maximum et le bouton pour confirmer.',
                 ],
             ],
         ],

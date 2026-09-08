@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 /**
  * The list help pages, in Spanish. See lang/nl/help_lists.php for the shape,
- * the [words](path) link syntax, and why this is not in site.php.
+ * the [words](path) link syntax, the "1. " steps, and why this is not in
+ * site.php.
  */
 return [
     'index' => [
         'title' => 'Cómo funcionan las listas',
         'seo_title' => 'Cómo funcionan las listas',
-        'seo_description' => 'Todo lo que permite una lista: guardar, compartir, regalar entre varios, Amigo invisible, amigos y recordatorios. Explicado por tema.',
-        'intro' => 'Una lista guarda lo que encuentras aquí, para ti o para otra persona. Abajo, lo que puedes hacer con ella, tema por tema. Empieza por el primero si nunca has guardado nada.',
+        'seo_description' => 'Todo lo que permite una lista: guardar, compartir, regalar entre varios, Amigo invisible, amigos y recordatorios. Paso a paso, con imágenes.',
+        'intro' => 'Una lista guarda lo que encuentras aquí, para ti o para otra persona. Abajo, lo que puedes hacer con ella y cómo, tema por tema, con imágenes. Empieza por el primero si nunca has guardado nada.',
         'back' => 'Todos los temas',
         'next' => 'Siguiente',
         'cta_search' => 'Buscar algo que guardar',
@@ -21,7 +22,7 @@ return [
     'topics' => [
         'saving' => [
             'title' => 'Guardar y crear una lista',
-            'blurb' => 'Tres pasos, con imágenes: encontrar algo, guardarlo, abrir tus listas.',
+            'blurb' => 'Encontrar algo, guardarlo, abrir tus listas, y crear una lista en tres pasos.',
             'seo_description' => 'Guarda todo lo que encuentres aquí en una lista de deseos y crea una en tres pasos. Con imágenes.',
             'intro' => 'No hace falta crear una lista antes. Al guardar se te ofrece, y la portada tiene un botón que crea una en tres pasos.',
             'numbered' => true,
@@ -45,8 +46,10 @@ return [
                     'alt' => 'La página Mis listas, con dos listas y el botón para crear una.',
                 ],
                 [
-                    'title' => 'Crear una lista',
-                    'body' => "De dos maneras, y casi todo el mundo usa la primera.\n\n- Al guardar: toca el marcador y elige una lista nueva. Lo que estabas guardando entra en ella al momento.\n- Con el botón «Crear una lista nueva» en la portada o «Nueva lista» en [Mis listas](lists): tres pasos, para quién es, nombre y ocasión, y si se queda privada o la compartes después.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalo en grupo](lists-help/kinds).",
+                    'title' => 'Crear una lista en tres pasos',
+                    'body' => "1. Toca «Nueva lista» en [Mis listas](lists), o «Crear una lista nueva» en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Toca «Siguiente».\n3. Ponle un nombre y una ocasión a la lista. Toca «Siguiente».\n4. Elige «Privada (o compartir después)» o «Compartir con un enlace», y toca «Crear lista».\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalo en grupo](lists-help/kinds).",
+                    'shot' => 'wizard',
+                    'alt' => 'El primer paso de una lista nueva, con las tres opciones de para quién es.',
                 ],
                 [
                     'title' => 'No hace falta iniciar sesión para empezar',
@@ -98,15 +101,17 @@ return [
                 ],
                 [
                     'title' => 'Añadir desde la lista',
-                    'body' => 'La página de una lista tiene «Añadir un producto». Busca ahí, o escanea un código de barras, y lo que elijas entra directamente en esa lista.',
+                    'body' => "1. Abre tu lista en [Mis listas](lists).\n2. Toca «+ Añadir un producto».\n3. Escribe lo que buscas y pulsa Intro, o toca el icono de escanear y apunta con la cámara al código de barras.\n4. Toca el producto en los resultados. Entra directamente en tu lista.",
+                    'shot' => 'add',
+                    'alt' => 'El campo de búsqueda al principio de una lista para añadir un producto, con debajo el enlace para añadirlo tú mismo.',
                 ],
                 [
                     'title' => 'Algo que no está en este sitio',
-                    'body' => 'En «Añadir un producto», elige «Ponerlo tú mismo». Con un nombre basta; puede llevar un enlace, un precio y una nota como «talla M, en azul». Tus propios artículos se pueden editar después. Los del catálogo no: su título y precio vienen de la tienda.',
+                    'body' => "1. Toca «+ Añadir un producto».\n2. Bajo el campo de búsqueda, elige «Añádelo tú mismo».\n3. Escribe qué es. Puede llevar un enlace, un precio y una nota como «talla M, en azul».\n4. Guárdalo.\n\nTus propios artículos se pueden cambiar después con «Editar». Los del catálogo no: su título y precio vienen de la tienda.",
                 ],
                 [
                     'title' => 'Copiar, no mover',
-                    'body' => 'Cada artículo tiene «Copiar a otra lista». En la [lista compartida](lists-help/claiming) de otra persona es «Poner en mi lista». El original se queda; la nota y el precio van con él, quien lo compra no.',
+                    'body' => 'Cada artículo tiene «Copiar a otra lista». En la [lista compartida](lists-help/claiming) de otra persona es «Añadir a mi lista». El original se queda; la nota y el precio van con él, quien lo compra no.',
                 ],
                 [
                     'title' => 'Cuando baja el precio',
@@ -114,7 +119,7 @@ return [
                 ],
                 [
                     'title' => 'Quitar',
-                    'body' => 'Solo quien gestiona la lista puede quitar un artículo, y antes se pide confirmación. Lo más nuevo está arriba.',
+                    'body' => 'Toca la cruz del artículo y confirma. Solo quien gestiona la lista puede quitar un artículo. Lo más nuevo está arriba.',
                 ],
             ],
         ],
@@ -132,11 +137,13 @@ return [
                 ],
                 [
                     'title' => 'Con un enlace',
-                    'body' => 'Copia el enlace, o un mensaje corto con el enlace dentro, o envíalo por WhatsApp, Telegram, correo y más. Cualquiera con el enlace ve la lista. «Dejar de compartir» invalida todos los enlaces enviados; si vuelves a compartir, recibes uno nuevo.',
+                    'body' => "1. Abre tu lista y toca «Compartir».\n2. Ponla en «Compartir con un enlace» si aún es privada.\n3. Toca «Copiar enlace» y pégalo en un mensaje. O toca «Copiar mensaje y enlace» para un mensaje ya escrito, o «Compartir» para elegir WhatsApp, Telegram, correo u otra aplicación.\n\nCualquiera con el enlace ve la lista. «Dejar de compartir» invalida todos los enlaces enviados; si vuelves a compartir, recibes uno nuevo.",
+                    'shot' => 'share',
+                    'alt' => 'El panel de compartir de una lista, con el enlace, el botón para copiarlo y el botón para dejar de compartir.',
                 ],
                 [
                     'title' => 'Con amigos por su nombre',
-                    'body' => 'Elige [amigos](friends) y envía. Reciben un correo con el enlace, sin el contenido, y la lista aparece en su [página de amigos](friends). «Dejar de compartir con …» la quita de ahí; un enlace que ya tuvieran sigue funcionando hasta que dejes de compartir. Cómo hacerse amigos está en [Amigos, cumpleaños y recordatorios](lists-help/friends).',
+                    'body' => "1. Toca «Compartir» y luego «Compartir con amigos».\n2. Elige los [amigos](friends) que pueden verla.\n3. Toca «Enviar».\n\nReciben un correo con el enlace, sin el contenido, y la lista aparece en su [página de amigos](friends). «Dejar de compartir con …» la quita de ahí; un enlace que ya tuvieran sigue funcionando hasta que dejes de compartir. Cómo hacerse amigos está en [Amigos, cumpleaños y recordatorios](lists-help/friends).",
                 ],
                 [
                     'title' => 'Quién puede añadir',
@@ -144,7 +151,7 @@ return [
                 ],
                 [
                     'title' => 'Quién ve lo que se ha comprado',
-                    'body' => 'En una [lista de deseos](lists-help/kinds) no ves lo reservado. Está desactivado por defecto y lo activas por lista con «Mostrarme lo que está reservado». En una lista de regalos está activado, porque también regalas. Los nombres de quién compra qué están ocultos por defecto; si los activas, vale solo para reservas nuevas.',
+                    'body' => 'En una [lista de deseos](lists-help/kinds) no ves lo reservado. Está desactivado por defecto y lo activas por lista con «Muéstrame lo que ya está reservado». En una lista de regalos está activado, porque también regalas. Los nombres de quién compra qué están ocultos por defecto; si los activas, vale solo para reservas nuevas.',
                 ],
                 [
                     'title' => 'Dirección de entrega',
@@ -162,19 +169,21 @@ return [
             'sections' => [
                 [
                     'title' => 'Reservar',
-                    'body' => '«Yo lo regalo» lo reserva para ti, para que nadie más lo compre también. Hace falta una cuenta; inicia sesión y tu toque se ejecuta igualmente. La persona para quien es la lista no ve nada.',
+                    'body' => "1. Abre el enlace que te enviaron.\n2. Toca «Yo lo regalo» en el regalo que compras.\n3. Inicia sesión si te lo piden; tu toque se ejecuta después.\n\nAsí nadie más lo compra también. La persona para quien es la lista no ve nada.",
+                    'shot' => 'shared',
+                    'alt' => 'Dos regalos en una lista compartida, cada uno con el botón para decir que lo regalas tú.',
                 ],
                 [
                     'title' => 'Al final no, o comprado',
-                    'body' => '«Al final no» lo suelta de nuevo, cuando quieras. «Ya lo he comprado» lo marca como comprado. Arriba ves cuánto está ya reservado.',
+                    'body' => '«Mejor no» lo suelta de nuevo, cuando quieras. «Ya lo he comprado» lo marca como comprado. Arriba ves cuánto está ya reservado.',
                 ],
                 [
                     'title' => 'Proponer algo',
-                    'body' => 'Busca al pie de la lista y elige «Proponerlo», o «Añadir a la lista» donde se permita directamente. También puedes describir algo tú mismo. Quien gestiona la lista ve tu propuesta y decide. Si se permite directamente o no está explicado en [Compartir una lista](lists-help/sharing).',
+                    'body' => "1. Busca al pie de la lista lo que quieres proponer, o descríbelo tú mismo.\n2. Toca «Sugerir algo», o «Añadir a la lista» donde se permita directamente.\n\nQuien gestiona la lista ve tu propuesta y decide. Si se permite directamente o no está explicado en [Compartir una lista](lists-help/sharing).",
                 ],
                 [
                     'title' => 'Guárdalo también para ti',
-                    'body' => 'Cada artículo tiene un marcador y «Poner en mi lista». Lo que copias llega a [tu lista](lists) sin la reserva.',
+                    'body' => 'Cada artículo tiene un marcador y «Añadir a mi lista». Lo que copias llega a [tu lista](lists) sin la reserva.',
                 ],
                 [
                     'title' => 'El quiz: ¿cuánto los conoces?',
@@ -192,15 +201,15 @@ return [
             'sections' => [
                 [
                     'title' => 'Un regalo en grupo',
-                    'body' => 'Al [crear](lists-help/saving) la lista, elige «Entre varios, para alguien». Cualquiera con el enlace puede añadir ideas y votarlas. No hay nada que reservar: es un solo regalo de todos vosotros. Sortear nombres es otra cosa; está en [Amigo invisible](lists-help/santa).',
+                    'body' => "1. Crea una [lista nueva](lists-help/saving) y elige «Entre varios, para alguien» en el primer paso.\n2. Di para quién es y ponle un nombre.\n3. Comparte el enlace con quienes participan.\n\nCualquiera con el enlace puede añadir ideas y votarlas. No hay nada que reservar: es un solo regalo de todos vosotros. Sortear nombres es otra cosa; está en [Amigo invisible](lists-help/santa).",
                 ],
                 [
                     'title' => 'Votar',
-                    'body' => 'Cada idea tiene «Votar esta» y un contador. El orden no cambia mientras miras; los contadores sí.',
+                    'body' => 'Cada idea tiene «Vota por esto» y un contador. El orden no cambia mientras miras; los contadores sí.',
                 ],
                 [
                     'title' => 'Aportar',
-                    'body' => 'En «Cómo aporta cada uno» eliges: cada uno elige su importe, o todos lo mismo. Quien participa toca «Me apunto» y ve su parte y el total. Solo quien organiza ve quién aporta qué, salvo que active «Todos ven quién aporta». Aquí no se mueve dinero; eso lo arregláis entre vosotros.',
+                    'body' => 'En «Cómo aporta cada uno» eliges: cada uno elige su importe, o todos lo mismo. Quien participa toca «Me apunto» y ve su parte y el total. Solo quien organiza ve quién aporta qué, salvo que active «Todos ven quién contribuye». Aquí no se mueve dinero; eso lo arregláis entre vosotros.',
                 ],
                 [
                     'title' => 'Hablarlo',
@@ -218,23 +227,25 @@ return [
             'sections' => [
                 [
                     'title' => 'Crear un grupo',
-                    'body' => 'Ve a [Amigo invisible](santa) y elige «Crear un grupo». Ponle un nombre, un presupuesto y la fecha en que dais los regalos. Tú organizas.',
+                    'body' => "1. Ve a [Amigo invisible](santa).\n2. Toca «Crear un grupo».\n3. Ponle al grupo un nombre, un presupuesto y la fecha en que dais los regalos.\n\nTú organizas.",
+                    'shot' => 'santa',
+                    'alt' => 'La página del Amigo invisible, con el botón para crear un grupo.',
                 ],
                 [
                     'title' => 'Invitar a todos',
-                    'body' => 'Pasa el enlace de invitación. Se entra con un nombre y un correo; no hace falta cuenta.',
+                    'body' => "1. Copia el enlace de invitación del grupo.\n2. Envíaselo a todos los que participan.\n3. Quien lo abre rellena un nombre y un correo. No hace falta cuenta.",
                 ],
                 [
                     'title' => 'Sortear',
-                    'body' => 'En cuanto haya al menos dos personas, elige «Sortear». Cada uno recibe un nombre por correo. Quien organiza nunca ve las parejas, así que tú también te llevas la sorpresa.',
+                    'body' => "1. Espera a que estén todos, al menos dos personas.\n2. Toca «Hacer el sorteo».\n\nCada uno recibe un nombre por correo. Quien organiza nunca ve las parejas, así que tú también te llevas la sorpresa.",
                 ],
                 [
                     'title' => 'Si alguien se retira',
-                    'body' => 'Quítalo del grupo, o vuelve a sortear para una sola persona. Solo se vuelven a sortear las parejas afectadas, y solo esas personas reciben un correo nuevo.',
+                    'body' => 'Quítalo del grupo, o elige «Volver a sortear para esta persona». Solo se vuelven a sortear las parejas afectadas, y solo esas personas reciben un correo nuevo.',
                 ],
                 [
                     'title' => 'Unir mi lista de deseos al grupo',
-                    'body' => 'Si tienes una [lista de deseos](lists), únela al grupo: abre tu lista y elige «Usar esta lista». Quien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en tres pasos.',
+                    'body' => "1. Abre tu [lista de deseos](lists).\n2. Toca «Usar esta lista» junto al grupo.\n\nQuien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en tres pasos.",
                 ],
                 [
                     'title' => 'Un recordatorio antes',
@@ -252,7 +263,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Hacerse amigos',
-                    'body' => 'Cuando alguien abre tu enlace compartido con la sesión iniciada, sois [amigos](friends). También puedes añadir a alguien por su correo; esa persona no recibe ningún correo por ello.',
+                    'body' => "Cuando alguien abre tu enlace compartido con la sesión iniciada, sois [amigos](friends). Para añadir a alguien tú mismo:\n\n1. Ve a [Amigos](friends).\n2. En «Añadir a alguien», escribe un correo, y el cumpleaños si quieres.\n3. Toca «Añadir».\n\nEsa persona no recibe ningún correo por ello. Si ya tiene cuenta, quedáis conectados al momento; si no, en cuanto inicie sesión.",
+                    'shot' => 'friends',
+                    'alt' => 'La página de amigos, con el formulario para añadir a alguien por su correo.',
                 ],
                 [
                     'title' => 'Qué ve un amigo',
@@ -267,8 +280,8 @@ return [
                     'body' => 'Treinta, quince y dos días antes recibes un aviso para un cumpleaños, la fecha de un [Amigo invisible](lists-help/santa) y la [ocasión](lists-help/kinds) de una lista. Aquí y por correo. El correo nombra la fecha y el enlace, nunca lo que hay en la lista.',
                 ],
                 [
-                    'title' => 'Notificaciones',
-                    'body' => 'En [Notificaciones](notifications) ves lo que pasó: alguien compartió una lista contigo, añadió o propuso algo, hay un mensaje nuevo en una conversación, un producto vuelve a estar en stock, una búsqueda que sigues tiene novedades. Abrir la página lo marca todo como leído.',
+                    'title' => 'Avisos',
+                    'body' => 'En [Avisos](notifications) ves lo que pasó: alguien compartió una lista contigo, añadió o propuso algo, hay un mensaje nuevo en una conversación, un producto vuelve a estar en stock, una búsqueda que sigues tiene novedades. Abrir la página lo marca todo como leído.',
                 ],
             ],
         ],
@@ -286,11 +299,13 @@ return [
                 ],
                 [
                     'title' => 'De vuelta en stock',
-                    'body' => 'Cuando ninguna tienda tiene ya un producto, su página dice «Avísame cuando vuelva». Recibes un aviso en cuanto una tienda lo tenga de nuevo. Se para en el mismo sitio.',
+                    'body' => "1. Abre la página de un producto que ya no tiene ninguna tienda.\n2. Toca «Avísame cuando vuelva».\n\nRecibes un aviso en cuanto una tienda lo tenga de nuevo. Se para en el mismo sitio con «Dejar de vigilar».",
                 ],
                 [
                     'title' => 'Seguir una búsqueda',
-                    'body' => '[Busca](search) algo y elige «Mantenme al tanto», con un precio máximo si quieres. Cada mañana miramos si hay algo nuevo que encaje, y lo ves en [Notificaciones](notifications). Se para en la misma página de búsqueda.',
+                    'body' => "1. [Busca](search) lo que quieres seguir.\n2. Encima de los resultados, toca «Avísame de novedades».\n3. Pon un precio máximo si quieres y toca «Seguir esta búsqueda».\n\nCada mañana miramos si hay algo nuevo que encaje, y lo ves en [Avisos](notifications). Se para en la misma página de búsqueda con «Parar».",
+                    'shot' => 'watch',
+                    'alt' => 'El botón para seguir una búsqueda, con debajo el campo para un precio máximo y el botón para confirmar.',
                 ],
             ],
         ],

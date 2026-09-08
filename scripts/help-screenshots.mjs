@@ -1,5 +1,5 @@
 /**
- * Capture the screenshots on the "how lists work" help page.
+ * Capture the screenshots on the "how lists work" help pages.
  *
  * ## Why a committed script and not a folder of images
  *
@@ -20,15 +20,26 @@
  * dialog opened from a menu rather than a page you can navigate to. So the
  * seeding command prints a real magic link — single use, fifteen minutes, and
  * only ever for an account that exists on a development machine — and this
- * follows it. Set it as SIGNIN_URL, or let the script run the command itself.
+ * follows it. It also prints the share link of the demo list, which a second,
+ * signed-out browser opens to photograph what a visitor sees.
  *
- * Usage, with `composer dev` and `docker compose up -d` running:
+ * ## Ten pictures, not three (2026-09-08)
+ *
+ * The help grew from one page to nine, and the owner missed pictures on the
+ * eight new ones. So besides the save flow this now photographs the list
+ * wizard, adding a product, the share panel, a shared list as a visitor sees
+ * it, the Secret Santa page, the friends page and following a search. Each
+ * is found by the button's own label, read from the language file, so a
+ * renamed button fails loudly here rather than silently photographing the
+ * wrong thing.
+ *
+ * Usage, with `composer dev` and `docker compose up -d` running, and the
+ * development database migrated:
  *
  *     node scripts/help-screenshots.mjs
  *
  * Images land in `public/help/lists/<language>/`.
  */
-
 import { chromium } from 'playwright'
 import { execSync } from 'node:child_process'
 import { mkdir } from 'node:fs/promises'
@@ -37,7 +48,6 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const SITE = process.env.SITE_URL ?? 'http://localhost:8000'
-const EMAIL = 'help-screenshots@giftcoves.test'
 
 /*
  * One market per language, chosen for the catalogue behind it.
@@ -51,13 +61,6 @@ const EMAIL = 'help-screenshots@giftcoves.test'
 const MARKETS = [
     { language: 'nl', market: 'be-nl', term: 'koptelefoon' },
     { language: 'fr', market: 'be-fr', term: 'casque' },
-    /*
-     * `en` is a real market with a thin catalogue whose product titles arrive
-     * from Dutch-language feeds — so an English screenshot shows Dutch product
-     * names. That is what an English visitor genuinely sees today, so the
-     * picture is accurate rather than flattering, and it is the interface the
-     * page is teaching. `es` has no catalogue at all and falls back to these.
-     */
     { language: 'en', market: 'en', term: 'sony' },
 ]
 
@@ -65,24 +68,44 @@ const MARKETS = [
 const VIEWPORT = { width: 1280, height: 1100 }
 
 /**
- * A signed-in session, via a link the seeding command mints.
- *
- * Runs the command itself unless SIGNIN_URL says otherwise, so the usual case
- * is one command with nothing to remember.
+ * A signed-in session, via a link the seeding command mints, and the demo
+ * list's share link.
  */
-function seed(market) {
-    const seeded = execSync(`php artisan bc:seed-help-demo --fresh --market=${market}`, {
+function seed(market, term) {
+    const seeded = execSync(`php artisan bc:seed-help-demo --fresh --shared --market=${market} --like=${term}`, {
         cwd: ROOT,
         encoding: 'utf8',
     })
 
-    const link = seeded.match(/https?:\/\/\S*\/auth\/magic\/\S+/)
+    const signIn = seeded.match(/https?:\/\/\S*\/auth\/magic\/\S+/)
+    const share = seeded.match(/https?:\/\/\S*\/l\/\S+/)
 
-    if (!link) {
-        throw new Error(`No sign-in link in the seeder output:\n${seeded}`)
+    if (!signIn || !share) {
+        throw new Error(`No sign-in or share link in the seeder output:\n${seeded}`)
     }
 
-    return link[0]
+    return { signIn: signIn[0], share: share[0] }
+}
+
+/**
+ * The interface's own words, so a button is found by what it says.
+ *
+ * `php -r` rather than a copy of the labels here: a copy is the thing that
+ * goes stale.
+ */
+function labels(language) {
+    const json = execSync(`php -r "echo json_encode(include 'lang/${language}/site.php');"`, {
+        cwd: ROOT,
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
+    })
+    const all = JSON.parse(json)
+
+    return (key) => {
+        const value = key.split('.').reduce((carry, part) => carry?.[part], all)
+        if (typeof value !== 'string') throw new Error(`No label ${key} in ${language}`)
+        return value
+    }
 }
 
 async function shoot(page, file, clip) {
@@ -123,6 +146,16 @@ async function around(page, locators, pad = 20) {
     }
 }
 
+/** The top of a page, for pages whose first screen is the instruction. */
+const top = (height) => ({ x: 0, y: 0, width: VIEWPORT.width, height })
+
+/** Scroll an element up the page so a panel opening under it stays in view. */
+async function raise(page, locator) {
+    await locator.scrollIntoViewIfNeeded()
+    await page.evaluate(() => window.scrollBy(0, -120))
+    await page.waitForTimeout(400)
+}
+
 const browser = await chromium.launch()
 const context = await browser.newContext({
     viewport: VIEWPORT,
@@ -133,13 +166,15 @@ const page = await context.newPage()
 
 for (const { language, market, term } of MARKETS) {
     console.log(`${language} (${market}):`)
+    const L = labels(language)
 
     /*
      * Re-seeded and re-signed-in per market, because the panel shows an
      * account's lists regardless of which market they belong to. One market's
      * lists at a time is the only way the picture stays in one language.
      */
-    await page.goto(seed(market), { waitUntil: 'networkidle' })
+    const links = seed(market, term)
+    await page.goto(links.signIn, { waitUntil: 'networkidle' })
     const out = (name) => resolve(ROOT, 'public', 'help', 'lists', language, `${name}.png`)
 
     await page.goto(`${SITE}/${market}/search?q=${encodeURIComponent(term)}`, {
@@ -189,9 +224,7 @@ for (const { language, market, term } of MARKETS) {
      * low in the window produced a screenshot of a panel with its last option —
      * "new list", the one the page is pointing at — cut off by the fold.
      */
-    await cards.scrollIntoViewIfNeeded()
-    await page.evaluate(() => window.scrollBy(0, -120))
-    await page.waitForTimeout(400)
+    await raise(page, cards)
 
     // 1. Where the button is. Two cards, so it reads as "every one of these".
     const pair = (await alsoNext.count()) > 0 ? [cards, alsoNext] : [cards]
@@ -206,10 +239,80 @@ for (const { language, market, term } of MARKETS) {
     await shoot(page, out('2-choose-list'), await around(page, [cards, menu]))
     await page.keyboard.press('Escape')
 
+    // 10. Following a search, while the results are still on screen.
+    const watch = page.getByRole('button', { name: L('search.watch'), exact: true }).first()
+    await raise(page, watch)
+    await watch.click()
+    const confirm = page.getByRole('button', { name: L('search.watch_confirm'), exact: true }).first()
+    await confirm.waitFor({ state: 'visible', timeout: 5000 })
+    await page.waitForTimeout(300)
+    // The whole panel, not the two buttons: the hint above the field is the
+    // sentence the help page is pointing at.
+    const watchPanel = page.locator('#watch-ceiling').locator('xpath=ancestor::div[contains(@class, "max-w-md")]').first()
+    await shoot(page, out('10-watch-search'), await around(page, [watch, watchPanel], 28))
+
     // 3. Where everything saved turns up.
     await page.goto(`${SITE}/${market}/lists`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(600)
-    await shoot(page, out('3-your-lists'), { x: 0, y: 0, width: VIEWPORT.width, height: 470 })
+    await shoot(page, out('3-your-lists'), top(470))
+
+    // 4. The wizard, at its first question.
+    // The list with things on it, not the empty one: an empty list opens the
+    // add-product panel by itself and has no button to photograph. The card
+    // of a list with items carries their thumbnails.
+    const withItems = page.locator('main a[href*="/lists/"]:has(img)')
+    const listHref = await ((await withItems.count()) > 0 ? withItems : page.locator('main a[href*="/lists/"]'))
+        .first()
+        .getAttribute('href')
+    await page.getByRole('button', { name: L('lists.new_list'), exact: true }).first().click()
+    const wizard = page.locator('section[aria-labelledby="wizard-title"]')
+    await wizard.waitFor({ state: 'visible', timeout: 5000 })
+    await page.waitForTimeout(300)
+    await shoot(page, out('4-wizard'), await around(page, [wizard], 12))
+
+    // 5. Adding a product from the list itself.
+    await page.goto(`${SITE}${listHref}`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(600)
+    const add = page.getByRole('button', { name: L('lists.add_product') }).first()
+    await raise(page, add)
+    const addBox = await add.boundingBox()
+    await add.click()
+    await page.waitForTimeout(500)
+    await shoot(page, out('5-add-product'), { x: 0, y: Math.max(0, addBox.y - 24), width: VIEWPORT.width, height: 480 })
+
+    // 6. The share panel.
+    await page.reload({ waitUntil: 'networkidle' })
+    await page.waitForTimeout(600)
+    const shareTab = page.locator('button[aria-controls="list-tools-panel"]', { hasText: L('lists.share') }).first()
+    await raise(page, shareTab)
+    await shareTab.click()
+    const panel = page.locator('#list-tools-panel')
+    await panel.waitFor({ state: 'visible', timeout: 5000 })
+    await page.waitForTimeout(400)
+    await shoot(page, out('6-share'), await around(page, [shareTab, panel], 16))
+
+    // 7. The shared list, as a visitor with no account sees it.
+    const visitor = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 2, colorScheme: 'light' })
+    const guest = await visitor.newPage()
+    await guest.goto(links.share, { waitUntil: 'networkidle' })
+    await guest.waitForTimeout(800)
+    const claim = guest.getByRole('button', { name: L('lists.claim'), exact: true }).first()
+    await claim.scrollIntoViewIfNeeded()
+    await guest.evaluate(() => window.scrollBy(0, -160))
+    await guest.waitForTimeout(300)
+    const tiles = guest.locator('main ul li')
+    await shoot(guest, out('7-shared-list'), await around(guest, [tiles.nth(0), tiles.nth(1)], 16))
+    await visitor.close()
+
+    // 8. Secret Santa, the page you start a group from.
+    await page.goto(`${SITE}/${market}/santa`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(600)
+    await shoot(page, out('8-santa'), top(520))
+
+    // 9. Friends.
+    await page.goto(`${SITE}/${market}/friends`, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(600)
+    await shoot(page, out('9-friends'), top(520))
 }
 
 await browser.close()

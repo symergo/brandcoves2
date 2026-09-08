@@ -9,21 +9,25 @@ declare(strict_types=1);
  * with every page, and nine pages of prose have no business riding along.
  * These are read on the server by ListHelpController and sent as props.
  *
- * A section body is paragraphs separated by a blank line; a paragraph whose
- * lines all start with "- " is a list. UI labels are quoted with curly
- * quotes. A link is written [words](path): the path is relative to the
- * market ("lists", "friends", "lists-help/sharing"), and "cove" means the
- * market's own Cove segment. The controller turns them into real URLs. Link
- * the words a person would search for, to the page that answers them; that
- * is what the owner asked for on 2026-09-08, and it is also what a search
- * engine reads.
+ * A section body is paragraphs separated by a blank line. A paragraph whose
+ * lines all start with "- " is a list; one whose lines all start with "1. "
+ * is the numbered steps of an instruction. UI labels are quoted with curly
+ * quotes and have to match the interface word for word, so a renamed button
+ * is a renamed help line too. A link is written [words](path): the path is
+ * relative to the market ("lists", "friends", "lists-help/sharing"), and
+ * "cove" means the market's own Cove segment. The controller turns them
+ * into real URLs. Link the words a person would search for, to the page
+ * that answers them; that is what the owner asked for on 2026-09-08, and it
+ * is also what a search engine reads. A section's "shot" names a picture
+ * from scripts/help-screenshots.mjs; the key is looked up in
+ * ListHelpController::SHOTS.
  */
 return [
     'index' => [
         'title' => 'Hoe lijstjes werken',
         'seo_title' => 'Hoe lijstjes werken',
-        'seo_description' => 'Alles wat je met een lijstje kunt: bewaren, delen, samen kopen, Geheime Vriend, vrienden en herinneringen. Per onderwerp uitgelegd.',
-        'intro' => 'Een lijstje bewaart wat je hier vindt, voor jezelf of voor iemand anders. Hieronder staat per onderwerp wat er kan. Begin bij het eerste als je nog nooit iets bewaard hebt.',
+        'seo_description' => 'Alles wat je met een lijstje kunt: bewaren, delen, samen kopen, Geheime Vriend, vrienden en herinneringen. Stap voor stap, met beeld.',
+        'intro' => 'Een lijstje bewaart wat je hier vindt, voor jezelf of voor iemand anders. Hieronder staat per onderwerp wat er kan en hoe je het doet, met beeld. Begin bij het eerste als je nog nooit iets bewaard hebt.',
         'back' => 'Alle onderwerpen',
         'next' => 'Volgende',
         'cta_search' => 'Zoek iets om te bewaren',
@@ -33,7 +37,7 @@ return [
     'topics' => [
         'saving' => [
             'title' => 'Bewaren en een lijstje maken',
-            'blurb' => 'Drie stappen, met beeld: iets vinden, bewaren, en je lijstjes openen.',
+            'blurb' => 'Iets vinden, bewaren, je lijstjes openen, en een lijstje maken in drie stappen.',
             'seo_description' => 'Bewaar alles wat je hier vindt in een verlanglijstje en maak er een in drie stappen. Met beeld.',
             'intro' => 'Je hoeft niet eerst een lijstje te maken. Bij het bewaren wordt het aangeboden, en op de startpagina staat een knop die er in drie stappen een maakt.',
             'numbered' => true,
@@ -57,8 +61,10 @@ return [
                     'alt' => 'De pagina met mijn lijstjes, met twee lijstjes en de knop waarmee je er een maakt.',
                 ],
                 [
-                    'title' => 'Een lijstje maken',
-                    'body' => "Op twee manieren, en de eerste gebruikt bijna iedereen.\n\n- Tijdens het bewaren: tik op de bladwijzer en kies voor een nieuw lijstje. Wat je aan het bewaren was staat er meteen in.\n- Met de knop “Maak een nieuw lijstje” op de startpagina of “Nieuw lijstje” onder [Mijn lijstjes](lists): drie stappen, voor wie het is, naam en gelegenheid, en of het privé blijft of je het later deelt.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of groepscadeau](lists-help/kinds).",
+                    'title' => 'Een lijstje maken in drie stappen',
+                    'body' => "1. Tik op “Nieuw lijstje” onder [Mijn lijstjes](lists), of op “Maak een nieuw lijstje” op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Tik op “Volgende”.\n3. Geef het lijstje een naam en een gelegenheid. Tik op “Volgende”.\n4. Kies “Privé (of deel later)” of “Delen via een link”, en tik op “Lijstje maken”.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuw lijstje. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of groepscadeau](lists-help/kinds).",
+                    'shot' => 'wizard',
+                    'alt' => 'De eerste stap van een nieuw lijstje, met de drie keuzes voor wie het is.',
                 ],
                 [
                     'title' => 'Je hoeft niet ingelogd te zijn om te beginnen',
@@ -110,11 +116,13 @@ return [
                 ],
                 [
                     'title' => 'Toevoegen vanuit het lijstje',
-                    'body' => 'Op de pagina van een lijstje staat “Product toevoegen”. Zoek daar, of scan een streepjescode, en wat je kiest staat meteen op dat lijstje.',
+                    'body' => "1. Open je lijstje onder [Mijn lijstjes](lists).\n2. Tik op “+ Product toevoegen”.\n3. Typ wat je zoekt en druk op Enter, of tik op het scan-icoon en richt je camera op de streepjescode.\n4. Tik op het product in de resultaten. Het staat meteen op je lijstje.",
+                    'shot' => 'add',
+                    'alt' => 'Het zoekvak bovenaan een lijstje om een product toe te voegen, met daaronder de link om het er zelf op te zetten.',
                 ],
                 [
                     'title' => 'Iets dat hier niet te vinden is',
-                    'body' => 'Kies bij “Product toevoegen” voor “Zet het er zelf op”. Een naam is genoeg; een link, een prijs en een omschrijving zoals “maat M, in het blauw” mogen erbij. Eigen items kun je later aanpassen. Producten uit de catalogus niet: hun titel en prijs komen van de winkel.',
+                    'body' => "1. Tik op “+ Product toevoegen”.\n2. Kies onder het zoekvak “Zet het er zelf op”.\n3. Vul in wat het is. Een link, een prijs en een omschrijving zoals “maat M, in het blauw” mogen erbij.\n4. Bewaar het.\n\nEigen items kun je later aanpassen met “Aanpassen”. Producten uit de catalogus niet: hun titel en prijs komen van de winkel.",
                 ],
                 [
                     'title' => 'Kopiëren, niet verplaatsen',
@@ -126,7 +134,7 @@ return [
                 ],
                 [
                     'title' => 'Verwijderen',
-                    'body' => 'Verwijderen kan alleen wie het lijstje beheert, en vraagt eerst om een bevestiging. Het nieuwste staat bovenaan.',
+                    'body' => 'Tik op het kruisje bij het item en bevestig. Verwijderen kan alleen wie het lijstje beheert. Het nieuwste staat bovenaan.',
                 ],
             ],
         ],
@@ -144,11 +152,13 @@ return [
                 ],
                 [
                     'title' => 'Met een link',
-                    'body' => 'Kopieer de link, of meteen een berichtje met de link erin, of stuur hem via WhatsApp, Telegram, e-mail en meer. Iedereen met de link ziet het lijstje. “Stop met delen” maakt elke verstuurde link ongeldig; deel je opnieuw, dan krijg je een nieuwe.',
+                    'body' => "1. Open je lijstje en tik op “Delen”.\n2. Zet het op “Delen via een link” als het nog privé is.\n3. Tik op “Link kopiëren” en plak hem in een bericht. Of tik op “Kopieer bericht en link” voor een kant-en-klaar berichtje, of op “Delen” om WhatsApp, Telegram, e-mail of een andere app te kiezen.\n\nIedereen met de link ziet het lijstje. “Stop met delen” maakt elke verstuurde link ongeldig; deel je opnieuw, dan krijg je een nieuwe.",
+                    'shot' => 'share',
+                    'alt' => 'Het deelvenster van een lijstje, met de link, de knop om hem te kopiëren en de knop om te stoppen met delen.',
                 ],
                 [
                     'title' => 'Met vrienden op naam',
-                    'body' => 'Kies [vrienden](friends) en verstuur. Zij krijgen een mailtje met de link, zonder de inhoud, en het lijstje staat op hun [vriendenpagina](friends). “Niet meer delen met …” haalt het daar weg; een link die ze al hadden, blijft werken tot je stopt met delen. Hoe je vrienden wordt, staat bij [Vrienden, verjaardagen en herinneringen](lists-help/friends).',
+                    'body' => "1. Tik op “Delen” en dan op “Delen met vrienden”.\n2. Kies de [vrienden](friends) die het mogen zien.\n3. Tik op “Versturen”.\n\nZij krijgen een mailtje met de link, zonder de inhoud, en het lijstje staat op hun [vriendenpagina](friends). “Niet meer delen met …” haalt het daar weg; een link die ze al hadden, blijft werken tot je stopt met delen. Hoe je vrienden wordt, staat bij [Vrienden, verjaardagen en herinneringen](lists-help/friends).",
                 ],
                 [
                     'title' => 'Wie mag toevoegen',
@@ -174,7 +184,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Reserveren',
-                    'body' => '“Ik koop dit” reserveert het voor jou, zodat niemand anders het ook koopt. Daarvoor heb je een account nodig; log je in, dan wordt je klik alsnog uitgevoerd. Degene voor wie het lijstje is, ziet er niets van.',
+                    'body' => "1. Open de link die je kreeg.\n2. Tik bij het cadeau dat je koopt op “Ik koop dit”.\n3. Log in als daarom gevraagd wordt; je klik wordt daarna alsnog uitgevoerd.\n\nZo koopt niemand anders het ook. Degene voor wie het lijstje is, ziet er niets van.",
+                    'shot' => 'shared',
+                    'alt' => 'Twee cadeaus op een gedeeld lijstje, elk met de knop “Ik koop dit”.',
                 ],
                 [
                     'title' => 'Toch niet, of gekocht',
@@ -182,7 +194,7 @@ return [
                 ],
                 [
                     'title' => 'Zelf iets voorstellen',
-                    'body' => 'Zoek onderaan het lijstje en kies “Stel iets voor”, of “Aan de lijst toevoegen” waar dat meteen mag. Je kunt ook iets zelf omschrijven. Wie het lijstje beheert, ziet je voorstel en beslist. Of dat meteen mag, staat bij [Een lijstje delen](lists-help/sharing).',
+                    'body' => "1. Zoek onderaan het lijstje naar wat je wilt voorstellen, of omschrijf het zelf.\n2. Tik op “Stel iets voor”, of op “Aan de lijst toevoegen” waar dat meteen mag.\n\nWie het lijstje beheert, ziet je voorstel en beslist. Of het meteen mag, staat bij [Een lijstje delen](lists-help/sharing).",
                 ],
                 [
                     'title' => 'Bewaar het ook voor jezelf',
@@ -204,7 +216,7 @@ return [
             'sections' => [
                 [
                     'title' => 'Een groepscadeau',
-                    'body' => 'Kies bij het [maken](lists-help/saving) “Samen, voor iemand”. Iedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één cadeau van jullie samen. Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).',
+                    'body' => "1. Maak een [nieuw lijstje](lists-help/saving) en kies in de eerste stap “Samen, voor iemand”.\n2. Zeg voor wie het is en geef het een naam.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één cadeau van jullie samen. Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
                 ],
                 [
                     'title' => 'Stemmen',
@@ -230,23 +242,25 @@ return [
             'sections' => [
                 [
                     'title' => 'Een groep starten',
-                    'body' => 'Ga naar [Geheime Vriend](santa) en kies “Start een groep”. Geef de groep een naam, een budget en de datum waarop jullie de cadeaus geven. Jij bent de organisator.',
+                    'body' => "1. Ga naar [Geheime Vriend](santa).\n2. Tik op “Start een groep”.\n3. Geef de groep een naam, een budget en de datum waarop jullie de cadeaus geven.\n\nJij bent de organisator.",
+                    'shot' => 'santa',
+                    'alt' => 'De pagina Geheime Vriend, met de knop om een groep te starten.',
                 ],
                 [
                     'title' => 'Iedereen uitnodigen',
-                    'body' => 'Stuur de uitnodigingslink rond. Meedoen kan met een naam en een e-mailadres; een account is niet nodig.',
+                    'body' => "1. Kopieer de uitnodigingslink van de groep.\n2. Stuur hem naar iedereen die meedoet.\n3. Wie de link opent, vult een naam en een e-mailadres in. Een account is niet nodig.",
                 ],
                 [
                     'title' => 'Trekken',
-                    'body' => 'Zodra er minstens twee mensen zijn, kies je “Trekken”. Iedereen krijgt per mail één naam. De organisator ziet de koppels niet, dus ook jij blijft verrast.',
+                    'body' => "1. Wacht tot iedereen erbij staat, minstens twee mensen.\n2. Tik op “Trekken”.\n\nIedereen krijgt per mail één naam. De organisator ziet de koppels niet, dus ook jij blijft verrast.",
                 ],
                 [
                     'title' => 'Als er iemand afvalt',
-                    'body' => 'Haal die persoon uit de groep, of trek voor één persoon opnieuw. Alleen de koppels die het raakt worden opnieuw getrokken, en alleen die mensen krijgen een nieuwe mail.',
+                    'body' => 'Haal die persoon uit de groep, of kies “Opnieuw trekken voor deze persoon”. Alleen de koppels die het raakt worden opnieuw getrokken, en alleen die mensen krijgen een nieuwe mail.',
                 ],
                 [
                     'title' => 'Mijn verlanglijst koppelen aan de groep',
-                    'body' => 'Heb je een [verlanglijst](lists), koppel hem dan aan de groep: open je lijstje en kies “Gebruik dit lijstje”. Wie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijstje? [Maak er een](lists-help/saving) in drie stappen.',
+                    'body' => "1. Open je [verlanglijst](lists).\n2. Tik op “Gebruik dit lijstje” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijstje? [Maak er een](lists-help/saving) in drie stappen.",
                 ],
                 [
                     'title' => 'Een herinnering vooraf',
@@ -264,7 +278,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Vrienden worden',
-                    'body' => 'Opent iemand jouw deellink terwijl hij ingelogd is, dan zijn jullie [vrienden](friends). Je kunt ook iemand toevoegen op e-mailadres; die persoon krijgt daar geen mail van.',
+                    'body' => "Opent iemand jouw deellink terwijl hij ingelogd is, dan zijn jullie [vrienden](friends). Iemand zelf toevoegen gaat zo:\n\n1. Ga naar [Vrienden](friends).\n2. Vul onder “Iemand toevoegen” een e-mailadres in, en als je wilt de verjaardag.\n3. Tik op “Toevoegen”.\n\nDie persoon krijgt daar geen mail van. Heeft hij al een account, dan zijn jullie meteen verbonden; anders zodra hij inlogt.",
+                    'shot' => 'friends',
+                    'alt' => 'De vriendenpagina, met het formulier om iemand toe te voegen op e-mailadres.',
                 ],
                 [
                     'title' => 'Wat een vriend ziet',
@@ -298,11 +314,13 @@ return [
                 ],
                 [
                     'title' => 'Weer op voorraad',
-                    'body' => 'Is een product nergens meer te koop, dan staat op de productpagina “Laat het weten als hij er weer is”. Je krijgt een seintje zodra een winkel het weer heeft. Stoppen kan op dezelfde plek.',
+                    'body' => "1. Open de productpagina van iets dat nergens meer te koop is.\n2. Tik op “Laat het weten als hij er weer is”.\n\nJe krijgt een seintje zodra een winkel het weer heeft. Stoppen kan op dezelfde plek met “Niet meer volgen”.",
                 ],
                 [
                     'title' => 'Een zoekopdracht volgen',
-                    'body' => '[Zoek](search) iets en kies “Hou me op de hoogte”, eventueel met een maximumprijs. Elke ochtend kijken we of er iets nieuws bij is dat erop past, en dat zie je bij [Meldingen](notifications). Stoppen doe je op dezelfde zoekpagina.',
+                    'body' => "1. [Zoek](search) wat je wilt volgen.\n2. Tik boven de resultaten op “Hou me op de hoogte”.\n3. Vul eventueel een maximumprijs in en tik op “Deze zoekopdracht volgen”.\n\nElke ochtend kijken we of er iets nieuws bij is dat erop past, en dat zie je bij [Meldingen](notifications). Stoppen doe je op dezelfde zoekpagina met “Stoppen”.",
+                    'shot' => 'watch',
+                    'alt' => 'De knop om een zoekopdracht te volgen, met daaronder het veld voor een maximumprijs en de knop om te bevestigen.',
                 ],
             ],
         ],

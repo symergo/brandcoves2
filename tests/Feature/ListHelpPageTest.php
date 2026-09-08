@@ -75,7 +75,24 @@ class ListHelpPageTest extends TestCase
     }
 
     #[Test]
-    public function only_the_saving_topic_carries_screenshots(): void
+    public function every_shot_key_in_the_language_files_is_known(): void
+    {
+        foreach (['nl', 'en', 'fr', 'es'] as $language) {
+            $file = require lang_path("{$language}/help_lists.php");
+
+            foreach ($file['topics'] as $topic => $copy) {
+                foreach ($copy['sections'] as $i => $section) {
+                    if (isset($section['shot'])) {
+                        $this->assertArrayHasKey($section['shot'], ListHelpController::SHOTS, "{$language}: {$topic} section {$i}");
+                        $this->assertNotSame('', trim($section['alt'] ?? ''), "{$language}: {$topic} section {$i} has a shot and no alt");
+                    }
+                }
+            }
+        }
+    }
+
+    #[Test]
+    public function the_pictures_sit_on_the_sections_that_name_them(): void
     {
         $this->get('/be-nl/lists-help/saving')
             ->assertOk()
@@ -84,13 +101,15 @@ class ListHelpPageTest extends TestCase
                 ->where('sections.0.shot.src', '/help/lists/nl/1-find.png')
                 ->where('sections.1.shot.src', '/help/lists/nl/2-choose-list.png')
                 ->where('sections.2.shot.src', '/help/lists/nl/3-your-lists.png')
-                ->where('sections.3.shot', null));
+                ->where('sections.3.shot.src', '/help/lists/nl/4-wizard.png')
+                ->where('sections.4.shot', null));
 
         $this->get('/be-nl/lists-help/sharing')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('numbered', false)
-                ->where('sections.0.shot', null));
+                ->where('sections.0.shot', null)
+                ->where('sections.1.shot.src', '/help/lists/nl/6-share.png'));
     }
 
     #[Test]
@@ -110,8 +129,8 @@ class ListHelpPageTest extends TestCase
         // committed. A reference to one that is missing is a broken picture
         // on a page whose whole point is the pictures.
         foreach (['nl', 'fr', 'en'] as $language) {
-            foreach (['1-find', '2-choose-list', '3-your-lists'] as $shot) {
-                $path = public_path("help/lists/{$language}/{$shot}.png");
+            foreach (ListHelpController::SHOTS as $shot) {
+                $path = public_path("help/lists/{$language}/{$shot}");
 
                 $this->assertFileExists($path, "Missing screenshot: {$path}");
             }

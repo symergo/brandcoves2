@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enums\ListVisibility;
 use App\Enums\Market;
 use App\Models\LoginToken;
 use App\Models\ProductGroup;
@@ -39,7 +40,9 @@ class SeedHelpDemoCommand extends Command
 
     protected $signature = 'bc:seed-help-demo
         {--market=be-nl : The market to fill the list from.}
-        {--fresh : Clear the demo account\'s existing lists first.}';
+        {--fresh : Clear the demo account\'s existing lists first.}
+        {--shared : Share the first list by link, and print that link, for the shared-list screenshot.}
+        {--like= : Prefer products whose title contains this, so the pictures show headphones rather than whatever the feed had.}';
 
     protected $description = 'Create the demo account the help-page screenshots are taken from';
 
@@ -121,19 +124,35 @@ class SeedHelpDemoCommand extends Command
             ],
         ));
 
-        $groups = ProductGroup::query()
+        $candidates = fn () => ProductGroup::query()
             ->where('market', $market->value)
             ->whereNotNull('image_url')
-            ->whereNotNull('min_price')
-            ->inRandomOrder()
-            ->limit(4)
-            ->get();
+            ->whereNotNull('min_price');
+
+        // Random picks put lingerie on the help page on 2026-09-08. A term
+        // keeps the pictures on something a help page can show; random is the
+        // fallback for a market whose catalogue has none of it.
+        $like = trim((string) $this->option('like'));
+        $groups = $like === ''
+            ? collect()
+            : $candidates()->where('title', 'ilike', "%{$like}%")->inRandomOrder()->limit(4)->get();
+
+        if ($groups->count() < 4) {
+            $groups = $candidates()->inRandomOrder()->limit(4)->get();
+        }
 
         if ($groups->isEmpty()) {
             $this->warn("No products in {$market->value}, so the list will be empty. Run bc:ingest first.");
         }
 
         $list = $lists->first();
+
+        // The help page photographs a shared list as a visitor sees it, with
+        // the claim buttons. A demo list is the only list this may be done to.
+        if ($this->option('shared')) {
+            $list->visibility = ListVisibility::Link;
+            $list->save();
+        }
 
         foreach ($groups as $group) {
             WishlistItem::firstOrCreate(
@@ -174,6 +193,12 @@ class SeedHelpDemoCommand extends Command
         $issued = LoginToken::issue(self::EMAIL, name: 'Demo');
 
         $this->newLine();
+        if ($this->option('shared')) {
+            $this->line('Share link:');
+            $this->line(url("/{$market->value}/l/{$list->share_token}"));
+            $this->newLine();
+        }
+
         $this->line('Sign-in link (15 minutes, single use):');
         $this->line(url("/{$market->value}/auth/magic/{$issued['token']}"));
         $this->newLine();

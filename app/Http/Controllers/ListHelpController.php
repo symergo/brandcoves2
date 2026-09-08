@@ -84,11 +84,21 @@ class ListHelpController extends Controller
      */
     private const SHOT_LANGUAGES = ['nl', 'fr', 'en'];
 
-    /** Which file a section's `shot` key names. */
-    private const SHOTS = [
+    /**
+     * Which file a section's `shot` key names. Public so the test can check
+     * that every one of them exists in every language that has its own set.
+     */
+    public const SHOTS = [
         'find' => '1-find.png',
         'choose' => '2-choose-list.png',
         'lists' => '3-your-lists.png',
+        'wizard' => '4-wizard.png',
+        'add' => '5-add-product.png',
+        'share' => '6-share.png',
+        'shared' => '7-shared-list.png',
+        'santa' => '8-santa.png',
+        'friends' => '9-friends.png',
+        'watch' => '10-watch-search.png',
     ];
 
     public function index(CurrentMarket $current): Response

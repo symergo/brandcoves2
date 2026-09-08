@@ -39,13 +39,13 @@ interface Props {
  * `ListHelpController` for why they are per language and why Spanish borrows
  * the English set.
  *
- * ## A body is paragraphs, a paragraph of "- " lines is a list, and
- * [words](url) is a link
+ * ## A body is paragraphs; "- " lines are a list, "1. " lines are steps,
+ * and [words](url) is a link
  *
  * The prose lives in a language file as plain text, so it cannot carry
- * markup. Three shapes are enough for help text: a paragraph, a short list
- * of the ways to do one thing, and a link on the words a person would search
- * for. The server has already turned each link's path into the market's URL,
+ * markup. Four shapes are enough for help text: a paragraph, a short list
+ * of the ways to do one thing, the numbered steps of an instruction, and a
+ * link on the words a person would search for. The server has already turned each link's path into the market's URL,
  * so an internal one is an Inertia link and anything else a plain anchor.
  * Anything richer would be an argument for a different tool, not a richer
  * parser.
@@ -156,6 +156,7 @@ function Body({ text }: { text: string }) {
             {text.split(/\n\s*\n/).map((block, i) => {
                 const lines = block.split('\n').map((l) => l.trim())
                 const isList = lines.length > 0 && lines.every((l) => l.startsWith('- '))
+                const isSteps = lines.length > 0 && lines.every((l) => /^\d+\. /.test(l))
 
                 return isList ? (
                     <ul key={i} className="list-disc space-y-2 pl-5">
@@ -165,6 +166,16 @@ function Body({ text }: { text: string }) {
                             </li>
                         ))}
                     </ul>
+                ) : isSteps ? (
+                    /* The steps of an instruction, numbered by the browser so
+                       the file can be reordered without renumbering. */
+                    <ol key={i} className="list-decimal space-y-2 pl-5 marker:font-semibold marker:text-ink">
+                        {lines.map((l) => (
+                            <li key={l}>
+                                <Inline text={l.replace(/^\d+\. /, '')} />
+                            </li>
+                        ))}
+                    </ol>
                 ) : (
                     <p key={i}>
                         <Inline text={block} />

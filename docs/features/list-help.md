@@ -52,9 +52,20 @@ by `ListHelpController`, and reach the page as props, so a topic's words reach o
 opened it. `lists_help.link` is the one key that stayed in `site.php`, because `Lists/Index`
 renders it client-side.
 
-A body is plain text: paragraphs separated by a blank line, and a paragraph whose lines all start
-with `- ` is a list. That is the whole markup, and `HelpTopic.tsx` renders it; anything richer would
-be an argument for a different tool.
+A body is plain text: paragraphs separated by a blank line; a paragraph whose lines all start with
+`- ` is a list, and one whose lines all start with `1. ` is the numbered steps of an instruction.
+That is the whole markup, and `HelpTopic.tsx` renders it; anything richer would be an argument for
+a different tool.
+
+## Instructions, not descriptions (2026-09-08, second pass)
+
+The first draft of the nine pages described what each feature was. The owner's reaction was "ik mis
+screenshots" and "en instructies". So every section that is something you *do* is now numbered
+steps that name the buttons word for word, in the four languages, with the labels checked against
+the language files (a renamed button is a renamed help line), and every topic but two carries a
+picture of the screen the steps happen on. Ten pictures per language now: the three of the save
+flow, the wizard's first step, adding a product, the share panel, a shared list as a visitor sees it
+with the claim buttons, the Secret Santa page, the friends page, and following a search.
 
 ## Keyword anchors
 
@@ -87,6 +98,13 @@ them one command, so it actually gets done:
 node scripts/help-screenshots.mjs     # composer dev + docker compose up -d must be running
 ```
 
+It now takes ten pictures per language and finds every button by its own label, read from the
+language file with `php -r`, so a renamed button fails loudly rather than silently photographing
+the wrong thing. The seeder grew two options for it: `--shared` puts the demo list on link sharing
+and prints the share link, which a second, signed-out browser opens to photograph the visitor's
+view; `--like=koptelefoon` fills the list with products matching a term, because random picks put
+lingerie on the help page the first time.
+
 Three decisions inside it are worth knowing, because each was a wrong screenshot first:
 
 - **It photographs a throwaway account**, created by `bc:seed-help-demo` (local only, refuses in
@@ -97,6 +115,8 @@ Three decisions inside it are worth knowing, because each was a wrong screenshot
   "Mijn verlanglijstje / My wish list / Anniversaire de Lea": three languages illustrating one step.
 - **It starts from a card whose picture actually loaded**, tested with `naturalWidth` rather than
   `:has(img)`.
+- **It opens the list that has things on it**, chosen by the thumbnails on its card. The empty
+  demo list opens the add-product panel by itself, so there was no button to photograph there.
 
 One thing it needs: a development database that is up to date. On 2026-09-08 the signed-in search
 page 500'd on a missing `search_alerts` table because four migrations had not been run locally, and
