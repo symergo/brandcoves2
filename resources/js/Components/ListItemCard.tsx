@@ -108,13 +108,20 @@ export default function ListItemCard({
               From `lg` the same three elements are a row, as before. One
               `aside`, placed by the grid, not two copies, because the save
               control carries state.
+
+              The thumbnail grew with it: 112px until `lg`, from 80. At 80px a
+              product was a smudge beside three lines of title; with the
+              controls stacked under it the left column has the height to
+              spare, and the picture is what a list is scanned by. Desktop
+              keeps 80px, where the controls sit beside the title and every
+              pixel given to the picture comes out of the words.
             */}
             <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 lg:flex lg:gap-4">
                 {image && (
                     <img
                         src={image}
                         alt=""
-                        className="h-20 w-20 shrink-0 rounded object-contain"
+                        className="h-28 w-28 shrink-0 rounded object-contain lg:h-20 lg:w-20"
                         // A feed image that 404s left a broken-image glyph where a
                         // product should be. Hidden rather than removed, so the
                         // layout does not shift under everything below it.

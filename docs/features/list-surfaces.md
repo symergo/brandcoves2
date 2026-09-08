@@ -538,7 +538,10 @@ strip of empty space with two buttons at its right end; the owner saw it within 
 `lg` the same three elements are a row, as before. Measured: the title has 232px on a 390px phone
 and 200px in the two-column grid at 700px, against 141 and 125 before; the desktop card is
 unchanged. One `aside` element placed by the grid, not two copies, because the save control
-carries state.
+carries state. The thumbnail grew from 80px to 112px below `lg` in the same change, because with
+the controls under it the left column had the height to spare and a product at 80px was a smudge
+beside three lines of title; the desktop card keeps 80px, where every pixel given to the picture
+comes out of the words.
 
 ## See also
 
