@@ -486,7 +486,7 @@ return [
         'unsubscribe' => 'Uitschrijven',
     ],
     'legal' => [
-        'about' => 'Over ons',
+        'about' => 'Over GiftCoves',
         'privacy' => 'Privacy',
         'terms' => 'Voorwaarden',
         'cookies' => 'Cookies',

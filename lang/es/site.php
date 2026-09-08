@@ -482,7 +482,7 @@ return [
         'unsubscribe' => 'Darse de baja',
     ],
     'legal' => [
-        'about' => 'Sobre nosotros',
+        'about' => 'Sobre GiftCoves',
         'privacy' => 'Privacidad',
         'terms' => 'Condiciones',
         'cookies' => 'Cookies',

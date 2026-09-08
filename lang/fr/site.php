@@ -483,7 +483,7 @@ return [
         'unsubscribe' => 'Se désabonner',
     ],
     'legal' => [
-        'about' => 'À propos',
+        'about' => 'À propos de GiftCoves',
         'privacy' => 'Confidentialité',
         'terms' => 'Conditions',
         'cookies' => 'Cookies',

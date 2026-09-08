@@ -92,3 +92,16 @@ unreachable, which is itself a compliance gap.
 
 French and Spanish translations are outstanding; both markets currently serve English with the
 fallback notice.
+
+## The about page was brought up to date on 2026-09-08
+
+The text dated from 2026-08-09 and described the site as it was then. It now names what was built
+since: the three-step list wizard, sharing with friends and by name, birthdays and notifications,
+gift ideas by persona, the advice guides ("Slim kopen"), saved searches, and the price drop a list
+card shows. The paragraph on AI-assisted writing was reworded to say that a person writes and
+reads through the Coves, the personas and the guides, and that a model, where it drafts, is
+bounded by the catalogue; that is the practice since the editorial API and the authored plans.
+
+The footer link to the page said "Over ons" / "About" and now says "Over GiftCoves" / "About
+GiftCoves" in all four languages, the page's own title. The owner asked for the name; the page
+is about the site, not about a team.

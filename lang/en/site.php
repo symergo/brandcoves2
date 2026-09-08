@@ -600,7 +600,7 @@ return [
         'unsubscribe' => 'Unsubscribe',
     ],
     'legal' => [
-        'about' => 'About',
+        'about' => 'About GiftCoves',
         'privacy' => 'Privacy',
         'terms' => 'Terms',
         'cookies' => 'Cookies',

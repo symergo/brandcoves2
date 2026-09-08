@@ -1,7 +1,7 @@
 ---
 title: Over GiftCoves
-summary: Een ontdekkingssite voor merken en producten, met een gecureerde blik en slimme matching, voor jezelf en voor anderen.
-updated: 2026-08-09
+summary: Een ontdekkingssite voor merken en producten, met gecureerde vondsten, cadeau-ideeën per persoon en lijstjes die je deelt.
+updated: 2026-09-08
 ---
 
 ## Wat dit is
@@ -20,34 +20,52 @@ heeft aan gadgets"*, en in *"waar is het vandaag de moeite om naar te kijken"*.
 
 ## Wat je hier kunt doen
 
+**Een lijstje maken, voor jezelf of voor iemand anders.** In drie stappen. Hou het
+privé, of deel het met een link of met vrienden. Wie het opent, kan iets kiezen
+om te kopen, terwijl degene voor wie het lijstje is nooit ziet wat er al gekocht
+is, tenzij je dat zelf anders instelt. Zakt de prijs van iets op je lijstje, dan
+zie je dat op de kaart.
+
+**Cadeau-ideeën per persoon.** Niet per categorie, maar per mens: de thuiskok, de
+wandelaar, de bouwer met te veel LEGO. Elke persona is een pagina met een
+handvol vondsten en een verhaal erbij.
+
+**Een cadeau vinden door iemand te beschrijven.** "Mijn broer, fietst graag, heeft
+al het voor de hand liggende al." Bijstellen, vervangen wat ernaast zit, houden
+wat klopt. Of stel je vraag aan anderen en lees wat zij aanraden.
+
+**Vrienden en verjaardagen.** Voeg vrienden toe, deel een lijstje op naam, en
+hoor het op tijd als iemand bijna jarig is. Meldingen komen hier binnen en, als
+je dat wilt, per mail.
+
 **Je met opzet laten verrassen.** Een vondst van de dag, een vreemde hoek van de
 catalogus, dat stille uitstekende ding waar niemand reclame voor maakt. Niet de
 bestseller die je al vier keer gezien hebt.
 
-**Een cadeau vinden door een persoon te beschrijven.** Geen categorie en geen
-prijsklasse, maar een persoon. "Mijn broer, fietst graag, heeft al het voor de
-hand liggende al." Bijstellen, vervangen wat ernaast zit, houden wat klopt.
-
-**Een lijstje maken, voor jezelf of voor iemand anders.** Deel het en anderen
-kunnen er items van claimen, terwijl degene voor wie het bedoeld is nooit ziet wat
-er al gekocht is.
-
 **De Cove van vandaag lezen.** Eén pagina per dag: een thema, een handvol
 vondsten die het scrollen waard zijn, en een prijsraadsel om te spelen. Elke
-eerdere editie houdt een eigen pagina.
+eerdere editie houdt een eigen pagina. Wil je ze per mail, dan krijg je één mail
+per dag met het thema, een paar vondsten en één link. Met één klik weer weg.
 
-**Door de Coves bladeren.** Langere stukken rond één thema, zoals het bureau
-opnieuw inrichten, één goed mes, of de weken voor Halloween. Elk merk en elk
-product erin is één klik van het echte werk verwijderd.
+**Door de Coves bladeren.** Langere stukken rond één thema, één merk of één
+seizoen, zoals het bureau opnieuw inrichten, één goed mes, of de weken voor
+Halloween. Elk merk en elk product erin is één klik van het echte werk
+verwijderd.
+
+**Slim kopen.** Korte gidsen over wat je rechten zijn als je online koopt:
+retourneren, garantie, keurmerken, betalen, en wat er gebeurt als een pakje
+niet komt. Zonder prijzen en zonder superlatieven, met de datum bij elke
+juridische stelling.
 
 **Een merk volgen.** Elk merk heeft een pagina met alles wat we ervan voeren en de
 Coves waarin het voorkomt.
 
+**Zoeken, en laten weten als er iets nieuws is.** De zoekfunctie vindt ook wat
+je met een tikfout intypt. Bewaar een zoekopdracht en je hoort het als er iets
+nieuws bijkomt dat erop past.
+
 **Een barcode scannen.** Sta je in de winkel met de doos in je hand: richt je
 camera erop en zie wat er nog meer is.
-
-**Eén mail per dag krijgen**, als je dat wilt. Het thema, een paar vondsten en één
-link. Met één klik weer weg, definitief.
 
 ## Eén product, één kaart
 
@@ -59,12 +77,13 @@ de winkels die het verkopen. Het is het minst spannende punt in dit lijstje en h
 is precies wat de rest laat werken: ontdekken is pas leuk als de catalogus weet
 wát dingen zijn.
 
-## Een deel van de teksten is met AI gemaakt
+## Wie de teksten schrijft
 
-Ze zijn opgesteld door een taalmodel en begrensd door de catalogus. Het model kan
-alleen verwijzen naar merken en producten die hier bestaan, en elk getal in de
-tekst wordt afgelezen van de pagina waarop het staat. Waar een model schrijft,
-verzint het de feiten eromheen niet.
+De Coves, de persona's en de gidsen worden geschreven en nagelezen door een
+mens. Waar een taalmodel een eerste versie maakt, is het begrensd door de
+catalogus: het kan alleen verwijzen naar merken en producten die hier bestaan,
+en elk getal in de tekst wordt afgelezen van de pagina waarop het staat. Waar een
+model schrijft, verzint het de feiten eromheen niet.
 
 ## Hoe we geld verdienen
 

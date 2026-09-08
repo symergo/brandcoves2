@@ -1,7 +1,7 @@
 ---
 title: About GiftCoves
-summary: A brand and product discovery site with curated finds and intelligent matching, for yourself and for other people.
-updated: 2026-08-09
+summary: A brand and product discovery site with curated finds, gift ideas by the kind of person, and lists you share.
+updated: 2026-09-08
 ---
 
 ## What this is
@@ -21,32 +21,49 @@ gadgets"*, and at *"what is worth looking at today"*.
 
 ## What you can do here
 
+**Build a list, for yourself or for someone else.** Three steps. Keep it private,
+or share it with a link or with friends. Whoever opens it can pick something to
+buy, while the person it is for never sees what has already been bought, unless
+you choose otherwise. When the price of something on your list drops, the card
+says so.
+
+**Gift ideas by the kind of person.** Not by category but by who they are: the
+home cook, the hiker, the builder with too much LEGO already. Each persona is a
+page with a handful of finds and the story behind them.
+
+**Find a gift by describing someone.** "My brother, into cycling, already owns
+everything obvious." Refine it, swap out anything that misses, keep what works.
+Or put the question to other people and read what they recommend.
+
+**Friends and birthdays.** Add friends, share a list by name, and hear in time
+when someone's birthday is close. Notifications arrive here and, if you want
+them, by email.
+
 **Get surprised on purpose.** A find of the day, an odd corner of the catalogue,
 the quietly excellent thing nobody advertises. Not the best-seller you have
 already seen four times.
 
-**Find a gift by describing a person.** Not a category and not a price bracket,
-but a person. "My brother, into cycling, already owns everything obvious." Refine
-it, swap out anything that misses, keep what works.
-
-**Build a list, for yourself or for someone else.** Share it and people can claim
-items from it, while the person it is for never sees what has already been bought.
-
 **Read today's Cove.** One page a day: a theme, a handful of finds worth the
-scroll, and a price puzzle to play. Every past edition keeps its own page.
+scroll, and a price puzzle to play. Every past edition keeps its own page. If you
+want it by email, one message a day carries the theme, a few of the finds and one
+link. One click to leave.
 
-**Browse the Coves.** Longer reads built around a single theme, such as the desk
-reset, one good knife, or the fortnight before Halloween. Every brand and product
-in them is one click from the real thing.
+**Browse the Coves.** Longer reads built around a single theme, a brand or a
+season, such as the desk reset, one good knife, or the fortnight before
+Halloween. Every brand and product in them is one click from the real thing.
+
+**Buy smart.** Short guides on your rights when you buy online: returns,
+guarantees, trust marks, how you pay, and what happens when a parcel never
+comes. No prices and no superlatives, and a date next to every legal claim.
 
 **Follow a brand.** Every brand has a page with everything we carry from it and
 the Coves that mention it.
 
+**Search, and hear when something new turns up.** Search copes with a typo.
+Save a search and you are told when something new matches it.
+
 **Scan a barcode.** Standing in a shop with the box in your hand, point your
 camera at it and see what else is out there.
-
-**Get one email a day**, if you want it. The theme, a few of the finds, and one
-link. One click to leave, permanently.
 
 ## One product, one card
 
@@ -58,12 +75,13 @@ shops that sell it. It is the least glamorous thing on this list and it is what
 makes the rest work: discovery is only enjoyable when the catalogue knows what
 things really are.
 
-## Some of the writing is AI-assisted
+## Who writes the words
 
-It is drafted by a language model and bounded by the catalogue. The model can only
-point at brands and products that exist here, and every number in the text is read
-off the page it appears on. Where a model writes, the facts around it are not the
-model's to invent.
+The Coves, the personas and the guides are written and read through by a
+person. Where a language model drafts a first version, it is bounded by the
+catalogue: it can only point at brands and products that exist here, and every
+number in the text is read off the page it appears on. Where a model writes, the
+facts around it are not the model's to invent.
 
 ## How we make money
 
