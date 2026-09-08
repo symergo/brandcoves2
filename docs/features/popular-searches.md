@@ -171,6 +171,12 @@ strings of product-title fragments. The read-time rule above stays as a second n
 matters beyond this page because `TopicMiner` reads the same table and had no length rule at
 all, so the guide topic queue was being fed the same junk.
 
+*And a crawler's search is not logged at all.* `SearchQuery::fromRequest()` sets `logged` to
+false when `App\Support\Crawlers::looksLikeOne()` recognises the user agent (a name match on
+the usual words and the crawlers seen in this site's logs, plus an empty user agent). The length
+rule catches the long strings a crawler mints; this catches the short steps on the same walk,
+which look like queries and are not demand.
+
 ## Indexable, and its links are followed
 
 Deliberately unlike the chips it replaces, which were `nofollow`ed and then

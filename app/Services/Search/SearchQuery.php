@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Search;
 
 use App\Enums\Market;
+use App\Support\Crawlers;
 use Illuminate\Http\Request;
 
 /**
@@ -111,6 +112,14 @@ final readonly class SearchQuery
              * crawler is told not to follow `page=` at all.
              */
             page: min(self::MAX_PAGE, max(1, (int) $request->query('page', 1))),
+            /*
+             * A crawler following a link into /search is not demand. The log
+             * feeds the guide topic queue and the popular-searches page, and on
+             * 2026-09-08 five in six of its rows were crawler steps through
+             * search links. The length rule on SearchLog catches the long
+             * strings; this catches the short steps on the same walk.
+             */
+            logged: ! Crawlers::looksLikeOne($request->userAgent()),
             view: $request->query('view') === 'store' ? 'store' : 'grid',
         );
     }

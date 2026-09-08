@@ -57,6 +57,34 @@ class SearchLogTest extends TestCase
     }
 
     #[Test]
+    public function a_crawler_search_is_not_logged(): void
+    {
+        // The short steps of a crawler's walk through search links look like
+        // queries; the user agent is the only thing that tells them apart.
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')
+            ->get('/en/search?q=headphones')
+            ->assertOk();
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)')
+            ->get('/en/search?q=headphones')
+            ->assertOk();
+        $this->withHeader('User-Agent', 'python-requests/2.32')
+            ->get('/en/search?q=headphones')
+            ->assertOk();
+
+        $this->assertDatabaseCount('search_log', 0);
+    }
+
+    #[Test]
+    public function a_browser_search_is_logged(): void
+    {
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1')
+            ->get('/en/search?q=headphones')
+            ->assertOk();
+
+        $this->assertDatabaseHas('search_log', ['query' => 'headphones', 'market' => 'en']);
+    }
+
+    #[Test]
     public function the_search_page_does_not_log_a_long_query_either(): void
     {
         $this->get('/en/search?q='.urlencode('koptelefoon sound draadloze uur hoofdtelefoon hoofdtelefoons earpads'))
