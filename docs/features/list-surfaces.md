@@ -526,22 +526,29 @@ the wizard names a list "For Anna", so the line said it a third time. And the de
 top-right corner on every width — the header used to wrap on a phone and drop the icon under the
 pills — at 44px, the site's minimum target.
 
-## The item card gives the title the width (2026-09-08)
+## The item card is a tile on a phone (2026-09-08)
 
-On a phone the save control and its chevron sat beside the title and took eighty pixels of a
-390px screen; with the image, the padding and the gaps, the title had 141px, four words a line
-for three lines, and "Originele Apple EarPods Oortjes MYQY3ZM/A…" was cut before it said what it
-was. `ListItemCard` is now a two-column grid until `lg`: the thumbnail and the controls stack in
-the left column, the title and price take the right, and the card is no taller than its taller
-column. (A first version gave the controls a row of their own, which widened the title and left a
-strip of empty space with two buttons at its right end; the owner saw it within the hour.) From
-`lg` the same three elements are a row, as before. Measured: the title has 232px on a 390px phone
-and 200px in the two-column grid at 700px, against 141 and 125 before; the desktop card is
-unchanged. One `aside` element placed by the grid, not two copies, because the save control
-carries state. The thumbnail grew from 80px to 112px below `lg` in the same change, because with
-the controls under it the left column had the height to spare and a product at 80px was a smudge
-beside three lines of title; the desktop card keeps 80px, where every pixel given to the picture
-comes out of the words.
+On a phone the row that works on a desktop did not: thumbnail, three lines of title and the
+save control side by side in 390px left the title 141px and the picture a smudge. Three fixes in
+one afternoon moved the controls around inside that row, and each cost something the owner saw
+within the hour: a strip of empty space, or a bigger thumbnail that made the words narrower
+again. The brief in the end was "compact, large picture", and the answer is not a better row but
+a different shape.
+
+Below `lg` `ListItemCard` is a tile: the picture is the card's width and square, the controls sit
+on it in the top-right corner the product card already uses, and the words go underneath, two
+lines of title and the price. The list shows two tiles to a row on a phone and three between `sm`
+and `lg`. A row of two tiles is shorter than two of the old rows and every picture is twice the
+size (171px on a 390px phone, against 80). From `lg` the card is the row it was: the two-column
+grid gives it 490px there, and beside a picture that wide the words would be the afterthought.
+
+The save control lost its chevron below `lg` in the same change. The compact `SaveToList` is a
+bookmark and a narrow chevron, the chevron there so a card can be filed straight into a named
+list. On a phone the chevron was a 32px second target beside the first, and the pair covered a
+third of a tile's picture; there the bookmark is the whole control, a tap saves and a second tap
+opens the sheet, which is where a move lives anyway. The desktop keeps the pair. `CopyToList`'s
+icon button and the owner's edit and remove buttons became the same round chip with a background
+and a blur, because they now sit on a picture rather than beside a title.
 
 ## See also
 

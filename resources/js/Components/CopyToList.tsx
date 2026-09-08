@@ -277,7 +277,7 @@ export default function CopyToList({
                 disabled={sending}
                 className={
                     label === undefined
-                        ? 'rounded p-2 text-ink-soft hover:text-accent disabled:opacity-50'
+                        ? 'flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink shadow-sm backdrop-blur transition hover:border-ink disabled:opacity-50 lg:h-9 lg:w-9'
                         : 'text-xs text-ink-soft underline hover:text-ink disabled:opacity-50'
                 }
             >

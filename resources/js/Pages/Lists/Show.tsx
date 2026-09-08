@@ -595,7 +595,7 @@ export default function ListShow({
                               stay here, because the owner's two are genuinely
                               not the visitor's four.
                             */}
-                            <ul className="mt-3 grid gap-4 sm:grid-cols-2">
+                            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-2">
                                 {items.map((item) => (
                                     <ListItemCard
                                         key={item.id}
@@ -691,7 +691,7 @@ export default function ListShow({
                                                         }
                                                         aria-label={t('lists.edit_item')}
                                                         title={t('lists.edit_item')}
-                                                        className="rounded p-2 text-ink-soft hover:text-accent"
+                                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink-soft shadow-sm backdrop-blur transition hover:border-ink hover:text-accent lg:h-9 lg:w-9"
                                                     >
                                                         ✎
                                                     </button>
@@ -717,7 +717,7 @@ export default function ListShow({
                                                             })
                                                         }}
                                                         aria-label={t('lists.remove')}
-                                                        className="rounded p-2 text-ink-soft hover:text-accent"
+                                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink-soft shadow-sm backdrop-blur transition hover:border-ink hover:text-accent lg:h-9 lg:w-9"
                                                     >
                                                         ✕
                                                     </button>

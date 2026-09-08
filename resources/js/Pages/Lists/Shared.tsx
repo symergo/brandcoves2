@@ -545,7 +545,7 @@ export default function SharedList({
                       a tally under it. A third statement of the same thing, in
                       a grey line between them, was the one nobody needed.
                     */}
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-2">
                         {ordered.map((item) => (
                             <ListItemCard
                                 key={item.id}

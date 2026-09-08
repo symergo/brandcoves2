@@ -1,5 +1,5 @@
 import { router, usePage } from '@inertiajs/react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { countAdded, countRemoved } from '../addingMode'
 import { HttpError, send } from '../http'
@@ -150,7 +150,9 @@ export default function SaveToList({
     const [place, setPlace] = useState<Placement | null>(null)
     const [sheet, setSheet] = useState(false)
 
-    const trigger = useRef<HTMLButtonElement>(null)
+    // A button on the full control, the wrapper on the compact one, where the
+    // chevron that used to hold it is not on screen below `lg`.
+    const trigger = useRef<HTMLElement>(null)
     const menu = useRef<HTMLDivElement>(null)
 
     // The product, however it is identified. A live bol result and an Amazon
@@ -813,7 +815,7 @@ export default function SaveToList({
     if (compact) {
         return (
             <>
-                <span className="relative z-20 inline-flex items-stretch">
+                <span ref={trigger} className="relative z-20 inline-flex items-stretch">
                     <button
                         type="button"
                         onClick={() => (saved ? openPicker() : void save())}
@@ -821,7 +823,7 @@ export default function SaveToList({
                         aria-pressed={saved}
                         aria-label={saved ? t('lists.saved') : destination}
                         title={saved ? t('lists.saved') : destination}
-                        className={`flex h-10 w-10 items-center justify-center rounded-l-full border shadow-sm backdrop-blur transition disabled:opacity-50 sm:h-9 sm:w-9 ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm backdrop-blur transition disabled:opacity-50 lg:h-9 lg:w-9 lg:rounded-r-none ${
                             saved
                                 ? 'border-sage bg-sage text-white'
                                 : 'border-line bg-card/90 text-ink hover:border-ink hover:bg-card'
@@ -842,25 +844,26 @@ export default function SaveToList({
                     </button>
 
                     {/*
-                      The chevron is kept even here, narrow.
+                      The chevron is kept on a desktop, narrow, and gone below
+                      `lg`.
 
-                      Without it, filing a card straight into a named list would
-                      cost a save into the default one, a second press to
-                      reopen, and a move — so adding the fast path would have
-                      made the deliberate path slower. It is 20px because the
-                      bookmark is the right answer almost every time.
+                      On a desktop it earns its 20px: without it, filing a card
+                      straight into a named list would cost a save into the
+                      default one, a second press to reopen, and a move — so
+                      the fast path would have made the deliberate path slower.
+                      On a phone it was a 32px second target next to the first,
+                      and the pair covered a third of a list tile's picture
+                      (2026-09-08). There the bookmark is the whole control: a
+                      tap saves, a second tap opens the sheet, and the sheet is
+                      where the move lives anyway.
                     */}
                     <button
-                        ref={trigger}
                         type="button"
                         onClick={openPicker}
                         aria-expanded={open}
                         aria-haspopup="menu"
                         aria-label={t('lists.save_to_list')}
-                        // 20px wide on a desktop, where a pointer is precise;
-                        // 32px on a phone, where it was the smallest target on
-                        // the site's busiest surface.
-                        className="-ml-px flex h-10 w-8 items-center justify-center rounded-r-full sm:h-9 border border-line bg-card/90 text-2xs text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink sm:w-5"
+                        className="-ml-px hidden h-9 w-5 items-center justify-center rounded-r-full border border-line bg-card/90 text-2xs text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink lg:flex"
                     >
                         ▾
                     </button>
@@ -892,7 +895,7 @@ export default function SaveToList({
             </button>
 
             <button
-                ref={trigger}
+                ref={trigger as RefObject<HTMLButtonElement | null>}
                 type="button"
                 onClick={openPicker}
                 aria-expanded={open}

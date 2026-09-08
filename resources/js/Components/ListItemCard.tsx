@@ -88,61 +88,59 @@ export default function ListItemCard({
               outdoors or to anyone who does not perceive the difference. The
               border carries it; the fade reinforces.
             */
-            className={`flex flex-col rounded-card border bg-card p-4 ${
+            className={`flex flex-col overflow-hidden rounded-card border bg-card lg:p-4 ${
                 muted ? 'border-dashed border-ink-soft/40 opacity-70' : 'border-line'
             } ${className}`}
         >
             {/*
-              On a phone the controls sit under the thumbnail, not beside the title.
+              A tile on a phone, a row on a desktop.
 
-              Beside the title, the save control and its chevron took eighty
-              pixels of a 390px screen, the image eighty more, and the padding
-              and gaps another sixty: the title was left 141px, four words a
-              line, three lines, and "Originele Apple EarPods Oortjes
-              MYQY3ZM/A…" was cut before it said what it was. A first fix gave
-              the controls a row of their own, which gave the title the width
-              and the card a strip of empty space with two buttons at its right
-              end. This one is a two-column grid until `lg`: the thumbnail and
-              the controls stack in the left column, the title and price take
-              the right, and the card is no taller than its taller column.
-              From `lg` the same three elements are a row, as before. One
-              `aside`, placed by the grid, not two copies, because the save
-              control carries state.
+              The row — thumbnail, three lines of title, controls — is the
+              right shape at 490px and the wrong one at 170. Three attempts
+              on 2026-09-08 moved the controls around inside the row and each
+              cost something: the title got its width and the card got a strip
+              of empty space, or the picture stayed a smudge. The owner's
+              brief was "compact, large picture", and that is a tile: the
+              picture is the card's width, square, with the controls sitting
+              on it where a product card puts them; the words go underneath,
+              two lines of title and the price; and the list shows two tiles
+              to a row. A row of two tiles is shorter than two of the old rows
+              and every picture is twice the size.
 
-              The thumbnail grew with it: 112px until `lg`, from 80. At 80px a
-              product was a smudge beside three lines of title; with the
-              controls stacked under it the left column has the height to
-              spare, and the picture is what a list is scanned by. Desktop
-              keeps 80px, where the controls sit beside the title and every
-              pixel given to the picture comes out of the words.
+              From `lg` the same elements are the row they were: the two-column
+              grid gives a card 490px there, and beside a picture that wide
+              the words would be the afterthought.
             */}
-            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 lg:flex lg:gap-4">
+            <div className="relative lg:flex lg:gap-4">
                 {image && (
-                    <img
-                        src={image}
-                        alt=""
-                        className="h-28 w-28 shrink-0 rounded object-contain lg:h-20 lg:w-20"
-                        // A feed image that 404s left a broken-image glyph where a
-                        // product should be. Hidden rather than removed, so the
-                        // layout does not shift under everything below it.
-                        onError={(e) => {
-                            e.currentTarget.style.visibility = 'hidden'
-                        }}
-                    />
+                    <div className="relative aspect-square w-full bg-white lg:aspect-auto lg:h-20 lg:w-20 lg:shrink-0 lg:rounded">
+                        <img
+                            src={image}
+                            alt=""
+                            className="h-full w-full object-contain p-2 lg:p-0"
+                            // A feed image that 404s left a broken-image glyph where a
+                            // product should be. Hidden rather than removed, so the
+                            // layout does not shift under everything below it.
+                            onError={(e) => {
+                                e.currentTarget.style.visibility = 'hidden'
+                            }}
+                        />
+                    </div>
                 )}
 
-                <div className="row-span-2 min-w-0 lg:row-span-1 lg:flex-1">
+                <div className="min-w-0 px-3 pt-2 pb-1 lg:flex-1 lg:p-0">
                     {/*
                       Clamped, because a feed title is written for a search engine
                       rather than a person: "OneOne 25W super snellader met 2
                       poorten + 1,5m sterke USB C kabel. PD lader. Oplader adapter
                       past op Sony WH-1000XM3, WH-1000XM4, …" ran to ten lines on a
                       phone and made one card four times the height of its
-                      neighbours. Three lines is enough to recognise a thing you
-                      have already seen, which is what a list is for.
+                      neighbours. Two lines under a picture, three beside one, is
+                      enough to recognise a thing you have already seen, which is
+                      what a list is for.
                     */}
                     {url ? (
-                        <Link href={url} className="line-clamp-3 font-medium hover:underline">
+                        <Link href={url} className="line-clamp-2 text-sm font-medium hover:underline lg:line-clamp-3 lg:text-base">
                             {title}
                         </Link>
                     ) : externalUrl ? (
@@ -158,12 +156,12 @@ export default function ListItemCard({
                             href={externalUrl}
                             target="_blank"
                             rel="nofollow noopener noreferrer"
-                            className="line-clamp-3 font-medium hover:underline"
+                            className="line-clamp-2 text-sm font-medium hover:underline lg:line-clamp-3 lg:text-base"
                         >
                             {title}
                         </a>
                     ) : (
-                        <span className="line-clamp-3 font-medium">{title}</span>
+                        <span className="line-clamp-2 text-sm font-medium lg:line-clamp-3 lg:text-base">{title}</span>
                     )}
 
                     {note && <p className="mt-1 text-sm text-ink-soft">{note}</p>}
@@ -193,14 +191,25 @@ export default function ListItemCard({
                     )}
                 </div>
 
+                {/*
+                  On the picture, top right, where the product card keeps the same
+                  control; beside the title from `lg`. The controls carry their
+                  own background and blur, so they read on any picture. A manual
+                  item with no picture has nothing to sit on, so there they go
+                  under the words instead of over them.
+                */}
                 {aside && (
-                    <div className="flex items-start gap-1 self-start lg:shrink-0">
+                    <div
+                        className={`flex items-start gap-1 lg:static lg:shrink-0 lg:self-start lg:p-0 ${
+                            image ? 'absolute top-2 right-2' : 'justify-end px-3 pb-2'
+                        }`}
+                    >
                         {aside}
                     </div>
                 )}
             </div>
 
-            {children}
+            {children && <div className="px-3 pb-3 lg:px-0 lg:pb-0">{children}</div>}
         </li>
     )
 }
