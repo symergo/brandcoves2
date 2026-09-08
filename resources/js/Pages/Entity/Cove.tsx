@@ -1,8 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react'
+import { Head, Link } from '@inertiajs/react'
 import EntityRails, { RailCard, type EntityRailSet } from '../../Components/EntityRails'
 import PageBlocks from '../../Components/PageBlocks'
 import type { BlockPayload } from '../../Components/Parts'
-import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 
 interface Props {
@@ -51,19 +50,6 @@ interface Props {
  */
 export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Props) {
     const { t } = useTranslations()
-    const { market } = usePage<SharedProps>().props
-
-    /*
-     * The market's separators, not the browser's.
-     *
-     * `toLocaleString()` with no argument reads the *reader's* locale, so a
-     * Dutch page opened on an English-configured laptop offered "2,051
-     * producten" where the market writes 2.051. Every other number on the site
-     * is formatted from `market.hrefLang` — see `formatPrice` — and this is the
-     * one that had quietly opted out.
-     */
-    const total = entity.total === null ? null : new Intl.NumberFormat(market.hrefLang).format(entity.total)
-
     const sidebar = rails
         ? [
               { key: 'discounts', products: rails.discounts },
@@ -157,14 +143,17 @@ export default function EntityCove({ entity, cove, rails, searchUrl, copy }: Pro
                       The way back to everything. An article about a brand that
                       offers no route to that brand's products is an article on
                       a shopping site that forgot what it was for.
+
+                      Without the count. "Bekijk alle 1.284 producten van Sony"
+                      made a number the headline of a link whose job is to say
+                      where it goes. The owner asked for the plain line on
+                      2026-09-08: all the brand's offers, all the shop's.
                     */}
                     <Link
                         href={searchUrl}
                         className="block rounded-lg border border-line px-4 py-3 text-sm font-medium hover:border-ink"
                     >
-                        {total === null
-                            ? t('entity_rails.see_all_uncounted', { entity: entity.name })
-                            : t('entity_rails.see_all', { count: total, entity: entity.name })}
+                        {t('entity_rails.see_all', { entity: entity.name })}
                     </Link>
                 </aside>
             </div>

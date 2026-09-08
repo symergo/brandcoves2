@@ -254,3 +254,11 @@ shop page would be a sentence about the wrong kind of thing.
 - [brand-pages.md](brand-pages.md) — the page a Brand Cove renders above
 - [popularity-charts.md](popularity-charts.md) — the rule the popular rail narrows
 - [cove-writer.md](cove-writer.md) — who writes it, and the prompt it is written from
+
+## The link out drops its count (2026-09-08)
+
+The sidebar's last line read "Bekijk alle 1.284 producten van Sony" when the entity carried a
+count and "Alle Sony aanbiedingen" when it did not. It is one line now, "Bekijk alle Sony
+aanbiedingen", for brands and shops alike, in four languages. A number made itself the headline
+of a link whose job is to say where it goes; the owner asked for the plain line. The
+`entity.total` prop still arrives and is unused on the page; `see_all_uncounted` is gone.

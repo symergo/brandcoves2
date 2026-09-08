@@ -1678,8 +1678,7 @@ return [
             'blurb' => 'Lo que los visitantes guardan en una lista. Solo si varias listas coinciden.',
         ],
         'sidebar_heading' => 'Productos de esta marca o tienda',
-        'see_all' => 'Ver los :count productos de :entity',
-        'see_all_uncounted' => 'Todas las ofertas de :entity',
+        'see_all' => 'Ver todas las ofertas de :entity',
     ],
 
     /*

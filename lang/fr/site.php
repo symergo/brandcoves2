@@ -1680,8 +1680,7 @@ return [
             'blurb' => 'Ce que les visiteurs ajoutent à une liste. Affiché seulement si plusieurs listes concordent.',
         ],
         'sidebar_heading' => 'Produits de cette marque ou de cette boutique',
-        'see_all' => 'Voir les :count produits de :entity',
-        'see_all_uncounted' => 'Toutes les offres :entity',
+        'see_all' => 'Voir toutes les offres :entity',
     ],
 
     /*

@@ -1691,8 +1691,7 @@ return [
             'blurb' => 'Wat bezoekers hier op een lijstje zetten. Alleen als meerdere lijstjes het delen.',
         ],
         'sidebar_heading' => 'Producten van dit merk of deze winkel',
-        'see_all' => 'Bekijk alle :count producten van :entity',
-        'see_all_uncounted' => 'Alle :entity aanbiedingen',
+        'see_all' => 'Bekijk alle :entity aanbiedingen',
     ],
 
     /*
