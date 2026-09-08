@@ -382,3 +382,15 @@ and every row of the desktop account menu carry the same icons (`ToolIcon`: `sea
 `friends`, `alerts`, `admin`, `signout`, `signin`), so a row with an icon beside a row without
 one no longer reads as two kinds of thing. The dial entry added the day before went with the
 feature it pointed at; see [discovery-modes.md](discovery-modes.md).
+
+## The footer is two rows and a small print line (2026-09-08)
+
+It was one wrapped row of eleven links at body size with 44px rows on a phone, which came to
+305px under every page. The same eleven links are now two groups in the smaller text size: where
+to go (brands, guides, the Daily, surprise, popular searches, search tips, help) and what the law
+wants reachable from every page (about, privacy, terms, cookies). On a desktop the two share one
+row with the legal group at the right edge; on a phone they stack at 40px a row, so a thumb still
+has a target. The affiliate disclosure sits under a hairline in the smallest size with the name
+"GiftCoves" before it. Measured: 305px to 246px on a 390px phone, 105px to 90px on a
+desktop. Nothing was removed and nothing was added; the disclosure sentence is the one the law
+requires and is untouched.

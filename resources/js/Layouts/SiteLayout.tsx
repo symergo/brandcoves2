@@ -756,98 +756,104 @@ function Chrome({ children }: PropsWithChildren) {
             <SaveToast />
 
             <footer className="border-t border-line">
-                <div className="mx-auto max-w-6xl px-4 py-6 text-sm text-ink-soft">
-                    {/*
-                      The brand and Cove indexes live here rather than in the nav.
+                {/*
+                  Two short rows and a small print line, in the smaller size.
 
-                      Not because they matter less, but because their job is
-                      different: the nav is for someone deciding what to do, and
-                      these are for a crawler that has landed on an arbitrary page
-                      and needs a route into the two largest indexable URL spaces
-                      on the site. A footer link on every page is exactly that.
-                    */}
-                    <nav aria-label={t('footer.explore')} className="mb-4 flex flex-wrap gap-x-5 gap-y-2">
-                        {/* Under its own name, not `nav.brand_coves`: with
-                            Brand Coves withheld from the header there is no
-                            header entry for this to agree with, and a footer
-                            link is not the place to introduce a name the rest
-                            of the site is not yet using. */}
-                        <Link href={`/${market.key}/brands`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('brand.index_title')}
-                        </Link>
-                        {/* Same name as the header uses. Two links to one page
-                            under two different words is the exact confusion the
-                            Cove naming pass set out to remove. */}
-                        <Link href={`/${market.key}/guides`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('nav.smart')}
-                        </Link>
-                        <Link href={`/${market.key}/${market.coveSegment}`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('nav.daily')}
-                        </Link>
-                        <Link href={`/${market.key}/surprise`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('nav.surprise')}
-                        </Link>
+                  It was one wrapped row of eleven links at body size with 44px
+                  rows on a phone, which came to 305px, a third of a screen of
+                  grey words under every page (2026-09-08). The links are the
+                  same eleven, in two groups now: where to go, and what the law
+                  wants reachable from every page. On a desktop the two groups
+                  share one row, the legal one at the right edge; on a phone
+                  they stack, 40px a row so a thumb still has a target. The
+                  small print sits under a hairline with the name on the left,
+                  which is the one place on the site the name is written
+                  without being the header.
 
-                        {/* The search help, which until now was reachable only
-                            from the two pages that carry a search field —
-                            useless to somebody who has wandered off them and
-                            still does not know the box takes a barcode. Under
-                            its short name: the question it is titled with on
-                            those pages is aimed at a search that just failed,
-                            not at a row of nouns on every page. */}
-                        <Link href={`/${market.key}/search-help`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('search_help.footer_link')}
-                        </Link>
-
-                        {/* Help, which gathers the how-to pages and the report
-                            form. Beside the search tips rather than replacing
-                            them: somebody looking for "how do I search" scans
-                            for that phrase, and a single "Help" would make them
-                            open a page to find out whether it is the right one. */}
-                        <Link href={`/${market.key}/help`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('help.link')}
-                        </Link>
-
-                        {/* What this market searches for. The hub that replaced
-                            the related-search chips under every result set when
-                            those were removed for cost — the outbound links a
-                            results page used to carry are concentrated here
-                            instead, which is also the only place a crawler can
-                            reach them from an arbitrary page. */}
-                        <Link href={`/${market.key}/popular-searches`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('popular_searches.title')}
-                        </Link>
+                  The brand and Cove indexes live here rather than in the nav,
+                  not because they matter less but because their job is
+                  different: the nav is for someone deciding what to do, and
+                  these are for a crawler that has landed on an arbitrary page
+                  and needs a route into the two largest indexable URL spaces
+                  on the site. A footer link on every page is exactly that.
+                */}
+                <div className="mx-auto max-w-6xl px-4 py-5 text-xs text-ink-soft sm:py-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                        <nav aria-label={t('footer.explore')} className="flex flex-wrap gap-x-4 gap-y-0 sm:gap-y-1">
+                            {/* Under its own name, not `nav.brand_coves`: with
+                                Brand Coves withheld from the header there is no
+                                header entry for this to agree with, and a footer
+                                link is not the place to introduce a name the rest
+                                of the site is not yet using. */}
+                            <Link href={`/${market.key}/brands`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('brand.index_title')}
+                            </Link>
+                            {/* Same name as the header uses. Two links to one page
+                                under two different words is the exact confusion the
+                                Cove naming pass set out to remove. */}
+                            <Link href={`/${market.key}/guides`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('nav.smart')}
+                            </Link>
+                            <Link href={`/${market.key}/${market.coveSegment}`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('nav.daily')}
+                            </Link>
+                            <Link href={`/${market.key}/surprise`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('nav.surprise')}
+                            </Link>
+                            {/* What this market searches for: the hub that
+                                replaced the related-search chips, and the only
+                                place a crawler reaches them from any page. */}
+                            <Link href={`/${market.key}/popular-searches`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('popular_searches.title')}
+                            </Link>
+                            {/* The search help under its short name, and Help,
+                                which gathers the how-to pages and the report
+                                form. Both, rather than one "Help": somebody
+                                looking for "how do I search" scans for that
+                                phrase. */}
+                            <Link href={`/${market.key}/search-help`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('search_help.footer_link')}
+                            </Link>
+                            <Link href={`/${market.key}/help`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('help.link')}
+                            </Link>
+                        </nav>
 
                         {/* Belgian law wants the operator's details reachable
                             from every page. The footer is that. */}
-                        <Link href={`/${market.key}/about`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('legal.about')}
-                        </Link>
-                        <Link href={`/${market.key}/privacy`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('legal.privacy')}
-                        </Link>
-                        <Link href={`/${market.key}/terms`} className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0">
-                            {t('legal.terms')}
-                        </Link>
-                        {/* Withdrawing consent has to be as easy as giving it
-                            was, and the honest way to offer that is to put the
-                            question back rather than to bury a toggle in a
-                            settings page. A button, not a Link: it reopens the
-                            banner where the visitor already is. Hidden where
-                            there is no tag, so it does not advertise a choice
-                            this environment never asked anyone to make. */}
-                        {analytics.id !== null && (
-                            <button
-                                type="button"
-                                onClick={() => window.dispatchEvent(new Event('bc:cookie-settings'))}
-                                className="inline-flex min-h-11 items-center hover:text-accent sm:min-h-0"
-                            >
-                                {t('legal.cookies')}
-                            </button>
-                        )}
-                    </nav>
+                        <nav aria-label={t('legal.about')} className="flex flex-wrap gap-x-4 gap-y-0 sm:shrink-0 sm:justify-end sm:gap-y-1">
+                            <Link href={`/${market.key}/about`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('legal.about')}
+                            </Link>
+                            <Link href={`/${market.key}/privacy`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('legal.privacy')}
+                            </Link>
+                            <Link href={`/${market.key}/terms`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
+                                {t('legal.terms')}
+                            </Link>
+                            {/* Withdrawing consent has to be as easy as giving it
+                                was, and the honest way to offer that is to put the
+                                question back rather than to bury a toggle in a
+                                settings page. A button, not a Link: it reopens the
+                                banner where the visitor already is. Hidden where
+                                there is no tag, so it does not advertise a choice
+                                this environment never asked anyone to make. */}
+                            {analytics.id !== null && (
+                                <button
+                                    type="button"
+                                    onClick={() => window.dispatchEvent(new Event('bc:cookie-settings'))}
+                                    className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0"
+                                >
+                                    {t('legal.cookies')}
+                                </button>
+                            )}
+                        </nav>
+                    </div>
 
-                    <p>{t('footer.affiliate')}</p>
+                    <p className="mt-3 flex flex-col gap-1 border-t border-line/60 pt-3 text-2xs sm:flex-row sm:items-baseline sm:gap-4">
+                        <span className="shrink-0 font-semibold tracking-tight text-ink">GiftCoves</span>
+                        <span>{t('footer.affiliate')}</span>
+                    </p>
                 </div>
             </footer>
 
