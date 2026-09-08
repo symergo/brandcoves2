@@ -19,9 +19,15 @@ use Illuminate\Support\Facades\DB;
  * a day were still arriving from crawlers revisiting the URLs they had
  * already found.
  *
- * `SearchLog::record()` refuses them from now on (see the two constants on
- * the model for the rule and why those numbers). This removes what is
- * already there, with the same rule, so the log and the rule agree.
+ * `SearchLog::record()` refuses the long ones from now on (see the two
+ * constants on the model), and a crawler's request is no longer logged at
+ * all. What is already there is another matter: the crawler walked every
+ * length, and the two- to six-word steps of that walk ("apple find bluetooth
+ * tracker grey") cannot be told from a person's query by any rule. So the
+ * owner's decision on 2026-09-08 was to keep only the single words, which
+ * are the one shape no crawler minted, and let the log fill up again with
+ * what people actually type from here on. Measured before the deploy:
+ * 1,126,485 of 1,149,744 rows go, 23,259 single words stay.
  *
  * A plain DELETE rather than a batched one. The table is written by upsert
  * only and read by jobs and one cached page, so nothing user-facing waits on
@@ -34,10 +40,10 @@ return new class extends Migration
     {
         $deleted = DB::table('search_log')
             ->whereRaw('length(query) > ?', [SearchLog::MAX_LENGTH])
-            ->orWhereRaw('array_length(regexp_split_to_array(query, ?), 1) > ?', ['\s+', SearchLog::MAX_WORDS])
+            ->orWhereRaw('array_length(regexp_split_to_array(query, ?), 1) > 1', ['\s+'])
             ->delete();
 
-        echo "search_log: {$deleted} long terms removed\n";
+        echo "search_log: {$deleted} multi-word terms removed\n";
     }
 
     public function down(): void

@@ -165,9 +165,11 @@ something to print, and length is the right kind of blunt filter for it.
 
 *Since 2026-09-08 the log itself refuses them.* `SearchLog::record()` drops a query over
 sixty characters or more than six words (`SearchLog::MAX_LENGTH`, `MAX_WORDS`), and the
-migration `2026_09_08_000100_the_search_log_forgets_the_long_terms` deleted the ones already
-there: 950 thousand of 1.14 million rows on production, five in six, all crawler-minted
-strings of product-title fragments. The read-time rule above stays as a second net. The change
+migration `2026_09_08_000100_the_search_log_forgets_the_long_terms` went further on what was
+already there: it deleted every row of more than one word, because the two- to six-word steps of
+the crawler's walk cannot be told from a person's query by any rule. The log keeps its single words
+(23 thousand of 1.15 million rows on production) and fills up again with what people type from
+here on, under the crawler rules below. The read-time rule above stays as a second net. The change
 matters beyond this page because `TopicMiner` reads the same table and had no length rule at
 all, so the guide topic queue was being fed the same junk.
 

@@ -60,8 +60,10 @@ in the helper. `SearchLogTest` holds the rule itself.
 (`SearchLog::MAX_LENGTH`, `MAX_WORDS`). Sixty because a pasted URL or a run of title fragments is
 longer and a real question is not; six because "cadeau voor mijn moeder van 70" is six and the
 minted strings start at seven. The migration
-`2026_09_08_000100_the_search_log_forgets_the_long_terms` applied the same rule to what was
-already there. This layer is a floor under the other three: it holds even for a request that
+`2026_09_08_000100_the_search_log_forgets_the_long_terms` went further on what was already there
+and deleted every row of more than one word: the two- to six-word steps of the crawler's walk look
+exactly like queries, so the owner chose to keep the single words, the one shape no crawler minted,
+and let the log fill again with what people type under the rules above. This layer is a floor under the other three: it holds even for a request that
 somehow passes them, and it is what cleaned up the past.
 
 ## What is left at read time
