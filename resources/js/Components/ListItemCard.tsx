@@ -93,20 +93,23 @@ export default function ListItemCard({
             } ${className}`}
         >
             {/*
-              On a phone the controls drop under the product instead of beside it.
+              On a phone the controls sit under the thumbnail, not beside the title.
 
               Beside the title, the save control and its chevron took eighty
               pixels of a 390px screen, the image eighty more, and the padding
               and gaps another sixty: the title was left 141px, four words a
               line, three lines, and "Originele Apple EarPods Oortjes
-              MYQY3ZM/A…" was cut before it said what it was. Wrapping the
-              controls to a row of their own gives the title the width of the
-              card minus the image, which is what a card is for. The two-column
-              grid from `sm` leaves a card no wider than a phone, so the same
-              applies until `lg`, where the controls sit beside the title as
-              before. One `aside`, moved by flex-wrap, not two.
+              MYQY3ZM/A…" was cut before it said what it was. A first fix gave
+              the controls a row of their own, which gave the title the width
+              and the card a strip of empty space with two buttons at its right
+              end. This one is a two-column grid until `lg`: the thumbnail and
+              the controls stack in the left column, the title and price take
+              the right, and the card is no taller than its taller column.
+              From `lg` the same three elements are a row, as before. One
+              `aside`, placed by the grid, not two copies, because the save
+              control carries state.
             */}
-            <div className="flex flex-wrap gap-3 lg:flex-nowrap lg:gap-4">
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 lg:flex lg:gap-4">
                 {image && (
                     <img
                         src={image}
@@ -121,7 +124,7 @@ export default function ListItemCard({
                     />
                 )}
 
-                <div className="min-w-0 flex-1">
+                <div className="row-span-2 min-w-0 lg:row-span-1 lg:flex-1">
                     {/*
                       Clamped, because a feed title is written for a search engine
                       rather than a person: "OneOne 25W super snellader met 2
@@ -184,7 +187,7 @@ export default function ListItemCard({
                 </div>
 
                 {aside && (
-                    <div className="flex basis-full shrink-0 items-start justify-end gap-1 self-start lg:basis-auto lg:justify-start">
+                    <div className="flex items-start gap-1 self-start lg:shrink-0">
                         {aside}
                     </div>
                 )}

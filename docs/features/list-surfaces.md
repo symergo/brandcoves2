@@ -531,10 +531,14 @@ pills — at 44px, the site's minimum target.
 On a phone the save control and its chevron sat beside the title and took eighty pixels of a
 390px screen; with the image, the padding and the gaps, the title had 141px, four words a line
 for three lines, and "Originele Apple EarPods Oortjes MYQY3ZM/A…" was cut before it said what it
-was. `ListItemCard` now wraps the controls to a row of their own below the product until `lg`,
-where the card is wide enough for all three. Measured: the title has 232px on a 390px phone and
-200px in the two-column grid at 700px, against 141 and 125 before; the desktop card is unchanged.
-One `aside` element moved by `flex-wrap`, not two copies, because the save control carries state.
+was. `ListItemCard` is now a two-column grid until `lg`: the thumbnail and the controls stack in
+the left column, the title and price take the right, and the card is no taller than its taller
+column. (A first version gave the controls a row of their own, which widened the title and left a
+strip of empty space with two buttons at its right end; the owner saw it within the hour.) From
+`lg` the same three elements are a row, as before. Measured: the title has 232px on a 390px phone
+and 200px in the two-column grid at 700px, against 141 and 125 before; the desktop card is
+unchanged. One `aside` element placed by the grid, not two copies, because the save control
+carries state.
 
 ## See also
 
