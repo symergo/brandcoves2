@@ -19,6 +19,27 @@ class SearchLog extends Model
 {
     protected $table = 'search_log';
 
+    /*
+     * What the log refuses to remember, decided 2026-09-08.
+     *
+     * On that day the table held 1.14 million rows and 950 thousand of them
+     * were strings such as "koptelefoon sound draadloze uur hoofdtelefoon
+     * hoofdtelefoons earpads hoge dichtheid drivers bluetooth blue true core
+     * code speelduur": crawlers walking the term chips that used to narrow
+     * cumulatively, and ten thousand more a day from crawlers revisiting the
+     * URLs after the chips were gone. Nobody types that. The popular-searches
+     * page already dropped anything over sixty characters at read time; the
+     * guide topic miner did not, and the log is its supply.
+     *
+     * Sixty characters because a pasted URL or a title fragment run is longer
+     * and a real question is not. Six words because "cadeau voor mijn moeder
+     * van 70" is six, and the minted strings start at seven. Both are blunt on
+     * purpose: a rule that needs tuning is a rule that gets tuned wrong.
+     */
+    public const MAX_LENGTH = 60;
+
+    public const MAX_WORDS = 6;
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -68,7 +89,7 @@ class SearchLog extends Model
     public static function record(string $query, Market $market, int $resultCount): void
     {
         $normalised = self::normalise($query);
-        if ($normalised === '') {
+        if ($normalised === '' || ! self::worthLogging($normalised)) {
             return;
         }
 
@@ -94,5 +115,14 @@ class SearchLog extends Model
                 'updated_at' => DB::raw('excluded.updated_at'),
             ],
         );
+    }
+
+    /**
+     * Is this a query a person could have typed? See the constants above.
+     */
+    public static function worthLogging(string $normalised): bool
+    {
+        return mb_strlen($normalised) <= self::MAX_LENGTH
+            && count(preg_split('/\s+/u', $normalised) ?: []) <= self::MAX_WORDS;
     }
 }

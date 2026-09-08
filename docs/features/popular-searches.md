@@ -163,6 +163,14 @@ publish.
 did not claim is logged as typed. It is neither a search anyone would click nor
 something to print, and length is the right kind of blunt filter for it.
 
+*Since 2026-09-08 the log itself refuses them.* `SearchLog::record()` drops a query over
+sixty characters or more than six words (`SearchLog::MAX_LENGTH`, `MAX_WORDS`), and the
+migration `2026_09_08_000100_the_search_log_forgets_the_long_terms` deleted the ones already
+there: 950 thousand of 1.14 million rows on production, five in six, all crawler-minted
+strings of product-title fragments. The read-time rule above stays as a second net. The change
+matters beyond this page because `TopicMiner` reads the same table and had no length rule at
+all, so the guide topic queue was being fed the same junk.
+
 ## Indexable, and its links are followed
 
 Deliberately unlike the chips it replaces, which were `nofollow`ed and then
