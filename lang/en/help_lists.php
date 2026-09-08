@@ -12,7 +12,7 @@ return [
         'title' => 'How lists work',
         'seo_title' => 'How lists work',
         'seo_description' => 'Everything a list can do: saving, sharing, buying together, Secret Santa, friends and reminders. Step by step, with pictures.',
-        'intro' => 'A list keeps what you find here, for yourself or for someone else. Below, what you can do with one and how, by topic, with pictures. Start with the first if you have never saved anything.',
+        'intro' => 'A [wish list](lists) keeps what you [find](search) here, for yourself or for someone else. Below, what you can do with one and how, by topic, with pictures. Start with the first if you have never saved anything.',
         'back' => 'All topics',
         'next' => 'Next',
         'cta_search' => 'Find something to save',
@@ -68,6 +68,8 @@ return [
                 [
                     'title' => 'One choice is fixed',
                     'body' => 'The first step of a [new list](lists-help/saving) asks who it is for. That decides what the list can do, and it is the only thing you cannot change later. Name, occasion and who sees it can always be changed.',
+                    'shot' => 'wizard',
+                    'alt' => 'The first step of a new list, with the three kinds to choose from.',
                 ],
                 [
                     'title' => 'For myself: a wish list',
@@ -84,6 +86,8 @@ return [
                 [
                     'title' => 'An occasion and a date',
                     'body' => 'Any list can carry an occasion: a birthday, Christmas, a wedding, a birth, and ten more. For a birthday, Christmas and Valentine the date fills itself in. With a date, you get a [reminder](lists-help/friends) in time.',
+                    'shot' => 'occasion',
+                    'alt' => 'The Occasion panel of a list, with the choice of occasion and the date.',
                 ],
             ],
         ],
@@ -116,6 +120,8 @@ return [
                 [
                     'title' => 'When the price drops',
                     'body' => 'A saved product remembers the price at that moment. When it drops, the card shows the new price with the old one struck through. There is nothing to set up. More under [Keeping an eye on prices and stock](lists-help/alerts).',
+                    'shot' => 'drop',
+                    'alt' => 'An item on a list whose price dropped, with the new price and the old one struck through.',
                 ],
                 [
                     'title' => 'Removing',
@@ -144,6 +150,8 @@ return [
                 [
                     'title' => 'With friends by name',
                     'body' => "1. Tap “Share”, then “Share with friends”.\n2. Pick the [friends](friends) who may see it.\n3. Tap “Send”.\n\nThey get an email with the link, without the contents, and the list appears on their [friends page](friends). “Stop sharing with …” takes it off there; a link they already had keeps working until you stop sharing. How you become friends is under [Friends, birthdays and reminders](lists-help/friends).",
+                    'shot' => 'friends-share',
+                    'alt' => 'The part of the share panel where you pick friends and send them the link.',
                 ],
                 [
                     'title' => 'Who may add',
@@ -169,7 +177,7 @@ return [
             'sections' => [
                 [
                     'title' => 'Reserving',
-                    'body' => "1. Open the link you were sent.\n2. Tap “I'll get this” on the gift you are buying.\n3. Sign in if asked; your tap is carried out afterwards.\n\nThat way nobody else buys it too. The person the list is for sees nothing of it.",
+                    'body' => "1. Open the link to the [shared list](lists-help/sharing) you were sent.\n2. Tap “I'll get this” on the gift you are buying.\n3. Sign in if asked; your tap is carried out afterwards.\n\nThat way nobody else buys it too. The person the list is for sees nothing of it.",
                     'shot' => 'shared',
                     'alt' => 'Two gifts on a shared list, each with the button to say you will get it.',
                 ],
@@ -185,9 +193,40 @@ return [
                     'title' => 'Keep it for yourself too',
                     'body' => 'Every item has a bookmark and “Add to my list”. What you copy lands on [your list](lists) without the reservation.',
                 ],
+            ],
+        ],
+
+        'quiz' => [
+            'title' => 'The quiz: how well do you know them?',
+            'blurb' => 'A game made from your shared list: four products, one of them really on it.',
+            'seo_description' => 'Make a quiz from your wish list: who knows you best? Five rounds, a score to share.',
+            'intro' => null,
+            'numbered' => false,
+            'sections' => [
                 [
-                    'title' => 'The quiz: how well do you know them?',
-                    'body' => 'On a shared list with at least five items, whoever manages it can make a quiz. Five rounds, four products each, one of them really on the list, and a score to share. The list’s manager does not play and sees only how many people played and the average score.',
+                    'title' => 'What the quiz is',
+                    'body' => 'A game made from a shared [wish list](lists-help/kinds). Five rounds, four products each, one of them really on the list, and a score to share at the end. Whoever manages the list makes the quiz; whoever gets the link plays.',
+                ],
+                [
+                    'title' => 'Making a quiz',
+                    'body' => '1. Open your list. It has to be [shared](lists-help/sharing) and have at least five items.
+2. Tap “Quiz”.
+3. Tap “Make a quiz from this list”.
+4. Pass the link round.',
+                    'shot' => 'quiz',
+                    'alt' => 'The quiz panel of a list, with the button to make a quiz from it.',
+                ],
+                [
+                    'title' => 'Playing',
+                    'body' => '1. Open the quiz link.
+2. In each round, pick which of the four products is really on the list.
+3. Tap “See how you did”, then “Share your score” if you like.
+
+Everyone plays once.',
+                ],
+                [
+                    'title' => 'What you see as the maker',
+                    'body' => 'You do not play; that would be cheating. You see how many people played and the average score, not who answered what.',
                 ],
             ],
         ],
@@ -201,7 +240,9 @@ return [
             'sections' => [
                 [
                     'title' => 'A group gift',
-                    'body' => "1. Make a [new list](lists-help/saving) and choose “Together, for someone” in the first step.\n2. Say who it is for and give it a name.\n3. Share the link with everyone in.\n\nEveryone with the link can add ideas and vote on them. There is nothing to reserve: it is one gift from all of you. Drawing names is something else; that is under [Secret Santa](lists-help/santa).",
+                    'body' => "1. Make a [new list](lists-help/saving) and choose “Together, for someone” in the first step.\n2. Say who it is for and give it a name.\n3. Share the link with everyone in.\n\nEveryone with the link can add ideas and vote on them. There is nothing to reserve: it is one [group gift](lists-help/kinds) from all of you. Drawing names is something else; that is under [Secret Santa](lists-help/santa).",
+                    'shot' => 'group',
+                    'alt' => 'The page of a group gift, with the ideas to vote on and the box to chip in.',
                 ],
                 [
                     'title' => 'Voting',

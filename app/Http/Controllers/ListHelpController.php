@@ -24,14 +24,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * Next to `/lists` rather than with the legal pages, for the same reason
  * `/search-help` sits next to `/search`: it documents a tool, not the company.
  *
- * ## One page became nine (2026-09-08)
+ * ## One page became ten (2026-09-08)
  *
  * The first version was one page: three steps with screenshots. By September
  * a list could be shared with friends by name, bought from, voted on, chipped
  * in to, talked over, quizzed, and reminded about, and Secret Santa drew names
  * beside it, and none of that was explained anywhere. The owner asked for all
  * of it. One page with all of it would be a manual nobody scrolls, so
- * `/lists-help` is an index of nine topics and each topic is a short page of
+ * `/lists-help` is an index of ten topics and each topic is a short page of
  * its own. The three-step page is the first topic and keeps its screenshots.
  *
  * ## The prose lives in lang/{language}/help_lists.php, not site.php
@@ -73,7 +73,7 @@ class ListHelpController extends Controller
      *
      * @var list<string>
      */
-    public const TOPICS = ['saving', 'kinds', 'items', 'sharing', 'claiming', 'group', 'santa', 'friends', 'alerts'];
+    public const TOPICS = ['saving', 'kinds', 'items', 'sharing', 'claiming', 'quiz', 'group', 'santa', 'friends', 'alerts'];
 
     /**
      * Languages there are real screenshots for.
@@ -99,6 +99,11 @@ class ListHelpController extends Controller
         'santa' => '8-santa.png',
         'friends' => '9-friends.png',
         'watch' => '10-watch-search.png',
+        'quiz' => '11-quiz.png',
+        'group' => '12-group.png',
+        'drop' => '13-price-drop.png',
+        'friends-share' => '14-share-friends.png',
+        'occasion' => '15-occasion.png',
     ];
 
     public function index(CurrentMarket $current): Response
@@ -118,7 +123,7 @@ class ListHelpController extends Controller
         return Inertia::render('Lists/HelpIndex', [
             'copy' => [
                 'title' => $copy['title'],
-                'intro' => $copy['intro'],
+                'intro' => $this->resolveLinks($copy['intro'], $current),
                 'cta_search' => $copy['cta_search'],
                 'cta_lists' => $copy['cta_lists'],
             ],

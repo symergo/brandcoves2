@@ -12,7 +12,7 @@ return [
         'title' => 'Comment fonctionnent les listes',
         'seo_title' => 'Comment fonctionnent les listes',
         'seo_description' => 'Tout ce qu’une liste permet : enregistrer, partager, offrir à plusieurs, Ami secret, amis et rappels. Pas à pas, en images.',
-        'intro' => 'Une liste garde ce que vous trouvez ici, pour vous ou pour quelqu’un d’autre. Ci-dessous, ce qu’on peut en faire et comment, sujet par sujet, en images. Commencez par le premier si vous n’avez encore rien enregistré.',
+        'intro' => 'Une [liste de souhaits](lists) garde ce que vous [trouvez](search) ici, pour vous ou pour quelqu’un d’autre. Ci-dessous, ce qu’on peut en faire et comment, sujet par sujet, en images. Commencez par le premier si vous n’avez encore rien enregistré.',
         'back' => 'Tous les sujets',
         'next' => 'Suivant',
         'cta_search' => 'Trouver quelque chose à enregistrer',
@@ -68,6 +68,8 @@ return [
                 [
                     'title' => 'Un choix est fixé',
                     'body' => 'La première étape d’une [nouvelle liste](lists-help/saving) demande pour qui elle est. Cela décide de ce que la liste permet, et c’est la seule chose qu’on ne change plus ensuite. Le nom, l’occasion et qui la voit se changent toujours.',
+                    'shot' => 'wizard',
+                    'alt' => 'La première étape d’une nouvelle liste, avec les trois sortes au choix.',
                 ],
                 [
                     'title' => 'Pour moi : une liste de souhaits',
@@ -84,6 +86,8 @@ return [
                 [
                     'title' => 'Une occasion et une date',
                     'body' => 'Toute liste peut porter une occasion : anniversaire, Noël, mariage, naissance, et dix autres. Pour un anniversaire, Noël et la Saint-Valentin, la date se remplit toute seule. Avec une date, vous recevez un [rappel](lists-help/friends) à temps.',
+                    'shot' => 'occasion',
+                    'alt' => 'Le volet Occasion d’une liste, avec le choix de l’occasion et la date.',
                 ],
             ],
         ],
@@ -116,6 +120,8 @@ return [
                 [
                     'title' => 'Quand le prix baisse',
                     'body' => 'Un produit enregistré retient le prix du moment. S’il baisse, la fiche montre le nouveau prix avec l’ancien barré. Il n’y a rien à régler. Plus sous [Garder un œil sur les prix et le stock](lists-help/alerts).',
+                    'shot' => 'drop',
+                    'alt' => 'Un article d’une liste dont le prix a baissé, avec le nouveau prix et l’ancien barré.',
                 ],
                 [
                     'title' => 'Retirer',
@@ -144,6 +150,8 @@ return [
                 [
                     'title' => 'Avec des amis par leur nom',
                     'body' => "1. Touchez « Partager », puis « Partager avec des amis ».\n2. Choisissez les [amis](friends) qui peuvent la voir.\n3. Touchez « Envoyer ».\n\nIls reçoivent un e-mail avec le lien, sans le contenu, et la liste apparaît sur leur [page d’amis](friends). « Ne plus partager avec … » l’en retire ; un lien qu’ils avaient déjà continue de marcher jusqu’à ce que vous arrêtiez le partage. Comment on devient amis est sous [Amis, anniversaires et rappels](lists-help/friends).",
+                    'shot' => 'friends-share',
+                    'alt' => 'La partie du volet de partage où vous choisissez des amis et leur envoyez le lien.',
                 ],
                 [
                     'title' => 'Qui peut ajouter',
@@ -169,7 +177,7 @@ return [
             'sections' => [
                 [
                     'title' => 'Réserver',
-                    'body' => "1. Ouvrez le lien que vous avez reçu.\n2. Touchez « Je m'en occupe » sur le cadeau que vous achetez.\n3. Connectez-vous si on vous le demande ; votre geste est exécuté ensuite.\n\nAinsi personne d’autre ne l’achète aussi. La personne pour qui est la liste n’en voit rien.",
+                    'body' => "1. Ouvrez le lien vers la [liste partagée](lists-help/sharing) que vous avez reçu.\n2. Touchez « Je m'en occupe » sur le cadeau que vous achetez.\n3. Connectez-vous si on vous le demande ; votre geste est exécuté ensuite.\n\nAinsi personne d’autre ne l’achète aussi. La personne pour qui est la liste n’en voit rien.",
                     'shot' => 'shared',
                     'alt' => 'Deux cadeaux sur une liste partagée, chacun avec le bouton pour dire que vous vous en occupez.',
                 ],
@@ -185,9 +193,40 @@ return [
                     'title' => 'Gardez-le aussi pour vous',
                     'body' => 'Chaque article a un marque-page et « Ajouter à ma liste ». Ce que vous copiez arrive sur [votre liste](lists) sans la réservation.',
                 ],
+            ],
+        ],
+
+        'quiz' => [
+            'title' => 'Le quiz : les connaissez-vous bien ?',
+            'blurb' => 'Un jeu fait de votre liste partagée : quatre produits, un seul y est vraiment.',
+            'seo_description' => 'Créez un quiz à partir de votre liste de souhaits : qui vous connaît le mieux ? Cinq manches, un score à partager.',
+            'intro' => null,
+            'numbered' => false,
+            'sections' => [
                 [
-                    'title' => 'Le quiz : les connaissez-vous bien ?',
-                    'body' => 'Sur une liste partagée d’au moins cinq articles, la personne qui la gère peut créer un quiz. Cinq manches, quatre produits à chaque fois dont un seul est vraiment sur la liste, et un score à partager. La personne qui gère la liste ne joue pas et voit seulement combien ont joué et le score moyen.',
+                    'title' => 'Ce qu’est le quiz',
+                    'body' => 'Un jeu fait d’une [liste de souhaits](lists-help/kinds) partagée. Cinq manches, quatre produits à chaque fois dont un seul est vraiment sur la liste, et à la fin un score à partager. La personne qui gère la liste crée le quiz ; qui reçoit le lien joue.',
+                ],
+                [
+                    'title' => 'Créer un quiz',
+                    'body' => '1. Ouvrez votre liste. Elle doit être [partagée](lists-help/sharing) et avoir au moins cinq articles.
+2. Touchez « Quiz ».
+3. Touchez « Créer un quiz à partir de cette liste ».
+4. Faites passer le lien.',
+                    'shot' => 'quiz',
+                    'alt' => 'Le volet quiz d’une liste, avec le bouton pour en créer un.',
+                ],
+                [
+                    'title' => 'Jouer',
+                    'body' => '1. Ouvrez le lien du quiz.
+2. À chaque manche, choisissez lequel des quatre produits est vraiment sur la liste.
+3. Touchez « Voir votre score », puis « Partager votre score » si vous voulez.
+
+Chacun joue une fois.',
+                ],
+                [
+                    'title' => 'Ce que vous voyez en tant que créateur',
+                    'body' => 'Vous ne jouez pas ; ce serait tricher. Vous voyez combien de personnes ont joué et le score moyen, pas qui a répondu quoi.',
                 ],
             ],
         ],
@@ -201,7 +240,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Un cadeau de groupe',
-                    'body' => "1. Créez une [nouvelle liste](lists-help/saving) et choisissez « À plusieurs, pour quelqu’un » à la première étape.\n2. Dites pour qui elle est et donnez-lui un nom.\n3. Partagez le lien avec ceux qui participent.\n\nToute personne avec le lien peut ajouter des idées et voter. Rien à réserver : c’est un seul cadeau de vous tous. Tirer les noms au sort est autre chose ; c’est sous [Ami secret](lists-help/santa).",
+                    'body' => "1. Créez une [nouvelle liste](lists-help/saving) et choisissez « À plusieurs, pour quelqu’un » à la première étape.\n2. Dites pour qui elle est et donnez-lui un nom.\n3. Partagez le lien avec ceux qui participent.\n\nToute personne avec le lien peut ajouter des idées et voter. Rien à réserver : c’est un seul [cadeau de groupe](lists-help/kinds) de vous tous. Tirer les noms au sort est autre chose ; c’est sous [Ami secret](lists-help/santa).",
+                    'shot' => 'group',
+                    'alt' => 'La page d’un cadeau de groupe, avec les idées à voter et la case pour contribuer.',
                 ],
                 [
                     'title' => 'Voter',

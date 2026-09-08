@@ -1,4 +1,5 @@
 import { Head, Link } from '@inertiajs/react'
+import { Inline } from './HelpTopic'
 
 interface Props {
     copy: { title: string; intro: string; cta_search: string; cta_lists: string }
@@ -23,7 +24,9 @@ export default function ListHelpIndex({ copy, topics, urls }: Props) {
 
             <div className="mx-auto max-w-3xl px-4 py-12">
                 <h1 className="text-2xl font-semibold text-ink sm:text-3xl">{copy.title}</h1>
-                <p className="mt-3 text-ink-soft">{copy.intro}</p>
+                <p className="mt-3 text-ink-soft">
+                    <Inline text={copy.intro} />
+                </p>
 
                 <ol className="mt-10 grid gap-3 sm:grid-cols-2">
                     {topics.map((topic, index) => (

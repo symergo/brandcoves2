@@ -27,7 +27,7 @@ return [
         'title' => 'Hoe lijstjes werken',
         'seo_title' => 'Hoe lijstjes werken',
         'seo_description' => 'Alles wat je met een lijstje kunt: bewaren, delen, samen kopen, Geheime Vriend, vrienden en herinneringen. Stap voor stap, met beeld.',
-        'intro' => 'Een lijstje bewaart wat je hier vindt, voor jezelf of voor iemand anders. Hieronder staat per onderwerp wat er kan en hoe je het doet, met beeld. Begin bij het eerste als je nog nooit iets bewaard hebt.',
+        'intro' => 'Een [verlanglijstje](lists) bewaart wat je hier [vindt](search), voor jezelf of voor iemand anders. Hieronder staat per onderwerp wat er kan en hoe je het doet, met beeld. Begin bij het eerste als je nog nooit iets bewaard hebt.',
         'back' => 'Alle onderwerpen',
         'next' => 'Volgende',
         'cta_search' => 'Zoek iets om te bewaren',
@@ -83,6 +83,8 @@ return [
                 [
                     'title' => 'Eén keuze ligt vast',
                     'body' => 'De eerste stap van een [nieuw lijstje](lists-help/saving) vraagt voor wie het is. Dat bepaalt wat het lijstje kan, en het is het enige wat je later niet meer verandert. Naam, gelegenheid en wie het ziet pas je altijd nog aan.',
+                    'shot' => 'wizard',
+                    'alt' => 'De eerste stap van een nieuw lijstje, met de drie soorten om uit te kiezen.',
                 ],
                 [
                     'title' => 'Voor mezelf: een verlanglijst',
@@ -99,6 +101,8 @@ return [
                 [
                     'title' => 'Een gelegenheid en een datum',
                     'body' => 'Elk lijstje kan een gelegenheid dragen: verjaardag, kerst, huwelijk, geboorte, en nog tien andere. Bij een verjaardag, kerst en valentijn vult de datum zichzelf in. Met een datum krijg je op tijd een [herinnering](lists-help/friends).',
+                    'shot' => 'occasion',
+                    'alt' => 'Het venster Gelegenheid van een lijstje, met de keuze van de gelegenheid en de datum.',
                 ],
             ],
         ],
@@ -131,6 +135,8 @@ return [
                 [
                     'title' => 'Als de prijs zakt',
                     'body' => 'Een bewaard product onthoudt de prijs van dat moment. Zakt hij, dan staat op de kaart de nieuwe prijs met de oude doorgestreept. Je hoeft er niets voor in te stellen. Meer bij [Prijzen en voorraad in de gaten houden](lists-help/alerts).',
+                    'shot' => 'drop',
+                    'alt' => 'Een item op een lijstje waarvan de prijs zakte, met de nieuwe prijs en de oude doorgestreept.',
                 ],
                 [
                     'title' => 'Verwijderen',
@@ -159,6 +165,8 @@ return [
                 [
                     'title' => 'Met vrienden op naam',
                     'body' => "1. Tik op “Delen” en dan op “Delen met vrienden”.\n2. Kies de [vrienden](friends) die het mogen zien.\n3. Tik op “Versturen”.\n\nZij krijgen een mailtje met de link, zonder de inhoud, en het lijstje staat op hun [vriendenpagina](friends). “Niet meer delen met …” haalt het daar weg; een link die ze al hadden, blijft werken tot je stopt met delen. Hoe je vrienden wordt, staat bij [Vrienden, verjaardagen en herinneringen](lists-help/friends).",
+                    'shot' => 'friends-share',
+                    'alt' => 'Het deel van het deelvenster waar je vrienden kiest en de link naar hen verstuurt.',
                 ],
                 [
                     'title' => 'Wie mag toevoegen',
@@ -184,7 +192,7 @@ return [
             'sections' => [
                 [
                     'title' => 'Reserveren',
-                    'body' => "1. Open de link die je kreeg.\n2. Tik bij het cadeau dat je koopt op “Ik koop dit”.\n3. Log in als daarom gevraagd wordt; je klik wordt daarna alsnog uitgevoerd.\n\nZo koopt niemand anders het ook. Degene voor wie het lijstje is, ziet er niets van.",
+                    'body' => "1. Open de link naar het [gedeelde lijstje](lists-help/sharing) die je kreeg.\n2. Tik bij het cadeau dat je koopt op “Ik koop dit”.\n3. Log in als daarom gevraagd wordt; je klik wordt daarna alsnog uitgevoerd.\n\nZo koopt niemand anders het ook. Degene voor wie het lijstje is, ziet er niets van.",
                     'shot' => 'shared',
                     'alt' => 'Twee cadeaus op een gedeeld lijstje, elk met de knop “Ik koop dit”.',
                 ],
@@ -200,9 +208,40 @@ return [
                     'title' => 'Bewaar het ook voor jezelf',
                     'body' => 'Elk item heeft een bladwijzer en “Zet op mijn lijstje”. Wat je kopieert, komt zonder reservering op [jouw lijstje](lists).',
                 ],
+            ],
+        ],
+
+        'quiz' => [
+            'title' => 'De quiz: hoe goed ken je ze?',
+            'blurb' => 'Een spelletje van je gedeelde lijstje: vier producten, één staat er echt op.',
+            'seo_description' => 'Maak een quiz van je verlanglijstje: wie kent je het best? Vijf rondes, een score om te delen.',
+            'intro' => null,
+            'numbered' => false,
+            'sections' => [
                 [
-                    'title' => 'De quiz: hoe goed ken je ze?',
-                    'body' => 'Op een gedeeld lijstje met minstens vijf items kan de beheerder een quiz maken. Vijf rondes, telkens vier producten waarvan er één echt op het lijstje staat, en een score om te delen. Wie het lijstje beheert, speelt niet mee en ziet alleen hoeveel mensen speelden en de gemiddelde score.',
+                    'title' => 'Wat de quiz is',
+                    'body' => 'Een spelletje van een gedeeld [verlanglijstje](lists-help/kinds). Vijf rondes, telkens vier producten waarvan er één echt op het lijstje staat, en aan het eind een score om te delen. Wie het lijstje beheert, maakt de quiz; wie de link krijgt, speelt.',
+                ],
+                [
+                    'title' => 'Een quiz maken',
+                    'body' => '1. Open je lijstje. Het moet [gedeeld](lists-help/sharing) zijn en minstens vijf items hebben.
+2. Tik op “Quiz”.
+3. Tik op “Maak een quiz van dit lijstje”.
+4. Stuur de link rond.',
+                    'shot' => 'quiz',
+                    'alt' => 'Het quizvenster van een lijstje, met de knop om er een quiz van te maken.',
+                ],
+                [
+                    'title' => 'Meespelen',
+                    'body' => '1. Open de quizlink.
+2. Kies in elke ronde welk van de vier producten echt op het lijstje staat.
+3. Tik op “Bekijk je score”, en daarna op “Deel je score” als je wilt.
+
+Iedereen speelt één keer.',
+                ],
+                [
+                    'title' => 'Wat jij ziet als maker',
+                    'body' => 'Jij speelt niet mee; dat zou valsspelen zijn. Je ziet hoeveel mensen speelden en de gemiddelde score, niet wie wat antwoordde.',
                 ],
             ],
         ],
@@ -216,7 +255,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Een groepscadeau',
-                    'body' => "1. Maak een [nieuw lijstje](lists-help/saving) en kies in de eerste stap “Samen, voor iemand”.\n2. Zeg voor wie het is en geef het een naam.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één cadeau van jullie samen. Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
+                    'body' => "1. Maak een [nieuw lijstje](lists-help/saving) en kies in de eerste stap “Samen, voor iemand”.\n2. Zeg voor wie het is en geef het een naam.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één [groepscadeau](lists-help/kinds) van jullie samen. Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
+                    'shot' => 'group',
+                    'alt' => 'De pagina van een groepscadeau, met de ideeën om op te stemmen en het vak om bij te dragen.',
                 ],
                 [
                     'title' => 'Stemmen',

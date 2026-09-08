@@ -7,7 +7,7 @@ date_added: 2026-09-06
 
 # The list help pages
 
-**`/{market}/lists-help` is an index of nine topics; `/{market}/lists-help/{topic}` is one short
+**`/{market}/lists-help` is an index of ten topics; `/{market}/lists-help/{topic}` is one short
 page per capability, in the reader's language, with the prose kept out of the shared translation
 payload.**
 
@@ -25,7 +25,7 @@ The first version, 2026-09-06, was one page: three steps with screenshots. Two d
 could be shared with friends by name, bought from, voted on, chipped in to, talked over, quizzed
 and reminded about, Secret Santa drew names beside it, and none of that was explained anywhere.
 The owner asked for all of it, on one page or several with an index. One page with all of it would
-be a manual nobody scrolls, so it is an index and nine topics, in the order somebody meets the
+be a manual nobody scrolls, so it is an index and ten topics, in the order somebody meets the
 features:
 
 | Topic | What it covers |
@@ -34,7 +34,8 @@ features:
 | `kinds` | wish list, gift list, group gift; the one fixed choice; occasions and dates |
 | `items` | the bookmark, adding from the list, own items, copying, price drops, removing |
 | `sharing` | private by default, link, friends by name, who may add, who sees claims, address |
-| `claiming` | reserving, releasing, bought, suggesting, the quiz |
+| `claiming` | reserving, releasing, bought, suggesting |
+| `quiz` | what the quiz is, making one, playing, what the maker sees |
 | `group` | group gift, voting, chipping in, the discussion board |
 | `santa` | Secret Santa: group, invite, draw, repair, attach a list, reminders |
 | `friends` | becoming friends, what a friend sees, birthdays, reminders, notifications |
@@ -42,7 +43,8 @@ features:
 
 Secret Santa was one section under group gifts in the first draft; the owner asked "what about
 secret friend?" and it became a topic of its own, because it is a page of its own on the site and
-people search for it by name.
+people search for it by name. The quiz went the same way an hour later, out of the buying topic:
+"the quiz is a separate feature".
 
 ## The prose is in `lang/{language}/help_lists.php`, not `site.php`
 
@@ -62,10 +64,12 @@ a different tool.
 The first draft of the nine pages described what each feature was. The owner's reaction was "ik mis
 screenshots" and "en instructies". So every section that is something you *do* is now numbered
 steps that name the buttons word for word, in the four languages, with the labels checked against
-the language files (a renamed button is a renamed help line), and every topic but two carries a
-picture of the screen the steps happen on. Ten pictures per language now: the three of the save
-flow, the wizard's first step, adding a product, the share panel, a shared list as a visitor sees it
-with the claim buttons, the Secret Santa page, the friends page, and following a search.
+the language files (a renamed button is a renamed help line), and every topic carries at least one
+picture of the screen the steps happen on: "I meant screenshots on all help pages." Fifteen
+pictures per language now: the three of the save flow, the wizard's first step, adding a product,
+the share panel and its friends block, a shared list as a visitor sees it with the claim buttons,
+the quiz panel, a group gift with its chip-in box and discussion, a card whose price dropped, the
+occasion panel, the Secret Santa page, the friends page, and following a search.
 
 ## Keyword anchors
 
@@ -98,12 +102,15 @@ them one command, so it actually gets done:
 node scripts/help-screenshots.mjs     # composer dev + docker compose up -d must be running
 ```
 
-It now takes ten pictures per language and finds every button by its own label, read from the
+It now takes fifteen pictures per language and finds every button by its own label, read from the
 language file with `php -r`, so a renamed button fails loudly rather than silently photographing
-the wrong thing. The seeder grew two options for it: `--shared` puts the demo list on link sharing
-and prints the share link, which a second, signed-out browser opens to photograph the visitor's
-view; `--like=koptelefoon` fills the list with products matching a term, because random picks put
-lingerie on the help page the first time.
+the wrong thing. The seeder grew with it: `--shared` puts the demo list on link sharing and prints
+the share link, which a second, signed-out browser opens to photograph the visitor's view;
+`--like=koptelefoon` fills the list with products matching a term, because random picks put
+lingerie on the help page the first time; the list has six items so the quiz tab offers to make
+one, the last item is "saved" at a fifth more than it costs so the price-drop card exists; the
+account has one friend, Lea, so the share panel shows its friends block and the friends page has a
+row; and a group gift "Samen voor Lea" is made through `ListMaker`, the way the wizard makes one.
 
 Three decisions inside it are worth knowing, because each was a wrong screenshot first:
 

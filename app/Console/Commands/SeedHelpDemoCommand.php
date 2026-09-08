@@ -11,6 +11,10 @@ use App\Models\ProductGroup;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Social\Friends;
+use App\Services\Wishlist\ListMaker;
+use App\Support\CurrentMarket;
+use App\Support\Owner;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -38,6 +42,9 @@ class SeedHelpDemoCommand extends Command
 {
     public const EMAIL = 'help-screenshots@giftcoves.test';
 
+    /** The one friend the demo account has, so the friends block and the friends page have something to show. */
+    public const FRIEND_EMAIL = 'help-screenshots-friend@giftcoves.test';
+
     protected $signature = 'bc:seed-help-demo
         {--market=be-nl : The market to fill the list from.}
         {--fresh : Clear the demo account\'s existing lists first.}
@@ -46,7 +53,7 @@ class SeedHelpDemoCommand extends Command
 
     protected $description = 'Create the demo account the help-page screenshots are taken from';
 
-    public function handle(): int
+    public function handle(ListMaker $maker, Friends $friends): int
     {
         if (app()->isProduction()) {
             $this->error('Not in production. This creates a fake account and a fake list.');
@@ -79,6 +86,18 @@ class SeedHelpDemoCommand extends Command
          * props for a photograph; putting them in the shipped copy files would
          * hand every translator two strings no visitor will ever read.
          */
+        /*
+         * A friend, because the share panel shows its "share with friends"
+         * block only to an account that has one, and a friends page with
+         * nobody on it teaches nothing. Linked the way opening a share link
+         * links two people.
+         */
+        $friend = User::firstOrCreate(
+            ['email' => self::FRIEND_EMAIL],
+            ['name' => 'Lea', 'email_verified_at' => now()],
+        );
+        $friends->link($user, $friend);
+
         $titles = match ($market->language()) {
             'nl' => ['Mijn verlanglijstje', 'Sinterklaas'],
             'fr' => ['Ma liste de souhaits', 'Anniversaire de Lea'],
@@ -135,10 +154,10 @@ class SeedHelpDemoCommand extends Command
         $like = trim((string) $this->option('like'));
         $groups = $like === ''
             ? collect()
-            : $candidates()->where('title', 'ilike', "%{$like}%")->inRandomOrder()->limit(4)->get();
+            : $candidates()->where('title', 'ilike', "%{$like}%")->inRandomOrder()->limit(6)->get();
 
-        if ($groups->count() < 4) {
-            $groups = $candidates()->inRandomOrder()->limit(4)->get();
+        if ($groups->count() < 6) {
+            $groups = $candidates()->inRandomOrder()->limit(6)->get();
         }
 
         if ($groups->isEmpty()) {
@@ -154,12 +173,53 @@ class SeedHelpDemoCommand extends Command
             $list->save();
         }
 
-        foreach ($groups as $group) {
+        foreach ($groups as $i => $group) {
             WishlistItem::firstOrCreate(
                 ['wishlist_id' => $list->id, 'group_id' => $group->id],
                 [
-                    // Snapshots, as a real save writes them: the list has to
-                    // survive the product going out of stock.
+                    'snapshot_title' => $group->title,
+                    'snapshot_image_url' => $group->image_url,
+                    // The last one was "saved" at a fifth more than it costs
+                    // now, so the list page shows a price that dropped. The
+                    // help page photographs that card.
+                    'snapshot_price' => $i === $groups->count() - 1
+                        ? (int) round($group->min_price * 1.2)
+                        : $group->min_price,
+                    'snapshot_url' => "/{$market->value}/p/{$group->id}/{$group->slug}",
+                ],
+            );
+        }
+
+        /*
+         * A group gift as well, so the help page can photograph the ideas
+         * with their votes and the box to chip in. Made through ListMaker,
+         * the way the wizard makes one, so the recipient and the kind agree.
+         */
+        $groupTitle = match ($market->language()) {
+            'nl' => 'Samen voor Lea',
+            'fr' => 'Ensemble pour Lea',
+            'es' => 'Entre todos para Lea',
+            default => 'Together for Lea',
+        };
+        $groupList = Wishlist::query()
+            ->where('owner_user_id', $user->id)
+            ->where('market', $market->value)
+            ->where('title', $groupTitle)
+            ->first()
+            ?? $maker->make(
+                owner: new Owner($user, null),
+                current: new CurrentMarket($market),
+                title: $groupTitle,
+                newRecipient: 'Lea',
+                together: true,
+            );
+        $groupList->visibility = ListVisibility::Link;
+        $groupList->save();
+
+        foreach ($groups->take(3) as $group) {
+            WishlistItem::firstOrCreate(
+                ['wishlist_id' => $groupList->id, 'group_id' => $group->id],
+                [
                     'snapshot_title' => $group->title,
                     'snapshot_image_url' => $group->image_url,
                     'snapshot_price' => $group->min_price,
@@ -198,6 +258,9 @@ class SeedHelpDemoCommand extends Command
             $this->line(url("/{$market->value}/l/{$list->share_token}"));
             $this->newLine();
         }
+
+        $this->line('Group list: '.url("/{$market->value}/lists/{$groupList->id}"));
+        $this->newLine();
 
         $this->line('Sign-in link (15 minutes, single use):');
         $this->line(url("/{$market->value}/auth/magic/{$issued['token']}"));

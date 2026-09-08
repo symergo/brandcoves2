@@ -12,7 +12,7 @@ return [
         'title' => 'Cómo funcionan las listas',
         'seo_title' => 'Cómo funcionan las listas',
         'seo_description' => 'Todo lo que permite una lista: guardar, compartir, regalar entre varios, Amigo invisible, amigos y recordatorios. Paso a paso, con imágenes.',
-        'intro' => 'Una lista guarda lo que encuentras aquí, para ti o para otra persona. Abajo, lo que puedes hacer con ella y cómo, tema por tema, con imágenes. Empieza por el primero si nunca has guardado nada.',
+        'intro' => 'Una [lista de deseos](lists) guarda lo que [encuentras](search) aquí, para ti o para otra persona. Abajo, lo que puedes hacer con ella y cómo, tema por tema, con imágenes. Empieza por el primero si nunca has guardado nada.',
         'back' => 'Todos los temas',
         'next' => 'Siguiente',
         'cta_search' => 'Buscar algo que guardar',
@@ -68,6 +68,8 @@ return [
                 [
                     'title' => 'Una elección queda fija',
                     'body' => 'El primer paso de una [lista nueva](lists-help/saving) pregunta para quién es. Eso decide lo que la lista permite, y es lo único que no se cambia después. El nombre, la ocasión y quién la ve se pueden cambiar siempre.',
+                    'shot' => 'wizard',
+                    'alt' => 'El primer paso de una lista nueva, con los tres tipos para elegir.',
                 ],
                 [
                     'title' => 'Para mí: una lista de deseos',
@@ -84,6 +86,8 @@ return [
                 [
                     'title' => 'Una ocasión y una fecha',
                     'body' => 'Cualquier lista puede llevar una ocasión: cumpleaños, Navidad, boda, nacimiento, y diez más. Para un cumpleaños, Navidad y San Valentín, la fecha se rellena sola. Con una fecha, recibes un [recordatorio](lists-help/friends) a tiempo.',
+                    'shot' => 'occasion',
+                    'alt' => 'El panel Ocasión de una lista, con la elección de la ocasión y la fecha.',
                 ],
             ],
         ],
@@ -116,6 +120,8 @@ return [
                 [
                     'title' => 'Cuando baja el precio',
                     'body' => 'Un producto guardado recuerda el precio de ese momento. Si baja, la ficha muestra el nuevo precio con el antiguo tachado. No hay nada que configurar. Más en [Vigilar precios y stock](lists-help/alerts).',
+                    'shot' => 'drop',
+                    'alt' => 'Un artículo de una lista cuyo precio bajó, con el precio nuevo y el antiguo tachado.',
                 ],
                 [
                     'title' => 'Quitar',
@@ -144,6 +150,8 @@ return [
                 [
                     'title' => 'Con amigos por su nombre',
                     'body' => "1. Toca «Compartir» y luego «Compartir con amigos».\n2. Elige los [amigos](friends) que pueden verla.\n3. Toca «Enviar».\n\nReciben un correo con el enlace, sin el contenido, y la lista aparece en su [página de amigos](friends). «Dejar de compartir con …» la quita de ahí; un enlace que ya tuvieran sigue funcionando hasta que dejes de compartir. Cómo hacerse amigos está en [Amigos, cumpleaños y recordatorios](lists-help/friends).",
+                    'shot' => 'friends-share',
+                    'alt' => 'La parte del panel de compartir donde eliges amigos y les envías el enlace.',
                 ],
                 [
                     'title' => 'Quién puede añadir',
@@ -169,7 +177,7 @@ return [
             'sections' => [
                 [
                     'title' => 'Reservar',
-                    'body' => "1. Abre el enlace que te enviaron.\n2. Toca «Yo lo regalo» en el regalo que compras.\n3. Inicia sesión si te lo piden; tu toque se ejecuta después.\n\nAsí nadie más lo compra también. La persona para quien es la lista no ve nada.",
+                    'body' => "1. Abre el enlace a la [lista compartida](lists-help/sharing) que te enviaron.\n2. Toca «Yo lo regalo» en el regalo que compras.\n3. Inicia sesión si te lo piden; tu toque se ejecuta después.\n\nAsí nadie más lo compra también. La persona para quien es la lista no ve nada.",
                     'shot' => 'shared',
                     'alt' => 'Dos regalos en una lista compartida, cada uno con el botón para decir que lo regalas tú.',
                 ],
@@ -185,9 +193,40 @@ return [
                     'title' => 'Guárdalo también para ti',
                     'body' => 'Cada artículo tiene un marcador y «Añadir a mi lista». Lo que copias llega a [tu lista](lists) sin la reserva.',
                 ],
+            ],
+        ],
+
+        'quiz' => [
+            'title' => 'El quiz: ¿cuánto los conoces?',
+            'blurb' => 'Un juego hecho con tu lista compartida: cuatro productos, solo uno está de verdad en ella.',
+            'seo_description' => 'Crea un quiz con tu lista de deseos: ¿quién te conoce mejor? Cinco rondas, una puntuación para compartir.',
+            'intro' => null,
+            'numbered' => false,
+            'sections' => [
                 [
-                    'title' => 'El quiz: ¿cuánto los conoces?',
-                    'body' => 'En una lista compartida con al menos cinco artículos, quien la gestiona puede crear un quiz. Cinco rondas, cuatro productos cada vez de los que solo uno está de verdad en la lista, y una puntuación para compartir. Quien gestiona la lista no juega y solo ve cuántos jugaron y la puntuación media.',
+                    'title' => 'Qué es el quiz',
+                    'body' => 'Un juego hecho con una [lista de deseos](lists-help/kinds) compartida. Cinco rondas, cuatro productos cada vez de los que solo uno está de verdad en la lista, y al final una puntuación para compartir. Quien gestiona la lista crea el quiz; quien recibe el enlace juega.',
+                ],
+                [
+                    'title' => 'Crear un quiz',
+                    'body' => '1. Abre tu lista. Tiene que estar [compartida](lists-help/sharing) y tener al menos cinco artículos.
+2. Toca «Quiz».
+3. Toca «Crear un quiz con esta lista».
+4. Pasa el enlace.',
+                    'shot' => 'quiz',
+                    'alt' => 'El panel del quiz de una lista, con el botón para crear uno.',
+                ],
+                [
+                    'title' => 'Jugar',
+                    'body' => '1. Abre el enlace del quiz.
+2. En cada ronda, elige cuál de los cuatro productos está de verdad en la lista.
+3. Toca «Ver tu resultado», y luego «Comparte tu resultado» si quieres.
+
+Cada uno juega una vez.',
+                ],
+                [
+                    'title' => 'Qué ves como creador',
+                    'body' => 'Tú no juegas; sería hacer trampa. Ves cuántas personas jugaron y la puntuación media, no quién respondió qué.',
                 ],
             ],
         ],
@@ -201,7 +240,9 @@ return [
             'sections' => [
                 [
                     'title' => 'Un regalo en grupo',
-                    'body' => "1. Crea una [lista nueva](lists-help/saving) y elige «Entre varios, para alguien» en el primer paso.\n2. Di para quién es y ponle un nombre.\n3. Comparte el enlace con quienes participan.\n\nCualquiera con el enlace puede añadir ideas y votarlas. No hay nada que reservar: es un solo regalo de todos vosotros. Sortear nombres es otra cosa; está en [Amigo invisible](lists-help/santa).",
+                    'body' => "1. Crea una [lista nueva](lists-help/saving) y elige «Entre varios, para alguien» en el primer paso.\n2. Di para quién es y ponle un nombre.\n3. Comparte el enlace con quienes participan.\n\nCualquiera con el enlace puede añadir ideas y votarlas. No hay nada que reservar: es un solo [regalo en grupo](lists-help/kinds) de todos vosotros. Sortear nombres es otra cosa; está en [Amigo invisible](lists-help/santa).",
+                    'shot' => 'group',
+                    'alt' => 'La página de un regalo en grupo, con las ideas para votar y la casilla para aportar.',
                 ],
                 [
                     'title' => 'Votar',

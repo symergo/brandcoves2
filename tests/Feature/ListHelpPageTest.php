@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * The list help: an index and nine topic pages.
+ * The list help: an index and ten topic pages.
  *
  * The prose lives in lang/{language}/help_lists.php and reaches the page as
  * props, so most of what can go wrong here is a language file that fell
@@ -162,6 +162,14 @@ class ListHelpPageTest extends TestCase
             }
         }
 
+        // The index's own intro carries anchors too.
+        $this->get('/be-nl/lists-help')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where(
+                'copy.intro',
+                fn (string $intro) => str_contains($intro, '](/be-nl/lists)') && str_contains($intro, '](/be-nl/search)'),
+            ));
+
         // The Cove segment differs per language; "cove" resolves to it.
         $this->get('/be-nl/lists-help/saving')
             ->assertOk()
@@ -247,6 +255,7 @@ class ListHelpPageTest extends TestCase
             ->assertOk()
             ->assertSee('/be-nl/lists-help<', escape: false)
             ->assertSee('/be-nl/lists-help/sharing', escape: false)
-            ->assertSee('/be-nl/lists-help/santa', escape: false);
+            ->assertSee('/be-nl/lists-help/santa', escape: false)
+            ->assertSee('/be-nl/lists-help/quiz', escape: false);
     }
 }

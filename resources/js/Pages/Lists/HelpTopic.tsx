@@ -186,8 +186,8 @@ function Body({ text }: { text: string }) {
     )
 }
 
-/** Text with [words](url) turned into links. */
-function Inline({ text }: { text: string }) {
+/** Text with [words](url) turned into links. The index uses it for its intro too. */
+export function Inline({ text }: { text: string }) {
     const parts: ReactNode[] = []
     const pattern = /\[([^\]]+)\]\(([^)\s]+)\)/g
     let last = 0

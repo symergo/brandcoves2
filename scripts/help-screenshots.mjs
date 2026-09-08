@@ -23,7 +23,7 @@
  * follows it. It also prints the share link of the demo list, which a second,
  * signed-out browser opens to photograph what a visitor sees.
  *
- * ## Ten pictures, not three (2026-09-08)
+ * ## Fifteen pictures, not three (2026-09-08)
  *
  * The help grew from one page to nine, and the owner missed pictures on the
  * eight new ones. So besides the save flow this now photographs the list
@@ -79,12 +79,13 @@ function seed(market, term) {
 
     const signIn = seeded.match(/https?:\/\/\S*\/auth\/magic\/\S+/)
     const share = seeded.match(/https?:\/\/\S*\/l\/\S+/)
+    const group = seeded.match(/Group list:\s*(\S+)/)
 
-    if (!signIn || !share) {
-        throw new Error(`No sign-in or share link in the seeder output:\n${seeded}`)
+    if (!signIn || !share || !group) {
+        throw new Error(`No sign-in, share or group link in the seeder output:\n${seeded}`)
     }
 
-    return { signIn: signIn[0], share: share[0] }
+    return { signIn: signIn[0], share: share[0], group: group[1] }
 }
 
 /**
@@ -280,16 +281,58 @@ for (const { language, market, term } of MARKETS) {
     await page.waitForTimeout(500)
     await shoot(page, out('5-add-product'), { x: 0, y: Math.max(0, addBox.y - 24), width: VIEWPORT.width, height: 480 })
 
-    // 6. The share panel.
+    // 13. The item whose price dropped since it was saved. The seeder sets one
+    //     up; the struck-through old price is what marks the card.
     await page.reload({ waitUntil: 'networkidle' })
     await page.waitForTimeout(600)
-    const shareTab = page.locator('button[aria-controls="list-tools-panel"]', { hasText: L('lists.share') }).first()
+    const dropped = page.locator('main ul li:has(.line-through)').first()
+    await raise(page, dropped)
+    await shoot(page, out('13-price-drop'), await around(page, [dropped], 16))
+
+    // 6. The share panel.
+    const tab = (label) => page.locator('button[aria-controls="list-tools-panel"]', { hasText: label }).first()
+    const panel = page.locator('#list-tools-panel')
+    const shareTab = tab(L('lists.share'))
     await raise(page, shareTab)
     await shareTab.click()
-    const panel = page.locator('#list-tools-panel')
     await panel.waitFor({ state: 'visible', timeout: 5000 })
     await page.waitForTimeout(400)
-    await shoot(page, out('6-share'), await around(page, [shareTab, panel], 16))
+    const shareClip = await around(page, [shareTab, panel], 16)
+    await shoot(page, out('6-share'), { ...shareClip, height: Math.min(shareClip.height, 360) })
+
+    // 14. Sharing with friends, further down the same panel.
+    const withFriends = panel.getByRole('button', { name: L('lists.share_with_friends') }).first()
+    await withFriends.scrollIntoViewIfNeeded()
+    await withFriends.click()
+    await page.waitForTimeout(400)
+    const friendsBox = await withFriends.boundingBox()
+    await shoot(page, out('14-share-friends'), { x: 0, y: Math.max(0, friendsBox.y - 24), width: VIEWPORT.width, height: 360 })
+
+    // 11. The quiz panel: the list is shared and has enough items, so the
+    //     button to make one is there.
+    const quizTab = tab(L('quiz.badge'))
+    await raise(page, quizTab)
+    await quizTab.click()
+    await page.waitForTimeout(400)
+    const quizClip = await around(page, [quizTab, panel], 16)
+    await shoot(page, out('11-quiz'), { ...quizClip, height: Math.min(quizClip.height, 360) })
+
+    // 15. The occasion panel.
+    const occasionTab = tab(L('registry.occasion'))
+    await raise(page, occasionTab)
+    await occasionTab.click()
+    await page.waitForTimeout(400)
+    const occasionClip = await around(page, [occasionTab, panel], 16)
+    await shoot(page, out('15-occasion'), { ...occasionClip, height: Math.min(occasionClip.height, 520) })
+
+    // 12. A group gift: the ideas with their votes and the box to chip in.
+    await page.goto(links.group, { waitUntil: 'networkidle' })
+    await page.waitForTimeout(800)
+    const firstIdea = page.locator('main ul li').first()
+    await firstIdea.scrollIntoViewIfNeeded()
+    await page.evaluate(() => window.scrollBy(0, -260))
+    await page.waitForTimeout(300)
+    await shoot(page, out('12-group'), top(720))
 
     // 7. The shared list, as a visitor with no account sees it.
     const visitor = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 2, colorScheme: 'light' })
