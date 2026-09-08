@@ -198,13 +198,9 @@ Two decisions worth keeping:
   below the pitch costs roughly a screen of height and pushes the search field, the one thing
   the page wants pressed, under the fold. It was hidden there until 2026-09-08, when the owner
   asked for it back: it is the one place the mark appears at size, and a first screen without it
-  is a page of words. It now sits beside the three-line headline at 128px (160px from `sm`), which
+  is a page of words. It now sits beside the three-line headline at 96px (128px from `sm`), which
   costs no height, and the headline wraps the same three lines in the narrower column. From `md`
-  it is the full-size drawing beside the whole pitch, as before. The phone version is the
-  `compact` drawing: the scene turned to texture at that size, so it is the icon's own
-  composition instead, the headland arc at the icon's weight and the gift in the buoy's orange
-  moored where the icon keeps its buoy, with no miniature tile. The owner asked for "a bit
-  bigger" and "more like the icon" within the hour of the first version.
+  it is the full-size drawing beside the whole pitch, as before.
 - **One object in the bay, not a group.** At this size a crowd of small shapes turns into texture and
   the mark stops being the first thing the eye finds.
 
