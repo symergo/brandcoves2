@@ -77,11 +77,24 @@ class SearchLogTest extends TestCase
     #[Test]
     public function a_browser_search_is_logged(): void
     {
-        $this->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1')
+        $this->withCookie((string) config('session.cookie'), 'a-visitor-who-has-been-here-before')
+            ->withHeader('User-Agent', 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1')
             ->get('/en/search?q=headphones')
             ->assertOk();
 
         $this->assertDatabaseHas('search_log', ['query' => 'headphones', 'market' => 'en']);
+    }
+
+    #[Test]
+    public function a_request_without_the_session_cookie_is_not_logged(): void
+    {
+        // A crawler that does not announce itself still keeps no cookies. The
+        // price is a person's very first search after landing from elsewhere.
+        $this->withHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36')
+            ->get('/en/search?q=headphones')
+            ->assertOk();
+
+        $this->assertDatabaseCount('search_log', 0);
     }
 
     #[Test]

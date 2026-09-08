@@ -600,3 +600,7 @@ disclosure that pushed every result down when opened. It is a full-screen sheet 
 and brand pages both, with "show results" one press away, so the grid stays where it was. The
 search-help link under the box came back on 2026-09-06 and went again on 2026-09-07 at the owner's
 request; the help stays in the footer and the phone sheet.
+
+## See also
+
+- [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) — the four layers that keep a crawler from adding a pill

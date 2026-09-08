@@ -47,9 +47,14 @@ class SearchTest extends TestCase
         GroupProducts::dispatchSync(Market::BeNl);
     }
 
+    /**
+     * A search by a person: the log wants the session cookie a crawler never
+     * carries (see SearchLogTest), so the helper sends one.
+     */
     private function search(array $params = []): TestResponse
     {
-        return $this->get('/be-nl/search?'.http_build_query($params));
+        return $this->withCookie((string) config('session.cookie'), 'a-visitor')
+            ->get('/be-nl/search?'.http_build_query($params));
     }
 
     #[Test]

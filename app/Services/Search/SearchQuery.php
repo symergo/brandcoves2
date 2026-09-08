@@ -81,6 +81,30 @@ final readonly class SearchQuery
     /** The deepest page a request may ask for. */
     public const MAX_PAGE = 200;
 
+    /**
+     * Is this search worth remembering as demand?
+     *
+     * The log feeds the guide topic queue and the popular-searches page, and
+     * on 2026-09-08 five in six of its rows were crawler steps through search
+     * links. Two tests, and a request must pass both:
+     *
+     * - The user agent does not name a crawler. A name match; nobody spoofs
+     *   Googlebot to stay out of a statistics table.
+     * - The request carries this site's session cookie. Crawlers keep no
+     *   cookies, whatever they call themselves, so a crawler that does not
+     *   announce itself fails here instead. The cost is a person's very first
+     *   search after landing from elsewhere, which is not a pattern yet; every
+     *   search after it counts.
+     *
+     * Asked for as "a crawler cannot trigger a pill addition": the length rule
+     * on SearchLog stops the long strings, this stops the short ones.
+     */
+    private static function fromAPerson(Request $request): bool
+    {
+        return ! Crawlers::looksLikeOne($request->userAgent())
+            && $request->cookies->has((string) config('session.cookie'));
+    }
+
     public static function fromRequest(Request $request, Market $market): self
     {
         return new self(
@@ -112,14 +136,7 @@ final readonly class SearchQuery
              * crawler is told not to follow `page=` at all.
              */
             page: min(self::MAX_PAGE, max(1, (int) $request->query('page', 1))),
-            /*
-             * A crawler following a link into /search is not demand. The log
-             * feeds the guide topic queue and the popular-searches page, and on
-             * 2026-09-08 five in six of its rows were crawler steps through
-             * search links. The length rule on SearchLog catches the long
-             * strings; this catches the short steps on the same walk.
-             */
-            logged: ! Crawlers::looksLikeOne($request->userAgent()),
+            logged: self::fromAPerson($request),
             view: $request->query('view') === 'store' ? 'store' : 'grid',
         );
     }

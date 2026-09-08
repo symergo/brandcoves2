@@ -31,6 +31,7 @@ cannot be recovered from a diff.
 | [brand-pages.md](brand-pages.md) | SEO / Discovery | Active |
 | [barcode-scanner.md](barcode-scanner.md) | Search / Mobile | Active |
 | [popular-searches.md](popular-searches.md) | Search / SEO | Active |
+| [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) | Search / SEO | Active |
 | [search-help.md](search-help.md) | Search / Content | Active |
 | [search-alerts.md](search-alerts.md) | Search / Alerts | Active — new 2026-09-06; in-app only |
 | [feedback.md](feedback.md) | Core / Quality | Active |

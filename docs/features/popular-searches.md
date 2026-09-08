@@ -172,10 +172,14 @@ matters beyond this page because `TopicMiner` reads the same table and had no le
 all, so the guide topic queue was being fed the same junk.
 
 *And a crawler's search is not logged at all.* `SearchQuery::fromRequest()` sets `logged` to
-false when `App\Support\Crawlers::looksLikeOne()` recognises the user agent (a name match on
-the usual words and the crawlers seen in this site's logs, plus an empty user agent). The length
-rule catches the long strings a crawler mints; this catches the short steps on the same walk,
-which look like queries and are not demand.
+false unless the request passes two tests: `App\Support\Crawlers::looksLikeOne()` does not
+recognise the user agent (a name match on the usual words and the crawlers seen in this site's
+logs, plus an empty user agent), **and** the request carries the session cookie. Crawlers keep no
+cookies whatever they call themselves, so the second test catches the ones the first does not. The
+price is a person's very first search after landing from elsewhere, which is not a pattern yet.
+The length rule catches the long strings a crawler mints; this catches the short steps on the
+same walk, which look like queries and are not demand. Asked for as "a crawler cannot trigger a
+pill addition", 2026-09-08.
 
 ## Indexable, and its links are followed
 
@@ -223,3 +227,7 @@ morning says the same thing that night.
 - `resources/js/Layouts/SiteLayout.tsx` (the footer link — its only inbound link)
 - `lang/{en,nl,fr,es}/site.php` (`popular_searches.*`)
 - `tests/Feature/PopularSearchesTest.php`
+
+## See also
+
+- [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) — the four layers that keep a crawler from adding a pill
