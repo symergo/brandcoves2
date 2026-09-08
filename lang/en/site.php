@@ -1961,7 +1961,7 @@ return [
         'making_title' => 'Making a list',
         'making_body' => 'Two ways, and the first is the one most people use.',
         'making_from_save' => 'While saving: tap the bookmark and choose a new list. What you were saving goes straight onto it.',
-        'making_from_lists' => 'With the “Make a new list” button on the home page or under My lists: three steps, who it is for, which occasion, and whether it stays private or you share it later.',
+        'making_from_lists' => 'With the “Make a new list” button on the home page or “New list” under My lists: three steps, who it is for, which occasion, and whether it stays private or you share it later.',
 
         'private_title' => 'Who can see it',
         'private_body' => 'A list is private until you share it, with a link or with friends by name. Whoever opens it can tick what they are buying. You do not see who took what, unless you switch that on for the list, so the surprise holds.',

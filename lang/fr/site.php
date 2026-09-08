@@ -1740,7 +1740,7 @@ return [
         'making_title' => 'Créer une liste',
         'making_body' => 'De deux façons, et la première est celle que presque tout le monde utilise.',
         'making_from_save' => 'En enregistrant : touchez le marque-page et choisissez une nouvelle liste. Ce que vous enregistriez y va tout de suite.',
-        'making_from_lists' => 'Avec le bouton « Créer une nouvelle liste » sur la page d’accueil ou sous Mes listes : trois étapes, pour qui, quelle occasion, et si elle reste privée ou si vous la partagez plus tard.',
+        'making_from_lists' => 'Avec le bouton « Créer une nouvelle liste » sur la page d’accueil ou « Nouvelle liste » sous Mes listes : trois étapes, pour qui, quelle occasion, et si elle reste privée ou si vous la partagez plus tard.',
 
         'private_title' => 'Qui peut la voir',
         'private_body' => 'Une liste est privée tant que vous ne la partagez pas, par un lien ou avec des amis par leur nom. Qui l’ouvre peut cocher ce qu’il achète. Vous ne voyez pas qui a pris quoi, sauf si vous l’activez pour la liste, donc la surprise tient.',

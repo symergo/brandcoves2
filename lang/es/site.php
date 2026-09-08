@@ -1738,7 +1738,7 @@ return [
         'making_title' => 'Crear una lista',
         'making_body' => 'De dos maneras, y la primera es la que usa casi todo el mundo.',
         'making_from_save' => 'Al guardar: toca el marcador y elige una lista nueva. Lo que estabas guardando entra en ella al momento.',
-        'making_from_lists' => 'Con el botón «Crear una lista nueva» en la portada o en Mis listas: tres pasos, para quién es, qué ocasión, y si se queda privada o la compartes después.',
+        'making_from_lists' => 'Con el botón «Crear una lista nueva» en la portada o «Nueva lista» en Mis listas: tres pasos, para quién es, qué ocasión, y si se queda privada o la compartes después.',
 
         'private_title' => 'Quién puede verla',
         'private_body' => 'Una lista es privada hasta que la compartes, con un enlace o con amigos por su nombre. Quien la abre puede marcar lo que compra. Tú no ves quién cogió qué, salvo que lo actives en la lista, así la sorpresa se mantiene.',

@@ -1751,7 +1751,7 @@ return [
         'making_title' => 'Een lijstje maken',
         'making_body' => 'Op twee manieren, en de eerste gebruikt bijna iedereen.',
         'making_from_save' => 'Tijdens het bewaren: tik op de bladwijzer en kies voor een nieuw lijstje. Wat je aan het bewaren was staat er meteen in.',
-        'making_from_lists' => 'Met de knop “Maak een nieuw lijstje” op de startpagina of onder Mijn lijstjes: drie stappen, voor wie het is, welke gelegenheid, en of het privé blijft of je het later deelt.',
+        'making_from_lists' => 'Met de knop “Maak een nieuw lijstje” op de startpagina of “Nieuw lijstje” onder Mijn lijstjes: drie stappen, voor wie het is, welke gelegenheid, en of het privé blijft of je het later deelt.',
 
         'private_title' => 'Wie het kan zien',
         'private_body' => 'Een lijstje is privé tot je het deelt, met een link of met vrienden op naam. Wie het opent, kan aanvinken wat hij koopt. Jij ziet niet wie wat genomen heeft, tenzij je dat zelf aanzet bij het lijstje, dus de verrassing blijft.',
