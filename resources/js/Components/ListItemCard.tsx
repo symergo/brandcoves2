@@ -112,23 +112,56 @@ export default function ListItemCard({
               the words would be the afterthought.
             */}
             <div className="relative lg:flex lg:gap-4">
-                {image && (
-                    <div className="relative aspect-square w-full bg-white lg:aspect-auto lg:h-20 lg:w-20 lg:shrink-0 lg:rounded">
-                        <img
-                            src={image}
-                            alt=""
-                            className="h-full w-full object-contain p-2 lg:p-0"
-                            // A feed image that 404s left a broken-image glyph where a
-                            // product should be. Hidden rather than removed, so the
-                            // layout does not shift under everything below it.
-                            onError={(e) => {
-                                e.currentTarget.style.visibility = 'hidden'
-                            }}
-                        />
-                    </div>
-                )}
+                {image &&
+                    (() => {
+                        /*
+                          The picture goes where the title goes. On a tile it is
+                          the biggest thing on the card and the first thing a
+                          thumb lands on; a tap there that did nothing read as a
+                          broken page (2026-09-08). Same three cases as the
+                          title below: ours, somebody else's, or nowhere.
 
-                <div className="min-w-0 px-3 pt-2 pb-1 lg:flex-1 lg:p-0">
+                          Sat at the foot of its box rather than centred, with
+                          no padding under it, so a product drawn on white
+                          meets its title instead of floating above a gap of
+                          the feed's own margin plus ours.
+                        */
+                        const picture = (
+                            <img
+                                src={image}
+                                alt=""
+                                className="h-full w-full object-contain object-bottom px-2 pt-2 lg:object-center lg:p-0"
+                                // A feed image that 404s left a broken-image glyph where a
+                                // product should be. Hidden rather than removed, so the
+                                // layout does not shift under everything below it.
+                                onError={(e) => {
+                                    e.currentTarget.style.visibility = 'hidden'
+                                }}
+                            />
+                        )
+                        const box = 'relative block aspect-square w-full bg-white lg:aspect-auto lg:h-20 lg:w-20 lg:shrink-0 lg:rounded'
+
+                        return url ? (
+                            <Link href={url} tabIndex={-1} aria-hidden className={box}>
+                                {picture}
+                            </Link>
+                        ) : externalUrl ? (
+                            <a
+                                href={externalUrl}
+                                target="_blank"
+                                rel="nofollow noopener noreferrer"
+                                tabIndex={-1}
+                                aria-hidden
+                                className={box}
+                            >
+                                {picture}
+                            </a>
+                        ) : (
+                            <div className={box}>{picture}</div>
+                        )
+                    })()}
+
+                <div className="min-w-0 px-3 pt-1 pb-1 lg:flex-1 lg:p-0">
                     {/*
                       Clamped, because a feed title is written for a search engine
                       rather than a person: "OneOne 25W super snellader met 2

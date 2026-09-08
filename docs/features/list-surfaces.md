@@ -541,6 +541,10 @@ lines of title and the price. The list shows two tiles to a row on a phone and t
 and `lg`. A row of two tiles is shorter than two of the old rows and every picture is twice the
 size (171px on a 390px phone, against 80). From `lg` the card is the row it was: the two-column
 grid gives it 490px there, and beside a picture that wide the words would be the afterthought.
+The picture is a link to wherever the title goes, hidden from the tab order and the screen reader
+because the title is the same link with a name; a tap on the biggest thing on the tile that did
+nothing read as a broken page. It sits at the foot of its box with no padding under it, so a
+product drawn on white meets its title instead of floating above the feed's margin plus ours.
 
 The save control lost its chevron below `lg` in the same change. The compact `SaveToList` is a
 bookmark and a narrow chevron, the chevron there so a card can be filed straight into a named
