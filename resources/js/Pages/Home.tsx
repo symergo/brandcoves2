@@ -134,11 +134,15 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                   paragraph, so the headline and the search box stay on one
                   optical column rather than being stepped around it.
 
-                  Hidden below md, deliberately. Stacked on a phone it costs
-                  roughly a screen of height and pushes the search field — the
-                  one thing this page wants pressed — under the fold, to say
-                  nothing that a decorative drawing already says in words above
-                  it.
+                  Below md it is not stacked but set beside the headline, small.
+                  Stacked on a phone it cost roughly a screen of height and
+                  pushed the search field — the one thing this page wants
+                  pressed — under the fold, so until 2026-09-08 it was hidden
+                  there. The owner missed it: the drawing is the one place the
+                  mark appears at size, and a first screen without it is a
+                  page of words. Beside a three-line headline it costs no
+                  height at all; the headline wraps the same three lines in
+                  the narrower column.
                 */}
                 <div className="flex flex-col gap-10 md:flex-row md:items-center md:gap-12">
                     <div className="min-w-0 flex-1">
@@ -153,11 +157,14 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                           and 120px of the first screen goes to the wrapping
                           rather than the words.
                         */}
-                        <h1 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
-                            {t('home.headline_1')}
-                            <br />
-                            {t('home.headline_2')}
-                        </h1>
+                        <div className="flex items-center gap-4 md:block">
+                            <h1 className="min-w-0 flex-1 text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+                                {t('home.headline_1')}
+                                <br />
+                                {t('home.headline_2')}
+                            </h1>
+                            <HomeIllustration className="w-24 shrink-0 text-ink-soft sm:w-32 md:hidden" />
+                        </div>
 
                         {/*
                           A search field, where the Gift Finder button used to
