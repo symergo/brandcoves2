@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react'
 import type { CoveKey } from './CoveIcon'
 
-export type CoveSceneKey = Extract<CoveKey, 'daily' | 'surprise' | 'idea' | 'ask'>
+export type CoveSceneKey = Extract<CoveKey, 'daily' | 'surprise' | 'idea' | 'persona' | 'ask'>
 
 /**
- * The four discovery cards on the homepage, at card size.
+ * The five discovery cards on the homepage, at card size.
  *
  * A strict subset of `CoveKey`, and deliberately so. `CoveIcon` draws every
- * entry in the Discover menu including Gift Coves and All Coves; these are the
- * four cards the homepage lays out, and a scene for a menu row nothing renders
+ * entry in the Discover menu including All Coves; these are the
+ * five cards the homepage lays out, and a scene for a menu row nothing renders
  * at 160px would be drawing for a surface that does not exist. `CoveSceneKey`
  * is what keeps that a compile error rather than a blank card.
  *
@@ -33,6 +33,10 @@ export type CoveSceneKey = Extract<CoveKey, 'daily' | 'surprise' | 'idea' | 'ask
  * - **Idea** is an open book against a shelf. The shelf is what makes it an
  *   archive rather than an article, which is the half of the Coves that earns
  *   traffic over years.
+ * - **Persona** is a person with a gift beside them, not in their hands. A
+ *   persona is built around who somebody is, and the present is the thing
+ *   this site adds; drawn holding it, the figure would be the recipient at
+ *   the moment of unwrapping, which is a different page.
  *
  * Decorative throughout: `aria-hidden`, because the Cove's name and its
  * sentence sit directly beside every one of these.
@@ -79,6 +83,21 @@ const scenes: Record<CoveSceneKey, ReactNode> = {
             <path d="M82 66c8-8 19-11 33-11h11v42h-11c-12 0-22 3-29 9" fill="none" />
             <path d="M81 66v40" />
             <path d="M48 70h20M48 80h16M96 70h20M96 80h16" />
+        </>
+    ),
+
+    persona: (
+        <>
+            {/* The person: head and shoulders, the one the list is about. */}
+            <circle cx="66" cy="38" r="17" fill="none" />
+            <path d="M28 104c0-22 17-36 38-36s38 14 38 36" fill="none" />
+            <path d="M28 104c0-22 17-36 38-36s38 14 38 36z" className="fill-accent/10" />
+            {/* The gift, beside them rather than in their hands. */}
+            <rect x="106" y="70" width="34" height="30" rx="4" className="fill-accent/15" />
+            <path d="M102 64h42v10h-42z" fill="none" />
+            <path d="M123 64v36" />
+            <path d="M123 64c-5-9-10-12-15-10a6 6 0 0 0 2 11" fill="none" />
+            <path d="M123 64c5-9 10-12 15-10a6 6 0 0 1-2 11" fill="none" />
         </>
     ),
 

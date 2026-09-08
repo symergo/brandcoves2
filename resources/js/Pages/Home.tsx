@@ -572,9 +572,9 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
             {/*
               The discovery band, and the header for everything under it.
 
-              Two of these three are demonstrated immediately below with real
-              content — today's edition, and the Coves themselves — so this is a
-              signpost followed by proof rather than a signpost on its own.
+              Three of these are demonstrated further down with real content —
+              today's edition, the personas, and the Coves themselves — so this
+              is a signpost followed by proof rather than a signpost on its own.
               Surprise is the one that has nowhere else to appear on this page,
               and it is also the one whose name promises least: "Surprise me"
               cannot be evaluated before you press it, so the sentence under it
@@ -598,7 +598,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                     </Link>
                 </div>
 
-                <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                     {(
                         [
                             {
@@ -620,7 +620,28 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                 what: t('discover_cove.idea_what'),
                             },
                             /*
-                              The fourth is the one that is not ours.
+                              Personas, and only once a market has one.
+
+                              The same rule the Discover hub applies, and for
+                              the same reason: the persona shelf starts empty
+                              in a new market, and a card pointing at "nothing
+                              here yet" would be this band's only bad link.
+                              Asked for on 2026-09-08, when the band listed
+                              the other three shapes and not the one built
+                              around a person.
+                            */
+                            ...(personas.length > 0
+                                ? [
+                                      {
+                                          key: 'persona',
+                                          href: `${base}/gift-ideas`,
+                                          name: t('gift_ideas.title'),
+                                          what: t('discover_cove.persona_what'),
+                                      },
+                                  ]
+                                : []),
+                            /*
+                              The last one is the one that is not ours.
 
                               Daily, Surprise and the Coves are all this site
                               showing you something it chose; Ask others is the

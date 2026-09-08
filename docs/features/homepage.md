@@ -401,3 +401,11 @@ under "Coves" and found none. `HomeController::coves()` now walks the kinds roun
 article, brand, shop, newest first within each, six cards in all, and names the kind on the card
 (`home.cove_kind_*`). The three personas the persona band above already carries are skipped, so the
 same card is not on the page twice. A market with one kind still gets six of that kind.
+
+## The discovery band names the personas (2026-09-08)
+
+The band under "Ontdek" listed Daily, Surprise, the guides and Ask, and not the shape built
+around a person. It now carries a fifth card to `/gift-ideas`, shown only once the market has a
+persona, the rule the Discover hub already applied. `CoveIllustration` gained a `persona` scene: a
+person with a gift beside them rather than in their hands, because the present is what this site
+adds to who somebody is. Five cards wrap to three columns below `xl`.
