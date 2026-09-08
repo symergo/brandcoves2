@@ -843,6 +843,14 @@ the same list wherever it is read.
 
 Price-drop and back-in-stock watches, delivered to the in-app inbox.
 
+**The product page stopped offering the price watch on 2026-09-08.** The owner took "Laat het
+weten als de prijs zakt" off the page. A list already shows a drop on everything saved to it, so
+saving is the way to follow a price. `AlertButton` now offers the restock watch only, and only on
+a product no shop has; the price endpoint, the model, the mail and the refresh job are untouched,
+so a watch set before that date keeps firing and can still be stopped from the page. The five
+strings the target-price panel used (`alerts.watch_price`, `target_label`, `confirm`,
+`any_drop_hint`, `excluded`) were removed from the four language files.
+
 ### Signed-in only
 
 Unlike lists. An alert fires days later and has to reach someone; a cookie identity has no delivery

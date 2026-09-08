@@ -199,12 +199,7 @@ export default function Product({ product, offers, alert, amazonSearch, descript
 
                     <div className="mt-5 flex flex-wrap items-start gap-3">
                         <SaveToList groupId={product.id} />
-                        <AlertButton
-                            groupId={product.id}
-                            alert={alert}
-                            currentPrice={product.minPrice}
-                            inStock={product.inStock}
-                        />
+                        <AlertButton groupId={product.id} alert={alert} inStock={product.inStock} />
                         {/*
                           The share sheet, on the page people actually send to
                           a group chat. It existed on the quiz alone; the

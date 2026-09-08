@@ -1042,17 +1042,10 @@ return [
     ],
 
     'alerts' => [
-        'watch_price' => 'Laat het weten als de prijs zakt',
         'watch_restock' => 'Laat het weten als hij er weer is',
         'watching_price' => 'We houden de prijs in de gaten',
         'watching_restock' => 'We wachten tot hij weer op voorraad is',
         'stop' => 'Niet meer volgen',
-        'target_label' => 'Waarschuw me onder',
-        'confirm' => 'Volgen',
-        'any_drop_hint' => 'Laat het leeg en we melden elke daling.',
-        // Named, not summarised. If one shop is not watched, saying so is the
-        // difference between a promise kept and a promise quietly narrowed.
-        'excluded' => ':shops kunnen we niet volgen, dus een daling daar krijg je niet te zien.',
         'created' => 'We laten het je weten.',
         'removed' => 'Niet meer gevolgd.',
         'not_available' => 'Deze kunnen we niet volgen.',

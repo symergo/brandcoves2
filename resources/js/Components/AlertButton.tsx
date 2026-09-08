@@ -1,8 +1,6 @@
 import { router, usePage } from '@inertiajs/react'
 import SignInLink from './SignInLink'
-import { useState } from 'react'
-import type { Cents, SharedProps } from '../types'
-import { formatPrice } from '../types'
+import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 export interface AlertState {
@@ -17,22 +15,23 @@ export interface AlertState {
 interface Props {
     groupId: number
     alert: AlertState
-    currentPrice: Cents | null
     inStock: boolean
 }
 
 /**
- * Watch a product for a price drop, or for it coming back in stock.
+ * Watch a product for it coming back in stock.
  *
- * Which of the two is offered depends on the product's state: telling someone
- * they can be notified about a drop on something nobody currently sells is
- * an offer we cannot keep.
+ * Until 2026-09-08 this also offered a price-drop watch, with a target price
+ * and a disclosure of the shops it could not follow. The owner took that
+ * offer off the page. A list already shows a drop on everything saved to it
+ * ("Nu €X, was €Y"), so saving is the way to follow a price here. The
+ * endpoint and the mail still exist, and a watch somebody set before that
+ * date keeps running and can still be stopped here; only the way to start a
+ * new one is gone. Restock stays, because nothing else says "it is back".
  */
-export default function AlertButton({ groupId, alert, currentPrice, inStock }: Props) {
+export default function AlertButton({ groupId, alert, inStock }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
-    const [open, setOpen] = useState(false)
-    const [target, setTarget] = useState('')
 
     // Not eligible means every offer comes from a source whose programme rules
     // forbid a price-tracking feature. Rendering nothing is better than a
@@ -41,26 +40,7 @@ export default function AlertButton({ groupId, alert, currentPrice, inStock }: P
         return null
     }
 
-    const watching = alert.price || alert.restock
-
-    if (alert.requiresAccount) {
-        return (
-            /*
-              The dialog, not the login page. This control sits on a product
-              somebody is looking at, and the whole point of a price alert is
-              that they are looking at *this* product — sending them to a form
-              on another page loses the one thing the alert is about.
-            */
-            <SignInLink
-                hint={inStock ? t('alerts.watch_price') : t('alerts.watch_restock')}
-                className="inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-sm hover:bg-card"
-            >
-                {inStock ? t('alerts.watch_price') : t('alerts.watch_restock')}
-            </SignInLink>
-        )
-    }
-
-    if (watching) {
+    if (alert.price || alert.restock) {
         return (
             <div className="flex items-center gap-3 text-sm">
                 <span className="text-ink-soft">
@@ -77,90 +57,43 @@ export default function AlertButton({ groupId, alert, currentPrice, inStock }: P
         )
     }
 
-    const submit = (type: 'price' | 'restock') => {
-        router.post(
-            `/${market.key}/alerts`,
-            {
-                group_id: groupId,
-                type,
-                // Blank means "any drop". Sent as a decimal amount because that
-                // is what the person typed; the server converts to cents.
-                target_price: type === 'price' && target.trim() !== '' ? target.trim().replace(',', '.') : null,
-            },
-            { preserveScroll: true, onSuccess: () => setOpen(false) },
-        )
+    // In stock and not watched: nothing to offer. Telling someone they can be
+    // notified about a restock on something every shop has is an offer with
+    // no moment to keep it.
+    if (inStock) {
+        return null
     }
 
-    if (!inStock) {
+    if (alert.requiresAccount) {
         return (
-            <button
-                type="button"
+            /*
+              The dialog, not the login page. This control sits on a product
+              somebody is looking at, and the whole point of the alert is that
+              they are looking at *this* product — sending them to a form on
+              another page loses the one thing the alert is about.
+            */
+            <SignInLink
+                hint={t('alerts.watch_restock')}
                 className="inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-sm hover:bg-card"
-                onClick={() => submit('restock')}
             >
                 {t('alerts.watch_restock')}
-            </button>
+            </SignInLink>
         )
     }
 
     return (
-        <div className="space-y-2">
-            <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-sm hover:bg-card"
-                onClick={() => setOpen(!open)}
-                aria-expanded={open}
-            >
-                {t('alerts.watch_price')}
-            </button>
-
-            {open && (
-                <div className="space-y-2 rounded-card border border-line bg-card p-3 text-sm">
-                    <label className="block" htmlFor={`target-${groupId}`}>
-                        {t('alerts.target_label')}
-                    </label>
-                    <div className="flex gap-2">
-                        {/*
-                          A text field with a decimal keyboard, not type="number".
-                          A Dutch or French keyboard writes 19,99 and a number
-                          input in most browsers turns that into an empty
-                          string — which the submit below then sent as "any
-                          drop", with nothing telling the shopper their €20
-                          ceiling had been thrown away. The comma is normalised
-                          on the way out, as AddProduct already does.
-                        */}
-                        <input
-                            id={`target-${groupId}`}
-                            inputMode="decimal"
-                            className="w-32 rounded border border-line px-2 py-1"
-                            placeholder={
-                                currentPrice === null ? '' : formatPrice(currentPrice, market)
-                            }
-                            value={target}
-                            onChange={(e) => setTarget(e.target.value)}
-                        />
-                        <button
-                            type="button"
-                            className="rounded bg-accent px-3 py-1 text-white"
-                            onClick={() => submit('price')}
-                        >
-                            {t('alerts.confirm')}
-                        </button>
-                    </div>
-                    <p className="text-ink-soft">{t('alerts.any_drop_hint')}</p>
-
-                    {/*
-                      Disclosure, not a footnote. If we watch three of four
-                      shops, saying "we'll tell you when it drops" without
-                      naming the exception is a promise we would quietly break.
-                    */}
-                    {alert.excluded.length > 0 && (
-                        <p className="text-ink-soft">
-                            {t('alerts.excluded', { shops: alert.excluded.join(', ') })}
-                        </p>
-                    )}
-                </div>
-            )}
-        </div>
+        <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded border border-line px-3 py-2 text-sm hover:bg-card"
+            onClick={() =>
+                router.post(
+                    `/${market.key}/alerts`,
+                    { group_id: groupId, type: 'restock', target_price: null },
+                    { preserveScroll: true },
+                )
+            }
+        >
+            {t('alerts.watch_restock')}
+        </button>
     )
 }

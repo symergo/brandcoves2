@@ -1210,17 +1210,10 @@ return [
     ],
 
     'alerts' => [
-        'watch_price' => 'Tell me when it drops',
         'watch_restock' => 'Tell me when it is back',
         'watching_price' => 'Watching the price',
         'watching_restock' => 'Waiting for it to come back',
         'stop' => 'Stop watching',
-        'target_label' => 'Tell me below',
-        'confirm' => 'Watch it',
-        'any_drop_hint' => 'Leave it empty and we will tell you about any drop.',
-        // Named, not summarised. If one shop is not watched, saying so is the
-        // difference between a promise kept and a promise quietly narrowed.
-        'excluded' => 'We cannot watch :shops, so a drop there will not reach you.',
         'created' => 'We will let you know.',
         'removed' => 'No longer watching.',
         'not_available' => 'We cannot watch this one.',

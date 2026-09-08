@@ -1039,17 +1039,10 @@ return [
     ],
 
     'alerts' => [
-        'watch_price' => 'Prévenez-moi si le prix baisse',
         'watch_restock' => 'Prévenez-moi de son retour',
         'watching_price' => 'Nous surveillons le prix',
         'watching_restock' => 'Nous attendons son retour en stock',
         'stop' => 'Ne plus suivre',
-        'target_label' => 'Prévenez-moi en dessous de',
-        'confirm' => 'Suivre',
-        'any_drop_hint' => 'Laissez vide et nous signalerons toute baisse.',
-        // Named, not summarised. If one shop is not watched, saying so is the
-        // difference between a promise kept and a promise quietly narrowed.
-        'excluded' => 'Nous ne pouvons pas surveiller :shops : une baisse là-bas ne vous parviendra pas.',
         'created' => 'Nous vous préviendrons.',
         'removed' => 'Suivi arrêté.',
         'not_available' => 'Nous ne pouvons pas suivre celui-ci.',

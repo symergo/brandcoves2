@@ -1038,17 +1038,10 @@ return [
     ],
 
     'alerts' => [
-        'watch_price' => 'Avísame si baja',
         'watch_restock' => 'Avísame cuando vuelva',
         'watching_price' => 'Estamos vigilando el precio',
         'watching_restock' => 'Esperando a que vuelva a haber stock',
         'stop' => 'Dejar de vigilar',
-        'target_label' => 'Avísame por debajo de',
-        'confirm' => 'Vigilar',
-        'any_drop_hint' => 'Déjalo vacío y te avisaremos de cualquier bajada.',
-        // Named, not summarised. If one shop is not watched, saying so is the
-        // difference between a promise kept and a promise quietly narrowed.
-        'excluded' => 'No podemos vigilar :shops, así que una bajada allí no te llegará.',
         'created' => 'Te avisaremos.',
         'removed' => 'Ya no lo vigilamos.',
         'not_available' => 'Este no lo podemos vigilar.',
