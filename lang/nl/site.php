@@ -507,6 +507,7 @@ return [
 
     'footer' => [
         'affiliate' => 'We verdienen mogelijk commissie op aankopen via onze links, dat verandert nooit wat jij betaalt.',
+        'copyright' => '© :year GiftCoves.',
         'explore' => 'Ontdekken',
     ],
 

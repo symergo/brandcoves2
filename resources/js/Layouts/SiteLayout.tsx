@@ -850,10 +850,18 @@ function Chrome({ children }: PropsWithChildren) {
                         </nav>
                     </div>
 
-                    <p className="mt-3 flex flex-col gap-1 border-t border-line/60 pt-3 text-2xs sm:flex-row sm:items-baseline sm:gap-4">
-                        <span className="shrink-0 font-semibold tracking-tight text-ink">GiftCoves</span>
-                        <span>{t('footer.affiliate')}</span>
-                    </p>
+                    {/*
+                      The name at body size, the way the header writes it, and
+                      the copyright line before the disclosure. The year is the
+                      one the page is rendered in; a notice that says 2026 in
+                      2028 reads as an abandoned site.
+                    */}
+                    <div className="mt-3 flex flex-col gap-1 border-t border-line/60 pt-3 sm:flex-row sm:items-baseline sm:gap-4">
+                        <span className="shrink-0 text-base font-semibold tracking-tight text-ink">GiftCoves</span>
+                        <span className="text-2xs">
+                            {t('footer.copyright', { year: String(new Date().getFullYear()) })} {t('footer.affiliate')}
+                        </span>
+                    </div>
                 </div>
             </footer>
 

@@ -391,6 +391,7 @@ to go (brands, guides, the Daily, surprise, popular searches, search tips, help)
 wants reachable from every page (about, privacy, terms, cookies). On a desktop the two share one
 row with the legal group at the right edge; on a phone they stack at 40px a row, so a thumb still
 has a target. The affiliate disclosure sits under a hairline in the smallest size with the name
-"GiftCoves" before it. Measured: 305px to 246px on a 390px phone, 105px to 90px on a
+"GiftCoves" before it at body size, and "© :year GiftCoves." opening the small print, the year
+taken from the clock at render. Measured: 305px to 246px on a 390px phone, 105px to 90px on a
 desktop. Nothing was removed and nothing was added; the disclosure sentence is the one the law
 requires and is untouched.

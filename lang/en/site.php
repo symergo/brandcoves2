@@ -626,6 +626,7 @@ return [
 
     'footer' => [
         'affiliate' => 'We may earn a commission on purchases made through our links, it never changes what you pay.',
+        'copyright' => '© :year GiftCoves.',
         'explore' => 'Explore',
     ],
 

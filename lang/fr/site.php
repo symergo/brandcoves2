@@ -504,6 +504,7 @@ return [
 
     'footer' => [
         'affiliate' => 'Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
+        'copyright' => '© :year GiftCoves.',
         'explore' => 'Explorer',
     ],
 
