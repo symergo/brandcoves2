@@ -391,3 +391,13 @@ asserted `assertDontSee('De kruidenliefhebber')` on `/be-nl`, which was a fine p
 FIRST trap while the front page showed no personas at all, and became wrong the day it grew a band
 for them — a whole-page string search cannot tell the band from the trap. It now asserts the props:
 not `today.theme`, and present in `personas`.
+
+## The Coves band shows every shape a Cove takes (2026-09-08)
+
+The band under "Coves" listed the six newest articles, which was the whole archive when it was
+written. By September a market had personas, brand and shop Coves too, and a day that published
+fourteen advice pieces turned the band into an advice column: the owner looked for the personas
+under "Coves" and found none. `HomeController::coves()` now walks the kinds round-robin, persona,
+article, brand, shop, newest first within each, six cards in all, and names the kind on the card
+(`home.cove_kind_*`). The three personas the persona band above already carries are skipped, so the
+same card is not on the page twice. A market with one kind still gets six of that kind.

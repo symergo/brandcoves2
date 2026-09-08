@@ -148,6 +148,13 @@ return [
         'coves_heading' => 'Coves',
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',
         'coves_all' => 'All Coves',
+        // The shape a Cove takes, named on the front page's Coves band.
+        'cove_kind_persona' => 'Gift idea',
+        'cove_kind_guide' => 'Buying guide',
+        'cove_kind_seasonal' => 'Seasonal guide',
+        'cove_kind_advice' => 'Advice',
+        'cove_kind_brand' => 'Brand',
+        'cove_kind_shop' => 'Shop',
         'coves_volume' => ':count searches a month',
         /*
          * The card for your own lists, which used to say nothing at all: the

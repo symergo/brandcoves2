@@ -103,6 +103,13 @@ return [
         'coves_heading' => 'Coves',
         'coves_intro' => 'Lange verhalen rond één thema, waarbij elk merk en elk product doorlinkt naar een live zoekopdracht.',
         'coves_all' => 'Alle Coves',
+        // The shape a Cove takes, named on the front page's Coves band.
+        'cove_kind_persona' => 'Cadeau-idee',
+        'cove_kind_guide' => 'Koopgids',
+        'cove_kind_seasonal' => 'Seizoensgids',
+        'cove_kind_advice' => 'Advies',
+        'cove_kind_brand' => 'Merk',
+        'cove_kind_shop' => 'Winkel',
         'coves_volume' => ':count zoekopdrachten per maand',
         /*
          * The card for your own lists, which used to say nothing at all: the

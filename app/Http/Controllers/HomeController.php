@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveKind;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\Recipient;
@@ -315,20 +316,57 @@ class HomeController extends Controller
     /** @return list<array<string, mixed>> */
     private function coves(CurrentMarket $current): array
     {
-        return DailyPickSet::query()
-            ->forMarket($current->get())
-            ->articles()
-            ->published()
-            ->orderByDesc('published_at')
-            ->limit(6)
-            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'source_volume'])
-            ->map(fn (DailyPickSet $guide) => [
-                'title' => $guide->theme_title,
-                'intro' => $guide->theme_blurb,
-                'url' => $current->url($guide->kind->path((string) $guide->slug, $current->get())),
-                // Why it exists, and a fact no competitor has.
-                'searches' => $guide->source_volume,
-            ])
-            ->all();
+        /*
+         * One band, every shape a Cove takes.
+         *
+         * It listed the six newest articles, which was the whole archive when
+         * it was written. By 2026-09-08 a market had personas, brand and shop
+         * Coves too, and a day that published fourteen advice pieces made the
+         * band read as an advice column: the owner looked for the personas
+         * under "Coves" and found none. The /coves page it links to groups by
+         * kind for exactly that reason, and this band is its front window.
+         *
+         * Round-robin across the kinds, newest first within each, so a market
+         * with all four shows all four and a market with one shows one. The
+         * three personas the band above already carries are skipped here; the
+         * same card twice on one page is not twice as findable.
+         */
+        $market = $current->get();
+        $shown = array_map(fn (array $p) => $p['url'], $this->personas($current));
+
+        $lanes = [
+            DailyPickSet::query()->forMarket($market)->personas()->published()
+                ->whereNotIn('slug', array_map(fn (string $url) => basename($url), $shown)),
+            DailyPickSet::query()->forMarket($market)->articles()->published(),
+            DailyPickSet::query()->forMarket($market)->where('kind', CoveKind::Brand->value)->published(),
+            DailyPickSet::query()->forMarket($market)->shops()->published(),
+        ];
+
+        $columns = ['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'source_volume'];
+        $lanes = array_map(
+            fn ($q) => $q->orderByDesc('published_at')->limit(6)->get($columns)->all(),
+            $lanes,
+        );
+
+        $picked = [];
+        while (count($picked) < 6 && array_filter($lanes)) {
+            foreach ($lanes as &$lane) {
+                if ($lane !== [] && count($picked) < 6) {
+                    $picked[] = array_shift($lane);
+                }
+            }
+            unset($lane);
+        }
+
+        return array_map(fn (DailyPickSet $cove) => [
+            'title' => $cove->theme_title,
+            'intro' => $cove->theme_blurb,
+            'url' => $current->url($cove->kind->path((string) $cove->slug, $market)),
+            // Named on the card, because a persona beside an advice piece
+            // beside a brand reads as three unrelated things without it.
+            'kind' => $cove->kind->value,
+            // Why it exists, and a fact no competitor has.
+            'searches' => $cove->source_volume,
+        ], $picked);
     }
 }

@@ -14,6 +14,8 @@ import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Cove {
+    /** The shape this Cove takes: persona, guide, seasonal, advice, brand or shop. Named on the card. */
+    kind: string
     title: string
     intro: string | null
     url: string
@@ -841,7 +843,10 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                     href={cove.url}
                                     className="flex h-full flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink sm:p-5"
                                 >
-                                    <h3 className="font-medium">{cove.title}</h3>
+                                    <span className="text-2xs font-medium tracking-wide text-ink-soft uppercase">
+                                        {t(`home.cove_kind_${cove.kind}`)}
+                                    </span>
+                                    <h3 className="mt-1 font-medium">{cove.title}</h3>
                                     {cove.intro && (
                                         <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{cove.intro}</p>
                                     )}

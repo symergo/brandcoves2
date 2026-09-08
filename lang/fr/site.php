@@ -104,6 +104,13 @@ return [
         'coves_heading' => 'Coves',
         'coves_intro' => "Des dossiers autour d'un thème, où chaque marque et chaque produit renvoie vers une recherche en direct.",
         'coves_all' => 'Toutes les Coves',
+        // The shape a Cove takes, named on the front page's Coves band.
+        'cove_kind_persona' => 'Idée cadeau',
+        'cove_kind_guide' => "Guide d'achat",
+        'cove_kind_seasonal' => 'Guide de saison',
+        'cove_kind_advice' => 'Conseil',
+        'cove_kind_brand' => 'Marque',
+        'cove_kind_shop' => 'Boutique',
         'coves_volume' => ':count recherches par mois',
         /*
          * The card for your own lists, which used to say nothing at all: the
