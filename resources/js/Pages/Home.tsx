@@ -5,7 +5,7 @@ import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import HomeIllustration from '../Components/HomeIllustration'
 import ListIllustration, { type ListSceneKey } from '../Components/ListIllustration'
-import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
+import type { SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
 import ToolIcon from '../Components/ToolIcon'
@@ -772,71 +772,15 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
             )}
 
             {/*
-              The people shelf, above the articles one.
-
-              Order is the argument: this page has just asked who the visitor is
-              shopping for, and a persona answers that question where a buying
-              guide answers a different one. Below the articles it would have
-              read as an afterthought to the archive rather than the front of it.
-
-              Empty on a market with no personas yet, and the band does not
-              render at all in that case — an "Ideas for a person" heading over
-              nothing is worse than a page that never promised it.
+              No persona band here any more. It stood between the Discover
+              band and the Coves band from 2026-09-01 to 2026-09-08, three
+              drawn cards under "Cadeau-ideeën, per type", and the owner took
+              it out: the Discover band above already carries a card to the
+              persona shelf, and the Coves band below now mixes personas in
+              with the other kinds, so the front page named the same shelf
+              three times. `personas` still arrives; the Discover card is
+              shown only when the market has one.
             */}
-            {personas.length > 0 && (
-                <section className="mt-10 sm:mt-14" aria-labelledby="personas-heading">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2
-                            id="personas-heading"
-                            className="text-xl sm:text-2xl font-semibold tracking-tight"
-                        >
-                            {t('home.personas_heading')}
-                        </h2>
-                        <Link
-                            href={`${base}/gift-ideas`}
-                            className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
-                        >
-                            {t('home.personas_all')} →
-                        </Link>
-                    </div>
-
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {personas.map((persona) => (
-                            <li
-                                key={persona.url}
-                                className="flex flex-col rounded-card border border-line bg-card p-4 sm:p-5"
-                            >
-                                {/*
-                                  The drawing takes the card's text colour, so
-                                  the whole card moves together on hover — the
-                                  same `currentColor` scene the shelf uses, and
-                                  the reason these survive a palette change
-                                  without being redrawn.
-                                */}
-                                <Link href={persona.url} className="group text-ink hover:text-accent">
-                                    <SceneIllustration
-                                        name={persona.scene}
-                                        className="h-24 w-full text-ink-soft transition group-hover:text-accent"
-                                    />
-                                    <h3 className="mt-3 font-medium group-hover:underline">
-                                        {persona.title}
-                                    </h3>
-                                </Link>
-
-                                {persona.blurb && (
-                                    <p className="mt-2 line-clamp-3 text-sm text-ink-soft">
-                                        {persona.blurb}
-                                    </p>
-                                )}
-
-                                <p className="mt-auto pt-4 text-xs text-ink-soft">
-                                    {t('gift_ideas.find_count', { count: n(persona.findCount) })}
-                                </p>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
 
             {/*
               What this visitor looked at, from the device's own memory. A

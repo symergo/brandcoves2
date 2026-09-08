@@ -267,10 +267,10 @@ class HomeController extends Controller
     /**
      * Gift personas, newest first.
      *
-     * Three, not six: the grid is three wide, and this band sits above the
-     * articles one on a page that already carries five sections. A full row is
-     * enough to say the shelf exists, which is what the front page owes it —
-     * "All gift ideas" carries the rest.
+     * The band that showed these three left the front page on 2026-09-08 at
+     * the owner's word. The list still goes to the page because the Discover
+     * band shows its card to the persona shelf only when the market has one,
+     * and three rows is a cheap way to know that.
      *
      * Ordered by `published_at` like the shelf at `/gift-ideas`, and for the
      * same reason: a persona has no date, and that stamp is set once at first
@@ -327,16 +327,15 @@ class HomeController extends Controller
          * kind for exactly that reason, and this band is its front window.
          *
          * Round-robin across the kinds, newest first within each, so a market
-         * with all four shows all four and a market with one shows one. The
-         * three personas the band above already carries are skipped here; the
-         * same card twice on one page is not twice as findable.
+         * with all four shows all four and a market with one shows one. Until
+         * 2026-09-08 the three personas a band above carried were skipped
+         * here; that band is gone, so this is where a persona meets a
+         * first-time visitor now.
          */
         $market = $current->get();
-        $shown = array_map(fn (array $p) => $p['url'], $this->personas($current));
 
         $lanes = [
-            DailyPickSet::query()->forMarket($market)->personas()->published()
-                ->whereNotIn('slug', array_map(fn (string $url) => basename($url), $shown)),
+            DailyPickSet::query()->forMarket($market)->personas()->published(),
             DailyPickSet::query()->forMarket($market)->articles()->published(),
             DailyPickSet::query()->forMarket($market)->where('kind', CoveKind::Brand->value)->published(),
             DailyPickSet::query()->forMarket($market)->shops()->published(),

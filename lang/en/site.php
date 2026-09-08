@@ -142,8 +142,6 @@ return [
          * itself. Two headings for one thing that read differently is
          * how a visitor ends up unsure whether they are the same page.
          */
-        'personas_heading' => 'Gift ideas, by person',
-        'personas_all' => 'All gift ideas',
 
         'coves_heading' => 'Coves',
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',

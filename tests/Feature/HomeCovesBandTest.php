@@ -47,7 +47,7 @@ class HomeCovesBandTest extends TestCase
         foreach (range(1, 8) as $i) {
             $this->cove(CoveKind::Advice, "advies-{$i}", $i);
         }
-        // Four personas: three go to the persona band, the fourth is the one this band may show.
+        // Four personas; the newest is the one the round-robin picks first.
         foreach (range(1, 4) as $i) {
             $this->cove(CoveKind::Persona, "de-persona-{$i}", 100 + $i);
         }
@@ -56,23 +56,27 @@ class HomeCovesBandTest extends TestCase
 
         $band = $this->band();
 
+        // Six cards, four lanes: persona, advice, brand, shop, then the
+        // persona and advice lanes come round again.
         $this->assertCount(6, $band);
         $kinds = array_count_values(array_column($band, 'kind'));
-        $this->assertSame(1, $kinds['persona'] ?? 0);
+        $this->assertSame(2, $kinds['persona'] ?? 0);
         $this->assertSame(1, $kinds['brand'] ?? 0);
         $this->assertSame(1, $kinds['shop'] ?? 0);
-        $this->assertSame(3, $kinds['advice'] ?? 0);
+        $this->assertSame(2, $kinds['advice'] ?? 0);
 
         // Each kind links to its own address, not to /guides for all of them.
         $urls = array_column($band, 'url');
-        $this->assertContains('/be-nl/gift-ideas/de-persona-4', $urls);
+        $this->assertContains('/be-nl/gift-ideas/de-persona-1', $urls);
         $this->assertContains('/be-nl/brand/sony', $urls);
         $this->assertContains('/be-nl/shops/bol-com', $urls);
     }
 
     #[Test]
-    public function a_persona_already_in_the_persona_band_is_not_repeated_below_it(): void
+    public function a_persona_is_in_this_band_now_that_it_has_no_band_of_its_own(): void
     {
+        // The persona band left the front page on 2026-09-08; this band is
+        // where a persona meets a first-time visitor, so none is skipped.
         foreach (range(1, 3) as $i) {
             $this->cove(CoveKind::Persona, "de-persona-{$i}", $i);
         }
@@ -81,7 +85,7 @@ class HomeCovesBandTest extends TestCase
         $props = $this->get('/be-nl')->assertOk()->viewData('page')['props'];
 
         $this->assertCount(3, $props['personas']);
-        $this->assertSame(['advice'], array_column($props['coves'], 'kind'));
+        $this->assertSame(['persona', 'advice', 'persona', 'persona'], array_column($props['coves'], 'kind'));
     }
 
     #[Test]

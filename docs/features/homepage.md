@@ -415,3 +415,15 @@ around a person. It now carries a fifth card to `/gift-ideas`, shown only once t
 persona, the rule the Discover hub already applied. `CoveIllustration` gained a `persona` scene: a
 person with a gift beside them rather than in their hands, because the present is what this site
 adds to who somebody is. Five cards wrap to three columns below `xl`.
+
+## The persona band left the front page (2026-09-08)
+
+The band above, added 2026-09-01, is gone at the owner's word. By the time it went the front page
+named the persona shelf three times: the Discover band's fifth card, this band's three drawn
+cards under "Cadeau-ideeën, per type", and the Coves band, which since the morning of the same
+day mixes personas in with the articles, brands and shops. The band's job, meeting a first-time
+visitor with a person to shop for, is done by the Coves band now, which no longer skips the
+personas the band used to carry. `HomeController::personas()` still sends three rows, because
+the Discover card is shown only when the market has a persona and that is the cheapest way to
+know. `home.personas_heading` and `home.personas_all` were removed from the four language files;
+the shelf keeps its own copy under `gift_ideas`.

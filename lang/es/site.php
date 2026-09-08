@@ -97,8 +97,6 @@ return [
          * itself. Two headings for one thing that read differently is
          * how a visitor ends up unsure whether they are the same page.
          */
-        'personas_heading' => 'Ideas de regalo, por perfil',
-        'personas_all' => 'Todas las ideas de regalo',
 
         'coves_heading' => 'Coves',
         'coves_intro' => 'Lecturas largas en torno a un tema, con cada marca y cada producto enlazado a una búsqueda en vivo.',
