@@ -61,7 +61,8 @@ class CoveSubscriptionTest extends TestCase
         foreach (range(0, 2) as $i) {
             $group = ProductGroup::create([
                 'market' => Market::BeNl->value,
-                // An EAN identity, so the email link is a barcode search.
+                // An EAN identity. Until 2026-09-09 that made the email link a
+                // barcode search; it is the product page now for every kind.
                 'identity_key' => '400638133393'.$i,
                 'identity_kind' => 'ean',
                 'title' => "Bordspel {$i}",
@@ -204,7 +205,73 @@ class CoveSubscriptionTest extends TestCase
     }
 
     #[Test]
-    public function the_digest_links_by_barcode_rather_than_to_a_product_page(): void
+    public function the_digest_links_every_find_to_its_product_page(): void
+    {
+        Mail::fake();
+        $edition = $this->seedEdition();
+        $this->confirmedSubscriber();
+
+        SendCoveDigest::dispatchSync(Market::BeNl, '2026-08-08');
+
+        Mail::assertSent(CoveDigestMail::class, function (CoveDigestMail $mail) use ($edition) {
+            /*
+             * The product page, not a barcode search. The search page does not
+             * query Amazon live, so a search for an EAN shows one result under
+             * a heading that reads "results for 4006381333930"; the product
+             * page holds every offer and the Amazon hand-off. And every find,
+             * not the first four: a mail that stopped short of the page it
+             * linked to read as cut off.
+             */
+            $this->assertCount(3, $mail->digest['finds']);
+
+            foreach ($edition->picks as $i => $pick) {
+                $this->assertSame(
+                    "/be-nl/p/{$pick->group_id}/bordspel-{$i}",
+                    $mail->digest['finds'][$i]['url'],
+                );
+            }
+
+            return true;
+        });
+    }
+
+    #[Test]
+    public function the_editorial_reaches_the_email_with_its_links_resolved(): void
+    {
+        Mail::fake();
+        $edition = $this->seedEdition();
+        $first = $edition->picks->first()->group_id;
+
+        $edition->update([
+            'editorial' => "Vandaag kijken we naar spellen.\n\n"
+                ."Een [[product:{$first}|spel voor vier]] hoort erbij. Meer [[search:Bordspellen|spellen]].",
+        ]);
+        $this->confirmedSubscriber();
+
+        SendCoveDigest::dispatchSync(Market::BeNl, '2026-08-08');
+
+        Mail::assertSent(CoveDigestMail::class, function (CoveDigestMail $mail) use ($first) {
+            // Whole paragraphs, not the first one: the page's article is the
+            // email's article.
+            $this->assertCount(2, $mail->digest['body']);
+            $this->assertSame('Vandaag kijken we naar spellen.', $mail->digest['body'][0]);
+
+            // Absolute, because a mail client has no origin to resolve "/be-nl"
+            // against. The same renderer as the page, so the same allowlist
+            // rules: a search outside it degrades to its label.
+            $this->assertStringContainsString(
+                '<a href="'.url("/be-nl/p/{$first}/bordspel-0").'">spel voor vier</a>',
+                $mail->digest['body'][1],
+            );
+            $this->assertStringContainsString('Meer spellen.', $mail->digest['body'][1]);
+            $this->assertStringNotContainsString('[[', $mail->digest['body'][1]);
+
+            return true;
+        });
+    }
+
+    #[Test]
+    public function the_rendered_email_has_a_working_unsubscribe_link(): void
     {
         Mail::fake();
         $this->seedEdition();
@@ -213,16 +280,17 @@ class CoveSubscriptionTest extends TestCase
         SendCoveDigest::dispatchSync(Market::BeNl, '2026-08-08');
 
         Mail::assertSent(CoveDigestMail::class, function (CoveDigestMail $mail) {
-            /*
-             * /search?q={ean}, so the reader lands on the live comparison —
-             * Amazon included, fetched live, on our page where it is licensed to
-             * appear. The email itself carries a number and our own words.
-             */
-            $urls = array_column($mail->digest['finds'], 'url');
+            $html = $mail->render();
 
-            foreach ($urls as $url) {
-                $this->assertStringContainsString('/search?q=4006381333', $url);
-            }
+            // The footer is an HTML block, and CommonMark does not parse
+            // Markdown inside one: a "[Unsubscribe](url)" written there went
+            // out as those literal characters in every digest before
+            // 2026-09-09.
+            $this->assertStringContainsString(
+                'href="'.url('/be-nl/coves/unsubscribe/'.$mail->unsubscribeToken).'"',
+                $html,
+            );
+            $this->assertStringNotContainsString('](http', $html);
 
             return true;
         });
@@ -283,6 +351,7 @@ class CoveSubscriptionTest extends TestCase
         ]);
 
         DailyPick::create(['set_id' => $edition->id, 'group_id' => $group->id, 'rank' => 4, 'slug' => 'amazon-only']);
+        $edition->update(['editorial' => "En een [[product:{$group->id}|spel dat alleen daar staat]] tot slot."]);
 
         $this->confirmedSubscriber();
         SendCoveDigest::dispatchSync(Market::BeNl, '2026-08-08');
@@ -294,6 +363,13 @@ class CoveSubscriptionTest extends TestCase
             // Counted rather than silently dropped: "and one more on the page"
             // is both true and a reason to click.
             $this->assertSame(1, $mail->digest['omitted']);
+
+            // The sentence is ours and stays; the token becomes the writer's
+            // own words with no link, and the Amazon title appears nowhere.
+            $this->assertSame(
+                'En een spel dat alleen daar staat tot slot.',
+                $mail->digest['body'][0],
+            );
 
             return true;
         });

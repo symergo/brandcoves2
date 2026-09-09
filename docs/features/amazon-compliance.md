@@ -212,42 +212,37 @@ than just links.
 
 ### What this means for the Cove digest
 
-It pushes strongly toward **a teaser that links to the edition**, not the
-edition rendered into an email:
+The email is the edition's own prose with Amazon filtered out of it, and the
+filter lives in one place. Until 2026-09-09 it was a teaser instead — one
+paragraph, four finds, one link — on the argument that a digest with nothing to
+filter cannot be got wrong later. That is still true, and it cost the reader
+the article: the mail read as cut off next to the page it pointed at. The
+filter is `DigestBuilder::mayName()`, it is tested, and a second template
+inherits it by construction. See [cove-subscriptions.md](cove-subscriptions.md).
 
-- our own editorial line, the observance, a few
-  non-Amazon finds
-- one link: *see today's Cove*
-
-Amazon items then live only on the page, live-fetched as already designed, and
-the email has no Amazon surface at all. The alternative — full edition in
-email with Amazon items stripped — is defensible on the same reading, but every
-future template inherits a filter someone has to remember. A digest with
-nothing to filter cannot be got wrong later.
-
-### Link by EAN, not by offer
-
-The neat resolution: **an email link points at our own search for the barcode**,
-not at a product page and certainly not at Amazon.
-
-```
-/{market}/search?q={ean}
-```
-
-`SearchService` treats a GTIN as an exact identity *and* queries the live
-sources, so the reader lands on the full comparison — Amazon included, fetched
-live, on our page where it is licensed to appear. The email itself carries a
-number and our own words.
-
-This works because of what the email does **not** contain, so the rule that
-makes it safe has to be stated as a rule:
+The rule that makes it safe has to be stated as a rule:
 
 > The email may name a product only when we hold that name from a **non-Amazon**
-> source — an Awin feed, bol, or our own editorial. An Amazon-only item gets a
-> link and no description, or is left out.
+> source — an Awin feed, bol, or our own editorial. An Amazon-only item is left
+> out of the price list, and its token in the prose becomes the writer's own
+> words with no link.
 
 A title lifted from PA-API is Product Advertising Content wherever it appears,
-and putting it next to a compliant link does not launder it.
+and putting it next to a compliant link does not launder it. Our own sentence
+about the product is ours, and is sent.
+
+### Links go to the product page, not to Amazon
+
+```
+/{market}/p/{id}/{slug}
+```
+
+Every link in the email is to our own site, where the Amazon offer is fetched
+live and is licensed to appear. Earlier the link was a barcode search,
+`/search?q={ean}`, on the belief that the search page pulled Amazon live and so
+showed the fuller comparison; it does not, and a search for a number showed one
+result under a heading made of that number. The compliance argument never
+rested on which of our pages the link opened, only on the link being ours.
 
 > Terms change and the EU Associates Programme differs from the US one. Read
 > the current agreement for the locales in use before the first send. This

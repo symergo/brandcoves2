@@ -7,10 +7,21 @@ date_added: 2026-08-09
 
 # Cove subscriptions
 
-**A daily teaser email for the Daily Cove: double opt-in, one-click unsubscribe, and no Amazon
-product data anywhere in it.**
+**The Daily Cove as an email: the whole article with its links, the price list under it, double
+opt-in, one-click unsubscribe, and no Amazon product data anywhere in it.**
 
-## Why a teaser and not the edition
+## What the email carries
+
+The edition's own words in full, one paragraph after another, with the product tokens resolved to
+links on the product page. Under the prose, every product the email may name, with its lowest price
+and how many shops carry it. Then the button to the page.
+
+Until 2026-09-09 it was a teaser: the first paragraph, four bare titles and a button. Read next to
+the page it linked to, that looked like a mail that had been cut off, and the owner said so. The
+prose is ours, so there was never a reason to withhold it; the teaser was a way of keeping Amazon out
+of the email, and the rule below does that on its own.
+
+### What stays out, and why
 
 Two separate Amazon rules apply to email, and dropping the affiliate link clears only one of them.
 
@@ -22,33 +33,51 @@ Two separate Amazon rules apply to email, and dropping the affiliate link clears
 So an email carrying an Amazon product's title breaches the second rule even when every link points at
 giftcoves.com. See [amazon-compliance.md](amazon-compliance.md).
 
-The email therefore carries our own words, up to four non-Amazon finds and one
-link. **A digest with nothing to filter cannot be got wrong later** — the alternative, a full edition
-with Amazon items stripped, makes every future template inherit a filter someone has to remember.
-
-### Links go to a barcode search
-
-```
-/{market}/search?q={ean}
-```
-
-Not a product page and certainly not a merchant. `SearchService` treats a GTIN as an exact identity
-*and* queries the live sources, so the reader lands on the full comparison — Amazon included, fetched
-live, on our page where it is licensed to appear. The email itself carries a number and our own words.
-
-For a group identified by `brand|title` there is no barcode, so the link falls back to the product
-page: sending someone to a text search of a product title is a worse page than the product.
-
-### The rule the builder enforces
-
 > A product may be named in the email only when we hold that name from a **non-Amazon** source.
 
 `DigestBuilder::mayName()` asks the *offers behind the group*, not the group. The group's denormalised
 title came from whichever offer won, and if that was Amazon then the title is Product Advertising
 Content wherever it appears — putting it next to a compliant link does not launder it.
 
-Excluded finds are **counted, not silently dropped**: "and three more on the page" is both true and a
-reason to click, and it means an edition that is mostly Amazon still produces a sendable email.
+An Amazon-only pick is therefore left out of the price list, and its token in the prose is reduced to
+the writer's own label with no link. The paragraph about it is still sent: those are our sentences,
+not Amazon's data, and the page renders the same paragraph. Excluded finds are **counted, not
+silently dropped**: "and three more on the page" is both true and a reason to click, and it means an
+edition that is mostly Amazon still produces a sendable email.
+
+### The prose is rendered by the page's renderer
+
+`DigestBuilder` hands the editorial to `CoveMarkup::paragraphs()` with the same `Allowlist::full()`
+the Cove page uses, narrowed in one way: the product allowlist holds only the groups the email may
+name. A token for an Amazon-only pick is rejected by the renderer and degrades to its label, exactly
+as a hallucinated brand does on the page. The digest knows nothing about the token grammar, and a link
+that works on the page works in the mail.
+
+The paragraphs come back as HTML and the template prints them as HTML blocks, not Markdown. That is
+deliberate twice over: the renderer has already escaped and linked them, and a feed title with a stray
+`*` or `_` in it must not be read as emphasis by the mail's Markdown pass. The renderer writes
+site-relative paths, which a mail client has no origin to resolve against, so the builder pins them to
+`APP_URL` before they leave.
+
+### Links go to the product page
+
+```
+/{market}/p/{id}/{slug}
+```
+
+They used to go to `/search?q={ean}`, on the reasoning that the search page queried Amazon live and so
+showed the fuller comparison. It does not: Amazon is not a live search connector, so a barcode search
+shows one result under a heading that reads "results for 6977728941431", which is what a reader saw
+after clicking a product in the mail. The product page holds every offer we have, re-checks bol at
+render, and carries the Amazon search hand-off for a group with a barcode. It is also the URL the
+editorial API already reports for a find. Changed 2026-09-09.
+
+### The footer link is an HTML anchor
+
+The footer sits inside `<small>`, which makes it an HTML block to CommonMark, and CommonMark does not
+parse Markdown inside an HTML block. A `[Unsubscribe](url)` written there went out as those literal
+characters in every digest sent before 2026-09-09. The RFC 8058 header was always correct, so
+one-click unsubscribe in Gmail worked throughout; the visible link did not.
 
 ## Double opt-in
 

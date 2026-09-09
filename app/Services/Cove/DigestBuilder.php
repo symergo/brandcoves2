@@ -4,23 +4,27 @@ declare(strict_types=1);
 
 namespace App\Services\Cove;
 
-use App\Enums\IdentityKind;
 use App\Enums\Market;
 use App\Enums\Source;
 use App\Models\DailyPickSet;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Services\Editorial\Allowlist;
+use App\Services\Guides\CoveMarkup;
 
 /**
  * What goes in the Daily Cove email.
  *
- * ## This is a teaser, not the edition
+ * ## The whole article, minus what may not be in an email
  *
- * The email carries our own words, a few finds, and one link. The edition itself
- * — the puzzle, the full set, the Amazon offers — lives on the page.
+ * The email carries the edition's own words in full, a link on every product
+ * we may name, and the price list under it. Until 2026-09-09 it was a teaser:
+ * the first paragraph, four bare titles and a button. Read next to the page it
+ * pointed at, that looked like a mail that had been cut off, and the owner said
+ * so. The prose is ours, so there is no reason to withhold it.
  *
- * That is a compliance decision before it is an editorial one. Two separate
- * Amazon rules apply to email and dropping the link clears only one of them:
+ * What still stays out is Amazon. Two separate Amazon rules apply to email and
+ * dropping the link clears only one of them:
  *
  * | Rule | Restricts | Does linking to our own page help? |
  * |---|---|---|
@@ -28,45 +32,49 @@ use App\Models\ProductGroup;
  * | PA-API licence | *Product Advertising Content* — titles, images, prices — displayed anywhere but your own site | **No.** The restriction is on the content, not the destination |
  *
  * So an email carrying an Amazon title breaches the second rule even when every
- * link points at giftcoves.com. A digest with **nothing to filter cannot be got
- * wrong later** — the alternative, a full edition with Amazon items stripped,
- * makes every future template inherit a filter someone has to remember.
- *
- * See docs/features/amazon-compliance.md.
- *
- * ## Links go to a barcode search
- *
- *     /{market}/search?q={ean}
- *
- * Not to a product page, and certainly not to a merchant. `SearchService` treats
- * a GTIN as an exact identity *and* queries the live sources, so the reader lands
- * on the full comparison — Amazon included, fetched live, on our page where it is
- * licensed to appear. The email itself carries a number and our own words.
+ * link points at giftcoves.com. See docs/features/amazon-compliance.md.
  *
  * ## The rule that makes it safe
  *
  * > A product may be named in the email only when we hold that name from a
- * > **non-Amazon** source. An Amazon-only item is left out.
+ * > **non-Amazon** source. An Amazon-only item is left out of the price list,
+ * > and its token in the prose is reduced to the writer's own words, unlinked.
  *
  * A title lifted from PA-API is Product Advertising Content wherever it appears,
- * and putting it next to a compliant link does not launder it. `hasNonAmazonSource()`
- * is the check, and it asks about the *offers behind the group*, not about the
+ * and putting it next to a compliant link does not launder it. `mayName()` is
+ * the check, and it asks about the *offers behind the group*, not about the
  * group — a group whose only live offer is Amazon has an Amazon title, whatever
  * else is recorded against it.
+ *
+ * The prose about an Amazon-only pick is still sent: those are our sentences,
+ * not Amazon's data, and the page renders the same paragraph.
+ *
+ * ## Links go to the product page
+ *
+ *     /{market}/p/{id}/{slug}
+ *
+ * They used to go to `/search?q={ean}`, on the reasoning that the search page
+ * queried Amazon live and so showed the fuller comparison. It does not: Amazon
+ * is not a live search connector, so a barcode search shows one result under a
+ * heading that reads "results for 6977728941431". The product page holds every
+ * offer we have, re-checks bol at render, and carries the Amazon search
+ * hand-off for a group with a barcode. It is the page the editorial API already
+ * reports as the product's URL. Changed 2026-09-09.
  */
 class DigestBuilder
 {
-    /** Four. A teaser that lists everything is not a teaser. */
-    private const MAX_FINDS = 4;
+    public function __construct(
+        private readonly Allowlist $allowlist,
+        private readonly CoveMarkup $markup,
+    ) {}
 
     /**
      * @return array{
      *     theme: string,
      *     blurb: string|null,
-     *     lead: string|null,
+     *     body: list<string>,
      *     date: string,
      *     url: string,
-     *     hasPuzzle: bool,
      *     finds: list<array{title: string, brand: string|null, price: int|null, url: string, shops: int}>,
      *     omitted: int,
      * }|null
@@ -76,6 +84,8 @@ class DigestBuilder
         $base = '/'.$market->value;
 
         $eligible = [];
+        /** @var list<ProductGroup> $nameable */
+        $nameable = [];
         $omitted = 0;
 
         foreach ($edition->picks as $pick) {
@@ -106,17 +116,13 @@ class DigestBuilder
                 continue;
             }
 
-            if (count($eligible) >= self::MAX_FINDS) {
-                $omitted++;
-
-                continue;
-            }
+            $nameable[] = $group;
 
             $eligible[] = [
                 'title' => $group->title,
                 'brand' => $group->brand,
                 'price' => $group->min_price,
-                'url' => $this->linkFor($group, $base),
+                'url' => $base.'/p/'.$group->id.'/'.$group->slug,
                 'shops' => max(1, (int) $group->merchant_count),
             ];
         }
@@ -133,9 +139,7 @@ class DigestBuilder
         return [
             'theme' => $edition->theme_title,
             'blurb' => $edition->theme_blurb,
-            // The first paragraph of the editorial, plain — the email is not the
-            // place to resolve [[product:…]] tokens into links.
-            'lead' => $this->lead($edition),
+            'body' => $this->body($edition, $market, $nameable),
             'date' => $edition->drop_date->toDateString(),
             // covePath() carries the market itself, so it replaces $base rather
             // than appending to it — the localised segment is only correct next
@@ -163,35 +167,41 @@ class DigestBuilder
     }
 
     /**
-     * Where a find in the email points.
+     * The editorial as HTML paragraphs, tokens resolved the way the page does.
      *
-     * A barcode search when we have a GTIN, so the reader lands on the live
-     * comparison across every source. The product page otherwise — for a group
-     * identified by "brand|title" there is no barcode to search for, and sending
-     * someone to a text search of a product title is a worse page than the
-     * product.
+     * The same renderer and the same allowlist as the Cove page, so a link that
+     * works there works here — with one narrowing: the product allowlist holds
+     * only the groups the email may name. A token for an Amazon-only pick is
+     * therefore rejected by the renderer and degrades to the writer's own label,
+     * exactly as a hallucinated brand does on the page. Nothing in this class
+     * has to know the token grammar.
+     *
+     * The paragraphs are HTML, escaped by the renderer, for the template to
+     * print raw. Emitting Markdown instead would mean escaping our own labels
+     * against a second parser.
+     *
+     * @param  list<ProductGroup>  $nameable
+     * @return list<string>
      */
-    private function linkFor(ProductGroup $group, string $base): string
-    {
-        return $group->identity_kind === IdentityKind::Ean
-            ? $base.'/search?'.http_build_query(['q' => $group->identity_key])
-            : $base.'/p/'.$group->id.'/'.$group->slug;
-    }
-
-    private function lead(DailyPickSet $edition): ?string
+    private function body(DailyPickSet $edition, Market $market, array $nameable): array
     {
         if (blank($edition->editorial)) {
-            return null;
+            return [];
         }
 
-        $first = preg_split('/\R{2,}/u', trim((string) $edition->editorial))[0] ?? '';
+        $allowed = $this->allowlist->full($nameable, $market);
 
-        // Tokens are a rendering syntax for the web page. In an email they would
-        // read as literal `[[product:412]]`, so they degrade to their labels —
-        // the same fallback CoveMarkup applies to a rejected token.
-        $plain = preg_replace('/\[\[(?:brand|search|product):([^\]|]{1,120})(?:\|([^\]]{1,160}))?\]\]/u', '$2$1', $first) ?? $first;
+        $paragraphs = $this->markup->paragraphs((string) $edition->editorial, $market, $allowed)['html'];
 
-        return trim($plain) === '' ? null : trim($plain);
+        // An email has no origin to resolve a path against, and the renderer
+        // writes site-relative ones for the page. Pinned to APP_URL here; only
+        // paths are touched, so an Amazon hand-off, already absolute, is not.
+        $origin = rtrim(url('/'), '/');
+
+        return array_map(
+            fn (string $html): string => str_replace('href="/', 'href="'.$origin.'/', $html),
+            $paragraphs,
+        );
     }
 
     /**
