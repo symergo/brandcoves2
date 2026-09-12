@@ -591,7 +591,7 @@ export default function SaveToList({
                 }}
             >
                 <label className="block text-xs font-medium">
-                    {creating === 'mine' ? t('lists.list_name') : t('lists.person_name')}
+                    {creating === 'mine' ? t('lists.list_name') : t('lists.recipient_label')}
                 </label>
                 <input
                     autoFocus
