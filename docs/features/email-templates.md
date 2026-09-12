@@ -87,6 +87,26 @@ rather than the generic one.
 | Wired | `MagicLinkMail`, `CoveConfirmationMail`, `ListInvitationMail`, `OccasionReminderMail` |
 | Tests | [tests/Feature/MailTemplateTest.php](../../tests/Feature/MailTemplateTest.php) |
 
+## The look of every mail, 2026-09-12
+
+The masthead and the theme are ours, published from the framework into
+`resources/views/vendor/mail`. Laravel's stock header prints `config('app.name')`, which
+is whatever `APP_NAME` says in that environment and "Laravel" wherever it is unset; the first
+list price digest rendered with that word above it. The brand is not an environment variable,
+so `html/header.blade.php` writes the mark (`/icons/giftcoves-512.png`, the PNG because mail
+clients render SVG unreliably) and the word GiftCoves once, and `message.blade.php` does the
+same in the footer.
+
+`html/themes/default.css` carries the site palette from `resources/css/app.css`: accent links
+without underline, a tinted table header row with a rule between rows, the accent button.
+It is **not an external stylesheet**: the renderer inlines every rule into `style` attributes
+at send time, so a mail carries its own styling and the only `<style>` block left in the head
+holds the two mobile media queries. The file has to stay plain CSS for that reason: no
+imports, no variables.
+
+The theme applies to every markdown mail, editable or not, which is the point: the words may
+be an editor's, the frame is one frame.
+
 ## See also
 
 - [page-templates.md](page-templates.md) — the same idea for pages, and where the
