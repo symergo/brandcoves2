@@ -217,10 +217,6 @@ export default function ListTools({
     const [title, setTitle] = useState(list.title)
     const [note, setNote] = useState(list.description ?? '')
 
-    // Closed until asked for. Sharing with named people is a deliberate act,
-    // not a setting you scan past.
-    const [sharing, setSharing] = useState(false)
-
     const shared = list.visibility !== 'private'
 
     /*
@@ -257,6 +253,16 @@ export default function ListTools({
     // Only a wish list of your own is a registry; every kind may carry an
     // occasion. The delivery address is the half that stays behind this.
     const isRegistry = list.kind === 'mine'
+
+    /*
+     * Does the share panel have anything to say about what the link allows?
+     *
+     * The section used to render regardless and be empty on a private wish
+     * list of your own, which is most lists, so the panel opened onto a
+     * heading-less gap. Adding needs a live link on a list that is not about
+     * you; the two group switches need a group. Nothing else exists.
+     */
+    const linkOptions = access.isOwner && ((list.shareUrl !== null && list.kind !== 'mine') || list.kind === 'group')
 
     /*
      * `show` is whether the chip exists; `set` is whether the thing behind it
@@ -552,96 +558,48 @@ export default function ListTools({
                 <div id="list-tools-panel" className="mt-3 rounded-card border border-line bg-card p-4">
                     {open === 'share' && (
                         /*
-                          One column, full width, one option per row.
+                          Sections with a heading and a rule between them, in
+                          the order the decision is made: is it shared, who
+                          gets the link by name, what the link allows, how a
+                          group collects, who was let in before links existed
+                          — and then, as further sections below this block,
+                          handing the list over and what the recipient asked
+                          for. The same shape as the Settings panel, so the
+                          two panels read as two views of one list.
 
-                          This went through both alternatives first. Capped at
-                          `max-w-xl` it read well and left half the panel empty,
-                          which on a control surface looks like something failed
-                          to load. Two columns filled the width and paired
-                          settings side by side — and a pair of switches at the
-                          same height reads as one choice with two halves, which
-                          none of these are: they are independent facts about
-                          one link, and each is answered on its own.
-
-                          So: the full measure, and every option on a row of its
-                          own. `space-y-8` between blocks is deliberately wider
-                          than the space inside one, which is what makes three
-                          blocks read as three rather than as one long form.
+                          It was one column of blocks with no headings and a
+                          fixed gap between them, and it rendered every block
+                          whether or not it had anything in it. On a private
+                          wish list of your own, which is most lists, that was
+                          a sentence, a button and a hundred pixels of nothing.
+                          A section now exists only when it has content.
                         */
-                        <div className="space-y-8">
+                        <div>
                             {/*
-                              The link, what it lets people do, and who can see
-                              what once they have it.
-
-                              Share and People were two chips asking two halves
-                              of one question — who else is looking at this
-                              list — with the roster, the one thing a group list
-                              cannot work without, filed furthest from the
-                              button that shares it. They are one panel.
-
-                              Four blocks now, each with a heading, in the order
-                              the decision is actually made: is it shared, what
-                              does the link allow, who sees the claims, who
-                              already has access. Before this they ran link →
-                              claim privacy → a loose sentence about the link →
-                              what the link allows → roster, all under one
-                              heading reading "Visibility" — so the two settings
-                              that are about the *link* sat below the two that
-                              are about *claims*, separated by a paragraph
-                              explaining the link they were nowhere near.
-
-                              Every block below the first is the owner's. A
-                              collaborator on an already-shared list sees the
-                              link and can pass it on, which is the whole reason
-                              this tab is offered to them.
-                            */}
-
-                            {/*
-                              What is true right now, in one sentence, before
-                              any control.
-
-                              The panel used to open straight into either a
-                              button or a URL and leave the reader to infer the
-                              state from which of the two they got. On a page
-                              where the mistake is thinking something is private
-                              when it is not, the state is worth a line of its
-                              own.
+                              What is true right now, as the heading, before
+                              any control. On a page where the mistake is
+                              thinking something is private when it is not,
+                              the state is worth being the first line.
                             */}
                             <section>
-                                {/*
-                                  The state, and the press that ends it, on one
-                                  row.
-
-                                  Stop sharing sat under the URL, which put the
-                                  control that revokes the link below the link
-                                  itself — read in order, that is "here is the
-                                  link, here is the field, and by the way you can
-                                  destroy it". Beside the sentence it belongs to
-                                  it reads as what it is: this is the state, and
-                                  this ends it. It also gets the link field a
-                                  row higher, which is what most people opened
-                                  the panel for.
-
-                                  Still quiet, still second: a bordered
-                                  secondary button, right-aligned, against a
-                                  sentence in medium. It was grey underlined
-                                  text before — the least prominent thing on the
-                                  panel, and the one irreversible one.
-                                */}
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <p className="text-sm font-medium">
-                                        {list.shareUrl
-                                            ? t('lists.sharing_on')
-                                            : t('lists.sharing_off')}
-                                    </p>
-
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <h3 className="text-sm font-medium">
+                                            {list.shareUrl ? t('lists.sharing_on') : t('lists.sharing_off')}
+                                        </h3>
+                                        {!list.shareUrl && (
+                                            <p className="mt-1 text-xs text-ink-soft">{t('lists.share_hint')}</p>
+                                        )}
+                                    </div>
+                                    {/*
+                                      Stop sharing beside the sentence it ends,
+                                      quiet and second: a bordered secondary
+                                      button against a heading, not grey text
+                                      under the link.
+                                    */}
                                     {list.shareUrl && access.isOwner && (
                                         <button
                                             type="button"
-                                            // Asked first: this is the one press on the
-                                            // panel that cannot be undone. Every link
-                                            // already sent dies with it, and the next
-                                            // share mints a different one.
                                             onClick={() => {
                                                 if (confirm(t('lists.disable_sharing_confirm'))) {
                                                     setting({ visibility: 'private' })
@@ -655,24 +613,21 @@ export default function ListTools({
                                 </div>
 
                                 {/*
-                                  Private lists land here too, now that this
-                                  panel is also where the roster lives — so it
-                                  has to offer the press rather than assume it
-                                  has already happened.
+                                  The press that publishes the list is a button
+                                  that says so. It used to be labelled "Share",
+                                  the same word as the chip that opened this
+                                  panel, so the panel appeared to ask the same
+                                  question twice; "Turn sharing on" is the
+                                  answer to the sentence above it.
                                 */}
                                 {!list.shareUrl && access.isOwner && (
-                                    <>
-                                        <p className="mt-1 text-xs text-ink-soft">
-                                            {t('lists.share_hint')}
-                                        </p>
-                                        <button
-                                            type="button"
-                                            onClick={() => setting({ visibility: 'link' })}
-                                            className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
-                                        >
-                                            {t('lists.share')}
-                                        </button>
-                                    </>
+                                    <button
+                                        type="button"
+                                        onClick={() => setting({ visibility: 'link' })}
+                                        className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+                                    >
+                                        {t('lists.enable_sharing')}
+                                    </button>
                                 )}
 
                                 {list.shareUrl && (
@@ -683,304 +638,207 @@ export default function ListTools({
                                         />
                                     </div>
                                 )}
-
-                                {/*
-                                  Share with friends: names you pick, not a switch.
-
-                                  There was a "my friends can see this list"
-                                  checkbox here for a day, and the risk was real
-                                  and silent: a friendship is made by opening
-                                  any share link, so one tap published a list to
-                                  a set the owner had never chosen and could not
-                                  see. A boolean cannot express consent to an
-                                  audience.
-
-                                  Picking names can. Each one gets an email with
-                                  the link and the list on their friends page,
-                                  and nobody else learns it exists. Un-ticking
-                                  somebody takes it off their page; it does not
-                                  take away a link they already hold, which is
-                                  `visibility`'s job.
-
-                                  Only on a shared list, and on every kind: a
-                                  group gift is exactly the case this shape was
-                                  always right for.
-                                */}
-                                {list.shareUrl && access.isOwner && friends.length > 0 && (
-                                    <div className="mt-4">
-                                        {/*
-                                          A box, like the link row above it,
-                                          rather than a bare line of text.
-
-                                          It is one of two things you can do with
-                                          a shared list — copy the link, or send
-                                          it to people by name — and the second
-                                          read as an afterthought while the first
-                                          had a control of its own.
-
-                                          The count sits in the label: "did I
-                                          already send this to her" is half of
-                                          why the panel gets opened, and a number
-                                          on the closed box answers the easy half
-                                          without opening anything.
-                                        */}
-                                        <button
-                                            type="button"
-                                            onClick={() => setSharing((v) => !v)}
-                                            aria-expanded={sharing}
-                                            /* The same box as "+ Add product"
-                                               on the list itself: both are the
-                                               plain, obvious thing you do next,
-                                               and two shapes for that is one
-                                               shape too many. */
-                                            className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm hover:border-ink"
-                                        >
-                                            <ToolIcon name="collab" className="h-4 w-4 text-accent" />
-
-                                            <span>
-                                                {t('lists.share_with_friends')}
-                                                {list.sharedWith.length > 0 && (
-                                                    <span className="ml-1 text-ink-soft">
-                                                        ({list.sharedWith.length})
-                                                    </span>
-                                                )}
-                                            </span>
-                                        </button>
-
-                                        {sharing && (
-                                            <form
-                                                onSubmit={(e) => {
-                                                    e.preventDefault()
-
-                                                    const picked = Array.from(
-                                                        new FormData(e.currentTarget).getAll('friend_ids'),
-                                                    ).map(Number)
-
-                                                    if (picked.length === 0) {
-                                                        return
-                                                    }
-
-                                                    router.post(
-                                                        `${base}/lists/${list.id}/share-with-friends`,
-                                                        { friend_ids: picked },
-                                                        /*
-                                                          The panel stays open.
-                                                          It used to close, which
-                                                          hid the only evidence
-                                                          the press had worked —
-                                                          the names turning
-                                                          ticked and green. A
-                                                          control that closes and
-                                                          says nothing has done
-                                                          nothing, as far as the
-                                                          person pressing it can
-                                                          tell.
-                                                        */
-                                                        { preserveScroll: true },
-                                                    )
-                                                }}
-                                                className="mt-2"
-                                            >
-                                                {/*
-                                                  Names as chips, not a column of
-                                                  checkboxes.
-
-                                                  No explanatory line above them
-                                                  either. There was one, and it
-                                                  spent two sentences on what
-                                                  sharing does and does not do —
-                                                  above a control whose whole
-                                                  content is a row of names and a
-                                                  Send button. Picking names and
-                                                  pressing send is not a thing
-                                                  people need talking through,
-                                                  and the paragraph made a small
-                                                  control look like a decision.
-
-                                                  A checkbox per friend down the
-                                                  page put a panel taller than the
-                                                  list it was on inside a tool
-                                                  that is one of nine. Names are
-                                                  short and there are rarely many,
-                                                  so they wrap: the whole set is
-                                                  visible at once, which is what
-                                                  makes "who have I not sent this
-                                                  to" answerable by looking.
-                                                  The input stays a real checkbox,
-                                                  visually hidden — `peer-checked`
-                                                  colours the chip — so keyboard,
-                                                  focus and screen readers get the
-                                                  control they expect and the form
-                                                  still submits by name.
-                                                */}
-                                                <ul className="mt-2 flex flex-wrap gap-1.5">
-                                                    {friends.map((friend) => {
-                                                        const already = list.sharedWith.includes(friend.id)
-
-                                                        /*
-                                                          A name already shared
-                                                          is a button that takes
-                                                          it back, not a dead
-                                                          chip.
-
-                                                          Un-sharing had an
-                                                          endpoint and no way to
-                                                          reach it: the only
-                                                          control was a picker
-                                                          that could add, so the
-                                                          list of people who
-                                                          have your list was a
-                                                          list you could only
-                                                          ever grow. The chip is
-                                                          where somebody is
-                                                          already looking when
-                                                          they think "not her,
-                                                          actually".
-
-                                                          A `<button>` rather
-                                                          than the label, so it
-                                                          is not a form control
-                                                          pretending to be
-                                                          inert, and it submits
-                                                          nothing — this is a
-                                                          separate act with its
-                                                          own endpoint, and it
-                                                          must not ride along
-                                                          with Send.
-                                                        */
-                                                        if (already) {
-                                                            return (
-                                                                <li key={friend.id}>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            if (
-                                                                                !window.confirm(
-                                                                                    t('lists.unshare_confirm', {
-                                                                                        name: friend.name,
-                                                                                    }),
-                                                                                )
-                                                                            ) {
-                                                                                return
-                                                                            }
-
-                                                                            router.delete(
-                                                                                `${base}/lists/${list.id}/share-with-friends/${friend.id}`,
-                                                                                { preserveScroll: true },
-                                                                            )
-                                                                        }}
-                                                                        title={t('lists.unshare_from', {
-                                                                            name: friend.name,
-                                                                        })}
-                                                                        className="group inline-flex items-center gap-1 rounded-full border border-sage/40 bg-sage/10 px-2.5 py-1 text-xs text-ink-soft hover:border-accent hover:text-accent"
-                                                                    >
-                                                                        {/* The tick becomes a cross on
-                                                                            hover: the same spot, and it
-                                                                            says what pressing will do
-                                                                            rather than what is true. */}
-                                                                        <span aria-hidden className="text-sage group-hover:hidden">
-                                                                            ✓
-                                                                        </span>
-                                                                        <span aria-hidden className="hidden group-hover:inline">
-                                                                            ✕
-                                                                        </span>
-                                                                        {friend.name}
-                                                                    </button>
-                                                                </li>
-                                                            )
-                                                        }
-
-                                                        return (
-                                                            <li key={friend.id}>
-                                                                <label className="inline-flex cursor-pointer items-center rounded-full border border-line px-2.5 py-1 text-xs hover:border-ink has-[:checked]:border-sage has-[:checked]:bg-sage/15 has-[:checked]:font-medium">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        name="friend_ids"
-                                                                        value={friend.id}
-                                                                        className="sr-only"
-                                                                    />
-                                                                    {friend.name}
-                                                                </label>
-                                                            </li>
-                                                        )
-                                                    })}
-                                                </ul>
-
-                                                <button
-                                                    type="submit"
-                                                    className="mt-3 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white hover:bg-accent-dark"
-                                                >
-                                                    {t('lists.share_send')}
-                                                </button>
-                                            </form>
-                                        )}
-                                    </div>
-                                )}
-
                             </section>
 
                             {/*
-                              Everything that is true about the link, as a
-                              stack of switches.
+                              Share with friends: names you pick, not a switch.
 
-                              This was two blocks with two headings: the
-                              adding switch inside the link section, and a
-                              "Who sees what" section carrying a legend and
-                              a switch under it. Three settings, three
-                              levels of heading, and each heading naming a
-                              category rather than telling you anything the
-                              switch beside it did not already say.
+                              A friendship is made by opening a link; a boolean
+                              "my friends can see this" would grant access to
+                              people the owner never chose. Picking names is
+                              consent per person: each gets an email with the
+                              link and nobody else learns the list exists.
+                              Un-ticking somebody takes it off their page; it
+                              does not revoke the link, which is visibility's
+                              job.
 
-                              Under each other with no heading at all, they
-                              read as what they are: a short list of facts
-                              about this link, each with an on and an off.
-                              The panel is a link and the things that are
-                              true about it; a category name in front of one
-                              of them was scaffolding for a form this is not.
-
-                              Each condition is its own, because the three
-                              are answerable at different times: adding needs
-                              a live link, and the two claim questions need
-                              somebody else to be on the list at all — a
-                              privacy choice offered on a solo research list
-                              is a question about an audience of one, which
-                              reads as though somebody is already looking.
+                              The picker used to sit behind a button, on the
+                              argument that sharing by name is a deliberate act.
+                              It still is: nothing happens until Send. What the
+                              button added was a click between the owner and
+                              the names, and a section heading says what the
+                              chips are for better than a collapsed button did.
                             */}
+                            {list.shareUrl && access.isOwner && friends.length > 0 && (
+                                <section className="mt-8 border-t border-line pt-6">
+                                    <h3 className="text-sm font-medium">
+                                        {t('lists.share_with_friends')}
+                                        {list.sharedWith.length > 0 && (
+                                            <span className="ml-1 font-normal text-ink-soft">
+                                                ({list.sharedWith.length})
+                                            </span>
+                                        )}
+                                    </h3>
+                                    <p className="mt-1 text-xs text-ink-soft">{t('lists.share_with_friends_hint')}</p>
+                                    <form
+                                        onSubmit={(e) => {
+                                            e.preventDefault()
+                                            const picked = Array.from(
+                                                new FormData(e.currentTarget).getAll('friend_ids'),
+                                            ).map(Number)
+
+                                            if (picked.length === 0) {
+                                                return
+                                            }
+
+                                            router.post(
+                                                `${base}/lists/${list.id}/share-with-friends`,
+                                                { friend_ids: picked },
+                                                { preserveScroll: true },
+                                            )
+                                        }}
+                                        className="mt-3"
+                                    >
+                                        {/*
+                                          Names as chips, so the whole set is in
+                                          view and "who have I not sent this to"
+                                          is answerable by looking. A friend who
+                                          already has it is a tick that becomes
+                                          a cross on hover: the same spot, and
+                                          it acts rather than describes. The
+                                          input under an unsent chip is a real
+                                          checkbox, visually hidden, so keyboard
+                                          and screen reader get the native one.
+                                        */}
+                                        <ul className="flex flex-wrap gap-1.5">
+                                            {friends.map((friend) => {
+                                                const already = list.sharedWith.includes(friend.id)
+
+                                                if (already) {
+                                                    return (
+                                                        <li key={friend.id}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    if (
+                                                                        !window.confirm(
+                                                                            t('lists.unshare_confirm', {
+                                                                                name: friend.name,
+                                                                            }),
+                                                                        )
+                                                                    ) {
+                                                                        return
+                                                                    }
+
+                                                                    router.delete(
+                                                                        `${base}/lists/${list.id}/share-with-friends/${friend.id}`,
+                                                                        { preserveScroll: true },
+                                                                    )
+                                                                }}
+                                                                title={t('lists.unshare_from', {
+                                                                    name: friend.name,
+                                                                })}
+                                                                className="group inline-flex items-center gap-1 rounded-full border border-sage/40 bg-sage/10 px-2.5 py-1 text-xs text-ink-soft hover:border-accent hover:text-accent"
+                                                            >
+                                                                <span aria-hidden className="text-sage group-hover:hidden">
+                                                                    ✓
+                                                                </span>
+                                                                <span aria-hidden className="hidden group-hover:inline">
+                                                                    ✕
+                                                                </span>
+                                                                {friend.name}
+                                                            </button>
+                                                        </li>
+                                                    )
+                                                }
+
+                                                return (
+                                                    <li key={friend.id}>
+                                                        <label className="inline-flex cursor-pointer items-center rounded-full border border-line px-2.5 py-1 text-xs hover:border-ink has-[:checked]:border-sage has-[:checked]:bg-sage/15 has-[:checked]:font-medium">
+                                                            <input
+                                                                type="checkbox"
+                                                                name="friend_ids"
+                                                                value={friend.id}
+                                                                className="sr-only"
+                                                            />
+                                                            {friend.name}
+                                                        </label>
+                                                    </li>
+                                                )
+                                            })}
+                                        </ul>
+                                        <button
+                                            type="submit"
+                                            className="mt-3 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white hover:bg-accent-dark"
+                                        >
+                                            {t('lists.share_send')}
+                                        </button>
+                                    </form>
+                                </section>
+                            )}
+
                             {/*
-                              How a group gift collects.
-
-                              The pot only ever worked one way: each person types
-                              what they are putting in. Right for "chip in what
-                              you can", wrong for the commonest group gift there
-                              is — twelve colleagues, €10 each, done. Asking
-                              twelve people to type the same number is twelve
-                              chances to get a different one, and the organiser
-                              then chases the two who typed €5.
-
-                              A choice rather than a switch with a field hanging
-                              off it, because the two are genuinely different
-                              collections rather than one with an option. The
-                              amount appears under the option it belongs to and
-                              nowhere else, so the form never shows a field that
-                              means nothing yet.
-
-                              Written on blur, not per keystroke: this posts, and
-                              "€1, €12, €120" typed into a live-saving field is
-                              three settings saved and two of them wrong.
+                              What the link allows, as a short list of switches
+                              under one heading. Each is its own condition,
+                              because the three are answerable at different
+                              times: adding needs a live link on a list that is
+                              not about you (on your own wish list the holders
+                              are shopping for you, and "anyone can add" would
+                              invite them to write your list); the two group
+                              switches need a group. See the Wishlist model
+                              for what each defaults to when nobody has said.
                             */}
-                            {/*
-                              No heading, and no rule above it.
+                            {linkOptions && (
+                                <section className="mt-8 border-t border-line pt-6">
+                                    <h3 className="text-sm font-medium">{t('lists.link_settings')}</h3>
+                                    <div className="mt-3 space-y-2">
+                                        {list.shareUrl && list.kind !== 'mine' && (
+                                            <Option
+                                                type="checkbox"
+                                                checked={list.linkCanAdd}
+                                                onChange={() => setting({ link_can_add: ! list.linkCanAdd })}
+                                                label={t('lists.anyone_can_add')}
+                                                hint={t('lists.anyone_can_add_hint')}
+                                            />
+                                        )}
+                                        {/*
+                                          Names only, never amounts: the ladder
+                                          of who put in how much stays the
+                                          organiser's whatever this says. See
+                                          ContributionView.
+                                        */}
+                                        {list.kind === 'group' && (
+                                            <Option
+                                                type="checkbox"
+                                                checked={list.pledgersVisible}
+                                                onChange={() => setting({ pledgers_visible: ! list.pledgersVisible })}
+                                                label={t('lists.pledgers_visible')}
+                                                hint={t('lists.pledgers_visible_hint')}
+                                            />
+                                        )}
+                                        {/*
+                                          Switching voting off deletes nothing:
+                                          a vote is somebody's opinion, and
+                                          turning it back on shows the tally as
+                                          it was.
+                                        */}
+                                        {list.kind === 'group' && (
+                                            <Option
+                                                type="checkbox"
+                                                checked={list.votingEnabled}
+                                                onChange={() => setting({ voting_enabled: ! list.votingEnabled })}
+                                                label={t('lists.voting_enabled')}
+                                                hint={t('lists.voting_enabled_hint')}
+                                            />
+                                        )}
+                                    </div>
+                                </section>
+                            )}
 
-                              "How everyone chips in" named a category over two
-                              options that already say what they are, and the
-                              hairline above it drew a boundary between settings
-                              that are all one list of facts about one link. The
-                              panel is that list; the only heading left is the
-                              state at the top, which is not a setting.
+                            {/*
+                              How a group gift collects: a choice, not a switch
+                              with a field hanging off it, because "each names
+                              their own" and "everyone puts in the same" are
+                              two collections rather than one with an option.
+                              The amount appears under the option it belongs to
+                              and nowhere else, and is written on blur: this
+                              posts, and "€1, €12, €120" typed into a live field
+                              is three settings saved and two of them wrong.
                             */}
                             {access.isOwner && list.kind === 'group' && (
-                                <section>
-                                    <div className="space-y-2">
+                                <section className="mt-8 border-t border-line pt-6">
+                                    <h3 className="text-sm font-medium">{t('lists.pledge_mode')}</h3>
+                                    <div className="mt-3 space-y-2">
                                         <Option
                                             type="radio"
                                             name="pledge_mode"
@@ -988,33 +846,19 @@ export default function ListTools({
                                             onChange={() => setting({ pledge_amount: null })}
                                             label={t('lists.pledge_mode_each')}
                                         />
-
                                         <Option
                                             type="radio"
                                             name="pledge_mode"
                                             checked={list.pledgeAmount !== null}
-                                            /*
-                                              Choosing this needs a number to
-                                              become true at all, so the press
-                                              seeds one rather than writing null
-                                              and leaving the radio unable to
-                                              select itself. Ten is the amount
-                                              this setting exists for.
-                                            */
+                                            // Ten is the amount the field opens
+                                            // on, not a recommendation; the
+                                            // organiser overtypes it.
                                             onChange={() => setting({ pledge_amount: 10 })}
                                             label={t('lists.pledge_mode_fixed')}
                                         />
-
                                         {list.pledgeAmount !== null && (
                                             <label className="flex items-center gap-2 pl-3 text-sm">
-                                                {/*
-                                                  The symbol, from the market's
-                                                  own currency code rather than
-                                                  a hard-coded €: four markets
-                                                  today all use euros, and the
-                                                  fifth to be added would find
-                                                  this quietly wrong.
-                                                */}
+                                                {/* The market's currency sign, never a hard-coded €. */}
                                                 <span className="text-ink-soft">
                                                     {(0)
                                                         .toLocaleString(market.hrefLang, {
@@ -1049,198 +893,23 @@ export default function ListTools({
                                 </section>
                             )}
 
-                            {access.isOwner && (
-                                <section>
-                                    <div className="space-y-2">
-                                        {/*
-                                          Who may put something on it.
-
-                                          Not offered on a wish list of your
-                                          own: the people holding that link are
-                                          shopping for you, and "anyone can add
-                                          gifts" there would invite them to
-                                          write your list for you. On a group
-                                          list and on a list about somebody else
-                                          the holders are co-givers, adding is
-                                          half of what they are there for, and
-                                          the switch says so in those words
-                                          rather than in the language of
-                                          permissions.
-
-                                          It replaced a two-outcome choice
-                                          between additions going on straight
-                                          away and additions waiting for the
-                                          owner to accept them. The approval
-                                          queue is no longer offered — somebody
-                                          handed the link has already been
-                                          trusted with the list, and moderating
-                                          a queue is work invented by the
-                                          setting. `Wishlist::linkCanAdd()`
-                                          still answers per kind when nobody has
-                                          said, and a hand-written item still
-                                          waits regardless, because that is free
-                                          text arriving through a forwardable
-                                          link.
-                                        */}
-                                        {list.shareUrl && list.kind !== 'mine' && (
-                                            <Option
-                                                type="checkbox"
-                                                checked={list.linkCanAdd}
-                                                onChange={() =>
-                                                    setting({ link_can_add: ! list.linkCanAdd })
-                                                }
-                                                label={t('lists.anyone_can_add')}
-                                                /*
-                                                  What stays true when it is off.
-
-                                                  Suggesting never stops: the
-                                                  item waits for the owner
-                                                  instead of going straight on.
-                                                  Without the line, switching
-                                                  this off reads as closing the
-                                                  list to everybody, and the
-                                                  suggestion box further down
-                                                  the shared page looks like a
-                                                  contradiction rather than the
-                                                  other half of the same rule.
-                                                */
-                                                hint={t('lists.anyone_can_add_hint')}
-                                            />
-                                        )}
-
-                                        {/*
-                                          A group gift's question, and only its.
-
-                                          The pot said one number and one count
-                                          to everybody but the organiser: €140
-                                          from six people, and nothing about
-                                          which six. That is the right default
-                                          and it was the only answer, which made
-                                          it a rule — and it is not one. Six
-                                          colleagues buying a leaving present
-                                          mostly want to know whether the other
-                                          five are actually in.
-
-                                          The hint is the important half of the
-                                          label: this adds *who*, never how
-                                          much. Amounts stay the organiser's
-                                          whatever this says, because a visible
-                                          ladder is pressure on whoever put in
-                                          least — and a switch called "everyone
-                                          sees who is chipping in" would
-                                          otherwise be read as offering the
-                                          numbers too.
-                                        */}
-                                        {list.kind === 'group' && (
-                                            <Option
-                                                type="checkbox"
-                                                checked={list.pledgersVisible}
-                                                onChange={() =>
-                                                    setting({
-                                                        pledgers_visible: ! list.pledgersVisible,
-                                                    })
-                                                }
-                                                label={t('lists.pledgers_visible')}
-                                                hint={t('lists.pledgers_visible_hint')}
-                                            />
-                                        )}
-
-                                        {/*
-                                          Do the members choose the present?
-
-                                          On for every group list since voting
-                                          shipped, decided by the kind — a good
-                                          default and a bad rule. Half of these
-                                          are "we already know what we're
-                                          buying, here it is, chip in", and on
-                                          those the vote button under each
-                                          candidate invites a decision that has
-                                          been made, and reorders the shortlist
-                                          under somebody reading it.
-
-                                          Switching it off deletes nothing. A
-                                          vote is somebody's opinion, and
-                                          turning it back on shows the tally
-                                          exactly as it was.
-                                        */}
-                                        {list.kind === 'group' && (
-                                            <Option
-                                                type="checkbox"
-                                                checked={list.votingEnabled}
-                                                onChange={() =>
-                                                    setting({
-                                                        voting_enabled: ! list.votingEnabled,
-                                                    })
-                                                }
-                                                label={t('lists.voting_enabled')}
-                                                hint={t('lists.voting_enabled_hint')}
-                                            />
-                                        )}
-
-                                        {/*
-                                          Two switches used to sit here and both
-                                          are gone.
-
-                                          **"Show me what has been reserved"**
-                                          (`owner_sees_claims`) let the owner of
-                                          a wish list opt into seeing claims. The
-                                          rule is now absolute instead: the person
-                                          a list is for never sees what has been
-                                          taken, and never sees the board either
-                                          — see App\Services\Wishlist\Board.
-                                          A surprise you can switch off is one
-                                          people switch off and then regret, and
-                                          the switch itself told them there was
-                                          something to look at.
-
-                                          **"Names of who is buying what are
-                                          visible"** (`claim_visibility`) let a
-                                          list name its claimers to each other.
-                                          Removed with it: two settings about who
-                                          sees what, both read by everybody as
-                                          being about the same thing, sitting one
-                                          line apart.
-
-                                          Both columns still exist and still have
-                                          defaults — `mine` hides, `for_someone`
-                                          shows its co-givers, names stay
-                                          anonymous — so nothing about a list
-                                          already out there changes. What is gone
-                                          is the ability to talk it out of them.
-                                        */}
-                                    </div>
-                                </section>
-                            )}
-
                             {/*
                               The people who were let in one at a time, back
-                              when that was how sharing worked.
-
-                              Nothing creates collaborators any more, and people
-                              granted access that way still have it — so the
-                              owner keeps a way to take it back. Its own block
-                              with its own heading: it was a bare `<ul>` whose
-                              only explanation was an `aria-label` nobody
-                              sighted ever heard.
+                              when that was how sharing worked. Nothing creates
+                              collaborators any more, and people granted access
+                              that way still have it, so the owner keeps a way
+                              to take it back.
                             */}
                             {access.isOwner && collaborators.length > 0 && (
-                                <section className="border-t border-line pt-5">
-                                    <h3 className="text-sm font-medium">
-                                        {t('lists.invited_before')}
-                                    </h3>
-
+                                <section className="mt-8 border-t border-line pt-6">
+                                    <h3 className="text-sm font-medium">{t('lists.invited_before')}</h3>
                                     <ul className="mt-3 space-y-2">
                                         {collaborators.map((c) => (
-                                            <li
-                                                key={c.id}
-                                                className="flex items-center justify-between gap-3 text-sm"
-                                            >
+                                            <li key={c.id} className="flex items-center justify-between gap-3 text-sm">
                                                 <span>
                                                     {c.name}
                                                     <span className="ml-2 text-xs text-ink-soft">
-                                                        {c.role === 'editor'
-                                                            ? t('lists.role_editor')
-                                                            : t('lists.role_viewer')}
+                                                        {c.role === 'editor' ? t('lists.role_editor') : t('lists.role_viewer')}
                                                     </span>
                                                 </span>
                                                 <button
@@ -1262,24 +931,18 @@ export default function ListTools({
                             )}
 
                             {/*
-                              One confirmation for the whole panel, at the foot
-                              of it.
-
-                              Not one per control: four of these save the same
-                              way, and a "Saved" beside each would be four
-                              places for the same sentence to appear and four
-                              chances for a row to change height while somebody
-                              is reading it. The height is held whether or not
-                              there is anything to say, so a save never nudges
-                              the page.
+                              One confirmation for the switches, at the foot,
+                              holding its height so a save never nudges the
+                              panel. Only when there is a switch to confirm:
+                              a private wish list of your own has none, and
+                              held blank height under a single button was part
+                              of the gap this redesign removed.
                             */}
-                            <p
-                                role="status"
-                                aria-live="polite"
-                                className="h-4 text-xs text-ink-soft"
-                            >
-                                {saved !== 0 && t('lists.saved')}
-                            </p>
+                            {(linkOptions || (access.isOwner && list.kind === 'group')) && (
+                                <p role="status" aria-live="polite" className="mt-3 h-4 text-xs text-sage">
+                                    {saved !== 0 && t('lists.saved')}
+                                </p>
+                            )}
                         </div>
                     )}
 

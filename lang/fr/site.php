@@ -723,6 +723,9 @@ return [
         'cancel' => 'Annuler',
         'share_text' => 'Voici ma liste : :title',
         'share_with_friends' => 'Partager avec des amis',
+        'share_with_friends_hint' => 'Choisissez qui reçoit le lien par e-mail. Personne d’autre n’apprend que la liste existe.',
+        'enable_sharing' => 'Activer le partage',
+        'link_settings' => 'Ce que le lien permet',
         'share_send' => 'Envoyer',
         'unshare_from' => 'Ne plus partager avec :name',
         'unshare_confirm' => 'Ne plus partager cette liste avec :name ? Un lien déjà reçu fonctionne toujours.',
@@ -762,7 +765,7 @@ return [
         'suggest' => 'Montrez-moi des idées',
         'nothing_yet' => 'Rien pour le moment. Ajoutez la première chose.',
         'ask_them' => 'Demandez-leur directement',
-        'ask_them_hint' => 'Envoyez ce lien. Le destinataire peut suggérer des cadeaux, mais ne voit jamais ce que vous mettez sur la liste.',
+        'ask_them_hint' => 'Le destinataire peut suggérer des cadeaux, mais ne voit jamais ce que vous mettez sur la liste.',
     ],
     'santa' => [
 

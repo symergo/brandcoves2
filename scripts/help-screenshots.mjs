@@ -301,9 +301,9 @@ for (const { language, market, term } of MARKETS) {
     await shoot(page, out('6-share'), { ...shareClip, height: Math.min(shareClip.height, 360) })
 
     // 14. Sharing with friends, further down the same panel.
-    const withFriends = panel.getByRole('button', { name: L('lists.share_with_friends') }).first()
+    // A section with a heading since 2026-09-12, no longer a button to press.
+    const withFriends = panel.getByRole('heading', { name: L('lists.share_with_friends') }).first()
     await withFriends.scrollIntoViewIfNeeded()
-    await withFriends.click()
     await page.waitForTimeout(400)
     const friendsBox = await withFriends.boundingBox()
     await shoot(page, out('14-share-friends'), { x: 0, y: Math.max(0, friendsBox.y - 24), width: VIEWPORT.width, height: 360 })

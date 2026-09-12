@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react'
+import { Head, Link, usePage } from '@inertiajs/react'
 import { useEffect, useRef, useState } from 'react'
 import AddProduct from '../../Components/AddProduct'
 import Pledge, { type Contributions } from '../../Components/Pledge'
@@ -11,7 +11,6 @@ import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
-import { markRemoved } from '../../savedItems'
 import { useTranslations } from '../../useTranslations'
 
 interface Item {
@@ -439,7 +438,7 @@ export default function ListShow({
                               stay here, because the owner's two are genuinely
                               not the visitor's four.
                             */}
-                            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                            <ul className="mt-3 grid grid-cols-1 gap-3 sm:gap-4">
                                 {items.map((item) => (
                                     <ListItemCard
                                         key={item.id}
@@ -541,31 +540,15 @@ export default function ListShow({
                                                     </button>
                                                 )}
 
-                                                {access.isOwner && (
-                                                    <button
-                                                        // Asked first. Saving has an undo
-                                                        // toast; removing had nothing, and
-                                                        // the destructive half was the
-                                                        // cheaper press.
-                                                        onClick={() => {
-                                                            if (!confirm(t('lists.remove_confirm', { title: item.title }))) return
-
-                                                            router.delete(`${base}/list-items/${item.id}`, {
-                                                                preserveScroll: true,
-                                                                // Otherwise the bookmark on the
-                                                                // product page still reads as
-                                                                // saved after the item has gone.
-                                                                onSuccess: () =>
-                                                                    item.groupId !== null
-                                                                    && markRemoved(item.groupId),
-                                                            })
-                                                        }}
-                                                        aria-label={t('lists.remove')}
-                                                        className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card/90 text-ink-soft shadow-sm backdrop-blur transition hover:border-ink hover:text-accent lg:h-9 lg:w-9"
-                                                    >
-                                                        ✕
-                                                    </button>
-                                                )}
+                                                {/*
+                                                  No ✕ any more. The bookmark beside it is a
+                                                  toggle whose menu offers to take the item
+                                                  off this list, so the ✕ was the same act a
+                                                  second time, one that asked a question the
+                                                  toggle answers with an undo instead. On a
+                                                  group list it also crowded the vote button
+                                                  into the corner. Removed 2026-09-12.
+                                                */}
                                             </>
                                         }
                                     >

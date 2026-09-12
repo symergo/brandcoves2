@@ -183,8 +183,14 @@ the row and the manual show the same marks. Two were added for this: `settings` 
 shows: Share lights up when the list has a live link, and the add-a-product control is present or it
 is not. A badge captioning a control one line below it is the header explaining the row.
 
-The item grid also stopped dropping to two columns on a wide screen; three from `sm` up, on every
+The item grid is one column of full-row cards on every width. It was two columns on a phone, three
+from `sm` and two again from `lg`, and on a wide screen two narrow cards side by side read as a
+broken layout; a card with the picture left and the actions right is a row, and a row wants the
 width.
+
+The ✕ on each card went the same afternoon. The bookmark beside it is a toggle whose menu already
+takes an item off the list, with an undo rather than a confirm; the ✕ was that act a second time, and
+on a group list it pushed the vote button into the corner.
 
 The manual's steps moved with it, as they did the last two times this row changed: `registry_step1`
 now says press *Settings*, `handover_step2` says open *Share* and press *Hand over*, and
@@ -260,6 +266,34 @@ exactly the evidence they would have had if it had failed.
 One `role="status"` line at the foot of the panel, `lists.saved`, cleared after two and a half
 seconds. One rather than one per control: four of these save the same way, and the line holds its
 height whether or not it has anything to say, so saving never nudges the page.
+
+## The sharing panel, redrawn to match Settings (2026-09-12)
+
+The same afternoon the row became three buttons, the owner asked for the share card to be made
+consistent with the rest. Two things were wrong with it, and both were the same thing seen twice.
+
+**It had no headings.** The Settings panel next to it opens with a heading, a short form, a rule and
+the next heading; the share panel was one column of blocks with a fixed gap between them and no
+words above any block but the first. A radio pair about money, three switches and a list of people
+sat under each other with nothing saying which was which. The earlier note above argues headings
+were scaffolding for a form this is not; that held while the panel was a link and three switches,
+and stopped holding once hand-over and the recipient's suggestions moved in under it. Each block now
+carries an `h3` and a rule, in the order the decision is made: the link, who gets it by name, what
+it allows, how a group collects, who was invited before links existed, then hand over, then what the
+recipient asked for.
+
+**It rendered blocks that were empty.** The options section existed on every list and had nothing
+in it on a private wish list of your own, which is most lists, so the panel opened onto a sentence,
+a button and a hundred pixels of nothing; the "Saved" line held its height under a panel with no
+switch to save. `linkOptions` is the one fact both now hang on, and a section exists only when it
+has content.
+
+Two smaller changes came with it. The button that publishes the list says *Turn sharing on*
+(`lists.enable_sharing`) rather than *Share*, which was the word on the chip that had just been
+pressed. And the friends picker is a section rather than a button that revealed one: it still does
+nothing until Send, so the deliberateness the collapsed button was protecting is intact, and a
+heading with a hint (`lists.share_with_friends_hint`) says what the chips are for better than the
+button did.
 
 ## "How each one works" is its own page
 

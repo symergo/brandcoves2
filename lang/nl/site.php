@@ -726,6 +726,9 @@ return [
         'cancel' => 'Annuleren',
         'share_text' => 'Dit is mijn lijstje: :title',
         'share_with_friends' => 'Delen met vrienden',
+        'share_with_friends_hint' => 'Kies wie de link per e-mail krijgt. Niemand anders hoort dat de lijst bestaat.',
+        'enable_sharing' => 'Delen aanzetten',
+        'link_settings' => 'Wat de link toelaat',
         'share_send' => 'Versturen',
         'unshare_from' => 'Niet meer delen met :name',
         'unshare_confirm' => 'Dit lijstje niet meer delen met :name? Een link die ze al hebben blijft werken.',
@@ -765,7 +768,7 @@ return [
         'suggest' => 'Laat me ideeen zien',
         'nothing_yet' => 'Nog niets. Voeg het eerste toe.',
         'ask_them' => 'Vraag het hen zelf',
-        'ask_them_hint' => 'Stuur deze link. De ontvanger kan cadeausuggesties doen, maar ziet nooit wat jij op de lijst zet.',
+        'ask_them_hint' => 'De ontvanger kan cadeausuggesties doen, maar ziet nooit wat jij op de lijst zet.',
     ],
     'santa' => [
 
