@@ -507,19 +507,14 @@ export default function ListTools({
                         >
                             <ToolIcon name={tab.icon} className="h-4 w-4 shrink-0" />
                             {/*
-                              A dot as well as the colour. Colour alone is not
-                              a state anybody can rely on — and these chips
-                              scroll past at a glance, where a filled dot reads
-                              faster than a tint does.
+                              The colour says whether the tool is switched on;
+                              a filled dot used to say it too, from before the
+                              chips had icons. With an icon in front of every
+                              label the dot was a third mark for one fact, and
+                              the owner asked for it to go. The words below
+                              still carry the state for a reader who gets no
+                              colour at all.
                             */}
-                            {tab.set && (
-                                <span
-                                    aria-hidden
-                                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                                        open === tab.key ? 'bg-accent' : 'bg-sage'
-                                    }`}
-                                />
-                            )}
                             {tab.label}
                             {/* And in words, for a reader who gets neither. */}
                             {tab.set && <span className="sr-only"> — {t('lists.tool_on')}</span>}
