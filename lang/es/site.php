@@ -201,7 +201,6 @@ return [
         'discounted_only' => 'Solo con descuento',
         // Consulta la explicación de estas claves en lang/en/site.php.
         'amazon_search' => 'Busca :term también en Amazon',
-        'amazon_search_any' => 'Prueba a buscar en Amazon',
         'previous' => 'Anterior',
         'next' => 'Siguiente',
         'page_of' => 'Página :current de :last',

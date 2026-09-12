@@ -202,7 +202,6 @@ return [
         'discounted_only' => 'En promotion uniquement',
         // Voir l'explication de ces clés dans lang/en/site.php.
         'amazon_search' => 'Cherchez aussi :term sur Amazon',
-        'amazon_search_any' => 'Essayez de chercher sur Amazon',
         'previous' => 'Précédent',
         'next' => 'Suivant',
         'page_of' => 'Page :current sur :last',

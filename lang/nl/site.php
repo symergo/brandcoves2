@@ -201,7 +201,6 @@ return [
         'discounted_only' => 'Alleen met korting',
         // Zie de toelichting bij deze sleutels in lang/en/site.php.
         'amazon_search' => 'Zoek :term ook op Amazon',
-        'amazon_search_any' => 'Probeer eens bij Amazon te zoeken',
         'previous' => 'Vorige',
         'next' => 'Volgende',
         'page_of' => 'Pagina :current van :last',

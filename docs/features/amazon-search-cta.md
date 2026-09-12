@@ -86,6 +86,9 @@ middle of a button costs the click.
 - **Search:** the foot of the filter rail. It is an alternative to the whole page, not to any
   product on it; in the grid it would compete with the offers we do carry, which are the ones a
   click here should be worth *less* than. The by-store view has no rail, so it carries no link.
+  Only when the URL carries a term. Since 2026-09-12 the page before anything is typed gets no
+  link at all: `SearchController` sends null, so neither the rail nor the empty state can offer
+  the bare storefront under "try searching on Amazon". The generic label was removed with it.
 - **Brand:** the same place in the same rail, searching the brand plus whatever term chips are
   narrowing the page — a visitor who has clicked down to "Sony koptelefoon" hands that across rather
   than starting again at "Sony".

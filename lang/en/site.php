@@ -264,7 +264,6 @@ return [
         'amazon_search' => 'Search :term on Amazon too',
         // Shown where there is no term to quote: the search page before
         // anything is typed. Not the same sentence with an empty gap in it.
-        'amazon_search_any' => 'Try searching on Amazon',
         'previous' => 'Previous',
         'next' => 'Next',
         'page_of' => 'Page :current of :last',
