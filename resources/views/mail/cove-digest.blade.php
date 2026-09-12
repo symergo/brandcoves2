@@ -56,6 +56,4 @@
 {{ __('site.cove_mail.why_receiving') }}
 <a href="{{ $unsubscribeUrl }}">{{ __('site.cove_mail.unsubscribe') }}</a>
 </small>
-
-<small>{{ __('site.footer.affiliate') }}</small>
 </x-mail::message>
