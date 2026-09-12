@@ -108,7 +108,8 @@ Editable-in-admin copy is a different system: `app/Services/Pages/` plus the `Pa
 Filament 5 at `/admin`, gated on `users.is_admin`.
 
 - **Resources** (CRUD over a model): AiUsage, ApiTokens, CommunityPosts, CoveEditorials, CovePlans,
-  Feedback, Feeds, GuideTopics, IngestionJobs, Merchants, ModeProfiles, Products, PromptTemplates
+  Feedback, Feeds, GuideTopics, IngestionJobs, Merchants, ModeProfiles, Products, PromptTemplates,
+  Users (Operations > Accounts: find a person, grant or remove panel access, delete an account)
 - **Pages** (custom): AiSettings, DiscoverAwinFeeds, EditPageTemplate, MarketSupply, MarketTrends,
   Migration
 
