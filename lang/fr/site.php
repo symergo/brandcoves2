@@ -660,7 +660,7 @@ return [
         'sent' => 'Acheté',
         'progress' => ':claimed sur :total réservés',
         'asked_none' => ":name n'a encore rien mis sur une liste.",
-        'ask_tab' => 'Demander à :name',
+        'ask_tab' => 'Demander des suggestions à :name',
         'collaborator_removed' => 'Retiré.',
         'who_sees_what' => 'Qui voit quoi',
         'share_link' => 'Le lien vers cette liste',
@@ -762,7 +762,7 @@ return [
         'suggest' => 'Montrez-moi des idées',
         'nothing_yet' => 'Rien pour le moment. Ajoutez la première chose.',
         'ask_them' => 'Demandez-leur directement',
-        'ask_them_hint' => 'Envoyez ce lien. Ils remplissent leurs propres goûts et ne voient jamais ce que vous avez choisi.',
+        'ask_them_hint' => 'Envoyez ce lien. Le destinataire peut suggérer des cadeaux, mais ne voit jamais ce que vous mettez sur la liste.',
     ],
     'santa' => [
 

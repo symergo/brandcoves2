@@ -663,7 +663,7 @@ return [
         'sent' => 'Gekocht',
         'progress' => ':claimed van :total geclaimd',
         'asked_none' => ':name heeft nog niets op een lijstje gezet.',
-        'ask_tab' => 'Vraag :name',
+        'ask_tab' => 'Vraag suggesties aan :name',
         'collaborator_removed' => 'Verwijderd.',
         'who_sees_what' => 'Wie ziet wat',
         'share_link' => 'De link naar deze lijst',
@@ -765,7 +765,7 @@ return [
         'suggest' => 'Laat me ideeen zien',
         'nothing_yet' => 'Nog niets. Voeg het eerste toe.',
         'ask_them' => 'Vraag het hen zelf',
-        'ask_them_hint' => 'Stuur deze link. Zij vullen hun eigen voorkeuren in en zien nooit wat jij hebt uitgekozen.',
+        'ask_them_hint' => 'Stuur deze link. De ontvanger kan cadeausuggesties doen, maar ziet nooit wat jij op de lijst zet.',
     ],
     'santa' => [
 

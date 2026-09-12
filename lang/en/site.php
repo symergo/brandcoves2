@@ -792,7 +792,7 @@ return [
         'sent' => 'Bought',
         'progress' => ':claimed of :total claimed',
         'asked_none' => ':name has not put anything on a list yet.',
-        'ask_tab' => 'Ask :name',
+        'ask_tab' => 'Ask :name for suggestions',
         'collaborator_removed' => 'Removed.',
         'who_sees_what' => 'Who sees what',
         'share_link' => 'The link to this list',
@@ -906,7 +906,7 @@ return [
         'suggest' => 'Show me ideas',
         'nothing_yet' => 'Nothing here yet. Add the first thing.',
         'ask_them' => 'Ask them what they want',
-        'ask_them_hint' => 'Send this link. They fill in their own tastes and never see what you picked.',
+        'ask_them_hint' => 'Send this link. The recipient can suggest gifts, but never sees what you put on the list.',
     ],
     /*
     |--------------------------------------------------------------------------
