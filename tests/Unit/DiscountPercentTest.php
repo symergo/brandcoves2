@@ -10,16 +10,16 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The discount badge is a claim, and every case here is about not overstating
- * it. Measured against our own 30-day median, never a merchant's "was" price.
+ * it. Measured against the offer's previous price, never a merchant's "was" price.
  *
  * Unsaved models: this is arithmetic on two columns and nothing else, so the
  * database would only make it slower.
  */
 class DiscountPercentTest extends TestCase
 {
-    private function group(?int $min, ?int $median): ProductGroup
+    private function group(?int $min, ?int $previous): ProductGroup
     {
-        return new ProductGroup(['min_price' => $min, 'median_price' => $median]);
+        return new ProductGroup(['min_price' => $min, 'previous_price' => $previous]);
     }
 
     #[Test]
@@ -39,16 +39,16 @@ class DiscountPercentTest extends TestCase
     }
 
     #[Test]
-    public function a_price_at_or_above_the_median_is_not_a_discount(): void
+    public function a_price_at_or_above_the_previous_one_is_not_a_discount(): void
     {
         $this->assertNull($this->group(10000, 10000)->discountPercent());
         $this->assertNull($this->group(12000, 10000)->discountPercent());
     }
 
     #[Test]
-    public function it_is_null_without_a_median_to_compare_against(): void
+    public function it_is_null_without_a_previous_price_to_compare_against(): void
     {
-        // A product we have not held a price history for yet.
+        // An offer whose price has never changed since we first saw it.
         $this->assertNull($this->group(8000, null)->discountPercent());
         $this->assertNull($this->group(null, 10000)->discountPercent());
     }

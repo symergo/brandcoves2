@@ -265,7 +265,7 @@ return [
         'compare' => 'Vergelijk :count aanbiedingen',
         'all_offers' => 'Alle aanbiedingen',
         'go_to_shop' => 'Naar de winkel',
-        'typical_price' => 'Gebruikelijke prijs :price',
+        'typical_price' => 'Eerder :price',
         'barcode' => 'Streepjescode',
         // Zie de toelichting bij deze sleutels in lang/en/site.php.
         'description_heading' => 'Over dit product',
@@ -1635,7 +1635,7 @@ return [
             'Je wist niet dat je dit nodig had',
         ],
         'deals_title' => 'Grootste dalers van nu',
-        'deals_hint' => 'Gemeten tegen onze eigen mediaan over 30 dagen, niet tegen een doorgestreepte winkelprijs.',
+        'deals_hint' => 'Gemeten tegen de vorige prijs van de aanbieding, niet tegen een doorgestreepte winkelprijs.',
     ],
 
     'guides' => [
@@ -1704,7 +1704,7 @@ return [
     'entity_rails' => [
         'discounts' => [
             'title' => 'Nu in prijs gedaald',
-            'blurb' => 'Gemeten tegen de mediaanprijs van de afgelopen dertig dagen, niet tegen een doorgestreepte adviesprijs.',
+            'blurb' => 'Gemeten tegen de prijs die de aanbieding had vóór de laatste wijziging, niet tegen een doorgestreepte adviesprijs.',
         ],
         'popular' => [
             'title' => 'Veel verkocht',

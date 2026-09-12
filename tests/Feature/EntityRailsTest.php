@@ -420,12 +420,12 @@ class EntityRailsTest extends TestCase
             'image_url' => 'https://img.test/x.jpg',
             'min_price' => $price,
             /*
-             * A discount is measured against the 30-day median rather than a
+             * A discount is measured against the previous price rather than a
              * merchant's "was" price, so that is what a fixture sets. A null
              * median is a product with no price history and therefore no
              * discount to announce.
              */
-            'median_price' => $discount === null ? null : (int) round($price / (1 - $discount / 100)),
+            'previous_price' => $discount === null ? null : (int) round($price / (1 - $discount / 100)),
             'merchant_count' => 1,
             'in_stock' => true,
             'giftable' => true,

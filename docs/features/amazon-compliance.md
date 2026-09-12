@@ -187,7 +187,7 @@ cheaper to honour now than to retrofit:
 1. `Source` gained `allowsPriceHistory()`, `allowsPriceAlerts()`,
    `allowsEmail()`, `requiresPriceTimestamp()` and `maxPriceAgeSeconds()`
    alongside the existing `allowsCatalogueStorage()`.
-2. `OfferUpserter` skips `price_history` for sources that disallow it.
+2. `ProductGrouper` takes a group's previous price from trackable sources only, so an Amazon price never becomes a discount reference.
 3. Alert buttons are only offered where `allowsPriceAlerts()`.
 4. Mailables filter their contents through `allowsEmail()`.
 5. Tests assert each of the above, so an Amazon offer cannot acquire a price

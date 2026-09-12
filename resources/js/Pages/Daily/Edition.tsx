@@ -327,7 +327,7 @@ export default function Edition({ preview = false, edition, finds, guide, deals,
 
               "Newest highest" is two orderings that fight — the deepest
               discount may be a month old — so it is sorted by discount inside a
-              recency window. Every figure is against our own 30-day median,
+              recency window. Every figure is against our own previous price,
               never a shop's crossed-out price.
             */}
             {deals.length > 0 && (

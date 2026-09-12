@@ -81,7 +81,7 @@ class PageCopyRenderTest extends TestCase
                 'image_url' => "https://example.test/{$i}.jpg",
                 'min_price' => 9900 + ($i * 1000),
                 'max_price' => 12900,
-                'median_price' => 14900,
+                'previous_price' => 14900,
                 'offer_count' => 2,
                 'merchant_count' => 2,
                 'in_stock' => true,
@@ -440,7 +440,7 @@ class PageCopyRenderTest extends TestCase
                 // Median equals minimum: nothing here is reduced.
                 'min_price' => 9900,
                 'max_price' => 9900,
-                'median_price' => 9900,
+                'previous_price' => 9900,
                 'offer_count' => 1,
                 'merchant_count' => 1,
                 'in_stock' => true,

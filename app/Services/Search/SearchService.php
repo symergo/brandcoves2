@@ -129,10 +129,10 @@ class SearchService
         }
 
         if ($query->discountedOnly) {
-            // Measured against our own 30-day median, never a merchant's "was"
+            // Measured against our own previous price, never a merchant's "was"
             // price, which is frequently fiction.
-            $groups->whereNotNull('median_price')
-                ->whereColumn('min_price', '<', 'median_price');
+            $groups->whereNotNull('previous_price')
+                ->whereColumn('min_price', '<', 'previous_price');
         }
 
         return $this->applySort($groups, $query);
@@ -243,8 +243,8 @@ class SearchService
             'price_desc' => $groups->orderByDesc('min_price')->orderBy('id'),
             'newest' => $groups->orderByDesc('first_seen_at')->orderBy('id'),
             'discount' => $groups
-                ->whereNotNull('median_price')
-                ->orderByRaw('(median_price - min_price)::float / NULLIF(median_price, 0) DESC NULLS LAST')
+                ->whereNotNull('previous_price')
+                ->orderByRaw('(previous_price - min_price)::float / NULLIF(previous_price, 0) DESC NULLS LAST')
                 ->orderBy('id'),
             default => $this->orderByRelevance($groups, $query),
         };

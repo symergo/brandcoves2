@@ -349,7 +349,7 @@ return [
         'compare' => 'Compare :count offers',
         'all_offers' => 'All offers',
         'go_to_shop' => 'Go to shop',
-        'typical_price' => 'Typical price :price',
+        'typical_price' => 'Previously :price',
         'barcode' => 'Barcode',
         /*
          * The Amazon hand-off, product-page wording.
@@ -1846,7 +1846,7 @@ return [
             'You did not know you needed this',
         ],
         'deals_title' => 'Biggest drops right now',
-        'deals_hint' => 'Against our own 30-day median, not a shop’s crossed-out price.',
+        'deals_hint' => 'Against the price the offer had before, not a shop’s crossed-out price.',
     ],
 
     'guides' => [
@@ -1914,7 +1914,7 @@ return [
     'entity_rails' => [
         'discounts' => [
             'title' => 'Down in price now',
-            'blurb' => 'Measured against the median price of the last thirty days, not against a struck-through list price.',
+            'blurb' => 'Measured against the price the offer had before its last change, not against a struck-through list price.',
         ],
         'popular' => [
             'title' => 'Frequently bought',

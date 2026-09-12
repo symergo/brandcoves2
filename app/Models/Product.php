@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * An OFFER: one merchant selling one thing in one market.
@@ -72,12 +71,6 @@ class Product extends Model
     public function feed(): BelongsTo
     {
         return $this->belongsTo(Feed::class);
-    }
-
-    /** @return HasMany<PriceHistory, $this> */
-    public function priceHistory(): HasMany
-    {
-        return $this->hasMany(PriceHistory::class);
     }
 
     /** @param Builder<$this> $query */

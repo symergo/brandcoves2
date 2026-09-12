@@ -219,19 +219,19 @@ final readonly class EntityRails
          * The same rule as `ProductGroup::discountPercent()`, in SQL.
          *
          * There is no `discount_percent` column: a discount is measured against
-         * the **30-day median** rather than a merchant-supplied "was" price,
+         * the **previous price** rather than a merchant-supplied "was" price,
          * which is frequently fiction. Ordering needs it in the database, and
          * the floor is repeated rather than approximated — a saving that floors
          * to zero is not a saving, and a rail that showed one would be claiming
          * nothing while looking exactly like a rail claiming something.
          */
-        $drop = '(product_groups.median_price - product_groups.min_price)::numeric / product_groups.median_price';
+        $drop = '(product_groups.previous_price - product_groups.min_price)::numeric / product_groups.previous_price';
 
         return $this->present(
             $this->base($market, $scope)
-                ->whereNotNull('median_price')
-                ->where('median_price', '>', 0)
-                ->whereColumn('min_price', '<', 'median_price')
+                ->whereNotNull('previous_price')
+                ->where('previous_price', '>', 0)
+                ->whereColumn('min_price', '<', 'previous_price')
                 ->whereRaw("floor({$drop} * 100) > 0")
                 ->orderByRaw("{$drop} desc")
                 ->limit(self::PER_RAIL)

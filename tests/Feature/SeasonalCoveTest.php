@@ -53,7 +53,7 @@ class SeasonalCoveTest extends TestCase
                 'image_url' => "https://example.test/{$noun}-{$i}.jpg",
                 'min_price' => 4900,
                 'max_price' => 8900,
-                'median_price' => 8900,
+                'previous_price' => 8900,
                 'offer_count' => 1,
                 'merchant_count' => 1,
                 'in_stock' => true,

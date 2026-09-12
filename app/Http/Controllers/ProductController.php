@@ -88,7 +88,7 @@ class ProductController extends Controller
                 'category' => $productGroup->category,
                 'minPrice' => $productGroup->min_price,
                 'maxPrice' => $productGroup->max_price,
-                'medianPrice' => $productGroup->median_price,
+                'previousPrice' => $productGroup->previous_price,
                 'discountPercent' => $productGroup->discountPercent(),
                 'inStock' => $productGroup->in_stock,
                 'merchantCount' => $productGroup->merchant_count,
@@ -300,7 +300,8 @@ class ProductController extends Controller
     /*
      * The 90-day price chart used to be built here.
      *
-     * Removed from the product page on request. `price_history` itself stays —
+     * Removed from the product page on request. `price_history` itself went
+     * later (2026-09-12, three prices on the offer row instead) —
      * it is what the 30-day median is computed from, and the median drives the
      * discount badge and the alert thresholds — so the table, the ingest write
      * and the pruning job are all unchanged. What is gone is the chart and the

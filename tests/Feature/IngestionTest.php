@@ -16,6 +16,8 @@ use App\Models\IngestionJob;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Services\Connectors\Offer;
+use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -183,16 +185,48 @@ class IngestionTest extends TestCase
     }
 
     #[Test]
-    public function price_history_records_one_sample_per_day(): void
+    public function an_offer_keeps_its_first_and_previous_price_instead_of_a_history(): void
     {
-        $this->ingest();
-        // A second run in the same day must not add a second sample.
-        $this->ingest();
-
-        $this->assertSame(
-            Product::query()->whereNotNull('price')->count(),
-            \DB::table('price_history')->count(),
+        $upserter = app(OfferUpserter::class);
+        $offer = fn (int $price): Offer => new Offer(
+            source: Source::Awin,
+            externalId: 'three-prices',
+            market: Market::BeNl,
+            title: 'Sony WH-1000XM5',
+            affiliateUrl: 'https://example.test/three-prices',
+            price: $price,
+            merchantName: 'Shop',
+            merchantExternalId: 'shop',
+            availability: Availability::InStock,
         );
+
+        $upserter->upsert([$offer(34900)]);
+        $row = Product::query()->where('external_id', 'three-prices')->firstOrFail();
+
+        // First seen: the first price is today's and there is no previous one.
+        $this->assertSame(34900, $row->first_price);
+        $this->assertNull($row->previous_price);
+        $this->assertNull($row->price_changed_at);
+
+        // The same price again: nothing moves. This is the case that used to
+        // write a row a day into price_history for no information.
+        $upserter->upsert([$offer(34900)]);
+        $row->refresh();
+        $this->assertNull($row->previous_price);
+
+        // A change: the old price becomes the previous one; the first stays.
+        $upserter->upsert([$offer(29900)]);
+        $row->refresh();
+        $this->assertSame(29900, $row->price);
+        $this->assertSame(34900, $row->previous_price);
+        $this->assertSame(34900, $row->first_price);
+        $this->assertNotNull($row->price_changed_at);
+
+        // Another: only the last change is remembered, by design.
+        $upserter->upsert([$offer(31900)]);
+        $row->refresh();
+        $this->assertSame(29900, $row->previous_price);
+        $this->assertSame(34900, $row->first_price);
     }
 
     #[Test]

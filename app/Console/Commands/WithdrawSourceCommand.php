@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\DB;
  *
  * {@see ProductStatus::Excluded} already means "deliberately suppressed — bad
  * data, hazmat, or an admin decision", which is precisely what this is. Deleting
- * would cascade into `price_history` and strand the wish lists and published
+ * would strand the wish lists and published
  * editorial that point at the groups these offers belong to — the case
  * {@see ProductStatus::Stale} exists to prevent. Excluding is one UPDATE, and
  * `--restore` is the other.

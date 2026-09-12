@@ -66,14 +66,13 @@ between two equally-priced merchants produces pointless cache invalidation and a
 
 ## Prices are integer cents
 
-Floats accumulate error across exactly the min and median aggregates that drive "cheapest offer" and
+Floats accumulate error across exactly the min and previous-price aggregates that drive "cheapest offer" and
 discount badges. Both have to be exactly right, and a check constraint forbids negatives — a negative
 price would sort straight to the top of every cheapest-offer query.
 
-## Discounts measured against our own median
+## Discounts measured against the offer's previous price
 
-`ProductGroup::discountPercent()` compares `min_price` against the **30-day median from
-`price_history`**, not against a merchant-supplied "was" price. Some merchants inflate the reference
+`ProductGroup::discountPercent()` compares `min_price` against the **previous price of the offer the group links to** (a 30-day median from a price history until 2026-09-12), not against a merchant-supplied "was" price. Some merchants inflate the reference
 price so everything looks discounted; `merchants.trusts_reference_price` flags those, and the Daily
 Picks discount lane excludes them.
 

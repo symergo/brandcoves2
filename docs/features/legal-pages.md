@@ -44,7 +44,7 @@ What survived the reframing, deliberately:
   `LegalPagesTest` asserts the section exists.
 - **The accuracy disclaimer in Terms §4.** Prices are shown, so they have to be qualified: the
   retailer's page is authoritative, and nothing here is an offer capable of acceptance.
-- **The discount-badge explanation.** Our badge measures against our own 30-day median, not a
+- **The discount-badge explanation.** Our badge measures against the price the offer had before its last change, not a
   retailer's crossed-out "was" price. Article 6a of Directive 98/6/EC binds the seller announcing
   the reduction, which is not us, but stating the basis of our own badge is what keeps it honest.
 

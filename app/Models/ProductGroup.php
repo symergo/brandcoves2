@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $identity_key
  * @property IdentityKind $identity_kind
  * @property int|null $min_price cents
- * @property int|null $median_price cents
+ * @property int|null $previous_price cents, the best offer's price before its last change
  */
 class ProductGroup extends Model
 {
@@ -134,25 +134,26 @@ class ProductGroup extends Model
     }
 
     /**
-     * Discount against the 30-day median rather than a merchant-supplied "was"
-     * price, which is frequently fiction.
+     * Discount against the previous price of the offer we link to, rather
+     * than a merchant-supplied "was" price, which is frequently fiction. It
+     * was a 30-day median until 2026-09-12; see docs/features/ingestion.md.
      */
     public function discountPercent(): ?int
     {
-        if ($this->median_price === null || $this->min_price === null) {
+        if ($this->previous_price === null || $this->min_price === null) {
             return null;
         }
-        if ($this->median_price <= 0 || $this->min_price >= $this->median_price) {
+        if ($this->previous_price <= 0 || $this->min_price >= $this->previous_price) {
             return null;
         }
 
         // Floor, never round: a badge must not overstate a saving we would then
         // have to defend.
-        $percent = (int) floor((($this->median_price - $this->min_price) / $this->median_price) * 100);
+        $percent = (int) floor((($this->previous_price - $this->min_price) / $this->previous_price) * 100);
 
         // A saving of less than one percent floors to zero, and "0% off" is a
         // badge that claims nothing while looking exactly like one that claims
-        // something. The price is a few cents under the median; there is no
+        // something. The price is a few cents under the previous one; there is no
         // discount to announce, so there is no badge.
         return $percent > 0 ? $percent : null;
     }

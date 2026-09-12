@@ -112,8 +112,8 @@ class BrandStats
      */
     private function aggregate(Market $market): array
     {
-        $discount = '((median_price - min_price)::numeric / median_price) * 100';
-        $isDiscounted = 'median_price IS NOT NULL AND min_price IS NOT NULL AND median_price > 0 AND min_price < median_price';
+        $discount = '((previous_price - min_price)::numeric / previous_price) * 100';
+        $isDiscounted = 'previous_price IS NOT NULL AND min_price IS NOT NULL AND previous_price > 0 AND min_price < previous_price';
 
         $rows = DB::table('product_groups')
             ->selectRaw('brand')

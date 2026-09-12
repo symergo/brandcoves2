@@ -57,7 +57,7 @@ class DailyDealsTest extends TestCase
             'worth_showing' => true,
             'merchant_count' => 2,
             'min_price' => 5000,
-            'median_price' => 10000,
+            'previous_price' => 10000,
         ], $overrides));
     }
 
@@ -72,8 +72,8 @@ class DailyDealsTest extends TestCase
     #[Test]
     public function a_cheap_thing_with_a_huge_percentage_is_not_a_deal(): void
     {
-        $this->group(['title' => 'Phone case', 'min_price' => 470, 'median_price' => 2584]);
-        $this->group(['title' => 'Coffee machine', 'min_price' => 3999, 'median_price' => 8495]);
+        $this->group(['title' => 'Phone case', 'min_price' => 470, 'previous_price' => 2584]);
+        $this->group(['title' => 'Coffee machine', 'min_price' => 3999, 'previous_price' => 8495]);
 
         // 81% off a phone case outranks 52% off a coffee machine on percentage
         // and is the worse thing to show a reader.
@@ -85,8 +85,8 @@ class DailyDealsTest extends TestCase
     {
         // Over the price floor, but €6 saved. The percentage is doing all the
         // work and there is no money behind it.
-        $this->group(['title' => 'Barely', 'min_price' => 2400, 'median_price' => 3000]);
-        $this->group(['title' => 'Properly', 'min_price' => 4000, 'median_price' => 6000]);
+        $this->group(['title' => 'Barely', 'min_price' => 2400, 'previous_price' => 3000]);
+        $this->group(['title' => 'Properly', 'min_price' => 4000, 'previous_price' => 6000]);
 
         $this->assertSame(['Properly'], $this->deals());
     }
@@ -133,7 +133,7 @@ class DailyDealsTest extends TestCase
             'worth_showing' => true,
             'giftable_reason' => 'too_expensive',
             'min_price' => 70000,
-            'median_price' => 100000,
+            'previous_price' => 100000,
         ]);
 
         $this->assertSame(['Espresso machine'], $this->deals());
@@ -159,11 +159,11 @@ class DailyDealsTest extends TestCase
                 'title' => "Cover {$i}",
                 'brand' => 'Samsung',
                 'min_price' => $price,
-                'median_price' => 20000,
+                'previous_price' => 20000,
             ]);
         }
 
-        $this->group(['title' => 'Something else', 'brand' => 'Sony', 'min_price' => 5000, 'median_price' => 9000]);
+        $this->group(['title' => 'Something else', 'brand' => 'Sony', 'min_price' => 5000, 'previous_price' => 9000]);
 
         $deals = $this->deals();
 
@@ -239,7 +239,7 @@ class DailyDealsTest extends TestCase
     public function the_column_is_capped(): void
     {
         foreach (range(1, 12) as $i) {
-            $this->group(['min_price' => 5000 + $i, 'median_price' => 12000]);
+            $this->group(['min_price' => 5000 + $i, 'previous_price' => 12000]);
         }
 
         $this->assertCount((int) config('giftcoves.deals.limit'), $this->deals());

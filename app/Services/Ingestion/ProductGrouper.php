@@ -208,35 +208,29 @@ class ProductGrouper
                     p.price ASC NULLS LAST,
                     p.id ASC
             ),
-            median AS (
-                -- The reference for discount badges. Our own 30-day median,
-                -- never a merchant-supplied "was" price, which is frequently
-                -- fiction.
+            previous AS (
+                -- The reference for discount badges: the price the offer we
+                -- link to had before its last change. Until 2026-09-12 this
+                -- was a 30-day median over price_history; the owner chose not
+                -- to keep a history, so an offer carries first, previous and
+                -- current price on its own row and the group quotes the
+                -- previous price of its best offer, the way the price-drop
+                -- mails put it: "was €189, now €149".
                 --
-                -- COMPLIANCE: sources that disallow price tracking are excluded.
-                -- Storing their history is permitted; building a visitor-facing
-                -- price-tracking feature on it is not, and the discount badge is
-                -- exactly that — "12% off" is a claim about a price over time.
-                -- Filtered here rather than at read time because the median is
-                -- denormalised onto product_groups and read from a dozen places.
-                -- See docs/features/amazon-compliance.md.
-                SELECT
-                    p.group_id,
-                    percentile_cont(0.5) WITHIN GROUP (ORDER BY h.price)::int AS median_price
-                FROM price_history h
-                JOIN products p ON p.id = h.product_id
-                WHERE p.group_id IS NOT NULL
-                  AND p.market = ?
-                  AND p.source IN (%TRACKABLE_SOURCES%)
-                  AND h.captured_on >= current_date - interval '30 days'
-                GROUP BY p.group_id
+                -- Trackable sources only, for the same reason the median was:
+                -- an Amazon price may not drive a discount claim. See
+                -- docs/features/amazon-compliance.md.
+                SELECT b.group_id, p.previous_price
+                FROM best b
+                JOIN products p ON p.id = b.best_offer_id
+                WHERE p.source IN (%TRACKABLE_SOURCES%)
             )
             UPDATE product_groups g
             SET offer_count    = stats.offer_count,
                 merchant_count = stats.merchant_count,
                 min_price      = stats.min_price,
                 max_price      = stats.max_price,
-                median_price   = median.median_price,
+                previous_price = previous.previous_price,
                 in_stock       = stats.in_stock,
                 best_offer_id  = best.best_offer_id,
                 title          = display.title,
@@ -247,7 +241,7 @@ class ProductGrouper
             FROM stats
             JOIN best ON best.group_id = stats.group_id
             JOIN display ON display.group_id = stats.group_id
-            LEFT JOIN median ON median.group_id = stats.group_id
+            LEFT JOIN previous ON previous.group_id = stats.group_id
             WHERE g.id = stats.group_id
         SQL;
 
@@ -258,7 +252,7 @@ class ProductGrouper
          */
         $sql = str_replace('%TRACKABLE_SOURCES%', $this->trackableSources(), $sql);
 
-        DB::statement($sql, [$market->value, $market->value, $market->value, $market->value]);
+        DB::statement($sql, [$market->value, $market->value, $market->value]);
 
         // Groups whose every offer vanished from the feeds. Zeroed rather than
         // deleted: a wishlist item or a published guide may still point here,
@@ -266,7 +260,7 @@ class ProductGrouper
         DB::statement(<<<'SQL'
             UPDATE product_groups g
             SET offer_count = 0, merchant_count = 0, in_stock = false,
-                min_price = NULL, max_price = NULL, best_offer_id = NULL,
+                min_price = NULL, max_price = NULL, best_offer_id = NULL, previous_price = NULL,
                 updated_at = now()
             WHERE g.market = ?
               AND NOT EXISTS (

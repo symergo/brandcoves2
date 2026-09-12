@@ -221,8 +221,8 @@ class PageTemplateTest extends TestCase
 
         $rendered = $this->text($this->copy()->forRegion('search', 'below_grid', $this->context([
             'products' => [
-                ['min_price' => 1999, 'median_price' => 2999],
-                ['min_price' => 4999, 'median_price' => 5999],
+                ['min_price' => 1999, 'previous_price' => 2999],
+                ['min_price' => 4999, 'previous_price' => 5999],
             ],
         ])));
 
@@ -309,7 +309,7 @@ class PageTemplateTest extends TestCase
         ])));
 
         $this->assertNotSame([], $this->copy()->forRegion('search', 'below_grid', $this->context([
-            'products' => [['min_price' => 1999, 'median_price' => 2999]],
+            'products' => [['min_price' => 1999, 'previous_price' => 2999]],
         ])));
     }
 

@@ -156,7 +156,7 @@ give it.
 They render in their own section below the grid rather than mixed into it, and the separation is the
 honest one. Every card in the grid is a physical product with every shop's price beneath it, because
 those offers are stored and grouped. These are grouped with nothing — no offer count, no shop count,
-no discount against a 30-day median, because all four are things the catalogue computes for rows it
+no discount against a previous price, because all four are things the catalogue computes for rows it
 holds. Rendering them through `ProductCard` would mean inventing them.
 
 The price note and the direct anchor are read off `Source::requiresPriceTimestamp()` and
@@ -174,7 +174,7 @@ Philips — wrong in the specific way that is hard to notice and impossible to d
 
 **Updated 2026-08-10.** A brand page used to open with four templated paragraphs: the product count,
 the categories, how many shops carry the brand, the price range, how many items sat below their
-30-day median. The search page opened with the same block, phrased for a query instead of a brand.
+previous price. The search page opened with the same block, phrased for a query instead of a brand.
 
 Both are gone from above the grid. Not because any of it was untrue — the whole point of
 [the copy rule](#the-copy-rule) is that none of it could be — but because a block of numbers
@@ -290,12 +290,12 @@ great prices!"* — which rank for a fortnight and then not at all, and which dr
 when a helpful-content update decides the site is mostly filler. A page stating real, checkable,
 changing numbers about a live catalogue is not filler, even when the sentence shapes are templates.
 
-Discounts are measured against **our own 30-day median**, never a merchant's crossed-out figure. The
-strikethrough is marketing; the median is evidence. Same arithmetic as
+Discounts are measured against **our own previous price**, never a merchant's crossed-out figure. The
+strikethrough is marketing; the previous price is evidence. Same arithmetic as
 `ProductGroup::discountPercent()` — floor, never round — because a badge and a sentence that disagree
 about whether something is reduced is worse than neither.
 
-`BrandPageTest` pins this: a brand whose median equals its minimum must produce copy containing no
+`BrandPageTest` pins this: a brand whose previous price equals its minimum must produce copy containing no
 percentage at all.
 
 ### Why templates and not AI
@@ -317,7 +317,7 @@ than variety.
 
 ## The copy is about the brand, not about the pricing
 
-Every sentence on a brand page used to be about price: ranges, 30-day medians, how many shops we
+Every sentence on a brand page used to be about price: ranges, previous prices, how many shops we
 track, why comparing matters. All true, all backed by a number — and none of it an answer to the
 question the reader asked by typing a brand name into a URL. Someone landing on `/brand/karcher`
 wants to know what Kärcher is; they were given three paragraphs on how we measure discounts.
@@ -352,7 +352,7 @@ Still no AI. These pages number in the thousands and their facts change nightly;
 ## `brand_stats` is the whole page
 
 One row per (market, brand), refreshed nightly by `RefreshBrandStats` after grouping — grouping is what
-produces the cheapest price and the median the copy quotes. The page itself aggregates nothing: a URL
+produces the cheapest price and the previous price the copy quotes. The page itself aggregates nothing: a URL
 that exists to be crawled thousands of times must not put a `GROUP BY` on its critical path.
 
 ### The stored slug

@@ -44,7 +44,7 @@ export interface EntityRailSet {
  *
  * Each rail makes a different claim and the caption is what the claim rests on:
  *
- * - **discounts** is measured against our own 30-day median, so a reader can
+ * - **discounts** is measured against our own previous price, so a reader can
  *   check it against the card underneath;
  * - **popular** comes from a retailer's chart, and naming it is the deliberate
  *   exception recorded in `docs/features/popularity-charts.md`;

@@ -157,7 +157,7 @@ run across the bottom of this page went.
 fight: the deepest discount in the catalogue may be a month old, and the newest
 may be 4% off. Sorted by discount *within* a fortnight's recency window, so the
 column is both fresh and worth looking at rather than a stale hall of fame. Every
-figure is against our own 30-day median, never a shop's crossed-out price — the
+figure is against our own previous price, never a shop's crossed-out price — the
 same rule the badges and the brand pages hold to, and the reason a saving shown
 here can be defended.
 
@@ -259,7 +259,7 @@ price history and the restock alert on it.
 ### Why percentage alone is the wrong ranking
 
 Shipped on percentage alone, the column filled with silicone phone cases. A €25
-median down to €4.70 is an honest 81%, and a useless thing to put beside an
+previous price down to €4.70 is an honest 81%, and a useless thing to put beside an
 article. The percentage was never the problem; what it was applied to was.
 
 Four filters, in `giftcoves.deals`, each removing one kind of junk:
@@ -268,7 +268,7 @@ Four filters, in `giftcoves.deals`, each removing one kind of junk:
 |---|---|
 | `min_price` €20 | Cheap things whose percentage says more about the price point than the offer |
 | `min_saving` €10 | Big percentages hiding small money |
-| `comparable()` | A median drawn from one shop — that is the shop's opinion, and a discount against it is its marketing |
+| `comparable()` | A previous price from one shop — that is the shop's opinion, and a discount against it is its marketing |
 | `worthShowing()` | Printer cartridges, beside gift writing on a gift site. Not `giftable()`: a deal is a deal at any price, and a heavily discounted expensive thing is the best row this column can carry. See [giftability.md](giftability.md) |
 
 Then **one product per brand**, over-fetching ten times the limit so the cap does

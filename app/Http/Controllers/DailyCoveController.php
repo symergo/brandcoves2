@@ -129,7 +129,7 @@ class DailyCoveController extends Controller
      * discount within a recency window, so the column is both fresh and worth
      * looking at rather than a stale hall of fame.
      *
-     * Measured against our own 30-day median, never a merchant's crossed-out
+     * Measured against our own previous price, never a merchant's crossed-out
      * "was" price — the same rule the badges and the brand pages hold to, and
      * the reason a saving shown here can be defended.
      *
@@ -154,7 +154,7 @@ class DailyCoveController extends Controller
     private function computeDeals(CurrentMarket $current): array
     {
         $config = (array) config('giftcoves.deals');
-        $discount = '((median_price - min_price)::numeric / median_price) * 100';
+        $discount = '((previous_price - min_price)::numeric / previous_price) * 100';
 
         $candidates = ProductGroup::query()
             ->forMarket($current->get())
@@ -167,7 +167,7 @@ class DailyCoveController extends Controller
              * bin. The percentage was never the problem — what it was applied to
              * was.
              */
-            // A median drawn from one shop is that shop's opinion, and a
+            // A previous price from one shop is that shop's opinion, and a
             // "discount" against it is that shop's marketing.
             ->comparable()
             // It sits beside gift writing on a gift site — so no consumables,
@@ -175,14 +175,14 @@ class DailyCoveController extends Controller
             // heavily discounted expensive thing is the best row this column
             // can carry, so this is `worthShowing`, not `giftable`.
             ->worthShowing()
-            ->whereNotNull('median_price')
-            ->where('median_price', '>', 0)
-            ->whereColumn('min_price', '<', 'median_price')
+            ->whereNotNull('previous_price')
+            ->where('previous_price', '>', 0)
+            ->whereColumn('min_price', '<', 'previous_price')
             // Below the floor a percentage says more about the price point than
             // about the offer.
             ->where('min_price', '>=', (int) $config['min_price'])
             // And the saving has to be real money, not only a big number.
-            ->whereRaw('(median_price - min_price) >= ?', [(int) $config['min_saving']])
+            ->whereRaw('(previous_price - min_price) >= ?', [(int) $config['min_saving']])
             // Seen in the last fortnight. A "deal" nobody has re-checked since
             // last month is a price we cannot stand behind.
             ->where('updated_at', '>=', now()->subDays((int) $config['window_days']))
@@ -221,7 +221,7 @@ class DailyCoveController extends Controller
                 'title' => $group->title,
                 'image' => $group->image_url,
                 'price' => $group->min_price,
-                'was' => $group->median_price,
+                'was' => $group->previous_price,
                 'discountPercent' => $group->discountPercent(),
                 'url' => $current->url("p/{$group->id}/{$group->slug}"),
             ])

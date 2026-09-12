@@ -106,7 +106,7 @@ class BrandPageTest extends TestCase
                 'image_url' => "https://example.test/{$i}.jpg",
                 'min_price' => 9900 + ($i * 1000),
                 'max_price' => 12900 + ($i * 1000),
-                'median_price' => 14900,
+                'previous_price' => 14900,
                 'offer_count' => 1,
                 'merchant_count' => 2,
                 'in_stock' => true,

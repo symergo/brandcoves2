@@ -41,7 +41,8 @@ interface Props {
         category: string | null
         minPrice: number | null
         maxPrice: number | null
-        medianPrice: number | null
+        /** The best offer's price before its last change; what the discount is against. */
+        previousPrice: number | null
         discountPercent: number | null
         inStock: boolean
         merchantCount: number
@@ -171,19 +172,19 @@ export default function Product({ product, offers, alert, amazonSearch, descript
                         <div className="mt-5 flex flex-wrap items-baseline gap-3">
                             <span className="text-3xl font-semibold tabular-nums sm:text-4xl">{formatPrice(product.minPrice, market)}</span>
 
-                            {product.discountPercent !== null && product.medianPrice && (
+                            {product.discountPercent !== null && product.previousPrice && (
                                 <>
                                     <Badge tone="discount">
                                         {t('product.off', { percent: product.discountPercent })}
                                     </Badge>
                                     {/*
-                                      Against our own 30-day median, never a
+                                      Against our own previous price, never a
                                       merchant's "was" price — those are
                                       frequently fiction.
                                     */}
                                     <span className="text-sm text-ink-soft">
                                         {t('product.typical_price', {
-                                            price: formatPrice(product.medianPrice, market),
+                                            price: formatPrice(product.previousPrice, market),
                                         })}
                                     </span>
                                 </>

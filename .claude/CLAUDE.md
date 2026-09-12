@@ -229,7 +229,7 @@ These are the rules the product depends on. Breaking one is a bug even when test
    price, image and availability live at render. A failed fetch hides the item rather than showing
    stale data. `Source::allowsCatalogueStorage()` encodes this.
 
-7. **Prices are integer cents.** Floats accumulate error across the min/median aggregates that drive
+7. **Prices are integer cents.** Floats accumulate error across the min and previous-price aggregates that drive
    "cheapest offer" and discount badges, both of which must be exactly right.
 
 8. **Long work is chunked and resumable.** A feed runs to hundreds of MB. Jobs record their cursor in

@@ -261,7 +261,7 @@ return [
         'compare' => 'Comparar :count ofertas',
         'all_offers' => 'Todas las ofertas',
         'go_to_shop' => 'Ir a la tienda',
-        'typical_price' => 'Precio habitual :price',
+        'typical_price' => 'Antes :price',
         'barcode' => 'Código de barras',
         // Consulta la explicación de estas claves en lang/en/site.php.
         'description_heading' => 'Sobre este producto',
@@ -1628,7 +1628,7 @@ return [
             'No sabías que lo necesitabas',
         ],
         'deals_title' => 'Las mayores bajadas',
-        'deals_hint' => 'Medido contra nuestra propia mediana de 30 días, no contra un precio tachado.',
+        'deals_hint' => 'Medido contra el precio anterior de la oferta, no contra un precio tachado.',
     ],
 
     'guides' => [
@@ -1691,7 +1691,7 @@ return [
     'entity_rails' => [
         'discounts' => [
             'title' => 'Ahora más barato',
-            'blurb' => 'Medido contra el precio mediano de los últimos treinta días, no contra un precio tachado.',
+            'blurb' => 'Medido contra el precio que tenía la oferta antes del último cambio, no contra un precio tachado.',
         ],
         'popular' => [
             'title' => 'Muy vendido',

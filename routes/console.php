@@ -377,9 +377,9 @@ Schedule::command('bc:prune-personal-data')
     ->dailyAt('03:20')
     ->onOneServer();
 
-// Trim price history to the retention window. Without this the table grows
-// without bound to support a 30-day median and a sparkline.
-Schedule::command('bc:prune-price-history')
+// Trim rank history to its retention window. Price history no longer exists
+// (2026-09-12): an offer keeps first, previous and current price on its row.
+Schedule::command('bc:prune-rank-history')
     ->dailyAt('03:30')
     ->onOneServer();
 

@@ -68,11 +68,11 @@ disagree about punctuation and "Audio-Technica" and "Audio Technica" are one bra
 
 | Rail | Ordered by | What it claims |
 |---|---|---|
-| Discounts | the drop against the 30-day median | first-party, and a reader can check it |
+| Discounts | the drop against the previous price | first-party, and a reader can check it |
 | Popular | `PopularRank` | a retailer's chart |
 | Wishlisted | distinct wishlists holding it | what **our** visitors want |
 
-There is no `discount_percent` column: a discount is measured against the **30-day median** rather
+There is no `discount_percent` column: a discount is measured against the **previous price** rather
 than a merchant-supplied "was" price, which is frequently fiction. The rail repeats that rule in SQL
 rather than approximating it, floor included — a saving that floors to zero is not a saving, and a
 rail showing one would claim nothing while looking exactly like a rail claiming something.
@@ -198,7 +198,7 @@ three on both:
 
 `sidebar` is the narrowest column on the page and its blurb says so: two lines read well there and a
 paragraph does not. It is where a note about the *products* belongs — that a discount is measured
-against our own 30-day median rather than a crossed-out price, or where a popularity ranking came
+against our own previous price rather than a crossed-out price, or where a popularity ranking came
 from — which is a claim worth making beside the numbers it qualifies rather than three hundred
 pixels away under the article.
 

@@ -45,7 +45,7 @@ interface Props {
      * Fetched during this request and never written down, so they are absent
      * from `results` by construction and cannot be a ProductCard: there is no
      * group behind them, and therefore no offer count, no shop count and no
-     * discount measured against a 30-day median. Empty until the Amazon
+     * discount measured against a previous price. Empty until the Amazon
      * connector is enabled; everything bol returns is already in the grid.
      */
     liveOffers: {
@@ -173,7 +173,7 @@ export default function Brand({
 
                   Four paragraphs of statistics used to open the page — product
                   count, shop count, price range, how many were below their
-                  30-day median. All true, all checkable, and all of it counting
+                  previous price. All true, all checkable, and all of it counting
                   the grid immediately beneath it. Someone who has typed a brand
                   name came to see the brand's products, not a screen of
                   arithmetic about them, and the facts still exist in the long

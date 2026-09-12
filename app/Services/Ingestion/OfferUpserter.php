@@ -62,6 +62,13 @@ class OfferUpserter
                 'merchant_category' => $offer->merchantCategory,
                 'price' => $offer->price,
                 'reference_price' => $offer->referencePrice,
+                // Three prices instead of a history (2026-09-12). On insert the
+                // first price is today's and there is no previous one; on update
+                // the expressions below decide, because only the database knows
+                // what the row said before this chunk.
+                'first_price' => $offer->price,
+                'previous_price' => null,
+                'price_changed_at' => null,
                 'currency' => $offer->currency,
                 'image_url' => $offer->imageUrl,
                 'affiliate_url' => $offer->affiliateUrl,
@@ -85,7 +92,7 @@ class OfferUpserter
 
         $rows = $this->deduplicate($rows);
 
-        DB::transaction(function () use ($rows, $now): void {
+        DB::transaction(function () use ($rows): void {
             DB::table('products')->upsert(
                 $rows,
                 ['source', 'external_id', 'market'],
@@ -100,10 +107,20 @@ class OfferUpserter
                     'availability', 'ean', 'commission_rate',
                     'identity_key', 'identity_kind', 'status',
                     'last_seen_at', 'updated_at',
+                    /*
+                     * The three prices. `products.*` is the row as it was,
+                     * `excluded.*` the row arriving. The first price is kept
+                     * once set; the previous price and the moment of change
+                     * move only when the price actually differs, so a chunk
+                     * that repeats yesterday's price leaves both alone. This
+                     * replaced a daily sample per offer in `price_history`.
+                     */
+                    'first_price' => DB::raw('COALESCE(products.first_price, excluded.first_price)'),
+                    'previous_price' => DB::raw('CASE WHEN products.price IS DISTINCT FROM excluded.price THEN products.price ELSE products.previous_price END'),
+                    'price_changed_at' => DB::raw('CASE WHEN products.price IS DISTINCT FROM excluded.price THEN excluded.updated_at ELSE products.price_changed_at END'),
                 ],
             );
 
-            $this->recordPriceHistory($rows, $now);
         });
 
         return ['written' => count($rows), 'skipped' => $skipped];
@@ -146,82 +163,6 @@ class OfferUpserter
         }
 
         return array_values($byKey);
-    }
-
-    /**
-     * One price sample per product per day.
-     *
-     * Ingestion runs hourly; without the daily key this table would take 24
-     * rows per product per day, which across a 60k catalogue is roughly half a
-     * billion rows a year to support a sparkline.
-     *
-     * @param  list<array<string, mixed>>  $rows
-     */
-    private function recordPriceHistory(array $rows, Carbon $now): void
-    {
-        // Prices are recorded for every source, Amazon included: storing a
-        // price is not the restricted act. What Amazon prohibits is building a
-        // price-tracking feature on top — that is gated on the read side by
-        // Source::allowsPriceTracking(). See docs/features/amazon-compliance.md.
-        $priced = array_values(array_filter(
-            $rows,
-            fn (array $r) => $r['price'] !== null && Source::from($r['source'])->allowsPriceStorage(),
-        ));
-
-        if ($priced === []) {
-            return;
-        }
-
-        // Grouped by (source, market) rather than assuming the whole batch
-        // shares one. A feed chunk does, but the live search path upserts bol
-        // offers alongside whatever else it found — and an earlier version
-        // keyed the lookup off the first row, silently dropping the price
-        // history of every other source in the batch.
-        $bySourceAndMarket = [];
-        foreach ($priced as $row) {
-            $bySourceAndMarket[$row['source'].'|'.$row['market']][] = $row['external_id'];
-        }
-
-        $products = collect();
-        foreach ($bySourceAndMarket as $key => $externalIds) {
-            [$source, $market] = explode('|', $key, 2);
-
-            $products = $products->merge(
-                DB::table('products')
-                    ->select('id', 'price', 'availability')
-                    ->where('source', $source)
-                    ->where('market', $market)
-                    ->whereIn('external_id', $externalIds)
-                    ->get()
-            );
-        }
-
-        $history = [];
-        foreach ($products as $product) {
-            if ($product->price === null) {
-                continue;
-            }
-
-            $history[] = [
-                'product_id' => $product->id,
-                'price' => $product->price,
-                'availability' => $product->availability,
-                'captured_at' => $now,
-                'captured_on' => $now->toDateString(),
-            ];
-        }
-
-        if ($history === []) {
-            return;
-        }
-
-        DB::table('price_history')->upsert(
-            $history,
-            ['product_id', 'captured_on'],
-            // Last write in a day wins: the most recent price is the truest
-            // answer, and a sparkline wants one point per day either way.
-            ['price', 'availability', 'captured_at'],
-        );
     }
 
     /**

@@ -186,7 +186,7 @@ class ProductLookup
             // string: these are compared and aggregated, and a formatted price
             // that gets parsed back is how currency bugs start.
             'minPriceCents' => $group->min_price,
-            'medianPriceCents' => $group->median_price,
+            'previousPriceCents' => $group->previous_price,
             'discountPercent' => $group->discountPercent(),
             'merchantCount' => $group->merchant_count,
             'inStock' => (bool) $group->in_stock,

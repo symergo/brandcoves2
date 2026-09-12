@@ -60,52 +60,34 @@ class AmazonComplianceTest extends TestCase
 
         $this->assertSame(2, Product::query()->count());
 
-        // Storing a price is NOT the restricted act. Both are recorded; what
-        // Amazon prohibits is building a price-tracking feature on top, which
-        // is gated on the read side.
-        $this->assertSame(2, DB::table('price_history')->count());
+        // Storing a price is NOT the restricted act. Both rows carry their
+        // first price; what Amazon prohibits is building a price-tracking
+        // feature on top, which is gated on the read side.
+        $this->assertSame(2, Product::query()->whereNotNull('first_price')->count());
     }
 
     #[Test]
-    public function amazon_prices_never_reach_the_thirty_day_median(): void
+    public function amazon_prices_never_supply_the_previous_price(): void
     {
-        /*
-         * This used to test the 90-day chart on the product page. That chart has
-         * been removed, and the rule it enforced has not: the median it was a
-         * sibling of drives the discount badge, and "12% off" is a claim about a
-         * price over time — a visitor-facing price-tracking feature by any
-         * reading.
-         *
-         * The gate moved from the chart's read query to
-         * ProductGrouper::recomputeAggregates(), which is strictly better: one
-         * filter covering every reader of the median, rather than one covering
-         * a single surface while the denormalised column stayed contaminated.
-         */
         $group = $this->groupWith([Source::Awin, Source::Amazon]);
 
-        // Amazon far cheaper, so a median that included it would be visibly
-        // dragged down — and the assertion could not pass by coincidence.
-        DB::table('products')->where('source', Source::Amazon->value)->update(['price' => 10000]);
-        DB::table('products')->where('source', Source::Awin->value)->update(['price' => 34900]);
-
-        foreach (Product::query()->get() as $product) {
-            DB::table('price_history')->insert([
-                'product_id' => $product->id,
-                'price' => $product->price,
-                'availability' => 'in_stock',
-                'captured_at' => now(),
-                'captured_on' => now()->toDateString(),
-            ]);
-        }
+        // Awin is the offer the group links to (cheaper, in stock). Its
+        // previous price is the one a badge may quote. Amazon's would show a
+        // far larger drop, and must not be the one the group carries.
+        DB::table('products')->where('source', Source::Amazon->value)->update(['price' => 39000, 'previous_price' => 99000]);
+        DB::table('products')->where('source', Source::Awin->value)->update(['price' => 34900, 'previous_price' => 39900]);
 
         app(ProductGrouper::class)->run(Market::BeNl);
 
-        // Both samples are stored — storage is permitted, and the pruning job
-        // and alerts both rely on it.
-        $this->assertSame(2, DB::table('price_history')->count());
+        $this->assertSame(39900, $group->fresh()->previous_price);
 
-        // The median is the Awin price alone.
-        $this->assertSame(34900, $group->fresh()->median_price);
+        // And when Amazon is the cheapest offer, the group has no previous
+        // price at all rather than Amazon's: no claim is the compliant claim.
+        DB::table('products')->where('source', Source::Amazon->value)->update(['price' => 10000]);
+
+        app(ProductGrouper::class)->run(Market::BeNl);
+
+        $this->assertNull($group->fresh()->previous_price);
     }
 
     #[Test]

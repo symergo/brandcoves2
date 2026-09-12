@@ -208,7 +208,7 @@ which handles both European and Anglo formats correctly. A CHECK constraint
 forbids negatives; a negative price would sort straight to the top of every
 cheapest-offer query.
 
-`price_history` takes **one sample per product per day**, enforced by a unique
+`price_history` **no longer exists** since 2026-09-12; see *Three prices instead of a history* below. Until then it took **one sample per product per day**, enforced by a unique
 index. Ingestion runs hourly, and 24 identical rows per product per day across a
 60k catalogue is roughly half a billion rows a year to support a sparkline.
 
@@ -246,7 +246,7 @@ Or from `/admin/feeds`: **Ingest now** and **Reset cursor** per feed, with live
 progress under **Ingestion jobs** (polls every 10s) and a sidebar badge counting
 failing feeds.
 
-Scheduled: ingest hourly, group at :40, prune price history nightly.
+Scheduled: ingest hourly, group at :40, prune rank history nightly.
 
 ## Files
 
@@ -270,3 +270,28 @@ never to reach the database.
 in `ProductGrouper` filters `price_history` on `captured_on` and both existing indexes led on
 `product_id`. `2026_09_06_000700_indexes_for_the_hot_paths` adds both, built `CONCURRENTLY` so
 the migrate step locks nothing while the site is already down for the deploy.
+
+## Three prices instead of a history (2026-09-12)
+
+`price_history` is gone. After a month it held 5.5 million rows for 385,000 offers, 80% of them
+repeating the previous day's price, and the only reader left was the nightly 30-day median behind
+the discount badge (the product page's chart had already been removed). The owner chose not to keep
+a history at all.
+
+An offer now carries three prices on its own row: `first_price` (what it cost when first seen),
+`price` (now) and `previous_price` (what it cost before the last change), with
+`price_changed_at` for when that change landed. `OfferUpserter` sets them in the upsert itself:
+the first price is kept once set, and the previous price moves only when the incoming price actually
+differs, so a chunk that repeats yesterday's price writes nothing new. The migration backfilled the
+first and previous prices from the history before dropping it; `price_changed_at` is null for those
+rows, because a daily series cannot say when within a day a change happened.
+
+The group's discount reference is `product_groups.previous_price` (renamed from `median_price`):
+the previous price of the offer the group links to, from trackable sources only, as the median was.
+`ProductGroup::discountPercent()`, the deals column, the brand aggregates, the entity rails and the
+search filters all read it under the new name, and the copy says "previously €189" where it used to
+say "typical price". A discount therefore means what the price-drop mails already mean: this offer
+cost more before its last change. A price that rose and fell back to where it started reads as a
+drop from the higher price, which is the trade accepted for keeping no history.
+
+`bc:prune-price-history` became `bc:prune-rank-history`; only `popular_ranks` is a time series now.
