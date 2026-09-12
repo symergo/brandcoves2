@@ -11,7 +11,7 @@ import ListItemCard from '../../Components/ListItemCard'
 import ListPills, { type ListRole } from '../../Components/ListPills'
 import ListBoard, { type BoardState } from '../../Components/ListBoard'
 import CopyToList, { type CopyTarget } from '../../Components/CopyToList'
-import { invalidate, markRemoved } from '../../savedItems'
+import { markRemoved } from '../../savedItems'
 import { useTranslations } from '../../useTranslations'
 
 interface Item {
@@ -217,9 +217,6 @@ export default function ListShow({
     const shared = list.visibility !== 'private'
     const [panel, setPanel] = useState<Panel | null>(null)
 
-    // The note under the title, and whether it is being written.
-    const [noting, setNoting] = useState(false)
-    const [note, setNote] = useState(list.description ?? '')
 
     return (
         <>
@@ -236,123 +233,24 @@ export default function ListShow({
                               What kind of list this is — the fact that decides who
                               may claim, who may vote and who sees the money, and
                               which this page has never said out loud.
+
+                              Only the kind. "Anyone can add" and "Shared" were
+                              pills here too, and both said something the row of
+                              tools underneath already shows: Share lights up when
+                              the list has a live link, and the add-a-product
+                              control is there or it is not. Two badges restating
+                              two controls was the header captioning the row.
                             */}
-                            <ListPills
-                                kind={list.kind as ListKind}
-                                role={role}
-                                ownerName={ownerName}
-                                canAdd={list.shareUrl !== null && list.linkCanAdd}
-                            />
-                            {/*
-                              Shared or private, as a chip rather than the two
-                              sentences that used to sit under the title — one
-                              naming the state, one explaining what the state lets
-                              you do. The row of tools below now lights up per
-                              option, so the explanation had become a caption for
-                              controls that say it themselves. Same shape as the
-                              badge on the index card, so a list reads the same in
-                              both places.
-                            */}
-                            <span
-                                className={
-                                    shared
-                                        ? 'rounded-full bg-sage/15 px-2 py-0.5 text-2xs text-sage'
-                                        : 'rounded-full bg-line/60 px-2 py-0.5 text-2xs text-ink-soft'
-                                }
-                            >
-                                {shared ? t('lists.shared_short') : t('lists.private_short')}
-                            </span>
+                            <ListPills kind={list.kind as ListKind} role={role} ownerName={ownerName} />
                         </div>
                         {/*
-                          A note, under the name, in the owner's own words.
-
-                          The column existed and was rendered on the shared page,
-                          and nothing anywhere could write it — so every list that
-                          had one had got it from an import. "Bring it to the office
-                          Friday", "she has enough candles" is the context a bare
-                          list of products cannot carry, and the shared page is
-                          where somebody arrives with none.
-
-                          Inline rather than behind a chip: it is a property of the
-                          list itself, like its title, not a thing you do with the
-                          list. The row of chips is for the latter.
-
-                          **The owner's, not an editor's.** `canEdit` is about the
-                          *items* — a collaborator may add and remove presents, and
-                          that is what the role was granted for. This is the owner
-                          speaking to the people they sent the link to, in their own
-                          voice, under their own title; an editor rewriting it would
-                          be putting words in somebody's mouth on a page addressed
-                          to their friends. The same reasoning that keeps a guest
-                          out of the sharing panel.
+                          The owner's note, under the name. Read-only here: it is
+                          written in the tools row, under Settings, next to the
+                          title it belongs to. The shared page renders the same
+                          line for the people the link was sent to.
                         */}
-                        {noting ? (
-                            <div className="mt-2 max-w-prose">
-                                <textarea
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    rows={3}
-                                    maxLength={2000}
-                                    autoFocus
-                                    placeholder={t('lists.note_placeholder')}
-                                    className="w-full rounded-lg border border-line bg-cream p-3 text-sm"
-                                />
-                                <div className="mt-2 flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            router.patch(
-                                                `${base}/lists/${list.id}`,
-                                                // Empty is no note, not an empty
-                                                // one: the column is nullable and a
-                                                // blank string would render as a
-                                                // gap under the title.
-                                                { description: note.trim() === '' ? null : note.trim() },
-                                                {
-                                                    preserveScroll: true,
-                                                    onSuccess: () => setNoting(false),
-                                                },
-                                            )
-                                        }
-                                        className="rounded-lg bg-ink px-3 py-1.5 text-sm text-cream"
-                                    >
-                                        {t('lists.save')}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setNote(list.description ?? '')
-                                            setNoting(false)
-                                        }}
-                                        className="rounded-lg border border-line px-3 py-1.5 text-sm"
-                                    >
-                                        {t('lists.cancel')}
-                                    </button>
-                                </div>
-                            </div>
-                        ) : list.description ? (
-                            <p className="mt-2 max-w-prose text-ink-soft">
-                                {list.description}
-                                {access.isOwner && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setNoting(true)}
-                                        className="ml-2 text-xs text-ink-soft underline hover:text-ink"
-                                    >
-                                        {t('lists.note_edit')}
-                                    </button>
-                                )}
-                            </p>
-                        ) : (
-                            access.isOwner && (
-                                <button
-                                    type="button"
-                                    onClick={() => setNoting(true)}
-                                    className="mt-2 text-sm text-ink-soft underline hover:text-ink"
-                                >
-                                    {t('lists.note_add')}
-                                </button>
-                            )
+                        {list.description && (
+                            <p className="mt-2 max-w-prose text-ink-soft">{list.description}</p>
                         )}
                         {/*
                           The quiz, named on the one list it cannot appear on.
@@ -372,62 +270,6 @@ export default function ListShow({
                         )}
                     </div>
 
-                    {/*
-                      All this header still holds is getting rid of the list.
-
-                      Share moved down into `ListTools`, next to the other things
-                      you can do with one — two copies of a control on one screen is
-                      not twice as findable, and that row is where somebody looks
-                      for what a list can do.
-                    */}
-                    {access.isOwner && (
-                        <button
-                            onClick={() => {
-                                if (confirm(t('lists.delete_confirm'))) {
-                                    // The store cannot infer a deleted list: every
-                                    // bookmark on the next page would still report
-                                    // its products as saved, into a list that is
-                                    // gone. This is the caller `invalidate()` was
-                                    // written for.
-                                    router.delete(`${base}/lists/${list.id}`, { onSuccess: () => invalidate() })
-                                }
-                            }}
-                            aria-label={t('lists.delete_list')}
-                            title={t('lists.delete_list')}
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-line text-ink-soft transition hover:border-accent hover:text-accent sm:h-9 sm:w-9"
-                        >
-                            {/*
-                              An icon, not the words "Delete this list".
-
-                              The only destructive control on the page was also its
-                              widest button, sitting level with the title and
-                              pulling the eye first on a screen that is about what
-                              is on the list. Small and cornered is the right
-                              weight for something you should have to go and find.
-                              The words survive as the label and the tooltip.
-
-                              Top right on every width. The header used to wrap,
-                              so on a phone the icon dropped under the title and
-                              the pills, where the eye had to hunt for it; the
-                              title column now shrinks and the icon keeps the
-                              corner. 44px on a phone, the site's minimum target.
-                            */}
-                            <svg
-                                aria-hidden
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                className="h-5 w-5"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M4 7h16M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m2 0v12a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V7M10 11v6M14 11v6"
-                                />
-                            </svg>
-                        </button>
-                    )}
                 </header>
 
             {/*
@@ -597,7 +439,7 @@ export default function ListShow({
                               stay here, because the owner's two are genuinely
                               not the visitor's four.
                             */}
-                            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-2">
+                            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                                 {items.map((item) => (
                                     <ListItemCard
                                         key={item.id}

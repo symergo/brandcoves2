@@ -603,6 +603,10 @@ return [
         'move_to' => 'Mover a :list',
         'remove_from' => 'Quitar de :list',
         'delete_list' => 'Eliminar esta lista',
+        'delete' => 'Eliminar',
+        'settings' => 'Ajustes',
+        'title_label' => 'Nombre de la lista',
+        'description_label' => 'Descripción',
         'delete_confirm' => '¿Eliminar esta lista y todo su contenido?',
         'share' => 'Compartir',
         'sharing_off' => 'Solo tú ves esta lista.',
@@ -916,7 +920,7 @@ return [
         'handover_title' => 'Ceder una lista',
         'handover_body' => '¿Empezaste una lista para alguien antes de que estuviera aquí? Dásela cuando se una y pasa a ser su propia lista.',
         'handover_step1' => 'Abre la lista y envíales el enlace «Pregúntaselo directamente», para que exista una cuenta a la que cederla.',
-        'handover_step2' => 'Cuando lo hayan usado, pulsa Ceder y escribe el correo con el que se registraron.',
+        'handover_step2' => 'Cuando lo hayan usado, abre Compartir, pulsa Ceder y escribe el correo con el que se registraron.',
         'handover_step3' => 'Confirma y la lista pasa a ser suya: pueden compartirla y otros pueden reservar en ella.',
 
         'santa_title' => 'Amigo invisible',
@@ -927,7 +931,7 @@ return [
 
         'registry_title' => 'Una lista de regalos',
         'registry_body' => 'Una lista con una ocasión y una fecha: boda, bebé o casa nueva. Añade una dirección y solo la ve quien haya reservado algo.',
-        'registry_step1' => 'Abre una de tus listas de deseos y pulsa Ocasión.',
+        'registry_step1' => 'Abre una de tus listas de deseos y pulsa Ajustes.',
         'registry_step2' => 'Elige la ocasión y la fecha, y añade una dirección de envío si te van a mandar las cosas.',
         'registry_step3' => 'Compártela como cualquier lista. Se comporta igual: la gente reserva y a ti nunca se te dice qué.',
 

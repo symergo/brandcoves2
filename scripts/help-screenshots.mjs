@@ -317,8 +317,10 @@ for (const { language, market, term } of MARKETS) {
     const quizClip = await around(page, [quizTab, panel], 16)
     await shoot(page, out('11-quiz'), { ...quizClip, height: Math.min(quizClip.height, 360) })
 
-    // 15. The occasion panel.
-    const occasionTab = tab(L('registry.occasion'))
+    // 15. The occasion, under Settings since 2026-09-12 (with the name, the note
+    //     and the price watch). Same picture number and file name: the help
+    //     page that shows it did not move.
+    const occasionTab = tab(L('lists.settings'))
     await raise(page, occasionTab)
     await occasionTab.click()
     await page.waitForTimeout(400)

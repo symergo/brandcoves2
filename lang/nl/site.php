@@ -607,6 +607,10 @@ return [
         'move_to' => 'Verplaats naar :list',
         'remove_from' => 'Haal uit :list',
         'delete_list' => 'Dit lijstje verwijderen',
+        'delete' => 'Verwijderen',
+        'settings' => 'Instellingen',
+        'title_label' => 'Naam van de lijst',
+        'description_label' => 'Omschrijving',
         'delete_confirm' => 'Dit lijstje en alles erin verwijderen?',
         'share' => 'Delen',
         'sharing_off' => 'Alleen jij ziet dit lijstje.',
@@ -920,7 +924,7 @@ return [
         'handover_title' => 'Geef een lijst door',
         'handover_body' => 'Een lijst begonnen voor iemand die er nog niet was? Geef hem door zodra ze meedoen, dan wordt het hun eigen wenslijst.',
         'handover_step1' => 'Open het lijstje en stuur hen de link "Vraag het hen zelf", zodat er een account is om het aan te geven.',
-        'handover_step2' => 'Zodra ze die gebruikt hebben, druk je op Doorgeven en vul je het e-mailadres in waarmee ze zich aanmeldden.',
+        'handover_step2' => 'Zodra ze die gebruikt hebben, open je Delen, druk je op Doorgeven en vul je het e-mailadres in waarmee ze zich aanmeldden.',
         'handover_step3' => 'Bevestig, en het lijstje is van hen: zij kunnen het delen en anderen kunnen eruit claimen.',
 
         'santa_title' => 'Geheime Vriend',
@@ -931,7 +935,7 @@ return [
 
         'registry_title' => 'Een geschenkenlijst',
         'registry_body' => 'Een wenslijst met een gelegenheid en een datum, voor een huwelijk, een baby of een nieuwe woning. Zet er een adres bij: alleen wie iets geclaimd heeft, ziet het.',
-        'registry_step1' => 'Open een van je verlanglijsten en klik op Gelegenheid.',
+        'registry_step1' => 'Open een van je verlanglijsten en klik op Instellingen.',
         'registry_step2' => 'Kies de gelegenheid en de datum, en zet er een adres bij als mensen dingen moeten opsturen.',
         'registry_step3' => 'Deel hem zoals elk ander lijstje. Hij gedraagt zich ook zo: mensen claimen, en jou wordt nooit verteld wat.',
 

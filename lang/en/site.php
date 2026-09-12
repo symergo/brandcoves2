@@ -736,6 +736,10 @@ return [
         'move_to' => 'Move to :list',
         'remove_from' => 'Remove from :list',
         'delete_list' => 'Delete this list',
+        'delete' => 'Delete',
+        'settings' => 'Settings',
+        'title_label' => 'Name of the list',
+        'description_label' => 'Description',
         'delete_confirm' => 'Delete this list and everything in it?',
         'share' => 'Share',
         'sharing_off' => 'Only you can see this list.',
@@ -1088,7 +1092,7 @@ return [
         'handover_title' => 'Hand a list over',
         'handover_body' => 'Started a list for someone before they were here? Give it to them once they join, and it becomes their own wishlist.',
         'handover_step1' => 'Open the list and send them the "Ask them what they want" link, so there is an account the list can go to.',
-        'handover_step2' => 'Once they have used it, press Hand over and type the email they signed up with.',
+        'handover_step2' => 'Once they have used it, open Share, press Hand over and type the email they signed up with.',
         'handover_step3' => 'Confirm, and the list is theirs: they can share it, and other people can claim from it.',
 
         'santa_title' => 'Secret Friend',
@@ -1099,7 +1103,7 @@ return [
 
         'registry_title' => 'A registry',
         'registry_body' => 'A wishlist with an occasion and a date on it, for a wedding, a baby or a new home. Add a delivery address and only people who have claimed something can see it.',
-        'registry_step1' => 'Open one of your wishlists and press Occasion.',
+        'registry_step1' => 'Open one of your wishlists and press Settings.',
         'registry_step2' => 'Pick the occasion and the date, and add a delivery address if people should be posting things to you.',
         'registry_step3' => 'Share it as you would any list. It behaves like one: people claim, and you are never told what.',
 

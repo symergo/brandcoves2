@@ -244,16 +244,18 @@ class CopyMatchesCodeTest extends TestCase
          * `registry_step1` quotes the label on the button, and the button has
          * been renamed twice: "Registry" named the artefact rather than what
          * you are doing to the list, "Special occasion" replaced it, and the
-         * chip in `ListTools` now reads `registry.occasion` — one word, because
-         * it sits in a scrolling row of chips. The panel keeps
-         * `registry.badge` as its heading, so asserting against that one would
-         * pass while the manual named something the row does not show.
+         * chip in `ListTools` read `registry.occasion` for a while, and since
+         * 2026-09-12 the occasion lives under the Settings chip
+         * (`lists.settings`) with the name, the note and the price watch. The
+         * panel still carries `registry.badge` as its own heading, so asserting
+         * against that one would pass while the manual named something the row
+         * does not show.
          *
          * Rename either without the other and the manual sends people hunting
          * for a button they are looking straight at.
          */
         foreach (['en', 'nl', 'fr', 'es'] as $locale) {
-            $label = __('site.registry.occasion', locale: $locale);
+            $label = __('site.lists.settings', locale: $locale);
             $step = __('site.gift_cove.registry_step1', locale: $locale);
 
             $this->assertStringContainsString(

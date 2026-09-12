@@ -25,6 +25,8 @@ export type ToolKey =
     | 'signout'
     | 'admin'
     | 'info'
+    | 'settings'
+    | 'trash'
 
 /**
  * The Gift Cove tools, drawn — the nine of them, plus `shared`.
@@ -96,6 +98,28 @@ const paths: Record<ToolKey, ReactNode> = {
         <>
             <circle cx="12" cy="12" r="9" />
             <path d="M12 11v5M12 8h.01" />
+        </>
+    ),
+
+    // Three sliders with a knob each: the list's own settings, as distinct
+    // from who may see it (`shared`). The knobs are filled so the rail does
+    // not show through them.
+    settings: (
+        <>
+            <path d="M4 7h16M4 12h16M4 17h16" />
+            <circle cx="15.5" cy="7" r="2.2" fill="currentColor" />
+            <circle cx="8.5" cy="12" r="2.2" fill="currentColor" />
+            <circle cx="13.5" cy="17" r="2.2" fill="currentColor" />
+        </>
+    ),
+
+    // The bin: the one destructive control in the list tools row.
+    trash: (
+        <>
+            <path d="M4 7h16" />
+            <path d="M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2" />
+            <path d="M7 7v11.5A1.5 1.5 0 0 0 8.5 20h7a1.5 1.5 0 0 0 1.5-1.5V7" />
+            <path d="M10 11v5M14 11v5" />
         </>
     ),
 

@@ -604,6 +604,10 @@ return [
         'move_to' => 'Déplacer vers :list',
         'remove_from' => 'Retirer de :list',
         'delete_list' => 'Supprimer cette liste',
+        'delete' => 'Supprimer',
+        'settings' => 'Réglages',
+        'title_label' => 'Nom de la liste',
+        'description_label' => 'Description',
         'delete_confirm' => 'Supprimer cette liste et tout son contenu ?',
         'share' => 'Partager',
         'sharing_off' => 'Vous seul voyez cette liste.',
@@ -917,7 +921,7 @@ return [
         'handover_title' => 'Transmettre une liste',
         'handover_body' => 'Vous avez commencé une liste pour quelqu\'un avant son arrivée ? Donnez-la-lui une fois la personne inscrite : elle devient sa propre liste.',
         'handover_step1' => 'Ouvrez la liste et envoyez-leur le lien « Demandez-leur directement », pour qu’il existe un compte à qui la transmettre.',
-        'handover_step2' => 'Une fois qu’ils s’en sont servis, appuyez sur Transmettre et saisissez l’adresse e-mail de leur inscription.',
+        'handover_step2' => 'Une fois qu’ils s’en sont servis, ouvrez Partager, appuyez sur Transmettre et saisissez l’adresse e-mail de leur inscription.',
         'handover_step3' => 'Confirmez : la liste est à eux, ils peuvent la partager et les autres peuvent y réserver.',
 
         'santa_title' => 'Ami Secret',
@@ -928,7 +932,7 @@ return [
 
         'registry_title' => 'Une liste de cadeaux',
         'registry_body' => 'Une liste avec une occasion et une date : mariage, naissance, nouveau logement. Ajoutez une adresse : seuls ceux qui ont réservé la voient.',
-        'registry_step1' => 'Ouvrez une de vos listes d’envies et appuyez sur Occasion.',
+        'registry_step1' => 'Ouvrez une de vos listes d’envies et appuyez sur Réglages.',
         'registry_step2' => 'Choisissez l’occasion et la date, et ajoutez une adresse de livraison si l’on doit vous envoyer les choses.',
         'registry_step3' => 'Partagez-la comme n’importe quelle liste. Elle se comporte pareil : on réserve, et on ne vous dit jamais quoi.',
 

@@ -4,7 +4,8 @@ import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import CopyToList from './CopyToList'
 import ShareRow from './ShareRow'
-import ToolIcon from './ToolIcon'
+import { invalidate } from '../savedItems'
+import ToolIcon, { type ToolKey } from './ToolIcon'
 import { useTranslations } from '../useTranslations'
 
 interface Collaborator {
@@ -90,6 +91,8 @@ interface Props {
         votingEnabled: boolean
         /** Mail the owner when something drops by at least this many percent; null is off. */
         priceWatchPercent: number | null
+        /** The owner's note under the title, or null. Edited in the settings panel. */
+        description: string | null
     }
     access: { isOwner: boolean; canEdit: boolean }
     collaborators: Collaborator[]
@@ -118,7 +121,7 @@ interface Props {
     onPanel: (panel: Panel | null) => void
 }
 
-export type Panel = 'share' | 'asked' | 'occasion' | 'quiz' | 'handover' | 'santa'
+export type Panel = 'share' | 'settings' | 'quiz' | 'santa'
 
 /**
  * One choice, as a card you press rather than a dot you aim at.
@@ -210,6 +213,9 @@ export default function ListTools({
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const [handTo, setHandTo] = useState(handoverEmail ?? '')
+    // The settings form: the name and the note, typed here and saved together.
+    const [title, setTitle] = useState(list.title)
+    const [note, setNote] = useState(list.description ?? '')
 
     // Closed until asked for. Sharing with named people is a deliberate act,
     // not a setting you scan past.
@@ -262,7 +268,7 @@ export default function ListTools({
      * something. `set` lights the ones that are — and it is deliberately the
      * *stored* fact each panel writes, never a proxy for it.
      */
-    const tabs: { key: Panel; label: string; show: boolean; set: boolean }[] = [
+    const tabs: { key: Panel; icon: ToolKey; label: string; show: boolean; set: boolean }[] = [
         /*
          * Share sits in this row, always, and is the first thing in it.
          *
@@ -285,6 +291,7 @@ export default function ListTools({
          */
         {
             key: 'share',
+            icon: 'shared',
             label: t('lists.share'),
             show: access.isOwner,
             // Lit when there is a live link, not merely when the list is not
@@ -292,42 +299,22 @@ export default function ListTools({
             set: shared && Boolean(list.shareUrl),
         },
         /*
-         * What they asked for, on a list about somebody else.
+         * The list's own settings: its name, the note under it, whether its
+         * prices are watched, and what it is for.
          *
-         * Second, because it is the other half of the same errand as Share: one
-         * is what you are sending them, the other is what they sent you. On a
-         * list about a person those two are the whole job, and everything below
-         * is occasional.
-         *
-         * The label carries their name — "Ask Anna" — which makes it the one
-         * chip in the row that is not a category. That is deliberate: the panel
-         * is about a person, and "Asked" alone would read as a state of the
-         * list rather than as somebody's answers.
-         *
-         * Gated on the kind as well as on the recipient. `ListMaker` derives
-         * one from the other — a list with a recipient is `for_someone` or
-         * `group`, one without is `mine` — so on today's data these are the
-         * same condition. Written out anyway, because "ask them what they want"
-         * on a wish list of your own would be the page asking you to interview
-         * yourself, and a kind that is derived somewhere else is exactly the
-         * sort of thing that stops being derived. `ListQuizController` names
-         * its kind for the same reason.
+         * Share is who may see the list; this is what the list is. The
+         * occasion used to be a chip of its own and the price switch sat among
+         * the sharing options, so the row named one property and hid another
+         * under a word that means something else. Lit when any of it is set:
+         * a watched price or an occasion is a fact about the list worth seeing
+         * from the row.
          */
         {
-            key: 'asked',
-            label: t('lists.ask_tab', { name: target?.name ?? '' }),
-            // The owner's, like Share. It holds a link that asks the recipient
-            // to describe their own taste, and the answers they gave — an
-            // errand belonging to whoever is organising the buying, not to
-            // everyone the list was passed to.
-            show:
-                access.isOwner
-                && target !== null
-                && (list.kind === 'for_someone' || list.kind === 'group'),
-            // Lit once they have actually answered. Not "have they an account":
-            // a linked recipient with an empty list is the same nothing as an
-            // unlinked one, from this page.
-            set: asked.length > 0,
+            key: 'settings',
+            icon: 'settings',
+            label: t('lists.settings'),
+            show: access.isOwner,
+            set: list.priceWatchPercent !== null || Boolean(list.eventType) || Boolean(list.eventDate),
         },
         /*
          * A quiz asks "how well do you know **me**", so it only exists over a
@@ -340,6 +327,7 @@ export default function ListTools({
          */
         {
             key: 'quiz',
+            icon: 'quiz',
             label: t('quiz.badge'),
             /*
              * `access.isOwner` is not decoration here.
@@ -357,44 +345,9 @@ export default function ListTools({
             // is a fact for inside the panel.
             set: quizUrl !== null,
         },
-        /*
-         * An occasion sits on any kind of list.
-         *
-         * This was `kind === 'mine'`, which made it the *registry* panel — and
-         * the column, the validator and the shared page were all kind-agnostic
-         * the whole time, so a birthday on a list about your father was storable
-         * and renderable and simply had nowhere to be typed. Only the delivery
-         * address inside the panel is registry-only; see the panel below.
-         *
-         * It was then folded into Share for a day and is a tab again. Setting
-         * what a list is for is not the same errand as letting people see it —
-         * you name the occasion months before you invite anybody, and often on
-         * a list you never share at all — so under Share it was hidden behind a
-         * word that means something else.
-         *
-         * Labelled with `registry.occasion` rather than `registry.badge`: a chip
-         * in a scrolling row wants one word ("Gelegenheid"), and the panel it
-         * opens carries the full "Speciale gelegenheid" as its heading.
-         */
-        {
-            key: 'occasion',
-            label: t('registry.occasion'),
-            show: access.isOwner,
-            // Either half counts: a date with no type is still an answer to
-            // "what is this list for", and the panel stores them separately.
-            set: Boolean(list.eventType) || Boolean(list.eventDate),
-        },
-        /*
-         * Handing over is an act, not a setting, so it is never lit.
-         *
-         * `canHandOver` is already false once it has happened — the chip goes
-         * away rather than lighting up — and `handoverEmail` is only the
-         * recipient's address prefilled for convenience. Lighting the chip off
-         * that would announce a handover nobody has offered.
-         */
-        { key: 'handover', label: t('handover.badge'), show: canHandOver, set: false },
         {
             key: 'santa',
+            icon: 'santa',
             label: t('santa.title'),
             // The owner's too, and for the reason spelled out on `quiz` above:
             // this page is reachable by anybody who has opened the link.
@@ -552,6 +505,7 @@ export default function ListTools({
                                       : 'border-line hover:border-ink'
                             }`}
                         >
+                            <ToolIcon name={tab.icon} className="h-4 w-4 shrink-0" />
                             {/*
                               A dot as well as the colour. Colour alone is not
                               a state anybody can rely on — and these chips
@@ -571,6 +525,31 @@ export default function ListTools({
                             {tab.set && <span className="sr-only"> — {t('lists.tool_on')}</span>}
                         </button>
                     ))}
+                    {/*
+                      Getting rid of the list, last in the row and pushed to its
+                      far end. It sat in the page header before, an icon with no
+                      word, level with the title; the row of things you can do with
+                      a list is where somebody looks for it, and the one
+                      destructive control reads better with its name beside it.
+                      Not a panel: it asks once and acts.
+                    */}
+                    {access.isOwner && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (confirm(t('lists.delete_confirm'))) {
+                                    // The store cannot infer a deleted list: every
+                                    // bookmark on the next page would still report
+                                    // its products as saved, into a list that is gone.
+                                    router.delete(`${base}/lists/${list.id}`, { onSuccess: () => invalidate() })
+                                }
+                            }}
+                            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm whitespace-nowrap text-ink-soft transition hover:border-accent hover:text-accent"
+                        >
+                            <ToolIcon name="trash" className="h-4 w-4 shrink-0" />
+                            {t('lists.delete')}
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -1204,52 +1183,6 @@ export default function ListTools({
                                         )}
 
                                         {/*
-                                          Watch the prices on this list.
-
-                                          bstore's wishlist mail, brought over:
-                                          one switch for the whole list and a
-                                          percentage, instead of a button on
-                                          every product. Off is null, like its
-                                          neighbours; on starts at 10%, which
-                                          is a real drop on anything and not a
-                                          rounding error. The choices are the
-                                          server's short list, and it refuses
-                                          anything outside it.
-                                        */}
-                                        <Option
-                                            type="checkbox"
-                                            checked={list.priceWatchPercent !== null}
-                                            onChange={() =>
-                                                setting({
-                                                    price_watch_percent:
-                                                        list.priceWatchPercent === null ? 10 : null,
-                                                })
-                                            }
-                                            label={t('lists.price_watch')}
-                                            hint={t('lists.price_watch_hint')}
-                                        />
-                                        {list.priceWatchPercent !== null && (
-                                            <label className="flex items-center gap-2 pl-3 text-sm">
-                                                <span>{t('lists.price_watch_threshold')}</span>
-                                                <select
-                                                    value={list.priceWatchPercent}
-                                                    onChange={(e) =>
-                                                        setting({
-                                                            price_watch_percent: Number(e.target.value),
-                                                        })
-                                                    }
-                                                    className="rounded-lg border border-line px-2 py-1 text-sm"
-                                                >
-                                                    {[5, 10, 15, 20, 30].map((p) => (
-                                                        <option key={p} value={p}>
-                                                            {p}%
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                        )}
-
-                                        {/*
                                           Two switches used to sit here and both
                                           are gone.
 
@@ -1389,7 +1322,7 @@ export default function ListTools({
                       in this row: a thing you do with the list, occasionally,
                       and go back to the list afterwards.
                     */}
-                    {open === 'asked' && target !== null && (
+                    {open === 'share' && access.isOwner && target !== null && (list.kind === 'for_someone' || list.kind === 'group') && (
                         /*
                           Full width, like the rest of the row's panels: this is
                           a list of products with an image, a price and a button
@@ -1397,7 +1330,8 @@ export default function ListTools({
                           bunched against the middle of the page while the right
                           half sat empty.
                         */
-                        <div>
+                        <div className="mt-8 border-t border-line pt-6">
+                            <h3 className="text-sm font-medium">{t('lists.ask_tab', { name: target.name })}</h3>
                             {!target.isLinked ? (
                                 <>
                                     {target.askUrl && (
@@ -1552,8 +1486,113 @@ export default function ListTools({
                         </div>
                     )}
 
-                    {open === 'occasion' && (
+                    {open === 'settings' && (
+                        /*
+                          The list's own facts, in one place: what it is called,
+                          the note under the name, whether its prices are watched
+                          and, below, what it is for. The name and the note were
+                          edited in the page header and the price switch sat among
+                          the sharing options, so changing something about the
+                          list meant three places. Sharing is who may see it; this
+                          is what it is.
+                        */
                         <div>
+                            <h3 className="text-sm font-medium">{t('lists.settings')}</h3>
+                            <form
+                                className="mt-3 grid gap-3 sm:max-w-xl"
+                                onSubmit={(e) => {
+                                    e.preventDefault()
+                                    setting({
+                                        title: title.trim() === '' ? list.title : title.trim(),
+                                        // Empty is no note, not an empty one: the column
+                                        // is nullable and a blank string would render as
+                                        // a gap under the title.
+                                        description: note.trim() === '' ? null : note.trim(),
+                                    })
+                                }}
+                            >
+                                <label className="block text-sm">
+                                    <span className="text-ink-soft">{t('lists.title_label')}</span>
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        maxLength={120}
+                                        required
+                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                    />
+                                </label>
+                                <label className="block text-sm">
+                                    <span className="text-ink-soft">{t('lists.description_label')}</span>
+                                    <textarea
+                                        value={note}
+                                        onChange={(e) => setNote(e.target.value)}
+                                        rows={3}
+                                        maxLength={2000}
+                                        placeholder={t('lists.note_placeholder')}
+                                        className="mt-1 w-full rounded-lg border border-line bg-cream p-3 text-sm"
+                                    />
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <button type="submit" className="rounded-lg bg-ink px-3 py-1.5 text-sm text-cream">
+                                        {t('lists.save')}
+                                    </button>
+                                    <span className="text-xs text-sage" aria-live="polite">
+                                        {saved !== 0 && t('lists.saved')}
+                                    </span>
+                                </div>
+                            </form>
+                            <div className="mt-6 space-y-2">
+                                        {/*
+                                          Watch the prices on this list.
+
+                                          bstore's wishlist mail, brought over:
+                                          one switch for the whole list and a
+                                          percentage, instead of a button on
+                                          every product. Off is null, like its
+                                          neighbours; on starts at 10%, which
+                                          is a real drop on anything and not a
+                                          rounding error. The choices are the
+                                          server's short list, and it refuses
+                                          anything outside it.
+                                        */}
+                                        <Option
+                                            type="checkbox"
+                                            checked={list.priceWatchPercent !== null}
+                                            onChange={() =>
+                                                setting({
+                                                    price_watch_percent:
+                                                        list.priceWatchPercent === null ? 10 : null,
+                                                })
+                                            }
+                                            label={t('lists.price_watch')}
+                                            hint={t('lists.price_watch_hint')}
+                                        />
+                                        {list.priceWatchPercent !== null && (
+                                            <label className="flex items-center gap-2 pl-3 text-sm">
+                                                <span>{t('lists.price_watch_threshold')}</span>
+                                                <select
+                                                    value={list.priceWatchPercent}
+                                                    onChange={(e) =>
+                                                        setting({
+                                                            price_watch_percent: Number(e.target.value),
+                                                        })
+                                                    }
+                                                    className="rounded-lg border border-line px-2 py-1 text-sm"
+                                                >
+                                                    {[5, 10, 15, 20, 30].map((p) => (
+                                                        <option key={p} value={p}>
+                                                            {p}%
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </label>
+                                        )}
+                            </div>
+                        </div>
+                    )}
+                    {open === 'settings' && (
+                        <div className="mt-8 border-t border-line pt-6">
                             <h3 className="text-sm font-medium">{t('registry.badge')}</h3>
 
                             <form
@@ -1697,9 +1736,11 @@ export default function ListTools({
 
 
 
-                    {open === 'handover' && (
+                    {open === 'share' && canHandOver && (
+                        <div className="mt-8 border-t border-line pt-6">
+                        <h3 className="text-sm font-medium">{t('handover.badge')}</h3>
                         <form
-                            className="flex flex-wrap gap-2"
+                            className="mt-3 flex flex-wrap gap-2"
                             onSubmit={(e) => {
                                 e.preventDefault()
 
@@ -1726,6 +1767,7 @@ export default function ListTools({
                                 {t('handover.action')}
                             </button>
                         </form>
+                        </div>
                     )}
 
                     {open === 'santa' && (

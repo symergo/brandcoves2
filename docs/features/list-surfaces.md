@@ -154,6 +154,43 @@ asserts against `registry.occasion` — the chip — rather than `registry.badge
 would have gone green while the manual named a word the row does not print, which is the whole failure
 it exists to prevent.
 
+## Three buttons: Share, Settings, Delete (2026-09-12)
+
+The row had grown back to six chips (Share, Ask *name*, Quiz, Occasion, Hand over, Secret Friend)
+plus a delete icon in the page header, and the owner read it the way a first-time visitor would:
+three of those are one errand. Handing a list over and reading what the recipient asked for are both
+things you do *with the people you shared it with*, so they live inside Share now, as sections under
+the link and the roster, each with its own heading and a rule above it. Ask *name* keeps its heading
+with the name in it; it lost its own chip and the lit state that came with it.
+
+**Settings is new, and it is what the list *is* rather than who may see it.** The name and the note
+under it were edited inline in the header, the price watch sat among the sharing switches (where it
+was a fact about the owner's inbox filed under a word about other people), and the occasion was a
+chip of its own. One panel holds the three: a small form for the name and the note, the price watch
+with its percentage, and the occasion form under a rule. The chip lights when a price watch or an
+occasion is set, since either is a fact about the list worth seeing from the row.
+
+**Delete is in the row, last, with its name.** It was a trash icon alone in the header corner, the
+one destructive control on the page and the one without a word beside it. The row is where somebody
+looks for what a list can do; pushed to the far end with a label it reads as the last resort it is.
+It is a button, not a panel: it asks once and acts.
+
+**Every chip carries an icon** from `ToolIcon`, the same set the Gift Cove draws its tools with, so
+the row and the manual show the same marks. Two were added for this: `settings` (three sliders) and
+`trash`.
+
+**The header lost two pills.** "Anyone can add" and "Shared" both restated something the row already
+shows: Share lights up when the list has a live link, and the add-a-product control is present or it
+is not. A badge captioning a control one line below it is the header explaining the row.
+
+The item grid also stopped dropping to two columns on a wide screen; three from `sm` up, on every
+width.
+
+The manual's steps moved with it, as they did the last two times this row changed: `registry_step1`
+now says press *Settings*, `handover_step2` says open *Share* and press *Hand over*, and
+`CopyMatchesCodeTest` pins the occasion step to `lists.settings`. The help screenshot script clicks
+the Settings tab for picture 15 and keeps the file name.
+
 ## The sharing panel, in the order the decision is made
 
 The merge above got the *contents* right and left the panel itself a stack. It read: the link → who
