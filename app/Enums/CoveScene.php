@@ -193,6 +193,54 @@ enum CoveScene: string
     /** A doorstep with nothing on it. */
     case MissingParcel = 'missing_parcel';
 
+    /** An envelope with a banknote showing, under a bow. Money, given well. */
+    case MoneyGift = 'money_gift';
+
+    /** A jar with a ribbon and a handwritten label. Made, not bought. */
+    case Handmade = 'handmade';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Figures — pictures inside an article
+    |--------------------------------------------------------------------------
+    |
+    | Added 2026-09-12, when two advice articles asked for pictures between
+    | their paragraphs. An article body renders bold and link tokens and
+    | nothing else, so a picture inside one is a `[[figure:KEY]]` token on a
+    | paragraph of its own, which `ProseCards` turns into a block the page
+    | draws with `SceneIllustration`. Same component, same viewBox, same
+    | stroke as the cover drawing, so a figure and the cover are one hand.
+    |
+    | Any scene may be a figure; these were drawn for the paragraphs that
+    | needed them and are listed with the articles so a cover can use them
+    | too. Named for what they show, not for the article that first used
+    | them: a jar of coins will illustrate more than one piece.
+    */
+
+    /** A small tree with banknotes clipped to its branches. */
+    case MoneyTree = 'money_tree';
+
+    /** A banknote folded into a shirt with a collar. */
+    case FoldedNote = 'folded_note';
+
+    /** A jar filling up with coins, a label on the front. */
+    case CoinJar = 'coin_jar';
+
+    /** A map with a dotted route and a cross at the end of it. */
+    case TreasureMap = 'treasure_map';
+
+    /** A booklet of vouchers, one torn along its perforation. */
+    case CouponBook = 'coupon_book';
+
+    /** A letter, folded, beside its envelope. */
+    case Letter = 'letter';
+
+    /** A cutting in a glass of water, roots showing. */
+    case PlantCutting = 'plant_cutting';
+
+    /** A month on the wall with one day ringed. */
+    case CalendarDay = 'calendar_day';
+
     /**
      * Pages of an article, and nothing saying which one.
      *
@@ -235,6 +283,16 @@ enum CoveScene: string
             self::Customs => 'Customs and importing',
             self::GiftReturn => 'Returning a gift',
             self::MissingParcel => 'Delivery gone wrong',
+            self::MoneyGift => 'Giving money',
+            self::Handmade => 'Made, not bought',
+            self::MoneyTree => 'Money tree',
+            self::FoldedNote => 'Folded banknote',
+            self::CoinJar => 'Jar of coins',
+            self::TreasureMap => 'Treasure map',
+            self::CouponBook => 'Voucher booklet',
+            self::Letter => 'A letter',
+            self::PlantCutting => 'Plant cutting',
+            self::CalendarDay => 'A day set aside',
             self::Article => 'No particular subject',
         };
     }
@@ -280,6 +338,9 @@ enum CoveScene: string
                 self::Rights, self::PriceHistory, self::Seller, self::Reviews,
                 self::Refurbished, self::ShopCheck, self::Phishing,
                 self::Customs, self::GiftReturn, self::MissingParcel,
+                self::MoneyGift, self::Handmade,
+                self::MoneyTree, self::FoldedNote, self::CoinJar, self::TreasureMap,
+                self::CouponBook, self::Letter, self::PlantCutting, self::CalendarDay,
                 self::Article,
             ],
             CoveKind::Daily, CoveKind::Shop => [],

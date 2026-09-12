@@ -36,6 +36,16 @@ export type SceneKey =
     | 'customs'
     | 'gift_return'
     | 'missing_parcel'
+    | 'money_gift'
+    | 'handmade'
+    | 'money_tree'
+    | 'folded_note'
+    | 'coin_jar'
+    | 'treasure_map'
+    | 'coupon_book'
+    | 'letter'
+    | 'plant_cutting'
+    | 'calendar_day'
     | 'article'
 
 /**
@@ -727,6 +737,208 @@ const scenes: Record<SceneKey, ReactNode> = {
             */}
             <path d="M102 56h36v34h-36z" className="stroke-accent" strokeDasharray="6 5" />
             <path d="M120 56v34" className="stroke-accent" strokeDasharray="6 5" />
+        </>
+    ),
+
+    /*
+     * An open envelope with a banknote standing in it, and a bow.
+     *
+     * The cover of the article about giving money. The note is the subject
+     * and stays plain; the bow is the one accent, because the article is about
+     * the wrapping and not the amount.
+     */
+    money_gift: (
+        <>
+            {/* The envelope, and the note standing in it. */}
+            <path d="M30 56h100v48H30z" className="fill-accent/10" />
+            <path d="M30 56h100v48H30z" />
+            <path d="M30 56l50 30 50-30" />
+            <path d="M48 32h64v24H48z" />
+            <circle cx="80" cy="44" r="7" />
+            <path d="M56 38v12M104 38v12" />
+            {/* The bow, on the corner. */}
+            <ellipse cx="122" cy="20" rx="7" ry="4" className="stroke-accent" transform="rotate(-25 122 20)" />
+            <ellipse cx="136" cy="20" rx="7" ry="4" className="stroke-accent" transform="rotate(25 136 20)" />
+            <path d="M129 22l-4 12M129 22l4 12" className="stroke-accent" />
+        </>
+    ),
+
+    /*
+     * A jar with a ribbon round its neck and a handwritten label.
+     *
+     * The cover of the article about presents that are made rather than
+     * bought. A jar is what most of them arrive in, and the label with two
+     * lines of writing is what says somebody's hand was involved.
+     */
+    handmade: (
+        <>
+            <path d="M58 26h44v8H58z" />
+            <path d="M54 34h52v60a8 8 0 0 1-8 8H62a8 8 0 0 1-8-8z" className="fill-accent/10" />
+            <path d="M54 34h52v60a8 8 0 0 1-8 8H62a8 8 0 0 1-8-8z" />
+            {/* The label, and the handwriting on it. */}
+            <path d="M64 56h32v22H64z" />
+            <path d="M70 64h20M70 71h14" />
+            {/* The ribbon, tied at the side. */}
+            <path d="M54 44h52" className="stroke-accent" />
+            <ellipse cx="114" cy="38" rx="6" ry="4" className="stroke-accent" transform="rotate(-35 114 38)" />
+            <ellipse cx="114" cy="50" rx="6" ry="4" className="stroke-accent" transform="rotate(35 114 50)" />
+        </>
+    ),
+
+    /*
+     * A vase of bare branches with a folded note pegged to each.
+     *
+     * The money tree as it is actually made at a kitchen table: twigs, not a
+     * canopy. Three notes because one reads as a price tag and five as a
+     * hedge.
+     */
+    money_tree: (
+        <>
+            {/* The vase and the branches. */}
+            <path d="M66 78h28l4 30H62z" className="fill-accent/10" />
+            <path d="M66 78h28l4 30H62z" />
+            <path d="M80 78V28M80 62c-10-4-18-12-22-24M80 56c10-4 18-12 22-24" />
+            {/* A note on the end of each branch. */}
+            <path d="M46 32h18v12H46z" className="fill-accent/10 stroke-accent" />
+            <path d="M96 26h18v12H96z" className="fill-accent/10 stroke-accent" />
+            <path d="M71 16h18v12H71z" className="fill-accent/10 stroke-accent" />
+        </>
+    ),
+
+    /*
+     * A banknote folded into a shirt.
+     *
+     * Sleeves, a collar, and the note's own oval still showing through the
+     * front, so it reads as money folded rather than a shirt drawn.
+     */
+    folded_note: (
+        <>
+            <path d="M56 34l-20 10 6 16 12-4v50h52V56l12 4 6-16-20-10-8 8H64z" className="fill-accent/10" />
+            <path d="M56 34l-20 10 6 16 12-4v50h52V56l12 4 6-16-20-10-8 8H64z" />
+            <path d="M68 34l12 14 12-14" />
+            <ellipse cx="80" cy="78" rx="9" ry="12" className="stroke-accent" />
+            <path d="M62 64v30M98 64v30" className="stroke-accent" strokeDasharray="3 4" />
+        </>
+    ),
+
+    /*
+     * A jar filling with coins, one still on its way in.
+     *
+     * The label is blank but for one line: what the jar is for is the
+     * article's point, and the reader supplies it.
+     */
+    coin_jar: (
+        <>
+            {/* The lid, with the slot in it, and the coin above. */}
+            <path d="M58 24h44v8H58z" />
+            <path d="M72 28h16" />
+            <circle cx="80" cy="10" r="6" className="stroke-accent" />
+            <path d="M54 32h52v64a10 10 0 0 1-10 10H64a10 10 0 0 1-10-10z" className="fill-accent/10" />
+            <path d="M54 32h52v64a10 10 0 0 1-10 10H64a10 10 0 0 1-10-10z" />
+            {/* The label. */}
+            <path d="M64 44h32v18H64z" />
+            <path d="M70 53h20" />
+            {/* The coins, in uneven stacks. */}
+            <ellipse cx="80" cy="92" rx="20" ry="4" />
+            <ellipse cx="72" cy="84" rx="14" ry="4" />
+            <ellipse cx="86" cy="76" rx="14" ry="4" />
+        </>
+    ),
+
+    /*
+     * A map with a dotted route and a cross at the end of it.
+     *
+     * The curled edges are what make a sheet a map rather than a letter; the
+     * tree and the house on the way are the clues.
+     */
+    treasure_map: (
+        <>
+            <path d="M28 24c8-6 8 6 16 0h72c8 6 8-6 16 0v68c-8 6-8-6-16 0H44c-8-6-8 6-16 0z" className="fill-accent/10" />
+            <path d="M28 24c8-6 8 6 16 0h72c8 6 8-6 16 0v68c-8 6-8-6-16 0H44c-8-6-8 6-16 0z" />
+            {/* The route, and where it ends. */}
+            <path d="M42 78c14-4 12-24 26-26s10 18 26 12 8-16 18-14" strokeDasharray="4 5" />
+            <path d="M104 44l12 12M116 44l-12 12" className="stroke-accent" strokeWidth={3} />
+            {/* A tree and a house on the way. */}
+            <path d="M56 46l6-10 6 10zM62 46v6" />
+            <path d="M86 74h12v10H86zM84 74l8-8 8 8" />
+        </>
+    ),
+
+    /*
+     * A booklet of vouchers, one torn off along the perforation.
+     *
+     * The torn one is the point: a voucher nobody redeems is a card, and the
+     * article is about ones that get used.
+     */
+    coupon_book: (
+        <>
+            {/* The stack, and the perforation across it. */}
+            <path d="M52 28h72v60" />
+            <path d="M46 34h72v60" />
+            <path d="M40 40h72v60H40z" className="fill-accent/10" />
+            <path d="M40 40h72v60H40z" />
+            <path d="M40 62h72" strokeDasharray="3 4" />
+            <path d="M52 50h30M52 74h48M52 86h36" />
+            <circle cx="98" cy="50" r="6" className="stroke-accent" />
+            {/* The one that has been torn off. */}
+            <path d="M118 70l26 6-4 18-26-6z" className="fill-accent/10 stroke-accent" />
+            <path d="M124 80l14 3" className="stroke-accent" />
+        </>
+    ),
+
+    /*
+     * A letter beside the envelope it came in.
+     *
+     * Lines of handwriting, not print, and the seal on the envelope in the
+     * accent: the two things that say it was written for one person.
+     */
+    letter: (
+        <>
+            <path d="M30 28h56v72H30z" className="fill-accent/10" />
+            <path d="M30 28h56v72H30z" />
+            <path d="M40 44h36M40 54h36M40 64h26M40 80h20" />
+            {/* The envelope, seal side up. */}
+            <path d="M92 50h44v36H92z" />
+            <path d="M92 50l22 18 22-18" />
+            <circle cx="114" cy="68" r="5" className="fill-accent/10 stroke-accent" />
+        </>
+    ),
+
+    /*
+     * A cutting in a glass of water, roots showing.
+     *
+     * The roots are in the accent because they are the gift: the leaves came
+     * off somebody else's plant, the roots grew for this one.
+     */
+    plant_cutting: (
+        <>
+            {/* The glass, and the water in it. */}
+            <path d="M58 60l3 44h38l3-44z" className="fill-accent/10" />
+            <path d="M56 40h48l-4 64H60z" />
+            <path d="M58 60h44" />
+            {/* The stem, two leaves, and the roots under the water line. */}
+            <path d="M80 96V26" />
+            <path d="M80 42c-10 0-18-6-20-16 10 0 18 6 20 16zM80 34c10 0 18-6 20-16-10 0-18 6-20 16z" />
+            <path d="M80 70c-8 4-14 10-18 18M80 78c6 6 10 12 12 16M80 84c-4 6-6 10-6 14" className="stroke-accent" />
+        </>
+    ),
+
+    /*
+     * A month on the wall with one day ringed.
+     *
+     * Time given is a date kept, and the ring is the only thing on the page
+     * that was put there by hand.
+     */
+    calendar_day: (
+        <>
+            <path d="M34 30h92v70H34z" className="fill-accent/10" />
+            <path d="M34 30h92v70H34z" />
+            <path d="M34 46h92" />
+            <path d="M52 22v14M108 22v14" />
+            {/* The days. */}
+            <path d="M48 60h8M64 60h8M80 60h8M96 60h8M112 60h8M48 74h8M64 74h8M96 74h8M112 74h8M48 88h8M64 88h8M80 88h8" />
+            <path d="M80 74h8" />
+            <circle cx="84" cy="74" r="9" className="stroke-accent" />
         </>
     ),
 

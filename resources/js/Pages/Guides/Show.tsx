@@ -37,6 +37,13 @@ interface Item {
 interface Block {
     html: string
     groupIds: number[]
+    /**
+     * A picture instead of a paragraph. Set when the author wrote a
+     * `[[figure:KEY]]` token on a line of its own; `html` is empty then and
+     * the page draws the scene in its place, with the same component as the
+     * cover. Absent on blocks built before figures existed.
+     */
+    figure?: SceneKey | null
 }
 
 interface Props {
@@ -180,10 +187,25 @@ function Article({
         <>
             {blocks.map((block, i) => (
                 <div key={i}>
-                    <p
-                        className={`${className} [&_a]:underline`}
-                        dangerouslySetInnerHTML={{ __html: block.html }}
-                    />
+                    {block.figure ? (
+                        /*
+                          Drawn, not photographed, like the cover: one hand
+                          through the whole article. Wider than the cover
+                          because it sits in the reading column rather than
+                          above a title.
+                        */
+                        <figure className="my-6 flex justify-center">
+                            <SceneIllustration
+                                name={block.figure}
+                                className="h-32 w-auto text-accent sm:h-40"
+                            />
+                        </figure>
+                    ) : (
+                        <p
+                            className={`${className} [&_a]:underline`}
+                            dangerouslySetInnerHTML={{ __html: block.html }}
+                        />
+                    )}
 
                     {block.groupIds
                         .map((id) => byGroup[id])

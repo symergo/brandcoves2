@@ -148,4 +148,31 @@ class ProseCardsTest extends TestCase
         $this->assertStringContainsString('EVERY product', $contract);
         $this->assertStringContainsString('One product per paragraph', $contract);
     }
+
+    #[Test]
+    public function a_figure_paragraph_becomes_a_block_the_page_draws(): void
+    {
+        $blocks = $this->cards()->blocks(
+            'Een inleiding.
+
+[[figure:coin_jar]]
+
+De [[product:12|Sony]] is de stille.
+
+[[figure:not_a_scene]]
+
+Slot.'
+        );
+
+        // Four, not five: the unknown figure is a missing picture, never the
+        // wrong one, and never a paragraph reading "[[figure:not_a_scene]]".
+        $this->assertCount(4, $blocks);
+
+        $this->assertSame(['html' => '', 'groupIds' => [], 'figure' => 'coin_jar'], $blocks[1]);
+
+        $this->assertNull($blocks[0]['figure']);
+        $this->assertSame([12], $blocks[2]['groupIds']);
+        $this->assertNull($blocks[2]['figure']);
+        $this->assertSame('Slot.', $blocks[3]['html']);
+    }
 }

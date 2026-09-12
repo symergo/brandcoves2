@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Guides;
 
+use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\BrandLinker;
@@ -96,6 +97,25 @@ class CoveMarkup
     private const BOLD = '/\*\*(?=\S)(.+?)(?<=\S)\*\*/us';
 
     /**
+     * `[[figure:KEY]]` alone on a paragraph: a picture between the paragraphs.
+     *
+     * Added 2026-09-12 for two advice articles that wanted pictures inside
+     * them. Not a link and not prose, so it is not in TOKEN: the paragraph it
+     * stands on becomes a block the page draws with the same component and
+     * from the same enum as the cover drawing (see `ProseCards::blocks()` and
+     * `CoveScene`). Whole-paragraph only, on purpose. A drawing sized for a
+     * card has no place mid-sentence, so a token inside a sentence is removed
+     * rather than drawn, and the sentence closes up around it.
+     *
+     * The key is checked against `CoveScene`, the way every other token is
+     * checked against an allowlist: an unknown key is dropped and reported,
+     * never printed as a token and never drawn as the default.
+     */
+    private const FIGURE = '/^\s*\[\[figure:([a-z_]{1,40})\]\]\s*$/u';
+
+    private const INLINE_FIGURE = '/ ?\[\[figure:[a-z_]{1,40}\]\]/u';
+
+    /**
      * Injected rather than resolved inside `render()`.
      *
      * Reaching for the container mid-render made a **database query a hidden
@@ -129,7 +149,9 @@ class CoveMarkup
         // Escape first, resolve second. The prose is model output and is
         // rendered as HTML, so anything that arrives already looking like
         // markup must stop being markup before we add our own.
-        $escaped = e($text);
+        // A figure token inside a sentence is not drawn; see FIGURE. Removed
+        // with the space before it so the words on either side close up.
+        $escaped = e(preg_replace(self::INLINE_FIGURE, '', $text) ?? $text);
 
         $html = preg_replace_callback(
             self::TOKEN,
@@ -251,6 +273,18 @@ class CoveMarkup
                 continue;
             }
 
+            // A surface that renders strings only has nowhere to draw a
+            // figure, so the paragraph is left out rather than printed as a
+            // token. An unknown key is reported like any rejected token.
+            $figure = $this->figureKey($paragraph);
+            if ($figure !== null) {
+                if (! self::knownFigure($figure)) {
+                    $rejected[] = "figure:{$figure}";
+                }
+
+                continue;
+            }
+
             $result = $this->render($paragraph, $market, $allowed);
             $out[] = $result['html'];
             $links += $result['links'];
@@ -264,6 +298,23 @@ class CoveMarkup
      * @param  list<string>  $brands
      * @param  array<string, string>  $brandUrls  lowered brand => brand page URL
      */
+    /**
+     * The key of a paragraph that is nothing but a figure token, else null.
+     *
+     * Raw, not checked: the caller decides what an unknown key means on its
+     * surface. `knownFigure()` answers whether the enum can draw it.
+     */
+    public function figureKey(string $paragraph): ?string
+    {
+        return preg_match(self::FIGURE, $paragraph, $m) === 1 ? $m[1] : null;
+    }
+
+    /** Whether `SceneIllustration` has a drawing under this key. */
+    public static function knownFigure(string $key): bool
+    {
+        return CoveScene::tryFrom($key) !== null;
+    }
+
     private function brand(string $value, array $brands, string $base, array $brandUrls = []): ?string
     {
         // Case-insensitive, because the model will not reproduce a feed's

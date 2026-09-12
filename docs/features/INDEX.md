@@ -73,7 +73,7 @@ cannot be recovered from a diff.
 | [product-cards-in-prose.md](product-cards-in-prose.md) | Content / Frontend | Active |
 | [scheduled-writing.md](scheduled-writing.md) | Content / Operations | Active |
 | [gift-personas.md](gift-personas.md) | Discovery / Content | Active — 10 per market in be-nl, nl-nl, en |
-| [cove-scenes.md](cove-scenes.md) | Content / Frontend | Active — 28 scenes; personas and articles |
+| [cove-scenes.md](cove-scenes.md) | Content / Frontend | Active — 38 scenes; personas, articles, and figures inside articles |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [editorial-api.md](editorial-api.md) | Content / Operations | Active |
 | [content-promotion.md](content-promotion.md) | Content / Operations | Active |

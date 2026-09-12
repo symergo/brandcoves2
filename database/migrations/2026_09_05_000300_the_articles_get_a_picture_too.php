@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\CoveScene;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -55,7 +54,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $this->constrain($this->allowedList());
+        /*
+         * Written out, not generated. This list was CoveScene::values() on the
+         * day it ran (2026-09-05, 28 values); the enum has grown since and a
+         * generated list would make a fresh migrate build a constraint the
+         * deployed databases never had. 2026_09_12_000300 widens it again.
+         */
+        $this->constrain(
+            collect([
+                'coffee', 'cooking', 'racing', 'has_everything', 'dog',
+                'photography', 'diy', 'outdoors', 'gardening', 'plants', 'music',
+                'reading', 'gaming', 'fitness', 'travel', 'baking', 'someone',
+                'rights', 'price_history', 'seller', 'reviews', 'refurbished',
+                'shop_check', 'phishing', 'customs', 'gift_return',
+                'missing_parcel', 'article',
+            ])->map(fn (string $v) => "'".$v."'")->implode(', ')
+        );
     }
 
     public function down(): void
@@ -84,12 +98,5 @@ return new class extends Migration
                 "check (scene is null or scene in ({$allowed}))"
             );
         }
-    }
-
-    private function allowedList(): string
-    {
-        return collect(CoveScene::values())
-            ->map(fn (string $v) => "'".str_replace("'", "''", $v)."'")
-            ->implode(', ');
     }
 };

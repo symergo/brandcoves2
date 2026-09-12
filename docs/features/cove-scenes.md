@@ -1,7 +1,7 @@
 ---
 name: Cove scenes
 area: Content / Frontend
-status: Active — 28 scenes; personas and articles
+status: Active — 38 scenes; personas, articles, and figures inside articles
 date_added: 2026-09-05
 ---
 
@@ -163,11 +163,49 @@ That is the correct failure and worth keeping in mind rather than working
 around: content that names a value the server does not have is content the
 server is right to refuse. Deploy, then write.
 
+## Figures inside an article
+
+Added 2026-09-12, when two advice articles asked for pictures between their paragraphs. An article
+body renders bold and link tokens and nothing else, on purpose (`CoveMarkup` says why it is not a
+Markdown parser), so a picture inside one is a token like everything else the writer may place:
+
+    [[figure:coin_jar]]
+
+**On a paragraph of its own.** `ProseCards::blocks()` turns that paragraph into a block with no
+html, no products and `figure: "coin_jar"`, and `Guides/Show.tsx` draws it with the same
+`SceneIllustration` as the cover, wider because it sits in the reading column. Same viewBox, same
+stroke, same accent wash: a figure and the cover are one hand, which is the whole reason this reuses
+the scene vocabulary instead of introducing image files. There is nothing to host, nothing to
+resize, and a palette change redraws the figures with the rest of the site.
+
+Three things that are deliberate:
+
+- **Whole-paragraph only.** A drawing sized for a card has no place mid-sentence. A figure token
+  inside a sentence is removed and the sentence closes up; it is never drawn inline.
+- **An unknown key is a missing picture, never the wrong one.** The key is checked against
+  `CoveScene`, as every token is checked against an allowlist. A typo drops the paragraph and is
+  reported in `rejected` as `figure:key`. It does not fall back to the default drawing, because a
+  generic sheet of paper in the middle of an article about money reads as a rendering fault.
+- **Surfaces that render strings only skip it.** `CoveMarkup::paragraphs()` (FAQ answers, the
+  legacy guide path) leaves a figure paragraph out rather than printing a token.
+
+Any scene may be a figure. Ten were added with the feature, two covers (`money_gift`, `handmade`)
+and eight figures (`money_tree`, `folded_note`, `coin_jar`, `treasure_map`, `coupon_book`,
+`letter`, `plant_cutting`, `calendar_day`), named for what they show rather than for the article
+that first used them. All ten are in the advice vocabulary of `forKind()`, so a cover can use a
+figure too. `2026_09_12_000300_pictures_inside_an_article` widens the CHECK and froze the 28 of its
+predecessor, per the rule above.
+
+The builder is not told about figures. `promptContract()` still says bold is the only markup, so
+model-written prose never carries one; figures are placed by a person, in an authored article.
+
 ## Files
 
 - `app/Enums/CoveScene.php`
 - `resources/js/Components/SceneIllustration.tsx`
-- `database/migrations/2026_09_05_000300_the_articles_get_a_picture_too.php`
+- `database/migrations/2026_09_12_000300_pictures_inside_an_article.php`
+- `database/migrations/2026_09_05_000300_the_articles_get_a_picture_too.php` — frozen
+- `app/Services/Guides/CoveMarkup.php`, `app/Services/Editorial/ProseCards.php` — the figure token
 - `database/migrations/2026_08_31_000200_a_persona_names_its_own_drawing.php` — frozen
 - `app/Http/Controllers/GuideController.php`, `GiftIdeasController.php`
 - `app/Filament/Resources/CovePlans/CovePlanResource.php`

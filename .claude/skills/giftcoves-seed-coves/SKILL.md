@@ -189,6 +189,11 @@ the two are separate fields and writing one no longer destroys the other.
 cap the builder applies to model-written prose). `body` is the article for a guide or
 an advice piece. Write in the market's language.
 
+**A picture between paragraphs is a figure token on a line of its own** (advice and guide
+bodies; authored articles only, the builder never writes one). The key is a `CoveScene` value:
+
+    [[figure:coin_jar]]
+
 **Link with tokens, never a URL, markdown or HTML:**
 
     [[product:1234|the odd one]]   [[brand:Sony]]   [[search:draadloze koptelefoon]]

@@ -425,4 +425,55 @@ class CoveMarkupTest extends TestCase
          */
         $this->assertStringNotContainsString('[[amazon:', $contract);
     }
+
+    #[Test]
+    public function a_figure_token_is_a_paragraph_of_its_own_or_nothing(): void
+    {
+        $markup = $this->markup();
+
+        // Alone on its paragraph: a figure, with its key.
+        $this->assertSame('coin_jar', $markup->figureKey('[[figure:coin_jar]]'));
+        $this->assertSame('coin_jar', $markup->figureKey('  [[figure:coin_jar]]  '));
+
+        // Inside a sentence: not a figure, and not drawn there either. The
+        // sentence closes up around where the token was.
+        $this->assertNull($markup->figureKey('Zie [[figure:coin_jar]] hierboven.'));
+        $this->assertSame(
+            'Zie hierboven.',
+            $this->render('Zie [[figure:coin_jar]] hierboven.')['html'],
+        );
+
+        // A surface that renders strings only has nowhere to draw it, so the
+        // paragraph is left out rather than printed as a token.
+        $result = $markup->paragraphs(
+            'Een.
+
+[[figure:coin_jar]]
+
+Twee.',
+            Market::BeNl,
+            $this->allowed(),
+        );
+        $this->assertSame(['Een.', 'Twee.'], $result['html']);
+        $this->assertSame([], $result['rejected']);
+    }
+
+    #[Test]
+    public function an_unknown_figure_is_dropped_and_reported_never_drawn_as_the_default(): void
+    {
+        $result = $this->markup()->paragraphs(
+            'Een.
+
+[[figure:not_a_scene]]
+
+Twee.',
+            Market::BeNl,
+            $this->allowed(),
+        );
+
+        $this->assertSame(['Een.', 'Twee.'], $result['html']);
+        $this->assertSame(['figure:not_a_scene'], $result['rejected']);
+        $this->assertFalse(CoveMarkup::knownFigure('not_a_scene'));
+        $this->assertTrue(CoveMarkup::knownFigure('coin_jar'));
+    }
 }

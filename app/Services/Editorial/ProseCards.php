@@ -63,11 +63,28 @@ final class ProseCards
                 continue;
             }
 
+            /*
+             * A paragraph that is only a figure token is a picture, not
+             * prose: no html, no products, and the page draws the scene in
+             * its place (CoveMarkup::FIGURE says why whole-paragraph only).
+             * An unknown key is dropped rather than drawn as the default,
+             * so a typo is a missing picture and never the wrong one.
+             */
+            $figure = $this->markup->figureKey($paragraph);
+            if ($figure !== null) {
+                if (CoveMarkup::knownFigure($figure)) {
+                    $out[] = ['html' => '', 'groupIds' => [], 'figure' => $figure];
+                }
+
+                continue;
+            }
+
             $out[] = [
                 'html' => $this->markup->render($paragraph, $this->market, $this->allowed)['html'],
                 // Claimed before the next paragraph is walked, so "first
                 // mention wins" is decided in reading order.
                 'groupIds' => $this->claim($paragraph),
+                'figure' => null,
             ];
         }
 
