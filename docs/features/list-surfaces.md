@@ -307,6 +307,13 @@ owner's request: with headings on the sections a gap separates well enough, the 
 they do without a title, and the card is a third shorter. The Settings panel keeps its one rule
 between the form and the occasion.
 
+The Send button under the friends went last. A chip was a checkbox and the row ended in Send, so
+choosing and sending were two moments, while the other half of the same row already acted on tap: a
+friend who has the list is a tick that becomes a cross. Now a tap shares with that person and the
+email goes out; a second tap takes it back after a confirm. A mis-tap sends a real email that cannot
+be recalled, and the chip turning green on the spot is what makes it visible; the harm is a friend
+hearing about a wish list, which was judged small enough for one control instead of two.
+
 ## "How each one works" is its own page
 
 The manual was the bottom half of `/gift-cove`, a page with two readers who want opposite things: one

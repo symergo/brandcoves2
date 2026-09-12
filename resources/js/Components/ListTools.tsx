@@ -701,100 +701,87 @@ export default function ListTools({
                                         )}
                                     </h3>
                                     <p className="mt-1 text-xs text-ink-soft">{t('lists.share_with_friends_hint')}</p>
-                                    <form
-                                        onSubmit={(e) => {
-                                            e.preventDefault()
-                                            const picked = Array.from(
-                                                new FormData(e.currentTarget).getAll('friend_ids'),
-                                            ).map(Number)
+                                    {/*
+                                      One tap per friend, and it acts. A chip
+                                      used to be a checkbox and the row ended
+                                      in a Send button, so choosing and sending
+                                      were two moments; the other half of the
+                                      same row already acted on tap (a friend
+                                      who has the list is a tick that becomes a
+                                      cross), so the button was the visible
+                                      seam between two behaviours. Now a tap
+                                      shares with that person and the email
+                                      goes out; a second tap takes it back,
+                                      after the confirm below. The chip turning
+                                      green on the spot is what makes a mis-tap
+                                      visible, and the harm of one is a friend
+                                      hearing about a wish list. Names wrap, so
+                                      the whole set is in view and "who have I
+                                      not sent this to" is answerable by
+                                      looking.
+                                    */}
+                                    <ul className="mt-3 flex flex-wrap gap-1.5">
+                                        {friends.map((friend) => {
+                                            const already = list.sharedWith.includes(friend.id)
 
-                                            if (picked.length === 0) {
-                                                return
-                                            }
-
-                                            router.post(
-                                                `${base}/lists/${list.id}/share-with-friends`,
-                                                { friend_ids: picked },
-                                                { preserveScroll: true },
-                                            )
-                                        }}
-                                        className="mt-3"
-                                    >
-                                        {/*
-                                          Names as chips, so the whole set is in
-                                          view and "who have I not sent this to"
-                                          is answerable by looking. A friend who
-                                          already has it is a tick that becomes
-                                          a cross on hover: the same spot, and
-                                          it acts rather than describes. The
-                                          input under an unsent chip is a real
-                                          checkbox, visually hidden, so keyboard
-                                          and screen reader get the native one.
-                                        */}
-                                        <ul className="flex flex-wrap gap-1.5">
-                                            {friends.map((friend) => {
-                                                const already = list.sharedWith.includes(friend.id)
-
-                                                if (already) {
-                                                    return (
-                                                        <li key={friend.id}>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    if (
-                                                                        !window.confirm(
-                                                                            t('lists.unshare_confirm', {
-                                                                                name: friend.name,
-                                                                            }),
-                                                                        )
-                                                                    ) {
-                                                                        return
-                                                                    }
-
-                                                                    router.delete(
-                                                                        `${base}/lists/${list.id}/share-with-friends/${friend.id}`,
-                                                                        { preserveScroll: true },
-                                                                    )
-                                                                }}
-                                                                title={t('lists.unshare_from', {
-                                                                    name: friend.name,
-                                                                })}
-                                                                className="group inline-flex items-center gap-1 rounded-full border border-sage/40 bg-sage/10 px-2.5 py-1 text-xs text-ink-soft hover:border-accent hover:text-accent"
-                                                            >
-                                                                <span aria-hidden className="text-sage group-hover:hidden">
-                                                                    ✓
-                                                                </span>
-                                                                <span aria-hidden className="hidden group-hover:inline">
-                                                                    ✕
-                                                                </span>
-                                                                {friend.name}
-                                                            </button>
-                                                        </li>
-                                                    )
-                                                }
-
+                                            if (already) {
                                                 return (
                                                     <li key={friend.id}>
-                                                        <label className="inline-flex cursor-pointer items-center rounded-full border border-line px-2.5 py-1 text-xs hover:border-ink has-[:checked]:border-sage has-[:checked]:bg-sage/15 has-[:checked]:font-medium">
-                                                            <input
-                                                                type="checkbox"
-                                                                name="friend_ids"
-                                                                value={friend.id}
-                                                                className="sr-only"
-                                                            />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (
+                                                                    !window.confirm(
+                                                                        t('lists.unshare_confirm', {
+                                                                            name: friend.name,
+                                                                        }),
+                                                                    )
+                                                                ) {
+                                                                    return
+                                                                }
+
+                                                                router.delete(
+                                                                    `${base}/lists/${list.id}/share-with-friends/${friend.id}`,
+                                                                    { preserveScroll: true },
+                                                                )
+                                                            }}
+                                                            title={t('lists.unshare_from', {
+                                                                name: friend.name,
+                                                            })}
+                                                            className="group inline-flex items-center gap-1 rounded-full border border-sage/40 bg-sage/10 px-2.5 py-1 text-xs text-ink-soft hover:border-accent hover:text-accent"
+                                                        >
+                                                            <span aria-hidden className="text-sage group-hover:hidden">
+                                                                ✓
+                                                            </span>
+                                                            <span aria-hidden className="hidden group-hover:inline">
+                                                                ✕
+                                                            </span>
                                                             {friend.name}
-                                                        </label>
+                                                        </button>
                                                     </li>
                                                 )
-                                            })}
-                                        </ul>
-                                        <button
-                                            type="submit"
-                                            className="mt-3 rounded-lg bg-accent px-4 py-1.5 text-sm font-medium text-white hover:bg-accent-dark"
-                                        >
-                                            {t('lists.share_send')}
-                                        </button>
-                                    </form>
+                                            }
+
+                                            return (
+                                                <li key={friend.id}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            router.post(
+                                                                `${base}/lists/${list.id}/share-with-friends`,
+                                                                { friend_ids: [friend.id] },
+                                                                { preserveScroll: true },
+                                                            )
+                                                        }
+                                                        title={t('lists.share_with', { name: friend.name })}
+                                                        className="inline-flex items-center rounded-full border border-line px-2.5 py-1 text-xs hover:border-sage hover:bg-sage/10"
+                                                    >
+                                                        {friend.name}
+                                                    </button>
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
                                 </section>
                             )}
 
