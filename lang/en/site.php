@@ -861,7 +861,6 @@ return [
         'share_with_friends' => 'Share with friends',
         'share_with_friends_hint' => 'Pick who gets the link by email. Nobody else learns the list exists.',
         'enable_sharing' => 'Turn sharing on',
-        'link_settings' => 'What the link allows',
         'share_send' => 'Send',
         'unshare_from' => 'Stop sharing with :name',
         'unshare_confirm' => 'Stop sharing this list with :name? Their link, if they have one, still works.',

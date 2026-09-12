@@ -585,14 +585,18 @@ export default function ListTools({
                 <div id="list-tools-panel" className="mt-3 rounded-card border border-line bg-card p-4">
                     {open === 'share' && (
                         /*
-                          Sections with a heading and a rule between them, in
-                          the order the decision is made: is it shared, who
+                          Sections, most with a heading, a gap between them and
+                          no rules, in the order the decision is made: is it shared, who
                           gets the link by name, what the link allows, how a
                           group collects, who was let in before links existed
-                          — and then, as further sections below this block,
-                          handing the list over and what the recipient asked
-                          for. The same shape as the Settings panel, so the
-                          two panels read as two views of one list.
+                          — and then, as a further section below this block,
+                          handing the list over. The link switches carry no
+                          heading of their own: each says what it does, and a
+                          title over them was one more line between the link
+                          and the first switch. Rules were tried and removed
+                          the same day; with headings on the sections the gap
+                          separates well enough, and the card is a third
+                          shorter without them.
 
                           It was one column of blocks with no headings and a
                           fixed gap between them, and it rendered every block
@@ -687,7 +691,7 @@ export default function ListTools({
                               chips are for better than a collapsed button did.
                             */}
                             {list.shareUrl && access.isOwner && friends.length > 0 && (
-                                <section className="mt-8 border-t border-line pt-6">
+                                <section className="mt-6">
                                     <h3 className="text-sm font-medium">
                                         {t('lists.share_with_friends')}
                                         {list.sharedWith.length > 0 && (
@@ -806,9 +810,8 @@ export default function ListTools({
                               for what each defaults to when nobody has said.
                             */}
                             {linkOptions && (
-                                <section className="mt-8 border-t border-line pt-6">
-                                    <h3 className="text-sm font-medium">{t('lists.link_settings')}</h3>
-                                    <div className="mt-3 space-y-2">
+                                <section className="mt-6">
+                                    <div className="space-y-2">
                                         {list.shareUrl && list.kind !== 'mine' && (
                                             <Option
                                                 type="checkbox"
@@ -863,7 +866,7 @@ export default function ListTools({
                               is three settings saved and two of them wrong.
                             */}
                             {access.isOwner && list.kind === 'group' && (
-                                <section className="mt-8 border-t border-line pt-6">
+                                <section className="mt-6">
                                     <h3 className="text-sm font-medium">{t('lists.pledge_mode')}</h3>
                                     <div className="mt-3 space-y-2">
                                         <Option
@@ -928,7 +931,7 @@ export default function ListTools({
                               to take it back.
                             */}
                             {access.isOwner && collaborators.length > 0 && (
-                                <section className="mt-8 border-t border-line pt-6">
+                                <section className="mt-6">
                                     <h3 className="text-sm font-medium">{t('lists.invited_before')}</h3>
                                     <ul className="mt-3 space-y-2">
                                         {collaborators.map((c) => (
@@ -1422,7 +1425,7 @@ export default function ListTools({
 
 
                     {open === 'share' && canHandOver && (
-                        <div className="mt-8 border-t border-line pt-6">
+                        <div className="mt-6">
                         <h3 className="text-sm font-medium">{t('handover.badge')}</h3>
                         <form
                             className="mt-3 flex flex-wrap gap-2"

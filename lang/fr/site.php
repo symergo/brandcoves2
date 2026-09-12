@@ -726,7 +726,6 @@ return [
         'share_with_friends' => 'Partager avec des amis',
         'share_with_friends_hint' => 'Choisissez qui reçoit le lien par e-mail. Personne d’autre n’apprend que la liste existe.',
         'enable_sharing' => 'Activer le partage',
-        'link_settings' => 'Ce que le lien permet',
         'share_send' => 'Envoyer',
         'unshare_from' => 'Ne plus partager avec :name',
         'unshare_confirm' => 'Ne plus partager cette liste avec :name ? Un lien déjà reçu fonctionne toujours.',

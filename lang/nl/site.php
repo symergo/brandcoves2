@@ -729,7 +729,6 @@ return [
         'share_with_friends' => 'Delen met vrienden',
         'share_with_friends_hint' => 'Kies wie de link per e-mail krijgt. Niemand anders hoort dat de lijst bestaat.',
         'enable_sharing' => 'Delen aanzetten',
-        'link_settings' => 'Wat de link toelaat',
         'share_send' => 'Versturen',
         'unshare_from' => 'Niet meer delen met :name',
         'unshare_confirm' => 'Dit lijstje niet meer delen met :name? Een link die ze al hebben blijft werken.',

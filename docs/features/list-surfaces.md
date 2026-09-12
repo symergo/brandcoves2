@@ -285,7 +285,7 @@ words above any block but the first. A radio pair about money, three switches an
 sat under each other with nothing saying which was which. The earlier note above argues headings
 were scaffolding for a form this is not; that held while the panel was a link and three switches,
 and stopped holding once hand-over and the recipient's suggestions moved in under it. Each block now
-carries an `h3` and a rule, in the order the decision is made: the link, who gets it by name, what
+carries an `h3`, in the order the decision is made: the link, who gets it by name, what
 it allows, how a group collects, who was invited before links existed, then hand over, then what the
 recipient asked for.
 
@@ -301,6 +301,11 @@ pressed. And the friends picker is a section rather than a button that revealed 
 nothing until Send, so the deliberateness the collapsed button was protecting is intact, and a
 heading with a hint (`lists.share_with_friends_hint`) says what the chips are for better than the
 button did.
+
+The rules between the sections and the heading over the link switches went the same evening, at the
+owner's request: with headings on the sections a gap separates well enough, the switches say what
+they do without a title, and the card is a third shorter. The Settings panel keeps its one rule
+between the form and the occasion.
 
 ## "How each one works" is its own page
 
