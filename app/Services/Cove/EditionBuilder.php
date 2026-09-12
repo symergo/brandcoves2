@@ -414,6 +414,11 @@ class EditionBuilder
                     'meta_description' => $plan->meta_description
                         ?? Str::limit($this->markup->plain((string) ($plan->blurb ?: $written->intro)), 155, '') ?: null,
                     'focus_keyphrase' => $plan->focus_keyphrase,
+                    // Authored, like the title, so it travels with it. Missing
+                    // until 2026-09-12: the persona build copied its drawing
+                    // and this one did not, so every article built from a plan
+                    // wore the default sheet of paper whatever the plan said.
+                    'scene' => $plan->scene,
                     'source_queries' => $plan->queries ?? [],
                     'editorial_source' => $written->source,
                     'season_from' => $plan->season_from,

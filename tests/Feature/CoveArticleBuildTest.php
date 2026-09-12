@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Enums\Availability;
 use App\Enums\CoveKind;
+use App\Enums\CoveScene;
 use App\Enums\Market;
 use App\Enums\PickMode;
 use App\Enums\PlanWriter;
@@ -75,6 +76,26 @@ class CoveArticleBuildTest extends TestCase
         // table, which is the whole point of folding rather than replacing.
         $this->assertSame('guides/beste-koptelefoons', $edition->kind->path($edition->slug, Market::BeNl));
         $this->assertSame($edition->id, $plan->fresh()->edition_id);
+    }
+
+    #[Test]
+    public function the_plans_drawing_travels_onto_the_built_article(): void
+    {
+        /*
+         * The persona build copied its scene from the plan; the article build
+         * did not, so an advice article approved over the API with a cover
+         * wore the default sheet of paper however it was set. Found on
+         * 2026-09-12, the day the first authored articles with covers went
+         * live on production without them.
+         */
+        $this->shelf();
+        $plan = $this->plan();
+        $plan->forceFill(['scene' => CoveScene::Customs->value])->save();
+
+        $edition = app(EditionBuilder::class)->buildArticle($plan);
+
+        $this->assertNotNull($edition);
+        $this->assertSame(CoveScene::Customs, $edition->fresh()->scene);
     }
 
     #[Test]
