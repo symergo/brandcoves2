@@ -66,3 +66,29 @@ export function reportPageView(): void {
         page_title: document.title,
     })
 }
+
+/**
+ * Report a new account, once.
+ *
+ * The auth callbacks flash how a just-created account signed in, and the page
+ * that follows the redirect carries it as `flash.signUp`. GA4 knows the event
+ * as `sign_up`, so it is marked as a key event in the property's admin
+ * screen rather than defined here.
+ *
+ * Reported once per page lifetime, whatever the page props say: the flash is
+ * gone from the server after one request, but Inertia restores page props from
+ * history on back/forward, and a visitor who signs up and then presses back
+ * would otherwise register a second conversion.
+ *
+ * Consent is not checked here either. `window.gtag` exists only if the shell
+ * rendered the tag or the banner loaded it, and both required a yes.
+ */
+let signUpReported = false
+
+export function reportSignUp(method: string): void {
+    if (signUpReported) {
+        return
+    }
+    signUpReported = true
+    window.gtag?.('event', 'sign_up', { method })
+}

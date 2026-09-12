@@ -73,6 +73,11 @@ class GoogleController extends Controller
         $user = User::query()->whereRaw('lower(email) = ?', [$email])->first();
 
         $user ??= User::create(['email' => $email, 'name' => $googleUser->getName()]);
+        // A new account is a conversion. The note rides the redirect and the
+        // page fires one analytics event for it; see docs/features/analytics.md.
+        if ($user->wasRecentlyCreated) {
+            $request->session()->flash('signed_up', 'google');
+        }
 
         $user->forceFill([
             // Google has already verified the address.

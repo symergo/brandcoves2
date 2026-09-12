@@ -92,7 +92,14 @@ export interface SharedProps {
      * `savedItem` is the odd one out: an id rather than a sentence, for a page
      * that can show the row it just gained instead of describing it.
      */
-    flash: { success?: string; error?: string; status?: string; savedItem?: number | null }
+    flash: {
+        success?: string
+        error?: string
+        status?: string
+        savedItem?: number | null
+        /** How an account that was just created signed in; only on the page after a first sign-in. */
+        signUp?: 'google' | 'email' | null
+    }
     [key: string]: unknown
 }
 

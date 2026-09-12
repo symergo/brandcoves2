@@ -84,6 +84,34 @@ and the report is deferred one frame, because Inertia's `<Head>` writes `documen
 render that follows the event, so reading it immediately attributes every page view to the title of
 the page being *left*.
 
+## Registrations as a conversion
+
+Added 2026-09-12. A new account is the one action on the site worth counting as a conversion, and
+GA4 counts conversions from events, so a first sign-in fires GA4's standard `sign_up` event with a
+`method` of `google` or `email`. Marking it as a key event is done once in the GA4 property
+(Admin, Events, toggle "Mark as key event" on `sign_up`); nothing in the repo can do that part.
+
+How it travels: both auth callbacks (`GoogleController::callback()`, `MagicLinkController::consume()`)
+know whether they just created the account, and only then flash `signed_up` with the method.
+`HandleInertiaRequests` shares it as `flash.signUp`, so it exists for exactly one request, the page
+after the redirect. `app.tsx` reads it in the same `navigate` handler that reports SPA page views
+and calls `reportSignUp()`.
+
+Three things that are deliberate:
+
+- **The server decides what a registration is.** The client could have compared `auth.user` before
+  and after, but a sign-in that merges anonymous work, or a Google login onto an account made by
+  magic link, looks the same from the browser. Only the callback knows `User::create` ran.
+- **Once per page lifetime, whatever the props say.** The flash is gone after one request, but
+  Inertia restores page props from history on back/forward, and a visitor who signs up and presses
+  back would otherwise convert twice. `reportSignUp()` keeps a flag.
+- **Consent is not checked again.** `window.gtag` exists only if the shell rendered the tag or the
+  banner loaded it. A visitor who refused, or has not answered, produces no event, and the registration
+  is simply not counted. That undercount is the price of the consent model and is accepted.
+
+Both sign-in paths are covered in `AuthTest`: a first sign-in carries the note and a second one does
+not, and the shared prop is null again on the next request.
+
 ## What is turned off in code
 
 `cookie_expires: 33696000` (13 months, the CNIL ceiling) rather than GA4's two-year default — a
@@ -115,6 +143,9 @@ The banner copy itself exists in all four languages.
 | `app/Support/CookieConsent.php` | has this visitor agreed |
 | `app/Http/Controllers/CookieConsentController.php` | records the answer |
 | `resources/views/app.blade.php` | the tag, for a visitor who accepted |
-| `resources/js/analytics.ts` | client-side load, and the SPA page view |
+| `resources/js/analytics.ts` | client-side load, the SPA page view, and the `sign_up` event |
+| `app/Http/Controllers/Auth/GoogleController.php`, `MagicLinkController.php` | flash `signed_up` on a first sign-in |
+| `app/Http/Middleware/HandleInertiaRequests.php` | shares it as `flash.signUp` |
 | `resources/js/Components/CookieBanner.tsx` | the question |
 | `tests/Feature/AnalyticsTest.php` | both gates, both directions |
+| `tests/Feature/AuthTest.php` | the sign-up note on a first sign-in, and not on a second |

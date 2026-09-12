@@ -245,6 +245,12 @@ class HandleInertiaRequests extends Middleware
                 // A save made from a list's own page answers with this instead
                 // of a sentence — see `WishlistItemController::report()`.
                 'savedItem' => fn () => $request->session()->get('saved_item'),
+
+                // Not a message either: how the account that was just created
+                // signed in ('google' or 'email'), set by the auth callbacks on
+                // a first sign-in only. The client reports it to analytics as
+                // a sign_up event, once. See docs/features/analytics.md.
+                'signUp' => fn () => $request->session()->get('signed_up'),
             ],
         ];
     }

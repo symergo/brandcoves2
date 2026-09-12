@@ -170,6 +170,11 @@ class MagicLinkController extends Controller
             'email' => $loginToken->email,
             'name' => $loginToken->name,
         ]);
+        // A new account is a conversion. The note rides the redirect and the
+        // page fires one analytics event for it; see docs/features/analytics.md.
+        if ($user->wasRecentlyCreated) {
+            $request->session()->flash('signed_up', 'email');
+        }
 
         // An account that never got a name takes the one just typed. Never
         // overwrites: a name already set is theirs, not the login form's.

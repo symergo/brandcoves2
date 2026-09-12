@@ -2,7 +2,7 @@ import { createInertiaApp, router } from '@inertiajs/react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import type { ReactElement } from 'react'
 import Layout from './Layouts/SiteLayout'
-import { reportPageView } from './analytics'
+import { reportPageView, reportSignUp } from './analytics'
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'GiftCoves'
 
@@ -100,6 +100,17 @@ function updateCanonical(canonical: unknown): void {
 
 router.on('navigate', (event) => {
     updateCanonical(event.detail.page.props.canonical)
+
+    /*
+      A first sign-in lands here as a full document load, so this is the
+      initial navigate event, before the page-view check below decides the
+      landing page is already counted. The conversion is not a page view and
+      is reported regardless.
+    */
+    const signUp = (event.detail.page.props.flash as { signUp?: string | null } | undefined)?.signUp
+    if (typeof signUp === 'string' && signUp !== '') {
+        reportSignUp(signUp)
+    }
 
     const url = window.location.pathname + window.location.search
 

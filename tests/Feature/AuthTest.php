@@ -17,6 +17,8 @@ use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User as GoogleUser;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Tests\TestCase;
@@ -399,5 +401,80 @@ class AuthTest extends TestCase
         $this->post('/be-nl/login', ['email' => 'someone@example.test'])
             ->assertRedirect()
             ->assertSessionHas('success', __('site.auth.link_sent'));
+    }
+
+    #[Test]
+    public function a_first_sign_in_by_magic_link_is_reported_as_a_sign_up_and_a_second_is_not(): void
+    {
+        /*
+         * Registrations are counted as a GA4 conversion from the page after
+         * the redirect: the callback flashes how the new account signed in,
+         * the page carries it as flash.signUp for exactly one request, and the
+         * client fires sign_up. A returning sign-in must stay silent, or every
+         * login would count as a registration.
+         */
+        $this->get('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
+            ->assertRedirect('/be-nl/lists')
+            ->assertSessionHas('signed_up', 'email');
+
+        $this->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page->where('flash.signUp', 'email'));
+
+        // One request only: a reload must not report the sign-up again.
+        $this->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page->where('flash.signUp', null));
+
+        $this->post('/be-nl/logout');
+
+        $this->get('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
+            ->assertRedirect('/be-nl/lists')
+            ->assertSessionMissing('signed_up');
+
+        $this->assertSame(1, User::query()->where('email', 'new@example.test')->count());
+    }
+
+    #[Test]
+    public function a_first_sign_in_with_google_is_reported_as_a_sign_up_and_a_second_is_not(): void
+    {
+        $this->configureGoogle();
+
+        $googleUser = (new GoogleUser)->map([
+            'email' => 'new@example.test',
+            'name' => 'New Person',
+            'avatar' => 'https://lh3.googleusercontent.com/a/photo',
+        ]);
+        Socialite::shouldReceive('driver->user')->andReturn($googleUser);
+
+        $this->withSession(['auth.market' => 'be-nl'])
+            ->get('/auth/google/callback')
+            ->assertRedirect('/be-nl/lists')
+            ->assertSessionHas('signed_up', 'google');
+
+        $this->post('/be-nl/logout');
+
+        $this->withSession(['auth.market' => 'be-nl'])
+            ->get('/auth/google/callback')
+            ->assertRedirect('/be-nl/lists')
+            ->assertSessionMissing('signed_up');
+
+        $this->assertSame(1, User::query()->where('email', 'new@example.test')->count());
+    }
+
+    /** Ask for a magic link and return its token, the way a mailbox would hand it over. */
+    private function requestLink(string $email): string
+    {
+        Mail::fake();
+        $this->post('/be-nl/login', ['email' => $email]);
+
+        $token = null;
+        Mail::assertSent(MagicLinkMail::class, function (MagicLinkMail $mail) use (&$token) {
+            $token = $mail->token;
+
+            return true;
+        });
+
+        $this->assertNotNull($token);
+
+        return $token;
     }
 }
