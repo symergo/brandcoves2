@@ -111,8 +111,15 @@ function ListCard({ list }: { list: ListSummary }) {
                     {list.itemCount === 1
                         ? t('lists.one_item')
                         : t('lists.items', { count: n(list.itemCount) })}
-                    {/* Not on a wish list of your own: there the recipient is you, and a handed-over list keeps yours as its record. */}
+                    {/*
+                      Who the list is for. On a list about somebody, the
+                      recipient; on a wish list somebody shared with me, its
+                      owner, because that is the person I shop for. Never on
+                      a wish list of your own: there the recipient is you,
+                      and a handed-over list keeps your name as its record.
+                    */}
                     {list.kind !== 'mine' && list.recipient && ` · ${list.recipient.name}`}
+                    {theirs && list.kind === 'mine' && list.ownerName && ` · ${list.ownerName}`}
                 </p>
 
                 {/*
