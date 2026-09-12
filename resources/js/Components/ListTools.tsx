@@ -1195,7 +1195,7 @@ export default function ListTools({
                                     // not the list: it goes to the recipient endpoint,
                                     // and the list follows once that has landed so one
                                     // Save means one outcome.
-                                    if (list.recipient !== null && renamed !== '' && renamed !== list.recipient.name) {
+                                    if (list.kind !== 'mine' && list.recipient !== null && renamed !== '' && renamed !== list.recipient.name) {
                                         router.patch(
                                             `${base}/recipients/${list.recipient.id}`,
                                             { name: renamed },
@@ -1225,8 +1225,13 @@ export default function ListTools({
                                   "Ask :name" chip lost its label, and a list
                                   about a person whose page never says the
                                   person is a list with its title missing.
+
+                                  Never on a wish list of your own: there the
+                                  recipient is you, and `mine` lists carry no
+                                  recipient at all, so the kind check is belt
+                                  to the null check's braces.
                                 */}
-                                {list.recipient !== null && (
+                                {list.kind !== 'mine' && list.recipient !== null && (
                                     <label className="block text-sm">
                                         <span className="text-ink-soft">{t('lists.recipient_label')}</span>
                                         <input
