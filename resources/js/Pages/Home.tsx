@@ -428,7 +428,7 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                     {pickingKind && (
                         <div
                             id="new-list-kinds"
-                            className="mt-3 max-w-3xl rounded-card border border-line bg-card p-4"
+                            className="mt-3 rounded-card border border-line bg-card p-4"
                         >
                             <p className="text-sm font-medium">{t('lists.for_whom')}</p>
 
@@ -481,7 +481,9 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                 // right while the band opened with a sentence
                                 // covering all five cards; that sentence is
                                 // gone, so this card carries its own.
-                                hint: gifting.lists > 0
+                                hint: gifting.lists === 1
+                                    ? t('home.gifting_lists_one')
+                                    : gifting.lists > 0
                                     ? t('home.gifting_lists_count', { count: n(gifting.lists) })
                                     : t('home.organise_mine_hint'),
                             },
