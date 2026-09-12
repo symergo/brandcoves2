@@ -412,7 +412,7 @@ return [
     ],
 
     'handover' => [
-        'hint' => 'Geef de lijst aan :name. Het wordt hun eigen wenslijst, die ze met anderen kunnen delen.',
+        'hint' => 'Geef de lijst aan iemand. De ontvanger wordt de eigenaar van de lijst en kan ze met anderen delen.',
         'action' => 'Geef hem door',
         'confirm' => 'Deze lijst aan :name geven? Hij is dan niet meer van jou.',
         'done' => 'Doorgegeven aan :name.',

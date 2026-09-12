@@ -523,7 +523,7 @@ return [
     ],
 
     'handover' => [
-        'hint' => 'Give the list to :name. It becomes their own wishlist, which they can share with others.',
+        'hint' => 'Give the list to someone. The recipient becomes its owner and can share it with others.',
         'action' => 'Hand it over',
         'confirm' => 'Give this list to :name? You will no longer own it.',
         'done' => 'Handed over to :name.',

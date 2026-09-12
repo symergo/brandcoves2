@@ -408,7 +408,7 @@ return [
     ],
 
     'handover' => [
-        'hint' => 'Dale la lista a :name. Pasa a ser su propia lista de deseos, que pueden compartir con otros.',
+        'hint' => 'Dale la lista a alguien. El destinatario pasa a ser su propietario y puede compartirla con otros.',
         'action' => 'Cederla',
         'confirm' => 'Dar esta lista a :name? Dejará de ser tuya.',
         'done' => 'Cedida a :name.',

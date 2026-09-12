@@ -409,7 +409,7 @@ return [
     ],
 
     'handover' => [
-        'hint' => 'Donnez la liste à :name. Elle devient leur propre liste d’envies, à partager librement.',
+        'hint' => 'Donnez la liste à quelqu’un. Le destinataire en devient le propriétaire et peut la partager avec d’autres.',
         'action' => 'La transmettre',
         'confirm' => 'Donner cette liste à :name ? Elle ne sera plus la vôtre.',
         'done' => 'Transmise à :name.',
