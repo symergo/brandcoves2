@@ -739,6 +739,7 @@ return [
         'delete' => 'Delete',
         'settings' => 'Settings',
         'title_label' => 'Name of the list',
+        'recipient_label' => 'For whom',
         'description_label' => 'Description',
         'delete_confirm' => 'Delete this list and everything in it?',
         'share' => 'Share',

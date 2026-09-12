@@ -314,6 +314,11 @@ email goes out; a second tap takes it back after a confirm. A mis-tap sends a re
 be recalled, and the chip turning green on the spot is what makes it visible; the harm is a friend
 hearing about a wish list, which was judged small enough for one control instead of two.
 
+Settings also names the person. Once the "Ask :name" chip lost its label the recipient's name
+appeared nowhere on their own list, so the form carries a *For whom* field above the description on a
+list about somebody. The name is a fact about the recipient, not the list: Save patches
+`/recipients/{id}` first and the list once that has landed, so one press is one outcome.
+
 ## "How each one works" is its own page
 
 The manual was the bottom half of `/gift-cove`, a page with two readers who want opposite things: one

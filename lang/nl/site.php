@@ -610,6 +610,7 @@ return [
         'delete' => 'Verwijderen',
         'settings' => 'Instellingen',
         'title_label' => 'Naam van de lijst',
+        'recipient_label' => 'Voor wie',
         'description_label' => 'Omschrijving',
         'delete_confirm' => 'Dit lijstje en alles erin verwijderen?',
         'share' => 'Delen',

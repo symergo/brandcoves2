@@ -67,7 +67,8 @@ interface Props {
         shareUrl: string | null
         /** Who this list has already been shared with, by id. */
         sharedWith: number[]
-        recipient: { name: string } | null
+        /** Who the list is for, on a list about somebody else. The id is what the settings form patches. */
+        recipient: { id: number; name: string } | null
         eventType: string | null
         eventDate: string | null
         /** Is anybody else on this list? Most lists are private and solo. */
@@ -216,6 +217,9 @@ export default function ListTools({
     // The settings form: the name and the note, typed here and saved together.
     const [title, setTitle] = useState(list.title)
     const [note, setNote] = useState(list.description ?? '')
+    // And who it is for, on a list about somebody else. Lives on the recipient,
+    // not the list, so it is saved through its own endpoint first.
+    const [personName, setPersonName] = useState(list.recipient?.name ?? '')
 
     const shared = list.visibility !== 'private'
 
@@ -1177,13 +1181,31 @@ export default function ListTools({
                                 className="mt-3 grid gap-3 sm:max-w-xl"
                                 onSubmit={(e) => {
                                     e.preventDefault()
-                                    setting({
-                                        title: title.trim() === '' ? list.title : title.trim(),
-                                        // Empty is no note, not an empty one: the column
-                                        // is nullable and a blank string would render as
-                                        // a gap under the title.
-                                        description: note.trim() === '' ? null : note.trim(),
-                                    })
+                                    const saveList = () =>
+                                        setting({
+                                            title: title.trim() === '' ? list.title : title.trim(),
+                                            // Empty is no note, not an empty one: the column
+                                            // is nullable and a blank string would render as
+                                            // a gap under the title.
+                                            description: note.trim() === '' ? null : note.trim(),
+                                        })
+                                    const renamed = personName.trim()
+
+                                    // The person's name is a fact about the recipient,
+                                    // not the list: it goes to the recipient endpoint,
+                                    // and the list follows once that has landed so one
+                                    // Save means one outcome.
+                                    if (list.recipient !== null && renamed !== '' && renamed !== list.recipient.name) {
+                                        router.patch(
+                                            `${base}/recipients/${list.recipient.id}`,
+                                            { name: renamed },
+                                            { preserveScroll: true, onSuccess: saveList },
+                                        )
+
+                                        return
+                                    }
+
+                                    saveList()
                                 }}
                             >
                                 <label className="block text-sm">
@@ -1197,6 +1219,26 @@ export default function ListTools({
                                         className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
                                     />
                                 </label>
+                                {/*
+                                  Who it is for, when it is about somebody. The
+                                  name appeared nowhere on the page once the
+                                  "Ask :name" chip lost its label, and a list
+                                  about a person whose page never says the
+                                  person is a list with its title missing.
+                                */}
+                                {list.recipient !== null && (
+                                    <label className="block text-sm">
+                                        <span className="text-ink-soft">{t('lists.recipient_label')}</span>
+                                        <input
+                                            type="text"
+                                            value={personName}
+                                            onChange={(e) => setPersonName(e.target.value)}
+                                            maxLength={80}
+                                            required
+                                            className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                        />
+                                    </label>
+                                )}
                                 <label className="block text-sm">
                                     <span className="text-ink-soft">{t('lists.description_label')}</span>
                                     <textarea

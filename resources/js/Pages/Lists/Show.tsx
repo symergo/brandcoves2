@@ -104,7 +104,7 @@ interface Props {
         claimable: boolean
         visibility: string
         shareUrl: string | null
-        recipient: { name: string } | null
+        recipient: { id: number; name: string } | null
         isDefault: boolean
         handedOver: boolean
         eventType: string | null

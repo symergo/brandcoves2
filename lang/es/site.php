@@ -606,6 +606,7 @@ return [
         'delete' => 'Eliminar',
         'settings' => 'Ajustes',
         'title_label' => 'Nombre de la lista',
+        'recipient_label' => 'Para quién',
         'description_label' => 'Descripción',
         'delete_confirm' => '¿Eliminar esta lista y todo su contenido?',
         'share' => 'Compartir',
