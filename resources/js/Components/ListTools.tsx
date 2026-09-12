@@ -1208,23 +1208,15 @@ export default function ListTools({
                                     saveList()
                                 }}
                             >
-                                <label className="block text-sm">
-                                    <span className="text-ink-soft">{t('lists.title_label')}</span>
-                                    <input
-                                        type="text"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
-                                        maxLength={120}
-                                        required
-                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
-                                    />
-                                </label>
                                 {/*
                                   Who it is for, when it is about somebody. The
                                   name appeared nowhere on the page once the
                                   "Ask :name" chip lost its label, and a list
                                   about a person whose page never says the
                                   person is a list with its title missing.
+                                  First, above the list's own name: the person
+                                  is what the list is about, the title is what
+                                  it is called.
 
                                   Never on a wish list of your own: there the
                                   recipient is you, and `mine` lists carry no
@@ -1244,6 +1236,17 @@ export default function ListTools({
                                         />
                                     </label>
                                 )}
+                                <label className="block text-sm">
+                                    <span className="text-ink-soft">{t('lists.title_label')}</span>
+                                    <input
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        maxLength={120}
+                                        required
+                                        className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2 text-sm"
+                                    />
+                                </label>
                                 <label className="block text-sm">
                                     <span className="text-ink-soft">{t('lists.description_label')}</span>
                                     <textarea
