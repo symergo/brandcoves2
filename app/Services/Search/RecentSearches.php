@@ -7,6 +7,7 @@ namespace App\Services\Search;
 use App\Enums\Market;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
+use App\Support\SearchUrl;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -100,7 +101,7 @@ final class RecentSearches
 
             $rows[] = [
                 'term' => $term,
-                'url' => '/'.$market->value.'/search?q='.rawurlencode($term),
+                'url' => SearchUrl::for($market, $term),
                 'images' => $images,
             ];
         }
