@@ -618,7 +618,7 @@ return [
         'voting_enabled' => 'Todos pueden votar los regalos',
         'voting_enabled_hint' => 'La lista se ordena por los votos. Desactívalo si el regalo ya está decidido.',
         'price_watch' => 'Seguir los precios de esta lista',
-        'price_watch_hint' => 'Un correo por la mañana cuando algo de la lista baje de precio o vuelva a estar disponible. Los precios de Amazon no se siguen.',
+        'price_watch_hint' => 'Un correo por la mañana cuando algo de la lista baje de precio o vuelva a estar disponible.',
         'price_watch_threshold' => 'Avísame con bajadas de al menos',
         'pledge_mode' => 'Cómo contribuye cada persona',
         'pledge_mode_each' => 'Cada persona dice cuánto pone',

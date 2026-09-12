@@ -751,7 +751,7 @@ return [
         'voting_enabled' => 'Everyone can vote on the presents',
         'voting_enabled_hint' => 'The shortlist sorts itself by the tally. Turn it off if the present is already decided.',
         'price_watch' => 'Watch the prices on this list',
-        'price_watch_hint' => 'One mail a morning when something on the list gets cheaper or is back in stock. Amazon prices are not watched.',
+        'price_watch_hint' => 'One mail a morning when something on the list gets cheaper or is back in stock.',
         'price_watch_threshold' => 'Tell me about drops of at least',
         'pledge_mode' => 'How everyone chips in',
         'pledge_mode_each' => 'Everyone says what they are putting in',

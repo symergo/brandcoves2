@@ -622,7 +622,7 @@ return [
         'voting_enabled' => 'Deelnemers kunnen stemmen op de cadeaus',
         'voting_enabled_hint' => 'De lijst sorteert zich op het aantal stemmen. Zet het uit als het cadeau al vaststaat.',
         'price_watch' => 'Volg de prijzen op deze lijst',
-        'price_watch_hint' => 'Eén mail per ochtend wanneer iets op de lijst goedkoper wordt of weer op voorraad is. Prijzen van Amazon worden niet gevolgd.',
+        'price_watch_hint' => 'Eén mail per ochtend wanneer iets op de lijst goedkoper wordt of weer op voorraad is.',
         'price_watch_threshold' => 'Laat het weten bij een daling van minstens',
         'pledge_mode' => 'Hoe iedereen bijdraagt',
         'pledge_mode_each' => 'Iedereen kiest zelf een bedrag',
