@@ -190,10 +190,11 @@ the row and the manual show the same marks. Two were added for this: `settings` 
 shows: Share lights up when the list has a live link, and the add-a-product control is present or it
 is not. A badge captioning a control one line below it is the header explaining the row.
 
-The item grid is one column of full-row cards on every width. It was two columns on a phone, three
-from `sm` and two again from `lg`, and on a wide screen two narrow cards side by side read as a
-broken layout; a card with the picture left and the actions right is a row, and a row wants the
-width.
+The item grid is two columns on a phone and one column of full-row cards from `sm` up. It was two,
+then three from `sm`, then two again from `lg`, and on a wide screen two narrow cards side by side
+read as a broken layout; a card with the picture left and the actions right is a row, and a row
+wants the width. On a phone the owner kept the pair: there a row would be mostly empty, and two
+small cards show twice as much of the list per screen.
 
 The ✕ on each card went the same afternoon. The bookmark beside it is a toggle whose menu already
 takes an item off the list, with an undo rather than a confirm; the ✕ was that act a second time, and

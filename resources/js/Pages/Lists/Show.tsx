@@ -438,7 +438,7 @@ export default function ListShow({
                               stay here, because the owner's two are genuinely
                               not the visitor's four.
                             */}
-                            <ul className="mt-3 grid grid-cols-1 gap-3 sm:gap-4">
+                            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-1 sm:gap-4">
                                 {items.map((item) => (
                                     <ListItemCard
                                         key={item.id}
