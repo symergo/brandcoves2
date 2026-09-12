@@ -51,6 +51,4 @@
 </x-mail::button>
 
 <small>{{ __('site.list_watch.mail_why') }}</small>
-
-<small>{{ __('site.footer.affiliate') }}</small>
 </x-mail::message>
