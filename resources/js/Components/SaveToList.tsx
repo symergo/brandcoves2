@@ -12,6 +12,7 @@ import {
 } from '../lastList'
 import {
     activeSnapshot,
+    type Holder,
     holderSnapshot,
     load,
     serverHolders,
@@ -332,10 +333,9 @@ export default function SaveToList({
         const unqualified = extra.wishlist_id === undefined && extra.new_list === undefined
         const guess = !unqualified ? undefined : (savingTo?.id ?? lastList?.id)
         const chosen = (extra.wishlist_id as string | undefined) ?? guess
-        const ontoActive = !savingTo || chosen === savingTo.id
 
         if (groupId !== undefined) {
-            markSaved(groupId, ontoActive)
+            markSaved(groupId, chosen ?? null)
         }
 
         try {
@@ -393,7 +393,7 @@ export default function SaveToList({
              * picking a different one did nothing you could see.
              */
             if (groupId !== undefined) {
-                markSaved(groupId, ontoActive, { listId: result.listId, itemId: result.itemId })
+                markSaved(groupId, result.listId, result.itemId)
             }
 
             setCreating(null)
@@ -430,7 +430,7 @@ export default function SaveToList({
             return true
         } catch (error) {
             if (groupId !== undefined) {
-                markRemoved(groupId, ontoActive)
+                markRemoved(groupId, chosen ?? null)
             }
 
             /*
@@ -454,51 +454,14 @@ export default function SaveToList({
     }
 
     /**
-     * One list at a time: put it here, and take it off wherever it was.
+     * Take it off one list, from the same row that put it there.
      *
-     * The picker was a checklist, and a product could sit on four lists at once.
-     * That answered "where have I kept this?" and asked the wrong question of
-     * the person using it — the reason to open this menu is almost always *this
-     * one, not that one*, and expressing a move as an add plus a hunt for the
-     * old row is how a product ends up on two lists neither of which is the one
-     * you meant.
-     *
-     * Sequential rather than parallel, and the delete comes second. The window
-     * where the product is on both lists is the safe order to fail in; the other
-     * one loses it entirely.
+     * The menu stays open: unticking the wrong list is the mistake this path
+     * exists to make recoverable, and closing the menu would make it
+     * unrecoverable in the same click. The store decides whether the bookmark
+     * empties — only when no other list still holds the product.
      */
-    async function move(
-        extra: Record<string, unknown>,
-        close = false,
-        keep?: string,
-    ): Promise<void> {
-        // One holder, so one delete — read before the save, which changes it.
-        const previous = held !== null && held.listId !== keep ? held : null
-
-        if (!(await save(extra, close))) return
-
-        if (previous !== null) {
-            await remove(previous.itemId, previous.listId, true)
-        }
-    }
-
-    /**
-     * Take it off a list, from the same row that put it there.
-     *
-     * The menu stays open: removing from the wrong list is the mistake this
-     * whole path exists to make recoverable, and closing the menu would make it
-     * unrecoverable in the same click.
-     *
-     * @param kept `true` when this delete is the second half of a move, so the
-     *             product is still on the list it went to. Without it the
-     *             bookmark would go hollow in the middle of putting something
-     *             somewhere.
-     *
-     * This used to refetch every list and recompute membership across all of
-     * them. One list holds a product now, so removing from it means it is on
-     * none — an answer already in hand, and not worth a round trip.
-     */
-    async function remove(itemId: number, listId: string, kept = false): Promise<void> {
+    async function remove(itemId: number, listId: string): Promise<void> {
         if (busy) return
 
         setBusy(true)
@@ -511,21 +474,8 @@ export default function SaveToList({
             }
 
             if (groupId !== undefined) {
-                if (!kept) {
-                    markRemoved(groupId, true)
-                } else if (savingTo?.id === listId) {
-                    // `false` for the holder: the move has already written the
-                    // new one, and forgetting it here would blank the marker in
-                    // the open picker mid-move.
-                    // Moved off the list being filled and onto another one: the
-                    // bookmark answers "is it on Camping?" during a run, so it
-                    // goes hollow for that question and stays filled for the
-                    // general one.
-                    markRemoved(groupId, true, false)
-                    markSaved(groupId, false)
-                }
+                markRemoved(groupId, listId)
             }
-
         } catch {
             showToast({ message: t('lists.save_failed'), tone: 'error' })
         } finally {
@@ -534,83 +484,75 @@ export default function SaveToList({
     }
 
     /*
-     * The one list holding it, if any.
-     *
-     * Singular by design — see `move()`. It decides three things: whether the
-     * other rows read "save" or "move", which row is marked as the current
-     * answer, and whether the menu offers a way off the lists at all.
-     *
-     * Null until `savedItems` has answered, and null forever for a product with
-     * no group of its own — a live bol result, an Amazon product — which is the
-     * same as it was: nothing to match on, so nothing is claimed.
+     * Every list holding it. Empty until `savedItems` has answered, and empty
+     * forever for a product with no group of its own — a live bol result, an
+     * Amazon product — which is the same as it was: nothing to match on, so
+     * nothing is ticked.
      */
-    const held = groupId === undefined ? null : (holders?.[groupId] ?? null)
-    const holder = held === null ? null : (lists.find((l) => l.id === held.listId) ?? null)
+    const held: Holder[] = groupId === undefined ? [] : (holders?.[groupId] ?? [])
 
     const mine = lists.filter((l) => l.kind === 'mine')
     const forOthers = lists.filter((l) => l.kind === 'for_someone')
     const groups = lists.filter((l) => l.kind === 'group')
 
     /**
-     * A row is an option, not a selection.
+     * A row is a tick: on, the product is on that list; off, it is not.
      *
-     * It has been both. As a **checklist** it let a product sit on four lists at
-     * once, which asked the wrong question — the reason to open this menu is
-     * almost always *this one, not that one*. As a **radio group** it stopped
-     * that, but it still put a control box in front of every list and made the
-     * chosen row mean something different from all the others: press it and the
-     * product left every list, from a widget whose whole grammar says it selects.
+     * The row has been three things. A **checklist** first. Then, from
+     * 2026-08-31, a **menu of options** where one list held a product and
+     * picking another row moved it there, on the argument that the reason to
+     * open the menu is almost always "this one, not that one". Then a
+     * checklist again from 2026-09-12, because the owner wanted a product to
+     * be able to sit on the birthday list and the Christmas list at once, and
+     * copying it across was a workaround for a capability the picker had
+     * taken away. The move's one surprise — choosing a second list silently
+     * emptied the first — goes with it.
      *
-     * So: no boxes. Every row is one option — *put it here* — and pressing any
-     * of them moves it. Where it currently is, is reported rather than offered:
-     * marked, `aria-current`, and inert, because "put it where it already is"
-     * is not an action. Taking it off the lists altogether is its own named
-     * option at the foot of the menu, where a destructive thing belongs.
+     * So: a box in front of every list, ticked where the product is. Ticking
+     * saves to that list and leaves the others alone; unticking takes it off
+     * that list only. "Get this off my lists" is unticking the rows that are
+     * on, so the separate remove option at the top of the menu is gone.
      */
     function row(list: ListOption, label: string) {
-        const on = held?.listId === list.id
+        const holder = held.find((h) => h.listId === list.id) ?? null
+        const on = holder !== null
 
         return (
             <button
                 key={list.id}
                 type="button"
-                role="menuitem"
-                aria-current={on ? 'true' : undefined}
-                disabled={busy || on}
-                onClick={() => void move({ wishlist_id: list.id }, false, list.id)}
-                title={
+                role="menuitemcheckbox"
+                aria-checked={on}
+                disabled={busy}
+                onClick={() => {
+                    if (holder !== null) {
+                        void remove(holder.itemId, list.id)
+                    } else {
+                        void save({ wishlist_id: list.id }, false)
+                    }
+                }}
+                title={on ? t('lists.remove_from', { list: label }) : t('lists.save_to', { list: label })}
+                className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm disabled:opacity-50 ${
                     on
-                        ? t('lists.saved')
-                        : holder
-                          ? t('lists.move_to', { list: label })
-                          : t('lists.save_to', { list: label })
-                }
-                className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm ${
-                    on
-                        ? 'border border-sage bg-sage/15 font-semibold text-sage'
-                        : 'border border-transparent hover:bg-line/40 disabled:opacity-50'
+                        ? 'border border-sage bg-sage/15 font-medium text-sage'
+                        : 'border border-transparent hover:bg-line/40'
                 }`}
             >
-                <span className="min-w-0 flex-1 truncate">{label}</span>
                 {/*
-                  Where it is, said loudly.
-
-                  A grey tick at the trailing edge of one row in a list of eight
-                  is not a state anybody reads — it was the same size and weight
-                  as the text beside it. The row itself carries the answer now:
-                  a sage tint, a sage border and a filled disc, so the one line
-                  that is different looks different from across the panel. Still
-                  at the trailing edge and still not a box, because it reports
-                  rather than offers.
+                  A real-looking box, because the row is a selection again and
+                  a box is the one shape everybody reads as "tick me". Sage
+                  when on, matching the filled bookmark and the tinted row, so
+                  the state is said three times for a reader who catches one.
                 */}
-                {on && (
-                    <span
-                        aria-hidden
-                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sage text-xs font-bold text-white"
-                    >
-                        ✓
-                    </span>
-                )}
+                <span
+                    aria-hidden
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-2xs font-bold ${
+                        on ? 'border-sage bg-sage text-white' : 'border-line bg-card'
+                    }`}
+                >
+                    {on ? '✓' : ''}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{label}</span>
             </button>
         )
     }
@@ -632,12 +574,11 @@ export default function SaveToList({
                      * after them; a group list adds `together`, which is the
                      * single bit that separates the two on the server.
                      *
-                     * Through `move` rather than `save`: naming a new list for
-                     * this product is the same intention as picking an existing
-                     * one, and leaving the old row behind here would be the one
-                     * way back to two lists holding it.
+                     * Through `save`, like a tick on an existing row: naming a
+                     * new list for this product puts it there and leaves the
+                     * other lists alone, now that a product may sit on several.
                      */
-                    void move(
+                    void save(
                         creating === 'mine'
                             ? { new_list: name }
                             : {
@@ -680,42 +621,6 @@ export default function SaveToList({
             </form>
         ) : (
             <>
-                {/*
-                  The way off the lists, first.
-
-                  It used to be the marked row itself: press the thing that says
-                  "it is on Camping" and it stops being on Camping. That is fine
-                  in a checklist and wrong in a menu of options, where every
-                  other row puts the product somewhere and one of them silently
-                  did the opposite.
-
-                  At the top rather than the foot, because it is the answer to a
-                  question you arrive with — "get this off my list" — and a
-                  panel of eight lists would otherwise make you read all of them
-                  to find out it was possible. One word: which list it leaves is
-                  the marked one, directly below, and the tooltip names it.
-                */}
-                {holder && held && (
-                    <>
-                        <button
-                            type="button"
-                            role="menuitem"
-                            disabled={busy}
-                            onClick={() => void remove(held.itemId, holder.id)}
-                            title={t('lists.remove_from', {
-                                list: holder.kind === 'mine' ? holder.title : (holder.recipient ?? holder.title),
-                            })}
-                            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm text-ink-soft hover:bg-line/40 hover:text-accent disabled:opacity-50"
-                        >
-                            <span aria-hidden className="text-xs">
-                                ✕
-                            </span>
-                            {t('lists.remove')}
-                        </button>
-                        <div className="my-1 border-t border-line" />
-                    </>
-                )}
-
                 <p className="px-2 pt-1 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
                     {t('lists.for_me')}
                 </p>

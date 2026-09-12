@@ -604,7 +604,6 @@ return [
         'saved' => 'Bewaard',
         'save_to_list' => 'Bewaar in een lijstje',
         'save_to' => 'Bewaar in :list',
-        'move_to' => 'Verplaats naar :list',
         'remove_from' => 'Haal uit :list',
         'delete_list' => 'Dit lijstje verwijderen',
         'delete' => 'Verwijderen',

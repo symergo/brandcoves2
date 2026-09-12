@@ -600,7 +600,6 @@ return [
         'saved' => 'Guardado',
         'save_to_list' => 'Guardar en una lista',
         'save_to' => 'Guardar en :list',
-        'move_to' => 'Mover a :list',
         'remove_from' => 'Quitar de :list',
         'delete_list' => 'Eliminar esta lista',
         'delete' => 'Eliminar',

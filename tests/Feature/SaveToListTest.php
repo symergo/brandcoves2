@@ -516,14 +516,39 @@ class SaveToListTest extends TestCase
         $this->actingAs($user)
             ->getJson('/be-nl/saved-items')
             ->assertOk()
-            ->assertJsonPath("holders.{$group->id}.listId", $list->id)
-            ->assertJsonPath("holders.{$group->id}.itemId", $item->id);
+            ->assertJsonPath("holders.{$group->id}.0.listId", $list->id)
+            ->assertJsonPath("holders.{$group->id}.0.itemId", $item->id);
     }
 
     /**
      * Asking about a list you have no part in is a read of somebody's list
      * membership, and is gated like one — empty, rather than its contents.
      */
+    #[Test]
+    public function saved_items_names_every_list_holding_a_product(): void
+    {
+        $user = User::factory()->create();
+        $group = $this->group();
+        $one = Wishlist::factory()->create(['owner_user_id' => $user->id, 'kind' => ListKind::Mine, 'market' => Market::BeNl]);
+        $two = Wishlist::factory()->create(['owner_user_id' => $user->id, 'kind' => ListKind::Mine, 'market' => Market::BeNl]);
+
+        foreach ([$one, $two] as $list) {
+            $this->actingAs($user)
+                ->postJson('/be-nl/list-items', ['group_id' => $group->id, 'wishlist_id' => $list->id])
+                ->assertOk();
+        }
+
+        // A product may sit on several lists at once, and the picker ticks
+        // each of them, so the answer is every holder rather than one.
+        $listIds = collect($this->actingAs($user)->getJson('/be-nl/saved-items')->json("holders.{$group->id}"))
+            ->pluck('listId')
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(collect([$one->id, $two->id])->sort()->values()->all(), $listIds);
+    }
+
     #[Test]
     public function saved_items_will_not_report_on_a_stranger_list(): void
     {

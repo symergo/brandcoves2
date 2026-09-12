@@ -18,6 +18,14 @@ Two things wanted the same operation from opposite directions:
 One service ([`ItemMover`](../../app/Services/Wishlist/ItemMover.php)), two
 endpoints, because the two have different sources and therefore different gates.
 
+## Since 2026-09-12: for a catalogue product, the picker does this
+
+The bookmark's picker is a checklist again, so putting a product that is already on one list onto
+another is a tick in the picker rather than a copy. `CopyToList` remains for what the picker cannot
+serve: a hand-written item, which has no product to save, and the recipient's own rows in the Ask
+panel, which are somebody else's list. See
+[wishlists.md](wishlists.md#and-back-to-ticks-a-product-may-sit-on-several-lists-2026-09-12).
+
 ## Copy, never move
 
 The only verb, and the decision that shapes everything else.

@@ -99,12 +99,19 @@ class WishlistItemController extends Controller
          * two lists, `keyBy` keeps the last and the first press consolidates
          * it.
          */
+        /*
+         * Every list holding each product, not one. The picker is a checklist
+         * again (2026-09-12): a product may sit on several lists at once, and
+         * each row needs the item id it would delete to untick itself.
+         */
         $holders = $rows
-            ->keyBy('group_id')
-            ->map(fn (WishlistItem $item): array => [
-                'listId' => $item->wishlist_id,
-                'itemId' => $item->id,
-            ]);
+            ->groupBy('group_id')
+            ->map(fn ($items) => $items
+                ->map(fn (WishlistItem $item): array => [
+                    'listId' => $item->wishlist_id,
+                    'itemId' => $item->id,
+                ])
+                ->values());
 
         $list = $request->query('list');
 

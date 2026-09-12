@@ -71,7 +71,9 @@ export default function SaveToast() {
              * which re-checks every list — stays the authority elsewhere.
              */
             if (toast.undo.groupId !== undefined) {
-                markRemoved(toast.undo.groupId)
+                // Named by list (2026-09-12): the bookmark empties only when no other
+                // list still holds the product, which the store now knows.
+                markRemoved(toast.undo.groupId, toast.listId ?? null)
             }
 
             dismiss(toast.key)

@@ -601,7 +601,6 @@ return [
         'saved' => 'Enregistré',
         'save_to_list' => 'Enregistrer dans une liste',
         'save_to' => 'Enregistrer dans :list',
-        'move_to' => 'Déplacer vers :list',
         'remove_from' => 'Retirer de :list',
         'delete_list' => 'Supprimer cette liste',
         'delete' => 'Supprimer',

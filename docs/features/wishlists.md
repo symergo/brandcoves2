@@ -408,6 +408,36 @@ save this?" by looking. What was wrong was the *offer*: the reason to open this 
 always **this one, not that one**, and expressing a move as an add plus a hunt for the old row is
 exactly how a product ends up on two lists, neither of which is the one you meant.
 
+### And back to ticks: a product may sit on several lists (2026-09-12)
+
+The menu of options above lasted twelve days. The owner asked for the checklist back, and the case
+was the one the August note had argued away: the same headphones belong on your own wish list *and*
+on the Christmas list for your brother, and "copy it to the other list" had become the workaround for
+a capability the picker used to have. The move's one surprise, that choosing a second list silently
+emptied the first, goes with it.
+
+What changed, and what did not:
+
+- **Every row is a tick.** `role="menuitemcheckbox"`, a box in front of the name, sage when on.
+  Ticking saves to that list and leaves the others alone; unticking takes it off that list only.
+  The separate *Remove* option at the top of the menu is gone, because unticking the rows that are
+  on is that action.
+- **The store keeps every holder.** `savedItems.holding` is `Record<groupId, Holder[]>`, and
+  `/saved-items` answers `holders.{group}` as a list. `markRemoved(groupId, listId)` drops one
+  holder and empties the bookmark only when none is left, which is also what the undo toast now
+  calls: undoing a save onto the Christmas list leaves the product on your own list. `move()` and
+  the `kept` flag on `remove()` are gone with the single-holder model.
+- **Saving from the menu no longer closes it.** A tick is one of possibly several, and the menu
+  stays for the next one; the bookmark's main press still saves to the remembered list and closes.
+- **The server never enforced one list.** `saving_to_a_list_does_not_move_it_in_the_picker` was
+  always green; the move lived entirely in the client, which is why this is a client change plus
+  the shape of one JSON answer. `saved_items_names_every_list_holding_a_product` pins the new shape.
+- **Unchanged:** where the last save went is still remembered, creating a list from the picker
+  still saves into it, and the adding mode's per-list set still answers "is it on Camping yet?".
+
+[copying-items.md](copying-items.md) keeps `CopyToList` for the two cases the picker cannot serve:
+a hand-written item, which has no product to save, and the recipient's own list in the Ask panel.
+
 ### The picker asks the server nothing to open
 
 The rows used to arrive over HTTP. Opening the panel called `GET /list-options?group_id=`, per card,

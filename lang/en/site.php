@@ -733,7 +733,6 @@ return [
         'saved' => 'Saved',
         'save_to_list' => 'Save to a list',
         'save_to' => 'Save to :list',
-        'move_to' => 'Move to :list',
         'remove_from' => 'Remove from :list',
         'delete_list' => 'Delete this list',
         'delete' => 'Delete',
