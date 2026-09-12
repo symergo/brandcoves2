@@ -12,11 +12,12 @@ use App\Models\Notification;
 use App\Models\PriceAlert;
 use App\Models\Product;
 use App\Models\RestockAlert;
+use App\Models\WishlistItem;
+use App\Services\Alerts\AlertEligibility;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Number;
@@ -88,6 +89,17 @@ class RefreshWishlistedProducts implements ShouldQueue
             ->pluck('group_id')
             ->merge(RestockAlert::query()
                 ->whereIn('state', [AlertState::Active->value, AlertState::Triggered->value])
+                ->pluck('group_id'))
+            /*
+             * And everything on a list whose owner watches its prices: the
+             * digest that runs after this job compares against today's price,
+             * and for a bol-only product today's price is whatever this fetch
+             * says. See App\Services\Alerts\ListPriceWatch.
+             */
+            ->merge(WishlistItem::query()
+                ->whereNotNull('group_id')
+                ->whereNotNull('accepted_at')
+                ->whereHas('wishlist', fn ($q) => $q->whereNotNull('price_watch_percent'))
                 ->pluck('group_id'))
             ->unique()
             ->values();
@@ -276,25 +288,13 @@ class RefreshWishlistedProducts implements ShouldQueue
     /**
      * The cheapest offer we are allowed to build an alert on.
      *
-     * Not simply product_groups.min_price: that aggregate includes every
-     * source, and a source that disallows price tracking must not be able to
-     * trigger a notification.
+     * Lives on AlertEligibility since the per-list watch needed the same
+     * number; kept as a one-liner here so the call sites above read as they
+     * always did.
      */
     private function trackablePrice(int $groupId): ?int
     {
-        $trackable = array_values(array_filter(
-            Source::values(),
-            fn (string $s) => Source::from($s)->allowsPriceAlerts(),
-        ));
-
-        $price = DB::table('products')
-            ->where('group_id', $groupId)
-            ->where('status', 'active')
-            ->where('availability', 'in_stock')
-            ->whereIn('source', $trackable)
-            ->min('price');
-
-        return $price === null ? null : (int) $price;
+        return app(AlertEligibility::class)->trackablePrice($groupId);
     }
 
     private function notify(PriceAlert|RestockAlert $alert, ?int $price, string $kind): void

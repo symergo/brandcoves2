@@ -618,6 +618,9 @@ return [
         'pledgers_visible_hint' => 'Les noms seulement. Qui a mis combien reste pour vous seul.',
         'voting_enabled' => 'Tout le monde peut voter pour les cadeaux',
         'voting_enabled_hint' => 'La liste se trie selon les votes. Désactivez-le si le cadeau est déjà choisi.',
+        'price_watch' => 'Suivre les prix de cette liste',
+        'price_watch_hint' => 'Un e-mail le matin quand un article de la liste baisse de prix ou est de nouveau en stock. Les prix Amazon ne sont pas suivis.',
+        'price_watch_threshold' => 'Prévenez-moi à partir d’une baisse de',
         'pledge_mode' => 'Comment chaque personne participe',
         'pledge_mode_each' => 'Chaque personne indique ce qu’elle met',
         'pledge_mode_fixed' => 'Tout le monde met la même chose',
@@ -1053,6 +1056,20 @@ return [
         'mail_why' => 'Vous nous avez demandé de surveiller ce produit. Vous pouvez arrêter depuis sa page.',
     ],
 
+    'list_watch' => [
+        'mail_subject' => 'Changements de prix sur votre liste',
+        'mail_heading' => 'Ce qui a changé sur votre liste',
+        'mail_intro' => 'Vous nous avez demandé de suivre les prix de votre liste. Voici ce qui a changé depuis notre dernier passage.',
+        'col_product' => 'Produit',
+        'col_was' => 'Avant',
+        'col_now' => 'Maintenant',
+        'col_change' => 'Écart',
+        'back_heading' => 'De nouveau disponible',
+        'mail_button' => 'Ouvrir votre liste',
+        'mail_button_lists' => 'Ouvrir vos listes',
+        'mail_why' => 'Vous avez activé le suivi des prix pour cette liste. Vous pouvez le désactiver dans les options de la liste.',
+    ],
+
     'notifications' => [
         'list_item_added_item' => 'Ajouté à « :list » : « :item »',
         'list_suggestion_item' => 'Proposition pour « :list » : « :item »',
@@ -1067,6 +1084,7 @@ return [
         'recent' => 'Récemment',
         'empty' => 'Rien pour l’instant. Nous vous préviendrons dès qu’un suivi bouge.',
         'dropped_to' => 'Maintenant :price, contre :was',
+        'list_price_digest' => 'Changements de prix sur cette liste : :count',
         'search_match_title' => 'Nouveautés pour « :term »',
         'search_match' => ':count nouveaux produits correspondent à votre recherche',
         'back_in_stock' => 'De nouveau en stock',

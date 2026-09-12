@@ -80,6 +80,11 @@ export default function Notifications({ notifications, watching }: Props) {
             return t('notifications.search_match', { count: String(notice.count ?? 0) })
         }
 
+        // The list price digest: how many lines the morning mail had for this list.
+        if (notice.kind === 'list_price_digest') {
+            return t('notifications.list_price_digest', { count: String(notice.count ?? 0) })
+        }
+
         if (notice.kind === 'price_drop') {
             return t('notifications.dropped_to', {
                 price: notice.price === null ? '-' : formatPrice(notice.price, market),

@@ -34,6 +34,7 @@ cannot be recovered from a diff.
 | [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) | Search / SEO | Active |
 | [search-help.md](search-help.md) | Search / Content | Active |
 | [search-alerts.md](search-alerts.md) | Search / Alerts | Active — new 2026-09-06; in-app only |
+| [list-price-watch.md](list-price-watch.md) | Wishlist / Alerts | Active — new 2026-09-12; one digest a morning |
 | [feedback.md](feedback.md) | Core / Quality | Active |
 | [copy-cull.md](copy-cull.md) | Core / Content | Done — 2026-09-03, 45 keys removed |
 | [product-description.md](product-description.md) | Catalogue / Frontend | Active |

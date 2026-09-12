@@ -607,6 +607,8 @@ deliberately. If the panel ever becomes a dialog, the escape has to come back wi
 - `tests/Feature/SaveToListTest.php`, `tests/Feature/PendingSaveTest.php`
 - See [list-taxonomy.md](list-taxonomy.md#filling-one-list-rather-than-saving-one-product) for the
   adding mode
+- Watching the prices on a whole list, with one digest a morning:
+  [list-price-watch.md](list-price-watch.md)
 
 ## Claiming is a conditional UPDATE
 

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Alerts;
 
+use App\Enums\Availability;
 use App\Enums\ProductStatus;
+use App\Enums\Source;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Decides whether a product may carry a price or restock alert.
@@ -88,5 +91,31 @@ class AlertEligibility
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * The cheapest offer we are allowed to build an alert on, in cents.
+     *
+     * Not simply product_groups.min_price: that aggregate includes every
+     * source, and a source that disallows price tracking must not be able to
+     * trigger a notification. Shared by the per-product alerts
+     * (RefreshWishlistedProducts) and the per-list watch (ListPriceWatch), so
+     * both answer "what does it cost today" the same way.
+     */
+    public function trackablePrice(int $groupId): ?int
+    {
+        $trackable = array_values(array_filter(
+            Source::values(),
+            fn (string $s) => Source::from($s)->allowsPriceAlerts(),
+        ));
+
+        $price = DB::table('products')
+            ->where('group_id', $groupId)
+            ->where('status', ProductStatus::Active->value)
+            ->where('availability', Availability::InStock->value)
+            ->whereIn('source', $trackable)
+            ->min('price');
+
+        return $price === null ? null : (int) $price;
     }
 }

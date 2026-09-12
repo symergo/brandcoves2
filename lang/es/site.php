@@ -617,6 +617,9 @@ return [
         'pledgers_visible_hint' => 'Solo los nombres. Cuánto pone cada persona sigue siendo solo para ti.',
         'voting_enabled' => 'Todos pueden votar los regalos',
         'voting_enabled_hint' => 'La lista se ordena por los votos. Desactívalo si el regalo ya está decidido.',
+        'price_watch' => 'Seguir los precios de esta lista',
+        'price_watch_hint' => 'Un correo por la mañana cuando algo de la lista baje de precio o vuelva a estar disponible. Los precios de Amazon no se siguen.',
+        'price_watch_threshold' => 'Avísame con bajadas de al menos',
         'pledge_mode' => 'Cómo contribuye cada persona',
         'pledge_mode_each' => 'Cada persona dice cuánto pone',
         'pledge_mode_fixed' => 'Todos ponen lo mismo',
@@ -1052,6 +1055,20 @@ return [
         'mail_why' => 'Nos pediste vigilar este producto. Puedes dejar de hacerlo desde su página.',
     ],
 
+    'list_watch' => [
+        'mail_subject' => 'Cambios de precio en tu lista',
+        'mail_heading' => 'Qué ha cambiado en tu lista',
+        'mail_intro' => 'Nos pediste seguir los precios de tu lista. Esto es lo que ha cambiado desde la última vez que miramos.',
+        'col_product' => 'Producto',
+        'col_was' => 'Antes',
+        'col_now' => 'Ahora',
+        'col_change' => 'Cambio',
+        'back_heading' => 'Disponible de nuevo',
+        'mail_button' => 'Abrir tu lista',
+        'mail_button_lists' => 'Abrir tus listas',
+        'mail_why' => 'Activaste el seguimiento de precios para esta lista. Puedes desactivarlo en las opciones de la lista.',
+    ],
+
     'notifications' => [
         'list_item_added_item' => 'Añadido a “:list”: “:item”',
         'list_suggestion_item' => 'Sugerido para “:list”: “:item”',
@@ -1066,6 +1083,7 @@ return [
         'recent' => 'Reciente',
         'empty' => 'Nada todavía. Te avisaremos en cuanto cambie algo que vigilas.',
         'dropped_to' => 'Ahora :price, antes :was',
+        'list_price_digest' => 'Cambios de precio en esta lista: :count',
         'search_match_title' => 'Novedades para “:term”',
         'search_match' => ':count productos nuevos coinciden con tu búsqueda',
         'back_in_stock' => 'De nuevo disponible',

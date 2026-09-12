@@ -8,6 +8,7 @@ use App\Enums\Source;
 use App\Models\ProductGroup;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Alerts\ListPriceWatch;
 use App\Support\CurrentMarket;
 
 /**
@@ -87,6 +88,16 @@ class ItemSaver
                 'accepted_at' => now(),
             ],
         );
+
+        /*
+         * A list that watches its prices starts watching the newcomer now, at
+         * today's price, rather than on the next morning's pass. Otherwise a
+         * drop between this save and 07:40 tomorrow would be measured from
+         * nothing and reported from nowhere.
+         */
+        if ($list->watchesPrices() && $item->watch_seeded_at === null) {
+            app(ListPriceWatch::class)->seedItem($item);
+        }
 
         $list->touch();
 

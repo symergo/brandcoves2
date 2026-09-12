@@ -78,6 +78,7 @@ class Wishlist extends Model
             'pledgers_visible' => 'boolean',
             'pledge_amount' => 'integer',
             'voting_enabled' => 'boolean',
+            'price_watch_percent' => 'integer',
             'event_type' => EventType::class,
             'event_date' => 'date',
             'is_default' => 'boolean',
@@ -509,5 +510,18 @@ class Wishlist extends Model
     public function pledgersVisible(): bool
     {
         return $this->pledgers_visible ?? false;
+    }
+
+    /**
+     * Does the owner want a mail when something on this list gets cheaper?
+     *
+     * Null is off, and unlike its neighbours there is no kind to fall back to:
+     * watching prices is a wish about one's own inbox, not about what a list
+     * is for. The percentage itself is `price_watch_percent`; see
+     * App\Services\Alerts\ListPriceWatch.
+     */
+    public function watchesPrices(): bool
+    {
+        return $this->price_watch_percent !== null;
     }
 }

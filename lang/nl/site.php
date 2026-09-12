@@ -621,6 +621,9 @@ return [
         'pledgers_visible_hint' => 'Alleen de namen. Wie hoeveel bijdraagt zie alleen jij.',
         'voting_enabled' => 'Deelnemers kunnen stemmen op de cadeaus',
         'voting_enabled_hint' => 'De lijst sorteert zich op het aantal stemmen. Zet het uit als het cadeau al vaststaat.',
+        'price_watch' => 'Volg de prijzen op deze lijst',
+        'price_watch_hint' => 'Eén mail per ochtend wanneer iets op de lijst goedkoper wordt of weer op voorraad is. Prijzen van Amazon worden niet gevolgd.',
+        'price_watch_threshold' => 'Laat het weten bij een daling van minstens',
         'pledge_mode' => 'Hoe iedereen bijdraagt',
         'pledge_mode_each' => 'Iedereen kiest zelf een bedrag',
         'pledge_mode_fixed' => 'Iedereen draagt hetzelfde bij',
@@ -1056,6 +1059,20 @@ return [
         'mail_why' => 'Je vroeg ons dit product in de gaten te houden. Stoppen kan op de productpagina.',
     ],
 
+    'list_watch' => [
+        'mail_subject' => 'Prijswijzigingen op je lijst',
+        'mail_heading' => 'Wat er veranderde op je lijst',
+        'mail_intro' => 'Je vroeg ons de prijzen op je lijst te volgen. Dit is er veranderd sinds we voor het laatst keken.',
+        'col_product' => 'Product',
+        'col_was' => 'Was',
+        'col_now' => 'Nu',
+        'col_change' => 'Verschil',
+        'back_heading' => 'Weer beschikbaar',
+        'mail_button' => 'Open je lijst',
+        'mail_button_lists' => 'Open je lijsten',
+        'mail_why' => 'Je zette prijzen volgen aan voor deze lijst. Uitzetten kan bij de opties van de lijst.',
+    ],
+
     'notifications' => [
         'list_item_added_item' => 'Iemand voegde toe aan “:list”: “:item”',
         'list_suggestion_item' => 'Iemand stelde voor aan “:list”: “:item”',
@@ -1070,6 +1087,7 @@ return [
         'recent' => 'Recent',
         'empty' => 'Nog niets. We melden het zodra er iets verandert aan wat je volgt.',
         'dropped_to' => 'Nu :price, was :was',
+        'list_price_digest' => 'Prijswijzigingen op deze lijst: :count',
         'search_match_title' => 'Nieuwe vondsten voor “:term”',
         'search_match' => ':count nieuwe producten passen bij je zoekopdracht',
         'back_in_stock' => 'Weer op voorraad',

@@ -35,6 +35,7 @@ class WishlistItem extends Model
             'marked_sent_at' => 'datetime',
             'source' => Source::class,
             'accepted_at' => 'datetime',
+            'watch_seeded_at' => 'datetime',
         ];
     }
 

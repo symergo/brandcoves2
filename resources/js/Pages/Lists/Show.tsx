@@ -120,6 +120,8 @@ interface Props {
         /** Cents per person on a group gift, or null for "everyone names their own". */
         pledgeAmount: number | null
         votingEnabled: boolean
+        /** Mail the owner when something drops by at least this many percent; null is off. */
+        priceWatchPercent: number | null
         /** The owner's own words, under the title. Null when they wrote none. */
         description: string | null
     }

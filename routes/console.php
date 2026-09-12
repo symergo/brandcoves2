@@ -16,6 +16,7 @@ use App\Jobs\RefreshWishlistedProducts;
 use App\Jobs\RunEditorialAutomation;
 use App\Jobs\ScoreSerendipity;
 use App\Jobs\SendCoveDigest;
+use App\Jobs\SendListPriceDigests;
 use App\Jobs\SendOccasionReminders;
 use App\Jobs\WidenGiftAngles;
 use App\Models\Feed;
@@ -289,6 +290,20 @@ Schedule::job(new RefreshWishlistedProducts)
     ->name('refresh-wishlisted')
     ->twiceDailyAt(5, 17, 20)
     ->withoutOverlapping()
+    ->onOneServer();
+
+/*
+ * The list price digest: bstore's wishlist mail, on GiftCoves.
+ *
+ * Once a day, after the 05:20 live refresh above has made a bol price today's.
+ * Not after the 17:20 one as well: a second pass would mail the same person
+ * twice a day about one product, and a digest that arrives twice is a digest
+ * that gets muted. See App\Jobs\SendListPriceDigests and
+ * docs/features/list-price-watch.md.
+ */
+Schedule::job(new SendListPriceDigests)
+    ->name('list-price-digests')
+    ->dailyAt('07:40')
     ->onOneServer();
 
 /*

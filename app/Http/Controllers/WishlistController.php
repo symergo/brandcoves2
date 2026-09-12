@@ -15,6 +15,7 @@ use App\Models\Recipient;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Alerts\ListPriceWatch;
 use App\Services\Gift\GiftTarget;
 use App\Services\Seo\PageMeta;
 use App\Services\Social\Friends;
@@ -34,6 +35,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -941,6 +943,16 @@ class WishlistController extends Controller
              * an owner — nothing here may infer it.
              */
             'owner_sees_claims' => ['sometimes', 'nullable', 'boolean'],
+
+            /*
+             * "Mail me when something on this list drops by at least this much."
+             *
+             * Whole percent from a short list, null for off. The list, not a
+             * free number, because the server is the only place that can
+             * refuse "1%" on a €30 item, and it is the same list the client
+             * offers. See App\Services\Alerts\ListPriceWatch.
+             */
+            'price_watch_percent' => ['sometimes', 'nullable', 'integer', Rule::in(ListPriceWatch::PERCENTAGES)],
         ]);
 
         /*
@@ -958,6 +970,22 @@ class WishlistController extends Controller
         }
 
         $wishlist->update($validated);
+
+        /*
+         * The watch starts from today, or forgets everything.
+         *
+         * Switching it on takes a reference price for every item now, so the
+         * first mail reports a drop from this moment and not one from the day
+         * the item was saved. Switching it off clears the references, so
+         * switching it on again next year does not report the year between.
+         */
+        if (array_key_exists('price_watch_percent', $validated)) {
+            $watch = app(ListPriceWatch::class);
+
+            $validated['price_watch_percent'] === null
+                ? $watch->forget($wishlist)
+                : $watch->seed($wishlist);
+        }
 
         return back();
     }
@@ -1198,6 +1226,8 @@ class WishlistController extends Controller
             // Cents, or null for "everyone names their own".
             'pledgeAmount' => $list->standardPledge(),
             'votingEnabled' => $list->votingEnabled(),
+            // Whole percent, or null when the owner is not watching prices.
+            'priceWatchPercent' => $list->price_watch_percent,
             'isDefault' => (bool) $list->is_default,
             'handedOver' => $list->handed_over_at !== null,
             'eventType' => $list->event_type?->value,

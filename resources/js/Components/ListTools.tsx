@@ -88,6 +88,8 @@ interface Props {
         pledgeAmount: number | null
         /** On a group gift: do the members choose the present? */
         votingEnabled: boolean
+        /** Mail the owner when something drops by at least this many percent; null is off. */
+        priceWatchPercent: number | null
     }
     access: { isOwner: boolean; canEdit: boolean }
     collaborators: Collaborator[]
@@ -1199,6 +1201,52 @@ export default function ListTools({
                                                 label={t('lists.voting_enabled')}
                                                 hint={t('lists.voting_enabled_hint')}
                                             />
+                                        )}
+
+                                        {/*
+                                          Watch the prices on this list.
+
+                                          bstore's wishlist mail, brought over:
+                                          one switch for the whole list and a
+                                          percentage, instead of a button on
+                                          every product. Off is null, like its
+                                          neighbours; on starts at 10%, which
+                                          is a real drop on anything and not a
+                                          rounding error. The choices are the
+                                          server's short list, and it refuses
+                                          anything outside it.
+                                        */}
+                                        <Option
+                                            type="checkbox"
+                                            checked={list.priceWatchPercent !== null}
+                                            onChange={() =>
+                                                setting({
+                                                    price_watch_percent:
+                                                        list.priceWatchPercent === null ? 10 : null,
+                                                })
+                                            }
+                                            label={t('lists.price_watch')}
+                                            hint={t('lists.price_watch_hint')}
+                                        />
+                                        {list.priceWatchPercent !== null && (
+                                            <label className="flex items-center gap-2 pl-3 text-sm">
+                                                <span>{t('lists.price_watch_threshold')}</span>
+                                                <select
+                                                    value={list.priceWatchPercent}
+                                                    onChange={(e) =>
+                                                        setting({
+                                                            price_watch_percent: Number(e.target.value),
+                                                        })
+                                                    }
+                                                    className="rounded-lg border border-line px-2 py-1 text-sm"
+                                                >
+                                                    {[5, 10, 15, 20, 30].map((p) => (
+                                                        <option key={p} value={p}>
+                                                            {p}%
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </label>
                                         )}
 
                                         {/*
