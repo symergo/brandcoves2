@@ -92,7 +92,8 @@ GA4 counts conversions from events, so a first sign-in fires GA4's standard `sig
 (Admin, Events, toggle "Mark as key event" on `sign_up`); nothing in the repo can do that part.
 
 How it travels: both auth callbacks (`GoogleController::callback()`, `MagicLinkController::consume()`)
-know whether they just created the account, and only then flash `signed_up` with the method.
+know whether they just created the account, and only then call `Registration::record()`, which flashes
+`signed_up` with the method (and mails the owner, see [auth.md](auth.md)).
 `HandleInertiaRequests` shares it as `flash.signUp`, so it exists for exactly one request, the page
 after the redirect. `app.tsx` reads it in the same `navigate` handler that reports SPA page views
 and calls `reportSignUp()`.

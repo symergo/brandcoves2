@@ -857,6 +857,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Registrations
+    |--------------------------------------------------------------------------
+    |
+    | Who hears about a new account. Asked for 2026-09-12: the site is small
+    | enough that every registration is news. Null or empty means nobody is
+    | mailed, which is the default so a fresh environment never mails an
+    | owner it does not have. Sent from App\Services\Auth\Registration, queued.
+    */
+    'registrations' => [
+        'notify' => env('REGISTRATION_NOTIFY_EMAIL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Editable page copy
     |--------------------------------------------------------------------------
     |

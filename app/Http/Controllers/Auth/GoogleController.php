@@ -9,6 +9,7 @@ use App\Http\Middleware\TrackAnonymousIdentity;
 use App\Models\AnonymousIdentity;
 use App\Models\User;
 use App\Services\Auth\IdentityMerger;
+use App\Services\Auth\Registration;
 use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
 use Illuminate\Http\RedirectResponse;
@@ -73,10 +74,10 @@ class GoogleController extends Controller
         $user = User::query()->whereRaw('lower(email) = ?', [$email])->first();
 
         $user ??= User::create(['email' => $email, 'name' => $googleUser->getName()]);
-        // A new account is a conversion. The note rides the redirect and the
-        // page fires one analytics event for it; see docs/features/analytics.md.
+        // A new account: the analytics event and the owner's email both
+        // start here. See App\Services\Auth\Registration.
         if ($user->wasRecentlyCreated) {
-            $request->session()->flash('signed_up', 'google');
+            app(Registration::class)->record($request, $user, 'google', $market);
         }
 
         $user->forceFill([

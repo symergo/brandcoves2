@@ -73,6 +73,14 @@ round-trip that proves nothing.
 
 `avatar_url` and `name` are refreshed on every Google sign-in, so a changed profile picture follows.
 
+Both callbacks still have one line that means "this account was just created", and everything that
+follows from it is in `App\Services\Auth\Registration::record()` rather than written twice. Two things
+follow today (2026-09-12): the page after the redirect reports a `sign_up` event to analytics (see
+[analytics.md](analytics.md)), and the owner gets an email saying who signed up, how, in which market
+and what the new total is. The email is off unless `REGISTRATION_NOTIFY_EMAIL` is set, and it is
+queued so a slow mail server never slows the person signing in. `AuthTest` covers both doors: mailed
+once on a first sign-in, silent on a second, silent with no address.
+
 ## The anonymous merge
 
 The site is useful before you sign up: `TrackAnonymousIdentity` issues a `bc_visitor` cookie and

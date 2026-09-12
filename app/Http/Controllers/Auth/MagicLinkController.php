@@ -11,6 +11,7 @@ use App\Models\AnonymousIdentity;
 use App\Models\LoginToken;
 use App\Models\User;
 use App\Services\Auth\IdentityMerger;
+use App\Services\Auth\Registration;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
 use Illuminate\Http\RedirectResponse;
@@ -170,10 +171,10 @@ class MagicLinkController extends Controller
             'email' => $loginToken->email,
             'name' => $loginToken->name,
         ]);
-        // A new account is a conversion. The note rides the redirect and the
-        // page fires one analytics event for it; see docs/features/analytics.md.
+        // A new account: the analytics event and the owner's email both
+        // start here. See App\Services\Auth\Registration.
         if ($user->wasRecentlyCreated) {
-            $request->session()->flash('signed_up', 'email');
+            app(Registration::class)->record($request, $user, 'email', $market);
         }
 
         // An account that never got a name takes the one just typed. Never

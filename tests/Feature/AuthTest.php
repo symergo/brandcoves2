@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Enums\Market;
 use App\Enums\Source;
 use App\Mail\MagicLinkMail;
+use App\Mail\NewRegistrationMail;
 use App\Models\AnonymousIdentity;
 use App\Models\GiftPledge;
 use App\Models\ListItemVote;
@@ -411,11 +412,20 @@ class AuthTest extends TestCase
          * the redirect: the callback flashes how the new account signed in,
          * the page carries it as flash.signUp for exactly one request, and the
          * client fires sign_up. A returning sign-in must stay silent, or every
-         * login would count as a registration.
+         * login would count as a registration. The owner's email follows the
+         * same rule, from the same place.
          */
+        config(['giftcoves.registrations.notify' => 'owner@example.test']);
+
         $this->get('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
             ->assertRedirect('/be-nl/lists')
             ->assertSessionHas('signed_up', 'email');
+
+        Mail::assertQueued(NewRegistrationMail::class, fn (NewRegistrationMail $mail) => $mail->hasTo('owner@example.test')
+            && $mail->email === 'new@example.test'
+            && $mail->method === 'email'
+            && $mail->market === 'be-nl'
+            && $mail->total === 1);
 
         $this->get('/be-nl/lists')
             ->assertInertia(fn ($page) => $page->where('flash.signUp', 'email'));
@@ -429,6 +439,7 @@ class AuthTest extends TestCase
         $this->get('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
             ->assertRedirect('/be-nl/lists')
             ->assertSessionMissing('signed_up');
+        Mail::assertNotQueued(NewRegistrationMail::class);
 
         $this->assertSame(1, User::query()->where('email', 'new@example.test')->count());
     }
@@ -437,6 +448,8 @@ class AuthTest extends TestCase
     public function a_first_sign_in_with_google_is_reported_as_a_sign_up_and_a_second_is_not(): void
     {
         $this->configureGoogle();
+        Mail::fake();
+        config(['giftcoves.registrations.notify' => 'owner@example.test']);
 
         $googleUser = (new GoogleUser)->map([
             'email' => 'new@example.test',
@@ -450,12 +463,19 @@ class AuthTest extends TestCase
             ->assertRedirect('/be-nl/lists')
             ->assertSessionHas('signed_up', 'google');
 
+        Mail::assertQueued(NewRegistrationMail::class, fn (NewRegistrationMail $mail) => $mail->hasTo('owner@example.test')
+            && $mail->name === 'New Person'
+            && $mail->method === 'google');
+
         $this->post('/be-nl/logout');
 
         $this->withSession(['auth.market' => 'be-nl'])
             ->get('/auth/google/callback')
             ->assertRedirect('/be-nl/lists')
             ->assertSessionMissing('signed_up');
+
+        // Once. A returning Google sign-in is not a registration either.
+        Mail::assertQueued(NewRegistrationMail::class, 1);
 
         $this->assertSame(1, User::query()->where('email', 'new@example.test')->count());
     }
@@ -476,5 +496,18 @@ class AuthTest extends TestCase
         $this->assertNotNull($token);
 
         return $token;
+    }
+
+    #[Test]
+    public function nobody_is_mailed_about_a_registration_unless_an_address_is_configured(): void
+    {
+        config(['giftcoves.registrations.notify' => null]);
+
+        $this->get('/be-nl/auth/magic/'.$this->requestLink('new@example.test'))
+            ->assertRedirect('/be-nl/lists')
+            ->assertSessionHas('signed_up', 'email');
+
+        Mail::assertNothingQueued();
+        $this->assertAuthenticated();
     }
 }
