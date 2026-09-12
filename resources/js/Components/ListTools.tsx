@@ -121,7 +121,7 @@ interface Props {
     onPanel: (panel: Panel | null) => void
 }
 
-export type Panel = 'share' | 'settings' | 'quiz' | 'santa'
+export type Panel = 'share' | 'ask' | 'settings' | 'quiz' | 'santa'
 
 /**
  * One choice, as a card you press rather than a dot you aim at.
@@ -303,6 +303,33 @@ export default function ListTools({
             // Lit when there is a live link, not merely when the list is not
             // private: the link is the thing the panel hands out.
             set: shared && Boolean(list.shareUrl),
+        },
+        /*
+         * Ask the recipient for suggestions, on a list about somebody else.
+         *
+         * It spent an afternoon as a section under Share, on the argument that
+         * it is the same errand as sharing: the people you sent the list to.
+         * The owner wanted it back as a button of its own, and the case is
+         * fair: the link it hands out goes to the one person the list must
+         * stay hidden from, which is the opposite direction to everything in
+         * Share, and the answers that come back are a list to read, not a
+         * setting. Second in the row because it is the other half of the same
+         * job as Share: one is what you send them, the other what they sent
+         * you. Lit once they have actually answered.
+         *
+         * Gated on the kind as well as on the recipient: ListMaker derives one
+         * from the other today, and "ask them what they want" on a wish list
+         * of your own would be the page asking you to interview yourself.
+         */
+        {
+            key: 'ask',
+            icon: 'suggestions',
+            label: t('lists.ask_chip'),
+            show:
+                access.isOwner
+                && target !== null
+                && (list.kind === 'for_someone' || list.kind === 'group'),
+            set: asked.length > 0,
         },
         /*
          * The list's own settings: its name, the note under it, whether its
@@ -980,7 +1007,7 @@ export default function ListTools({
                       in this row: a thing you do with the list, occasionally,
                       and go back to the list afterwards.
                     */}
-                    {open === 'share' && access.isOwner && target !== null && (list.kind === 'for_someone' || list.kind === 'group') && (
+                    {open === 'ask' && target !== null && (
                         /*
                           Full width, like the rest of the row's panels: this is
                           a list of products with an image, a price and a button
@@ -988,7 +1015,7 @@ export default function ListTools({
                           bunched against the middle of the page while the right
                           half sat empty.
                         */
-                        <div className="mt-8 border-t border-line pt-6">
+                        <div>
                             <h3 className="text-sm font-medium">{t('lists.ask_tab', { name: target.name })}</h3>
                             {!target.isLinked ? (
                                 <>

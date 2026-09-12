@@ -660,6 +660,7 @@ return [
         'progress' => ':claimed de :total reservados',
         'asked_none' => ':name aún no ha puesto nada en una lista.',
         'ask_tab' => 'Pedir sugerencias a :name',
+        'ask_chip' => 'Pedir sugerencias',
         'collaborator_removed' => 'Eliminado.',
         'who_sees_what' => 'Quién ve qué',
         'share_link' => 'El enlace a esta lista',

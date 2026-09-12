@@ -163,6 +163,13 @@ things you do *with the people you shared it with*, so they live inside Share no
 the link and the roster, each with its own heading and a rule above it. Ask *name* keeps its heading
 with the name in it; it lost its own chip and the lit state that came with it.
 
+Ask came back out the same evening, as a chip of its own labelled *Ask for suggestions*
+(`lists.ask_chip`), second in the row after Share. The owner asked for it, and the case is fair: the
+link it hands out goes to the one person the list must stay hidden from, which is the opposite
+direction to everything under Share, and the answers that come back are a list to read, not a
+setting. Hand over stays under Share. The lit state returned with the chip: it lights once the
+recipient has actually answered.
+
 **Settings is new, and it is what the list *is* rather than who may see it.** The name and the note
 under it were edited inline in the header, the price watch sat among the sharing switches (where it
 was a fact about the owner's inbox filed under a word about other people), and the occasion was a

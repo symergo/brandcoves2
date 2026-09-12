@@ -661,6 +661,7 @@ return [
         'progress' => ':claimed sur :total réservés',
         'asked_none' => ":name n'a encore rien mis sur une liste.",
         'ask_tab' => 'Demander des suggestions à :name',
+        'ask_chip' => 'Demander des suggestions',
         'collaborator_removed' => 'Retiré.',
         'who_sees_what' => 'Qui voit quoi',
         'share_link' => 'Le lien vers cette liste',

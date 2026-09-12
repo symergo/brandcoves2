@@ -793,6 +793,7 @@ return [
         'progress' => ':claimed of :total claimed',
         'asked_none' => ':name has not put anything on a list yet.',
         'ask_tab' => 'Ask :name for suggestions',
+        'ask_chip' => 'Ask for suggestions',
         'collaborator_removed' => 'Removed.',
         'who_sees_what' => 'Who sees what',
         'share_link' => 'The link to this list',

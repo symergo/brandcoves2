@@ -664,6 +664,7 @@ return [
         'progress' => ':claimed van :total geclaimd',
         'asked_none' => ':name heeft nog niets op een lijstje gezet.',
         'ask_tab' => 'Vraag suggesties aan :name',
+        'ask_chip' => 'Vraag suggesties',
         'collaborator_removed' => 'Verwijderd.',
         'who_sees_what' => 'Wie ziet wat',
         'share_link' => 'De link naar deze lijst',
