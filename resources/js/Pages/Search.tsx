@@ -205,14 +205,11 @@ export default function Search({
      * on every search anyone ever runs.
      */
     /*
-     * "Search <term> on Amazon too", or just "try searching on Amazon" when
-     * there is no term to quote — the search page before anything is typed.
-     * `hasTerm` is the server's word for it, because the server is what decided
-     * whether the URL carries a query at all.
+     * "Search <term> on Amazon too". The server sends no link at all when the
+     * URL carries no term (SearchController), so there is always a term to
+     * quote by the time this renders.
      */
-    const amazonLabel = amazonSearch?.hasTerm
-        ? t('search.amazon_search', { term: q })
-        : t('search.amazon_search_any')
+    const amazonLabel = t('search.amazon_search', { term: q })
 
     const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
         if (['q', 'view', 'sort', 'page'].includes(key)) return false

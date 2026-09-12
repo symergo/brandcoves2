@@ -52,18 +52,17 @@ class AmazonSearchCtaTest extends TestCase
     }
 
     /**
-     * The search page before anything is typed still offers the link — the
-     * storefront itself, tagged, and labelled without a term to quote.
+     * The search page before anything is typed offers no link. It used to
+     * offer the bare storefront under "try searching on Amazon"; the owner
+     * asked for it only when there is a term (2026-09-12), because a hand-off
+     * exists to answer a question we could not, and there was no question yet.
      */
     #[Test]
-    public function a_search_with_no_term_still_offers_the_storefront(): void
+    public function a_search_with_no_term_offers_no_amazon_link(): void
     {
         $this->get('/nl-nl/search')
             ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->where('amazonSearch.url', 'https://www.amazon.nl/?tag=giftcoves-21')
-                ->where('amazonSearch.hasTerm', false)
-            );
+            ->assertInertia(fn ($page) => $page->where('amazonSearch', null));
     }
 
     /**

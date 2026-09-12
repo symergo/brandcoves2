@@ -124,8 +124,17 @@ class SearchController extends Controller
              * and a market without one must produce no link at all — a decision
              * with money attached does not belong in a component that cannot
              * see the config. Null is the normal answer in `en` and `es`.
+             *
+             * Null without a term as well (2026-09-12). The search page before
+             * anything is typed used to offer the bare storefront under "try
+             * searching on Amazon", which sent people away from a page that
+             * had not yet been asked anything. The link exists to answer a
+             * question we could not; with no question, there is nothing to
+             * hand off.
              */
-            'amazonSearch' => AmazonSearchLink::for($current->get(), $query->term)?->toArray(),
+            'amazonSearch' => $query->hasTerm()
+                ? AmazonSearchLink::for($current->get(), $query->term)?->toArray()
+                : null,
 
             /*
              * What we made of a pasted link, if the box held one.
