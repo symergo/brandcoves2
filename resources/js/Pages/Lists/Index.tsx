@@ -111,7 +111,8 @@ function ListCard({ list }: { list: ListSummary }) {
                     {list.itemCount === 1
                         ? t('lists.one_item')
                         : t('lists.items', { count: n(list.itemCount) })}
-                    {list.recipient && ` · ${list.recipient.name}`}
+                    {/* Not on a wish list of your own: there the recipient is you, and a handed-over list keeps yours as its record. */}
+                    {list.kind !== 'mine' && list.recipient && ` · ${list.recipient.name}`}
                 </p>
 
                 {/*
