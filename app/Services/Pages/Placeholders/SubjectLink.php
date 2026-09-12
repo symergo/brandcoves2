@@ -9,6 +9,7 @@ use App\Models\BrandStat;
 use App\Services\Pages\Context\BrandContext;
 use App\Services\Pages\Context\PageContext;
 use App\Services\Pages\Context\SearchContext;
+use App\Support\SearchUrl;
 
 /**
  * What this page is about, as a link to the canonical page for it.
@@ -124,7 +125,7 @@ final readonly class SubjectLink implements PlaceholderFunction
 
         return Value::links([[
             'label' => $term,
-            'url' => '/'.$context->market->value.'/search?'.http_build_query(['q' => $term]),
+            'url' => SearchUrl::for($context->market, $term),
         ]]);
     }
 

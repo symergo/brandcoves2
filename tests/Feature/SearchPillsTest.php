@@ -38,11 +38,11 @@ class SearchPillsTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('activeTerms.0.term', 'koptelefoon')
                 ->where('activeTerms.1.term', 'draadloos')
-                // Removing one leaves the other, rather than clearing the search.
-                ->where('activeTerms.0.url', fn (string $url) => str_contains($url, 'q=draadloos')
-                    && ! str_contains($url, 'koptelefoon'))
-                ->where('activeTerms.1.url', fn (string $url) => str_contains($url, 'q=koptelefoon')
-                    && ! str_contains($url, 'draadloos')));
+                // Removing one leaves the other, rather than clearing the search,
+                // and the way off stays a readable address (search-urls.md):
+                // this is the pill that broke the URL on 2026-09-12.
+                ->where('activeTerms.0.url', '/be-nl/zoek/draadloos')
+                ->where('activeTerms.1.url', '/be-nl/zoek/koptelefoon'));
     }
 
     #[Test]

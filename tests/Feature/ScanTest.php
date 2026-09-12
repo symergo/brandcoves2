@@ -51,7 +51,7 @@ class ScanTest extends TestCase
             // camera has asked one question, and a card that makes them tap
             // again to answer it is a step that exists only because the code
             // was easier to write that way.
-            ->assertJsonPath('searchUrl', '/be-nl/search?q=4905524930184');
+            ->assertJsonPath('searchUrl', '/be-nl/zoek/4905524930184');
     }
 
     #[Test]
@@ -69,7 +69,7 @@ class ScanTest extends TestCase
          */
         $this->getJson('/be-nl/scan/049055249309')
             ->assertOk()
-            ->assertJsonPath('searchUrl', '/be-nl/search?q=0049055249309');
+            ->assertJsonPath('searchUrl', '/be-nl/zoek/0049055249309');
     }
 
     #[Test]

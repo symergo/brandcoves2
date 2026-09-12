@@ -6,6 +6,7 @@ namespace App\Services\Pages\Context;
 
 use App\Enums\Market;
 use App\Models\ProductGroup;
+use App\Support\SearchUrl;
 
 /**
  * What a search results page can say about itself.
@@ -44,9 +45,7 @@ final class SearchContext extends PageContext
      */
     public function narrowUrl(string $term): string
     {
-        return '/'.$this->market->value.'/search?'.http_build_query([
-            'q' => trim($this->term.' '.$term),
-        ]);
+        return SearchUrl::for($this->market, trim($this->term.' '.$term));
     }
 
     protected function computeFacts(): array

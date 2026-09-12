@@ -113,7 +113,7 @@ class ScanController extends Controller
              * for every American product. Search also queries the live sources,
              * so a scan can surface an offer that has never been ingested.
              */
-            'searchUrl' => $current->url('search').'?q='.$gtin,
+            'searchUrl' => SearchUrl::for($current->get(), $gtin),
         ]);
     }
 }

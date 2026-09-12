@@ -553,14 +553,15 @@ class SearchController extends Controller
             return [];
         }
 
-        $base = $current->url('search');
+        return array_map(function (string $word, int $index) use ($query, $current, $words): array {
+            // The same search without this word, under its readable address.
+            $without = $query->withTerm(implode(' ', array_values(array_diff_key($words, [$index => null]))));
 
-        return array_map(fn (string $word, int $index) => [
-            'term' => $word,
-            'url' => $base.'?'.http_build_query(
-                $query->withTerm(implode(' ', array_values(array_diff_key($words, [$index => null]))))->toArray()
-            ),
-        ], $words, array_keys($words));
+            return [
+                'term' => $word,
+                'url' => SearchUrl::for($current->get(), $without->term, $without->toArray()),
+            ];
+        }, $words, array_keys($words));
     }
 
     private function terms(SearchQuery $query, SearchResult $result, CurrentMarket $current): array
