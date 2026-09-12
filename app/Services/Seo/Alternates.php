@@ -9,6 +9,7 @@ use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\ProductGroup;
 use App\Support\CurrentMarket;
+use App\Support\SearchUrl;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -67,6 +68,13 @@ class Alternates
          */
         if ($kind === 'daily' || ($kind !== null && in_array($kind, Market::coveSegments(), true))) {
             return $this->daily($segments, $current);
+        }
+
+        // A term search: /be-nl/zoek/x has a French twin at /be-fr/recherche/x,
+        // not /be-fr/zoek/x. The bare /search landing still falls through to
+        // swap(), which is right for it.
+        if ($kind !== null && isset($segments[2]) && in_array($kind, SearchUrl::segments(), true)) {
+            return $this->search($segments);
         }
 
         return match ($kind) {
@@ -508,6 +516,25 @@ class Alternates
         }
 
         return count($alternates) > 1 ? $alternates : [];
+    }
+
+    /**
+     * The same term searched in every published market, each under its own
+     * word for "search".
+     *
+     * @param  list<string>  $segments
+     * @return array<string, string>
+     */
+    private function search(array $segments): array
+    {
+        $term = SearchUrl::term($segments[2]);
+        $alternates = [];
+
+        foreach (Market::published() as $market) {
+            $alternates[$market->hrefLang()] = url(SearchUrl::for($market, $term));
+        }
+
+        return $alternates;
     }
 
     /** @return array<string, string> */

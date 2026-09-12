@@ -85,7 +85,7 @@ class PopularSearchesTest extends TestCase
         $terms = app(SearchTermStats::class)->for(Market::BeNl)['months'][0]['terms'];
 
         $this->assertSame(['koffiemachine', 'koptelefoon'], array_column($terms, 'term'));
-        $this->assertSame('/be-nl/search?q=koffiemachine', $terms[0]['url']);
+        $this->assertSame('/be-nl/zoek/koffiemachine', $terms[0]['url']);
 
         /*
          * Counts are ordering evidence, never payload. Rendering them was
@@ -145,11 +145,12 @@ class PopularSearchesTest extends TestCase
     }
 
     #[Test]
-    public function an_empty_page_is_not_offered_to_a_crawler(): void
+    public function an_empty_page_is_still_indexable(): void
     {
         /*
-         * Thin pages spend crawl budget that belongs to products and guides —
-         * the same rule the filtered search variants follow.
+         * It was `noindex, follow` until 2026-09-12, on the crawl-budget rule
+         * the filtered search variants followed; the owner asked for every
+         * page to be indexable, so the empty page carries no directive either.
          *
          * `robots_allow` has to be turned on for this to be observable at all:
          * it is false everywhere but production, which renders every page
@@ -159,7 +160,7 @@ class PopularSearchesTest extends TestCase
 
         $this->get('/be-nl/popular-searches')
             ->assertOk()
-            ->assertSee('noindex, follow', false);
+            ->assertDontSee('noindex', false);
 
         $this->log('koptelefoon', 40);
         Cache::flush();

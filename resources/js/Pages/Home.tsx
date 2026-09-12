@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react'
+import { Head, Link, router, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import type { CoveSceneKey } from '../Components/CoveIllustration'
 import CoveIllustration from '../Components/CoveIllustration'
@@ -12,6 +12,7 @@ import ToolIcon from '../Components/ToolIcon'
 import RecentlyViewed from '../Components/RecentlyViewed'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import { isCleanTerm, searchHref } from '../searchUrl'
 
 interface Cove {
     /** The shape this Cove takes: persona, guide, seasonal, advice, brand or shop. Named on the card. */
@@ -185,6 +186,16 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                             action={`${base}/search`}
                             method="get"
                             role="search"
+                            // With JavaScript, the same search under its
+                            // readable address (/zoek/term). Without it, the
+                            // form above still lands on ?q=, which answers the
+                            // same page and names /zoek/term as canonical.
+                            onSubmit={(e) => {
+                                const q = new FormData(e.currentTarget).get('q')
+                                if (typeof q !== 'string' || !isCleanTerm(q)) return
+                                e.preventDefault()
+                                router.get(searchHref(market.key, q))
+                            }}
                             /*
                               Wraps on a phone, one row from `sm`.
 

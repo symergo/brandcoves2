@@ -12,6 +12,7 @@ use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
 use App\Services\Guides\CoveMarkup;
 use App\Support\CurrentMarket;
+use App\Support\SearchUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
@@ -329,7 +330,7 @@ class CoveRail
                  * search box is what turns one into a browsable list. The same
                  * destination a `[[search:...]]` token in the prose resolves to.
                  */
-                'url' => $current->url('search').'?'.http_build_query(['q' => $category]),
+                'url' => SearchUrl::for($current->get(), $category),
                 'products' => $products->map(fn (ProductGroup $group): array => [
                     'id' => $group->id,
                     'title' => $group->title,

@@ -23,6 +23,7 @@ cannot be recovered from a diff.
 | [product-identity.md](product-identity.md) | Catalogue | Active |
 | [product-titles.md](product-titles.md) | Catalogue / SEO | Active |
 | [search.md](search.md) | Search | Active |
+| [search-urls.md](search-urls.md) | Search / SEO | Active — `/be-nl/zoek/term`, the market's word in the path |
 | [seo.md](seo.md) | SEO / Frontend | Active |
 | [page-titles.md](page-titles.md) | SEO / Frontend | Active |
 | [analytics.md](analytics.md) | SEO / Compliance | Active — production only, behind a consent banner |

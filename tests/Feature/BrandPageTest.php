@@ -29,6 +29,7 @@ use App\Services\Pages\PageCopy;
 use App\Services\Pages\Regions\EntityCoveRegions;
 use App\Services\Seo\BrandCopy;
 use App\Services\Seo\BrandLinker;
+use App\Support\SearchUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
@@ -408,7 +409,7 @@ class BrandPageTest extends TestCase
     }
 
     #[Test]
-    public function the_page_is_indexable_and_its_filtered_variants_are_not(): void
+    public function the_page_and_its_filtered_variants_are_indexable_and_share_one_canonical(): void
     {
         // Indexing on, or the environment stamps `noindex, nofollow` on
         // every page and the page's own value is never consulted.
@@ -438,9 +439,11 @@ class BrandPageTest extends TestCase
         $bare->assertDontSee('content="noindex, follow"', escape: false);
         $bare->assertSee($canonical, escape: false);
 
+        // Indexable too since 2026-09-12 (owner's decision); the canonical
+        // is what keeps the sorted variant from competing with the bare page.
         $this->get('/be-nl/brand/aurex?sort=price_asc')
             ->assertOk()
-            ->assertSee('content="noindex, follow"', escape: false)
+            ->assertDontSee('noindex', false)
             // Canonical still names the bare page, so any signal a sorted
             // variant picks up consolidates rather than splitting.
             ->assertSee($canonical, escape: false);
@@ -535,7 +538,7 @@ class BrandPageTest extends TestCase
                 // Every word narrows the search it came from rather than
                 // replacing it: the reader is refining, not restarting.
                 foreach ($terms as $term => $url) {
-                    $this->assertSame('/be-nl/search?q='.urlencode("koptelefoon {$term}"), $url);
+                    $this->assertSame(SearchUrl::for(Market::BeNl, "koptelefoon {$term}"), $url);
                 }
             });
     }
@@ -914,7 +917,7 @@ class BrandPageTest extends TestCase
     }
 
     #[Test]
-    public function a_sub_searched_brand_page_is_not_indexable(): void
+    public function a_sub_searched_brand_page_is_indexable_but_canonicalises_to_the_brand(): void
     {
         // Indexing on, or the environment stamps `noindex, nofollow` on
         // every page and the page's own value is never consulted.
@@ -930,7 +933,7 @@ class BrandPageTest extends TestCase
          */
         $this->get('/be-nl/brand/aurex?q=koptelefoon')
             ->assertOk()
-            ->assertSee('content="noindex, follow"', escape: false)
+            ->assertDontSee('noindex', false)
             ->assertSee('rel="canonical" href="'.url('/be-nl/brand/aurex').'"', escape: false);
     }
 

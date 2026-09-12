@@ -907,8 +907,6 @@ class BrandController extends Controller
      */
     private function seo(BrandStat $stat, CurrentMarket $current, SearchQuery $query): void
     {
-        $thin = $this->isThin($query);
-
         app(PageMeta::class)
             ->set(
                 title: $this->listingTitle($stat->brand),
@@ -917,7 +915,9 @@ class BrandController extends Controller
                 description: __('site.brand.seo_description', ['brand' => $stat->brand]),
                 image: SocialCard::versioned(url($current->url("og/brand/{$stat->slug}.png"))),
                 canonical: url($current->url("brand/{$stat->slug}")),
-                robots: $thin ? 'noindex, follow' : null,
+                // Indexable on every variant since 2026-09-12; the canonical
+                // above consolidates the sorted and sub-searched ones.
+                robots: null,
             )
             ->addJsonLd(StructuredData::brand(
                 $stat->brand,

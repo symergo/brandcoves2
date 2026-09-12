@@ -318,24 +318,34 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function filtered_and_paginated_searches_are_kept_out_of_the_index(): void
+    public function filtered_and_paginated_searches_are_indexable_and_page_two_is_its_own_canonical(): void
     {
         // Indexing on: with it off the environment stamps `noindex, nofollow`
-        // on every page, and the page's own `follow` is never consulted.
+        // on every page, and the page's own value is never consulted.
         config(['giftcoves.robots_allow' => true]);
         $this->seedCatalogue();
+
+        /*
+         * Until 2026-09-12 these three carried `noindex, follow` to keep a
+         * crawler's budget on products and guides. The owner asked for every
+         * page to be indexable; the canonical does the consolidating now, and
+         * a later page names itself, as a paginated series should.
+         */
 
         // A facet UI generates a combinatorial explosion of URLs. Left
         // indexable, a crawler spends its whole budget on near-identical
         // filtered pages and never reaches the products worth ranking.
         $this->get('/be-nl/search?q=koptelefoon&brand[]=Sony')
-            ->assertSee('name="robots" content="noindex, follow"', escape: false);
+            ->assertDontSee('noindex', false)
+            ->assertSee('rel="canonical" href="'.url('/be-nl/zoek/koptelefoon').'"', escape: false);
 
         $this->get('/be-nl/search?q=koptelefoon&page=2')
-            ->assertSee('name="robots" content="noindex, follow"', escape: false);
+            ->assertDontSee('noindex', false)
+            ->assertSee('rel="canonical" href="'.url('/be-nl/zoek/koptelefoon').'?page=2"', escape: false);
 
         $this->get('/be-nl/search?q=koptelefoon&sort=price_asc')
-            ->assertSee('name="robots" content="noindex, follow"', escape: false);
+            ->assertDontSee('noindex', false)
+            ->assertSee('rel="canonical" href="'.url('/be-nl/zoek/koptelefoon').'"', escape: false);
     }
 
     #[Test]
@@ -346,7 +356,7 @@ class SeoTest extends TestCase
         // So any ranking signal a filtered variant picks up consolidates onto
         // one URL instead of being split across dozens.
         $this->get('/be-nl/search?q=koptelefoon&brand[]=Sony&sort=price_asc')
-            ->assertSee('rel="canonical" href="'.url('/be-nl/search').'?q=koptelefoon"', escape: false);
+            ->assertSee('rel="canonical" href="'.url('/be-nl/zoek/koptelefoon').'"', escape: false);
     }
 
     #[Test]
@@ -375,7 +385,7 @@ class SeoTest extends TestCase
         $page = $response->viewData('page');
 
         $this->assertSame(
-            url('/be-nl/search').'?q=koptelefoon',
+            url('/be-nl/zoek/koptelefoon'),
             $page['props']['canonical'] ?? null,
             'the client must receive the same canonical the shell would have rendered',
         );
@@ -561,20 +571,22 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function an_unstocked_product_is_noindexed_but_still_followed(): void
+    public function an_unstocked_product_is_still_indexable(): void
     {
+        // It was `noindex, follow` until 2026-09-12 (a page with no offers is
+        // thin); the owner asked for every page to be indexable, and a product
+        // that comes back in stock is then already known to the index.
         config(['giftcoves.robots_allow' => true]);
         $group = $this->seedCatalogue();
         $group->offers()->update(['status' => 'stale']);
 
-        // A page with no offers is thin, but its links are still worth
-        // following — hence follow, not nofollow.
         $this->get("/be-nl/p/{$group->id}/{$group->slug}")
-            ->assertSee('name="robots" content="noindex, follow"', escape: false);
+            ->assertOk()
+            ->assertDontSee('noindex', false);
     }
 
     #[Test]
-    public function a_product_whose_shops_have_all_sold_out_is_noindexed_too(): void
+    public function a_product_whose_shops_have_all_sold_out_is_indexable_too(): void
     {
         config(['giftcoves.robots_allow' => true]);
         $group = $this->seedCatalogue();
@@ -585,7 +597,7 @@ class SeoTest extends TestCase
 
         $this->get("/be-nl/p/{$group->id}/{$group->slug}")
             ->assertOk()
-            ->assertSee('name="robots" content="noindex, follow"', escape: false);
+            ->assertDontSee('noindex', false);
     }
 
     #[Test]
@@ -677,14 +689,20 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function robots_keeps_crawlers_off_capability_urls_and_array_facets(): void
+    public function robots_keeps_crawlers_off_capability_urls_and_nothing_else(): void
     {
         config(['giftcoves.robots_allow' => true]);
 
         $body = (string) $this->get('/robots.txt')->assertOk()->getContent();
 
-        foreach (['Disallow: /*/l/', 'Disallow: /*/for/', 'Disallow: /*/q/', 'Disallow: /*/santa/', 'Disallow: /*?*brand%5B'] as $line) {
+        foreach (['Disallow: /*/l/', 'Disallow: /*/for/', 'Disallow: /*/q/', 'Disallow: /*/santa/', 'Disallow: /*/go/'] as $line) {
             $this->assertStringContainsString($line, $body);
+        }
+
+        // The facet and pagination disallows went on 2026-09-12: every page
+        // and every internal link is indexable, so none may be blocked.
+        foreach (['brand%5B', 'merchant%5B', 'sort=', 'page='] as $gone) {
+            $this->assertStringNotContainsString($gone, $body);
         }
 
         // `brand=` never appears in a URL this site generates — the parameter

@@ -89,7 +89,7 @@ final class SearchPageRegions
                 label: 'Below the results',
                 blurb: 'After the products and the pagination, laid out in up to three columns. This is the '
                     .'page\'s long copy and where nearly all of it belongs. Hidden on page 2, on a filtered '
-                    .'URL, and when nothing matched — a filtered variant is noindex, and repeating several '
+                    .'URL, and when nothing matched — a filtered variant canonicalises to the bare term, and repeating several '
                     .'hundred words across near-identical URLs is the doorway-page pattern.',
                 layout: Region::SECTIONS,
                 requiresContent: true,

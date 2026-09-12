@@ -9,6 +9,7 @@ use App\Enums\Market;
 use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\BrandLinker;
 use App\Support\CurrentMarket;
+use App\Support\SearchUrl;
 
 /**
  * Turns the link tokens in a Cove's prose into real internal links.
@@ -26,7 +27,7 @@ use App\Support\CurrentMarket;
  *
  *     [[brand:Sony]]              → /{market}/search?brand=Sony
  *     [[search:draadloze koptelefoon]]
- *                                 → /{market}/search?q=draadloze+koptelefoon
+ *                                 → /{market}/zoek/draadloze-koptelefoon
  *     [[product:1234|Sony XM5]]   → /{market}/p/1234/slug
  *     [[guide:beste-koptelefoons]] → /{market}/guides/beste-koptelefoons
  *     [[page:gift-whisperer]]     → /{market}/gift
@@ -165,7 +166,7 @@ class CoveMarkup
 
                 $href = match ($kind) {
                     'brand' => $this->brand($value, $allowed['brands'] ?? [], $base, $brandUrls),
-                    'search' => $this->search($value, $allowed['searches'] ?? [], $base),
+                    'search' => $this->search($value, $allowed['searches'] ?? [], $market),
                     'product' => $this->product($value, $allowed['products'] ?? [], $base),
                     'guide' => $this->guide($value, $allowed['guides'] ?? [], $base),
                     'page' => $this->page($value, $base),
@@ -345,13 +346,13 @@ class CoveMarkup
     }
 
     /** @param list<string> $searches */
-    private function search(string $value, array $searches, string $base): ?string
+    private function search(string $value, array $searches, Market $market): ?string
     {
         $needle = mb_strtolower(trim($value));
 
         foreach ($searches as $search) {
             if (mb_strtolower($search) === $needle) {
-                return $base.'/search?'.http_build_query(['q' => $search]);
+                return SearchUrl::for($market, $search);
             }
         }
 

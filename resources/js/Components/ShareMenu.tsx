@@ -221,7 +221,10 @@ export default function ShareMenu({
                                 role="menuitem"
                                 href={channel.href}
                                 target="_blank"
-                                rel="noopener noreferrer"
+                                // nofollow on every link that leaves the site
+                                // (owner's rule, 2026-09-12); these go to the
+                                // messaging apps' share endpoints.
+                                rel="nofollow noopener noreferrer"
                                 onClick={() => close(false)}
                                 className={row}
                             >

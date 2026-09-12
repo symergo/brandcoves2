@@ -77,8 +77,8 @@ final class BrandPageRegions
                 key: 'below_grid',
                 label: 'Below the products',
                 blurb: 'Full width, after both columns, laid out in up to three columns. The page\'s long copy. '
-                    .'Hidden on page 2, on a sub-search, and on any filtered or re-sorted URL — those are all '
-                    .'noindex, and repeating the copy across them is the doorway-page pattern.',
+                    .'Hidden on page 2, on a sub-search, and on any filtered or re-sorted URL — those all '
+                    .'canonicalise to the bare page, and repeating the copy across them is the doorway-page pattern.',
                 layout: Region::SECTIONS,
                 // Ships empty since 2026-09-06.
                 //
@@ -99,7 +99,7 @@ final class BrandPageRegions
                 key: 'empty_state',
                 label: 'When the brand has nothing to show',
                 blurb: 'Under the "nothing here" line, which always renders whatever you write. Shown even on a '
-                    .'noindex sub-search, because it is for the reader rather than for a crawler.',
+                    .'sub-search, because it is for the reader rather than for a crawler.',
                 layout: Region::FLOW,
                 requiresContent: true,
                 // No products, so no facts about them — but a reader at a dead

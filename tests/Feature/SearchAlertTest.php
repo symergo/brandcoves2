@@ -125,7 +125,7 @@ class SearchAlertTest extends TestCase
         $this->assertSame('search_match', $notification->kind);
         $this->assertSame(1, $notification->payload['count']);
         $this->assertStringContainsString('koptelefoon', $notification->title);
-        $this->assertStringContainsString('/be-nl/search?q=koptelefoon', (string) $notification->url);
+        $this->assertStringContainsString('/be-nl/zoek/koptelefoon', (string) $notification->url);
         $this->assertContains($cheap->id, SearchAlert::query()->firstOrFail()->seen_group_ids);
 
         // The next morning says nothing about the same product.

@@ -76,24 +76,51 @@ headings with their answers under them — only the JSON-LD went. A Cove keeps i
 own, where the questions are genuinely written per page. See
 [page-templates.md](page-templates.md).
 
-## Crawl budget
+## Every public page is indexable (2026-09-12)
 
-The real concern on search pages is not ranking, it is waste. Every filter
-combination is a distinct URL and a facet UI generates a combinatorial explosion
-of them. Left indexable, a crawler spends its entire budget on near-identical
-filtered pages and never reaches the products and guides worth ranking.
+The owner's rule, stated on 2026-09-12: **every page is indexable, every internal
+link may be followed, and every link that leaves the site is `nofollow`.** It
+replaces the crawl-budget table that stood here, kept below for the record.
 
-| Page | robots |
-|---|---|
-| Bare search landing (`?q=term`) | index, follow |
-| Filtered / sorted / paginated | **noindex, follow** |
-| Empty result | **noindex, follow** |
-| Product with offers | index, follow |
-| Product with no offers | **noindex, follow** |
+What that means in code:
 
-`follow` throughout, never `nofollow` — products are still discovered through
-those links. Filtered searches canonicalise to the bare term so any ranking
-signal consolidates onto one URL.
+| Page | robots | canonical |
+|---|---|---|
+| Term search (`/zoek/term`; `?q=term` when the term cannot be a path) | none (index) | itself |
+| Filtered / sorted search or brand variant | none | the bare term or brand page |
+| Page 2 onwards | none | itself, with `page=` |
+| Empty result, empty popular-searches page | none | itself |
+| Product, with or without a buyable offer | none | itself |
+| Guide with an empty shortlist | none | itself |
+| Previews, shared lists, Secret Santa, quiz, taste profile, magic link, 404 | **noindex** | — |
+
+The last row is the exception the rule allows for: those pages are private or
+transient, not thin. `robots.txt` keeps `/*/go/` (an outbound affiliate hop is
+not a page) and the capability URLs, and nothing else; the `?sort=`, `brand[`,
+`merchant[` and `page=` disallows are gone, because a link a crawler may not
+follow is not an indexable link.
+
+Consolidation is now the canonical's job alone. A filtered or sorted variant
+names the bare page, so whatever signal it collects lands there; a later page of
+results is its own canonical, which is what a search engine asks of a paginated
+series. The copy block still skips thin variants (`isThin()`) for the
+performance reason measured below, not for indexing.
+
+External links: every anchor that leaves the site carries `nofollow` (with
+`sponsored` where money is involved): the shop buttons, the Amazon hand-off,
+list items linking out, and the share sheet's messaging endpoints.
+
+### The crawl-budget rule this replaced
+
+Kept because the measurements in it are still true and the trade-off may come
+back. The concern on search pages was waste: every filter combination is a
+distinct URL and a facet UI generates a combinatorial explosion of them, and a
+crawler that indexes them all spends its budget on near-identical pages before
+reaching the products and guides worth ranking. From 2026-08 to 2026-09-12 the
+rule was therefore: bare term search and product with offers `index, follow`;
+filtered, sorted, paginated, empty, and product without offers `noindex, follow`;
+plus `robots.txt` disallows on the filter parameters. If the crawl stats show the
+filtered variants eating the budget again, that table is the thing to restore.
 
 ### The chips under the grid, and what happened to them
 

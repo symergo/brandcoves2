@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\AlertState;
 use App\Enums\Market;
+use App\Support\SearchUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -47,12 +48,12 @@ class SearchAlert extends Model
     /** Where the person lands from the notification: the search, with its ceiling. */
     public function searchPath(): string
     {
-        $params = ['q' => $this->term];
+        $params = [];
 
         if ($this->max_price !== null) {
             $params['max'] = number_format($this->max_price / 100, 2, '.', '');
         }
 
-        return '/'.$this->market->value.'/search?'.http_build_query($params);
+        return SearchUrl::for($this->market, $this->term, $params);
     }
 }

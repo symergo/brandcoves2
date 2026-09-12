@@ -9,6 +9,7 @@ use App\Models\ProductGroup;
 use App\Services\Identity\Gtin;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
+use App\Support\SearchUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -89,7 +90,7 @@ class ScanController extends Controller
             return response()->json([
                 'status' => 'not_found',
                 'gtin' => $gtin,
-                'searchUrl' => $current->url('search').'?q='.$gtin,
+                'searchUrl' => SearchUrl::for($current->get(), $gtin),
                 'message' => __('site.scan.not_found'),
             ]);
         }

@@ -232,9 +232,10 @@ class ProductController extends Controller
              * soft-404 shape the sitemap's `presentable()` filter exists to
              * keep crawlers away from, reached by the front door instead.
              */
-            robots: array_any($offers, fn (Product $offer) => $offer->availability->isBuyable())
-                ? null
-                : 'noindex, follow',
+            // Indexable whether or not an offer is buyable today (owner's
+            // decision, 2026-09-12); a product that comes back in stock is
+            // then already known to the index.
+            robots: null,
         );
 
         // From the row in hand, not from the path: resolving by path re-fetches

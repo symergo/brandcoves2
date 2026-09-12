@@ -61,6 +61,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\WishlistItemController;
 use App\Support\CurrentMarket;
 use App\Support\MarketPreference;
+use App\Support\SearchUrl;
 use App\Support\ShareCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -199,6 +200,18 @@ Route::prefix('{market}')->group(function () {
     Route::get('/search', SearchController::class)
         ->middleware('throttle:60,1')
         ->name('search');
+
+    /*
+     * The same page with the term in the path, in the market's own word:
+     * /be-nl/zoek/draadloze-koptelefoon, /be-fr/recherche/casque. Every
+     * market's segment is accepted on every market (the canonical names the
+     * right one), and the term is constrained to what SearchUrl can turn back
+     * into words without guessing. See App\Support\SearchUrl.
+     */
+    Route::get('/{segment}/{term}', SearchController::class)
+        ->where(['segment' => implode('|', SearchUrl::segments()), 'term' => '[a-z0-9]+(?:-[a-z0-9]+)*'])
+        ->middleware('throttle:60,1')
+        ->name('search.term');
 
     // What the box accepts and how the camera does it. Next to /search rather
     // than with about/privacy/terms: it is documentation of a tool, not a

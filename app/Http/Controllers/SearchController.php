@@ -23,6 +23,7 @@ use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
+use App\Support\SearchUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -62,6 +63,12 @@ class SearchController extends Controller
 
     public function __invoke(Request $request, CurrentMarket $current, SearchService $search): Response|RedirectResponse
     {
+        // /{market}/zoek/{term}: the term is in the path rather than in ?q=.
+        // Read back into the query so everything below sees one shape.
+        if (is_string($slug = $request->route('term'))) {
+            $request->query->set('q', SearchUrl::term($slug));
+        }
+
         $query = SearchQuery::fromRequest($request, $current->get());
 
         /*
@@ -426,23 +433,18 @@ class SearchController extends Controller
     /**
      * Search-page SEO.
      *
-     * Crawl budget is the real concern here, not ranking. Every filter
-     * combination is a distinct URL, and a facet UI generates a combinatorial
-     * explosion of them — left indexable, a crawler spends its entire budget on
-     * near-identical filtered pages and never reaches the product and guide
-     * pages that are actually worth ranking.
-     *
-     * So: the bare landing page is indexable; anything filtered, sorted or
-     * paginated is `noindex, follow`. Links are still followed, so products are
-     * still discovered through them.
+     * Every variant is indexable (owner's decision, 2026-09-12). Until then a
+     * filtered, sorted, paginated or empty page was `noindex, follow` to keep a
+     * crawler's budget on products and guides; the owner asked for every page
+     * and every internal link to be indexable, so the directive is gone and
+     * the canonical does the consolidating instead: a filtered or sorted
+     * variant names the bare term as canonical, so any signal it picks up
+     * lands on one URL, and page 2 onwards is its own canonical, which is what
+     * a search engine asks of paginated series. The copy block still skips
+     * thin pages (`isThin()`), for the performance reason seo.md measured.
      */
     private function seo(SearchQuery $query, SearchResult $result, CurrentMarket $current): void
     {
-        $thin = $query->hasFilters()
-            || $query->page > 1
-            || $query->sort !== 'relevance'
-            || $result->isEmpty();
-
         app(PageMeta::class)
             ->set(
                 title: $query->hasTerm()
@@ -462,9 +464,15 @@ class SearchController extends Controller
                     ? __('site.search.seo_term', ['term' => $query->term])
                     : __('site.search.seo_default'),
                 // Canonical points at the unfiltered term, so any ranking signal
-                // a filtered variant picks up consolidates onto one URL.
-                canonical: url($current->url('search')).($query->hasTerm() ? '?q='.urlencode($query->term) : ''),
-                robots: $thin ? 'noindex, follow' : null,
+                // a filtered variant picks up consolidates onto one URL. That
+                // URL is the localised path (/zoek/term) wherever the term can
+                // be one, and ?q= only where it cannot; SearchUrl decides.
+                canonical: url(SearchUrl::for(
+                    $current->get(),
+                    $query->term,
+                    $query->page > 1 ? ['page' => $query->page] : [],
+                )),
+                robots: null,
             )
             ->addJsonLd(StructuredData::website(url('/'), $current->get()));
     }
@@ -567,8 +575,6 @@ class SearchController extends Controller
             $query->term,
         );
 
-        $base = $current->url('search');
-
         /*
          * The pill narrows the search. It does not change how you are looking
          * at it.
@@ -586,12 +592,14 @@ class SearchController extends Controller
          * returns nothing at all once any are set — so in practice this adds
          * `view` and `sort`, each only when it is not the default.
          */
-        return array_map(fn (string $term) => [
-            'term' => $term,
-            'url' => $base.'?'.http_build_query(
-                $query->withTerm(trim($query->term.' '.$term))->toArray()
-            ),
-        ], $terms);
+        return array_map(function (string $term) use ($query, $current): array {
+            $narrowed = $query->withTerm(trim($query->term.' '.$term));
+
+            return [
+                'term' => $term,
+                'url' => SearchUrl::for($current->get(), $narrowed->term, $narrowed->toArray()),
+            ];
+        }, $terms);
     }
 
     /** @return array<string, mixed> */

@@ -14,6 +14,7 @@ import WatchSearch, { type WatchState } from '../Components/WatchSearch'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
+import { searchHref, searchTarget } from '../searchUrl'
 
 interface Facets {
     brands: { value: string }[]
@@ -244,7 +245,12 @@ export default function Search({
          * `preserveState` keeps this component mounted across the visit, which
          * is what lets the same instance that raised the flag lower it.
          */
-        router.get(base, next as Record<string, string>, {
+        // The term goes in the path when it can (/zoek/term), the rest stays
+        // in the query. The server names the same URL as canonical, so what
+        // the address bar shows and what a crawler is told are one page.
+        const target = searchTarget(market.key, next)
+
+        router.get(target.path, target.query as Record<string, string>, {
             /*
              * Asks for `brand[]=HP` rather than `brand[0]=HP`.
              *
@@ -801,7 +807,7 @@ export default function Search({
                                 {emptyBecauseOfFilters ? t('search.empty_filters') : t('search.empty', { term: q })}
                             </p>
                             {emptyBecauseOfFilters && (
-                                <Link href={`${base}?q=${encodeURIComponent(q)}`} className="mt-3 inline-block text-accent underline">
+                                <Link href={searchHref(market.key, q)} className="mt-3 inline-block text-accent underline">
                                     {t('search.clear_filters')}
                                 </Link>
                             )}

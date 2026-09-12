@@ -15,6 +15,7 @@ use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\SearchLog;
+use App\Support\SearchUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
@@ -410,7 +411,7 @@ class SearchTest extends TestCase
          * box is for.
          */
         $this->assertSame(
-            '/be-nl/search?q='.urlencode('ruisonderdrukkende Draadloze'),
+            SearchUrl::for(Market::BeNl, 'ruisonderdrukkende Draadloze'),
             $terms['Draadloze'] ?? null,
         );
 
@@ -573,7 +574,8 @@ class SearchTest extends TestCase
 
             $this->assertSame('store', $params['view'] ?? null);
             $this->assertSame('price_asc', $params['sort'] ?? null);
-            $this->assertStringStartsWith('gizmo ', $params['q']);
+            // The term is in the path now: /be-nl/zoek/gizmo-<word>.
+            $this->assertStringStartsWith('/be-nl/zoek/gizmo-', (string) parse_url($item['url'], PHP_URL_PATH));
         }
     }
 

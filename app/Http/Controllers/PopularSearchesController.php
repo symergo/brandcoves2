@@ -52,7 +52,9 @@ class PopularSearchesController extends Controller
              * spend crawl budget that belongs to products and guides — the same
              * rule the filtered search variants follow.
              */
-            robots: $empty ? 'noindex, follow' : null,
+            // Indexable even before the first search is logged (owner's
+            // decision, 2026-09-12): every page is.
+            robots: null,
         );
 
         return Inertia::render('PopularSearches', [

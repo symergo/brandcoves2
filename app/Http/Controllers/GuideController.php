@@ -520,9 +520,9 @@ class GuideController extends Controller
              * written to rank — and a Shop Cove is the same case, which is why
              * this asks `expectsShortlist()` rather than naming Advice.
              */
-            robots: $preview
-                ? 'noindex, nofollow'
-                : ($items === [] && $guide->kind->expectsShortlist() ? 'noindex, follow' : null),
+            // A preview is private. Everything published is indexable, an
+            // empty shortlist included (owner's decision, 2026-09-12).
+            robots: $preview ? 'noindex, nofollow' : null,
         );
 
         // An ItemList of nothing asserts that this page ranks nothing, which is

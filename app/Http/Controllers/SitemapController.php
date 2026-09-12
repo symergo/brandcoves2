@@ -441,21 +441,14 @@ class SitemapController extends Controller
                 // outbound affiliate hop, and crawling it burns budget on
                 // redirects while looking like link-selling to a search engine.
                 'Disallow: /*/go/',
-                // Filtered and sorted variants are noindexed in the head too;
-                // this stops the crawl before it starts.
-                'Disallow: /*?*sort=',
                 /*
-                 * Array parameters. The URL the site generates is
-                 * `brand%5B0%5D=Sony` — a browser shows the brackets encoded —
-                 * so the rule used to read `brand=` and matched nothing. Both
-                 * spellings, because a hand-typed link may carry the bare
-                 * bracket and a crawler matches the URL as written.
+                 * Filtered, sorted and paginated variants used to be blocked
+                 * here as well (`?sort=`, `brand[`, `merchant[`, `page=`).
+                 * Removed 2026-09-12: the owner asked for every page and every
+                 * internal link to be indexable, and a link a crawler may not
+                 * follow is not. The head carries no noindex on them any more
+                 * either; the canonical consolidates the filtered ones.
                  */
-                'Disallow: /*?*brand%5B',
-                'Disallow: /*?*brand[',
-                'Disallow: /*?*merchant%5B',
-                'Disallow: /*?*merchant[',
-                'Disallow: /*?*page=',
                 /*
                  * Capability URLs. Each carries a token that *is* the access,
                  * so a crawler that finds one — a forum post, a chat preview —

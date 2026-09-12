@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Search;
 
 use App\Enums\Market;
+use App\Support\SearchUrl;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -454,6 +455,6 @@ class SearchTermStats
 
     private function url(Market $market, string $term): string
     {
-        return '/'.$market->value.'/search?'.http_build_query(['q' => $term]);
+        return SearchUrl::for($market, $term);
     }
 }
