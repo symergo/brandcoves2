@@ -683,15 +683,16 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, m
                                     {t(kind === 'mine' ? 'wizard.occasion_hint_mine' : 'wizard.occasion_hint_other')}
                                 </InfoTip>
                             </p>
-            {/*
-                              Both fields carry their label, which is also what
-                              keeps them the same height: a bare select beside a
-                              labelled input stretches to the taller cell and
-                              the pair reads as two different controls.
+                            {/*
+                              The select carries no visible label: the heading
+                              above is its label, and "Occasion" twice in two
+                              lines read as a mistake (owner's request,
+                              2026-09-13). It keeps an aria-label. The date
+                              beside it does carry one, so the pair aligns on
+                              its bottom edge rather than its top.
                             */}
-                            <div className="mt-2 grid items-start gap-3 sm:grid-cols-2">
+                            <div className="mt-2 grid items-end gap-3 sm:grid-cols-2">
                                 <label className="block text-sm">
-                                    {t('registry.occasion')}
                                     <select
                                         aria-label={t('registry.occasion')}
                                         value={form.data.event_type}
