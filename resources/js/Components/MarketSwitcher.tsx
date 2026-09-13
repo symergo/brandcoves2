@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react'
 import FlagIcon, { type FlagCountry } from './FlagIcon'
+import { chooseMarket } from '../marketChoice'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -83,32 +84,7 @@ export default function MarketSwitcher({
      * the currency and the language at once, and anything short of a document
      * load risks the previous market's prices sitting under the new copy.
      */
-    const go = (marketKey: string) => {
-        const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content
-
-        const form = document.createElement('form')
-        form.method = 'post'
-        form.action = '/market'
-        form.hidden = true
-
-        for (const [name, value] of [
-            ['market', marketKey],
-            ['_token', token ?? ''],
-            // Where the visitor is now. A language change inside the same
-            // country lands on this page's twin rather than the market home;
-            // the server decides whether one exists.
-            ['path', window.location.pathname],
-        ]) {
-            const field = document.createElement('input')
-            field.type = 'hidden'
-            field.name = name
-            field.value = value
-            form.append(field)
-        }
-
-        document.body.append(form)
-        form.submit()
-    }
+    const go = chooseMarket
 
     const chooseCountry = (country: string) => {
         const next = markets.find((c) => c.country === country)

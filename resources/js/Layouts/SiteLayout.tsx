@@ -7,6 +7,7 @@ import CoveIcon from '../Components/CoveIcon'
 import FlashMessage from '../Components/FlashMessage'
 import SaveToast from '../Components/SaveToast'
 import SignInLink from '../Components/SignInLink'
+import MarketPrompt from '../Components/MarketPrompt'
 import MarketSwitcher from '../Components/MarketSwitcher'
 import NavMenu, { type NavMenuItem } from '../Components/NavMenu'
 import ToolIcon from '../Components/ToolIcon'
@@ -917,6 +918,10 @@ function Chrome({ children }: PropsWithChildren) {
             </footer>
 
             <CookieBanner />
+            {/* Over everything, including the cookie bar: a first visit
+                answers the country first, then the page loads again with
+                the choice made and the bar gets its turn. */}
+            <MarketPrompt />
         </div>
     )
 }

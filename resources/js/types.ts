@@ -82,6 +82,8 @@ export interface SharedProps {
     seoTitle: string | null
     market: CurrentMarket
     markets: SwitcherCountry[]
+    /** Ask where they shop: no stored choice yet, and not a crawler. See MarketPrompt. */
+    askMarket: boolean
     translations: Translations
     translationVersion: string
     unreadCount: number

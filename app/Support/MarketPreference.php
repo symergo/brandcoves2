@@ -73,6 +73,23 @@ final class MarketPreference
     }
 
     /**
+     * Should this visitor be asked where they shop?
+     *
+     * Once, and only of a person: no stored choice yet, and a user agent
+     * that is not a crawler. A crawler is never asked, because the answer is
+     * a cookie it will not keep and the dialog would sit in every page it
+     * renders. Read by HandleInertiaRequests into `askMarket`, which is what
+     * shows the first-visit prompt (Components/MarketPrompt). The answer is
+     * written the only way a choice may be, through the switcher's POST, so
+     * asking changes nothing about who may write the cookie.
+     */
+    public static function shouldAsk(Request $request): bool
+    {
+        return self::stored($request) === null
+            && ! Crawlers::looksLikeOne($request->userAgent());
+    }
+
+    /**
      * The market to send this request to when its URL does not say.
      *
      * The one entry point for that question — root redirect, legacy 404 mapper

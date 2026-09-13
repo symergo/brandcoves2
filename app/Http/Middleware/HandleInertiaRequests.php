@@ -11,6 +11,7 @@ use App\Services\Wishlist\ListOptions;
 use App\Support\Analytics;
 use App\Support\CookieConsent;
 use App\Support\CurrentMarket;
+use App\Support\MarketPreference;
 use App\Support\MarketSwitcher;
 use App\Support\Owner;
 use Illuminate\Http\Request;
@@ -170,6 +171,14 @@ class HandleInertiaRequests extends Middleware
              * about it.
              */
             'markets' => app(MarketSwitcher::class)->payload(),
+
+            /*
+             * Ask a first-time visitor where they shop. True until a choice
+             * is stored, and never for a crawler; see MarketPreference and
+             * Components/MarketPrompt. Not lazy: it is one cookie read, and
+             * the prompt has to be in the first paint or it is a flash.
+             */
+            'askMarket' => MarketPreference::shouldAsk($request),
 
             /*
              * Site copy for the current market's language.

@@ -34,7 +34,7 @@ return [
         'countries' => [
             'be' => 'Belgique',
             'nl' => 'Pays-Bas',
-            'int' => 'International',
+            'int' => 'Europe',
             'es' => 'Espagne',
         ],
         /*
@@ -81,6 +81,12 @@ return [
         // langues, comme GiftCoves lui-même. Un nom traduit est un second nom.
         'cove' => 'Gift Cove',
         'discover_cove' => 'Discover Cove',
+    ],
+
+    'market_prompt' => [
+        'title' => 'Où achetez-vous ?',
+        'intro' => 'Boutiques, prix et livraison diffèrent selon le pays. Choisissez le vôtre, nous nous en souviendrons.',
+        'guess' => 'Nous avons deviné :name d’après votre navigateur. Appuyez sur Échap pour le garder.',
     ],
 
     'home' => [

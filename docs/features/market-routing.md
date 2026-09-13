@@ -92,6 +92,29 @@ It redirects to the market **home**, not to the equivalent of the current page. 
 market-scoped, so the same path under another market is usually a 404; `Alternates` resolves genuine
 equivalents, but only for pages that have one and only for crawlers.
 
+### A first visit is asked (2026-09-13)
+
+At the owner's request, a visitor with no `bc_market` cookie is asked where they shop, once: a
+dialog over the page with the three flags, Belgium, the Netherlands and Europe, the guessed one
+marked and focused. It is `Components/MarketPrompt`, shown when the shared prop `askMarket` is true,
+which `MarketPreference::shouldAsk()` answers: no stored choice, and a user agent that is not a
+crawler (`Crawlers::looksLikeOne`). **A crawler is never asked**: it keeps no cookie, so the dialog
+would sit in every page it renders, and the server-rendered HTML it reads carries no dialog at all.
+
+An answer is the switcher's own POST, through the shared `marketChoice.ts` helper, so nothing new
+may write the cookie. Another country lands on that market's home, its landing page. **The market
+you are already on keeps you on the page you opened**: `destination()` returns the posted path when
+its market is the chosen one, which is safe because that market was read from the path's first
+segment, so the path starts with `/{market}` and a protocol-relative `//host` can never match.
+This case existed only in theory before, since the switcher's radio never fires for the flag that
+is already selected; the prompt made it real, because Escape means "keep what you guessed" and
+records that too, so closing the dialog is an answer and it does not come back. Without it, keeping
+Belgium from a friend's shared Belgian list would have thrown the list away.
+
+The third flag is labelled **Europe** now (`nav.countries.int`, was "International"), the owner's
+word for it and what the English market's EU flag has always meant; the header's switcher says the
+same.
+
 ### Re-validated on read
 
 `MarketPreference::stored()` re-checks `isPublished()` every time. The cookie outlives deploys by a

@@ -66,7 +66,8 @@ class MarketPreferenceController extends Controller
      * same catalogue, and a reader switching a product page to French lost the
      * product. `Alternates` already knows which pages have a twin, so the
      * question is asked of it: a twin in the chosen market means landing
-     * there, and anything else means the home, as before.
+     * there, and anything else means the home, as before. Since 2026-09-13
+     * the market you are already on is a third answer: the page itself.
      */
     private function destination(Market $market, ?string $path): string
     {
@@ -78,7 +79,19 @@ class MarketPreferenceController extends Controller
 
         $from = Market::tryFrom((string) explode('/', trim($path, '/'))[0]);
 
-        if ($from === null || $from === $market || $from->country() !== $market->country()) {
+        /*
+         * The market you are already on: stay on the page. The first-visit
+         * prompt posts "keep this one" from wherever it was opened, and that
+         * is often a friend's shared list; landing on the home would throw
+         * the link away. Safe as a redirect target because `$from` was read
+         * from the path's first segment, so the path starts with `/{market}`
+         * and `//evil.example` can never reach this line.
+         */
+        if ($from === $market) {
+            return $path;
+        }
+
+        if ($from === null || $from->country() !== $market->country()) {
             return $home;
         }
 

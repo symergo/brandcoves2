@@ -104,6 +104,43 @@ class MarketRoutingTest extends TestCase
     }
 
     #[Test]
+    public function a_first_visit_is_asked_where_it_shops_and_a_crawler_is_not(): void
+    {
+        $browser = ['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0 Safari/537.36'];
+
+        // No stored choice: ask.
+        $this->withHeaders($browser)->get('/nl-nl')
+            ->assertInertia(fn ($page) => $page->where('askMarket', true));
+
+        // A choice on file: asked once, not once per page.
+        $this->withHeaders($browser)->withCookie(MarketPreference::COOKIE, 'nl-nl')->get('/nl-nl')
+            ->assertInertia(fn ($page) => $page->where('askMarket', false));
+
+        // A crawler is never asked: it keeps no cookie, and the dialog would
+        // sit in every page it renders.
+        $this->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'])
+            ->get('/nl-nl')
+            ->assertInertia(fn ($page) => $page->where('askMarket', false));
+    }
+
+    #[Test]
+    public function keeping_the_market_you_are_on_records_it_and_stays_on_the_page(): void
+    {
+        /*
+         * The prompt's "keep this one" posts from wherever it was opened,
+         * often a friend's shared list; landing on the home would throw the
+         * link away. Still recorded, so the question does not come back.
+         */
+        $this->post('/market', ['market' => 'nl-nl', 'path' => '/nl-nl/l/k7m2xq9v4p'])
+            ->assertRedirect('/nl-nl/l/k7m2xq9v4p')
+            ->assertCookie(MarketPreference::COOKIE, 'nl-nl');
+
+        // Another country is a different catalogue: its home, as before.
+        $this->post('/market', ['market' => 'be-nl', 'path' => '/nl-nl/l/k7m2xq9v4p'])
+            ->assertRedirect('/be-nl');
+    }
+
+    #[Test]
     public function a_chosen_market_beats_the_browser_language(): void
     {
         // The whole point. The header still says the Netherlands and the
