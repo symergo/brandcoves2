@@ -15,6 +15,7 @@ use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Search\SavedTaste;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
@@ -23,6 +24,7 @@ use App\Services\Seo\PageMeta;
 use App\Services\Seo\ResultTerms;
 use App\Services\Seo\StructuredData;
 use App\Support\CurrentMarket;
+use App\Support\Owner;
 use App\Support\SearchUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +34,13 @@ use Inertia\Response;
 
 class SearchController extends Controller
 {
+    /**
+     * The fewest similar products worth leading the landing with. One row of
+     * the grid at its widest: fewer reads as a thin match dressed up as a
+     * page, and the ordinary catalogue is the better answer.
+     */
+    private const SEEDED_MINIMUM = 4;
+
     /** Built once per request; three regions ask for the same facts. */
     private ?SearchContext $context = null;
 
@@ -94,12 +103,37 @@ class SearchController extends Controller
             $query = $query->withTerm($known?->classified_title ?: $link->terms);
         }
 
-        $result = $search->search($query);
+        /*
+         * The landing, seeded from what this person saved.
+         *
+         * A bare `/search` was the same catalogue grid for everybody, led by
+         * whatever had the most shops. For somebody who has saved things it
+         * is led by the brands and categories of those things instead
+         * (owner's request, 2026-09-13), which is the one thing the page can
+         * know about them without asking. Only the bare landing: a term, a
+         * filter, a sort or the shop view is a question of its own, and
+         * answering it with "but you like Sony" would be answering the wrong
+         * one. And only when it fills a row: a taste that matches three
+         * products is not a grid, so the ordinary one comes back.
+         */
+        $taste = ! $query->hasTerm() && ! $query->hasFilters() && $query->sort === 'relevance' && $query->view === 'grid'
+            ? SavedTaste::forOwner(Owner::fromRequest($request))
+            : null;
+
+        $result = $taste === null ? $search->search($query) : $search->similarTo($query, $taste);
+
+        if ($taste !== null && $result->groups->total() < self::SEEDED_MINIMUM) {
+            $taste = null;
+            $result = $search->search($query);
+        }
 
         $this->seo($query, $result, $current);
 
         return Inertia::render('Search', [
             'q' => $query->term,
+            // What the grid was seeded from, so the page can say so: 'lists'
+            // or null. The heading changes; nothing else does.
+            'seeded' => $taste === null ? null : 'lists',
             'filters' => $query->toArray(),
             'sort' => $query->sort,
             'view' => $query->view,

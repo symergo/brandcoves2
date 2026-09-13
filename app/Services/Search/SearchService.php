@@ -76,6 +76,57 @@ class SearchService
      *
      * @return list<int>
      */
+    /**
+     * The catalogue, led by what this person saved.
+     *
+     * For the landing with no term (owner's request, 2026-09-13): the same
+     * stored query as a browse, narrowed to products sharing a brand or a
+     * category with the saved ones and ranked by how much they share, with
+     * the browse order breaking ties. What is already on a list is left out
+     * by identity key, so the Dutch twin of a saved Belgian product does not
+     * come back as a suggestion. Live sources are not asked: there is no term
+     * to ask them with, and a brand name would be a search of its own.
+     */
+    public function similarTo(SearchQuery $query, SavedTaste $taste): SearchResult
+    {
+        $brands = $taste->brands;
+        $categories = $taste->categories;
+
+        $groups = $this->storedQuery($query)
+            ->where(function (Builder $q) use ($brands, $categories): void {
+                if ($brands !== []) {
+                    $q->whereIn('product_groups.brand', $brands);
+                }
+
+                if ($categories !== []) {
+                    $q->orWhereIn('product_groups.category', $categories);
+                }
+            })
+            ->whereNotIn('product_groups.identity_key', $taste->identityKeys)
+            ->reorder();
+
+        // Both facts shared first, then one, then the browse order.
+        $groups->orderByRaw(
+            '((product_groups.brand IN ('.$this->marks($brands).'))::int + (product_groups.category IN ('.$this->marks($categories).'))::int) DESC',
+            [...$brands, ...$categories],
+        );
+
+        $this->applySort($groups, $query);
+
+        return new SearchResult(
+            groups: $groups->paginate(perPage: (int) config('giftcoves.search.per_page'), page: $query->page),
+            query: $query,
+            liveOffersAdded: 0,
+            facets: fn (): array => $this->facets($query),
+        );
+    }
+
+    /** A placeholder per value, or one that matches nothing when there are none. */
+    private function marks(array $values): string
+    {
+        return $values === [] ? 'NULL' : implode(', ', array_fill(0, count($values), '?'));
+    }
+
     public function matchingGroupIds(SearchQuery $query, int $limit): array
     {
         return $this->storedQuery($query)

@@ -207,6 +207,8 @@ return [
         'submit' => 'Search',
         'searching' => 'Searching…',
         'results_for' => 'Results for ":term"',
+        'like_your_lists' => 'Like what you saved',
+        'like_your_lists_hint' => 'Picked from the brands and categories on your lists. Search to find something else.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

@@ -36,6 +36,8 @@ interface Props {
     }
     lanes: { shop: string; logo: string | null; items: GroupCard[] }[] | null
     emptyBecauseOfFilters: boolean
+    /** What the grid was seeded from on a bare landing: your lists, or nothing. */
+    seeded: 'lists' | null
     /** Set when the search box held an Amazon URL rather than a search term. */
     pastedLink: {
         asin: string | null
@@ -139,6 +141,7 @@ export default function Search({
     results,
     lanes,
     emptyBecauseOfFilters,
+    seeded,
     amazonSearch,
     watch,
     pastedLink,
@@ -549,9 +552,19 @@ export default function Search({
                       Capitalised because the term arrives as raw user input and
                       a heading that opens lowercase reads as broken.
                     */}
-                    <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
-                        {q ? q.charAt(0).toUpperCase() + q.slice(1) : t('search.title')}
+                    <h1 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${seeded ? 'mb-1' : 'mb-4'}`}>
+                        {q ? q.charAt(0).toUpperCase() + q.slice(1) : seeded === 'lists' ? t('search.like_your_lists') : t('search.title')}
                     </h1>
+
+                    {/*
+                      A grid led by your own lists says so, and says how to
+                      get the ordinary one: search. Without the line, a
+                      landing full of one brand looks like the catalogue
+                      shrank.
+                    */}
+                    {!q && seeded === 'lists' && (
+                        <p className="mb-4 text-sm text-ink-soft">{t('search.like_your_lists_hint')}</p>
+                    )}
 
                     {/* Watch this search — the intent is expressed here, so the
                         control is here. Null on the landing, where there is no term. */}

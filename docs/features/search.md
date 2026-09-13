@@ -601,6 +601,26 @@ and brand pages both, with "show results" one press away, so the grid stays wher
 search-help link under the box came back on 2026-09-06 and went again on 2026-09-07 at the owner's
 request; the help stays in the footer and the phone sheet.
 
+## The landing is led by what you saved (2026-09-13)
+
+At the owner's request. `/search` with no term is a catalogue grid, and it was the same grid for
+everybody, led by whatever had the most shops. For a signed-in visitor with catalogue products on a
+list it is led by the brands and categories of those products instead: `SavedTaste::forOwner()`
+reads the top five brands and top five categories of what they saved (across markets, a brand is a
+brand on either side of the border), `SearchService::similarTo()` runs the ordinary stored query
+narrowed to products sharing one of them, ranked by how many they share (both facts, then one)
+with the browse order breaking ties, and the saved products themselves are left out by identity
+key so a Dutch twin of a Belgian save does not come back as a suggestion. The page says so with the
+heading "Like what you saved" and a line naming the source and the way out (`search.like_your_lists`,
+`search.like_your_lists_hint`); `seeded` is `'lists'` or null.
+
+Only the bare landing: a term, a filter, a sort or the shop view is a question of its own. And only
+when the match fills a row (`SEEDED_MINIMUM`, 4): fewer reads as a thin match dressed up as a
+page, so the ordinary grid comes back. Deliberately no recommender: brand and category are the two
+facts every group carries and the two a shopper would name themselves, and anything cleverer would
+be its own feature with its own drift. Live sources are not asked on this landing; there is no term
+to ask them with.
+
 ## See also
 
 - [crawlers-and-the-search-log.md](crawlers-and-the-search-log.md) — the four layers that keep a crawler from adding a pill
