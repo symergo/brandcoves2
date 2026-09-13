@@ -94,7 +94,7 @@ return [
         'headline_2' => 'Krijg wat je écht wilt.',
         // The pitch under the headline and the two buttons. Owner's words,
         // 2026-09-13; `cta_gift` below is the second button.
-        'intro' => 'Maak een verlanglijst van alles wat je online vindt. Deel hem met de mensen die cadeaus voor je kopen.',
+        'intro' => 'Maak een verlanglijst van alles wat je online én offline vindt. Deel hem met de mensen die cadeaus voor je kopen.',
         'cta_wishlist' => 'Maak mijn verlanglijst',
         'search_placeholder' => 'Zoek een cadeau of scan een streepjescode',
         'recently_viewed' => 'Je bekeek',

@@ -132,7 +132,7 @@ return [
         'headline_2' => 'Get what you actually want.',
         // The pitch under the headline and the two buttons. Owner's words,
         // 2026-09-13; `cta_gift` below is the second button.
-        'intro' => 'Create a wishlist from anything you find online. Share it with the people who buy gifts for you.',
+        'intro' => 'Create a wishlist from anything you find online or offline. Share it with the people who buy gifts for you.',
         'cta_wishlist' => 'Create my wishlist',
         // Names the second way in, not a third example. The examples this
         // used to carry ("Headphones, a coffee grinder, a brand name…") taught

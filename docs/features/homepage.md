@@ -443,7 +443,8 @@ the shelf keeps its own copy under `gift_ideas`.
 ## The pitch says what you make here (2026-09-13)
 
 The hero now reads, in the owner's words: *"Give better. Get what you actually want."* — *"Create a
-wishlist from anything you find online. Share it with the people who buy gifts for you."* — two
+wishlist from anything you find online or offline. Share it with the people who buy gifts for
+you."* ("én offline" added the same day: the barcode scanner is what makes the offline half true.) — two
 buttons, **Create my wishlist** (the list form on My Lists, `?new=mine`) and **Find a gift** (the
 Find a gift page, where the header entry of that name goes). A line under the buttons, *Search
 anything · Scan a barcode · Keep it all in one place*, lasted a few hours: the owner took it out

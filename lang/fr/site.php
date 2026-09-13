@@ -95,7 +95,7 @@ return [
         'headline_2' => 'Recevez ce que vous voulez vraiment.',
         // The pitch under the headline and the two buttons. Owner's words,
         // 2026-09-13; `cta_gift` below is the second button.
-        'intro' => 'Créez une liste d’envies à partir de tout ce que vous trouvez en ligne. Partagez-la avec les personnes qui vous offrent des cadeaux.',
+        'intro' => 'Créez une liste d’envies à partir de tout ce que vous trouvez en ligne ou en magasin. Partagez-la avec les personnes qui vous offrent des cadeaux.',
         'cta_wishlist' => 'Créer ma liste d’envies',
         'search_placeholder' => 'Cherchez un cadeau ou scannez un code-barres',
         'recently_viewed' => 'Vous avez regardé',
