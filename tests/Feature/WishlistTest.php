@@ -109,20 +109,22 @@ class WishlistTest extends TestCase
          * list vanished the moment the message did — which was already true for
          * anybody sent a link rather than an invitation, i.e. most people.
          */
+        // Under "For others" since 2026-09-13: a list somebody shared with
+        // me is about giving to them, not about what I want.
         [$list] = $this->giftListForSomeone();
         $reader = $this->user('reader-'.bin2hex(random_bytes(4)).'@example.test');
 
         // Asserted on this list's id, not on a count: opening `/lists` mints
         // the default "My wishlist" for anybody signed in, so the interesting
         // number is never zero and a count would be measuring that instead.
-        $before = $this->actingAs($reader)->get('/be-nl/lists')->assertOk()
+        $before = $this->actingAs($reader)->get('/be-nl/lists?view=shared')->assertOk()
             ->viewData('page')['props']['lists'];
 
         $this->assertNotContains($list->id, array_column($before, 'id'));
 
         $this->actingAs($reader)->get("/be-nl/l/{$list->share_token}")->assertOk();
 
-        $after = $this->actingAs($reader)->get('/be-nl/lists')->assertOk()
+        $after = $this->actingAs($reader)->get('/be-nl/lists?view=shared')->assertOk()
             ->viewData('page')['props']['lists'];
 
         $this->assertContains($list->id, array_column($after, 'id'));

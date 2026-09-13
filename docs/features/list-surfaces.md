@@ -342,7 +342,7 @@ explains the Whisperer. Only
 `gift_cove.band_find` was deleted. The `find` band was the one four-card band; the grid still
 takes its column count from each band, so nothing sits alone.
 
-## My Lists lists my Secret Friend groups (2026-09-12)
+## My Lists lists my Secret Friend groups (2026-09-12; undone 2026-09-13, see below)
 
 The groups I am in were a band under the tool grid on `/gift-cove`, five at most. They are on My
 Lists now, at the owner's request, after the list groups and only on the `mine` view: a group is a
@@ -694,6 +694,29 @@ its question above the fold. Not on mount, so a page does not jump to the wizard
 `WizardOffer` now carries `myLists` (own, `mine`, this market) for that third step, so both pages
 that mount the wizard send it without a second copy of the query. `?new=santa` opens the wizard on
 step 2, and the home page's chooser deep-links there like the other three kinds.
+
+## Three views, by whom the lists are for (2026-09-13)
+
+At the owner's request. The default view was every list I could open, sectioned by kind, and
+"Shared lists" was only what others sent me. The errand a visitor arrives with is "what do I want"
+or "what am I giving", so the views split on that now:
+
+| View | Label | Holds |
+|---|---|---|
+| `mine` | My wish lists (*Mijn verlanglijsten*) | my own lists of what I want, and nothing else |
+| `shared` | For others (*Voor anderen*) | my lists about a person; the wish lists and the gift lists others shared with me |
+| `group` | Group lists | one present bought together: mine, and the ones I was let into |
+
+The kind is still chosen at creation and never derived, so a list does not change view because
+somebody was invited to it. "For others" is sectioned three ways (my gift lists, gift lists from
+others, wish lists from others), each heading shown only when more than one section has something
+in it; the other two views are one group each. `nav.lists`, `nav.shared_lists`, `lists.title`,
+`lists.shared_subtitle` and `lists.shared_empty` were reworded in all four languages, and
+`lists.others_*` are the section labels. `ListsViewsTest` pins the split.
+
+The Secret Friend groups left the lists page the same day: the owner decided Secret Friend is its
+own page, which it already was (`/santa` lists your groups), so the band that had moved from the
+Gift Cove hub to My Lists earlier that day is gone, with its `santaGroups` prop and its test.
 
 ## A shared list names its owner twice (2026-09-13)
 

@@ -50,8 +50,6 @@ interface Props extends WizardOffer {
     lists: ListSummary[]
     view: ListsView
     isSignedIn: boolean
-    /** The Secret Friend groups I am in, newest first. */
-    santaGroups: { title: string; drawn: boolean; url: string }[]
 }
 
 /**
@@ -211,7 +209,7 @@ function ListCard({ list }: { list: ListSummary }) {
     )
 }
 
-export default function ListsIndex({ lists, view, recipients, friends, occasions, myLists, isSignedIn, santaGroups }: Props) {
+export default function ListsIndex({ lists, view, recipients, friends, occasions, myLists, isSignedIn }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -255,41 +253,33 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
      * Empty sections are dropped rather than shown empty: a heading over
      * nothing reads as a thing that failed to load.
      */
-    const mineOnly = lists.filter((l) => !l.sharedWithMe)
-
+    /*
+     * Three views by whom the lists are for (2026-09-13; see the controller):
+     * "My wish lists" is one group and needs no heading; "For others" is my
+     * gift lists, then the gift lists and the wish lists others shared with
+     * me; "Group lists" is one group of mine and theirs. A heading only earns
+     * its place when more than one group has something in it.
+     */
     const groups =
-        view === 'mine'
+        view === 'shared'
             ? [
-                  /*
-                   * Each group carries the sentence the wizard uses for that
-                   * kind, behind an info icon beside the heading (owner's
-                   * request, 2026-09-12): the same words on the page you
-                   * chose the kind and the page you find the list, and the
-                   * site rule that explanations sit behind the icon.
-                   */
                   {
-                      key: 'mine',
-                      label: t('lists.for_me'),
-                      hint: t('wizard.kind_mine_body'),
-                      lists: mineOnly.filter((l) => l.kind === 'mine'),
-                  },
-                  {
-                      key: 'others',
-                      label: t('lists.for_someone_else'),
+                      key: 'own',
+                      label: t('lists.others_own'),
                       hint: t('wizard.kind_for_someone_body'),
-                      lists: mineOnly.filter((l) => l.kind === 'for_someone'),
+                      lists: lists.filter((l) => !l.sharedWithMe),
                   },
                   {
-                      key: 'group',
-                      label: t('lists.for_group'),
-                      hint: t('wizard.kind_group_body'),
-                      lists: mineOnly.filter((l) => l.kind === 'group'),
-                  },
-                  {
-                      key: 'shared',
-                      label: t('lists.shared_with_me'),
+                      key: 'gift-shared',
+                      label: t('lists.others_gift_shared'),
                       hint: t('lists.shared_subtitle'),
-                      lists: lists.filter((l) => l.sharedWithMe),
+                      lists: lists.filter((l) => l.sharedWithMe && l.kind === 'for_someone'),
+                  },
+                  {
+                      key: 'wish-shared',
+                      label: t('lists.others_wish_shared'),
+                      hint: t('lists.shared_subtitle'),
+                      lists: lists.filter((l) => l.sharedWithMe && l.kind === 'mine'),
                   },
               ].filter((g) => g.lists.length > 0)
             : [{ key: view, label: '', hint: '', lists }]
@@ -460,53 +450,6 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                 ))
             )}
         
-            {/*
-              The Secret Friend groups I am in, after the lists and only on
-              My Lists proper. Moved here from the bottom of the Gift Cove hub
-              on 2026-09-12 (owner's call): a group is a thing I am in, like
-              a list, so it belongs on the shelf of what I have. Same heading
-              style as the list groups above, so it reads as one more of them.
-              The Shared and Group views are answers to a narrower question and
-              do not carry it.
-            */}
-            {view === 'mine' && santaGroups.length > 0 && (
-                <section className="mt-8">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <div className="flex items-center gap-1">
-                            <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
-                                {t('santa.title')}
-                                {/* The other names for it, in ordinary case beside
-                                    the heading: "Secret Friend" is the site's word
-                                    and not everybody's, so the heading says which
-                                    game it means (owner's wording, 2026-09-12). */}
-                                <span className="ml-2 font-normal tracking-normal normal-case">{t('santa.aka')}</span>
-                            </h2>
-                            <InfoTip>{t('santa.subtitle')}</InfoTip>
-                        </div>
-                        <Link
-                            href={`/${market.key}/santa`}
-                            className="text-sm text-accent-dark underline hover:text-ink"
-                        >
-                            {t('santa.create')}
-                        </Link>
-                    </div>
-                    <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {santaGroups.map((group) => (
-                            <li key={group.url}>
-                                <Link
-                                    href={group.url}
-                                    className="block h-full rounded-card border border-line bg-card p-4 transition hover:border-ink"
-                                >
-                                    <span className="font-medium">{group.title}</span>
-                                    <span className="mt-1 block text-sm text-ink-soft">
-                                        {group.drawn ? t('santa.drawn') : t('santa.not_drawn')}
-                                    </span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
 
             {/*
               Under the lists rather than over them.

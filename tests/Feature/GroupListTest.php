@@ -149,33 +149,23 @@ class GroupListTest extends TestCase
     }
 
     #[Test]
-    public function a_group_list_appears_under_my_lists_as_a_list_i_own(): void
+    public function a_group_list_appears_under_group_lists_as_a_list_i_own_and_not_under_my_wish_lists(): void
     {
-        /*
-         * This asserted the opposite until 2026-08-29, on the grounds that
-         * three views answer three questions and showing a group list in two of
-         * them makes the sections decoration.
-         *
-         * The sections survived; the exclusion did not. My Lists is the page
-         * somebody opens to find *a list*, and it was the one place a third of
-         * their lists could not be found — the group view is one nav entry you
-         * have to already know about. So the broad view is the superset and the
-         * labelled section carries the distinction, which is what the section
-         * was for.
-         *
-         * `?view=group` still answers the narrow question, and the row still
-         * says it is mine rather than one somebody shared with me.
-         */
+        // Since 2026-09-13 the default view is my wish lists alone; a group
+        // list I own lives under Group lists, still marked as mine.
         $user = User::factory()->create();
         $list = $this->groupList($user);
 
-        $response = $this->actingAs($user)->get('/be-nl/lists')->assertOk();
+        $response = $this->actingAs($user)->get('/be-nl/lists?view=group')->assertOk();
 
         $row = collect($this->props($response)['lists'])->firstWhere('id', $list->id);
 
-        $this->assertNotNull($row, 'A group list I own is missing from My Lists.');
+        $this->assertNotNull($row, 'A group list I own is missing from Group lists.');
         $this->assertSame(ListKind::Group->value, $row['kind']);
         $this->assertFalse($row['sharedWithMe']);
+
+        $mine = $this->actingAs($user)->get('/be-nl/lists')->assertOk();
+        $this->assertNotContains($list->id, array_column($this->props($mine)['lists'], 'id'));
     }
 
     #[Test]

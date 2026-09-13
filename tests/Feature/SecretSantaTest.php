@@ -500,29 +500,6 @@ class SecretSantaTest extends TestCase
     }
 
     #[Test]
-    public function my_lists_shows_the_groups_i_am_in_and_the_gift_cove_does_not(): void
-    {
-        /*
-         * Moved on 2026-09-12: a group is a thing I am in, like a list, so
-         * it sits on My Lists with them rather than under the hub that
-         * explains the tools. Only on My Lists proper; the Shared and Group
-         * views answer a narrower question.
-         */
-        $organiser = User::factory()->create();
-        $group = $this->group($organiser);
-
-        $this->actingAs($organiser)->get('/be-nl/lists')
-            ->assertInertia(fn ($page) => $page
-                ->has('santaGroups', 1)
-                ->where('santaGroups.0.title', 'Office 2026')
-                ->where('santaGroups.0.drawn', false)
-                ->where('santaGroups.0.url', "/be-nl/santa/{$group->id}"));
-
-        $this->actingAs($organiser)->get('/be-nl/gift-cove')
-            ->assertInertia(fn ($page) => $page->missing('santaGroups'));
-    }
-
-    #[Test]
     public function joining_after_the_draw_is_refused(): void
     {
         $group = $this->group();

@@ -12,7 +12,6 @@ use App\Enums\RecipientStatus;
 use App\Models\Friendship;
 use App\Models\ListQuiz;
 use App\Models\Recipient;
-use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
@@ -128,20 +127,34 @@ class WishlistController extends Controller
          * `rows()`. A single `ListAccess::scope()` with a `withCount` would put
          * a message addressed to somebody else on their card in my list.
          */
+        /*
+         * Three views, by whom the lists are for (owner's call, 2026-09-13).
+         *
+         * "My wish lists" is only that: my own lists of what I want. "For
+         * others" is everything about giving to somebody: my lists about a
+         * person, and what others shared with me — their wish lists and their
+         * gift lists. "Group lists" is one present bought together, mine and
+         * the ones I was let into. Until then the default view held every
+         * list I could open, sectioned by kind, and "Shared" held only what
+         * others sent me; the errand a visitor arrives with is "what do I
+         * want" or "what am I giving", and the views now split on that.
+         *
+         * The kind is chosen at creation, never derived, so a list must not
+         * change view because somebody was invited to it.
+         */
         $lists = match ($view) {
-            'shared' => $this->rows($sharedWithMe, $owner, $current, owned: false),
+            'shared' => $this->rows($owned->where('kind', ListKind::ForSomeone->value), $owner, $current, owned: true)
+                ->concat($this->rows(
+                    $sharedWithMe->whereIn('kind', [ListKind::Mine->value, ListKind::ForSomeone->value]),
+                    $owner,
+                    $current,
+                    owned: false,
+                )),
 
-            // Chosen at creation, never derived — a list must not change
-            // section because somebody was invited to it.
-            'group' => $this->rows(
-                $owned->where('kind', ListKind::Group->value),
-                $owner,
-                $current,
-                owned: true,
-            ),
+            'group' => $this->rows($owned->where('kind', ListKind::Group->value), $owner, $current, owned: true)
+                ->concat($this->rows($sharedWithMe->where('kind', ListKind::Group->value), $owner, $current, owned: false)),
 
-            default => $this->rows($owned, $owner, $current, owned: true)
-                ->concat($this->rows($sharedWithMe, $owner, $current, owned: false)),
+            default => $this->rows($owned->where('kind', ListKind::Mine->value), $owner, $current, owned: true),
         };
 
         /*
@@ -182,31 +195,6 @@ class WishlistController extends Controller
 
             'isSignedIn' => $owner->isSignedIn(),
 
-            /*
-             * The Secret Friend groups I am in, moved here from the Gift Cove
-             * hub on 2026-09-12 at the owner's request. A group is a thing I
-             * am *in*, like a list, so it belongs on the shelf of what I
-             * have rather than under the page that explains the tools. All
-             * of them, newest first: the hub showed five, which is a limit
-             * for a footnote, and this is the page for the whole set.
-             */
-            'santaGroups' => $owner->user === null
-                ? []
-                : SecretSantaGroup::query()
-                    ->where('market', $current->value())
-                    ->whereExists(fn ($q) => $q
-                        ->selectRaw('1')
-                        ->from('secret_santa_members')
-                        ->whereColumn('secret_santa_members.group_id', 'secret_santa_groups.id')
-                        ->where('secret_santa_members.user_id', $owner->user->id))
-                    ->latest()
-                    ->get()
-                    ->map(fn (SecretSantaGroup $group) => [
-                        'title' => $group->title,
-                        'drawn' => $group->status->isDrawn(),
-                        'url' => $current->url("santa/{$group->id}"),
-                    ])
-                    ->all(),
         ]);
     }
 
