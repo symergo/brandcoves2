@@ -1146,7 +1146,7 @@ return [
             'yoga' => 'Yoga y meditación', 'cars' => 'Coches', 'science' => 'Ciencia y espacio',
             'water' => 'Natación y deportes acuáticos', 'wintersports' => 'Deportes de invierno', 'football' => 'Fútbol',
             'collecting' => 'Coleccionismo', 'nature' => 'Naturaleza y aves', 'fishing' => 'Pesca',
-            'horses' => 'Caballos',
+            'horses' => 'Caballos', 'hunting' => 'Caza',
         ],
 
         'vibes' => [

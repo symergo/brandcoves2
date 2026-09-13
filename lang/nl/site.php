@@ -1150,7 +1150,7 @@ return [
             'yoga' => 'Yoga en meditatie', 'cars' => 'Auto\'s', 'science' => 'Wetenschap en ruimte',
             'water' => 'Zwemmen en watersport', 'wintersports' => 'Wintersport', 'football' => 'Voetbal',
             'collecting' => 'Verzamelen', 'nature' => 'Natuur en vogels', 'fishing' => 'Vissen',
-            'horses' => 'Paarden',
+            'horses' => 'Paarden', 'hunting' => 'Jagen',
         ],
 
         'vibes' => [

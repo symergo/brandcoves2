@@ -77,6 +77,7 @@ class AngleMap
         'nature' => ['vogelhuisje', 'vogelvoeder', 'natuurgids', 'insectenhotel', 'wildcamera', 'vogelverrekijker'],
         'fishing' => ['hengel', 'visdoos', 'vismolen', 'viskoffer', 'visstoel', 'kunstaas set'],
         'horses' => ['paardenborstel', 'rijhandschoenen', 'halster', 'ruiterhelm', 'hoefkrabber', 'paardenboek'],
+        'hunting' => ['jachtmes', 'verrekijker jacht', 'jachtvest', 'wildlokker', 'jachtrugzak', 'schietbril'],
     ];
 
     /**

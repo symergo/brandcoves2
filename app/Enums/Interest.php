@@ -60,6 +60,10 @@ enum Interest: string
     case Nature = 'nature';
     case Fishing = 'fishing';
     case Horses = 'horses';
+    // Proposed by the taggers, 2026-09-14: five products on be-fr had no
+    // interest that fitted. The first value to arrive from the tagging pass
+    // rather than from the wizard.
+    case Hunting = 'hunting';
 
     /** @return list<string> */
     public static function values(): array

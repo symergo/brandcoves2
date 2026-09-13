@@ -1315,7 +1315,7 @@ return [
             'yoga' => 'Yoga and meditation', 'cars' => 'Cars', 'science' => 'Science and space',
             'water' => 'Swimming and water sports', 'wintersports' => 'Winter sports', 'football' => 'Football',
             'collecting' => 'Collecting', 'nature' => 'Nature and birds', 'fishing' => 'Fishing',
-            'horses' => 'Horses',
+            'horses' => 'Horses', 'hunting' => 'Hunting',
         ],
 
         'vibes' => [

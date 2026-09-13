@@ -24,7 +24,7 @@ brief's "coffee" without anything in between. Every vocabulary is one the site a
 
 | Vocabulary | Values | Source |
 |---|---|---|
-| `interest` | the thirty-six wizard interests (twenty broad ones, sixteen hobbies added 2026-09-14: art, cycling, board games, drinks, baking, running, yoga, cars, science, water sports, winter sports, football, collecting, nature, fishing, horses) | `App\Enums\Interest` |
+| `interest` | the thirty-seven wizard interests (twenty broad ones, sixteen hobbies added 2026-09-14: art, cycling, board games, drinks, baking, running, yoga, cars, science, water sports, winter sports, football, collecting, nature, fishing, horses; then hunting, the first value proposed by the tagging pass itself) | `App\Enums\Interest` |
 | `occasion` | the list occasions except `other`, plus sinterklaas, easter, new_year, halloween, communion, christening, engagement, get_well, new_job, secret_santa | `App\Enums\EventType`, `GiftTags::EXTRA_OCCASIONS` |
 | `recipient` | partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host | `App\Enums\RecipientType` |
 | `age` | 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64, 65+ | `GiftTags::AGE_BANDS` |
@@ -34,6 +34,16 @@ brief's "coffee" without anything in between. Every vocabulary is one the site a
 
 A tag is `<vocabulary>:<value>`. The whole list is `GiftTags::all()`, and `GET /products/untagged`
 returns it beside the products, so a writer never has to guess a spelling.
+
+**The vocabulary grows from the tagging, not only from the wizard.** A writer working a batch may
+invent an `interest`, `occasion` or `style` value when nothing on the list fits — `recipient`,
+`age`, `vibe` and `values` are complete and are not open to it. `POST /products/tags` still
+refuses anything outside the vocabulary, so an invented value is a **proposal**: the poster
+collects the rejected spellings with their counts, and the ones that recur are added here and the
+batch re-posted. `interest:hunting` is the first that arrived this way (five products on be-fr with
+no interest that fitted, 2026-09-14). The rest of that round was noise worth naming: age ranges the
+drafters made up rather than picking a band (`age:6-12`), and duplicates of a vocabulary that
+already covered it (`recipient:baby`, which `age:0-2` says better).
 
 ## Two decisions the owner asked about (2026-09-14)
 
