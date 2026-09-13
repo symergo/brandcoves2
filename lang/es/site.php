@@ -552,7 +552,7 @@ return [
         'seo_title' => 'Listas de deseos para compartir',
         'seo_description' => 'Guarda una lista de deseos, compártela con quien te hace regalos y deja que reserven uno sin que tú veas quién eligió qué.',
         'title' => 'Mis listas de deseos',
-        'shared_subtitle' => 'Tus listas de regalos y las listas que otros compartieron contigo. Así es como les compras algo.',
+        'shared_subtitle' => 'Listas de deseos y listas de regalos que otros compartieron contigo. Complétalas y elige lo que te gustaría regalar.',
         'shared_empty' => 'Aún no hay lista para otra persona. Haz una, o abre un enlace que te hayan enviado.',
         'others_own' => 'Mis listas de regalos',
         'others_gift_shared' => 'Listas de regalos de otros',

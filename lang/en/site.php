@@ -675,7 +675,7 @@ return [
         'seo_title' => 'Wish lists you can share',
         'seo_description' => 'Keep a wish list, share it with the people buying for you, and let them claim a gift without you seeing who claimed what.',
         'title' => 'My wish lists',
-        'shared_subtitle' => 'Your gift lists, and the lists others shared with you. This is how you shop for them.',
+        'shared_subtitle' => 'Wish lists and gift lists others shared with you. Add to them and choose what you would like to give.',
         'shared_empty' => 'No list for somebody else yet. Make one, or open a link somebody sent you.',
         'others_own' => 'My gift lists',
         'others_gift_shared' => 'Gift lists from others',

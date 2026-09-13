@@ -553,7 +553,7 @@ return [
         'seo_title' => 'Des listes d’envies à partager',
         'seo_description' => 'Tenez une liste d’envies, partagez-la avec ceux qui vous offrent quelque chose, et laissez-les réserver un cadeau sans savoir qui a pris quoi.',
         'title' => 'Mes listes de souhaits',
-        'shared_subtitle' => 'Vos listes cadeaux, et les listes qu’on a partagées avec vous. C’est ainsi que vous leur trouvez un cadeau.',
+        'shared_subtitle' => 'Les listes d’envies et les listes de cadeaux qu’on a partagées avec vous. Complétez-les et choisissez ce que vous aimeriez offrir.',
         'shared_empty' => 'Pas encore de liste pour quelqu’un d’autre. Créez-en une, ou ouvrez un lien qu’on vous a envoyé.',
         'others_own' => 'Mes listes cadeaux',
         'others_gift_shared' => 'Listes cadeaux des autres',

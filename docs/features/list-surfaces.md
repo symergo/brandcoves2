@@ -103,7 +103,8 @@ the wording should not wait for it. See the *opened-link record*, still open, in
 
 Three changes:
 
-- **The view's subtitle** names the errand: *"This is how you shop for them."*
+- **The view's subtitle** names the errand: *"Add to them and choose what you would like to give."*
+  (reworded 2026-09-13 at the owner's request; it read "This is how you shop for them").
 - **The card** carries *"Claim something for Anna"* — but only on a `mine` list of theirs, which is
   the kind with something to claim. A `for_someone` or `group` list I was invited to is co-giver
   coordination, and its own kind sentence already covers it.
