@@ -65,21 +65,54 @@ class AngleMap
     /**
      * Queries for a set of interests, in priority order.
      *
-     * Free-text interests (anything not in the enum) are passed through as
-     * queries verbatim: someone who typed "wielrennen" has told us exactly what
-     * to search for, and second-guessing them is worse than trusting them.
+     * The flat form of {@see queriesByInterest()}, for retrieval, which only
+     * needs the terms.
      *
      * @param  list<string>  $interests  enum values and/or free text
      * @return list<string>
      */
     public function queriesFor(Market $market, array $interests, ?Vibe $vibe = null): array
     {
+        $queries = [];
+
+        foreach ($this->queriesByInterest($market, $interests, $vibe) as $slot) {
+            foreach ($slot['queries'] as $query) {
+                $queries[] = $query;
+            }
+        }
+
+        return $queries;
+    }
+
+    /**
+     * Queries grouped by the interest they came from, interests in the order
+     * they were given.
+     *
+     * The grouping is what lets the scorer weigh *which interest* a product
+     * answers rather than which query in a flat list it happened to match.
+     * Flattened, the second interest's first query sat right behind the first
+     * interest's last, and a speaker answering "tech" scored nearly as well as
+     * a paint set answering "schilderen" — the interest the person typed first.
+     *
+     * Free-text interests (anything not in the enum) are passed through as
+     * queries verbatim: someone who typed "wielrennen" has told us exactly what
+     * to search for, and second-guessing them is worse than trusting them.
+     *
+     * A query that two interests share is credited to the first; it appears
+     * once, so retrieval's tsquery does not grow with duplicates.
+     *
+     * @param  list<string>  $interests  enum values and/or free text
+     * @return list<array{interest: string, queries: list<string>}>
+     */
+    public function queriesByInterest(Market $market, array $interests, ?Vibe $vibe = null): array
+    {
         if ($interests === []) {
             return [];
         }
 
         $widened = $this->widened($market, $interests, $vibe);
-        $queries = [];
+        $seen = [];
+        $slots = [];
 
         foreach ($interests as $interest) {
             $key = mb_strtolower(trim($interest));
@@ -87,6 +120,8 @@ class AngleMap
             if ($key === '') {
                 continue;
             }
+
+            $queries = [];
 
             /*
              * Widened rows first. They are newer and more specific, and putting
@@ -105,11 +140,22 @@ class AngleMap
                 // Free text. Trusted as written.
                 $queries[] = $key;
             }
+
+            $own = [];
+
+            foreach ($queries as $query) {
+                if (! isset($seen[$query])) {
+                    $seen[$query] = true;
+                    $own[] = $query;
+                }
+            }
+
+            if ($own !== []) {
+                $slots[] = ['interest' => $key, 'queries' => $own];
+            }
         }
 
-        // Preserve first-seen order: the first interest someone picked is the
-        // one they thought of first, and it should shape the results most.
-        return array_values(array_unique($queries));
+        return $slots;
     }
 
     /**

@@ -57,6 +57,7 @@ class SuggestionEngineTest extends TestCase
         ?string $category = null,
         ?string $brand = null,
         int $merchants = 1,
+        ?string $description = null,
     ): ProductGroup {
         $group = ProductGroup::create([
             'market' => Market::BeNl,
@@ -82,6 +83,7 @@ class SuggestionEngineTest extends TestCase
             'title' => $title,
             'brand' => $brand,
             'merchant_category' => $category,
+            'description' => $description,
             'price' => $price,
             'currency' => 'EUR',
             'affiliate_url' => 'https://example.test/buy',
@@ -370,6 +372,94 @@ class SuggestionEngineTest extends TestCase
         // starts to feel broken.
         $this->assertNotEmpty($picks);
         $this->assertStringContainsStringIgnoringCase('tamper', $picks[0]->group->title);
+    }
+
+    #[Test]
+    public function the_first_interest_outranks_the_second(): void
+    {
+        /*
+         * The brief that took the Whisperer out of the menu (2026-09-13):
+         * "schilderen" and "tech" returned speakers and earbuds. The paint set
+         * is cheap against the budget and the watch sits at the sweet spot, so
+         * on price alone the watch wins — and under per-query position
+         * scoring the second interest was worth 0.94 of the first, which was
+         * not enough of a gap to overcome that. The first interest is the one
+         * the person typed first; it has to win when it has an answer.
+         */
+        $paint = $this->giftable('Acrylverf set 24 kleuren om te schilderen', 2500, 'Hobby');
+        $this->giftable('Smartwatch sport GPS', 8500, 'Wearables');
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['schilderen', 'tech'],
+            budgetMax: 10000,
+            limit: 2,
+        ));
+
+        $this->assertSame($paint->id, $picks[0]->group->id);
+    }
+
+    #[Test]
+    public function the_second_interest_is_worth_half_of_the_first(): void
+    {
+        $this->giftable('Manfrotto statief voor camera', 5000, 'Foto');
+        $this->giftable('Koffiemolen handmatig', 5000, 'Keuken');
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['photography', 'coffee'],
+            limit: 2,
+        ));
+
+        $fit = [];
+
+        foreach ($picks as $pick) {
+            $fit[$pick->group->title] = $pick->breakdown['interest_fit'];
+        }
+
+        // Out of 40: the whole weight for the first interest, half for the second.
+        $this->assertEqualsWithDelta(40.0, $fit['Manfrotto statief voor camera'], 0.01);
+        $this->assertEqualsWithDelta(20.0, $fit['Koffiemolen handmatig'], 0.01);
+    }
+
+    #[Test]
+    public function scoring_credits_what_the_search_matched(): void
+    {
+        /*
+         * Retrieval matches on stems and the scorer used to look for the
+         * query text literally in the title, so a product the search found
+         * scored zero on interest. "Schilders" stems to "schilder", the same
+         * as "schilderen"; the title never contains the word typed.
+         */
+        $this->giftable('Ezel voor schilders, beuken', 4000, 'Hobby');
+
+        $pick = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['schilderen'],
+        ))[0];
+
+        $this->assertGreaterThan(0, $pick->breakdown['interest_fit']);
+        $this->assertSame('schilderen', $pick->primaryInterest);
+    }
+
+    #[Test]
+    public function a_match_in_the_description_counts_for_less_than_one_in_the_title(): void
+    {
+        // A games console whose blurb mentions painting is not a painting
+        // present. Same price, same category, so interest fit is the only
+        // thing that differs.
+        $set = $this->giftable('Schilderen op nummer set volwassenen', 3000, 'Hobby');
+        $this->giftable('Spelconsole bundel', 3000, 'Hobby', null, 1, 'Met een avontuur vol schilderen en tekenen.');
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['schilderen'],
+            limit: 2,
+        ));
+
+        $this->assertCount(2, $picks);
+        $this->assertSame($set->id, $picks[0]->group->id);
+        $this->assertGreaterThan($picks[1]->breakdown['interest_fit'], $picks[0]->breakdown['interest_fit']);
     }
 
     #[Test]

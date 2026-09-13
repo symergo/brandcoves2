@@ -105,7 +105,7 @@ person told us who they are shopping for; "we found nothing" throws that away.
 
 | Signal | Weight | Note |
 |---|---:|---|
-| `interest_fit` | 40 | Weighted by *where* the matching query sat, not just how many matched. The first interest someone thinks of is the one that matters. A second match adds at most 0.2, so a product that name-drops five keywords cannot win on padding. |
+| `interest_fit` | 40 | Weighted by *which interest* the product answers: the first is worth 1.0, the last 0.5, spread evenly. Matches are what the search matched, asked of Postgres by the same tsquery; a description-only match is worth half a title match. An extra interest matched adds 0.1, capped at 0.2, so a product that name-drops every interest cannot win on padding. Changed 2026-09-13, see below. |
 | `budget_fit` | 20 | Peaks at 85% of the ceiling, falls away on both sides. A €12 gift against a €100 budget reads as thoughtless, not thrifty. |
 | `surprise` | 20 | From [the Serendipity Engine](serendipity.md). |
 | `vibe` | 10 | A nudge, never a filter — someone who said "playful" still wants the good headphones if headphones are the right answer. |
@@ -212,6 +212,37 @@ Two further consequences worth stating:
 
 Both caps on the memory exist because a session store is visitor-controlled input: ~60 ids per brief
 and five briefs, LRU.
+
+## Scoring follows the search, and the first interest wins (2026-09-13)
+
+The brief that took the Whisperer out of the menu: "schilderen" plus "techniek" returned speakers
+and earbuds. Read against production's data, two causes, and the second was the real one.
+
+- **The stock is thin.** The be-nl products matching "schilderen" with the most sellers are
+  children's craft kits, and a games console matched through its description.
+- **The ranking let the second interest win, twice over.** First, interest fit was weighted by a
+  query's *position in a flat list*: the nightly widening had written the tech angle as "draadloze
+  oordopjes, bluetooth speaker, ...", those sat right behind "schilderen", and the first of them
+  scored 0.94 of it. Second, the scorer looked for the query text *literally* in the title, while
+  retrieval matches on stems. A title saying "schilders" was found by the search and scored zero on
+  interest; a title spelling out "bluetooth speaker" scored full marks. Budget fit finished the job:
+  paint sets at six to sixteen euros sit far below the sweet spot, headphones do not.
+
+Two changes, both in `SuggestionEngine`:
+
+1. **Per-interest weight.** `AngleMap::queriesByInterest()` keeps the provenance, and the scorer
+   weighs the *slot* a match came from: first interest 1.0, last 0.5, spread evenly, a typed search
+   query as a slot of its own in front. At 0.5 the second interest is a real second: it decides
+   between two answers to the first and wins only when the first has nothing to offer.
+   `the_first_interest_outranks_the_second` is the user's brief as a test and fails on the old code.
+2. **Matches come from Postgres.** One query over the candidate ids and the terms, the same
+   `websearch_to_tsquery` against the same `search_vector`, so the scorer credits exactly what the
+   search found. `ts_filter` on weights A-C separates a title, brand or category match (1.0) from a
+   description-only one (0.5): the description is where feeds put everything they could think of.
+   A CTE parses each tsquery once; 300 groups by 24 terms is a few milliseconds.
+
+Not changed: the reason on the card still names the matched term, and the catalogue is still thin
+on adult painting supplies. The first is a declined item, the second is a feed question.
 
 ## Out of the header (2026-09-13)
 

@@ -78,11 +78,8 @@ class SuggestionEngine
     {
         $profile = $brief->profile();
 
-        $queries = array_slice(
-            $this->queries($brief),
-            0,
-            self::MAX_QUERIES,
-        );
+        $slots = $this->slots($brief);
+        $queries = $this->flatten($slots);
 
         $candidates = $this->retrieve($brief, $queries);
 
@@ -93,8 +90,16 @@ class SuggestionEngine
             $candidates = $this->retrieve($brief, []);
         }
 
+        $matches = $this->matches($brief, $queries, $candidates->pluck('id')->all());
+
         $scored = $candidates
-            ->map(fn (ProductGroup $group) => $this->score($group, $brief, $queries, $profile))
+            ->map(fn (ProductGroup $group) => $this->score(
+                $group,
+                $brief,
+                $slots,
+                $matches[$group->id] ?? [],
+                $profile,
+            ))
             ->sortByDesc(fn (Suggestion $pick) => $pick->score)
             ->values();
 
@@ -102,23 +107,134 @@ class SuggestionEngine
     }
 
     /**
-     * What to retrieve on.
+     * What to retrieve on, grouped by what it answers.
      *
-     * A typed query goes **first**, ahead of every derived angle. Someone who
-     * wrote "espresso tamper" has told us precisely what they want, and burying
-     * that under a guess derived from "coffee" is the fastest way to make a
-     * search box feel broken. Interest position already drives `interestFit()`,
-     * so first place here is also the strongest scoring position.
+     * A typed query goes **first**, as a slot of its own ahead of every
+     * interest. Someone who wrote "espresso tamper" has told us precisely what
+     * they want, and burying that under a guess derived from "coffee" is the
+     * fastest way to make a search box feel broken. Slot position drives
+     * `interestFit()`, so first place here is also the strongest scoring
+     * position.
      *
+     * Capped at MAX_QUERIES in slot order, so a brief with eight interests
+     * still retrieves on the first ones the person thought of.
+     *
+     * @return list<array{interest: string, queries: list<string>}>
+     */
+    private function slots(TasteBrief $brief): array
+    {
+        $slots = $this->angles->queriesByInterest($brief->market, $brief->interests, $brief->vibe);
+
+        if ($brief->query !== null) {
+            $typed = $brief->query;
+
+            $slots = array_values(array_filter(array_map(
+                fn (array $slot) => [
+                    'interest' => $slot['interest'],
+                    'queries' => array_values(array_filter($slot['queries'], fn (string $q) => $q !== $typed)),
+                ],
+                $slots,
+            ), fn (array $slot) => $slot['queries'] !== []));
+
+            array_unshift($slots, ['interest' => $typed, 'queries' => [$typed]]);
+        }
+
+        $budget = self::MAX_QUERIES;
+        $capped = [];
+
+        foreach ($slots as $slot) {
+            if ($budget <= 0) {
+                break;
+            }
+
+            $queries = array_slice($slot['queries'], 0, $budget);
+            $budget -= count($queries);
+            $capped[] = ['interest' => $slot['interest'], 'queries' => $queries];
+        }
+
+        return $capped;
+    }
+
+    /**
+     * @param  list<array{interest: string, queries: list<string>}>  $slots
      * @return list<string>
      */
-    private function queries(TasteBrief $brief): array
+    private function flatten(array $slots): array
     {
-        $angles = $this->angles->queriesFor($brief->market, $brief->interests, $brief->vibe);
+        return array_merge([], ...array_map(fn (array $slot) => $slot['queries'], $slots));
+    }
 
-        return $brief->query === null
-            ? $angles
-            : array_values(array_unique([$brief->query, ...$angles]));
+    /**
+     * Which queries each candidate answers, and how squarely.
+     *
+     * Asked of Postgres rather than decided in PHP, and that is the fix for a
+     * bug that was invisible in every test and visible on every brief with two
+     * interests. Retrieval matches on stems — "schilderen" finds a product
+     * whose title says "schilder" — but the scorer used to look for the query
+     * text literally in the title, so the products the search had just found
+     * for the first interest scored **zero** on interest fit, while a product
+     * whose title happened to spell a second-interest query out in full
+     * ("bluetooth speaker") scored top marks. The scorer now credits exactly
+     * what the search matched, by the same tsquery against the same vector.
+     *
+     * Two strengths. A match in the title, brand or category (weights A-C) is
+     * 1.0; a match only in the description (weight D) is 0.5, because a games
+     * console whose blurb mentions painting is not a painting present, and
+     * the description is where feeds put everything they could think of.
+     *
+     * One query over the candidate ids and the terms, tsqueries parsed once in
+     * a CTE; 300 groups × 24 terms is a few milliseconds.
+     *
+     * @param  list<string>  $queries
+     * @param  list<int>  $ids
+     * @return array<int, array<int, float>> group id => [query index => strength]
+     */
+    private function matches(TasteBrief $brief, array $queries, array $ids): array
+    {
+        if ($queries === [] || $ids === []) {
+            return [];
+        }
+
+        $rows = DB::select(
+            <<<'SQL'
+            WITH q AS (
+                SELECT t.idx, websearch_to_tsquery(bc_text_config(?), t.term) AS tsq
+                FROM unnest(?::text[]) WITH ORDINALITY AS t(term, idx)
+            )
+            SELECT p.group_id, q.idx,
+                   bool_or(ts_filter(p.search_vector, '{a,b,c}') @@ q.tsq) AS strong
+            FROM products p
+            JOIN q ON p.search_vector @@ q.tsq
+            WHERE p.market = ?
+              AND p.status = 'active'
+              AND p.group_id = ANY(?::bigint[])
+            GROUP BY p.group_id, q.idx
+            SQL,
+            [
+                $brief->market->value,
+                $this->pgTextArray($queries),
+                $brief->market->value,
+                '{'.implode(',', array_map('intval', $ids)).'}',
+            ],
+        );
+
+        $matches = [];
+
+        foreach ($rows as $row) {
+            // WITH ORDINALITY counts from one; the query list from zero.
+            $matches[(int) $row->group_id][(int) $row->idx - 1] = $row->strong ? 1.0 : 0.5;
+        }
+
+        return $matches;
+    }
+
+    /** A Postgres text[] literal, every element quoted so commas and quotes in user text survive. */
+    private function pgTextArray(array $values): string
+    {
+        return '{'.implode(',', array_map(
+            fn (string $v) => '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $v).'"',
+            $values,
+        )).'}';
     }
 
     /**
@@ -261,19 +377,32 @@ class SuggestionEngine
     /**
      * Weighted score out of 100, with every contribution recorded.
      *
-     * @param  list<string>  $queries
+     * @param  list<array{interest: string, queries: list<string>}>  $slots
+     * @param  array<int, float>  $matches  query index => strength, from {@see matches()}
      */
-    private function score(ProductGroup $group, TasteBrief $brief, array $queries, SuggestionProfile $profile): Suggestion
+    private function score(ProductGroup $group, TasteBrief $brief, array $slots, array $matches, SuggestionProfile $profile): Suggestion
     {
         $haystack = mb_strtolower($group->title.' '.($group->category ?? ''));
 
-        $matched = array_values(array_filter(
-            $queries,
-            fn (string $q) => str_contains($haystack, mb_strtolower($q)),
-        ));
+        // The strongest match per slot, and the terms that matched, in slot
+        // order — so `primaryInterest` is a term from the interest that won.
+        $strengths = [];
+        $matched = [];
+        $index = 0;
+
+        foreach ($slots as $slotIndex => $slot) {
+            foreach ($slot['queries'] as $query) {
+                if (isset($matches[$index])) {
+                    $strengths[$slotIndex] = max($strengths[$slotIndex] ?? 0.0, $matches[$index]);
+                    $matched[] = $query;
+                }
+
+                $index++;
+            }
+        }
 
         $breakdown = [
-            'interest_fit' => $this->interestFit($matched, $queries) * $profile->weight('interest_fit', 40),
+            'interest_fit' => $this->interestFit($strengths, count($slots)) * $profile->weight('interest_fit', 40),
             'budget_fit' => $profile->budgetFit($group->min_price, $brief->ceiling()) * $profile->weight('budget_fit', 20),
             'surprise' => $this->surprise($group) * $profile->weight('surprise', 20),
             'vibe' => $this->vibeFit($haystack, $brief) * $profile->weight('vibe', 10),
@@ -306,31 +435,39 @@ class SuggestionEngine
     /**
      * How squarely this answers what the person likes.
      *
-     * Weighted by *where* the matching query sat in the list, not just how many
-     * matched: the angle map returns queries in the order the interests were
-     * picked, and the first interest someone thinks of is the one that matters.
-     * A product matching two low-priority queries should not beat one matching
-     * the very first.
+     * Weighted by *which interest* the product answers, not by where a query
+     * sat in a flat list. The first interest someone thinks of is the one that
+     * matters, and the weight says so plainly: the first interest is worth
+     * 1.0, the last 0.5, spread evenly between. Under the old per-query
+     * position, "schilderen" followed by "techniek" put the first tech query
+     * at 0.94 of the painting one — close enough for a speaker at the budget's
+     * sweet spot to beat every paint set on price alone. At 0.5 the second
+     * interest is a real second: it decides between two answers to the first,
+     * and wins only when the first has nothing to offer.
      *
-     * @param  list<string>  $matched
-     * @param  list<string>  $queries
+     * The strength is the match quality from {@see matches()}: 1.0 for a
+     * title, brand or category match, 0.5 for a description-only one.
+     *
+     * A product answering more than one interest earns a little for each
+     * extra — far less than the first, otherwise a product that name-drops
+     * every interest wins on padding.
+     *
+     * @param  array<int, float>  $strengths  slot index => strongest match
      */
-    private function interestFit(array $matched, array $queries): float
+    private function interestFit(array $strengths, int $slotCount): float
     {
-        if ($queries === [] || $matched === []) {
+        if ($slotCount === 0 || $strengths === []) {
             return 0.0;
         }
 
         $best = 0.0;
 
-        foreach ($matched as $query) {
-            $position = (int) array_search($query, $queries, true);
-            $best = max($best, 1.0 - ($position / max(1, count($queries))));
+        foreach ($strengths as $slotIndex => $strength) {
+            $weight = $slotCount === 1 ? 1.0 : 1.0 - (0.5 * $slotIndex / ($slotCount - 1));
+            $best = max($best, $weight * $strength);
         }
 
-        // A second match is worth something, but far less than the first —
-        // otherwise a product that name-drops five keywords wins on padding.
-        $bonus = min(0.2, (count($matched) - 1) * 0.05);
+        $bonus = min(0.2, (count($strengths) - 1) * 0.1);
 
         return min(1.0, $best + $bonus);
     }
