@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Enums\ListKind;
 use App\Enums\Market;
+use App\Models\BrandStat;
 use App\Models\ProductGroup;
 use App\Models\User;
 use App\Models\Wishlist;
@@ -37,6 +38,18 @@ class SearchLandingTest extends TestCase
             ->create(['wishlist_id' => $list->id]);
     }
 
+    /** A brand page exists only for a brand with three products in this market. */
+    private function page(string $brand, Market $market = Market::BeNl): void
+    {
+        BrandStat::create([
+            'market' => $market->value,
+            'brand' => $brand,
+            'slug' => \Illuminate\Support\Str::slug($brand),
+            'aliases' => [$brand],
+            'product_count' => 3,
+        ]);
+    }
+
     #[Test]
     public function a_bare_search_shows_no_products_and_the_brands_of_what_you_saved(): void
     {
@@ -44,6 +57,8 @@ class SearchLandingTest extends TestCase
         $this->saved($user, 'Sony');
         $this->saved($user, 'Sony');
         $this->saved($user, 'Audio-Technica');
+        $this->page('Sony');
+        $this->page('Audio-Technica');
 
         // Products exist; none are shown until somebody asks for them.
         ProductGroup::factory()->count(3)->create(['market' => Market::BeNl]);
@@ -59,6 +74,50 @@ class SearchLandingTest extends TestCase
                 ->where('landing.brands.0.url', '/be-nl/brand/sony')
                 ->where('landing.brands.1.name', 'Audio-Technica')
                 ->where('landing.brands.1.url', '/be-nl/brand/audio-technica'));
+    }
+
+    /**
+     * The report of 2026-09-13: one saved AIR&ME product, no brand page (three
+     * products short of one), and a chip that led to /brand/airme and a 404.
+     * A brand with no page in this market goes to the search filtered on it,
+     * which shows the very thing that was saved.
+     */
+    #[Test]
+    public function a_saved_brand_without_a_page_goes_to_the_search_for_it_rather_than_a_404(): void
+    {
+        $user = User::factory()->create();
+        $this->saved($user, 'AIR&ME');
+        $this->saved($user, 'Sony');
+        $this->page('Sony');
+        // A page in another market is not a page here.
+        $this->page('AIR&ME', Market::NlNl);
+
+        $this->actingAs($user)->get('/be-nl/search')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('landing.brands.0.name', 'AIR&ME')
+                ->where('landing.brands.0.url', '/be-nl/search?brand%5B0%5D=AIR%26ME')
+                ->where('landing.brands.1.url', '/be-nl/brand/sony'));
+
+        $this->actingAs($user)->get('/be-nl/brand/airme')->assertNotFound();
+        $this->actingAs($user)->get('/be-nl/search?brand[]=AIR%26ME')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+    }
+
+    /** Two spellings of one brand are one chip, and the fallback search carries both. */
+    #[Test]
+    public function a_brand_saved_under_two_spellings_is_one_chip_that_searches_for_both(): void
+    {
+        $user = User::factory()->create();
+        $this->saved($user, 'Audio-Technica');
+        $this->saved($user, 'Audio Technica');
+
+        $this->actingAs($user)->get('/be-nl/search')
+            ->assertInertia(fn ($page) => $page
+                ->count('landing.brands', 1)
+                ->where('landing.brands.0.name', 'Audio-Technica')
+                ->where('landing.brands.0.url', '/be-nl/search?'.http_build_query(['brand' => ['Audio-Technica', 'Audio Technica']])));
     }
 
     #[Test]

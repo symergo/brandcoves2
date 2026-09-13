@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Search;
 
 use App\Models\WishlistItem;
+use App\Services\Seo\BrandLinker;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Support\Str;
@@ -29,7 +30,10 @@ final class SearchLanding
     /** Brand chips shown: enough to cover a list, few enough to be a row. */
     private const BRANDS = 8;
 
-    public function __construct(private readonly RecentSearches $recent) {}
+    public function __construct(
+        private readonly RecentSearches $recent,
+        private readonly BrandLinker $links,
+    ) {}
 
     /**
      * @return array{
@@ -46,11 +50,29 @@ final class SearchLanding
     }
 
     /**
-     * The brands of what this person saved, most saved first, as brand pages.
+     * The brands of what this person saved, most saved first.
      *
      * A brand is a slug, not a spelling (see brand_stats): the page for
      * "Audio-Technica" and "Audio Technica" is one page, so the chips are
      * folded the same way before they are counted.
+     *
+     * ## Where a chip goes
+     *
+     * To the brand page when this market has one, and otherwise to the search
+     * filtered on the brand. Not every brand has a page: `BrandStat::pageworthy()`
+     * asks for three products, and a brand somebody saved one product of is
+     * exactly the kind that falls short. Until 2026-09-13 the chips were built
+     * by slugifying the name and trusting the page to exist, which is the bug
+     * `BrandLinker` was written to prevent and the one it named as the worst
+     * place to have it — a link the site offers unprompted, to a 404. "AIR&ME"
+     * was the report: one saved product, no `brand_stats` row, a chip to
+     * `/brand/airme`, page not found.
+     *
+     * The fallback is a search rather than no chip, because the visitor saved
+     * something of that brand and a search on it shows them that something.
+     * It filters on the spellings their own lists carry, which is what the
+     * saved products are stored under, so it cannot come back empty for the
+     * wrong reason.
      *
      * @return list<array{name: string, url: string}>
      */
@@ -70,22 +92,43 @@ final class SearchLanding
             ->filter(fn ($brand) => is_string($brand) && trim($brand) !== '')
             ->map(fn (string $brand) => trim($brand));
 
-        $names = [];
+        /** @var array<string, list<string>> $spellings slug => every spelling saved, first seen first */
+        $spellings = [];
 
         foreach ($brands as $brand) {
-            $names[Str::slug($brand)] ??= $brand;
+            $slug = Str::slug($brand);
+
+            if ($slug !== '' && ! in_array($brand, $spellings[$slug] ?? [], true)) {
+                $spellings[$slug][] = $brand;
+            }
         }
 
-        return $brands
+        $slugs = $brands
             ->countBy(fn (string $brand) => Str::slug($brand))
+            ->forget('')
             ->sortDesc()
             ->keys()
             ->take(self::BRANDS)
-            ->map(fn (string $slug) => [
-                'name' => $names[$slug],
-                'url' => $current->url("brand/{$slug}"),
-            ])
-            ->values()
             ->all();
+
+        // One query for the whole row of chips, keyed by lowered name.
+        $pages = $this->links->urls(
+            array_map(fn (string $slug) => $spellings[$slug][0], $slugs),
+            $current->get(),
+        );
+
+        $chips = [];
+
+        foreach ($slugs as $slug) {
+            $name = $spellings[$slug][0];
+
+            $chips[] = [
+                'name' => $name,
+                'url' => $pages[mb_strtolower($name)]
+                    ?? $current->url('search').'?'.http_build_query(['brand' => $spellings[$slug]]),
+            ];
+        }
+
+        return $chips;
     }
 }

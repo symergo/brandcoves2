@@ -614,10 +614,19 @@ queued one, their strings and their tests.
 
 The landing is `SearchLanding` (PHP and TSX): the searches people made lately, from the same
 `RecentSearches` cache the home page reads; the brands on the visitor's own lists, most saved
-first, as brand-page chips (folded to the page's slug, so two spellings of one brand are one chip);
+first, as chips (folded to the brand page's slug, so two spellings of one brand are one chip);
 and the site's other ways of finding something — asking others, a shared wish list others add to,
 a gift list for somebody, and the search tips — as cards the page builds itself. Each section
 drops out when it has nothing, so a stranger on a quiet market sees the tools alone.
+
+A brand chip goes to the brand page when this market has one, and otherwise to the search
+filtered on the brand, with every spelling the visitor's lists carry. The chips used to be built
+by slugifying the name and trusting the page to exist, and on 2026-09-13 one saved "AIR&ME"
+product produced a chip to `/brand/airme` and a 404: a brand page needs three products in the
+market (`BrandStat::pageworthy()`), and a brand somebody saved one thing of is exactly the kind
+that has none. The chips now go through `BrandLinker`, the same check every other brand link on
+the site makes. The fallback is a search rather than a missing chip because the visitor saved
+something of that brand, and a search on it shows them that something.
 
 The controller renders it for the bare landing only: no term, no filter, the grid view, page one.
 `SearchResult::none()` gives everything downstream that reads a result (the presenter, the
