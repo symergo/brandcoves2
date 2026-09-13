@@ -736,6 +736,8 @@ return [
         'shared_with_nobody' => 'Niemand nieuws om het naar te sturen.',
         'someones_wishlist' => 'Wenslijst van :name',
         'shared_by' => ':name deelde dit lijstje',
+        'for_line' => 'Voor :name',
+        'owner_role' => 'Eigenaar van dit lijstje',
         'note_add' => 'Voeg een tekst toe',
         'note_edit' => 'Bewerk',
         'note_placeholder' => 'Wat de mensen die dit openen moeten weten.',

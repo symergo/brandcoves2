@@ -691,6 +691,20 @@ taken. So `santa` is a `Kind` in `ListWizard` with its own second and third step
 that mount the wizard send it without a second copy of the query. `?new=santa` opens the wizard on
 step 2, and the home page's chooser deep-links there like the other three kinds.
 
+## A shared list names its owner twice (2026-09-13)
+
+At the owner's request, `/l/{token}` now says who the list is **for** under the title ("For
+:name", `lists.for_line`: the recipient of a list about somebody, the owner of a wish list) and
+ends with an owner card: an initial in the accent, the name, and "Owner of this list". The line
+first read "Shared by :name" and the owner asked for "for whom" instead, the owner being the card.
+It is skipped when the heading already names them, as a default-titled list's does ("Anna's
+wishlist"). `sharedBy` had been in the payload since the page learned to answer "who is this
+from", but it only reached the board; the one screen opened cold, from a message, still put no
+name under its heading. The card is the way an article ends with its author: somebody who scrolled
+the whole list arrives at who it belongs to. Both are omitted for the owner, who knows, and for an
+anonymous owner, who has no name to give. The initial is drawn from the name; the site keeps no
+photos of people.
+
 ## The item card is a tile on a phone (2026-09-08)
 
 On a phone the row that works on a desktop did not: thumbnail, three lines of title and the

@@ -732,6 +732,8 @@ return [
         'shared_with_nobody' => 'Nadie nuevo a quien enviarla.',
         'someones_wishlist' => 'La lista de :name',
         'shared_by' => ':name ha compartido esta lista',
+        'for_line' => 'Para :name',
+        'owner_role' => 'Dueño de esta lista',
         'note_add' => 'Añadir una nota',
         'note_edit' => 'Editar',
         'note_placeholder' => 'Lo que deberían saber quienes abran esto.',

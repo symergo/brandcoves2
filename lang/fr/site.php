@@ -733,6 +733,8 @@ return [
         'shared_with_nobody' => 'Personne de nouveau à qui l\'envoyer.',
         'someones_wishlist' => 'La liste de :name',
         'shared_by' => ':name a partagé cette liste',
+        'for_line' => 'Pour :name',
+        'owner_role' => 'Propriétaire de cette liste',
         'note_add' => 'Ajouter un mot',
         'note_edit' => 'Modifier',
         'note_placeholder' => 'Ce que les personnes qui ouvrent ceci doivent savoir.',

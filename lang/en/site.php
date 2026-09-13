@@ -868,6 +868,8 @@ return [
         'shared_with_nobody' => 'Nobody new to send it to.',
         'someones_wishlist' => ":name's wishlist",
         'shared_by' => ':name shared this list',
+        'for_line' => 'For :name',
+        'owner_role' => 'Owner of this list',
         'note_add' => 'Add a note',
         'note_edit' => 'Edit',
         'note_placeholder' => 'Anything the people opening this should know.',

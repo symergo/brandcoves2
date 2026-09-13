@@ -340,6 +340,21 @@ export default function SharedList({
                     <h1 className="text-xl font-semibold sm:text-2xl">{list.heading}</h1>
 
                     {/*
+                      Who the list is for, right under the title (owner's
+                      call, 2026-09-13: "for whom", not "shared by"; the
+                      owner is the card at the foot). `for` is the recipient
+                      of a list about somebody and the owner of a wish list.
+                      Skipped when the heading already says it, as it does
+                      for a default-titled list ("Anna's wishlist"), when the
+                      owner is looking, and when there is no name to give.
+                    */}
+                    {list.for !== null && !isOwner && !list.heading.includes(list.for) && (
+                        <p className="mt-1 text-sm text-ink-soft">
+                            {t('lists.for_line', { name: list.for })}
+                        </p>
+                    )}
+
+                    {/*
                       What this is and what you are on it, on the one screen
                       that is always opened cold — from a message, by somebody
                       with no context at all.
@@ -875,6 +890,36 @@ export default function SharedList({
                                     ))}
                                 </ul>
                             )}
+                        </section>
+                    )}
+
+                    {/*
+                      The owner, as a card at the foot of the list (owner's
+                      request, 2026-09-13): an initial in the accent, the name,
+                      and what they are to this page. The way an article ends
+                      with its author: somebody who scrolled the whole list
+                      arrives at who it belongs to. The initial is drawn from
+                      the name rather than a photo, because the site keeps no
+                      photos of people. Same two conditions as the line under
+                      the title.
+                    */}
+                    {list.sharedBy !== null && !isOwner && (
+                        <section
+                            className="mt-10 rounded-card border border-line bg-card p-5"
+                            aria-label={t('lists.owner_role')}
+                        >
+                            <div className="flex items-center gap-4">
+                                <span
+                                    aria-hidden="true"
+                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-lg font-semibold text-white"
+                                >
+                                    {list.sharedBy.trim().charAt(0).toUpperCase()}
+                                </span>
+                                <div className="min-w-0">
+                                    <p className="font-medium">{list.sharedBy}</p>
+                                    <p className="text-sm text-ink-soft">{t('lists.owner_role')}</p>
+                                </div>
+                            </div>
                         </section>
                     )}
                 </div>
