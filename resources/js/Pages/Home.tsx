@@ -231,6 +231,90 @@ export default function Home({ today, gifting, personas, coves }: Props) {
             <SearchCard className="mt-10 sm:mt-12" />
 
             {/*
+              Today's Cove and the signup for it, straight under the search
+              card (owner's call, 2026-09-13). They sat below the Organise
+              and Discover bands, a screen and a half down; the thing that
+              makes somebody return tomorrow should not be that deep. The
+              search answers the visitor who knows what they want; this
+              answers the one who does not, and the email keeps them.
+            */}
+            {today && (
+                <section className="mt-10 sm:mt-14" aria-labelledby="today-heading">
+                    <div className="rounded-card border border-line bg-card p-5 sm:p-8">
+                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                            <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">
+                                {t('home.today_badge')}
+                            </span>
+                            <time dateTime={today.date} className="text-sm text-ink-soft">
+                                {today.label}
+                            </time>
+                        </div>
+
+                        <h2 id="today-heading" className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+                            <Link href={today.url} className="hover:text-accent">
+                                {today.theme}
+                            </Link>
+                        </h2>
+                        {today.blurb && <p className="mt-2 max-w-2xl text-ink-soft">{today.blurb}</p>}
+
+                        {today.finds.length > 0 && (
+                            <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                                {today.finds.map((find) => (
+                                    <li key={find.id} className="relative">
+                                        {/*
+                                          Outside the anchor and above it on the
+                                          z-axis. A tile is one big link, and a
+                                          button nested inside it is not a
+                                          button — the anchor takes the click.
+                                        */}
+                                        <div className="absolute top-2 right-2 z-10">
+                                            <SaveToList groupId={find.id} compact />
+                                        </div>
+                                        <Link href={find.url} className="group block">
+                                            <div className="aspect-square overflow-hidden rounded-lg bg-cream">
+                                                {find.image && (
+                                                    <img
+                                                        src={find.image}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        className="h-full w-full object-contain transition group-hover:scale-105"
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="mt-2 line-clamp-2 text-sm group-hover:text-accent">
+                                                {find.title}
+                                            </div>
+                                            {find.price !== null && (
+                                                <div className="text-sm font-medium tabular-nums">
+                                                    {formatPrice(find.price, market)}
+                                                </div>
+                                            )}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <Link
+                            href={today.url}
+                            className="mt-6 inline-block font-medium text-accent-dark hover:text-ink"
+                        >
+                            {t('home.today_cta')} →
+                        </Link>
+                    </div>
+                </section>
+            )}
+
+            {/* Only where there is a Cove to subscribe to. Offering a daily
+                email on a site with no editions yet is a promise we would then
+                have to keep. */}
+            {today && (
+                <div className="mt-10">
+                    <CoveSubscribe source="home" />
+                </div>
+            )}
+
+            {/*
               The Organise band — the front-page half of the header's Organise
               verb, and it mirrors that menu entry for entry.
 
@@ -575,82 +659,6 @@ export default function Home({ today, gifting, personas, coves }: Props) {
                     ))}
                 </ul>
             </section>
-
-            {today && (
-                <section className="mt-10 sm:mt-14" aria-labelledby="today-heading">
-                    <div className="rounded-card border border-line bg-card p-5 sm:p-8">
-                        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                            <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-accent">
-                                {t('home.today_badge')}
-                            </span>
-                            <time dateTime={today.date} className="text-sm text-ink-soft">
-                                {today.label}
-                            </time>
-                        </div>
-
-                        <h2 id="today-heading" className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
-                            <Link href={today.url} className="hover:text-accent">
-                                {today.theme}
-                            </Link>
-                        </h2>
-                        {today.blurb && <p className="mt-2 max-w-2xl text-ink-soft">{today.blurb}</p>}
-
-                        {today.finds.length > 0 && (
-                            <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                                {today.finds.map((find) => (
-                                    <li key={find.id} className="relative">
-                                        {/*
-                                          Outside the anchor and above it on the
-                                          z-axis. A tile is one big link, and a
-                                          button nested inside it is not a
-                                          button — the anchor takes the click.
-                                        */}
-                                        <div className="absolute top-2 right-2 z-10">
-                                            <SaveToList groupId={find.id} compact />
-                                        </div>
-                                        <Link href={find.url} className="group block">
-                                            <div className="aspect-square overflow-hidden rounded-lg bg-cream">
-                                                {find.image && (
-                                                    <img
-                                                        src={find.image}
-                                                        alt=""
-                                                        loading="lazy"
-                                                        className="h-full w-full object-contain transition group-hover:scale-105"
-                                                    />
-                                                )}
-                                            </div>
-                                            <div className="mt-2 line-clamp-2 text-sm group-hover:text-accent">
-                                                {find.title}
-                                            </div>
-                                            {find.price !== null && (
-                                                <div className="text-sm font-medium tabular-nums">
-                                                    {formatPrice(find.price, market)}
-                                                </div>
-                                            )}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-
-                        <Link
-                            href={today.url}
-                            className="mt-6 inline-block font-medium text-accent-dark hover:text-ink"
-                        >
-                            {t('home.today_cta')} →
-                        </Link>
-                    </div>
-                </section>
-            )}
-
-            {/* Only where there is a Cove to subscribe to. Offering a daily
-                email on a site with no editions yet is a promise we would then
-                have to keep. */}
-            {today && (
-                <div className="mt-10">
-                    <CoveSubscribe source="home" />
-                </div>
-            )}
 
             {/*
               No persona band here any more. It stood between the Discover

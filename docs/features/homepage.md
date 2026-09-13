@@ -465,3 +465,12 @@ answered a question nobody arrives with. The card asks the one they do, and it i
 `SearchCard` that now opens the Find a gift page, so the two cannot drift apart the way the hero's
 field and the search page's own once did. `home.recent_heading` went with the band;
 `RecentSearches` still serves the search landing. The hero above keeps its two buttons.
+
+## Today's Cove and its signup sit under the search card (2026-09-13)
+
+At the owner's request the order after the hero is now: the search card, Today's Cove, the email
+signup, then the Organise and Discover bands, then the Coves archive. The edition and the signup
+had drifted below the two card bands, a screen and a half down on a phone, which contradicted the
+rule this document already stated: the thing that makes somebody return tomorrow should not be
+that deep. The search card answers the visitor who knows what they want; the edition answers the
+one who does not, and the signup keeps them. Nothing inside the bands changed.
