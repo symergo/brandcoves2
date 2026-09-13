@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\CoveKind;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
+use App\Services\Guides\CoveMarkup;
 use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\WizardOffer;
 use App\Support\CurrentMarket;
@@ -17,6 +17,12 @@ use Inertia\Response;
 
 class HomeController extends Controller
 {
+    /**
+     * Rows in the recent Coves list. Ten is a band; more is a page, and the
+     * archive is one link away.
+     */
+    private const RECENT_COVES = 10;
+
     public function __invoke(Request $request, CurrentMarket $current, WizardOffer $offer): Response
     {
         /*
@@ -59,24 +65,6 @@ class HomeController extends Controller
              */
             'signedIn' => $owner->isSignedIn(),
             ...$offer->for($owner, $request->user(), $current->get()),
-
-            /*
-             * The shelf of people, which the front page never showed.
-             *
-             * `coves` below is `articles()` — guides, seasonal guides and
-             * advice — so a gift persona appeared on `/gift-ideas`, on `/coves`
-             * and in the sitemap, and nowhere a first-time visitor would meet
-             * one. On a market whose only other Coves are advice articles that
-             * made the front page look like a consumer-rights blog.
-             *
-             * Its own band rather than six more rows in that one. The articles
-             * band promises "long reads around a theme" and prints a monthly
-             * search volume per card; a persona is neither — it is a person to
-             * shop for, it has no search volume, and it is drawn rather than
-             * described. Mixing them would have needed the intro to stop saying
-             * what the cards are.
-             */
-            'personas' => $this->personas($current),
 
             // The evergreen half. Coves earn their traffic over years, so the
             // front page is where a first-time visitor discovers the archive
@@ -129,108 +117,52 @@ class HomeController extends Controller
         ];
     }
 
+    /** @return list<array<string, mixed>> */
     /**
-     * Gift personas, newest first.
+     * Recent Coves: every kind this market publishes, newest first.
      *
-     * The band that showed these three left the front page on 2026-09-08 at
-     * the owner's word. The list still goes to the page because the Discover
-     * band shows its card to the persona shelf only when the market has one,
-     * and three rows is a cheap way to know that.
+     * Until 2026-09-13 this was six cards drawn round-robin from four lanes,
+     * so that a market with four kinds showed four. The owner asked for the
+     * plain thing instead: what was published most recently, whatever it is,
+     * with the kind named on each row. Dailies are in — they were kept out
+     * of the round-robin because Today's Cove has the band above — except
+     * the edition that band is already showing, which would otherwise open
+     * this list as a repeat.
      *
-     * Ordered by `published_at` like the shelf at `/gift-ideas`, and for the
-     * same reason: a persona has no date, and that stamp is set once at first
-     * build and never refreshed by a rebuild. Anything else would reshuffle the
-     * front page whenever a persona's products were refreshed, which is
-     * movement no reader could account for.
+     * Ordered by `published_at`, which every published Cove has; `drop_date`
+     * only breaks ties between dailies. Blurbs are flattened to their labels
+     * the way the archive does it: a link inside a row that is already a link
+     * is a target fighting its parent.
      *
      * @return list<array<string, mixed>>
      */
-    private function personas(CurrentMarket $current): array
-    {
-        return DailyPickSet::query()
-            ->forMarket($current->get())
-            ->personas()
-            ->published()
-            // The count below walks the picks, so they are loaded rather than
-            // counted one persona at a time.
-            ->with(['picks.group'])
-            ->orderByDesc('published_at')
-            ->limit(3)
-            ->get()
-            ->map(fn (DailyPickSet $persona) => [
-                'title' => $persona->theme_title,
-                'blurb' => $persona->theme_blurb,
-                'url' => $current->url('gift-ideas/'.$persona->slug),
-                /*
-                 * The drawing, not a product photograph — the same choice the
-                 * shelf makes. A cover taken from the first buyable find makes
-                 * a row of *people* look like a row of products, and changes
-                 * face whenever stock does.
-                 */
-                'scene' => $persona->scene?->value,
-                // In stock only. A count that includes what nobody can buy is a
-                // promise the page does not keep.
-                'findCount' => $persona->picks
-                    ->filter(fn ($pick) => $pick->group !== null && $pick->group->in_stock)
-                    ->count(),
-            ])
-            ->values()
-            ->all();
-    }
-
-    /** @return list<array<string, mixed>> */
     private function coves(CurrentMarket $current): array
     {
-        /*
-         * One band, every shape a Cove takes.
-         *
-         * It listed the six newest articles, which was the whole archive when
-         * it was written. By 2026-09-08 a market had personas, brand and shop
-         * Coves too, and a day that published fourteen advice pieces made the
-         * band read as an advice column: the owner looked for the personas
-         * under "Coves" and found none. The /coves page it links to groups by
-         * kind for exactly that reason, and this band is its front window.
-         *
-         * Round-robin across the kinds, newest first within each, so a market
-         * with all four shows all four and a market with one shows one. Until
-         * 2026-09-08 the three personas a band above carried were skipped
-         * here; that band is gone, so this is where a persona meets a
-         * first-time visitor now.
-         */
         $market = $current->get();
 
-        $lanes = [
-            DailyPickSet::query()->forMarket($market)->personas()->published(),
-            DailyPickSet::query()->forMarket($market)->articles()->published(),
-            DailyPickSet::query()->forMarket($market)->where('kind', CoveKind::Brand->value)->published(),
-            DailyPickSet::query()->forMarket($market)->shops()->published(),
-        ];
+        $shown = DailyPickSet::query()
+            ->forMarket($market)
+            ->daily()
+            ->published()
+            ->where('drop_date', '<=', now()->toDateString())
+            ->orderByDesc('drop_date')
+            ->value('id');
 
-        $columns = ['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'source_volume'];
-        $lanes = array_map(
-            fn ($q) => $q->orderByDesc('published_at')->limit(6)->get($columns)->all(),
-            $lanes,
-        );
-
-        $picked = [];
-        while (count($picked) < 6 && array_filter($lanes)) {
-            foreach ($lanes as &$lane) {
-                if ($lane !== [] && count($picked) < 6) {
-                    $picked[] = array_shift($lane);
-                }
-            }
-            unset($lane);
-        }
-
-        return array_map(fn (DailyPickSet $cove) => [
-            'title' => $cove->theme_title,
-            'intro' => $cove->theme_blurb,
-            'url' => $current->url($cove->kind->path((string) $cove->slug, $market)),
-            // Named on the card, because a persona beside an advice piece
-            // beside a brand reads as three unrelated things without it.
-            'kind' => $cove->kind->value,
-            // Why it exists, and a fact no competitor has.
-            'searches' => $cove->source_volume,
-        ], $picked);
+        return DailyPickSet::query()
+            ->forMarket($market)
+            ->published()
+            ->when($shown !== null, fn ($q) => $q->whereKeyNot($shown))
+            ->orderByDesc('published_at')
+            ->orderByDesc('drop_date')
+            ->limit(self::RECENT_COVES)
+            ->get(['id', 'kind', 'slug', 'drop_date', 'published_at', 'theme_title', 'theme_blurb'])
+            ->map(fn (DailyPickSet $cove): array => [
+                'kind' => $cove->kind->value,
+                'title' => $cove->theme_title,
+                'intro' => app(CoveMarkup::class)->plain($cove->theme_blurb),
+                'url' => $current->url($cove->kind->path((string) $cove->slug, $market)),
+                'date' => ($cove->drop_date ?? $cove->published_at)?->toDateString(),
+            ])
+            ->all();
     }
 }

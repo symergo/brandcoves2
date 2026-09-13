@@ -108,10 +108,11 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
 
-        'coves_heading' => 'Coves',
+        'coves_heading' => 'Coves récentes',
         'coves_intro' => "Des dossiers autour d'un thème, où chaque marque et chaque produit renvoie vers une recherche en direct.",
         'coves_all' => 'Toutes les Coves',
         // The shape a Cove takes, named on the front page's Coves band.
+        'cove_kind_daily' => 'Cove du jour',
         'cove_kind_persona' => 'Idée cadeau',
         'cove_kind_guide' => "Guide d'achat",
         'cove_kind_seasonal' => 'Guide de saison',

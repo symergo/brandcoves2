@@ -1,33 +1,22 @@
 import { Head, Link, usePage } from '@inertiajs/react'
-import type { CoveSceneKey } from '../Components/CoveIllustration'
-import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import HomeIllustration from '../Components/HomeIllustration'
 import ListWizard, { type WizardOffer } from '../Components/ListWizard'
-import type { SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
 import SearchCard from '../Components/SearchCard'
 import { buttonClasses } from '../Components/Button'
 import RecentlyViewed from '../Components/RecentlyViewed'
-import { formatPrice, type SharedProps } from '../types'
+import { formatOccasionDate, formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Cove {
-    /** The shape this Cove takes: persona, guide, seasonal, advice, brand or shop. Named on the card. */
+    /** The shape this Cove takes: daily, persona, guide, seasonal, advice, brand or shop. Named on the row. */
     kind: string
     title: string
     intro: string | null
     url: string
-    searches: number
-}
-
-interface Persona {
-    title: string
-    blurb: string | null
-    url: string
-    /** Null until a curator picks one; the component draws a figure. */
-    scene: SceneKey | null
-    findCount: number
+    /** The edition's day for a daily, the publication day for the rest. ISO date, null if unknown. */
+    date: string | null
 }
 
 interface Props {
@@ -45,13 +34,12 @@ interface Props {
     friends: WizardOffer['friends']
     occasions: WizardOffer['occasions']
     myLists: WizardOffer['myLists']
-    personas: Persona[]
     coves: Cove[]
 }
 
-export default function Home({ today, signedIn, recipients, friends, occasions, myLists, personas, coves }: Props) {
+export default function Home({ today, signedIn, recipients, friends, occasions, myLists, coves }: Props) {
     const { market } = usePage<SharedProps>().props
-    const { t, n } = useTranslations()
+    const { t } = useTranslations()
     const base = `/${market.key}`
 
     return (
@@ -253,135 +241,7 @@ export default function Home({ today, signedIn, recipients, friends, occasions, 
                 </div>
             </section>
 
-            {/*
-              The discovery band, and the header for everything under it.
 
-              Three of these are demonstrated further down with real content —
-              today's edition, the personas, and the Coves themselves — so this
-              is a signpost followed by proof rather than a signpost on its own.
-              Surprise is the one that has nowhere else to appear on this page,
-              and it is also the one whose name promises least: "Surprise me"
-              cannot be evaluated before you press it, so the sentence under it
-              is doing the work the label cannot.
-
-              Heading and intro come from `discover_cove.*`, the same keys the
-              hub page uses. One source, so the front page and the page it links
-              to cannot drift into describing the same three things differently
-              — which is the defect that produced two names for the Gift Cove.
-            */}
-            <section className="mt-10 sm:mt-14" aria-labelledby="discover-heading">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 id="discover-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
-                        {t('discover_cove.title')}
-                    </h2>
-                    <Link
-                        href={`${base}/discover-cove`}
-                        className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
-                    >
-                        {t('nav.discover_cove')} →
-                    </Link>
-                </div>
-
-                <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                    {(
-                        [
-                            {
-                                key: 'daily',
-                                href: `${base}/${market.coveSegment}`,
-                                name: t('nav.daily'),
-                                what: t('discover_cove.daily_what'),
-                            },
-                            {
-                                key: 'surprise',
-                                href: `${base}/surprise`,
-                                name: t('nav.surprise'),
-                                what: t('discover_cove.surprise_what'),
-                            },
-                            {
-                                key: 'idea',
-                                href: `${base}/guides`,
-                                name: t('nav.smart'),
-                                what: t('discover_cove.idea_what'),
-                            },
-                            /*
-                              Personas, and only once a market has one.
-
-                              The same rule the Discover hub applies, and for
-                              the same reason: the persona shelf starts empty
-                              in a new market, and a card pointing at "nothing
-                              here yet" would be this band's only bad link.
-                              Asked for on 2026-09-08, when the band listed
-                              the other three shapes and not the one built
-                              around a person.
-                            */
-                            ...(personas.length > 0
-                                ? [
-                                      {
-                                          key: 'persona',
-                                          href: `${base}/gift-ideas`,
-                                          name: t('gift_ideas.title'),
-                                          what: t('discover_cove.persona_what'),
-                                      },
-                                  ]
-                                : []),
-                            /*
-                              The last one is the one that is not ours.
-
-                              Daily, Surprise and the Coves are all this site
-                              showing you something it chose; Ask others is the
-                              one where the answer comes from another person. Its
-                              sentence comes from `ask.nav_hint` — the same key
-                              the Discover hub uses — so the two pages describing
-                              it cannot drift into describing it differently.
-
-                              That is also why `what` is now spelled out per
-                              entry rather than derived from the key: three of
-                              these live under `discover_cove.*` and this one
-                              does not, and inventing a fourth `discover_cove`
-                              key would be a second copy of a sentence that
-                              already exists.
-                            */
-                            {
-                                key: 'ask',
-                                href: `${base}/ask`,
-                                name: t('ask.title'),
-                                what: t('ask.nav_hint'),
-                            },
-                        ] as { key: CoveSceneKey; href: string; name: string; what: string }[]
-                    ).map((cove) => (
-                        <li key={cove.key}>
-                            {/* Same treatment as Organise above, and for the
-                                same reason — the two bands sit one under the
-                                other, so one of them staying tall would undo
-                                half the saving and read as the odd one out. */}
-                            <Link
-                                href={cove.href}
-                                className="flex h-full flex-row items-center gap-4 rounded-card border border-line bg-card p-4 text-ink transition hover:border-ink hover:text-accent sm:flex-col sm:items-stretch sm:gap-0 sm:p-5"
-                            >
-                                <CoveIllustration
-                                    name={cove.key}
-                                    className="h-12 w-16 shrink-0 sm:h-28 sm:w-full"
-                                />
-                                <div className="min-w-0 sm:mt-4">
-                                    <h3 className="font-medium">{cove.name}</h3>
-                                    <p className="mt-1 text-sm text-ink-soft sm:mt-2">{cove.what}</p>
-                                </div>
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
-            </section>
-
-            {/*
-              No persona band here any more. It stood between the Discover
-              band and the Coves band from 2026-09-01 to 2026-09-08, three
-              drawn cards under "Cadeau-ideeën, per type", and the owner took
-              it out: the Discover band above already carries a card to the
-              persona shelf, and the Coves band below now mixes personas in
-              with the other kinds, so the front page named the same shelf
-              three times. `personas` still arrives; the Discover card is
-              shown only when the market has one.
-            */}
 
             {/*
               What this visitor looked at, from the device's own memory. A
@@ -390,44 +250,51 @@ export default function Home({ today, signedIn, recipients, friends, occasions, 
             */}
             <RecentlyViewed className="mt-10 sm:mt-14" />
 
+            {/*
+              Recent Coves, every kind, newest first (owner's call, 2026-09-13).
+
+              This was a grid of six cards drawn round-robin from four lanes,
+              under the Discover band's five signposts. The signposts went the
+              same day: a list of what was actually published this week is
+              the better invitation, and the archive it links to is where the
+              kinds are grouped. A row, not a card, because ten cards is a
+              page and ten rows is a band. Today's edition is left out — it
+              has the band above — and each row names its kind, because a
+              persona beside an advice piece beside a brand reads as three
+              unrelated things without it.
+            */}
             {coves.length > 0 && (
                 <section className="mt-10 sm:mt-14" aria-labelledby="coves-heading">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <h2 id="coves-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
                             {t('home.coves_heading')}
                         </h2>
-                        {/*
-                          "All Coves" now goes to the page that is all Coves.
-                          It pointed at /guides, which is the theme archive —
-                          one of three — so the homepage promised the whole
-                          shelf and delivered a third of it. Two links reading
-                          "All Coves" and landing in different places is the
-                          drift this codebase keeps writing about.
-                        */}
                         <Link href={`${base}/coves`} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
                             {t('home.coves_all')} →
                         </Link>
                     </div>
 
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <ul className="mt-6 divide-y divide-line rounded-card border border-line bg-card">
                         {coves.map((cove) => (
                             <li key={cove.url}>
                                 <Link
                                     href={cove.url}
-                                    className="flex h-full flex-col rounded-card border border-line bg-card p-4 transition hover:border-ink sm:p-5"
+                                    className="flex flex-col gap-1 p-4 transition hover:bg-cream sm:flex-row sm:items-baseline sm:gap-4"
                                 >
-                                    <span className="text-2xs font-medium tracking-wide text-ink-soft uppercase">
-                                        {t(`home.cove_kind_${cove.kind}`)}
+                                    <span className="flex shrink-0 gap-2 text-2xs font-medium tracking-wide text-ink-soft uppercase sm:w-44">
+                                        <span>{t(`home.cove_kind_${cove.kind}`)}</span>
+                                        {cove.date && (
+                                            <time dateTime={cove.date} className="normal-case tracking-normal">
+                                                {formatOccasionDate(cove.date, market)}
+                                            </time>
+                                        )}
                                     </span>
-                                    <h3 className="mt-1 font-medium">{cove.title}</h3>
-                                    {cove.intro && (
-                                        <p className="mt-2 line-clamp-3 text-sm text-ink-soft">{cove.intro}</p>
-                                    )}
-                                    {cove.searches > 0 && (
-                                        <span className="mt-auto pt-3 text-xs text-ink-soft">
-                                            {t('home.coves_volume', { count: n(cove.searches) })}
-                                        </span>
-                                    )}
+                                    <span className="min-w-0">
+                                        <span className="block font-medium">{cove.title}</span>
+                                        {cove.intro && (
+                                            <span className="mt-0.5 line-clamp-2 block text-sm text-ink-soft">{cove.intro}</span>
+                                        )}
+                                    </span>
                                 </Link>
                             </li>
                         ))}

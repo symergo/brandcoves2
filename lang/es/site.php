@@ -107,10 +107,11 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
 
-        'coves_heading' => 'Coves',
+        'coves_heading' => 'Coves recientes',
         'coves_intro' => 'Lecturas largas en torno a un tema, con cada marca y cada producto enlazado a una búsqueda en vivo.',
         'coves_all' => 'Todas las Coves',
         // The shape a Cove takes, named on the front page's Coves band.
+        'cove_kind_daily' => 'Cove del día',
         'cove_kind_persona' => 'Idea de regalo',
         'cove_kind_guide' => 'Guía de compra',
         'cove_kind_seasonal' => 'Guía de temporada',

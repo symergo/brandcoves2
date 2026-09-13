@@ -12,18 +12,16 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * The front page's "Coves" band shows every shape a Cove takes.
+ * The recent Coves list on the front page.
  *
- * It listed the six newest articles, which was the whole archive when it was
- * written. A day that published fourteen advice pieces then turned it into an
- * advice column, and the owner looked for the personas under "Coves" and found
- * none (2026-09-08).
+ * Every kind, newest first, ten rows, today's edition left out because it
+ * has the band above. It replaced a round-robin of six cards on 2026-09-13.
  */
 class HomeCovesBandTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function cove(CoveKind $kind, string $slug, int $minutesAgo = 0): DailyPickSet
+    private function cove(CoveKind $kind, string $slug, int $minutesAgo = 0, ?string $dropDate = null): DailyPickSet
     {
         return DailyPickSet::create([
             'market' => Market::BeNl,
@@ -33,6 +31,7 @@ class HomeCovesBandTest extends TestCase
             'theme_slug' => $slug,
             'status' => 'published',
             'published_at' => now()->subMinutes($minutesAgo),
+            'drop_date' => $dropDate,
         ]);
     }
 
@@ -42,62 +41,70 @@ class HomeCovesBandTest extends TestCase
     }
 
     #[Test]
-    public function the_band_mixes_the_kinds_rather_than_listing_the_newest_articles(): void
+    public function the_list_is_newest_first_across_every_kind(): void
     {
-        foreach (range(1, 8) as $i) {
-            $this->cove(CoveKind::Advice, "advies-{$i}", $i);
-        }
-        // Four personas; the newest is the one the round-robin picks first.
-        foreach (range(1, 4) as $i) {
-            $this->cove(CoveKind::Persona, "de-persona-{$i}", 100 + $i);
-        }
-        $this->cove(CoveKind::Brand, 'sony', 200);
-        $this->cove(CoveKind::Shop, 'bol-com', 300);
+        $this->cove(CoveKind::Advice, 'advies', 1);
+        $this->cove(CoveKind::Persona, 'de-persona', 2);
+        $this->cove(CoveKind::Brand, 'sony', 3);
+        $this->cove(CoveKind::Shop, 'bol-com', 4);
+        $this->cove(CoveKind::Guide, 'gids', 5);
+        // Two dailies: today's has the band above and stays out of the list,
+        // yesterday's is a Cove like any other.
+        $today = now()->toDateString();
+        $yesterday = now()->subDay()->toDateString();
+        $this->cove(CoveKind::Daily, $today, 0, $today);
+        $this->cove(CoveKind::Daily, $yesterday, 6, $yesterday);
 
         $band = $this->band();
 
-        // Six cards, four lanes: persona, advice, brand, shop, then the
-        // persona and advice lanes come round again.
-        $this->assertCount(6, $band);
-        $kinds = array_count_values(array_column($band, 'kind'));
-        $this->assertSame(2, $kinds['persona'] ?? 0);
-        $this->assertSame(1, $kinds['brand'] ?? 0);
-        $this->assertSame(1, $kinds['shop'] ?? 0);
-        $this->assertSame(2, $kinds['advice'] ?? 0);
+        $this->assertSame(['advice', 'persona', 'brand', 'shop', 'guide', 'daily'], array_column($band, 'kind'));
 
         // Each kind links to its own address, not to /guides for all of them.
         $urls = array_column($band, 'url');
-        $this->assertContains('/be-nl/gift-ideas/de-persona-1', $urls);
+        $this->assertContains('/be-nl/gift-ideas/de-persona', $urls);
         $this->assertContains('/be-nl/brand/sony', $urls);
         $this->assertContains('/be-nl/shops/bol-com', $urls);
+        $this->assertContains('/be-nl/guides/gids', $urls);
+        $this->assertContains("/be-nl/tips/{$yesterday}", $urls);
+
+        // The daily carries its edition day; the rest their publication day.
+        $this->assertSame($yesterday, $band[5]['date']);
+        $this->assertSame(now()->toDateString(), $band[0]['date']);
     }
 
     #[Test]
-    public function a_persona_is_in_this_band_now_that_it_has_no_band_of_its_own(): void
+    public function todays_edition_is_not_repeated_below_its_own_band(): void
     {
-        // The persona band left the front page on 2026-09-08; this band is
-        // where a persona meets a first-time visitor, so none is skipped.
-        foreach (range(1, 3) as $i) {
-            $this->cove(CoveKind::Persona, "de-persona-{$i}", $i);
-        }
-        $this->cove(CoveKind::Advice, 'advies', 10);
+        $today = now()->toDateString();
+        $yesterday = now()->subDay()->toDateString();
+        $this->cove(CoveKind::Daily, $today, 1, $today);
+        $this->cove(CoveKind::Daily, $yesterday, 2, $yesterday);
 
         $props = $this->get('/be-nl')->assertOk()->viewData('page')['props'];
 
-        $this->assertCount(3, $props['personas']);
-        $this->assertSame(['persona', 'advice', 'persona', 'persona'], array_column($props['coves'], 'kind'));
+        $this->assertNotNull($props['today']);
+        $this->assertSame(["/be-nl/tips/{$yesterday}"], array_column($props['coves'], 'url'));
     }
 
     #[Test]
-    public function a_market_with_only_articles_still_gets_its_articles(): void
+    public function ten_rows_and_no_more(): void
     {
-        foreach (range(1, 7) as $i) {
+        foreach (range(1, 12) as $i) {
             $this->cove(CoveKind::Advice, "advies-{$i}", $i);
         }
 
         $band = $this->band();
 
-        $this->assertCount(6, $band);
+        $this->assertCount(10, $band);
         $this->assertSame('Advies 1', $band[0]['title']);
+    }
+
+    #[Test]
+    public function a_market_with_nothing_published_has_no_list(): void
+    {
+        $props = $this->get('/be-nl')->assertOk()->viewData('page')['props'];
+
+        $this->assertSame([], $props['coves']);
+        $this->assertArrayNotHasKey('personas', $props);
     }
 }

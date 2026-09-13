@@ -491,3 +491,19 @@ card. The section "The Organise band gained a registry card" above describes a c
 exists; the invariant it cites (#4, no claim state on the owner's front page) still binds anything
 that returns there. `HomeListWizardTest` pins that the front page feeds the wizard what My Lists
 feeds it.
+
+## The Discover band goes; the Coves band lists what is recent (2026-09-13)
+
+At the owner's request the Discover band, five signposts to the Daily Cove, Surprise, the guides,
+the personas and Ask, is gone from the front page; the header's Find a gift entry and the page it
+opens carry those. The Coves band under it is now **Recent Coves**: the ten most recently published
+Coves of any kind, newest first, as rows rather than cards, each naming its kind and its day. It
+replaced six cards drawn round-robin from four lanes, which existed so that a market with four kinds
+showed four; the plain list is the better invitation, and the archive it links to is where the kinds
+are grouped.
+
+Dailies are in the list now (`home.cove_kind_daily`), except the edition Today's Cove is already
+showing, which would otherwise open the list as a repeat. Blurbs are flattened to their labels the
+way the archive does it. `personas` no longer reaches the page: the persona shelf's only remaining
+door here was the Discover card. The order after the hero is: search card, Today's Cove, signup,
+the list wizard, what you looked at, Recent Coves.
