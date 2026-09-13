@@ -1324,11 +1324,23 @@ return [
             'beautiful' => 'Beautiful',
         ],
 
+        'styles' => [
+            'modern' => 'Modern',
+            'vintage' => 'Vintage',
+            'classic' => 'Classic',
+            'minimal' => 'Understated',
+            'colourful' => 'Colourful',
+            'natural' => 'Natural',
+            'cosy' => 'Cosy',
+        ],
+
         'values' => [
             'sustainable' => 'Sustainable',
             'local' => 'Made nearby',
             'handmade' => 'Handmade',
         ],
+
+        'style_label' => 'And how should it look? (up to 3)',
 
         'find' => 'Find gifts',
         'swap' => 'Something else',
@@ -1375,6 +1387,7 @@ return [
             'budget_fit' => 'Right for your budget',
             'surprise' => 'Not the obvious choice',
             'vibe' => 'Fits the feeling you wanted',
+            'style' => 'Matches the style you chose',
             'values' => 'Matches what matters to you',
         ],
     ],

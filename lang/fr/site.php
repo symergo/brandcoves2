@@ -1156,11 +1156,23 @@ return [
             'beautiful' => 'Beau',
         ],
 
+        'styles' => [
+            'modern' => 'Moderne',
+            'vintage' => 'Vintage',
+            'classic' => 'Classique',
+            'minimal' => 'Sobre',
+            'colourful' => 'Coloré',
+            'natural' => 'Naturel',
+            'cosy' => 'Cocooning',
+        ],
+
         'values' => [
             'sustainable' => 'Durable',
             'local' => 'Fabriqué près d’ici',
             'handmade' => 'Fait main',
         ],
+
+        'style_label' => 'Et quel style ? (3 maximum)',
 
         'find' => 'Trouver des cadeaux',
         'swap' => 'Autre chose',
@@ -1207,6 +1219,7 @@ return [
             'budget_fit' => 'Bien placé dans votre budget',
             'surprise' => 'Pas le choix évident',
             'vibe' => 'Correspond à l’effet recherché',
+            'style' => 'Correspond au style choisi',
             'values' => 'Correspond à ce qui compte pour vous',
         ],
     ],

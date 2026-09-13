@@ -1159,11 +1159,23 @@ return [
             'beautiful' => 'Mooi',
         ],
 
+        'styles' => [
+            'modern' => 'Modern',
+            'vintage' => 'Vintage',
+            'classic' => 'Klassiek',
+            'minimal' => 'Sober',
+            'colourful' => 'Kleurrijk',
+            'natural' => 'Natuurlijk',
+            'cosy' => 'Knus',
+        ],
+
         'values' => [
             'sustainable' => 'Duurzaam',
             'local' => 'Uit de buurt',
             'handmade' => 'Handgemaakt',
         ],
+
+        'style_label' => 'En hoe mag het eruitzien? (maximaal 3)',
 
         'find' => 'Zoek cadeaus',
         'swap' => 'Iets anders',
@@ -1210,6 +1222,7 @@ return [
             'budget_fit' => 'Past binnen je budget',
             'surprise' => 'Niet de voor de hand liggende keuze',
             'vibe' => 'Past bij het gevoel dat je zocht',
+            'style' => 'Past bij de stijl die je koos',
             'values' => 'Sluit aan bij wat jij belangrijk vindt',
         ],
     ],

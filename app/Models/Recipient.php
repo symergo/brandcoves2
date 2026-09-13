@@ -46,6 +46,7 @@ class Recipient extends Model
     {
         return [
             'interests' => 'array',
+            'styles' => 'array',
             'values' => 'array',
             'avoid' => 'array',
             'birthday' => 'date',

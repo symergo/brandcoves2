@@ -18,6 +18,7 @@ interface Recipient {
     relationship: string | null
     interests: string[]
     vibe: string | null
+    styles: string[]
     budgetMin: Cents | null
     budgetMax: Cents | null
     avoid: string[]
@@ -40,6 +41,7 @@ interface Pick {
 interface Brief {
     interests?: string[]
     vibe?: string | null
+    styles?: string[]
     budget_min?: number | null
     budget_max?: number | null
     avoid?: string[]
@@ -52,7 +54,7 @@ interface Brief {
 }
 
 interface Props {
-    options: { interests: Option[]; vibes: Option[]; values: string[]; ages: Option[] }
+    options: { interests: Option[]; vibes: Option[]; styles: Option[]; values: string[]; ages: Option[] }
     recipients: Recipient[]
     picks: Pick[] | null
     brief: Brief | null
@@ -79,6 +81,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
     const [step, setStep] = useState(0)
     const [interests, setInterests] = useState<string[]>(brief?.interests ?? [])
     const [vibe, setVibe] = useState<string | null>(brief?.vibe ?? null)
+    const [styles, setStyles] = useState<string[]>(brief?.styles ?? [])
     const [budgetMax, setBudgetMax] = useState<string>(
         brief?.budget_max != null ? String(brief.budget_max) : '',
     )
@@ -125,6 +128,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
     const payload = (overrides: Partial<{ remember: boolean }> = {}) => ({
         interests,
         vibe,
+        styles,
         budget_max: budgetMax === '' ? null : Number(budgetMax),
         avoid,
         values,
@@ -188,6 +192,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
         setRecipientId(chosen.id)
         setInterests(chosen.interests)
         setVibe(chosen.vibe)
+        setStyles(chosen.styles ?? [])
         setAvoid(chosen.avoid)
         setValues(chosen.values)
         setRelationship(chosen.relationship)
@@ -267,6 +272,11 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                 {options.ages.find((o) => o.value === ageBand)?.label ?? ageBand}
                             </span>
                         )}
+                        {styles.map((style) => (
+                            <span key={style} className="rounded-full border border-line px-3 py-1 text-sm">
+                                {t(`gift.styles.${style}`)}
+                            </span>
+                        ))}
                         {vibe && (
                             <span className="rounded-full border border-line px-3 py-1 text-sm">
                                 {options.vibes.find((o) => o.value === vibe)?.label ?? vibe}
@@ -486,18 +496,50 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                         )}
 
                         {steps[step] === 'vibe' && (
-                            <div className="flex flex-wrap gap-2">
-                                {options.vibes.map((option) => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        aria-pressed={vibe === option.value}
-                                        className={chip(vibe === option.value)}
-                                        onClick={() => setVibe(vibe === option.value ? null : option.value)}
-                                    >
-                                        {option.label}
-                                    </button>
-                                ))}
+                            /*
+                              Two rows, one question.
+
+                              What a present is for and what it looks like are
+                              independent — a useful gift can be modern or
+                              vintage — but nobody experiences them as two
+                              questions about the same person, and a step of
+                              its own is a step people skip. The vibe is one
+                              choice, the style is up to three: someone who
+                              likes vintage and colourful things has one
+                              taste, not two.
+                            */
+                            <div className="space-y-5">
+                                <div className="flex flex-wrap gap-2">
+                                    {options.vibes.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            aria-pressed={vibe === option.value}
+                                            className={chip(vibe === option.value)}
+                                            onClick={() => setVibe(vibe === option.value ? null : option.value)}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div>
+                                    <p className="mb-2 text-sm text-ink-soft">{t('gift.style_label')}</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {options.styles.map((option) => (
+                                            <button
+                                                key={option.value}
+                                                type="button"
+                                                aria-pressed={styles.includes(option.value)}
+                                                className={chip(styles.includes(option.value))}
+                                                onClick={() => toggle(styles, setStyles, option.value)}
+                                                disabled={!styles.includes(option.value) && styles.length >= 3}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         )}
 

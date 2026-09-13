@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Gift;
 
 use App\Enums\Interest;
+use App\Enums\Style;
 use App\Models\ProductGroup;
 use App\Services\Charts\ChartDemand;
 use Illuminate\Database\Eloquent\Builder;
@@ -443,6 +444,14 @@ class SuggestionEngine
             'budget_fit' => $profile->budgetFit($group->min_price, $brief->ceiling()) * $profile->weight('budget_fit', 20),
             'surprise' => $this->surprise($group) * $profile->weight('surprise', 20),
             'vibe' => $this->vibeFit($haystack, $brief, $tags) * $profile->weight('vibe', 10),
+            /*
+             * What it looks like, which the vibe cannot say.
+             *
+             * Five, half of vibe: a person who asks for "vintage" means it,
+             * but they would still rather have the right kind of present in
+             * the wrong finish than the wrong present in the right one.
+             */
+            'style' => $this->styleFit($haystack, $brief, $tags) * $profile->weight('style', 5),
             'values' => $this->valuesFit($haystack, $brief, $tags) * $profile->weight('values', 10),
             /*
              * Five since 2026-09-14, from zero. It was zero because the
@@ -590,6 +599,43 @@ class SuggestionEngine
         }
 
         return 0.3;
+    }
+
+    /**
+     * How close a product is to the styles the brief named.
+     *
+     * Several styles may be asked for and any one of them matching is a
+     * match: they describe one taste, not a list of requirements. An
+     * editor's `style:` tag beats a title word, the same order of trust
+     * {@see valuesFit()} uses and for the same reason — a feed says "eiken"
+     * by accident and an editor says `style:natural` on purpose.
+     *
+     * @param  list<string>  $tags
+     */
+    private function styleFit(string $haystack, TasteBrief $brief, array $tags = []): float
+    {
+        if ($brief->styles === []) {
+            // Unasked is not unmet. Same neutral 0.5 every skipped question
+            // scores, so a brief that leaves this out is not quietly ranked
+            // against one that answered it.
+            return 0.5;
+        }
+
+        foreach ($brief->styles as $style) {
+            if (in_array(GiftTags::style($style), $tags, true)) {
+                return 1.0;
+            }
+
+            foreach ((Style::tryFrom($style)?->keywords() ?? []) as $keyword) {
+                if (str_contains($haystack, $keyword)) {
+                    return 1.0;
+                }
+            }
+        }
+
+        // Weak evidence, like values: most feeds never describe a look at
+        // all, so silence is not a "no".
+        return 0.4;
     }
 
     /**

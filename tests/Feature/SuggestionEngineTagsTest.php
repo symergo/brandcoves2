@@ -242,4 +242,48 @@ class SuggestionEngineTagsTest extends TestCase
         $this->assertLessThan(10.0, $by[$plain->id]['vibe']);
         $this->assertLessThan(10.0, $by[$plain->id]['values']);
     }
+
+    /**
+     * Style is the taste question the vibe cannot ask (owner's call,
+     * 2026-09-14): "modern or vintage" is not a stronger "useful or
+     * beautiful". Any one of the styles named matching is a match, a tag
+     * beats a title word, and a brief that skipped the question scores the
+     * same neutral half every skipped question does.
+     */
+    #[Test]
+    public function a_style_tag_beats_a_title_word_and_any_one_of_them_counts(): void
+    {
+        $tagged = $this->giftable('Kruk', 6000, ['interest:home', 'style:vintage']);
+        $byTitle = $this->giftable('Retro kruk', 6000, ['interest:home']);
+        $plain = $this->giftable('Kruk grijs', 6000, ['interest:home']);
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['home'],
+            styles: ['vintage', 'natural'],
+            limit: 3,
+        ));
+
+        $by = [];
+
+        foreach ($picks as $pick) {
+            $by[$pick->group->id] = $pick->breakdown['style'];
+        }
+
+        $this->assertEqualsWithDelta(5.0, $by[$tagged->id], 0.01);
+        // "retro" is one of Style::Vintage's keywords, so the title carries it.
+        $this->assertEqualsWithDelta(5.0, $by[$byTitle->id], 0.01);
+        $this->assertEqualsWithDelta(2.0, $by[$plain->id], 0.01);
+
+        // Not asked is not unmet: everything scores the neutral half.
+        $unasked = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['home'],
+            limit: 3,
+        ));
+
+        foreach ($unasked as $pick) {
+            $this->assertEqualsWithDelta(2.5, $pick->breakdown['style'], 0.01);
+        }
+    }
 }

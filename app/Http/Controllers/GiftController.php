@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Interest;
 use App\Enums\ListKind;
+use App\Enums\Style;
 use App\Enums\TasteSource;
 use App\Enums\Vibe;
 use App\Models\Event;
@@ -101,6 +102,7 @@ class GiftController extends Controller
             'market' => $current->value(),
             'interests' => $brief->interests,
             'vibe' => $brief->vibe?->value,
+            'styles' => $brief->styles,
             'results' => count($picks),
         ]);
 
@@ -252,6 +254,7 @@ class GiftController extends Controller
         $recipient->describeTaste(array_filter([
             'interests' => $validated['interests'] ?? null,
             'vibe' => $validated['vibe'] ?? null,
+            'styles' => $validated['styles'] ?? null,
             'values' => $validated['values'] ?? null,
             'avoid' => $validated['avoid'] ?? null,
         ], fn ($v) => $v !== null), TasteSource::Suggested);
@@ -317,6 +320,10 @@ class GiftController extends Controller
             'interests' => ['array', 'max:8'],
             'interests.*' => ['string', 'max:40'],
             'vibe' => ['nullable', 'string', 'in:'.implode(',', Vibe::values())],
+            // Several may be true of one taste, so a list; capped at three
+            // because a person who picks five has described nothing.
+            'styles' => ['array', 'max:3'],
+            'styles.*' => ['string', Rule::in(Style::values())],
             // Euros in the payload, cents everywhere else — the wizard shows a
             // slider in the currency people think in.
             'budget_min' => ['nullable', 'numeric', 'min:0', 'max:100000'],
@@ -381,6 +388,7 @@ class GiftController extends Controller
             $validated += array_filter([
                 'interests' => $stored->interests ?: null,
                 'vibe' => $stored->vibe?->value,
+                'styles' => $stored->styles ?: null,
                 'budget_min' => $stored->budgetMin === null ? null : $stored->budgetMin / 100,
                 'budget_max' => $stored->budgetMax === null ? null : $stored->budgetMax / 100,
                 'avoid' => $stored->avoid ?: null,
@@ -395,6 +403,7 @@ class GiftController extends Controller
             market: $current->get(),
             interests: array_values((array) ($validated['interests'] ?? [])),
             vibe: isset($validated['vibe']) ? Vibe::tryFrom((string) $validated['vibe']) : null,
+            styles: array_values((array) ($validated['styles'] ?? [])),
             budgetMin: isset($validated['budget_min']) ? (int) round((float) $validated['budget_min'] * 100) : null,
             budgetMax: isset($validated['budget_max']) ? (int) round((float) $validated['budget_max'] * 100) : null,
             avoid: array_values((array) ($validated['avoid'] ?? [])),
@@ -443,6 +452,13 @@ class GiftController extends Controller
                 'value' => $v->value,
                 'label' => $v->label(),
             ], Vibe::cases()),
+            // What it should look like. Asked in the same step as the vibe,
+            // because they are one question about taste asked two ways, and
+            // a step of its own is a step people skip.
+            'styles' => array_map(fn (Style $s) => [
+                'value' => $s->value,
+                'label' => $s->label(),
+            ], Style::cases()),
             'values' => ['sustainable', 'local', 'handmade'],
             // The fixed age groups, the same strings an editor tags a
             // product with (GiftTags::AGE_BANDS), so the giver's answer and
@@ -474,6 +490,7 @@ class GiftController extends Controller
                 'relationship' => $r->relationship,
                 'interests' => (array) $r->interests,
                 'vibe' => $r->vibe,
+                'styles' => (array) $r->styles,
                 'budgetMin' => $r->budget_min,
                 'budgetMax' => $r->budget_max,
                 'avoid' => (array) $r->avoid,

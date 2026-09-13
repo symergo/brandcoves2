@@ -29,6 +29,7 @@ brief's "coffee" without anything in between. Every vocabulary is one the site a
 | `recipient` | partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host | `App\Enums\RecipientType` |
 | `age` | 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64, 65+ | `GiftTags::AGE_BANDS` |
 | `vibe` | practical, playful, beautiful | `App\Enums\Vibe` |
+| `style` | modern, vintage, classic, minimal, colourful, natural, cosy | `App\Enums\Style` |
 | `values` | sustainable, local, handmade | `GiftTags::VALUE_OPTIONS` |
 
 A tag is `<vocabulary>:<value>`. The whole list is `GiftTags::all()`, and `GET /products/untagged`
@@ -41,6 +42,15 @@ returns it beside the products, so a writer never has to guess a spelling.
 than a fact, and where a product genuinely is gendered (a razor, a dress) its title says so and
 search finds it. If a market ever needs it, it would be a separate `audience` vocabulary, not a
 split of `recipient`.
+
+**Style is not a stronger vibe.** Added 2026-09-14 on the owner's ask ("practical vs design,
+modern vs vintage, useful vs beautiful"). Vibe is what a present is *for* — useful, fun, beautiful
+— and stays three, because it is the question that most changes the answer. Style is what it
+*looks like*, and the two are independent: a useful present can be modern or vintage, a beautiful
+one minimal or colourful. Folding them into one list would have forced a choice nobody makes.
+Several styles may be true of one person, unlike a vibe, so both the tag and the answer are lists.
+The wizard asks it in the vibe step rather than a step of its own, because a step is a thing people
+skip and this is one question about taste asked two ways.
 
 **Age is its own vocabulary, as fixed groups of years.** The bands are ranges (owner's call: real
 age groups, fixed on both sides, nothing typed): 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64,
@@ -67,8 +77,11 @@ because a bare `?` is a placeholder to PDO, and the default jsonb operator class
   the best single interest answered, half the weighted share of the whole brief answered, so a
   product tagged for three of four interests beats one tagged for the first alone. The arithmetic
   is on `SuggestionEngine::interestFit()` and in gift-whisperer.md.
-- **Occasion, vibe, values**: the tag answers before the title words are looked for. Occasion
-  weighs 5 now, from zero: title words were too thin to trust, an editor's tag is not.
+- **Occasion, vibe, style, values**: the tag answers before the title words are looked for.
+  Occasion weighs 5 now, from zero: title words were too thin to trust, an editor's tag is not.
+  Style weighs 5 buying for someone else and 10 on your own list, where the finish is half the
+  point of wanting the thing; any one of the styles named matching is a match, since they describe
+  one taste rather than a list of requirements.
 - **Recipient fit**, a new signal weighted 5 in `for_someone` (taken from surprise, 20 to 15) and 0
   in `for_myself`: 1.0 when a recipient or age tag meets the brief's relationship or age band, 0.45
   when the product is tagged for somebody or some age else, 0.5 when nothing was asked or nothing is

@@ -109,7 +109,7 @@ class GiftTagsApiTest extends TestCase
     {
         $vocabulary = GiftTags::vocabulary();
 
-        $this->assertSame(['interest', 'occasion', 'recipient', 'age', 'vibe', 'values'], array_keys($vocabulary));
+        $this->assertSame(['interest', 'occasion', 'recipient', 'age', 'vibe', 'style', 'values'], array_keys($vocabulary));
         $this->assertContains('coffee', $vocabulary['interest']);
         $this->assertContains('christmas', $vocabulary['occasion']);
         $this->assertContains('sinterklaas', $vocabulary['occasion']);
@@ -121,6 +121,9 @@ class GiftTagsApiTest extends TestCase
         $this->assertNotContains('teen', $vocabulary['recipient']);
         $this->assertSame(['0-2', '3-5', '6-9', '10-12', '13-17', '18-29', '30-49', '50-64', '65+'], $vocabulary['age']);
         $this->assertContains('playful', $vocabulary['vibe']);
+        // What it looks like, which the vibe cannot say.
+        $this->assertContains('vintage', $vocabulary['style']);
+        $this->assertContains('style:vintage', GiftTags::all());
         $this->assertContains('handmade', $vocabulary['values']);
         $this->assertContains('interest:coffee', GiftTags::all());
     }

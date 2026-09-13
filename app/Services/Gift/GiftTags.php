@@ -7,18 +7,19 @@ namespace App\Services\Gift;
 use App\Enums\EventType;
 use App\Enums\Interest;
 use App\Enums\RecipientType;
+use App\Enums\Style;
 use App\Enums\Vibe;
 
 /**
  * What a product can be tagged with, and nothing else.
  *
- * Six vocabularies, each one the site already speaks: the interests the
+ * Seven vocabularies, each one the site already speaks: the interests the
  * gift wizard offers, the occasions a list can carry, the kinds of person a
- * gift is for, how old they are, and the wizard's two other questions, how
- * it should feel and what should matter about it. A tag is
- * `<vocabulary>:<value>`, so `interest:coffee`, `occasion:christmas`,
- * `recipient:mother`, `age:teen`, `vibe:playful`, `values:handmade`. Closed
- * rather than free text
+ * gift is for, how old they are, and the wizard's three other questions, how
+ * it should feel, what it should look like and what should matter about it. A
+ * tag is `<vocabulary>:<value>`, so `interest:coffee`, `occasion:christmas`,
+ * `recipient:mother`, `age:13-17`, `vibe:playful`, `style:vintage`,
+ * `values:handmade`. Closed rather than free text
  * because a tag is only worth having when the wizard can ask for exactly it:
  * a brief says "coffee" and a product says `interest:coffee`, and the two meet
  * without a text match in between.
@@ -38,6 +39,8 @@ class GiftTags
     public const AGE = 'age';
 
     public const VIBE = 'vibe';
+
+    public const STYLE = 'style';
 
     public const VALUES = 'values';
 
@@ -93,10 +96,12 @@ class GiftTags
             ],
             self::RECIPIENT => RecipientType::values(),
             self::AGE => self::AGE_BANDS,
-            // The wizard's "how should it feel" and "anything that matters"
-            // questions. The engine guesses both from title words ("luxe",
-            // "duurzaam"); a tag is an editor saying so, and it wins.
+            // The wizard's "how should it feel", "what should it look like"
+            // and "anything that matters" questions. The engine guesses all
+            // three from title words ("luxe", "eiken", "duurzaam"); a tag is
+            // an editor saying so, and it wins.
             self::VIBE => Vibe::values(),
+            self::STYLE => Style::values(),
             self::VALUES => self::VALUE_OPTIONS,
         ];
     }
@@ -174,6 +179,11 @@ class GiftTags
     public static function vibe(string $value): string
     {
         return self::VIBE.':'.mb_strtolower(trim($value));
+    }
+
+    public static function style(string $value): string
+    {
+        return self::STYLE.':'.mb_strtolower(trim($value));
     }
 
     public static function value(string $value): string

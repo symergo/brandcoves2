@@ -437,6 +437,24 @@ class GiftWhispererTest extends TestCase
         $this->assertTrue($before->equalTo($mum->updated_at));
     }
 
+    /**
+     * The style question, added 2026-09-14: what a present should look like,
+     * which the vibe cannot say. Several may be chosen, only the seven
+     * offered are accepted, and the answer rides the brief back to the page.
+     */
+    #[Test]
+    public function the_style_is_several_of_the_offered_ones_or_nothing(): void
+    {
+        $this->catalogue();
+
+        $this->post('/be-nl/gift', [...$this->brief(), 'styles' => ['vintage', 'cosy']])
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('brief.styles', ['vintage', 'cosy']));
+
+        $this->post('/be-nl/gift', [...$this->brief(), 'styles' => ['edgy']])
+            ->assertSessionHasErrors('styles.0');
+    }
+
     #[Test]
     public function remembering_writes_the_answers_onto_the_person(): void
     {
@@ -447,6 +465,7 @@ class GiftWhispererTest extends TestCase
             ->post('/be-nl/gift', [
                 'interests' => ['coffee', 'wielrennen'],
                 'vibe' => 'playful',
+                'styles' => ['vintage'],
                 'budget_max' => 60,
                 'recipient_id' => $mum->id,
                 'remember' => true,
@@ -457,6 +476,7 @@ class GiftWhispererTest extends TestCase
 
         $this->assertSame(['coffee', 'wielrennen'], $mum->interests);
         $this->assertSame('playful', $mum->vibe);
+        $this->assertSame(['vintage'], $mum->styles);
         $this->assertSame(TasteSource::Suggested, $mum->taste_source);
         // Euros in, cents stored — invariant 7.
         $this->assertSame(6000, $mum->budget_max);
