@@ -454,12 +454,13 @@ export default function SharedList({
 
                             {/* Shown to a signed-out visitor too: what a claim
                                 discloses has to be readable before the press,
-                                and the press is what asks them to sign in. */}
-                            {(canClaim || claimNeedsAccount) && (
+                                and the press is what asks them to sign in.
+                                Only when a name is shown: the anonymous case
+                                said "nobody sees it was you" and the owner
+                                asked for that line to go (2026-09-13). */}
+                            {(canClaim || claimNeedsAccount) && claimNames && (
                                 <p className={isOwner ? 'text-ink-soft' : 'mt-2 text-ink-soft'}>
-                                    {claimNames
-                                        ? t('lists.claim_named_note')
-                                        : t('lists.claim_anonymous_note')}
+                                    {t('lists.claim_named_note')}
                                 </p>
                             )}
                         </div>

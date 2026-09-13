@@ -707,7 +707,6 @@ return [
          * See resources/js/Components/ListKindBadge.tsx.
          */
         'claimed_by' => ':name s’en charge',
-        'claim_anonymous_note' => 'Personne ne saura que c’était vous — pas même la personne qui gère cette liste.',
         'claim_named_note' => 'Votre nom sera visible par les autres sur cette liste, pour que tout le monde sache qui offre quoi.',
         'claim_sign_in_hint' => 'Connectez-vous et cela reste à vous : vous voyez ce que vous offrez depuis n’importe quel appareil, et vous pouvez y renoncer si vos plans changent.',
         'claimed_item' => 'Vous offrez :item.',

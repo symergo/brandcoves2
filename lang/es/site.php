@@ -706,7 +706,6 @@ return [
          * See resources/js/Components/ListKindBadge.tsx.
          */
         'claimed_by' => ':name se encarga de esto',
-        'claim_anonymous_note' => 'Nadie verá que fuiste tú — ni siquiera quien organiza esta lista.',
         'claim_named_note' => 'Tu nombre se mostrará a los demás de esta lista, para que sepan quién regala qué.',
         'claim_sign_in_hint' => 'Inicia sesión y esto sigue siendo tuyo: verás qué vas a regalar desde cualquier dispositivo, y podrás devolverlo si cambias de planes.',
         'claimed_item' => 'Tú regalas :item.',

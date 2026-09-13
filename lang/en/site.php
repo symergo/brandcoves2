@@ -839,7 +839,6 @@ return [
          * See resources/js/Components/ListKindBadge.tsx.
          */
         'claimed_by' => ':name is getting this',
-        'claim_anonymous_note' => 'Nobody will see it was you — not even the person organising this list.',
         'claim_named_note' => 'Your name will be shown to the others on this list, so they know who is getting what.',
         'claim_sign_in_hint' => 'Sign in and this stays yours: you can see what you are getting from any device, and hand it back if your plans change.',
         'claimed_item' => 'You are getting :item.',

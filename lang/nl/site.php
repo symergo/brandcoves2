@@ -710,7 +710,6 @@ return [
          * See resources/js/Components/ListKindBadge.tsx.
          */
         'claimed_by' => ':name koopt dit',
-        'claim_anonymous_note' => 'Niemand ziet dat jij het was — ook niet degene die deze lijst beheert.',
         'claim_named_note' => 'Je naam is zichtbaar voor de anderen op deze lijst, zodat ze weten wie wat koopt.',
         'claim_sign_in_hint' => 'Log in en het blijft van jou: je ziet op elk apparaat wat je koopt, en je kunt het teruggeven als je van plan verandert.',
         'claimed_item' => 'Jij koopt :item.',
