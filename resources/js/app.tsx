@@ -9,7 +9,7 @@ const appName = import.meta.env.VITE_APP_NAME ?? 'GiftCoves'
 createInertiaApp({
     /*
       The brand is appended, unless the page has already put it in its own
-      title. The Dutch homepage leads with "GiftCoves verlanglijstjes" on
+      title. The Dutch homepage leads with "GiftCoves verlanglijsten" on
       purpose, and appending the name to that prints it twice in one tab.
     */
     title: (title) => {

@@ -45,7 +45,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * ## Links are written [words](path) and resolved here
  *
  * The owner asked for the words a person searches for to be anchors to the
- * page that answers them: "verlanglijstje" to the lists, "Geheime Vriend" to
+ * page that answers them: "verlanglijst" to the lists, "Geheime Vriend" to
  * the draw, "delen" to the sharing topic. The language files write them as
  * [words](path) with a market-relative path, and this controller turns the
  * path into the market's URL, so a Dutch page links to /be-nl/... and the

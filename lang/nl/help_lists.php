@@ -24,22 +24,22 @@ declare(strict_types=1);
  */
 return [
     'index' => [
-        'title' => 'Hoe lijstjes werken',
-        'seo_title' => 'Hoe lijstjes werken',
-        'seo_description' => 'Alles wat je met een lijstje kunt: bewaren, delen, samen kopen, Geheime Vriend, vrienden en herinneringen. Stap voor stap, met beeld.',
-        'intro' => 'Een [verlanglijstje](lists) bewaart wat je hier [vindt](search), voor jezelf of voor iemand anders. Hieronder staat per onderwerp wat er kan en hoe je het doet, met beeld. Begin bij het eerste als je nog nooit iets bewaard hebt.',
+        'title' => 'Hoe lijsten werken',
+        'seo_title' => 'Hoe lijsten werken',
+        'seo_description' => 'Alles wat je met een lijst kunt: bewaren, delen, samen kopen, Geheime Vriend, vrienden en herinneringen. Stap voor stap, met beeld.',
+        'intro' => 'Een [verlanglijst](lists) bewaart wat je hier [vindt](search), voor jezelf of voor iemand anders. Hieronder staat per onderwerp wat er kan en hoe je het doet, met beeld. Begin bij het eerste als je nog nooit iets bewaard hebt.',
         'back' => 'Alle onderwerpen',
         'next' => 'Volgende',
         'cta_search' => 'Zoek iets om te bewaren',
-        'cta_lists' => 'Naar mijn lijstjes',
+        'cta_lists' => 'Naar mijn lijsten',
     ],
 
     'topics' => [
         'saving' => [
-            'title' => 'Bewaren en een lijstje maken',
-            'blurb' => 'Iets vinden, bewaren, je lijstjes openen, en een lijstje maken in drie stappen.',
-            'seo_description' => 'Bewaar alles wat je hier vindt in een verlanglijstje en maak er een in drie stappen. Met beeld.',
-            'intro' => 'Je hoeft niet eerst een lijstje te maken. Bij het bewaren wordt het aangeboden, en op de startpagina staat een knop die er in drie stappen een maakt.',
+            'title' => 'Bewaren en een lijst maken',
+            'blurb' => 'Iets vinden, bewaren, je lijsten openen, en een lijst maken in drie stappen.',
+            'seo_description' => 'Bewaar alles wat je hier vindt in een verlanglijst en maak er een in drie stappen. Met beeld.',
+            'intro' => 'Je hoeft niet eerst een lijst te maken. Bij het bewaren wordt het aangeboden, en op de startpagina staat een knop die er in drie stappen een maakt.',
             'numbered' => true,
             'sections' => [
                 [
@@ -49,50 +49,50 @@ return [
                     'alt' => 'Twee productkaarten, elk met een bladwijzerknop in de foto.',
                 ],
                 [
-                    'title' => 'Bewaar het en kies een lijstje',
-                    'body' => 'Tik op de bladwijzer en het staat in je lijstje. Tik nog eens om een ander lijstje te kiezen of een nieuw te beginnen. Op een computer staat naast de bladwijzer een pijltje dat dat venster meteen opent.',
+                    'title' => 'Bewaar het en kies een lijst',
+                    'body' => 'Tik op de bladwijzer en het staat in je lijst. Tik nog eens om een andere lijst te kiezen of een nieuwe te beginnen. Op een computer staat naast de bladwijzer een pijltje dat dat venster meteen opent.',
                     'shot' => 'choose',
-                    'alt' => 'Het geopende venster naast een product, met de lijstjes om in te bewaren en de optie om een nieuw lijstje te beginnen.',
+                    'alt' => 'Het geopende venster naast een product, met de lijsten om in te bewaren en de optie om een nieuwe lijst te beginnen.',
                 ],
                 [
-                    'title' => 'Open je lijstjes',
-                    'body' => 'Alles wat je bewaarde staat onder [Mijn lijstjes](lists). Je ziet per lijstje wat erin zit, of het privé is en voor wie het bedoeld is. Zakt de prijs van iets, dan zie je dat op de kaart.',
+                    'title' => 'Open je lijsten',
+                    'body' => 'Alles wat je bewaarde staat onder [Mijn lijsten](lists). Je ziet per lijst wat erin zit, of het privé is en voor wie het bedoeld is. Zakt de prijs van iets, dan zie je dat op de kaart.',
                     'shot' => 'lists',
-                    'alt' => 'De pagina met mijn lijstjes, met twee lijstjes en de knop waarmee je er een maakt.',
+                    'alt' => 'De pagina met mijn lijsten, met twee lijsten en de knop waarmee je er een maakt.',
                 ],
                 [
-                    'title' => 'Een lijstje maken in drie stappen',
-                    'body' => "1. Tik op “Nieuw lijstje” onder [Mijn lijstjes](lists), of op “Maak een nieuw lijstje” op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Tik op “Volgende”.\n3. Geef het lijstje een naam en een gelegenheid. Tik op “Volgende”.\n4. Kies “Privé (of deel later)” of “Delen via een link”, en tik op “Lijstje maken”.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuw lijstje. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of groepscadeau](lists-help/kinds).",
+                    'title' => 'Een lijst maken in drie stappen',
+                    'body' => "1. Tik op “Nieuwe lijst” onder [Mijn lijsten](lists), of op “Maak een nieuwe lijst” op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Tik op “Volgende”.\n3. Geef de lijst een naam en een gelegenheid. Tik op “Volgende”.\n4. Kies “Privé (of deel later)” of “Delen via een link”, en tik op “Lijst maken”.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuwe lijst. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of groepscadeau](lists-help/kinds).",
                     'shot' => 'wizard',
-                    'alt' => 'De eerste stap van een nieuw lijstje, met de drie keuzes voor wie het is.',
+                    'alt' => 'De eerste stap van een nieuwe lijst, met de drie keuzes voor wie het is.',
                 ],
                 [
                     'title' => 'Je hoeft niet ingelogd te zijn om te beginnen',
-                    'body' => 'De drie stappen kun je zonder account doorlopen. Aan het eind log je in en het lijstje staat er. Wat je invulde blijft een dag bewaard, dus even weglopen kan.',
+                    'body' => 'De drie stappen kun je zonder account doorlopen. Aan het eind log je in en de lijst staat er. Wat je invulde blijft een dag bewaard, dus even weglopen kan.',
                 ],
             ],
         ],
 
         'kinds' => [
             'title' => 'Verlanglijst, cadeaulijst of groepscadeau',
-            'blurb' => 'De ene keuze die vastligt, en wat elk soort lijstje kan.',
-            'seo_description' => 'Drie soorten lijstjes: een verlanglijst voor jezelf, een cadeaulijst voor iemand anders, of een groepscadeau. Wat elk kan en wat vastligt.',
+            'blurb' => 'De ene keuze die vastligt, en wat elk soort lijst kan.',
+            'seo_description' => 'Drie soorten lijsten: een verlanglijst voor jezelf, een cadeaulijst voor iemand anders, of een groepscadeau. Wat elk kan en wat vastligt.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Eén keuze ligt vast',
-                    'body' => 'De eerste stap van een [nieuw lijstje](lists-help/saving) vraagt voor wie het is. Dat bepaalt wat het lijstje kan, en het is het enige wat je later niet meer verandert. Naam, gelegenheid en wie het ziet pas je altijd nog aan.',
+                    'body' => 'De eerste stap van een [nieuwe lijst](lists-help/saving) vraagt voor wie het is. Dat bepaalt wat de lijst kan, en het is het enige wat je later niet meer verandert. Naam, gelegenheid en wie het ziet pas je altijd nog aan.',
                     'shot' => 'wizard',
-                    'alt' => 'De eerste stap van een nieuw lijstje, met de drie soorten om uit te kiezen.',
+                    'alt' => 'De eerste stap van een nieuwe lijst, met de drie soorten om uit te kiezen.',
                 ],
                 [
                     'title' => 'Voor mezelf: een verlanglijst',
-                    'body' => 'Wat jij wilt hebben. [Deel je het](lists-help/sharing), dan kunnen anderen aanvinken wat ze kopen, en jij ziet niet wat of wie. Zo blijft de verrassing. Wil je het toch weten, dan zet je dat per lijstje aan.',
+                    'body' => 'Wat jij wilt hebben. [Deel je hem](lists-help/sharing), dan kunnen anderen aanvinken wat ze kopen, en jij ziet niet wat of wie. Zo blijft de verrassing. Wil je het toch weten, dan zet je dat per lijst aan.',
                 ],
                 [
                     'title' => 'Voor iemand anders: een cadeaulijst',
-                    'body' => 'Ideeën voor iemand die het lijstje zelf nooit opent. Wie je het deelt, vinkt aan wat hij [koopt](lists-help/claiming), zodat niemand dubbel koopt. Jij ziet dat wel, want jij geeft mee.',
+                    'body' => 'Ideeën voor iemand die de lijst zelf nooit opent. Wie je hem deelt, vinkt aan wat hij [koopt](lists-help/claiming), zodat niemand dubbel koopt. Jij ziet dat wel, want jij geeft mee.',
                 ],
                 [
                     'title' => 'Samen, voor iemand: een groepscadeau',
@@ -100,29 +100,29 @@ return [
                 ],
                 [
                     'title' => 'Een gelegenheid en een datum',
-                    'body' => 'Elk lijstje kan een gelegenheid dragen: verjaardag, kerst, huwelijk, geboorte, en nog tien andere. Bij een verjaardag, kerst en valentijn vult de datum zichzelf in. Met een datum krijg je op tijd een [herinnering](lists-help/friends).',
+                    'body' => 'Elke lijst kan een gelegenheid dragen: verjaardag, kerst, huwelijk, geboorte, en nog tien andere. Bij een verjaardag, kerst en valentijn vult de datum zichzelf in. Met een datum krijg je op tijd een [herinnering](lists-help/friends).',
                     'shot' => 'occasion',
-                    'alt' => 'Het venster Gelegenheid van een lijstje, met de keuze van de gelegenheid en de datum.',
+                    'alt' => 'Het venster Gelegenheid van een lijst, met de keuze van de gelegenheid en de datum.',
                 ],
             ],
         ],
 
         'items' => [
-            'title' => 'Wat er op een lijstje kan',
+            'title' => 'Wat er op een lijst kan',
             'blurb' => 'Producten van hier, eigen items met een link, kopiëren, aanpassen, en de prijs die zakt.',
-            'seo_description' => 'Producten bewaren, eigen items toevoegen met een link en een prijs, kopiëren naar een ander lijstje, en zien wanneer de prijs zakt.',
+            'seo_description' => 'Producten bewaren, eigen items toevoegen met een link en een prijs, kopiëren naar een andere lijst, en zien wanneer de prijs zakt.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'De bladwijzer',
-                    'body' => 'Op elke productkaart, bij het [zoeken](search) en in elke [Cove](cove). Eén tik bewaart in het lijstje waar je het laatst iets in bewaarde, anders in je standaardlijstje. Nog een tik opent het venster: daar kies je een ander lijstje, verplaats je het, of haal je het eraf. Op een computer staat naast de bladwijzer een pijltje dat het venster meteen opent.',
+                    'body' => 'Op elke productkaart, bij het [zoeken](search) en in elke [Cove](cove). Eén tik bewaart in de lijst waar je het laatst iets in bewaarde, anders in je standaardlijst. Nog een tik opent het venster: daar kies je een andere lijst, verplaats je het, of haal je het eraf. Op een computer staat naast de bladwijzer een pijltje dat het venster meteen opent.',
                 ],
                 [
-                    'title' => 'Toevoegen vanuit het lijstje',
-                    'body' => "1. Open je lijstje onder [Mijn lijstjes](lists).\n2. Tik op “+ Product toevoegen”.\n3. Typ wat je zoekt en druk op Enter, of tik op het scan-icoon en richt je camera op de streepjescode.\n4. Tik op het product in de resultaten. Het staat meteen op je lijstje.",
+                    'title' => 'Toevoegen vanuit de lijst',
+                    'body' => "1. Open je lijst onder [Mijn lijsten](lists).\n2. Tik op “+ Product toevoegen”.\n3. Typ wat je zoekt en druk op Enter, of tik op het scan-icoon en richt je camera op de streepjescode.\n4. Tik op het product in de resultaten. Het staat meteen op je lijst.",
                     'shot' => 'add',
-                    'alt' => 'Het zoekvak bovenaan een lijstje om een product toe te voegen, met daaronder de link om het er zelf op te zetten.',
+                    'alt' => 'Het zoekvak bovenaan een lijst om een product toe te voegen, met daaronder de link om het er zelf op te zetten.',
                 ],
                 [
                     'title' => 'Iets dat hier niet te vinden is',
@@ -130,51 +130,51 @@ return [
                 ],
                 [
                     'title' => 'Kopiëren, niet verplaatsen',
-                    'body' => 'Elk item heeft “Kopieer naar een ander lijstje”. Op een [gedeeld lijstje](lists-help/claiming) van iemand anders heet dat “Zet op mijn lijstje”. Het origineel blijft staan; de omschrijving en de prijs gaan mee, wie het al koopt niet.',
+                    'body' => 'Elk item heeft “Kopieer naar een andere lijst”. Op een [gedeelde lijst](lists-help/claiming) van iemand anders heet dat “Zet op mijn lijst”. Het origineel blijft staan; de omschrijving en de prijs gaan mee, wie het al koopt niet.',
                 ],
                 [
                     'title' => 'Als de prijs zakt',
                     'body' => 'Een bewaard product onthoudt de prijs van dat moment. Zakt hij, dan staat op de kaart de nieuwe prijs met de oude doorgestreept. Je hoeft er niets voor in te stellen. Meer bij [Prijzen en voorraad in de gaten houden](lists-help/alerts).',
                     'shot' => 'drop',
-                    'alt' => 'Een item op een lijstje waarvan de prijs zakte, met de nieuwe prijs en de oude doorgestreept.',
+                    'alt' => 'Een item op een lijst waarvan de prijs zakte, met de nieuwe prijs en de oude doorgestreept.',
                 ],
                 [
                     'title' => 'Verwijderen',
-                    'body' => 'Tik op het kruisje bij het item en bevestig. Verwijderen kan alleen wie het lijstje beheert. Het nieuwste staat bovenaan.',
+                    'body' => 'Tik op het kruisje bij het item en bevestig. Verwijderen kan alleen wie de lijst beheert. Het nieuwste staat bovenaan.',
                 ],
             ],
         ],
 
         'sharing' => [
-            'title' => 'Een lijstje delen',
+            'title' => 'Een lijst delen',
             'blurb' => 'Met een link of met vrienden op naam, wie wat te zien krijgt, en hoe je het weer stopt.',
-            'seo_description' => 'Een verlanglijstje delen met een link of met vrienden, bepalen wie mag toevoegen en wie ziet wat er gekocht is, en het delen weer stoppen.',
+            'seo_description' => 'Een verlanglijst delen met een link of met vrienden, bepalen wie mag toevoegen en wie ziet wat er gekocht is, en het delen weer stoppen.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Privé tot je het deelt',
-                    'body' => 'Een nieuw lijstje ziet alleen jij. Niets deelt het stilletjes: geen gelegenheid, geen vriend, geen quiz. Delen doe je zelf, met “Delen” op het lijstje.',
+                    'body' => 'Een nieuwe lijst ziet alleen jij. Niets deelt hem stilletjes: geen gelegenheid, geen vriend, geen quiz. Delen doe je zelf, met “Delen” op de lijst.',
                 ],
                 [
                     'title' => 'Met een link',
-                    'body' => "1. Open je lijstje en tik op “Delen”.\n2. Zet het op “Delen via een link” als het nog privé is.\n3. Tik op “Link kopiëren” en plak hem in een bericht. Of tik op “Kopieer bericht en link” voor een kant-en-klaar berichtje, of op “Delen” om WhatsApp, Telegram, e-mail of een andere app te kiezen.\n\nIedereen met de link ziet het lijstje. “Stop met delen” maakt elke verstuurde link ongeldig; deel je opnieuw, dan krijg je een nieuwe.",
+                    'body' => "1. Open je lijst en tik op “Delen”.\n2. Zet hem op “Delen via een link” als hij nog privé is.\n3. Tik op “Link kopiëren” en plak hem in een bericht. Of tik op “Kopieer bericht en link” voor een kant-en-klaar berichtje, of op “Delen” om WhatsApp, Telegram, e-mail of een andere app te kiezen.\n\nIedereen met de link ziet de lijst. “Stop met delen” maakt elke verstuurde link ongeldig; deel je opnieuw, dan krijg je een nieuwe.",
                     'shot' => 'share',
-                    'alt' => 'Het deelvenster van een lijstje, met de link, de knop om hem te kopiëren en de knop om te stoppen met delen.',
+                    'alt' => 'Het deelvenster van een lijst, met de link, de knop om hem te kopiëren en de knop om te stoppen met delen.',
                 ],
                 [
                     'title' => 'Met vrienden op naam',
-                    'body' => "1. Tik op “Delen” en dan op “Delen met vrienden”.\n2. Kies de [vrienden](friends) die het mogen zien.\n3. Tik op “Versturen”.\n\nZij krijgen een mailtje met de link, zonder de inhoud, en het lijstje staat op hun [vriendenpagina](friends). “Niet meer delen met …” haalt het daar weg; een link die ze al hadden, blijft werken tot je stopt met delen. Hoe je vrienden wordt, staat bij [Vrienden, verjaardagen en herinneringen](lists-help/friends).",
+                    'body' => "1. Tik op “Delen” en dan op “Delen met vrienden”.\n2. Kies de [vrienden](friends) die hem mogen zien.\n3. Tik op “Versturen”.\n\nZij krijgen een mailtje met de link, zonder de inhoud, en de lijst staat op hun [vriendenpagina](friends). “Niet meer delen met …” haalt het daar weg; een link die ze al hadden, blijft werken tot je stopt met delen. Hoe je vrienden wordt, staat bij [Vrienden, verjaardagen en herinneringen](lists-help/friends).",
                     'shot' => 'friends-share',
                     'alt' => 'Het deel van het deelvenster waar je vrienden kiest en de link naar hen verstuurt.',
                 ],
                 [
                     'title' => 'Wie mag toevoegen',
-                    'body' => 'Staat “Iedereen kan cadeaus toevoegen” aan, dan zet wie de link heeft meteen iets op het lijstje. Staat het uit, dan komen voorstellen bij jou terecht en beslis jij. Zelfgeschreven items wachten altijd op jou.',
+                    'body' => 'Staat “Iedereen kan cadeaus toevoegen” aan, dan zet wie de link heeft meteen iets op de lijst. Staat het uit, dan komen voorstellen bij jou terecht en beslis jij. Zelfgeschreven items wachten altijd op jou.',
                 ],
                 [
                     'title' => 'Wie ziet wat er gekocht is',
-                    'body' => 'Op een [verlanglijst](lists-help/kinds) zie jij niet wat er gereserveerd is. Dat staat standaard uit en zet je per lijstje aan met “Laat mij zien wat er gereserveerd is”. Op een cadeaulijst staat het aan, want jij geeft mee. Namen van wie wat koopt zijn standaard verborgen; zet je ze aan, dan geldt dat alleen voor nieuwe reserveringen.',
+                    'body' => 'Op een [verlanglijst](lists-help/kinds) zie jij niet wat er gereserveerd is. Dat staat standaard uit en zet je per lijst aan met “Laat mij zien wat er gereserveerd is”. Op een cadeaulijst staat het aan, want jij geeft mee. Namen van wie wat koopt zijn standaard verborgen; zet je ze aan, dan geldt dat alleen voor nieuwe reserveringen.',
                 ],
                 [
                     'title' => 'Bezorgadres',
@@ -184,17 +184,17 @@ return [
         ],
 
         'claiming' => [
-            'title' => 'Iets kopen van een gedeeld lijstje',
+            'title' => 'Iets kopen van een gedeelde lijst',
             'blurb' => 'Reserveren, loslaten, gekocht melden, iets voorstellen, en de quiz.',
-            'seo_description' => 'Wat je kunt op een verlanglijstje dat iemand met je deelde: reserveren wat je koopt, iets voorstellen, en de quiz spelen.',
+            'seo_description' => 'Wat je kunt op een verlanglijst die iemand met je deelde: reserveren wat je koopt, iets voorstellen, en de quiz spelen.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Reserveren',
-                    'body' => "1. Open de link naar het [gedeelde lijstje](lists-help/sharing) die je kreeg.\n2. Tik bij het cadeau dat je koopt op “Ik koop dit”.\n3. Log in als daarom gevraagd wordt; je klik wordt daarna alsnog uitgevoerd.\n\nZo koopt niemand anders het ook. Degene voor wie het lijstje is, ziet er niets van.",
+                    'body' => "1. Open de link naar de [gedeelde lijst](lists-help/sharing) die je kreeg.\n2. Tik bij het cadeau dat je koopt op “Ik koop dit”.\n3. Log in als daarom gevraagd wordt; je klik wordt daarna alsnog uitgevoerd.\n\nZo koopt niemand anders het ook. Degene voor wie de lijst is, ziet er niets van.",
                     'shot' => 'shared',
-                    'alt' => 'Twee cadeaus op een gedeeld lijstje, elk met de knop “Ik koop dit”.',
+                    'alt' => 'Twee cadeaus op een gedeelde lijst, elk met de knop “Ik koop dit”.',
                 ],
                 [
                     'title' => 'Toch niet, of gekocht',
@@ -202,39 +202,39 @@ return [
                 ],
                 [
                     'title' => 'Zelf iets voorstellen',
-                    'body' => "1. Zoek onderaan het lijstje naar wat je wilt voorstellen, of omschrijf het zelf.\n2. Tik op “Stel iets voor”, of op “Aan de lijst toevoegen” waar dat meteen mag.\n\nWie het lijstje beheert, ziet je voorstel en beslist. Of het meteen mag, staat bij [Een lijstje delen](lists-help/sharing).",
+                    'body' => "1. Zoek onderaan de lijst naar wat je wilt voorstellen, of omschrijf het zelf.\n2. Tik op “Stel iets voor”, of op “Aan de lijst toevoegen” waar dat meteen mag.\n\nWie de lijst beheert, ziet je voorstel en beslist. Of het meteen mag, staat bij [Een lijst delen](lists-help/sharing).",
                 ],
                 [
                     'title' => 'Bewaar het ook voor jezelf',
-                    'body' => 'Elk item heeft een bladwijzer en “Zet op mijn lijstje”. Wat je kopieert, komt zonder reservering op [jouw lijstje](lists).',
+                    'body' => 'Elk item heeft een bladwijzer en “Zet op mijn lijst”. Wat je kopieert, komt zonder reservering op [jouw lijst](lists).',
                 ],
             ],
         ],
 
         'quiz' => [
             'title' => 'De quiz: hoe goed ken je ze?',
-            'blurb' => 'Een spelletje van je gedeelde lijstje: vier producten, één staat er echt op.',
-            'seo_description' => 'Maak een quiz van je verlanglijstje: wie kent je het best? Vijf rondes, een score om te delen.',
+            'blurb' => 'Een spelletje van je gedeelde lijst: vier producten, één staat er echt op.',
+            'seo_description' => 'Maak een quiz van je verlanglijst: wie kent je het best? Vijf rondes, een score om te delen.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
                     'title' => 'Wat de quiz is',
-                    'body' => 'Een spelletje van een gedeeld [verlanglijstje](lists-help/kinds). Vijf rondes, telkens vier producten waarvan er één echt op het lijstje staat, en aan het eind een score om te delen. Wie het lijstje beheert, maakt de quiz; wie de link krijgt, speelt.',
+                    'body' => 'Een spelletje van een gedeelde [verlanglijst](lists-help/kinds). Vijf rondes, telkens vier producten waarvan er één echt op de lijst staat, en aan het eind een score om te delen. Wie de lijst beheert, maakt de quiz; wie de link krijgt, speelt.',
                 ],
                 [
                     'title' => 'Een quiz maken',
-                    'body' => '1. Open je lijstje. Het moet [gedeeld](lists-help/sharing) zijn en minstens vijf items hebben.
+                    'body' => '1. Open je lijst. Het moet [gedeeld](lists-help/sharing) zijn en minstens vijf items hebben.
 2. Tik op “Quiz”.
-3. Tik op “Maak een quiz van dit lijstje”.
+3. Tik op “Maak een quiz van deze lijst”.
 4. Stuur de link rond.',
                     'shot' => 'quiz',
-                    'alt' => 'Het quizvenster van een lijstje, met de knop om er een quiz van te maken.',
+                    'alt' => 'Het quizvenster van een lijst, met de knop om er een quiz van te maken.',
                 ],
                 [
                     'title' => 'Meespelen',
                     'body' => '1. Open de quizlink.
-2. Kies in elke ronde welk van de vier producten echt op het lijstje staat.
+2. Kies in elke ronde welk van de vier producten echt op de lijst staat.
 3. Tik op “Bekijk je score”, en daarna op “Deel je score” als je wilt.
 
 Iedereen speelt één keer.',
@@ -255,7 +255,7 @@ Iedereen speelt één keer.',
             'sections' => [
                 [
                     'title' => 'Een groepscadeau',
-                    'body' => "1. Maak een [nieuw lijstje](lists-help/saving) en kies in de eerste stap “Samen, voor iemand”.\n2. Zeg voor wie het is en geef het een naam.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één [groepscadeau](lists-help/kinds) van jullie samen. Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
+                    'body' => "1. Maak een [nieuwe lijst](lists-help/saving) en kies in de eerste stap “Samen, voor iemand”.\n2. Zeg voor wie het is en geef hem een naam.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één [groepscadeau](lists-help/kinds) van jullie samen. Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
                     'shot' => 'group',
                     'alt' => 'De pagina van een groepscadeau, met de ideeën om op te stemmen en het vak om bij te dragen.',
                 ],
@@ -269,7 +269,7 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Overleggen',
-                    'body' => 'Naast het lijstje staat “Overleg”, een gesprek voor iedereen met de link. Degene voor wie het lijstje is, leest niet mee. Je plaatst een bericht met je naam; je eigen berichten kun je weghalen, de beheerder alle. Op een privé lijstje is er geen overleg.',
+                    'body' => 'Naast de lijst staat “Overleg”, een gesprek voor iedereen met de link. Degene voor wie de lijst is, leest niet mee. Je plaatst een bericht met je naam; je eigen berichten kun je weghalen, de beheerder alle. Op een privé lijst is er geen overleg.',
                 ],
             ],
         ],
@@ -277,7 +277,7 @@ Iedereen speelt één keer.',
         'santa' => [
             'title' => 'Geheime Vriend',
             'blurb' => 'Lootjes trekken zonder briefjes: een groep, een budget, een datum, en iedereen krijgt één naam.',
-            'seo_description' => 'Lootjes trekken voor Geheime Vriend of Secret Santa: start een groep, nodig iedereen uit met een link, trek, en koppel een verlanglijstje.',
+            'seo_description' => 'Lootjes trekken voor Geheime Vriend of Secret Santa: start een groep, nodig iedereen uit met een link, trek, en koppel een verlanglijst.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
@@ -301,7 +301,7 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Mijn verlanglijst koppelen aan de groep',
-                    'body' => "Kies je lijstje onder “Je verlanglijstje” als je de groep start, of daarna op de groepspagina. Andersom kan ook: open je [verlanglijst](lists) en tik op “Gebruik dit lijstje” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijstje? [Maak er een](lists-help/saving) in drie stappen.",
+                    'body' => "Kies je lijst onder “Je verlanglijst” als je de groep start, of daarna op de groepspagina. Andersom kan ook: open je [verlanglijst](lists) en tik op “Gebruik deze lijst” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijst? [Maak er een](lists-help/saving) in drie stappen.",
                 ],
                 [
                     'title' => 'Een herinnering vooraf',
@@ -325,7 +325,7 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Wat een vriend ziet',
-                    'body' => 'Op de [vriendenpagina](friends) staat per vriend zijn verjaardag, de lijstjes die hij met jou deelde en welke van jouw lijstjes hij ziet. Wat er gereserveerd is, staat daar nooit. Een vriend verwijderen haalt de band aan beide kanten weg; lijstjes en reserveringen blijven staan.',
+                    'body' => 'Op de [vriendenpagina](friends) staat per vriend zijn verjaardag, de lijsten die hij met jou deelde en welke van jouw lijsten hij ziet. Wat er gereserveerd is, staat daar nooit. Een vriend verwijderen haalt de band aan beide kanten weg; lijsten en reserveringen blijven staan.',
                 ],
                 [
                     'title' => 'Verjaardagen',
@@ -333,11 +333,11 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Herinneringen',
-                    'body' => 'Dertig, vijftien en twee dagen vooraf krijg je een seintje bij een verjaardag, de datum van een [Geheime Vriend](lists-help/santa) en de [gelegenheid](lists-help/kinds) van een lijstje. Hier en per mail. De mail noemt de datum en de link, nooit wat er op het lijstje staat.',
+                    'body' => 'Dertig, vijftien en twee dagen vooraf krijg je een seintje bij een verjaardag, de datum van een [Geheime Vriend](lists-help/santa) en de [gelegenheid](lists-help/kinds) van een lijst. Hier en per mail. De mail noemt de datum en de link, nooit wat er op de lijst staat.',
                 ],
                 [
                     'title' => 'Meldingen',
-                    'body' => 'Onder [Meldingen](notifications) zie je wat er gebeurde: iemand deelde een lijstje met je, voegde iets toe of stelde iets voor, er is een nieuw bericht in het overleg, iets is weer op voorraad, een zoekopdracht die je volgt heeft iets nieuws. Openen zet alles op gelezen.',
+                    'body' => 'Onder [Meldingen](notifications) zie je wat er gebeurde: iemand deelde een lijst met je, voegde iets toe of stelde iets voor, er is een nieuw bericht in het overleg, iets is weer op voorraad, een zoekopdracht die je volgt heeft iets nieuws. Openen zet alles op gelezen.',
                 ],
             ],
         ],
@@ -351,7 +351,7 @@ Iedereen speelt één keer.',
             'sections' => [
                 [
                     'title' => 'Bewaar het, en de prijs volgt vanzelf',
-                    'body' => 'Een product op je [lijstje](lists) onthoudt de prijs van dat moment. Zakt hij, dan zie je het op de kaart, met de oude prijs doorgestreept. Meer hoeft niet.',
+                    'body' => 'Een product op je [lijst](lists) onthoudt de prijs van dat moment. Zakt hij, dan zie je het op de kaart, met de oude prijs doorgestreept. Meer hoeft niet.',
                 ],
                 [
                     'title' => 'Weer op voorraad',

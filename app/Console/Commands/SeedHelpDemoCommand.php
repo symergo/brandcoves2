@@ -99,7 +99,7 @@ class SeedHelpDemoCommand extends Command
         $friends->link($user, $friend);
 
         $titles = match ($market->language()) {
-            'nl' => ['Mijn verlanglijstje', 'Sinterklaas'],
+            'nl' => ['Mijn verlanglijst', 'Sinterklaas'],
             'fr' => ['Ma liste de souhaits', 'Anniversaire de Lea'],
             'es' => ['Mi lista de deseos', 'Cumpleanos de Lea'],
             default => ['My wish list', "Lea's birthday"],
@@ -110,7 +110,7 @@ class SeedHelpDemoCommand extends Command
          *
          * The save panel lists every list the account has, whatever market it
          * was made in — so seeding three markets in turn and photographing the
-         * third produced a panel reading "Mijn verlanglijstje / My wish list /
+         * third produced a panel reading "Mijn verlanglijst / My wish list /
          * Anniversaire de Lea". Three languages in the picture illustrating one
          * step.
          */

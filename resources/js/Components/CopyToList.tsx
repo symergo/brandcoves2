@@ -238,7 +238,7 @@ export default function CopyToList({
      *
      * The Ask panel passes exactly one — the list you asked from — and opening a
      * panel to reveal a single button asks somebody to choose between one thing.
-     * Pressing "Zet op mijn lijstje" should put it on the list, which is what it
+     * Pressing "Zet op mijn lijst" should put it on the list, which is what it
      * says.
      */
     const only = targets.length === 1 ? targets[0] : null
@@ -250,7 +250,7 @@ export default function CopyToList({
 
               On a list row this sits beside the remove control at the end of
               every item, and a sentence there — "Kopieer naar een ander
-              lijstje" — was longer than most of the product titles it was
+              lijst" — was longer than most of the product titles it was
               lined up against. Repeated down twenty rows it read as the page's
               main verb, which it is not: copying is occasional, and removing is
               the only other per-row action, already an icon.

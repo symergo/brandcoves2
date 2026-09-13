@@ -33,7 +33,7 @@ class ListHelpPageTest extends TestCase
                 ->has('topics', count(ListHelpController::TOPICS))
                 ->where('topics.0.key', 'saving')
                 ->where('topics.0.url', '/be-nl/lists-help/saving')
-                ->where('copy.title', 'Hoe lijstjes werken'));
+                ->where('copy.title', 'Hoe lijsten werken'));
     }
 
     #[Test]
