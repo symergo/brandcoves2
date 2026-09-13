@@ -432,6 +432,20 @@ and the phone panel opened in the flow at 911px tall with its only close control
 - **Every row is 44px**, the hamburger and close are `ToolIcon`s rather than the ☰ and ✕
   characters, and the dial has its own `CoveIcon` instead of borrowing the guides one.
 
+## The phone gets an account menu of its own (2026-09-13)
+
+At the owner's request. Your lists, friends and the rest were an "Account" block at the foot of the
+hamburger sheet, under two sections and a rule: My Lists sat four rows from the bottom of a
+screen-tall panel, and a signed-in visitor looking for their lists had to know to scroll for them.
+The phone header now has a **person button** between Search and the hamburger, the initial in the
+accent when signed in and the sign-in mark when not, opening `AccountSheet`: My Lists, Shared with
+me, Group lists, Secret Friend, Friends, Notifications (with the count), Admin, Sign out. Signed out
+it still opens, with My Lists and Sign in, because lists are anonymous-first and a visitor who built
+one before signing up needs a way back to it. The hamburger sheet keeps what the site offers
+everybody, the two sections and the market switcher, and the account block is gone from it. Only
+one sheet is open at a time; pressing either button closes the other. The wide header is unchanged:
+its account menu already was its own control.
+
 ## One row design, and the dial is gone (2026-09-07)
 
 The phone sheet's Search and Help rows were bare text links and its account block a third style;

@@ -1,5 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import AccountMenu from '../Components/AccountMenu'
+import AccountSheet from '../Components/AccountSheet'
 import AddingToBar from '../Components/AddingToBar'
 import { buttonClasses } from '../Components/Button'
 import CookieBanner from '../Components/CookieBanner'
@@ -85,6 +86,13 @@ function Chrome({ children }: PropsWithChildren) {
     const { t } = useTranslations()
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
+    /*
+     * The phone's account sheet, behind a person button beside the hamburger
+     * (owner's request, 2026-09-13): your lists, friends and the rest were
+     * an "Account" block at the foot of the hamburger sheet, four rows from
+     * the bottom of a screen-tall panel. See Components/AccountSheet.
+     */
+    const [accountOpen, setAccountOpen] = useState(false)
 
     /*
      * While the phone panel is open: Escape closes it, the page under it does
@@ -446,12 +454,43 @@ function Chrome({ children }: PropsWithChildren) {
                         >
                             <ToolIcon name="search" className="h-5 w-5" />
                         </Link>
+                        {/*
+                          Your own things, behind a person: the initial in
+                          the accent when signed in, the sign-in mark when
+                          not. Its sheet is `AccountSheet`; the hamburger
+                          beside it keeps what the site offers everybody.
+                        */}
+                        <button
+                            type="button"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg text-ink hover:bg-line/40"
+                            aria-expanded={accountOpen}
+                            aria-controls="account-sheet"
+                            onClick={() => {
+                                setMenuOpen(false)
+                                setAccountOpen(!accountOpen)
+                            }}
+                        >
+                            {auth.user ? (
+                                <span
+                                    aria-hidden
+                                    className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white"
+                                >
+                                    {(auth.user.name?.trim() || auth.user.email).slice(0, 1).toUpperCase()}
+                                </span>
+                            ) : (
+                                <ToolIcon name="signin" className="h-5 w-5" />
+                            )}
+                            <span className="sr-only">{t('nav.account')}</span>
+                        </button>
                         <button
                             type="button"
                             className="flex h-11 w-11 items-center justify-center rounded-lg border border-line text-ink"
                             aria-expanded={menuOpen}
                             aria-controls="mobile-menu"
-                            onClick={() => setMenuOpen(!menuOpen)}
+                            onClick={() => {
+                                setAccountOpen(false)
+                                setMenuOpen(!menuOpen)
+                            }}
                         >
                             <ToolIcon name={menuOpen ? 'close' : 'menu'} className="h-5 w-5" />
                             <span className="sr-only">{t('nav.main')}</span>
@@ -512,6 +551,8 @@ function Chrome({ children }: PropsWithChildren) {
                   own while the page behind holds still, with a close at the
                   bottom as well as the top.
                 */}
+                <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} isHere={isHere} />
+
                 {menuOpen && (
                     <div
                         id="mobile-menu"
@@ -659,92 +700,10 @@ function Chrome({ children }: PropsWithChildren) {
                                 </div>
                             ))}
 
-                            <div>
-                                <p className="flex min-h-11 items-center py-1 text-base font-semibold text-ink">
-                                    {t('nav.account')}
-                                    {auth.user && (
-                                        <span className="ml-2 truncate text-sm font-normal text-ink-soft">
-                                            {auth.user.name?.trim() || auth.user.email}
-                                        </span>
-                                    )}
-                                </p>
-                                <ul className="mt-1 border-l border-line pl-3">
-                                    {/*
-                                      For everybody, signed in or not: lists
-                                      are anonymous-first, and a visitor who
-                                      built one before signing up needs a way
-                                      back to it. This row left the panel on
-                                      2026-08-31 because the Make-a-list menu
-                                      carried it; that menu is gone, so it is
-                                      the panel's only route to My Lists.
-                                    */}
-                                    <li>
-                                        <Link
-                                            href={`${base}/lists`}
-                                            aria-current={isHere(`${base}/lists`) ? 'page' : undefined}
-                                            onClick={() => setMenuOpen(false)}
-                                            className={`flex min-h-11 items-center gap-2.5 py-2 ${isHere(`${base}/lists`) ? 'font-medium text-accent' : ''}`}
-                                        >
-                                            <span className="shrink-0 text-accent"><ToolIcon name="wishlist" className="h-5 w-5" /></span>
-                                            <span>{t('nav.lists')}</span>
-                                        </Link>
-                                    </li>
-                                    {auth.user ? (
-                                        <>
-                                            <li>
-                                            <Link
-                                                href={`${base}/friends`}
-                                                aria-current={isHere(`${base}/friends`) ? 'page' : undefined}
-                                                onClick={() => setMenuOpen(false)}
-                                                className={`flex min-h-11 items-center gap-2.5 py-2 ${isHere(`${base}/friends`) ? 'font-medium text-accent' : ''}`}
-                                            >
-                                                <span className="shrink-0 text-accent"><ToolIcon name="friends" className="h-5 w-5" /></span>
-                                                <span>{t('nav.friends')}</span>
-                                            </Link>
-                                            </li>
-                                            <li>
-                                            <Link
-                                                href={`${base}/notifications`}
-                                                aria-current={isHere(`${base}/notifications`) ? 'page' : undefined}
-                                                onClick={() => setMenuOpen(false)}
-                                                className={`flex min-h-11 items-center gap-2.5 py-2 ${isHere(`${base}/notifications`) ? 'font-medium text-accent' : ''}`}
-                                            >
-                                                <span className="shrink-0 text-accent"><ToolIcon name="alerts" className="h-5 w-5" /></span>
-                                                <span>{t('nav.notifications')}{unreadCount > 0 && ` (${unreadCount})`}</span>
-                                            </Link>
-                                            </li>
-                                            {auth.user.isAdmin && (
-                                                <li>
-                                                    <a href="/admin" className="flex min-h-11 items-center gap-2.5 py-2">
-                                                        <span className="shrink-0 text-accent"><ToolIcon name="admin" className="h-5 w-5" /></span>
-                                                        <span>{t('nav.admin')}</span>
-                                                    </a>
-                                                </li>
-                                            )}
-                                            <li>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setMenuOpen(false)
-                                                        router.post(`${base}/logout`)
-                                                    }}
-                                                    className="flex min-h-11 items-center gap-2.5 py-2 w-full text-left"
-                                                >
-                                                    <span className="shrink-0 text-accent"><ToolIcon name="signout" className="h-5 w-5" /></span>
-                                                    <span>{t('nav.sign_out')}</span>
-                                                </button>
-                                            </li>
-                                        </>
-                                    ) : (
-                                        <li>
-                                            <SignInLink onNavigate={() => setMenuOpen(false)} className="flex min-h-11 items-center gap-2.5 py-2">
-                                                <span className="shrink-0 text-accent"><ToolIcon name="signin" className="h-5 w-5" /></span>
-                                                <span>{t('nav.sign_in')}</span>
-                                            </SignInLink>
-                                        </li>
-                                    )}
-                                </ul>
-                            </div>
+                            {/* No account block here since 2026-09-13: it is
+                                the person button's own sheet, `AccountSheet`,
+                                where My Lists and the rest are one tap from
+                                the header instead of a scroll to the foot. */}
                         </nav>
 
                         {/*
