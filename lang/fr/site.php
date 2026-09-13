@@ -119,25 +119,6 @@ return [
         'cove_kind_brand' => 'Marque',
         'cove_kind_shop' => 'Boutique',
         'coves_volume' => ':count recherches par mois',
-        /*
-         * The card for your own lists, which used to say nothing at all: the
-         * band's opening sentence covered all five cards and this one was the
-         * only card left leaning on it. With that sentence gone the card has to
-         * say what it is, and privacy is the part a first-time visitor is
-         * actually unsure about.
-         */
-        'organise_mine_hint' => 'Ce que vous voulez pour vous, à un seul endroit et privé tant que vous n’envoyez le lien à personne.',
-        'organise_group_hint' => 'Un cadeau, plusieurs personnes, et personne ne court après l’argent.',
-        'organise_occasion' => 'Occasion',
-        'organise_occasion_hint' => 'Mettez une date sur une liste — un anniversaire, un mariage, Noël — et tous ceux qui ont le lien savent à quoi elle sert.',
-        'organise_registry_on' => ':occasion le :date',
-        'gifting_lists' => 'Listes',
-        'gifting_lists_count' => 'Vous avez :count listes',
-        'gifting_lists_one' => 'Vous avez une liste',
-        'gifting_santa' => 'Ami Secret',
-        'gifting_santa_hint' => 'Un groupe, un tirage, personne ne sait qui a qui.',
-        'gifting_santa_one' => '1 ami secret',
-        'gifting_santa_count' => ':count amis secrets',
     ],
 
     'search' => [

@@ -118,25 +118,6 @@ return [
         'cove_kind_brand' => 'Merk',
         'cove_kind_shop' => 'Winkel',
         'coves_volume' => ':count zoekopdrachten per maand',
-        /*
-         * The card for your own lists, which used to say nothing at all: the
-         * band's opening sentence covered all five cards and this one was the
-         * only card left leaning on it. With that sentence gone the card has to
-         * say what it is, and privacy is the part a first-time visitor is
-         * actually unsure about.
-         */
-        'organise_mine_hint' => 'Wat je zelf wilt hebben, op één plek en privé tot je iemand de link stuurt.',
-        'organise_group_hint' => 'Eén cadeau, meerdere mensen, en niemand hoeft achter het geld aan.',
-        'organise_occasion' => 'Gelegenheid',
-        'organise_occasion_hint' => 'Zet een datum op een lijst — een verjaardag, een huwelijk, Kerst — en iedereen met de link weet waarvoor hij is.',
-        'organise_registry_on' => ':occasion op :date',
-        'gifting_lists' => 'Lijstjes',
-        'gifting_lists_count' => 'Je hebt :count lijstjes',
-        'gifting_lists_one' => 'Je hebt één lijstje',
-        'gifting_santa' => 'Geheime Vriend',
-        'gifting_santa_hint' => 'Een groep, een trekking, niemand weet wie aan wie geeft.',
-        'gifting_santa_one' => '1 geheime vriend',
-        'gifting_santa_count' => ':count geheime vrienden',
     ],
 
     'search' => [

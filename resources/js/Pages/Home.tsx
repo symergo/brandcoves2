@@ -1,12 +1,9 @@
 import { Head, Link, usePage } from '@inertiajs/react'
-import { useEffect, useState } from 'react'
 import type { CoveSceneKey } from '../Components/CoveIllustration'
 import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import HomeIllustration from '../Components/HomeIllustration'
-import InfoTip from '../Components/InfoTip'
-import ListIllustration, { type ListSceneKey } from '../Components/ListIllustration'
-import NewListButton from '../Components/NewListButton'
+import ListWizard, { type WizardOffer } from '../Components/ListWizard'
 import type { SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
 import SearchCard from '../Components/SearchCard'
@@ -42,104 +39,20 @@ interface Props {
         url: string
         finds: { id: number; title: string; image: string | null; price: number | null; url: string }[]
     } | null
-    gifting: {
-        lists: number
-        people: number
-        santaGroups: number
-        /**
-         * The visitor's own registry, or null when they have none. Carries the
-         * occasion and the date and deliberately no claim state — this is the
-         * owner's front page (invariant #4).
-         */
-        registry: {
-            title: string
-            occasion: string
-            date: string | null
-            /** The recipient, on a list about somebody else. Null on your own. */
-            for: string | null
-            url: string
-        } | null
-        urls: { gift: string; lists: string; santa: string }
-    }
+    signedIn: boolean
+    /** Everything the list wizard offers, in the shape My Lists and the Gift Cove send it. */
+    recipients: WizardOffer['recipients']
+    friends: WizardOffer['friends']
+    occasions: WizardOffer['occasions']
+    myLists: WizardOffer['myLists']
     personas: Persona[]
     coves: Cove[]
 }
 
-export default function Home({ today, gifting, personas, coves }: Props) {
+export default function Home({ today, signedIn, recipients, friends, occasions, myLists, personas, coves }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
-
-    /*
-     * The kind chooser under "Make a new list".
-     *
-     * Making a list is the one thing here that is awkward to undo: the three
-     * kinds differ in who may claim, who may vote and who sees the money, none
-     * of which is recoverable from the words "new list", and somebody who picks
-     * wrong finds out weeks later when the mechanism they wanted is not on the
-     * page. `Lists/Index` reaches the same conclusion and shows the same three
-     * cards in its create form — each choice here deep-links to `?new=<kind>`,
-     * which that page reads to open its form already on that shape. A shortcut
-     * into the one create form, not a second one.
-     *
-     * A disclosure rather than a floating menu. This sits at the top of a phone
-     * screen, so a popover anchored under it has nowhere to go but over the
-     * search field it is standing above, and a menu that covers the thing you
-     * were about to use is worse than one that moves it down.
-     */
-    const [pickingKind, setPickingKind] = useState(false)
-
-    /*
-     * The wizard's own sentences (`wizard.kind_*_body`), not a second set
-     * written for the home page: this is a preview of its first step, and a
-     * preview that describes the choice differently is a second opinion.
-     */
-    const kindChoices = [
-        { kind: 'mine', href: `${base}/lists?new=mine`, label: t('lists.for_me'), body: t('wizard.kind_mine_body') },
-        {
-            kind: 'for_someone',
-            href: `${base}/lists?new=for_someone`,
-            label: t('lists.for_someone_else'),
-            body: t('wizard.kind_for_someone_body'),
-        },
-        { kind: 'group', href: `${base}/lists?new=group`, label: t('lists.for_group'), body: t('wizard.kind_group_body') },
-        /*
-         * Secret Friend, fourth (added 2026-09-12 at the owner's request).
-         * Not a list kind — it is a group with a draw — but it is the fourth
-         * thing somebody pressing "make a new list" may have meant, and the
-         * wizard makes one since the same day, so this deep-links into it
-         * like the other three.
-         */
-        { kind: 'santa', href: `${base}/lists?new=santa`, label: t('santa.title'), body: t('santa.subtitle') },
-    ]
-
-    useEffect(() => {
-        if (!pickingKind) return
-
-        const escape = (e: KeyboardEvent) => e.key === 'Escape' && setPickingKind(false)
-        document.addEventListener('keydown', escape)
-
-        return () => document.removeEventListener('keydown', escape)
-    }, [pickingKind])
-
-    /*
-     * Day and month, plus the year only when it is not this one.
-     *
-     * A registry is often dated a long way out — a wedding gets booked eighteen
-     * months ahead — and "14 Jun" for a date in 2027 is wrong in the one
-     * direction that matters here. Adding the year to every date instead makes
-     * the ordinary case heavier than it needs to be.
-     */
-    function registryDate(iso: string): string {
-        const date = new Date(iso)
-        const thisYear = date.getFullYear() === new Date().getFullYear()
-
-        return new Intl.DateTimeFormat(market.hrefLang, {
-            day: 'numeric',
-            month: 'short',
-            ...(thisYear ? {} : { year: 'numeric' }),
-        }).format(date)
-    }
 
     return (
         <>
@@ -315,230 +228,29 @@ export default function Home({ today, gifting, personas, coves }: Props) {
             )}
 
             {/*
-              The Organise band — the front-page half of the header's Organise
-              verb, and it mirrors that menu entry for entry.
+              Making a list, right here (owner's call, 2026-09-13).
 
-              It replaced a "Buying for someone else" band offering the Gift
-              Finder, Lists and Secret Santa. That heading described only half
-              of what is here: three of these four are equally about lists you
-              keep for yourself, and the site's own pitch two bands above now
-              says "yourself included". The Gift Finder moved out entirely — it
-              suggests things rather than organising them, and it already has
-              the primary CTA in the pitch.
-
-              Counts where the visitor has something, hints where they do not.
-              "3 lists" is a reason to click; "make a list" stops being one the
-              moment lists exist.
+              This was the Organise band: a heading, a "Make a new list"
+              button that unfolded four kinds, and five cards into lists that
+              already exist. The wizard those four kinds led to lives on My
+              Lists and the Gift Cove; the front page now mounts it under the
+              button's own words, so making a list is one step from the
+              pitch that promised it, and the cards into existing lists are
+              where the header's Make a list entry already goes.
             */}
-            {/*
-              `mt-14` from `sm` up, `mt-10` below it.
-
-              56px between bands is read at arm's length on a desktop and at
-              20cm on a phone, where it is a seventh of the screen. Five of
-              these gaps down the page is most of a screenful spent on nothing,
-              on the device that has the least of it. The gap still has to be
-              bigger than the 16px between cards inside a band, or the bands
-              stop being bands — 40px is.
-            */}
-            <section className="mt-10 sm:mt-14" aria-labelledby="organise-heading">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 id="organise-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
-                        {t('nav.organise')}
-                    </h2>
-                    <Link
-                        href={`${base}/gift-cove`}
-                        className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
-                    >
-                        {t('nav.cove')} →
-                    </Link>
-                </div>
-
-                {/*
-                  Making a list, offered as an action rather than only as a
-                  side effect.
-
-                  Every route to a new list used to run through a product: find
-                  something, save it, and the list appears underneath. That
-                  works for somebody who already knows what they want and not at
-                  all for somebody starting a birthday. The five cards below are
-                  all doors into lists that already exist; this is the one that
-                  makes one. The button itself is `NewListButton`, shared with
-                  My Lists so the two pages show one button.
-                */}
+            <section className="mt-10 sm:mt-14" aria-labelledby="new-list-heading">
+                <h2 id="new-list-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
+                    {t('lists.make_new')}
+                </h2>
                 <div className="mt-4">
-                    <NewListButton
-                        open={pickingKind}
-                        onToggle={() => setPickingKind((v) => !v)}
-                        controls="new-list-kinds"
+                    <ListWizard
+                        signedIn={signedIn}
+                        recipients={recipients}
+                        friends={friends}
+                        occasions={occasions}
+                        myLists={myLists}
                     />
-
-                    {pickingKind && (
-                        <div
-                            id="new-list-kinds"
-                            className="mt-3 rounded-card border border-accent/40 bg-accent/5 p-5 sm:p-6"
-                        >
-                            {/*
-                              The same three cards as the first step of the
-                              wizard on the Gift Cove page, and the same words
-                              behind the same info icon. Two surfaces asking one
-                              question should look like one question: a reader
-                              who has met the wizard recognises this at a
-                              glance, and one who meets this first finds the
-                              wizard already familiar. The label carries the
-                              card; the sentence per kind sits in the tip, as
-                              every explanation on the site does.
-                            */}
-                            <p className="font-medium">
-                                {t('lists.for_whom')}
-                                <InfoTip className="ml-1">
-                                    <span className="block">{t('wizard.kind_hint')}</span>
-                                    {kindChoices.map((choice) => (
-                                        <span key={choice.kind} className="mt-2 block">
-                                            <span className="font-medium text-ink">{choice.label}</span> — {choice.body}
-                                        </span>
-                                    ))}
-                                </InfoTip>
-                            </p>
-
-                            {/*
-                              One column on a phone, two from `sm`, four from
-                              `lg`: the wizard's three cards plus Secret Friend.
-                            */}
-                            {/* Two by two from `sm`, four across from `lg`:
-                                four cards in three columns leaves a widow. */}
-                            <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                {kindChoices.map((choice) => (
-                                    <li key={choice.kind}>
-                                        <Link
-                                            href={choice.href}
-                                            className="block rounded-card border border-line bg-card p-4 text-left font-medium transition hover:border-ink"
-                                        >
-                                            {choice.label}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
                 </div>
-
-                {/* Five across at desktop rather than four-plus-a-widow. The
-                    cards are illustration-led and scale down happily; a lone
-                    fifth on its own row reads as an afterthought bolted on. */}
-                <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                    {(
-                        [
-                            {
-                                key: 'mine',
-                                href: gifting.urls.lists,
-                                name: t('nav.lists'),
-                                // A count once there are lists, and what the
-                                // card is for until then — the same shape the
-                                // Secret Friend card below uses. The earlier
-                                // fallback here was nothing at all, which was
-                                // right while the band opened with a sentence
-                                // covering all five cards; that sentence is
-                                // gone, so this card carries its own.
-                                hint: gifting.lists === 1
-                                    ? t('home.gifting_lists_one')
-                                    : gifting.lists > 0
-                                    ? t('home.gifting_lists_count', { count: n(gifting.lists) })
-                                    : t('home.organise_mine_hint'),
-                            },
-                            {
-                                key: 'shared',
-                                href: `${gifting.urls.lists}?view=shared`,
-                                name: t('nav.shared_lists'),
-                                hint: t('lists.shared_subtitle'),
-                            },
-                            {
-                                key: 'group',
-                                href: `${gifting.urls.lists}?view=group`,
-                                name: t('nav.group_lists'),
-                                hint: t('home.organise_group_hint'),
-                            },
-                            {
-                                key: 'santa',
-                                href: gifting.urls.santa,
-                                name: t('nav.santa'),
-                                hint:
-                                    // "1 vriend", "3 vrienden": the translator has no
-                                    // plural forms, so the singular is its own string,
-                                    // as the lists card does (owner's request, 2026-09-13).
-                                    gifting.santaGroups === 1
-                                        ? t('home.gifting_santa_one')
-                                        : gifting.santaGroups > 0
-                                        ? t('home.gifting_santa_count', { count: n(gifting.santaGroups) })
-                                        : t('home.gifting_santa_hint'),
-                            },
-                            /*
-                              A registry is a wish list with an occasion and a
-                              date on it, so the card leads to that list rather
-                              than to a surface of its own — there isn't one, and
-                              inventing a URL for a thing that is really a panel
-                              on your own list is how two names for one page
-                              start.
-                            */
-                            {
-                                key: 'registry',
-                                href: gifting.registry?.url ?? gifting.urls.lists,
-                                name: t('home.organise_occasion'),
-                                /*
-                                 * Names the person when the occasion is not the
-                                 * visitor's own. "Wedding on 14 June" on a list
-                                 * about your father reads as though you are the
-                                 * one getting married.
-                                 */
-                                hint: gifting.registry
-                                    ? [
-                                          gifting.registry.date
-                                              ? t('home.organise_registry_on', {
-                                                    occasion: gifting.registry.occasion,
-                                                    date: registryDate(gifting.registry.date),
-                                                })
-                                              : gifting.registry.occasion,
-                                          gifting.registry.for,
-                                      ]
-                                          .filter(Boolean)
-                                          .join(' · ')
-                                    : t('home.organise_occasion_hint'),
-                            },
-                        ] as { key: ListSceneKey; href: string; name: string; hint: string }[]
-                    ).map((tool) => (
-                        <li key={tool.key}>
-                            {/*
-                              A row on a phone, the illustration-led card from
-                              `sm` up.
-
-                              Stacked, these five cards ran 226px each — 96px of
-                              it artwork — and this section plus Discover came to
-                              54% of the whole page: three screens of navigation
-                              before a phone reader reached any content at all.
-                              Laid on their side the art still reads at a glance
-                              and the card is about a third of the height.
-
-                              The SVG keeps its 160x116 viewBox and its default
-                              `preserveAspectRatio`, so the small box letterboxes
-                              it rather than squashing it.
-                            */}
-                            <Link
-                                href={tool.href}
-                                className="flex h-full flex-row items-center gap-4 rounded-card border border-line bg-card p-4 text-ink transition hover:border-ink hover:text-accent sm:flex-col sm:items-stretch sm:gap-0 sm:p-5"
-                            >
-                                <ListIllustration
-                                    name={tool.key}
-                                    className="h-12 w-16 shrink-0 sm:h-24 sm:w-full"
-                                />
-                                <div className="min-w-0 sm:mt-4">
-                                    <h3 className="font-medium">{tool.name}</h3>
-                                    {tool.hint && (
-                                        <p className="mt-1 text-sm text-ink-soft sm:mt-2">{tool.hint}</p>
-                                    )}
-                                </div>
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
             </section>
 
             {/*

@@ -474,3 +474,20 @@ had drifted below the two card bands, a screen and a half down on a phone, which
 rule this document already stated: the thing that makes somebody return tomorrow should not be
 that deep. The search card answers the visitor who knows what they want; the edition answers the
 one who does not, and the signup keeps them. Nothing inside the bands changed.
+
+## The list wizard where the Organise band was (2026-09-13)
+
+At the owner's request the Organise band is gone and the list wizard sits in its place, under the
+heading "Make a new list" (`lists.make_new`, the words the band's own button carried). The band was
+a heading, that button unfolding four kinds, and five cards into lists that already exist, with
+counts and a registry card. The wizard those four kinds led to lives on My Lists and the Gift Cove;
+the front page now mounts the same component, fed by the same `WizardOffer`, so making a list is
+one step from the pitch that promised it. The cards into existing lists are where the header's
+Make a list entry already goes.
+
+With the band went `HomeController::gifting()` and `registry()`, the `home.organise_*` and
+`home.gifting_*` copy in four languages, and `HomeRegistryTest`, whose subject was the registry
+card. The section "The Organise band gained a registry card" above describes a card that no longer
+exists; the invariant it cites (#4, no claim state on the owner's front page) still binds anything
+that returns there. `HomeListWizardTest` pins that the front page feeds the wizard what My Lists
+feeds it.

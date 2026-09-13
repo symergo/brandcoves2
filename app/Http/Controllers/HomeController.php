@@ -7,10 +7,8 @@ namespace App\Http\Controllers;
 use App\Enums\CoveKind;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
-use App\Models\Recipient;
-use App\Models\SecretSantaGroup;
-use App\Models\Wishlist;
 use App\Services\Seo\PageMeta;
+use App\Services\Wishlist\WizardOffer;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
@@ -19,7 +17,7 @@ use Inertia\Response;
 
 class HomeController extends Controller
 {
-    public function __invoke(Request $request, CurrentMarket $current): Response
+    public function __invoke(Request $request, CurrentMarket $current, WizardOffer $offer): Response
     {
         /*
          * No catalogue counters.
@@ -40,6 +38,8 @@ class HomeController extends Controller
             canonical: url($current->url()),
         );
 
+        $owner = Owner::fromRequest($request);
+
         return Inertia::render('Home', [
             /*
              * Today's Cove, on the front page.
@@ -52,20 +52,13 @@ class HomeController extends Controller
             'today' => $this->today($current),
 
             /*
-             * The gifting band.
-             *
-             * The homepage said "you don't know what you want, you know who it's
-             * for" and then offered exactly one way to act on it. Everything
-             * else gifting can do — a list somebody else fills in, a Secret
-             * Santa, a quiz over a list — was reachable only by already knowing
-             * the URL, which is how v1 shipped its gift finder unlinked and
-             * unreachable for two months.
-             *
-             * Counts rather than prose where the visitor already has something:
-             * "3 lists" is a reason to click and "Make a list" is not, once the
-             * lists exist.
+             * The list wizard, on the front page (owner's call, 2026-09-13),
+             * where the Organise band and its counts were. Same shape My
+             * Lists and the Gift Cove send, from the same service, so the
+             * three pages mount one wizard.
              */
-            'gifting' => $this->gifting($request, $current),
+            'signedIn' => $owner->isSignedIn(),
+            ...$offer->for($owner, $request->user(), $current->get()),
 
             /*
              * The shelf of people, which the front page never showed.
@@ -90,117 +83,6 @@ class HomeController extends Controller
             // exists at all.
             'coves' => $this->coves($current),
         ]);
-    }
-
-    /**
-     * The four ways in, and what this visitor already has.
-     *
-     * @return array<string, mixed>
-     */
-    private function gifting(Request $request, CurrentMarket $current): array
-    {
-        $owner = Owner::fromRequest($request);
-        $user = $request->user();
-
-        return [
-            // Anonymous-first, exactly like the lists themselves: someone who
-            // saved a product before signing up should see it here.
-            'lists' => $owner->exists()
-                ? $owner->scope(Wishlist::query())
-                    ->where('market', $current->value())
-                    ->count()
-                : 0,
-
-            'people' => $owner->exists()
-                ? $owner->scope(Recipient::query())->count()
-                : 0,
-
-            // Signed-in only: a group has to belong to somebody who can be
-            // reached when the draw happens.
-            'santaGroups' => $user === null
-                ? 0
-                : SecretSantaGroup::query()
-                    ->where('market', $current->value())
-                    ->where('owner_user_id', $user->id)
-                    ->count(),
-
-            // A registry, if this visitor has one. Null is the ordinary case,
-            // and the card then explains what one is instead of naming it.
-            'registry' => $this->registry($owner, $current),
-
-            'urls' => [
-                'gift' => $current->url('gift'),
-                'lists' => $current->url('lists'),
-                'santa' => $current->url('santa'),
-            ],
-        ];
-    }
-
-    /**
-     * The next occasion the visitor is buying towards, on any list of theirs.
-     *
-     * **This was "the visitor's own registry", and the query has not changed —
-     * the world under it has.** It has always looked for `event_type` rather
-     * than for a kind, on the correct reasoning that a registry is not a fourth
-     * kind of list. Once an occasion could be set on a list *about somebody
-     * else*, that same query started returning gift lists, and the card calling
-     * one "your registry" would tell somebody their research about their father
-     * was a wedding list of their own.
-     *
-     * So the card is about the occasion now, which is the more useful nudge in
-     * any case: a birthday you are shopping for beats a registry most people
-     * never create. `kind` rides along so the copy can tell the two apart.
-     *
-     * The **soonest upcoming** one, not the newest. A registry is a date people
-     * are buying towards, and last summer's wedding is not the one you are
-     * still adding to — while a list with a date in the past is exactly the one
-     * that should stop occupying the front page. Past dates are excluded
-     * outright; a registry with no date at all still counts, because the
-     * occasion alone is enough to make it one.
-     *
-     * Carries no claim state of any kind. This is the owner's own front page
-     * (invariant #4), so it says what the list is *for* and never how much of
-     * it has been bought.
-     *
-     * @return array<string, mixed>|null
-     */
-    private function registry(Owner $owner, CurrentMarket $current): ?array
-    {
-        if (! $owner->exists()) {
-            return null;
-        }
-
-        $registry = $owner->scope(Wishlist::query())
-            ->with('recipient')
-            ->where('market', $current->value())
-            ->whereNotNull('event_type')
-            ->where(fn ($q) => $q
-                ->whereNull('event_date')
-                ->orWhere('event_date', '>=', now()->toDateString()))
-            // Nulls last, so a dated registry outranks an undated one rather
-            // than losing to it on an ORDER BY that treats null as smallest.
-            ->orderByRaw('event_date IS NULL, event_date')
-            ->first();
-
-        if ($registry === null) {
-            return null;
-        }
-
-        return [
-            'title' => $registry->displayTitle(),
-            'occasion' => $registry->event_type->label(),
-            'date' => $registry->event_date?->toDateString(),
-
-            /*
-             * Whose occasion it is, so the card can say "Dad's birthday" rather
-             * than implying the visitor is the one being bought for. Null on a
-             * wish list of their own, where the answer is them.
-             */
-            'for' => $registry->kind->isForSomeoneElse()
-                ? $registry->recipient?->name
-                : null,
-            'url' => $current->url("lists/{$registry->id}"),
-        ];
     }
 
     /** @return array<string, mixed>|null */

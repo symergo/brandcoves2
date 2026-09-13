@@ -163,28 +163,6 @@ return [
         'cove_kind_brand' => 'Brand',
         'cove_kind_shop' => 'Shop',
         'coves_volume' => ':count searches a month',
-        /*
-         * The card for your own lists, which used to say nothing at all: the
-         * band's opening sentence covered all five cards and this one was the
-         * only card left leaning on it. With that sentence gone the card has to
-         * say what it is, and privacy is the part a first-time visitor is
-         * actually unsure about.
-         */
-        'organise_mine_hint' => 'What you want yourself, kept in one place and private until you send somebody the link.',
-        'organise_group_hint' => 'One present, several people, and nobody has to chase anyone for the money.',
-        // The card says what a registry IS to somebody who has none, and which
-        // one theirs is to somebody who has. Never how much of it has been
-        // bought — this is the owner's own front page (invariant #4).
-        'organise_occasion' => 'Occasion',
-        'organise_occasion_hint' => 'Put a date on a list — a birthday, a wedding, Christmas — and everyone with the link knows what it is for.',
-        'organise_registry_on' => ':occasion on :date',
-        'gifting_lists' => 'Lists',
-        'gifting_lists_count' => 'You have :count lists',
-        'gifting_lists_one' => 'You have one list',
-        'gifting_santa' => 'Secret Friend',
-        'gifting_santa_hint' => 'One group, one draw, nobody knows who has who.',
-        'gifting_santa_one' => '1 secret friend',
-        'gifting_santa_count' => ':count secret friends',
     ],
 
     'search' => [
