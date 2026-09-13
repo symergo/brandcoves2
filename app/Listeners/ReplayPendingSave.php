@@ -39,9 +39,9 @@ class ReplayPendingSave
             return;
         }
 
-        $list = $this->pending->replayFor($user, $this->saver, $this->lists);
+        $replay = $this->pending->replayFor($user, $this->saver, $this->lists);
 
-        if ($list === null) {
+        if ($replay === null) {
             return;
         }
 
@@ -53,6 +53,8 @@ class ReplayPendingSave
          * has already had reason to doubt. It names the list for the same
          * reason every other confirmation does.
          */
-        session()->flash('success', __('site.lists.added_to', ['list' => $list]));
+        // In the language of the market the save belongs to, which is where
+        // the visitor lands next; see PendingSave::replayFor().
+        session()->flash('success', trans('site.lists.added_to', ['list' => $replay['title']], $replay['language']));
     }
 }

@@ -88,10 +88,16 @@ class PendingSave
      * and asking them to make a second one after a detour through an inbox is
      * how the first decision gets abandoned.
      *
-     * Returns the list's title so the caller can say where it went, or null
-     * when there was nothing to do.
+     * Returns the list's title and the language to say it in, or null when
+     * there was nothing to do. The language is the pending market's, not the
+     * sign-in request's: the visitor is sent on to the page they left, which
+     * is in that market, and a "Saved to" flashed under whatever locale the
+     * login ran in (the admin's, a magic link opened from another market)
+     * reads in the wrong language on arrival (owner, 2026-09-13).
+     *
+     * @return array{title: string, language: string}|null
      */
-    public function replayFor(User $user, ItemSaver $saver, DefaultList $lists): ?string
+    public function replayFor(User $user, ItemSaver $saver, DefaultList $lists): ?array
     {
         $pending = $this->session->get(self::KEY);
 
@@ -133,7 +139,7 @@ class PendingSave
 
             $saver->saveGroup($list, $group, $current);
 
-            return $list->displayTitle();
+            return ['title' => $list->displayTitle($market->language()), 'language' => $market->language()];
         }
 
         $source = Source::tryFrom((string) ($payload['source'] ?? ''));
@@ -159,6 +165,6 @@ class PendingSave
             ],
         );
 
-        return $list->displayTitle();
+        return ['title' => $list->displayTitle($market->language()), 'language' => $market->language()];
     }
 }
