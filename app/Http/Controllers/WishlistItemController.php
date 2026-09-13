@@ -24,6 +24,7 @@ use App\Support\Owner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class WishlistItemController extends Controller
@@ -39,6 +40,21 @@ class WishlistItemController extends Controller
      * Ids only, and only for this market, so the payload stays small enough to
      * fetch once and hold. Any list of yours counts: a thing on your research
      * list for your mother is still a thing you have already found.
+     *
+     * ## A product saved on another market's catalogue counts too
+     *
+     * Product identity is scoped to the market (invariant #2): the same thing
+     * on `be-nl` and `nl-nl` is two `product_groups` rows with two ids. The
+     * ids here used to be only the current market's, so a product saved from
+     * the Belgian catalogue showed an empty bookmark on its Dutch page, and
+     * the owner met exactly that on 2026-09-13, the day the country prompt
+     * started sending people to one market while their saves sat on another.
+     * "Have I kept this?" is a question about the thing, not the catalogue,
+     * so since then the saved products' identity keys are matched against
+     * the current market and the twins are reported under *this* market's
+     * ids. Prices and offers stay market-scoped; only the bookmark reads
+     * across. The holders still name the row that was actually saved, so
+     * unticking removes that row, whichever market's group it holds.
      *
      * ## `?list=` — the same question about one list
      *
@@ -59,31 +75,27 @@ class WishlistItemController extends Controller
             return response()->json(['groupIds' => [], 'holders' => (object) []]);
         }
 
+        /*
+         * Every accepted product row on any list of this owner, whatever
+         * market the product came from. A wish list is not scoped to a
+         * market: one person keeps one list and shops from wherever they
+         * happen to be, so a list made on `nl-nl` holds `be-fr` products
+         * quite normally. The market comes in below, when each row is
+         * translated to the id it has *here*.
+         */
         $rows = WishlistItem::query()
             ->whereNotNull('group_id')
             ->whereNotNull('accepted_at')
             ->whereHas('wishlist', fn ($q) => $owner->scope($q))
-            /*
-             * Narrowed by the **product's** market, not the list's.
-             *
-             * These ids are matched against the group ids on the cards of the
-             * page asking, and `product_groups` is unique on `(market,
-             * identity_key)` — so an id from another market can never light a
-             * badge here and is only weight in the payload. That much the old
-             * filter also achieved.
-             *
-             * What it got wrong is which row it asked about. A wish list is
-             * not scoped to a market: one person keeps one list and shops from
-             * wherever they happen to be, so a list made on `nl-nl` holds
-             * `be-fr` products quite normally. Filtering on `wishlists.market`
-             * dropped every one of those, and the bookmark on a product they
-             * had saved a week ago rendered empty — offering to save it a
-             * second time onto the list it was already on.
-             */
-            ->whereHas('group', fn ($q) => $q->where('market', $current->value()))
+            ->with('group:id,market,identity_key')
             ->get(['id', 'group_id', 'wishlist_id']);
 
-        $ids = $rows->pluck('group_id')->unique()->values();
+        $here = $this->hereIds($rows, $current);
+
+        $ids = $rows->map(fn (WishlistItem $item) => $here[$item->group_id] ?? null)
+            ->filter()
+            ->unique()
+            ->values();
 
         /*
          * And *which* list holds each of them.
@@ -105,7 +117,8 @@ class WishlistItemController extends Controller
          * each row needs the item id it would delete to untick itself.
          */
         $holders = $rows
-            ->groupBy('group_id')
+            ->filter(fn (WishlistItem $item) => isset($here[$item->group_id]))
+            ->groupBy(fn (WishlistItem $item) => $here[$item->group_id])
             ->map(fn ($items) => $items
                 ->map(fn (WishlistItem $item): array => [
                     'listId' => $item->wishlist_id,
@@ -119,17 +132,70 @@ class WishlistItemController extends Controller
             return response()->json(['groupIds' => $ids, 'holders' => $holders]);
         }
 
-        $onList = ListAccess::scope(Wishlist::query(), $owner)->whereKey($list)->exists()
-            ? WishlistItem::query()
-                ->where('wishlist_id', $list)
-                ->whereNotNull('group_id')
-                ->whereNotNull('accepted_at')
-                ->pluck('group_id')
-                ->unique()
-                ->values()
-            : collect();
+        if (! ListAccess::scope(Wishlist::query(), $owner)->whereKey($list)->exists()) {
+            return response()->json(['groupIds' => $ids, 'holders' => $holders, 'listGroupIds' => []]);
+        }
+
+        // The list being filled may be one the owner can edit but does not
+        // own, so its rows are read on their own, then translated the same way.
+        $listRows = WishlistItem::query()
+            ->where('wishlist_id', $list)
+            ->whereNotNull('group_id')
+            ->whereNotNull('accepted_at')
+            ->with('group:id,market,identity_key')
+            ->get(['id', 'group_id', 'wishlist_id']);
+
+        $listHere = $this->hereIds($listRows, $current);
+
+        $onList = $listRows->map(fn (WishlistItem $item) => $listHere[$item->group_id] ?? null)
+            ->filter()
+            ->unique()
+            ->values();
 
         return response()->json(['groupIds' => $ids, 'holders' => $holders, 'listGroupIds' => $onList]);
+    }
+
+    /**
+     * Each saved group's id in the current market: its own when it is from
+     * here, its twin's when the same product exists here under another id,
+     * and nothing when it does not. Twins are found by `identity_key`, the
+     * barcode for almost every product, through the unique index on
+     * `(market, identity_key)`: one query for all of them.
+     *
+     * @param  Collection<int, WishlistItem>  $rows
+     * @return array<int, int> saved group id => group id in this market
+     */
+    private function hereIds($rows, CurrentMarket $current): array
+    {
+        $here = [];
+        $elsewhere = [];
+
+        foreach ($rows as $item) {
+            if ($item->group === null) {
+                continue;
+            }
+
+            if ($item->group->market === $current->get()) {
+                $here[$item->group_id] = $item->group_id;
+            } else {
+                $elsewhere[$item->group->identity_key][] = $item->group_id;
+            }
+        }
+
+        if ($elsewhere !== []) {
+            $twins = ProductGroup::query()
+                ->where('market', $current->value())
+                ->whereIn('identity_key', array_keys($elsewhere))
+                ->pluck('id', 'identity_key');
+
+            foreach ($twins as $key => $twinId) {
+                foreach ($elsewhere[$key] as $savedId) {
+                    $here[$savedId] = (int) $twinId;
+                }
+            }
+        }
+
+        return $here;
     }
 
     /**

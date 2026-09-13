@@ -133,6 +133,50 @@ class MarketIndependentListsTest extends TestCase
     }
 
     #[Test]
+    public function the_saved_badge_lights_the_products_twin_in_the_market_being_read(): void
+    {
+        /*
+         * The same product on two catalogues is two groups with two ids
+         * (invariant #2). Saved from the Belgian one, its Dutch page showed
+         * an empty bookmark; the owner met that on 2026-09-13. The badge now
+         * answers about the thing: the twin is reported under the Dutch id,
+         * and the holder still names the Belgian row that was saved.
+         */
+        $user = User::factory()->create();
+        $belgian = $this->group(Market::BeNl);
+        $dutch = ProductGroup::factory()->create([
+            'market' => Market::NlNl,
+            'identity_key' => $belgian->identity_key,
+        ]);
+        $unrelated = $this->group(Market::NlNl);
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        $item = WishlistItem::factory()->of($belgian)->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs($user)
+            ->getJson('/nl-nl/saved-items')
+            ->assertJsonPath('groupIds', [$dutch->id])
+            ->assertJsonPath("holders.{$dutch->id}.0.listId", $list->id)
+            ->assertJsonPath("holders.{$dutch->id}.0.itemId", $item->id)
+            ->assertJsonMissingPath("holders.{$unrelated->id}");
+
+        // Read where it was saved, it is simply itself.
+        $this->actingAs($user)
+            ->getJson('/be-nl/saved-items')
+            ->assertJsonPath('groupIds', [$belgian->id]);
+
+        // Filling that list on the Dutch side: the twin counts there too.
+        $this->actingAs($user)
+            ->getJson("/nl-nl/saved-items?list={$list->id}")
+            ->assertJsonPath('listGroupIds', [$dutch->id]);
+    }
+
+    #[Test]
     public function an_item_links_to_its_own_market_not_the_readers(): void
     {
         $user = User::factory()->create();

@@ -278,6 +278,18 @@ list while hiding the ones just added. `GET /saved-items?list=` returns `listGro
 `ListAccess`, because asking "what is on this list" about a list you have no part in is a read of
 somebody's list membership and is gated like one.
 
+**The bookmark reads across markets (2026-09-13).** Product identity is market-scoped, so the same
+thing on `be-nl` and `nl-nl` is two group ids, and `/saved-items` used to return only the current
+market's ids: a product saved from the Belgian catalogue showed an empty bookmark on its Dutch page.
+The owner met exactly that the day the country prompt started sending people to one market while
+their saves sat on another. The endpoint now takes every accepted product row on the owner's lists,
+whatever market it came from, and translates each to the id it has in the market being read: its
+own when it is from here, its twin's (same `identity_key`, one query through the unique index)
+when the product exists here under another id, nothing when it does not. `groupIds`, `holders` and
+`listGroupIds` are all keyed by the current market's ids, and a holder still names the row that was
+actually saved, so unticking removes that row whichever market's group it holds. Prices and offers
+stay market-scoped; only "have I kept this?" reads across.
+
 The mode is a **default, not a lock**: the picker still reaches every list, and a save that names one
 goes there — which is why `markSaved()` takes an `onActiveList` flag. Saving to Books during a
 Camping run must not tick the bookmark, because the item is still not on Camping.
