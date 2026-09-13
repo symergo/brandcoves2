@@ -159,8 +159,7 @@ return [
         'submit' => 'Buscar',
         'searching' => 'Buscando…',
         'results_for' => 'Resultados para «:term»',
-        'like_your_lists' => 'Parecido a lo que guardaste',
-        'like_your_lists_hint' => 'Elegido según las marcas y categorías de tus listas. Busca para encontrar otra cosa.',
+        'like_your_lists' => 'Algunas sugerencias para ti…',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

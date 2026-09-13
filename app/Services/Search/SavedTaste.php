@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use App\Enums\Market;
 use App\Models\WishlistItem;
 use App\Support\Owner;
+use Illuminate\Support\Facades\DB;
 
 /**
- * What somebody's lists say they like: the brands and categories of the
- * products they saved, and the products themselves so they are not shown
- * again.
+ * What somebody's lists say they like: the words in the titles of what they
+ * saved, the brands behind those products, and the products themselves so
+ * they are not shown again.
  *
  * Read for the search landing (owner's request, 2026-09-13): `/search` with
  * no term showed everybody the same catalogue grid, led by whatever had the
@@ -18,56 +20,76 @@ use App\Support\Owner;
  * on the site that knows nothing about them. This is the taste the grid is
  * seeded from instead — see {@see SearchService::similarTo()}.
  *
- * Deliberately shallow. Brand and category are the two facts every product
- * group carries and the two a shopper would name themselves ("more Sony",
- * "more headphones"); anything cleverer would be a recommender, with its own
- * data, its own drift and its own explanations owed. The counts decide the
- * order, so the brand saved three times leads the one saved once.
+ * ## Titles, not categories
  *
- * Across markets: the saved product's market does not matter, a brand is a
- * brand on either side of the border, so a list built on `be-nl` seeds the
- * `nl-nl` landing too. The products themselves are excluded by identity key
- * for the same reason: the Dutch twin of a saved Belgian product is still
- * something already on the list.
+ * The first version matched on brand and category. The owner's list held a
+ * kids' backpack whose category is "Kids", and the landing filled with
+ * children's books; the book on subway art they also saved was an Amazon
+ * item with no catalogue product behind it and counted for nothing. A
+ * category is a shelf label — "Boek" covers a thousand products — and an
+ * audience like "Kids" is not even that. The title is what the person read
+ * when they chose the thing, so the title is what similarity is measured
+ * on: its words, stemmed by the same text configuration the search index
+ * uses, matched against the offers' search vectors. Every saved item has a
+ * title, catalogue or not, so the Amazon book counts too. Brand and
+ * category remain as tie-breakers only.
+ *
+ * Deliberately shallow beyond that: anything cleverer would be a recommender,
+ * with its own data, its own drift and its own explanations owed.
  */
 final readonly class SavedTaste
 {
-    /** Enough of each to have variety, few enough to still look chosen. */
+    /** Titles to read; a list longer than this says nothing sharper. */
+    private const TITLES = 30;
+
+    /** Enough brands to have variety, few enough to still look chosen. */
     private const TOP = 5;
 
+    /** Distinct title words to search on; more than this dilutes the ranking. */
+    private const LEXEMES = 60;
+
     /**
+     * @param  list<string>  $lexemes  stemmed words from the saved titles
      * @param  list<string>  $brands  most saved first
      * @param  list<string>  $categories  most saved first
      * @param  list<string>  $identityKeys  what is already on a list
      */
     private function __construct(
+        public array $lexemes,
         public array $brands,
         public array $categories,
         public array $identityKeys,
     ) {}
 
     /**
-     * Null when there is nothing to go on: no account, or no catalogue
-     * product on any list.
+     * Null when there is nothing to go on: no account, or nothing saved
+     * that has a title or a brand.
      */
-    public static function forOwner(Owner $owner): ?self
+    public static function forOwner(Owner $owner, Market $market): ?self
     {
         if (! $owner->isSignedIn()) {
             return null;
         }
 
-        $groups = WishlistItem::query()
-            ->whereNotNull('group_id')
+        $items = WishlistItem::query()
             ->whereNotNull('accepted_at')
             ->whereHas('wishlist', fn ($q) => $owner->scope($q))
-            ->with('group:id,brand,category,identity_key')
-            ->get(['id', 'group_id', 'wishlist_id'])
-            ->pluck('group')
-            ->filter();
+            ->with('group:id,title,brand,category,identity_key')
+            ->latest('id')
+            ->limit(self::TITLES)
+            ->get(['id', 'group_id', 'wishlist_id', 'snapshot_title']);
 
-        if ($groups->isEmpty()) {
+        if ($items->isEmpty()) {
             return null;
         }
+
+        $groups = $items->pluck('group')->filter();
+
+        $titles = $items
+            ->map(fn (WishlistItem $item) => trim((string) ($item->group?->title ?? $item->snapshot_title)))
+            ->filter()
+            ->unique()
+            ->values();
 
         $top = fn (string $column): array => $groups
             ->pluck($column)
@@ -79,17 +101,88 @@ final readonly class SavedTaste
             ->values()
             ->all();
 
+        $lexemes = self::lexemes($titles->all(), $market);
         $brands = $top('brand');
-        $categories = $top('category');
 
-        if ($brands === [] && $categories === []) {
+        if ($lexemes === [] && $brands === []) {
             return null;
         }
 
         return new self(
+            lexemes: $lexemes,
             brands: $brands,
-            categories: $categories,
+            categories: $top('category'),
             identityKeys: $groups->pluck('identity_key')->unique()->values()->all(),
         );
+    }
+
+    /**
+     * The words of the titles, as the index would store them.
+     *
+     * Run through Postgres rather than split in PHP, so a title is stemmed,
+     * unaccented and stripped of stop words by exactly the configuration the
+     * offers' search vectors were built with — "koptelefoons" and
+     * "koptelefoon" are one lexeme on both sides. The current market's
+     * configuration is used for every title, whichever market it was saved
+     * on: the stemmers differ little on product names, and the vectors being
+     * matched are this market's.
+     *
+     * Short and purely numeric tokens are dropped. A model number matches
+     * only its own product, and two-letter tokens match everything.
+     *
+     * @param  list<string>  $titles
+     * @return list<string>
+     */
+    private static function lexemes(array $titles, Market $market): array
+    {
+        if ($titles === []) {
+            return [];
+        }
+
+        $sql = implode(' UNION ALL ', array_fill(
+            0,
+            count($titles),
+            'SELECT unnest(tsvector_to_array(to_tsvector(bc_text_config(?), bc_unaccent(?)))) AS lexeme',
+        ));
+
+        $bindings = [];
+
+        foreach ($titles as $title) {
+            $bindings[] = $market->value;
+            $bindings[] = mb_substr($title, 0, 200);
+        }
+
+        $seen = [];
+
+        foreach (DB::select("SELECT lexeme, count(*) AS n FROM ({$sql}) t GROUP BY lexeme ORDER BY n DESC, lexeme", $bindings) as $row) {
+            $lexeme = (string) $row->lexeme;
+
+            if (mb_strlen($lexeme) < 3 || ctype_digit($lexeme)) {
+                continue;
+            }
+
+            $seen[] = $lexeme;
+
+            if (count($seen) >= self::LEXEMES) {
+                break;
+            }
+        }
+
+        return $seen;
+    }
+
+    /**
+     * The lexemes as one OR query, for `@@` and `ts_rank_cd`.
+     *
+     * Quoted, so a lexeme carrying a hyphen or a dot is one token; cast to
+     * `tsquery` rather than parsed by `to_tsquery`, because these are already
+     * normalised and a second pass through the stemmer would change them.
+     */
+    public function tsquery(): string
+    {
+        return implode(' | ', array_map(
+            fn (string $lexeme) => "'".str_replace(['\\', "'"], ['\\\\', "''"], $lexeme)."'",
+            $this->lexemes,
+        ));
     }
 }

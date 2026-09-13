@@ -159,8 +159,7 @@ return [
         'submit' => 'Zoeken',
         'searching' => 'Bezig met zoeken…',
         'results_for' => 'Resultaten voor ":term"',
-        'like_your_lists' => 'Lijkt op wat je bewaarde',
-        'like_your_lists_hint' => 'Gekozen bij de merken en categorieën op je lijstjes. Zoek om iets anders te vinden.',
+        'like_your_lists' => 'Enkele suggesties voor jou…',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

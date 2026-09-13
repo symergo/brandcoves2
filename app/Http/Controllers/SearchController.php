@@ -117,7 +117,7 @@ class SearchController extends Controller
          * products is not a grid, so the ordinary one comes back.
          */
         $taste = ! $query->hasTerm() && ! $query->hasFilters() && $query->sort === 'relevance' && $query->view === 'grid'
-            ? SavedTaste::forOwner(Owner::fromRequest($request))
+            ? SavedTaste::forOwner(Owner::fromRequest($request), $current->get())
             : null;
 
         $result = $taste === null ? $search->search($query) : $search->similarTo($query, $taste);

@@ -160,8 +160,7 @@ return [
         'submit' => 'Rechercher',
         'searching' => 'Recherche en cours…',
         'results_for' => 'Résultats pour « :term »',
-        'like_your_lists' => 'Dans l’esprit de vos listes',
-        'like_your_lists_hint' => 'Choisi d’après les marques et catégories de vos listes. Cherchez pour trouver autre chose.',
+        'like_your_lists' => 'Quelques suggestions pour vous…',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

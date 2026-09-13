@@ -604,22 +604,33 @@ request; the help stays in the footer and the phone sheet.
 ## The landing is led by what you saved (2026-09-13)
 
 At the owner's request. `/search` with no term is a catalogue grid, and it was the same grid for
-everybody, led by whatever had the most shops. For a signed-in visitor with catalogue products on a
-list it is led by the brands and categories of those products instead: `SavedTaste::forOwner()`
-reads the top five brands and top five categories of what they saved (across markets, a brand is a
-brand on either side of the border), `SearchService::similarTo()` runs the ordinary stored query
-narrowed to products sharing one of them, ranked by how many they share (both facts, then one)
-with the browse order breaking ties, and the saved products themselves are left out by identity
-key so a Dutch twin of a Belgian save does not come back as a suggestion. The page says so with the
-heading "Like what you saved" and a line naming the source and the way out (`search.like_your_lists`,
-`search.like_your_lists_hint`); `seeded` is `'lists'` or null.
+everybody, led by whatever had the most shops. For a signed-in visitor with things on a list it is
+led by products that echo what they saved.
+
+**Words, not categories.** The first cut matched on brand and category. The owner's list held a
+kids' backpack filed under "Kids", and the landing filled with children's books; the book on subway
+art they had also saved was an Amazon item with no catalogue product behind it and counted for
+nothing. A category is a shelf label ("Boek" covers a thousand products) and an audience like
+"Kids" is not even that. So `SavedTaste::forOwner()` now reads the **titles** of the last thirty
+saved items, catalogue or not, has Postgres stem them with the same text configuration the offers'
+search vectors use (`bc_text_config`, `bc_unaccent`), and keeps up to sixty distinct words. Brand
+stays as a second way in; category is a tie-breaker only.
+
+`SearchService::similarTo()` runs the ordinary stored query narrowed to products whose offers match
+those words (`search_vector @@ tsquery`, ids collected through the offers index the way a typed
+search does, since the vector lives on `products`; a description counts, at the weight the index
+gives it) or whose brand is a saved brand, ranked by the best offer's `ts_rank_cd` against the same
+query plus a small bonus for a shared brand (0.3) or category (0.15), then the browse order. The
+saved products themselves are left out by identity key, so a Dutch twin of a Belgian save does not
+come back as a suggestion. The page heads the grid "Enkele suggesties voor jou…"
+(`search.like_your_lists`; it first read "Like what you saved" with a line explaining the source,
+and the owner asked for the one short line instead); `seeded` is `'lists'` or null.
 
 Only the bare landing: a term, a filter, a sort or the shop view is a question of its own. And only
-when the match fills a row (`SEEDED_MINIMUM`, 4): fewer reads as a thin match dressed up as a
-page, so the ordinary grid comes back. Deliberately no recommender: brand and category are the two
-facts every group carries and the two a shopper would name themselves, and anything cleverer would
-be its own feature with its own drift. Live sources are not asked on this landing; there is no term
-to ask them with.
+when the match fills a row (`SEEDED_MINIMUM`, 4): fewer reads as a thin match dressed up as a page,
+so the ordinary grid comes back. Deliberately no recommender: anything cleverer would be its own
+feature with its own drift. Live sources are not asked on this landing; there is no term to ask
+them with.
 
 ## See also
 
