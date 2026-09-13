@@ -160,6 +160,8 @@ return [
         'searching' => 'Bezig met zoeken…',
         'results_for' => 'Resultaten voor ":term"',
         'like_your_lists' => 'Enkele suggesties voor jou…',
+        'live_heading' => 'Zojuist opgehaald',
+        'live_note' => 'Live opgehaald bij een winkel waarvan we de prijzen niet mogen bewaren, dus dit zijn losse aanbiedingen en geen volledige productpagina.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

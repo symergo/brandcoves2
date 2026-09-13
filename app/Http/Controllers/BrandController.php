@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
-use App\Models\Merchant;
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
 use App\Services\Cove\EntityRails;
@@ -22,6 +20,7 @@ use App\Services\Pages\Context\EntityCoveContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Pages\Regions\EntityCoveRegions;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Search\LiveOfferCard;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
@@ -197,7 +196,7 @@ class BrandController extends Controller
              * the ones nothing is allowed to write down, so they are rendered
              * from this request's own fetch and are gone when it ends.
              */
-            'liveOffers' => array_map($this->liveCard(...), $result->liveOffers),
+            'liveOffers' => array_map(LiveOfferCard::present(...), $result->liveOffers),
 
             /*
              * "Search this brand on Amazon too".
@@ -923,53 +922,6 @@ class BrandController extends Controller
                 $stat->brand,
                 url($current->url("brand/{$stat->slug}")),
             ));
-    }
-
-    /**
-     * An offer we may show but not store.
-     *
-     * Deliberately not a `GroupCard`: it has no group, no id, no offer count and
-     * no discount, because all four of those are things the catalogue computes
-     * for rows it holds. Rendering it through the same component would mean
-     * inventing them.
-     *
-     * `needsPriceTimestamp` and `directLink` carry the programme's own
-     * conditions to the page — an Amazon price must say when it was read, and an
-     * Associates link must be an unobscured anchor rather than a trip through
-     * `/go/`. Read off `Source` rather than hard-coded, so a second such source
-     * inherits its own answer.
-     *
-     * @return array<string, mixed>
-     */
-    private function liveCard(Offer $offer): array
-    {
-        return [
-            'title' => $offer->title,
-            'url' => $offer->affiliateUrl,
-            'image' => $offer->imageUrl,
-            'price' => $offer->price,
-            'merchant' => $offer->merchantName === null
-                    ? $offer->source->label()
-                    : Merchant::withoutCountrySuffix($offer->merchantName),
-
-            /*
-             * What it takes to keep one of these.
-             *
-             * `WishlistItemController::store()` has accepted `source` +
-             * `external_id` since live results became reachable, and
-             * `ItemSaver::saveExternal()` decides per source what may be
-             * stored — but this card emitted neither field, so the entire
-             * external-save path was unreachable from the one page that renders
-             * live offers. Passing the snapshot fields is safe because the
-             * server discards them for a source that may not be mirrored
-             * (invariant #6); they are hints, not instructions.
-             */
-            'source' => $offer->source->value,
-            'externalId' => $offer->externalId,
-            'inStock' => $offer->availability === Availability::InStock,
-            'needsPriceTimestamp' => $offer->source->requiresPriceTimestamp(),
-            'directLink' => $offer->source->requiresDirectLink(),
-        ];
     }
 
     /** @return array<string, mixed> */

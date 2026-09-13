@@ -3,6 +3,7 @@ import { useState } from 'react'
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
+import LiveOfferCard, { type LiveOffer } from '../Components/LiveOfferCard'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import SaveToList from '../Components/SaveToList'
 import type { SharedProps } from '../types'
@@ -48,19 +49,7 @@ interface Props {
      * discount measured against a previous price. Empty until the Amazon
      * connector is enabled; everything bol returns is already in the grid.
      */
-    liveOffers: {
-        title: string
-        url: string
-        image: string | null
-        price: number | null
-        merchant: string
-        inStock: boolean
-        needsPriceTimestamp: boolean
-        directLink: boolean
-        /** What it takes to keep one: the external-source save path. */
-        source: string
-        externalId: string
-    }[]
+    liveOffers: LiveOffer[]
     coves: { title: string; intro: string | null; url: string }[]
     /**
      * The Brand Cove, when somebody has written one.
@@ -551,93 +540,7 @@ export default function Brand({
 
                             <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
                                 {liveOffers.map((offer) => (
-                                    <li
-                                        key={offer.url}
-                                        className="flex flex-col overflow-hidden rounded-card border border-line bg-card transition hover:border-ink/30"
-                                    >
-                                        <div className="relative aspect-square overflow-hidden bg-cream">
-                                            {offer.image && (
-                                                <img
-                                                    src={offer.image}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    className="h-full w-full object-contain p-4"
-                                                    onError={(e) => {
-                                                        e.currentTarget.style.visibility = 'hidden'
-                                                    }}
-                                                />
-                                            )}
-
-                                            {/*
-                                              A live offer was the one product on
-                                              the site that could be looked at
-                                              and not kept. The whole external
-                                              save path — `source` +
-                                              `external_id`, and
-                                              `ItemSaver::saveExternal()` behind
-                                              it — was built and reachable from
-                                              no UI at all.
-
-                                              The snapshot fields are hints: the
-                                              server stores them only for a
-                                              source it is allowed to mirror, so
-                                              an Amazon offer keeps the decision
-                                              and nothing else (invariant #6).
-                                            */}
-                                            <div className="absolute right-2 bottom-2">
-                                                <SaveToList
-                                                    source={offer.source}
-                                                    externalId={offer.externalId}
-                                                    title={offer.title}
-                                                    imageUrl={offer.image}
-                                                    price={offer.price}
-                                                    compact
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-1 flex-col p-4">
-                                            <div className="text-xs tracking-wide text-ink-soft uppercase">
-                                                {offer.merchant}
-                                            </div>
-
-                                            <h3 className="mt-1 line-clamp-2 text-sm font-medium">
-                                                <a
-                                                    href={offer.url}
-                                                    // Unobscured, as the
-                                                    // programme requires — and
-                                                    // sponsored + noopener, as
-                                                    // any outbound affiliate
-                                                    // link needs.
-                                                    rel="sponsored noopener nofollow"
-                                                    target="_blank"
-                                                    className="hover:text-accent"
-                                                >
-                                                    {offer.title}
-                                                </a>
-                                            </h3>
-
-                                            <div className="mt-auto pt-3">
-                                                {offer.price !== null && (
-                                                    <div className="text-lg font-semibold">
-                                                        {formatPrice(offer.price, market)}
-                                                    </div>
-                                                )}
-                                                <div
-                                                    className={`mt-1 text-xs ${offer.inStock ? 'text-sage' : 'text-ink-soft'}`}
-                                                >
-                                                    {offer.inStock
-                                                        ? t('product.in_stock')
-                                                        : t('product.out_of_stock')}
-                                                </div>
-                                                {offer.needsPriceTimestamp && (
-                                                    <div className="mt-0.5 text-2xs text-ink-soft">
-                                                        {t('product.price_as_of')}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </li>
+                                    <LiveOfferCard key={offer.url} offer={offer} />
                                 ))}
                             </ul>
                         </section>

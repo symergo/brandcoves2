@@ -48,17 +48,22 @@ final readonly class SavedTaste
     /** Distinct title words to search on; more than this dilutes the ranking. */
     private const LEXEMES = 60;
 
+    /** Live shops asked per landing; each is a request upstream. */
+    private const LIVE_TERMS = 2;
+
     /**
      * @param  list<string>  $lexemes  stemmed words from the saved titles
      * @param  list<string>  $brands  most saved first
      * @param  list<string>  $categories  most saved first
      * @param  list<string>  $identityKeys  what is already on a list
+     * @param  list<string>  $liveTerms  short queries for the live shops, from the latest saves
      */
     private function __construct(
         public array $lexemes,
         public array $brands,
         public array $categories,
         public array $identityKeys,
+        public array $liveTerms,
     ) {}
 
     /**
@@ -91,6 +96,17 @@ final readonly class SavedTaste
             ->unique()
             ->values();
 
+        $liveTerms = $items
+            ->map(fn (WishlistItem $item) => self::liveTerm(
+                trim((string) ($item->group?->title ?? $item->snapshot_title)),
+                $item->group?->brand,
+            ))
+            ->filter()
+            ->unique()
+            ->take(self::LIVE_TERMS)
+            ->values()
+            ->all();
+
         $top = fn (string $column): array => $groups
             ->pluck($column)
             ->filter(fn ($value) => is_string($value) && trim($value) !== '')
@@ -113,7 +129,32 @@ final readonly class SavedTaste
             brands: $brands,
             categories: $top('category'),
             identityKeys: $groups->pluck('identity_key')->unique()->values()->all(),
+            liveTerms: $liveTerms,
         );
+    }
+
+    /**
+     * A short query for the live shops, from one saved title.
+     *
+     * A whole title sent to bol finds the very product that was saved; two
+     * of its longest words find its neighbours. The brand leads when there
+     * is one ("Sony koptelefoon draadloze"), model numbers and short tokens
+     * are dropped, and a title with nothing left gives nothing.
+     */
+    private static function liveTerm(string $title, ?string $brand): ?string
+    {
+        $brand = trim((string) $brand);
+        $words = preg_split('/[^\p{L}]+/u', mb_strtolower($title), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $words = array_values(array_unique(array_filter(
+            $words,
+            fn (string $w) => mb_strlen($w) >= 4 && ($brand === '' || ! str_contains(mb_strtolower($brand), $w)),
+        )));
+
+        usort($words, fn (string $a, string $b) => mb_strlen($b) <=> mb_strlen($a));
+
+        $term = trim($brand.' '.implode(' ', array_slice($words, 0, 2)));
+
+        return $term === '' ? null : $term;
     }
 
     /**

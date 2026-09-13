@@ -142,6 +142,27 @@ class SearchService
         );
     }
 
+    /**
+     * Ask the live shops with a term of the landing's choosing.
+     *
+     * The seeded landing has no typed term, but it has a good guess at what
+     * the person is after — short queries drawn from their latest saves —
+     * and the owner's call (2026-09-13) is that what the shops return for
+     * those is worth keeping like any typed search's results: folded into
+     * the catalogue, so the stored grid built right after this already has
+     * them. Only what may not be mirrored, Amazon, comes back unstored, for
+     * the page to show as cards the way the brand page does.
+     *
+     * The same `pullLiveResults()` as a typed search, so the same cache
+     * window guards the request and the same folding writes it.
+     *
+     * @return list<Offer> the offers that could not be stored
+     */
+    public function pullLive(SearchQuery $query, string $term): array
+    {
+        return $this->pullLiveResults($query->withBrands($query->brands, liveTerm: $term))['unstored'];
+    }
+
     /** A placeholder per value, or one that matches nothing when there are none. */
     private function marks(array $values): string
     {

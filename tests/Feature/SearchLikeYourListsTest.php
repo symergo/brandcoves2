@@ -15,6 +15,9 @@ use App\Models\ProductGroup;
 use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
+use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Connectors\LiveConnector;
+use App\Services\Connectors\Offer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -179,6 +182,85 @@ class SearchLikeYourListsTest extends TestCase
                 $this->assertContains($sibling->id, $shown);
                 $this->assertNotContains($dutchTwin->id, $shown);
             });
+    }
+
+    #[Test]
+    public function the_seeded_landing_asks_the_live_shops_and_keeps_what_they_return(): void
+    {
+        $user = User::factory()->create();
+        $this->saved($user, $this->product('Sony WH-1000XM5 draadloze koptelefoon zwart', 'Sony', 'Audio'));
+
+        foreach (range(1, 4) as $i) {
+            $this->product("Draadloze koptelefoon model {$i}", 'Merk', 'Audio');
+        }
+
+        $asked = [];
+
+        app(ConnectorRegistry::class)->registerLive(new class($asked) implements LiveConnector
+        {
+            public function __construct(private array &$asked) {}
+
+            public function source(): Source
+            {
+                return Source::Bol;
+            }
+
+            public function supports(Market $market): bool
+            {
+                return true;
+            }
+
+            public function isCoolingDown(): bool
+            {
+                return false;
+            }
+
+            public function search(string $query, Market $market, int $limit = 24): array
+            {
+                $this->asked[] = $query;
+
+                return [new Offer(
+                    source: Source::Bol,
+                    externalId: 'bol-live-1',
+                    market: $market,
+                    title: 'Sony WH-CH720N draadloze koptelefoon',
+                    affiliateUrl: 'https://example.test/bol/1',
+                    price: 9900,
+                    // A barcode, as a real bol offer carries: the identity
+                    // the catalogue groups it under.
+                    ean: '4006381333931',
+                    imageUrl: 'https://img.test/live.jpg',
+                    merchantName: 'bol',
+                    merchantExternalId: 'bol',
+                    availability: Availability::InStock,
+                )];
+            }
+
+            public function fetchById(string $externalId, Market $market): ?Offer
+            {
+                return null;
+            }
+        });
+
+        $before = Product::query()->count();
+
+        $response = $this->actingAs($user)->get('/be-nl/search');
+
+        // Asked with a short query from the saved title, not the whole title.
+        $this->assertSame(['Sony koptelefoon draadloze'], $asked);
+
+        // Kept, like a typed search's results (the owner's call), and in the
+        // grid of the same request; nothing unstored, since bol may be mirrored.
+        $this->assertSame($before + 1, Product::query()->count());
+        $response->assertInertia(function ($page): void {
+            $page->where('seeded', 'lists')->where('liveOffers', []);
+            $titles = collect($page->toArray()['props']['results']['items'])->pluck('title')->all();
+            $this->assertContains('Sony WH-CH720N draadloze koptelefoon', $titles);
+        });
+
+        // The second landing is inside the cache window: no second request.
+        $this->actingAs($user)->get('/be-nl/search')->assertOk();
+        $this->assertCount(1, $asked);
     }
 
     #[Test]

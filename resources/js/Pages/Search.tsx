@@ -4,6 +4,7 @@ import { preferred as preferredView, remember as rememberView } from '../viewPre
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
+import LiveOfferCard, { type LiveOffer } from '../Components/LiveOfferCard'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import { buttonClasses } from '../Components/Button'
@@ -38,6 +39,8 @@ interface Props {
     emptyBecauseOfFilters: boolean
     /** What the grid was seeded from on a bare landing: your lists, or nothing. */
     seeded: 'lists' | null
+    /** Live offers a seeded landing may show but not store: Amazon's. */
+    liveOffers: LiveOffer[]
     /** Set when the search box held an Amazon URL rather than a search term. */
     pastedLink: {
         asin: string | null
@@ -142,6 +145,7 @@ export default function Search({
     lanes,
     emptyBecauseOfFilters,
     seeded,
+    liveOffers,
     amazonSearch,
     watch,
     pastedLink,
@@ -1039,6 +1043,26 @@ export default function Search({
                                 />
                             ))}
                         </div>
+                    )}
+
+                    {/*
+                      Under the seeded grid: what the live shops returned for
+                      the latest saves and may not be stored, as cards the way
+                      the brand page shows them. Everything that could be
+                      stored is already in the grid above.
+                    */}
+                    {liveOffers.length > 0 && (
+                        <section className="mt-10" aria-labelledby="live-heading">
+                            <h2 id="live-heading" className="text-xl font-semibold tracking-tight">
+                                {t('search.live_heading')}
+                            </h2>
+                            <p className="mt-1 text-sm text-ink-soft">{t('search.live_note')}</p>
+                            <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+                                {liveOffers.map((offer) => (
+                                    <LiveOfferCard key={`${offer.source}:${offer.externalId}`} offer={offer} />
+                                ))}
+                            </ul>
+                        </section>
                     )}
 
                     {results.lastPage > 1 && view === 'grid' && (

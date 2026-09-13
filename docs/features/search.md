@@ -629,8 +629,20 @@ and the owner asked for the one short line instead); `seeded` is `'lists'` or nu
 Only the bare landing: a term, a filter, a sort or the shop view is a question of its own. And only
 when the match fills a row (`SEEDED_MINIMUM`, 4): fewer reads as a thin match dressed up as a page,
 so the ordinary grid comes back. Deliberately no recommender: anything cleverer would be its own
-feature with its own drift. Live sources are not asked on this landing; there is no term to ask
-them with.
+feature with its own drift.
+
+**The live shops are asked too, and what they return is kept** (owner's call, 2026-09-13; the
+first instinct was to store nothing, then "you can save the top list of products").
+`SavedTaste::liveTerms` turns the two latest saves into short queries, the brand plus the two
+longest words of the title ("Sony koptelefoon draadloze"): a whole title sent to bol finds the very
+product that was saved, its longest words find its neighbours. `SearchService::pullLive()` runs
+the same `pullLiveResults()` as a typed search with each, so the same cache window guards the
+request and the same folding writes the offers into the catalogue, *before* the seeded grid is
+built, so the grid of the same request already holds them. Only what may not be mirrored, Amazon,
+comes back unstored and is shown as cards under the grid (`liveOffers`), the way the brand page
+shows them; the card and its presenter are shared with the brand page now (`LiveOfferCard`, PHP and
+TSX), so the save path and the price rules cannot drift between the two. First page of a seeded
+landing only.
 
 ## See also
 

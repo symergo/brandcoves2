@@ -208,6 +208,8 @@ return [
         'searching' => 'Searching…',
         'results_for' => 'Results for ":term"',
         'like_your_lists' => 'A few suggestions for you…',
+        'live_heading' => 'Fetched just now',
+        'live_note' => 'Listed live from a shop whose prices we are not allowed to keep, so these are single offers rather than a full product page.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

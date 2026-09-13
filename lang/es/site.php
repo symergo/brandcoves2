@@ -160,6 +160,8 @@ return [
         'searching' => 'Buscando…',
         'results_for' => 'Resultados para «:term»',
         'like_your_lists' => 'Algunas sugerencias para ti…',
+        'live_heading' => 'Traído ahora mismo',
+        'live_note' => 'Mostrado en directo desde una tienda cuyos precios no podemos guardar, así que son ofertas sueltas y no una ficha completa.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

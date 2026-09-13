@@ -15,6 +15,7 @@ use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\AmazonSearchLink;
+use App\Services\Search\LiveOfferCard;
 use App\Services\Search\SavedTaste;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
@@ -120,6 +121,21 @@ class SearchController extends Controller
             ? SavedTaste::forOwner(Owner::fromRequest($request), $current->get())
             : null;
 
+        /*
+         * The live shops first, on the first page of a seeded landing, with
+         * two short queries drawn from the latest saves. What they return is
+         * folded into the catalogue before the grid is built, so the grid
+         * below already holds it; what may not be stored (Amazon) becomes
+         * cards under the grid. See SearchService::pullLive().
+         */
+        $live = [];
+
+        if ($taste !== null && $query->page === 1) {
+            foreach ($taste->liveTerms as $term) {
+                $live = [...$live, ...$search->pullLive($query, $term)];
+            }
+        }
+
         $result = $taste === null ? $search->search($query) : $search->similarTo($query, $taste);
 
         if ($taste !== null && $result->groups->total() < self::SEEDED_MINIMUM) {
@@ -134,6 +150,7 @@ class SearchController extends Controller
             // What the grid was seeded from, so the page can say so: 'lists'
             // or null. The heading changes; nothing else does.
             'seeded' => $taste === null ? null : 'lists',
+            'liveOffers' => $taste === null ? [] : array_map(LiveOfferCard::present(...), $live),
             'filters' => $query->toArray(),
             'sort' => $query->sort,
             'view' => $query->view,

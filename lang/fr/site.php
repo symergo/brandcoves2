@@ -161,6 +161,8 @@ return [
         'searching' => 'Recherche en cours…',
         'results_for' => 'Résultats pour « :term »',
         'like_your_lists' => 'Quelques suggestions pour vous…',
+        'live_heading' => 'Récupéré à l’instant',
+        'live_note' => 'Affiché en direct depuis une boutique dont nous ne pouvons pas conserver les prix : ce sont des offres isolées, pas une fiche produit complète.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.
