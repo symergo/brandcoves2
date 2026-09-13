@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -44,7 +45,7 @@ class SearchLandingTest extends TestCase
         BrandStat::create([
             'market' => $market->value,
             'brand' => $brand,
-            'slug' => \Illuminate\Support\Str::slug($brand),
+            'slug' => Str::slug($brand),
             'aliases' => [$brand],
             'product_count' => 3,
         ]);
