@@ -650,7 +650,7 @@ return [
         'unclaim' => 'Mejor no',
         'already_claimed' => 'Alguien se te acaba de adelantar.',
         'cannot_unclaim' => 'Solo puedes deshacer tu propia elección.',
-        'shared_intro' => 'Toca un artículo para indicar que lo regalas tú. :name no ve nada; los demás solo ven que ya se está comprando, para no regalar dos veces.',
+        'shared_intro' => ':name no ve nada. Di a los demás qué regalas, para no regalar dos veces.',
         'recipient_added' => 'Persona añadida.',
         'recipient_removed' => 'Persona eliminada.',
         'add_person' => 'Añadir a alguien',

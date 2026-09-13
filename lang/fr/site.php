@@ -651,7 +651,7 @@ return [
         'unclaim' => 'Finalement non',
         'already_claimed' => 'Quelqu\'un vient de le prendre.',
         'cannot_unclaim' => 'Vous ne pouvez annuler que votre propre choix.',
-        'shared_intro' => 'Touchez un article pour indiquer que vous l\'offrez. :name ne voit rien ; les autres voient seulement que c’est déjà acheté, pour ne pas offrir en double.',
+        'shared_intro' => ':name ne voit rien. Dites aux autres ce que vous offrez, pour ne pas offrir en double.',
         'recipient_added' => 'Personne ajoutée.',
         'recipient_removed' => 'Personne retirée.',
         'add_person' => 'Ajouter une personne',
