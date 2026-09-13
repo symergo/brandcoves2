@@ -100,7 +100,6 @@ return [
         'tagline_scan' => 'Scan een barcode',
         'tagline_keep' => 'Alles op één plek',
         'search_placeholder' => 'Zoek een cadeau of scan een streepjescode',
-        'recent_heading' => 'Recent gezocht',
         'recently_viewed' => 'Je bekeek',
         'cta_gift' => 'Vind een cadeau',
         'today_badge' => 'Cove van vandaag',
@@ -1728,6 +1727,13 @@ return [
         'series_title' => ':topic, deel :part',
         'series_slug_part' => 'deel',
         'series_heading' => 'In deze reeks',
+    ],
+
+    // The search card: on the home page where "Recently searched" was, and
+    // at the top of Find a gift. The field's placeholder is home.search_placeholder.
+    'search_card' => [
+        'title' => 'Zoek een cadeau',
+        'hint' => 'Een product, een merk, of de streepjescode van iets dat je vasthoudt.',
     ],
 
     'og' => [

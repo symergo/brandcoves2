@@ -454,3 +454,14 @@ header carries the search on every page. The two things the field promised, a se
 survive as the first two words of the line under the buttons, each a link to where it is done, so
 the camera is still one tap from the first screen. Everything below the hero is unchanged. The
 Dutch second line is *"Krijg wat je écht wilt."*
+
+## A search card where "Recently searched" was (2026-09-13)
+
+The band of three recent searches is gone, at the owner's request, and a search card sits in its
+place: a heading, one line, the field, the camera and the button. The band showed other people's
+searches as pictures, rendered nothing in development or on a market without search history, and
+answered a question nobody arrives with. The card asks the one they do, and it is the same
+`SearchCard` that now opens the Find a gift page, so the two cannot drift apart the way the hero's
+field and the search page's own once did. `home.recent_heading` went with the band;
+`RecentSearches` still serves the search landing. The hero above keeps its two buttons and the
+line under them.

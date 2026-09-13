@@ -145,7 +145,6 @@ return [
         // to a `ScanButton` — this one and `search.placeholder` — may promise
         // it; the same line in a modal with no camera is a broken promise.
         'search_placeholder' => 'Search for a gift or scan a barcode',
-        'recent_heading' => 'Recently searched',
         'recently_viewed' => 'You looked at',
         'cta_gift' => 'Find a gift',
         'today_badge' => "Today's Cove",
@@ -1940,6 +1939,13 @@ return [
      * by people scrolling a timeline rather than by a crawler: label, headline,
      * one line of substance.
      */
+    // The search card: on the home page where "Recently searched" was, and
+    // at the top of Find a gift. The field's placeholder is home.search_placeholder.
+    'search_card' => [
+        'title' => 'Search for a gift',
+        'hint' => 'A product, a brand, or the barcode of something in your hand.',
+    ],
+
     'og' => [
         'daily' => 'The Daily Cove',
         'default_title' => 'Discover products and brands',

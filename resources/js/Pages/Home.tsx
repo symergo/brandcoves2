@@ -9,6 +9,7 @@ import ListIllustration, { type ListSceneKey } from '../Components/ListIllustrat
 import NewListButton from '../Components/NewListButton'
 import type { SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
+import SearchCard from '../Components/SearchCard'
 import { buttonClasses } from '../Components/Button'
 import RecentlyViewed from '../Components/RecentlyViewed'
 import { formatPrice, type SharedProps } from '../types'
@@ -62,10 +63,9 @@ interface Props {
     }
     personas: Persona[]
     coves: Cove[]
-    recentSearches: { term: string; url: string; images: string[] }[]
 }
 
-export default function Home({ today, gifting, personas, coves, recentSearches }: Props) {
+export default function Home({ today, gifting, personas, coves }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
@@ -231,95 +231,15 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
             </section>
 
             {/*
-              What other people have been looking for.
+              A search, where "Recently searched" was (owner's call, 2026-09-13).
 
-              Pictures rather than a list of words: a row of terms reads as a
-              tag cloud, and a tag cloud is something visitors have learned to
-              skip. The images are the invitation and the term is the label.
-
-              Every card links to the **search**, not to a product. These are
-              not recommendations — nothing here has been chosen, ranked or
-              checked, and sending someone to one product implies it was. The
-              search results are the honest destination, and they are also where
-              the visitor can immediately do something else.
-
-              No prices, deliberately. A price on a picture that was resolved up
-              to an hour ago is a number that can be wrong, and a wrong price is
-              worse than no price. Prices belong on the product page, where they
-              are read live.
-
-              Precomputed hourly by RefreshRecentSearches; absent until the
-              first run, and absent on a market with no search history, which is
-              why the whole band is conditional.
+              That band showed three of other people's searches as pictures.
+              It was invisible in development and on any market without
+              search history, and it answered a question nobody arrives
+              with. The card asks the one they do. The same card sits at the
+              top of Find a gift; see SearchCard.
             */}
-            {recentSearches.length > 0 && (
-                <section className="mt-10 sm:mt-12" aria-labelledby="recent-heading">
-                    <h2 id="recent-heading" className="text-sm font-medium tracking-wide text-ink-soft uppercase">
-                        {t('home.recent_heading')}
-                    </h2>
-
-                    {/*
-                      Three across at lg, stacked below it. No two-column step:
-                      with three cards it would always leave one orphan on its
-                      own row, and each card carries four 40px thumbnails that
-                      have nowhere to shrink to in a narrow column.
-                    */}
-                    <ul className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
-                        {recentSearches.map((recent) => (
-                            /*
-                              `min-w-0`, and the `grid-cols-1` above it, are
-                              what make the `truncate` on the term work.
-
-                              This band pushed the whole page sideways on a
-                              phone — 1,103px wide in a 390px viewport on `en`,
-                              and every market with search history behind it.
-                              Bare `grid` leaves the implicit column `auto`,
-                              which sizes to max-content, and a grid item's
-                              `min-width` defaults to `auto`, which is its own
-                              content's minimum. So the row grew to fit
-                              "bluetooth tracker koptelefoon draadloze…" in
-                              full, and the `truncate` never had a width to
-                              truncate against. `grid-cols-1` is
-                              `minmax(0,1fr)` in Tailwind, which caps the
-                              track; `min-w-0` lets the item shrink inside it.
-                              Both are needed — either alone leaves one of the
-                              two floors in place.
-
-                              Invisible in development on purpose, which is the
-                              part worth remembering: the band is served from a
-                              cache RefreshRecentSearches writes, so a local
-                              database with no search history renders nothing
-                              here and `scripts/shots.mjs` reports a clean page.
-                              It was found by running the same overflow report
-                              against production.
-                            */
-                            <li key={recent.term} className="min-w-0">
-                                <Link
-                                    href={recent.url}
-                                    className="flex items-center gap-3 rounded-card border border-line bg-card p-3 transition hover:border-ink"
-                                >
-                                    <span className="flex shrink-0 gap-1">
-                                        {recent.images.map((image) => (
-                                            <span
-                                                key={image}
-                                                className="h-10 w-10 overflow-hidden rounded bg-cream"
-                                            >
-                                                <img
-                                                    src={image}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    className="h-full w-full object-contain"
-                                                />
-                                            </span>
-                                        ))}
-                                    </span>
-                                    <span className="min-w-0 flex-1 truncate text-sm text-ink">{recent.term}</span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
+            <SearchCard className="mt-10 sm:mt-12" />
 
             {/*
               The Organise band — the front-page half of the header's Organise

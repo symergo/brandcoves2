@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
+import SearchCard from '../Components/SearchCard'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -140,6 +141,9 @@ export default function DiscoverCove({
 
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-ink">{t('discover_cove.title')}</h1>
             <p className="mt-3 max-w-2xl text-ink-soft">{t('discover_cove.intro')}</p>
+
+            {/* The same search card as the home page, first (owner's call, 2026-09-13). */}
+            <SearchCard className="mt-6" />
 
             {/*
               Four across, or five when the persona card is present. Both

@@ -100,7 +100,6 @@ return [
         'tagline_scan' => 'Escanea un código de barras',
         'tagline_keep' => 'Todo en un solo sitio',
         'search_placeholder' => 'Busca un regalo o escanea un código de barras',
-        'recent_heading' => 'Buscado hace poco',
         'recently_viewed' => 'Has visto',
         'cta_gift' => 'Buscar un regalo',
         'today_badge' => 'La Cove de hoy',
@@ -1715,6 +1714,13 @@ return [
         'series_title' => ':topic, parte :part',
         'series_slug_part' => 'parte',
         'series_heading' => 'En esta serie',
+    ],
+
+    // The search card: on the home page where "Recently searched" was, and
+    // at the top of Find a gift. The field's placeholder is home.search_placeholder.
+    'search_card' => [
+        'title' => 'Busca un regalo',
+        'hint' => 'Un producto, una marca o el código de barras de algo que tengas en la mano.',
     ],
 
     'og' => [

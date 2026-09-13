@@ -36,3 +36,10 @@ answer the same "show me something" with editorial rather than a slider.
 serendipity, freshness, catalogue age) that the Surprise page, the Daily Cove builder and the
 charts use. `CatalogueAge` lost its one mode-specific test and kept the rest. `/discover-cove`,
 the hub page, is unrelated and stays.
+
+## Find a gift opens with the search card (2026-09-13)
+
+At the owner's request the `/discover-cove` page carries the same `SearchCard` as the home page,
+right under its title and intro, before the four cards. Somebody who chose "Find a gift" in the
+header most often knows what they are looking for, and the field is the shortest way there; the
+Daily Cove, Surprise, the Coves and Ask remain below for the ones who do not.
