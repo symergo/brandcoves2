@@ -556,7 +556,10 @@ return [
         'seo_title' => 'Verlanglijstjes die je kunt delen',
         'seo_description' => 'Hou een verlanglijstje bij, deel het met wie voor je koopt, en laat ze een cadeau claimen zonder dat jij ziet wie wat koos.',
         'title' => 'Mijn verlanglijsten',
-        'shared_subtitle' => 'Verlanglijsten en cadeaulijsten die anderen met jou deelden. Vul ze aan en kies wat je graag geeft.',
+        'shared_subtitle' => 'Cadeaulijsten van jou, en lijsten die anderen met je deelden. Zo koop je iets voor hen.',
+        // The hint on the two "shared with me" groups of that view: what to do
+        // with them. The subtitle above stays; owner's call, 2026-09-13.
+        'others_shared_hint' => 'Verlanglijsten en cadeaulijsten die anderen met jou deelden. Vul ze aan en kies wat je graag geeft.',
         'shared_empty' => 'Nog geen lijst voor iemand anders. Maak er een, of open een link die iemand je stuurde.',
         'others_own' => 'Mijn cadeaulijsten',
         'others_gift_shared' => 'Cadeaulijsten van anderen',

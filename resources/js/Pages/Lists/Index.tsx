@@ -272,13 +272,13 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                   {
                       key: 'gift-shared',
                       label: t('lists.others_gift_shared'),
-                      hint: t('lists.shared_subtitle'),
+                      hint: t('lists.others_shared_hint'),
                       lists: lists.filter((l) => l.sharedWithMe && l.kind === 'for_someone'),
                   },
                   {
                       key: 'wish-shared',
                       label: t('lists.others_wish_shared'),
-                      hint: t('lists.shared_subtitle'),
+                      hint: t('lists.others_shared_hint'),
                       lists: lists.filter((l) => l.sharedWithMe && l.kind === 'mine'),
                   },
               ].filter((g) => g.lists.length > 0)
