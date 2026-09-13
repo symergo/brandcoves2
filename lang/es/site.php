@@ -1802,7 +1802,7 @@ return [
      */
     'friends' => [
         'title' => 'Amigos',
-        'intro' => 'Las personas de quienes tienes una lista, y que tienen una tuya. Quien abre una lista que compartiste aparece aquí, y tú en la suya.',
+        'intro' => 'Quien abre una lista que compartiste aparece aquí, y tú en la suya.',
         'empty' => 'Todavía nadie. Abre una lista que te hayan compartido, o añade una dirección abajo.',
         'your_note' => 'tu nota',
         'they_share' => 'Listas de :name',

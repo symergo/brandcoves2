@@ -1804,7 +1804,7 @@ return [
      */
     'friends' => [
         'title' => 'Amis',
-        'intro' => 'Les personnes dont vous avez une liste, et qui ont l\'une des vôtres. Qui ouvre une liste que vous avez partagée apparaît ici, et vous chez eux.',
+        'intro' => 'Qui ouvre une liste que vous avez partagée apparaît ici, et vous chez eux.',
         'empty' => 'Personne pour l\'instant. Ouvrez une liste que l\'on vous a partagée, ou ajoutez une adresse ci-dessous.',
         'your_note' => 'votre note',
         'they_share' => 'Listes de :name',

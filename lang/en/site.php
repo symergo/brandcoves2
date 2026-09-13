@@ -2025,7 +2025,7 @@ return [
      */
     'friends' => [
         'title' => 'Friends',
-        'intro' => 'The people whose lists you hold, and who hold yours. Anyone who opens a list you shared ends up here, and you on theirs.',
+        'intro' => 'Anyone who opens a list you shared ends up here, and you on theirs.',
         'empty' => 'Nobody yet. Open a list somebody shared with you, or add them by email below.',
         'your_note' => 'your note',
         'they_share' => ':name\'s lists',

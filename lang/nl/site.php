@@ -1815,7 +1815,7 @@ return [
      */
     'friends' => [
         'title' => 'Vrienden',
-        'intro' => 'De mensen van wie jij een lijst hebt, en die er een van jou hebben. Wie een gedeelde lijst van jou opent komt hier terecht, en jij bij hen.',
+        'intro' => 'Wie een gedeelde lijst van jou opent komt hier terecht, en jij bij hen.',
         'empty' => 'Nog niemand. Open een lijst die iemand met je deelde, of voeg hieronder een e-mailadres toe.',
         'your_note' => 'jouw notitie',
         'they_share' => 'Lijstjes van :name',
