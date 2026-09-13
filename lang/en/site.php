@@ -500,6 +500,8 @@ return [
         'accepted' => 'Added to your list.',
         'dismissed' => 'Dismissed.',
         'suggest' => 'Suggest something',
+        'suggested' => 'Suggested',
+        'added_short' => 'Added',
         'invite' => 'Know something they would like?',
         'invite_hint' => 'Suggest it!',
         'search_placeholder' => 'Search for something they would like',

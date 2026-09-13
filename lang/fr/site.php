@@ -386,6 +386,8 @@ return [
         'accepted' => 'Ajouté à votre liste.',
         'dismissed' => 'Écarté.',
         'suggest' => 'Proposer quelque chose',
+        'suggested' => 'Proposé',
+        'added_short' => 'Ajouté',
         'invite' => 'Vous savez ce qui leur ferait plaisir ?',
         'invite_hint' => 'Proposez-le !',
         'search_placeholder' => 'Cherchez quelque chose qui leur plairait',

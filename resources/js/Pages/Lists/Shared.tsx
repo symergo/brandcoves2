@@ -184,6 +184,19 @@ export default function SharedList({
      */
     const [claimName, setClaimName] = useState(page.props.auth.user?.name ?? '')
     const [claiming, setClaiming] = useState<number | null>(null)
+
+    /*
+     * What happened to a suggestion, beside the button that sent it.
+     *
+     * The press posted, the server redirected back with a flash, and the flash
+     * bar sits at the top of the page while `preserveScroll` kept the reader
+     * deep in the results: the request succeeded and nothing visible changed
+     * where they were looking. The owner reported it as "nothing happens"
+     * (2026-09-13). So the card the press came from turns into "Suggested"
+     * and the server's line is repeated under the grid, in view.
+     */
+    const [suggested, setSuggested] = useState<Set<number>>(new Set())
+    const [suggestNote, setSuggestNote] = useState<{ text: string; ok: boolean } | null>(null)
     const nameField = useRef<HTMLInputElement | null>(null)
 
     const signIn = useSignIn()
@@ -831,20 +844,54 @@ export default function SharedList({
                                             )}
                                             <button
                                                 type="button"
+                                                disabled={suggested.has(result.id)}
                                                 onClick={() =>
                                                     router.post(
                                                         `${base}/l/${token}/suggest`,
                                                         { group_id: result.id },
-                                                        { preserveScroll: true },
+                                                        {
+                                                            preserveScroll: true,
+                                                            onSuccess: (visited) => {
+                                                                const flash = (visited.props as unknown as SharedProps).flash
+                                                                const error = flash?.error ?? null
+
+                                                                if (error === null) {
+                                                                    setSuggested((prev) => new Set(prev).add(result.id))
+                                                                }
+
+                                                                setSuggestNote({
+                                                                    text: error ?? flash?.success ?? '',
+                                                                    ok: error === null,
+                                                                })
+                                                            },
+                                                        },
                                                     )
                                                 }
-                                                className="mt-3 w-full rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-dark"
+                                                className={`mt-3 w-full rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                                                    suggested.has(result.id)
+                                                        ? 'border border-sage bg-sage/10 text-sage'
+                                                        : 'bg-accent text-white hover:bg-accent-dark'
+                                                }`}
                                             >
-                                                {addsDirectly ? t('suggestions.add_action') : t('suggestions.suggest')}
+                                                {suggested.has(result.id)
+                                                    ? `✓ ${addsDirectly ? t('suggestions.added_short') : t('suggestions.suggested')}`
+                                                    : addsDirectly
+                                                      ? t('suggestions.add_action')
+                                                      : t('suggestions.suggest')}
                                             </button>
                                         </li>
                                     ))}
                                 </ul>
+                            )}
+
+                            {/* The server's answer, here where the press was. */}
+                            {suggestNote !== null && suggestNote.text !== '' && (
+                                <p
+                                    role="status"
+                                    className={`mt-4 text-sm ${suggestNote.ok ? 'text-sage' : 'text-danger'}`}
+                                >
+                                    {suggestNote.text}
+                                </p>
                             )}
                         </section>
                     )}

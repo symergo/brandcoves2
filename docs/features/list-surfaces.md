@@ -718,6 +718,17 @@ The Secret Friend groups left the lists page the same day: the owner decided Sec
 own page, which it already was (`/santa` lists your groups), so the band that had moved from the
 Gift Cove hub to My Lists earlier that day is gone, with its `santaGroups` prop and its test.
 
+## Suggesting says so where you pressed (2026-09-13)
+
+The "Suggest something" button on a shared list's results posted, the server redirected back with
+a flash, and the flash bar sits at the top of the page while `preserveScroll` kept the reader deep
+in the results: the request succeeded and nothing visible changed where they were looking. The
+owner reported it as "nothing happens". The card the press came from now turns into "✓ Suggested"
+(or "✓ Added" on a list that takes additions directly) and stays that way, and the server's line,
+"Sent. They decide whether it goes on the list." or "That is already on the list.", is repeated
+under the grid in the same colour the flash bar would use. The flash bar still shows it at the
+top; this is the copy in view.
+
 ## A shared list names its owner twice (2026-09-13)
 
 At the owner's request, `/l/{token}` now says who the list is **for** under the title ("For

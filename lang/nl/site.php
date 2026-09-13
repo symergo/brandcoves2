@@ -389,6 +389,8 @@ return [
         'accepted' => 'Op je lijst gezet.',
         'dismissed' => 'Afgewezen.',
         'suggest' => 'Stel iets voor',
+        'suggested' => 'Voorgesteld',
+        'added_short' => 'Toegevoegd',
         'invite' => 'Weet jij iets dat ze leuk zouden vinden?',
         'invite_hint' => 'Stel het voor!',
         'search_placeholder' => 'Zoek iets dat ze leuk zouden vinden',
