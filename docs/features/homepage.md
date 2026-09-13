@@ -505,5 +505,6 @@ are grouped.
 Dailies are in the list now (`home.cove_kind_daily`), except the edition Today's Cove is already
 showing, which would otherwise open the list as a repeat. Blurbs are flattened to their labels the
 way the archive does it. `personas` no longer reaches the page: the persona shelf's only remaining
-door here was the Discover card. The order after the hero is: search card, Today's Cove, signup,
-the list wizard, what you looked at, Recent Coves.
+door here was the Discover card. The order after the hero is: search card, the list wizard (moved above
+Today's Cove later the same day, at the owner's request), Today's Cove, signup, what you looked at,
+Recent Coves.

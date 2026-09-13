@@ -132,6 +132,33 @@ export default function Home({ today, signedIn, recipients, friends, occasions, 
             <SearchCard className="mt-10 sm:mt-12" />
 
             {/*
+              Making a list, right here, straight under the search card
+              (owner's call, 2026-09-13; moved above Today's Cove the same day).
+
+              This was the Organise band: a heading, a "Make a new list"
+              button that unfolded four kinds, and five cards into lists that
+              already exist. The wizard those four kinds led to lives on My
+              Lists and the Gift Cove; the front page now mounts it under the
+              button's own words, so making a list is one step from the
+              pitch that promised it, and the cards into existing lists are
+              where the header's Make a list entry already goes.
+            */}
+            <section className="mt-10 sm:mt-14" aria-labelledby="new-list-heading">
+                <h2 id="new-list-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
+                    {t('lists.make_new')}
+                </h2>
+                <div className="mt-4">
+                    <ListWizard
+                        signedIn={signedIn}
+                        recipients={recipients}
+                        friends={friends}
+                        occasions={occasions}
+                        myLists={myLists}
+                    />
+                </div>
+            </section>
+
+            {/*
               Today's Cove and the signup for it, straight under the search
               card (owner's call, 2026-09-13). They sat below the Organise
               and Discover bands, a screen and a half down; the thing that
@@ -214,34 +241,6 @@ export default function Home({ today, signedIn, recipients, friends, occasions, 
                     <CoveSubscribe source="home" />
                 </div>
             )}
-
-            {/*
-              Making a list, right here (owner's call, 2026-09-13).
-
-              This was the Organise band: a heading, a "Make a new list"
-              button that unfolded four kinds, and five cards into lists that
-              already exist. The wizard those four kinds led to lives on My
-              Lists and the Gift Cove; the front page now mounts it under the
-              button's own words, so making a list is one step from the
-              pitch that promised it, and the cards into existing lists are
-              where the header's Make a list entry already goes.
-            */}
-            <section className="mt-10 sm:mt-14" aria-labelledby="new-list-heading">
-                <h2 id="new-list-heading" className="text-xl sm:text-2xl font-semibold tracking-tight">
-                    {t('lists.make_new')}
-                </h2>
-                <div className="mt-4">
-                    <ListWizard
-                        signedIn={signedIn}
-                        recipients={recipients}
-                        friends={friends}
-                        occasions={occasions}
-                        myLists={myLists}
-                    />
-                </div>
-            </section>
-
-
 
             {/*
               What this visitor looked at, from the device's own memory. A
