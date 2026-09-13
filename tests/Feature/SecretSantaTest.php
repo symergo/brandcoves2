@@ -347,6 +347,137 @@ class SecretSantaTest extends TestCase
     }
 
     #[Test]
+    public function a_list_can_be_chosen_while_starting_the_group(): void
+    {
+        /*
+         * The organiser is a player too, and choosing the list on the create
+         * form is the one moment they are certain to be thinking about it.
+         * Before 2026-09-12 they had to come back from the list's own page.
+         */
+        $organiser = User::factory()->create();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $organiser->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        $this->actingAs($organiser)
+            ->post('/be-nl/santa', ['title' => 'Office 2026', 'wishlist_id' => $list->id])
+            ->assertRedirect();
+
+        $member = SecretSantaGroup::query()->firstOrFail()
+            ->members()->where('user_id', $organiser->id)->firstOrFail();
+
+        $this->assertSame($list->id, $member->wishlist_id);
+    }
+
+    #[Test]
+    public function starting_a_group_with_a_list_you_do_not_own_creates_nothing(): void
+    {
+        $organiser = User::factory()->create();
+
+        $someoneElses = Wishlist::factory()->create([
+            'owner_user_id' => User::factory()->create()->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        // Refused before the write, not attached-then-dropped: a tampered form
+        // must not leave a group behind that claims to have a list.
+        $this->actingAs($organiser)
+            ->post('/be-nl/santa', ['title' => 'Office 2026', 'wishlist_id' => $someoneElses->id])
+            ->assertForbidden();
+
+        $this->assertSame(0, SecretSantaGroup::query()->count());
+    }
+
+    #[Test]
+    public function only_lists_about_yourself_are_offered_to_attach(): void
+    {
+        /*
+         * A list about somebody else is research they must never see, and a
+         * group list is other people's money. The hub and the group page
+         * offer neither, so the select cannot even ask for one.
+         */
+        $organiser = User::factory()->create();
+
+        $mine = Wishlist::factory()->create([
+            'owner_user_id' => $organiser->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+            'title' => 'Things I would like',
+        ]);
+        Wishlist::factory()->create([
+            'owner_user_id' => $organiser->id,
+            'kind' => ListKind::ForSomeone,
+            'market' => Market::BeNl,
+        ]);
+
+        $group = $this->group($organiser);
+
+        $this->actingAs($organiser)->get('/be-nl/santa')
+            ->assertInertia(fn ($page) => $page
+                ->has('myLists', 1)
+                ->where('myLists.0.id', $mine->id)
+                ->where('myLists.0.title', 'Things I would like'));
+
+        $this->actingAs($organiser)->get("/be-nl/santa/{$group->id}")
+            ->assertInertia(fn ($page) => $page
+                ->has('myLists', 1)
+                ->where('me.wishlistId', null));
+    }
+
+    #[Test]
+    public function a_member_can_take_their_list_back_off_the_group(): void
+    {
+        $organiser = User::factory()->create();
+        $group = $this->group($organiser);
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $organiser->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        $this->actingAs($organiser)
+            ->post("/be-nl/santa/{$group->id}/list", ['wishlist_id' => $list->id])
+            ->assertRedirect();
+
+        // The select's "no list yet" option posts a null, and it must read as a
+        // detach rather than a validation failure.
+        $this->actingAs($organiser)
+            ->post("/be-nl/santa/{$group->id}/list", ['wishlist_id' => null])
+            ->assertRedirect()
+            ->assertSessionHas('success', __('site.santa.list_detached'));
+
+        $this->assertNull($group->members()->where('user_id', $organiser->id)->firstOrFail()->wishlist_id);
+    }
+
+    #[Test]
+    public function my_lists_shows_the_groups_i_am_in_and_the_gift_cove_does_not(): void
+    {
+        /*
+         * Moved on 2026-09-12: a group is a thing I am in, like a list, so
+         * it sits on My Lists with them rather than under the hub that
+         * explains the tools. Only on My Lists proper; the Shared and Group
+         * views answer a narrower question.
+         */
+        $organiser = User::factory()->create();
+        $group = $this->group($organiser);
+
+        $this->actingAs($organiser)->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page
+                ->has('santaGroups', 1)
+                ->where('santaGroups.0.title', 'Office 2026')
+                ->where('santaGroups.0.drawn', false)
+                ->where('santaGroups.0.url', "/be-nl/santa/{$group->id}"));
+
+        $this->actingAs($organiser)->get('/be-nl/gift-cove')
+            ->assertInertia(fn ($page) => $page->missing('santaGroups'));
+    }
+
+    #[Test]
     public function joining_after_the_draw_is_refused(): void
     {
         $group = $this->group();

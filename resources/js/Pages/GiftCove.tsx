@@ -3,7 +3,6 @@ import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import ListWizard from '../Components/ListWizard'
 import ToolIcon, { type ToolKey } from '../Components/ToolIcon'
 import type { SharedProps } from '../types'
-import { formatOccasionDate } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Wishlist {
@@ -40,7 +39,6 @@ interface Props {
         suggestions: number
         friends: number
     }
-    santaGroups: { title: string; drawn: boolean; url: string }[]
     urls: {
         manual: string
         gift: string
@@ -62,6 +60,7 @@ interface Props {
      * they were two lists for a while, and the picker's copy left out anybody
      * who already had a profile, which emptied it.
      */
+    myLists: { id: string; title: string }[]
     recipients: { id: string; name: string; birthday: string | null }[]
     friends: { id: number; name: string; recipientId: string | null; birthday: string | null }[]
     occasions: { value: string; label: string; date: string | null }[]
@@ -96,17 +95,23 @@ interface Props {
  */
 
 /**
- * The five questions somebody arrives with.
+ * The four questions somebody arrives with.
  *
- * Five one-line headings, no prose. The grouping is the explanation, and the
+ * Four one-line headings, no prose. The grouping is the explanation, and the
  * order is the order somebody arrives in: my own list, a list for somebody,
- * doing it with other people, finding a present, getting inspired. A band is
- * three or four cards, and the grid takes its column count from the band, so
- * every band is full rows and nothing sits alone under the others.
+ * doing it with other people, getting inspired. A band is three or four
+ * cards, and the grid takes its column count from the band, so every band is
+ * full rows and nothing sits alone under the others.
+ *
+ * There were five. "Find a present" — the Gift Whisperer, Search, Ask and
+ * Alerts — went on 2026-09-12 at the owner's request: this is the page for
+ * lists and the people around them, and finding is the header's other half,
+ * where "Find a gift" now carries the Whisperer as its first entry. Search
+ * is in the header on every page, and Ask stays behind it too.
  */
-type Band = 'own' | 'someone' | 'together' | 'find' | 'inspire'
+type Band = 'own' | 'someone' | 'together' | 'inspire'
 
-const BANDS: Band[] = ['own', 'someone', 'together', 'find', 'inspire']
+const BANDS: Band[] = ['own', 'someone', 'together', 'inspire']
 
 /**
  * A card is a list tool or a corner of the site; the icon says which set it is
@@ -125,8 +130,8 @@ export default function GiftCove({
     signedIn,
     wishlists,
     counts,
-    santaGroups,
     urls,
+    myLists,
     recipients,
     friends,
     occasions,
@@ -184,11 +189,6 @@ export default function GiftCove({
         { key: 'quiz', icon: { tool: 'quiz' }, href: first?.url ?? urls.lists, badge: null, band: 'together' },
         { key: 'friends', icon: { tool: 'friends' }, href: urls.friends, badge: counts.friends ? n(counts.friends) : null, band: 'together' },
 
-        { key: 'whisperer', icon: { tool: 'whisperer' }, href: urls.gift, badge: counts.people ? n(counts.people) : null, band: 'find' },
-        { key: 'search', icon: { tool: 'search' }, href: urls.search, badge: null, band: 'find' },
-        { key: 'ask', icon: { cove: 'ask' }, href: urls.ask, badge: null, band: 'find' },
-        { key: 'alerts', icon: { tool: 'alerts' }, href: urls.notifications, badge: null, band: 'find' },
-
         { key: 'daily', icon: { cove: 'daily' }, href: urls.daily, badge: null, band: 'inspire' },
         { key: 'guides', icon: { tool: 'guides' }, href: urls.guides, badge: null, band: 'inspire' },
         { key: 'ideas', icon: { cove: 'persona' }, href: urls.ideas, badge: null, band: 'inspire' },
@@ -219,70 +219,19 @@ export default function GiftCove({
                     recipients={recipients}
                     friends={friends}
                     occasions={occasions}
+                    myLists={myLists}
                 />
             </div>
 
             {/*
-              Your own lists, with their state on them. "3 things saved, not
-              shared yet" is a next action; a link labelled "My wishlist" is a
-              filing cabinet. Only the first is highlighted, because it is the
-              one a save reaches without being asked about.
+              No "My wishlists" band here any more (removed 2026-09-12, at the
+              owner's request). It listed every list of mine with its state
+              between the wizard and the tool grid, so the page opened with a
+              form to make a list and followed it with the lists already made,
+              and the tools people came for sat a screen down. My Lists is the
+              page for that, one tap away in the header and on the first card
+              below; the cards still carry the counts and open the first list.
             */}
-            {wishlists.length > 0 && (
-                <section className="mt-10">
-                    <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
-                        {t('gift_cove.my_wishlists')}
-                    </h2>
-
-                    <ul className="mt-3 space-y-3">
-                        {wishlists.map((list, i) => (
-                            <li
-                                key={list.id}
-                                className={
-                                    i === 0
-                                        ? 'rounded-card border border-accent/40 bg-accent/5 p-5'
-                                        : 'rounded-card border border-line bg-card p-4'
-                                }
-                            >
-                                <div className="flex flex-wrap items-baseline gap-x-2">
-                                    <h3 className={i === 0 ? 'text-lg font-medium' : 'font-medium'}>
-                                        {list.title}
-                                    </h3>
-                                    {/* The occasion is the whole visible difference
-                                        between two wish lists of mine. */}
-                                    {list.occasion && (
-                                        <span className="rounded-full bg-line/60 px-2 py-0.5 text-xs">
-                                            {list.occasionDate
-                                                ? t('registry.occasion_on', {
-                                                      occasion: list.occasion,
-                                                      date: formatOccasionDate(list.occasionDate, market),
-                                                  })
-                                                : list.occasion}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <p className="mt-1 text-sm text-ink-soft">
-                                    {t('gift_cove.items_count', { count: n(list.items) })}
-                                    {' · '}
-                                    {list.shared ? t('lists.sharing_on') : t('lists.sharing_off')}
-                                </p>
-
-                                <Link
-                                    href={list.url}
-                                    className={
-                                        i === 0
-                                            ? 'mt-3 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white'
-                                            : 'mt-2 inline-block text-sm text-accent underline'
-                                    }
-                                >
-                                    {list.items === 0 ? t('gift_cove.start_list') : t('gift_cove.open_list')}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
 
             <section className="mt-12">
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -363,26 +312,12 @@ export default function GiftCove({
                 })}
             </section>
 
-            {santaGroups.length > 0 && (
-                <section className="mt-12">
-                    <h2 className="text-lg font-medium">{t('santa.title')}</h2>
-                    <ul className="mt-4 grid gap-4 sm:grid-cols-2">
-                        {santaGroups.map((group) => (
-                            <li key={group.url}>
-                                <Link
-                                    href={group.url}
-                                    className="block rounded-card border border-line bg-card p-4 transition hover:border-ink"
-                                >
-                                    <span className="font-medium">{group.title}</span>
-                                    <span className="mt-1 block text-sm text-ink-soft">
-                                        {group.drawn ? t('santa.drawn') : t('santa.not_drawn')}
-                                    </span>
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
+            {/*
+              The Secret Friend groups I am in used to be listed here, under
+              the grid. They are on My Lists since 2026-09-12 (owner's call):
+              a group is a thing I am *in*, like a list, and this page is the
+              explanation of the tools rather than the shelf of what I have.
+            */}
         </>
     )
 }

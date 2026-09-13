@@ -117,6 +117,35 @@ whoever drew you has nothing to go on until you do. The member page pushes
 list-building before the draw. Without it Secret Santa degrades to "here is a
 name, good luck", which is the version that already exists in every group chat.
 
+## Attaching your list from the Secret Santa pages (2026-09-12)
+
+`POST /santa/{group}/list` existed from the start, but the only button that called it sat on
+the **list's** page ("Use this list", next to the group) — so the people who needed it, standing
+on the group page reading "make your own list first", had to guess where to go. Three changes:
+
+- **The create form asks for the list.** "Your wish list" is a select of the organiser's own
+  lists, and `store()` sets it on the membership it creates for them. The organiser is a player
+  too, and the form is the one moment they are certainly thinking about the group. The select
+  is only rendered when there is a list to choose; an empty select with one "no list yet" option
+  is a field that cannot be filled in.
+- **The group page has the same select** in the member's own box, writing through the existing
+  endpoint, so the two doors cannot admit different lists. "No list yet" posts a null, which the
+  endpoint reads as a detach (`santa.list_detached`) rather than a validation failure. With no
+  list at all, the box links to `/lists?new=mine` instead.
+- **Only lists about yourself are offered, and only those are accepted.** A list *about*
+  somebody else is research they must never see, and a group list is other people's money.
+  `myLists()` filters to `kind = mine` on the current market; `ownsList()` is the one check both
+  the form and the endpoint run, and a create with a foreign list is refused with 403 *before*
+  the group is written, so a tampered form leaves nothing behind.
+
+Also that day: the create form is full width with two fields to a row from `sm` (it was a
+`max-w-lg` strip of five stacked short fields), the budget hint moved behind an info icon per
+the site rule, and the hub ends with a link to the help topic at `/lists-help/santa`, under the
+groups as My Lists does with its own help link.
+
+The groups you are in are listed on **My Lists** since 2026-09-12 (they were a band at the foot
+of the Gift Cove hub); see [list-surfaces.md](list-surfaces.md).
+
 ## Email
 
 One per member, each naming exactly one pairing — the single channel through

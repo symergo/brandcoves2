@@ -15,7 +15,8 @@ return [
         'search' => 'Search',
         'feedback' => 'Feedback',
         'organise' => 'Organise',
-        'discover' => 'Discover',
+        'make_list' => 'Make a list',
+        'find_gift' => 'Find a gift',
         'submenu' => 'What is in :section',
         'gift' => 'Gift Finder',
         'daily' => 'Daily Cove',
@@ -32,7 +33,6 @@ return [
         'account' => 'Account',
         'skip' => 'Skip to content',
         'info' => 'More about this',
-        'search_and_help' => 'Search and help',
         'share' => 'Share',
         'close' => 'Close',
         'choose_market' => 'Choose your market',
@@ -97,6 +97,9 @@ return [
         'hint_gift_coves' => 'Ideas built around a person',
         'hint_all_coves' => 'Everything we have published',
         'hint_ask' => 'Let other people suggest something',
+        'hint_whisperer' => 'Describe someone, get four ideas',
+        'search_offers' => 'Search offers',
+        'hint_search' => 'By name, brand or category',
 
         'santa' => 'Secret Friend',
 
@@ -399,7 +402,7 @@ return [
     'discover_cove' => [
         'seo_title' => 'Gift ideas and product finds, new every day',
         'seo_description' => 'Three ways to find something you were not looking for: a new edition every day, a surprise chosen for how rare it is, and long reads around one theme.',
-        'title' => 'Discover',
+        'title' => 'Find a gift - discover the Coves',
         // Counts no longer. The hub described "three" while the cards were
         // four, and the persona card made it five — a number in the copy is a
         // promise the card row has to keep, and this one has been broken twice.
@@ -409,6 +412,7 @@ return [
         'idea_what' => 'Buying advice and guides around one subject: what to look at and what actually makes the difference, with every brand and product linked straight into a live search.',
         'persona_what' => 'Presents chosen around a person rather than a date — the coffee obsessive, the one who already has everything.',
         'persona_all' => 'All gift ideas',
+        'guides_all' => 'All guides',
     ],
 
     /*
@@ -843,9 +847,6 @@ return [
         'about_group_private' => 'Nobody can join yet. Press Share to invite them.',
         'about_group_shared' => 'You are buying one present together. Vote for it, then say what you can put in.',
         'quiz_unlocks' => 'Share it and you can send it as a quiz: four products, one really yours. See who knows you best.',
-        'new_mine_body' => 'Things you would like. Keep it to yourself, or share it and people claim what they are getting.',
-        'new_for_someone_body' => 'A list about them. Keep it to yourself, or share it: then you build it together and split the shopping.',
-        'new_group_body' => 'Several of you buy one present and split it. Everyone votes and chips in.',
 
         'for_me' => 'For me',
         'for_someone_else' => 'For someone else',
@@ -928,6 +929,7 @@ return [
         'seo_description' => 'Set up a group, draw the names online, and everybody sees only who they are buying for. No hat, no spreadsheet, no accidental spoilers.',
         'title' => 'Secret Friend',
         'subtitle' => 'One group, one draw, nobody knows who has who.',
+        'aka' => '(drawing names, or Secret Santa)',
         'create' => 'Start a group',
         'group_name' => 'What is this group called?',
         'budget' => 'Budget',
@@ -986,6 +988,11 @@ return [
         'delete_confirm_drawn' => 'Delete :title? It has already been drawn, so everyone loses who they were buying for — and nobody will be told. Tell them yourself first.',
         'deleted' => 'Group deleted.',
         'email_hint' => 'So the person who draws you can be told who they have. It is not shown to anyone else.',
+        'your_list' => 'Your wish list',
+        'your_list_hint' => 'Whoever draws you sees this list, without you seeing who it is. You can change it later on the group page.',
+        'no_list_option' => 'No list yet',
+        'list_detached' => 'That group no longer sees a list of yours.',
+        'how_it_works' => 'How does Secret Friend work?',
     ],
     'quiz' => [
         'title' => 'How well do you know them?',
@@ -1045,7 +1052,6 @@ return [
         'intro' => 'Everything for buying for other people, and for saying what you would like yourself.',
         'tools' => 'What you can do here',
         'band_together' => 'With other people',
-        'band_find' => 'Find a present',
         'band_inspire' => 'Get inspired',
         'search_title' => 'Search and compare',
         'search_body' => 'Find a product across the shops of your country and see who sells it cheapest. On your phone, scan the barcode.',
@@ -1063,10 +1069,6 @@ return [
         'ideas_body' => 'Ideas by person, occasion and budget, each one ready to save straight onto a list.',
         'surprise_title' => 'Surprise Cove',
         'surprise_body' => 'Something rare rather than something popular, for the person who already has everything.',
-        'items_count' => ':count things saved',
-        'open_list' => 'Open my wishlist',
-        'start_list' => 'Start my wishlist',
-        'my_wishlists' => 'My wishlists',
         'another_list' => 'Another wishlist',
 
         'manual' => 'How each one works',
@@ -1172,6 +1174,12 @@ return [
         'title_placeholder_mine' => 'My birthday, Things I would like…',
         'title_placeholder_for_someone' => 'Ideas for Dad, Anna turns 30…',
         'title_placeholder_group' => 'A present for Sam from all of us…',
+        'title_placeholder_santa' => 'Office 2026, Family Christmas…',
+        'title_santa' => 'Start a group in three steps',
+        'santa_sharing' => 'How the group gets shared',
+        'santa_sharing_hint' => 'Once the group exists you get an invite link. Send it to everyone: they join with a name and an email address, no account needed. When everyone is in, you do the draw, and each person is emailed one name.',
+        'santa_no_list_yet' => 'You have no wish list yet. Once you make one, you can point the group at it from the group page, so whoever draws you has something to go on.',
+        'sign_in_and_create_santa' => 'Sign in and start the group',
         'person' => 'Who is it for?',
         'person_hint' => 'Pick one of your friends to link the list to their account, or type a name for somebody who is not here.',
         'occasion' => 'An occasion? (optional)',

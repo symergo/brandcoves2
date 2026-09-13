@@ -4,7 +4,9 @@ import type { CoveSceneKey } from '../Components/CoveIllustration'
 import CoveIllustration from '../Components/CoveIllustration'
 import CoveSubscribe from '../Components/CoveSubscribe'
 import HomeIllustration from '../Components/HomeIllustration'
+import InfoTip from '../Components/InfoTip'
 import ListIllustration, { type ListSceneKey } from '../Components/ListIllustration'
+import NewListButton from '../Components/NewListButton'
 import type { SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
 import ScanButton from '../Components/ScanButton'
@@ -88,6 +90,30 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
      * were about to use is worse than one that moves it down.
      */
     const [pickingKind, setPickingKind] = useState(false)
+
+    /*
+     * The wizard's own sentences (`wizard.kind_*_body`), not a second set
+     * written for the home page: this is a preview of its first step, and a
+     * preview that describes the choice differently is a second opinion.
+     */
+    const kindChoices = [
+        { kind: 'mine', href: `${base}/lists?new=mine`, label: t('lists.for_me'), body: t('wizard.kind_mine_body') },
+        {
+            kind: 'for_someone',
+            href: `${base}/lists?new=for_someone`,
+            label: t('lists.for_someone_else'),
+            body: t('wizard.kind_for_someone_body'),
+        },
+        { kind: 'group', href: `${base}/lists?new=group`, label: t('lists.for_group'), body: t('wizard.kind_group_body') },
+        /*
+         * Secret Friend, fourth (added 2026-09-12 at the owner's request).
+         * Not a list kind — it is a group with a draw — but it is the fourth
+         * thing somebody pressing "make a new list" may have meant, and the
+         * wizard makes one since the same day, so this deep-links into it
+         * like the other three.
+         */
+        { kind: 'santa', href: `${base}/lists?new=santa`, label: t('santa.title'), body: t('santa.subtitle') },
+    ]
 
     useEffect(() => {
         if (!pickingKind) return
@@ -388,85 +414,58 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                   works for somebody who already knows what they want and not at
                   all for somebody starting a birthday. The five cards below are
                   all doors into lists that already exist; this is the one that
-                  makes one.
-
-                  Outlined rather than filled — the accent button on this page
-                  is the search, and Organise is not where the page asks to be
-                  pressed first.
+                  makes one. The button itself is `NewListButton`, shared with
+                  My Lists so the two pages show one button.
                 */}
                 <div className="mt-4">
-                    <button
-                        type="button"
-                        onClick={() => setPickingKind((v) => !v)}
-                        aria-expanded={pickingKind}
-                        aria-controls="new-list-kinds"
-                        /*
-                          Full width only below `sm`: at 390px an inline button
-                          beside nothing looks like it fell off a toolbar, and
-                          everything else in this band is full width anyway.
-                          `py-2.5` at 16px keeps the tap target at 44px.
-                        */
-                        className="flex w-full items-center justify-center gap-2 rounded-card border border-line bg-card px-4 py-2.5 font-medium text-ink transition hover:border-ink sm:inline-flex sm:w-auto"
-                    >
-                        <svg
-                            viewBox="0 0 20 20"
-                            aria-hidden="true"
-                            className="h-4 w-4 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                        >
-                            <path d="M10 4v12M4 10h12" />
-                        </svg>
-                        {t('lists.make_new')}
-                        <svg
-                            viewBox="0 0 20 20"
-                            aria-hidden="true"
-                            className={`h-4 w-4 shrink-0 text-ink-soft transition-transform ${
-                                pickingKind ? 'rotate-180' : ''
-                            }`}
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="m5 8 5 5 5-5" />
-                        </svg>
-                    </button>
+                    <NewListButton
+                        open={pickingKind}
+                        onToggle={() => setPickingKind((v) => !v)}
+                        controls="new-list-kinds"
+                    />
 
                     {pickingKind && (
                         <div
                             id="new-list-kinds"
-                            className="mt-3 rounded-card border border-line bg-card p-4"
+                            className="mt-3 rounded-card border border-accent/40 bg-accent/5 p-5 sm:p-6"
                         >
-                            <p className="text-sm font-medium">{t('lists.for_whom')}</p>
+                            {/*
+                              The same three cards as the first step of the
+                              wizard on the Gift Cove page, and the same words
+                              behind the same info icon. Two surfaces asking one
+                              question should look like one question: a reader
+                              who has met the wizard recognises this at a
+                              glance, and one who meets this first finds the
+                              wizard already familiar. The label carries the
+                              card; the sentence per kind sits in the tip, as
+                              every explanation on the site does.
+                            */}
+                            <p className="font-medium">
+                                {t('lists.for_whom')}
+                                <InfoTip className="ml-1">
+                                    <span className="block">{t('wizard.kind_hint')}</span>
+                                    {kindChoices.map((choice) => (
+                                        <span key={choice.kind} className="mt-2 block">
+                                            <span className="font-medium text-ink">{choice.label}</span> — {choice.body}
+                                        </span>
+                                    ))}
+                                </InfoTip>
+                            </p>
 
                             {/*
-                              One column on a phone, three across from `sm`.
-                              Stacked, each choice is a heading and a sentence —
-                              the shape the eye already reads down a page — and
-                              three side by side at 390px would leave each body
-                              two words wide.
+                              One column on a phone, two from `sm`, four from
+                              `lg`: the wizard's three cards plus Secret Friend.
                             */}
-                            <ul className="mt-2 grid gap-2 sm:grid-cols-3">
-                                {[
-                                    { kind: 'mine', label: t('lists.for_me'), body: t('lists.new_mine_body') },
-                                    {
-                                        kind: 'for_someone',
-                                        label: t('lists.for_someone_else'),
-                                        body: t('lists.new_for_someone_body'),
-                                    },
-                                    { kind: 'group', label: t('lists.for_group'), body: t('lists.new_group_body') },
-                                ].map((choice) => (
+                            {/* Two by two from `sm`, four across from `lg`:
+                                four cards in three columns leaves a widow. */}
+                            <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                {kindChoices.map((choice) => (
                                     <li key={choice.kind}>
                                         <Link
-                                            href={`${base}/lists?new=${choice.kind}`}
-                                            className="flex h-full flex-col rounded-card border border-line p-3 transition hover:border-accent hover:bg-accent/5"
+                                            href={choice.href}
+                                            className="block rounded-card border border-line bg-card p-4 text-left font-medium transition hover:border-ink"
                                         >
-                                            <span className="text-sm font-medium">{choice.label}</span>
-                                            <span className="mt-1 text-xs text-ink-soft">{choice.body}</span>
+                                            {choice.label}
                                         </Link>
                                     </li>
                                 ))}

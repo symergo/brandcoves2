@@ -1,4 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
+import InfoTip from '../../Components/InfoTip'
 import ShareRow from '../../Components/ShareRow'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -30,8 +31,12 @@ interface Props {
         name: string
         done: boolean
         hasList: boolean
+        /** The list this member attached, if any. */
+        wishlistId: string | null
         giftee: { name: string } | null
     } | null
+    /** The lists this person could attach: their own, about themselves. */
+    myLists: { id: string; title: string }[]
 }
 
 /**
@@ -42,7 +47,7 @@ interface Props {
  * pairings outright, which quietly makes one player a spectator of everyone
  * else's game.
  */
-export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
+export default function SantaGroup({ group, isOrganiser, members, me, myLists }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const done = members.filter((m) => m.done).length
@@ -81,13 +86,59 @@ export default function SantaGroup({ group, isOrganiser, members, me }: Props) {
             </header>
 
             {me && (
-                <p className="mt-6 max-w-2xl rounded-card border border-line bg-card p-4 text-sm">
+                <div className="mt-6 max-w-2xl rounded-card border border-line bg-card p-4 text-sm">
                     <Link href={`/${market.key}/santa/${group.id}/me/${me.joinToken}`} className="underline">
                         {group.drawn && me.giftee
                             ? t('santa.you_have', { name: me.giftee.name })
                             : t('santa.not_drawn')}
                     </Link>
-                </p>
+
+                    {/*
+                      Your own list, attached from here.
+
+                      This is where every member ends up — the organiser after
+                      creating, everybody else after joining — and until
+                      2026-09-12 it only *said* who had a list; attaching one
+                      meant finding "Use this list" on the list's own page.
+                      The select writes through the same endpoint that button
+                      does, so the two doors cannot admit different lists.
+                      Somebody with no list is sent to make one, on the "for
+                      me" shape, since that is the only kind a Santa may see.
+                    */}
+                    {myLists.length > 0 ? (
+                        <label className="mt-3 block">
+                            <span className="font-medium">
+                                {t('santa.your_list')}
+                                <InfoTip className="ml-1">{t('santa.your_list_hint')}</InfoTip>
+                            </span>
+                            <select
+                                value={me.wishlistId ?? ''}
+                                onChange={(e) =>
+                                    router.post(
+                                        `/${market.key}/santa/${group.id}/list`,
+                                        { wishlist_id: e.target.value === '' ? null : e.target.value },
+                                        { preserveScroll: true },
+                                    )
+                                }
+                                className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 sm:w-auto sm:min-w-64"
+                            >
+                                <option value="">{t('santa.no_list_option')}</option>
+                                {myLists.map((list) => (
+                                    <option key={list.id} value={list.id}>
+                                        {list.title}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+                    ) : (
+                        <p className="mt-3 text-ink-soft">
+                            {t('santa.build_yours_hint')}{' '}
+                            <Link href={`/${market.key}/lists?new=mine`} className="underline hover:text-ink">
+                                {t('santa.build_yours')}
+                            </Link>
+                        </p>
+                    )}
+                </div>
             )}
 
             <section className="mt-10">

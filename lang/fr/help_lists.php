@@ -286,7 +286,7 @@ Chacun joue une fois.',
                 ],
                 [
                     'title' => 'Rattacher ma liste de souhaits au groupe',
-                    'body' => "1. Ouvrez votre [liste de souhaits](lists).\n2. Touchez « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.",
+                    'body' => "Choisissez votre liste sous « Votre liste de souhaits » quand vous créez le groupe, ou ensuite sur la page du groupe. L’inverse marche aussi : ouvrez votre [liste de souhaits](lists) et touchez « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.",
                 ],
                 [
                     'title' => 'Un rappel avant',

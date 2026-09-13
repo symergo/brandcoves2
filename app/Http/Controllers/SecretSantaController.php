@@ -90,7 +90,41 @@ class SecretSantaController extends Controller
                 'url' => $current->url("santa/{$group->id}"),
             ])->all(),
             'isSignedIn' => $user !== null,
+            'myLists' => $this->myLists($request, $current),
         ]);
+    }
+
+    /**
+     * The lists this person could point a group at: their own, of the
+     * "for me" kind, on this market.
+     *
+     * Offered where the group is made and on the group page, because until
+     * 2026-09-12 the only way to attach a list was from the list's own page
+     * — "Use this list" next to the group — and the people who needed it
+     * were standing on the group page wondering how. Keyed by id and titled
+     * as the owner sees it, in the language of the page.
+     *
+     * @return list<array{id: string, title: string}>
+     */
+    private function myLists(Request $request, CurrentMarket $current): array
+    {
+        $owner = Owner::fromRequest($request);
+
+        if (! $owner->isSignedIn()) {
+            return [];
+        }
+
+        return $owner->scope(Wishlist::query())
+            ->where('market', $current->value())
+            ->where('kind', ListKind::Mine->value)
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn (Wishlist $list) => [
+                'id' => $list->id,
+                'title' => $list->displayTitle($current->get()->language()),
+            ])
+            ->values()
+            ->all();
     }
 
     public function show(Request $request, CurrentMarket $current, string $market, string $group): Response
@@ -135,6 +169,7 @@ class SecretSantaController extends Controller
                 ]),
 
             'me' => $me === null ? null : $this->mine($me, $current),
+            'myLists' => $this->myLists($request, $current),
         ]);
     }
 
@@ -149,7 +184,19 @@ class SecretSantaController extends Controller
             'budget_max' => ['nullable', 'numeric', 'min:0', 'max:100000'],
             'exchange_date' => ['nullable', 'date'],
             'theme' => ['nullable', 'string', 'max:120'],
+            'wishlist_id' => ['nullable', 'uuid'],
         ]);
+
+        /*
+         * Checked before anything is written. A list that is not theirs is
+         * refused outright rather than silently dropped, so a form that was
+         * tampered with does not create a group and pretend it attached.
+         */
+        $listId = $validated['wishlist_id'] ?? null;
+
+        if ($listId !== null) {
+            abort_unless($this->ownsList($request, $listId), 403);
+        }
 
         $santa = SecretSantaGroup::create([
             'owner_user_id' => $user->id,
@@ -170,6 +217,9 @@ class SecretSantaController extends Controller
             'email' => $user->email,
             'display_name' => $user->displayName(),
             'joined_at' => now(),
+            // Chosen on the same form, so the organiser is the one member who
+            // never has to come back and attach a list afterwards.
+            'wishlist_id' => $listId,
         ]);
 
         return redirect()->to($current->url("santa/{$santa->id}"));
@@ -537,18 +587,31 @@ class SecretSantaController extends Controller
         $listId = $validated['wishlist_id'] ?? null;
 
         if ($listId !== null) {
-            $owned = Owner::fromRequest($request)
-                ->scope(Wishlist::query())
-                ->whereKey($listId)
-                ->where('kind', ListKind::Mine->value)
-                ->exists();
-
-            abort_unless($owned, 403);
+            abort_unless($this->ownsList($request, $listId), 403);
         }
 
         $member->update(['wishlist_id' => $listId]);
 
-        return back()->with('success', __('site.santa.list_attached'));
+        return back()->with('success', $listId === null
+            ? __('site.santa.list_detached')
+            : __('site.santa.list_attached'));
+    }
+
+    /**
+     * Only a list you own, and only one about yourself.
+     *
+     * A list *about* somebody else is research they must never see, and a
+     * group list is other people's money; neither is what a Santa should be
+     * handed. Shared by the create form and the attach endpoint so the two
+     * doors cannot admit different lists.
+     */
+    private function ownsList(Request $request, string $listId): bool
+    {
+        return Owner::fromRequest($request)
+            ->scope(Wishlist::query())
+            ->whereKey($listId)
+            ->where('kind', ListKind::Mine->value)
+            ->exists();
     }
 
     /**
@@ -666,6 +729,7 @@ class SecretSantaController extends Controller
             'name' => $member->display_name,
             'done' => $member->marked_done_at !== null,
             'hasList' => $member->wishlist_id !== null,
+            'wishlistId' => $member->wishlist_id,
             'listUrl' => $member->wishlist_id === null
                 ? null
                 : $current->url("lists/{$member->wishlist_id}"),

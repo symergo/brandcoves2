@@ -7,7 +7,6 @@ namespace App\Http\Controllers;
 use App\Enums\ListKind;
 use App\Models\Friendship;
 use App\Models\Recipient;
-use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Services\Seo\PageMeta;
@@ -159,25 +158,6 @@ class GiftCoveController extends Controller
             // with, and the occasions with their dates. Shared with My Lists,
             // which mounts the same wizard; see WizardOffer.
             ...$offer->for($owner, $user, $current->get()),
-
-            'santaGroups' => $user === null
-                ? []
-                : SecretSantaGroup::query()
-                    ->where('market', $current->value())
-                    ->whereExists(fn ($q) => $q
-                        ->selectRaw('1')
-                        ->from('secret_santa_members')
-                        ->whereColumn('secret_santa_members.group_id', 'secret_santa_groups.id')
-                        ->where('secret_santa_members.user_id', $user->id))
-                    ->latest()
-                    ->limit(5)
-                    ->get()
-                    ->map(fn (SecretSantaGroup $group) => [
-                        'title' => $group->title,
-                        'drawn' => $group->status->isDrawn(),
-                        'url' => $current->url("santa/{$group->id}"),
-                    ])
-                    ->all(),
 
             /*
              * The rest of the site, for the two bands that are not list tools.

@@ -6,6 +6,8 @@ import type { SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
 import ListWizard, { hasListDraft, type WizardOffer } from '../../Components/ListWizard'
+import InfoTip from '../../Components/InfoTip'
+import NewListButton from '../../Components/NewListButton'
 
 interface ListSummary {
     id: string
@@ -48,6 +50,8 @@ interface Props extends WizardOffer {
     lists: ListSummary[]
     view: ListsView
     isSignedIn: boolean
+    /** The Secret Friend groups I am in, newest first. */
+    santaGroups: { title: string; drawn: boolean; url: string }[]
 }
 
 /**
@@ -207,7 +211,7 @@ function ListCard({ list }: { list: ListSummary }) {
     )
 }
 
-export default function ListsIndex({ lists, view, recipients, friends, occasions, isSignedIn }: Props) {
+export default function ListsIndex({ lists, view, recipients, friends, occasions, myLists, isSignedIn, santaGroups }: Props) {
     const page = usePage<SharedProps>()
     const { market } = page.props
     const { t } = useTranslations()
@@ -219,7 +223,8 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
      * question answered instead.
      */
     const intent = new URLSearchParams(page.url.split('?')[1] ?? '').get('new')
-    const initialKind = intent === 'mine' || intent === 'for_someone' || intent === 'group' ? intent : undefined
+    const initialKind =
+        intent === 'mine' || intent === 'for_someone' || intent === 'group' || intent === 'santa' ? intent : undefined
     const [creating, setCreating] = useState(intent !== null)
 
     /*
@@ -255,28 +260,39 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
     const groups =
         view === 'mine'
             ? [
+                  /*
+                   * Each group carries the sentence the wizard uses for that
+                   * kind, behind an info icon beside the heading (owner's
+                   * request, 2026-09-12): the same words on the page you
+                   * chose the kind and the page you find the list, and the
+                   * site rule that explanations sit behind the icon.
+                   */
                   {
                       key: 'mine',
                       label: t('lists.for_me'),
+                      hint: t('wizard.kind_mine_body'),
                       lists: mineOnly.filter((l) => l.kind === 'mine'),
                   },
                   {
                       key: 'others',
                       label: t('lists.for_someone_else'),
+                      hint: t('wizard.kind_for_someone_body'),
                       lists: mineOnly.filter((l) => l.kind === 'for_someone'),
                   },
                   {
                       key: 'group',
                       label: t('lists.for_group'),
+                      hint: t('wizard.kind_group_body'),
                       lists: mineOnly.filter((l) => l.kind === 'group'),
                   },
                   {
                       key: 'shared',
                       label: t('lists.shared_with_me'),
+                      hint: t('lists.shared_subtitle'),
                       lists: lists.filter((l) => l.sharedWithMe),
                   },
               ].filter((g) => g.lists.length > 0)
-            : [{ key: view, label: '', lists }]
+            : [{ key: view, label: '', hint: '', lists }]
 
     // Each view names itself and its own empty state. "You have no lists" and
     // "nobody has shared a list with you" are different facts, and one sentence
@@ -328,14 +344,18 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                       opened a one-screen form that asked the same things with
                       none of the explanation, and a second copy of the picker
                       that had already been fixed once elsewhere.
+
+                      The button is the home page's "Make a new list" button
+                      (`NewListButton`) since 2026-09-12. It was a plain
+                      "New list" here, smaller and without the glyph, and the
+                      two looked like different things that turned out to open
+                      the same wizard.
                     */}
-                    <button
-                        onClick={() => setCreating((v) => !v)}
-                        aria-expanded={creating}
-                        className="rounded-lg border border-line px-4 py-2 font-medium hover:border-ink"
-                    >
-                        {t('lists.new_list')}
-                    </button>
+                    <NewListButton
+                        open={creating}
+                        onToggle={() => setCreating((v) => !v)}
+                        controls="new-list-wizard"
+                    />
                 </div>
             </header>
 
@@ -357,12 +377,13 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
             )}
 
             {creating && (
-                <div className="mt-6">
+                <div id="new-list-wizard" className="mt-6">
                     <ListWizard
                         signedIn={isSignedIn}
                         recipients={recipients}
                         friends={friends}
                         occasions={occasions}
+                        myLists={myLists}
                         initialKind={initialKind}
                         onCancel={() => setCreating(false)}
                     />
@@ -418,9 +439,15 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                         {/* The heading only earns its place when both groups
                             exist; with one group it is a label for the obvious. */}
                         {groups.length > 1 && (
-                            <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
-                                {group.label}
-                            </h2>
+                            /* The icon is a sibling of the heading, not inside
+                               it: the heading is uppercase and the tip's text
+                               would inherit that. */
+                            <div className="flex items-center gap-1">
+                                <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
+                                    {group.label}
+                                </h2>
+                                <InfoTip>{group.hint}</InfoTip>
+                            </div>
                         )}
                         <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {group.lists.map((list) => (
@@ -433,6 +460,54 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                 ))
             )}
         
+            {/*
+              The Secret Friend groups I am in, after the lists and only on
+              My Lists proper. Moved here from the bottom of the Gift Cove hub
+              on 2026-09-12 (owner's call): a group is a thing I am in, like
+              a list, so it belongs on the shelf of what I have. Same heading
+              style as the list groups above, so it reads as one more of them.
+              The Shared and Group views are answers to a narrower question and
+              do not carry it.
+            */}
+            {view === 'mine' && santaGroups.length > 0 && (
+                <section className="mt-8">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <div className="flex items-center gap-1">
+                            <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
+                                {t('santa.title')}
+                                {/* The other names for it, in ordinary case beside
+                                    the heading: "Secret Friend" is the site's word
+                                    and not everybody's, so the heading says which
+                                    game it means (owner's wording, 2026-09-12). */}
+                                <span className="ml-2 font-normal tracking-normal normal-case">{t('santa.aka')}</span>
+                            </h2>
+                            <InfoTip>{t('santa.subtitle')}</InfoTip>
+                        </div>
+                        <Link
+                            href={`/${market.key}/santa`}
+                            className="text-sm text-accent-dark underline hover:text-ink"
+                        >
+                            {t('santa.create')}
+                        </Link>
+                    </div>
+                    <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {santaGroups.map((group) => (
+                            <li key={group.url}>
+                                <Link
+                                    href={group.url}
+                                    className="block h-full rounded-card border border-line bg-card p-4 transition hover:border-ink"
+                                >
+                                    <span className="font-medium">{group.title}</span>
+                                    <span className="mt-1 block text-sm text-ink-soft">
+                                        {group.drawn ? t('santa.drawn') : t('santa.not_drawn')}
+                                    </span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
             {/*
               Under the lists rather than over them.
 

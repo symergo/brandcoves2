@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Wishlist;
 
 use App\Enums\EventType;
+use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Models\Friendship;
 use App\Models\Recipient;
 use App\Models\User;
+use App\Models\Wishlist;
 use App\Services\Social\Friends;
 use App\Support\DayAndMonth;
 use App\Support\Owner;
@@ -37,6 +39,7 @@ final class WizardOffer
      *     friends: list<array{id: int, name: string, recipientId: string|null, birthday: string|null}>,
      *     recipients: list<array{id: string, name: string, birthday: string|null}>,
      *     occasions: list<array{value: string, label: string, date: string|null}>,
+     *     myLists: list<array{id: string, title: string}>,
      * }
      */
     public function for(Owner $owner, ?User $user, Market $market): array
@@ -110,6 +113,29 @@ final class WizardOffer
                 ],
                 EventType::cases(),
             ),
+
+            /*
+             * My own lists, about myself, on this market: what a Secret Friend
+             * group may be pointed at. The wizard has made groups since
+             * 2026-09-12 (its fourth kind), and its last step offers the list
+             * whoever draws me will see. Only `mine`: a list about somebody
+             * else is research they must never see, and a group list is other
+             * people's money. Titled as the owner sees it, in the language of
+             * the page.
+             */
+            'myLists' => $owner->isSignedIn()
+                ? $owner->scope(Wishlist::query())
+                    ->where('market', $market->value)
+                    ->where('kind', ListKind::Mine->value)
+                    ->orderBy('created_at')
+                    ->get()
+                    ->map(fn (Wishlist $list) => [
+                        'id' => $list->id,
+                        'title' => $list->displayTitle($market->language()),
+                    ])
+                    ->values()
+                    ->all()
+                : [],
         ];
     }
 

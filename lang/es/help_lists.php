@@ -286,7 +286,7 @@ Cada uno juega una vez.',
                 ],
                 [
                     'title' => 'Unir mi lista de deseos al grupo',
-                    'body' => "1. Abre tu [lista de deseos](lists).\n2. Toca «Usar esta lista» junto al grupo.\n\nQuien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en tres pasos.",
+                    'body' => "Elige tu lista bajo «Tu lista de deseos» al crear el grupo, o después en la página del grupo. También funciona al revés: abre tu [lista de deseos](lists) y toca «Usar esta lista» junto al grupo.\n\nQuien te tocó ve así qué te gustaría, sin que tú veas quién es. ¿Aún no tienes lista? [Crea una](lists-help/saving) en tres pasos.",
                 ],
                 [
                     'title' => 'Un recordatorio antes',

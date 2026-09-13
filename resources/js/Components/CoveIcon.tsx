@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type CoveKey = 'daily' | 'surprise' | 'idea' | 'persona' | 'brand' | 'shop' | 'all' | 'ask' | 'dial'
+export type CoveKey = 'daily' | 'surprise' | 'idea' | 'persona' | 'brand' | 'shop' | 'all' | 'ask' | 'dial' | 'compass'
 
 /**
  * The discovery surfaces, drawn.
@@ -103,6 +103,20 @@ const paths: Record<CoveKey, ReactNode> = {
             <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" />
             <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" />
             <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
+        </>
+    ),
+
+    /*
+     * A compass, for the Discover entry in the header (added 2026-09-12, when
+     * the owner asked for an icon on it). None of the keys above fit: each is
+     * one Cove shape, and the entry stands for all of them. A compass is the
+     * ordinary mark for "go and find", drawn as a ring with the needle a
+     * diamond pointing north-east, on the same grid as the rest.
+     */
+    compass: (
+        <>
+            <circle cx="12" cy="12" r="8.5" />
+            <path d="m15.5 8.5-2 5-5 2 2-5Z" />
         </>
     ),
 

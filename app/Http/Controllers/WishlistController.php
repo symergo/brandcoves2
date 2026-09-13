@@ -12,6 +12,7 @@ use App\Enums\RecipientStatus;
 use App\Models\Friendship;
 use App\Models\ListQuiz;
 use App\Models\Recipient;
+use App\Models\SecretSantaGroup;
 use App\Models\SecretSantaMember;
 use App\Models\Wishlist;
 use App\Models\WishlistItem;
@@ -180,6 +181,32 @@ class WishlistController extends Controller
             ...$offer->for($owner, $owner->user, $current->get()),
 
             'isSignedIn' => $owner->isSignedIn(),
+
+            /*
+             * The Secret Friend groups I am in, moved here from the Gift Cove
+             * hub on 2026-09-12 at the owner's request. A group is a thing I
+             * am *in*, like a list, so it belongs on the shelf of what I
+             * have rather than under the page that explains the tools. All
+             * of them, newest first: the hub showed five, which is a limit
+             * for a footnote, and this is the page for the whole set.
+             */
+            'santaGroups' => $owner->user === null
+                ? []
+                : SecretSantaGroup::query()
+                    ->where('market', $current->value())
+                    ->whereExists(fn ($q) => $q
+                        ->selectRaw('1')
+                        ->from('secret_santa_members')
+                        ->whereColumn('secret_santa_members.group_id', 'secret_santa_groups.id')
+                        ->where('secret_santa_members.user_id', $owner->user->id))
+                    ->latest()
+                    ->get()
+                    ->map(fn (SecretSantaGroup $group) => [
+                        'title' => $group->title,
+                        'drawn' => $group->status->isDrawn(),
+                        'url' => $current->url("santa/{$group->id}"),
+                    ])
+                    ->all(),
         ]);
     }
 

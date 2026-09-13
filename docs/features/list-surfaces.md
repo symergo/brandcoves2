@@ -320,6 +320,45 @@ appeared nowhere on their own list, so the form carries a *For whom* field above
 list about somebody. The name is a fact about the recipient, not the list: Save patches
 `/recipients/{id}` first and the list once that has landed, so one press is one outcome.
 
+## The hub no longer lists my wishlists (2026-09-12)
+
+`/gift-cove` opened with the wizard, then a "My wishlists" band — every list of mine with its
+count, its sharing state and an Open button, the first one highlighted — and only then the tool
+grid. Removed at the owner's request. The page opened with a form to make a list and followed it
+with the lists already made, so the tools it exists to present sat a screen down, and the band
+duplicated My Lists, which is one tap away in the header and behind the first card of the grid.
+The controller still sends `wishlists`: the cards read the count for their badges and open the
+first list. The four strings the band alone used (`gift_cove.my_wishlists`, `items_count`,
+`open_list`, `start_list`) are gone from all four languages.
+
+## The hub has four bands, not five (2026-09-12)
+
+"Find a present" — the Gift Whisperer, Search, Ask and Alerts — is gone from `/gift-cove`, at the
+owner's request. The hub is the page for lists and the people around them; finding is the header's
+other half, where the entry now called "Find a gift" carries the Whisperer as its first item, and
+Search is in the header on every page. The four cards' strings stay: the manual at
+`/gift-cove/how-it-works` still explains the Whisperer, and the header uses its title. Only
+`gift_cove.band_find` was deleted. The `find` band was the one four-card band; the grid still
+takes its column count from each band, so nothing sits alone.
+
+## My Lists lists my Secret Friend groups (2026-09-12)
+
+The groups I am in were a band under the tool grid on `/gift-cove`, five at most. They are on My
+Lists now, at the owner's request, after the list groups and only on the `mine` view: a group is a
+thing I am *in*, like a list, so it belongs on the shelf of what I have rather than under the page
+that explains the tools. All of them, newest first (five was a limit for a footnote), each card
+saying whether the draw has happened, with a link to the Secret Friend hub beside the heading for
+starting another. The heading carries the game's other names beside it, "(lotjestrekken of Secret
+Santa)" (`santa.aka`), because Secret Friend is the site's word and not everybody's. The Shared and
+Group views answer a narrower question and do not carry it. The query moved from
+`GiftCoveController` to `WishlistController::index()` unchanged apart from the limit.
+
+**Every section heading on My Lists carries an info icon** (owner's request, the same day): the
+three kinds show the wizard's sentence for that kind (`wizard.kind_*_body`), Shared with me shows
+`lists.shared_subtitle`, and Secret Friend shows `santa.subtitle`. The icon sits beside the
+heading rather than inside it, because the heading is uppercase and the tip's text would inherit
+that.
+
 ## "How each one works" is its own page
 
 The manual was the bottom half of `/gift-cove`, a page with two readers who want opposite things: one
@@ -599,6 +638,12 @@ exactly the sort of thing that stops being derived.
 "New list" on My Lists opens `ListWizard` — the same four questions the Gift Cove opens with —
 and the one-screen create form that used to sit there is gone. Two reasons.
 
+(Since 2026-09-12 the button is the home page's **Make a new list** button, `NewListButton`,
+shared between the two pages. It was a plain "New list" here, smaller and without the glyph, and
+the two looked like different things that turned out to open the same wizard. The home page's
+version opens a kind chooser that deep-links to `?new=<kind>` here; this one opens the wizard
+directly, whose first step is that same chooser.)
+
 The form asked the same things with none of the explanation. Its three kind cards carried a
 sentence each; the wizard explains a kind before it asks, the sharing before it is chosen, and
 lets a signed-out visitor walk the whole thing as the explanation, with the sign-in as the last
@@ -621,6 +666,29 @@ title is gone: the recipient is on the kind pill beside the title and in the tit
 the wizard names a list "For Anna", so the line said it a third time. And the delete icon keeps the
 top-right corner on every width — the header used to wrap on a phone and drop the icon under the
 pills — at 44px, the site's minimum target.
+
+## The wizard makes a Secret Friend group too (2026-09-12)
+
+"Who is it for?" has a fourth card, Secret Friend, at the owner's request. It is not a list kind
+(a group with a draw), but it is the fourth thing somebody pressing *make a new list* may have
+meant, and a card that only linked away to the hub left them with three steps promised and none
+taken. So `santa` is a `Kind` in `ListWizard` with its own second and third step:
+
+- **Step 2** is the group form's fields in the wizard's clothes: name, budget beside date, theme.
+  The same fields the Secret Friend hub's own form asks, because both post to the same `store()`.
+- **Step 3** cannot ask "who may see it" the way a list's does: a group is shared by its invite
+  link, which does not exist until the group does. It says how the sharing will go and asks the
+  one thing that can be settled now, which of my lists whoever draws me will see
+  (`wizard.santa_sharing_hint`, then `santa.your_list`). With no list yet it says so
+  (`wizard.santa_no_list_yet`) rather than showing a select with one empty option.
+- **Create** posts `title`, `budget_max`, `exchange_date`, `theme` and `wishlist_id` to
+  `POST /santa`, which auto-joins the organiser and lands on the group page with the invite link.
+  Signed out, the last button is "Sign in and start the group", and the draft replays like a
+  list's; a group needs an owner, so there is no anonymous path.
+
+`WizardOffer` now carries `myLists` (own, `mine`, this market) for that third step, so both pages
+that mount the wizard send it without a second copy of the query. `?new=santa` opens the wizard on
+step 2, and the home page's chooser deep-links there like the other three kinds.
 
 ## The item card is a tile on a phone (2026-09-08)
 

@@ -286,7 +286,7 @@ Everyone plays once.',
                 ],
                 [
                     'title' => 'Attaching my wish list to the group',
-                    'body' => "1. Open your [wish list](lists).\n2. Tap “Use this list” next to the group.\n\nWhoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in three steps.",
+                    'body' => "Choose your list under “Your wish list” when you start the group, or on the group page afterwards. It also works the other way round: open your [wish list](lists) and tap “Use this list” next to the group.\n\nWhoever drew you then sees what you would like, without you seeing who it is. No list yet? [Make one](lists-help/saving) in three steps.",
                 ],
                 [
                     'title' => 'A reminder ahead',

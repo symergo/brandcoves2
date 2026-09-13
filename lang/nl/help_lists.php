@@ -301,7 +301,7 @@ Iedereen speelt één keer.',
                 ],
                 [
                     'title' => 'Mijn verlanglijst koppelen aan de groep',
-                    'body' => "1. Open je [verlanglijst](lists).\n2. Tik op “Gebruik dit lijstje” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijstje? [Maak er een](lists-help/saving) in drie stappen.",
+                    'body' => "Kies je lijstje onder “Je verlanglijstje” als je de groep start, of daarna op de groepspagina. Andersom kan ook: open je [verlanglijst](lists) en tik op “Gebruik dit lijstje” bij de groep.\n\nWie jou trok, ziet zo wat je graag hebt, zonder dat jij ziet wie het is. Nog geen lijstje? [Maak er een](lists-help/saving) in drie stappen.",
                 ],
                 [
                     'title' => 'Een herinnering vooraf',

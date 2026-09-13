@@ -255,10 +255,22 @@ So the band now opens with a **Make a new list** button, between its heading and
 **It asks which kind before it goes anywhere.** The three kinds differ in who may claim, who may
 vote and who sees the money ([list-taxonomy.md](list-taxonomy.md)), and none of that is recoverable
 from the words *new list*. Choosing is free at this moment and awkward afterwards: somebody who
-picks wrong finds out weeks later, when the mechanism they wanted is not on the page. `Lists/Index`
-reached the same conclusion for its own create form and shows the same three cards with the same
-three sentences — `lists.new_mine_body`, `lists.new_for_someone_body`, `lists.new_group_body` — so
-the two surfaces cannot describe the choice differently.
+picks wrong finds out weeks later, when the mechanism they wanted is not on the page. The list
+wizard reached the same conclusion for its first step, and since 2026-09-12 the chooser here **is
+that step's cards**: the same three label-only cards, the same *Who is it for?* heading, and the
+same three sentences behind the same info icon (`wizard.kind_hint`, `wizard.kind_*_body`). Until
+then the home page had its own smaller cards with a sentence printed under each label and its own
+set of copy (`lists.new_*_body`, now deleted). Two surfaces asking one question should look like
+one question: somebody who has met the wizard on the Gift Cove page recognises this at a glance,
+and somebody who meets this first finds the wizard already familiar. It also brings the chooser in
+line with the site rule that explanations sit behind an info icon and labels stay on the surface.
+
+Later the same day the chooser gained a **fourth card, Secret Friend**, at the owner's request. It
+is not a list kind — a group with a draw — but it is the fourth thing somebody pressing *make a
+new list* may have meant. It deep-links to `?new=santa` like the other three: the wizard makes a
+group since the same day (see [list-surfaces.md](list-surfaces.md)). Its sentence in the info tip
+is `santa.subtitle`. Two columns from `sm` and four from `lg`, because four cards in three columns
+leaves a widow.
 
 **Each choice is a link to `?new=<kind>`, not a second create form.** `Lists/Index` already reads
 that parameter to open the list wizard with the kind answered (a one-screen form until 2026-09-07); it was added so the Gift Cove's cards could land

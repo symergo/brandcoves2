@@ -10,7 +10,7 @@ import SignInLink from '../Components/SignInLink'
 import MarketSwitcher from '../Components/MarketSwitcher'
 import NavMenu, { type NavMenuItem } from '../Components/NavMenu'
 import ToolIcon from '../Components/ToolIcon'
-import { type PropsWithChildren, useEffect, useState } from 'react'
+import { type PropsWithChildren, type ReactNode, useEffect, useState } from 'react'
 import { SignInProvider } from '../signIn'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -152,85 +152,80 @@ function Chrome({ children }: PropsWithChildren) {
      */
     const organise = {
         href: `${base}/gift-cove`,
-        label: t('nav.organise'),
         /*
-         * The three lists views, then the draw.
-         *
-         * They are three questions rather than three filters — what am I
-         * keeping, what has somebody shown me, what are we choosing together —
-         * which is why each carries its own `?view=` rather than being one
-         * entry you narrow after arriving. See docs/features/list-taxonomy.md.
-         *
-         * The Gift Finder is deliberately absent: it suggests things rather
-         * than organising them, so it belongs to the homepage CTA and the Gift
-         * Cove hub, not under a verb meaning "organise".
+         * "Make a list", not "Organise" (changed 2026-09-12). The verb named
+         * the section and told a newcomer nothing about what to press; the
+         * hub it opens starts with the list wizard, so the label now names
+         * the thing you do there. The home page keeps `nav.organise` as the
+         * heading of its band, where a "Make a new list" button already sits
+         * under it and a heading saying the same thing would be the button
+         * twice.
          */
+        label: t('nav.make_list'),
+        // The wish list mark, which is what the entry makes. Added 2026-09-12
+        // with Discover's compass, at the owner's request.
+        icon: <ToolIcon name="wishlist" className="h-4 w-4" />,
         /*
-         * Iconed, like Discover.
+         * No submenu, since 2026-09-12, at the owner's request.
          *
-         * This menu deliberately had none: the entries are tools whose names
-         * say what they are, and the fear was a contact sheet. What that missed
-         * is that the two menus sit in one panel on a phone, where an iconed
-         * block above a bare one reads as one finished list and one unfinished
-         * one — and that three of these four names are the same noun with a
-         * different adjective, which is exactly the case a mark in the margin
-         * helps with.
+         * Four entries hung under it: the three list views (mine, shared
+         * with me, group) and Secret Friend. The hub it opens carries all
+         * four as cards with a sentence each, and a menu that repeats the
+         * page it leads to is a second copy of that page with less on it.
+         * The entry is one thing to press now, which is also what its new
+         * label promises: "Make a list", not "here are your list views".
          *
-         * `ToolIcon`, not `CoveIcon`: these are the Gift Cove tools and already
-         * have their glyphs there, drawn on the same grid at the same weight as
-         * Discover's. Reusing them means the header cannot drift from the tool
-         * pages that teach them.
+         * Two things follow. On the wide header the entry renders as a plain
+         * link (NavMenu draws no chevron for an empty list), and on the phone
+         * panel the section is a heading with nothing indented under it. My
+         * Lists had been dropped from the panel's account block because it
+         * was in this menu; it is back there now, below.
          */
-        items: [
-            {
-                href: `${base}/lists`,
-                label: t('nav.lists'),
-                icon: <ToolIcon name="wishlist" className="h-5 w-5" />,
-            },
-            {
-                href: `${base}/lists?view=shared`,
-                label: t('nav.shared_lists'),
-                icon: <ToolIcon name="shared" className="h-5 w-5" />,
-            },
-            {
-                href: `${base}/lists?view=group`,
-                label: t('nav.group_lists'),
-                icon: <ToolIcon name="collab" className="h-5 w-5" />,
-            },
-            {
-                href: `${base}/santa`,
-                label: t('nav.santa'),
-                icon: <ToolIcon name="santa" className="h-5 w-5" />,
-            },
-        ],
+        items: [] as NavMenuItem[],
     }
 
-    /*
-     * The Cove types, then the one thing here that is not one.
-     *
-     * The menu used to name three surfaces — Daily, "Idea Cove" and Ask — which
-     * meant the header used the word "Cove" for the daily column and for the
-     * article archive and had no word at all for the personas, whose shelf at
-     * `/gift-ideas` was reachable from nothing. A reader could not learn from
-     * the header that Cove is one thing with several shapes, because the header
-     * only showed two of the shapes and called one of them by the name of the
-     * whole.
-     *
-     * So: one entry per kind, named for the kind, and All Coves under them for
-     * the overview. Every entry carries a hint — five labels differing by one
-     * word cannot be told apart on first opening, and the hint slot has been on
-     * `NavMenuItem` since it was written.
-     *
-     * Ask others sits below the Coves rather than among them. It is a way of
-     * *finding* something when you cannot describe it, which is why it belongs
-     * under Discover at all, but its content comes from other visitors rather
-     * than from us — it is not something we published, and listing it as a
-     * fourth Cove type would say that it is.
-     */
     const discover = {
         href: `${base}/discover-cove`,
-        label: t('nav.discover'),
+        /*
+         * "Find a gift", not "Discover" (changed 2026-09-12, at the owner's
+         * request, the same day Organise became "Make a list"). Discover
+         * said what the Coves are for; this says what the visitor came to
+         * do, and pairs with the other entry: make a list, find a gift.
+         * The variable keeps its old name, as `organise` does.
+         */
+        label: t('nav.find_gift'),
+        icon: <CoveIcon name="compass" className="h-4 w-4" />,
         items: [
+            /*
+             * The Gift Whisperer, first. It was kept out of the header on
+             * the grounds that it suggests rather than organises; under a
+             * menu called "Find a gift" it is the most direct answer to the
+             * label, and the owner asked for it here (2026-09-12). The
+             * "Find a present" band on the Gift Cove hub, which was its
+             * other door, went the same day.
+             */
+            {
+                href: `${base}/gift`,
+                label: t('gift_cove.whisperer_title'),
+                hint: t('nav.hint_whisperer'),
+                icon: <ToolIcon name="whisperer" className="h-5 w-5" />,
+            },
+            /*
+             * Search, second (moved in from the loose links on 2026-09-12,
+             * at the owner's request). It sat outside both menus because it
+             * reads as a control rather than a section; under a menu called
+             * "Find a gift" it is the second most direct answer to the label,
+             * after the Whisperer, and the search field on every page is
+             * still the way most people reach it.
+             */
+            {
+                href: `${base}/search`,
+                // "Search offers", not "Search": under this menu it says
+                // what is searched, as the entries around it do.
+                label: t('nav.search_offers'),
+                hint: t('nav.hint_search'),
+                icon: <ToolIcon name="search" className="h-5 w-5" />,
+            },
             {
                 href: `${base}/${market.coveSegment}`,
                 label: t('nav.daily'),
@@ -290,7 +285,7 @@ function Chrome({ children }: PropsWithChildren) {
      * the report gets written.
      */
     const nav = [
-        { href: `${base}/search`, label: t('nav.search'), icon: <ToolIcon name="search" className="h-5 w-5" /> },
+        // Search was here until 2026-09-12; it is under Find a gift now.
         /*
           Help, not Feedback.
 
@@ -318,7 +313,14 @@ function Chrome({ children }: PropsWithChildren) {
      * are three groups after them. Same links, same order, same single tap to
      * any of them.
      */
-    const sections: { href: string; label: string; items: NavMenuItem[] }[] = [organise, discover]
+    /*
+     * Discover first, then Make a list (swapped 2026-09-12, at the owner's
+     * request). Discover is the editorial half, the only part that is ours,
+     * and the one with a menu left under it; Make a list is now a single
+     * link, and a menu followed by a link reads better than the reverse.
+     * The phone panel follows the same order.
+     */
+    const sections: { href: string; label: string; icon: ReactNode; items: NavMenuItem[] }[] = [discover, organise]
 
     /*
      * "You are here", in a menu where three entries share a path.
@@ -388,21 +390,23 @@ function Chrome({ children }: PropsWithChildren) {
                         aria-label={t('nav.main')}
                     >
                         <NavMenu
-                            href={organise.href}
-                            label={organise.label}
-                            items={organise.items}
-                            current={isCurrent(organise.href)}
-                            isCurrent={isCurrent}
-                            submenuLabel={t('nav.submenu', { section: organise.label })}
-                        />
-
-                        <NavMenu
                             href={discover.href}
                             label={discover.label}
+                            icon={discover.icon}
                             items={discover.items}
                             current={isCurrent(discover.href)}
                             isCurrent={isCurrent}
                             submenuLabel={t('nav.submenu', { section: discover.label })}
+                        />
+
+                        <NavMenu
+                            href={organise.href}
+                            label={organise.label}
+                            icon={organise.icon}
+                            items={organise.items}
+                            current={isCurrent(organise.href)}
+                            isCurrent={isCurrent}
+                            submenuLabel={t('nav.submenu', { section: organise.label })}
                         />
 
                         {nav.map((item) => (
@@ -569,7 +573,10 @@ function Chrome({ children }: PropsWithChildren) {
                                             isHere(section.href) ? 'text-accent' : 'text-ink'
                                         }`}
                                     >
-                                        {section.label}
+                                        <span className="flex items-center gap-2.5">
+                                            <span className="shrink-0 text-accent">{section.icon}</span>
+                                            {section.label}
+                                        </span>
                                         <span aria-hidden className="text-xs text-ink-soft">
                                             →
                                         </span>
@@ -577,7 +584,11 @@ function Chrome({ children }: PropsWithChildren) {
 
                                     {/* Indented under a rule, which is the
                                         cheapest way to say "these belong to
-                                        that" without a control to expand. */}
+                                        that" without a control to expand.
+                                        Nothing at all under a section with no
+                                        items: a rule beside empty space reads
+                                        as a list that failed to load. */}
+                                    {section.items.length > 0 && (
                                     <ul className="mt-1 border-l border-line pl-3">
                                         {section.items.map((item) => (
                                             <li key={item.href}>
@@ -618,36 +629,41 @@ function Chrome({ children }: PropsWithChildren) {
                                             </li>
                                         ))}
                                     </ul>
+                                    )}
                                 </div>
                             ))}
 
                             {/*
-                              The same row as every section item above: an icon
-                              in the accent, a label, 44px. Search and Help were
-                              two bare text links and the account block a third
-                              style again — three designs in one column for
-                              rows that all do the same thing.
+                              The loose links, drawn like the section headings
+                              above: an icon in the accent, a label, 44px, and
+                              an arrow. This group was "Search and help", a
+                              heading over two indented rows; Search moved
+                              under Find a gift on 2026-09-12, and a heading
+                              over one row that repeats the heading's word is
+                              a box around nothing. So each remaining link is
+                              its own heading-weight row, the shape Make a
+                              list already has now that it carries no items.
                             */}
-                            <div className="mb-4 border-b border-line pb-4">
-                                <p className="flex min-h-11 items-center py-1 text-base font-semibold text-ink">
-                                    {t('nav.search_and_help')}
-                                </p>
-                                <ul className="mt-1 border-l border-line pl-3">
-                                    {nav.map((item) => (
-                                        <li key={item.href}>
-                                            <Link
-                                                href={item.href}
-                                                aria-current={isHere(item.href) ? 'page' : undefined}
-                                                onClick={() => setMenuOpen(false)}
-                                                className={`flex min-h-11 items-center gap-2.5 py-2 ${isHere(item.href) ? 'font-medium text-accent' : ''}`}
-                                            >
-                                                <span className="shrink-0 text-accent">{item.icon}</span>
-                                                <span>{item.label}</span>
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                            {nav.map((item) => (
+                                <div key={item.href} className="mb-4 border-b border-line pb-4">
+                                    <Link
+                                        href={item.href}
+                                        aria-current={isHere(item.href) ? 'page' : undefined}
+                                        onClick={() => setMenuOpen(false)}
+                                        className={`flex min-h-11 items-center justify-between py-1 text-base font-semibold ${
+                                            isHere(item.href) ? 'text-accent' : 'text-ink'
+                                        }`}
+                                    >
+                                        <span className="flex items-center gap-2.5">
+                                            <span className="shrink-0 text-accent">{item.icon}</span>
+                                            {item.label}
+                                        </span>
+                                        <span aria-hidden className="text-xs text-ink-soft">
+                                            →
+                                        </span>
+                                    </Link>
+                                </div>
+                            ))}
 
                             <div>
                                 <p className="flex min-h-11 items-center py-1 text-base font-semibold text-ink">
@@ -659,6 +675,26 @@ function Chrome({ children }: PropsWithChildren) {
                                     )}
                                 </p>
                                 <ul className="mt-1 border-l border-line pl-3">
+                                    {/*
+                                      For everybody, signed in or not: lists
+                                      are anonymous-first, and a visitor who
+                                      built one before signing up needs a way
+                                      back to it. This row left the panel on
+                                      2026-08-31 because the Make-a-list menu
+                                      carried it; that menu is gone, so it is
+                                      the panel's only route to My Lists.
+                                    */}
+                                    <li>
+                                        <Link
+                                            href={`${base}/lists`}
+                                            aria-current={isHere(`${base}/lists`) ? 'page' : undefined}
+                                            onClick={() => setMenuOpen(false)}
+                                            className={`flex min-h-11 items-center gap-2.5 py-2 ${isHere(`${base}/lists`) ? 'font-medium text-accent' : ''}`}
+                                        >
+                                            <span className="shrink-0 text-accent"><ToolIcon name="wishlist" className="h-5 w-5" /></span>
+                                            <span>{t('nav.lists')}</span>
+                                        </Link>
+                                    </li>
                                     {auth.user ? (
                                         <>
                                             <li>

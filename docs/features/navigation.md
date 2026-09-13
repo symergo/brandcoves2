@@ -37,11 +37,30 @@ surfaces live underneath.
 
 | Top level | Route | en | nl | fr | es |
 |---|---|---|---|---|---|
-| | `/{market}/gift-cove` | Organise | Organiseer | Organiser | Organizar |
+| | `/{market}/gift-cove` | Make a list | Maak een lijst | Créer une liste | Crear una lista |
 | | `/{market}/discover-cove` | Discover | Ontdek | Découvrir | Descubrir |
 | | `/{market}/search` | Search | Zoek | Rechercher | Buscar |
 
-Behind **Organise**: the Gift Finder, Lists, Secret Friend. Behind **Discover**, keeping the Cove
+**The first verb is "Make a list" since 2026-09-12** (`nav.make_list`; it was "Organise",
+`nav.organise`, from 2026-08-15). "Organise" named the section and told a newcomer nothing about
+what to press, and the Gift Cove page it opens starts with the list wizard, so the label now says
+what you do there. The rest of this document still calls the menu Organise, which is its name in
+the code (`organise` in `SiteLayout`) and the heading of the home page band, where the old key
+lives on: that band has a "Make a new list" button under its heading, and a heading saying the same
+thing would be the button twice.
+
+**Nothing hangs under "Make a list" since 2026-09-12**, at the owner's request. The four entries
+that did — My Lists, Shared Lists, Group Lists, Secret Friend — are all cards on the Gift Cove hub
+the entry opens, with a sentence each, and a menu that repeats the page it leads to is a second
+copy of that page with less on it. The entry is one thing to press now, which is what its label
+promises. `NavMenu` renders a plain link when given no items (no chevron, no empty panel), and the
+phone panel draws no rule under a section with nothing in it. One consequence: My Lists had left
+the phone panel's account block on 2026-08-31 *because* this menu carried it, so it is back in that
+block, for signed-in and signed-out visitors alike, as the panel's only route to `/lists`. The
+paragraphs below that describe the Organise menu's contents and icons are history now; Discover is
+the one menu left.
+
+Behind **Organise**, until then: the Gift Finder, Lists, Secret Friend. Behind **Discover**, keeping the Cove
 names that were briefly the top-level labels:
 
 | Route | en | nl | fr | es |
@@ -165,6 +184,16 @@ for a menu row nothing renders at 160px is a compile error rather than a blank c
 hides the one page written to explain the tools behind it, which is the page that exists *because*
 they are not self-evident.
 
+**The hub's title follows the header entry (2026-09-12).** `discover_cove.title` reads "Een
+cadeau vinden - ontdek de Coves" (and the equivalent in the other three languages), the owner's
+wording, so the page a visitor lands on from "Vind een cadeau" (the header entry, reworded from "Cadeau vinden" the same day) opens with the words they pressed and
+then says what it holds. The band of Coves at the bottom is headed "Slim kopen" (`nav.smart`, the
+header's own name for `/guides`, which is where the band's link goes) rather than the home page's
+"Coves": on a page whose title already says "discover the Coves" that named the shape twice and the
+destination never, and its link reads "Alle gidsen" (`discover_cove.guides_all`) rather than the
+home page's "Alle Coves", for the same reason. The home page keeps `home.coves_heading` and
+`home.coves_all`.
+
 ### The Discover hub lists the Coves themselves
 
 Added 2026-08-15. Under the three cards, `/discover-cove` now lists up to twelve published Coves for
@@ -240,6 +269,34 @@ rather than a section — sitting between two menus it also broke the run of che
 visitor looks when the two curated routes did not have what they came for, which is what Search is
 for. The phone panel follows the same order, with Search and Feedback in a group of their own below
 the two sections.
+
+Changed again 2026-09-12: **Discover first, then Make a list**, so the order is Discover, Make a
+list, Search. The owner's call. It also reads better once Make a list is a single link: a menu
+followed by a link, then the search, rather than a link wedged between two chevrons' worth of
+menus. The phone panel follows.
+
+The same day, **both entries got an icon**, at the owner's request: the wish list heart on Make a
+list (`ToolIcon` `wishlist`, the mark My Lists already wears) and a compass on Discover (`CoveIcon`
+`compass`, new: every existing Cove key is one Cove shape, and the entry stands for all of them).
+In the accent, before the label, on the wide header and as the phone panel's section headings.
+Search and Help stay bare on the wide header, which is what tells the two sections apart from the
+loose links.
+
+Later that day, **"Discover" became "Find a gift"** (`nav.find_gift`; `nav.discover` is gone), at
+the owner's request: Discover said what the Coves are for, this says what the visitor came to do,
+and it pairs with the other entry — make a list, find a gift. **The Gift Whisperer is the first
+entry under it** (`/gift`, `ToolIcon` `whisperer`, hint `nav.hint_whisperer`). It had been kept
+out of the header on the grounds that it suggests rather than organises; under a menu called
+Find a gift it is the most direct answer to the label. Its other door, the "Find a present" band
+on the Gift Cove hub, went the same day — see [list-surfaces.md](list-surfaces.md).
+
+**Search is the second entry under Find a gift** (also 2026-09-12, owner's request), so the wide
+header is now Find a gift, Make a list, Help, and the search field on every page remains the
+ordinary way in. The paragraph above about Search moving to the *end* described the loose links; it
+is no longer one of them. On the phone panel the "Search and help" group is gone with it: Help is
+a heading-weight row of its own, the shape Make a list has now that nothing is indented under it,
+because a heading over one row that repeats the heading's word is a box around nothing.
+`nav.search_and_help` was deleted.
 
 **The header now uses the Cove names.** It was the last surface still calling `/guides` "Guides"
 (`nav.guides`, "Koopgidsen") and `/daily` "Daily Picks" ("Dagtips"), while the homepage, the

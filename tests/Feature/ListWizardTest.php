@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\EventType;
+use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Models\Friendship;
 use App\Models\Recipient;
@@ -274,6 +275,46 @@ class ListWizardTest extends TestCase
         $this->assertCount(1, $lists['friends']);
         $this->assertNotNull($lists['friends'][0]['recipientId']);
         $this->assertSame([], $lists['recipients']);
+    }
+
+    #[Test]
+    public function both_pages_offer_the_wizard_my_own_lists_for_a_secret_friend_group(): void
+    {
+        /*
+         * The wizard's fourth kind makes a Secret Friend group, and its last
+         * step offers the list whoever draws me will see. Only lists about
+         * myself: a list about somebody else is research they must never
+         * see, and a group list is other people's money.
+         */
+        $owner = User::factory()->create();
+
+        $mine = Wishlist::factory()->create([
+            'owner_user_id' => $owner->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+            'title' => 'Things I would like',
+        ]);
+        Wishlist::factory()->create([
+            'owner_user_id' => $owner->id,
+            'kind' => ListKind::ForSomeone,
+            'market' => Market::BeNl,
+        ]);
+
+        $props = fn (string $path) => $this->actingAs($owner)->get($path)->assertOk()
+            ->viewData('page')['props'];
+
+        $cove = $props('/be-nl/gift-cove');
+        $lists = $props('/be-nl/lists');
+
+        $this->assertSame($cove['myLists'], $lists['myLists']);
+        $this->assertCount(1, $lists['myLists']);
+        $this->assertSame($mine->id, $lists['myLists'][0]['id']);
+        $this->assertSame('Things I would like', $lists['myLists'][0]['title']);
+
+        // A stranger is offered none. Logged out explicitly: actingAs() above
+        // keeps the session for the rest of the test.
+        auth()->logout();
+        $this->assertSame([], $this->get('/be-nl/lists')->viewData('page')['props']['myLists']);
     }
 
     #[Test]

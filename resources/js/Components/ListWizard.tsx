@@ -6,7 +6,14 @@ import { useTranslations } from '../useTranslations'
 import InfoTip from './InfoTip'
 import SignInLink from './SignInLink'
 
-type Kind = 'mine' | 'for_someone' | 'group'
+/**
+ * The four answers to "who is it for?". Three are list kinds; `santa` is a
+ * Secret Friend group, which is not a list at all but is the fourth thing
+ * somebody pressing "make a new list" may have meant (owner's call,
+ * 2026-09-12). It runs the same three steps with its own second and third,
+ * and posts to the group endpoint instead of the list one.
+ */
+type Kind = 'mine' | 'for_someone' | 'group' | 'santa'
 
 /** Somebody a list can be for: a friend, or a person I made a profile for. */
 interface Person {
@@ -34,6 +41,8 @@ export interface WizardOffer {
     recipients: (Person & { id: string })[]
     friends: Friend[]
     occasions: { value: string; label: string; date: string | null }[]
+    /** My own lists, about myself: what a Secret Friend group may be pointed at. */
+    myLists: { id: string; title: string }[]
 }
 
 interface Props extends WizardOffer {
@@ -98,7 +107,7 @@ export function hasListDraft(): boolean {
  * afterwards; `store()` now takes them too, because a wizard that explains an
  * option and then sends you elsewhere to turn it on has explained it to nobody.
  */
-export default function ListWizard({ signedIn, recipients, friends, occasions, initialKind, onCancel }: Props) {
+export default function ListWizard({ signedIn, recipients, friends, occasions, myLists, initialKind, onCancel }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
@@ -133,6 +142,15 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
         link_can_add: false,
         voting_enabled: true,
         share_with: [] as number[],
+        /*
+         * The Secret Friend group's own fields. `title` is shared: it is the
+         * group's name there, and a list's title otherwise. Euros here, cents
+         * in the column, as the group form has always done.
+         */
+        budget_max: '',
+        exchange_date: '',
+        theme: '',
+        wishlist_id: '',
     })
 
     /*
@@ -194,7 +212,10 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
     }
 
     const shared = form.data.visibility === 'link'
-    const forSomeone = kind !== 'mine'
+    const isSanta = kind === 'santa'
+    // A group is "for someone" in the sense of the two list kinds only: it
+    // names no person, and the person question must not appear for it.
+    const forSomeone = kind === 'for_someone' || kind === 'group'
     const index = STEPS.indexOf(step)
 
     function choose(next: Kind) {
@@ -203,7 +224,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
         // the recipient and this bit, so the form just keeps them consistent.
         form.setData('together', next === 'group')
 
-        if (next === 'mine') {
+        if (next === 'mine' || next === 'santa') {
             form.setData('recipient_id', '')
             form.setData('new_recipient', '')
             form.setData('friend_id', '')
@@ -219,6 +240,26 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
     }
 
     function submit() {
+        /*
+         * A group, not a list: only the group's fields, to the group
+         * endpoint, which auto-joins the organiser and lands on the group
+         * page with the invite link. The same `store()` the Secret Friend
+         * hub's own form posts to, so there is one way a group is made.
+         */
+        if (isSanta) {
+            form.transform((data) => ({
+                title: data.title,
+                budget_max: data.budget_max || null,
+                exchange_date: data.exchange_date || null,
+                theme: data.theme || null,
+                wishlist_id: data.wishlist_id || null,
+            }))
+
+            form.post(`${base}/santa`, { onSuccess: forget })
+
+            return
+        }
+
         form.transform((data) => ({
             ...data,
             /*
@@ -346,6 +387,8 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
         { value: 'mine', label: t('lists.for_me'), body: t('wizard.kind_mine_body') },
         { value: 'for_someone', label: t('lists.for_someone_else'), body: t('wizard.kind_for_someone_body') },
         { value: 'group', label: t('lists.for_group'), body: t('wizard.kind_group_body') },
+        // Secret Friend, fourth: see `Kind`.
+        { value: 'santa', label: t('santa.title'), body: t('santa.subtitle') },
     ]
 
     const canContinue = step !== 'details' || (form.data.title.trim() !== '' && (!forSomeone || personName.trim() !== ''))
@@ -353,7 +396,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
     return (
         <section className="rounded-card border border-accent/40 bg-accent/5 p-5 sm:p-6" aria-labelledby="wizard-title">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h2 id="wizard-title" className="text-lg font-medium">{t('wizard.title')}</h2>
+                <h2 id="wizard-title" className="text-lg font-medium">{t(isSanta ? 'wizard.title_santa' : 'wizard.title')}</h2>
                 <p className="text-xs text-ink-soft tabular-nums">
                     {t('wizard.step_of', { step: String(index + 1), total: String(STEPS.length) })}
                 </p>
@@ -391,7 +434,9 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
                             </InfoTip>
                         </legend>
 
-                        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                        {/* Two by two from `sm`, four across from `lg`:
+                            four cards in three columns leaves a widow. */}
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {choices.map((choice) => (
                                 <button
                                     key={choice.value}
@@ -411,7 +456,67 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
                     </fieldset>
                 )}
 
-                {step === 'details' && (
+                {/*
+                  Step 2 for a Secret Friend group: the group form's fields,
+                  two to a row, in the wizard's clothes. Name on its own row,
+                  budget beside date, theme alone. The hub's own form asks the
+                  same things; this is the same request from the other door.
+                */}
+                {step === 'details' && isSanta && (
+                    <div className="grid gap-5 sm:grid-cols-2">
+                        <label className="block sm:col-span-2">
+                            <span className="font-medium">{t('santa.group_name')}</span>
+                            <input
+                                value={form.data.title}
+                                onChange={(e) => {
+                                    setTitleTouched(true)
+                                    form.setData('title', e.target.value)
+                                }}
+                                required
+                                maxLength={120}
+                                placeholder={t('wizard.title_placeholder_santa')}
+                                className="mt-2 w-full rounded-card border border-line bg-card px-3 py-2"
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="font-medium">
+                                {t('santa.budget')}
+                                <InfoTip className="ml-1">{t('santa.budget_hint')}</InfoTip>
+                            </span>
+                            <input
+                                type="number"
+                                min={0}
+                                step="1"
+                                value={form.data.budget_max}
+                                onChange={(e) => form.setData('budget_max', e.target.value)}
+                                className="mt-2 w-full rounded-card border border-line bg-card px-3 py-2"
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="font-medium">{t('santa.exchange_date')}</span>
+                            <input
+                                type="date"
+                                value={form.data.exchange_date}
+                                onChange={(e) => form.setData('exchange_date', e.target.value)}
+                                className="mt-2 w-full rounded-card border border-line bg-card px-3 py-2"
+                            />
+                        </label>
+
+                        <label className="block">
+                            <span className="font-medium">{t('santa.theme')}</span>
+                            <input
+                                value={form.data.theme}
+                                onChange={(e) => form.setData('theme', e.target.value)}
+                                maxLength={120}
+                                className="mt-2 w-full rounded-card border border-line bg-card px-3 py-2"
+                            />
+                        </label>
+                    </div>
+                )}
+
+                {step === 'details' && !isSanta && (
                     <div className="grid gap-5 sm:grid-cols-2">
 
                         {forSomeone && (
@@ -638,7 +743,48 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
                     </div>
                 )}
 
-                {step === 'sharing' && (
+                {/*
+                  Step 3 for a group: my own list, and what happens next. A
+                  group is shared by its invite link, which does not exist
+                  until the group does, so this step cannot ask "who may see
+                  it" the way a list's does; it says how the sharing will go
+                  and asks the one thing that can be settled now — which of
+                  my lists whoever draws me will see.
+                */}
+                {step === 'sharing' && isSanta && (
+                    <div>
+                        <p className="font-medium">{t('wizard.santa_sharing')}</p>
+                        <p className="mt-2 text-sm text-ink-soft">{t('wizard.santa_sharing_hint')}</p>
+
+                        {myLists.length > 0 ? (
+                            <label className="mt-5 block">
+                                <span className="font-medium">
+                                    {t('santa.your_list')}
+                                    <InfoTip className="ml-1">{t('santa.your_list_hint')}</InfoTip>
+                                </span>
+                                <select
+                                    value={form.data.wishlist_id}
+                                    onChange={(e) => form.setData('wishlist_id', e.target.value)}
+                                    className="mt-2 w-full rounded-card border border-line bg-card px-3 py-2 sm:w-auto sm:min-w-64"
+                                >
+                                    <option value="">{t('santa.no_list_option')}</option>
+                                    {myLists.map((list) => (
+                                        <option key={list.id} value={list.id}>
+                                            {list.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        ) : (
+                            /* Nothing to choose yet: said, rather than a select
+                               with one empty option. The group page offers the
+                               same choice once a list exists. */
+                            <p className="mt-5 text-sm text-ink-soft">{t('wizard.santa_no_list_yet')}</p>
+                        )}
+                    </div>
+                )}
+
+                {step === 'sharing' && !isSanta && (
                     <div>
                         <fieldset>
                             <legend className="font-medium">
@@ -790,7 +936,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
                         disabled={form.processing}
                         className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-50"
                     >
-                        {t('lists.create')}
+                        {t(isSanta ? 'santa.create' : 'lists.create')}
                     </button>
                 ) : (
                     <SignInLink
@@ -798,7 +944,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, i
                         onNavigate={remember}
                         className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
                     >
-                        {t('wizard.sign_in_and_create')}
+                        {t(isSanta ? 'wizard.sign_in_and_create_santa' : 'wizard.sign_in_and_create')}
                     </SignInLink>
                 )}
             </div>

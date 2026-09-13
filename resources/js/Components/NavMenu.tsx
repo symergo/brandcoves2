@@ -27,10 +27,16 @@ export type NavMenuItem = {
  * the section) rather than inheriting the label, because "Discover, link" and
  * "Discover, button" one after another describes two controls by one word and
  * says nothing about what the second does.
+ *
+ * With no items at all there is nothing to open, so only the link renders: no
+ * chevron, no empty panel. Make a list became such an entry on 2026-09-12,
+ * when its four sub-entries were dropped in favour of the hub page that
+ * already lists them.
  */
 export default function NavMenu({
     href,
     label,
+    icon,
     items,
     current,
     isCurrent,
@@ -38,6 +44,12 @@ export default function NavMenu({
 }: {
     href: string
     label: string
+    /**
+     * A mark before the label, in the accent. Both header entries carry one
+     * since 2026-09-12 at the owner's request; the loose links (Search, Help)
+     * do not, which is what tells the two sections apart from them.
+     */
+    icon?: ReactNode
     items: NavMenuItem[]
     current: boolean
     isCurrent: (href: string) => boolean
@@ -80,19 +92,28 @@ export default function NavMenu({
         }
     }, [open])
 
+    const link = (
+        <Link
+            href={href}
+            aria-current={current ? 'page' : undefined}
+            className={`inline-flex items-center gap-1.5 ${
+                current
+                    ? 'font-medium text-ink underline decoration-accent decoration-2 underline-offset-8'
+                    : 'hover:text-ink'
+            }`}
+        >
+            {icon ? <span className="shrink-0 text-accent">{icon}</span> : null}
+            {label}
+        </Link>
+    )
+
+    if (items.length === 0) {
+        return link
+    }
+
     return (
         <div ref={wrapper} className="relative flex items-center gap-1">
-            <Link
-                href={href}
-                aria-current={current ? 'page' : undefined}
-                className={
-                    current
-                        ? 'font-medium text-ink underline decoration-accent decoration-2 underline-offset-8'
-                        : 'hover:text-ink'
-                }
-            >
-                {label}
-            </Link>
+            {link}
 
             <button
                 ref={toggle}

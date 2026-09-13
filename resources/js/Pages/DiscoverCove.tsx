@@ -419,14 +419,25 @@ export default function DiscoverCove({
             {coves.length > 0 && (
                 <section className="mt-14" aria-labelledby="coves-heading">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        {/*
+                          "Shop Smarter", the name the header gives /guides,
+                          which is where the link beside this heading goes
+                          (owner's wording, 2026-09-12). It read "Coves"
+                          before, borrowed from the home page band, and on a
+                          page whose title already says "discover the Coves"
+                          that named the shape twice and the destination never.
+                          The home page keeps its own heading.
+                        */}
                         <h2 id="coves-heading" className="text-xl sm:text-2xl font-semibold tracking-tight text-ink">
-                            {t('home.coves_heading')}
+                            {t('nav.smart')}
                         </h2>
                         <Link
                             href={urls.guides}
                             className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0"
                         >
-                            {t('home.coves_all')} →
+                            {/* "All guides", to match the heading: the
+                                link goes to /guides. */}
+                            {t('discover_cove.guides_all')} →
                         </Link>
                     </div>
                     <p className="mt-1 max-w-2xl text-ink-soft">{t('home.coves_intro')}</p>
