@@ -304,6 +304,15 @@ sight of the thing you were filtering. Measured, the lanes now move 0px when it 
 `FilterPanel` is shared with the rail so both render one definition, and `showShops` is false here —
 a shop facet in the popover would be a second control for the state the chips already own.
 
+**On a phone the two views share one arrangement** (owner's ask, 2026-09-14). The by-store view
+used to open on a phone with the title first and a small round "Filters" button beside the chips,
+opening the popover, while the grid view opened with the full-width "Filters and sort" bar above
+the title, opening a sheet: the same two things in two places, and switching views moved them. Below
+`lg` both views now show the bar above the title and open the sheet (with `showShops` false in the
+by-store view, since the chips under the title own the shops); the popover is `lg`-only. The
+popover is a desktop idiom in any case: it exists so the lane strip does not move, and on a phone
+the sheet covers the strip whatever it does.
+
 ### Shop names lose the country suffix
 
 Feeds name an advertiser per country, so the catalogue holds `Coolblue BE`, `DreamLand BE`,

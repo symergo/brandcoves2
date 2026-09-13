@@ -444,7 +444,20 @@ export default function Search({
                 <SearchLanding landing={landing} />
             ) : (
             <div className={`mt-8 grid gap-8 ${view === 'store' ? '' : 'lg:grid-cols-[16rem_1fr]'}`}>
-                {view === 'store' ? null : (
+                {/*
+                  One phone layout for both views (2026-09-14).
+
+                  The by-store view used to open on a phone with the title
+                  first and a small round "Filters" button beside the shop
+                  chips, opening a popover, while the grid view opened with
+                  the full-width "Filters and sort" bar above the title,
+                  opening a sheet. Same page, two arrangements of the same
+                  two things, and switching views moved them. On a phone the
+                  bar and the sheet serve both views now; the popover is a
+                  desktop idiom (it exists so the lane strip does not move,
+                  and on a phone the sheet covers the strip anyway) and
+                  stays `lg`-only below.
+                */}
                     <>
                         {/*
                           Collapsed on mobile, always open from `lg`.
@@ -486,10 +499,15 @@ export default function Search({
                         <aside
                             id="search-filters"
                             aria-label={t('search.filters')}
-                            className={`text-sm lg:block lg:space-y-6 ${
-                                filtersOpen
-                                    ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 lg:static lg:inset-auto lg:z-auto lg:overflow-visible lg:bg-transparent lg:p-0'
-                                    : 'hidden'
+                            className={`text-sm ${
+                                view === 'store'
+                                    // A sheet on a phone; on a desktop the by-store view has no rail (the shops are the control).
+                                    ? filtersOpen
+                                        ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 lg:hidden'
+                                        : 'hidden'
+                                    : filtersOpen
+                                        ? 'fixed inset-0 z-40 space-y-6 overflow-y-auto bg-cream p-4 pb-24 lg:static lg:inset-auto lg:z-auto lg:block lg:space-y-6 lg:overflow-visible lg:bg-transparent lg:p-0'
+                                        : 'hidden lg:block lg:space-y-6'
                             }`}
                         >
                             <div className="flex items-center justify-between lg:hidden">
@@ -505,12 +523,13 @@ export default function Search({
 
                             <ResultControls sort={sort} view={view} go={go} />
 
+                            {/* In the by-store view the chips under the title own the shops. */}
                             <FilterPanel
                                 facets={facets}
                                 filters={filters}
                                 brandLinks={brandLinks}
                                 go={go}
-                                showShops
+                                showShops={view !== 'store'}
                             />
 
                             {/*
@@ -533,7 +552,6 @@ export default function Search({
                             )}
                         </aside>
                     </>
-                )}
 
                 {/*
                   `min-w-0`, or the whole page scrolls sideways.
@@ -597,12 +615,13 @@ export default function Search({
                                 onChange={(next) => go({ merchant: next.length > 0 ? next : null })}
                             />
 
-                            <div className="relative ml-auto">
+                            {/* Desktop only: on a phone the bar above the title opens the sheet instead. */}
+                            <div className="relative ml-auto hidden lg:block">
                                 <button
                                     type="button"
-                                    className="flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm min-h-10 sm:min-h-0 transition hover:border-ink"
+                                    className="flex items-center gap-2 rounded-full border border-line bg-card px-3 py-1.5 text-sm transition hover:border-ink"
                                     aria-expanded={filtersOpen}
-                                    aria-controls="search-filters"
+                                    aria-controls="search-filters-popover"
                                     onClick={() => setFiltersOpen(!filtersOpen)}
                                 >
                                     <span>{t('search.filters')}</span>
@@ -625,7 +644,7 @@ export default function Search({
                                   Floating, the columns never move.
                                 */}
                                 <aside
-                                    id="search-filters"
+                                    id="search-filters-popover"
                                     aria-label={t('search.filters')}
                                     className={`absolute right-0 top-full z-20 mt-2 w-72 space-y-5 rounded-card border border-line bg-card p-4 text-sm shadow-lg ${filtersOpen ? 'block' : 'hidden'}`}
                                 >
