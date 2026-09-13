@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\CoveKind;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Services\Guides\CoveMarkup;
@@ -12,16 +13,20 @@ use App\Services\Wishlist\WizardOffer;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class HomeController extends Controller
 {
     /**
-     * Rows in the recent Coves list. Ten is a band; more is a page, and the
-     * archive is one link away.
+     * Rows in the Coves shelf. Ten is a band; more is a page, and the archive
+     * is one link away.
      */
-    private const RECENT_COVES = 10;
+    private const COVES_SHOWN = 10;
+
+    /** How long one draw of the shelf is kept, per market. Seconds. */
+    private const COVES_TTL = 3600;
 
     public function __invoke(Request $request, CurrentMarket $current, WizardOffer $offer): Response
     {
@@ -119,20 +124,28 @@ class HomeController extends Controller
 
     /** @return list<array<string, mixed>> */
     /**
-     * Recent Coves: every kind this market publishes, newest first.
+     * A handful of other Coves, for whoever has read today's.
      *
-     * Until 2026-09-13 this was six cards drawn round-robin from four lanes,
-     * so that a market with four kinds showed four. The owner asked for the
-     * plain thing instead: what was published most recently, whatever it is,
-     * with the kind named on each row. Dailies are in — they were kept out
-     * of the round-robin because Today's Cove has the band above — except
-     * the edition that band is already showing, which would otherwise open
-     * this list as a repeat.
+     * Ten published Coves of any kind but the dailies, drawn at random and
+     * held for an hour per market. It was "recent, newest first" for an
+     * afternoon on 2026-09-13; the owner asked for a random pick instead,
+     * and asked that the page not say so — a heading like "More Coves" is
+     * an invitation, "random" is an admission. Dailies stay out: one appears
+     * every day, so any list of ten would be a week of editions with the
+     * writing pushed off the end, and they have Today's Cove above and their
+     * own archive. No dates on the rows either, since a date on a row implies
+     * an order the list does not have.
      *
-     * Ordered by `published_at`, which every published Cove has; `drop_date`
-     * only breaks ties between dailies. Blurbs are flattened to their labels
-     * the way the archive does it: a link inside a row that is already a link
-     * is a target fighting its parent.
+     * Cached rather than drawn per request so that a visitor who reloads or
+     * comes back the same morning sees the same shelf, and so the front page
+     * does not pay for `ORDER BY random()` on every hit. An hour is short
+     * enough that the shelf changes between visits on different days, which
+     * is the point of drawing at random at all. The cache carries the
+     * presented rows, URLs included, so the key is per market.
+     *
+     * Blurbs are flattened to their labels the way the archive does it: a
+     * link inside a row that is already a link is a target fighting its
+     * parent.
      *
      * @return list<array<string, mixed>>
      */
@@ -140,29 +153,23 @@ class HomeController extends Controller
     {
         $market = $current->get();
 
-        $shown = DailyPickSet::query()
-            ->forMarket($market)
-            ->daily()
-            ->published()
-            ->where('drop_date', '<=', now()->toDateString())
-            ->orderByDesc('drop_date')
-            ->value('id');
-
-        return DailyPickSet::query()
-            ->forMarket($market)
-            ->published()
-            ->when($shown !== null, fn ($q) => $q->whereKeyNot($shown))
-            ->orderByDesc('published_at')
-            ->orderByDesc('drop_date')
-            ->limit(self::RECENT_COVES)
-            ->get(['id', 'kind', 'slug', 'drop_date', 'published_at', 'theme_title', 'theme_blurb'])
-            ->map(fn (DailyPickSet $cove): array => [
-                'kind' => $cove->kind->value,
-                'title' => $cove->theme_title,
-                'intro' => app(CoveMarkup::class)->plain($cove->theme_blurb),
-                'url' => $current->url($cove->kind->path((string) $cove->slug, $market)),
-                'date' => ($cove->drop_date ?? $cove->published_at)?->toDateString(),
-            ])
-            ->all();
+        return Cache::remember(
+            'home.coves:'.$market->value,
+            self::COVES_TTL,
+            fn (): array => DailyPickSet::query()
+                ->forMarket($market)
+                ->published()
+                ->whereNot('kind', CoveKind::Daily->value)
+                ->inRandomOrder()
+                ->limit(self::COVES_SHOWN)
+                ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb'])
+                ->map(fn (DailyPickSet $cove): array => [
+                    'kind' => $cove->kind->value,
+                    'title' => $cove->theme_title,
+                    'intro' => app(CoveMarkup::class)->plain($cove->theme_blurb),
+                    'url' => $current->url($cove->kind->path((string) $cove->slug, $market)),
+                ])
+                ->all(),
+        );
     }
 }

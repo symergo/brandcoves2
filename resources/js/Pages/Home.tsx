@@ -6,7 +6,7 @@ import SaveToList from '../Components/SaveToList'
 import SearchCard from '../Components/SearchCard'
 import { buttonClasses } from '../Components/Button'
 import RecentlyViewed from '../Components/RecentlyViewed'
-import { formatOccasionDate, formatPrice, type SharedProps } from '../types'
+import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Cove {
@@ -15,8 +15,6 @@ interface Cove {
     title: string
     intro: string | null
     url: string
-    /** The edition's day for a daily, the publication day for the rest. ISO date, null if unknown. */
-    date: string | null
 }
 
 interface Props {
@@ -250,17 +248,15 @@ export default function Home({ today, signedIn, recipients, friends, occasions, 
             <RecentlyViewed className="mt-10 sm:mt-14" />
 
             {/*
-              Recent Coves, every kind, newest first (owner's call, 2026-09-13).
-
-              This was a grid of six cards drawn round-robin from four lanes,
-              under the Discover band's five signposts. The signposts went the
-              same day: a list of what was actually published this week is
-              the better invitation, and the archive it links to is where the
-              kinds are grouped. A row, not a card, because ten cards is a
-              page and ten rows is a band. Today's edition is left out — it
-              has the band above — and each row names its kind, because a
-              persona beside an advice piece beside a brand reads as three
-              unrelated things without it.
+              More Coves: ten at random, any kind but the dailies, held for
+              an hour (owner's call, 2026-09-13). The heading does not say
+              random, on purpose. This was a grid of six cards drawn
+              round-robin from four lanes under the Discover band's five
+              signposts; the signposts went the same day. A row, not a card,
+              because ten cards is a page and ten rows is a band, and each
+              row names its kind, because a persona beside an advice piece
+              beside a brand reads as three unrelated things without it. No
+              date: a date on a row implies an order the list does not have.
             */}
             {coves.length > 0 && (
                 <section className="mt-10 sm:mt-14" aria-labelledby="coves-heading">
@@ -280,13 +276,8 @@ export default function Home({ today, signedIn, recipients, friends, occasions, 
                                     href={cove.url}
                                     className="flex flex-col gap-1 p-4 transition hover:bg-cream sm:flex-row sm:items-baseline sm:gap-4"
                                 >
-                                    <span className="flex shrink-0 gap-2 text-2xs font-medium tracking-wide text-ink-soft uppercase sm:w-44">
-                                        <span>{t(`home.cove_kind_${cove.kind}`)}</span>
-                                        {cove.date && (
-                                            <time dateTime={cove.date} className="normal-case tracking-normal">
-                                                {formatOccasionDate(cove.date, market)}
-                                            </time>
-                                        )}
+                                    <span className="shrink-0 text-2xs font-medium tracking-wide text-ink-soft uppercase sm:w-32">
+                                        {t(`home.cove_kind_${cove.kind}`)}
                                     </span>
                                     <span className="min-w-0">
                                         <span className="block font-medium">{cove.title}</span>

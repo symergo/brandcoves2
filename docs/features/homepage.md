@@ -492,19 +492,23 @@ exists; the invariant it cites (#4, no claim state on the owner's front page) st
 that returns there. `HomeListWizardTest` pins that the front page feeds the wizard what My Lists
 feeds it.
 
-## The Discover band goes; the Coves band lists what is recent (2026-09-13)
+## The Discover band goes; the Coves band becomes a shelf of other Coves (2026-09-13)
 
 At the owner's request the Discover band, five signposts to the Daily Cove, Surprise, the guides,
 the personas and Ask, is gone from the front page; the header's Find a gift entry and the page it
-opens carry those. The Coves band under it is now **Recent Coves**: the ten most recently published
-Coves of any kind, newest first, as rows rather than cards, each naming its kind and its day. It
-replaced six cards drawn round-robin from four lanes, which existed so that a market with four kinds
-showed four; the plain list is the better invitation, and the archive it links to is where the kinds
-are grouped.
+opens carry those. The Coves band under it is now **More Coves**: ten published Coves of any kind but
+the dailies, drawn at random and held for an hour per market, as rows rather than cards, each naming
+its kind. It replaced six cards drawn round-robin from four lanes, and for an afternoon the ten
+newest; the owner asked for a random pick, and asked that the page not say so. A heading like "More
+Coves" is an invitation, "random" is an admission.
 
-Dailies are in the list now (`home.cove_kind_daily`), except the edition Today's Cove is already
-showing, which would otherwise open the list as a repeat. Blurbs are flattened to their labels the
-way the archive does it. `personas` no longer reaches the page: the persona shelf's only remaining
-door here was the Discover card. The order after the hero is: search card, the list wizard (moved above
-Today's Cove later the same day, at the owner's request), Today's Cove, signup, what you looked at,
-Recent Coves.
+Three decisions worth keeping. **Dailies stay out**: one appears every day, so any list of ten would
+be a week of editions with the writing pushed off the end, and they have Today's Cove above and
+their own archive (`home.cove_kind_daily` stays, harmless). **The draw is cached**, an hour per
+market, so a visitor who reloads sees the same shelf and the page does not pay for `ORDER BY
+random()` on every hit; an hour is short enough that the shelf differs between visits on different
+days, which is the point of drawing at random. **No dates on the rows**: a date implies an order the
+list does not have. Blurbs are flattened to their labels the way the archive does it. `personas` no
+longer reaches the page: the persona shelf's only remaining door here was the Discover card. The
+order after the hero is: search card, the list wizard, Today's Cove, signup, what you looked at,
+More Coves.

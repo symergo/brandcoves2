@@ -152,7 +152,7 @@ return [
          * how a visitor ends up unsure whether they are the same page.
          */
 
-        'coves_heading' => 'Recent Coves',
+        'coves_heading' => 'More Coves',
         'coves_intro' => 'Long reads around a theme, with every brand and product linked straight into a live search.',
         'coves_all' => 'All Coves',
         // The shape a Cove takes, named on the front page's Coves band.
