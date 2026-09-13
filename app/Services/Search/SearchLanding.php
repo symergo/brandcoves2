@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use App\Models\ProductGroup;
 use App\Models\WishlistItem;
 use App\Services\Seo\BrandLinker;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -71,8 +73,19 @@ final class SearchLanding
      * The fallback is a search rather than no chip, because the visitor saved
      * something of that brand and a search on it shows them that something.
      * It filters on the spellings their own lists carry, which is what the
-     * saved products are stored under, so it cannot come back empty for the
-     * wrong reason.
+     * saved products are stored under.
+     *
+     * ## Only brands this market sells
+     *
+     * Lists are per market, and a person browses in one market while their
+     * lists live in another: the owner saved Melitta, Scanpart and Teltonika
+     * on be-nl and opened the landing on en, where none of the three is sold.
+     * No page, so the fallback search, and the search filtered on a brand the
+     * market does not carry is empty (reported 2026-09-14). The chip was the
+     * site's own suggestion, so an empty answer to it is the site's fault. A
+     * saved brand is offered only where it has a product the search could
+     * show, whichever market it was saved in; JBL saved on be-nl is still a
+     * chip on en because en sells JBL.
      *
      * @return list<array{name: string, url: string}>
      */
@@ -108,27 +121,79 @@ final class SearchLanding
             ->forget('')
             ->sortDesc()
             ->keys()
-            ->take(self::BRANDS)
             ->all();
 
-        // One query for the whole row of chips, keyed by lowered name.
+        // One query each for the whole row: the pages this market has, keyed
+        // by lowered name, and the spellings it sells the rest under.
         $pages = $this->links->urls(
             array_map(fn (string $slug) => $spellings[$slug][0], $slugs),
             $current->get(),
         );
+        $sold = $this->soldHere($spellings, $current);
 
         $chips = [];
 
         foreach ($slugs as $slug) {
             $name = $spellings[$slug][0];
+            $page = $pages[mb_strtolower($name)] ?? null;
+
+            if ($page === null && ! isset($sold[$slug])) {
+                continue;
+            }
 
             $chips[] = [
                 'name' => $name,
-                'url' => $pages[mb_strtolower($name)]
-                    ?? $current->url('search').'?'.http_build_query(['brand' => $spellings[$slug]]),
+                'url' => $page ?? $current->url('search').'?'.http_build_query(['brand' => $sold[$slug]]),
             ];
+
+            if (count($chips) === self::BRANDS) {
+                break;
+            }
         }
 
         return $chips;
+    }
+
+    /**
+     * What this market sells of the saved brands: slug => the spellings its
+     * products carry. The search filters on `brand` as stored, so the chip
+     * must search the market's spellings, not the ones the lists happen to
+     * hold ("JBL" saved on be-nl, "jbl" sold on en). Case is folded in SQL,
+     * the rest of the fold (punctuation) in PHP on the way back, as it is
+     * everywhere brands are compared (see brand_stats). The same floor
+     * `SearchService` puts under every result, a price and an image, so a
+     * spelling returned here is one the search will show something for.
+     *
+     * @param  array<string, list<string>>  $spellings  slug => spellings saved
+     * @return array<string, list<string>> slug => spellings sold here
+     */
+    private function soldHere(array $spellings, CurrentMarket $current): array
+    {
+        if ($spellings === []) {
+            return [];
+        }
+
+        $lowered = array_map('mb_strtolower', array_merge(...array_values($spellings)));
+
+        $found = ProductGroup::query()
+            ->forMarket($current->get())
+            ->whereNotNull('min_price')
+            ->whereNotNull('image_url')
+            ->whereIn(DB::raw('lower(brand)'), $lowered)
+            ->distinct()
+            ->pluck('brand');
+
+        // The list's own spellings first, in the order they were saved, so
+        // the chip's URL is stable and reads like the list it came from.
+        $rank = array_flip($lowered);
+        $found = $found->sortBy(fn (string $brand) => $rank[mb_strtolower($brand)] ?? PHP_INT_MAX)->values();
+
+        $sold = [];
+
+        foreach ($found as $brand) {
+            $sold[Str::slug($brand)][] = $brand;
+        }
+
+        return $sold;
     }
 }

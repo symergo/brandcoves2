@@ -628,6 +628,16 @@ that has none. The chips now go through `BrandLinker`, the same check every othe
 the site makes. The fallback is a search rather than a missing chip because the visitor saved
 something of that brand, and a search on it shows them that something.
 
+A saved brand is a chip only in a market that sells it. Lists are per market and people browse
+across them: on 2026-09-14 the owner had Melitta, Scanpart and Teltonika saved on be-nl and
+opened the landing on en, where none of the three is sold, so each chip went to a brand search
+that found nothing. `SearchLanding::soldHere()` keeps the slugs with a product in the current
+market that the search would show (a price and an image, the floor `SearchService` puts under
+every result), whichever market the product was saved in, and the fallback search carries the
+spellings this market stores rather than the ones the list holds ("JBL" saved on be-nl, "jbl"
+sold on en; the search filters on `brand` as stored). The chip is the site's own suggestion, and
+a suggestion that answers with nothing is worse than no chip.
+
 The controller renders it for the bare landing only: no term, no filter, the grid view, page one.
 `SearchResult::none()` gives everything downstream that reads a result (the presenter, the
 empty-state copy, the SEO) one shape with nothing in it, and the page shows the landing in place

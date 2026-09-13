@@ -27,15 +27,15 @@ class SearchLandingTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function saved(User $user, string $brand): void
+    private function saved(User $user, string $brand, Market $market = Market::BeNl): void
     {
         $list = Wishlist::query()->firstOrCreate(
-            ['owner_user_id' => $user->id, 'kind' => ListKind::Mine->value, 'market' => Market::BeNl->value],
+            ['owner_user_id' => $user->id, 'kind' => ListKind::Mine->value, 'market' => $market->value],
             ['title' => 'Mine'],
         );
 
         WishlistItem::factory()
-            ->of(ProductGroup::factory()->create(['market' => Market::BeNl, 'brand' => $brand]))
+            ->of(ProductGroup::factory()->create(['market' => $market, 'brand' => $brand]))
             ->create(['wishlist_id' => $list->id]);
     }
 
@@ -119,6 +119,43 @@ class SearchLandingTest extends TestCase
                 ->count('landing.brands', 1)
                 ->where('landing.brands.0.name', 'Audio-Technica')
                 ->where('landing.brands.0.url', '/be-nl/search?'.http_build_query(['brand' => ['Audio-Technica', 'Audio Technica']])));
+    }
+
+    /**
+     * The report of 2026-09-14: Melitta, Scanpart and Teltonika saved on
+     * be-nl, the landing opened on en, three chips to a search that found
+     * nothing, because en does not sell them. A saved brand is a chip only
+     * where the market has a product of it; where it was saved does not
+     * matter, so JBL saved on be-nl is still a chip on en.
+     */
+    #[Test]
+    public function a_saved_brand_is_a_chip_only_in_a_market_that_sells_it(): void
+    {
+        $user = User::factory()->create();
+        $this->saved($user, 'Melitta');
+        $this->saved($user, 'Melitta');
+        $this->saved($user, 'JBL');
+        // Sold on en too, under a spelling the lists do not carry.
+        ProductGroup::factory()->create(['market' => Market::En, 'brand' => 'jbl']);
+        // A product the search would never show does not make a brand sold here.
+        ProductGroup::factory()->create(['market' => Market::En, 'brand' => 'Melitta', 'image_url' => null]);
+
+        $this->actingAs($user)->get('/en/search')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->count('landing.brands', 1)
+                ->where('landing.brands.0.name', 'JBL')
+                // The search filters on the spelling the market stores, not the one the list holds.
+                ->where('landing.brands.0.url', '/en/search?'.http_build_query(['brand' => ['jbl']])));
+
+        $this->actingAs($user)->get('/en/search?brand[]=jbl')
+            ->assertInertia(fn ($page) => $page->where('results.total', 1));
+
+        // Where it was saved, Melitta leads as before.
+        $this->actingAs($user)->get('/be-nl/search')
+            ->assertInertia(fn ($page) => $page
+                ->count('landing.brands', 2)
+                ->where('landing.brands.0.name', 'Melitta'));
     }
 
     #[Test]
