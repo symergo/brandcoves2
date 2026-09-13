@@ -131,7 +131,7 @@ return [
         'gifting_lists_count' => 'Je hebt :count lijstjes',
         'gifting_lists_one' => 'Je hebt één lijstje',
         'gifting_santa' => 'Geheime Vriend',
-        'gifting_santa_hint' => 'Een groep, een trekking, niemand weet wie wie heeft.',
+        'gifting_santa_hint' => 'Een groep, een trekking, niemand weet wie aan wie geeft.',
         'gifting_santa_count' => ':count groepen die jij regelt',
     ],
 
@@ -784,7 +784,7 @@ return [
         'seo_title' => 'Geheime Vriend, online geloot',
         'seo_description' => 'Maak een groep, loot de namen online, en je ziet alleen voor wie jij koopt. Geen hoed, geen spreadsheet, geen uitgelekte namen.',
         'title' => 'Geheime Vriend',
-        'subtitle' => 'Een groep, een trekking, niemand weet wie wie heeft.',
+        'subtitle' => 'Een groep, een trekking, niemand weet wie aan wie geeft.',
         'aka' => '(lotjestrekken of Secret Santa)',
         'create' => 'Start een groep',
         'group_name' => 'Hoe heet deze groep?',
@@ -938,7 +938,7 @@ return [
         'handover_step3' => 'Bevestig, en het lijstje is van hen: zij kunnen het delen en anderen kunnen eruit claimen.',
 
         'santa_title' => 'Geheime Vriend',
-        'santa_body' => 'Een groep, een trekking, niemand weet wie wie heeft. Iedereen kan een eigen wenslijst koppelen, zodat degene die hen trekt niet hoeft te gokken.',
+        'santa_body' => 'Een groep, een trekking, niemand weet wie aan wie geeft. Iedereen kan een eigen wenslijst koppelen, zodat degene die hen trekt niet hoeft te gokken.',
         'santa_step1' => 'Druk op Start een groep en geef hem een naam, ongeveer wat iedereen uitgeeft, en de datum waarop jullie uitwisselen.',
         'santa_step2' => 'Stuur de uitnodigingslink naar iedereen. Ze doen mee met een naam en een e-mailadres, zonder account, en kunnen zeggen wie ze niet mogen trekken.',
         'santa_step3' => 'Zit iedereen erin, druk dan op Trekken. Iedereen krijgt een mail met daarin een naam: alleen die van henzelf.',
