@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
 import InfoTip from '../../Components/InfoTip'
+import SantaBadge from '../../Components/SantaBadge'
 import ShareRow from '../../Components/ShareRow'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -59,7 +60,10 @@ export default function SantaGroup({ group, isOrganiser, members, me, myLists }:
             </Head>
 
             <header className="max-w-2xl">
-                <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
+                <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
+                    <SantaBadge />
+                </div>
                 <p className="mt-2 text-sm text-ink-soft">
                     {group.budgetMax !== null &&
                         `${t('santa.budget')}: ${formatPrice(group.budgetMax, market)}`}

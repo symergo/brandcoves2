@@ -146,7 +146,8 @@ class SecretSantaController extends Controller
                 'exchangeDate' => $santa->exchange_date?->toDateString(),
                 'theme' => $santa->theme,
                 'drawn' => $santa->status->isDrawn(),
-                'inviteUrl' => url($current->url("santa/{$santa->id}/join/{$santa->invite_token}")),
+                // The short form, `/s/{code}`, since 2026-09-13; see inviteByCode().
+                'inviteUrl' => url($current->url("s/{$santa->invite_token}")),
             ],
             'isOrganiser' => $isOrganiser,
 
@@ -787,6 +788,37 @@ class SecretSantaController extends Controller
 
         return in_array(mb_strtolower($other->email), $exclusions, true)
             || in_array(mb_strtolower($other->display_name), $exclusions, true);
+    }
+
+    /**
+     * The short invite, `/s/{code}`, resolved by the code alone.
+     *
+     * The shared link was `/santa/{group}/join/{token}`: a uuid, the word
+     * join and a 36-character token, about ninety characters next to a wish
+     * list's `/l/k7m2xq9v4p`, on the one link people paste into a group chat
+     * by hand. The code is the whole credential and is unique, so the group
+     * id in the path was saying nothing the token did not. Both routes land
+     * in the same two methods, so a link already sent keeps working.
+     */
+    public function inviteByCode(Request $request, CurrentMarket $current, string $market, string $token): Response|RedirectResponse
+    {
+        return $this->invite($request, $current, $market, $this->byInvite($token)->id, $token);
+    }
+
+    public function joinByCode(Request $request, CurrentMarket $current, string $market, string $token): RedirectResponse
+    {
+        return $this->join($request, $current, $market, $this->byInvite($token)->id, $token);
+    }
+
+    private function byInvite(string $token): SecretSantaGroup
+    {
+        $santa = SecretSantaGroup::query()->where('invite_token', $token)->first();
+
+        if ($santa === null) {
+            throw new NotFoundHttpException;
+        }
+
+        return $santa;
     }
 
     private function membership(Request $request, SecretSantaGroup $santa): ?SecretSantaMember

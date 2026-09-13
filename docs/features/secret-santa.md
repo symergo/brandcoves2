@@ -99,6 +99,22 @@ the page has to get right, each one a way the obvious version is worse:
 Following your own invite a second time redirects to your own page rather than asking you to join
 again.
 
+## The invite is a short code, and the group wears a pill (2026-09-13)
+
+The shared link was `/be-nl/santa/{uuid}/join/{uuid}`, about ninety characters, on the one link
+people paste into a group chat by hand, next to a wish list's `/be-nl/l/k7m2xq9v4p`. It is
+`/be-nl/s/k7m2xq9v4p` now: `invite_token` is a `ShareCode` for new groups, the column is `varchar`
+(see the migration of that date), and `/s/{code}` sits beside `/l/{code}` under the same throttle
+and the same generous pattern. The code is the whole credential and is unique, so the group id in
+the path said nothing the token did not. The long route stays, and **existing tokens were not
+regenerated**: every one of them is an invite mid-exchange, unlike the wishlist migration that
+chose to break its links. Both routes land in the same `invite()` and `join()`.
+
+The group, member and join pages carry a pill beside the title, `SantaBadge`: the Secret Friend
+mark from the tool grid and the word, in the accent like a group gift's badge, because a page
+opened from a link is read title-first and nothing said what kind of thing it was. The join page's
+uppercase eyebrow line said the same thing in a second shape and is gone.
+
 ## The organiser is a player, and not a spectator
 
 They are added as a member on create, because running one without being in it is

@@ -106,7 +106,8 @@ class ScrubDatabase extends Command
                     join_token = gen_random_uuid()
             SQL);
 
-            DB::statement('UPDATE secret_santa_groups SET invite_token = gen_random_uuid()');
+            // `::text`: the column stopped being a uuid on 2026-09-13.
+            DB::statement('UPDATE secret_santa_groups SET invite_token = gen_random_uuid()::text');
 
             // Raw email addresses for logged-out alert subscribers.
             DB::statement('UPDATE price_alerts   SET email = NULL WHERE email IS NOT NULL');

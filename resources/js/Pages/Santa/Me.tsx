@@ -1,4 +1,5 @@
 import { Head, router, usePage } from '@inertiajs/react'
+import SantaBadge from '../../Components/SantaBadge'
 import SaveToList from '../../Components/SaveToList'
 import { formatPrice, type Cents, type SharedProps } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -54,7 +55,10 @@ export default function SantaMe({ group, me }: Props) {
             </Head>
 
             <header className="max-w-2xl">
-                <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
+                <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
+                    <SantaBadge />
+                </div>
 
                 {!group.drawn ? (
                     <p className="mt-4 rounded-card border border-line bg-card p-4 text-sm">

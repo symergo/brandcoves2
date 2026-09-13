@@ -553,6 +553,16 @@ Route::prefix('{market}')->group(function () {
         Route::post('/l/{token}/sent/{item}', [SharedListController::class, 'markSent'])->name('lists.sent');
 
         /*
+         * A Secret Friend invite, by its code alone: `/s/{code}`, a sibling
+         * of `/l/{code}` (2026-09-13). The link was `/santa/{uuid}/join/{uuid}`,
+         * ninety characters pasted into group chats by hand; the code is the
+         * whole credential and is unique, so the group id said nothing it did
+         * not. The long form stays below for links already sent.
+         */
+        Route::get('/s/{token}', [SecretSantaController::class, 'inviteByCode'])->name('santa.invite.short');
+        Route::post('/s/{token}', [SecretSantaController::class, 'joinByCode'])->name('santa.join.short');
+
+        /*
          * Which present the group should buy.
          *
          * Mounted on the share token beside the pledge routes, because that is

@@ -6,11 +6,11 @@ namespace App\Models;
 
 use App\Enums\Market;
 use App\Enums\SantaStatus;
+use App\Support\ShareCode;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 /**
  * A gift exchange.
@@ -29,7 +29,10 @@ class SecretSantaGroup extends Model
     protected static function booted(): void
     {
         static::creating(function (self $group): void {
-            $group->invite_token ??= (string) Str::uuid();
+            // Ten characters, like a list's share link, since 2026-09-13: the
+            // invite is pasted into a group chat by hand, and a uuid was the
+            // longest link on the site. See ShareCode for why ten.
+            $group->invite_token ??= ShareCode::make();
         });
     }
 

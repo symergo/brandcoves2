@@ -2,6 +2,7 @@ import { Head, useForm, usePage } from '@inertiajs/react'
 import type { Cents, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import SantaBadge from '../../Components/SantaBadge'
 
 interface Props {
     group: {
@@ -56,8 +57,12 @@ export default function SantaJoin({ group, members, you }: Props) {
             </Head>
 
             <div className="mx-auto max-w-xl">
-                <p className="text-xs tracking-wide text-ink-soft uppercase">{t('santa.title')}</p>
-                <h1 className="mt-1 text-xl sm:text-2xl font-semibold">{group.title}</h1>
+                {/* The pill, as on the group page, rather than an eyebrow
+                    line: one way of saying what this is, everywhere. */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-xl sm:text-2xl font-semibold">{group.title}</h1>
+                    <SantaBadge />
+                </div>
 
                 <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink-soft">
                     {budget && (
@@ -113,7 +118,8 @@ export default function SantaJoin({ group, members, you }: Props) {
                                     .filter(Boolean),
                             }))
 
-                            form.post(`/${market.key}/santa/${group.id}/join/${group.token}`)
+                            // The short route; the page was opened by this code.
+                            form.post(`/${market.key}/s/${group.token}`)
                         }}
                     >
                         <div>

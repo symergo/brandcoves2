@@ -86,6 +86,51 @@ class SecretSantaTest extends TestCase
     }
 
     #[Test]
+    public function the_invite_is_a_short_code_that_opens_and_joins_on_its_own(): void
+    {
+        $group = $this->group();
+
+        // Ten characters, like a list's share link, not a uuid: this is the
+        // one link people paste into a group chat by hand.
+        $this->assertSame(10, strlen($group->invite_token));
+
+        $this->actingAs($group->organiser)->get("/be-nl/santa/{$group->id}")
+            ->assertInertia(fn ($page) => $page
+                ->where('group.inviteUrl', url("/be-nl/s/{$group->invite_token}")));
+
+        auth()->logout();
+
+        $this->get("/be-nl/s/{$group->invite_token}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Santa/Join')
+                ->where('group.title', 'Office 2026'));
+
+        $this->post("/be-nl/s/{$group->invite_token}", [
+            'display_name' => 'Sam',
+            'email' => 'sam@example.test',
+        ])->assertRedirect();
+
+        $this->assertSame(2, $group->members()->count());
+
+        // A guessed code is a 404, as on the long route.
+        $this->get('/be-nl/s/k7m2xq9v4p')->assertNotFound();
+    }
+
+    #[Test]
+    public function an_invite_sent_before_the_short_code_still_opens(): void
+    {
+        // Existing groups kept their uuid token, so the long link in
+        // somebody's chat keeps working, and so does the short route with it.
+        $group = $this->group();
+        $group->update(['invite_token' => Str::uuid()->toString()]);
+        auth()->logout();
+
+        $this->get("/be-nl/santa/{$group->id}/join/{$group->invite_token}")->assertOk();
+        $this->get("/be-nl/s/{$group->invite_token}")->assertOk();
+    }
+
+    #[Test]
     public function a_wrong_invite_token_is_not_found(): void
     {
         $group = $this->group();
