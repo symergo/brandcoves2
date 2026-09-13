@@ -24,7 +24,7 @@ import {
 } from '../savedItems'
 import { show as showToast } from '../saveToast'
 import { useSignIn } from '../signIn'
-import type { ListOption, SharedProps } from '../types'
+import type { ListOption, SavingTo, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface SaveResult {
@@ -90,6 +90,7 @@ export default function SaveToList({
     imageUrl,
     price,
     compact = false,
+    into,
 }: {
     groupId?: number
     source?: string
@@ -98,6 +99,15 @@ export default function SaveToList({
     imageUrl?: string | null
     price?: number | null
     compact?: boolean
+    /**
+     * A list the page chose for this product, ahead of every guess.
+     *
+     * The Gift Whisperer resolves the chosen person's list server-side and
+     * names it here, so a pick lands on "For Mum" rather than wherever the
+     * last save went. More specific than adding mode (a person, not a list
+     * being filled) and than the remembered last list, so it outranks both.
+     */
+    into?: SavingTo
 }) {
     const { market, auth, savingTo, lists } = usePage<SharedProps>().props
     const signIn = useSignIn()
@@ -168,7 +178,9 @@ export default function SaveToList({
      * that files things somewhere without saying where would be worse than the
      * default it replaces, and this label plus the toast are where it says.
      */
-    const destination = savingTo
+    const destination = into
+        ? t('lists.save_to', { list: into.title })
+        : savingTo
         ? t('lists.save_to', { list: savingTo.title })
         : lastList
           ? t('lists.save_to', { list: lastList.title })
@@ -326,12 +338,13 @@ export default function SaveToList({
          * request does not in fact succeed.
          */
         /*
-         * Nobody named a list, so one is guessed: adding mode if it is on,
+         * Nobody named a list, so one is guessed: the list the page chose for
+         * this product (`into`) if there is one, else adding mode if it is on,
          * otherwise wherever the last save went. An explicit `wishlist_id` or a
          * `new_list` is not a guess and is left alone.
          */
         const unqualified = extra.wishlist_id === undefined && extra.new_list === undefined
-        const guess = !unqualified ? undefined : (savingTo?.id ?? lastList?.id)
+        const guess = !unqualified ? undefined : (into?.id ?? savingTo?.id ?? lastList?.id)
         const chosen = (extra.wishlist_id as string | undefined) ?? guess
 
         if (groupId !== undefined) {

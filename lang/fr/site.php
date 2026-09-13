@@ -955,7 +955,7 @@ return [
 
         'whisperer_title' => 'Gift Whisperer',
         'whisperer_body' => 'Décrivez une personne et recevez quatre idées, chacune avec sa raison. Pour quand vous savez pour qui, mais pas quoi.',
-        'whisperer_step1' => 'Répondez à six courtes questions sur la personne : qui elle est, ce qu’elle aime, ce que vous voulez dépenser, ce qu’il faut éviter.',
+        'whisperer_step1' => 'Répondez à quelques courtes questions sur la personne : qui elle est, ce qu’elle aime, ce que vous voulez dépenser, ce qu’il faut éviter.',
         'whisperer_step2' => 'Quatre idées reviennent, chacune avec sa raison. Demandez autre chose et ce que vous avez écarté ne revient jamais.',
         'whisperer_step3' => 'Enregistrez les bonnes directement sur une liste pour cette personne.',
         'band_own' => 'Votre propre liste',
@@ -1146,7 +1146,6 @@ return [
         ],
 
         'find' => 'Trouver des cadeaux',
-        'again' => 'Réessayer',
         'swap' => 'Autre chose',
         'start_over' => 'Recommencer',
         'results_title' => 'Quatre idées',
@@ -1155,12 +1154,31 @@ return [
         'budget_up_to' => 'Jusqu’à',
         'avoid_placeholder' => 'p. ex. alcool, laine',
         'avoid_hint' => 'Nous écarterons tout ce qui correspond à ces mots.',
-        'avoid_add' => 'Ajouter',
+        'add' => 'Ajouter',
         'recipient_use' => 'Utiliser ce que nous savons de :name',
         'recipient_none' => 'Quelqu’un de nouveau',
         'step' => 'Étape :current sur :total',
         'back' => 'Retour',
         'next' => 'Suivant',
+
+        // The interests step accepts words of your own as well as the chips.
+        'interests_other' => 'Autre chose ?',
+        'interests_other_placeholder' => 'p. ex. vélo, pain au levain',
+        'interests_max' => '8 au maximum',
+
+        // The results view: what you said, an Adjust button, and the next board.
+        'more' => 'Quatre autres',
+        'adjust' => 'Modifier',
+        'back_to_ideas' => 'Retour aux idées',
+        'summary_for' => 'Pour :name',
+        'summary_budget' => 'Jusqu’à :amount',
+        'summary_avoid' => 'Pas de :word',
+
+        // Keeping the answers on a saved person is opt-in; the hint says what
+        // it cannot do (overwrite what they said about themselves).
+        'remember' => 'Retenir ces réponses pour :name',
+        'remember_hint' => 'La prochaine fois que vous choisissez :name, ces réponses seront déjà remplies. Si :name a décrit ses propres goûts via son lien, ses réponses restent.',
+        'saving_to' => 'Ce que vous enregistrez va sur :list.',
 
         // The card shows one reason, not a breakdown: three reasons read as a
         // machine justifying itself.

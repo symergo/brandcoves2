@@ -958,7 +958,7 @@ return [
 
         'whisperer_title' => 'Gift Whisperer',
         'whisperer_body' => 'Beschrijf iemand en krijg vier ideeen, elk met de reden waarom. Voor als je weet voor wie het is, maar niet wat.',
-        'whisperer_step1' => 'Beantwoord zes korte vragen over die persoon: wie het is, waar diegene van houdt, wat je wilt uitgeven, en wat vooral niet.',
+        'whisperer_step1' => 'Beantwoord een paar korte vragen over die persoon: wie het is, waar diegene van houdt, wat je wilt uitgeven, en wat vooral niet.',
         'whisperer_step2' => 'Je krijgt vier ideeen terug, elk met de reden waarom. Vraag om iets anders en wat je wegstuurde komt nooit meer terug.',
         'whisperer_step3' => 'Zet de goede meteen op een lijstje voor die persoon.',
         'band_own' => 'Je eigen lijst',
@@ -1149,7 +1149,6 @@ return [
         ],
 
         'find' => 'Zoek cadeaus',
-        'again' => 'Opnieuw proberen',
         'swap' => 'Iets anders',
         'start_over' => 'Opnieuw beginnen',
         'results_title' => 'Vier ideeën',
@@ -1158,12 +1157,31 @@ return [
         'budget_up_to' => 'Tot',
         'avoid_placeholder' => 'bv. alcohol, wol',
         'avoid_hint' => 'Wat op deze woorden lijkt, laten we weg.',
-        'avoid_add' => 'Toevoegen',
+        'add' => 'Toevoegen',
         'recipient_use' => 'Gebruik wat we over :name weten',
         'recipient_none' => 'Iemand nieuw',
         'step' => 'Stap :current van :total',
         'back' => 'Terug',
         'next' => 'Volgende',
+
+        // The interests step accepts words of your own as well as the chips.
+        'interests_other' => 'Nog iets?',
+        'interests_other_placeholder' => 'bv. wielrennen, zuurdesem',
+        'interests_max' => 'Maximaal 8',
+
+        // The results view: what you said, an Adjust button, and the next board.
+        'more' => 'Vier andere',
+        'adjust' => 'Aanpassen',
+        'back_to_ideas' => 'Terug naar de ideeën',
+        'summary_for' => 'Voor :name',
+        'summary_budget' => 'Tot :amount',
+        'summary_avoid' => 'Geen :word',
+
+        // Keeping the answers on a saved person is opt-in; the hint says what
+        // it cannot do (overwrite what they said about themselves).
+        'remember' => 'Onthoud deze antwoorden voor :name',
+        'remember_hint' => 'De volgende keer dat je :name kiest, staan deze antwoorden al ingevuld. Heeft :name via de eigen link zelf beschreven wat diegene leuk vindt, dan blijft dat staan.',
+        'saving_to' => 'Wat je bewaart, komt op :list.',
 
         // The card shows one reason, not a breakdown: three reasons read as a
         // machine justifying itself.

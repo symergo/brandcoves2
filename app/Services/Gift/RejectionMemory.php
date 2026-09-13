@@ -25,7 +25,7 @@ use Illuminate\Contracts\Session\Session;
  *
  * The one-word client fix — adding `preserveState` — was rejected because it
  * only holds until the visitor does something ordinary. A reload, a
- * back-navigation or the "Try again" button all wipe component state, and the
+ * back-navigation or the "Four more" button all wipe component state, and the
  * promise is unconditional.
  *
  * ## Bucketed per brief

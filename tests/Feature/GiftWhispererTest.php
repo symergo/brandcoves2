@@ -5,12 +5,20 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Availability;
+use App\Enums\ListKind;
 use App\Enums\Market;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
+use App\Enums\TasteSource;
+use App\Models\Event;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Models\Recipient;
+use App\Models\User;
+use App\Models\Wishlist;
+use App\Services\Gift\SuggestionEngine;
+use App\Services\Gift\TasteBrief;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
@@ -241,5 +249,286 @@ class GiftWhispererTest extends TestCase
         $fresh = $this->pickIds($this->post('/be-nl/gift', $this->brief())->assertOk());
 
         $this->assertSame($first, $fresh);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | "Four more", and the invariant behind it
+    |--------------------------------------------------------------------------
+    |
+    | Every action renders `suggest(brief minus memory)`. The board on screen
+    | is therefore always recomputable server-side, and "Four more" is exactly
+    | "remember what is on screen, then suggest again". The catalogue here has
+    | one category and identical title tokens, so every pair scores similarity
+    | 1.0 in the diversifier and the ranking is the plain score order — which
+    | makes "top four minus the rejected one" checkable to the id.
+    */
+
+    #[Test]
+    public function four_more_returns_a_board_you_have_not_seen(): void
+    {
+        $this->catalogue();
+
+        $first = $this->pickIds($this->post('/be-nl/gift', $this->brief())->assertOk());
+        $next = $this->pickIds($this->post('/be-nl/gift/more', $this->brief())->assertOk());
+
+        $this->assertCount(4, $next);
+        $this->assertSame([], array_intersect($first, $next));
+    }
+
+    #[Test]
+    public function four_more_after_a_swap_does_not_skip_a_board(): void
+    {
+        /*
+         * The oracle for the invariant. If a swap remembered the board it
+         * returned (as it did until 2026-09-13), the recompute in `more()`
+         * would already be the *next* board, and pressing the button would
+         * skip four cards the visitor never saw.
+         */
+        $this->catalogue();
+
+        $first = $this->pickIds($this->post('/be-nl/gift', $this->brief())->assertOk());
+        $second = $this->pickIds(
+            $this->post('/be-nl/gift/swap', [...$this->brief(), 'rejected' => $first[0]])->assertOk()
+        );
+        $third = $this->pickIds($this->post('/be-nl/gift/more', $this->brief())->assertOk());
+
+        $expected = app(SuggestionEngine::class)->suggest(
+            (new TasteBrief(market: Market::BeNl, interests: ['coffee'], budgetMax: 10000))
+                ->excluding([$first[0], ...$second])
+        );
+
+        $this->assertSame(array_map(fn ($p) => $p->group->id, $expected), $third);
+    }
+
+    #[Test]
+    public function a_second_swap_keeps_the_three_you_did_not_reject(): void
+    {
+        // Failed before the swap stopped remembering its own board: the second
+        // swap replaced all four cards instead of the one rejected.
+        $this->catalogue();
+
+        $first = $this->pickIds($this->post('/be-nl/gift', $this->brief())->assertOk());
+        $second = $this->pickIds(
+            $this->post('/be-nl/gift/swap', [...$this->brief(), 'rejected' => $first[0]])->assertOk()
+        );
+        $third = $this->pickIds(
+            $this->post('/be-nl/gift/swap', [...$this->brief(), 'rejected' => $second[0]])->assertOk()
+        );
+
+        $kept = array_slice($second, 1);
+
+        $this->assertSame([], array_diff($kept, $third), 'a card the visitor kept was replaced');
+        $this->assertNotContains($second[0], $third);
+    }
+
+    #[Test]
+    public function four_more_is_recorded(): void
+    {
+        $this->catalogue();
+
+        $this->post('/be-nl/gift/more', $this->brief())->assertOk();
+
+        $this->assertTrue(Event::query()->where('kind', 'gift.more')->exists());
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | A saved person
+    |--------------------------------------------------------------------------
+    |
+    | Every catalogue title contains "koffiemolen", so a stored avoid word of
+    | exactly that empties the board — a clean probe for "was the profile
+    | applied".
+    */
+
+    /** @return array{User, Recipient} */
+    private function mother(array $attributes = []): array
+    {
+        $user = User::factory()->create();
+        $recipient = Recipient::factory()->create([
+            'owner_user_id' => $user->id,
+            'name' => 'Mum',
+            ...$attributes,
+        ]);
+
+        return [$user, $recipient];
+    }
+
+    #[Test]
+    public function a_saved_person_fills_in_what_the_brief_leaves_out(): void
+    {
+        $this->catalogue();
+        [$user, $mum] = $this->mother(['avoid' => ['koffiemolen']]);
+
+        // No `avoid` key posted at all, so the stored one applies.
+        $ids = $this->pickIds(
+            $this->actingAs($user)
+                ->postJson('/be-nl/gift', ['interests' => ['coffee'], 'recipient_id' => $mum->id])
+                ->assertOk()
+        );
+
+        $this->assertSame([], $ids);
+    }
+
+    #[Test]
+    public function a_cleared_answer_beats_the_stored_one(): void
+    {
+        /*
+         * The `+=` overlay in `GiftController::brief()`: a posted key wins even
+         * when it is empty. Without this, clearing "avoid" in the wizard would
+         * silently put the stored words back.
+         */
+        $this->catalogue();
+        [$user, $mum] = $this->mother(['avoid' => ['koffiemolen']]);
+
+        $ids = $this->pickIds(
+            $this->actingAs($user)
+                ->postJson('/be-nl/gift', ['interests' => ['coffee'], 'avoid' => [], 'recipient_id' => $mum->id])
+                ->assertOk()
+        );
+
+        $this->assertCount(4, $ids);
+    }
+
+    #[Test]
+    public function somebody_elses_person_is_not_used(): void
+    {
+        $this->catalogue();
+        [, $theirMum] = $this->mother(['avoid' => ['koffiemolen']]);
+        $me = User::factory()->create();
+
+        $response = $this->actingAs($me)
+            ->postJson('/be-nl/gift', ['interests' => ['coffee'], 'recipient_id' => $theirMum->id])
+            ->assertOk();
+
+        // A guessed uuid attaches nothing: not their avoid words, not their list.
+        $this->assertCount(4, $this->pickIds($response));
+        $this->assertNull($response->viewData('page')['props']['recipientList']);
+    }
+
+    #[Test]
+    public function remembering_is_opt_in(): void
+    {
+        $this->catalogue();
+        [$user, $mum] = $this->mother();
+        $before = $mum->fresh()->updated_at;
+
+        $this->travel(1)->minutes();
+
+        $this->actingAs($user)
+            ->post('/be-nl/gift', [...$this->brief(), 'recipient_id' => $mum->id])
+            ->assertOk();
+
+        $mum->refresh();
+
+        // Not a field written, not even a touch: the row is as it was.
+        $this->assertSame([], $mum->interests);
+        $this->assertNull($mum->budget_max);
+        $this->assertTrue($before->equalTo($mum->updated_at));
+    }
+
+    #[Test]
+    public function remembering_writes_the_answers_onto_the_person(): void
+    {
+        $this->catalogue();
+        [$user, $mum] = $this->mother();
+
+        $this->actingAs($user)
+            ->post('/be-nl/gift', [
+                'interests' => ['coffee', 'wielrennen'],
+                'vibe' => 'playful',
+                'budget_max' => 60,
+                'recipient_id' => $mum->id,
+                'remember' => true,
+            ])
+            ->assertOk();
+
+        $mum->refresh();
+
+        $this->assertSame(['coffee', 'wielrennen'], $mum->interests);
+        $this->assertSame('playful', $mum->vibe);
+        $this->assertSame(TasteSource::Suggested, $mum->taste_source);
+        // Euros in, cents stored — invariant 7.
+        $this->assertSame(6000, $mum->budget_max);
+    }
+
+    #[Test]
+    public function remembering_never_overwrites_what_the_person_said_themselves(): void
+    {
+        $this->catalogue();
+        [$user, $mum] = $this->mother([
+            'interests' => ['gardening'],
+            'taste_source' => TasteSource::Self,
+        ]);
+
+        $this->actingAs($user)
+            ->post('/be-nl/gift', [
+                'interests' => ['coffee'],
+                'budget_max' => 60,
+                'recipient_id' => $mum->id,
+                'remember' => true,
+            ])
+            ->assertOk();
+
+        $mum->refresh();
+
+        // Her own description outranks a guess; the budget is the giver's
+        // fact and is not gated the same way.
+        $this->assertSame(['gardening'], $mum->interests);
+        $this->assertSame(6000, $mum->budget_max);
+    }
+
+    #[Test]
+    public function a_brief_for_a_saved_person_names_their_list(): void
+    {
+        $this->catalogue();
+        [$user, $mum] = $this->mother();
+        $list = Wishlist::factory()->forSomeone($mum)->create(['owner_user_id' => $user->id, 'title' => 'For Mum']);
+
+        $props = $this->actingAs($user)
+            ->post('/be-nl/gift', [...$this->brief(), 'recipient_id' => $mum->id])
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        $this->assertSame($list->id, $props['recipientList']['id']);
+        $this->assertSame('For Mum', $props['recipientList']['title']);
+    }
+
+    #[Test]
+    public function a_saved_person_without_a_list_gets_one_once(): void
+    {
+        $this->catalogue();
+        [$user, $mum] = $this->mother();
+
+        $post = fn () => $this->actingAs($user)
+            ->post('/be-nl/gift', [...$this->brief(), 'recipient_id' => $mum->id])
+            ->assertOk()
+            ->viewData('page')['props']['recipientList'];
+
+        $made = $post();
+
+        $this->assertNotNull($made);
+
+        $list = Wishlist::query()->findOrFail($made['id']);
+        $this->assertSame($mum->id, $list->recipient_id);
+        $this->assertSame(ListKind::ForSomeone, $list->kind);
+        $this->assertSame($user->id, $list->owner_user_id);
+
+        // Idempotent: the second brief finds the list rather than minting another.
+        $again = $post();
+
+        $this->assertSame($made['id'], $again['id']);
+        $this->assertSame(1, Wishlist::query()->count());
+    }
+
+    #[Test]
+    public function no_person_means_no_list(): void
+    {
+        $this->catalogue();
+
+        $props = $this->post('/be-nl/gift', $this->brief())->assertOk()->viewData('page')['props'];
+
+        $this->assertNull($props['recipientList']);
     }
 }

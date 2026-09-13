@@ -1126,7 +1126,7 @@ return [
 
         'whisperer_title' => 'Gift Whisperer',
         'whisperer_body' => 'Describe a person and get four ideas, each with the reason it was chosen. For when you know who it is for and not what to buy.',
-        'whisperer_step1' => 'Answer six short questions about them: who they are, what they are into, what you want to spend, anything to avoid.',
+        'whisperer_step1' => 'Answer a few short questions about them: who they are, what they are into, what you want to spend, anything to avoid.',
         'whisperer_step2' => 'Four ideas come back, each with the reason it was chosen. Ask for something else and what you rejected is never offered again.',
         'whisperer_step3' => 'Save the good ones straight onto a list for that person.',
         'band_own' => 'Your own list',
@@ -1317,7 +1317,6 @@ return [
         ],
 
         'find' => 'Find gifts',
-        'again' => 'Try again',
         'swap' => 'Something else',
         'start_over' => 'Start over',
         'results_title' => 'Four ideas',
@@ -1326,12 +1325,31 @@ return [
         'budget_up_to' => 'Up to',
         'avoid_placeholder' => 'e.g. alcohol, wool',
         'avoid_hint' => 'We will not show anything matching these words.',
-        'avoid_add' => 'Add',
+        'add' => 'Add',
         'recipient_use' => 'Use what we know about :name',
         'recipient_none' => 'Someone new',
         'step' => 'Step :current of :total',
         'back' => 'Back',
         'next' => 'Next',
+
+        // The interests step accepts words of your own as well as the chips.
+        'interests_other' => 'Anything else?',
+        'interests_other_placeholder' => 'e.g. cycling, sourdough',
+        'interests_max' => 'Up to 8',
+
+        // The results view: what you said, an Adjust button, and the next board.
+        'more' => 'Four more',
+        'adjust' => 'Adjust',
+        'back_to_ideas' => 'Back to the ideas',
+        'summary_for' => 'For :name',
+        'summary_budget' => 'Up to :amount',
+        'summary_avoid' => 'Not :word',
+
+        // Keeping the answers on a saved person is opt-in; the hint says what
+        // it cannot do (overwrite what they said about themselves).
+        'remember' => 'Remember these answers for :name',
+        'remember_hint' => 'Next time you pick :name these answers are filled in for you. If :name has described their own taste through their link, their answers stay.',
+        'saving_to' => 'Saving a pick puts it on :list.',
 
         // The card shows one reason, not a breakdown: three reasons read as a
         // machine justifying itself.

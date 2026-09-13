@@ -780,6 +780,7 @@ Route::prefix('{market}')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Route::post('/gift', [GiftController::class, 'suggest'])->name('gift.suggest');
         Route::post('/gift/swap', [GiftController::class, 'swap'])->name('gift.swap');
+        Route::post('/gift/more', [GiftController::class, 'more'])->name('gift.more');
     });
 
     /*

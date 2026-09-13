@@ -161,17 +161,20 @@ their tastes, what to avoid, what you are willing to spend on them — and that 
 URL that lands in a referrer header or a shared browser history. The wizard page itself is a GET so
 it can be indexed; only the results are POSTed.
 
-Swapping carries every group already on screen plus everything swapped away, so "something else"
-never loops back to what was just rejected — the fastest way to lose trust in a recommender.
+A rejection is remembered server-side for the sitting (see below), so "something else" never loops
+back to what was just rejected — the fastest way to lose trust in a recommender.
 
 ## Files
 
 - `app/Services/Gift/GiftabilityClassifier.php`, `Giftability.php`
 - `app/Services/Gift/AngleMap.php`, `GiftEngine.php`, `TasteBrief.php`, `Suggestion.php`
 - `app/Jobs/ClassifyGiftability.php`, `WidenGiftAngles.php`
+- `app/Services/Gift/RejectionMemory.php`
 - `app/Http/Controllers/GiftController.php`
-- `resources/js/Pages/Gift/Wizard.tsx`
-- `tests/Unit/GiftabilityClassifierTest.php`, `tests/Feature/SuggestionEngineTest.php`
+- `resources/js/Pages/Gift/Wizard.tsx`, `resources/js/Components/ChipInput.tsx`,
+  `resources/js/Components/SaveToList.tsx` (the `into` prop)
+- `tests/Unit/GiftabilityClassifierTest.php`, `tests/Feature/SuggestionEngineTest.php`,
+  `tests/Feature/GiftWhispererTest.php`
 
 
 ## "Show me something else" — two defects behind one promise
@@ -203,9 +206,99 @@ Two further consequences worth stating:
 
 - **Bucketed per brief**, keyed on a hash of the normalised brief. Describing your mother and then a
   colleague in one sitting must not have one poison the other.
-- **"Try again" now means something.** It used to re-post the same brief and re-render the same four
-  cards, which is not what the button says. Opening the wizard flushes everything, which is what
-  "Start over" says.
+- **"Try again" was replaced by "Four more" on 2026-09-13.** It re-posted the same brief, and a plain
+  post is idempotent, so it only showed something new when a swap had already thrown something away.
+  See the section below. Opening the wizard still flushes everything, which is what "Start over" says.
 
 Both caps on the memory exist because a session store is visitor-controlled input: ~60 ids per brief
 and five briefs, LRU.
+
+## Adjust, Four more, and the saved person (2026-09-13)
+
+Five changes to the wizard and one bug fix underneath them, all chosen by the owner from a list of
+gaps found by reading the feature end to end. Three offered improvements were declined and are not
+done: reasons in the reader's language (a card says "Matches koffiemolen" on every market), matching
+multi-word queries in any order, and a notice when the interest matched nothing and the board is a
+budget browse. Do not do them unprompted.
+
+### The invariant: every action renders `suggest(brief minus memory)`
+
+`suggest()`, `swap()` and the new `more()` all render exactly that and differ only in what they add
+to the session memory first: nothing, the one rejected id, or the board on screen. Because the
+ranker is deterministic, the board a visitor is looking at can always be recomputed on the server,
+and **nothing in the controller trusts a client-supplied list of ids** — a list that could just as
+well name the four the visitor wanted to keep.
+
+This exposed a bug. `swap()` used to remember the whole board it returned, so that a "Try again"
+re-post would show something new. The side effect was that the *second* swap excluded the three
+cards the visitor had kept and replaced all four. The docblock's promise ("the three that were kept
+plus the next one down") held for the first swap only, and no test asserted the kept three survived.
+`a_second_swap_keeps_the_three_you_did_not_reject` now does, and `swap()` remembers exactly the one
+opinion it was given.
+
+**"Four more"** (`POST /gift/more`) is the explicit way past a board: recompute what is on screen,
+remember those ids, suggest again. Two engine runs per press, each well under 100 ms.
+`four_more_after_a_swap_does_not_skip_a_board` is the oracle: after a swap, the next board must equal
+the engine run directly with the rejected id and the current board excluded, which is only true if
+the swap did not poison the memory. The memory's cap of 60 ids per brief gives 15 presses before the
+oldest board is evicted; past that the brief is the problem, not the picks.
+
+### Adjust, not Start over
+
+The results used to hide the answers entirely, so disliking one card meant "Start over" and six
+questions again — while the controller's own comment claimed the wizard "keeps its answers on screen
+next to the results". Now a line of chips above the cards says what was answered (for whom, the
+interests, the feel, the budget, the avoid words, the values) with an **Adjust** button that returns
+to the questions with the answers kept. No request: component state was already the truth, and the
+results stay in props for "Back to the ideas".
+
+### Words of your own
+
+The engine has always searched a free-text interest verbatim, and this document said so, but the
+wizard only offered the twenty chips. An "Anything else?" box on the interests step now adds a word
+as a chip; the `ChipInput` component was lifted out of the avoid step so both use one implementation.
+The cap of eight interests is enforced in the wizard as well as on the server, because the server's
+`max:8` is a 422 that puts nothing on screen: refusing the ninth word at the input is the only place
+the visitor can see the limit.
+
+### Five steps when nobody is saved
+
+"Who is it for?" exists to offer the people already described. With nobody saved it was a step with
+one button. It is now filtered out of the step list rather than skipped over, so the counter ("Step 1
+of 5"), Back and Next all stay correct without knowing it was ever there. The How-it-works copy said
+"six short questions" and now says "a few".
+
+### The saved person is actually used
+
+Picking a saved person copied their answers into the form and stopped there: `recipient_id` was never
+posted, so the controller's overlay from the stored profile and its `remember` write were dead code.
+The id now travels with every request.
+
+- **The overlay contract.** `brief()` fills only *absent* keys from the profile (`+=`). A key the
+  wizard posted wins even when it is `[]` or `null` — Laravel's `validated()` keeps an empty array —
+  so clearing "avoid" really clears it, while the occasion and age band, which the wizard never asks,
+  still come from what is stored. The wizard posts every key it edits for this reason, and
+  `a_cleared_answer_beats_the_stored_one` pins it.
+- **Remember is opt-in**, off by default, shown only when a saved person was chosen, on the last
+  question and on the results (where a tick re-posts the brief at once; a plain post is idempotent,
+  so the board does not move). The controller's original reasoning stands: a brief for something
+  silly for the office must not become Mum's profile.
+- **The label says "answers", not "taste"**, and the hint says what it cannot do. `describeTaste()`
+  refuses when the person has described their own taste through their link (`TasteSource::Self`
+  outranks `Suggested`). The budget is the *giver's* fact, not the person's taste, so it is written
+  directly and survives that gate — without it, "use what we know about Mum" restored everything
+  except what you spend on her.
+
+### Saving lands on that person's list
+
+How-it-works promised "save the good ones straight onto a list for that person"; the Save button
+landed wherever the last save went. The controller now returns `recipientList` — the chosen person's
+`for_someone` list, made if missing — and `SaveToList` takes it as a new `into` prop that outranks
+adding mode and the remembered last list. A group list never qualifies: it is a shortlist other
+people are paying into, not somewhere to file research.
+
+Resolved on the server rather than lazily from the Save button because `SaveToList` reloads the
+shared `lists` prop after creating a list with a partial GET of the current page — which on this page
+is `/gift` after a suggest (and `show()` flushes the rejection memory on the way in) or `/gift/swap`
+after a swap (a 405). Signed-in owners only: an anonymous visitor cannot save, so a list they could
+never use would be noise in the picker. `RecipientProfileController::theirList()` is the precedent.
