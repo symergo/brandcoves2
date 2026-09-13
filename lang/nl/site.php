@@ -1006,7 +1006,7 @@ return [
         'kind_hint' => 'Dit bepaalt wat het lijstje kan. Later niet te veranderen.',
         'title_for' => 'Voor :name',
         'kind_mine_body' => 'Wat jij graag wilt. Deel je hem, dan claimen anderen wat ze kopen. Jij ziet nooit wat of wie.',
-        'kind_for_someone_body' => 'Een lijst over iemand anders. Deel je hem, dan verdelen de gevers het kopen.',
+        'kind_for_someone_body' => 'Deel de lijst, stel hem samen op en zie welke cadeaus al gekocht worden.',
         'kind_group_body' => 'Eén cadeau, samen gekocht. Iedereen stemt en legt in.',
         'title_placeholder_mine' => 'Mijn verjaardag, Dingen die ik leuk vind…',
         'title_placeholder_for_someone' => 'Ideeën voor papa, Anna wordt 30…',

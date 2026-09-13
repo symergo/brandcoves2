@@ -1174,7 +1174,7 @@ return [
         'kind_hint' => 'This decides what the list can do. It cannot be changed later.',
         'title_for' => 'For :name',
         'kind_mine_body' => 'What you would like. Share it and people claim what they are getting. You never see what or who.',
-        'kind_for_someone_body' => 'A list about somebody else. Share it and the givers split the shopping.',
+        'kind_for_someone_body' => 'Share the list, build it together and see which presents are already being bought.',
         'kind_group_body' => 'One present, bought together. Everybody votes and chips in.',
         'title_placeholder_mine' => 'My birthday, Things I would like…',
         'title_placeholder_for_someone' => 'Ideas for Dad, Anna turns 30…',

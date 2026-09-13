@@ -1003,7 +1003,7 @@ return [
         'kind_hint' => 'Cela décide ce que la liste peut faire. Impossible à changer ensuite.',
         'title_for' => 'Pour :name',
         'kind_mine_body' => 'Ce qui vous ferait plaisir. Partagez-la et chacun réserve ce qu’il offre. Vous ne voyez jamais quoi ni qui.',
-        'kind_for_someone_body' => 'Une liste sur quelqu’un d’autre. Partagez-la et les donateurs se répartissent les achats.',
+        'kind_for_someone_body' => 'Partagez la liste, composez-la ensemble et voyez quels cadeaux sont déjà achetés.',
         'kind_group_body' => 'Un cadeau, acheté ensemble. Chacun vote et participe.',
         'title_placeholder_mine' => 'Mon anniversaire, Ce qui me plairait…',
         'title_placeholder_for_someone' => 'Idées pour papa, Anna a 30 ans…',

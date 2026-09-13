@@ -1002,7 +1002,7 @@ return [
         'kind_hint' => 'Esto decide qué puede hacer la lista. No se puede cambiar después.',
         'title_for' => 'Para :name',
         'kind_mine_body' => 'Lo que te gustaría. Compártela y cada persona reserva lo que regala. Nunca ves qué ni quién.',
-        'kind_for_someone_body' => 'Una lista sobre otra persona. Compártela y quienes regalan se reparten las compras.',
+        'kind_for_someone_body' => 'Comparte la lista, hazla entre todos y ve qué regalos ya se están comprando.',
         'kind_group_body' => 'Un regalo, comprado entre todos. Todos votan y aportan.',
         'title_placeholder_mine' => 'Mi cumpleaños, Cosas que me gustarían…',
         'title_placeholder_for_someone' => 'Ideas para papá, Ana cumple 30…',
