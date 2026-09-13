@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react'
+import { Head, Link, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import type { CoveSceneKey } from '../Components/CoveIllustration'
 import CoveIllustration from '../Components/CoveIllustration'
@@ -9,12 +9,10 @@ import ListIllustration, { type ListSceneKey } from '../Components/ListIllustrat
 import NewListButton from '../Components/NewListButton'
 import type { SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
-import ScanButton from '../Components/ScanButton'
-import ToolIcon from '../Components/ToolIcon'
+import { buttonClasses } from '../Components/Button'
 import RecentlyViewed from '../Components/RecentlyViewed'
 import { formatPrice, type SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
-import { isCleanTerm, searchHref } from '../searchUrl'
 
 interface Cove {
     /** The shape this Cove takes: persona, guide, seasonal, advice, brand or shop. Named on the card. */
@@ -194,81 +192,38 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                         </div>
 
                         {/*
-                          A search field, where the Gift Finder button used to
-                          be.
-
-                          The Whisperer is not good enough to be the first thing
-                          the site asks you to trust — it is still reachable from
-                          the Gift Cove, and it comes back here when it earns the
-                          place.
-
-                          A real <form method="get"> rather than a controlled
-                          input and a router call: it submits without JavaScript,
-                          the browser offers previous searches, and Enter works
-                          the way it does in every other search box the visitor
-                          has ever used.
+                          The pitch, in the owner's words (2026-09-13): what
+                          you make here and whom you share it with. It replaced
+                          a search field, which had replaced the Gift Finder
+                          button. The field taught the site's second job on
+                          its first screen; this says the first job, and the
+                          header carries the search on every page. The line
+                          under the buttons keeps the two things the field
+                          used to promise — search anything, scan a barcode —
+                          as links to where each is done.
                         */}
-                        <form
-                            action={`${base}/search`}
-                            method="get"
-                            role="search"
-                            // With JavaScript, the same search under its
-                            // readable address (/zoek/term). Without it, the
-                            // form above still lands on ?q=, which answers the
-                            // same page and names /zoek/term as canonical.
-                            onSubmit={(e) => {
-                                const q = new FormData(e.currentTarget).get('q')
-                                if (typeof q !== 'string' || !isCleanTerm(q)) return
-                                e.preventDefault()
-                                router.get(searchHref(market.key, q))
-                            }}
-                            /*
-                              Wraps on a phone, one row from `sm`.
+                        <p className="mt-5 max-w-xl text-lg text-ink-soft">{t('home.intro')}</p>
 
-                              Three controls on one 390px line left the field
-                              about 200px wide and clipped its own placeholder
-                              mid-word — "Koptelefoon, koffiem…" — so the
-                              example that tells a visitor what this box accepts
-                              was the part cut off. The field now takes its own
-                              line and the two buttons share the next.
-                            */
-                            className="mt-8 flex max-w-xl gap-2"
-                        >
-                            <input
-                                type="search"
-                                name="q"
-                                // The placeholder is the label. Two strings for
-                                // one field drifted apart the moment one of
-                                // them was rewritten: a screen reader heard
-                                // "a product or a brand" while the field on
-                                // screen offered to scan a barcode.
-                                aria-label={t('home.search_placeholder')}
-                                placeholder={t('home.search_placeholder')}
-                                className="h-12 min-w-0 flex-1 rounded-card border border-line bg-card px-4 text-ink placeholder:text-ink-soft focus:border-ink"
-                            />
-                            {/*
-                              The camera, beside the field, on the first screen
-                              of the site.
+                        <div className="mt-8 flex flex-wrap gap-3">
+                            <Link href={`${base}/lists?new=mine`} className={buttonClasses('primary', 'lg')}>
+                                {t('home.cta_wishlist')}
+                            </Link>
+                            <Link href={`${base}/discover-cove`} className={buttonClasses('secondary', 'lg')}>
+                                {t('home.cta_gift')}
+                            </Link>
+                        </div>
 
-                              Someone standing in a shop with the product in
-                              their hand has the highest intent this site ever
-                              sees, and until now the only way to reach the
-                              scanner was to run a search they did not want, in
-                              order to find the button on the results page. The
-                              weight is not the reason it was absent either: the
-                              wasm decoder is fetched inside the click handler,
-                              so a home page nobody scans from still loads
-                              nothing extra.
-                            */}
-                            <ScanButton className="h-12 w-12 shrink-0 rounded-card border border-line bg-card text-ink transition hover:border-ink" />
-                            <button
-                                type="submit"
-                                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card bg-accent text-white transition hover:bg-accent-dark"
-                            >
-                                <ToolIcon name="search" className="h-5 w-5" />
-                                <span className="sr-only">{t('nav.search')}</span>
-                            </button>
-                        </form>
+                        <p className="mt-6 text-sm text-ink-soft">
+                            <Link href={`${base}/search`} className="hover:text-ink hover:underline">
+                                {t('home.tagline_search')}
+                            </Link>
+                            <span aria-hidden> · </span>
+                            <Link href={`${base}/scan`} className="hover:text-ink hover:underline">
+                                {t('home.tagline_scan')}
+                            </Link>
+                            <span aria-hidden> · </span>
+                            {t('home.tagline_keep')}
+                        </p>
                     </div>
 
                     <HomeIllustration className="hidden w-72 shrink-0 text-ink-soft md:block lg:w-80" />

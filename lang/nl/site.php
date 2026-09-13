@@ -90,8 +90,15 @@ return [
         // Zie de toelichting bij deze sleutels in lang/en/site.php.
         'seo_description' => 'Doorzoek bol, Amazon en honderden winkels tegelijk. Hou verlanglijstjes bij, deel ze, leg samen in voor één cadeau en organiseer een Geheime Vriend.',
         'title' => 'GiftCoves verlanglijstjes: cadeaus geven en ontvangen aan de beste prijs',
-        'headline_1' => 'Iets wat het geven waard is.',
-        'headline_2' => 'Ook aan jezelf.',
+        'headline_1' => 'Geef beter.',
+        'headline_2' => 'Krijg wat je écht wilt.',
+        // The pitch under the headline, the two buttons, and the line under
+        // them. Owner's words, 2026-09-13; `cta_gift` below is the second button.
+        'intro' => 'Maak een verlanglijst van alles wat je online vindt. Deel hem met de mensen die cadeaus voor je kopen.',
+        'cta_wishlist' => 'Maak mijn verlanglijst',
+        'tagline_search' => 'Zoek wat je wilt',
+        'tagline_scan' => 'Scan een barcode',
+        'tagline_keep' => 'Alles op één plek',
         'search_placeholder' => 'Zoek een cadeau of scan een streepjescode',
         'recent_heading' => 'Recent gezocht',
         'recently_viewed' => 'Je bekeek',

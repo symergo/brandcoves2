@@ -91,8 +91,15 @@ return [
         // Voir l'explication de ces clés dans lang/en/site.php.
         'seo_description' => "Cherchez sur bol, Amazon et des centaines de boutiques à la fois. Gardez vos listes d'envies, partagez-les, cotisez à plusieurs et organisez un Ami Secret.",
         'title' => "GiftCoves : listes d'envies, offrir et recevoir au meilleur prix",
-        'headline_1' => 'De quoi faire plaisir.',
-        'headline_2' => 'À vous aussi.',
+        'headline_1' => 'Offrez mieux.',
+        'headline_2' => 'Recevez ce que vous voulez vraiment.',
+        // The pitch under the headline, the two buttons, and the line under
+        // them. Owner's words, 2026-09-13; `cta_gift` below is the second button.
+        'intro' => 'Créez une liste d’envies à partir de tout ce que vous trouvez en ligne. Partagez-la avec les personnes qui vous offrent des cadeaux.',
+        'cta_wishlist' => 'Créer ma liste d’envies',
+        'tagline_search' => 'Cherchez n’importe quoi',
+        'tagline_scan' => 'Scannez un code-barres',
+        'tagline_keep' => 'Tout au même endroit',
         'search_placeholder' => 'Cherchez un cadeau ou scannez un code-barres',
         'recent_heading' => 'Recherché récemment',
         'recently_viewed' => 'Vous avez regardé',

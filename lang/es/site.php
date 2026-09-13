@@ -90,8 +90,15 @@ return [
         // Consulta la explicación de estas claves en lang/en/site.php.
         'seo_description' => 'Busca en bol, Amazon y cientos de tiendas a la vez. Guarda listas de deseos, compártelas, poned dinero en común y organiza un Amigo invisible.',
         'title' => 'GiftCoves: listas de deseos, regalar y recibir al mejor precio',
-        'headline_1' => 'Algo que merezca la pena regalar.',
-        'headline_2' => 'También para ti.',
+        'headline_1' => 'Regala mejor.',
+        'headline_2' => 'Recibe lo que de verdad quieres.',
+        // The pitch under the headline, the two buttons, and the line under
+        // them. Owner's words, 2026-09-13; `cta_gift` below is the second button.
+        'intro' => 'Crea una lista de deseos con cualquier cosa que encuentres en internet. Compártela con las personas que te hacen regalos.',
+        'cta_wishlist' => 'Crear mi lista de deseos',
+        'tagline_search' => 'Busca lo que sea',
+        'tagline_scan' => 'Escanea un código de barras',
+        'tagline_keep' => 'Todo en un solo sitio',
         'search_placeholder' => 'Busca un regalo o escanea un código de barras',
         'recent_heading' => 'Buscado hace poco',
         'recently_viewed' => 'Has visto',

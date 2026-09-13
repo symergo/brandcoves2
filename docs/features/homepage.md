@@ -439,3 +439,18 @@ personas the band used to carry. `HomeController::personas()` still sends three 
 the Discover card is shown only when the market has a persona and that is the cheapest way to
 know. `home.personas_heading` and `home.personas_all` were removed from the four language files;
 the shelf keeps its own copy under `gift_ideas`.
+
+## The pitch says what you make here (2026-09-13)
+
+The hero now reads, in the owner's words: *"Give better. Get what you actually want."* — *"Create a
+wishlist from anything you find online. Share it with the people who buy gifts for you."* — two
+buttons, **Create my wishlist** (the list form on My Lists, `?new=mine`) and **Find a gift** (the
+Find a gift page, where the header entry of that name goes) — and one line under them: *Search
+anything · Scan a barcode · Keep it all in one place*.
+
+The search field that sat under the headline went with it. It had replaced the Gift Finder button
+and taught the site's second job on its first screen; the pitch now says the first job, and the
+header carries the search on every page. The two things the field promised, a search and a scan,
+survive as the first two words of the line under the buttons, each a link to where it is done, so
+the camera is still one tap from the first screen. Everything below the hero is unchanged. The
+Dutch second line is *"Krijg wat je écht wilt."*
