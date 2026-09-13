@@ -249,6 +249,12 @@ class HandleInertiaRequests extends Middleware
                 // the same thing however it went, so it is neither a success nor
                 // an error and calling it either would leak which one it was.
                 'status' => fn () => $request->session()->get('status'),
+                // A way on from a status: `['label' => …, 'href' => …]`,
+                // rendered as a link after the sentence. "You're unsubscribed"
+                // ends in the link to subscribe again (owner's call,
+                // 2026-09-13); a message with no next step reads as a door
+                // closing.
+                'action' => fn () => $request->session()->get('action'),
 
                 // Not a message: the id of a row a page can point at itself.
                 // A save made from a list's own page answers with this instead

@@ -376,7 +376,10 @@ return [
         'subscribe_privacy' => 'We gebruiken je adres alleen voor deze mail.',
         'confirm_done' => 'Je staat op de lijst. De volgende Cove komt morgenochtend.',
         'confirm_invalid' => 'Die link is verlopen of al gebruikt. Schrijf je opnieuw in voor een nieuwe.',
-        'unsubscribed' => 'Je bent uitgeschreven. Geen harde gevoelens.',
+        'unsubscribed' => 'Je bent uitgeschreven.',
+        // Rendered as a link after `unsubscribed`, to the signup form on the
+        // page the unsubscribe lands on.
+        'resubscribe' => 'Opnieuw inschrijven',
     ],
     'suggestions' => [
         'added' => 'Toegevoegd aan de lijst.',

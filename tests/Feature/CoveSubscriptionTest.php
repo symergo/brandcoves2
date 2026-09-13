@@ -395,6 +395,24 @@ class CoveSubscriptionTest extends TestCase
     }
 
     #[Test]
+    public function unsubscribing_ends_in_the_way_back_in(): void
+    {
+        // "No hard feelings" closed the door politely; the owner wanted it
+        // left open (2026-09-13). The sentence ends in a link to the signup
+        // form on the page the unsubscribe lands on.
+        $this->seedEdition();
+        $subscriber = $this->confirmedSubscriber();
+
+        $this->get('/be-nl/coves/unsubscribe/'.$subscriber->getAttribute('unsubscribe_token'))
+            ->assertRedirect('/be-nl/tips')
+            ->assertSessionHas('status', 'Je bent uitgeschreven.')
+            ->assertSessionHas('action', [
+                'label' => 'Opnieuw inschrijven',
+                'href' => '/be-nl/tips#cove-subscribe',
+            ]);
+    }
+
+    #[Test]
     public function one_click_unsubscribe_headers_are_present(): void
     {
         Mail::fake();

@@ -1,4 +1,4 @@
-import { usePage } from '@inertiajs/react'
+import { Link, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -42,7 +42,19 @@ export default function FlashMessage() {
                     : 'border-sage/40 bg-sage/10 text-ink'
             }`}
         >
-            <span className="flex-1">{message}</span>
+            <span className="flex-1">
+                {message}
+                {/* The way on, when the server named one: a link, not a
+                    second sentence, so the banner still reads as one line. */}
+                {flash.action && (
+                    <>
+                        {' '}
+                        <Link href={flash.action.href} className="font-medium underline hover:text-accent">
+                            {flash.action.label}
+                        </Link>
+                    </>
+                )}
+            </span>
             <button
                 type="button"
                 onClick={() => setDismissed(true)}

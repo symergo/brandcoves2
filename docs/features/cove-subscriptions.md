@@ -173,3 +173,14 @@ address, already subscribed and previously unsubscribed must be indistinguishabl
 or the form becomes a way to ask whether an address reads this site. Removing the flash removed it
 from all three at once; adding a message to any one of them would break that, and the class docblock
 says so.
+
+## Unsubscribing ends in the way back in (2026-09-13)
+
+The confirmation read *"You're unsubscribed. No hard feelings."* The owner asked for the second
+sentence to be a link to subscribe again instead. The unsubscribe already lands on the Daily Cove
+page, which carries the signup form, so the link is an anchor to that form on the same page.
+
+It is carried as a second flash, `action` (`label` and `href`), which `FlashMessage` renders as a
+link after the sentence. A flash message could not hold a link before: it was a string, and the
+banner is shared by every controller, so the way to add a link was a typed sibling rather than
+HTML in a translation string.

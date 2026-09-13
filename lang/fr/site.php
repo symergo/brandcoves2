@@ -373,7 +373,10 @@ return [
         'subscribe_privacy' => "Nous utilisons votre adresse pour cet e-mail et rien d'autre.",
         'confirm_done' => 'Vous êtes inscrit. La prochaine Cove arrive demain matin.',
         'confirm_invalid' => 'Ce lien a expiré ou a déjà été utilisé. Réinscrivez-vous pour en recevoir un nouveau.',
-        'unsubscribed' => 'Vous êtes désinscrit. Sans rancune.',
+        'unsubscribed' => 'Vous êtes désinscrit.',
+        // Rendered as a link after `unsubscribed`, to the signup form on the
+        // page the unsubscribe lands on.
+        'resubscribe' => 'Se réinscrire',
     ],
     'suggestions' => [
         'added' => 'Ajouté à la liste.',

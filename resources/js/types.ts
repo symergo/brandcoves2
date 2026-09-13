@@ -98,6 +98,8 @@ export interface SharedProps {
         success?: string
         error?: string
         status?: string
+        /** A way on from the message, shown as a link after it. */
+        action?: { label: string; href: string } | null
         savedItem?: number | null
         /** How an account that was just created signed in; only on the page after a first sign-in. */
         signUp?: 'google' | 'email' | null

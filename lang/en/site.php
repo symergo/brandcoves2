@@ -487,7 +487,10 @@ return [
         'subscribe_privacy' => 'We use your address for this email and nothing else.',
         'confirm_done' => "You're on the list. The next Cove arrives tomorrow morning.",
         'confirm_invalid' => 'That link has expired or has already been used. Sign up again to get a new one.',
-        'unsubscribed' => "You're unsubscribed. No hard feelings.",
+        'unsubscribed' => 'You\'re unsubscribed.',
+        // Rendered as a link after `unsubscribed`, to the signup form on the
+        // page the unsubscribe lands on.
+        'resubscribe' => 'Subscribe again',
     ],
     'suggestions' => [
         'added' => 'Added to the list.',

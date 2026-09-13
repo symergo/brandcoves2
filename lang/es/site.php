@@ -372,7 +372,10 @@ return [
         'subscribe_privacy' => 'Usamos tu dirección para este correo y para nada más.',
         'confirm_done' => 'Ya estás en la lista. La próxima Cove llega mañana por la mañana.',
         'confirm_invalid' => 'Ese enlace ha caducado o ya se ha usado. Vuelve a suscribirte para recibir uno nuevo.',
-        'unsubscribed' => 'Te has dado de baja. Sin rencores.',
+        'unsubscribed' => 'Te has dado de baja.',
+        // Rendered as a link after `unsubscribed`, to the signup form on the
+        // page the unsubscribe lands on.
+        'resubscribe' => 'Volver a suscribirse',
     ],
     'suggestions' => [
         'added' => 'Añadido a la lista.',

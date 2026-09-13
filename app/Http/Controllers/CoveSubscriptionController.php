@@ -163,7 +163,15 @@ class CoveSubscriptionController extends Controller
         // Unknown token gets the same page. A 404 here would confirm which
         // tokens are real, and there is nothing useful to tell someone whose
         // link is malformed anyway.
+        // The sentence ends in the way back in: the Daily Cove page this lands
+        // on carries the signup form, and the link jumps to it. It read "No
+        // hard feelings" until 2026-09-13, which closed the door politely
+        // where the owner wanted it left open.
         return redirect($current->get()->covePath())
-            ->with('status', __('site.cove.unsubscribed'));
+            ->with('status', __('site.cove.unsubscribed'))
+            ->with('action', [
+                'label' => __('site.cove.resubscribe'),
+                'href' => $current->get()->covePath().'#cove-subscribe',
+            ]);
     }
 }
