@@ -417,55 +417,10 @@ export default function SharedList({
                       what, and an anonymous owner genuinely has no name to give.
                     */}
                     {/*
-                      One box, two sentences: what this page is, and what
-                      pressing the button will disclose.
-
-                      They were a bordered card and a loose grey line below it,
-                      and they are one thought — "several of you are buying from
-                      this list, and nobody will see which part was you". Split
-                      across two blocks the second read as a footnote to the
-                      items rather than as the reassurance that makes somebody
-                      press at all.
-
-                      Still above the items, because both have to be read before
-                      the first claim. A name shown to other people is a consent
-                      decision, and consent given after the press is not consent.
+                      What this page is and what a claim discloses used to be
+                      a box here, under the title; it is in the owner card at
+                      the foot since 2026-09-13, at the owner's request.
                     */}
-                    {(!isOwner || canClaim || claimNeedsAccount) && (
-                        <div className="mt-4 rounded-card border border-line bg-card p-4 text-sm">
-                            {/*
-                              The wish-list branch names the person, or says
-                              nothing about a person at all — falling back to the
-                              list *title* once told visitors that "Saved items"
-                              would not see who claimed what, and an anonymous
-                              owner genuinely has no name to give.
-                            */}
-                            {!isOwner && (
-                                <p>
-                                    {list.kind === 'mine'
-                                        ? list.for
-                                            ? t('lists.shared_intro', { name: list.for })
-                                            : t('lists.shared_intro_anon')
-                                        : list.kind === 'group'
-                                          ? t('lists.shared_intro_group')
-                                          : t('lists.shared_intro_gift')}
-                                </p>
-                            )}
-
-                            {/* Shown to a signed-out visitor too: what a claim
-                                discloses has to be readable before the press,
-                                and the press is what asks them to sign in.
-                                Only when a name is shown: the anonymous case
-                                said "nobody sees it was you" and the owner
-                                asked for that line to go (2026-09-13). */}
-                            {(canClaim || claimNeedsAccount) && claimNames && (
-                                <p className={isOwner ? 'text-ink-soft' : 'mt-2 text-ink-soft'}>
-                                    {t('lists.claim_named_note')}
-                                </p>
-                            )}
-                        </div>
-                    )}
-
                     {canClaim && claimNames && (
                         <label className="mt-3 block text-xs font-medium">
                             {t('pledges.your_name')}
@@ -897,30 +852,60 @@ export default function SharedList({
                     {/*
                       The owner, as a card at the foot of the list (owner's
                       request, 2026-09-13): an initial in the accent, the name,
-                      and what they are to this page. The way an article ends
-                      with its author: somebody who scrolled the whole list
-                      arrives at who it belongs to. The initial is drawn from
-                      the name rather than a photo, because the site keeps no
-                      photos of people. Same two conditions as the line under
-                      the title.
+                      what they are to this page, and, since the same day,
+                      what this page is and what a claim discloses — the two
+                      sentences that were a box under the title, moved here at
+                      the owner's request. The way an article ends with its
+                      author: somebody who scrolled the whole list arrives at
+                      who it belongs to and what pressing a claim means. The
+                      initial is drawn from the name rather than a photo,
+                      because the site keeps no photos of people. An anonymous
+                      owner has no name to give, so the card then carries the
+                      sentences alone. Never for the owner, who knows.
                     */}
-                    {list.sharedBy !== null && !isOwner && (
+                    {!isOwner && (
                         <section
                             className="mt-10 rounded-card border border-line bg-card p-5"
                             aria-label={t('lists.owner_role')}
                         >
-                            <div className="flex items-center gap-4">
-                                <span
-                                    aria-hidden="true"
-                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-lg font-semibold text-white"
-                                >
-                                    {list.sharedBy.trim().charAt(0).toUpperCase()}
-                                </span>
-                                <div className="min-w-0">
-                                    <p className="font-medium">{list.sharedBy}</p>
-                                    <p className="text-sm text-ink-soft">{t('lists.owner_role')}</p>
+                            {list.sharedBy !== null && (
+                                <div className="flex items-center gap-4">
+                                    <span
+                                        aria-hidden="true"
+                                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-lg font-semibold text-white"
+                                    >
+                                        {list.sharedBy.trim().charAt(0).toUpperCase()}
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="font-medium">{list.sharedBy}</p>
+                                        <p className="text-sm text-ink-soft">{t('lists.owner_role')}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/*
+                              The wish-list branch names the person, or says
+                              nothing about a person at all — falling back to
+                              the list *title* once told visitors that "Saved
+                              items" would not see who claimed what, and an
+                              anonymous owner genuinely has no name to give.
+                            */}
+                            <p className={`text-sm ${list.sharedBy !== null ? 'mt-4' : ''}`}>
+                                {list.kind === 'mine'
+                                    ? list.for
+                                        ? t('lists.shared_intro', { name: list.for })
+                                        : t('lists.shared_intro_anon')
+                                    : list.kind === 'group'
+                                      ? t('lists.shared_intro_group')
+                                      : t('lists.shared_intro_gift')}
+                            </p>
+
+                            {/* Only when a name is shown with a claim; the
+                                anonymous case said "nobody sees it was you"
+                                and the owner asked for that line to go. */}
+                            {(canClaim || claimNeedsAccount) && claimNames && (
+                                <p className="mt-2 text-sm text-ink-soft">{t('lists.claim_named_note')}</p>
+                            )}
                         </section>
                     )}
                 </div>

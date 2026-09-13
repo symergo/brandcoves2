@@ -699,7 +699,11 @@ step 2, and the home page's chooser deep-links there like the other three kinds.
 
 At the owner's request, `/l/{token}` now says who the list is **for** under the title ("For
 :name", `lists.for_line`: the recipient of a list about somebody, the owner of a wish list) and
-ends with an owner card: an initial in the accent, the name, and "Owner of this list". The line
+ends with an owner card: an initial in the accent, the name, "Owner of this list", and, since the
+same day at the owner's request, the two sentences that were a box under the title: what this page
+is ("Tap an item to mark that you are getting it. :name sees nothing; the others only see that it is
+already being bought…") and, when a name is shown with a claim, what a claim discloses. An anonymous
+owner has no name, so the card then carries the sentences alone. The line
 first read "Shared by :name" and the owner asked for "for whom" instead, the owner being the card.
 It is skipped when the heading already names them, as a default-titled list's does ("Anna's
 wishlist"). `sharedBy` had been in the payload since the page learned to answer "who is this
