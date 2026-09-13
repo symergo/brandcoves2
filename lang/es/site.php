@@ -389,7 +389,7 @@ return [
         'search_placeholder' => 'Busca algo que le pueda gustar',
         'none_found' => 'No hay nada que coincida. Prueba con otra palabra.',
         'already_on_list' => 'Ese ya está en la lista.',
-        'manual_hint' => '¿No está en las tiendas que cubrimos? Proponlo igualmente, la decisión sigue siendo suya.',
+        'manual_hint' => '¿No está en las tiendas que cubrimos?',
     ],
 
     'registry' => [

@@ -390,7 +390,7 @@ return [
         'search_placeholder' => 'Cherchez quelque chose qui leur plairait',
         'none_found' => 'Rien ne correspond. Essayez un autre mot.',
         'already_on_list' => 'Celui-là est déjà sur la liste.',
-        'manual_hint' => 'Introuvable dans les boutiques que nous couvrons ? Proposez-le quand même, la décision reste la leur.',
+        'manual_hint' => 'Introuvable dans les boutiques que nous couvrons ?',
     ],
 
     'registry' => [

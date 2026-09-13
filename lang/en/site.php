@@ -504,7 +504,7 @@ return [
         'search_placeholder' => 'Search for something they would like',
         'none_found' => 'Nothing matched that. Try another word.',
         'already_on_list' => 'That one is already on the list.',
-        'manual_hint' => 'Not in the shops we cover? Put it forward anyway — they still decide.',
+        'manual_hint' => 'Not in the shops we cover?',
     ],
 
     'registry' => [

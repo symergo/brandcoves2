@@ -393,7 +393,7 @@ return [
         'search_placeholder' => 'Zoek iets dat ze leuk zouden vinden',
         'none_found' => 'Daar kwam niets uit. Probeer een ander woord.',
         'already_on_list' => 'Die staat al op de lijst.',
-        'manual_hint' => 'Niet te vinden bij de winkels die we volgen? Draag het toch aan, zij beslissen nog steeds.',
+        'manual_hint' => 'Niet te vinden bij de winkels die we volgen?',
     ],
 
     'registry' => [
