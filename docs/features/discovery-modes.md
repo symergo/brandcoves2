@@ -43,3 +43,14 @@ At the owner's request the `/discover-cove` page carries the same `SearchCard` a
 right under its title and intro, before the four cards. Somebody who chose "Find a gift" in the
 header most often knows what they are looking for, and the field is the shortest way there; the
 Daily Cove, Surprise, the Coves and Ask remain below for the ones who do not.
+
+## After the search: today, the days before, then the map (2026-09-13)
+
+At the owner's request the Find a gift page now reads, top to bottom: the search card, Today's
+Cove, a list of the editions before it (a week, newest first, each row a date and a title linking
+to that edition's page, with "All editions" to the Daily Cove's archive), and only then the cards
+for every kind of Cove. The cards had sat directly under the search, so the map came before any
+of the territory; a visitor who liked today's edition now sees at once that there was a yesterday.
+The list is `DiscoverCoveController::dailies()`, which is "the newest editions by `drop_date`,
+skipping the first", the first being exactly what `today()` shows. The bands below the cards
+(Surprise, questions, personas, guides) are unchanged.

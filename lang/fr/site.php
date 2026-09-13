@@ -303,6 +303,9 @@ return [
         'persona_what' => "Des cadeaux choisis autour d'une personne plutôt que d'une date : le fanatique de café, celui qui a déjà tout.",
         'persona_all' => 'Toutes les idées cadeaux',
         'guides_all' => 'Tous les guides',
+        // The list of editions before today's, under today's band.
+        'dailies_heading' => 'Éditions précédentes',
+        'dailies_all' => 'Toutes les éditions',
     ],
 
     'shops' => [

@@ -4,7 +4,7 @@ import SceneIllustration, { type SceneKey } from '../Components/SceneIllustratio
 import SaveToList from '../Components/SaveToList'
 import SearchCard from '../Components/SearchCard'
 import type { SharedProps } from '../types'
-import { formatPrice } from '../types'
+import { formatOccasionDate, formatPrice } from '../types'
 import { useTranslations } from '../useTranslations'
 
 interface Cove {
@@ -35,6 +35,8 @@ interface Props {
     /** Empty until a market publishes its first; the card goes with the band. */
     personas: Persona[]
     /** Null before a market has published its first edition. */
+    /** The editions before today's, newest first. */
+    dailies: { date: string; title: string; url: string }[]
     today: {
         theme: string
         blurb: string | null
@@ -88,7 +90,7 @@ export default function DiscoverCove({
     urls,
     coves,
     personas,
-    today,
+    today, dailies,
     questions,
     askUrl,
     surprises,
@@ -144,33 +146,6 @@ export default function DiscoverCove({
 
             {/* The same search card as the home page, first (owner's call, 2026-09-13). */}
             <SearchCard className="mt-6" />
-
-            {/*
-              Four across, or five when the persona card is present. Both
-              classes are written out because Tailwind scans source text and
-              never sees a class assembled from a variable — and four cards in a
-              five-column grid leaves a hole that reads as a missing card.
-            */}
-            <ul
-                className={`mt-8 grid gap-4 sm:grid-cols-2 ${
-                    sections.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
-                }`}
-            >
-                {sections.map((section) => (
-                    <li key={section.key}>
-                        <Link
-                            href={section.href}
-                            className="flex h-full flex-col gap-3 rounded-xl border border-line p-5 hover:border-accent"
-                        >
-                            <span className="text-accent">
-                                <CoveIcon name={section.key} className="h-8 w-8" />
-                            </span>
-                            <span className="font-medium text-ink">{section.name}</span>
-                            <span className="text-sm text-ink-soft">{section.what}</span>
-                        </Link>
-                    </li>
-                ))}
-            </ul>
 
             {/*
               Today's edition, shown rather than described. Same copy keys as
@@ -243,6 +218,72 @@ export default function DiscoverCove({
                     </div>
                 </section>
             )}
+
+            {/*
+              The days before today's, as rows. A visitor who liked today's
+              edition wants to know there is a yesterday; a row per edition
+              says so without another band of product tiles. Empty on a
+              market with one edition, and then not rendered.
+            */}
+            {dailies.length > 0 && (
+                <section className="mt-14" aria-labelledby="dailies-heading">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h2 id="dailies-heading" className="text-xl font-semibold tracking-tight text-ink">
+                            {t('discover_cove.dailies_heading')}
+                        </h2>
+                        <Link href={urls.daily} className="inline-flex min-h-11 items-center text-sm font-medium text-accent-dark hover:text-ink sm:min-h-0">
+                            {t('discover_cove.dailies_all')} →
+                        </Link>
+                    </div>
+                    <ul className="mt-4 divide-y divide-line rounded-card border border-line bg-card">
+                        {dailies.map((edition) => (
+                            <li key={edition.url}>
+                                <Link
+                                    href={edition.url}
+                                    className="flex flex-col gap-0.5 p-4 transition hover:bg-cream sm:flex-row sm:items-baseline sm:gap-4"
+                                >
+                                    <time dateTime={edition.date} className="shrink-0 text-sm text-ink-soft sm:w-24">
+                                        {formatOccasionDate(edition.date, market)}
+                                    </time>
+                                    <span className="font-medium">{edition.title}</span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+            )}
+
+            {/*
+              The cards for every kind of Cove, after the editions (owner's
+              call, 2026-09-13): the page opens with the search, then today's
+              edition, then the days before it, and only then the map of what
+              else there is.
+
+              Four across, or five when the persona card is present. Both
+              classes are written out because Tailwind scans source text and
+              never sees a class assembled from a variable — and four cards in a
+              five-column grid leaves a hole that reads as a missing card.
+            */}
+            <ul
+                className={`mt-10 grid gap-4 sm:grid-cols-2 ${
+                    sections.length === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
+                }`}
+            >
+                {sections.map((section) => (
+                    <li key={section.key}>
+                        <Link
+                            href={section.href}
+                            className="flex h-full flex-col gap-3 rounded-xl border border-line p-5 hover:border-accent"
+                        >
+                            <span className="text-accent">
+                                <CoveIcon name={section.key} className="h-8 w-8" />
+                            </span>
+                            <span className="font-medium text-ink">{section.name}</span>
+                            <span className="text-sm text-ink-soft">{section.what}</span>
+                        </Link>
+                    </li>
+                ))}
+            </ul>
 
             {/*
               Surprise, demonstrated.

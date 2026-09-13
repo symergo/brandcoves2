@@ -42,6 +42,9 @@ use Inertia\Response;
  */
 class DiscoverCoveController extends Controller
 {
+    /** Earlier editions listed under today's: a week of them. */
+    private const EARLIER_EDITIONS = 7;
+
     /**
      * More than the front page's taste, fewer than the archive index's sixty.
      *
@@ -148,6 +151,16 @@ class DiscoverCoveController extends Controller
             'today' => $this->today($current),
 
             /*
+             * The editions before today's, as a list (owner's call,
+             * 2026-09-13): the page opens with the search, then today's
+             * edition, then the days before it, then the cards for every kind
+             * of Cove. A visitor who liked today's wants to know there is a
+             * yesterday; a row per edition says so without another band of
+             * product tiles.
+             */
+            'dailies' => $this->dailies($current),
+
+            /*
              * A handful of surprises, resampled on every visit.
              *
              * Surprise was the one card with nothing underneath it, which left
@@ -240,6 +253,35 @@ class DiscoverCoveController extends Controller
      *
      * @return array<string, mixed>|null
      */
+    /**
+     * The editions before the one shown above, newest first.
+     *
+     * `skip(1)` is "not today's": `today()` takes the newest edition by
+     * `drop_date`, so the next ones by the same order are exactly the earlier
+     * ones. A week of them; the Daily Cove's own archive has the rest.
+     *
+     * @return list<array{date: string, title: string, url: string}>
+     */
+    private function dailies(CurrentMarket $current): array
+    {
+        $market = $current->get();
+
+        return DailyPickSet::query()
+            ->forMarket($market)
+            ->daily()
+            ->published()
+            ->orderByDesc('drop_date')
+            ->skip(1)
+            ->limit(self::EARLIER_EDITIONS)
+            ->get(['id', 'kind', 'slug', 'drop_date', 'theme_title'])
+            ->map(fn (DailyPickSet $edition): array => [
+                'date' => $edition->drop_date->toDateString(),
+                'title' => $edition->theme_title,
+                'url' => $current->url($edition->kind->path((string) $edition->slug, $market)),
+            ])
+            ->all();
+    }
+
     private function today(CurrentMarket $current): ?array
     {
         $edition = DailyPickSet::query()

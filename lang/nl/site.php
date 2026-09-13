@@ -306,6 +306,9 @@ return [
         'persona_what' => 'Cadeaus gekozen rond een persoon in plaats van een datum: de koffiefanaat, wie alles al heeft.',
         'persona_all' => 'Alle cadeau-ideeën',
         'guides_all' => 'Alle gidsen',
+        // The list of editions before today's, under today's band.
+        'dailies_heading' => 'Eerdere edities',
+        'dailies_all' => 'Alle edities',
     ],
 
     'shops' => [

@@ -406,6 +406,9 @@ return [
         'persona_what' => 'Presents chosen around a person rather than a date — the coffee obsessive, the one who already has everything.',
         'persona_all' => 'All gift ideas',
         'guides_all' => 'All guides',
+        // The list of editions before today's, under today's band.
+        'dailies_heading' => 'Earlier editions',
+        'dailies_all' => 'All editions',
     ],
 
     /*

@@ -42,6 +42,42 @@ class DiscoverCoveHubTest extends TestCase
         ]);
     }
 
+    private function daily(string $date, string $title, Market $market = Market::BeNl): DailyPickSet
+    {
+        return DailyPickSet::create([
+            'market' => $market->value,
+            'kind' => CoveKind::Daily->value,
+            'slug' => $date,
+            'drop_date' => $date,
+            'theme_title' => $title,
+            'theme_slug' => $date,
+            'status' => PublishStatus::Published->value,
+            'published_at' => $date.' 06:00:00',
+        ]);
+    }
+
+    #[Test]
+    public function the_editions_before_todays_are_listed_under_it(): void
+    {
+        // Today's edition has its own band; the days before it are rows,
+        // newest first, each linking to its own page.
+        $this->daily('2026-09-11', 'Eergisteren');
+        $this->daily('2026-09-13', 'Vandaag');
+        $this->daily('2026-09-12', 'Gisteren');
+        $this->daily('2026-09-13', 'Elders', Market::NlNl);
+
+        $this->get('/be-nl/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('today.theme', 'Vandaag')
+                ->has('dailies', 2)
+                ->where('dailies.0.title', 'Gisteren')
+                ->where('dailies.0.date', '2026-09-12')
+                ->where('dailies.0.url', '/be-nl/tips/2026-09-12')
+                ->where('dailies.1.title', 'Eergisteren')
+            );
+    }
+
     #[Test]
     public function it_lists_the_published_coves_for_this_market_newest_first(): void
     {
