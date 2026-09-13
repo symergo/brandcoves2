@@ -140,7 +140,7 @@ class CopyMatchesCodeTest extends TestCase
     }
 
     #[Test]
-    public function my_lists_holds_every_list_i_can_open_and_says_whose_each_one_is(): void
+    public function every_list_i_can_open_is_on_one_of_the_three_views_and_says_whose_it_is(): void
     {
         /*
          * My Lists used to mean "lists I own, of two of the three kinds". A
@@ -149,9 +149,13 @@ class CopyMatchesCodeTest extends TestCase
          * — so the page named after finding a list was the one place half of
          * them could not be found.
          *
-         * Mixing them makes the label load-bearing: what I may do with my own
+         * Since 2026-09-13 the page splits by whom a list is for (owner's
+         * call): "My wish lists" is only my own wants, "For others" is giving,
+         * "Group lists" is buying together. So the two lists here sit on two
+         * views rather than one page — and each still has to be findable, and
+         * still has to say whose it is, because what I may do with my own
          * research list and with somebody else's wish list is not the same
-         * thing, so every row has to say which it is.
+         * thing.
          */
         $me = User::factory()->create();
         $friend = User::factory()->create(['name' => 'Sanne']);
@@ -180,17 +184,17 @@ class CopyMatchesCodeTest extends TestCase
         // copy of their card now that their card is on my page.
         WishlistItem::factory()->create(['wishlist_id' => $theirs->id, 'accepted_at' => null]);
 
-        $props = $this->actingAs($me)->get('/be-nl/lists')->assertOk()->viewData('page')['props'];
+        $rows = fn (string $view) => collect(
+            $this->actingAs($me)->get("/be-nl/lists?view={$view}")->assertOk()->viewData('page')['props']['lists']
+        );
 
-        $rows = collect($props['lists']);
-
-        $mine = $rows->firstWhere('id', $ownGroup->id);
-        $this->assertNotNull($mine, 'A group list I own is missing from My Lists.');
+        $mine = $rows('group')->firstWhere('id', $ownGroup->id);
+        $this->assertNotNull($mine, 'A group list I own is missing from Group lists.');
         $this->assertFalse($mine['sharedWithMe']);
         $this->assertNull($mine['ownerName']);
 
-        $invited = $rows->firstWhere('id', $theirs->id);
-        $this->assertNotNull($invited, 'A list shared with me is missing from My Lists.');
+        $invited = $rows('shared')->firstWhere('id', $theirs->id);
+        $this->assertNotNull($invited, 'A list shared with me is missing from For others.');
         $this->assertTrue($invited['sharedWithMe']);
         $this->assertSame('Sanne', $invited['ownerName']);
         $this->assertSame('editor', $invited['role']);

@@ -86,8 +86,10 @@ class ThemeTest extends TestCase
         // not contain.
         $this->get('/be-nl')
             ->assertOk()
-            ->assertSee('<meta name="theme-color" content="#f7f4ef">', escape: false);
+            ->assertSee('<meta name="theme-color" content="#fbf6ee">', escape: false);
 
-        $this->assertStringContainsString('--color-cream: #f7f4ef;', $this->stylesheet());
+        // The same literal twice on purpose: the page's ground and the
+        // browser chrome must agree, and the two live in different files.
+        $this->assertStringContainsString('--color-cream: #fbf6ee;', $this->stylesheet());
     }
 }

@@ -108,6 +108,12 @@ x-app: &app
     # free-form — it has to match MAIL_USERNAME.
     MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@giftcoves.com}
     MAIL_FROM_NAME: ${APP_NAME:-GiftCoves}
+    # Who hears that somebody created an account. Blank means nobody, which is
+    # the documented off switch — but it has to be passed through, or the
+    # setting in Coolify silently never arrives and the notice never sends.
+    # ConfigContractTest caught it missing, on every CI run from 2026-09-12
+    # until 2026-09-13.
+    REGISTRATION_NOTIFY_EMAIL: ${REGISTRATION_NOTIFY_EMAIL:-}
 
     # Kept so switching back is an env change rather than a redeploy of this
     # file. Unused while MAIL_MAILER is smtp.
