@@ -117,8 +117,9 @@ class GiftPersonaTest extends TestCase
         $this->get('/be-nl')
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('today.theme', fn (?string $theme) => $theme !== 'De kruidenliefhebber')
-                ->where('personas.0.title', 'De kruidenliefhebber'));
+                // `personas` no longer reaches the front page (the Discover
+                // band went on 2026-09-13); the trap is the edition band.
+                ->where('today.theme', fn (?string $theme) => $theme !== 'De kruidenliefhebber'));
     }
 
     #[Test]
