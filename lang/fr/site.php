@@ -72,7 +72,6 @@ return [
         'hint_gift_coves' => "Des idées construites autour d'une personne",
         'hint_all_coves' => 'Tout ce que nous avons publié',
         'hint_ask' => "Laissez d'autres proposer quelque chose",
-        'hint_whisperer' => 'Décrivez quelqu’un, recevez quatre idées',
         'search_offers' => 'Chercher des offres',
         'hint_search' => 'Par nom, marque ou catégorie',
 

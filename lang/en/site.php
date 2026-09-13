@@ -97,7 +97,6 @@ return [
         'hint_gift_coves' => 'Ideas built around a person',
         'hint_all_coves' => 'Everything we have published',
         'hint_ask' => 'Let other people suggest something',
-        'hint_whisperer' => 'Describe someone, get four ideas',
         'search_offers' => 'Search offers',
         'hint_search' => 'By name, brand or category',
 

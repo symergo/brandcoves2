@@ -213,6 +213,15 @@ Two further consequences worth stating:
 Both caps on the memory exist because a session store is visitor-controlled input: ~60 ids per brief
 and five briefs, LRU.
 
+## Out of the header (2026-09-13)
+
+The owner took the Whisperer out of the "Find a gift" menu the same day the changes below shipped:
+it does not work well enough to be the most prominent answer to that label. The page stays at
+`/gift`, the How-it-works manual still explains it and the legacy redirect still lands on it, so it
+has an address but no door in the header, the same status the home page gave it when the search
+field replaced its button there. It comes back when the suggestions earn the place. See
+[navigation.md](navigation.md).
+
 ## Adjust, Four more, and the saved person (2026-09-13)
 
 Five changes to the wizard and one bug fix underneath them, all chosen by the owner from a list of

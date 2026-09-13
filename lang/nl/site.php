@@ -71,7 +71,6 @@ return [
         'hint_gift_coves' => 'Ideeën rond één persoon',
         'hint_all_coves' => 'Alles wat we gepubliceerd hebben',
         'hint_ask' => 'Laat anderen iets voorstellen',
-        'hint_whisperer' => 'Beschrijf iemand, krijg vier ideeën',
         'search_offers' => 'Zoek aanbiedingen',
         'hint_search' => 'Op naam, merk of categorie',
 

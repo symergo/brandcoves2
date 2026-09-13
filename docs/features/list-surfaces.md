@@ -335,9 +335,10 @@ first list. The four strings the band alone used (`gift_cove.my_wishlists`, `ite
 
 "Find a present" — the Gift Whisperer, Search, Ask and Alerts — is gone from `/gift-cove`, at the
 owner's request. The hub is the page for lists and the people around them; finding is the header's
-other half, where the entry now called "Find a gift" carries the Whisperer as its first item, and
-Search is in the header on every page. The four cards' strings stay: the manual at
-`/gift-cove/how-it-works` still explains the Whisperer, and the header uses its title. Only
+other half, where the entry now called "Find a gift" carried the Whisperer as its first item for
+one day (it came out again on 2026-09-13, see [navigation.md](navigation.md)), and Search is in the
+header on every page. The four cards' strings stay: the manual at `/gift-cove/how-it-works` still
+explains the Whisperer. Only
 `gift_cove.band_find` was deleted. The `find` band was the one four-card band; the grid still
 takes its column count from each band, so nothing sits alone.
 
