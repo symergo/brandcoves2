@@ -115,8 +115,16 @@ the commit that landed this section.
 ## Explanations go behind an (i) (2026-09-07, the standard from here on)
 
 A control shows its label and, where there is something to explain, `InfoTip` beside it: an (i)
-that reveals the explanation in the flow on a tap. The words are one tap away for whoever wants
-them and cost nothing for whoever does not. This replaces the sentence under every label, the
+that reveals the explanation in the flow on a tap, **under the title it stands next to**. The words
+are one tap away for whoever wants them and cost nothing for whoever does not.
+
+The "under the title" part is a layout rule with one requirement on the caller (2026-09-13). The
+component's wrapper is `display: contents` and the note is a full-width block, so in running text
+the note breaks below the line the icon is on, and in a flex row it drops to the next line — but
+only if the row has `flex-wrap`. Without it the row does not break and the note opens beside the
+heading, hanging off the icon, which is how the section headings on My Lists looked. A flex row
+that holds an `InfoTip` gets `flex-wrap`; the two that do (My Lists' group headings, the Whisperer's
+"remember" tick) say so in a comment. This replaces the sentence under every label, the
 paragraph in every choice card and the note at the foot of a form — each true, each a line, and
 on a phone a step of the list wizard was a screen of explanation with the controls between the
 paragraphs.

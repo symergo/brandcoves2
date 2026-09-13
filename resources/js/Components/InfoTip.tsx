@@ -18,6 +18,17 @@ import { useTranslations } from '../useTranslations'
  * without turning the whole line into a target; it is real interactive
  * content, so a click on it inside a `<label>` does not toggle the label's
  * control.
+ *
+ * ## The note goes under the title, whatever the title sits in
+ *
+ * The wrapper is `display: contents`, so the button and the note take part
+ * in the parent's layout directly, and the note is a full-width block. In
+ * running text that is what a block already did: it breaks below the line
+ * the icon is on. In a flex row it was not — the wrapper was one flex item,
+ * so the note opened beside the heading, hanging off the icon, instead of
+ * under the heading it explains (the lists page, 2026-09-13). A parent flex
+ * row needs `flex-wrap` for the full-width note to drop to the next line;
+ * `className` lands on the button, since a contents box has no margin.
  */
 export default function InfoTip({ children, className = '' }: { children: ReactNode; className?: string }) {
     const { t } = useTranslations()
@@ -25,7 +36,7 @@ export default function InfoTip({ children, className = '' }: { children: ReactN
     const id = useId()
 
     return (
-        <span className={className}>
+        <span className="contents">
             <button
                 type="button"
                 aria-expanded={open}
@@ -34,7 +45,7 @@ export default function InfoTip({ children, className = '' }: { children: ReactN
                 onClick={() => setOpen((v) => !v)}
                 className={`-my-1 inline-flex h-8 w-8 items-center justify-center rounded-full align-middle transition hover:text-ink ${
                     open ? 'text-accent' : 'text-ink-soft'
-                }`}
+                } ${className}`}
             >
                 <ToolIcon name="info" className="h-4 w-4" />
             </button>
@@ -42,7 +53,7 @@ export default function InfoTip({ children, className = '' }: { children: ReactN
                 <span
                     id={id}
                     role="note"
-                    className="mt-1 block rounded-lg border border-line bg-card p-3 text-sm font-normal text-ink-soft"
+                    className="mt-1 block w-full rounded-lg border border-line bg-card p-3 text-sm font-normal text-ink-soft normal-case tracking-normal"
                 >
                     {children}
                 </span>

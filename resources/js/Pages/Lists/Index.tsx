@@ -432,10 +432,12 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                             /* The icon is a sibling of the heading, not inside
                                it: the heading is uppercase and the tip's text
                                would inherit that. */
-                            <div className="flex items-center gap-1">
+                            <div className="flex flex-wrap items-center gap-1">
                                 <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
                                     {group.label}
                                 </h2>
+                                {/* `flex-wrap` above is what puts the opened note under
+                                    the heading rather than beside it: see InfoTip. */}
                                 <InfoTip>{group.hint}</InfoTip>
                             </div>
                         )}

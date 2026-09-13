@@ -213,7 +213,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
      */
     const rememberBox = (onChange: (on: boolean) => void) =>
         recipient && (
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex flex-wrap items-center gap-2 text-sm">
                 <input
                     type="checkbox"
                     className="h-4 w-4"
