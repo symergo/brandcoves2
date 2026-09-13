@@ -60,8 +60,12 @@ because a bare `?` is a placeholder to PDO, and the default jsonb operator class
   indexed. A tagged product is found whether or not its title agrees.
 - **Interest fit**: a tag on an interest is a match at full strength on that interest's slot,
   ahead of any text strength. `interest:coffee` on the product and "coffee" first in the brief is
-  the strongest evidence the engine gets.
-- **Occasion, vibe, values**: the tag answers before the title words are looked for.
+  the strongest evidence the engine gets. The signal is vectorial (owner's call, 2026-09-14): half
+  the best single interest answered, half the weighted share of the whole brief answered, so a
+  product tagged for three of four interests beats one tagged for the first alone. The arithmetic
+  is on `SuggestionEngine::interestFit()` and in gift-whisperer.md.
+- **Occasion, vibe, values**: the tag answers before the title words are looked for. Occasion
+  weighs 5 now, from zero: title words were too thin to trust, an editor's tag is not.
 - **Recipient fit**, a new signal weighted 5 in `for_someone` (taken from surprise, 20 to 15) and 0
   in `for_myself`: 1.0 when a recipient or age tag meets the brief's relationship or age band, 0.45
   when the product is tagged for somebody or some age else, 0.5 when nothing was asked or nothing is
@@ -83,6 +87,20 @@ change nothing about demand.
 
 Publish rather than write for the reason display titles are: the Whisperer reads a tag on the next
 request.
+
+## Growing the vocabulary from what people type
+
+The wizard's "anything else?" box accepts any word, and every brief is recorded as a `gift.suggest`
+event (append-only, no personal data: the interests and the vibe, never the person). Words that
+are not an enum interest are the demand the vocabulary has not met. `GET /interests/candidates`
+ranks them per market over the last ninety days, with the vocabulary beside them, so an interest
+is added when people keep asking for it rather than when somebody guesses they might (owner's
+call, 2026-09-14). It reads the events and not `recipients.interests`: the events are the designed
+signal for exactly this question, and a person's saved taste is not to be mined.
+
+Adding an interest stays a code change on purpose: a case on `Interest`, a seed of product nouns
+in `AngleMap`, a label in four languages. Each has to be written by a person, and a tag vocabulary
+that grew from typed words would grow by typo.
 
 ## The tagging brief
 

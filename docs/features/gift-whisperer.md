@@ -105,12 +105,13 @@ person told us who they are shopping for; "we found nothing" throws that away.
 
 | Signal | Weight | Note |
 |---|---:|---|
-| `interest_fit` | 40 | Weighted by *which interest* the product answers: the first is worth 1.0, the last 0.5, spread evenly. Matches are what the search matched, asked of Postgres by the same tsquery; a description-only match is worth half a title match. An extra interest matched adds 0.1, capped at 0.2, so a product that name-drops every interest cannot win on padding. Changed 2026-09-13, see below. |
+| `interest_fit` | 40 | Half the best single interest answered, half the weighted share of the brief's interests answered (vectorial since 2026-09-14). Interests weigh 1.0 for the first down to 0.5 for the last. A match is an editor's tag or what the search matched; a description-only match is worth half. With four interests: the first alone 0.67, the first two 0.81, the last three 0.75, all four 1.0. |
 | `budget_fit` | 20 | Peaks at 85% of the ceiling, falls away on both sides. A €12 gift against a €100 budget reads as thoughtless, not thrifty. |
-| `surprise` | 15 | From [the Serendipity Engine](serendipity.md). 20 until 2026-09-14; five points went to `recipient_fit`. |
+| `surprise` | 10 | From [the Serendipity Engine](serendipity.md). 20 until 2026-09-14; five points went to `recipient_fit`, five to `occasion`. |
 | `vibe` | 10 | A nudge, never a filter — someone who said "playful" still wants the good headphones if headphones are the right answer. |
 | `values` | 10 | Sustainable / local / handmade. |
 | `recipient_fit` | 5 | An editor's `recipient:` or `age:` tag meeting the brief's relationship or age band. No text fallback. See [gift-tags.md](gift-tags.md). |
+| `occasion` | 5 | An editor's `occasion:` tag meeting the brief's occasion, or the word in the title. Zero until 2026-09-14: title words alone were too thin to trust. |
 | `demand` | **0** | Bestseller-chart strength. Zero here is the decision — see below. |
 
 **`demand` is weighted zero for `for_someone` on purpose.** We hold a real demand signal now (see

@@ -445,15 +445,20 @@ return [
                 'weights' => [
                     'interest_fit' => 40,
                     'budget_fit' => 20,
-                    // 15, from 20, to pay for recipient_fit below (2026-09-14).
-                    // Surprise still stops the best-stocked product winning
-                    // every tie; five points less does not change that.
-                    'surprise' => 15,
+                    // 10, from 20, to pay for recipient_fit and occasion
+                    // below (2026-09-14). Surprise still stops the best-
+                    // stocked product winning every tie; it never needed
+                    // twenty points to do that.
+                    'surprise' => 10,
                     'vibe' => 10,
                     'values' => 10,
                     // An editor's `recipient:mother` tag meeting "mother" in
                     // the brief. Small: it decides between two good answers.
                     'recipient_fit' => 5,
+                    // An editor's `occasion:christmas` tag meeting the
+                    // brief's occasion, or the word in the title. Zero until
+                    // tags existed: title words alone were too thin to trust.
+                    'occasion' => 5,
                     /*
                      * Zero, deliberately, and the zero is the decision.
                      *

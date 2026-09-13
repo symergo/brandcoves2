@@ -417,9 +417,12 @@ class SuggestionEngineTest extends TestCase
             $fit[$pick->group->title] = $pick->breakdown['interest_fit'];
         }
 
-        // Out of 40: the whole weight for the first interest, half for the second.
-        $this->assertEqualsWithDelta(40.0, $fit['Manfrotto statief voor camera'], 0.01);
-        $this->assertEqualsWithDelta(20.0, $fit['Koffiemolen handmatig'], 0.01);
+        // Out of 40, half best and half coverage: the first interest alone is
+        // 0.5·1.0 + 0.5·(1.0/1.5) = 0.83, the second alone 0.5·0.5 + 0.5·(0.5/1.5)
+        // = 0.42. The second is half the first, and neither is the whole
+        // brief.
+        $this->assertEqualsWithDelta(33.33, $fit['Manfrotto statief voor camera'], 0.05);
+        $this->assertEqualsWithDelta(16.67, $fit['Koffiemolen handmatig'], 0.05);
     }
 
     #[Test]

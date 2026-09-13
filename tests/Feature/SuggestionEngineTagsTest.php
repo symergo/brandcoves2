@@ -117,6 +117,60 @@ class SuggestionEngineTagsTest extends TestCase
     }
 
     #[Test]
+    public function a_product_answering_more_of_the_brief_beats_one_answering_the_first_interest_only(): void
+    {
+        /*
+         * The owner's ask: matching is vectorial. Four interests, three
+         * products: one tagged for the first alone, one for the first two,
+         * one for all four. Same price, same category, so interest fit is
+         * the only difference — and coverage decides.
+         */
+        $first = $this->giftable('Alleen koffie', 3000, ['interest:coffee']);
+        $two = $this->giftable('Koffie en koken', 3000, ['interest:coffee', 'interest:cooking']);
+        $all = $this->giftable('Alles', 3000, ['interest:coffee', 'interest:cooking', 'interest:baking', 'interest:drinks']);
+        $last = $this->giftable('Zonder koffie', 3000, ['interest:cooking', 'interest:baking', 'interest:drinks']);
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['coffee', 'cooking', 'baking', 'drinks'],
+            limit: 4,
+        ));
+
+        $fit = [];
+
+        foreach ($picks as $pick) {
+            $fit[$pick->group->id] = round($pick->breakdown['interest_fit'], 1);
+        }
+
+        // Weights 1.0, 0.83, 0.67, 0.5; half best, half coverage. Three of
+        // four without the first beats the first alone: more of the brief
+        // wins, which is what vectorial means here.
+        $this->assertSame(40.0, $fit[$all->id]);
+        $this->assertSame(32.2, $fit[$two->id]);
+        $this->assertSame(30.0, $fit[$last->id]);
+        $this->assertSame(26.7, $fit[$first->id]);
+        $this->assertSame($all->id, $picks[0]->group->id);
+    }
+
+    #[Test]
+    public function an_occasion_tag_counts(): void
+    {
+        $forChristmas = $this->giftable('Adventskalender koffie', 3000, ['interest:coffee', 'occasion:christmas']);
+        $plain = $this->giftable('Koffiebonen proefpakket', 3000, ['interest:coffee']);
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['coffee'],
+            occasion: 'christmas',
+            limit: 2,
+        ));
+
+        $this->assertSame($forChristmas->id, $picks[0]->group->id);
+        $this->assertEqualsWithDelta(5.0, $picks[0]->breakdown['occasion'], 0.01);
+        $this->assertEqualsWithDelta(2.25, $picks[1]->breakdown['occasion'], 0.01);
+    }
+
+    #[Test]
     public function the_recipient_tag_meets_the_brief(): void
     {
         $forMum = $this->giftable('Zijden sjaal', 4900, ['interest:fashion', 'recipient:mother']);

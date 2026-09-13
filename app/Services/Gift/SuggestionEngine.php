@@ -444,6 +444,14 @@ class SuggestionEngine
             'surprise' => $this->surprise($group) * $profile->weight('surprise', 20),
             'vibe' => $this->vibeFit($haystack, $brief, $tags) * $profile->weight('vibe', 10),
             'values' => $this->valuesFit($haystack, $brief, $tags) * $profile->weight('values', 10),
+            /*
+             * Five since 2026-09-14, from zero. It was zero because the
+             * catalogue was too thin in seasonal goods for title words to
+             * carry weight; an editor's `occasion:` tag is not a title word.
+             * The text fallback rides along at the same weight, which is
+             * small enough that "kerst" in a novelty title cannot outrank a
+             * real present.
+             */
             'occasion' => $this->occasionFit($haystack, $brief, $tags) * $profile->weight('occasion', 0),
             /*
              * Who the present is for, from an editor's tag only.
@@ -480,24 +488,29 @@ class SuggestionEngine
     }
 
     /**
-     * How squarely this answers what the person likes.
+     * How squarely this answers what the person likes: half the best single
+     * interest it answers, half how much of the whole brief it covers.
      *
-     * Weighted by *which interest* the product answers, not by where a query
-     * sat in a flat list. The first interest someone thinks of is the one that
-     * matters, and the weight says so plainly: the first interest is worth
-     * 1.0, the last 0.5, spread evenly between. Under the old per-query
-     * position, "schilderen" followed by "techniek" put the first tech query
-     * at 0.94 of the painting one — close enough for a speaker at the budget's
-     * sweet spot to beat every paint set on price alone. At 0.5 the second
-     * interest is a real second: it decides between two answers to the first,
-     * and wins only when the first has nothing to offer.
+     * Each interest is a slot with a weight: the first interest someone
+     * thinks of is worth 1.0, the last 0.5, spread evenly between. Under the
+     * old per-query position, "schilderen" followed by "techniek" put the
+     * first tech query at 0.94 of the painting one — close enough for a
+     * speaker at the budget's sweet spot to beat every paint set on price
+     * alone. At 0.5 the second interest is a real second.
      *
-     * The strength is the match quality from {@see matches()}: 1.0 for a
-     * title, brand or category match, 0.5 for a description-only one.
+     * The blend is the owner's ask (2026-09-14) that matching be vectorial: a
+     * product answering three of four interests should beat one answering
+     * only the first, and until now it did not — the best slot decided and
+     * every extra match added a fixed crumb. Coverage is the weighted share of
+     * the brief's slots the product answers, so with four interests (weights
+     * 1.0, 0.83, 0.67, 0.5) a product answering the first alone scores
+     * 0.5·1.0 + 0.5·0.33 = 0.67, one answering the first two 0.81, one
+     * answering the last three 0.75, and one answering all four 1.0: more of
+     * the brief wins, and the first interest still weighs most among equals.
+     * A single-interest brief is unchanged at 1.0.
      *
-     * A product answering more than one interest earns a little for each
-     * extra — far less than the first, otherwise a product that name-drops
-     * every interest wins on padding.
+     * The strength per slot is the match quality: 1.0 for an editor's tag or
+     * a title, brand or category match, 0.5 for a description-only one.
      *
      * @param  array<int, float>  $strengths  slot index => strongest match
      */
@@ -507,16 +520,23 @@ class SuggestionEngine
             return 0.0;
         }
 
-        $best = 0.0;
+        $weight = fn (int $slotIndex): float => $slotCount === 1 ? 1.0 : 1.0 - (0.5 * $slotIndex / ($slotCount - 1));
 
-        foreach ($strengths as $slotIndex => $strength) {
-            $weight = $slotCount === 1 ? 1.0 : 1.0 - (0.5 * $slotIndex / ($slotCount - 1));
-            $best = max($best, $weight * $strength);
+        $best = 0.0;
+        $covered = 0.0;
+        $total = 0.0;
+
+        for ($i = 0; $i < $slotCount; $i++) {
+            $total += $weight($i);
+
+            if (isset($strengths[$i])) {
+                $scored = $weight($i) * $strengths[$i];
+                $best = max($best, $scored);
+                $covered += $scored;
+            }
         }
 
-        $bonus = min(0.2, (count($strengths) - 1) * 0.1);
-
-        return min(1.0, $best + $bonus);
+        return min(1.0, 0.5 * $best + 0.5 * ($covered / $total));
     }
 
     /**
