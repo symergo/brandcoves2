@@ -18,7 +18,7 @@ use App\Services\Gift\GiftTags;
  * Relationships, not genders and not ages. A friend or a colleague has no
  * gender here on purpose: a product an editor would tag "for women" is a
  * stereotype more often than a fact, and where a product genuinely is
- * gendered its title says so. Age is its own vocabulary (`age:teen`), so
+ * gendered its title says so. Age is its own vocabulary (`age:13-17`), so
  * `recipient:child` means "their child", who may be forty.
  *
  * `recipients.relationship` is free text and stays so; the Whisperer folds

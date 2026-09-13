@@ -769,6 +769,7 @@ return [
         'my_list' => 'Ce qui plairait à :name',
         'about_you' => 'À propos de vous',
         'step_interests' => 'Qu’est-ce qui vous plaît ?',
+        'step_age' => 'Quel âge a la personne ?',
         'step_vibe' => 'Quel effet doit-il faire ?',
         'step_values' => 'Qu’est-ce qui compte pour vous ?',
         'your_list' => 'Ce qui vous ferait plaisir',
@@ -1181,6 +1182,9 @@ return [
         'interests_other' => 'Autre chose ?',
         'interests_other_placeholder' => 'p. ex. vélo, pain au levain',
         'interests_max' => '8 au maximum',
+
+        // The fixed age groups, shown as chips; the band is a range of years or 65+.
+        'age_band' => ':band ans',
 
         // The results view: what you said, an Adjust button, and the next board.
         'more' => 'Quatre autres',

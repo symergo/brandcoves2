@@ -344,3 +344,11 @@ shared `lists` prop after creating a list with a partial GET of the current page
 is `/gift` after a suggest (and `show()` flushes the rejection memory on the way in) or `/gift/swap`
 after a swap (a 405). Signed-in owners only: an anonymous visitor cannot save, so a list they could
 never use would be noise in the picker. `RecipientProfileController::theirList()` is the precedent.
+
+## The wizard asks the age, from fixed groups (2026-09-14)
+
+A seventh question, after the interests: "How old are they?", nine chips (0-2, 3-5, 6-9, 10-12,
+13-17, 18-29, 30-49, 50-64, 65+), skippable like every step after the first. The answer is one of
+the exact strings an editor tags a product with (`age:13-17`), so `recipient_fit` compares two
+fixed values and nothing is typed or folded. The server refuses anything else. See
+[gift-tags.md](gift-tags.md).

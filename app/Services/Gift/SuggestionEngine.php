@@ -680,11 +680,13 @@ class SuggestionEngine
      * Whether an editor tagged this product for the person the brief
      * describes: who they are to the giver, and how old they are.
      *
-     * Both fields on the brief are free text; each is folded to lower case
-     * and compared with its vocabulary as it is. "mother" meets
-     * `recipient:mother` and "teen" meets `age:teen`; "my mum" meets nothing
-     * and scores neutral rather than badly, the same rule every skipped
-     * question follows. One signal for the two because they answer one
+     * The relationship is free text, folded to lower case and compared as
+     * it is: "mother" meets `recipient:mother`, "my mum" meets nothing. The
+     * age band is one of the fixed groups the wizard offers, the same
+     * strings an editor tags with, so "13-17" meets `age:13-17` and a stored
+     * value from before the groups existed meets nothing. Nothing recognised
+     * scores neutral rather than badly, the same rule every skipped question
+     * follows. One signal for the two because they answer one
      * question, "is this for them", and a product tagged for a teenager
      * given to a teenager is as right as one tagged for a mother given to a
      * mother.
@@ -699,7 +701,7 @@ class SuggestionEngine
             $asked[GiftTags::RECIPIENT] = GiftTags::recipient($brief->relationship);
         }
 
-        if ($brief->ageBand !== null && trim($brief->ageBand) !== '') {
+        if ($brief->ageBand !== null && in_array($brief->ageBand, GiftTags::AGE_BANDS, true)) {
             $asked[GiftTags::AGE] = GiftTags::age($brief->ageBand);
         }
 

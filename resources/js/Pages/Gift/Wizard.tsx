@@ -22,6 +22,7 @@ interface Recipient {
     budgetMax: Cents | null
     avoid: string[]
     values: string[]
+    ageBand: string | null
 }
 
 interface Pick {
@@ -45,12 +46,13 @@ interface Brief {
     values?: string[]
     relationship?: string | null
     occasion?: string | null
+    age_band?: string | null
     recipient_id?: string | null
     remember?: boolean
 }
 
 interface Props {
-    options: { interests: Option[]; vibes: Option[]; values: string[] }
+    options: { interests: Option[]; vibes: Option[]; values: string[]; ages: Option[] }
     recipients: Recipient[]
     picks: Pick[] | null
     brief: Brief | null
@@ -58,7 +60,7 @@ interface Props {
     recipientList: SavingTo | null
 }
 
-const STEPS = ['who', 'interests', 'vibe', 'budget', 'avoid', 'values'] as const
+const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid', 'values'] as const
 
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
@@ -83,6 +85,9 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
     const [avoid, setAvoid] = useState<string[]>(brief?.avoid ?? [])
     const [values, setValues] = useState<string[]>(brief?.values ?? [])
     const [relationship, setRelationship] = useState<string | null>(brief?.relationship ?? null)
+    // One of the fixed groups the server offers, never typed: an editor tags
+    // a product with the same strings, so the two meet as one value.
+    const [ageBand, setAgeBand] = useState<string | null>(brief?.age_band ?? null)
     const [recipientId, setRecipientId] = useState<string | null>(brief?.recipient_id ?? null)
     const [remember, setRemember] = useState<boolean>(brief?.remember ?? false)
 
@@ -124,6 +129,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
         avoid,
         values,
         relationship,
+        age_band: ageBand,
         recipient_id: recipientId,
         remember,
         ...overrides,
@@ -185,6 +191,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
         setAvoid(chosen.avoid)
         setValues(chosen.values)
         setRelationship(chosen.relationship)
+        setAgeBand(chosen.ageBand)
         setBudgetMax(chosen.budgetMax != null ? String(chosen.budgetMax / 100) : '')
         setStep(firstQuestion)
     }
@@ -255,6 +262,11 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                 {interestLabel(value)}
                             </span>
                         ))}
+                        {ageBand && (
+                            <span className="rounded-full border border-line px-3 py-1 text-sm">
+                                {options.ages.find((o) => o.value === ageBand)?.label ?? ageBand}
+                            </span>
+                        )}
                         {vibe && (
                             <span className="rounded-full border border-line px-3 py-1 text-sm">
                                 {options.vibes.find((o) => o.value === vibe)?.label ?? vibe}
@@ -454,6 +466,22 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                         />
                                     </div>
                                 </div>
+                            </div>
+                        )}
+
+                        {steps[step] === 'age' && (
+                            <div className="flex flex-wrap gap-2">
+                                {options.ages.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        aria-pressed={ageBand === option.value}
+                                        className={chip(ageBand === option.value)}
+                                        onClick={() => setAgeBand(ageBand === option.value ? null : option.value)}
+                                    >
+                                        {option.label}
+                                    </button>
+                                ))}
                             </div>
                         )}
 

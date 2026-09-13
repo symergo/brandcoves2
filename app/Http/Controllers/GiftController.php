@@ -11,6 +11,7 @@ use App\Enums\Vibe;
 use App\Models\Event;
 use App\Models\Recipient;
 use App\Models\Wishlist;
+use App\Services\Gift\GiftTags;
 use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
@@ -20,6 +21,7 @@ use App\Services\Wishlist\ListMaker;
 use App\Support\CurrentMarket;
 use App\Support\Owner;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -325,7 +327,8 @@ class GiftController extends Controller
             'values.*' => ['string', 'in:sustainable,local,handmade'],
             'relationship' => ['nullable', 'string', 'max:40'],
             'occasion' => ['nullable', 'string', 'max:40'],
-            'age_band' => ['nullable', 'string', 'max:20'],
+            // One of the fixed groups, the same strings a product is tagged with.
+            'age_band' => ['nullable', 'string', Rule::in(GiftTags::AGE_BANDS)],
             'recipient_id' => ['nullable', 'uuid'],
             // Validated so it echoes back in `brief`, and the tick survives the
             // round trip. TasteBrief never sees it.
@@ -441,6 +444,13 @@ class GiftController extends Controller
                 'label' => $v->label(),
             ], Vibe::cases()),
             'values' => ['sustainable', 'local', 'handmade'],
+            // The fixed age groups, the same strings an editor tags a
+            // product with (GiftTags::AGE_BANDS), so the giver's answer and
+            // the tag meet as one value.
+            'ages' => array_map(fn (string $band) => [
+                'value' => $band,
+                'label' => __('site.gift.age_band', ['band' => $band]),
+            ], GiftTags::AGE_BANDS),
         ];
     }
 
@@ -468,6 +478,7 @@ class GiftController extends Controller
                 'budgetMax' => $r->budget_max,
                 'avoid' => (array) $r->avoid,
                 'values' => (array) $r->values,
+                'ageBand' => $r->age_band,
             ])
             ->all();
     }

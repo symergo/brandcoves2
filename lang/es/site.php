@@ -768,6 +768,7 @@ return [
         'my_list' => 'Lo que le gustaría a :name',
         'about_you' => 'Sobre ti',
         'step_interests' => '¿Qué te gusta?',
+        'step_age' => '¿Qué edad tiene?',
         'step_vibe' => '¿Cómo debe sentirse?',
         'step_values' => '¿Qué te importa?',
         'your_list' => 'Cosas que te gustarían',
@@ -1180,6 +1181,9 @@ return [
         'interests_other' => '¿Algo más?',
         'interests_other_placeholder' => 'p. ej. ciclismo, masa madre',
         'interests_max' => 'Hasta 8',
+
+        // The fixed age groups, shown as chips; the band is a range of years or 65+.
+        'age_band' => ':band años',
 
         // The results view: what you said, an Adjust button, and the next board.
         'more' => 'Otras cuatro',

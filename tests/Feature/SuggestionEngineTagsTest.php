@@ -200,13 +200,15 @@ class SuggestionEngineTagsTest extends TestCase
     #[Test]
     public function the_age_tag_meets_the_brief_too(): void
     {
-        $forTeen = $this->giftable('Skateboard', 4900, ['interest:outdoors', 'age:teen']);
-        $forToddler = $this->giftable('Loopfiets', 4900, ['interest:outdoors', 'age:toddler']);
+        $forTeen = $this->giftable('Skateboard', 4900, ['interest:outdoors', 'age:13-17']);
+        $forToddler = $this->giftable('Loopfiets', 4900, ['interest:outdoors', 'age:3-5']);
 
+        // The giver picked the band on the wizard; the same string the
+        // editor tagged with.
         $picks = $this->engine()->suggest(new TasteBrief(
             market: Market::BeNl,
             interests: ['outdoors'],
-            ageBand: 'teen',
+            ageBand: '13-17',
             limit: 2,
         ));
 

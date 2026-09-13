@@ -117,8 +117,9 @@ class GiftTagsApiTest extends TestCase
         $this->assertContains('cycling', $vocabulary['interest']);
         $this->assertNotContains('other', $vocabulary['occasion']);
         $this->assertContains('mother', $vocabulary['recipient']);
-        $this->assertContains('teen', $vocabulary['age']);
+        $this->assertContains('13-17', $vocabulary['age']);
         $this->assertNotContains('teen', $vocabulary['recipient']);
+        $this->assertSame(['0-2', '3-5', '6-9', '10-12', '13-17', '18-29', '30-49', '50-64', '65+'], $vocabulary['age']);
         $this->assertContains('playful', $vocabulary['vibe']);
         $this->assertContains('handmade', $vocabulary['values']);
         $this->assertContains('interest:coffee', GiftTags::all());

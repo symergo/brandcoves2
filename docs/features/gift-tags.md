@@ -27,7 +27,7 @@ brief's "coffee" without anything in between. Every vocabulary is one the site a
 | `interest` | the thirty-six wizard interests (twenty broad ones, sixteen hobbies added 2026-09-14: art, cycling, board games, drinks, baking, running, yoga, cars, science, water sports, winter sports, football, collecting, nature, fishing, horses) | `App\Enums\Interest` |
 | `occasion` | the list occasions except `other`, plus sinterklaas, easter, new_year, halloween, communion, christening, engagement, get_well, new_job, secret_santa | `App\Enums\EventType`, `GiftTags::EXTRA_OCCASIONS` |
 | `recipient` | partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host | `App\Enums\RecipientType` |
-| `age` | baby, toddler, child, teen, adult, senior | `GiftTags::AGE_BANDS` |
+| `age` | 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64, 65+ | `GiftTags::AGE_BANDS` |
 | `vibe` | practical, playful, beautiful | `App\Enums\Vibe` |
 | `values` | sustainable, local, handmade | `GiftTags::VALUE_OPTIONS` |
 
@@ -42,10 +42,13 @@ than a fact, and where a product genuinely is gendered (a razor, a dress) its ti
 search finds it. If a market ever needs it, it would be a separate `audience` vocabulary, not a
 split of `recipient`.
 
-**Age is its own vocabulary.** It matters, and the wizard already stores an age band on a person
-that nothing read. Coarse bands, because the line between a six-year-old and a twelve-year-old is
-not one two editors would draw in the same place; "child" and "teen" they would. Splitting it from
-`recipient` is what lets `recipient:child` mean "their child, who may be forty".
+**Age is its own vocabulary, as fixed groups of years.** The bands are ranges (owner's call: real
+age groups, fixed on both sides, nothing typed): 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64,
+65+, cut where presents change. An editor tags the range a product suits, and the wizard asks the
+giver to pick one of the same ranges as a step ("How old are they?"), so the two meet as the same
+string and nothing has to be folded. An age band stored on a person from before the groups existed
+matches nothing and scores neutral. Splitting age from `recipient` is what lets `recipient:child`
+mean "their child, who may be forty".
 
 ## Storage and retrieval
 

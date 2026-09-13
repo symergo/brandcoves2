@@ -60,12 +60,16 @@ class GiftTags
     ];
 
     /**
-     * Age bands, coarse on purpose. A present for a six-year-old and one for
-     * a twelve-year-old differ, but the line between them is not one two
-     * editors would draw in the same place; "child" and "teen" they would.
-     * `recipients.age_band` is free text and meets these where it matches.
+     * Age bands, as ranges of years (owner's call, 2026-09-14: real age
+     * groups, not words). The cuts follow how presents change: a two-year-old
+     * and a four-year-old want different things, a fourteen-year-old and a
+     * twenty-year-old more so, and past thirty the decades are what a giver
+     * knows. An editor tags the range a product suits, and the wizard asks
+     * the giver to pick one of the same ranges (owner's call: fixed groups
+     * on both sides, nothing typed and nothing folded), so the two meet as
+     * the same string.
      */
-    public const AGE_BANDS = ['baby', 'toddler', 'child', 'teen', 'adult', 'senior'];
+    public const AGE_BANDS = ['0-2', '3-5', '6-9', '10-12', '13-17', '18-29', '30-49', '50-64', '65+'];
 
     /**
      * The whole vocabulary, grouped, in the order the wizard asks about it.

@@ -356,6 +356,15 @@ class GiftWhispererTest extends TestCase
     }
 
     #[Test]
+    public function the_age_is_one_of_the_fixed_groups_or_nothing(): void
+    {
+        $this->catalogue();
+
+        $this->post('/be-nl/gift', [...$this->brief(), 'age_band' => '13-17'])->assertOk();
+        $this->post('/be-nl/gift', [...$this->brief(), 'age_band' => 'teen'])->assertSessionHasErrors('age_band');
+    }
+
+    #[Test]
     public function a_saved_person_fills_in_what_the_brief_leaves_out(): void
     {
         $this->catalogue();

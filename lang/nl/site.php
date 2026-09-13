@@ -772,6 +772,7 @@ return [
         'my_list' => 'Wat :name leuk zou vinden',
         'about_you' => 'Over jou',
         'step_interests' => 'Waar hou je van?',
+        'step_age' => 'Hoe oud is die persoon?',
         'step_vibe' => 'Hoe mag het voelen?',
         'step_values' => 'Waar hecht je waarde aan?',
         'your_list' => 'Dingen die je leuk zou vinden',
@@ -1184,6 +1185,9 @@ return [
         'interests_other' => 'Nog iets?',
         'interests_other_placeholder' => 'bv. wielrennen, zuurdesem',
         'interests_max' => 'Maximaal 8',
+
+        // The fixed age groups, shown as chips; the band is a range of years or 65+.
+        'age_band' => ':band jaar',
 
         // The results view: what you said, an Adjust button, and the next board.
         'more' => 'Vier andere',

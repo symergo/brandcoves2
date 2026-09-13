@@ -910,6 +910,7 @@ return [
         'my_list' => 'What :name would like',
         'about_you' => 'About you',
         'step_interests' => 'What are you into?',
+        'step_age' => 'How old are they?',
         'step_vibe' => 'How should it feel?',
         'step_values' => 'Anything that matters to you?',
         'your_list' => 'Things you would like',
@@ -1349,6 +1350,9 @@ return [
         'interests_other' => 'Anything else?',
         'interests_other_placeholder' => 'e.g. cycling, sourdough',
         'interests_max' => 'Up to 8',
+
+        // The fixed age groups, shown as chips; the band is a range of years or 65+.
+        'age_band' => ':band years',
 
         // The results view: what you said, an Adjust button, and the next board.
         'more' => 'Four more',
