@@ -23,7 +23,7 @@ return [
         'guides' => 'Guides',
         'surprise' => 'Surprise Cove',
         'lists' => 'My Lists',
-        'shared_lists' => 'Shared Lists',
+        'shared_lists' => 'Shared with me',
         'group_lists' => 'Group Lists',
         'notifications' => 'Notifications',
         'sign_in' => 'Sign in',

@@ -17,7 +17,7 @@ return [
         'guides' => 'Koopgidsen',
         'surprise' => 'Verrassingscove',
         'lists' => 'Mijn lijsten',
-        'shared_lists' => 'Gedeelde lijsten',
+        'shared_lists' => 'Met mij gedeeld',
         'group_lists' => 'Groepslijsten',
         'notifications' => 'Meldingen',
         'sign_in' => 'Inloggen',

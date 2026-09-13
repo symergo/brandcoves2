@@ -17,7 +17,7 @@ return [
         'guides' => "Guides d'achat",
         'surprise' => 'Cove Surprise',
         'lists' => 'Mes listes',
-        'shared_lists' => 'Listes partagées',
+        'shared_lists' => 'Partagées avec moi',
         'group_lists' => 'Listes de groupe',
         'notifications' => 'Notifications',
         'sign_in' => 'Se connecter',
