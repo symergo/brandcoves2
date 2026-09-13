@@ -2,7 +2,7 @@
  * The GiftCoves mail theme.
  *
  * Laravel's stock theme with the site's own palette from resources/css/app.css
- * (ink #1a1614, soft ink #5b524c, accent #c9503a, line #e5ded4) so a mail
+ * (ink #1d1710, soft ink #63594c, accent #b2601f, line #ebe0cf) so a mail
  * looks like the page it links to. Links are the accent colour and carry no
  * underline, tables have a tinted header row and a rule between rows, and the
  * button is the accent. Everything here is inlined at render, which is why
@@ -39,12 +39,12 @@ blockquote {
 }
 
 a {
-    color: #c9503a;
+    color: #b2601f;
     text-decoration: none;
 }
 
 a:hover {
-    color: #a83f2c;
+    color: #93501a;
 }
 
 a img {
@@ -54,7 +54,7 @@ a img {
 /* Typography */
 
 h1 {
-    color: #1a1614;
+    color: #1d1710;
     font-size: 22px;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -63,7 +63,7 @@ h1 {
 }
 
 h2 {
-    color: #1a1614;
+    color: #1d1710;
     font-size: 17px;
     font-weight: 600;
     margin-top: 0;
@@ -71,7 +71,7 @@ h2 {
 }
 
 h3 {
-    color: #1a1614;
+    color: #1d1710;
     font-size: 15px;
     font-weight: 600;
     margin-top: 0;
@@ -91,7 +91,7 @@ p.sub {
 }
 
 small {
-    color: #5b524c;
+    color: #63594c;
     font-size: 13px;
     line-height: 1.5;
 }
@@ -114,7 +114,7 @@ li {
 
 hr {
     border: 0;
-    border-top: 1px solid #e5ded4;
+    border-top: 1px solid #ebe0cf;
     margin: 24px 0;
 }
 
@@ -147,7 +147,7 @@ hr {
 }
 
 .header a {
-    color: #1a1614;
+    color: #1d1710;
     font-size: 20px;
     font-weight: 700;
     text-decoration: none;
@@ -163,7 +163,7 @@ hr {
 }
 
 .brand {
-    color: #1a1614;
+    color: #1d1710;
     display: inline-block;
     font-size: 22px;
     font-weight: 700;
@@ -190,7 +190,7 @@ hr {
     -premailer-cellspacing: 0;
     -premailer-width: 570px;
     background-color: #ffffff;
-    border: 1px solid #e5ded4;
+    border: 1px solid #ebe0cf;
     border-radius: 10px;
     margin: 0 auto;
     padding: 0;
@@ -204,13 +204,13 @@ hr {
 /* Subcopy */
 
 .subcopy {
-    border-top: 1px solid #e5ded4;
+    border-top: 1px solid #ebe0cf;
     margin-top: 25px;
     padding-top: 25px;
 }
 
 .subcopy p {
-    color: #5b524c;
+    color: #63594c;
     font-size: 14px;
 }
 
@@ -243,7 +243,7 @@ hr {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 100%;
-    border: 1px solid #e5ded4;
+    border: 1px solid #ebe0cf;
     border-collapse: separate;
     border-radius: 8px;
     margin: 16px auto 24px;
@@ -253,8 +253,8 @@ hr {
 
 .table th {
     background-color: #f6f2ec;
-    border-bottom: 1px solid #e5ded4;
-    color: #5b524c;
+    border-bottom: 1px solid #ebe0cf;
+    color: #63594c;
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -278,7 +278,7 @@ hr {
 }
 
 .table td a {
-    color: #1a1614;
+    color: #1d1710;
     font-weight: 500;
 }
 
@@ -312,11 +312,11 @@ hr {
 
 .button-blue,
 .button-primary {
-    background-color: #c9503a;
-    border-bottom: 10px solid #c9503a;
-    border-left: 20px solid #c9503a;
-    border-right: 20px solid #c9503a;
-    border-top: 10px solid #c9503a;
+    background-color: #b2601f;
+    border-bottom: 10px solid #b2601f;
+    border-left: 20px solid #b2601f;
+    border-right: 20px solid #b2601f;
+    border-top: 10px solid #b2601f;
 }
 
 .button-green,
@@ -330,17 +330,17 @@ hr {
 
 .button-red,
 .button-error {
-    background-color: #a83f2c;
-    border-bottom: 10px solid #a83f2c;
-    border-left: 20px solid #a83f2c;
-    border-right: 20px solid #a83f2c;
-    border-top: 10px solid #a83f2c;
+    background-color: #93501a;
+    border-bottom: 10px solid #93501a;
+    border-left: 20px solid #93501a;
+    border-right: 20px solid #93501a;
+    border-top: 10px solid #93501a;
 }
 
 /* Panels */
 
 .panel {
-    border-left: #c9503a solid 4px;
+    border-left: #b2601f solid 4px;
     margin: 21px 0;
 }
 

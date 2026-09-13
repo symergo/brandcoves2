@@ -4,28 +4,38 @@
  * Design tokens.
  *
  * The warm "Maison Commerce" palette is carried over from v1 — white cards on
- * cream, terracotta for action. It is the one thing from the old site worth
- * keeping verbatim: it reads as a considered shop rather than a price-comparison
- * spreadsheet, which is exactly the difference this product is selling.
+ * cream, one warm colour for action. It reads as a considered shop rather than
+ * a price-comparison spreadsheet, which is exactly the difference this product
+ * is selling.
+ *
+ * The action colour is amber since 2026-09-13, chosen by the owner from five
+ * schemes rendered side by side: it is the colour of the dot in the mark, and
+ * terracotta had become the default of every generated shop. Checked for
+ * contrast before it went in: `accent` is 4.6:1 for white text on it (the
+ * buttons) and `accent-dark` 6.2:1 as link text on cream; the brighter
+ * orange first proposed was 3.2:1 and failed. `ink-soft` is 6.4:1 on cream.
+ * Ink, cream and line warmed a step to sit under the new accent; sage is
+ * unchanged, and `amber`, the badge tint for a list about somebody, went a
+ * shade yellower so it stays apart from the accent beside it.
  *
  * Inter throughout. v1 replaced a three-font stack with one and the pages got
  * both faster and more coherent.
  */
 @theme {
-    --color-cream: #f7f4ef;
-    --color-ink: #1a1614;
-    --color-ink-soft: #5b524c;
-    --color-accent: #c9503a;
-    --color-accent-dark: #a83f2c;
+    --color-cream: #fbf6ee;
+    --color-ink: #1d1710;
+    --color-ink-soft: #63594c;
+    --color-accent: #b2601f;
+    --color-accent-dark: #93501a;
     --color-sage: #4a6741;
-    --color-amber: #c4956a;
-    --color-line: #e5ded4;
+    --color-amber: #b99055;
+    --color-line: #ebe0cf;
     --color-card: #ffffff;
 
     /*
      * Something went wrong, in its own colour.
      *
-     * Validation errors used to be painted `text-accent` — the same terracotta
+     * Validation errors used to be painted `text-accent` — the same colour
      * as the submit button directly beneath them, so a refused field and the
      * call to action were one colour. A red that is clearly not the brand,
      * 6.4:1 on cream so it reads at `text-sm`.

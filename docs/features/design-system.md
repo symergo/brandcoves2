@@ -135,3 +135,20 @@ The home page, the search page, the 404 page, the add-a-product panel on a list,
 search on a shared list and the picks search on a question all use it. The word was set four
 different ways across those six and was the widest thing on the row on a phone; the glyph is
 recognised faster than the word and reads the same in four languages.
+
+## The action colour is amber (2026-09-13)
+
+The owner picked it from five schemes rendered on the same two screens (the home page and the
+Gift Cove wizard): terracotta as it was, sea green, bordeaux, amber and indigo. Amber is the colour
+of the dot in the mark, and terracotta had become the default of every generated shop page.
+
+Contrast was checked before the tokens changed, because the first orange proposed (`#d9782a`) was
+3.2:1 for white text and failed AA. The tokens now: `accent` `#b2601f`, 4.6:1 for white text on it,
+which is every filled button; `accent-dark` `#93501a`, 6.2:1 as link text on cream; `ink-soft`
+`#63594c`, 6.4:1 on cream. Cream, ink and line warmed a step (`#fbf6ee`, `#1d1710`, `#ebe0cf`) to
+sit under the new accent; `amber`, the badge tint for a list about somebody, went a shade yellower
+(`#b99055`) so it stays apart from the accent beside it; sage and danger are unchanged. The same
+values went into the mail theme, the Inertia progress bar and the browser theme colour, the three
+places the palette is written out rather than read from the tokens. The dark theme keeps its own
+surfaces and takes the accent as is: 4.0:1 on its ground, the same as before.
+
