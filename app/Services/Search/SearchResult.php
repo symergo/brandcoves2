@@ -7,7 +7,7 @@ namespace App\Services\Search;
 use App\Models\ProductGroup;
 use App\Services\Connectors\Offer;
 use Closure;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 final class SearchResult
 {
@@ -27,6 +27,21 @@ final class SearchResult
         private Closure|array $facets,
         public readonly array $liveOffers = [],
     ) {}
+
+    /**
+     * No search was made: the landing before a term (2026-09-13). An empty
+     * page rather than null, so everything downstream that reads a result
+     * — the presenter, the empty-state copy, the SEO — keeps one shape.
+     */
+    public static function none(SearchQuery $query): self
+    {
+        return new self(
+            groups: new LengthAwarePaginator([], 0, (int) config('giftcoves.search.per_page'), 1),
+            query: $query,
+            liveOffersAdded: 0,
+            facets: fn (): array => [],
+        );
+    }
 
     /**
      * The facet counts, computed the first time somebody asks.

@@ -207,9 +207,13 @@ return [
         'submit' => 'Search',
         'searching' => 'Searching…',
         'results_for' => 'Results for ":term"',
-        'like_your_lists' => 'A few suggestions for you…',
-        'live_heading' => 'Fetched just now',
-        'live_note' => 'Listed live from a shop whose prices we are not allowed to keep, so these are single offers rather than a full product page.',
+        'landing_recent' => 'Recent searches',
+        'landing_brands' => 'Brands from your lists',
+        'landing_tools' => 'Other ways to find something',
+        'landing_suggest_title' => 'Let others add ideas',
+        'landing_suggest_body' => 'Make a shared wish list: anybody with the link suggests things and you choose.',
+        'landing_giftlist_title' => 'A gift list for somebody',
+        'landing_giftlist_body' => 'Collect ideas for one person and split the shopping with the other givers.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

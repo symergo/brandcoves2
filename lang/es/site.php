@@ -159,9 +159,13 @@ return [
         'submit' => 'Buscar',
         'searching' => 'Buscando…',
         'results_for' => 'Resultados para «:term»',
-        'like_your_lists' => 'Algunas sugerencias para ti…',
-        'live_heading' => 'Traído ahora mismo',
-        'live_note' => 'Mostrado en directo desde una tienda cuyos precios no podemos guardar, así que son ofertas sueltas y no una ficha completa.',
+        'landing_recent' => 'Búsquedas recientes',
+        'landing_brands' => 'Marcas de tus listas',
+        'landing_tools' => 'Otras formas de encontrar algo',
+        'landing_suggest_title' => 'Deja que otros aporten ideas',
+        'landing_suggest_body' => 'Haz una lista de deseos compartida: quien tenga el enlace propone y tú eliges.',
+        'landing_giftlist_title' => 'Una lista de regalos para alguien',
+        'landing_giftlist_body' => 'Reúne ideas para una persona y reparte las compras con los demás.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

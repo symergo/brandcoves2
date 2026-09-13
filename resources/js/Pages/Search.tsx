@@ -4,8 +4,8 @@ import { preferred as preferredView, remember as rememberView } from '../viewPre
 import PageNarrative, { type Narrative } from '../Components/PageNarrative'
 import PageBlocks from '../Components/PageBlocks'
 import { type BlockPayload } from '../Components/Parts'
-import LiveOfferCard, { type LiveOffer } from '../Components/LiveOfferCard'
 import ProductCard, { type GroupCard } from '../Components/ProductCard'
+import SearchLanding, { type Landing } from '../Components/SearchLanding'
 import AmazonSearchCta, { type AmazonSearch } from '../Components/AmazonSearchCta'
 import { buttonClasses } from '../Components/Button'
 import SaveToList from '../Components/SaveToList'
@@ -37,10 +37,8 @@ interface Props {
     }
     lanes: { shop: string; logo: string | null; items: GroupCard[] }[] | null
     emptyBecauseOfFilters: boolean
-    /** What the grid was seeded from on a bare landing: your lists, or nothing. */
-    seeded: 'lists' | null
-    /** Live offers a seeded landing may show but not store: Amazon's. */
-    liveOffers: LiveOffer[]
+    /** Ways in, before a search: recent searches, your brands, the tools. Null once there is a term or a filter. */
+    landing: Landing | null
     /** Set when the search box held an Amazon URL rather than a search term. */
     pastedLink: {
         asin: string | null
@@ -144,8 +142,7 @@ export default function Search({
     results,
     lanes,
     emptyBecauseOfFilters,
-    seeded,
-    liveOffers,
+    landing,
     amazonSearch,
     watch,
     pastedLink,
@@ -439,6 +436,13 @@ export default function Search({
               the rail and gets its shop filter as a row of chips instead. See
               ShopChips.
             */}
+            {/*
+              Before a search, ways in; after one, the grid. The landing has
+              no sidebar and no heading: its sections carry their own.
+            */}
+            {landing ? (
+                <SearchLanding landing={landing} />
+            ) : (
             <div className={`mt-8 grid gap-8 ${view === 'store' ? '' : 'lg:grid-cols-[16rem_1fr]'}`}>
                 {view === 'store' ? null : (
                     <>
@@ -557,7 +561,7 @@ export default function Search({
                       a heading that opens lowercase reads as broken.
                     */}
                     <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">
-                        {q ? q.charAt(0).toUpperCase() + q.slice(1) : seeded === 'lists' ? t('search.like_your_lists') : t('search.title')}
+                        {q ? q.charAt(0).toUpperCase() + q.slice(1) : t('search.title')}
                     </h1>
 
                     {/* Watch this search — the intent is expressed here, so the
@@ -1045,26 +1049,6 @@ export default function Search({
                         </div>
                     )}
 
-                    {/*
-                      Under the seeded grid: what the live shops returned for
-                      the latest saves and may not be stored, as cards the way
-                      the brand page shows them. Everything that could be
-                      stored is already in the grid above.
-                    */}
-                    {liveOffers.length > 0 && (
-                        <section className="mt-10" aria-labelledby="live-heading">
-                            <h2 id="live-heading" className="text-xl font-semibold tracking-tight">
-                                {t('search.live_heading')}
-                            </h2>
-                            <p className="mt-1 text-sm text-ink-soft">{t('search.live_note')}</p>
-                            <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                                {liveOffers.map((offer) => (
-                                    <LiveOfferCard key={`${offer.source}:${offer.externalId}`} offer={offer} />
-                                ))}
-                            </ul>
-                        </section>
-                    )}
-
                     {results.lastPage > 1 && view === 'grid' && (
                         <nav className="mt-8 flex items-center justify-center gap-4 text-sm">
                             <button
@@ -1088,6 +1072,7 @@ export default function Search({
                     )}
                 </section>
             </div>
+            )}
 
             {/*
               Below the grid, deliberately.

@@ -160,9 +160,13 @@ return [
         'submit' => 'Rechercher',
         'searching' => 'Recherche en cours…',
         'results_for' => 'Résultats pour « :term »',
-        'like_your_lists' => 'Quelques suggestions pour vous…',
-        'live_heading' => 'Récupéré à l’instant',
-        'live_note' => 'Affiché en direct depuis une boutique dont nous ne pouvons pas conserver les prix : ce sont des offres isolées, pas une fiche produit complète.',
+        'landing_recent' => 'Recherches récentes',
+        'landing_brands' => 'Les marques de vos listes',
+        'landing_tools' => 'D’autres façons de trouver',
+        'landing_suggest_title' => 'Laissez les autres proposer des idées',
+        'landing_suggest_body' => 'Créez une liste de souhaits partagée : qui a le lien propose, vous choisissez.',
+        'landing_giftlist_title' => 'Une liste cadeaux pour quelqu’un',
+        'landing_giftlist_body' => 'Rassemblez des idées pour une personne et répartissez les achats avec les autres.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

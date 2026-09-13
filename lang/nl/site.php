@@ -159,9 +159,13 @@ return [
         'submit' => 'Zoeken',
         'searching' => 'Bezig met zoeken…',
         'results_for' => 'Resultaten voor ":term"',
-        'like_your_lists' => 'Enkele suggesties voor jou…',
-        'live_heading' => 'Zojuist opgehaald',
-        'live_note' => 'Live opgehaald bij een winkel waarvan we de prijzen niet mogen bewaren, dus dit zijn losse aanbiedingen en geen volledige productpagina.',
+        'landing_recent' => 'Recente zoekopdrachten',
+        'landing_brands' => 'Merken van je lijstjes',
+        'landing_tools' => 'Andere manieren om iets te vinden',
+        'landing_suggest_title' => 'Laat anderen ideeën aandragen',
+        'landing_suggest_body' => 'Maak een gedeeld verlanglijstje: wie de link heeft, stelt dingen voor en jij kiest.',
+        'landing_giftlist_title' => 'Een cadeaulijst voor iemand',
+        'landing_giftlist_body' => 'Verzamel ideeën voor één persoon en verdeel het kopen met de andere gevers.',
 
         /*
          * The browser tab and the search listing, which is NOT `results_for`.

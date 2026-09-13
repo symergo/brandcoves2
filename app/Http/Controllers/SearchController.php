@@ -15,8 +15,7 @@ use App\Services\Pages\Context\SearchContext;
 use App\Services\Pages\PageCopy;
 use App\Services\Search\AmazonLink;
 use App\Services\Search\AmazonSearchLink;
-use App\Services\Search\LiveOfferCard;
-use App\Services\Search\SavedTaste;
+use App\Services\Search\SearchLanding;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchResult;
 use App\Services\Search\SearchService;
@@ -35,13 +34,6 @@ use Inertia\Response;
 
 class SearchController extends Controller
 {
-    /**
-     * The fewest similar products worth leading the landing with. One row of
-     * the grid at its widest: fewer reads as a thin match dressed up as a
-     * page, and the ordinary catalogue is the better answer.
-     */
-    private const SEEDED_MINIMUM = 4;
-
     /** Built once per request; three regions ask for the same facts. */
     private ?SearchContext $context = null;
 
@@ -105,43 +97,20 @@ class SearchController extends Controller
         }
 
         /*
-         * The landing, seeded from what this person saved.
-         *
-         * A bare `/search` was the same catalogue grid for everybody, led by
-         * whatever had the most shops. For somebody who has saved things it
-         * is led by the brands and categories of those things instead
-         * (owner's request, 2026-09-13), which is the one thing the page can
-         * know about them without asking. Only the bare landing: a term, a
-         * filter, a sort or the shop view is a question of its own, and
-         * answering it with "but you like Sony" would be answering the wrong
-         * one. And only when it fills a row: a taste that matches three
-         * products is not a grid, so the ordinary one comes back.
+         * Before a search there are no products (owner's call, 2026-09-13).
+         * The bare landing — no term, no filter, no sort, the grid view,
+         * page one — gets ways in instead; an explicit sort is an ask, and
+         * gets the catalogue in that order: recent searches, the brands on the visitor's
+         * lists, the site's other tools. See SearchLanding. A landing that
+         * showed a catalogue grid, and for a day a grid seeded from the
+         * visitor's lists with the live shops asked on the way, answered a
+         * question nobody had put, and slowly.
          */
-        $taste = ! $query->hasTerm() && ! $query->hasFilters() && $query->sort === 'relevance' && $query->view === 'grid'
-            ? SavedTaste::forOwner(Owner::fromRequest($request), $current->get())
-            : null;
+        $landing = $query->hasTerm() || $query->hasFilters() || $query->sort !== 'relevance' || $query->view !== 'grid' || $query->page !== 1
+            ? null
+            : app(SearchLanding::class)->for(Owner::fromRequest($request), $current);
 
-        /*
-         * The live shops first, on the first page of a seeded landing, with
-         * two short queries drawn from the latest saves. What they return is
-         * folded into the catalogue before the grid is built, so the grid
-         * below already holds it; what may not be stored (Amazon) becomes
-         * cards under the grid. See SearchService::pullLive().
-         */
-        $live = [];
-
-        if ($taste !== null && $query->page === 1) {
-            foreach ($taste->liveTerms as $term) {
-                $live = [...$live, ...$search->pullLive($query, $term)];
-            }
-        }
-
-        $result = $taste === null ? $search->search($query) : $search->similarTo($query, $taste);
-
-        if ($taste !== null && $result->groups->total() < self::SEEDED_MINIMUM) {
-            $taste = null;
-            $result = $search->search($query);
-        }
+        $result = $landing === null ? $search->search($query) : SearchResult::none($query);
 
         $this->seo($query, $result, $current);
 
@@ -149,8 +118,7 @@ class SearchController extends Controller
             'q' => $query->term,
             // What the grid was seeded from, so the page can say so: 'lists'
             // or null. The heading changes; nothing else does.
-            'seeded' => $taste === null ? null : 'lists',
-            'liveOffers' => $taste === null ? [] : array_map(LiveOfferCard::present(...), $live),
+            'landing' => $landing,
             'filters' => $query->toArray(),
             'sort' => $query->sort,
             'view' => $query->view,

@@ -290,7 +290,9 @@ class SearchTest extends TestCase
     #[Test]
     public function it_can_show_only_products_available_from_several_shops(): void
     {
-        $all = $this->search(['q' => ''])->viewData('page')['props']['results']['total'];
+        // A bare /search lists nothing since 2026-09-13 (it is the landing);
+        // an explicit sort is an ask and lists the whole catalogue.
+        $all = $this->search(['sort' => 'newest'])->viewData('page')['props']['results']['total'];
         $comparable = $this->search(['comparable' => '1'])->viewData('page')['props']['results']['total'];
 
         $this->assertGreaterThan($comparable, $all, 'the filter must actually narrow the set');

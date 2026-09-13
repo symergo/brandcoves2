@@ -76,98 +76,11 @@ class SearchService
      *
      * @return list<int>
      */
-    /**
-     * The catalogue, led by what this person saved.
-     *
-     * For the landing with no term (owner's request, 2026-09-13): the same
-     * stored query as a browse, narrowed to products whose offers share words
-     * with the saved titles or whose brand is one of the saved brands, and
-     * ranked by how much of the saved titles they echo, with a small bonus
-     * for a shared brand or category and the browse order breaking ties.
-     * What is already on a list is left out by identity key, so the Dutch
-     * twin of a saved Belgian product does not come back as a suggestion.
-     *
-     * The words are matched the way a typed search is: against the offers'
-     * search vectors through their index, ids collected first, because the
-     * vector lives on `products` and not on the group (see applyTextMatch).
-     * The rank is the best offer's `ts_rank_cd` against the same query — a
-     * subquery per candidate, which is cheap because the candidates are
-     * already the index's answer. Live sources are not asked: there is no
-     * term to ask them with.
-     */
-    public function similarTo(SearchQuery $query, SavedTaste $taste): SearchResult
-    {
-        $market = $query->market->value;
-        $brands = $taste->brands;
-        $categories = $taste->categories;
-        $tsquery = $taste->tsquery();
+    /** Candidates the seeded landing keeps: five pages of the grid. */
+    private const SEEDED_CANDIDATES = 120;
 
-        $groups = $this->storedQuery($query)
-            ->where(function (Builder $q) use ($market, $brands, $tsquery): void {
-                if ($tsquery !== '') {
-                    $q->whereIn('product_groups.id', DB::table('products')
-                        ->select('group_id')
-                        ->where('market', $market)
-                        ->where('status', 'active')
-                        ->whereNotNull('group_id')
-                        ->whereRaw('search_vector @@ ?::tsquery', [$tsquery]));
-                }
-
-                if ($brands !== []) {
-                    $q->orWhereIn('product_groups.brand', $brands);
-                }
-            })
-            ->whereNotIn('product_groups.identity_key', $taste->identityKeys)
-            ->reorder();
-
-        $rank = $tsquery === ''
-            ? '0'
-            : '(SELECT COALESCE(MAX(ts_rank_cd(p.search_vector, ?::tsquery)), 0) FROM products p WHERE p.group_id = product_groups.id AND p.market = ? AND p.status = ?)';
-
-        // The words first; a shared brand is worth a little, a shared
-        // category less, so neither can outrank a title that actually echoes
-        // what was saved. Then the browse order.
-        $groups->orderByRaw(
-            '('.$rank.' + (product_groups.brand IN ('.$this->marks($brands).'))::int * 0.3 + (product_groups.category IN ('.$this->marks($categories).'))::int * 0.15) DESC',
-            [...($tsquery === '' ? [] : [$tsquery, $market, 'active']), ...$brands, ...$categories],
-        );
-
-        $this->applySort($groups, $query);
-
-        return new SearchResult(
-            groups: $groups->paginate(perPage: (int) config('giftcoves.search.per_page'), page: $query->page),
-            query: $query,
-            liveOffersAdded: 0,
-            facets: fn (): array => $this->facets($query),
-        );
-    }
-
-    /**
-     * Ask the live shops with a term of the landing's choosing.
-     *
-     * The seeded landing has no typed term, but it has a good guess at what
-     * the person is after — short queries drawn from their latest saves —
-     * and the owner's call (2026-09-13) is that what the shops return for
-     * those is worth keeping like any typed search's results: folded into
-     * the catalogue, so the stored grid built right after this already has
-     * them. Only what may not be mirrored, Amazon, comes back unstored, for
-     * the page to show as cards the way the brand page does.
-     *
-     * The same `pullLiveResults()` as a typed search, so the same cache
-     * window guards the request and the same folding writes it.
-     *
-     * @return list<Offer> the offers that could not be stored
-     */
-    public function pullLive(SearchQuery $query, string $term): array
-    {
-        return $this->pullLiveResults($query->withBrands($query->brands, liveTerm: $term))['unstored'];
-    }
-
-    /** A placeholder per value, or one that matches nothing when there are none. */
-    private function marks(array $values): string
-    {
-        return $values === [] ? 'NULL' : implode(', ', array_fill(0, count($values), '?'));
-    }
+    /** Products of a saved brand added beside them, most-shopped first. */
+    private const SEEDED_BRAND_CANDIDATES = 24;
 
     public function matchingGroupIds(SearchQuery $query, int $limit): array
     {

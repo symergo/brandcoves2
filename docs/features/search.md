@@ -601,48 +601,28 @@ and brand pages both, with "show results" one press away, so the grid stays wher
 search-help link under the box came back on 2026-09-06 and went again on 2026-09-07 at the owner's
 request; the help stays in the footer and the phone sheet.
 
-## The landing is led by what you saved (2026-09-13)
+## Before a search there are no products (2026-09-13)
 
-At the owner's request. `/search` with no term is a catalogue grid, and it was the same grid for
-everybody, led by whatever had the most shops. For a signed-in visitor with things on a list it is
-led by products that echo what they saved.
+`/search` with no term used to be a catalogue grid, the same for everybody, led by whatever had the
+most shops. For a day it was a grid seeded from the visitor's lists: the brands and categories of
+what they saved, then the words of the saved titles matched against the offers' search vectors,
+with the live shops asked on the way. The owner measured it as very slow (a sixty-word OR query
+matched half the catalogue and was scored row by row, 22 seconds on the dev catalogue) and, more
+to the point, decided that a page with no question on it should not answer with products at all.
+All of that is gone: `SavedTaste`, `SearchService::similarTo()`, the inline live pull and the
+queued one, their strings and their tests.
 
-**Words, not categories.** The first cut matched on brand and category. The owner's list held a
-kids' backpack filed under "Kids", and the landing filled with children's books; the book on subway
-art they had also saved was an Amazon item with no catalogue product behind it and counted for
-nothing. A category is a shelf label ("Boek" covers a thousand products) and an audience like
-"Kids" is not even that. So `SavedTaste::forOwner()` now reads the **titles** of the last thirty
-saved items, catalogue or not, has Postgres stem them with the same text configuration the offers'
-search vectors use (`bc_text_config`, `bc_unaccent`), and keeps up to sixty distinct words. Brand
-stays as a second way in; category is a tie-breaker only.
+The landing is `SearchLanding` (PHP and TSX): the searches people made lately, from the same
+`RecentSearches` cache the home page reads; the brands on the visitor's own lists, most saved
+first, as brand-page chips (folded to the page's slug, so two spellings of one brand are one chip);
+and the site's other ways of finding something — asking others, a shared wish list others add to,
+a gift list for somebody, and the search tips — as cards the page builds itself. Each section
+drops out when it has nothing, so a stranger on a quiet market sees the tools alone.
 
-`SearchService::similarTo()` runs the ordinary stored query narrowed to products whose offers match
-those words (`search_vector @@ tsquery`, ids collected through the offers index the way a typed
-search does, since the vector lives on `products`; a description counts, at the weight the index
-gives it) or whose brand is a saved brand, ranked by the best offer's `ts_rank_cd` against the same
-query plus a small bonus for a shared brand (0.3) or category (0.15), then the browse order. The
-saved products themselves are left out by identity key, so a Dutch twin of a Belgian save does not
-come back as a suggestion. The page heads the grid "Enkele suggesties voor jou…"
-(`search.like_your_lists`; it first read "Like what you saved" with a line explaining the source,
-and the owner asked for the one short line instead); `seeded` is `'lists'` or null.
-
-Only the bare landing: a term, a filter, a sort or the shop view is a question of its own. And only
-when the match fills a row (`SEEDED_MINIMUM`, 4): fewer reads as a thin match dressed up as a page,
-so the ordinary grid comes back. Deliberately no recommender: anything cleverer would be its own
-feature with its own drift.
-
-**The live shops are asked too, and what they return is kept** (owner's call, 2026-09-13; the
-first instinct was to store nothing, then "you can save the top list of products").
-`SavedTaste::liveTerms` turns the two latest saves into short queries, the brand plus the two
-longest words of the title ("Sony koptelefoon draadloze"): a whole title sent to bol finds the very
-product that was saved, its longest words find its neighbours. `SearchService::pullLive()` runs
-the same `pullLiveResults()` as a typed search with each, so the same cache window guards the
-request and the same folding writes the offers into the catalogue, *before* the seeded grid is
-built, so the grid of the same request already holds them. Only what may not be mirrored, Amazon,
-comes back unstored and is shown as cards under the grid (`liveOffers`), the way the brand page
-shows them; the card and its presenter are shared with the brand page now (`LiveOfferCard`, PHP and
-TSX), so the save path and the price rules cannot drift between the two. First page of a seeded
-landing only.
+The controller renders it for the bare landing only: no term, no filter, the grid view, page one.
+`SearchResult::none()` gives everything downstream that reads a result (the presenter, the
+empty-state copy, the SEO) one shape with nothing in it, and the page shows the landing in place
+of the sidebar and the grid. A term or a filter is a search and gets the grid as before.
 
 ## See also
 
