@@ -98,6 +98,11 @@ refund. Review each batch with the feed title beside the draft before posting.
 The drafting may go to a cheaper model than the one running the session; the review stays with the
 session. Post 200 per request at the write rate (20 a minute).
 
+## Sibling: gift tags
+
+The same products get gift tags from a closed vocabulary over the sibling endpoints; see
+[gift-tags.md](gift-tags.md).
+
 ## Files
 
 - `database/migrations/2026_09_14_000100_product_groups_carry_a_display_title.php`

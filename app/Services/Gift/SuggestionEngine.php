@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Gift;
 
+use App\Enums\Interest;
 use App\Models\ProductGroup;
 use App\Services\Charts\ChartDemand;
 use Illuminate\Database\Eloquent\Builder;
@@ -302,6 +303,23 @@ class SuggestionEngine
             $tsquery = implode(' OR ', array_map(fn (string $q) => trim($q), $queries));
 
             /*
+             * The tags an editor gave a product are the other way in.
+             *
+             * "coffee" retrieves on the angle queries, and it also retrieves
+             * anything tagged `interest:coffee` — a product an editor decided
+             * is a coffee present, whatever its title says. Retrieval is an
+             * OR of the two because a tag is an editor's decision and a text
+             * match is a guess, and the decision must not need the guess to
+             * agree. Both branches are indexed: the tsquery on the offers'
+             * vector, the tags on their GIN index (`?|`, spelled as the
+             * function because a bare `?` is a placeholder to PDO).
+             */
+            $tags = array_map(
+                fn (string $interest) => GiftTags::interest($interest),
+                array_values(array_filter($brief->interests, fn (string $i) => Interest::tryFrom(mb_strtolower(trim($i))) !== null)),
+            );
+
+            /*
              * The market is bound, not read from products.market.
              *
              * Same reason as in SearchService, where this cost a 90x difference
@@ -313,16 +331,22 @@ class SuggestionEngine
              * selects exactly the same rows — and it doubles as the explicit
              * filter that makes that reasoning checkable.
              */
-            $groups->whereExists(fn ($sub) => $sub
-                ->select(DB::raw(1))
-                ->from('products')
-                ->whereColumn('products.group_id', 'product_groups.id')
-                ->where('products.market', $brief->market->value)
-                ->where('products.status', 'active')
-                ->whereRaw(
-                    'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
-                    [$brief->market->value, $tsquery]
-                ));
+            $groups->where(function ($either) use ($brief, $tsquery, $tags): void {
+                $either->whereExists(fn ($sub) => $sub
+                    ->select(DB::raw(1))
+                    ->from('products')
+                    ->whereColumn('products.group_id', 'product_groups.id')
+                    ->where('products.market', $brief->market->value)
+                    ->where('products.status', 'active')
+                    ->whereRaw(
+                        'products.search_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                        [$brief->market->value, $tsquery]
+                    ));
+
+                if ($tags !== []) {
+                    $either->orWhereRaw('jsonb_exists_any(product_groups.gift_tags, ?::text[])', [$this->pgTextArray($tags)]);
+                }
+            });
         }
 
         // Comparable products first: a suggestion the shopper can price against
@@ -390,7 +414,20 @@ class SuggestionEngine
         $matched = [];
         $index = 0;
 
+        $tags = $group->giftTags();
+
         foreach ($slots as $slotIndex => $slot) {
+            /*
+             * An editor's tag is a match at full strength, ahead of any
+             * text: `interest:coffee` on the product and "coffee" in the
+             * brief is the strongest evidence this engine ever gets, and it
+             * needs no word in the title to agree.
+             */
+            if (in_array(GiftTags::interest($slot['interest']), $tags, true)) {
+                $strengths[$slotIndex] = 1.0;
+                $matched[] = $slot['interest'];
+            }
+
             foreach ($slot['queries'] as $query) {
                 if (isset($matches[$index])) {
                     $strengths[$slotIndex] = max($strengths[$slotIndex] ?? 0.0, $matches[$index]);
@@ -405,9 +442,19 @@ class SuggestionEngine
             'interest_fit' => $this->interestFit($strengths, count($slots)) * $profile->weight('interest_fit', 40),
             'budget_fit' => $profile->budgetFit($group->min_price, $brief->ceiling()) * $profile->weight('budget_fit', 20),
             'surprise' => $this->surprise($group) * $profile->weight('surprise', 20),
-            'vibe' => $this->vibeFit($haystack, $brief) * $profile->weight('vibe', 10),
-            'values' => $this->valuesFit($haystack, $brief) * $profile->weight('values', 10),
-            'occasion' => $this->occasionFit($haystack, $brief) * $profile->weight('occasion', 0),
+            'vibe' => $this->vibeFit($haystack, $brief, $tags) * $profile->weight('vibe', 10),
+            'values' => $this->valuesFit($haystack, $brief, $tags) * $profile->weight('values', 10),
+            'occasion' => $this->occasionFit($haystack, $brief, $tags) * $profile->weight('occasion', 0),
+            /*
+             * Who the present is for, from an editor's tag only.
+             *
+             * `recipient:mother` on a product and "mother" in the brief is a
+             * fact about the present nothing in a title can say, so there is
+             * no text fallback here. Small: it decides between two good
+             * answers, it does not choose one. Zero for `for_myself`, where
+             * there is no other person to be for.
+             */
+            'recipient_fit' => $this->recipientFit($brief, $tags) * $profile->weight('recipient_fit', 0),
             /*
              * Zero by default, and zero for `for_someone` on purpose.
              *
@@ -502,13 +549,18 @@ class SuggestionEngine
      * Someone who said "playful" still wants the good headphones if headphones
      * are the right answer; the vibe decides between two equally good ones.
      */
-    private function vibeFit(string $haystack, TasteBrief $brief): float
+    private function vibeFit(string $haystack, TasteBrief $brief, array $tags = []): float
     {
         if ($brief->vibe === null) {
             // No stated vibe is not a zero — it is "this signal does not
             // apply". Scoring it zero would silently shrink the total for
             // everyone who skipped the question.
             return 0.5;
+        }
+
+        // An editor said how it feels; no need to find "luxe" in the title.
+        if (in_array(GiftTags::vibe($brief->vibe->value), $tags, true)) {
+            return 1.0;
         }
 
         foreach ($brief->vibe->keywords() as $keyword) {
@@ -575,7 +627,7 @@ class SuggestionEngine
      * carry real weight without becoming noise, and claiming otherwise would be
      * the "plausible wrong answer" failure the discovery docs warn about.
      */
-    private function occasionFit(string $haystack, TasteBrief $brief): float
+    private function occasionFit(string $haystack, TasteBrief $brief, array $tags = []): float
     {
         if ($brief->occasion === null || $brief->occasion === '') {
             // An unanswered question scores 0.5, not 0 — "does not apply" is not
@@ -584,6 +636,12 @@ class SuggestionEngine
         }
 
         $occasion = mb_strtolower($brief->occasion);
+
+        // An editor said so; no need to find the word in the title.
+        if (in_array(GiftTags::occasion($occasion), $tags, true)) {
+            return 1.0;
+        }
+
         $markers = self::OCCASION_MARKERS[$occasion] ?? [$occasion];
 
         foreach ($markers as $marker) {
@@ -598,6 +656,54 @@ class SuggestionEngine
         return 0.45;
     }
 
+    /**
+     * Whether an editor tagged this product for the person the brief
+     * describes: who they are to the giver, and how old they are.
+     *
+     * Both fields on the brief are free text; each is folded to lower case
+     * and compared with its vocabulary as it is. "mother" meets
+     * `recipient:mother` and "teen" meets `age:teen`; "my mum" meets nothing
+     * and scores neutral rather than badly, the same rule every skipped
+     * question follows. One signal for the two because they answer one
+     * question, "is this for them", and a product tagged for a teenager
+     * given to a teenager is as right as one tagged for a mother given to a
+     * mother.
+     *
+     * @param  list<string>  $tags
+     */
+    private function recipientFit(TasteBrief $brief, array $tags): float
+    {
+        $asked = [];
+
+        if ($brief->relationship !== null && trim($brief->relationship) !== '') {
+            $asked[GiftTags::RECIPIENT] = GiftTags::recipient($brief->relationship);
+        }
+
+        if ($brief->ageBand !== null && trim($brief->ageBand) !== '') {
+            $asked[GiftTags::AGE] = GiftTags::age($brief->ageBand);
+        }
+
+        if ($asked === []) {
+            return 0.5;
+        }
+
+        foreach ($asked as $tag) {
+            if (in_array($tag, $tags, true)) {
+                return 1.0;
+            }
+        }
+
+        // A product tagged for somebody else, or some other age, is weak
+        // evidence against; an untagged one is no evidence at all.
+        foreach (array_keys($asked) as $vocabulary) {
+            if (array_filter($tags, fn (string $t) => str_starts_with($t, $vocabulary.':')) !== []) {
+                return 0.45;
+            }
+        }
+
+        return 0.5;
+    }
+
     /** @var array<string, list<string>> */
     private const VALUE_MARKERS = [
         'sustainable' => ['duurzaam', 'gerecycled', 'recycled', 'bio', 'eco', 'fairtrade', 'fsc'],
@@ -605,13 +711,19 @@ class SuggestionEngine
         'handmade' => ['handgemaakt', 'handmade', 'artisanaal', 'ambachtelijk', 'fait main'],
     ];
 
-    private function valuesFit(string $haystack, TasteBrief $brief): float
+    private function valuesFit(string $haystack, TasteBrief $brief, array $tags = []): float
     {
         if ($brief->values === []) {
             return 0.5;
         }
 
         foreach ($brief->values as $value) {
+            // An editor's tag beats a title word: feeds rarely say
+            // "handgemaakt" even when it is true.
+            if (in_array(GiftTags::value($value), $tags, true)) {
+                return 1.0;
+            }
+
             foreach (self::VALUE_MARKERS[$value] ?? [] as $marker) {
                 if (str_contains($haystack, $marker)) {
                     return 1.0;

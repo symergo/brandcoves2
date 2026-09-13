@@ -44,6 +44,9 @@ Markets: `be-nl`, `be-fr`, `en`, `es`, `nl-nl`.
     GET /products/untitled             market (req), limit (1..200), after (last id);
                                        products on a Cove, shortlist, chart or the
                                        Surprise pool with no display title yet
+    GET /products/untagged             same, with no gift tags yet; carries the
+                                       vocabulary (interest, occasion, recipient,
+                                       age, vibe, values)
     GET /topics                        market (req), status (def candidate), limit
     GET /coves                         market, kind, status, from, to, limit
     GET /coves/queue                   market, kinds[], limit (1..20), horizon days
@@ -80,6 +83,9 @@ answers. Use `GET /topics` and `GET /coves/queue` and write the titles yourself.
     POST /products/titles              {market, titles: [{id, title|null}]}, <=200,
                                        all or nothing; a title reaches readers at once.
                                        Brief: docs/features/display-titles.md
+    POST /products/tags                {market, tags: [{id, tags: [...]}]}, <=200,
+                                       all or nothing, replaces; [] clears.
+                                       Brief: docs/features/gift-tags.md
 
 ## POST /coves — the full body
 

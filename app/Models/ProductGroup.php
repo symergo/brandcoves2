@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $previous_price cents, the best offer's price before its last change
  * @property string $title the feed's title, rewritten by the grouper on every run
  * @property string|null $display_title a hand-written title, or null for "not written yet"
+ * @property list<string>|null $gift_tags `interest:coffee`, `occasion:christmas`, `recipient:mother`; see GiftTags
  */
 class ProductGroup extends Model
 {
@@ -91,12 +92,23 @@ class ProductGroup extends Model
         return $this->display_title ?? ProductTitle::heading($this);
     }
 
+    /**
+     * The gift tags an editor gave this product, empty for the untagged.
+     *
+     * @return list<string>
+     */
+    public function giftTags(): array
+    {
+        return array_values((array) ($this->gift_tags ?? []));
+    }
+
     protected function casts(): array
     {
         return [
             'market' => Market::class,
             'identity_kind' => IdentityKind::class,
             'surprise_breakdown' => 'array',
+            'gift_tags' => 'array',
             'in_stock' => 'boolean',
             'giftable' => 'boolean',
             'worth_showing' => 'boolean',

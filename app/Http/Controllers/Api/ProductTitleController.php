@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ProductGroup;
 use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\UntitledProducts;
+use App\Services\Gift\GiftTags;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Gift-friendly product titles, written outside and posted in.
+ * Gift-friendly product titles and gift tags, written outside and posted in.
  *
  * The feed's title stays where it is; what a visitor reads is
  * `product_groups.display_title` when one has been written, and the
@@ -54,6 +55,110 @@ class ProductTitleController extends Controller
             'market' => $market->value,
             'count' => count($rows),
             'data' => $rows,
+        ]);
+    }
+
+    /**
+     * The products on an editorial surface with no gift tags yet, and the
+     * vocabulary to tag them from, in one call.
+     */
+    public function untagged(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'market' => ['required', 'string', Rule::in(Market::values())],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:200'],
+            'after' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $market = Market::from($data['market']);
+        $rows = $this->untitled->list(
+            $market,
+            (int) ($data['limit'] ?? 200),
+            isset($data['after']) ? (int) $data['after'] : null,
+            UntitledProducts::MISSING_TAGS,
+        );
+
+        return response()->json([
+            'market' => $market->value,
+            'count' => count($rows),
+            'vocabulary' => GiftTags::vocabulary(),
+            'data' => $rows,
+        ]);
+    }
+
+    /**
+     * Write gift tags, all or nothing, replacing what a product had.
+     *
+     * Replacing rather than merging, so a wrong tag can be taken off by
+     * sending the set without it; an empty set clears. A tag outside the
+     * vocabulary refuses the batch and names it, the same as a foreign id:
+     * a vocabulary that grows by typo is not a vocabulary.
+     */
+    public function storeTags(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'market' => ['required', 'string', Rule::in(Market::values())],
+            'tags' => ['required', 'array', 'min:1', 'max:'.self::BATCH],
+            'tags.*.id' => ['required', 'integer'],
+            'tags.*.tags' => ['present', 'array', 'max:20'],
+            'tags.*.tags.*' => ['string', 'max:40'],
+        ]);
+
+        $market = Market::from($data['market']);
+
+        $unknown = GiftTags::unknown(array_merge([], ...array_column($data['tags'], 'tags')));
+
+        if ($unknown !== []) {
+            throw ValidationException::withMessages([
+                'tags' => 'Not in the vocabulary: '.implode(', ', $unknown).'. Nothing was written. The vocabulary is in GET /products/untagged.',
+            ]);
+        }
+
+        $sets = [];
+
+        foreach ($data['tags'] as $entry) {
+            $sets[(int) $entry['id']] = GiftTags::normalise($entry['tags']);
+        }
+
+        $ids = array_keys($sets);
+
+        $known = ProductGroup::query()
+            ->forMarket($market)
+            ->whereIn('id', $ids)
+            ->pluck('id')
+            ->all();
+
+        $strangers = array_values(array_diff($ids, $known));
+
+        if ($strangers !== []) {
+            throw ValidationException::withMessages([
+                'tags' => "Not products in {$market->value}: ".implode(', ', $strangers).'. Nothing was written.',
+            ]);
+        }
+
+        DB::transaction(function () use ($sets, $market): void {
+            foreach ($sets as $id => $tags) {
+                ProductGroup::query()
+                    ->forMarket($market)
+                    ->whereKey($id)
+                    ->update(['gift_tags' => json_encode($tags)]);
+            }
+        });
+
+        $groups = ProductGroup::query()
+            ->forMarket($market)
+            ->whereIn('id', $ids)
+            ->orderBy('id')
+            ->get(['id', 'title', 'display_title', 'gift_tags']);
+
+        return response()->json([
+            'market' => $market->value,
+            'count' => $groups->count(),
+            'data' => $groups->map(fn (ProductGroup $group): array => [
+                'id' => $group->id,
+                'displayTitle' => $group->displayTitle(),
+                'tags' => $group->giftTags(),
+            ])->all(),
         ]);
     }
 

@@ -59,6 +59,7 @@ Route::prefix('editorial')
             Route::get('/products', [CatalogueController::class, 'products']);
             // Before `/products/{group}`, or "untitled" is read as an id.
             Route::get('/products/untitled', [ProductTitleController::class, 'untitled']);
+            Route::get('/products/untagged', [ProductTitleController::class, 'untagged']);
             Route::get('/products/{group}', [CatalogueController::class, 'product']);
             Route::get('/topics', [CatalogueController::class, 'topics']);
 
@@ -232,5 +233,6 @@ Route::prefix('editorial')
              * are a publish, not a write. See ProductTitleController.
              */
             Route::post('/products/titles', [ProductTitleController::class, 'store']);
+            Route::post('/products/tags', [ProductTitleController::class, 'storeTags']);
         });
     });

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * The products a visitor meets on an editorial surface that still carry the
- * feed's title.
+ * feed's title, or no gift tags yet.
  *
  * "Editorial surface" is where a title is read as a sentence rather than
  * scanned in a grid: a Cove's finds, a curated shortlist, a bestseller chart,
@@ -39,10 +39,15 @@ class UntitledProducts
     /** How far back a chart capture still counts as current. */
     private const CHART_DAYS = 14;
 
+    public const MISSING_TITLE = 'title';
+
+    public const MISSING_TAGS = 'tags';
+
     /**
+     * @param  string  $missing  which editorial field is still empty: 'title' or 'tags'
      * @return list<array<string, mixed>>
      */
-    public function list(Market $market, int $limit = 200, ?int $after = null): array
+    public function list(Market $market, int $limit = 200, ?int $after = null, string $missing = self::MISSING_TITLE): array
     {
         $surfaces = $this->surfaces($market);
 
@@ -53,14 +58,19 @@ class UntitledProducts
         return ProductGroup::query()
             ->forMarket($market)
             ->whereIn('id', array_keys($surfaces))
-            ->whereNull('display_title')
+            ->when($missing === self::MISSING_TAGS,
+                fn ($q) => $q->whereRaw("gift_tags = '[]'::jsonb"),
+                fn ($q) => $q->whereNull('display_title'),
+            )
             ->when($after !== null, fn ($q) => $q->where('id', '>', $after))
             ->orderBy('id')
             ->limit(max(1, min($limit, 200)))
-            ->get(['id', 'market', 'slug', 'title', 'brand', 'category', 'min_price', 'image_url'])
+            ->get(['id', 'market', 'slug', 'title', 'display_title', 'gift_tags', 'brand', 'category', 'min_price', 'image_url'])
             ->map(fn (ProductGroup $group): array => [
                 'id' => $group->id,
                 'title' => $group->title,
+                'displayTitle' => $group->displayTitle(),
+                'tags' => $group->giftTags(),
                 'brand' => $group->brand,
                 'category' => $group->category,
                 'minPriceCents' => $group->min_price,

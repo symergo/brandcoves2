@@ -667,3 +667,10 @@ writes up to 200 at once, all or nothing, `null` to clear. The write is a publis
 reaches every reader on the next request. The titles are authored outside and posted in; no job in
 the application writes them. The why, the surfaces and the writing brief are in
 [display-titles.md](display-titles.md).
+
+## Gift tags (2026-09-14)
+
+`GET /products/untagged` and `POST /products/tags`, the same shape as the display-title pair: the
+listing carries the vocabulary, the write is a publish, all or nothing, replacing a product's tags.
+The vocabulary, the engine's reading of them and the tagging brief are in
+[gift-tags.md](gift-tags.md).
