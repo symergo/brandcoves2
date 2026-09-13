@@ -180,7 +180,8 @@ return [
         'gifting_lists_one' => 'You have one list',
         'gifting_santa' => 'Secret Friend',
         'gifting_santa_hint' => 'One group, one draw, nobody knows who has who.',
-        'gifting_santa_count' => ':count groups you are running',
+        'gifting_santa_one' => '1 secret friend',
+        'gifting_santa_count' => ':count secret friends',
     ],
 
     'search' => [

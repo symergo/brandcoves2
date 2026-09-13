@@ -133,7 +133,8 @@ return [
         'gifting_lists_one' => 'Vous avez une liste',
         'gifting_santa' => 'Ami Secret',
         'gifting_santa_hint' => 'Un groupe, un tirage, personne ne sait qui a qui.',
-        'gifting_santa_count' => ':count groupes que vous organisez',
+        'gifting_santa_one' => '1 ami secret',
+        'gifting_santa_count' => ':count amis secrets',
     ],
 
     'search' => [

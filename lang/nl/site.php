@@ -132,7 +132,8 @@ return [
         'gifting_lists_one' => 'Je hebt één lijstje',
         'gifting_santa' => 'Geheime Vriend',
         'gifting_santa_hint' => 'Een groep, een trekking, niemand weet wie aan wie geeft.',
-        'gifting_santa_count' => ':count groepen die jij regelt',
+        'gifting_santa_one' => '1 geheime vriend',
+        'gifting_santa_count' => ':count geheime vrienden',
     ],
 
     'search' => [

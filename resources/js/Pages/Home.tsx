@@ -514,7 +514,12 @@ export default function Home({ today, gifting, personas, coves, recentSearches }
                                 href: gifting.urls.santa,
                                 name: t('nav.santa'),
                                 hint:
-                                    gifting.santaGroups > 0
+                                    // "1 vriend", "3 vrienden": the translator has no
+                                    // plural forms, so the singular is its own string,
+                                    // as the lists card does (owner's request, 2026-09-13).
+                                    gifting.santaGroups === 1
+                                        ? t('home.gifting_santa_one')
+                                        : gifting.santaGroups > 0
                                         ? t('home.gifting_santa_count', { count: n(gifting.santaGroups) })
                                         : t('home.gifting_santa_hint'),
                             },

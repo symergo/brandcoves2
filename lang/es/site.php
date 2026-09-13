@@ -132,7 +132,8 @@ return [
         'gifting_lists_one' => 'Tienes una lista',
         'gifting_santa' => 'Amigo invisible',
         'gifting_santa_hint' => 'Un grupo, un sorteo, nadie sabe a quién le ha tocado quién.',
-        'gifting_santa_count' => ':count grupos que organizas',
+        'gifting_santa_one' => '1 amigo invisible',
+        'gifting_santa_count' => ':count amigos invisibles',
     ],
 
     'search' => [
