@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\CoveStageController;
 use App\Http\Controllers\Api\EditionController;
 use App\Http\Controllers\Api\EditorialIndexController;
 use App\Http\Controllers\Api\GuideEditorialController;
+use App\Http\Controllers\Api\InterestCandidatesController;
 use App\Http\Controllers\Api\ProductTitleController;
 use App\Models\ApiToken;
 use Illuminate\Support\Facades\Route;
@@ -60,6 +61,7 @@ Route::prefix('editorial')
             // Before `/products/{group}`, or "untitled" is read as an id.
             Route::get('/products/untitled', [ProductTitleController::class, 'untitled']);
             Route::get('/products/untagged', [ProductTitleController::class, 'untagged']);
+            Route::get('/interests/candidates', InterestCandidatesController::class);
             Route::get('/products/{group}', [CatalogueController::class, 'product']);
             Route::get('/topics', [CatalogueController::class, 'topics']);
 

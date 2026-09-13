@@ -47,6 +47,9 @@ Markets: `be-nl`, `be-fr`, `en`, `es`, `nl-nl`.
     GET /products/untagged             same, with no gift tags yet; carries the
                                        vocabulary (interest, occasion, recipient,
                                        age, vibe, values)
+    GET /interests/candidates          market (req), days (def 90), limit (def 50):
+                                       interests people typed that the vocabulary
+                                       lacks, ranked; adding one is a code change
     GET /topics                        market (req), status (def candidate), limit
     GET /coves                         market, kind, status, from, to, limit
     GET /coves/queue                   market, kinds[], limit (1..20), horizon days
