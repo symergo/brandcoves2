@@ -1144,6 +1144,12 @@ return [
             'fashion' => 'Mode', 'tech' => 'Techniek', 'home' => 'Hun huis',
             'craft' => 'Zelf maken', 'film' => 'Films en series', 'pets' => 'Hun huisdier',
             'wellness' => 'Ontspannen', 'kids' => 'Kinderen',
+            'art' => 'Tekenen en schilderen', 'cycling' => 'Fietsen', 'boardgames' => 'Bordspellen',
+            'drinks' => 'Wijn en dranken', 'baking' => 'Bakken', 'running' => 'Hardlopen',
+            'yoga' => 'Yoga en meditatie', 'cars' => 'Auto\'s', 'science' => 'Wetenschap en ruimte',
+            'water' => 'Zwemmen en watersport', 'wintersports' => 'Wintersport', 'football' => 'Voetbal',
+            'collecting' => 'Verzamelen', 'nature' => 'Natuur en vogels', 'fishing' => 'Vissen',
+            'horses' => 'Paarden',
         ],
 
         'vibes' => [

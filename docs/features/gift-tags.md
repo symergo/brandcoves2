@@ -24,8 +24,8 @@ brief's "coffee" without anything in between. Every vocabulary is one the site a
 
 | Vocabulary | Values | Source |
 |---|---|---|
-| `interest` | the twenty wizard interests | `App\Enums\Interest` |
-| `occasion` | the list occasions except `other`, plus `sinterklaas` | `App\Enums\EventType` |
+| `interest` | the thirty-six wizard interests (twenty broad ones, sixteen hobbies added 2026-09-14: art, cycling, board games, drinks, baking, running, yoga, cars, science, water sports, winter sports, football, collecting, nature, fishing, horses) | `App\Enums\Interest` |
+| `occasion` | the list occasions except `other`, plus sinterklaas, easter, new_year, halloween, communion, christening, engagement, get_well, new_job, secret_santa | `App\Enums\EventType`, `GiftTags::EXTRA_OCCASIONS` |
 | `recipient` | partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host | `App\Enums\RecipientType` |
 | `age` | baby, toddler, child, teen, adult, senior | `GiftTags::AGE_BANDS` |
 | `vibe` | practical, playful, beautiful | `App\Enums\Vibe` |

@@ -1141,6 +1141,12 @@ return [
             'fashion' => 'La mode', 'tech' => 'La tech', 'home' => 'Son intérieur',
             'craft' => 'Créer de ses mains', 'film' => 'Films et séries', 'pets' => 'Son animal',
             'wellness' => 'Se détendre', 'kids' => 'Les enfants',
+            'art' => 'Dessin et peinture', 'cycling' => 'Le vélo', 'boardgames' => 'Jeux de société',
+            'drinks' => 'Vin et spiritueux', 'baking' => 'La pâtisserie', 'running' => 'La course à pied',
+            'yoga' => 'Yoga et méditation', 'cars' => 'L\'automobile', 'science' => 'Sciences et espace',
+            'water' => 'Natation et sports nautiques', 'wintersports' => 'Sports d\'hiver', 'football' => 'Le football',
+            'collecting' => 'Objets de collection', 'nature' => 'Nature et oiseaux', 'fishing' => 'La pêche',
+            'horses' => 'Les chevaux',
         ],
 
         'vibes' => [

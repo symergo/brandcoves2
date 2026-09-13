@@ -60,6 +60,23 @@ class AngleMap
         'pets' => ['hondenmand', 'kattenkrabpaal', 'voerautomaat', 'hondenspeelgoed', 'huisdier fontein'],
         'wellness' => ['massageapparaat', 'aromadiffuser', 'badjas', 'geurstokjes', 'lichttherapielamp'],
         'kids' => ['bouwset', 'knuffel', 'kinderboek', 'buitenspeelgoed', 'educatief speelgoed'],
+        // The sixteen added 2026-09-14. Same rule: concrete product nouns.
+        'art' => ['acrylverf set', 'schildersezel', 'aquarelset', 'tekenset', 'penselen set', 'canvas doek'],
+        'cycling' => ['fietslamp', 'fietshelm', 'fietscomputer', 'fietstas', 'fietsbidon', 'fietsgereedschap'],
+        'boardgames' => ['bordspel', 'kaartspel', 'strategiespel', 'partyspel', 'dobbelspel', 'puzzel 1000 stukjes'],
+        'drinks' => ['wijnset', 'decanteerkaraf', 'gin set', 'whiskyglazen', 'cocktailset', 'kurkentrekker'],
+        'baking' => ['bakvorm', 'keukenweegschaal', 'springvorm', 'spuitzak set', 'bakboek', 'taartplateau'],
+        'running' => ['hardloophorloge', 'hardloopriem', 'reflecterend vest', 'hartslagmeter', 'sportsokken', 'hardloopjack'],
+        'yoga' => ['yogablok', 'meditatiekussen', 'yogariem', 'yogatas', 'meditatiebankje', 'yogaboek'],
+        'cars' => ['dashcam', 'autostofzuiger', 'telefoonhouder auto', 'modelauto', 'auto poetsset', 'startkabels'],
+        'science' => ['telescoop', 'microscoop', 'experimenteerdoos', 'sterrenkaart', 'planetarium projector', 'wetenschapsboek'],
+        'water' => ['zwembril', 'snorkelset', 'waterdichte tas', 'sup board', 'duikhorloge', 'microvezel handdoek'],
+        'wintersports' => ['skibril', 'skihandschoenen', 'thermo ondergoed', 'skisokken', 'skihelm', 'snowboard onderhoud'],
+        'football' => ['voetbal', 'scheenbeschermers', 'voetbalschoenen', 'keepershandschoenen', 'voetbalshirt', 'trainingshesjes'],
+        'collecting' => ['funko pop', 'verzamelfiguur', 'lego set', 'modelbouw', 'ruilkaarten', 'vitrinekast'],
+        'nature' => ['vogelhuisje', 'vogelvoeder', 'natuurgids', 'insectenhotel', 'wildcamera', 'vogelverrekijker'],
+        'fishing' => ['hengel', 'visdoos', 'vismolen', 'viskoffer', 'visstoel', 'kunstaas set'],
+        'horses' => ['paardenborstel', 'rijhandschoenen', 'halster', 'ruiterhelm', 'hoefkrabber', 'paardenboek'],
     ];
 
     /**

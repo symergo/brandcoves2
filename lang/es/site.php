@@ -1140,6 +1140,12 @@ return [
             'fashion' => 'La moda', 'tech' => 'La tecnología', 'home' => 'Su casa',
             'craft' => 'Hacer cosas', 'film' => 'Cine y series', 'pets' => 'Su mascota',
             'wellness' => 'Desconectar', 'kids' => 'Los niños',
+            'art' => 'Dibujo y pintura', 'cycling' => 'Ciclismo', 'boardgames' => 'Juegos de mesa',
+            'drinks' => 'Vino y licores', 'baking' => 'Repostería', 'running' => 'Correr',
+            'yoga' => 'Yoga y meditación', 'cars' => 'Coches', 'science' => 'Ciencia y espacio',
+            'water' => 'Natación y deportes acuáticos', 'wintersports' => 'Deportes de invierno', 'football' => 'Fútbol',
+            'collecting' => 'Coleccionismo', 'nature' => 'Naturaleza y aves', 'fishing' => 'Pesca',
+            'horses' => 'Caballos',
         ],
 
         'vibes' => [

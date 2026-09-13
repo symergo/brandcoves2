@@ -79,7 +79,7 @@ what to search for, and second-guessing them is worse than trusting them.
 ### Widening is the AI invariant in miniature
 
 The model runs in a scheduled job, under a daily cap, and writes rows the request path only reads.
-Batched one call per market covering the five stalest interests — 5 markets × 20 interests × 4 vibe
+Batched one call per market covering the five stalest interests — 5 markets × 36 interests × 4 vibe
 states is 400 combinations against a cap of 20 calls a day, and the model writes better queries when
 it can see several interests at once. Staleness is read off `updated_at`, so the timestamp *is* the
 cursor and it survives a redeploy for free.

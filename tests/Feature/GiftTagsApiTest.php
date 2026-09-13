@@ -113,6 +113,8 @@ class GiftTagsApiTest extends TestCase
         $this->assertContains('coffee', $vocabulary['interest']);
         $this->assertContains('christmas', $vocabulary['occasion']);
         $this->assertContains('sinterklaas', $vocabulary['occasion']);
+        $this->assertContains('easter', $vocabulary['occasion']);
+        $this->assertContains('cycling', $vocabulary['interest']);
         $this->assertNotContains('other', $vocabulary['occasion']);
         $this->assertContains('mother', $vocabulary['recipient']);
         $this->assertContains('teen', $vocabulary['age']);

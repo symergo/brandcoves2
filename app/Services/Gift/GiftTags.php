@@ -45,6 +45,21 @@ class GiftTags
     public const VALUE_OPTIONS = ['sustainable', 'local', 'handmade'];
 
     /**
+     * Occasions a product can be for that a list cannot carry as its event.
+     *
+     * The list occasions (`EventType`) are dated things a person plans a list
+     * towards. These are the rest of the calendar people buy presents for
+     * (owner's call, 2026-09-14): the feasts, the milestones without a list,
+     * and the things a brief types as an occasion. A tag, not an EventType,
+     * because adding an EventType changes what a list can be for and what the
+     * reminders send, and none of these needs a reminder.
+     */
+    public const EXTRA_OCCASIONS = [
+        'sinterklaas', 'easter', 'new_year', 'halloween', 'communion', 'christening',
+        'engagement', 'get_well', 'new_job', 'secret_santa',
+    ];
+
+    /**
      * Age bands, coarse on purpose. A present for a six-year-old and one for
      * a twelve-year-old differ, but the line between them is not one two
      * editors would draw in the same place; "child" and "teen" they would.
@@ -55,9 +70,9 @@ class GiftTags
     /**
      * The whole vocabulary, grouped, in the order the wizard asks about it.
      *
-     * `other` is not an occasion a product can be for. Sinterklaas is: the
-     * list occasions do not carry it because a list has a date instead, but
-     * two of five markets shop for it and the Whisperer already knows the word.
+     * `other` is not an occasion a product can be for. The extra occasions
+     * are (see EXTRA_OCCASIONS): the list occasions do not carry them because
+     * a list has a date instead, but people shop for them.
      *
      * @return array<string, list<string>>
      */
@@ -70,7 +85,7 @@ class GiftTags
                     EventType::values(),
                     fn (string $v) => $v !== EventType::Other->value,
                 )),
-                'sinterklaas',
+                ...self::EXTRA_OCCASIONS,
             ],
             self::RECIPIENT => RecipientType::values(),
             self::AGE => self::AGE_BANDS,

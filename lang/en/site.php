@@ -1309,6 +1309,12 @@ return [
             'fashion' => 'Fashion', 'tech' => 'Tech', 'home' => 'Their home',
             'craft' => 'Making things', 'film' => 'Film and TV', 'pets' => 'Their pet',
             'wellness' => 'Winding down', 'kids' => 'Kids',
+            'art' => 'Drawing and painting', 'cycling' => 'Cycling', 'boardgames' => 'Board games',
+            'drinks' => 'Wine and spirits', 'baking' => 'Baking', 'running' => 'Running',
+            'yoga' => 'Yoga and meditation', 'cars' => 'Cars', 'science' => 'Science and space',
+            'water' => 'Swimming and water sports', 'wintersports' => 'Winter sports', 'football' => 'Football',
+            'collecting' => 'Collecting', 'nature' => 'Nature and birds', 'fishing' => 'Fishing',
+            'horses' => 'Horses',
         ],
 
         'vibes' => [

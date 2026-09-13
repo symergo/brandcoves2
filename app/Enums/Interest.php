@@ -36,6 +36,31 @@ enum Interest: string
     case Wellness = 'wellness';
     case Kids = 'kids';
 
+    /*
+     * Sixteen more (2026-09-14, owner's call). Each is a hobby with products
+     * of its own: a chip on the wizard, a seed of Dutch product nouns in
+     * AngleMap, a label in four languages, and a tag an editor can give a
+     * product (`interest:cycling`). The first twenty were chosen for
+     * breadth; these are chosen because a market stocks them, and a person
+     * who cycles is not well served by "fitness".
+     */
+    case Art = 'art';
+    case Cycling = 'cycling';
+    case BoardGames = 'boardgames';
+    case Drinks = 'drinks';
+    case Baking = 'baking';
+    case Running = 'running';
+    case Yoga = 'yoga';
+    case Cars = 'cars';
+    case Science = 'science';
+    case Water = 'water';
+    case WinterSports = 'wintersports';
+    case Football = 'football';
+    case Collecting = 'collecting';
+    case Nature = 'nature';
+    case Fishing = 'fishing';
+    case Horses = 'horses';
+
     /** @return list<string> */
     public static function values(): array
     {
