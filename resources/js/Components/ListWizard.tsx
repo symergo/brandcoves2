@@ -1,5 +1,5 @@
 import { useForm, usePage } from '@inertiajs/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
 import { formatOccasionDate } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -231,6 +231,33 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, m
         }
     }
 
+    /*
+     * A step change scrolls the card back to its top.
+     *
+     * The Next button sits at the foot of the card, so on a phone a press
+     * left the reader at the foot of the next step, looking at its Back and
+     * Next with the question above the fold (owner's request, 2026-09-13).
+     * Not on mount: a page that jumps to the wizard as it loads has decided
+     * where the reader looks before they have. The 8px keeps the card's top
+     * border in view rather than flush with the screen edge.
+     */
+    const card = useRef<HTMLElement>(null)
+    const mounted = useRef(false)
+
+    useEffect(() => {
+        if (!mounted.current) {
+            mounted.current = true
+
+            return
+        }
+
+        const top = card.current?.getBoundingClientRect().top
+
+        if (top !== undefined) {
+            window.scrollBy({ top: top - 8, behavior: 'smooth' })
+        }
+    }, [step])
+
     function next() {
         setStep(STEPS[Math.min(index + 1, STEPS.length - 1)])
     }
@@ -394,7 +421,7 @@ export default function ListWizard({ signedIn, recipients, friends, occasions, m
     const canContinue = step !== 'details' || (form.data.title.trim() !== '' && (!forSomeone || personName.trim() !== ''))
 
     return (
-        <section className="rounded-card border border-accent/40 bg-accent/5 p-5 sm:p-6" aria-labelledby="wizard-title">
+        <section ref={card} className="rounded-card border border-accent/40 bg-accent/5 p-5 sm:p-6" aria-labelledby="wizard-title">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h2 id="wizard-title" className="text-lg font-medium">{t(isSanta ? 'wizard.title_santa' : 'wizard.title')}</h2>
                 <p className="text-xs text-ink-soft tabular-nums">

@@ -687,6 +687,10 @@ taken. So `santa` is a `Kind` in `ListWizard` with its own second and third step
   Signed out, the last button is "Sign in and start the group", and the draft replays like a
   list's; a group needs an owner, so there is no anonymous path.
 
+A step change scrolls the card back to its top (2026-09-13, owner's request): the Next button is
+at the foot of the card, so on a phone a press left the reader at the foot of the next step with
+its question above the fold. Not on mount, so a page does not jump to the wizard as it loads.
+
 `WizardOffer` now carries `myLists` (own, `mine`, this market) for that third step, so both pages
 that mount the wizard send it without a second copy of the query. `?new=santa` opens the wizard on
 step 2, and the home page's chooser deep-links there like the other three kinds.
