@@ -654,7 +654,7 @@ return [
         'unclaim' => 'Toch niet',
         'already_claimed' => 'Iemand anders was je net voor.',
         'cannot_unclaim' => 'Je kunt alleen je eigen keuze terugdraaien.',
-        'shared_intro' => 'Tik op een item om aan te geven dat jij het koopt. :name ziet niet wie wat koopt.',
+        'shared_intro' => 'Tik op een item om aan te geven dat jij het koopt. :name ziet niets, anderen zien enkel dat het al gekocht wordt zodat jullie niet dubbel geven.',
         'recipient_added' => 'Persoon toegevoegd.',
         'recipient_removed' => 'Persoon verwijderd.',
         'add_person' => 'Iemand toevoegen',

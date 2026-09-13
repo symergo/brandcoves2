@@ -783,7 +783,7 @@ return [
         'unclaim' => 'Actually, I am not',
         'already_claimed' => 'Someone else just claimed that one.',
         'cannot_unclaim' => 'You can only undo your own claim.',
-        'shared_intro' => 'Tap an item to mark that you are getting it. :name will not see who claimed what.',
+        'shared_intro' => 'Tap an item to mark that you are getting it. :name sees nothing; the others only see that it is already being bought, so nobody gives twice.',
         'recipient_added' => 'Person added.',
         'recipient_removed' => 'Person removed.',
         'add_person' => 'Add a person',
