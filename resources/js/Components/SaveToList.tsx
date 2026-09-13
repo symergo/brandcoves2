@@ -178,12 +178,26 @@ export default function SaveToList({
      * that files things somewhere without saying where would be worse than the
      * default it replaces, and this label plus the toast are where it says.
      */
+    /*
+     * The remembered list's title is looked up on this page, not read from
+     * memory. `lastList.ts` stores the title as it was shown at the save,
+     * in the language of the market at that moment, and keeps it across
+     * markets: a save on the English site left "My wishlist" behind, and a
+     * Dutch page then read "Bewaar in My wishlist" (owner, 2026-09-13). The
+     * `lists` prop carries every list of yours titled in this page's
+     * language, so it is the source; the stored title is only the fallback
+     * for a list this page does not know, which the save then re-checks.
+     */
+    const lastListTitle = lastList
+        ? (lists.find((l) => l.id === lastList.id)?.title ?? lastList.title)
+        : null
+
     const destination = into
         ? t('lists.save_to', { list: into.title })
         : savingTo
         ? t('lists.save_to', { list: savingTo.title })
-        : lastList
-          ? t('lists.save_to', { list: lastList.title })
+        : lastListTitle !== null
+          ? t('lists.save_to', { list: lastListTitle })
           : t('lists.save_to_list')
 
     /*

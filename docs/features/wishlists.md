@@ -360,6 +360,13 @@ codebase already uses for the market:
 where it landed, as it already did. A bookmark that quietly files things into a list you have
 forgotten choosing would be worse than the default it replaces.
 
+**The remembered title is not the one shown (2026-09-13).** The store keeps the title as it was
+shown at the save, in the language of the market at that moment, and the memory spans markets: a
+save on the English site left "My wishlist" behind, and a Dutch page read "Bewaar in My wishlist".
+The label now takes the title from the `lists` prop, which names every list of yours in this
+page's language, and falls back to the stored title only for a list this page does not know, which
+the save then re-checks anyway.
+
 **A remembered list can be deleted.** From the server that is a 404 on a request the reader never
 knowingly made, so it is recovered from rather than reported: forget the memory, retry the save
 unqualified, and it lands in the default list. A 403 is treated the same way — a collaborator
