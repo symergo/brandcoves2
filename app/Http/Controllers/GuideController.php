@@ -190,7 +190,7 @@ class GuideController extends Controller
             ->map(fn (DailyPick $pick) => [
                 'rank' => $pick->rank,
                 'groupId' => $pick->group->id,
-                'title' => $pick->group->title,
+                'title' => $pick->group->displayTitle(),
                 'brand' => $pick->group->brand,
                 'image' => $pick->group->image_url,
                 // Live from the group, never from the row. A price written into

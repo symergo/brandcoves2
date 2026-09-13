@@ -32,6 +32,11 @@ use Illuminate\Support\Str;
  *
  * ## Presentation, not storage
  *
+ * Since 2026-09-14 a hand-written title can sit beside the stored one
+ * (`product_groups.display_title`, written over the editorial API), and
+ * `ProductGroup::displayTitle()` prefers it; this class is the fallback for
+ * the three hundred thousand groups nobody has written a title for.
+ *
  * Nothing here writes to the database. The stored title stays exactly as the
  * feed sent it, because it is also the input to search indexing, to
  * {@see ProductDescription} matching and to the slug — all of which want the
@@ -75,6 +80,19 @@ final class ProductTitle
         'CPU', 'GPU', 'WIFI', 'WI-FI', 'BBQ', 'UV', 'SPF', 'XL', 'XXL', 'XS',
         'RVS', 'ABS', 'PVC', 'EU', 'UK', 'US', 'AC', 'DC', 'IP', 'AI',
     ];
+
+    /**
+     * The card title: the merchant's title, de-shouted, and nothing else.
+     *
+     * No brand put in front, because a card already names the brand beside
+     * the title (`ProductCard`, the Cove tiles), and "Sony Sony WH-1000XM5" is
+     * the failure that prefixing there produces. The heading below is for the
+     * one place the string stands alone.
+     */
+    public static function card(ProductGroup $group): string
+    {
+        return self::deShout(trim($group->title), $group->brand);
+    }
 
     /**
      * The heading: the merchant's title, de-shouted and carrying its brand.

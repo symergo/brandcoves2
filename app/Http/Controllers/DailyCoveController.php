@@ -218,7 +218,7 @@ class DailyCoveController extends Controller
             ->take((int) $config['limit'])
             ->map(fn (ProductGroup $group) => [
                 'id' => $group->id,
-                'title' => $group->title,
+                'title' => $group->displayTitle(),
                 'image' => $group->image_url,
                 'price' => $group->min_price,
                 'was' => $group->previous_price,

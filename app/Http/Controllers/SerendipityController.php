@@ -98,7 +98,7 @@ class SerendipityController extends Controller
 
         return $groups->map(fn (ProductGroup $group) => [
             'id' => $group->id,
-            'title' => $group->title,
+            'title' => $group->displayTitle(),
             'brand' => $group->brand,
             'image' => $group->image_url,
             'price' => $group->min_price,

@@ -238,7 +238,31 @@ class SearchService
             ->where('market', $market)
             ->whereRaw('? <% title', [$term]);
 
-        $groups->whereIn('product_groups.id', $byText->union($byTitle));
+        /*
+         * The written title, both ways (2026-09-14).
+         *
+         * A visitor who reads "Hario handmolen" on a card and types it in
+         * must find the product, and the feed title says "KOFFIEMOLEN
+         * HANDMATIG". The group carries a generated vector of the written
+         * title and a trigram index on it, so these are two more indexed
+         * branches of the same union, not a scan. Nearly every row has an
+         * empty vector and a null title here, which the indexes skip.
+         */
+        $byDisplayText = DB::table('product_groups')
+            ->select('id')
+            ->where('market', $market)
+            ->whereRaw(
+                'display_vector @@ websearch_to_tsquery(bc_text_config(?), ?)',
+                [$market, $term],
+            );
+
+        $byDisplayTitle = DB::table('product_groups')
+            ->select('id')
+            ->where('market', $market)
+            ->whereNotNull('display_title')
+            ->whereRaw('? <% display_title', [$term]);
+
+        $groups->whereIn('product_groups.id', $byText->union($byTitle)->union($byDisplayText)->union($byDisplayTitle));
     }
 
     /** @param Builder<ProductGroup> $groups */
@@ -270,8 +294,14 @@ class SearchService
         // Rank on title similarity, then break ties toward products a shopper
         // can actually compare — a card showing three shops is more useful than
         // one showing a single price, at equal relevance.
+        // The better of the two titles: a product found on its written
+        // title should rank as if that were its title, which for the visitor
+        // who typed it, it is.
         return $groups
-            ->orderByRaw('word_similarity(?, product_groups.title) DESC', [$query->term])
+            ->orderByRaw(
+                "GREATEST(word_similarity(?, product_groups.title), word_similarity(?, coalesce(product_groups.display_title, ''))) DESC",
+                [$query->term, $query->term],
+            )
             ->orderByDesc('merchant_count')
             ->orderBy('id');
     }

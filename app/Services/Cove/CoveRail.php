@@ -333,7 +333,7 @@ class CoveRail
                 'url' => SearchUrl::for($current->get(), $category),
                 'products' => $products->map(fn (ProductGroup $group): array => [
                     'id' => $group->id,
-                    'title' => $group->title,
+                    'title' => $group->displayTitle(),
                     'image' => $group->image_url,
                     'price' => $group->min_price,
                     'merchantCount' => $group->merchant_count,

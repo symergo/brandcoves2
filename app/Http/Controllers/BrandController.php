@@ -929,7 +929,7 @@ class BrandController extends Controller
     {
         return [
             'id' => $group->id,
-            'title' => $group->title,
+            'title' => $group->displayTitle(),
             'slug' => $group->slug,
             'brand' => $group->brand,
             'image' => $group->image_url,

@@ -184,7 +184,7 @@ class QuizBuilder
     {
         return [
             'id' => $group->id,
-            'title' => $group->title,
+            'title' => $group->displayTitle(),
             'image' => $group->image_url,
         ];
     }

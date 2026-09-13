@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\CoveStageController;
 use App\Http\Controllers\Api\EditionController;
 use App\Http\Controllers\Api\EditorialIndexController;
 use App\Http\Controllers\Api\GuideEditorialController;
+use App\Http\Controllers\Api\ProductTitleController;
 use App\Models\ApiToken;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +57,8 @@ Route::prefix('editorial')
          */
         Route::middleware('api.ability:'.ApiToken::READ)->group(function () {
             Route::get('/products', [CatalogueController::class, 'products']);
+            // Before `/products/{group}`, or "untitled" is read as an id.
+            Route::get('/products/untitled', [ProductTitleController::class, 'untitled']);
             Route::get('/products/{group}', [CatalogueController::class, 'product']);
             Route::get('/topics', [CatalogueController::class, 'topics']);
 
@@ -223,5 +226,11 @@ Route::prefix('editorial')
             Route::post('/coves/{plan}/build', [CovePlanController::class, 'build']);
             Route::post('/guides/{guide}/publish', [GuideEditorialController::class, 'publish']);
             Route::post('/editions/{market}/{date}/build', [EditionController::class, 'build']);
+
+            /*
+             * Display titles reach every reader on the next request, so they
+             * are a publish, not a write. See ProductTitleController.
+             */
+            Route::post('/products/titles', [ProductTitleController::class, 'store']);
         });
     });

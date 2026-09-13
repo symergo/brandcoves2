@@ -258,7 +258,7 @@ class AskController extends Controller
                 'answeredAt' => ($a->published_at ?? $a->created_at)->toIso8601String(),
                 'picks' => $a->groups->map(fn (ProductGroup $g) => [
                     'id' => $g->id,
-                    'title' => $g->title,
+                    'title' => $g->displayTitle(),
                     'image' => $g->image_url,
                     'price' => $g->min_price,
                     'inStock' => $g->in_stock,
@@ -357,7 +357,7 @@ class AskController extends Controller
 
         return array_map(fn (ProductGroup $g) => [
             'id' => $g->id,
-            'title' => $g->title,
+            'title' => $g->displayTitle(),
             'image' => $g->image_url,
             'price' => $g->min_price,
         ], array_slice($results, 0, 8));

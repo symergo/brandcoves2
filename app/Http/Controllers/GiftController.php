@@ -411,7 +411,7 @@ class GiftController extends Controller
     {
         return array_map(fn (Suggestion $pick) => [
             'id' => $pick->group->id,
-            'title' => $pick->group->title,
+            'title' => $pick->group->displayTitle(),
             'brand' => $pick->group->brand,
             'image' => $pick->group->image_url,
             'price' => $pick->group->min_price,

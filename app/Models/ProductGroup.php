@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\IdentityKind;
 use App\Enums\Market;
+use App\Services\Catalogue\ProductTitle;
 use Database\Factories\ProductGroupFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property IdentityKind $identity_kind
  * @property int|null $min_price cents
  * @property int|null $previous_price cents, the best offer's price before its last change
+ * @property string $title the feed's title, rewritten by the grouper on every run
+ * @property string|null $display_title a hand-written title, or null for "not written yet"
  */
 class ProductGroup extends Model
 {
@@ -49,6 +52,43 @@ class ProductGroup extends Model
     public function path(): string
     {
         return '/'.$this->market->value."/p/{$this->id}/{$this->slug}";
+    }
+
+    /**
+     * The title a visitor reads on a card, a tile, a row or in a mail.
+     *
+     * The hand-written one when somebody has written it, otherwise the feed's
+     * title with the shouting undone. No brand put in front: a card names the
+     * brand beside the title already. Where the string stands alone, the
+     * product page's heading, the JSON-LD name and the social card, use
+     * {@see heading()}, which carries the brand. Nothing a visitor sees
+     * should print `title` directly.
+     *
+     * What may still read `title` raw, because it is the merchant's words
+     * those consumers want: the search vector and relevance ordering
+     * (`SearchService::orderByRelevance()`), the grouper that writes it,
+     * `IdentityResolver`, the slug, term extraction (`ResultTerms`), the two
+     * scorers (`SuggestionEngine`, `SerendipityEngine`), and every prompt the
+     * builders assemble (`CovePrompt`, `EditionBuilder`, `GuideWriter`,
+     * `ClassifyGiftability`). An editor's lookup (`ProductLookup::describe()`)
+     * carries both. See docs/features/display-titles.md.
+     */
+    public function displayTitle(): string
+    {
+        return $this->display_title ?? ProductTitle::card($this);
+    }
+
+    /**
+     * The title where it stands alone, with the brand in it.
+     *
+     * A written title already names the brand when it matters; the fallback
+     * puts the feed's brand in front of the cleaned feed title, because an
+     * `<h1>` with no brand label beside it and no brand in it is a heading
+     * that does not say what the product is.
+     */
+    public function heading(): string
+    {
+        return $this->display_title ?? ProductTitle::heading($this);
     }
 
     protected function casts(): array

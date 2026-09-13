@@ -249,7 +249,7 @@ class RecipientProfileController extends Controller
 
             'suggestions' => array_map(fn ($pick) => [
                 'id' => $pick->group->id,
-                'title' => $pick->group->title,
+                'title' => $pick->group->displayTitle(),
                 'image' => $pick->group->image_url,
                 'price' => $pick->group->min_price,
                 'reason' => $pick->topSignal(),

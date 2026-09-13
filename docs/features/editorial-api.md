@@ -31,7 +31,7 @@ Three ability strings, not roles:
 |---|---|---|
 | `editorial.read` | Product lookup, ripe topics, plans, guides, published editions | The grounding calls. Useful on their own, safe on their own. |
 | `editorial.write` | Create and rewrite drafts | **Nothing in this group can reach a reader.** |
-| `editorial.publish` | Approve a plan, publish a guide, queue a build | The calls that put something in front of people. |
+| `editorial.publish` | Approve a plan, publish a guide, queue a build, write a product's display title | The calls that put something in front of people. |
 
 A role called "editor" would collapse write and publish the first time anyone needed the safer
 variant. The interesting configuration — an automated writer that drafts, a human who approves — is
@@ -657,3 +657,13 @@ one day, all authored here and none through the model. What the docs above did n
   has to name the product's category string exactly (`[[search:Toetsenbord gaming pc|…]]`), read
   from `GET /products/{id}`.
 - `metaDescription` is capped at 160 characters and `blurb` at 300; the 422 names the field.
+
+## Display titles (2026-09-14)
+
+Two endpoints for the gift-friendly product titles that sit beside the feed's title:
+`GET /products/untitled` lists the products on an editorial surface that still lack one, each row
+naming the surface (`daily`, `plan`, `chart`, `surprise`), paged by id; `POST /products/titles`
+writes up to 200 at once, all or nothing, `null` to clear. The write is a publish, because a title
+reaches every reader on the next request. The titles are authored outside and posted in; no job in
+the application writes them. The why, the surfaces and the writing brief are in
+[display-titles.md](display-titles.md).

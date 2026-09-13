@@ -101,7 +101,7 @@ class OgImageController extends Controller
         // one card whose cache entry was written far more often than it was read.
         return $this->render(
             $og,
-            $product->title,
+            $product->heading(),
             __('site.og.product', [], $language),
             $this->offerLine($product, $language),
         );

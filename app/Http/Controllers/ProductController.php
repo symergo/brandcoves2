@@ -74,7 +74,7 @@ class ProductController extends Controller
                  * because search indexing and the slug want the merchant's own
                  * words; only what a person reads is cleaned.
                  */
-                'title' => ProductTitle::heading($productGroup),
+                'title' => $productGroup->heading(),
                 'brand' => $productGroup->brand,
                 /*
                  * Null when the brand has no page of its own — which is most of
@@ -175,7 +175,7 @@ class ProductController extends Controller
         $market = $current->get();
         $url = url($current->url("p/{$group->id}/{$group->slug}"));
 
-        $heading = ProductTitle::heading($group);
+        $heading = $group->heading();
 
         /*
          * Three shapes, because two of them lead with the price and there is

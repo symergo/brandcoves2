@@ -88,7 +88,7 @@ class NotificationController extends Controller
 
             $rows[$alert->group_id] = [
                 'groupId' => $alert->group_id,
-                'title' => $alert->group->title,
+                'title' => $alert->group->displayTitle(),
                 'image' => $alert->group->image_url,
                 'url' => $current->url("p/{$alert->group_id}/{$alert->group->slug}"),
                 'currentPrice' => $alert->group->min_price,
@@ -106,7 +106,7 @@ class NotificationController extends Controller
 
             $existing = $rows[$alert->group_id] ?? [
                 'groupId' => $alert->group_id,
-                'title' => $alert->group->title,
+                'title' => $alert->group->displayTitle(),
                 'image' => $alert->group->image_url,
                 'url' => $current->url("p/{$alert->group_id}/{$alert->group->slug}"),
                 'currentPrice' => $alert->group->min_price,

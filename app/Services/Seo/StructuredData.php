@@ -7,7 +7,6 @@ namespace App\Services\Seo;
 use App\Enums\Market;
 use App\Models\Product;
 use App\Models\ProductGroup;
-use App\Services\Catalogue\ProductTitle;
 
 /**
  * schema.org JSON-LD.
@@ -36,7 +35,7 @@ class StructuredData
             '@type' => 'Product',
             // The heading, not the stored title: structured data must describe
             // what the page visibly says, and the <h1> is the cleaned string.
-            'name' => ProductTitle::heading($group),
+            'name' => $group->heading(),
             'url' => $url,
         ];
 

@@ -119,7 +119,7 @@ class DigestBuilder
             $nameable[] = $group;
 
             $eligible[] = [
-                'title' => $group->title,
+                'title' => $group->displayTitle(),
                 'brand' => $group->brand,
                 'price' => $group->min_price,
                 'url' => $base.'/p/'.$group->id.'/'.$group->slug,

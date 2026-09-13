@@ -98,7 +98,7 @@ class ScanController extends Controller
         return response()->json([
             'status' => 'found',
             'gtin' => $gtin,
-            'title' => $group->title,
+            'title' => $group->displayTitle(),
             'image' => $group->image_url,
             'price' => $group->min_price,
             'merchantCount' => $group->merchant_count,

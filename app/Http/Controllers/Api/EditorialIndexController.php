@@ -56,6 +56,8 @@ class EditorialIndexController extends Controller
                 'GET  /api/editorial/products?market=&ean=' => 'Resolve a barcode to the product in that market. A 422 means the barcode failed its check digit — a misread, not a product we do not carry.',
                 'GET  /api/editorial/products?market=&q=&includeLive=1' => 'Also ask the live sources (bol). Slower, and the results come back as ordinary catalogue products with ids.',
                 'GET  /api/editorial/products/{id}' => 'One product, with the compliance flags that decide where it may appear.',
+                'GET  /api/editorial/products/untitled?market=&limit=&after=' => 'Products on an editorial surface (a Cove, a shortlist, a chart, the Surprise pool) that still carry the feed\'s title. Each row says which surface. Page with after=<last id>.',
+                'POST /api/editorial/products/titles' => 'Write gift-friendly display titles in batch: {market, titles: [{id, title}]}, up to 200, all or nothing; null clears one. The feed title stays for search. Publish ability: a title reaches readers at once.',
                 'GET  /api/editorial/topics?market=' => 'Guide topics ripened by what visitors actually searched for.',
                 'GET  /api/editorial/coves?market=&kind=' => 'The editorial calendar: planned Coves of every kind, and whether they were built.',
                 'POST /api/editorial/coves/drafts' => 'Ask for N draft plans of one kind, from the sources that know what is worth writing here: the observance calendar, the mined topic queue, the gift-wizard interests. Each arrives with a shortlist of real products. Start here rather than inventing titles.',

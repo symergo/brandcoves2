@@ -41,6 +41,9 @@ Markets: `be-nl`, `be-fr`, `en`, `es`, `nl-nl`.
                                        minPriceCents, maxPriceCents,
                                        includeLive (0/1), limit (1..100, def 24)
     GET /products/{groupId}            adds the offers: merchant, priceCents, source
+    GET /products/untitled             market (req), limit (1..200), after (last id);
+                                       products on a Cove, shortlist, chart or the
+                                       Surprise pool with no display title yet
     GET /topics                        market (req), status (def candidate), limit
     GET /coves                         market, kind, status, from, to, limit
     GET /coves/queue                   market, kinds[], limit (1..20), horizon days
@@ -74,6 +77,9 @@ answers. Use `GET /topics` and `GET /coves/queue` and write the titles yourself.
     POST /coves/{planId}/build
     POST /guides/{id}/publish          {"unpublish": true} to reverse
     POST /editions/{market}/{date}/build
+    POST /products/titles              {market, titles: [{id, title|null}]}, <=200,
+                                       all or nothing; a title reaches readers at once.
+                                       Brief: docs/features/display-titles.md
 
 ## POST /coves — the full body
 

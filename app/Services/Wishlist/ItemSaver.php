@@ -65,7 +65,7 @@ class ItemSaver
                 'snapshot_title' => match (true) {
                     filled($title) => trim((string) $title),
                     $existing !== null => $existing->snapshot_title,
-                    default => $group->title,
+                    default => $group->displayTitle(),
                 },
                 'snapshot_image_url' => $group->image_url,
                 'snapshot_price' => $group->min_price,

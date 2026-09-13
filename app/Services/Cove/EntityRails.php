@@ -368,7 +368,7 @@ final readonly class EntityRails
          */
         return $groups->map(fn (ProductGroup $g) => [
             'id' => $g->id,
-            'title' => $g->title,
+            'title' => $g->displayTitle(),
             'brand' => $g->brand,
             'image' => $g->image_url,
             'category' => $g->category,

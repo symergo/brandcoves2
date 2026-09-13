@@ -112,7 +112,7 @@ class HomeController extends Controller
                 ->take(4)
                 ->map(fn (DailyPick $pick) => [
                     'id' => $pick->group->id,
-                    'title' => $pick->group->title,
+                    'title' => $pick->group->displayTitle(),
                     'image' => $pick->group->image_url,
                     'price' => $pick->group->min_price,
                     'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),

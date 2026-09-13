@@ -336,7 +336,7 @@ class RefreshWishlistedProducts implements ShouldQueue
 
         Mail::to($user)->send(new AlertMail(
             kind: $kind,
-            title: $group->title,
+            title: $group->displayTitle(),
             url: url($url),
             language: $language,
             price: $price === null ? null : Number::currency($price / 100, 'EUR', $language),

@@ -180,6 +180,10 @@ class ProductLookup
             'id' => $group->id,
             'market' => $group->market->value,
             'title' => $group->title,
+            // What a visitor reads: the hand-written title, or the cleaned
+            // feed title until one is written. The raw `title` stays above
+            // it because an editor matching a product needs the feed's words.
+            'displayTitle' => $group->displayTitle(),
             'brand' => $group->brand,
             'category' => $group->category,
             // Integer cents everywhere, never a float and never a formatted

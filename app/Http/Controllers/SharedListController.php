@@ -467,7 +467,7 @@ class SharedListController extends Controller
             'results' => $term === '' ? null : array_map(
                 fn (ProductGroup $group) => [
                     'id' => $group->id,
-                    'title' => $group->title,
+                    'title' => $group->displayTitle(),
                     'image' => $group->image_url,
                     // Cents on the wire, as everywhere: the client formats.
                     'price' => $group->min_price,

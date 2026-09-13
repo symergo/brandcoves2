@@ -167,6 +167,10 @@ class ProductGrouper
                  * 38,495 whose brand was known and absent from the title. Both
                  * are the title *and* the <h1> *and* the schema.org name.
                  *
+                 * `display_title` is deliberately not in the UPDATE: it is the
+                 * hand-written title, owned by an editor, and a regrouping
+                 * run must not take it back. See ProductGroup::displayTitle().
+                 *
                  * Splitting the two lets the ordering below prefer a well-formed
                  * title without ever moving the offer a shopper is sent to. The
                  * price still breaks the tie, so among equally well-formed
