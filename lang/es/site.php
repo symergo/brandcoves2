@@ -964,7 +964,6 @@ return [
         'whisperer_step3' => 'Guarda las buenas directamente en una lista para esa persona.',
         'band_own' => 'Tu propia lista',
         'band_someone' => 'Una lista para alguien',
-        'tools_intro' => 'Cada tarjeta dice qué es y por dónde se empieza.',
         'wishlist_cta' => 'Abrir mi lista de deseos',
         'registry_cta' => 'Añadir una ocasión',
         'suggestions_cta' => 'Ver sugerencias',

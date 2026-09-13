@@ -968,7 +968,6 @@ return [
         'whisperer_step3' => 'Zet de goede meteen op een lijstje voor die persoon.',
         'band_own' => 'Je eigen lijst',
         'band_someone' => 'Een lijst voor iemand',
-        'tools_intro' => 'Elk kaartje zegt wat het is en waar je begint.',
         'wishlist_cta' => 'Open mijn wenslijst',
         'registry_cta' => 'Zet er een gelegenheid op',
         'suggestions_cta' => 'Bekijk suggesties',

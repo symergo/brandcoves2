@@ -237,7 +237,6 @@ export default function GiftCove({
                 <div className="flex flex-wrap items-baseline justify-between gap-3">
                     <div>
                         <h2 className="text-lg font-medium">{t('gift_cove.tools')}</h2>
-                        <p className="mt-1 text-sm text-ink-soft">{t('gift_cove.tools_intro')}</p>
                     </div>
                     {/*
                       A real page now, not an anchor into the bottom of this

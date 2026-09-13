@@ -965,7 +965,6 @@ return [
         'whisperer_step3' => 'Enregistrez les bonnes directement sur une liste pour cette personne.',
         'band_own' => 'Votre propre liste',
         'band_someone' => 'Une liste pour quelqu\'un',
-        'tools_intro' => 'Chaque carte dit ce que c\'est et où cela commence.',
         'wishlist_cta' => 'Ouvrir ma liste d\'envies',
         'registry_cta' => 'Ajouter une occasion',
         'suggestions_cta' => 'Voir les suggestions',

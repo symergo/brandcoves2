@@ -1136,7 +1136,6 @@ return [
         'whisperer_step3' => 'Save the good ones straight onto a list for that person.',
         'band_own' => 'Your own list',
         'band_someone' => 'A list for somebody',
-        'tools_intro' => 'Each card says what it is and where it starts.',
         'wishlist_cta' => 'Open my wish list',
         'registry_cta' => 'Add an occasion',
         'suggestions_cta' => 'See suggestions',
