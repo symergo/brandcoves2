@@ -93,13 +93,10 @@ return [
         'title' => "GiftCoves : listes d'envies, offrir et recevoir au meilleur prix",
         'headline_1' => 'Offrez mieux.',
         'headline_2' => 'Recevez ce que vous voulez vraiment.',
-        // The pitch under the headline, the two buttons, and the line under
-        // them. Owner's words, 2026-09-13; `cta_gift` below is the second button.
+        // The pitch under the headline and the two buttons. Owner's words,
+        // 2026-09-13; `cta_gift` below is the second button.
         'intro' => 'Créez une liste d’envies à partir de tout ce que vous trouvez en ligne. Partagez-la avec les personnes qui vous offrent des cadeaux.',
         'cta_wishlist' => 'Créer ma liste d’envies',
-        'tagline_search' => 'Cherchez n’importe quoi',
-        'tagline_scan' => 'Scannez un code-barres',
-        'tagline_keep' => 'Tout au même endroit',
         'search_placeholder' => 'Cherchez un cadeau ou scannez un code-barres',
         'recently_viewed' => 'Vous avez regardé',
         'cta_gift' => 'Trouver un cadeau',

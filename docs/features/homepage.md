@@ -445,15 +445,15 @@ the shelf keeps its own copy under `gift_ideas`.
 The hero now reads, in the owner's words: *"Give better. Get what you actually want."* — *"Create a
 wishlist from anything you find online. Share it with the people who buy gifts for you."* — two
 buttons, **Create my wishlist** (the list form on My Lists, `?new=mine`) and **Find a gift** (the
-Find a gift page, where the header entry of that name goes) — and one line under them: *Search
-anything · Scan a barcode · Keep it all in one place*.
+Find a gift page, where the header entry of that name goes). A line under the buttons, *Search
+anything · Scan a barcode · Keep it all in one place*, lasted a few hours: the owner took it out
+the same day, once the search card below (next section) carried the field and the camera.
 
 The search field that sat under the headline went with it. It had replaced the Gift Finder button
-and taught the site's second job on its first screen; the pitch now says the first job, and the
-header carries the search on every page. The two things the field promised, a search and a scan,
-survive as the first two words of the line under the buttons, each a link to where it is done, so
-the camera is still one tap from the first screen. Everything below the hero is unchanged. The
-Dutch second line is *"Krijg wat je écht wilt."*
+and taught the site's second job on its first screen; the pitch now says the first job, the header
+carries the search on every page, and the search card two bands down keeps the camera one tap from
+the first screen. Everything below the hero is unchanged. The Dutch second line is *"Krijg wat je
+écht wilt."*
 
 ## A search card where "Recently searched" was (2026-09-13)
 
@@ -463,5 +463,4 @@ searches as pictures, rendered nothing in development or on a market without sea
 answered a question nobody arrives with. The card asks the one they do, and it is the same
 `SearchCard` that now opens the Find a gift page, so the two cannot drift apart the way the hero's
 field and the search page's own once did. `home.recent_heading` went with the band;
-`RecentSearches` still serves the search landing. The hero above keeps its two buttons and the
-line under them.
+`RecentSearches` still serves the search landing. The hero above keeps its two buttons.

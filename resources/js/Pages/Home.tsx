@@ -197,10 +197,11 @@ export default function Home({ today, gifting, personas, coves }: Props) {
                           a search field, which had replaced the Gift Finder
                           button. The field taught the site's second job on
                           its first screen; this says the first job, and the
-                          header carries the search on every page. The line
-                          under the buttons keeps the two things the field
-                          used to promise — search anything, scan a barcode —
-                          as links to where each is done.
+                          header carries the search on every page, and the
+                          search card lower down carries the camera. A line
+                          under the buttons ("Search anything · Scan a
+                          barcode · Keep it all in one place") lasted a few
+                          hours; the owner took it out the same day.
                         */}
                         <p className="mt-5 max-w-xl text-lg text-ink-soft">{t('home.intro')}</p>
 
@@ -212,18 +213,6 @@ export default function Home({ today, gifting, personas, coves }: Props) {
                                 {t('home.cta_gift')}
                             </Link>
                         </div>
-
-                        <p className="mt-6 text-sm text-ink-soft">
-                            <Link href={`${base}/search`} className="hover:text-ink hover:underline">
-                                {t('home.tagline_search')}
-                            </Link>
-                            <span aria-hidden> · </span>
-                            <Link href={`${base}/scan`} className="hover:text-ink hover:underline">
-                                {t('home.tagline_scan')}
-                            </Link>
-                            <span aria-hidden> · </span>
-                            {t('home.tagline_keep')}
-                        </p>
                     </div>
 
                     <HomeIllustration className="hidden w-72 shrink-0 text-ink-soft md:block lg:w-80" />

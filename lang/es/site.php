@@ -92,13 +92,10 @@ return [
         'title' => 'GiftCoves: listas de deseos, regalar y recibir al mejor precio',
         'headline_1' => 'Regala mejor.',
         'headline_2' => 'Recibe lo que de verdad quieres.',
-        // The pitch under the headline, the two buttons, and the line under
-        // them. Owner's words, 2026-09-13; `cta_gift` below is the second button.
+        // The pitch under the headline and the two buttons. Owner's words,
+        // 2026-09-13; `cta_gift` below is the second button.
         'intro' => 'Crea una lista de deseos con cualquier cosa que encuentres en internet. Compártela con las personas que te hacen regalos.',
         'cta_wishlist' => 'Crear mi lista de deseos',
-        'tagline_search' => 'Busca lo que sea',
-        'tagline_scan' => 'Escanea un código de barras',
-        'tagline_keep' => 'Todo en un solo sitio',
         'search_placeholder' => 'Busca un regalo o escanea un código de barras',
         'recently_viewed' => 'Has visto',
         'cta_gift' => 'Buscar un regalo',

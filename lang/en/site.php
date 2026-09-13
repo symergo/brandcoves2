@@ -130,13 +130,10 @@ return [
         'title' => 'GiftCoves wish lists: give and get gifts at the best price',
         'headline_1' => 'Give better.',
         'headline_2' => 'Get what you actually want.',
-        // The pitch under the headline, the two buttons, and the line under
-        // them. Owner's words, 2026-09-13; `cta_gift` below is the second button.
+        // The pitch under the headline and the two buttons. Owner's words,
+        // 2026-09-13; `cta_gift` below is the second button.
         'intro' => 'Create a wishlist from anything you find online. Share it with the people who buy gifts for you.',
         'cta_wishlist' => 'Create my wishlist',
-        'tagline_search' => 'Search anything',
-        'tagline_scan' => 'Scan a barcode',
-        'tagline_keep' => 'Keep it all in one place',
         // Names the second way in, not a third example. The examples this
         // used to carry ("Headphones, a coffee grinder, a brand name…") taught
         // the syntax of a field nobody struggles with; the camera beside it is
