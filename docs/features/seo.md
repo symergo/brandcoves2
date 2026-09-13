@@ -356,3 +356,20 @@ non-product URL through `Alternates::forPaths()`, which sorts paths by kind and 
 kind in one query — the same batching the product block had, now for guides, Shop Coves,
 personas and dailies. Per-URL resolution on a cold cache was a query or two for each of five
 hundred editorial URLs, per chunk.
+
+## A shared list previews as itself (2026-09-13)
+
+A share link pasted into a chat used to turn into the market's default card, "Ontdek producten en
+merken": the shared list page set a title and a noindex but no image and no description, so the
+shell fell back to `og/default.png`. The person receiving "here is Mum's list" saw an advert for the
+site. `/og/l/{code}.png` now draws the list's own title, with "Wish list" or "Gift list" as the kicker
+and the number of ideas as the footnote, and the page sets an `og:description` from the owner's own
+description or a sentence that says what this is and how many ideas are on it.
+
+Two rules worth keeping. The card is drawn only for a list that is actually shared, by the same
+visibility check the page uses, so withdrawing a share withdraws the preview. And nothing from the
+list's *contents* reaches the card or the description, not a product name and not a claim: the card
+goes wherever the link goes, and the items are for whoever opens it. The card is cached like the
+brand and guide cards, keyed on the text it draws and the commit; shared lists are bounded by what
+people share and re-read by every chat they are pasted into, which is the profile that earns a cache
+entry.

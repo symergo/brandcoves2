@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\CoveKind;
+use App\Enums\ListVisibility;
 use App\Models\BrandStat;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
+use App\Models\Wishlist;
 use App\Services\Seo\OgImage;
 use App\Support\CurrentMarket;
 use Illuminate\Http\Response;
@@ -190,6 +192,41 @@ class OgImageController extends Controller
                 'products' => Number::format($brand->product_count, locale: $language),
                 'shops' => $brand->merchant_count,
             ], $language),
+        );
+    }
+
+    /**
+     * A shared list's card: its title, what kind of list it is, how many ideas.
+     *
+     * Until 2026-09-13 a shared list had no card, so a link pasted into a chat
+     * turned into the market's default card — "Ontdek producten en merken" —
+     * and the person receiving "here is Mum's list" saw a generic advert for
+     * the site. The card now says what the page says: the list's own title.
+     *
+     * Only for a list that is actually shared. The code is the access to the
+     * page, and turning sharing off has to turn the card off too, or a chat
+     * preview would keep naming a list its owner has withdrawn.
+     *
+     * Nothing from the list's *contents* is drawn: no product names, no claim
+     * state. The card goes wherever the link goes, and the link is what the
+     * owner chose to share — the items are for whoever opens it.
+     */
+    public function list(CurrentMarket $current, OgImage $og, string $market, string $token): Response
+    {
+        $list = Wishlist::query()
+            ->where('share_token', $token)
+            ->where('visibility', '!=', ListVisibility::Private->value)
+            ->firstOrFail();
+
+        $language = $current->get()->language();
+        $count = $list->items()->count();
+
+        return $this->card(
+            'list:'.$list->id,
+            $og,
+            $list->displayTitle($language),
+            __($list->isForSomeoneElse() ? 'site.og.list_for' : 'site.og.list', [], $language),
+            $count > 0 ? trans_choice('site.og.list_footnote', $count, ['count' => $count], $language) : null,
         );
     }
 

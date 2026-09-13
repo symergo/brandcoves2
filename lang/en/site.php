@@ -1941,6 +1941,13 @@ return [
         'brand_footnote' => ':products products at :shops shops',
         'shops' => '{1} 1 shop|[2,*] :count shops',
         'from_price' => 'from :price',
+
+        // A shared list's card and description. The card draws the title
+        // and the count, never an item: it goes wherever the link goes.
+        'list' => 'Wish list',
+        'list_for' => 'Gift list',
+        'list_footnote' => '{1} 1 idea|[2,*] :count ideas',
+        'list_description' => '{0} A list shared with you on GiftCoves.|{1} A list shared with you: one gift idea, with a link to the shop.|[2,*] A list shared with you: :count gift ideas, each with a link to the shop.',
     ],
 
     /*

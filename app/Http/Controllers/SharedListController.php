@@ -13,6 +13,7 @@ use App\Services\Notifications\ListActivity;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
 use App\Services\Seo\PageMeta;
+use App\Services\Seo\SocialCard;
 use App\Services\Social\Friends;
 use App\Services\Social\ShareReferral;
 use App\Services\Wishlist\Board;
@@ -212,9 +213,22 @@ class SharedListController extends Controller
          * one — from a forum post, a chat preview, anywhere — would list a
          * family's gift list under the recipient's name. Nothing here set
          * `PageMeta`, so the shell defaulted this page to `index, follow`.
+         *
+         * A card and a description of its own (2026-09-13). Without them the
+         * shell fell back to the market's default card, so a link pasted into
+         * a chat previewed as "Ontdek producten en merken" — an advert for the
+         * site where the recipient expected "Mum's list". The description is
+         * the owner's own when they wrote one; otherwise a sentence that says
+         * what this is and how many ideas are on it, and nothing about which.
          */
+        $count = count($items);
+
         app(PageMeta::class)->set(
             title: $list->displayTitle(),
+            description: filled($list->description)
+                ? $list->description
+                : trans_choice('site.og.list_description', $count, ['count' => $count]),
+            image: SocialCard::versioned(url($current->url("og/l/{$list->share_token}.png"))),
             robots: 'noindex, nofollow',
         );
 

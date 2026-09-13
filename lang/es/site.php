@@ -1718,6 +1718,13 @@ return [
         'brand_footnote' => ':products productos en :shops tiendas',
         'shops' => '{1} 1 tienda|[2,*] :count tiendas',
         'from_price' => 'desde :price',
+
+        // A shared list's card and description. The card draws the title
+        // and the count, never an item: it goes wherever the link goes.
+        'list' => 'Lista de deseos',
+        'list_for' => 'Lista de regalos',
+        'list_footnote' => '{1} 1 idea|[2,*] :count ideas',
+        'list_description' => '{0} Una lista compartida contigo en GiftCoves.|{1} Una lista compartida contigo: una idea de regalo, con enlace a la tienda.|[2,*] Una lista compartida contigo: :count ideas de regalo, cada una con enlace a la tienda.',
     ],
 
     /*

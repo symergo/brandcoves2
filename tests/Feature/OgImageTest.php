@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\CoveKind;
+use App\Enums\ListVisibility;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
+use App\Models\User;
+use App\Models\Wishlist;
 use App\Services\Seo\OgImage;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -194,6 +197,48 @@ class OgImageTest extends TestCase
         $without = $this->get('/be-nl/og/default.png')->getContent();
 
         $this->assertSame(md5($without), md5($withText));
+    }
+
+    #[Test]
+    public function a_shared_list_has_a_card_of_its_own(): void
+    {
+        /*
+         * A link to somebody's list used to preview as the market's default
+         * card — "Ontdek producten en merken" — because the page set no image.
+         * The card is addressed by the share code, like the page.
+         */
+        $owner = User::factory()->create();
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $owner->id,
+            'market' => Market::BeNl,
+            'visibility' => ListVisibility::Link,
+            'title' => 'Voor mama',
+        ]);
+
+        $this->get("/be-nl/og/l/{$list->share_token}.png")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
+
+        $this->get("/be-nl/l/{$list->share_token}")
+            ->assertOk()
+            ->assertSee("/be-nl/og/l/{$list->share_token}.png", false)
+            ->assertSee('og:description', false)
+            ->assertDontSee('/be-nl/og/default.png', false);
+    }
+
+    #[Test]
+    public function a_list_that_is_not_shared_has_no_card(): void
+    {
+        // Turning sharing off has to turn the card off too, or a chat preview
+        // keeps naming a list its owner withdrew.
+        $owner = User::factory()->create();
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $owner->id,
+            'market' => Market::BeNl,
+            'visibility' => ListVisibility::Private,
+        ]);
+
+        $this->get("/be-nl/og/l/{$list->share_token}.png")->assertNotFound();
     }
 
     #[Test]

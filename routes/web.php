@@ -1079,6 +1079,13 @@ Route::prefix('{market}')->group(function () {
         Route::get('/og/brand/{slug}.png', [OgImageController::class, 'brand'])
             ->where('slug', '[a-z0-9]+(?:-[a-z0-9]+)*')
             ->name('og.brand');
+
+        // A shared list's card, addressed by the same code as the page. The
+        // code is the access, so a card is only drawn for a list that is
+        // actually shared — see the controller.
+        Route::get('/og/l/{token}.png', [OgImageController::class, 'list'])
+            ->where('token', ShareCode::pattern())
+            ->name('og.list');
     });
 
     /*
