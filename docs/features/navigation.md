@@ -270,10 +270,9 @@ visitor looks when the two curated routes did not have what they came for, which
 for. The phone panel follows the same order, with Search and Feedback in a group of their own below
 the two sections.
 
-Changed again 2026-09-12: **Discover first, then Make a list**, so the order is Discover, Make a
-list, Search. The owner's call. It also reads better once Make a list is a single link: a menu
-followed by a link, then the search, rather than a link wedged between two chevrons' worth of
-menus. The phone panel follows.
+Changed again 2026-09-12: Discover first, then Make a list, at the owner's request, and **changed
+back on 2026-09-13**, also the owner's call: the order is **Make a list, Find a gift, Help**.
+Making a list is the thing the site is for, and the header leads with it. The phone panel follows.
 
 The same day, **both entries got an icon**, at the owner's request: the wish list heart on Make a
 list (`ToolIcon` `wishlist`, the mark My Lists already wears) and a compass on Discover (`CoveIcon`
@@ -284,13 +283,16 @@ loose links.
 
 Later that day, **"Discover" became "Find a gift"** (`nav.find_gift`; `nav.discover` is gone), at
 the owner's request: Discover said what the Coves are for, this says what the visitor came to do,
-and it pairs with the other entry — make a list, find a gift. **The Gift Whisperer is the first
-entry under it** (`/gift`, `ToolIcon` `whisperer`, hint `nav.hint_whisperer`). It had been kept
-out of the header on the grounds that it suggests rather than organises; under a menu called
-Find a gift it is the most direct answer to the label. Its other door, the "Find a present" band
-on the Gift Cove hub, went the same day — see [list-surfaces.md](list-surfaces.md).
+and it pairs with the other entry — make a list, find a gift. The Gift Whisperer was the first
+entry under it for one day (`/gift`, `ToolIcon` `whisperer`, hint `nav.hint_whisperer`) and **came
+out again on 2026-09-13 at the owner's request: the suggestions are not good enough to be the most
+prominent answer to the label.** The page stays at `/gift` and the How-it-works manual still
+explains it, so it has an address but no door in the header; the home page note about it earning
+its place back applies here too. Its other door, the "Find a present" band on the Gift Cove hub,
+had gone on 2026-09-12 — see [list-surfaces.md](list-surfaces.md). `nav.hint_whisperer` went with
+the entry.
 
-**Search is the second entry under Find a gift** (also 2026-09-12, owner's request), so the wide
+**Search is the first entry under Find a gift** (moved in 2026-09-12, owner's request), so the wide
 header is now Find a gift, Make a list, Help, and the search field on every page remains the
 ordinary way in. The paragraph above about Search moving to the *end* described the loose links; it
 is no longer one of them. On the phone panel the "Search and help" group is gone with it: Help is

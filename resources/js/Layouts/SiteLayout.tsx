@@ -197,26 +197,20 @@ function Chrome({ children }: PropsWithChildren) {
         icon: <CoveIcon name="compass" className="h-4 w-4" />,
         items: [
             /*
-             * The Gift Whisperer, first. It was kept out of the header on
-             * the grounds that it suggests rather than organises; under a
-             * menu called "Find a gift" it is the most direct answer to the
-             * label, and the owner asked for it here (2026-09-12). The
-             * "Find a present" band on the Gift Cove hub, which was its
-             * other door, went the same day.
+             * No Gift Whisperer here. It was the first entry for one day
+             * (2026-09-12) and came out on 2026-09-13 at the owner's
+             * request: the suggestions are not good enough to be the most
+             * prominent answer to "Find a gift". The page stays at /gift
+             * and the How-it-works manual still explains it; it comes back
+             * when it earns the place, as the home page note already says.
              */
-            {
-                href: `${base}/gift`,
-                label: t('gift_cove.whisperer_title'),
-                hint: t('nav.hint_whisperer'),
-                icon: <ToolIcon name="whisperer" className="h-5 w-5" />,
-            },
             /*
-             * Search, second (moved in from the loose links on 2026-09-12,
+             * Search, first (moved in from the loose links on 2026-09-12,
              * at the owner's request). It sat outside both menus because it
              * reads as a control rather than a section; under a menu called
-             * "Find a gift" it is the second most direct answer to the label,
-             * after the Whisperer, and the search field on every page is
-             * still the way most people reach it.
+             * "Find a gift" it is the most direct answer to the label, and
+             * the search field on every page is still the way most people
+             * reach it.
              */
             {
                 href: `${base}/search`,
@@ -314,13 +308,12 @@ function Chrome({ children }: PropsWithChildren) {
      * any of them.
      */
     /*
-     * Discover first, then Make a list (swapped 2026-09-12, at the owner's
-     * request). Discover is the editorial half, the only part that is ours,
-     * and the one with a menu left under it; Make a list is now a single
-     * link, and a menu followed by a link reads better than the reverse.
-     * The phone panel follows the same order.
+     * Make a list first, then Find a gift (the owner's call, 2026-09-13;
+     * the two were swapped the other way for a day). Making a list is the
+     * thing the site is for, and the header leads with it; finding a gift
+     * and its menu follow. The phone panel follows the same order.
      */
-    const sections: { href: string; label: string; icon: ReactNode; items: NavMenuItem[] }[] = [discover, organise]
+    const sections: { href: string; label: string; icon: ReactNode; items: NavMenuItem[] }[] = [organise, discover]
 
     /*
      * "You are here", in a menu where three entries share a path.
@@ -390,16 +383,6 @@ function Chrome({ children }: PropsWithChildren) {
                         aria-label={t('nav.main')}
                     >
                         <NavMenu
-                            href={discover.href}
-                            label={discover.label}
-                            icon={discover.icon}
-                            items={discover.items}
-                            current={isCurrent(discover.href)}
-                            isCurrent={isCurrent}
-                            submenuLabel={t('nav.submenu', { section: discover.label })}
-                        />
-
-                        <NavMenu
                             href={organise.href}
                             label={organise.label}
                             icon={organise.icon}
@@ -407,6 +390,16 @@ function Chrome({ children }: PropsWithChildren) {
                             current={isCurrent(organise.href)}
                             isCurrent={isCurrent}
                             submenuLabel={t('nav.submenu', { section: organise.label })}
+                        />
+
+                        <NavMenu
+                            href={discover.href}
+                            label={discover.label}
+                            icon={discover.icon}
+                            items={discover.items}
+                            current={isCurrent(discover.href)}
+                            isCurrent={isCurrent}
+                            submenuLabel={t('nav.submenu', { section: discover.label })}
                         />
 
                         {nav.map((item) => (
