@@ -109,9 +109,7 @@ return [
     ],
 
     'market_prompt' => [
-        'title' => 'Where do you shop?',
-        'intro' => 'Shops, prices and delivery differ per country. Pick yours and we remember it.',
-        'guess' => 'We guessed :name from your browser. Press Escape to keep it.',
+        'title' => 'Where are you?',
     ],
 
     'home' => [

@@ -83,9 +83,7 @@ return [
     ],
 
     'market_prompt' => [
-        'title' => 'Waar koop je?',
-        'intro' => 'Winkels, prijzen en bezorging verschillen per land. Kies het jouwe, dan onthouden we het.',
-        'guess' => 'We gokten op :name op basis van je browser. Druk op Escape om dat zo te laten.',
+        'title' => 'Waar ben je?',
     ],
 
     'home' => [

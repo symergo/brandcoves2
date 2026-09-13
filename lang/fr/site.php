@@ -84,9 +84,7 @@ return [
     ],
 
     'market_prompt' => [
-        'title' => 'Où achetez-vous ?',
-        'intro' => 'Boutiques, prix et livraison diffèrent selon le pays. Choisissez le vôtre, nous nous en souviendrons.',
-        'guess' => 'Nous avons deviné :name d’après votre navigateur. Appuyez sur Échap pour le garder.',
+        'title' => 'Où êtes-vous ?',
     ],
 
     'home' => [

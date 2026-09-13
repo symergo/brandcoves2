@@ -30,8 +30,10 @@ import { useTranslations } from '../useTranslations'
  * choice may be (see App\Support\MarketPreference). Another country lands on
  * that market's home, the landing page for it; the market you are already on
  * keeps you on the page you opened, which matters when that page is a friend's
- * shared list. Escape means "keep what you guessed", and records that too, so
- * closing the dialog is also an answer and it does not come back.
+ * shared list. Escape, or a press outside the card, means "keep what you
+ * guessed", and records that too, so closing the dialog is also an answer and
+ * it does not come back. One question and three flags, nothing else: the
+ * intro and the "we guessed X" line were asked away by the owner (2026-09-13).
  */
 export default function MarketPrompt() {
     const { askMarket, market, markets } = usePage<SharedProps>().props
@@ -85,12 +87,18 @@ export default function MarketPrompt() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="market-prompt-title"
+            // A press on the backdrop is "keep what you guessed", like Escape
+            // (owner's request, 2026-09-13). Only the backdrop: the card
+            // stops the event, so a press inside it is not a dismissal.
+            onClick={keep}
         >
-            <div className="w-full max-w-lg rounded-card border border-line bg-card p-6 shadow-lg">
+            <div
+                className="w-full max-w-lg rounded-card border border-line bg-card p-6 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <h2 id="market-prompt-title" className="text-lg font-semibold">
                     {t('market_prompt.title')}
                 </h2>
-                <p className="mt-1 text-sm text-ink-soft">{t('market_prompt.intro')}</p>
 
                 {/*
                   Three cards, one per country, the flag large and the name
@@ -122,8 +130,6 @@ export default function MarketPrompt() {
                         )
                     })}
                 </ul>
-
-                <p className="mt-4 text-xs text-ink-soft">{t('market_prompt.guess', { name: current.name })}</p>
             </div>
         </div>
     )

@@ -94,9 +94,10 @@ equivalents, but only for pages that have one and only for crawlers.
 
 ### A first visit is asked (2026-09-13)
 
-At the owner's request, a visitor with no `bc_market` cookie is asked where they shop, once: a
+At the owner's request, a visitor with no `bc_market` cookie is asked "Where are you?", once: a
 dialog over the page with the three flags, Belgium, the Netherlands and Europe, the guessed one
-marked and focused. It is `Components/MarketPrompt`, shown when the shared prop `askMarket` is true,
+marked and focused, and nothing else on it (an intro line and a "we guessed X, press Escape"
+line were asked away the same day). It is `Components/MarketPrompt`, shown when the shared prop `askMarket` is true,
 which `MarketPreference::shouldAsk()` answers: no stored choice, and a user agent that is not a
 crawler (`Crawlers::looksLikeOne`). **A crawler is never asked**: it keeps no cookie, so the dialog
 would sit in every page it renders, and the server-rendered HTML it reads carries no dialog at all.
@@ -107,8 +108,9 @@ you are already on keeps you on the page you opened**: `destination()` returns t
 its market is the chosen one, which is safe because that market was read from the path's first
 segment, so the path starts with `/{market}` and a protocol-relative `//host` can never match.
 This case existed only in theory before, since the switcher's radio never fires for the flag that
-is already selected; the prompt made it real, because Escape means "keep what you guessed" and
-records that too, so closing the dialog is an answer and it does not come back. Without it, keeping
+is already selected; the prompt made it real, because Escape or a press outside the card means
+"keep what you guessed" and records that too, so closing the dialog is an answer and it does not
+come back. Without it, keeping
 Belgium from a friend's shared Belgian list would have thrown the list away.
 
 The third flag is labelled **Europe** now (`nav.countries.int`, was "International"), the owner's
