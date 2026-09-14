@@ -55,13 +55,48 @@ This also means internal uses of stored Amazon prices remain available —
 detecting that a feed moved, or spotting a merchant with a permanently inflated
 reference price — because none of those are a visitor-facing feature.
 
+## An exception was made on 2026-09-14, and here is exactly how far it goes
+
+The browser extension (see [page-import.md](page-import.md)) stores an Amazon
+page's **title, description, image URL, category and EAN/UPC** in
+`amazon_products`. That is mirroring, which is restriction 3 below, and it was
+asked for directly by the owner — who also drew the line: **not the price, yet.**
+
+Worth being precise about what did and did not move, because the next person to
+read this will be deciding whether to go further.
+
+| | Before | Now |
+|---|---|---|
+| ASIN, brand, category, classification | stored | stored |
+| Title | stored as *input to a decision*, never rendered | stored, same intent |
+| Description, image URL | **not stored** | **stored** |
+| EAN / UPC | no way to obtain one | stored when the page prints one |
+| Price, availability | not stored | **still not stored** |
+| Anything in `products` / search / email | never | **still never** |
+
+`Source::allowsCatalogueStorage()` is still `false` and the eight call sites
+gated on it are untouched, so none of this reaches search, offer comparison, a
+chart, a wishlist or an email. `AmazonPageImportTest` asserts that gate directly
+rather than trusting it.
+
+Price is held back for a reason worth keeping: it is the field bound to the
+24-hour refresh rule, and the one a person acts on and is wrong about. It is not
+read by the scraper, not accepted by the validator, and has no column — three
+refusals rather than one. Adding one is a decision about this document, not a
+schema change.
+
+**The barcode is what this buys.** `amazon_products.identity_key` was described
+as "the bridge" to a product group when the table was created and nothing could
+ever fill it, because Amazon publishes no barcodes through any interface this
+site had. A product page prints one, on a minority of listings.
+
 ## The other restrictions that shape the product
 
 | # | Restriction | What it constrains |
 |---|---|---|
 | 1 | No price-tracking feature | Sparkline, price alerts, historical claims |
 | 2 | No Associates links or product content in email | Alerts, digests, shared-list mails |
-| 3 | No mirroring the catalogue | Storing Amazon products in our search index |
+| 3 | No mirroring the catalogue | Storing Amazon products in our search index — and see the exception above, which stores page content in `amazon_products` but still nothing in the index |
 | 4 | Displayed prices need an "as of" time and a disclaimer | Bare price display |
 | 5 | Links must go to Amazon, unobscured | Aggressive redirect/cloaking patterns |
 

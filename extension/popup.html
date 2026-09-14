@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>GiftCoves</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Send to GiftCoves</h1>
+      <a id="options" href="#" title="Settings">Settings</a>
+    </header>
+
+    <p id="status" class="status">Reading the page…</p>
+
+    <div id="controls" hidden>
+      <label class="market" id="market-field">
+        Market
+        <select id="market"></select>
+      </label>
+      <span class="market" id="locale-field" hidden>Storefront <strong id="locale"></strong></span>
+      <label class="all">
+        <input type="checkbox" id="toggle-all" checked />
+        <span id="count"></span>
+      </label>
+    </div>
+
+    <ul id="products" class="products"></ul>
+
+    <footer>
+      <button id="send" type="button" disabled>Send</button>
+      <p class="hint" id="hint"></p>
+    </footer>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

@@ -28,6 +28,7 @@ read once you know which feature you are in.
 | a merchant or feed source | [app/Enums/Source.php](../app/Enums/Source.php) + `app/Services/Connectors/<Vendor>/` |
 | the schema | `database/migrations/` — forward-only, expand/contract |
 | the editorial API Claude-on-the-web calls | [routes/api.php](../routes/api.php) + `app/Http/Controllers/Api/` |
+| the browser extension that imports a bol or Amazon page | [extension/](../extension/) + `app/Services/Ingestion/{Bol,Amazon}PageImport.php` — see [features/page-import.md](features/page-import.md) |
 
 ## The request path
 

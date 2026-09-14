@@ -80,6 +80,8 @@ class EditorialIndexController extends Controller
                 'GET  /api/editorial/guides?market=' => 'Buying guides, drafts included.',
                 'POST /api/editorial/guides' => 'Write or rewrite a guide and its ranked items.',
                 'POST /api/editorial/guides/{id}/publish' => 'Publish a guide.',
+                'POST /api/editorial/import/bol' => 'Import a page of bol products into the catalogue: {market, products: [{productId, ean?, title?}]}, up to 60. Send only ids and titles as scraped from the page — every price, image and affiliate link is re-fetched from bol. Each product comes back as imported, unavailable, unresolved or ungrouped, with the product group it became. The Chrome extension in extension/ is the intended caller.',
+                'POST /api/editorial/import/amazon' => 'Record a page of Amazon products: {locale, products: [{asin, title, description?, imageUrl?, category?, brand?, ean?, url?}]}, up to 60. Writes to amazon_products, the ASIN decision store, NOT to the catalogue — Amazon offers never enter search or offer comparison. No price is accepted or stored. A barcode is the valuable field: it fills identity_key and makes a pasted Amazon link resolve to a GiftCoves product page.',
             ],
             /*
              * The writing contract, stated where the writer will see it.

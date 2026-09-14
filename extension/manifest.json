@@ -1,0 +1,76 @@
+{
+  "manifest_version": 3,
+  "name": "GiftCoves importer",
+  "version": "1.1.0",
+  "description": "Send the products on a bol.com or Amazon page to GiftCoves in one click.",
+  "permissions": ["storage", "scripting", "activeTab", "notifications"],
+  "host_permissions": [
+    "https://www.bol.com/*",
+    "https://www.amazon.nl/*",
+    "https://www.amazon.com.be/*",
+    "https://www.amazon.de/*",
+    "https://www.amazon.fr/*",
+    "https://www.amazon.es/*",
+    "https://www.amazon.it/*",
+    "https://www.amazon.co.uk/*",
+    "https://giftcoves.com/*",
+    "https://staging.giftcoves.com/*",
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "optional_host_permissions": ["https://*/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.bol.com/*"],
+      "js": ["scan-bol.js", "content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://www.amazon.nl/*",
+        "https://www.amazon.com.be/*",
+        "https://www.amazon.de/*",
+        "https://www.amazon.fr/*",
+        "https://www.amazon.es/*",
+        "https://www.amazon.it/*",
+        "https://www.amazon.co.uk/*"
+      ],
+      "js": ["scan-amazon.js", "content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Send this page's products to GiftCoves",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "export-page": {
+      "suggested_key": {
+        "default": "Alt+Shift+G"
+      },
+      "description": "Send every product on this page to GiftCoves"
+    }
+  }
+}

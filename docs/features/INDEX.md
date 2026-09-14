@@ -16,6 +16,7 @@ cannot be recovered from a diff.
 | [navigation.md](navigation.md) | Core / Frontend | Active |
 | [homepage.md](homepage.md) | Core / Frontend | Active |
 | [ingestion.md](ingestion.md) | Catalogue | Active |
+| [page-import.md](page-import.md) | Ingestion / Editorial | Active — new 2026-09-14; Chrome extension in `extension/` |
 | [popularity-charts.md](popularity-charts.md) | Catalogue / Discovery | Active — bol; Amazon on the same seam |
 | [ebay-account-deletion.md](ebay-account-deletion.md) | Catalogue / Compliance | Active — needs deploying, then registering with eBay |
 | [ebay-connector.md](ebay-connector.md) | Catalogue | Merged, unverified — needs credentials, see [TODO](../TODO.md) |

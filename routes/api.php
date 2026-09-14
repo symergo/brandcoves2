@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\CatalogueController;
+use App\Http\Controllers\Api\CatalogueImportController;
 use App\Http\Controllers\Api\CoveBriefController;
 use App\Http\Controllers\Api\CoveCalendarController;
 use App\Http\Controllers\Api\CoveDraftController;
@@ -215,6 +216,29 @@ Route::prefix('editorial')
             Route::post('/coves/stages/{stage}', [CoveStageController::class, 'run']);
 
             Route::post('/guides', [GuideEditorialController::class, 'store']);
+
+            /*
+             * Products into the catalogue, from a page in a browser.
+             *
+             * The Chrome extension in `extension/` reads a bol shelf and posts
+             * the ids on it; the server re-fetches every one from bol's own API
+             * and stores it through the ordinary ingestion path. Under `write`
+             * rather than `publish` because the rows it creates are the same
+             * rows a shopper's live search creates — a product in the catalogue
+             * is not a piece of writing in front of a reader.
+             */
+            Route::post('/import/bol', [CatalogueImportController::class, 'bol']);
+
+            /*
+             * The same gesture on an Amazon page, landing somewhere else.
+             *
+             * Amazon products do not enter the catalogue —
+             * `Source::allowsCatalogueStorage()` is false and stays false — so
+             * this writes to `amazon_products`, the ASIN decision store, and
+             * never to `products`. No price is accepted or stored. The
+             * controller says why.
+             */
+            Route::post('/import/amazon', [CatalogueImportController::class, 'amazon']);
         });
 
         /*

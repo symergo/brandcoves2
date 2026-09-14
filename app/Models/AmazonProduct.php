@@ -30,6 +30,10 @@ class AmazonProduct extends Model
             'seen_in_locales' => 'array',
             'classified_at' => 'datetime',
             'first_seen_at' => 'datetime',
+            // When a person last imported this ASIN from a page. Distinct from
+            // first_seen_at, which never moves, and from classified_at, which
+            // is about the verdict rather than about the facts.
+            'imported_at' => 'datetime',
         ];
     }
 

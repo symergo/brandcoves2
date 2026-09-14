@@ -1,0 +1,208 @@
+/*
+ * Deliberately close to the panel's own palette rather than to the public
+ * site's: this is a working tool, used in a hurry, and it should read as part
+ * of the admin surface rather than as a second brand.
+ */
+
+:root {
+  --ink: #1c1917;
+  --muted: #78716c;
+  --line: #e7e5e4;
+  --ground: #ffffff;
+  --raised: #fafaf9;
+  --accent: #0f766e;
+  --good: #166534;
+  --bad: #991b1b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f5f5f4;
+    --muted: #a8a29e;
+    --line: #292524;
+    --ground: #1c1917;
+    --raised: #292524;
+    --accent: #2dd4bf;
+    --good: #4ade80;
+    --bad: #f87171;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/*
+ * The `hidden` attribute has to win.
+ *
+ * The browser's own `[hidden] { display: none }` has the lowest specificity
+ * there is, so `#controls { display: flex }` below silently overrode it and the
+ * market picker, the "select all" box and the storefront label all rendered on
+ * a popup that had nothing to control — caught in a screenshot of the
+ * no-API-key state on 2026-09-14. The script toggles `.hidden` and trusts it;
+ * this is what makes that trust correct.
+ */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  width: 380px;
+  margin: 0;
+  padding: 12px;
+  font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: var(--ground);
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+header a {
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+header a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.status {
+  margin: 8px 0;
+  color: var(--muted);
+}
+
+.status.error {
+  color: var(--bad);
+}
+
+.status.done {
+  color: var(--good);
+}
+
+#controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.market,
+.all {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+select {
+  font: inherit;
+  padding: 3px 6px;
+  color: var(--ink);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.products {
+  /* A shelf can be forty products; the popup stays one screen and scrolls. */
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.products li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.products img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex: none;
+  background: var(--raised);
+  border-radius: 4px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  /* Two lines, then clipped: the full name is in the title attribute, and a
+     wrapping list makes forty products unscannable. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.title small {
+  display: block;
+  color: var(--muted);
+}
+
+.outcome {
+  flex: none;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.outcome.imported {
+  color: var(--good);
+}
+
+.outcome.failed {
+  color: var(--bad);
+}
+
+.outcome a {
+  color: inherit;
+}
+
+footer {
+  padding-top: 10px;
+}
+
+button {
+  width: 100%;
+  padding: 9px 12px;
+  font: inherit;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}

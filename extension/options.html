@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>GiftCoves bol importer — settings</title>
+    <link rel="stylesheet" href="popup.css" />
+    <style>
+      body {
+        width: auto;
+        max-width: 620px;
+        margin: 0 auto;
+        padding: 28px 20px;
+      }
+
+      label {
+        display: block;
+        margin: 18px 0 4px;
+        font-weight: 600;
+      }
+
+      input[type='text'],
+      input[type='password'],
+      select {
+        width: 100%;
+        padding: 8px 10px;
+        font: inherit;
+        color: var(--ink);
+        background: var(--raised);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+
+      p.note {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      button {
+        width: auto;
+        margin-top: 22px;
+        padding: 9px 22px;
+      }
+
+      code {
+        padding: 1px 4px;
+        background: var(--raised);
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>GiftCoves bol importer</h1>
+
+    <label for="baseUrl">GiftCoves address</label>
+    <input type="text" id="baseUrl" spellcheck="false" placeholder="https://giftcoves.com" />
+    <p class="note">
+      Production is <code>https://giftcoves.com</code>. Staging is
+      <code>https://staging.giftcoves.com</code>. Any other address has to be allowed once, and
+      Chrome will ask.
+    </p>
+
+    <label for="apiKey">Editorial API key</label>
+    <input type="password" id="apiKey" spellcheck="false" placeholder="bc_…" />
+    <p class="note">
+      Mint one with <code>php artisan bc:api-token</code>. It needs the
+      <code>editorial.write</code> ability and nothing more — a key that can import products does
+      not need to be able to publish anything. Stored on this machine only, never synced.
+    </p>
+
+    <label for="defaultMarket">Market when the page does not say</label>
+    <select id="defaultMarket"></select>
+    <p class="note">
+      A bol page normally says which market it is: <code>/nl/nl/</code>, <code>/be/nl/</code>,
+      <code>/be/fr/</code>. This is the fallback for the ones that do not, and the popup always
+      shows which market is about to be used.
+    </p>
+
+    <button id="save" type="button">Save</button>
+    <p id="status" class="status"></p>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

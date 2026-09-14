@@ -125,7 +125,48 @@ class BolConnector implements LiveConnector, PopularityConnector
         return $offers;
     }
 
+    /**
+     * One product, by the id we store for it.
+     *
+     * ## The product endpoint is keyed on the EAN, not on `bolProductId`
+     *
+     * Measured against the live API on 2026-09-14. `GET /products/{id}` with a
+     * `bolProductId` answers 400 `must match "^\d{13}$"`, and searching for a
+     * `bolProductId` as a term returns nothing at all. So an id that is not a
+     * 13-digit barcode cannot be resolved here, and saying so by returning null
+     * is better than a request that will always 400.
+     *
+     * We store `bolProductId` in `products.external_id` (an EAN identifies the
+     * *product*, so two listings of it would collide on one external id), which
+     * means a caller holding only an external id has nothing to ask for. It
+     * should pass `products.ean` instead — {@see fetchByEan} is the same call
+     * under its real name.
+     */
     public function fetchById(string $externalId, Market $market): ?Offer
+    {
+        if (! preg_match('/^\d{13}$/', $externalId)) {
+            // Almost certainly a bolProductId. Logged at debug rather than
+            // warning: it is a caller passing the wrong key, not an outage,
+            // and a warning per watched product would drown the log.
+            Log::debug('bol product lookup needs an EAN', ['id' => $externalId]);
+
+            return null;
+        }
+
+        return $this->fetchByEan($externalId, $market);
+    }
+
+    /**
+     * One product, by its barcode.
+     *
+     * The `include-*` flags are not optional: without them bol returns the
+     * catalogue entry alone — no `offer` and no `image` — so the product
+     * arrives unpriced and unrenderable and {@see Offer::isValid} or the
+     * presentability filter drops it. `country-code` is required outright and
+     * its absence is a 400, which is how this endpoint came to be called with
+     * no parameters at all and answer nothing for months.
+     */
+    public function fetchByEan(string $ean, Market $market): ?Offer
     {
         if (! $this->supports($market)) {
             return null;
@@ -137,7 +178,12 @@ class BolConnector implements LiveConnector, PopularityConnector
             return null;
         }
 
-        $response = $this->request("/products/{$externalId}", $market, 'product');
+        $response = $this->request("/products/{$ean}", $market, 'product', [
+            'country-code' => $market->bolCountry(),
+            'include-offer' => 'true',
+            'include-image' => 'true',
+        ]);
+
         if ($response === null) {
             return null;
         }

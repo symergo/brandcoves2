@@ -10,6 +10,7 @@ use App\Models\SearchLog;
 use App\Services\Connectors\ConnectorRegistry;
 use App\Services\Connectors\Offer;
 use App\Services\Identity\Gtin;
+use App\Services\Ingestion\IncomingGrouper;
 use App\Services\Ingestion\OfferUpserter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -29,6 +30,7 @@ class SearchService
         private readonly ConnectorRegistry $registry,
         private readonly OfferUpserter $upserter,
         private readonly BrandAttribution $attribution,
+        private readonly IncomingGrouper $grouper,
     ) {}
 
     public function search(SearchQuery $query): SearchResult
@@ -475,71 +477,18 @@ class SearchService
     /**
      * Attach freshly-arrived offers to their groups.
      *
-     * Deliberately narrow: it creates groups for new identities and links the
-     * incoming rows, but does not recompute market-wide aggregates. The nightly
-     * grouper owns that. What it must do is make the new offer countable, which
-     * is why offer_count and min_price are refreshed for the touched groups.
+     * The work itself is {@see IncomingGrouper}, shared with the bol page
+     * import — both write offers outside a feed run and both need the new rows
+     * to be countable before the page that triggered them renders. Keeping one
+     * implementation matters more than the handful of lines it saves: two
+     * copies would be two answers to "when may an offer join a group", and a
+     * wrong merge lets a foreign price masquerade as the cheapest.
      *
      * @param  list<Offer>  $offers
      */
     private function groupIncoming(SearchQuery $query, array $offers): void
     {
-        $externalIds = array_map(fn ($o) => $o->externalId, $offers);
-        if ($externalIds === []) {
-            return;
-        }
-
-        DB::statement(<<<'SQL'
-            INSERT INTO product_groups (
-                market, identity_key, identity_kind, title, slug, brand, image_url, category,
-                first_seen_at, created_at, updated_at
-            )
-            SELECT DISTINCT ON (p.identity_key)
-                p.market, p.identity_key, p.identity_kind, p.title,
-                left(regexp_replace(lower(unaccent(p.title)), '[^a-z0-9]+', '-', 'g'), 80),
-                p.brand, p.image_url, p.merchant_category, now(), now(), now()
-            FROM products p
-            WHERE p.market = ? AND p.external_id = ANY(?) AND p.identity_key IS NOT NULL
-            ORDER BY p.identity_key, (p.image_url IS NOT NULL) DESC, p.price ASC NULLS LAST, p.id
-            ON CONFLICT (market, identity_key) DO NOTHING
-        SQL, [$query->market->value, '{'.implode(',', array_map(fn ($id) => '"'.$id.'"', $externalIds)).'}']);
-
-        DB::statement(<<<'SQL'
-            UPDATE products p SET group_id = g.id
-            FROM product_groups g
-            WHERE p.market = ? AND p.external_id = ANY(?)
-              AND g.market = p.market AND g.identity_key = p.identity_key
-              AND p.group_id IS DISTINCT FROM g.id
-        SQL, [$query->market->value, '{'.implode(',', array_map(fn ($id) => '"'.$id.'"', $externalIds)).'}']);
-
-        // Refresh counts for the affected groups only, so the card the shopper
-        // is about to see says "2 shops" rather than "1".
-        DB::statement(<<<'SQL'
-            WITH touched AS (
-                SELECT DISTINCT group_id FROM products
-                WHERE market = ? AND external_id = ANY(?) AND group_id IS NOT NULL
-            ),
-            stats AS (
-                SELECT p.group_id,
-                       count(*) AS offer_count,
-                       count(DISTINCT p.merchant_id) AS merchant_count,
-                       min(p.price) FILTER (WHERE p.price IS NOT NULL) AS min_price,
-                       max(p.price) FILTER (WHERE p.price IS NOT NULL) AS max_price,
-                       bool_or(p.availability = 'in_stock') AS in_stock
-                FROM products p
-                JOIN touched t ON t.group_id = p.group_id
-                WHERE p.status = 'active'
-                GROUP BY p.group_id
-            )
-            UPDATE product_groups g
-            SET offer_count = stats.offer_count,
-                merchant_count = stats.merchant_count,
-                min_price = stats.min_price,
-                max_price = stats.max_price,
-                in_stock = stats.in_stock,
-                updated_at = now()
-            FROM stats WHERE g.id = stats.group_id
-        SQL, [$query->market->value, '{'.implode(',', array_map(fn ($id) => '"'.$id.'"', $externalIds)).'}']);
+        $this->grouper->attach($query->market, array_map(fn (Offer $o) => $o->externalId, $offers));
     }
 
     /**
