@@ -2,6 +2,7 @@ import { Head, Link, usePage } from '@inertiajs/react'
 import CoveIcon, { type CoveKey } from '../Components/CoveIcon'
 import SceneIllustration, { type SceneKey } from '../Components/SceneIllustration'
 import SaveToList from '../Components/SaveToList'
+import GiftWizardCard from '../Components/GiftWizardCard'
 import SearchCard from '../Components/SearchCard'
 import type { SharedProps } from '../types'
 import { formatOccasionDate, formatPrice } from '../types'
@@ -31,6 +32,8 @@ interface Persona {
 
 interface Props {
     urls: { daily: string; surprise: string; guides: string; giftIdeas: string; ask: string }
+    /** The chips the Whisperer teaser under the search card offers. */
+    giftInterests: { value: string; label: string }[]
     coves: Cove[]
     /** Empty until a market publishes its first; the card goes with the band. */
     personas: Persona[]
@@ -94,6 +97,7 @@ export default function DiscoverCove({
     questions,
     askUrl,
     surprises,
+    giftInterests,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
@@ -146,6 +150,15 @@ export default function DiscoverCove({
 
             {/* The same search card as the home page, first (owner's call, 2026-09-13). */}
             <SearchCard className="mt-6" />
+
+            {/*
+              The Whisperer, straight under the search card (owner's call,
+              2026-09-14), in the shape the front page gives the list wizard:
+              the card above answers the visitor who knows what they want,
+              this one answers the visitor who does not, and on a page called
+              "Find a gift" that is the question most people arrive with.
+            */}
+            <GiftWizardCard interests={giftInterests} className="mt-6" />
 
             {/*
               Today's edition, shown rather than described. Same copy keys as

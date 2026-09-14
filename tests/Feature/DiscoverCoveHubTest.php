@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\CoveKind;
+use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\CommunityQuestion;
@@ -54,6 +55,23 @@ class DiscoverCoveHubTest extends TestCase
             'status' => PublishStatus::Published->value,
             'published_at' => $date.' 06:00:00',
         ]);
+    }
+
+    /**
+     * The Whisperer is back on this page and in the menu (owner's call,
+     * 2026-09-14), as a teaser under the search card: the card above answers
+     * the visitor who knows what they want and this one answers the visitor
+     * who does not, which on a page called "Find a gift" is most of them.
+     */
+    #[Test]
+    public function the_whisperer_teaser_is_offered_the_interests_it_shows_as_chips(): void
+    {
+        $this->get('/be-nl/discover-cove')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('giftInterests', count(Interest::cases()))
+                ->where('giftInterests.0.value', Interest::cases()[0]->value)
+                ->where('giftInterests.0.label', Interest::cases()[0]->label()));
     }
 
     #[Test]

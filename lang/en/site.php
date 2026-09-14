@@ -91,6 +91,7 @@ return [
          * dropdown, not the hub page, and the hub is one click away for the
          * argument.
          */
+        'hint_gift' => 'Describe them, get eight ideas',
         'hint_daily' => 'New every morning',
         'hint_surprise' => 'Something rare, not something popular',
         'hint_smart' => 'Buying advice and guides by subject',
@@ -1351,6 +1352,7 @@ return [
         'preference_or' => 'or',
 
         'find' => 'Find gifts',
+        'more_questions' => 'Answer more questions',
         'swap' => 'Something else',
         'start_over' => 'Start over',
         'results_title' => 'Eight ideas',

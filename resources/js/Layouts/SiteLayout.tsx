@@ -206,13 +206,23 @@ function Chrome({ children }: PropsWithChildren) {
         icon: <CoveIcon name="compass" className="h-4 w-4" />,
         items: [
             /*
-             * No Gift Whisperer here. It was the first entry for one day
-             * (2026-09-12) and came out on 2026-09-13 at the owner's
-             * request: the suggestions are not good enough to be the most
-             * prominent answer to "Find a gift". The page stays at /gift
-             * and the How-it-works manual still explains it; it comes back
-             * when it earns the place, as the home page note already says.
+             * The Gift Whisperer, first again (owner's call, 2026-09-14).
+             *
+             * It was the first entry for one day (2026-09-12), came out the
+             * next because the suggestions were not good enough to be the
+             * most prominent answer to "Find a gift", and is back because
+             * what it answers changed: a board now spreads across the
+             * interests somebody actually named rather than answering the
+             * first one eight times over, and the cards say what they have
+             * in common with the brief. The same teaser sits under the
+             * search card on the page this menu opens.
              */
+            {
+                href: `${base}/gift`,
+                label: t('nav.gift'),
+                hint: t('nav.hint_gift'),
+                icon: <CoveIcon name="dial" className="h-5 w-5" />,
+            },
             /*
              * Search, first (moved in from the loose links on 2026-09-12,
              * at the owner's request). It sat outside both menus because it

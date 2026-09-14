@@ -284,13 +284,16 @@ loose links.
 Later that day, **"Discover" became "Find a gift"** (`nav.find_gift`; `nav.discover` is gone), at
 the owner's request: Discover said what the Coves are for, this says what the visitor came to do,
 and it pairs with the other entry — make a list, find a gift. The Gift Whisperer was the first
-entry under it for one day (`/gift`, `ToolIcon` `whisperer`, hint `nav.hint_whisperer`) and **came
-out again on 2026-09-13 at the owner's request: the suggestions are not good enough to be the most
-prominent answer to the label.** The page stays at `/gift` and the How-it-works manual still
-explains it, so it has an address but no door in the header; the home page note about it earning
-its place back applies here too. Its other door, the "Find a present" band on the Gift Cove hub,
-had gone on 2026-09-12 — see [list-surfaces.md](list-surfaces.md). `nav.hint_whisperer` went with
-the entry.
+entry under it for one day (2026-09-12) and **came out again on 2026-09-13 at the owner's request:
+the suggestions were not good enough to be the most prominent answer to the label.**
+
+**It is the first entry again since 2026-09-14** (`/gift`, `CoveIcon` `dial`, hint `nav.hint_gift`),
+and what changed is what it answers. A board used to spend itself on whichever interest retrieved
+best — "painting and technique" came back as a page of speakers — and now every interest gets a
+share of the candidate pool and a share of the board, the board is eight cards rather than four,
+and each card names what it has in common with the brief instead of asserting that it fits. See
+[gift-whisperer.md](gift-whisperer.md). The same teaser sits under the search card on the page this
+menu opens, so the entry and the page agree about what the Whisperer is for.
 
 **Search is the first entry under Find a gift** (moved in 2026-09-12, owner's request), so the wide
 header is now Find a gift, Make a list, Help, and the search field on every page remains the

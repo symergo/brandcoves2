@@ -66,6 +66,7 @@ return [
          */
         'smart' => 'Acheter malin',
 
+        'hint_gift' => 'Décrivez la personne, recevez huit idées',
         'hint_daily' => 'Nouveau chaque matin',
         'hint_surprise' => 'Quelque chose de rare, pas de populaire',
         'hint_smart' => "Conseils d'achat et guides par sujet",
@@ -1183,6 +1184,7 @@ return [
         'preference_or' => 'ou',
 
         'find' => 'Trouver des cadeaux',
+        'more_questions' => 'Répondre à plus de questions',
         'swap' => 'Autre chose',
         'start_over' => 'Recommencer',
         'results_title' => 'Huit idées',

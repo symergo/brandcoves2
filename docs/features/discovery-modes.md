@@ -54,3 +54,18 @@ of the territory; a visitor who liked today's edition now sees at once that ther
 The list is `DiscoverCoveController::dailies()`, which is "the newest editions by `drop_date`,
 skipping the first", the first being exactly what `today()` shows. The bands below the cards
 (Surprise, questions, personas, guides) are unchanged.
+
+## The Whisperer sits under the search card on this hub (2026-09-14)
+
+`GiftWizardCard` is a dozen interest chips and a budget, directly under the search card on
+`/discover-cove` — the shape the front page gives the list wizard, and for the same reason: the
+search card answers the visitor who knows what they want, and the card under it answers the one who
+does not. On a page called "Find a gift" that is most of them. The Whisperer is the first entry in
+the menu again the same day; see [navigation.md](navigation.md) for what changed in between.
+
+It is a teaser, not a second wizard. The submit posts the brief to `/{market}/gift`, the same
+endpoint the full wizard's own form posts to, so the visitor lands on the Whisperer page at its own
+address with the board already on it and there is no lesser result screen to keep in step with this
+one. The five questions the chips skip — age, vibe, taste, what to avoid, who it is for — are one
+link away, and the controller sends every interest so what the card shows is a layout decision
+rather than a payload one.

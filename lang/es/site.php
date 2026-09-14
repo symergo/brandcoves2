@@ -65,6 +65,7 @@ return [
          */
         'smart' => 'Comprar mejor',
 
+        'hint_gift' => 'Descríbela y recibe ocho ideas',
         'hint_daily' => 'Nuevo cada mañana',
         'hint_surprise' => 'Algo raro, no algo popular',
         'hint_smart' => 'Consejos de compra y guías por tema',
@@ -1182,6 +1183,7 @@ return [
         'preference_or' => 'o',
 
         'find' => 'Buscar regalos',
+        'more_questions' => 'Responder más preguntas',
         'swap' => 'Otra cosa',
         'start_over' => 'Empezar de nuevo',
         'results_title' => 'Ocho ideas',

@@ -65,6 +65,7 @@ return [
          */
         'smart' => 'Slim kopen',
 
+        'hint_gift' => 'Beschrijf de persoon, krijg acht ideeën',
         'hint_daily' => 'Elke ochtend nieuw',
         'hint_surprise' => 'Iets zeldzaams, niet iets populairs',
         'hint_smart' => 'Koopadvies en gidsen per onderwerp',
@@ -1186,6 +1187,7 @@ return [
         'preference_or' => 'of',
 
         'find' => 'Zoek cadeaus',
+        'more_questions' => 'Meer vragen beantwoorden',
         'swap' => 'Iets anders',
         'start_over' => 'Opnieuw beginnen',
         'results_title' => 'Acht ideeën',

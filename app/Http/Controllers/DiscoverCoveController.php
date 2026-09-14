@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\Interest;
 use App\Models\CommunityQuestion;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
@@ -96,6 +97,18 @@ class DiscoverCoveController extends Controller
         );
 
         return Inertia::render('DiscoverCove', [
+            /*
+             * The interests the Whisperer teaser offers as chips.
+             *
+             * Sent whole and sliced by the card, so what it shows is a layout
+             * decision rather than a payload one, and the link to the full
+             * wizard offers the same words for the rest of them.
+             */
+            'giftInterests' => array_map(fn (Interest $i) => [
+                'value' => $i->value,
+                'label' => $i->label(),
+            ], Interest::cases()),
+
             'urls' => [
                 'daily' => $current->get()->covePath(),
                 'surprise' => $current->url('surprise'),
