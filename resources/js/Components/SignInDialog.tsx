@@ -105,7 +105,35 @@ export default function SignInDialog({
             <h2 className="text-lg font-semibold">{t('auth.title')}</h2>
             <p className="mt-2 text-sm text-ink-soft">{hint ?? t('auth.intro')}</p>
 
-            <form onSubmit={submit} className="mt-5 space-y-3">
+            {/*
+              Google first (owner's call, 2026-09-14). See Auth/Login.tsx: an
+              account somebody already has is one tap, a magic link is a trip
+              to an inbox and back, so the form is the alternative rather than
+              the other way round.
+
+              A full page load, deliberately: OAuth leaves the site and comes
+              back, so there is no page state to preserve and an Inertia visit
+              would only get in the way. Hidden entirely when unconfigured — a
+              button that leads to an exception is worse than no button.
+            */}
+            {auth.googleEnabled && (
+                <>
+                    <a
+                        href={`${base}/auth/google`}
+                        className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-cream px-5 py-3 font-medium transition hover:border-ink"
+                    >
+                        {t('auth.google')}
+                    </a>
+
+                    <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
+                        <span className="h-px flex-1 bg-line" />
+                        {t('auth.or')}
+                        <span className="h-px flex-1 bg-line" />
+                    </div>
+                </>
+            )}
+
+            <form onSubmit={submit} className="space-y-3">
                 {/* Optional, and only used when the account is created. A magic
                     link is the whole of registration here, so this is the one
                     moment there is to ask — and without a name a shared wishlist
@@ -153,30 +181,6 @@ export default function SignInDialog({
                     {t('auth.send')}
                 </button>
             </form>
-
-            {/* Hidden entirely when unconfigured — a button that leads to an
-                exception is worse than no button. */}
-            {auth.googleEnabled && (
-                <>
-                    <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
-                        <span className="h-px flex-1 bg-line" />
-                        {t('auth.or')}
-                        <span className="h-px flex-1 bg-line" />
-                    </div>
-
-                    {/*
-                      A full page load, deliberately: OAuth leaves the site and
-                      comes back, so there is no page state to preserve and an
-                      Inertia visit would only get in the way.
-                    */}
-                    <a
-                        href={`${base}/auth/google`}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-line px-5 py-3 font-medium transition hover:border-ink"
-                    >
-                        {t('auth.google')}
-                    </a>
-                </>
-            )}
 
             <button
                 type="button"

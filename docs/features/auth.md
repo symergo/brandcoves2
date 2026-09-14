@@ -22,6 +22,12 @@ Two paths, offered together rather than one instead of the other:
 | Magic link | `/{market}/login` → `/{market}/auth/magic/{token}` | Works for everyone, needs no third party |
 | Google | `/{market}/auth/google` → `/auth/google/callback` | An email round-trip is slow; for someone already signed into Google this is one tap |
 
+**Google goes first, above the form** (owner's call, 2026-09-14, on both the page and the dialog).
+It used to sit under the email form behind an "or", which reads as the fallback and is the wrong way
+round: an account somebody already has is one tap, and a magic link is a trip to an inbox and back.
+The form stays directly beneath for anyone who would rather not connect an account at all, and the
+"or" now sits between the two rather than under them. Neither path changes; only the order does.
+
 Both land on the same account, **matched on the email address case-insensitively**
 (`whereRaw('lower(email) = ?')`). Without that fold, signing in with Google and later with a magic
 link would produce two accounts with half a gift list each — and the person would have no way to tell

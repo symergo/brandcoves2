@@ -60,13 +60,14 @@ class SuggestionEngine
      * Share of the candidate pool reserved for products that are actually
      * selling.
      *
-     * A correction, not a preference. The pool is ordered by `merchant_count`,
-     * and a bestseller pulled from a retailer's chart is sold by that retailer
-     * alone — so it sorts last and falls off the end of a 300-row pool, however
-     * well it answers the brief. The things people demonstrably buy would be
-     * systematically absent from gift suggestions, and nothing in the output
-     * would show it. A sixth is enough to guarantee presence without crowding
-     * out the comparable products the ordering exists to favour.
+     * A correction, not a preference. A bestseller pulled from a retailer's
+     * chart is sold by that retailer alone, and for as long as the pool was
+     * ordered by `merchant_count` it sorted last and fell off the end of a
+     * 300-row cut however well it answered the brief. The ordering is gone
+     * (see below) and this stays: a chart product can still lose a newest-first
+     * cut simply by having been in the catalogue a while, and the things people
+     * demonstrably buy should not be systematically absent from gift
+     * suggestions with nothing in the output to show it.
      */
     private const DEMAND_POOL_SHARE = 0.16;
 
@@ -249,14 +250,30 @@ class SuggestionEngine
      * @param  list<string>  $queries
      * @return Collection<int, ProductGroup>
      */
+    /**
+     * How many shops sell a thing is not how good a present it is.
+     *
+     * The pool used to be ordered by `merchant_count`, on the reasoning that a
+     * product you can price against a second shop is one you can act on. That
+     * is true of a comparison site and false of a gift: the owner's call,
+     * 2026-09-14, is that it does not matter, and the ordering was doing real
+     * damage — a Bluetooth speaker is sold by nine shops and a set of brushes
+     * by one, so entire interests were being cut before they were ever scored.
+     *
+     * Newest first instead, with the id as the tiebreaker so the cut is stable
+     * across a board and the "four more" that follows it. It favours fresh
+     * stock, which is at least a fact about the present rather than about its
+     * distribution, and `surprise` already argues the other way for rarity
+     * where rarity is the point.
+     */
     private function retrieve(TasteBrief $brief, array $slots): Collection
     {
         $queries = $this->flatten($slots);
 
         if (count($slots) < 2) {
             $pool = $this->pool($brief, $queries)
-                ->orderByDesc('merchant_count')
                 ->orderByDesc('first_seen_at')
+                ->orderByDesc('id')
                 ->limit(self::CANDIDATE_POOL)
                 ->get();
 
@@ -264,17 +281,14 @@ class SuggestionEngine
         }
 
         /*
-         * One share of the pool per interest, and the reason is the same one
-         * the demand slice exists for.
+         * One share of the pool per interest.
          *
-         * The pool is ordered by `merchant_count`, and that is not evenly
-         * distributed across interests: a Bluetooth speaker is sold by nine
-         * shops and a set of brushes by one. Asked for "painting and
-         * technique" over a single OR'd query, all 300 rows came back
-         * technique and painting never reached the scorer at all — measured
-         * on staging, 2026-09-14, with 57 giftable painting products sitting
-         * in the catalogue the whole time. Spreading the *board* cannot fix
-         * that, because by then the candidates are already gone.
+         * Asked for "painting and technique" over a single OR'd query, all
+         * 300 candidate rows came back technique and painting never reached
+         * the scorer at all — measured on staging, 2026-09-14, with 57
+         * giftable painting products sitting in the catalogue the whole time.
+         * Spreading the *board* cannot fix that, because by then the
+         * candidates are already gone.
          *
          * So each slot retrieves its own share. A slot that cannot fill it
          * simply returns less; nothing is reserved and nothing is wasted.
@@ -287,8 +301,8 @@ class SuggestionEngine
         foreach ($slots as $slot) {
             $pool = $pool->concat(
                 $this->pool($brief, $slot['queries'], $slot['interest'])
-                    ->orderByDesc('merchant_count')
                     ->orderByDesc('first_seen_at')
+                    ->orderByDesc('id')
                     ->limit($share)
                     ->get()
                     ->all()

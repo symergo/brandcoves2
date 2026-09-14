@@ -43,7 +43,36 @@ export default function Login({ googleEnabled }: Props) {
                   because the commonest next action is "it did not arrive, send
                   another".
                 */}
-                <form onSubmit={submit} className="mt-6 space-y-3">
+                {/*
+                  Google first (owner's call, 2026-09-14).
+
+                  It was under the email form behind an "or", which reads as
+                  the fallback and is the wrong way round: signing in with an
+                  account you already have is one tap, and a magic link is a
+                  trip to an inbox and back. The form stays right below it for
+                  anyone who would rather not connect an account at all.
+
+                  Hidden entirely when unconfigured — a button that leads to an
+                  exception is worse than no button.
+                */}
+                {googleEnabled && (
+                    <>
+                        <a
+                            href={`${base}/auth/google`}
+                            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-line bg-card px-5 py-3 font-medium transition hover:border-ink"
+                        >
+                            {t('auth.google')}
+                        </a>
+
+                        <div className="my-6 flex items-center gap-3 text-xs text-ink-soft">
+                            <span className="h-px flex-1 bg-line" />
+                            {t('auth.or')}
+                            <span className="h-px flex-1 bg-line" />
+                        </div>
+                    </>
+                )}
+
+                <form onSubmit={submit} className="space-y-3">
                     {/*
                       Optional, and only used when the account is created.
                       A magic link is the whole of registration here, so this is
@@ -93,25 +122,6 @@ export default function Login({ googleEnabled }: Props) {
                         {t('auth.send')}
                     </button>
                 </form>
-
-                {/* Hidden entirely when unconfigured — a button that leads to an
-                    exception is worse than no button. */}
-                {googleEnabled && (
-                    <>
-                        <div className="my-6 flex items-center gap-3 text-xs text-ink-soft">
-                            <span className="h-px flex-1 bg-line" />
-                            {t('auth.or')}
-                            <span className="h-px flex-1 bg-line" />
-                        </div>
-
-                        <a
-                            href={`${base}/auth/google`}
-                            className="flex w-full items-center justify-center gap-2 rounded-lg border border-line px-5 py-3 font-medium transition hover:border-ink"
-                        >
-                            {t('auth.google')}
-                        </a>
-                    </>
-                )}
             </div>
         </>
     )

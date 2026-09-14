@@ -125,12 +125,13 @@ kettle on their own wishlist, they want the one that turns out to be good. This 
 `SuggestionEngineDemandTest::chart_data_does_not_move_a_gift_suggestion` asserts the gift output is
 byte-identical with and without chart data.
 
-Chart products still *reach* the scorer. The candidate pool is capped at 300 and ordered by
-`merchant_count`, and a bestseller pulled from one retailer's chart is sold by that retailer alone —
-so it sorted last and fell off the end, meaning the things people demonstrably buy were
-systematically absent with nothing in the output to show it. A sixth of the pool is now reserved for
-chart-backed groups, through the same query builder so `avoid` and the budget bind identically. It
-can add candidates; it cannot reorder them.
+Chart products still *reach* the scorer. The candidate pool is capped at 300, and while it was
+ordered by `merchant_count` a bestseller from one retailer's chart — sold by that retailer alone —
+sorted last and fell off the end, so the things people demonstrably buy were systematically absent
+with nothing in the output to show it. The ordering is gone (see below) and the reservation stays,
+because a chart product can still lose a newest-first cut by having been in the catalogue a while.
+A sixth of the pool is reserved for chart-backed groups, through the same query builder so `avoid`
+and the budget bind identically. It can add candidates; it cannot reorder them.
 
 **An unanswered question scores 0.5, not 0.** "Does not apply" is not "scores badly" — scoring a
 skipped question as zero would silently shrink the total for everyone who skipped it, and the wizard
@@ -384,17 +385,21 @@ board where one wrong guess is a quarter of the answer. `giftcoves.gift.results`
 is the single place the number lives; the copy that counts them out loud
 ("Acht ideeën", "Acht andere") follows it by hand.
 
+**How many shops sell a thing is not how good a present it is.** The pool was ordered by
+`merchant_count`, on the reasoning that a product you can price against a second shop is one you can
+act on — true of a comparison site, false of a gift, and the owner's call is that it does not matter
+(2026-09-14). It was also doing real damage. A Bluetooth speaker is sold by nine shops and a set of
+brushes by one, so asked for painting and technique every one of the 300 candidate rows came back
+technique and the 57 giftable painting products in the catalogue never reached the scorer at all.
+The cut is newest first now, with the id as the tiebreaker so it is stable across a board and the
+"Acht andere" that follows. Fresh stock is at least a fact about the present rather than about its
+distribution, and `surprise` already argues for rarity where rarity is the point.
+
 **Each interest gets a share of the candidate pool, before any of that.**
-Spreading the board can only spread what was retrieved, and retrieval ordered
-300 rows by `merchant_count` over one OR'd query. That is not evenly spread
-across interests: a Bluetooth speaker is sold by nine shops and a set of
-brushes by one. Asked for painting and technique, every one of the 300 rows
-came back technique, and the 57 giftable painting products in the catalogue
-never reached the scorer — measured on staging with the board share already in
-place, which is how the board could still come back seven-to-one. Each slot now
-retrieves its own share of the pool, and its tag branch is scoped to its own
-interest so it cannot hand that share to another. A slot that cannot fill its
-share just returns less.
+Spreading the board can only spread what was retrieved, and one OR'd query over a single cut hands
+the whole pool to whichever interest happens to sort well. Each slot now retrieves its own share,
+with its tag branch scoped to its own interest so it cannot hand that share to another. A slot that
+cannot fill its share just returns less.
 
 **Each interest then gets a share of the board.** "Painting and technique" came back
 as a page of speakers: the diversifier spread the board across *categories*,
