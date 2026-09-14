@@ -1123,7 +1123,7 @@ return [
 
     'gift' => [
         'title' => 'Buscador de regalos',
-        'subtitle' => 'Cuéntanos cómo es. Buscamos cuatro regalos que encajen.',
+        'subtitle' => 'Cuéntanos cómo es. Buscamos ocho regalos que encajen.',
         'seo_description' => 'Describe a la persona a quien regalas y recibe cuatro ideas, cada una con su motivo y dónde comprarla.',
 
         'step_who' => '¿Para quién es?',
@@ -1131,7 +1131,6 @@ return [
         'step_vibe' => '¿Cómo debe sentirse?',
         'step_budget' => '¿Cuánto quieres gastar?',
         'step_avoid' => '¿Algo que evitar?',
-        'step_values' => '¿Qué te importa?',
 
         'interests' => [
             'cooking' => 'Cocinar', 'coffee' => 'El café', 'photography' => 'La fotografía',
@@ -1184,7 +1183,7 @@ return [
         'find' => 'Buscar regalos',
         'swap' => 'Otra cosa',
         'start_over' => 'Empezar de nuevo',
-        'results_title' => 'Cuatro ideas',
+        'results_title' => 'Ocho ideas',
         'no_results' => 'Nada encajaba. Prueba con más presupuesto u otro interés.',
         'budget_any' => 'Sin límite',
         'budget_up_to' => 'Hasta',
@@ -1206,7 +1205,7 @@ return [
         'age_band' => ':band años',
 
         // The results view: what you said, an Adjust button, and the next board.
-        'more' => 'Otras cuatro',
+        'more' => 'Otras ocho',
         'adjust' => 'Ajustar',
         'back_to_ideas' => 'Volver a las ideas',
         'summary_for' => 'Para :name',
@@ -1218,17 +1217,6 @@ return [
         'remember' => 'Recordar estas respuestas para :name',
         'remember_hint' => 'La próxima vez que elijas a :name, estas respuestas ya estarán rellenadas. Si :name ha descrito sus propios gustos a través de su enlace, sus respuestas se mantienen.',
         'saving_to' => 'Lo que guardes irá a :list.',
-
-        // The card shows one reason, not a breakdown: three reasons read as a
-        // machine justifying itself.
-        'reasons' => [
-            'interest_fit' => 'Encaja con :match',
-            'budget_fit' => 'Bien situado en tu presupuesto',
-            'surprise' => 'No es la opción obvia',
-            'vibe' => 'Encaja con la sensación que buscabas',
-            'preference' => 'Encaja con su gusto',
-            'values' => 'Encaja con lo que te importa',
-        ],
     ],
 
     'ask' => [

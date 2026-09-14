@@ -413,6 +413,7 @@ class SuggestionEngine
         // order — so `primaryInterest` is a term from the interest that won.
         $strengths = [];
         $matched = [];
+        $interests = [];
         $index = 0;
 
         $tags = $group->giftTags();
@@ -436,6 +437,13 @@ class SuggestionEngine
                 }
 
                 $index++;
+            }
+
+            // The interest itself, not the angle query that found it: the card
+            // says "cooking", never "cast iron pan". A typed query is its own
+            // slot and names no interest, so it drops out here.
+            if (isset($strengths[$slotIndex]) && $slot['interest'] !== '') {
+                $interests[] = $slot['interest'];
             }
         }
 
@@ -493,6 +501,8 @@ class SuggestionEngine
             breakdown: $breakdown,
             matchedQueries: $matched,
             primaryInterest: $matched[0] ?? null,
+            matchedInterests: array_values(array_unique($interests)),
+            matchedTastes: $this->matchedTastes($haystack, $brief, $tags),
         );
     }
 
@@ -599,6 +609,57 @@ class SuggestionEngine
         }
 
         return 0.3;
+    }
+
+    /**
+     * The taste the brief named that this product actually sits at.
+     *
+     * The same three questions {@see vibeFit()}, {@see preferenceFit()} and
+     * {@see valuesFit()} score, asked one pole at a time so the card can name
+     * which one landed rather than report that something did. An editor's tag
+     * counts first and a title word second, the order of trust those three
+     * use. A pole the brief did not ask for is never reported: the card is
+     * about the overlap, not about the product.
+     *
+     * @param  list<string>  $tags
+     * @return list<array{kind: string, value: string}>
+     */
+    private function matchedTastes(string $haystack, TasteBrief $brief, array $tags): array
+    {
+        $fits = [];
+
+        if ($brief->vibe !== null && $this->vibeFit($haystack, $brief, $tags) >= 1.0) {
+            $fits[] = ['kind' => 'vibe', 'value' => $brief->vibe->value];
+        }
+
+        foreach ($brief->preferences as $pole) {
+            $keywords = Preference::tryFrom($pole)?->keywords() ?? [];
+
+            if (in_array(GiftTags::preference($pole), $tags, true) || $this->mentions($haystack, $keywords)) {
+                $fits[] = ['kind' => 'preference', 'value' => $pole];
+            }
+        }
+
+        foreach ($brief->values as $value) {
+            if (in_array(GiftTags::value($value), $tags, true)
+                || $this->mentions($haystack, self::VALUE_MARKERS[$value] ?? [])) {
+                $fits[] = ['kind' => 'values', 'value' => $value];
+            }
+        }
+
+        return $fits;
+    }
+
+    /** @param list<string> $needles */
+    private function mentions(string $haystack, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (str_contains($haystack, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -813,12 +874,30 @@ class SuggestionEngine
      * Maximal Marginal Relevance.
      *
      * Greedy: take the best remaining candidate by
-     * `λ·score − (1−λ)·maxSimilarityToAlreadyPicked`. λ = 0.65 favours relevance
-     * while still breaking up clusters.
+     * `λ·score − (1−λ)·maxPenalty`. λ = 0.65 favours relevance while still
+     * breaking up clusters.
+     *
+     * ## The share, which runs before the penalty
+     *
+     * Similarity spreads a board across *categories*, which is not the same
+     * as spreading it across what the person told us. Someone who said
+     * "painting and cycling" can be shown a brush, an easel, a palette knife
+     * and a canvas — four categories, one interest, and half the brief
+     * ignored (owner's report, 2026-09-14). Scaling the penalty could not fix
+     * that: two products of the same interest are already near-identical to
+     * the similarity term, so the interest a board opens on keeps winning by
+     * raw score long after it has said everything it has to say.
+     *
+     * So each interest gets a share of the board — `limit ÷ interests with
+     * candidates`, rounded up — and while any interest is still under its
+     * share, only those are eligible. When every interest has had its share,
+     * or nothing eligible is left, the whole pool opens again and the ranking
+     * finishes the board. An interest with two good products and a share of
+     * four therefore gives its spare seats back rather than holding them.
      *
      * This is the difference between a ranked list and a set of suggestions. It
-     * is tested directly — the top four must be near-duplicates *without* it and
-     * not *with* it, because a diversifier that quietly stops working looks
+     * is tested directly — the top picks must be near-duplicates *without* it
+     * and not *with* it, because a diversifier that quietly stops working looks
      * exactly like one that works.
      *
      * @param  Collection<int, Suggestion>  $scored
@@ -830,11 +909,33 @@ class SuggestionEngine
         $pool = $scored->all();
         $picked = [];
 
+        // The fair share of the board per interest, counted over the
+        // interests that actually have candidates rather than the ones that
+        // were asked for: an interest the catalogue cannot answer should not
+        // reserve seats nothing can fill.
+        $interests = $scored
+            ->map(fn (Suggestion $pick) => $pick->primaryInterest)
+            ->filter()
+            ->unique()
+            ->count();
+        $share = max(1, (int) ceil($limit / max(1, $interests)));
+
+        /** @var array<string, int> $taken interest => picks so far */
+        $taken = [];
+
         while (count($picked) < $limit && $pool !== []) {
             $bestIndex = null;
             $bestValue = -INF;
 
-            foreach ($pool as $index => $candidate) {
+            // Under-share interests first; if none of them can still field a
+            // candidate, everything is eligible again.
+            $eligible = array_filter(
+                $pool,
+                fn (Suggestion $candidate) => $candidate->primaryInterest !== null
+                    && ($taken[$candidate->primaryInterest] ?? 0) < $share,
+            );
+
+            foreach (($eligible !== [] ? $eligible : $pool) as $index => $candidate) {
                 $penalty = 0.0;
 
                 foreach ($picked as $chosen) {
@@ -856,6 +957,11 @@ class SuggestionEngine
             }
 
             $picked[] = $pool[$bestIndex];
+
+            if ($pool[$bestIndex]->primaryInterest !== null) {
+                $taken[$pool[$bestIndex]->primaryInterest] = ($taken[$pool[$bestIndex]->primaryInterest] ?? 0) + 1;
+            }
+
             unset($pool[$bestIndex]);
         }
 

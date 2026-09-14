@@ -432,13 +432,15 @@ class GiftController extends Controller
             'merchantCount' => $pick->group->merchant_count,
             'url' => $current->url("p/{$pick->group->id}/{$pick->group->slug}"),
             /*
-             * One reason, not a breakdown. Three reasons read as a machine
-             * justifying itself; the strongest signal is almost always the true
-             * one. The key is translated client-side so the reason speaks the
-             * market's language.
+             * What it has in common with the brief, not a sentence about it.
+             *
+             * The card used to carry the strongest signal as prose, "matches
+             * cooking", and the owner cut the wording (2026-09-14): saying
+             * that it fits adds nothing a shopper cannot see. The values go
+             * out raw and the page labels them, so an interest the person
+             * typed themselves still shows in their own words.
              */
-            'reason' => $pick->topSignal(),
-            'reasonMatch' => $pick->primaryInterest,
+            'fits' => $pick->fits(),
         ], $picks);
     }
 
@@ -468,7 +470,6 @@ class GiftController extends Controller
                     'label' => $p->label(),
                 ], $axis['poles']),
             ], Preference::axes()),
-            'values' => ['sustainable', 'local', 'handmade'],
             // The fixed age groups, the same strings an editor tags a
             // product with (GiftTags::AGE_BANDS), so the giver's answer and
             // the tag meet as one value.

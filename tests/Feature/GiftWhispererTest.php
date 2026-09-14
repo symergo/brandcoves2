@@ -60,7 +60,7 @@ class GiftWhispererTest extends TestCase
      * — the generated column lives on the offer, not on the group, so a group
      * with nobody selling it is correctly invisible to the engine.
      */
-    private function catalogue(int $count = 20): void
+    private function catalogue(int $count = 40): void
     {
         for ($i = 0; $i < $count; $i++) {
             $price = 2000 + $i * 100;
@@ -113,13 +113,13 @@ class GiftWhispererTest extends TestCase
     }
 
     #[Test]
-    public function a_brief_returns_a_board_of_four(): void
+    public function a_brief_returns_a_full_board(): void
     {
         $this->catalogue();
 
         $ids = $this->pickIds($this->post('/be-nl/gift', $this->brief())->assertOk());
 
-        $this->assertCount(4, $ids);
+        $this->assertCount(8, $ids);
     }
 
     #[Test]
@@ -138,7 +138,7 @@ class GiftWhispererTest extends TestCase
             $this->post('/be-nl/gift/swap', [...$this->brief(), 'rejected' => $first[0]])->assertOk()
         );
 
-        $this->assertCount(4, $after);
+        $this->assertCount(8, $after);
     }
 
     #[Test]
@@ -265,25 +265,25 @@ class GiftWhispererTest extends TestCase
     */
 
     #[Test]
-    public function four_more_returns_a_board_you_have_not_seen(): void
+    public function more_returns_a_board_you_have_not_seen(): void
     {
         $this->catalogue();
 
         $first = $this->pickIds($this->post('/be-nl/gift', $this->brief())->assertOk());
         $next = $this->pickIds($this->post('/be-nl/gift/more', $this->brief())->assertOk());
 
-        $this->assertCount(4, $next);
+        $this->assertCount(8, $next);
         $this->assertSame([], array_intersect($first, $next));
     }
 
     #[Test]
-    public function four_more_after_a_swap_does_not_skip_a_board(): void
+    public function more_after_a_swap_does_not_skip_a_board(): void
     {
         /*
          * The oracle for the invariant. If a swap remembered the board it
          * returned (as it did until 2026-09-13), the recompute in `more()`
          * would already be the *next* board, and pressing the button would
-         * skip four cards the visitor never saw.
+         * skip a whole board the visitor never saw.
          */
         $this->catalogue();
 
@@ -294,15 +294,19 @@ class GiftWhispererTest extends TestCase
         $third = $this->pickIds($this->post('/be-nl/gift/more', $this->brief())->assertOk());
 
         $expected = app(SuggestionEngine::class)->suggest(
-            (new TasteBrief(market: Market::BeNl, interests: ['coffee'], budgetMax: 10000))
-                ->excluding([$first[0], ...$second])
+            (new TasteBrief(
+                market: Market::BeNl,
+                interests: ['coffee'],
+                budgetMax: 10000,
+                limit: (int) config('giftcoves.gift.results'),
+            ))->excluding([$first[0], ...$second])
         );
 
         $this->assertSame(array_map(fn ($p) => $p->group->id, $expected), $third);
     }
 
     #[Test]
-    public function a_second_swap_keeps_the_three_you_did_not_reject(): void
+    public function a_second_swap_keeps_the_cards_you_did_not_reject(): void
     {
         // Failed before the swap stopped remembering its own board: the second
         // swap replaced all four cards instead of the one rejected.
@@ -323,7 +327,7 @@ class GiftWhispererTest extends TestCase
     }
 
     #[Test]
-    public function four_more_is_recorded(): void
+    public function more_is_recorded(): void
     {
         $this->catalogue();
 
@@ -397,7 +401,7 @@ class GiftWhispererTest extends TestCase
                 ->assertOk()
         );
 
-        $this->assertCount(4, $ids);
+        $this->assertCount(8, $ids);
     }
 
     #[Test]
@@ -412,7 +416,7 @@ class GiftWhispererTest extends TestCase
             ->assertOk();
 
         // A guessed uuid attaches nothing: not their avoid words, not their list.
-        $this->assertCount(4, $this->pickIds($response));
+        $this->assertCount(8, $this->pickIds($response));
         $this->assertNull($response->viewData('page')['props']['recipientList']);
     }
 

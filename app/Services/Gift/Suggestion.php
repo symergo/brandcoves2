@@ -19,6 +19,8 @@ final readonly class Suggestion
     /**
      * @param  array<string, float>  $breakdown  signal name => points contributed
      * @param  list<string>  $matchedQueries  angle queries this product answered
+     * @param  list<string>  $matchedInterests  interests it answered, strongest slot first
+     * @param  list<array{kind: string, value: string}>  $matchedTastes  vibe, preference and values poles it sits at
      */
     public function __construct(
         public ProductGroup $group,
@@ -26,7 +28,34 @@ final readonly class Suggestion
         public array $breakdown,
         public array $matchedQueries = [],
         public ?string $primaryInterest = null,
+        public array $matchedInterests = [],
+        public array $matchedTastes = [],
     ) {}
+
+    /**
+     * What this present has in common with the brief, for the card.
+     *
+     * Not a sentence. The card used to carry the strongest signal as prose,
+     * "matches cooking", and the owner cut the wording (2026-09-14): saying
+     * *that* something fits adds nothing a shopper cannot see, and the words
+     * around the fact crowd out the fact. The card lists what it fits with
+     * instead, interests first and then the taste, and the reader draws the
+     * conclusion.
+     *
+     * Capped, because a product answering six things is a wall of chips and
+     * the first few are the strongest anyway.
+     *
+     * @return list<array{kind: string, value: string}>
+     */
+    public function fits(int $limit = 4): array
+    {
+        $fits = array_map(
+            fn (string $interest) => ['kind' => 'interest', 'value' => $interest],
+            $this->matchedInterests,
+        );
+
+        return array_slice([...$fits, ...$this->matchedTastes], 0, $limit);
+    }
 
     /**
      * The single strongest reason, for the card's one-line explanation.

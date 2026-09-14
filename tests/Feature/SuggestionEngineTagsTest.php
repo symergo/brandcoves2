@@ -244,6 +244,78 @@ class SuggestionEngineTagsTest extends TestCase
     }
 
     /**
+     * The owner's report, 2026-09-14: "painting and technique" came back as a
+     * board of speakers, and a board that answers one interest has ignored
+     * half the brief. The diversifier now costs an interest once it has had
+     * its fair share of the board, so the second interest gets a turn even
+     * when the first has better-scoring products left.
+     */
+    #[Test]
+    public function a_board_spreads_across_the_interests_that_were_asked_for(): void
+    {
+        // Cooking wins on score everywhere: more of it, and priced squarely
+        // in the middle of the budget. Without the spread it takes the board.
+        for ($i = 0; $i < 12; $i++) {
+            $this->giftable("Koekenpan {$i}", 8000 + $i, ['interest:cooking'], 'Pannen');
+        }
+
+        for ($i = 0; $i < 4; $i++) {
+            $this->giftable("Penseel {$i}", 1200 + $i, ['interest:art'], 'Kunst');
+        }
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['cooking', 'art'],
+            budgetMax: 10000,
+            limit: 8,
+        ));
+
+        $byInterest = [];
+
+        foreach ($picks as $pick) {
+            $byInterest[$pick->primaryInterest] = ($byInterest[$pick->primaryInterest] ?? 0) + 1;
+        }
+
+        $this->assertCount(8, $picks);
+        $this->assertSame(4, $byInterest['cooking'] ?? 0, 'cooking took more than its share');
+        $this->assertSame(4, $byInterest['art'] ?? 0, 'art never got its share');
+
+        // An interest that cannot fill its share gives the seats back rather
+        // than leaving the board short.
+        $thin = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['cooking', 'gardening'],
+            budgetMax: 10000,
+            limit: 8,
+        ));
+
+        $this->assertCount(8, $thin, 'an interest with no products must not cost the board a card');
+    }
+
+    /**
+     * The card names what a present has in common with the brief, rather than
+     * saying that it has something (owner's call, 2026-09-14). Interests
+     * first, then the taste, and only what was actually asked for.
+     */
+    #[Test]
+    public function a_suggestion_carries_what_it_fits_with(): void
+    {
+        $this->giftable('Fluitketel', 4000, ['interest:cooking', 'preference:vintage', 'values:handmade'], 'Keuken');
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['cooking'],
+            preferences: ['vintage', 'colourful'],
+            limit: 1,
+        ));
+
+        $this->assertSame([
+            ['kind' => 'interest', 'value' => 'cooking'],
+            ['kind' => 'preference', 'value' => 'vintage'],
+        ], $picks[0]->fits(), 'a pole nobody asked for, or that does not match, must not be listed');
+    }
+
+    /**
      * Taste is the question the vibe cannot ask (owner's call, 2026-09-14):
      * "modern or vintage" is not a stronger "useful or beautiful". It is
      * asked as pairs of opposites. Any one of the poles named matching is a

@@ -34,8 +34,8 @@ interface Pick {
     price: Cents | null
     merchantCount: number
     url: string
-    reason: string
-    reasonMatch: string | null
+    /** What this present has in common with the brief. Interests first, then the taste. */
+    fits: { kind: 'interest' | 'vibe' | 'preference' | 'values'; value: string }[]
 }
 
 interface Brief {
@@ -59,7 +59,6 @@ interface Props {
         vibes: Option[]
         /** Taste as axes: each one drawn as its two ends, so picking a side is one click. */
         preferences: { axis: string; poles: [Option, Option] }[]
-        values: string[]
         ages: Option[]
     }
     recipients: Recipient[]
@@ -69,7 +68,16 @@ interface Props {
     recipientList: SavingTo | null
 }
 
-const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid', 'values'] as const
+/*
+  No values step (owner's call, 2026-09-14).
+
+  "Anything that matters?" asked about sustainable, local and handmade, and
+  it was the last thing between a person and their suggestions. A saved
+  person still carries values — they set them on their own page, and the
+  brief picks them up server-side — so the signal survives; it is the
+  question that goes.
+*/
+const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid'] as const
 
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
@@ -93,6 +101,11 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
         brief?.budget_max != null ? String(brief.budget_max) : '',
     )
     const [avoid, setAvoid] = useState<string[]>(brief?.avoid ?? [])
+    /*
+      No step asks for these any more, but a saved person carries them from
+      their own page and the brief echoes them back, so they stay in the
+      payload and on the summary row.
+    */
     const [values, setValues] = useState<string[]>(brief?.values ?? [])
     const [relationship, setRelationship] = useState<string | null>(brief?.relationship ?? null)
     // One of the fixed groups the server offers, never typed: an editor tags
@@ -214,8 +227,20 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
         setStep(firstQuestion)
     }
 
-    const reason = (pick: Pick) =>
-        t(`gift.reasons.${pick.reason}`, { match: pick.reasonMatch ?? '' })
+    /*
+      What a card fits, in the reader's words.
+
+      An interest may be one the person typed themselves, so it goes through
+      the same lookup the summary chips use and falls back to the raw word.
+      The taste poles and the vibe are always ours, so they always translate.
+    */
+    const fitLabel = (fit: Pick['fits'][number]) => {
+        if (fit.kind === 'interest') {
+            return interestLabel(fit.value)
+        }
+
+        return t(`gift.${fit.kind === 'vibe' ? 'vibes' : fit.kind}.${fit.value}`)
+    }
 
     const interestLabel = (value: string) =>
         options.interests.find((o) => o.value === value)?.label ?? value
@@ -349,8 +374,23 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                         <h3 className="mt-3 line-clamp-2 font-medium">{pick.title}</h3>
                                     </Link>
 
-                                    {/* One reason. Three read as a machine justifying itself. */}
-                                    <p className="mt-2 text-sm text-ink-soft">{reason(pick)}</p>
+                                    {/*
+                                      What it fits with, not a sentence saying
+                                      it fits. Listed, so the reader sees which
+                                      part of what they said this answers.
+                                    */}
+                                    {pick.fits.length > 0 && (
+                                        <ul className="mt-2 flex flex-wrap gap-1.5">
+                                            {pick.fits.map((fit) => (
+                                                <li
+                                                    key={`${fit.kind}:${fit.value}`}
+                                                    className="rounded-full bg-sage/10 px-2 py-0.5 text-xs text-sage"
+                                                >
+                                                    {fitLabel(fit)}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
 
                                     <div className="mt-auto space-y-2 pt-4">
                                         <span className="block font-semibold">
@@ -614,27 +654,11 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                     max={10}
                                 />
                                 <p className="mt-2 text-xs text-ink-soft">{t('gift.avoid_hint')}</p>
-                            </div>
-                        )}
-
-                        {steps[step] === 'values' && (
-                            <div>
-                                <div className="flex flex-wrap gap-2">
-                                    {options.values.map((value) => (
-                                        <button
-                                            key={value}
-                                            type="button"
-                                            aria-pressed={values.includes(value)}
-                                            className={chip(values.includes(value))}
-                                            onClick={() => toggle(values, setValues, value)}
-                                        >
-                                            {t(`gift.values.${value}`)}
-                                        </button>
-                                    ))}
-                                </div>
+                                {/* The last step, so this is where keeping the answers is offered. */}
                                 {recipient && <div className="mt-5">{rememberBox(setRemember)}</div>}
                             </div>
                         )}
+
                     </div>
 
                     <div className="mt-8 flex items-center gap-3">

@@ -396,7 +396,15 @@ return [
         'min_price' => 500,
         'max_price' => 50000,
 
-        'results' => 4,
+        /*
+         * Eight, from four (owner's call, 2026-09-14).
+         *
+         * Four is a board you take in at a glance and also a board where one
+         * wrong guess is a quarter of the answer. Eight is enough for the
+         * spread across interests to be visible — with two interests asked,
+         * four each — and still one screen.
+         */
+        'results' => 8,
 
         // Maximal Marginal Relevance. Without diversification the top four are
         // near-duplicates, because whatever scores well scores well for the same

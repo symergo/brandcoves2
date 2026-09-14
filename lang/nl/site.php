@@ -1127,15 +1127,14 @@ return [
 
     'gift' => [
         'title' => 'Cadeauzoeker',
-        'subtitle' => 'Vertel ons over die persoon. Wij zoeken vier cadeaus die kloppen.',
-        'seo_description' => 'Beschrijf voor wie je zoekt en krijg vier cadeau-ideeën, elk met de reden erbij en waar je het koopt.',
+        'subtitle' => 'Vertel ons over die persoon. Wij zoeken acht cadeaus die kloppen.',
+        'seo_description' => 'Beschrijf voor wie je zoekt en krijg acht cadeau-ideeën, elk met de reden erbij en waar je het koopt.',
 
         'step_who' => 'Voor wie is het?',
         'step_interests' => 'Waar houdt die persoon van?',
         'step_vibe' => 'Hoe moet het voelen?',
         'step_budget' => 'Wat wil je uitgeven?',
         'step_avoid' => 'Iets vermijden?',
-        'step_values' => 'Waar hecht je waarde aan?',
 
         'interests' => [
             'cooking' => 'Koken', 'coffee' => 'Koffie', 'photography' => 'Fotografie',
@@ -1188,7 +1187,7 @@ return [
         'find' => 'Zoek cadeaus',
         'swap' => 'Iets anders',
         'start_over' => 'Opnieuw beginnen',
-        'results_title' => 'Vier ideeën',
+        'results_title' => 'Acht ideeën',
         'no_results' => 'Hier paste niets bij. Probeer een ruimer budget of een andere interesse.',
         'budget_any' => 'Geen limiet',
         'budget_up_to' => 'Tot',
@@ -1210,7 +1209,7 @@ return [
         'age_band' => ':band jaar',
 
         // The results view: what you said, an Adjust button, and the next board.
-        'more' => 'Vier andere',
+        'more' => 'Acht andere',
         'adjust' => 'Aanpassen',
         'back_to_ideas' => 'Terug naar de ideeën',
         'summary_for' => 'Voor :name',
@@ -1222,17 +1221,6 @@ return [
         'remember' => 'Onthoud deze antwoorden voor :name',
         'remember_hint' => 'De volgende keer dat je :name kiest, staan deze antwoorden al ingevuld. Heeft :name via de eigen link zelf beschreven wat diegene leuk vindt, dan blijft dat staan.',
         'saving_to' => 'Wat je bewaart, komt op :list.',
-
-        // The card shows one reason, not a breakdown: three reasons read as a
-        // machine justifying itself.
-        'reasons' => [
-            'interest_fit' => 'Past bij :match',
-            'budget_fit' => 'Past binnen je budget',
-            'surprise' => 'Niet de voor de hand liggende keuze',
-            'vibe' => 'Past bij het gevoel dat je zocht',
-            'preference' => 'Past bij hun smaak',
-            'values' => 'Sluit aan bij wat jij belangrijk vindt',
-        ],
     ],
 
     'ask' => [

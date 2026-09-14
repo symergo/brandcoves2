@@ -110,7 +110,7 @@ person told us who they are shopping for; "we found nothing" throws that away.
 | `surprise` | 10 | From [the Serendipity Engine](serendipity.md). 20 until 2026-09-14; five points went to `recipient_fit`, five to `occasion`. |
 | `vibe` | 10 | A nudge, never a filter — someone who said "playful" still wants the good headphones if headphones are the right answer. |
 | `preference` | 5 | Which way their taste goes, as seven axes of two poles: practical/design, modern/vintage, minimal/colourful, natural/technical, manual/powered, everyday/luxurious, classic/quirky. Added 2026-09-14. Any one of the poles named matching is a match, and the pole *not* chosen is never scored against a product. 10 in `for_myself`, where the finish is half the point of wanting the thing. |
-| `values` | 10 | Sustainable / local / handmade. |
+| `values` | 10 | Sustainable / local / handmade. The wizard stopped asking on 2026-09-14 (below); a saved person still carries them from their own page. |
 | `recipient_fit` | 5 | An editor's `recipient:` or `age:` tag meeting the brief's relationship or age band. No text fallback. See [gift-tags.md](gift-tags.md). |
 | `occasion` | 5 | An editor's `occasion:` tag meeting the brief's occasion, or the word in the title. Zero until 2026-09-14: title words alone were too thin to trust. |
 | `demand` | **0** | Bestseller-chart strength. Zero here is the decision — see below. |
@@ -374,6 +374,51 @@ as a fallback (a feed says "eiken" far more often than anyone tags `preference:n
 neutral 0.5 when the question was not asked, so skipping it costs nothing. The opposite pole is
 never scored against a product: a cosy present shown to someone who said "sleek" is merely not
 what they asked for, and the rest of the brief judges it better than this signal would.
+
+## A board of eight, spread across the interests (2026-09-14)
+
+Three changes the owner asked for together, because they are one complaint.
+
+**Eight cards, from four.** Four is a board you take in at a glance and also a
+board where one wrong guess is a quarter of the answer. `giftcoves.gift.results`
+is the single place the number lives; the copy that counts them out loud
+("Acht ideeën", "Acht andere") follows it by hand.
+
+**Each interest gets a share of the board.** "Painting and technique" came back
+as a page of speakers: the diversifier spread the board across *categories*,
+which is not the same as spreading it across what the person said. Scaling the
+similarity penalty could not fix it — two products of one interest already look
+alike to that term, so the interest a board opens on keeps winning on raw score
+long after it has said everything it has. So `diversify()` gives each interest
+`limit ÷ interests with candidates` seats, rounded up, and while any interest is
+under its share only those candidates are eligible. When every interest has had
+its share, or nothing eligible is left, the pool opens again and the ranking
+finishes the board — so an interest with two good products and a share of four
+hands the spare seats back rather than leaving the board short.
+
+**The values question is gone.** "Anything that matters?" — sustainable, local,
+handmade — was the last thing standing between a person and their suggestions.
+The signal stays: a saved person sets values on their own page and the brief
+picks them up server-side, so `valuesFit` still scores. It is the question that
+went, not the answer.
+
+## The card names what it fits, and says nothing else (2026-09-14)
+
+A card used to carry its strongest signal as a sentence: *Past bij koken*,
+matches cooking. The owner cut the wording — saying *that* a suggestion fits
+adds nothing a shopper cannot see, and the words around the fact crowd out the
+fact. The card now lists what the present has in common with the brief:
+the interests it answered first, then the taste poles and values it sits at,
+capped at four.
+
+`Suggestion::fits()` builds the list and `SuggestionEngine::matchedTastes()`
+works out the taste half by asking each pole the brief named on its own, an
+editor's tag first and a title word second. Only what was asked for is ever
+listed — a product tagged `preference:vintage` says nothing on a card for
+somebody who never mentioned vintage — because the line is about the overlap,
+not about the product. The values go to the page raw and the page labels them,
+so an interest somebody typed in their own words still reads back in their own
+words.
 
 ## The wizard asks the age, from fixed groups (2026-09-14)
 

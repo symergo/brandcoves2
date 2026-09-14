@@ -1292,15 +1292,14 @@ return [
 
     'gift' => [
         'title' => 'Gift Finder',
-        'subtitle' => 'Tell us about them. We will find four things worth giving.',
-        'seo_description' => 'Describe the person you are buying for and get four gift ideas, each with the reason it was chosen and where to buy it.',
+        'subtitle' => 'Tell us about them. We will find eight things worth giving.',
+        'seo_description' => 'Describe the person you are buying for and get eight gift ideas, each with the reason it was chosen and where to buy it.',
 
         'step_who' => 'Who is it for?',
         'step_interests' => 'What are they into?',
         'step_vibe' => 'How should it feel?',
         'step_budget' => 'What are you spending?',
         'step_avoid' => 'Anything to avoid?',
-        'step_values' => 'Anything that matters?',
 
         'interests' => [
             'cooking' => 'Cooking', 'coffee' => 'Coffee', 'photography' => 'Photography',
@@ -1353,7 +1352,7 @@ return [
         'find' => 'Find gifts',
         'swap' => 'Something else',
         'start_over' => 'Start over',
-        'results_title' => 'Four ideas',
+        'results_title' => 'Eight ideas',
         'no_results' => 'Nothing fit that brief. Try a wider budget or another interest.',
         'budget_any' => 'No limit',
         'budget_up_to' => 'Up to',
@@ -1375,7 +1374,7 @@ return [
         'age_band' => ':band years',
 
         // The results view: what you said, an Adjust button, and the next board.
-        'more' => 'Four more',
+        'more' => 'Eight more',
         'adjust' => 'Adjust',
         'back_to_ideas' => 'Back to the ideas',
         'summary_for' => 'For :name',
@@ -1387,17 +1386,6 @@ return [
         'remember' => 'Remember these answers for :name',
         'remember_hint' => 'Next time you pick :name these answers are filled in for you. If :name has described their own taste through their link, their answers stay.',
         'saving_to' => 'Saving a pick puts it on :list.',
-
-        // The card shows one reason, not a breakdown: three reasons read as a
-        // machine justifying itself.
-        'reasons' => [
-            'interest_fit' => 'Matches :match',
-            'budget_fit' => 'Right for your budget',
-            'surprise' => 'Not the obvious choice',
-            'vibe' => 'Fits the feeling you wanted',
-            'preference' => 'Matches their taste',
-            'values' => 'Matches what matters to you',
-        ],
     ],
 
     /*

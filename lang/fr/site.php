@@ -1124,7 +1124,7 @@ return [
 
     'gift' => [
         'title' => 'Trouveur de cadeaux',
-        'subtitle' => 'Parlez-nous d’elle ou de lui. Nous trouvons quatre cadeaux qui tiennent la route.',
+        'subtitle' => 'Parlez-nous d’elle ou de lui. Nous trouvons huit cadeaux qui tiennent la route.',
         'seo_description' => 'Décrivez la personne à qui vous offrez et recevez quatre idées de cadeaux, chacune avec sa raison et où l\'acheter.',
 
         'step_who' => 'C’est pour qui ?',
@@ -1132,7 +1132,6 @@ return [
         'step_vibe' => 'Quel effet doit-il faire ?',
         'step_budget' => 'Quel budget ?',
         'step_avoid' => 'Quelque chose à éviter ?',
-        'step_values' => 'Qu’est-ce qui compte pour vous ?',
 
         'interests' => [
             'cooking' => 'La cuisine', 'coffee' => 'Le café', 'photography' => 'La photo',
@@ -1185,7 +1184,7 @@ return [
         'find' => 'Trouver des cadeaux',
         'swap' => 'Autre chose',
         'start_over' => 'Recommencer',
-        'results_title' => 'Quatre idées',
+        'results_title' => 'Huit idées',
         'no_results' => 'Rien ne correspondait. Essayez un budget plus large ou un autre centre d’intérêt.',
         'budget_any' => 'Sans limite',
         'budget_up_to' => 'Jusqu’à',
@@ -1207,7 +1206,7 @@ return [
         'age_band' => ':band ans',
 
         // The results view: what you said, an Adjust button, and the next board.
-        'more' => 'Quatre autres',
+        'more' => 'Huit autres',
         'adjust' => 'Modifier',
         'back_to_ideas' => 'Retour aux idées',
         'summary_for' => 'Pour :name',
@@ -1219,17 +1218,6 @@ return [
         'remember' => 'Retenir ces réponses pour :name',
         'remember_hint' => 'La prochaine fois que vous choisissez :name, ces réponses seront déjà remplies. Si :name a décrit ses propres goûts via son lien, ses réponses restent.',
         'saving_to' => 'Ce que vous enregistrez va sur :list.',
-
-        // The card shows one reason, not a breakdown: three reasons read as a
-        // machine justifying itself.
-        'reasons' => [
-            'interest_fit' => 'Correspond à :match',
-            'budget_fit' => 'Bien placé dans votre budget',
-            'surprise' => 'Pas le choix évident',
-            'vibe' => 'Correspond à l’effet recherché',
-            'preference' => 'Correspond à leurs goûts',
-            'values' => 'Correspond à ce qui compte pour vous',
-        ],
     ],
 
     'ask' => [
