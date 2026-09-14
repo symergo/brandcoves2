@@ -914,7 +914,7 @@ class SuggestionEngine
         // were asked for: an interest the catalogue cannot answer should not
         // reserve seats nothing can fill.
         $interests = $scored
-            ->map(fn (Suggestion $pick) => $pick->primaryInterest)
+            ->map(fn (Suggestion $pick) => $this->interestOf($pick))
             ->filter()
             ->unique()
             ->count();
@@ -931,8 +931,8 @@ class SuggestionEngine
             // candidate, everything is eligible again.
             $eligible = array_filter(
                 $pool,
-                fn (Suggestion $candidate) => $candidate->primaryInterest !== null
-                    && ($taken[$candidate->primaryInterest] ?? 0) < $share,
+                fn (Suggestion $candidate) => $this->interestOf($candidate) !== null
+                    && ($taken[$this->interestOf($candidate)] ?? 0) < $share,
             );
 
             foreach (($eligible !== [] ? $eligible : $pool) as $index => $candidate) {
@@ -957,15 +957,32 @@ class SuggestionEngine
             }
 
             $picked[] = $pool[$bestIndex];
+            $interest = $this->interestOf($pool[$bestIndex]);
 
-            if ($pool[$bestIndex]->primaryInterest !== null) {
-                $taken[$pool[$bestIndex]->primaryInterest] = ($taken[$pool[$bestIndex]->primaryInterest] ?? 0) + 1;
+            if ($interest !== null) {
+                $taken[$interest] = ($taken[$interest] ?? 0) + 1;
             }
 
             unset($pool[$bestIndex]);
         }
 
         return $picked;
+    }
+
+    /**
+     * The interest a suggestion counts against its share.
+     *
+     * `primaryInterest` is the first *term* that matched, which is the
+     * interest's name only when an editor tagged the product and the angle
+     * query the text matched otherwise — "airfryer", "powerbank". Sharing the
+     * board out over those spreads it across queries and leaves the interests
+     * as lopsided as before, which is exactly what it looked like on staging
+     * before this was fixed: seven of eight from one interest. The slot is
+     * the thing the person actually named.
+     */
+    private function interestOf(Suggestion $pick): ?string
+    {
+        return $pick->matchedInterests[0] ?? null;
     }
 
     /**

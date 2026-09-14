@@ -98,6 +98,40 @@ class GiftWhispererTest extends TestCase
         }
     }
 
+    /** A handful of untagged garden products, found by the angle queries alone. */
+    private function gardening(string $title, int $price): void
+    {
+        $group = ProductGroup::create([
+            'market' => Market::BeNl,
+            'identity_key' => 'k'.bin2hex(random_bytes(5)),
+            'identity_kind' => 'ean',
+            'title' => $title.' snoeischaar tuin',
+            'slug' => 'p-'.bin2hex(random_bytes(3)),
+            'category' => 'Tuin',
+            'image_url' => 'https://img.test/x.jpg',
+            'min_price' => $price,
+            'merchant_count' => 1,
+            'in_stock' => true,
+            'giftable' => true,
+        ]);
+
+        Product::create([
+            'source' => Source::Awin,
+            'market' => Market::BeNl,
+            'merchant_id' => $this->merchant->id,
+            'group_id' => $group->id,
+            'external_id' => 'e'.bin2hex(random_bytes(5)),
+            'title' => $group->title,
+            'merchant_category' => 'Tuin',
+            'price' => $price,
+            'currency' => 'EUR',
+            'affiliate_url' => 'https://example.test/buy',
+            'availability' => Availability::InStock,
+            'status' => ProductStatus::Active,
+            'identity_key' => $group->identity_key,
+        ]);
+    }
+
     /** @return list<int> */
     private function pickIds(TestResponse $response): array
     {
@@ -263,6 +297,40 @@ class GiftWhispererTest extends TestCase
     | 1.0 in the diversifier and the ranking is the plain score order — which
     | makes "top four minus the rejected one" checkable to the id.
     */
+
+    /**
+     * The board spreads over the interests even when nothing is tagged.
+     *
+     * Untagged products match on an angle query ("koffiemolen"), not on the
+     * interest's name, so counting the share on the first matched term shares
+     * the board out per query and leaves the interests as lopsided as before.
+     * Staging showed seven of eight cards from one interest with the spread
+     * supposedly in place; this is the oracle for the fix.
+     */
+    #[Test]
+    public function an_untagged_catalogue_still_spreads_over_the_interests(): void
+    {
+        // Coffee is deeper and better priced for the budget, so it takes the
+        // whole board unless the share holds it back.
+        $this->catalogue(20);
+
+        for ($i = 0; $i < 6; $i++) {
+            $this->gardening("Snoeischaar {$i}", 3000 + $i);
+        }
+
+        $ids = $this->pickIds(
+            $this->post('/be-nl/gift', ['interests' => ['coffee', 'gardening'], 'budget_max' => 100])->assertOk()
+        );
+
+        $this->assertCount(8, $ids);
+
+        $gardening = ProductGroup::query()
+            ->whereIn('id', $ids)
+            ->where('category', 'Tuin')
+            ->count();
+
+        $this->assertSame(4, $gardening, 'the second interest did not get its share of the board');
+    }
 
     #[Test]
     public function more_returns_a_board_you_have_not_seen(): void
