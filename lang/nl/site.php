@@ -97,6 +97,7 @@ return [
         'intro' => 'Maak een verlanglijst van alles wat je online én offline vindt. Deel hem met de mensen die cadeaus voor je kopen.',
         'cta_wishlist' => 'Maak mijn verlanglijst',
         'search_placeholder' => 'Zoek een cadeau of scan een streepjescode',
+        'search_placeholder_plain' => 'Zoek een cadeau',
         'recently_viewed' => 'Je bekeek',
         'cta_gift' => 'Vind een cadeau',
         'today_badge' => 'Cove van vandaag',

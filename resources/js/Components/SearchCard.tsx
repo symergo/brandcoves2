@@ -1,4 +1,5 @@
 import { router, usePage } from '@inertiajs/react'
+import { useEffect, useState } from 'react'
 import ScanButton from './ScanButton'
 import ToolIcon from './ToolIcon'
 import { isCleanTerm, searchHref } from '../searchUrl'
@@ -26,11 +27,36 @@ import { useTranslations } from '../useTranslations'
  * placeholder is the one place allowed to promise it. The wasm decoder is
  * fetched inside the click handler, so a page nobody scans from loads
  * nothing extra.
+ *
+ * **And it only promises it where the button is.** `ScanButton` is `md:hidden`
+ * — a laptop webcam pointed at a shelf is a party trick — so on a desktop the
+ * placeholder was offering a scanner with no button anywhere on the page
+ * (owner's report, 2026-09-14). The plain wording is the default, including
+ * in SSR and with no JavaScript, and the offer is added after mount on a
+ * viewport narrow enough to show the button. That way the promise and the
+ * control appear together or not at all.
  */
 export default function SearchCard({ className = '' }: { className?: string }) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
+
+    // The same breakpoint ScanButton hides itself at, read once and then on
+    // change: a phone held sideways loses the button, and a placeholder that
+    // kept promising a scan would be the same lie in miniature.
+    const [canScan, setCanScan] = useState(false)
+
+    useEffect(() => {
+        const narrow = window.matchMedia('(max-width: 767.98px)')
+        const sync = () => setCanScan(narrow.matches)
+
+        sync()
+        narrow.addEventListener('change', sync)
+
+        return () => narrow.removeEventListener('change', sync)
+    }, [])
+
+    const placeholder = canScan ? t('home.search_placeholder') : t('home.search_placeholder_plain')
 
     return (
         <section
@@ -59,8 +85,8 @@ export default function SearchCard({ className = '' }: { className?: string }) {
                     name="q"
                     // The placeholder is the label: two strings for one field
                     // drift apart the moment one of them is rewritten.
-                    aria-label={t('home.search_placeholder')}
-                    placeholder={t('home.search_placeholder')}
+                    aria-label={placeholder}
+                    placeholder={placeholder}
                     className="h-12 min-w-0 flex-1 rounded-card border border-line bg-cream px-4 text-ink placeholder:text-ink-soft focus:border-ink"
                 />
                 <ScanButton className="h-12 w-12 shrink-0 rounded-card border border-line bg-cream text-ink transition hover:border-ink" />

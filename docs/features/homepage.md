@@ -95,6 +95,14 @@ rewritten to *"Search for a gift or scan a barcode"* — so a screen reader anno
 everyone else saw another. Two strings for one control drift apart the moment one of them is
 edited; the field now labels itself with its placeholder, as the search page's already did.
 
+**The placeholder only offers the scan where the scanner is** (owner's report, 2026-09-14).
+`ScanButton` is `md:hidden` — a laptop webcam pointed at a shelf is a party trick — so on a desktop
+the field was promising a scanner with no button anywhere on the page. `home.search_placeholder_plain`
+is the default, which is what SSR renders and what anybody without JavaScript keeps, and
+`SearchCard` swaps in the scanning wording after mount when `(max-width: 767.98px)` matches, the
+same breakpoint the button hides at. It listens for changes too, so turning a phone sideways takes
+the offer away with the button. Promise and control appear together or not at all.
+
 **`home.gifting_lists_hint`** was the zero-state line under the Lists card: *"Keep things for
 yourself or share them with others"*, under a card called **Lists**. The card showed its count when
 there was one and nothing when there was not — until the band intros went too, below.

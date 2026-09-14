@@ -97,6 +97,7 @@ return [
         'intro' => 'Crea una lista de deseos con cualquier cosa que encuentres en internet o en la tienda. Compártela con las personas que te hacen regalos.',
         'cta_wishlist' => 'Crear mi lista de deseos',
         'search_placeholder' => 'Busca un regalo o escanea un código de barras',
+        'search_placeholder_plain' => 'Busca un regalo',
         'recently_viewed' => 'Has visto',
         'cta_gift' => 'Buscar un regalo',
         'today_badge' => 'La Cove de hoy',

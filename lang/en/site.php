@@ -142,6 +142,7 @@ return [
         // to a `ScanButton` — this one and `search.placeholder` — may promise
         // it; the same line in a modal with no camera is a broken promise.
         'search_placeholder' => 'Search for a gift or scan a barcode',
+        'search_placeholder_plain' => 'Search for a gift',
         'recently_viewed' => 'You looked at',
         'cta_gift' => 'Find a gift',
         'today_badge' => "Today's Cove",

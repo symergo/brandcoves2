@@ -98,6 +98,7 @@ return [
         'intro' => 'Créez une liste d’envies à partir de tout ce que vous trouvez en ligne ou en magasin. Partagez-la avec les personnes qui vous offrent des cadeaux.',
         'cta_wishlist' => 'Créer ma liste d’envies',
         'search_placeholder' => 'Cherchez un cadeau ou scannez un code-barres',
+        'search_placeholder_plain' => 'Cherchez un cadeau',
         'recently_viewed' => 'Vous avez regardé',
         'cta_gift' => 'Trouver un cadeau',
         'today_badge' => 'La Cove du jour',
