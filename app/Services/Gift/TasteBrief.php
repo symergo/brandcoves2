@@ -25,7 +25,7 @@ final readonly class TasteBrief
     /**
      * @param  list<string>  $interests  Interest enum values and/or free text
      * @param  list<string>  $avoid  hard exclusions, matched against the title
-     * @param  list<string>  $styles  Style enum values; several may be true of one taste
+     * @param  list<string>  $preferences  Preference poles; several axes, never both ends of one
      * @param  list<string>  $values  'sustainable', 'local', 'handmade'
      * @param  list<int>  $excludeGroupIds  already shown, swapped away, or on the list
      * @param  string|null  $query  a typed search, when the person also knows what they want
@@ -34,7 +34,7 @@ final readonly class TasteBrief
         public Market $market,
         public array $interests = [],
         public ?Vibe $vibe = null,
-        public array $styles = [],
+        public array $preferences = [],
         public ?int $budgetMin = null,
         public ?int $budgetMax = null,
         public array $avoid = [],
@@ -54,7 +54,7 @@ final readonly class TasteBrief
             market: $market,
             interests: array_values(array_filter((array) $recipient->interests)),
             vibe: $recipient->vibe === null ? null : Vibe::tryFrom($recipient->vibe),
-            styles: array_values(array_filter((array) $recipient->styles)),
+            preferences: array_values(array_filter((array) $recipient->preferences)),
             budgetMin: $recipient->budget_min,
             budgetMax: $recipient->budget_max,
             avoid: array_values(array_filter((array) $recipient->avoid)),
@@ -131,14 +131,14 @@ final readonly class TasteBrief
      *
      * @param  list<string>|null  $interests
      * @param  list<string>|null  $avoid
-     * @param  list<string>|null  $styles
+     * @param  list<string>|null  $preferences
      * @param  list<string>|null  $values
      * @param  list<int>|null  $excludeGroupIds
      */
     private function with(
         ?array $interests = null,
         ?Vibe $vibe = null,
-        ?array $styles = null,
+        ?array $preferences = null,
         ?array $avoid = null,
         ?array $values = null,
         ?array $excludeGroupIds = null,
@@ -150,7 +150,7 @@ final readonly class TasteBrief
             market: $this->market,
             interests: $interests ?? $this->interests,
             vibe: $vibe ?? $this->vibe,
-            styles: $styles ?? $this->styles,
+            preferences: $preferences ?? $this->preferences,
             budgetMin: $this->budgetMin,
             budgetMax: $this->budgetMax,
             avoid: $avoid ?? $this->avoid,

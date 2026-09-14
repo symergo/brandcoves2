@@ -109,7 +109,7 @@ person told us who they are shopping for; "we found nothing" throws that away.
 | `budget_fit` | 20 | Peaks at 85% of the ceiling, falls away on both sides. A €12 gift against a €100 budget reads as thoughtless, not thrifty. |
 | `surprise` | 10 | From [the Serendipity Engine](serendipity.md). 20 until 2026-09-14; five points went to `recipient_fit`, five to `occasion`. |
 | `vibe` | 10 | A nudge, never a filter — someone who said "playful" still wants the good headphones if headphones are the right answer. |
-| `style` | 5 | What it should look like: modern, vintage, classic, minimal, colourful, natural, cosy. Added 2026-09-14. Any one of the styles named matching is a match. 10 in `for_myself`, where the finish is half the point of wanting the thing. |
+| `preference` | 5 | Which way their taste goes, as seven axes of two poles: practical/design, modern/vintage, minimal/colourful, cosy/sleek, natural/technical, everyday/luxurious, classic/quirky. Added 2026-09-14. Any one of the poles named matching is a match, and the pole *not* chosen is never scored against a product. 10 in `for_myself`, where the finish is half the point of wanting the thing. |
 | `values` | 10 | Sustainable / local / handmade. |
 | `recipient_fit` | 5 | An editor's `recipient:` or `age:` tag meeting the brief's relationship or age band. No text fallback. See [gift-tags.md](gift-tags.md). |
 | `occasion` | 5 | An editor's `occasion:` tag meeting the brief's occasion, or the word in the title. Zero until 2026-09-14: title words alone were too thin to trust. |
@@ -346,22 +346,32 @@ is `/gift` after a suggest (and `show()` flushes the rejection memory on the way
 after a swap (a 405). Signed-in owners only: an anonymous visitor cannot save, so a list they could
 never use would be noise in the picker. `RecipientProfileController::theirList()` is the precedent.
 
-## The vibe step asks the style too (2026-09-14)
+## The vibe step asks which way their taste goes (2026-09-14)
 
-The owner's ask was "practical vs design, modern vs vintage, useful vs beautiful". The first and
-third of those the vibe already answers; the second it cannot, and no amount of stretching the
-three vibes makes it. So there is a second vocabulary beside it, `App\Enums\Style`: modern,
-vintage, classic, minimal, colourful, natural, cosy.
+The owner's ask was "practical vs design, modern vs vintage, useful vs beautiful", and the first
+answer here was a flat list of looks. The correction came within the hour — "it's more than style"
+— and it is the design: the *vs* is the point. A taste is a handful of choices between two ways a
+present can go, and a person recognises their own by being shown both ends rather than by reading
+a bag of adjectives and picking none.
 
-It is a second row inside the vibe step, not a step of its own, because every step after the first
-is one people skip and this is one question about taste asked two ways. The vibe stays a single
-choice and the style takes up to three, since somebody who likes vintage *and* colourful things
-has one taste rather than two. A saved person remembers it in `recipients.styles`, next to the
-vibe and the values they already remembered.
+`App\Enums\Preference` is seven axes of two poles: practical/design, modern/vintage,
+minimal/colourful, cosy/sleek, natural/technical, everyday/luxurious, classic/quirky. The wizard draws one row per axis inside
+the vibe step — not a step of its own, because every step after the first is one people skip —
+with up to three chosen across the whole answer, and picking one end clears the other because
+nothing is both modern and vintage. A saved person remembers them in `recipients.preferences`,
+next to the vibe and the values they already remembered.
 
-Scored like `values` and for the same reason: an editor's `style:` tag first, the title words as a
-fallback (a feed says "eiken" far more often than anyone tags `style:natural`), and a neutral 0.5
-when the question was not asked, so skipping it costs nothing.
+The first axis is the owner's headline pair, practical or design, and it asks the vibe question
+again on purpose: it belongs in the form the rest of the taste is asked in. The vibe itself does
+not change — one pick of three, and what thousands of products are already tagged with — so a
+product can carry both, and two signals that agree are the same fact said twice. The other six
+axes are everything the vibe cannot carry at all.
+
+Scored like `values` and for the same reason: an editor's `preference:` tag first, the title words
+as a fallback (a feed says "eiken" far more often than anyone tags `preference:natural`), and a
+neutral 0.5 when the question was not asked, so skipping it costs nothing. The opposite pole is
+never scored against a product: a cosy present shown to someone who said "sleek" is merely not
+what they asked for, and the rest of the brief judges it better than this signal would.
 
 ## The wizard asks the age, from fixed groups (2026-09-14)
 

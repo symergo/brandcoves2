@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import type { Cents, SavingTo, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
@@ -18,7 +18,7 @@ interface Recipient {
     relationship: string | null
     interests: string[]
     vibe: string | null
-    styles: string[]
+    preferences: string[]
     budgetMin: Cents | null
     budgetMax: Cents | null
     avoid: string[]
@@ -41,7 +41,7 @@ interface Pick {
 interface Brief {
     interests?: string[]
     vibe?: string | null
-    styles?: string[]
+    preferences?: string[]
     budget_min?: number | null
     budget_max?: number | null
     avoid?: string[]
@@ -54,7 +54,14 @@ interface Brief {
 }
 
 interface Props {
-    options: { interests: Option[]; vibes: Option[]; styles: Option[]; values: string[]; ages: Option[] }
+    options: {
+        interests: Option[]
+        vibes: Option[]
+        /** Taste as axes: each one drawn as its two ends, so picking a side is one click. */
+        preferences: { axis: string; poles: [Option, Option] }[]
+        values: string[]
+        ages: Option[]
+    }
     recipients: Recipient[]
     picks: Pick[] | null
     brief: Brief | null
@@ -81,7 +88,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
     const [step, setStep] = useState(0)
     const [interests, setInterests] = useState<string[]>(brief?.interests ?? [])
     const [vibe, setVibe] = useState<string | null>(brief?.vibe ?? null)
-    const [styles, setStyles] = useState<string[]>(brief?.styles ?? [])
+    const [preferences, setPreferences] = useState<string[]>(brief?.preferences ?? [])
     const [budgetMax, setBudgetMax] = useState<string>(
         brief?.budget_max != null ? String(brief.budget_max) : '',
     )
@@ -128,7 +135,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
     const payload = (overrides: Partial<{ remember: boolean }> = {}) => ({
         interests,
         vibe,
-        styles,
+        preferences,
         budget_max: budgetMax === '' ? null : Number(budgetMax),
         avoid,
         values,
@@ -192,7 +199,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
         setRecipientId(chosen.id)
         setInterests(chosen.interests)
         setVibe(chosen.vibe)
-        setStyles(chosen.styles ?? [])
+        setPreferences(chosen.preferences ?? [])
         setAvoid(chosen.avoid)
         setValues(chosen.values)
         setRelationship(chosen.relationship)
@@ -272,9 +279,9 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                 {options.ages.find((o) => o.value === ageBand)?.label ?? ageBand}
                             </span>
                         )}
-                        {styles.map((style) => (
-                            <span key={style} className="rounded-full border border-line px-3 py-1 text-sm">
-                                {t(`gift.styles.${style}`)}
+                        {preferences.map((preference) => (
+                            <span key={preference} className="rounded-full border border-line px-3 py-1 text-sm">
+                                {t(`gift.preferences.${preference}`)}
                             </span>
                         ))}
                         {vibe && (
@@ -523,20 +530,56 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                                     ))}
                                 </div>
 
+                                {/*
+                                  Taste as pairs of opposites, one row an axis.
+
+                                  A flat list of adjectives was the first
+                                  attempt and the owner's correction was the
+                                  design: "it's more than style: practical vs
+                                  beautiful, useful vs design". The *vs* is
+                                  the point. Shown both ends, a person
+                                  recognises their own taste; shown a bag of
+                                  words, they read all of them and pick none.
+
+                                  Picking one end clears the other, because
+                                  nothing is both modern and vintage. The cap
+                                  counts the whole answer, not the row.
+                                */}
                                 <div>
-                                    <p className="mb-2 text-sm text-ink-soft">{t('gift.style_label')}</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {options.styles.map((option) => (
-                                            <button
-                                                key={option.value}
-                                                type="button"
-                                                aria-pressed={styles.includes(option.value)}
-                                                className={chip(styles.includes(option.value))}
-                                                onClick={() => toggle(styles, setStyles, option.value)}
-                                                disabled={!styles.includes(option.value) && styles.length >= 3}
-                                            >
-                                                {option.label}
-                                            </button>
+                                    <p className="mb-3 text-sm text-ink-soft">{t('gift.preference_label')}</p>
+                                    <div className="space-y-2">
+                                        {options.preferences.map(({ axis, poles }) => (
+                                            <div key={axis} className="flex flex-wrap items-center gap-2">
+                                                {poles.map((pole, index) => (
+                                                    <Fragment key={pole.value}>
+                                                        {index === 1 && (
+                                                            <span aria-hidden className="text-xs text-ink-soft">
+                                                                {t('gift.preference_or')}
+                                                            </span>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            aria-pressed={preferences.includes(pole.value)}
+                                                            className={chip(preferences.includes(pole.value))}
+                                                            onClick={() =>
+                                                                setPreferences((current) => {
+                                                                    const other = poles[index === 0 ? 1 : 0].value
+                                                                    const without = current.filter(
+                                                                        (value) => value !== pole.value && value !== other,
+                                                                    )
+
+                                                                    return current.includes(pole.value) ||
+                                                                        without.length >= 3
+                                                                        ? without
+                                                                        : [...without, pole.value]
+                                                                })
+                                                            }
+                                                        >
+                                                            {pole.label}
+                                                        </button>
+                                                    </Fragment>
+                                                ))}
+                                            </div>
                                         ))}
                                     </div>
                                 </div>

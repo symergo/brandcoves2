@@ -451,10 +451,11 @@ return [
                     // twenty points to do that.
                     'surprise' => 10,
                     'vibe' => 10,
-                    // What it should look like: modern, vintage, cosy. Half
-                    // of vibe, because the right present in the wrong finish
-                    // still beats the wrong present in the right one.
-                    'style' => 5,
+                    // Which way their taste goes: modern or vintage, cosy or
+                    // sleek. Half of vibe, because the right present in the
+                    // wrong finish still beats the wrong present in the right
+                    // one.
+                    'preference' => 5,
                     'values' => 10,
                     // An editor's `recipient:mother` tag meeting "mother" in
                     // the brief. Small: it decides between two good answers.
@@ -495,10 +496,10 @@ return [
                     // into whatever is best stocked.
                     'surprise' => 15,
                     'vibe' => 15,
-                    // Your own look, worth more here than when buying for
+                    // Your own taste, worth more here than when buying for
                     // someone else: on your own list the finish is half the
                     // point of wanting the thing.
-                    'style' => 10,
+                    'preference' => 10,
                     'values' => 15,
                     // Small, and the opposite sign to the gift case. Nobody
                     // wants a surprising kettle on their own list; they want the

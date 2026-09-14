@@ -1324,14 +1324,21 @@ return [
             'beautiful' => 'Beautiful',
         ],
 
-        'styles' => [
+        'preferences' => [
+            'practical' => 'Practical',
+            'design' => 'Design',
             'modern' => 'Modern',
             'vintage' => 'Vintage',
-            'classic' => 'Classic',
             'minimal' => 'Understated',
             'colourful' => 'Colourful',
-            'natural' => 'Natural',
             'cosy' => 'Cosy',
+            'sleek' => 'Sleek',
+            'natural' => 'Natural',
+            'technical' => 'Technical',
+            'everyday' => 'Everyday',
+            'luxurious' => 'Luxurious',
+            'classic' => 'Classic',
+            'quirky' => 'Quirky',
         ],
 
         'values' => [
@@ -1340,7 +1347,8 @@ return [
             'handmade' => 'Handmade',
         ],
 
-        'style_label' => 'And how should it look? (up to 3)',
+        'preference_label' => 'And which way does their taste go? (up to 3)',
+        'preference_or' => 'or',
 
         'find' => 'Find gifts',
         'swap' => 'Something else',
@@ -1387,7 +1395,7 @@ return [
             'budget_fit' => 'Right for your budget',
             'surprise' => 'Not the obvious choice',
             'vibe' => 'Fits the feeling you wanted',
-            'style' => 'Matches the style you chose',
+            'preference' => 'Matches their taste',
             'values' => 'Matches what matters to you',
         ],
     ],

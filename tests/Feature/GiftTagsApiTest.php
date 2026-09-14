@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Enums\Availability;
 use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\Preference;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Models\ApiToken;
@@ -109,7 +110,7 @@ class GiftTagsApiTest extends TestCase
     {
         $vocabulary = GiftTags::vocabulary();
 
-        $this->assertSame(['interest', 'occasion', 'recipient', 'age', 'vibe', 'style', 'values'], array_keys($vocabulary));
+        $this->assertSame(['interest', 'occasion', 'recipient', 'age', 'vibe', 'preference', 'values'], array_keys($vocabulary));
         $this->assertContains('coffee', $vocabulary['interest']);
         $this->assertContains('christmas', $vocabulary['occasion']);
         $this->assertContains('sinterklaas', $vocabulary['occasion']);
@@ -121,9 +122,16 @@ class GiftTagsApiTest extends TestCase
         $this->assertNotContains('teen', $vocabulary['recipient']);
         $this->assertSame(['0-2', '3-5', '6-9', '10-12', '13-17', '18-29', '30-49', '50-64', '65+'], $vocabulary['age']);
         $this->assertContains('playful', $vocabulary['vibe']);
-        // What it looks like, which the vibe cannot say.
-        $this->assertContains('vintage', $vocabulary['style']);
-        $this->assertContains('style:vintage', GiftTags::all());
+        // Which way their taste goes, which the vibe cannot say. Pairs of
+        // opposites, so every pole has its other end in the list.
+        $this->assertContains('vintage', $vocabulary['preference']);
+        $this->assertContains('preference:vintage', GiftTags::all());
+
+        foreach (Preference::cases() as $pole) {
+            $this->assertNotSame($pole, $pole->opposite(), $pole->value.' sits on no axis');
+            $this->assertSame($pole, $pole->opposite()->opposite());
+            $this->assertSame($pole->axis(), $pole->opposite()->axis());
+        }
         $this->assertContains('handmade', $vocabulary['values']);
         $this->assertContains('interest:coffee', GiftTags::all());
     }

@@ -6,8 +6,8 @@ namespace App\Services\Gift;
 
 use App\Enums\EventType;
 use App\Enums\Interest;
+use App\Enums\Preference;
 use App\Enums\RecipientType;
-use App\Enums\Style;
 use App\Enums\Vibe;
 
 /**
@@ -18,7 +18,7 @@ use App\Enums\Vibe;
  * gift is for, how old they are, and the wizard's three other questions, how
  * it should feel, what it should look like and what should matter about it. A
  * tag is `<vocabulary>:<value>`, so `interest:coffee`, `occasion:christmas`,
- * `recipient:mother`, `age:13-17`, `vibe:playful`, `style:vintage`,
+ * `recipient:mother`, `age:13-17`, `vibe:playful`, `preference:vintage`,
  * `values:handmade`. Closed rather than free text
  * because a tag is only worth having when the wizard can ask for exactly it:
  * a brief says "coffee" and a product says `interest:coffee`, and the two meet
@@ -40,7 +40,7 @@ class GiftTags
 
     public const VIBE = 'vibe';
 
-    public const STYLE = 'style';
+    public const PREFERENCE = 'preference';
 
     public const VALUES = 'values';
 
@@ -96,12 +96,12 @@ class GiftTags
             ],
             self::RECIPIENT => RecipientType::values(),
             self::AGE => self::AGE_BANDS,
-            // The wizard's "how should it feel", "what should it look like"
-            // and "anything that matters" questions. The engine guesses all
-            // three from title words ("luxe", "eiken", "duurzaam"); a tag is
-            // an editor saying so, and it wins.
+            // The wizard's "how should it feel", "which way does their taste
+            // go" and "anything that matters" questions. The engine guesses
+            // all three from title words ("luxe", "eiken", "duurzaam"); a tag
+            // is an editor saying so, and it wins.
             self::VIBE => Vibe::values(),
-            self::STYLE => Style::values(),
+            self::PREFERENCE => Preference::values(),
             self::VALUES => self::VALUE_OPTIONS,
         ];
     }
@@ -181,9 +181,9 @@ class GiftTags
         return self::VIBE.':'.mb_strtolower(trim($value));
     }
 
-    public static function style(string $value): string
+    public static function preference(string $value): string
     {
-        return self::STYLE.':'.mb_strtolower(trim($value));
+        return self::PREFERENCE.':'.mb_strtolower(trim($value));
     }
 
     public static function value(string $value): string

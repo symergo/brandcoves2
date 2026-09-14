@@ -1159,14 +1159,21 @@ return [
             'beautiful' => 'Mooi',
         ],
 
-        'styles' => [
+        'preferences' => [
+            'practical' => 'Handig',
+            'design' => 'Design',
             'modern' => 'Modern',
             'vintage' => 'Vintage',
-            'classic' => 'Klassiek',
             'minimal' => 'Sober',
             'colourful' => 'Kleurrijk',
-            'natural' => 'Natuurlijk',
             'cosy' => 'Knus',
+            'sleek' => 'Strak',
+            'natural' => 'Natuurlijk',
+            'technical' => 'Technisch',
+            'everyday' => 'Alledaags',
+            'luxurious' => 'Luxueus',
+            'classic' => 'Klassiek',
+            'quirky' => 'Eigenzinnig',
         ],
 
         'values' => [
@@ -1175,7 +1182,8 @@ return [
             'handmade' => 'Handgemaakt',
         ],
 
-        'style_label' => 'En hoe mag het eruitzien? (maximaal 3)',
+        'preference_label' => 'En welke kant gaat hun smaak op? (maximaal 3)',
+        'preference_or' => 'of',
 
         'find' => 'Zoek cadeaus',
         'swap' => 'Iets anders',
@@ -1222,7 +1230,7 @@ return [
             'budget_fit' => 'Past binnen je budget',
             'surprise' => 'Niet de voor de hand liggende keuze',
             'vibe' => 'Past bij het gevoel dat je zocht',
-            'style' => 'Past bij de stijl die je koos',
+            'preference' => 'Past bij hun smaak',
             'values' => 'Sluit aan bij wat jij belangrijk vindt',
         ],
     ],

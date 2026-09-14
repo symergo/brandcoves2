@@ -438,21 +438,29 @@ class GiftWhispererTest extends TestCase
     }
 
     /**
-     * The style question, added 2026-09-14: what a present should look like,
-     * which the vibe cannot say. Several may be chosen, only the seven
-     * offered are accepted, and the answer rides the brief back to the page.
+     * The taste question, added 2026-09-14: which way a person's taste goes,
+     * which the vibe cannot say. Asked as pairs of opposites; several may be
+     * chosen, only the twelve poles are accepted, and the answer rides the
+     * brief back to the page.
      */
     #[Test]
-    public function the_style_is_several_of_the_offered_ones_or_nothing(): void
+    public function the_taste_is_several_of_the_offered_poles_or_nothing(): void
     {
         $this->catalogue();
 
-        $this->post('/be-nl/gift', [...$this->brief(), 'styles' => ['vintage', 'cosy']])
+        $this->post('/be-nl/gift', [...$this->brief(), 'preferences' => ['vintage', 'cosy']])
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('brief.styles', ['vintage', 'cosy']));
+            ->assertInertia(fn ($page) => $page
+                ->where('brief.preferences', ['vintage', 'cosy'])
+                // The wizard draws the axes, so the page is given them as
+                // axes, the owner's headline pair first.
+                ->where('options.preferences.0.axis', 'purpose')
+                ->where('options.preferences.0.poles.0.value', 'practical')
+                ->where('options.preferences.0.poles.1.value', 'design')
+                ->where('options.preferences.1.poles.1.value', 'vintage'));
 
-        $this->post('/be-nl/gift', [...$this->brief(), 'styles' => ['edgy']])
-            ->assertSessionHasErrors('styles.0');
+        $this->post('/be-nl/gift', [...$this->brief(), 'preferences' => ['edgy']])
+            ->assertSessionHasErrors('preferences.0');
     }
 
     #[Test]
@@ -465,7 +473,7 @@ class GiftWhispererTest extends TestCase
             ->post('/be-nl/gift', [
                 'interests' => ['coffee', 'wielrennen'],
                 'vibe' => 'playful',
-                'styles' => ['vintage'],
+                'preferences' => ['vintage'],
                 'budget_max' => 60,
                 'recipient_id' => $mum->id,
                 'remember' => true,
@@ -476,7 +484,7 @@ class GiftWhispererTest extends TestCase
 
         $this->assertSame(['coffee', 'wielrennen'], $mum->interests);
         $this->assertSame('playful', $mum->vibe);
-        $this->assertSame(['vintage'], $mum->styles);
+        $this->assertSame(['vintage'], $mum->preferences);
         $this->assertSame(TasteSource::Suggested, $mum->taste_source);
         // Euros in, cents stored — invariant 7.
         $this->assertSame(6000, $mum->budget_max);
