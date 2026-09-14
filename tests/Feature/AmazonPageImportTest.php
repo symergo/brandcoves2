@@ -111,16 +111,6 @@ class AmazonPageImportTest extends TestCase
     }
 
     #[Test]
-    public function amazon_is_still_forbidden_from_the_catalogue(): void
-    {
-        // The gate itself, asserted directly. Flipping this one boolean would
-        // silently re-enable Amazon storage at eight call sites, each of which
-        // encodes its own compliance reasoning.
-        $this->assertFalse(Source::Amazon->allowsCatalogueStorage());
-        $this->assertTrue(Source::Bol->allowsCatalogueStorage());
-    }
-
-    #[Test]
     public function no_price_can_be_stored_by_any_route(): void
     {
         // Sent anyway, as a hostile or merely outdated client would. It is not

@@ -293,25 +293,4 @@ class CopyItemToListTest extends TestCase
 
         $this->assertSame(0, $mine->items()->count());
     }
-
-    #[Test]
-    public function a_copy_from_a_shared_list_arrives_unclaimed(): void
-    {
-        // Their own claim state is theirs. It must not appear on my list, where
-        // I can see it.
-        $me = User::factory()->create();
-        $mine = $this->list($me);
-
-        $theirs = $this->list(User::factory()->create());
-        $item = WishlistItem::factory()->create([
-            'wishlist_id' => $theirs->id,
-            'claimed_by_hash' => str_repeat('b', 64),
-            'claimed_at' => now(),
-        ]);
-
-        $this->actingAs($me)
-            ->post("/be-nl/l/{$theirs->share_token}/items/{$item->id}/copy", ['to' => $mine->id]);
-
-        $this->assertNull($mine->items()->firstOrFail()->claimed_by_hash);
-    }
 }

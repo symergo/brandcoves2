@@ -134,21 +134,6 @@ class GroupListTest extends TestCase
     }
 
     #[Test]
-    public function the_group_view_is_no_longer_structurally_empty(): void
-    {
-        // `?view=group` shipped with the index and could never return a row,
-        // because nothing could write the kind it filters on.
-        $user = User::factory()->create();
-        $list = $this->groupList($user);
-
-        $response = $this->actingAs($user)->get('/be-nl/lists?view=group')->assertOk();
-
-        $ids = array_column($this->props($response)['lists'], 'id');
-
-        $this->assertContains($list->id, $ids);
-    }
-
-    #[Test]
     public function a_group_list_appears_under_group_lists_as_a_list_i_own_and_not_under_my_wish_lists(): void
     {
         // Since 2026-09-13 the default view is my wish lists alone; a group
@@ -431,37 +416,6 @@ class GroupListTest extends TestCase
     // --- Contributions: the write gate --------------------------------------
 
     #[Test]
-    public function a_group_list_can_be_contributed_to(): void
-    {
-        /*
-         * The gate used to be `allowsClaiming()`, which is mine-only — so a
-         * list for a third person structurally could not carry contributions.
-         *
-         * The route names no item, and that is the second half of the same
-         * idea: a group list is ONE present, so the money is towards the list
-         * and the items under it are candidates nobody has chosen between yet.
-         * Pledging against one would be a bet, and most of those bets would end
-         * up attached to something nobody buys.
-         */
-        $organiser = User::factory()->create();
-        $list = $this->groupList($organiser);
-        $item = WishlistItem::factory()->create(['wishlist_id' => $list->id]);
-
-        // Euros on the wire for this one endpoint, which has validated and
-        // multiplied them since it shipped; `Pledge.tsx` normalises the comma
-        // half our markets type before it gets here.
-        $this->actingAs(User::factory()->create())
-            ->post("/be-nl/l/{$list->share_token}/pledge", [
-                'amount' => '25.50',
-                'display_name' => 'Zzyzx',
-            ])
-            ->assertRedirect();
-
-        // Cents in the column, per invariant #7.
-        $this->assertSame(2550, GiftPledge::query()->firstOrFail()->amount);
-    }
-
-    #[Test]
     public function the_organiser_of_a_group_list_may_contribute_to_it(): void
     {
         // They front the money and collect afterwards; refusing them would lock
@@ -725,6 +679,19 @@ class GroupListTest extends TestCase
     #[Test]
     public function everyone_names_their_own_amount_until_a_share_is_set(): void
     {
+        /*
+         * The gate used to be `allowsClaiming()`, which is mine-only — so a
+         * list for a third person structurally could not carry contributions.
+         *
+         * The route names no item, and that is the second half of the same
+         * idea: a group list is ONE present, so the money is towards the list
+         * and the items under it are candidates nobody has chosen between yet.
+         * Pledging against one would be a bet, and most of those bets would end
+         * up attached to something nobody buys.
+         *
+         * Euros on the wire for this one endpoint; cents in the column, per
+         * invariant #7.
+         */
         $organiser = User::factory()->create();
         $list = $this->groupList($organiser);
         WishlistItem::factory()->create(['wishlist_id' => $list->id]);
@@ -779,27 +746,5 @@ class GroupListTest extends TestCase
         $this->get("/be-nl/l/{$list->share_token}")
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('pot', null));
-    }
-
-    #[Test]
-    public function a_research_list_carries_no_contributions_at_all(): void
-    {
-        // `for_someone` is one person's research: nothing to pool against, and
-        // no key to render.
-        $owner = User::factory()->create();
-
-        $list = Wishlist::factory()->create([
-            'owner_user_id' => $owner->id,
-            'recipient_id' => Recipient::factory()->create(['owner_user_id' => $owner->id])->id,
-            'kind' => ListKind::ForSomeone,
-            'market' => Market::BeNl,
-            'visibility' => ListVisibility::Link,
-        ]);
-
-        WishlistItem::factory()->create(['wishlist_id' => $list->id]);
-
-        $response = $this->get("/be-nl/l/{$list->share_token}")->assertOk();
-
-        $this->assertArrayNotHasKey('contributions', $this->props($response)['items'][0]);
     }
 }

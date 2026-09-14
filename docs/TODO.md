@@ -31,7 +31,7 @@ rather than through the connector, so the 401 is eBay refusing the pair, not our
 no Marketplace Account Deletion endpoint. A non-compliant keyset does not mint production tokens,
 which is the whole of the `invalid_client` above — the credentials were never the problem.
 
-That endpoint now exists: `/webhooks/ebay/account-deletion`, 11 tests, verified end to end against
+That endpoint now exists: `/webhooks/ebay/account-deletion`, tested, verified end to end against
 the local dev server ([ebay-account-deletion.md](features/ebay-account-deletion.md)).
 
 **So the remaining work is a sequence, and the order matters** — eBay validates the endpoint the

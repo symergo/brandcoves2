@@ -29,14 +29,6 @@ class LegacyHostRedirectTest extends TestCase
     }
 
     #[Test]
-    public function the_old_domain_redirects_permanently_to_the_new_one(): void
-    {
-        $this->get('http://brandcoves.com/be-nl')
-            ->assertStatus(301)
-            ->assertRedirect('http://giftcoves.com/be-nl');
-    }
-
-    #[Test]
     public function the_path_and_query_survive_the_move(): void
     {
         /*

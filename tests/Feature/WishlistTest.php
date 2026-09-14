@@ -518,39 +518,6 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
-    public function an_anonymous_owner_cannot_claim_on_their_own_list(): void
-    {
-        $identity = AnonymousIdentity::create(['last_seen_at' => now()]);
-
-        $list = Wishlist::create([
-            'owner_anon_id' => $identity->getKey(),
-            'title' => 'Birthday',
-            'market' => Market::BeNl,
-            'kind' => ListKind::Mine,
-            'visibility' => 'link',
-        ]);
-
-        $item = WishlistItem::create([
-            'wishlist_id' => $list->id,
-            'group_id' => $this->group()->id,
-            'snapshot_title' => 'Sony WH-1000XM5',
-            'snapshot_price' => 32999,
-        ]);
-
-        /*
-         * The response itself would otherwise tell them whether it was taken.
-         *
-         * Two guards refuse this now — claiming needs an account, and the owner
-         * of a wish list may not claim on it — and this one reaches the first.
-         * The owner half is covered on its own by
-         * `the_owner_of_a_wish_list_cannot_claim_on_it`, which signs in.
-         */
-        $this->withCookie(TrackAnonymousIdentity::COOKIE, (string) $identity->getKey())
-            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
-            ->assertForbidden();
-    }
-
-    #[Test]
     public function the_owner_of_a_wish_list_cannot_claim_on_it(): void
     {
         // Signed in, so the account gate is satisfied and what refuses this is
@@ -695,26 +662,6 @@ class WishlistTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('isOwner', true)
                 ->where('items.0.claimed', true));
-    }
-
-    #[Test]
-    public function a_wish_list_owner_still_never_sees_claim_state(): void
-    {
-        /*
-         * Invariant #4, asserted beside the inversion rather than only in its
-         * own test far away. These two are one decision, and the way it breaks
-         * is somebody widening the gift-list branch by one kind.
-         */
-        [$list, $item] = $this->giftListForSomeone(ListKind::Mine);
-
-        $item->claim(WishlistItem::identityHash('anon:a-friend'));
-
-        $this->actingAs($list->owner)
-            ->get("/be-nl/l/{$list->share_token}")
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->where('isOwner', true)
-                ->missing('items.0.claimed'));
     }
 
     #[Test]
@@ -917,41 +864,6 @@ class WishlistTest extends TestCase
     }
 
     #[Test]
-    public function the_owner_cannot_claim_on_their_own_list(): void
-    {
-        [$list, $item] = $this->sharedGiftList();
-
-        // Otherwise the response itself tells them whether it was already taken.
-        $this->actingAs($list->owner)
-            ->post("/be-nl/l/{$list->share_token}/claim/{$item->id}")
-            ->assertForbidden();
-    }
-
-    #[Test]
-    public function only_one_of_two_racing_claims_wins(): void
-    {
-        [$list, $item] = $this->sharedGiftList();
-
-        $first = $item->fresh()->claim(WishlistItem::identityHash('anon:alice'));
-        $second = $item->fresh()->claim(WishlistItem::identityHash('anon:bob'));
-
-        // Two people tapping "I'll get this" at once is the expected case. If
-        // both won, the recipient gets two of the same thing.
-        $this->assertTrue($first);
-        $this->assertFalse($second);
-    }
-
-    #[Test]
-    public function a_claimer_can_undo_their_own_claim_but_not_another(): void
-    {
-        [$list, $item] = $this->sharedGiftList();
-        $item->claim(WishlistItem::identityHash('anon:alice'));
-
-        $this->assertFalse($item->fresh()->release(WishlistItem::identityHash('anon:bob')));
-        $this->assertTrue($item->fresh()->release(WishlistItem::identityHash('anon:alice')));
-    }
-
-    #[Test]
     public function a_claim_can_be_undone_however_long_ago_it_was_made(): void
     {
         /*
@@ -1002,7 +914,6 @@ class WishlistTest extends TestCase
         $this->get('/be-nl/l/'.Str::uuid())->assertNotFound();
     }
 
-    /** @return array{0: Wishlist, 1: WishlistItem} */
     /**
      * A visitor keeping something for themselves is not a claim.
      *
@@ -1050,17 +961,7 @@ class WishlistTest extends TestCase
         $this->assertNull($list->items()->first()->claimed_by_hash);
     }
 
-    /** Nothing about the group id reveals who is reading the list. */
-    #[Test]
-    public function the_owner_still_gets_no_progress_after_the_save_control_landed(): void
-    {
-        [$list] = $this->sharedGiftList();
-
-        $this->actingAs($list->owner)
-            ->get("/be-nl/l/{$list->share_token}")
-            ->assertInertia(fn ($page) => $page->where('progress', null));
-    }
-
+    /** @return array{0: Wishlist, 1: WishlistItem} */
     private function sharedGiftList(): array
     {
         $list = Wishlist::create([

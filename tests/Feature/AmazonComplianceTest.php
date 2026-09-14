@@ -11,8 +11,6 @@ use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Services\Alerts\AlertEligibility;
-use App\Services\Connectors\Offer;
-use App\Services\Ingestion\OfferUpserter;
 use App\Services\Ingestion\ProductGrouper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -30,41 +28,6 @@ use Tests\TestCase;
 class AmazonComplianceTest extends TestCase
 {
     use RefreshDatabase;
-
-    private function offer(Source $source, string $externalId, int $price): Offer
-    {
-        return new Offer(
-            source: $source,
-            externalId: $externalId,
-            market: Market::BeNl,
-            title: 'Sony WH-1000XM5 Koptelefoon',
-            affiliateUrl: 'https://example.test/'.$externalId,
-            price: $price,
-            brand: 'Sony',
-            merchantName: $source->label(),
-            merchantExternalId: $source->value,
-            merchantDeepLink: 'https://shop.test/'.$externalId,
-            imageUrl: 'https://img.test/'.$externalId.'.jpg',
-            ean: '4006381333931',
-            availability: Availability::InStock,
-        );
-    }
-
-    #[Test]
-    public function amazon_prices_are_stored_because_storage_is_permitted(): void
-    {
-        app(OfferUpserter::class)->upsert([
-            $this->offer(Source::Awin, 'aw-1', 34900),
-            $this->offer(Source::Amazon, 'B08XYZ', 32900),
-        ]);
-
-        $this->assertSame(2, Product::query()->count());
-
-        // Storing a price is NOT the restricted act. Both rows carry their
-        // first price; what Amazon prohibits is building a price-tracking
-        // feature on top, which is gated on the read side.
-        $this->assertSame(2, Product::query()->whereNotNull('first_price')->count());
-    }
 
     #[Test]
     public function amazon_prices_never_supply_the_previous_price(): void
@@ -88,22 +51,6 @@ class AmazonComplianceTest extends TestCase
         app(ProductGrouper::class)->run(Market::BeNl);
 
         $this->assertNull($group->fresh()->previous_price);
-    }
-
-    #[Test]
-    public function the_product_page_no_longer_ships_a_price_history(): void
-    {
-        // Removed on request. Asserted rather than assumed, because the prop was
-        // ninety rows fetched on every render of the most-crawled page type, and
-        // a re-added chart would quietly restore both the query and a compliance
-        // surface that now has no gate of its own.
-        $group = $this->groupWith([Source::Awin]);
-
-        $props = $this->get("/be-nl/p/{$group->id}/{$group->slug}")
-            ->assertOk()
-            ->viewData('page')['props'];
-
-        $this->assertArrayNotHasKey('history', $props);
     }
 
     #[Test]

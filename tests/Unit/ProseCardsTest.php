@@ -81,25 +81,6 @@ class ProseCardsTest extends TestCase
     }
 
     #[Test]
-    public function dedupe_spans_the_whole_document_not_one_block(): void
-    {
-        $cards = $this->cards();
-
-        $intro = $cards->blocks('De [[product:12]] leidt.');
-        $body = $cards->blocks('Terug naar de [[product:12]].');
-
-        /*
-         * A guide asks for two blocks of prose — the intro, then the article —
-         * and a product introduced up top must not get a second card halfway
-         * down. This is the whole reason ProseCards is constructed per page
-         * render rather than resolved from the container.
-         */
-        $this->assertSame([12], $intro[0]['groupIds']);
-        $this->assertSame([], $body[0]['groupIds']);
-        $this->assertSame([12], $cards->shown());
-    }
-
-    #[Test]
     public function a_product_outside_the_allowlist_gets_no_card(): void
     {
         $blocks = $this->cards()->blocks('Kijk ook naar de [[product:999|die andere]].');

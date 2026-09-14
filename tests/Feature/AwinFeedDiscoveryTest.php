@@ -197,16 +197,6 @@ class AwinFeedDiscoveryTest extends TestCase
     }
 
     #[Test]
-    public function an_advertiser_you_are_not_joined_to_is_ignored(): void
-    {
-        // The list includes every advertiser on the network, not only the ones
-        // this account may actually download.
-        $this->awinReturns('Some Shop,111,pending,BE,dutch,9000');
-
-        $this->assertSame([], app(AwinFeedDiscovery::class)->available());
-    }
-
-    #[Test]
     public function one_unreachable_account_does_not_stop_the_others(): void
     {
         $header = 'Advertiser Name,Feed ID,Membership Status,Primary Region,Language,No of products';

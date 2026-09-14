@@ -202,27 +202,6 @@ class CovePlanCurationTest extends TestCase
     }
 
     #[Test]
-    public function a_product_from_another_market_cannot_be_curated(): void
-    {
-        // Invariant 2: the same product elsewhere has different tax, shipping
-        // and availability, and would present a price the reader cannot pay.
-        $foreign = ProductGroup::create([
-            'market' => Market::NlNl,
-            'identity_key' => 'k-foreign',
-            'identity_kind' => 'ean',
-            'title' => 'Nederlandse pers',
-            'slug' => 'nl-pers',
-            'image_url' => 'https://img.test/x.jpg',
-            'min_price' => 4500,
-            'in_stock' => true,
-        ]);
-
-        $this->expectException(InvalidArgumentException::class);
-
-        app(PlanCurator::class)->add($this->plan(), 'group:'.$foreign->id);
-    }
-
-    #[Test]
     public function reordering_renumbers_from_one(): void
     {
         $plan = $this->plan();

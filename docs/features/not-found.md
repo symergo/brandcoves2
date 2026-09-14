@@ -47,7 +47,9 @@ framework's page rather than a broken copy of ours. It is not a page a person me
 
 ## The v1 redirect check had to move with it
 
-This is the regression the change could most easily have caused, and it has its own test.
+This is the regression the change could most easily have caused. `LegacyRedirectTest::a_v1_url_lands_on_a_working_page`
+holds it: its `magazine index` case is exactly the unmatched v1 URL that now reaches the fallback
+route, and it asserts the 301, the destination and that the destination answers.
 
 v1 was a WordPress site with thousands of indexed paths, and `LegacyRedirects` maps the ones worth
 keeping. That check lived in the exception handler because an unmatched URL was the only thing that

@@ -43,25 +43,6 @@ class HelpPageTest extends TestCase
     }
 
     #[Test]
-    public function it_carries_the_report_form(): void
-    {
-        /*
-         * The form is `/feedback`'s own component, so this asserts the page
-         * reaches the same endpoint rather than that a second form exists.
-         * Two forms posting to one endpoint is how a honeypot ends up on one of
-         * them and not the other.
-         */
-        $this->get('/be-nl/help')->assertOk();
-
-        $this->post('/be-nl/feedback', [
-            'message' => 'De prijs klopt niet meer.',
-            'path' => '/be-nl/help',
-        ])->assertRedirect();
-
-        $this->assertDatabaseHas('feedback', ['message' => 'De prijs klopt niet meer.']);
-    }
-
-    #[Test]
     public function it_is_reachable_from_every_page(): void
     {
         // A source check: SSR does not run in the suite, so asserting on

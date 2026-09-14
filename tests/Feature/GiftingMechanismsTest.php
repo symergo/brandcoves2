@@ -178,14 +178,6 @@ class GiftingMechanismsTest extends TestCase
     }
 
     #[Test]
-    public function the_gift_cove_works_signed_out(): void
-    {
-        // Somebody has to be able to read what this offers before deciding to
-        // sign up for it.
-        $this->get('/be-nl/gift-cove')->assertOk();
-    }
-
-    #[Test]
     public function the_manual_is_its_own_page_and_the_hub_links_to_it(): void
     {
         /*

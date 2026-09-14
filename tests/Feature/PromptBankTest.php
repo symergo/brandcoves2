@@ -50,17 +50,6 @@ class PromptBankTest extends TestCase
     }
 
     #[Test]
-    public function an_empty_table_sends_the_shipped_prompt(): void
-    {
-        $bank = app(PromptBank::class);
-
-        // The normal state of this table, and the one every environment starts
-        // in. Nothing about a build may depend on a row existing.
-        $this->assertSame(Defaults::system('cove.guide'), $bank->system('cove.guide'));
-        $this->assertStringContainsString('No prices at all', $bank->system('cove.guide'));
-    }
-
-    #[Test]
     public function a_blank_override_is_not_an_override(): void
     {
         PromptTemplate::create(['slot' => 'cove.guide', 'system' => '', 'user_template' => null]);

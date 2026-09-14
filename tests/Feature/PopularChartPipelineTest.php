@@ -10,7 +10,6 @@ use App\Enums\Source;
 use App\Jobs\PullPopularCharts;
 use App\Models\ChartCategory;
 use App\Models\IngestionJob;
-use App\Models\Merchant;
 use App\Models\PopularRank;
 use App\Models\Product;
 use App\Models\ProductGroup;
@@ -373,13 +372,5 @@ class PopularChartPipelineTest extends TestCase
         $registry->registerPopularity($connector);
 
         return $registry;
-    }
-
-    private function merchant(): Merchant
-    {
-        return Merchant::firstOrCreate(
-            ['source' => Source::Bol->value, 'external_id' => 'bol'],
-            ['name' => 'bol.com'],
-        );
     }
 }

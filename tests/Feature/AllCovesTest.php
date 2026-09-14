@@ -122,19 +122,6 @@ class AllCovesTest extends TestCase
     }
 
     #[Test]
-    public function an_empty_kind_drops_its_band_rather_than_heading_nothing(): void
-    {
-        $this->cove(CoveKind::Guide, 'koptelefoons', 'De beste koptelefoons');
-
-        $this->get('/be-nl/coves')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->has('sections', 1)
-                ->where('sections.0.key', 'smart')
-            );
-    }
-
-    #[Test]
     public function a_draft_is_not_listed(): void
     {
         // A public page. A Cove still being written is published nowhere else

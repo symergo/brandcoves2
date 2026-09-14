@@ -237,20 +237,6 @@ class SuggestionEngineTest extends TestCase
     }
 
     #[Test]
-    public function swapping_never_returns_something_already_rejected(): void
-    {
-        $first = $this->giftable('Koffiemolen handmatig', 4999, 'Keuken');
-        $this->giftable('French press glazen kan', 3499, 'Keuken');
-
-        $brief = new TasteBrief(market: Market::BeNl, interests: ['coffee'], limit: 1);
-
-        $replacement = $this->engine()->suggest($brief->excluding([$first->id]));
-
-        $this->assertNotEmpty($replacement);
-        $this->assertNotSame($first->id, $replacement[0]->group->id);
-    }
-
-    #[Test]
     public function an_interest_with_no_matches_still_returns_suggestions(): void
     {
         // Nothing here answers "gardening". Returning an empty page would throw

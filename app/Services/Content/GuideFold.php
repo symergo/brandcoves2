@@ -33,6 +33,16 @@ use Illuminate\Support\Facades\Schema;
  * to delete would have to be dropped before the drop anyway, and the column
  * outliving its target by a single migration is the whole point of
  * expand/contract.
+ *
+ * ## Its tests are gone, and the class is not
+ *
+ * `guides` was dropped on 2026-09-06, after production ran this fold for the
+ * last time. `GuideFoldTest` had to recreate the dropped tables just to run,
+ * guarding a move that can no longer happen, so it was removed on 2026-09-14.
+ * The class stays because `2026_08_30_000100_a_guide_is_a_cove` and
+ * `2026_09_06_000100_the_guides_tables_retire` still call it, and every fresh
+ * migrate (the test suite's included) runs them over an empty table. Deleting
+ * it would break `migrate`, not just this file.
  */
 class GuideFold
 {
@@ -58,8 +68,8 @@ class GuideFold
      *
      * `$only` narrows the set. It exists because the fold's own failure proved
      * something about the rows it was meant to save: see `hasAnArticle()`.
-     * Passing nothing moves everything, which is what the tests assert and what
-     * the original migration intended.
+     * Passing nothing moves everything, which is what the original migration
+     * intended.
      *
      * @param  (Closure(Builder): void)|null  $only  narrows which guides are moved
      * @return array{editions: int, picks: int, skipped: int, renamed: list<string>, did_nothing: string|null}

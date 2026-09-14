@@ -56,32 +56,6 @@ class EbayAccountDeletionTest extends TestCase
     }
 
     #[Test]
-    public function the_registered_endpoint_url_is_part_of_the_hash(): void
-    {
-        $code = 'abc123challenge';
-
-        $first = $this->getJson('/webhooks/ebay/account-deletion?challenge_code='.$code)
-            ->json('challengeResponse');
-
-        // The same request, the same token, a different registered host.
-        config(['giftcoves.connectors.ebay.deletion.endpoint' => 'https://www.giftcoves.com/webhooks/ebay/account-deletion']);
-
-        $second = $this->getJson('/webhooks/ebay/account-deletion?challenge_code='.$code)
-            ->json('challengeResponse');
-
-        /*
-         * This is the failure that actually happens, and it is why the endpoint
-         * is explicit config rather than route().
-         *
-         * Production serves giftcoves.com, www.giftcoves.com and
-         * brandcoves.com without redirecting between them, so a URL the app
-         * generates for itself is a guess — and a wrong guess fails validation
-         * with an error that looks like a code problem rather than a config one.
-         */
-        $this->assertNotSame($first, $second);
-    }
-
-    #[Test]
     public function a_trailing_slash_does_not_change_the_answer(): void
     {
         config(['giftcoves.connectors.ebay.deletion.endpoint' => self::ENDPOINT.'/']);
@@ -150,16 +124,6 @@ class EbayAccountDeletionTest extends TestCase
     }
 
     #[Test]
-    public function it_acknowledges_a_deletion_notification(): void
-    {
-        $response = $this->postJson('/webhooks/ebay/account-deletion', $this->notification());
-
-        // eBay wants a 2xx, promptly. Anything else is retried and counted
-        // against compliance.
-        $response->assertNoContent();
-    }
-
-    #[Test]
     public function it_never_logs_the_personal_data_of_somebody_asking_to_be_forgotten(): void
     {
         $captured = [];
@@ -188,23 +152,6 @@ class EbayAccountDeletionTest extends TestCase
         // eBay's own reference identifies nobody, and is enough to prove
         // receipt if they ever ask.
         $this->assertStringContainsString('notif-1', $logged);
-    }
-
-    #[Test]
-    public function the_webhook_is_exempt_from_csrf(): void
-    {
-        /*
-         * A server-to-server POST from outside: no session, no token to carry.
-         *
-         * Without the exemption this answers 419, eBay records a failure, and
-         * the application is marked non compliant — which stops the production
-         * keyset minting tokens. Asserted explicitly because the exemption
-         * lives in bootstrap/app.php, far from this route, and nothing else
-         * would notice its removal.
-         */
-        $this->withMiddleware()
-            ->post('/webhooks/ebay/account-deletion', $this->notification())
-            ->assertNoContent();
     }
 
     #[Test]

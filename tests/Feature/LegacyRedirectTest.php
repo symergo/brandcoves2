@@ -32,7 +32,9 @@ class LegacyRedirectTest extends TestCase
         yield 'articles index' => ['/articles', '/en/guides'];
         yield 'login' => ['/login', '/en/login'];
 
-        // WPML language directories.
+        // WPML language directories. v1's `/nl/` was one Dutch site; v2 has two
+        // Dutch markets with different catalogues, and nl-nl is the larger, so
+        // it inherits. Someone in Belgium reaches be-nl through the switcher.
         yield 'dutch search' => ['/nl/search', '/nl-nl/search'];
         yield 'french gift' => ['/fr/gift-whisperer', '/be-fr/gift'];
         yield 'dutch wishlist' => ['/nl/wishlist', '/nl-nl/lists'];
@@ -90,20 +92,6 @@ class LegacyRedirectTest extends TestCase
     }
 
     #[Test]
-    public function a_v2_url_that_does_not_exist_still_404s(): void
-    {
-        /*
-         * The mapper must not answer for everything.
-         *
-         * A catch-all would swallow genuine v2 typos into a silent redirect —
-         * so a broken internal link would look fine in every crawl and never
-         * get fixed.
-         */
-        $this->get('/be-nl/p/999999/nothing')->assertNotFound();
-        $this->get('/be-nl/discover/telepathy')->assertNotFound();
-    }
-
-    #[Test]
     public function an_unknown_market_prefix_is_not_treated_as_a_legacy_url(): void
     {
         // `/de/search` looks like a WPML prefix but German was never a v1
@@ -123,15 +111,5 @@ class LegacyRedirectTest extends TestCase
          */
         $this->get('/es')->assertOk();
         $this->get('/es/search')->assertOk();
-    }
-
-    #[Test]
-    public function the_language_directory_picks_the_market_that_inherited_the_traffic(): void
-    {
-        // v1's `/nl/` was one Dutch site. v2 has two Dutch markets, and they
-        // are different catalogues — nl-nl is the larger, so it inherits.
-        // Someone in Belgium reaches be-nl through the switcher.
-        $this->get('/nl/search')->assertRedirect(url('/nl-nl/search'));
-        $this->get('/fr/search')->assertRedirect(url('/be-fr/search'));
     }
 }

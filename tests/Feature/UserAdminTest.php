@@ -62,12 +62,6 @@ class UserAdminTest extends TestCase
     }
 
     #[Test]
-    public function a_non_admin_cannot_reach_it(): void
-    {
-        $this->actingAs($this->shopper())->get('/admin/users')->assertForbidden();
-    }
-
-    #[Test]
     public function accounts_are_not_created_by_hand(): void
     {
         // An account is a proven address. There is no create page.

@@ -96,13 +96,4 @@ class SearchLogTest extends TestCase
 
         $this->assertDatabaseCount('search_log', 0);
     }
-
-    #[Test]
-    public function the_search_page_does_not_log_a_long_query_either(): void
-    {
-        $this->get('/en/search?q='.urlencode('koptelefoon sound draadloze uur hoofdtelefoon hoofdtelefoons earpads'))
-            ->assertOk();
-
-        $this->assertDatabaseCount('search_log', 0);
-    }
 }

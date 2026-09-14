@@ -78,7 +78,9 @@ would also hide personas from the gift-ideas pages, which would then need `witho
 inversion that reads as a mistake and gets copied as a pattern.
 
 `GiftPersonaTest` asserts each surface separately rather than trusting the scope, because the failure
-is silent everywhere it can happen.
+is silent everywhere it can happen. The one exception is the rail of other editions under an edition:
+`CoveRailTest::an_edition_offers_the_other_editions_and_not_the_personas` asserts that on the page
+data, which is stronger than the text search `GiftPersonaTest` used to run for it.
 
 The date uniqueness also had to become **partial**: a plain `unique (market, drop_date)` permits
 exactly one NULL per market in Postgres, so the second persona in a market would have failed to

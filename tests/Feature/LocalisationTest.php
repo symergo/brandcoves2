@@ -143,21 +143,6 @@ class LocalisationTest extends TestCase
     }
 
     #[Test]
-    public function the_two_dutch_markets_share_copy_but_not_identity(): void
-    {
-        // be-nl and nl-nl are one language and two markets. Same words,
-        // different hreflang — search engines need the distinction.
-        $be = $this->get('/be-nl')->assertOk();
-        $nl = $this->get('/nl-nl')->assertOk();
-
-        $be->assertSee('Cadeauzoeker', escape: false);
-        $nl->assertSee('Cadeauzoeker', escape: false);
-
-        $be->assertSee('nl-BE', escape: false);
-        $nl->assertSee('nl-NL', escape: false);
-    }
-
-    #[Test]
     public function no_english_leaks_into_a_translated_market(): void
     {
         // A missing key renders as the key itself, which is loud on purpose.

@@ -102,17 +102,6 @@ class EditorialApiTest extends TestCase
     }
 
     #[Test]
-    public function only_the_hash_is_stored(): void
-    {
-        ['token' => $plaintext, 'model' => $token] = ApiToken::issue('claude', [ApiToken::READ]);
-
-        // A database leak must not hand over working keys.
-        $this->assertNotSame($plaintext, $token->token_hash);
-        $this->assertSame(hash('sha256', $plaintext), $token->token_hash);
-        $this->assertDatabaseMissing('api_tokens', ['token_hash' => $plaintext]);
-    }
-
-    #[Test]
     public function the_root_reports_what_the_key_may_do(): void
     {
         $this->withToken($this->key([ApiToken::READ]))

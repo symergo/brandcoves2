@@ -64,8 +64,16 @@ not require a build.
 
 **The invariant is untouched.** Enabling AI here makes the *nightly jobs* able to
 call a model. It does not make a request able to: `AiClient` checks the queue
-context before anything else, and an architecture test asserts no controller can
-reach the client. `AiSettingsTest` restates that as a test on this feature.
+context before anything else.
+
+**That check has no working test.** An earlier version of this page said an
+architecture test asserts no controller can reach the client; there is no such
+test in `tests/`. `AiSettingsTest` had one that claimed to prove it, and it could
+not fail: the check stands down under `runningInConsole()`, which is true for
+all of PHPUnit, so the test was really sending an unmocked request to the
+Anthropic API with a fake key and passing on the 401. It was removed on
+2026-09-14. A real test needs to exercise the check with the console flag
+faked, or assert statically that nothing under `app/Http` resolves `AiClient`.
 
 ### How it reaches the rest of the code
 

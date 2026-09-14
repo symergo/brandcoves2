@@ -27,8 +27,9 @@ it simultaneously at the start. That is the whole prize, so it has not been done
 **The conclusion to carry forward: the way to spend less time waiting on tests is to run fewer of
 them, not to make the suite faster.** Use `--filter`; the full run is for the moment before a push.
 
-894 tests, ~62,000 assertions, against a real PostgreSQL. The suite is the only thing standing
-between a commit and a deploy, because both branches auto-deploy and neither has a human gate.
+1,808 tests on 2026-09-14, against a real PostgreSQL. The suite is the only thing standing between a
+push to `main` and staging, which deploys it within the minute; production is a separate, deliberate
+trigger (see CLAUDE.md).
 
 ## Running it
 
@@ -54,6 +55,45 @@ about coverage the hook would miss. It is about *when you learn*. Run by hand, a
 while shipping is still a decision; left to the hook, it arrives after you have committed to the
 deploy and are watching it abort. Same 39 seconds, bought at the point where the answer can still
 change what you do.
+
+## Pruned on 2026-09-14, and what counts as a duplicate
+
+77 tests were removed (1,885 → 1,808), including the whole of `GuideFoldTest`, which recreated
+the dropped `guides` tables to guard a data move production finished on 2026-09-06. Every test was
+judged by reading its body and the code it runs, not its name, against one rule:
+
+**A test goes only if a test that stays fails for every bug it would catch.** Same code path, same
+or stronger assertion, same or wider cases. If it covers even one branch the other does not, it
+stays. By that rule, these look like duplicates and are not:
+
+- **The same rule on a different surface.** "A draft is not listed" on the hub and on the index are
+  two queries; the page, the inbox and the email are three wirings of one decision.
+- **The bol, eBay and Tradedoubler cache/429/degrade tests.** They read alike because each connector
+  has its own copy of that code. There is no shared base class, so a fix in one copy is proved
+  only by that connector's test.
+- **Unit tests that enumerate cases** (GTIN check digits, identity resolution, the Secret Santa draw)
+  beside a feature test of the same service. The feature test proves the wiring; the unit test
+  proves the cases.
+- **Render tests beside `PageSmokeTest`.** The smoke test accepts any status under 500 on `/be-nl`
+  alone, so a 404 or a redirect passes it. An `assertOk()` elsewhere is stronger, not covered.
+
+Also removed: tests that **could not fail**, which is worse than none because they read as coverage.
+A CSRF-exemption test (Laravel skips the CSRF check whenever unit tests run), two `getAttributes()`
+checks on a freshly made model (it only ever holds what the test passed in), and an AI test that sent
+a real, unmocked request to the Anthropic API on every run and passed on the 401.
+
+**Known weak tests, left in place because nothing else covers their subject.** Fix rather than
+delete:
+
+- `SearchLogTest::a_crawler_search_is_not_logged` sends no session cookie, so the cookie rule refuses
+  it before the crawler rule is consulted. The crawler rule is untested.
+- `SecretSantaTest::the_giftees_own_list_is_an_ordinary_wishlist` asserts only when the random draw
+  lands one of two ways; the other half of its runs assert nothing.
+- `SearchHelpPageTest` and `LegalPagesTest`'s indexable checks never switch `robots_allow` on, so
+  every page prints noindex and the check passes whatever the page asks for.
+- `SuggestionEngineTest::it_answers_fast_enough_to_sit_in_a_request` is wall-clock (see below).
+- The AI invariant (`AiClient` refuses outside a queued job) and the eBay webhook's CSRF exemption
+  now have no test at all; see `docs/features/ai-invariant.md`.
 
 ## Parallel by default
 

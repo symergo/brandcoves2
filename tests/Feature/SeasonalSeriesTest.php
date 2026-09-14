@@ -169,32 +169,6 @@ class SeasonalSeriesTest extends TestCase
     // ── The dates ─────────────────────────────────────────────────────────
 
     #[Test]
-    public function the_parts_are_spread_across_the_window_and_never_land_in_the_past(): void
-    {
-        $this->shelf('tent');
-        $this->shelf('slaapzak');
-
-        $parts = app(SeasonalSeries::class)->lay($this->topic(['tent', 'slaapzak']));
-
-        $dates = array_map(fn (CovePlan $p) => $p->drop_date->toDateString(), $parts);
-
-        /*
-         * Part one's natural slot is 15 March, five weeks ago. It is late, not
-         * cancelled, so it queues from tomorrow — and part two keeps the slot
-         * the window gave it rather than being dragged forward with it.
-         */
-        $this->assertSame('2027-04-16', $dates[0]);
-        $this->assertSame('2027-05-30', $dates[1]);
-
-        // Inside the window it was written for, at both ends. A part dated after
-        // 15 August is a page published once the demand has gone.
-        foreach ($dates as $date) {
-            $this->assertGreaterThanOrEqual('2027-03-15', $date);
-            $this->assertLessThanOrEqual('2027-08-15', $date);
-        }
-    }
-
-    #[Test]
     public function a_dated_part_does_not_cost_the_day_its_daily_cove(): void
     {
         $this->shelf('tent');

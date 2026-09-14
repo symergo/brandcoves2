@@ -73,23 +73,6 @@ class NotFoundPageTest extends TestCase
     }
 
     #[Test]
-    public function the_old_site_is_still_redirected_rather_than_shown_this_page(): void
-    {
-        /*
-         * The regression this page could most easily have caused. The v1
-         * redirect map used to be consulted only from the exception handler,
-         * which was the one thing an unmatched URL reached; a fallback route
-         * catches those first, so the check had to travel with it. Without
-         * that, every indexed v1 address would quietly start answering "not
-         * found" instead of redirecting.
-         */
-        $response = $this->get('/magazine');
-
-        $response->assertStatus(301);
-        $response->assertRedirectContains('guides');
-    }
-
-    #[Test]
     public function it_is_never_indexed(): void
     {
         // Indexing on, or the environment stamps `noindex, nofollow` on every

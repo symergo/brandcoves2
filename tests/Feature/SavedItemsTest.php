@@ -27,26 +27,6 @@ class SavedItemsTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function it_reports_what_is_on_your_lists(): void
-    {
-        $user = User::factory()->create();
-        $group = ProductGroup::factory()->create(['market' => Market::BeNl]);
-
-        $list = Wishlist::factory()->create([
-            'owner_user_id' => $user->id,
-            'kind' => ListKind::Mine,
-            'market' => Market::BeNl,
-        ]);
-
-        WishlistItem::factory()->of($group)->create(['wishlist_id' => $list->id]);
-
-        $this->actingAs($user)
-            ->getJson('/be-nl/saved-items')
-            ->assertOk()
-            ->assertJsonPath('groupIds', [$group->id]);
-    }
-
-    #[Test]
     public function a_thing_on_a_gift_list_counts_too(): void
     {
         $user = User::factory()->create();

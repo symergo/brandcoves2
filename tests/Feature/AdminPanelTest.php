@@ -81,14 +81,6 @@ class AdminPanelTest extends TestCase
             ->assertForbidden();
     }
 
-    #[Test]
-    public function an_admin_can_reach_the_dashboard(): void
-    {
-        $this->actingAs($this->user(admin: true))
-            ->get('/admin')
-            ->assertOk();
-    }
-
     /**
      * The panel's stylesheets are linked at the scheme the page is served on.
      *

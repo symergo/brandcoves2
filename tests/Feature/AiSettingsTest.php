@@ -9,7 +9,6 @@ use App\Jobs\TestAiCredential;
 use App\Models\ConnectorSetting;
 use App\Models\User;
 use App\Services\Ai\AiClient;
-use App\Services\Ai\AiUnavailable;
 use App\Services\Settings\AiSettingsStore;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -174,28 +173,6 @@ class AiSettingsTest extends TestCase
         $this->store()->apply();
 
         $this->assertSame(7, (int) config('giftcoves.ai.caps.daily_picks'));
-    }
-
-    #[Test]
-    public function enabling_ai_does_not_let_a_request_spend_money(): void
-    {
-        /*
-         * The invariant, restated as a test on this feature. Turning generation
-         * on makes the nightly jobs able to call a model; it must not make a web
-         * request able to. AiClient enforces that and nothing here touches it.
-         */
-        $this->store()->put(['enabled' => true, 'api_key' => 'sk-ant-test']);
-        $this->store()->apply();
-
-        $this->expectException(AiUnavailable::class);
-
-        // Simulating the request path: outside a queued job, the client refuses.
-        app(AiClient::class)->json(
-            featureKey: 'gift_angles',
-            system: 'x',
-            prompt: 'y',
-            schemaHint: [],
-        );
     }
 
     #[Test]

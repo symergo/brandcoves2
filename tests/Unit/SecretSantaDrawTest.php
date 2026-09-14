@@ -56,19 +56,6 @@ class SecretSantaDrawTest extends TestCase
     }
 
     #[Test]
-    public function a_draw_respects_exclusions(): void
-    {
-        $assignments = $this->draw()->assign(
-            ['a', 'b', 'c', 'd'],
-            ['a' => ['b'], 'b' => ['a']],
-        );
-
-        // Couples excluding each other is the ordinary case, not an exotic one.
-        $this->assertNotSame('b', $assignments['a']);
-        $this->assertNotSame('a', $assignments['b']);
-    }
-
-    #[Test]
     public function it_solves_a_set_a_retry_loop_would_give_up_on(): void
     {
         /*

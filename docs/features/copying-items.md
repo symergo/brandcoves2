@@ -48,8 +48,10 @@ something has been bought. On a wish list that is invariant 4 broken by a copy
 button. `suggested_by_user_id` goes for the same reason in miniature: it names a
 person in a context they did not agree to.
 
-Two tests hold this: `a_claim_never_travels_with_a_copy` and
-`a_copy_from_a_shared_list_arrives_unclaimed`.
+`a_claim_never_travels_with_a_copy` holds this, and it holds it for both ways
+in: a copy from my own list and a copy from somebody else's shared list end in
+the same `ItemMover::copy()`. A second test for the shared route used to assert
+the same thing with fewer fields and was removed on 2026-09-14.
 
 ## What does come along
 

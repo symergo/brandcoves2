@@ -163,25 +163,6 @@ class TradedoublerConnectorTest extends TestCase
     }
 
     #[Test]
-    public function each_advertisers_offer_gets_its_own_external_id(): void
-    {
-        Http::fake(['api.tradedoubler.com/*' => Http::response($this->searchResponse())]);
-
-        $offers = $this->connector->search('koptelefoon', Market::NlNl);
-
-        /*
-         * `products` is unique on (source, external_id, market).
-         *
-         * Keying on the product alone would make these two offers overwrite
-         * each other, and the last one written would masquerade as the only
-         * price — turning the one source that gives us a real comparison into
-         * the one that hides it.
-         */
-        $this->assertSame('772211:241234', $offers[0]->externalId);
-        $this->assertSame('772211:335566', $offers[1]->externalId);
-    }
-
-    #[Test]
     public function the_same_offer_twice_in_one_payload_is_written_once(): void
     {
         // Paging overlap, or one shop listing a product twice.
@@ -198,6 +179,12 @@ class TradedoublerConnectorTest extends TestCase
          * CONFLICT DO UPDATE command cannot affect row a second time" and the
          * entire search's worth of offers is lost. bol hit exactly this on its
          * first live chart run.
+         *
+         * The ids themselves matter too. `products` is unique on (source,
+         * external_id, market), so keying on the product alone would make one
+         * product's two advertisers overwrite each other, and the last one
+         * written would masquerade as the only price — turning the one source
+         * that gives us a real comparison into the one that hides it.
          */
         $this->assertCount(2, $offers);
         $this->assertSame(

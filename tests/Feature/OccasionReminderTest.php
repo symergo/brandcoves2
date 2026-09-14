@@ -75,17 +75,6 @@ class OccasionReminderTest extends TestCase
     // ── Birthdays ─────────────────────────────────────────────────────────
 
     #[Test]
-    public function a_birthday_inside_a_window_produces_one_reminder(): void
-    {
-        $this->windows(30, 15, 2);
-        $this->recipientWithBirthdayIn(15);
-
-        (new SendOccasionReminders)->handle();
-
-        $this->assertSame(1, Notification::query()->where('kind', 'occasion.birthday')->count());
-    }
-
-    #[Test]
     public function running_twice_does_not_notify_twice(): void
     {
         $this->windows(30, 15, 2);

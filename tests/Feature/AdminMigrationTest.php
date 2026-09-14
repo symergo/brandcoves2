@@ -42,23 +42,6 @@ class AdminMigrationTest extends TestCase
     }
 
     #[Test]
-    public function a_non_admin_cannot_reach_it(): void
-    {
-        // The page can redeploy the application and read every configured
-        // setting's shape. It lives behind the same gate as the rest of /admin,
-        // and that has to be asserted rather than assumed.
-        $this->actingAs(User::factory()->create(['is_admin' => false]))
-            ->get('/admin/migration')
-            ->assertForbidden();
-
-        // A guest is 403'd rather than redirected here. Filament sends an
-        // unauthenticated visitor to the login only from the panel root; a deep
-        // link is refused outright, which is the stricter of the two and the one
-        // worth pinning on a page that can redeploy the site.
-        $this->get('/admin/migration')->assertForbidden();
-    }
-
-    #[Test]
     public function it_exports_an_envelope_as_a_download(): void
     {
         $product = ProductGroup::factory()->create([

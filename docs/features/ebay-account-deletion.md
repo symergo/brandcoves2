@@ -153,6 +153,6 @@ non compliant.
 
 ## Tests
 
-`tests/Feature/EbayAccountDeletionTest.php` — 11 of them. The challenge hash and its exact inputs are
+`tests/Feature/EbayAccountDeletionTest.php`. The challenge hash and its exact inputs are
 pinned rather than merely exercised, because a bug here does not degrade a feature: it switches the
 entire eBay integration off.

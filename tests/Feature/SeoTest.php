@@ -349,17 +349,6 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function a_filtered_search_canonicalises_to_the_bare_term(): void
-    {
-        $this->seedCatalogue();
-
-        // So any ranking signal a filtered variant picks up consolidates onto
-        // one URL instead of being split across dozens.
-        $this->get('/be-nl/search?q=koptelefoon&brand[]=Sony&sort=price_asc')
-            ->assertSee('rel="canonical" href="'.url('/be-nl/zoek/koptelefoon').'"', escape: false);
-    }
-
-    #[Test]
     public function the_canonical_is_shared_with_the_client_so_it_survives_a_client_side_visit(): void
     {
         /*

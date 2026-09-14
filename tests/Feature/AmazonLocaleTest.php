@@ -39,35 +39,6 @@ class AmazonLocaleTest extends TestCase
     }
 
     #[Test]
-    public function one_asin_carries_one_verdict_for_every_market(): void
-    {
-        $product = $this->product();
-
-        /*
-         * There is no market column, on purpose.
-         *
-         * Giftability is a property of the product, not the storefront.
-         * Classifying per locale would spend five times the compute to produce
-         * five answers that should be identical — and would not be, because the
-         * classifier reads the title and the title is translated.
-         */
-        $this->assertArrayNotHasKey('market', $product->getAttributes());
-        $this->assertTrue($product->giftable);
-    }
-
-    #[Test]
-    public function the_decision_is_stored_but_never_the_catalogue(): void
-    {
-        $columns = array_keys($this->product()->getAttributes());
-
-        // Amazon may not be mirrored. Price, availability, image and
-        // description are re-fetched live and a failed fetch hides the item.
-        foreach (['price', 'availability', 'image_url', 'description'] as $forbidden) {
-            $this->assertNotContains($forbidden, $columns);
-        }
-    }
-
-    #[Test]
     public function every_market_gets_a_sensible_primary_locale(): void
     {
         $this->assertSame(AmazonLocale::Nl, AmazonLocale::primaryFor(Market::NlNl));

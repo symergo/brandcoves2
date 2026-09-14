@@ -27,7 +27,6 @@ use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
 use App\Services\Pages\PageCopy;
 use App\Services\Pages\Regions\EntityCoveRegions;
-use App\Services\Seo\BrandCopy;
 use App\Services\Seo\BrandLinker;
 use App\Support\SearchUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -914,27 +913,6 @@ class BrandPageTest extends TestCase
         // And a word already active is never suggested again: clicking it would
         // change nothing.
         $this->assertArrayNotHasKey('koptelefoon', $terms);
-    }
-
-    #[Test]
-    public function a_sub_searched_brand_page_is_indexable_but_canonicalises_to_the_brand(): void
-    {
-        // Indexing on, or the environment stamps `noindex, nofollow` on
-        // every page and the page's own value is never consulted.
-        config(['giftcoves.robots_allow' => true]);
-
-        $this->seedBrand('Aurex');
-
-        /*
-         * The cost of the chips narrowing rather than leaving. `?q=` is now the
-         * widest source of URL variants a brand page has, which is the exact
-         * crawl-budget trap `/search?brand[]=` is noindex for. `follow`, because
-         * the products underneath are real pages worth reaching.
-         */
-        $this->get('/be-nl/brand/aurex?q=koptelefoon')
-            ->assertOk()
-            ->assertDontSee('noindex', false)
-            ->assertSee('rel="canonical" href="'.url('/be-nl/brand/aurex').'"', escape: false);
     }
 
     #[Test]

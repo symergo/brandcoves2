@@ -49,16 +49,6 @@ class CuratePlanScreenTest extends TestCase
     }
 
     #[Test]
-    public function a_non_admin_cannot_reach_it(): void
-    {
-        $plan = $this->plan();
-
-        $this->actingAs($this->user(admin: false))
-            ->get("/admin/cove-plans/{$plan->id}/curate")
-            ->assertForbidden();
-    }
-
-    #[Test]
     public function the_page_renders_both_panes_for_an_admin(): void
     {
         /*

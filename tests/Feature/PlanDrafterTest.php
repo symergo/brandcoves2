@@ -147,25 +147,6 @@ class PlanDrafterTest extends TestCase
     }
 
     #[Test]
-    public function guides_run_out_with_a_sentence_rather_than_a_zero(): void
-    {
-        $this->shelf();
-        $this->topic();
-
-        $result = $this->drafter()->draft(CoveKind::Guide, Market::BeNl, 10);
-
-        $this->assertSame(1, $result->count());
-
-        /*
-         * The reason is the useful part: "the queue is empty, mine some more" is
-         * a next step, and "1 of 10" on its own reads as a bug and gets the
-         * button pressed again.
-         */
-        $this->assertNotNull($result->shortfall);
-        $this->assertStringContainsString('bc:refresh-discovery', $result->shortfall);
-    }
-
-    #[Test]
     public function personas_come_one_per_interest_with_that_interests_own_product_words(): void
     {
         $result = $this->drafter()->draft(CoveKind::Persona, Market::BeNl, 3, withProducts: false);

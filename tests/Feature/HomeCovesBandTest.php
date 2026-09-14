@@ -80,16 +80,6 @@ class HomeCovesBandTest extends TestCase
     }
 
     #[Test]
-    public function ten_rows_and_no_more(): void
-    {
-        foreach (range(1, 12) as $i) {
-            $this->cove(CoveKind::Advice, "advies-{$i}", $i);
-        }
-
-        $this->assertCount(10, $this->band());
-    }
-
-    #[Test]
     public function the_shelf_holds_still_for_an_hour(): void
     {
         // Drawn at random, but not per request: a visitor who reloads sees

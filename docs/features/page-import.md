@@ -101,8 +101,8 @@ four are no longer true.
 import writes reaches `products`, the search index, offer comparison, a
 wishlist, a chart, the serendipity pool or an email. Those are eight call sites,
 each with its own reasoning, and flipping that one boolean would re-enable all
-of them at once and silently. `AmazonPageImportTest` asserts the gate directly
-for that reason.
+of them at once and silently. `AmazonComplianceTest::the_capability_matrix_is_what_the_policy_says`
+asserts the gate directly for that reason.
 
 **Why the price is the right field to hold back.** It is what the Associates
 agreement binds to a 24-hour refresh, and it is the one field a person acts on

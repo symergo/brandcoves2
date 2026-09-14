@@ -121,7 +121,7 @@ Styling gotcha, and it looks exactly like a page nobody styled: Filament's prebu
 
 ## Tests
 
-120 files in `tests/Feature/`, named after the feature rather than the class — `SearchTest`,
+161 files in `tests/Feature/` (2026-09-14), named after the feature rather than the class — `SearchTest`,
 `BrandPageTest`, `LocalisationTest`, `AdminPanelTest`, `SaveToListTest`, `MarketSupplyTest`. So the
 filter you want is usually the feature's name, guessed correctly on the first try:
 

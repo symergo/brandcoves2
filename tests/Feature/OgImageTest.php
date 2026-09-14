@@ -74,21 +74,6 @@ class OgImageTest extends TestCase
     }
 
     #[Test]
-    public function a_product_card_names_the_product(): void
-    {
-        $group = ProductGroup::factory()->create([
-            'market' => Market::BeNl,
-            'title' => 'Sony WH-1000XM5',
-            'merchant_count' => 4,
-            'min_price' => 27900,
-        ]);
-
-        $this->get("/be-nl/og/p/{$group->id}.png")
-            ->assertOk()
-            ->assertHeader('Content-Type', 'image/png');
-    }
-
-    #[Test]
     public function a_product_from_another_market_is_not_rendered(): void
     {
         // Invariant 2 reaches even here: a card served under /be-nl/ that

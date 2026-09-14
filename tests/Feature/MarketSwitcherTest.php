@@ -22,52 +22,41 @@ class MarketSwitcherTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @return list<array{language: string, name: string, market: string}> */
-    private function switcherOptions(): array
-    {
-        $options = [];
-
-        foreach (app(MarketSwitcher::class)->payload() as $country) {
-            foreach ($country['languages'] as $language) {
-                $options[] = $language;
-            }
-        }
-
-        return $options;
-    }
-
     #[Test]
-    public function every_published_market_is_reachable(): void
-    {
-        $offered = array_unique(array_column($this->switcherOptions(), 'market'));
-
-        sort($offered);
-        $expected = array_map(fn (Market $m): string => $m->value, Market::published());
-        sort($expected);
-
-        $this->assertSame($expected, $offered, 'a published market cannot be reached from the switcher');
-    }
-
-    #[Test]
-    public function no_option_leads_to_an_unpublished_market(): void
+    public function the_switcher_offers_every_published_market_once_and_nothing_else(): void
     {
         /*
          * A switcher entry is a promise that there is a shop on the other end.
          * `es` routes and has no supply at all — Awin reports no advertiser
          * coverage and bol does not operate there — so offering it would be a
          * link to an empty catalogue.
+         *
+         * Read the props rather than the HTML: the payload is JSON-encoded, so
+         * "España" and "Français" arrive as \u escapes and a string match on
+         * the document would pass for the wrong reason. The payload is grouped
+         * by country (a flag, then its languages), so the markets are one
+         * level down.
          */
-        foreach (Market::cases() as $market) {
-            if ($market->isPublished()) {
-                continue;
-            }
+        $markets = collect($this->get('/be-nl')->viewData('page')['props']['markets'])
+            ->flatMap(fn (array $country): array => array_column($country['languages'], 'market'))
+            ->all();
 
-            $this->assertNotContains(
-                $market->value,
-                array_column($this->switcherOptions(), 'market'),
-                "{$market->value} is unpublished and must not appear in the switcher",
-            );
-        }
+        $this->assertNotContains('es', $markets);
+        $this->assertContains('be-fr', $markets);
+
+        /*
+         * Same set, and each exactly once — a market offered under two flags
+         * would be a market whose catalogue depends on how you got to it, so
+         * there is deliberately no array_unique here.
+         *
+         * Compared as strings: PHP cannot order enum cases, so sorting two
+         * lists of them only happened to agree.
+         */
+        $expected = array_map(fn (Market $market): string => $market->value, Market::published());
+        sort($expected);
+        sort($markets);
+
+        $this->assertSame($expected, $markets);
     }
 
     #[Test]

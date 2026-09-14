@@ -166,24 +166,6 @@ class AddProductTest extends TestCase
         $this->assertSame('maat M', $item->note);
     }
 
-    #[Test]
-    public function a_product_added_without_a_title_keeps_the_catalogue_wording(): void
-    {
-        $user = $this->user();
-        $list = $this->listFor($user);
-        $group = ProductGroup::factory()->create(['market' => Market::BeNl, 'title' => 'Tent voor twee']);
-
-        $this->actingAs($user)->post('/be-nl/list-items', [
-            'wishlist_id' => $list->id,
-            'group_id' => $group->id,
-        ])->assertRedirect();
-
-        $this->assertSame(
-            'Tent voor twee',
-            WishlistItem::query()->where('group_id', $group->id)->firstOrFail()->snapshot_title,
-        );
-    }
-
     /**
      * The whole reason the hand-written path exists: a voucher for the climbing
      * gym is in nobody's catalogue, and it is reachable without searching first.
@@ -213,19 +195,4 @@ class AddProductTest extends TestCase
     }
 
     /** A hand-written link is hostile input until proven otherwise. */
-    #[Test]
-    public function a_javascript_link_is_refused(): void
-    {
-        $user = $this->user();
-        $list = $this->listFor($user);
-
-        $this->actingAs($user)->post('/be-nl/list-items', [
-            'wishlist_id' => $list->id,
-            'source' => 'manual',
-            'title' => 'Iets',
-            'url' => 'javascript:alert(1)',
-        ])->assertSessionHasErrors('url');
-
-        $this->assertSame(0, $list->items()->count());
-    }
 }

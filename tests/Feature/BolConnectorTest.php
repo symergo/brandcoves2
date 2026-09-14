@@ -306,19 +306,6 @@ class BolConnectorTest extends TestCase
     }
 
     #[Test]
-    public function spain_is_skipped_entirely(): void
-    {
-        Http::fake($this->fakeToken());
-
-        // bol does not operate in Spain. A null country means skip, never
-        // "use the default" — which would show Belgian stock to Spanish users.
-        $this->assertFalse($this->connector->supports(Market::Es));
-        $this->assertSame([], $this->connector->search('auriculares', Market::Es));
-
-        Http::assertNothingSent();
-    }
-
-    #[Test]
     public function a_429_triggers_a_cooldown_rather_than_a_retry_storm(): void
     {
         Http::fake([...$this->fakeToken(), 'api.bol.com/*' => Http::response([], 429)]);

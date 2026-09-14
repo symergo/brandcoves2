@@ -141,7 +141,7 @@ Merchants — the pipeline, with the summary on top.
 | [app/Filament/Pages/MarketSupply.php](../../app/Filament/Pages/MarketSupply.php) | The page, the sidebar badge, the re-count action |
 | [resources/views/filament/pages/market-supply.blade.php](../../resources/views/filament/pages/market-supply.blade.php) | The grid |
 | [app/Services/Connectors/ConnectorRegistry.php](../../app/Services/Connectors/ConnectorRegistry.php) | Gained `liveSources()` and a nullable `live()` — see below |
-| [tests/Feature/MarketSupplyTest.php](../../tests/Feature/MarketSupplyTest.php) | 9 tests, one per distinction |
+| [tests/Feature/MarketSupplyTest.php](../../tests/Feature/MarketSupplyTest.php) | One test per distinction. Admin-only access is not re-tested here: the panel-wide gate is `AdminPanelTest` |
 
 `ConnectorRegistry::live()` is nullable where `feed()` throws. `feed()` is called by the ingestion
 pipeline, which has already decided the source exists and cannot proceed without it — an exception is

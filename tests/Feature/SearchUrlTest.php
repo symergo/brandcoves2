@@ -78,18 +78,6 @@ class SearchUrlTest extends TestCase
     }
 
     #[Test]
-    public function a_filtered_path_search_is_indexable_and_canonicalises_to_the_bare_path(): void
-    {
-        // Indexing on, or the environment stamps noindex on every page.
-        config(['giftcoves.robots_allow' => true]);
-
-        $this->get('/be-nl/zoek/koptelefoon?sort=price_asc')
-            ->assertOk()
-            ->assertDontSee('noindex', false)
-            ->assertSee('rel="canonical" href="'.url('/be-nl/zoek/koptelefoon').'"', escape: false);
-    }
-
-    #[Test]
     public function a_later_page_is_its_own_canonical(): void
     {
         config(['giftcoves.robots_allow' => true]);

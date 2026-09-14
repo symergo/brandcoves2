@@ -66,21 +66,6 @@ class AmazonSearchCtaTest extends TestCase
     }
 
     /**
-     * A dead end is where this link is worth most: we found nothing, and the
-     * shopper's question is still open.
-     */
-    #[Test]
-    public function a_search_that_found_nothing_still_offers_the_link(): void
-    {
-        $this->get('/nl-nl/search?q=iets-wat-hier-niet-bestaat')
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->where('results.total', 0)
-                ->where('amazonSearch.url', 'https://www.amazon.nl/s?k=iets-wat-hier-niet-bestaat&tag=giftcoves-21')
-            );
-    }
-
-    /**
      * The brand page hands across the brand plus whatever term chips are
      * narrowing it — not "Sony" when the visitor has clicked down to Sony
      * headphones.

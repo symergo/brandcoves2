@@ -67,16 +67,6 @@ class WishlistCollaboratorTest extends TestCase
     }
 
     #[Test]
-    public function a_stranger_still_cannot(): void
-    {
-        [, $list] = $this->ownedList();
-
-        $this->actingAs(User::factory()->create())
-            ->get("/be-nl/lists/{$list->id}")
-            ->assertNotFound();
-    }
-
-    #[Test]
     public function a_viewer_cannot_add_items(): void
     {
         [, $list] = $this->ownedList();

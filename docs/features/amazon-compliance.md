@@ -76,8 +76,8 @@ read this will be deciding whether to go further.
 
 `Source::allowsCatalogueStorage()` is still `false` and the eight call sites
 gated on it are untouched, so none of this reaches search, offer comparison, a
-chart, a wishlist or an email. `AmazonPageImportTest` asserts that gate directly
-rather than trusting it.
+chart, a wishlist or an email. `AmazonComplianceTest::the_capability_matrix_is_what_the_policy_says`
+asserts that gate directly rather than trusting it.
 
 Price is held back for a reason worth keeping: it is the field bound to the
 24-hour refresh rule, and the one a person acts on and is wrong about. It is not

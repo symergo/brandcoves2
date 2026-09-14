@@ -83,19 +83,6 @@ class MarketSupplyTest extends TestCase
     }
 
     #[Test]
-    public function a_non_admin_cannot_reach_it(): void
-    {
-        // Nothing here is a secret — presence and counts only — but it reports
-        // which credentials an environment is missing, which is a map for
-        // somebody probing it. Same gate as the rest of /admin.
-        $this->actingAs(User::factory()->create(['is_admin' => false]))
-            ->get('/admin/market-supply')
-            ->assertForbidden();
-
-        $this->get('/admin/market-supply')->assertForbidden();
-    }
-
-    #[Test]
     public function it_renders_every_market_including_the_unpublished_one(): void
     {
         $this->feed(Market::BeNl, enabled: true, ranAt: now()->subHour()->toDateTimeString());

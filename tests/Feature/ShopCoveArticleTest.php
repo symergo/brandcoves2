@@ -206,19 +206,6 @@ Tweede alinea.',
     }
 
     #[Test]
-    public function it_publishes_with_no_products(): void
-    {
-        // Its substance is the writing. `minimumItems()` is zero for exactly
-        // this reason, as it is for an advice article.
-        $this->assertSame(0, CoveKind::Shop->minimumItems());
-        $this->assertFalse(CoveKind::Shop->expectsShortlist());
-
-        $this->cove('krefel-be', 'Kopen bij Krëfel');
-
-        $this->get('/be-nl/shops/krefel-be')->assertOk();
-    }
-
-    #[Test]
     public function it_does_not_leak_into_the_guides_space(): void
     {
         /*

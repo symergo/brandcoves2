@@ -124,16 +124,6 @@ class SantaRepairTest extends TestCase
     }
 
     #[Test]
-    public function the_group_is_still_a_valid_draw_after_a_removal(): void
-    {
-        $before = [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 1];
-
-        $changed = $this->repair()->remove($before, 4, [], $this->ordered());
-
-        $this->assertIsAPermutation($this->after($before, $changed, removed: 4));
-    }
-
-    #[Test]
     public function removing_somebody_from_a_mutual_pair_splices_their_partner_in(): void
     {
         /*

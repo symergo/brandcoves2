@@ -84,17 +84,6 @@ class SearchTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('results.total', 1));
     }
 
-    #[Test]
-    public function a_typo_still_finds_the_product(): void
-    {
-        // The reason the trigram index is queried with `<%` and not `%`:
-        // similarity() scores this below the default threshold and finds
-        // nothing at all.
-        $this->search(['q' => 'koptelefon'])
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('results.total', 1));
-    }
-
     /**
      * The threshold reaches Postgres, and search behaves as if it had.
      *
@@ -109,8 +98,10 @@ class SearchTest extends TestCase
      * "kopltelefon" is the guard: it scores 0.500 against "Sony WH-1000XM5
      * Draadloze Koptelefoon", so it matches at 0.45 and does not at 0.6. It is
      * also not a word any dictionary stems, so full text cannot quietly cover for
-     * the trigram branch and make this pass for the wrong reason. The existing
-     * typo above scores 0.818 and would pass either way.
+     * the trigram branch and make this pass for the wrong reason. "koptelefon",
+     * the typo this file used to test, is stemmed by the Dutch dictionary into a
+     * full-text match, so it passed with the trigram branch removed; it was
+     * dropped on 2026-09-14 for that reason.
      */
     #[Test]
     public function a_typo_below_the_postgres_default_threshold_still_finds_the_product(): void
