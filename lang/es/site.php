@@ -1146,7 +1146,7 @@ return [
             'yoga' => 'Yoga y meditación', 'cars' => 'Coches', 'science' => 'Ciencia y espacio',
             'water' => 'Natación y deportes acuáticos', 'wintersports' => 'Deportes de invierno', 'football' => 'Fútbol',
             'collecting' => 'Coleccionismo', 'nature' => 'Naturaleza y aves', 'fishing' => 'Pesca',
-            'horses' => 'Caballos', 'hunting' => 'Caza',
+            'horses' => 'Caballos', 'hunting' => 'Caza', 'gadgets' => 'Gadgets', 'it' => 'Informática',
         ],
 
         'vibes' => [
@@ -1162,10 +1162,10 @@ return [
             'vintage' => 'Vintage',
             'minimal' => 'Sobrio',
             'colourful' => 'Con color',
-            'cosy' => 'Acogedor',
-            'sleek' => 'Estilizado',
             'natural' => 'Natural',
             'technical' => 'Técnico',
+            'manual' => 'Manual',
+            'powered' => 'Eléctrico',
             'everyday' => 'De diario',
             'luxurious' => 'De lujo',
             'classic' => 'Clásico',

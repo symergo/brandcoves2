@@ -78,6 +78,8 @@ class AngleMap
         'fishing' => ['hengel', 'visdoos', 'vismolen', 'viskoffer', 'visstoel', 'kunstaas set'],
         'horses' => ['paardenborstel', 'rijhandschoenen', 'halster', 'ruiterhelm', 'hoefkrabber', 'paardenboek'],
         'hunting' => ['jachtmes', 'verrekijker jacht', 'jachtvest', 'wildlokker', 'jachtrugzak', 'schietbril'],
+        'gadgets' => ['gadget', 'mini drone', 'sleutelzoeker', 'draadloze oplader', 'smart plug', 'actiecamera'],
+        'it' => ['mechanisch toetsenbord', 'monitor 27 inch', 'usb-c hub', 'externe ssd', 'nas', 'wifi router'],
     ];
 
     /**

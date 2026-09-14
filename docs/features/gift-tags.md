@@ -24,12 +24,12 @@ brief's "coffee" without anything in between. Every vocabulary is one the site a
 
 | Vocabulary | Values | Source |
 |---|---|---|
-| `interest` | the thirty-seven wizard interests (twenty broad ones, sixteen hobbies added 2026-09-14: art, cycling, board games, drinks, baking, running, yoga, cars, science, water sports, winter sports, football, collecting, nature, fishing, horses; then hunting, the first value proposed by the tagging pass itself) | `App\Enums\Interest` |
+| `interest` | the thirty-nine wizard interests (twenty broad ones, sixteen hobbies added 2026-09-14: art, cycling, board games, drinks, baking, running, yoga, cars, science, water sports, winter sports, football, collecting, nature, fishing, horses; then hunting, the first value proposed by the tagging pass itself; then gadgets and IT, split off from `tech`, which was carrying a clever little thing, a computer and everything else with a plug all at once) | `App\Enums\Interest` |
 | `occasion` | the list occasions except `other`, plus sinterklaas, easter, new_year, halloween, communion, christening, engagement, get_well, new_job, secret_santa | `App\Enums\EventType`, `GiftTags::EXTRA_OCCASIONS` |
 | `recipient` | partner, mother, father, grandparent, child, friend, colleague, sibling, teacher, host | `App\Enums\RecipientType` |
 | `age` | 0-2, 3-5, 6-9, 10-12, 13-17, 18-29, 30-49, 50-64, 65+ | `GiftTags::AGE_BANDS` |
 | `vibe` | practical, playful, beautiful | `App\Enums\Vibe` |
-| `preference` | seven axes, two poles each: practical/design, modern/vintage, minimal/colourful, cosy/sleek, natural/technical, everyday/luxurious, classic/quirky | `App\Enums\Preference` |
+| `preference` | seven axes, two poles each: practical/design, modern/vintage, minimal/colourful, natural/technical, manual/powered, everyday/luxurious, classic/quirky | `App\Enums\Preference` |
 | `values` | sustainable, local, handmade | `GiftTags::VALUE_OPTIONS` |
 
 A tag is `<vocabulary>:<value>`. The whole list is `GiftTags::all()`, and `GET /products/untagged`
@@ -66,10 +66,15 @@ So seven axes, two poles each, and nothing is ever both:
 | purpose | practical | design |
 | era | modern | vintage |
 | tone | minimal | colourful |
-| warmth | cosy | sleek |
 | material | natural | technical |
+| power | manual | powered |
 | spend | everyday | luxurious |
 | character | classic | quirky |
+
+Warmth (cosy or sleek) was an eighth axis for a few hours and the owner cut it: a blanket is cosy
+because of what it is, so the axis was describing the product rather than the person holding the
+taste. Manual or powered stays for the opposite reason — a hand grinder and an electric one are
+the same object answered two ways, and which one somebody wants is a fact about them.
 
 **The purpose axis is deliberately the vibe question again.** The owner asked for
 "practical vs design" twice, and it belongs in the form the rest of the taste is asked in. Vibe

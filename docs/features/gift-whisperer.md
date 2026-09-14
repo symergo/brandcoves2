@@ -109,7 +109,7 @@ person told us who they are shopping for; "we found nothing" throws that away.
 | `budget_fit` | 20 | Peaks at 85% of the ceiling, falls away on both sides. A €12 gift against a €100 budget reads as thoughtless, not thrifty. |
 | `surprise` | 10 | From [the Serendipity Engine](serendipity.md). 20 until 2026-09-14; five points went to `recipient_fit`, five to `occasion`. |
 | `vibe` | 10 | A nudge, never a filter — someone who said "playful" still wants the good headphones if headphones are the right answer. |
-| `preference` | 5 | Which way their taste goes, as seven axes of two poles: practical/design, modern/vintage, minimal/colourful, cosy/sleek, natural/technical, everyday/luxurious, classic/quirky. Added 2026-09-14. Any one of the poles named matching is a match, and the pole *not* chosen is never scored against a product. 10 in `for_myself`, where the finish is half the point of wanting the thing. |
+| `preference` | 5 | Which way their taste goes, as seven axes of two poles: practical/design, modern/vintage, minimal/colourful, natural/technical, manual/powered, everyday/luxurious, classic/quirky. Added 2026-09-14. Any one of the poles named matching is a match, and the pole *not* chosen is never scored against a product. 10 in `for_myself`, where the finish is half the point of wanting the thing. |
 | `values` | 10 | Sustainable / local / handmade. |
 | `recipient_fit` | 5 | An editor's `recipient:` or `age:` tag meeting the brief's relationship or age band. No text fallback. See [gift-tags.md](gift-tags.md). |
 | `occasion` | 5 | An editor's `occasion:` tag meeting the brief's occasion, or the word in the title. Zero until 2026-09-14: title words alone were too thin to trust. |
@@ -355,7 +355,9 @@ present can go, and a person recognises their own by being shown both ends rathe
 a bag of adjectives and picking none.
 
 `App\Enums\Preference` is seven axes of two poles: practical/design, modern/vintage,
-minimal/colourful, cosy/sleek, natural/technical, everyday/luxurious, classic/quirky. The wizard draws one row per axis inside
+minimal/colourful, natural/technical, manual/powered, everyday/luxurious, classic/quirky. Manual or powered is a real fork in a present — a hand grinder and an electric
+one are different gifts for the same shelf — and it is the one axis a feed title almost always
+answers by itself. The wizard draws one row per axis inside
 the vibe step — not a step of its own, because every step after the first is one people skip —
 with up to three chosen across the whole answer, and picking one end clears the other because
 nothing is both modern and vintage. A saved person remembers them in `recipients.preferences`,

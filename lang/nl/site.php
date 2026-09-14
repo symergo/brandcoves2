@@ -1150,7 +1150,7 @@ return [
             'yoga' => 'Yoga en meditatie', 'cars' => 'Auto\'s', 'science' => 'Wetenschap en ruimte',
             'water' => 'Zwemmen en watersport', 'wintersports' => 'Wintersport', 'football' => 'Voetbal',
             'collecting' => 'Verzamelen', 'nature' => 'Natuur en vogels', 'fishing' => 'Vissen',
-            'horses' => 'Paarden', 'hunting' => 'Jagen',
+            'horses' => 'Paarden', 'hunting' => 'Jagen', 'gadgets' => 'Gadgets', 'it' => 'Computers en IT',
         ],
 
         'vibes' => [
@@ -1166,10 +1166,10 @@ return [
             'vintage' => 'Vintage',
             'minimal' => 'Sober',
             'colourful' => 'Kleurrijk',
-            'cosy' => 'Knus',
-            'sleek' => 'Strak',
             'natural' => 'Natuurlijk',
             'technical' => 'Technisch',
+            'manual' => 'Handmatig',
+            'powered' => 'Elektrisch',
             'everyday' => 'Alledaags',
             'luxurious' => 'Luxueus',
             'classic' => 'Klassiek',

@@ -64,6 +64,11 @@ enum Interest: string
     // interest that fitted. The first value to arrive from the tagging pass
     // rather than from the wizard.
     case Hunting = 'hunting';
+    // Split off from `tech`, which was carrying three different presents at
+    // once (owner's call, 2026-09-14): a clever little thing, a computer, and
+    // everything else with a plug.
+    case Gadgets = 'gadgets';
+    case It = 'it';
 
     /** @return list<string> */
     public static function values(): array

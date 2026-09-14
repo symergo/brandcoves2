@@ -448,10 +448,10 @@ class GiftWhispererTest extends TestCase
     {
         $this->catalogue();
 
-        $this->post('/be-nl/gift', [...$this->brief(), 'preferences' => ['vintage', 'cosy']])
+        $this->post('/be-nl/gift', [...$this->brief(), 'preferences' => ['vintage', 'manual']])
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->where('brief.preferences', ['vintage', 'cosy'])
+                ->where('brief.preferences', ['vintage', 'manual'])
                 // The wizard draws the axes, so the page is given them as
                 // axes, the owner's headline pair first.
                 ->where('options.preferences.0.axis', 'purpose')

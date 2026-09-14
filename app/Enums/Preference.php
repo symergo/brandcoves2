@@ -24,8 +24,8 @@ namespace App\Enums;
  * | purpose | practical | design |
  * | era | modern | vintage |
  * | tone | minimal | colourful |
- * | warmth | cosy | sleek |
  * | material | natural | technical |
+ * | power | manual | powered |
  * | spend | everyday | luxurious |
  * | character | classic | quirky |
  *
@@ -50,10 +50,10 @@ enum Preference: string
     case Vintage = 'vintage';
     case Minimal = 'minimal';
     case Colourful = 'colourful';
-    case Cosy = 'cosy';
-    case Sleek = 'sleek';
     case Natural = 'natural';
     case Technical = 'technical';
+    case Manual = 'manual';
+    case Powered = 'powered';
     case Everyday = 'everyday';
     case Luxurious = 'luxurious';
     case Classic = 'classic';
@@ -63,9 +63,14 @@ enum Preference: string
      * The axes, in the order the wizard shows them.
      *
      * The order is the order a person would think of them: what the present
-     * is for first, then what era, then how loud, then how it feels in the
-     * hand, then what it is made of, then what it costs to be, then whether
-     * it is straight-faced.
+     * is for first, then what era, then how loud, then what it is made of,
+     * then whether it plugs in, then what it costs to be, then whether it is
+     * straight-faced.
+     *
+     * Warmth (cosy or sleek) was here for a few hours on 2026-09-14 and the
+     * owner cut it: a blanket is cosy because of what it is, not because of
+     * a taste somebody holds, so the axis was describing the product rather
+     * than the person.
      *
      * @return list<array{axis: string, poles: array{self, self}}>
      */
@@ -75,8 +80,8 @@ enum Preference: string
             ['axis' => 'purpose', 'poles' => [self::Practical, self::Design]],
             ['axis' => 'era', 'poles' => [self::Modern, self::Vintage]],
             ['axis' => 'tone', 'poles' => [self::Minimal, self::Colourful]],
-            ['axis' => 'warmth', 'poles' => [self::Cosy, self::Sleek]],
             ['axis' => 'material', 'poles' => [self::Natural, self::Technical]],
+            ['axis' => 'power', 'poles' => [self::Manual, self::Powered]],
             ['axis' => 'spend', 'poles' => [self::Everyday, self::Luxurious]],
             ['axis' => 'character', 'poles' => [self::Classic, self::Quirky]],
         ];
@@ -144,10 +149,12 @@ enum Preference: string
             self::Vintage => ['vintage', 'retro', 'nostalg', 'antiek'],
             self::Minimal => ['minimal', 'sober', 'basic', 'essential'],
             self::Colourful => ['kleurrijk', 'colour', 'color', 'regenboog', 'rainbow', 'multicolor'],
-            self::Cosy => ['knus', 'cosy', 'cozy', 'fleece', 'plaid', 'zacht'],
-            self::Sleek => ['mat zwart', 'matzwart', 'rvs', 'aluminium', 'sleek'],
             self::Natural => ['hout', 'wood', 'bamboe', 'bamboo', 'linnen', 'linen', 'katoen', 'natuur'],
             self::Technical => ['technisch', 'technical', 'digitaal', 'digital', 'precisie', 'elektronisch'],
+            // "hand" alone would meet handdoek and handtas, so the words are
+            // the ones that only ever mean worked by hand.
+            self::Manual => ['handmatig', 'manueel', 'mechanisch', 'manual', 'hendel', 'handgedreven'],
+            self::Powered => ['elektrisch', 'electric', 'accu', 'oplaadbaar', 'batterij', 'motor'],
             self::Everyday => ['dagelijks', 'alledaags', 'everyday', 'handig'],
             self::Luxurious => ['luxe', 'luxury', 'premium', 'deluxe', 'exclusief'],
             self::Classic => ['klassiek', 'classic', 'tijdloos', 'timeless', 'traditioneel'],
