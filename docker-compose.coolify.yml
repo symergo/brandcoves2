@@ -289,6 +289,37 @@ services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    # Memory sized for the catalogue rather than Postgres's defaults (2026-09-14).
+    #
+    # It ran on stock settings: 128MB of shared buffers against a working set
+    # of about 3.4GB (products 1.9GB plus 0.85GB of indexes, product_groups
+    # 0.7GB), so nearly every read went to an OS cache shared with every other
+    # container on the box and emptied by any restart. After an unclean
+    # restart during a deploy, Whisperer requests hit the 30-second limit.
+    #
+    # Staging runs from this same file, so the numbers have to fit twice: the
+    # server has 11.7GB and every container together used about 3.5GB when
+    # measured. 1GB of buffers per database leaves the rest to the OS cache,
+    # which effective_cache_size tells the planner about (it allocates
+    # nothing). work_mem is per sort or hash, per query, so it stays modest.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - effective_cache_size=5GB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=256MB
+    # Docker's default /dev/shm is 64MB, and parallel queries allocate their
+    # shared hash tables there: with work_mem raised, a parallel hash join can
+    # outgrow it and fail with "could not resize shared memory segment".
+    shm_size: 1gb
+    # Coolify stops this container on every deploy. With Docker's default ten
+    # seconds it was killed mid-checkpoint on 2026-09-14 and came back through
+    # crash recovery with every cache empty. A minute lets it shut down clean.
+    stop_grace_period: 60s
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
