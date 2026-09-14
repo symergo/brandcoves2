@@ -222,7 +222,9 @@ class BolPageImport
 
         $this->upserter->upsert($offers);
 
-        $this->grouper->attach($market, array_map(fn (Offer $o) => $o->externalId, $offers));
+        // The offers, not their ids: the grouper needs each one's source to use
+        // the index at all. See IncomingGrouper::attachFrom().
+        $this->grouper->attach($market, $offers);
     }
 
     /**

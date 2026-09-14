@@ -488,7 +488,9 @@ class SearchService
      */
     private function groupIncoming(SearchQuery $query, array $offers): void
     {
-        $this->grouper->attach($query->market, array_map(fn (Offer $o) => $o->externalId, $offers));
+        // The offers, not their ids: the grouper needs each one's source to use
+        // the index at all. See IncomingGrouper::attachFrom().
+        $this->grouper->attach($query->market, $offers);
     }
 
     /**

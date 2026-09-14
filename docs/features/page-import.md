@@ -237,10 +237,32 @@ product asking bol about it.
 | Grouping shared with live search | `app/Services/Ingestion/IncomingGrouper.php` |
 | bol product lookup by barcode | `app/Services/Connectors/Bol/BolConnector::fetchByEan()` |
 | The extension | `extension/` — `scan-bol.js`, `scan-amazon.js`, `popup.js` |
-| Tests | `tests/Feature/BolPageImportTest.php`, `AmazonPageImportTest.php` |
+| Tests | `tests/Feature/BolPageImportTest.php`, `AmazonPageImportTest.php`, `IncomingGrouperTest.php` |
 
 `IncomingGrouper` was lifted out of `SearchService::groupIncoming()` rather than
 copied. Both write offers outside a feed run and both need the new rows countable
 before the page that triggered them renders; two copies would be two answers to
 "when may an offer join a group", and a wrong merge lets a foreign price
 masquerade as the cheapest — the worst bug this site has.
+
+### It finds the offers by source, id and market (2026-09-14)
+
+`attach()` takes the offers themselves, not a list of their ids, and works one
+source at a time. Its three statements used to find the incoming rows by id and
+market alone, and the only index on the id is `(source, external_id, market)`: a
+filter that leaves out the leading column cannot seek into it, so Postgres walked
+the whole index for each statement. That was the entire cost of a first search
+for a term on production, from 7 to over 45 seconds while a repeat took about one,
+and it is why this import timed out on the evening it shipped. Measured there on a
+warm cache, one lookup took 698 ms as it was and 0.7 ms with the source added.
+
+The source is also the exact key, since an id is only unique within its source.
+Before, another shop's row that shared the number was swept in too, grouped
+outside the nightly run with its group's counts rewritten. Only the step that
+finds the touched groups is scoped to the source; the counts after it still
+include every shop's offers, so a bol offer arriving next to an eBay one still
+makes the card say two shops. `IncomingGrouperTest` pins all three: the join and
+its counts, the other shop's row left alone, and a batch from two sources.
+
+None of this affects how a list shows its products. A list item points at its
+group by id, and grouping was always limited to one market.

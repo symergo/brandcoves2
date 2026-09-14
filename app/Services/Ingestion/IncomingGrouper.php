@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Ingestion;
 
 use App\Enums\Market;
+use App\Services\Connectors\Offer;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -36,14 +37,55 @@ use Illuminate\Support\Facades\DB;
 class IncomingGrouper
 {
     /**
-     * @param  list<string>  $externalIds  the offers' source-side ids, as just written
+     * Take the offers themselves rather than their ids.
+     *
+     * Both callers used to pass a bare list of ids, which is what let the
+     * statements below forget the source. An offer carries its source, so the
+     * pair cannot drift apart on the way in.
+     *
+     * @param  list<Offer>  $offers  as just written
      */
-    public function attach(Market $market, array $externalIds): void
+    public function attach(Market $market, array $offers): void
     {
-        if ($externalIds === []) {
-            return;
+        /** @var array<string, list<string>> $bySource source => external ids */
+        $bySource = [];
+
+        foreach ($offers as $offer) {
+            $bySource[$offer->source->value][] = $offer->externalId;
         }
 
+        foreach ($bySource as $source => $externalIds) {
+            $this->attachFrom($market, $source, $externalIds);
+        }
+    }
+
+    /**
+     * One source's offers, found by source, id and market together.
+     *
+     * Never by id and market alone, for two reasons.
+     *
+     * **Speed.** The only index on the offer id is `(source, external_id,
+     * market)`, and a filter that leaves out its leading column cannot seek into
+     * it: Postgres walked the entire index for each of the three statements
+     * below. That is what made the first search for any term take from 7 to
+     * over 45 seconds on production, and the bol page import time out, on
+     * 2026-09-14. Measured there, warm: 698 ms for one lookup as it was, 0.7 ms
+     * with the source added.
+     *
+     * **Exactness.** An id is only unique within its source. Without the source,
+     * another shop's row that happened to share the number was swept in too:
+     * grouped outside the nightly run, and its group's counts rewritten, because
+     * a bol offer arrived. Never a wrong merge — it relinks by its own identity —
+     * but work nobody asked for, on rows nobody sent.
+     *
+     * Only the step that finds the touched groups is scoped to the source. The
+     * counts that follow deliberately are not: a group's shop count is every
+     * shop's offers, whichever source brought this one in.
+     *
+     * @param  list<string>  $externalIds
+     */
+    private function attachFrom(Market $market, string $source, array $externalIds): void
+    {
         $ids = $this->literal($externalIds);
 
         DB::statement(<<<'SQL'
@@ -56,23 +98,23 @@ class IncomingGrouper
                 left(regexp_replace(lower(unaccent(p.title)), '[^a-z0-9]+', '-', 'g'), 80),
                 p.brand, p.image_url, p.merchant_category, now(), now(), now()
             FROM products p
-            WHERE p.market = ? AND p.external_id = ANY(?) AND p.identity_key IS NOT NULL
+            WHERE p.source = ? AND p.market = ? AND p.external_id = ANY(?) AND p.identity_key IS NOT NULL
             ORDER BY p.identity_key, (p.image_url IS NOT NULL) DESC, p.price ASC NULLS LAST, p.id
             ON CONFLICT (market, identity_key) DO NOTHING
-        SQL, [$market->value, $ids]);
+        SQL, [$source, $market->value, $ids]);
 
         DB::statement(<<<'SQL'
             UPDATE products p SET group_id = g.id
             FROM product_groups g
-            WHERE p.market = ? AND p.external_id = ANY(?)
+            WHERE p.source = ? AND p.market = ? AND p.external_id = ANY(?)
               AND g.market = p.market AND g.identity_key = p.identity_key
               AND p.group_id IS DISTINCT FROM g.id
-        SQL, [$market->value, $ids]);
+        SQL, [$source, $market->value, $ids]);
 
         DB::statement(<<<'SQL'
             WITH touched AS (
                 SELECT DISTINCT group_id FROM products
-                WHERE market = ? AND external_id = ANY(?) AND group_id IS NOT NULL
+                WHERE source = ? AND market = ? AND external_id = ANY(?) AND group_id IS NOT NULL
             ),
             stats AS (
                 SELECT p.group_id,
@@ -94,7 +136,7 @@ class IncomingGrouper
                 in_stock = stats.in_stock,
                 updated_at = now()
             FROM stats WHERE g.id = stats.group_id
-        SQL, [$market->value, $ids]);
+        SQL, [$source, $market->value, $ids]);
     }
 
     /**
