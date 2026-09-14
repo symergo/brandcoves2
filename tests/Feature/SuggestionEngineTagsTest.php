@@ -244,6 +244,44 @@ class SuggestionEngineTagsTest extends TestCase
     }
 
     /**
+     * A word somebody typed searches, and never pretends to be a tag.
+     *
+     * The "anything else?" box takes any word. A typed interest becomes a slot
+     * whose only query is the word itself, and it must not be matched against
+     * `interest:` tags: the tag vocabulary is closed, so `interest:schilderen`
+     * cannot exist, and treating the word as a tag would mean a product tagged
+     * for a *different* interest could never be reached by it while the typed
+     * word silently scored as though it had been (owner's call, 2026-09-14).
+     *
+     * True by construction — `Interest::tryFrom` fails, so neither the pool's
+     * tag branch nor the slot's tag check sees it — and pinned here because it
+     * is now a rule rather than an accident.
+     */
+    #[Test]
+    public function a_typed_interest_searches_but_is_never_matched_as_a_tag(): void
+    {
+        // Tagged for art, and its title says nothing about painting.
+        $tagged = $this->giftable('Doos 24 stuks', 3000, ['interest:art'], 'Kunst');
+        // Untagged, and the typed word is in the title.
+        $byWord = $this->giftable('Schilderen op nummer', 3000, [], 'Hobby');
+
+        $picks = $this->engine()->suggest(new TasteBrief(
+            market: Market::BeNl,
+            interests: ['schilderen'],
+            limit: 8,
+        ));
+
+        $found = array_map(fn ($pick) => $pick->group->id, $picks);
+
+        $this->assertContains($byWord->id, $found, 'the typed word has to search');
+        $this->assertNotContains($tagged->id, $found, 'a typed word must not be read as a tag');
+
+        // And it names itself on the card rather than borrowing an interest.
+        $pick = collect($picks)->firstWhere(fn ($p) => $p->group->id === $byWord->id);
+        $this->assertSame([['kind' => 'interest', 'value' => 'schilderen']], $pick->fits());
+    }
+
+    /**
      * The owner's report, 2026-09-14: "painting and technique" came back as a
      * board of speakers, and a board that answers one interest has ignored
      * half the brief. The diversifier now costs an interest once it has had
