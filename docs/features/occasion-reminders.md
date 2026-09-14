@@ -112,3 +112,13 @@ arriving half in English is the bug all of that prevents.
 - [wishlists.md](wishlists.md) — invariant 4, and why claimers are unreachable
 - [email-templates.md](email-templates.md) — the reminder's wording is editable
 - [secret-santa.md](secret-santa.md) — the exchange date this also watches
+
+## The settings page could not save on production until 2026-09-14
+
+`ReminderSettingsStore` writes under the source `reminders`, and `connector_settings.source` has a
+CHECK that never listed it. So saving the reminders admin page failed with a check violation on
+production, where the table held no `reminders` rows at all. The tests never caught it because none
+of them saved through the store. Found while adding `affiliate` to the same list:
+`2026_09_14_000500_affiliate_and_reminder_settings_are_sources` allows both, and
+`tests/Feature/SettingsSourcesTest.php` now writes a row under every settings store's source, so a
+store shipped without its migration fails there.

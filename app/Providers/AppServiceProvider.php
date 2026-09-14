@@ -14,6 +14,7 @@ use App\Services\Connectors\Tradedoubler\TradedoublerConnector;
 use App\Services\Pages\PageCopy;
 use App\Services\Seo\BrandLinker;
 use App\Services\Seo\PageMeta;
+use App\Services\Settings\AffiliateSettingsStore;
 use App\Services\Settings\AiSettingsStore;
 use App\Services\Settings\ReminderSettingsStore;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -136,6 +137,12 @@ class AppServiceProvider extends ServiceProvider
         // Same overlay, same reasoning: when a reminder fires is a judgement
         // about how people shop, and changing it should not be a deploy.
         app(ReminderSettingsStore::class)->apply();
+
+        // And again for the shops: bol's partner ids and API credentials and
+        // the Amazon Associates tags, so a new id or a rotated secret is not a
+        // deploy. The values in Coolify stay the defaults. See
+        // AffiliateSettingsStore.
+        app(AffiliateSettingsStore::class)->apply();
 
         $this->trigramThreshold();
         $this->editorialApiLimits();

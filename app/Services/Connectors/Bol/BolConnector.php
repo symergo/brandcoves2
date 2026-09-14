@@ -32,6 +32,8 @@ class BolConnector implements LiveConnector, PopularityConnector
 {
     private const TOKEN_URL = 'https://login.bol.com/token';
 
+    private const TOKEN_CACHE_KEY = 'bc:bol:token';
+
     private const API_BASE = 'https://api.bol.com/marketing/catalog/v1';
 
     public function source(): Source
@@ -758,6 +760,20 @@ class BolConnector implements LiveConnector, PopularityConnector
 
     private function tokenCacheKey(): string
     {
-        return 'bc:bol:token';
+        return self::TOKEN_CACHE_KEY;
+    }
+
+    /**
+     * Drop the cached login, so the next call signs in with the credentials the
+     * config holds now.
+     *
+     * Called when an administrator changes the client id or secret in the
+     * admin. Without it the old token stays valid for up to four minutes, and a
+     * wrong new secret only shows itself once that token expires, long after the
+     * person who typed it has moved on.
+     */
+    public static function forgetAccessToken(): void
+    {
+        Cache::forget(self::TOKEN_CACHE_KEY);
     }
 }

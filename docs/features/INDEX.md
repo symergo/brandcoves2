@@ -10,6 +10,7 @@ cannot be recovered from a diff.
 | [list-help.md](list-help.md) | Core / Frontend | Active |
 | [auth.md](auth.md) | Core / Accounts | Active — Google needs credentials per environment |
 | [user-admin.md](user-admin.md) | Core / Accounts / Admin | Active — new 2026-09-12 |
+| [affiliate-settings.md](affiliate-settings.md) | Admin / Connectors | Active — new 2026-09-14 |
 | [display-titles.md](display-titles.md) | Catalogue / Editorial | Active — new 2026-09-14 |
 | [gift-tags.md](gift-tags.md) | Catalogue / Gifting / Editorial | Active — new 2026-09-14 |
 | [localisation.md](localisation.md) | Core / Frontend | Active |
