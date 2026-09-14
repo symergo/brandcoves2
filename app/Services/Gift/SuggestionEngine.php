@@ -83,7 +83,7 @@ class SuggestionEngine
         $slots = $this->slots($brief);
         $queries = $this->flatten($slots);
 
-        $candidates = $this->retrieve($brief, $queries);
+        $candidates = $this->retrieve($brief, $slots);
 
         if ($candidates->isEmpty() && $queries !== []) {
             // Nothing matched the interests. Falling back to a budget-and-vibe
@@ -249,15 +249,53 @@ class SuggestionEngine
      * @param  list<string>  $queries
      * @return Collection<int, ProductGroup>
      */
-    private function retrieve(TasteBrief $brief, array $queries): Collection
+    private function retrieve(TasteBrief $brief, array $slots): Collection
     {
-        $pool = $this->pool($brief, $queries)
-            ->orderByDesc('merchant_count')
-            ->orderByDesc('first_seen_at')
-            ->limit(self::CANDIDATE_POOL)
-            ->get();
+        $queries = $this->flatten($slots);
 
-        return $this->withDemandCoverage($pool, $brief, $queries);
+        if (count($slots) < 2) {
+            $pool = $this->pool($brief, $queries)
+                ->orderByDesc('merchant_count')
+                ->orderByDesc('first_seen_at')
+                ->limit(self::CANDIDATE_POOL)
+                ->get();
+
+            return $this->withDemandCoverage($pool, $brief, $queries);
+        }
+
+        /*
+         * One share of the pool per interest, and the reason is the same one
+         * the demand slice exists for.
+         *
+         * The pool is ordered by `merchant_count`, and that is not evenly
+         * distributed across interests: a Bluetooth speaker is sold by nine
+         * shops and a set of brushes by one. Asked for "painting and
+         * technique" over a single OR'd query, all 300 rows came back
+         * technique and painting never reached the scorer at all — measured
+         * on staging, 2026-09-14, with 57 giftable painting products sitting
+         * in the catalogue the whole time. Spreading the *board* cannot fix
+         * that, because by then the candidates are already gone.
+         *
+         * So each slot retrieves its own share. A slot that cannot fill it
+         * simply returns less; nothing is reserved and nothing is wasted.
+         */
+        $share = (int) ceil(self::CANDIDATE_POOL / count($slots));
+
+        /** @var Collection<int, ProductGroup> $pool */
+        $pool = new Collection;
+
+        foreach ($slots as $slot) {
+            $pool = $pool->concat(
+                $this->pool($brief, $slot['queries'], $slot['interest'])
+                    ->orderByDesc('merchant_count')
+                    ->orderByDesc('first_seen_at')
+                    ->limit($share)
+                    ->get()
+                    ->all()
+            );
+        }
+
+        return $this->withDemandCoverage($pool->unique('id')->values(), $brief, $queries);
     }
 
     /**
@@ -268,9 +306,10 @@ class SuggestionEngine
      * "no alcohol" ends up holding on one path and not the other.
      *
      * @param  list<string>  $queries
+     * @param  string|null  $interest  the slot this pool is for; null means every interest asked
      * @return Builder<ProductGroup>
      */
-    private function pool(TasteBrief $brief, array $queries)
+    private function pool(TasteBrief $brief, array $queries, ?string $interest = null)
     {
         $groups = ProductGroup::query()
             ->forMarket($brief->market)
@@ -315,9 +354,15 @@ class SuggestionEngine
              * vector, the tags on their GIN index (`?|`, spelled as the
              * function because a bare `?` is a placeholder to PDO).
              */
+            // Scoped to the slot when retrieval is per interest, or every
+            // interest asked when it is one pool: a slot that also dragged in
+            // the tagged products of other interests would hand its share to
+            // them.
+            $wanted = $interest === null ? $brief->interests : [$interest];
+
             $tags = array_map(
                 fn (string $interest) => GiftTags::interest($interest),
-                array_values(array_filter($brief->interests, fn (string $i) => Interest::tryFrom(mb_strtolower(trim($i))) !== null)),
+                array_values(array_filter($wanted, fn (string $i) => Interest::tryFrom(mb_strtolower(trim($i))) !== null)),
             );
 
             /*

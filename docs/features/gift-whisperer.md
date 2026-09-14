@@ -384,7 +384,19 @@ board where one wrong guess is a quarter of the answer. `giftcoves.gift.results`
 is the single place the number lives; the copy that counts them out loud
 ("Acht ideeën", "Acht andere") follows it by hand.
 
-**Each interest gets a share of the board.** "Painting and technique" came back
+**Each interest gets a share of the candidate pool, before any of that.**
+Spreading the board can only spread what was retrieved, and retrieval ordered
+300 rows by `merchant_count` over one OR'd query. That is not evenly spread
+across interests: a Bluetooth speaker is sold by nine shops and a set of
+brushes by one. Asked for painting and technique, every one of the 300 rows
+came back technique, and the 57 giftable painting products in the catalogue
+never reached the scorer — measured on staging with the board share already in
+place, which is how the board could still come back seven-to-one. Each slot now
+retrieves its own share of the pool, and its tag branch is scoped to its own
+interest so it cannot hand that share to another. A slot that cannot fill its
+share just returns less.
+
+**Each interest then gets a share of the board.** "Painting and technique" came back
 as a page of speakers: the diversifier spread the board across *categories*,
 which is not the same as spreading it across what the person said. Scaling the
 similarity penalty could not fix it — two products of one interest already look
