@@ -1712,7 +1712,7 @@ return [
          */
         'seo_title' => 'Koopgidsen met bij elk product een actuele prijs',
         'title' => 'Slim kopen',
-        'subtitle' => 'Koopadvies en koopgidsen, geschreven op basis van wat mensen hier zoeken en niet van een zoekwoordtool.',
+        'subtitle' => 'Koopadvies en koopgidsen.',
         'seo_description' => 'Koopgidsen gebouwd op echte zoekvraag, met live prijzen van elke winkel die het product heeft.',
         'empty' => 'Nog geen koopadvies. Het wordt geschreven zodra een onderwerp genoeg vraag opbouwt.',
         'how_to_choose' => 'Hoe kies je',

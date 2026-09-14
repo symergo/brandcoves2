@@ -1920,7 +1920,7 @@ return [
          */
         'seo_title' => 'Buying guides with a live price on every product',
         'title' => 'Shop Smarter',
-        'subtitle' => 'Buying advice and guides, written from what people search for here rather than from a keyword tool.',
+        'subtitle' => 'Buying advice and guides.',
         'seo_description' => 'Buying guides built from real search demand, with live prices from every shop that stocks each product.',
         'empty' => 'No buying advice yet. It is written as topics build up enough demand.',
         'how_to_choose' => 'How to choose',

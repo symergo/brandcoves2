@@ -1707,7 +1707,7 @@ return [
          */
         'seo_title' => 'Guides d’achat avec prix en direct',
         'title' => 'Acheter malin',
-        'subtitle' => "Conseils d'achat et guides, écrits à partir de ce que les gens cherchent ici plutôt que d'un outil de mots-clés.",
+        'subtitle' => "Conseils d'achat et guides.",
         'seo_description' => 'Des guides d’achat bâtis sur une demande réelle, avec les prix en direct de toutes les boutiques qui vendent chaque produit.',
         'empty' => "Pas encore de conseils d'achat. Ils s'écrivent dès qu'un sujet accumule assez de demande.",
         'how_to_choose' => 'Comment choisir',

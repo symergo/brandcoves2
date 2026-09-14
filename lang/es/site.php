@@ -1705,7 +1705,7 @@ return [
          */
         'seo_title' => 'Guías de compra con precios en vivo',
         'title' => 'Comprar mejor',
-        'subtitle' => 'Consejos de compra y guías, escritas a partir de lo que la gente busca aquí y no de una herramienta de palabras clave.',
+        'subtitle' => 'Consejos de compra y guías.',
         'seo_description' => 'Guías de compra construidas sobre demanda real, con precios en vivo de todas las tiendas que venden cada producto.',
         'empty' => 'Aún no hay consejos de compra. Se escriben cuando un tema acumula suficiente demanda.',
         'how_to_choose' => 'Cómo elegir',
