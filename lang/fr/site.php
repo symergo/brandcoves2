@@ -1324,7 +1324,6 @@ return [
         'title' => 'Ce que les gens recherchent',
         'empty' => 'Rien à afficher pour l\'instant — ce marché n\'a pas encore été assez consulté pour qu\'une tendance se dégage.',
         'empty_link' => 'Faire une recherche',
-        'note' => 'Uniquement les recherches qui ont donné des résultats, et seulement celles effectuées assez souvent pour représenter une tendance plutôt qu\'une seule personne.',
         'seo_title' => 'Ce que les gens recherchent',
         'seo_description' => 'Les recherches les plus fréquentes sur ce site ces trois derniers mois, chacune menant à ses résultats.',
         'popular_heading' => 'Les plus recherchées',

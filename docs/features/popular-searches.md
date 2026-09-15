@@ -189,6 +189,10 @@ A page with every column and both lists empty is indexable too, since 2026-09-12
 and a link to the search box, because the footer points here from every page in
 every market.
 
+The note under the lists that explained the filters ("only searches that found something, and only
+those run often enough to be a pattern rather than one person") was removed on 2026-09-15 at the
+owner's request; the link to the search tips stays in its place. The rules themselves are unchanged.
+
 ## Cost
 
 Grouped aggregates over `search_log` filtered by `(market, hour_bucket)`, which

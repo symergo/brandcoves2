@@ -1327,7 +1327,6 @@ return [
         'title' => 'Waar mensen naar zoeken',
         'empty' => 'Nog niets te tonen — er is in deze markt nog te weinig gezocht om een patroon te laten zien.',
         'empty_link' => 'Probeer een zoekopdracht',
-        'note' => 'Alleen zoekopdrachten die iets vonden, en alleen die vaak genoeg zijn uitgevoerd om een patroon te zijn in plaats van één persoon.',
         'seo_title' => 'Waar mensen naar zoeken',
         'seo_description' => 'De meest uitgevoerde zoekopdrachten op deze site van de afgelopen drie maanden, elk met een link naar de resultaten.',
         'popular_heading' => 'Meest gezocht',

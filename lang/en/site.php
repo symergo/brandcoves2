@@ -1528,7 +1528,6 @@ return [
         'title' => 'What people search for',
         'empty' => 'Nothing to show yet — this market has not been searched enough for a pattern to be worth printing.',
         'empty_link' => 'Try a search',
-        'note' => 'Only searches that found something, and only those run often enough to be a pattern rather than one person.',
         'seo_title' => 'What people search for',
         'seo_description' => 'The most-run searches on this site over the last three months, each linking to its results.',
         'popular_heading' => 'Most searched',

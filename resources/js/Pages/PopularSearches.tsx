@@ -249,7 +249,6 @@ export default function PopularSearches({ months, trending, latest, urls }: Prop
             )}
 
             <p className="mt-10 max-w-3xl text-sm text-ink-soft">
-                {t('popular_searches.note')}{' '}
                 <Link href={urls.searchHelp} className="underline hover:text-accent">
                     {t('search_help.footer_link')}
                 </Link>

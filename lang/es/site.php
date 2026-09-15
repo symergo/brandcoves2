@@ -1323,7 +1323,6 @@ return [
         'title' => 'Lo que la gente busca',
         'empty' => 'Todavía no hay nada que mostrar: en este mercado aún no se ha buscado lo suficiente como para ver un patrón.',
         'empty_link' => 'Haz una búsqueda',
-        'note' => 'Solo búsquedas que encontraron algo, y solo las realizadas con la frecuencia suficiente para ser un patrón y no una sola persona.',
         'seo_title' => 'Lo que la gente busca',
         'seo_description' => 'Las búsquedas más frecuentes en este sitio durante los últimos tres meses, cada una enlazada a sus resultados.',
         'popular_heading' => 'Las más buscadas',
