@@ -32,7 +32,6 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ItemTransferController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ListHelpController;
-use App\Http\Controllers\ListInvitationController;
 use App\Http\Controllers\ListItemVoteController;
 use App\Http\Controllers\ListMessageController;
 use App\Http\Controllers\ListQuizController;
@@ -492,19 +491,6 @@ Route::prefix('{market}')->group(function () {
     Route::delete('/lists/{list}/collaborators/{collaborator}', [WishlistCollaboratorController::class, 'destroy'])
         ->middleware('auth')
         ->name('lists.collaborators.destroy');
-
-    /*
-     * Following an invitation to help choose.
-     *
-     * The token decides which list to land on, never whether access is granted
-     * - that happens on sign-in, keyed to the address the invitation was sent
-     * to. A link in an email is followed by whoever holds the inbox, and a URL
-     * cannot tell a forward from the real recipient.
-     */
-    Route::get('/invitations/{token}', ListInvitationController::class)
-        ->where('token', '[0-9a-f-]{36}')
-        ->middleware('throttle:30,1')
-        ->name('invitations.show');
 
     /*
     |----------------------------------------------------------------------

@@ -14,11 +14,9 @@ use App\Models\ProductGroup;
 use App\Models\User;
 use App\Services\Content\ContentEnvelope;
 use App\Services\Ops\ConfigReport;
-use App\Services\Ops\DeployTrigger;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -160,87 +158,6 @@ class AdminMigrationTest extends TestCase
         config(['giftcoves.connectors.amazon.enabled' => true]);
 
         $this->assertContains('AMAZON_ACCESS_KEY', $report->failures());
-    }
-
-    #[Test]
-    public function the_deploy_button_is_absent_until_a_webhook_exists(): void
-    {
-        // A button that cannot work is worse than no button: it invites a click
-        // and then explains itself in a toast.
-        Livewire::actingAs($this->admin())
-            ->test(Migration::class)
-            ->assertActionHidden(TestAction::make('deploy')->schemaComponent('deployment'));
-
-        app(DeployTrigger::class)->setWebhook('https://coolify.example.test/api/v1/deploy?uuid=abc');
-
-        Livewire::actingAs($this->admin())
-            ->test(Migration::class)
-            ->assertActionVisible(TestAction::make('deploy')->schemaComponent('deployment'));
-    }
-
-    #[Test]
-    public function the_webhook_is_stored_encrypted_and_never_rendered(): void
-    {
-        $url = 'https://coolify.example.test/api/v1/deploy?uuid=secret-uuid-9999';
-
-        Livewire::actingAs($this->admin())
-            ->test(Migration::class)
-            ->set('data.webhook', $url)
-            ->call('saveWebhook');
-
-        $this->assertSame($url, app(DeployTrigger::class)->webhook());
-
-        // Encrypted at rest, like every other admin-editable setting: a
-        // production dump restored on a laptop must not hand over a URL that
-        // redeploys production.
-        // Read through the query builder, not Eloquent: `Model::query()->value()`
-        // hydrates a model and applies the cast, so it would hand back the
-        // decrypted URL and the assertion would be testing nothing.
-        $raw = DB::table('connector_settings')
-            ->where('source', DeployTrigger::SOURCE)
-            ->where('key', DeployTrigger::KEY)
-            ->value('encrypted_value');
-
-        $this->assertNotNull($raw);
-        $this->assertStringNotContainsString('secret-uuid-9999', (string) $raw);
-
-        // And it must not come back out into the page once stored.
-        Livewire::actingAs($this->admin())
-            ->test(Migration::class)
-            ->assertDontSee('secret-uuid-9999');
-    }
-
-    #[Test]
-    public function deploying_posts_to_the_webhook(): void
-    {
-        Http::fake(['*' => Http::response('', 200)]);
-
-        app(DeployTrigger::class)->setWebhook('https://coolify.example.test/api/v1/deploy?uuid=abc');
-
-        Livewire::actingAs($this->admin())
-            ->test(Migration::class)
-            ->call('deploy');
-
-        Http::assertSent(fn ($request) => str_contains($request->url(), 'deploy?uuid=abc'));
-
-        $this->assertTrue(app(DeployTrigger::class)->last()['ok']);
-    }
-
-    #[Test]
-    public function a_refused_webhook_is_reported_rather_than_thrown(): void
-    {
-        // This runs from a button. An unhandled exception on an admin screen is
-        // a stack trace where a sentence belongs.
-        Http::fake(['*' => Http::response('nope', 401)]);
-
-        app(DeployTrigger::class)->setWebhook('https://coolify.example.test/api/v1/deploy?uuid=abc');
-
-        Livewire::actingAs($this->admin())
-            ->test(Migration::class)
-            ->call('deploy')
-            ->assertOk();
-
-        $this->assertFalse(app(DeployTrigger::class)->last()['ok']);
     }
 
     #[Test]

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\ConnectorSetting;
-use App\Services\Ops\DeployTrigger;
 use App\Services\Settings\AffiliateSettingsStore;
 use App\Services\Settings\AiSettingsStore;
 use App\Services\Settings\AutomationSettingsStore;
@@ -39,7 +38,6 @@ class SettingsSourcesTest extends TestCase
             'reminders' => [ReminderSettingsStore::SOURCE],
             'automation' => [AutomationSettingsStore::SOURCE],
             'affiliate' => [AffiliateSettingsStore::SOURCE],
-            'deploy trigger' => [DeployTrigger::SOURCE],
         ];
     }
 

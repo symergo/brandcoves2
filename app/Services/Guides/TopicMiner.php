@@ -133,52 +133,6 @@ class TopicMiner
     }
 
     /**
-     * The next topic worth building a guide for.
-     *
-     * Ripe means: enough demand, enough products, not already written, and not
-     * rejected. Ordered by score so the best available topic goes first.
-     *
-     * **An in-season seasonal topic wins outright**, whatever its score. Not a
-     * hedge — a timing argument. A Halloween Cove written on 20 October is nearly
-     * worthless and the same Cove written on 1 August is an asset for a decade,
-     * and no evergreen topic's score can outweigh a window that is about to shut.
-     * See `SeasonalTopics` for why the log alone cannot see a season coming.
-     */
-    public function ripest(Market $market): ?GuideTopic
-    {
-        $seasonal = app(SeasonalTopics::class)->ripest($market);
-
-        if ($seasonal !== null) {
-            return $seasonal;
-        }
-
-        return GuideTopic::query()
-            ->where('market', $market->value)
-            ->whereIn('status', ['candidate', 'queued'])
-            /*
-             * Not yet turned into a plan.
-             *
-             * Was `whereNull('guide_id')`, an FK into the `guides` table the fold
-             * retired. `TopicPlanner` sets `plan_id` when a topic becomes a draft
-             * plan, so that is the column that means "nobody has taken this one".
-             */
-            ->whereNull('plan_id')
-            // Either kind of demand evidence qualifies. A market with no search
-            // log yet still has a queue, which is the point of mining charts at
-            // all — but a chart-only topic still ranks below a searched-for one,
-            // because score() weights them that way.
-            ->where(fn ($q) => $q
-                ->where('search_volume', '>=', self::MIN_VOLUME)
-                ->orWhere('chart_entries', '>=', self::MIN_PRODUCTS))
-            ->where('available_products', '>=', self::MIN_PRODUCTS)
-            // A topic the builder has just failed on would otherwise sit at the
-            // head of the queue forever, and everything behind it is unreachable.
-            ->notRecentlyAttempted()
-            ->orderByDesc('score')
-            ->first();
-    }
-
-    /**
      * @return list<array{query: string, volume: int, zero: int}>
      */
     private function recentQueries(Market $market): array

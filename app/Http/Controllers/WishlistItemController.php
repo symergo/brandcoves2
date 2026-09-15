@@ -208,6 +208,11 @@ class WishlistItemController extends Controller
      * is signed-in only, and it is what a caller outside an Inertia page would
      * reach for. It is a candidate for deletion the day nothing does.
      *
+     * It no longer says which lists already hold a given product. That took a
+     * `group_id` and returned an `itemId` per list; once the picker read the
+     * same answer from `holders` on `/saved-items`, nothing sent one, and the
+     * branch was removed on 2026-09-14.
+     *
      * The old reasoning, for the record: a plain JSON endpoint rather than page
      * props, because the control lives on every product card on every surface
      * and props would put a query on all of them for a control most visitors
@@ -230,26 +235,6 @@ class WishlistItemController extends Controller
         // payload draws the same menu and the two must not disagree about it.
         $lists = ListOptions::query($owner)->withCount('items')->get();
 
-        /*
-         * Where this product already is.
-         *
-         * The picker could only ever add. Saving to the wrong list — easy,
-         * since the rows are one line apart — left no way back except finding
-         * the list, opening it and deleting the row there. Carrying the item id
-         * lets the same row that put it there take it off again, and reuses
-         * `destroy()` rather than growing a second delete path with its own
-         * ownership check.
-         */
-        $group = $request->integer('group_id');
-
-        $existing = $group === 0
-            ? collect()
-            : WishlistItem::query()
-                ->whereIn('wishlist_id', $lists->pluck('id'))
-                ->where('group_id', $group)
-                ->whereNotNull('accepted_at')
-                ->pluck('id', 'wishlist_id');
-
         return response()->json([
             'lists' => $lists->map(fn (Wishlist $list) => [
                 'id' => $list->id,
@@ -260,7 +245,6 @@ class WishlistItemController extends Controller
                 'kind' => $list->kind->value,
                 'recipient' => $list->recipient?->name,
                 'items' => $list->items_count,
-                'itemId' => $existing[$list->id] ?? null,
             ])->values(),
             'recipients' => $owner->scope(Recipient::query())
                 ->orderBy('name')

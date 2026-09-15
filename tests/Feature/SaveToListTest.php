@@ -153,54 +153,6 @@ class SaveToListTest extends TestCase
     }
 
     #[Test]
-    public function the_picker_says_which_lists_already_hold_the_product(): void
-    {
-        $user = User::factory()->create();
-        $group = $this->group();
-
-        $holding = Wishlist::factory()->create([
-            'owner_user_id' => $user->id,
-            'kind' => ListKind::Mine,
-            'title' => 'Has it',
-            'market' => Market::BeNl,
-        ]);
-
-        $empty = Wishlist::factory()->create([
-            'owner_user_id' => $user->id,
-            'kind' => ListKind::Mine,
-            'title' => 'Does not',
-            'market' => Market::BeNl,
-        ]);
-
-        $this->actingAs($user)->post('/be-nl/list-items', [
-            'group_id' => $group->id,
-            'wishlist_id' => $holding->id,
-        ]);
-
-        /*
-         * Without this the picker is a one-way door: every row looks the same,
-         * so a save into the wrong list can only be undone by going and finding
-         * that list. The item id is what lets the row that put it there take it
-         * off again, through the existing `destroy()` and its ownership check.
-         */
-        $rows = array_column(
-            $this->actingAs($user)
-                ->getJson("/be-nl/list-options?group_id={$group->id}")
-                ->assertOk()
-                ->json('lists'),
-            null,
-            'title',
-        );
-
-        $this->assertNotNull($rows['Has it']['itemId']);
-        $this->assertNull($rows['Does not']['itemId']);
-        $this->assertSame(
-            $holding->items()->firstOrFail()->id,
-            $rows['Has it']['itemId'],
-        );
-    }
-
-    #[Test]
     public function saving_to_a_list_does_not_move_it_in_the_picker(): void
     {
         $user = User::factory()->create();
@@ -239,26 +191,6 @@ class SaveToListTest extends TestCase
 
         $this->assertSame(['Newer', 'Older'], $before);
         $this->assertSame($before, $after);
-    }
-
-    #[Test]
-    public function asking_without_a_product_reports_no_membership(): void
-    {
-        $user = User::factory()->create();
-
-        Wishlist::factory()->create([
-            'owner_user_id' => $user->id,
-            'kind' => ListKind::Mine,
-            'market' => Market::BeNl,
-        ]);
-
-        // The picker is also opened from surfaces with no stored group at all —
-        // a live bol result, an Amazon product — and must not claim membership
-        // it has not been asked about.
-        $this->actingAs($user)
-            ->getJson('/be-nl/list-options')
-            ->assertOk()
-            ->assertJsonPath('lists.0.itemId', null);
     }
 
     #[Test]
@@ -520,10 +452,6 @@ class SaveToListTest extends TestCase
             ->assertJsonPath("holders.{$group->id}.0.itemId", $item->id);
     }
 
-    /**
-     * Asking about a list you have no part in is a read of somebody's list
-     * membership, and is gated like one — empty, rather than its contents.
-     */
     #[Test]
     public function saved_items_names_every_list_holding_a_product(): void
     {
@@ -549,6 +477,10 @@ class SaveToListTest extends TestCase
         $this->assertSame(collect([$one->id, $two->id])->sort()->values()->all(), $listIds);
     }
 
+    /**
+     * Asking about a list you have no part in is a read of somebody's list
+     * membership, and is gated like one — empty, rather than its contents.
+     */
     #[Test]
     public function saved_items_will_not_report_on_a_stranger_list(): void
     {

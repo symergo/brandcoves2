@@ -142,8 +142,8 @@ to it.
 
 ## In the admin
 
-**Operations → Migration** does the same three things without a shell: shows what is running here,
-moves content, and redeploys.
+**Operations → Migration** does the same things without a shell: shows what is running here and
+moves content. It used to redeploy too; see [Deploy](#deploy) for why that button is gone.
 
 It is a face on `ContentEnvelope`, deliberately — one set of rules rather than two, so the screen
 cannot drift from the commands.
@@ -155,9 +155,8 @@ it by mistake. A file passes through a person, and the dry run makes that person
 first. **Apply is hidden until something has been checked**, for the same reason.
 
 **The buttons live on the sections they act on.** *Download envelope*, *Check upload* and *Apply
-upload* sit under the Content transfer section, in the order you do them; *Save webhook* and *Deploy*
-sit under Deploy. They were five page-header actions in a row, with nothing to say which button
-belonged to which section — and the most destructive one, Deploy, sat next to the most routine one.
+upload* sit under the Content transfer section, in the order you do them. They were page-header
+actions in a row, with nothing to say which button belonged to which section.
 
 Three things about that section are load-bearing rather than cosmetic:
 
@@ -182,17 +181,16 @@ why picks get dropped, and seeing both counts explains a drop list before it app
 
 ### Deploy
 
-A **per-application Coolify deploy webhook**, stored encrypted with `APP_KEY`, deliberately not an
-API token. A token can rename domains, read every environment variable of every application on the
-box, and delete things; the worst this secret can do if it leaks is redeploy the current commit.
+**Removed on 2026-09-14.** The section stored a per-application Coolify deploy webhook, encrypted
+with `APP_KEY` and chosen over an API token because the worst a leaked webhook can do is redeploy the
+current commit. It never worked where it mattered: `DeployTrigger` sent no `Authorization` header and
+Coolify answered the stored webhook with a 401. Production is now released by one authenticated
+request to the Coolify API with a Bearer token, deliberately and by hand
+([../deployment.md](../deployment.md)). A button that cannot work invites a click and then explains
+itself in a toast, so it went, with `App\Services\Ops\DeployTrigger` and its tests.
 
-It cannot choose a commit — the webhook deploys whatever the tracked branch points at. A button that
-can put any commit on production is a deploy pipeline with no review step, and that belongs in
-Coolify where the audit trail is.
-
-Today this is a convenience rather than a gate: both applications have auto-deploy on, so a push to
-`main` already ships within the minute. It becomes the gate under the one-branch model in
-[../deployment.md](../deployment.md), which turns auto-deploy off on production.
+No production row was left behind: on removal, `connector_settings` held nothing under `ops`. The
+`ops` value stays in that table's CHECK constraint, because migrations only go forward.
 
 ## Usage
 

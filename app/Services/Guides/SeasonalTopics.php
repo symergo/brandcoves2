@@ -22,15 +22,16 @@ use Illuminate\Support\Collection;
  * Halloween is worse: the whole demand window is three weeks, so by the time it
  * shows in the log it is over.
  *
- * So each seasonal topic carries a window that opens well before its season, and
- * `TopicMiner::ripest()` prefers an in-season topic over a higher-scoring
- * evergreen one. Out of season these rows are inert.
+ * So each seasonal topic carries a window that opens well before its season,
+ * and `opening()` hands it to the editorial calendar (`bc:plan-coves`, through
+ * `SeasonalSeries::plan()`) from the day that window opens. Out of season these
+ * rows are inert.
  *
  * ## What it does not do
  *
  * It does not fabricate a search volume. A seasonal topic's `search_volume` is
- * whatever the log actually says — usually zero on a young site — and the
- * seasonal branch of `ripest()` deliberately does not test it. Writing a
+ * whatever the log actually says — usually zero on a young site — and
+ * `opening()` deliberately does not test it. Writing a
  * plausible-looking number into that column would corrupt the one honest demand
  * signal the system has, and the "180 searches, 0 products" report in admin is
  * only useful while every number in it is measured.
@@ -112,52 +113,11 @@ class SeasonalTopics
     }
 
     /**
-     * The in-season seasonal topic most worth writing next.
-     *
-     * Ordered by how soon the window closes, not by score: a Halloween Cove
-     * written on 20 October is nearly worthless and the same Cove written on
-     * 1 August is an asset for a decade. Urgency beats size here in a way it
-     * never does for an evergreen topic.
-     */
-    public function ripest(Market $market, ?CarbonImmutable $today = null): ?GuideTopic
-    {
-        $today ??= CarbonImmutable::today();
-
-        $candidates = GuideTopic::query()
-            ->where('market', $market->value)
-            ->where('origin', 'seasonal')
-            ->whereIn('status', ['candidate', 'queued'])
-            /*
-             * Not yet turned into a plan.
-             *
-             * Was `whereNull('guide_id')`, an FK into the `guides` table the fold
-             * retired. `TopicPlanner` sets `plan_id` when a topic becomes a draft
-             * plan, so that is the column that means "nobody has taken this one".
-             */
-            ->whereNull('plan_id')
-            ->where('available_products', '>=', self::MIN_PRODUCTS)
-            ->whereNotNull('season_from')
-            ->notRecentlyAttempted()
-            ->get();
-
-        $open = $candidates
-            ->filter(fn (GuideTopic $topic) => $this->inWindow($today, [
-                'from' => $topic->season_from,
-                'to' => $topic->season_to,
-            ]))
-            ->sortBy(fn (GuideTopic $topic) => $this->daysLeft($today, (string) $topic->season_to));
-
-        return $open->first();
-    }
-
-    /**
      * Every season whose window is open, or opens soon — planned or not.
      *
-     * `ripest()` answers a different question — "which single season is most
-     * urgent" — and it was the only way to reach these rows, which suited a
-     * pipeline that wrote one guide at a time. A recurring editorial calendar
-     * needs the other question: which seasons should be on it, given how far
-     * ahead it is being drawn.
+     * The question a recurring editorial calendar asks: which seasons should be
+     * on it, given how far ahead it is being drawn. It is the only way these
+     * rows are read back.
      *
      * **Planned ones included, deliberately.** This filtered on `plan_id IS
      * NULL` while a season was something that happened once, and that is exactly
@@ -174,8 +134,8 @@ class SeasonalTopics
      * takes the first few takes the most urgent few — and so a run that is
      * interrupted has done the work that mattered most.
      *
-     * `available_products` is the same floor `ripest()` applies. It is a rough
-     * ILIKE count and the real test is whether the ladder can fill a part, which
+     * The `available_products` floor is a rough ILIKE count, not the real
+     * test. The real test is whether the ladder can fill a part, which
      * `SeasonalSeries` does properly; this only keeps the obviously empty ones
      * out of a loop that would otherwise probe every facet of every season in
      * five markets. A season that has fallen below it keeps the pages it already
@@ -193,7 +153,6 @@ class SeasonalTopics
             ->where('status', '!=', 'rejected')
             ->where('available_products', '>=', self::MIN_PRODUCTS)
             ->whereNotNull('season_from')
-            ->notRecentlyAttempted()
             ->get()
             ->map(function (GuideTopic $topic) use ($from, $days): array {
                 return ['topic' => $topic, 'opens' => $this->opensWithin($topic, $from, $days)];
@@ -321,23 +280,5 @@ class SeasonalTopics
         return $from <= $to
             ? $today >= $from && $today <= $to
             : $today >= $from || $today <= $to;
-    }
-
-    /** Days until the window closes, for ordering by urgency. */
-    private function daysLeft(CarbonImmutable $today, string $to): int
-    {
-        if ($to === '') {
-            return 999;
-        }
-
-        [$month, $day] = array_map('intval', explode('-', $to) + [1, 1]);
-        $close = CarbonImmutable::create($today->year, $month, $day);
-
-        // A window closing "in January" from a December date closes next year.
-        if ($close->lessThan($today)) {
-            $close = $close->addYear();
-        }
-
-        return (int) $today->diffInDays($close);
     }
 }

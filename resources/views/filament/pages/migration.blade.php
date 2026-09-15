@@ -3,9 +3,10 @@
     @php($failures = $this->configFailures())
 
     {{--
-      What is running here, first. Every question on this page — should I deploy,
-      is it safe to import — starts with "which build is this and did its config
-      arrive", so that answer goes above the controls rather than below them.
+      What is running here, first. Every question on this page — is this the
+      build I think it is, is it safe to import — starts with "which build is
+      this and did its config arrive", so that answer goes above the controls
+      rather than below them.
     --}}
     <x-filament::section heading="This environment">
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -16,17 +17,6 @@
                 </div>
             @endforeach
         </div>
-
-        @php($deploy = $this->lastDeploy())
-
-        @if ($deploy)
-            <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                Last deploy from this screen:
-                {{ \Illuminate\Support\Carbon::parse($deploy['at'])->diffForHumans() }}
-                — {{ $deploy['ok'] ? 'accepted' : 'refused' }}.
-                Coolify holds the real deployment history.
-            </p>
-        @endif
     </x-filament::section>
 
     <x-filament::section heading="Content held here" collapsible collapsed>

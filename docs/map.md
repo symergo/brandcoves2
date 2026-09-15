@@ -84,7 +84,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Guides/` | topic mining and planning |
 | `Identity/` | GTIN parsing and `identity_key` resolution — see invariant 2 |
 | `Ingestion/` | offer upsert and grouping — the write path for feeds |
-| `Ops/` | deploy trigger, market supply |
+| `Ops/` | config report, market supply |
 | `Pages/` | editable page templates and copy blocks |
 | `Search/` | `SearchService` (668 lines), `SearchQuery`, Amazon links, brand attribution |
 | `Seo/` | meta, OG images, structured data, alternates, legacy redirects |

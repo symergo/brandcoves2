@@ -331,8 +331,10 @@ An edition that opens with "Today's picks" and nothing else gives nobody a reaso
 | Copy | Hand-written, checked | Hand-written, seasonal |
 
 `ObservanceCalendar::themeFor()` returns the named day if there is one and falls through to
-`ThemeRotation` otherwise. `on()` still answers the narrower "is this a *named* day?", which is what
-the "coming up" strip wants — nobody is counting down to the desk reset.
+`ThemeRotation` otherwise. `on()` still answers the narrower "is this a *named* day?", for the places
+where only a named day should count — nobody is counting down to the desk reset. `upcoming()`, which
+listed the named days ahead for a "coming up" strip, was removed on 2026-09-14: the strip was never
+built and nothing called it.
 
 ### Where the named days come from, and where they do not
 

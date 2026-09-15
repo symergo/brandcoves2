@@ -51,7 +51,7 @@ real risk for nothing.
 | `php artisan bc:*` | Fifteen commands, the scheduler and every runbook reference them. Operator-facing only |
 | The `bc_visitor` cookie | Renaming it orphans every anonymous identity a second time, on top of the loss the domain move already causes. Same class of permanent decision as `CLAIM_HASH_SECRET` |
 | Database name, user, password | A production database rename for a cosmetic gain. `docker-compose.yml` and `phpunit.xml` keep `brandcoves` |
-| Coolify application names (`brandcoves2-*`) | Renaming an application invalidates every deploy webhook already issued against it — including the one stored encrypted for [content promotion](content-promotion.md) |
+| Coolify application names (`brandcoves2-*`) | Renaming an application invalidates every deploy webhook already issued against it |
 
 ## Anonymous lists do not survive the move
 

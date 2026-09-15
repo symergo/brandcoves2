@@ -656,15 +656,29 @@ cleaning and spring running from mid-February, barbecue from mid-March, poolside
 from April, back-to-school from mid-June, Halloween from 1 August, wintersport from mid-September,
 Easter, Mother's Day, Father's Day, Valentine's.
 
-`TopicMiner::ripest()` returns an in-season seasonal topic **outright**, whatever an evergreen topic
-scores. Not a hedge — a timing argument: a Halloween Cove written on 20 October is nearly worthless
-and the same Cove written on 1 August is an asset for a decade. Within the seasonal set the ordering is
-by **how soon the window closes**, not by size, for the same reason.
+`SeasonalTopics::opening()` offers every season whose window is open, or opens within the stretch of
+calendar being drawn, and `bc:plan-coves` hands each one to `SeasonalSeries::plan()` to lay out as
+dated parts — see [seasonal-series.md](seasonal-series.md). They come ordered by the day each window
+opens, so a run that takes the first few takes the most urgent. A timing argument: a Halloween Cove
+written on 20 October is nearly worthless and the same Cove written on 1 August is an asset for a
+decade.
+
+Until 2026-09-14 there was also `TopicMiner::ripest()` (with `SeasonalTopics::ripest()` behind it),
+which returned one in-season topic ahead of any evergreen one, ordered by how soon its window closed.
+It was written for a pipeline that built one guide at a time, and nothing had called it since the
+calendar replaced that pipeline, so it was removed.
+
+The "recently attempted" rule went the same day. A topic whose build failed used to sit out fourteen
+days (`guide_topics.last_attempt_at`), so one unbuildable topic at the head of that one-at-a-time
+queue could not block every topic behind it. The planner drafts a whole list of topics now, and
+nothing had recorded an attempt since the old builder went, so the filter could never trigger. It
+was removed from `opening()` and `PlanDrafter`, along with the admin's "Tried" column and the API's
+`lastAttemptAt`/`attempts` fields. The columns themselves go a release later (docs/TODO.md).
 
 Two things it deliberately does not do:
 
 - **It never fabricates a search volume.** A seasonal topic's `search_volume` is whatever the log
-  actually says, usually zero on a young site, and the seasonal branch does not test it. Writing a
+  actually says, usually zero on a young site, and `opening()` does not test it. Writing a
   plausible number there would corrupt the one honest demand signal the system has, and admin's
   "180 searches, 0 products" report is useful exactly as long as every figure in it was measured.
 - **It never overturns an editor's decision.** Re-seeding is nightly; a rejected topic that reset

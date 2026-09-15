@@ -242,10 +242,10 @@ class PlanCovesCommand extends Command
     /**
      * Every day in the window, themed.
      *
-     * `upcoming()` returns named days only, which left the plan table with a
-     * dozen rows a quarter and nothing to review in between. The planner wants
-     * the opposite: a row for every day, so an editor can see the whole month
-     * and only has to intervene where the rotation's guess is weak.
+     * Through `themeFor()`, not `on()`: named days alone left the plan table
+     * with a dozen rows a quarter and nothing to review in between. The planner
+     * wants the opposite: a row for every day, so an editor can see the whole
+     * month and only has to intervene where the rotation's guess is weak.
      *
      * @return array<string, Observance>
      */

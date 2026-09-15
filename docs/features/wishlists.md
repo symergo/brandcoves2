@@ -243,10 +243,12 @@ both "you saved it at €329" and "it is €279 now".
 
 ## The save control is a toggle, not a one-way door
 
-`GET /{market}/list-options` takes an optional `group_id` and returns, per list, the `itemId` of the
-row that product already occupies — `null` when it is not on that list. The picker draws a tick from
-it, and pressing a ticked row deletes that item through the existing `destroy()` rather than a second
-delete path with its own ownership check.
+The picker draws a tick for every list that holds the product, from the `holders` that
+`GET /{market}/saved-items` returns (per product, a `{ listId, itemId }` for each list it is on), and
+pressing a ticked row deletes that item through the existing `destroy()` rather than a second delete
+path with its own ownership check. `GET /{market}/list-options` used to answer the same question when
+given a `group_id`, with an `itemId` per list; nothing sent one once the picker read `holders`, and
+that branch was removed on 2026-09-14.
 
 Before this the picker could only add. The two groups of lists sit a line apart in the menu, so
 saving to the wrong one is easy, and undoing it meant leaving the product, finding the list, opening
@@ -462,8 +464,10 @@ changed since they signed in. Both halves of that payload had a better home:
   people who actually use the control.
 - **Which list holds this product** comes from `/saved-items`, which the page already fetches once,
   lazily, the first time a card mounts. It queried exactly the right rows and threw two columns
-  away; it now returns `holders`, a `groupId → { listId, itemId }` map. That is only honest because a
-  product lives on one list — with the old checklist it would have been a list per product.
+  away; it now returns `holders`, which maps each `groupId` to a **list** of `{ listId, itemId }`,
+  one per list holding the product (the tests read `holders.{id}.0.listId`). It was first written
+  as one entry per product, on the assumption that a product lives on one list; it can be on
+  several, and the picker ticks every one of them.
 
 A list created *inside* the picker is the one thing the props cannot know about, since they were
 serialised before it existed. That is one `router.reload({ only: ['lists'] })` on the rare press that
@@ -540,10 +544,9 @@ rather than solving it, at exactly the moment a person is most willing to act.
 
 `App\Services\Wishlist\PendingSave` stashes the save in the session and sets `url.intended`, so both
 `MagicLinkController` and `GoogleController` return the visitor to the product with no change to
-either — they already end in `redirect()->intended(…)`. `ReplayPendingSave` listens for `Login`, for
-the same reason [`ClaimListInvitations`](../../app/Listeners/ClaimListInvitations.php) does: a save
-that completes on the magic link and not on Google is a bug visible only to whichever half of people
-pressed the other button.
+either — they already end in `redirect()->intended(…)`. `ReplayPendingSave` listens for `Login`
+rather than being an edit in each sign-in controller: a save that completes on the magic link and not
+on Google is a bug visible only to whichever half of people pressed the other button.
 
 Four rules, each of which is the interesting part:
 

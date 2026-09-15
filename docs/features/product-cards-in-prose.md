@@ -44,6 +44,9 @@ The dedupe spans the **whole document**, not one block, which is why `ProseCards
 page render and never resolved from the container as a singleton. A guide asks it for its intro and
 then its body, and a product introduced up top must not reappear halfway down.
 
+`ProseCards::shown()`, which listed the ids claimed so far, was removed on 2026-09-14 because nothing
+called it. The dedupe only needs to know whether an id is taken, not the order it was taken in.
+
 | Page | Prose | Where the remainder goes |
 |---|---|---|
 | Daily Cove | `editorial` | a grid of up to six unnamed finds |

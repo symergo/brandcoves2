@@ -20,8 +20,9 @@ declare(strict_types=1);
 |
 | These are the topics we know are coming. Each one opens a window *before* its
 | season so the Cove is written, indexed and already ranking when people start
-| looking. `TopicMiner::ripest()` prefers an in-season topic over a
-| higher-scoring evergreen one, for exactly that reason.
+| looking. `SeasonalTopics::opening()` hands each season to the editorial
+| calendar (`bc:plan-coves`) from the day its window opens, for exactly that
+| reason.
 |
 | HOW THIS DIFFERS FROM config/observances.php
 |

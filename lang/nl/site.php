@@ -1300,7 +1300,6 @@ return [
         'mail_what' => 'Open de link hieronder en log in met dit adres. Je ziet dan de lijst en kunt er ideeën aan toevoegen.',
         'mail_button' => 'Bekijk de lijst',
         'mail_expiry' => 'De link werkt twee weken.',
-        'sign_in_first' => 'Log in met het adres waar de uitnodiging naartoe is gestuurd, dan staat de lijst klaar.',
     ],
 
     // Zie de toelichting bij deze sleutels in lang/en/site.php.

@@ -1297,7 +1297,6 @@ return [
         'mail_what' => 'Ouvrez le lien ci-dessous et connectez-vous avec cette adresse. Vous verrez la liste et pourrez y ajouter des idées.',
         'mail_button' => 'Voir la liste',
         'mail_expiry' => 'Le lien est valable deux semaines.',
-        'sign_in_first' => 'Connectez-vous avec l’adresse à laquelle l’invitation a été envoyée, et la liste vous attendra.',
     ],
 
     // Voir l'explication de ces clés dans lang/en/site.php.

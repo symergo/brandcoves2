@@ -265,8 +265,10 @@ Three things came out of it, and only the first is about this feature:
    reason, and every caller either surfaces it or logs it. A caller that gets a zero has been told
    why, rather than having to infer it.
 2. **A one-shot migration needs a front door.** Migrations run once, so when one does the wrong
-   thing there is no supported way to run it again. `bc:fold-guides` is that door: idempotent, dry
-   by default, and it reports what is outstanding rather than what it attempted.
+   thing there is no supported way to run it again. `bc:fold-guides` was that door: idempotent, dry
+   by default, and it reported what was outstanding rather than what it attempted. It was removed
+   on 2026-09-14, once the `guides` tables it read had been dropped and it could only ever answer
+   "nothing to fold". `GuideFold` itself stays: two migrations still call it on a fresh migrate.
 3. **On this deployment a migration that throws is an outage.** The first attempt at the drop
    guarded instead of repairing: it counted unfolded guides and threw. The guard was *correct* — it
    is the only reason those 61 rows still existed — and it cost 55 minutes of downtime, because
@@ -302,7 +304,6 @@ market. Their slugs are free again, so a real article can claim any of those add
 - `app/Services/Guides/TopicPlanner.php` — topic → draft plan
 - `app/Http/Controllers/Api/CoveDraftController.php` — the same thing over HTTP
 - `app/Services/Content/GuideFold.php` — the one-time data move, and `hasAnArticle()`
-- `app/Console/Commands/FoldGuidesCommand.php` — `bc:fold-guides`, the front door it needed
 - `database/migrations/2026_08_30_0001*` … `0004*`
 
 ## Open

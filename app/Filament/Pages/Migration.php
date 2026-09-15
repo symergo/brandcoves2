@@ -7,12 +7,10 @@ namespace App\Filament\Pages;
 use App\Enums\CoveKind;
 use App\Services\Content\ContentEnvelope;
 use App\Services\Ops\ConfigReport;
-use App\Services\Ops\DeployTrigger;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -29,12 +27,16 @@ use UnitEnum;
 /**
  * Moving work between environments, from the admin rather than a shell.
  *
- * Three things that used to need SSH, Coolify credentials, or both:
+ * Two things that used to need SSH:
  *
  * - **What is running here** — the build, the migration, and whether the config
  *   actually arrived.
  * - **Content transfer** — editorial out of one environment and into another.
- * - **Deploy** — redeploy this application from the tracked branch.
+ *
+ * It used to redeploy as well, from a Coolify deploy webhook stored here. That
+ * was removed on 2026-09-14: the webhook sends no token and Coolify answered it
+ * with a 401, production is now released by an authenticated Coolify API call
+ * instead (docs/deployment.md), and a button that cannot work invites a click.
  *
  * ## Why a file rather than a direct push
  *
@@ -51,12 +53,11 @@ use UnitEnum;
  *
  * ## Why the buttons live in the sections
  *
- * They used to be five header actions in a row — Download, Check, Apply, Deploy,
- * Save webhook — above two unrelated sections, with nothing to say which button
- * belonged to which. "Download envelope" acts on the surface checkboxes fifty
- * pixels further down the page and read as a page-level operation; "Deploy" sat
- * next to it and is the one irreversible thing here. Each section now carries
- * its own actions, in the order you would do them.
+ * They used to be header actions in a row, above unrelated sections, with
+ * nothing to say which button belonged to which. "Download envelope" acts on the
+ * surface checkboxes fifty pixels further down the page and read as a page-level
+ * operation. Each section now carries its own actions, in the order you would do
+ * them.
  */
 class Migration extends Page implements HasForms
 {
@@ -86,14 +87,11 @@ class Migration extends Page implements HasForms
     {
         $this->form->fill([
             'surfaces' => ContentEnvelope::SURFACES,
-            'webhook' => null,
         ]);
     }
 
     public function form(Schema $schema): Schema
     {
-        $deploy = app(DeployTrigger::class);
-
         /*
          * Registered as well as placed in the footer.
          *
@@ -104,7 +102,6 @@ class Migration extends Page implements HasForms
          * does nothing", the single worst button on this page to break.
          */
         $transfer = $this->transferActions();
-        $deployment = $this->deployActions();
 
         return $schema
             ->components([
@@ -134,24 +131,6 @@ class Migration extends Page implements HasForms
                     ])
                     ->registerActions($transfer)
                     ->footerActions($transfer),
-
-                Section::make('Deploy')
-                    ->key('deployment')
-                    ->description($deploy->isConfigured()
-                        ? 'Redeploys this application from its tracked branch. It cannot choose a commit — that stays in Coolify, where the audit trail is.'
-                        : 'No webhook set. Coolify → this application → Webhooks → Deploy Webhook.')
-                    ->schema([
-                        TextInput::make('webhook')
-                            ->label('Coolify deploy webhook')
-                            ->password()
-                            ->revealable(false)
-                            ->autocomplete('new-password')
-                            ->placeholder($deploy->isConfigured() ? 'Set — leave empty to keep it' : 'https://coolify.example.com/api/v1/deploy?uuid=…')
-                            ->dehydrated(fn (?string $state) => filled($state))
-                            ->helperText('A per-application webhook, deliberately not an API token: the worst this secret can do if it leaks is redeploy the current commit. Stored encrypted with APP_KEY.'),
-                    ])
-                    ->registerActions($deployment)
-                    ->footerActions($deployment),
             ])
             ->statePath('data');
     }
@@ -190,28 +169,6 @@ class Migration extends Page implements HasForms
                 ->requiresConfirmation()
                 ->modalDescription('This writes the uploaded content into this environment. Re-running is safe — surfaces match on natural keys — but products this environment lacks stay dropped.')
                 ->action('apply'),
-        ];
-    }
-
-    /** @return list<Action> */
-    private function deployActions(): array
-    {
-        return [
-            Action::make('saveWebhook')
-                ->label('Save webhook')
-                ->color('gray')
-                ->action('saveWebhook'),
-
-            Action::make('deploy')
-                ->label('Deploy')
-                ->icon(Heroicon::OutlinedRocketLaunch)
-                ->color('warning')
-                // A button that cannot work is worse than no button: it invites
-                // a click and then explains itself in a toast.
-                ->visible(fn (): bool => app(DeployTrigger::class)->isConfigured())
-                ->requiresConfirmation()
-                ->modalDescription('Redeploys this application from its tracked branch, whatever that branch currently points at.')
-                ->action('deploy'),
         ];
     }
 
@@ -279,12 +236,6 @@ class Migration extends Page implements HasForms
             'built' => is_readable($stamp) ? trim((string) file_get_contents($stamp)) : 'dev',
             'migration' => (string) (DB::table('migrations')->orderByDesc('id')->value('migration') ?? 'none'),
         ];
-    }
-
-    /** @return array{at: string, ok: bool}|null */
-    public function lastDeploy(): ?array
-    {
-        return app(DeployTrigger::class)->last();
     }
 
     /**
@@ -479,37 +430,5 @@ class Migration extends Page implements HasForms
                 : $dropped.' reference(s) had no product here and were dropped. The list is below.')
             ->{$clean ? 'success' : 'warning'}()
             ->send();
-    }
-
-    public function deploy(): void
-    {
-        $result = app(DeployTrigger::class)->trigger();
-
-        Notification::make()
-            ->title($result['ok'] ? 'Deployment queued' : 'Deploy failed')
-            ->body($result['message'])
-            ->{$result['ok'] ? 'success' : 'danger'}()
-            ->send();
-    }
-
-    public function saveWebhook(): void
-    {
-        $url = $this->form->getState()['webhook'] ?? null;
-
-        if (blank($url)) {
-            Notification::make()
-                ->title('Nothing to save')
-                ->body('The field is empty, which means keep the current webhook.')
-                ->warning()
-                ->send();
-
-            return;
-        }
-
-        app(DeployTrigger::class)->setWebhook((string) $url);
-
-        $this->mount();
-
-        Notification::make()->title('Webhook saved')->success()->send();
     }
 }

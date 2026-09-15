@@ -23,9 +23,9 @@ class ObservanceCalendar
      * The theme for a date — named day if there is one, otherwise evergreen.
      *
      * This is what the edition builder and the planner should call. `on()`
-     * answers a narrower question ("is this a *named* day?") and is what the
-     * "coming up" strip wants, because "the desk reset, in eleven days" is not
-     * something anyone is counting down to.
+     * answers a narrower question ("is this a *named* day?") and is the one to
+     * call where only a named day should count, because "the desk reset, in
+     * eleven days" is not something anyone is counting down to.
      */
     public function themeFor(CarbonImmutable $date, Market $market): ?Observance
     {
@@ -41,27 +41,6 @@ class ObservanceCalendar
         // null lets the builder fall through to the model or the rotation,
         // which is the correct behaviour for an ordinary Tuesday anyway.
         return $observance?->isUsable($market) === true ? $observance : null;
-    }
-
-    /**
-     * The next few observances, for a "coming up" strip.
-     *
-     * @return array<string, Observance> date (Y-m-d) => observance
-     */
-    public function upcoming(CarbonImmutable $from, Market $market, int $days = 30): array
-    {
-        $found = [];
-
-        for ($i = 1; $i <= $days; $i++) {
-            $date = $from->addDays($i);
-            $observance = $this->on($date, $market);
-
-            if ($observance !== null) {
-                $found[$date->toDateString()] = $observance;
-            }
-        }
-
-        return $found;
     }
 
     private function fixed(CarbonImmutable $date, Market $market): ?Observance

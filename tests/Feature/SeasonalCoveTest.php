@@ -24,9 +24,12 @@ use Tests\TestCase;
  * Halloween is worse — three weeks of demand, so by the time the log knows, it is
  * over.
  *
- * These tests pin the two things that make the fix work rather than merely exist:
- * the window opens *before* the season, and an in-season topic beats a
- * higher-scoring evergreen one.
+ * `SeasonalTopics::seed()` stores one row per season with a window that opens
+ * *before* the season, and `opening()` is how the editorial calendar
+ * (`bc:plan-coves`, through `SeasonalSeries::plan()`) reads those rows back.
+ * These tests pin what `opening()` offers and what it holds back: a window that
+ * has not opened, a window that wraps the year end, a topic the catalogue cannot
+ * fill, one an editor rejected, and one the builder has just failed on.
  */
 class SeasonalCoveTest extends TestCase
 {
@@ -61,24 +64,20 @@ class SeasonalCoveTest extends TestCase
         }
     }
 
-    #[Test]
-    public function a_seasonal_topic_is_in_season_before_its_season_starts(): void
+    /**
+     * The seasons the calendar is offered on this day, by topic.
+     *
+     * A horizon of zero days by default: only windows already open on `$on`
+     * count, which is the question most of these tests are about.
+     *
+     * @return list<string>
+     */
+    private function offered(CarbonImmutable $on, int $days = 0): array
     {
-        $this->seedProducts('gasbarbecue');
-
-        // Mid-April. Nobody has searched for a barbecue yet and the shops are
-        // already selling them — which is the whole point of the window.
-        $topic = app(SeasonalTopics::class)->ripest(Market::BeNl, CarbonImmutable::create(2027, 4, 15));
-
-        // seed() has to run first; ripest() reads rows, it does not create them.
-        $this->assertNull($topic, 'ripest() must not invent rows');
-
-        app(SeasonalTopics::class)->seed(Market::BeNl, CarbonImmutable::create(2027, 4, 15));
-
-        $topic = app(SeasonalTopics::class)->ripest(Market::BeNl, CarbonImmutable::create(2027, 4, 15));
-
-        $this->assertNotNull($topic);
-        $this->assertSame('seasonal', $topic->origin);
+        return app(SeasonalTopics::class)
+            ->opening(Market::BeNl, $on, $days)
+            ->pluck('topic')
+            ->all();
     }
 
     #[Test]
@@ -88,12 +87,15 @@ class SeasonalCoveTest extends TestCase
         app(SeasonalTopics::class)->seed(Market::BeNl, CarbonImmutable::create(2027, 6, 1));
 
         // Wintersport's window is 15 September to 15 February. In June it is
-        // stored, visible in admin, and not offered to the builder.
+        // stored, visible in admin, and not offered to the calendar.
         $stored = GuideTopic::query()->where('topic', 'wintersport')->first();
         $this->assertNotNull($stored);
 
-        $ripest = app(SeasonalTopics::class)->ripest(Market::BeNl, CarbonImmutable::create(2027, 6, 1));
-        $this->assertNotSame('wintersport', $ripest?->topic);
+        $this->assertNotContains('wintersport', $this->offered(CarbonImmutable::create(2027, 6, 1)));
+
+        // The window is what holds it back, not a shortage of products: the
+        // same row is offered once the window has opened.
+        $this->assertContains('wintersport', $this->offered(CarbonImmutable::create(2027, 9, 20)));
     }
 
     #[Test]
@@ -102,50 +104,10 @@ class SeasonalCoveTest extends TestCase
         // Valentine's runs 27 December to 14 February. Compared as strings,
         // "01-05" is neither >= "12-27" nor <= ... unless the wrap is handled.
         $this->seedProducts('sieraden');
-        app(SeasonalTopics::class)->seed(Market::BeNl, CarbonImmutable::create(2027, 1, 5));
-
-        $ripest = app(SeasonalTopics::class)->ripest(Market::BeNl, CarbonImmutable::create(2027, 1, 5));
-
-        $this->assertNotNull($ripest, 'a wrapping window never opened');
-    }
-
-    #[Test]
-    public function the_soonest_closing_window_goes_first(): void
-    {
-        // Ordered by urgency rather than size: a Cove written three weeks before
-        // its season is nearly worthless, and one written three months before is
-        // an asset for a decade.
-        $this->seedProducts('halloween verkleedkleding');
-        $this->seedProducts('luchtreiniger');
-
-        $on = CarbonImmutable::create(2027, 10, 20);
+        $on = CarbonImmutable::create(2027, 1, 5);
         app(SeasonalTopics::class)->seed(Market::BeNl, $on);
 
-        // Halloween closes on 31 October; air quality runs to 31 December.
-        $this->assertSame('halloween', app(SeasonalTopics::class)->ripest(Market::BeNl, $on)?->topic);
-    }
-
-    #[Test]
-    public function an_in_season_topic_beats_a_higher_scoring_evergreen_one(): void
-    {
-        $this->seedProducts('gasbarbecue');
-
-        // An evergreen topic with far more measured demand.
-        GuideTopic::create([
-            'market' => Market::BeNl->value,
-            'topic' => 'koptelefoon',
-            'origin' => 'search',
-            'member_queries' => ['koptelefoon'],
-            'search_volume' => 5000,
-            'available_products' => 400,
-            'score' => 9999,
-            'status' => 'candidate',
-        ]);
-
-        $this->travelTo(CarbonImmutable::create(2027, 4, 15));
-        app(SeasonalTopics::class)->seed(Market::BeNl);
-
-        $this->assertSame('barbecue', app(TopicMiner::class)->ripest(Market::BeNl)?->topic);
+        $this->assertContains('valentijnscadeau', $this->offered($on), 'a wrapping window never opened');
     }
 
     #[Test]
@@ -168,6 +130,8 @@ class SeasonalCoveTest extends TestCase
         $this->seedProducts('gasbarbecue');
         app(SeasonalTopics::class)->seed(Market::BeNl, CarbonImmutable::create(2027, 4, 15));
 
+        $this->assertContains('barbecue', $this->offered(CarbonImmutable::create(2027, 4, 15)));
+
         GuideTopic::query()->where('topic', 'barbecue')->update(['status' => 'rejected']);
 
         // Re-seeding is a nightly job. If it reset the status, a rejected topic
@@ -175,7 +139,8 @@ class SeasonalCoveTest extends TestCase
         app(SeasonalTopics::class)->seed(Market::BeNl, CarbonImmutable::create(2027, 4, 16));
 
         $this->assertSame('rejected', GuideTopic::query()->where('topic', 'barbecue')->value('status'));
-        $this->assertNotSame('barbecue', app(SeasonalTopics::class)->ripest(Market::BeNl, CarbonImmutable::create(2027, 4, 16))?->topic);
+        // And the calendar honours the decision inside the window, too.
+        $this->assertNotContains('barbecue', $this->offered(CarbonImmutable::create(2027, 4, 16)));
     }
 
     #[Test]
@@ -214,58 +179,7 @@ class SeasonalCoveTest extends TestCase
         app(SeasonalTopics::class)->seed(Market::BeNl, CarbonImmutable::create(2027, 4, 15));
 
         $this->assertNotNull(GuideTopic::query()->where('topic', 'barbecue')->first());
-        $this->assertNotSame('barbecue', app(SeasonalTopics::class)->ripest(Market::BeNl, CarbonImmutable::create(2027, 4, 15))?->topic);
-    }
-
-    #[Test]
-    public function a_topic_the_builder_cannot_build_stops_blocking_the_queue(): void
-    {
-        /*
-         * The bug this pins, found on staging: `ripest()` returned "kamperen"
-         * every single time. The builder found four products where it needs five,
-         * logged a skip and returned null — and nothing recorded the attempt, so
-         * the next run got the same topic. 123 topics in the queue, five Coves
-         * published, and every topic behind the first one unreachable.
-         *
-         * Invisible in tests because each one either seeds enough products or
-         * asserts the skip. Nothing asserted what happens the *next* day.
-         */
-        $this->seedProducts('gasbarbecue');
-
-        // Enough for the seasonal matcher's ILIKE, too few for the builder's
-        // stricter shortlist — which is exactly the real-world shape.
-        $this->seedProducts('tent', count: 2);
-
-        $on = CarbonImmutable::create(2027, 4, 15);
-        app(SeasonalTopics::class)->seed(Market::BeNl, $on);
-        $this->travelTo($on);
-
-        $first = app(TopicMiner::class)->ripest(Market::BeNl);
-        $this->assertNotNull($first);
-
-        // Fail it the way the builder does.
-        $first->forceFill(['last_attempt_at' => now(), 'attempts' => 1])->save();
-
-        $second = app(TopicMiner::class)->ripest(Market::BeNl);
-
-        $this->assertNotSame($first->topic, $second?->topic, 'the queue is head-blocked');
-    }
-
-    #[Test]
-    public function a_failed_topic_comes_back_once_the_catalogue_has_had_time_to_change(): void
-    {
-        // Not banned, just parked: a category that is thin today may have an
-        // advertiser next month, and permanently rejecting it means never
-        // noticing.
-        $this->seedProducts('gasbarbecue');
-        $on = CarbonImmutable::create(2027, 4, 15);
-        app(SeasonalTopics::class)->seed(Market::BeNl, $on);
-        $this->travelTo($on);
-
-        $topic = app(TopicMiner::class)->ripest(Market::BeNl);
-        $topic->forceFill(['last_attempt_at' => now()->subDays(20), 'attempts' => 1])->save();
-
-        $this->assertSame($topic->topic, app(TopicMiner::class)->ripest(Market::BeNl)?->topic);
+        $this->assertNotContains('barbecue', $this->offered(CarbonImmutable::create(2027, 4, 15)));
     }
 
     #[Test]

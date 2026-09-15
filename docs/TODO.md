@@ -188,6 +188,16 @@ fix. Any new horizontal scroll is that bug again somewhere else.
   deferred until tokens mint, at which point it can be written against a real signed payload rather
   than a guess. It buys little meanwhile: the handler takes no action, so a forged notification
   achieves nothing beyond a log line carrying no personal data.
+- **Drop `list_invitations`, and `guide_topics.last_attempt_at` / `attempts`, in the release after
+  2026-09-14's.** The code behind both went that day: the invitation redemption path (production's
+  table held no rows) and the "recently attempted" topic rule (nothing had written an attempt since
+  the one-guide-at-a-time builder went). They stayed one release on purpose, because the previous
+  build reads them — the invitations table on every sign-in — so dropping them in the same release
+  would break that build on a rollback. Once the 2026-09-14 build has been live and nobody has needed
+  to roll back, one migration can `Schema::dropIfExists('list_invitations')` and drop the two
+  columns. Take `last_attempt_at` and `attempts` out of `ContentEnvelope`'s `topics` exclusion list
+  in the same change. That is the contract half of expand/contract; delete this entry when it ships.
+  See [list-taxonomy.md](features/list-taxonomy.md) and `App\Models\GuideTopic`.
 - **`fetchById()` has no callers.** All three live connectors implement it because `LiveConnector`
   requires it, and no re-check job exists for any source. It is where a wishlist item would get a
   fresh price — and, for eBay, the only place a barcode can come from.

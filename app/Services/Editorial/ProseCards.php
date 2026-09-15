@@ -32,7 +32,8 @@ use App\Services\Guides\CoveMarkup;
 final class ProseCards
 {
     /**
-     * Ids already shown, in the order the document reached them.
+     * Ids an earlier paragraph has already claimed, so a later mention of the
+     * same product gets no second card.
      *
      * @var array<int, true>
      */
@@ -114,12 +115,6 @@ final class ProseCards
           paragraph that names it, so two products in one paragraph stacks both
           cards under it and reads as a caption for a pair.
         TXT;
-    }
-
-    /** Every id this document has paired with a paragraph so far. */
-    public function shown(): array
-    {
-        return array_keys($this->used);
     }
 
     /**

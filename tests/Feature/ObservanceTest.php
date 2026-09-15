@@ -106,13 +106,4 @@ class ObservanceTest extends TestCase
         // 'coffee' has a title and deliberately no blurb.
         $this->assertNull($observance->blurb(Market::En));
     }
-
-    #[Test]
-    public function upcoming_observances_can_be_listed(): void
-    {
-        $upcoming = $this->calendar()->upcoming(CarbonImmutable::parse('2026-04-01'), Market::BeNl, 30);
-
-        $this->assertArrayHasKey('2026-04-11', $upcoming);
-        $this->assertArrayHasKey('2026-04-22', $upcoming);
-    }
 }

@@ -204,8 +204,9 @@ cost.
 ### The one-branch model is no longer blocked
 
 This file used to say the model needs "a production deploy path that works without the Coolify UI"
-and that none existed, because `DeployTrigger` sends no `Authorization` header and the stored webhook
-answers 401. That is true of the *webhook* and false of the *endpoint*. With a Bearer token:
+and that none existed, because `DeployTrigger` (the admin Migration page's Deploy button, removed on
+2026-09-14 for exactly this reason) sent no `Authorization` header and the stored webhook answered
+401. That is true of the *webhook* and false of the *endpoint*. With a Bearer token:
 
 ```bash
 curl -H "Authorization: Bearer $COOLIFY_TOKEN"      "http://51.75.78.173:8000/api/v1/deploy?uuid=<application-uuid>"

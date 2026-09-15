@@ -277,7 +277,6 @@ final readonly class PlanDrafter
             ->where('status', 'candidate')
             ->when($seasonal, fn ($q) => $q->where('origin', 'seasonal'))
             ->when(! $seasonal, fn ($q) => $q->where('origin', '!=', 'seasonal'))
-            ->notRecentlyAttempted()
             ->when($seasonal, fn ($q) => $q->orderBy('season_from'))
             ->when(! $seasonal, fn ($q) => $q->orderByDesc('score'))
             ->limit($count)

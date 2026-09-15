@@ -1488,7 +1488,6 @@ return [
         'mail_what' => 'Open the link below and sign in with this address. You will be able to see the list and add ideas to it.',
         'mail_button' => 'See the list',
         'mail_expiry' => 'The link works for two weeks.',
-        'sign_in_first' => 'Sign in with the address the invitation was sent to, and the list will be waiting.',
     ],
 
     /*

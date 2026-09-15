@@ -64,6 +64,14 @@ invited editor can add and remove, someone who opened a link can only look and c
 
 ### Invitations became real, 2026-08-16
 
+> **Retired on 2026-09-14.** Sharing became a link on 2026-08-30 and the invite form went with it,
+> so nothing wrote an invitation after that; production's `list_invitations` table was checked that
+> day and held no rows at all. The redemption path — the `/invitations/{token}` route,
+> `ListInvitationController`, the `ClaimListInvitations` sign-in listener, `Invitations`, the
+> `ListInvitation` model and `ListInvitationTest` — was removed. `ListInvitationMail` stays: sharing
+> with friends sends it. The table stays one more release so a rollback onto the previous build, which
+> reads it on every sign-in, cannot break sign-in; see docs/TODO.md. What follows is the history.
+
 `WishlistCollaboratorController::store()` looked a `User` up by email and did **nothing** when there
 was no account — while returning *"If they have an account, they can see this list now."* The owner
 was told something happened when nothing had, and that is the common case: the person whose help you
@@ -672,6 +680,12 @@ round to it; deleting `Invitations::claimFor()` would turn every one of them int
 a dead end long after anybody could work out why. `invite()` is gone with the
 form that called it.
 
+*Superseded on 2026-09-14.* The worry above was about invitations that production
+held, and it held none: `list_invitations` was empty when checked that day, and
+the fourteen-day lifetime had run out on anything staging could have sent. With
+nobody waiting on a link, the redemption path was removed; see the retirement
+note under "Invitations became real".
+
 The **roster survives as an undo**. Real people were granted real access by name
 before this, and `ListAccess` still honours `wishlist_collaborators` — dropping
 the union would revoke them silently. The owner keeps a way to take it back;
@@ -712,10 +726,9 @@ there is just no longer a way to add.
 - `resources/js/Pages/Lists/Index.tsx`, `Show.tsx`, `Shared.tsx`,
   `resources/js/Components/SaveToList.tsx`, `ListTools.tsx`
 - `lang/*/site.php` — `lists`, `pledges`, `nav`
-- `app/Services/Wishlist/Invitations.php`, `app/Models/ListInvitation.php`,
-  `app/Listeners/ClaimListInvitations.php`, `app/Mail/ListInvitationMail.php`
+- `app/Mail/ListInvitationMail.php` (the invitation redemption code was retired on 2026-09-14)
 - `database/migrations/2026_08_16_000400_create_list_invitations.php`
-- `tests/Feature/GroupListTest.php`, `ListInvitationTest.php`, `CopyMatchesCodeTest.php`,
+- `tests/Feature/GroupListTest.php`, `CopyMatchesCodeTest.php`,
   `tests/Unit/ContributionViewTest.php`
 
 ## See also

@@ -88,8 +88,9 @@ class BuildDailyEdition implements ShouldQueue
          * switches" is not, and only the first should skip a build. See
          * docs/features/cove-automation.md.
          */
-        // Mine first: the edition asks for the ripest topic, and yesterday's
-        // searches are what ripen one.
+        // Mine first. The edition itself does not read the topic queue —
+        // `PlanDrafter` drafts from it, by score — but yesterday's searches are
+        // what score a topic, and this nightly pass is what counts them.
         $candidates = $miner->mine($this->market);
 
         // Then the calendar, which knows about seasons the log cannot see yet —

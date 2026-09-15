@@ -1296,7 +1296,6 @@ return [
         'mail_what' => 'Abre el enlace de abajo e inicia sesión con esta dirección. Verás la lista y podrás añadirle ideas.',
         'mail_button' => 'Ver la lista',
         'mail_expiry' => 'El enlace funciona durante dos semanas.',
-        'sign_in_first' => 'Inicia sesión con la dirección a la que se envió la invitación y la lista estará esperando.',
     ],
 
     // Consulta la explicación de estas claves en lang/en/site.php.

@@ -232,11 +232,6 @@ class CatalogueController extends Controller
                 'availableProducts' => $t->available_products,
                 'score' => $t->score,
                 'status' => $t->status,
-                // A topic the builder has already failed on is a topic whose
-                // catalogue is thin, not a topic nobody got round to. Saying so
-                // stops an author picking it and finding five products.
-                'lastAttemptAt' => $t->last_attempt_at?->toIso8601String(),
-                'attempts' => $t->attempts,
             ])->all(),
         ]);
     }

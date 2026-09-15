@@ -13,8 +13,8 @@ use Illuminate\Auth\Events\Login;
 /**
  * Finish the save the visitor started before they had an account.
  *
- * A listener for the same reason {@see ClaimListInvitations} is one: there are
- * two sign-in paths today and nothing promises there will not be a third, and a
+ * A listener rather than an edit in each sign-in controller: there are two
+ * sign-in paths today and nothing promises there will not be a third, and a
  * save that completes on the magic link but not on Google is a bug visible only
  * to whichever half of people pressed the other button.
  *
