@@ -37,9 +37,10 @@ class WishlistItemController extends Controller
      * showed an empty bookmark, and the only way to find out was to save it
      * again.
      *
-     * Ids only, and only for this market, so the payload stays small enough to
-     * fetch once and hold. Any list of yours counts: a thing on your research
-     * list for your mother is still a thing you have already found.
+     * Ids only, so the payload stays small enough to fetch once and hold: one
+     * or two per saved product, the group it was saved as and its twin in
+     * this market (see below). Any list of yours counts: a thing on your
+     * research list for your mother is still a thing you have already found.
      *
      * ## A product saved on another market's catalogue counts too
      *
@@ -92,8 +93,21 @@ class WishlistItemController extends Controller
 
         $here = $this->hereIds($rows, $current);
 
-        $ids = $rows->map(fn (WishlistItem $item) => $here[$item->group_id] ?? null)
-            ->filter()
+        /*
+         * Each saved product under two ids: the group it was saved as, and its
+         * twin in this market when it came from another one.
+         *
+         * Only the twin used to be reported. That is right for a product card
+         * on this market's pages and wrong for the list page itself, which
+         * shows every row with the group it was saved as: an item saved from
+         * `nl-nl` and looked at under `/be-nl/lists/...` carried an id that was
+         * not in the set, so its bookmark sat empty on the very list it is on
+         * (owner's report, 2026-09-15; on production five of fifteen products
+         * on lists came from another market than their list). Group ids are
+         * primary keys across every market, so the extra ones cannot be
+         * mistaken for anything else.
+         */
+        $ids = $rows->flatMap(fn (WishlistItem $item) => $this->idsOf($item, $here))
             ->unique()
             ->values();
 
@@ -116,24 +130,24 @@ class WishlistItemController extends Controller
          * again (2026-09-12): a product may sit on several lists at once, and
          * each row needs the item id it would delete to untick itself.
          */
-        $holders = $rows
-            ->filter(fn (WishlistItem $item) => isset($here[$item->group_id]))
-            ->groupBy(fn (WishlistItem $item) => $here[$item->group_id])
-            ->map(fn ($items) => $items
-                ->map(fn (WishlistItem $item): array => [
-                    'listId' => $item->wishlist_id,
-                    'itemId' => $item->id,
-                ])
-                ->values());
+        // Under both ids as well, so the picker ticks the right rows whichever
+        // of the two the card on screen carries.
+        $holders = [];
+
+        foreach ($rows as $item) {
+            foreach ($this->idsOf($item, $here) as $id) {
+                $holders[$id][] = ['listId' => $item->wishlist_id, 'itemId' => $item->id];
+            }
+        }
 
         $list = $request->query('list');
 
         if (! is_string($list) || $list === '') {
-            return response()->json(['groupIds' => $ids, 'holders' => $holders]);
+            return response()->json(['groupIds' => $ids, 'holders' => (object) $holders]);
         }
 
         if (! ListAccess::scope(Wishlist::query(), $owner)->whereKey($list)->exists()) {
-            return response()->json(['groupIds' => $ids, 'holders' => $holders, 'listGroupIds' => []]);
+            return response()->json(['groupIds' => $ids, 'holders' => (object) $holders, 'listGroupIds' => []]);
         }
 
         // The list being filled may be one the owner can edit but does not
@@ -147,12 +161,27 @@ class WishlistItemController extends Controller
 
         $listHere = $this->hereIds($listRows, $current);
 
-        $onList = $listRows->map(fn (WishlistItem $item) => $listHere[$item->group_id] ?? null)
-            ->filter()
+        $onList = $listRows->flatMap(fn (WishlistItem $item) => $this->idsOf($item, $listHere))
             ->unique()
             ->values();
 
-        return response()->json(['groupIds' => $ids, 'holders' => $holders, 'listGroupIds' => $onList]);
+        return response()->json(['groupIds' => $ids, 'holders' => (object) $holders, 'listGroupIds' => $onList]);
+    }
+
+    /**
+     * The ids a saved row answers to: its own group, and that group's twin in
+     * the current market when there is one. One id when the product is from
+     * here, since the two are the same.
+     *
+     * @param  array<int, int>  $here  from hereIds()
+     * @return list<int>
+     */
+    private function idsOf(WishlistItem $item, array $here): array
+    {
+        return array_values(array_unique(array_filter([
+            (int) $item->group_id,
+            $here[$item->group_id] ?? null,
+        ])));
     }
 
     /**

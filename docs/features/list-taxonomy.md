@@ -293,10 +293,19 @@ The owner met exactly that the day the country prompt started sending people to 
 their saves sat on another. The endpoint now takes every accepted product row on the owner's lists,
 whatever market it came from, and translates each to the id it has in the market being read: its
 own when it is from here, its twin's (same `identity_key`, one query through the unique index)
-when the product exists here under another id, nothing when it does not. `groupIds`, `holders` and
-`listGroupIds` are all keyed by the current market's ids, and a holder still names the row that was
-actually saved, so unticking removes that row whichever market's group it holds. Prices and offers
-stay market-scoped; only "have I kept this?" reads across.
+when the product exists here under another id, nothing when it does not. A holder still names the
+row that was actually saved, so unticking removes that row whichever market's group it holds. Prices
+and offers stay market-scoped; only "have I kept this?" reads across.
+
+**Both ids, not only this market's (2026-09-15).** `groupIds`, `holders` and `listGroupIds` report
+each saved row under the group it was saved as *and* under its twin here. Only the twin used to be
+reported, which is right for a product card on this market's pages and wrong for the list page: a
+list shows every row with the group it was saved as, so an item saved from `nl-nl` and read under
+`/be-nl/lists/...` carried an id that was not in the set, and its bookmark sat empty on the very
+list it is on. The owner reported exactly that, and on production five of fifteen products on lists
+came from another market than their list. A product with no twin here is now reported under its own
+id alone, where before it was not reported at all. Group ids are primary keys across every market,
+so the extra ids cannot be mistaken for anything else; `MarketIndependentListsTest` pins both cases.
 
 The mode is a **default, not a lock**: the picker still reaches every list, and a save that names one
 goes there — which is why `markSaved()` takes an `onActiveList` flag. Saving to Books during a

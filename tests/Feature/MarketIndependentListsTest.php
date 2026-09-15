@@ -158,11 +158,19 @@ class MarketIndependentListsTest extends TestCase
 
         $item = WishlistItem::factory()->of($belgian)->create(['wishlist_id' => $list->id]);
 
+        /*
+         * Both ids: the Dutch twin, for the product cards on this market's
+         * pages, and the Belgian group the row was saved as, for the list page,
+         * which shows every row under its own group (see the test below). The
+         * holders sit under both, so the picker ticks the right row whichever
+         * id the card on screen carries.
+         */
         $this->actingAs($user)
             ->getJson('/nl-nl/saved-items')
-            ->assertJsonPath('groupIds', [$dutch->id])
+            ->assertJsonPath('groupIds', [$belgian->id, $dutch->id])
             ->assertJsonPath("holders.{$dutch->id}.0.listId", $list->id)
             ->assertJsonPath("holders.{$dutch->id}.0.itemId", $item->id)
+            ->assertJsonPath("holders.{$belgian->id}.0.itemId", $item->id)
             ->assertJsonMissingPath("holders.{$unrelated->id}");
 
         // Read where it was saved, it is simply itself.
@@ -170,10 +178,45 @@ class MarketIndependentListsTest extends TestCase
             ->getJson('/be-nl/saved-items')
             ->assertJsonPath('groupIds', [$belgian->id]);
 
-        // Filling that list on the Dutch side: the twin counts there too.
+        // Filling that list on the Dutch side: the twin counts there too, and
+        // so does the row's own group.
         $this->actingAs($user)
             ->getJson("/nl-nl/saved-items?list={$list->id}")
-            ->assertJsonPath('listGroupIds', [$dutch->id]);
+            ->assertJsonPath('listGroupIds', [$belgian->id, $dutch->id]);
+    }
+
+    #[Test]
+    public function an_item_on_the_list_being_read_shows_as_saved_whatever_its_market(): void
+    {
+        /*
+         * The owner's report, 2026-09-15: "an item on a wishlist does not have
+         * the save button green". The list page gives each row's bookmark the
+         * group the row was saved as. Saved from `nl-nl` and read under
+         * `/be-nl/...`, that id was not in the set, because only this market's
+         * version of each product was reported, and with no Belgian twin
+         * nothing was reported at all. The bookmark sat empty on the very list
+         * the item is on. On production that was five of fifteen products.
+         */
+        $user = User::factory()->create();
+        $dutchOnly = $this->group(Market::NlNl);
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+        ]);
+
+        $item = WishlistItem::factory()->of($dutchOnly)->create(['wishlist_id' => $list->id]);
+
+        $this->actingAs($user)
+            ->getJson('/be-nl/saved-items')
+            ->assertJsonPath('groupIds', [$dutchOnly->id])
+            ->assertJsonPath("holders.{$dutchOnly->id}.0.itemId", $item->id);
+
+        // And while that list is the one being filled.
+        $this->actingAs($user)
+            ->getJson("/be-nl/saved-items?list={$list->id}")
+            ->assertJsonPath('listGroupIds', [$dutchOnly->id]);
     }
 
     #[Test]
