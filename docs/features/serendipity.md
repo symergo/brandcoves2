@@ -9,8 +9,10 @@ date_added: 2026-08-08
 
 Scores how likely a product is to make someone say *"I didn't know that existed."*
 
-It is the shared machinery behind three surfaces: the `/surprise` page, the gift engine's `surprise`
-signal, and Daily Picks. All three read the same `product_groups.surprise_score`.
+It is the shared machinery behind four surfaces: the `/surprise` page, the gift engine's `surprise`
+signal (`SuggestionEngine`), the surprise lane of the Daily Cove and the gift personas
+(`SurpriseSelector`), and the Surprise band on the Find a gift hub (`DiscoverCoveController`). All of
+them read the same `product_groups.surprise_score`.
 
 ## The idea
 

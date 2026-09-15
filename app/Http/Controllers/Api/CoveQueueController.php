@@ -108,13 +108,14 @@ class CoveQueueController extends Controller
     /**
      * Prose back, and nothing else.
      *
-     * `POST /coves` is a full upsert whose `items` are replace-never-merge, and
-     * when `items` is omitted it falls back to the legacy `pinnedGroupIds` — so
-     * an agent submitting only prose there can empty a curated shortlist. That is
-     * precisely the failure a scheduled writer would produce at 03:00 and nobody
-     * would see until the page built.
+     * `POST /coves` is a whole-plan upsert: it leaves the shortlist alone when
+     * `items` is omitted, but resets every other field — editorial, blurb,
+     * pickMode, writer — to what the body carries. An agent revising one
+     * paragraph through it has to resend the whole plan to avoid blanking the
+     * rest.
      *
-     * This writes words. It cannot add, remove or reorder a product.
+     * This writes words. It cannot add, remove or reorder a product, and it
+     * touches nothing else on the plan.
      */
     public function store(Request $request, CovePlan $plan): JsonResponse
     {

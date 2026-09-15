@@ -302,17 +302,17 @@ class ProductController extends Controller
      * The 90-day price chart used to be built here.
      *
      * Removed from the product page on request. `price_history` itself went
-     * later (2026-09-12, three prices on the offer row instead) —
-     * it is what the 30-day median is computed from, and the median drives the
-     * discount badge and the alert thresholds — so the table, the ingest write
-     * and the pruning job are all unchanged. What is gone is the chart and the
-     * per-page query behind it, which fetched ninety rows for every render of
-     * the most-crawled page type on the site.
+     * later (2026-09-12): an offer now carries `first_price`, `price` and
+     * `previous_price` on its own row instead of a table of daily samples, and
+     * the group's discount reference reads `previous_price` directly rather
+     * than a 30-day median. What is gone is the chart and the per-page query
+     * behind it, which fetched ninety rows for every render of the
+     * most-crawled page type on the site.
      *
      * The compliance rule the chart carried has not gone anywhere. Sources that
-     * disallow price tracking are now filtered where the median is computed, in
-     * `ProductGrouper::recomputeAggregates()` — one gate covering every reader of
-     * the median instead of one covering the chart alone.
+     * disallow price tracking are still filtered where the discount reference is
+     * computed, in `ProductGrouper::recomputeAggregates()` — one gate covering
+     * every reader of `previous_price` instead of one covering the chart alone.
      * See docs/features/amazon-compliance.md.
      */
 }

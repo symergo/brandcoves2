@@ -141,6 +141,7 @@ which enables FreeType, so the guard is insurance against a future edit to that 
 | Guide | Buying guide | The guide title | How many products it covers |
 | Brand | Brand | The brand name | Products and shops |
 | Daily Cove | The Daily Cove | The edition's theme | The edition's date |
+| Shared list | Wish list / Gift list | The list's title | The number of ideas |
 | Everything else | — | "Discover products and brands" | giftcoves.com |
 
 A product carried by one shop is not "1 shops" and one with no price is not "from €0"; both are
@@ -149,11 +150,28 @@ common enough in a feed that a card built from the happy path would be visibly w
 ## Two things the Daily Cove card does differently
 
 **It is addressed by date, never by "today".** A platform caches the card it fetched when a link was
-first posted, and `/daily` is a different edition every morning. The page therefore points at the
-dated image even at its own undated URL, so a post from last Tuesday keeps showing last Tuesday's
-theme.
+first posted, and the undated edition URL (`/{market}/tips`) is a different edition every morning.
+The page therefore points at the dated image even at its own undated URL, so a post from last
+Tuesday keeps showing last Tuesday's theme.
 
-**It applies the page's rules.** The Daily Cove refuses a future date because guessing tomorrow's
-tomorrow's edition by URL would leak a draft, and it refuses an unpublished edition. A card
+**It applies the page's rules.** The Daily Cove refuses a future date, because guessing tomorrow's
+edition by URL would leak a draft, and it refuses an unpublished edition. A card
 is a URL that renders the theme in 60pt type, so it refuses both as well. An image endpoint that
 skips a page's access rules is that page's access rules with an extension on the end.
+
+## A shared list previews as itself (2026-09-13)
+
+A share link pasted into a chat used to turn into the market's default card, "Ontdek producten en
+merken": the shared list page set a title and a noindex but no image and no description, so the
+shell fell back to `og/default.png`. The person receiving "here is Mum's list" saw an advert for the
+site. `/og/l/{code}.png` now draws the list's own title, with "Wish list" or "Gift list" as the kicker
+and the number of ideas as the footnote, and the page sets an `og:description` from the owner's own
+description or a sentence that says what this is and how many ideas are on it.
+
+Two rules worth keeping. The card is drawn only for a list that is actually shared, by the same
+visibility check the page uses, so withdrawing a share withdraws the preview. And nothing from the
+list's *contents* reaches the card or the description, not a product name and not a claim: the card
+goes wherever the link goes, and the items are for whoever opens it. The card is cached like the
+brand and guide cards, keyed on the text it draws and the commit; shared lists are bounded by what
+people share and re-read by every chat they are pasted into, which is the profile that earns a cache
+entry.

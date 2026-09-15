@@ -1,6 +1,13 @@
+---
+name: Feedback
+area: Content / Operations
+status: Active
+---
+
 # Feedback
 
-One page, in the main menu: **tell us what is wrong**. No account, one required field.
+A form on `/help`, reached from **Help** in the main menu: tell us what could be better, or what
+you like. No account, one required field.
 
 - Page: [`Help.tsx`](../../resources/js/Pages/Help.tsx) and the form it renders,
   [`FeedbackForm.tsx`](../../resources/js/Components/FeedbackForm.tsx);
@@ -28,10 +35,10 @@ action almost nobody takes on a given visit — and it cannot be linked to.
 **No account.** The reports worth having come from people annoyed enough to type and not invested
 enough to register.
 
-**One required field.** The message. The page is prefilled from the `Referer` (host-checked, query
-string dropped — see below) and editable; the address is optional. A report form that opens on five
-required fields collects reports only from people already determined to file one, which is not the
-population worth hearing from.
+**One required field.** The message. The page the report is about is taken from the `Referer`
+(host-checked, query string dropped, see below) and posted with the form without being shown; the
+address is optional. A report form that opens on five required fields collects reports only from
+people already determined to file one, which is not the population worth hearing from.
 
 **The address hint sits next to the field**, not in the privacy policy: "only so we can reply to
 this" is the question being asked at the moment the cursor is in the box.

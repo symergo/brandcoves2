@@ -44,10 +44,11 @@ The offer-comparison card the result renders is the one Phase 2 builds anyway.
    keep scanning rather than querying, because a wrong digit is a *different
    real product*, not a near miss.
 3. **Look up the stored index** — direct hit on `(market, identity_key)`.
-4. **Miss? Ask bol live** — `BolConnector::fetchById()`; bol's catalogue is
-   EAN-addressable and far broader than our Awin feeds.
-5. **Still nothing?** Offer to add it to a wishlist from the scanned code, and
-   log the miss — see *What a miss is worth* below.
+4. **Miss? Search for it.** The scan answers `not_found` with the search URL for the normalised
+   GTIN; the search page resolves a GTIN as an exact identity and asks the live sources, so a
+   product we never ingested can still turn up. The scanner itself makes no bol call.
+5. **Record it.** Every scan is logged as a `scan` event with `hit: true|false`; see *What a miss is
+   worth*.
 
 ## Three honest limitations
 
@@ -136,7 +137,7 @@ Every scan that finds nothing is a **precise, high-intent gap in the catalogue**
 a real product, a real shopper, a real moment of demand, identified by an exact
 GTIN.
 
-Logged to `events` as `scan_miss`, these become the best possible input to
+Logged to `events` as `scan` with `hit: false` (`ScanController.php`), these become the best possible input to
 merchant onboarding — not "we should add homeware", but "47 people scanned
 things we do not carry from this category last month". Nothing else in the
 product produces a signal that specific.
@@ -201,14 +202,15 @@ have appeared on only one of the two surfaces.
 
 ### And beside every product search field
 
-Added 2026-09-03. Two entry points became seven, on the same rule applied a
-third time: scanning belongs **where a query is entered**, and the site enters a
-product query in more places than its two search boxes. The camera now sits
-beside the add-to-list panel, the suggestion box on a shared list, the picks
-picker on an answer, the self-describe list, and the discovery dial.
+Added 2026-09-03. Two entry points became seven (six since the discovery dial went on 2026-09-07), on
+the same rule applied a third time: scanning belongs **where a query is entered**, and the site
+enters a product query in more places than its two search boxes. The camera now sits beside the
+add-to-list panel, the suggestion box on a shared list, the picks picker on an answer, and the
+self-describe list.
 
 **What had to change first is what a scan *does*.** Beside the home and search
-fields a good read navigates to `/search?q=<gtin>` — right there, and wrong in
+fields a good read navigates to the search URL for the GTIN (`SearchUrl::for()`, e.g.
+`/nl-nl/zoek/<gtin>`; see [search-urls.md](search-urls.md)) — right there, and wrong in
 every one of the five above. Those are *pickers*: you search in order to attach
 something to the screen you are already on, and a `router.visit` would take the
 list being added to, the half-typed answer or the dial settings with it. So
@@ -229,23 +231,6 @@ to the question the field asked, and the picker's own empty state — which
 already offers to add the item by hand — says it better than a card inside a
 dialog can.
 
-**The discovery dial is the one exception, in its Projects layout.** That box
-wants a situation ("home office", "coffee corner"), and a barcode is the
-opposite kind of answer, so the button is hidden there — the same condition that
-already swaps the placeholder.
-
-## Where it fits
-
-| | |
-|---|---|
-| Depends on | Phase 2 — the product page and offer-comparison card |
-| Route | `/{market}/scan` |
-| Enhances | Wishlists (scan to add), Daily Picks (scan a pick you saw in a shop) |
-| Effort | Small, because identity and lookup already exist. Most of the work is camera UX and the decoder fallback |
-
-Suggested slot: **late Phase 2 or early Phase 3**, once there is a product page
-worth landing on. Building it before that means scanning into an empty result.
-
 ## Not in scope
 
 - **A native app.** A web scanner reaches everyone from a link; an app store
@@ -260,15 +245,18 @@ worth landing on. Building it before that means scanning into an empty result.
 - `resources/js/Components/BarcodeScanner.tsx` — camera UI, and
   `makeDetector()`: native `BarcodeDetector` where it exists, lazy-loaded ZXing
   wasm everywhere else. One implementation, shared by all three surfaces.
+One implementation, shared by every scan button.
+
 - `resources/js/Components/ScanButton.tsx` — the button beside a search field and
-  the dialog it opens. Used by `Pages/Home.tsx` and `Pages/Search.tsx`; takes a
-  `className` so it can match the field row it sits in, which differs between
-  the two.
+  the dialog it opens. Used by `Components/SearchCard.tsx` (home page and `DiscoverCove`),
+  `Pages/Search.tsx`, `Components/AddProduct.tsx`, `Pages/Lists/Shared.tsx`, `Pages/Ask/Show.tsx`
+  and `Pages/Recipients/SelfDescribe.tsx`; takes a `className` so it can match the field row it
+  sits in.
 - `resources/js/Pages/Scan.tsx` — the standalone page, for a held URL or a
   home-screen shortcut. Renders the scanner without `autoStart`, because there
   the button is the page.
-- `app/Http/Controllers/ScanController.php` — validate, look up, fall back to bol
-- Reuses `App\Services\Identity\Gtin` and `BolConnector::fetchById()` unchanged
+- `app/Http/Controllers/ScanController.php` — validate, look up, answer a miss with a search URL
+- Reuses `App\Services\Identity\Gtin`
 
 ## Phones only, full screen, under the field (2026-09-07)
 

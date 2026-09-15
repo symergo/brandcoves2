@@ -7,7 +7,9 @@ date_added: 2026-08-10
 
 # The homepage
 
-Four bands, in this order: the pitch, today's Cove, the gifting band, the Coves archive.
+Seven bands, in this order (2026-09-13): the pitch, the search card, the list wizard, Today's Cove,
+the Cove signup, what you looked at, and More Coves. The sections below are a dated log; those
+marked superseded describe bands that are gone.
 
 ## The pitch says who it is for, and that includes you
 
@@ -161,6 +163,8 @@ which is the largest table we have. The controller no longer computes them.
 
 ## The bands that stayed, and why they are in this order
 
+*(Order superseded 2026-09-13; see the last sections.)*
+
 - **Today's Cove first.** The thing that makes someone return tomorrow should not be one click deep.
   A visitor who lands here and sees a dated edition with real finds learns that this site changes;
   one who sees a search box learns it is a search engine.
@@ -171,6 +175,8 @@ which is the largest table we have. The controller no longer computes them.
   where a first-time visitor learns the archive exists at all.
 
 ## What people have been searching for: three, not six
+
+*(The band was removed 2026-09-13; see "A search card where Recently searched was".)*
 
 Changed 2026-08-15. The band under the pitch shows **three** terms, in one row at `lg` and stacked
 below it.
@@ -251,6 +257,9 @@ Two smaller phone fixes in the same pass:
   avoid — see above.
 
 ## Making a list, from the Organise band — 2026-09-01
+
+*(The band and its button went on 2026-09-13; the kind-first reasoning now lives in the list
+wizard.)*
 
 The band was five cards and every one of them was a **door into lists that already exist**: my
 lists, shared with me, group lists, Secret Friend, the occasion. Nothing on the front page made one.
@@ -358,10 +367,12 @@ production-shaped data, check it against production.
 - [navigation.md](navigation.md) — the header, and why editorial leads it
 - [daily-cove.md](daily-cove.md) — the edition this page opens with
 - [brand-mark.md](brand-mark.md) — the mark, its palette, and everywhere else it appears
-- [search-help.md](search-help.md) — linked from under the hero search box
+- [search-help.md](search-help.md) — linked from the footer on every page
 - [list-taxonomy.md](list-taxonomy.md) — the three kinds the new-list button asks you to choose between
 
 ## The Discover band gained a fourth card
+
+*(The Discover band left the front page on 2026-09-13.)*
 
 2026-08-16. Ask others sits beside Daily, Surprise and the Coves, because it is a way of *finding*
 something rather than a tool for keeping track of what you already chose.
@@ -443,10 +454,10 @@ named the persona shelf three times: the Discover band's fifth card, this band's
 cards under "Cadeau-ideeën, per type", and the Coves band, which since the morning of the same
 day mixes personas in with the articles, brands and shops. The band's job, meeting a first-time
 visitor with a person to shop for, is done by the Coves band now, which no longer skips the
-personas the band used to carry. `HomeController::personas()` still sends three rows, because
-the Discover card is shown only when the market has a persona and that is the cheapest way to
-know. `home.personas_heading` and `home.personas_all` were removed from the four language files;
-the shelf keeps its own copy under `gift_ideas`.
+personas the band used to carry. `HomeController::personas()` sent three rows for the Discover
+card until that band went too (2026-09-13, below); the method is gone. `home.personas_heading`
+and `home.personas_all` were removed from the four language files; the shelf keeps its own copy
+under `gift_ideas`.
 
 ## The pitch says what you make here (2026-09-13)
 
@@ -456,7 +467,8 @@ you."* ("én offline" added the same day: the barcode scanner is what makes the 
 buttons, **Create my wishlist** (the list form on My Lists, `?new=mine`) and **Find a gift** (the
 Find a gift page, where the header entry of that name goes). A line under the buttons, *Search
 anything · Scan a barcode · Keep it all in one place*, lasted a few hours: the owner took it out
-the same day, once the search card below (next section) carried the field and the camera.
+the same day, once the search card below (next section) carried the field and the camera. The
+sentence is `home.intro`, the key deleted on 2026-09-03 and reused.
 
 The search field that sat under the headline went with it. It had replaced the Gift Finder button
 and taught the site's second job on its first screen; the pitch now says the first job, the header

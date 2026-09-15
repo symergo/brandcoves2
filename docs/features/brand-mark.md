@@ -38,7 +38,3 @@ Two small decisions inside those:
 - **The mark is the seed of the social card**, not the card itself: [social-cards.md](social-cards.md)
   renders the cove and the palette into a 1200×630 image per page.
 
-## Social cards
-
-Superseded by [social-cards.md](social-cards.md): pages no longer fall back to the square mark, they
-render a real 1200×630 card with their own title on it.

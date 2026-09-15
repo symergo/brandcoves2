@@ -19,14 +19,16 @@ A short thread in a rail beside the list, on both pages a list has —
 ## Who may read it is the claim gate
 
 A board is free text written by the people doing the buying, and *"I've got the
-scarf, someone take the boots"* is claim state in prose. So it hangs off
-`Wishlist::shouldHideClaimsFrom()` — where invariant 4 lives — rather than off a
-second rule that would have to be kept in step with it.
+scarf, someone take the boots"* is claim state in prose. So it starts from
+`Wishlist::shouldHideClaimsFrom()`, where invariant 4 lives, with one rule stricter than it: **the
+owner of a wish list never sees the board.** `owner_sees_claims` lets them see *what* is taken; a
+board is other people talking about them, in prose no claim-hiding code can redact. Turning claims
+on used to turn the board on too.
 
 | the list | its owner | anybody with the link |
 |---|---|---|
 | a wish list, claims hidden (the default) | **no board at all** | reads and writes |
-| a wish list, owner asked to see claims | reads and writes | reads and writes |
+| a wish list, owner asked to see claims | **still no board** | reads and writes |
 | about somebody else | reads and writes | reads and writes |
 | a group gift | reads and writes — they are the organiser | reads and writes |
 

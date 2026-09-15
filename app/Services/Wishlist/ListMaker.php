@@ -105,14 +105,14 @@ class ListMaker
 
         if (filled($newRecipient)) {
             /*
-             * The birthday rides along with the name, and only on a person
-             * being minted here.
+             * The birthday rides along with the name, on a person being
+             * minted here.
              *
-             * An *existing* recipient is not touched: the creator is choosing
-             * somebody they already have, and quietly overwriting a date they
-             * entered months ago from a field they may have left blank is the
-             * sort of edit nobody would find. Editing a person's details is
-             * that person's screen.
+             * Picking an *existing* recipient does not go through this
+             * branch at all — see the `filled($recipientId)` return above.
+             * There, a blank birthday may still be filled in later by
+             * `WishlistController::applyWizardSettings()`, but only when
+             * none is stored; a date already entered is left alone.
              */
             return Recipient::create([
                 ...$owner->attributes(),

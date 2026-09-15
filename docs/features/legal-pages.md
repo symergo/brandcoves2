@@ -1,3 +1,9 @@
+---
+name: Legal and about pages
+area: Content / Compliance
+status: Active — en and nl written; fr and es fall back to English
+---
+
 # Legal and about pages
 
 `/about`, `/privacy`, `/terms` in every market. Markdown on disk, rendered through

@@ -1,3 +1,10 @@
+---
+name: Pasting an Amazon link into the search box
+area: Search / Affiliate
+status: Active — ASIN redirect works for ASINs imported with a barcode (page import)
+date_added: 2026-08-09
+---
+
 # Pasting an Amazon link into the search box
 
 Someone standing on an Amazon product page, wondering who else sells the thing, pastes the URL into
@@ -13,11 +20,13 @@ makes it safe to put there: an ordinary query takes exactly the path it always d
 Two things, and the less obvious one is the one that works.
 
 The **ASIN** identifies the product exactly. `amazon_products` is the decision store the compliance
-rule requires (ASIN, classification, resolved identity, no mirrored title or price — see
-[amazon-compliance.md](amazon-compliance.md)), and its `identity_key` is the same key `product_groups`
-is unique on per market. A classified ASIN therefore points straight at the group the other shops'
-offers hang off, and the paste becomes a redirect to that product page. That table is empty until the
-connector runs, so this path is correct and currently silent.
+rule requires (ASIN, classification, resolved identity, and since 2026-09-14 what an imported page
+said, but never a price — see [amazon-compliance.md](amazon-compliance.md)), and its `identity_key`
+is the same key `product_groups` is unique on per market. A classified ASIN therefore points straight
+at the group the other shops' offers hang off, and the paste becomes a redirect to that product page.
+Since 2026-09-14 the page import fills it: an ASIN imported from an Amazon page that printed a
+barcode resolves to its GiftCoves product page. Amazon prints one on a minority of listings, so the
+slug path below is still the one that usually answers.
 
 The **slug** in front of `/dp/` is the product title with dashes in it —
 `Sony-WH-1000XM5-Draadloze-Koptelefoon`. Unglamorous, always present on a desktop link, and the thing

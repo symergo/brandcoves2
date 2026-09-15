@@ -104,8 +104,8 @@ unscoped".
 
 **The currency guard is what holds when the scoping is wrong.** Any offer whose currency is not the
 market's is dropped, never converted. `products.price` has no per-row currency, so a converted number
-enters the min and median aggregates behind "cheapest offer" at a rate nobody recorded — and 99
-kronor stored as 9900 cents wins that badge outright. This matters more here than for eBay, because
+enters the `min_price` and `previous_price` aggregates behind "cheapest offer" at a rate nobody
+recorded — and 99 kronor stored as 9900 cents wins that badge outright. This matters more here than for eBay, because
 here a mis-scoped query returns foreign listings *by design*.
 
 ## A 4xx is never retried
@@ -120,9 +120,9 @@ requests after the live 403 above: two calls, one answer, no possibility of a di
 A `ConnectionException` is not a `RequestException` and carries no response, so a timeout still
 retries, which is the case retry exists for.
 
-The same over-eager retry is still in `BolConnector` and `EbayConnector`, deliberately left alone —
-both are working and verified, and changing them is a separate, testable move rather than a
-drive-by.
+The same over-eager retry is still in `BolConnector` and `EbayConnector`, deliberately left alone.
+bol is working and verified; eBay has never authenticated (see [TODO](../TODO.md)). Changing either
+is a separate, testable move rather than a drive-by.
 
 ## Prices come from a history, most recent first
 
@@ -205,10 +205,7 @@ nothing about it would look wrong.
 
 ## Adding a source is still a migration
 
-`2026_09_02_000200_tradedoubler_is_a_source` — the second instance of the file
-[ebay-connector.md](ebay-connector.md) predicted would be needed, and a deliberate copy rather than
-an edit to that one: it has already run everywhere, so widening its constraint set in place would
-change nothing on any existing database and would diverge a fresh clone from staging.
-
-Seven tables carry a `CHECK (source IN (…))` frozen from `Source::values()` at their own migration
-time. Rebuilding all seven from `Source::values()` keeps each such file idempotent and convergent.
+`2026_09_02_000200_tradedoubler_is_a_source`, the second file of the kind
+[ebay-connector.md](ebay-connector.md#adding-a-source-is-still-a-migration) explains. A new file
+rather than an edit to the eBay one: that one has already run everywhere, so widening it in place
+would change nothing on an existing database and would diverge a fresh clone from staging.

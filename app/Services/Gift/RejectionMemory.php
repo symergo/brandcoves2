@@ -42,8 +42,8 @@ class RejectionMemory
     /**
      * Ids remembered per brief.
      *
-     * Fifteen swaps is a visitor who is not going to be satisfied by the
-     * sixteenth; past that the brief is the problem, not the picks. Bounded
+     * Seven swaps is a visitor who is not going to be satisfied by the
+     * eighth; past that the brief is the problem, not the picks. Bounded
      * because a session store is visitor-controlled input and an unbounded list
      * in a cookie-backed session is a way to make every subsequent request
      * large.

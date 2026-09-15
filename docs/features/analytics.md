@@ -26,8 +26,8 @@ default in `config/giftcoves.php` rather than being something an environment mus
 Everything else this site stores is strictly necessary for something the visitor asked for — the
 session, the CSRF token, the market they chose, the identifier that lets a list work before there is
 an account — and Article 5(3) of the ePrivacy Directive exempts exactly that category. `_ga` is the
-first thing here that falls outside it. Both published markets are EU (BE, NL), so this is not
-optional.
+first thing here that falls outside it. Every published market is in the EU (Belgium, the
+Netherlands, and the English market under the EU flag), so this is not optional.
 
 **The gate is a cookie read in PHP, not a check the tag does after loading.** A tag that loads and
 then decides has already fetched a script from Google and already had its chance. `App\Support\

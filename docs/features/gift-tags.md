@@ -36,8 +36,8 @@ A tag is `<vocabulary>:<value>`. The whole list is `GiftTags::all()`, and `GET /
 returns it beside the products, so a writer never has to guess a spelling.
 
 **The vocabulary grows from the tagging, not only from the wizard.** A writer working a batch may
-invent an `interest`, `occasion` or `style` value when nothing on the list fits — `recipient`,
-`age`, `vibe` and `values` are complete and are not open to it. `POST /products/tags` still
+invent an `interest` or `occasion` value when nothing on the list fits — `recipient`, `age`,
+`vibe`, `preference` and `values` are complete and are not open to it. `POST /products/tags` still
 refuses anything outside the vocabulary, so an invented value is a **proposal**: the poster
 collects the rejected spellings with their counts, and the ones that recur are added here and the
 batch re-posted. `interest:hunting` is the first that arrived this way (five products on be-fr with
@@ -106,8 +106,9 @@ because a bare `?` is a placeholder to PDO, and the default jsonb operator class
 
 ## How the Whisperer reads them
 
-- **Retrieval**: the candidate pool is the text match OR any interest tag from the brief, both
-  indexed. A tagged product is found whether or not its title agrees.
+- **Retrieval**: each interest retrieves its own share of the candidate pool, as a text match OR
+  that interest's tag; a slot's tag branch is scoped to its own interest so it cannot hand its
+  share to another. A tagged product is found whether or not its title agrees.
 - **Interest fit**: a tag on an interest is a match at full strength on that interest's slot,
   ahead of any text strength. `interest:coffee` on the product and "coffee" first in the brief is
   the strongest evidence the engine gets. The signal is vectorial (owner's call, 2026-09-14): half
@@ -119,7 +120,8 @@ because a bare `?` is a placeholder to PDO, and the default jsonb operator class
   A `preference:` pole weighs 5 buying for someone else and 10 on your own list, where the finish
   is half the point of wanting the thing; any one of the poles named matching is a match, since
   they are one taste rather than a list of requirements.
-- **Recipient fit**, a new signal weighted 5 in `for_someone` (taken from surprise, 20 to 15) and 0
+- **Recipient fit**, a new signal weighted 5 in `for_someone` (surprise went from 20 to 10 to pay
+  for this and for occasion) and 0
   in `for_myself`: 1.0 when a recipient or age tag meets the brief's relationship or age band, 0.45
   when the product is tagged for somebody or some age else, 0.5 when nothing was asked or nothing is
   tagged. One signal for both because they answer one question, "is this for them". No text
@@ -165,9 +167,11 @@ scores neutral, a wrongly tagged one scores against the person it was meant for.
 
 ## Files
 
-- `database/migrations/2026_09_14_000200_product_groups_carry_gift_tags.php`
-- `app/Services/Gift/GiftTags.php`, `app/Enums/RecipientType.php`
+- `database/migrations/2026_09_14_000200_product_groups_carry_gift_tags.php`,
+  `database/migrations/2026_09_14_000300_a_saved_person_remembers_its_taste.php`
+- `app/Services/Gift/GiftTags.php`, `app/Enums/RecipientType.php`, `app/Enums/Preference.php`
 - `app/Models/ProductGroup.php` (`giftTags()`), `app/Services/Gift/SuggestionEngine.php`
+- `app/Services/Gift/InterestCandidates.php`, `app/Http/Controllers/Api/InterestCandidatesController.php`
 - `app/Services/Editorial/UntitledProducts.php`, `app/Http/Controllers/Api/ProductTitleController.php`
 - `config/giftcoves.php` (`recipient_fit`)
 - `tests/Feature/GiftTagsApiTest.php`, `tests/Feature/SuggestionEngineTagsTest.php`

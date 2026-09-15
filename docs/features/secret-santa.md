@@ -64,7 +64,7 @@ the giftee's name into `recipients.name` in plain text one table over and make
 the encryption decorative. The giftee is resolved at render time through
 `GiftTarget` instead — one place where the pairing lives.
 
-`bc:scrub` anonymises members and nulls the assignment.
+`bc:scrub` anonymises members, nulls the assignment and regenerates every invite token.
 
 ## Participation without an account
 
@@ -86,8 +86,7 @@ had ever been in one. Reported from a pasted link in Edge.
 The same URL now serves both verbs: `GET` renders the invite, `POST` is the form on it. Four things
 the page has to get right, each one a way the obvious version is worse:
 
-- **No account.** Requiring a login before somebody can be in an office Secret Santa is how most of
-  the office does not join. The email is what the draw needs to reach them; the join token is what
+- **No account** (see above). The email is what the draw needs to reach them; the join token is what
   gets them back in.
 - **`noindex`.** An invite is a private URL that happens to be unauthenticated, exactly like
   `/l/{token}`.
@@ -122,9 +121,9 @@ rare and joining separately is a step everyone forgets.
 
 They see who is in, who has a list, and how many have finished shopping — never
 who drew whom. v1 let the organiser read the pairings outright, which quietly
-makes one player a spectator of everyone else's game. Same reasoning as the
-reminder in [the occasion lens](gifting-lenses.md): a nudge names nobody who has
-not yet bought.
+makes one player a spectator of everyone else's game. Same reasoning as the exchange
+reminder in [occasion-reminders.md](occasion-reminders.md#a-secret-friend-exchange-reminds-each-member-not-the-organiser):
+nobody is told who has not bought yet.
 
 ## The loop worth having
 
@@ -205,8 +204,10 @@ rounding difference gets into a budget comparison.
 - `app/Models/SecretSantaGroup.php`, `SecretSantaMember.php`, `app/Enums/SantaStatus.php`
 - `app/Http/Controllers/SecretSantaController.php`
 - `app/Mail/SecretSantaAssignmentMail.php`, `resources/views/mail/santa-assignment.blade.php`
-- `resources/js/Pages/Santa/Group.tsx`, `Join.tsx`, `Me.tsx`
+- `resources/js/Pages/Santa/Group.tsx`, `Join.tsx`, `Me.tsx`, `Index.tsx`
+- `resources/js/Components/SantaBadge.tsx`
 - `database/migrations/2026_08_16_000300_a_santa_member_can_leave.php`
+- `database/migrations/2026_09_13_000100_a_secret_friend_invite_you_can_read_out_loud.php`
 - `tests/Unit/SecretSantaDrawTest.php`, `SantaRepairTest.php`
 - `tests/Feature/SecretSantaTest.php`, `SantaRepairFlowTest.php`
 
@@ -281,5 +282,5 @@ on the group page confirmed, and this one did not. It confirms now (`santa.draw_
 the member count), and under two members the disabled button is accompanied by a sentence
 saying so (`santa.draw_needs_two`) rather than a button that simply does nothing.
 
-The group card on the hub reads ":count people" rather than a bare number, and no longer prints a
+The group card on `/santa` reads ":count people" rather than a bare number, and no longer prints a
 dangling separator when there is no exchange date (2026-09-06).

@@ -1,7 +1,7 @@
 ---
 name: Cove subscriptions
 area: Discovery / Email
-status: Built
+status: Active
 date_added: 2026-08-09
 ---
 
@@ -131,9 +131,9 @@ Three guards, each closing a way this could embarrass us:
 
 - **No published edition, no email.** A digest linking to a page that does not exist is worse than
   silence.
-- **No sendable content, no email.** `DigestBuilder` returns null when every find is Amazon-sourced and
-  A mail that only says "a page exists" teaches people the digest is not worth
-  opening — the one irreversible thing a daily email can do.
+- **No sendable content, no email.** `DigestBuilder` returns null when no find may be named in the
+  mail, which is what an all-Amazon edition produces. A mail that only says "a page exists" teaches
+  people the digest is not worth opening — the one irreversible thing a daily email can do.
 - **`last_sent_on` per subscriber.** A retried job that already mailed half the list must not mail that
   half again. Written immediately after each send, so a crash costs one duplicate rather than two
   hundred.

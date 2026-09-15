@@ -25,7 +25,8 @@ client binaries would make it work — and would buy about 7 seconds of the 63, 
 it simultaneously at the start. That is the whole prize, so it has not been done.
 
 **The conclusion to carry forward: the way to spend less time waiting on tests is to run fewer of
-them, not to make the suite faster.** Use `--filter`; the full run is for the moment before a push.
+them, not to make the suite faster.** Use `--filter`; run the whole suite when asked, or when a change
+reaches further than a filter can.
 
 1,808 tests on 2026-09-14, against a real PostgreSQL. The suite is the only thing standing between a
 push to `main` and staging, which deploys it within the minute; production is a separate, deliberate
@@ -42,19 +43,15 @@ php artisan test --filter=BrandPage
 
 ## Run what the change touches
 
-The full suite is for the push, not for the edit loop. While work is in progress — including work
-Claude is doing — run the narrowest thing that proves the change: `--filter` on the test class, or
-the test file itself, or `--dirty` to pick up everything touching uncommitted work. Report which one
-ran, so "tests pass" is never mistaken for "the suite passes".
+While work is in progress — including work Claude is doing — run the narrowest thing that proves the
+change: `--filter` on the test class, the test file itself, or `--dirty` for everything touching
+uncommitted work. Report which one ran, so "tests pass" is never mistaken for "the suite passes".
 
-`composer test` earns its 39 seconds at one moment: **before production goes out** — a push to
-`main`, or the fast-forward that advances it — and whenever it is explicitly asked for.
-
-The hook already runs the suite on *every* push, staging included, so this deliberate run is not
-about coverage the hook would miss. It is about *when you learn*. Run by hand, a failure arrives
-while shipping is still a decision; left to the hook, it arrives after you have committed to the
-deploy and are watching it abort. Same 39 seconds, bought at the point where the answer can still
-change what you do.
+**The full suite is not run before every push, by the owner's decision of 2026-09-08.** The hook
+added two minutes to each push on days of many small commits, and CI runs the same suite on every
+push anyway, so the local run was an early warning rather than a gate. Push with
+`git push --no-verify`. Run `composer test` locally when it is asked for, or when a change touches
+migrations or shared services that a narrow filter cannot cover — and say that you did.
 
 ## Pruned on 2026-09-14, and what counts as a duplicate
 
@@ -131,6 +128,15 @@ Pinned to `false` in `phpunit.xml` so it no longer depends on a file that may no
 diagnostics are unaffected: Laravel captures the exception on the `TestResponse` and prints it in
 the assertion message either way. The run now exercises the error page production actually serves.
 
+## Never `--env=testing` by hand
+
+`.env.testing` is gitignored, and Laravel falls back to `.env` when the named environment file is
+missing — silently. So on a clone without it, `php artisan migrate:fresh --env=testing` reads `.env`,
+resolves to the **development** database and drops it. That happened on 2026-08-10. The suite never
+needs the file: `phpunit.xml` sets its own environment and `RefreshDatabase` migrates the test
+database itself, so there is no reason to run `migrate:fresh` by hand between test runs. If you want
+the file anyway, recreate it locally, pinned to `DB_DATABASE=brandcoves_test`.
+
 ## Two gates: the hook and CI
 
 `.github/workflows/tests.yml` runs the suite on GitHub for every push and pull request, against a
@@ -144,7 +150,9 @@ because it only exists once someone runs the per-clone config below.
 
 Both matter, and they fail differently: the hook is fast but optional, CI is authoritative but only
 learns about the code after it has been pushed — and a push to a tracked branch has already started
-a deploy by then. That asymmetry is the argument for the hook, not against it.
+a deploy by then. That asymmetry is why the hook exists. Since 2026-09-08 pushes normally skip it
+with `--no-verify`, because CI already runs the suite (see "Run what the change touches"); the hook
+stays for whoever wants the warning earlier.
 
 ### The differences in CI
 

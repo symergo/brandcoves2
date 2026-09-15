@@ -34,18 +34,19 @@ in the header.
 Six, because the grid is three across and two rows is where it ends. A third row past the bottom of
 an article somebody has already finished is an index, and there is one of those a click away.
 
-**Four bands out of six kinds.** A buying guide, a seasonal guide and an advice article are one
+**Four bands out of seven kinds.** A buying guide, a seasonal guide and an advice article are one
 section to a reader — they share a URL space, an index and a name in the header — so `sectionOf()`
 folds them into `smart`. Splitting them would leave an advice article offering only the other advice
 articles, which on most markets is nothing. The band keys are `/coves`'s keys deliberately: the copy
 for a heading and for "all of these" already exists as `site.coves.{key}_heading` and
 `site.coves.{key}_all`, and a second set of names for the same sections would be more strings to keep
-in step across four languages.
+in step across four languages. A Brand Cove is read on its brand page, which does not carry this
+rail.
 
 **Brands and shops are not bands here.** `/coves` publishes those two as directories, and a page of
 writing that offered a grid of brand names would be navigation dressed as a recommendation.
 
-**Ordering has to name its column.** `drop_date` is null on five of the six kinds and Postgres sorts
+**Ordering has to name its column.** `drop_date` is null on every kind but the Daily and Postgres sorts
 `ORDER BY ... DESC` **NULLS FIRST**, so ordering every band by it would head each one with whichever
 dateless Cove the planner happened to write first. Editions sort by `drop_date`, everything else by
 `published_at` — the same trap `DailyPickSet::scopeDaily()` documents.

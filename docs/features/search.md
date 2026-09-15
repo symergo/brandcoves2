@@ -1,7 +1,7 @@
 ---
 name: Search & offer comparison
 area: Search
-status: Partial — schema, functions and indexes built and verified; the service and UI are Phase 2
+status: Active
 date_added: 2026-08-07
 ---
 
@@ -90,8 +90,8 @@ serves both operators, so this is a query-side fix, not an indexing one.
 
 `config('giftcoves.search.trigram_threshold')` is **0.45**: below Postgres' 0.6 word-similarity
 default so single misspelled words still match, but not so low that unrelated products leak in.
-Starting point only — it must be re-tuned against a real catalogue in Phase 2, because with two rows
-in the table false-positive testing is meaningless.
+Still the starting value: it was chosen with two rows in the table and has not been re-tuned against
+the real catalogue.
 
 **The threshold is a session setting, not a WHERE clause.** `AppServiceProvider` issues `SET
 pg_trgm.word_similarity_threshold` on every Postgres connection, because `<%` compares against that
@@ -173,13 +173,12 @@ search folds live offers in and moves `merchant_count`.
 ### What this cost elsewhere
 
 Lowering the session threshold to 0.45 widens **every** `<%` in the codebase, not just search's.
-`SpectrumRetriever::anchor()` re-checks against `trigram_threshold_strict` explicitly, having been
-written against Postgres' 0.6. It answers "what is near this?", where a loose match is a wrong
-neighbour rather than a forgiving typo. The `<%` still drives the index; the re-check only narrows
-what survives. `RelatedSearchQuery::for()` did the same until it was removed on 2026-09-05.
+Nothing re-checks against `trigram_threshold_strict` any more. Its readers (Discover's anchor
+lookup, and `RelatedSearchQuery::for()`, removed 2026-09-05) are gone, and the key in
+`config/giftcoves.php` is unread.
 
-The `word_similarity()` calls in `ORDER BY` — `orderByRelevance()`, `GuideBuilder`, `SlotsRetriever`,
-`KeywordRetriever` — are unaffected. The GUC sets the operator's cutoff, never the function's return
+The `word_similarity()` calls in `ORDER BY` — `SearchService::orderByRelevance()` and
+`LadderSelector` — are unaffected. The GUC sets the operator's cutoff, never the function's return
 value, so all ranking is untouched.
 
 `SearchTest::a_typo_below_the_postgres_default_threshold_still_finds_the_product` is the regression
@@ -188,11 +187,11 @@ title: it matches at 0.45, misses at 0.6, and is not a word any dictionary stems
 quietly cover for the trigram branch and pass it for the wrong reason. The older typo test scores
 0.818 and would pass either way.
 
-## Offer comparison (Phase 2)
+## Offer comparison
 
-The plan, not yet built:
+Built in Phase 2:
 
-- Merge the stored index (Awin, ingested hourly) with a live bol query, Redis-cached 15 min.
+- Merges the stored index (Awin, ingested hourly) with a live bol query, Redis-cached 15 min.
 - Live results are grouped into the stored graph **on the fly** — an incoming bol offer with a
   matching EAN joins an existing group and immediately becomes comparable.
 - Results render as **group cards**: *"from €X · 3 offers across 2 stores"*.
@@ -360,7 +359,6 @@ banded across the top on `bg-cream`, and the rows inside divided by a hairline r
 individually (inside a card that already has an edge, a border per row is three nested outlines in
 224px). The price took the weight and the title gave it up, because in a column of one shop's stock
 the price is the thing being compared. No new colours — all existing palette tokens.
-- Every query is logged to `search_log` — that table is the input to [buying-guides.md](buying-guides.md).
 
 ### What the live half is actually asked
 
@@ -390,21 +388,26 @@ median, how many were sold by more than one shop. Every clause was checkable and
 a description of the grid printed directly above the grid. On a phone it was most of a screen between
 the shopper and the first card.
 
-What is there now is one row of links: the words that recur across the titles on the page, each
-adding itself to the query — `?q=koptelefoon` plus `over-ear` becomes `?q=koptelefoon over-ear`.
+What is there now is one row of chips (buttons, not links, since 2026-09-05 — see
+[crawlers-and-the-search-log.md](crawlers-and-the-search-log.md)): the words that recur across the
+titles on the page, each adding itself to the query — `?q=koptelefoon` plus `over-ear` becomes
+`?q=koptelefoon over-ear`.
 
 - **Extracted, never generated.** `App\Services\Seo\ResultTerms` counts words in the titles the page
   actually holds. Asking a model for "related keywords" invents plausible words the page does not
   contain — keyword stuffing *and* a lie about the contents. The reasoning, and every exclusion rule,
-  is in [brand-pages.md](brand-pages.md#resultterms-extraction-not-generation).
+  is below, under [What the row excludes, and how a phrase is
+  built](#what-the-row-excludes-and-how-a-phrase-is-built).
 - **Added to the query, not swapped in for it.** *Changed 2026-08-11.* The link used to carry the
   bare word, so that `over-ear` reached the whole category. That was wrong about what the click
   means: somebody reading "over-ear" under a page of headphones is refining, not restarting, and a
   fresh search discards the word they typed. Because the next page's suggestions are read off the
   titles that survived, every one of them is a word the result set can still answer — the path
   narrows and cannot dead-end. Widening is what the search box is for.
-- **Empty on any `noindex` variant** — filtered, sorted, paginated. One block of internal links
-  repeated across dozens of near-identical URLs is the doorway-page pattern.
+- **Empty on thin variants** — filtered or paginated (`SearchController::isThin()`). Those were
+  `noindex` until 2026-09-12. They are indexable now and canonicalise to the bare term, and the row
+  stays off them because one block of internal links repeated across dozens of near-identical URLs
+  is the doorway-page pattern.
 
 The brand page carries the identical row, narrowing the brand page itself rather than leaving for a
 search, with the brand name passed as the query so it cannot list itself. It pays for the resulting
@@ -414,6 +417,48 @@ URL space in two ways a search page does not have to — see
 The long copy *below* the grid is untouched and still carries the page's facts. Below, not above:
 several hundred words between a shopper and the first product is a worse page for them, and Google
 has said for years that it is a worse page for it too.
+
+### What the row excludes, and how a phrase is built
+
+Excluded, each for its own reason:
+
+- **The query's own words**, or the brand on a brand page. Echoing "bluetooth" at someone who searched
+  for "bluetooth" is filler, and on a brand page it is a link back to the page you are on.
+- **Per-language stopwords.** Without them the list is "de, met, voor". *Reworked 2026-08-16* — the
+  list used to be chosen by the *market* (`STOPWORDS[$market->language()]`), while product titles are
+  whatever the feed wrote. A Belgian feed is full of "Wireless Bluetooth Headphones with Noise
+  Cancelling", so on `be-nl` the English function words were never filtered and "and", "with" and
+  "for" were among the most frequent words on the page. Every language's list now applies at once;
+  they are disjoint enough that unioning them costs nothing real.
+- **Anything under three characters, and pure numbers.** Model numbers and capacities are not
+  vocabulary; they are what makes a list look machine-made.
+- **Anything appearing in only one title.** A word in one of 24 listings does not characterise the
+  page — it is how a page of headphones ends up described with the word "keukenmachine".
+
+Each title contributes a word at most once, or twelve near-identical listings for one product make
+that product's model name the page's defining vocabulary.
+
+**A chip can be a phrase, not just a word.** *Reworked 2026-08-16*, because "noise" and "cancelling"
+as two chips is one idea chopped in half, and clicking either narrows the page by half a concept.
+Adjacent pairs are counted alongside single words, and a phrase **absorbs** its own words once it
+accounts for 60% of their occurrences. Three rules keep that from inventing language:
+
+- A stopword, a number or a short token **breaks the run**, so "Headphones with Case" never yields
+  "headphones case" — a phrase the page does not contain is exactly the invented vocabulary this
+  class exists to avoid.
+- **Phrases may not overlap.** "draadloze koptelefoon" and "koptelefoon model" share a word and are
+  one idea chained; the strongest wins and the rest is dropped.
+- **A brand is a stopword.** A title is overwhelmingly "Brand Attribute Noun", so without this the
+  strongest phrase on a page is routinely the brand plus whatever follows it — "Aurex draadloze",
+  which nobody would type. Brands already have their own filter and their own pages.
+
+One consequence worth knowing when reading the tests: the query's own words break a run too, so
+searching "koptelefoon" yields "draadloze" as a word while the *brand* page for the same products
+yields "draadloze koptelefoon" as a phrase. Both are right — the difference is which word is already
+on the page you are standing on.
+
+`extract()` no longer takes a `Market`. It took one only to pick the stopword list, and picking one
+was the bug.
 
 ### The results line says nothing when there is no term — 2026-09-04
 
@@ -440,7 +485,7 @@ the facets have already chosen, so they belong after it.
 schema's terms — `merchant_count > 1` is an artefact of how many feeds happen to carry a product, not
 a property of the product — and the answer is already on every card that has it. `comparable=1` still
 works as a query parameter and `SearchService` still honours it (`SearchTest` covers it), so existing
-links and the guide builder are unaffected; there is simply no longer a control that sets it.
+links are unaffected; there is simply no longer a control that sets it.
 
 ## A query in flight says so
 
@@ -511,8 +556,7 @@ search is not free.
   and Amazon, and the Amazon one cannot be cached. The public route had none, so an anonymous loop
   over `?q=<random>` could spend the PA-API quota and write a `search_log` row per term.
 - **`page` is capped at `SearchQuery::MAX_PAGE` (200).** `?page=500000` was a deep OFFSET over the
-  whole match set. Nothing a person scrolls to lives past two hundred pages, and crawlers are told
-  not to follow `page=` at all.
+  whole match set. Nothing a person scrolls to lives past two hundred pages.
 - **`SearchQuery::$discountedOnly` defaults to `false`.** It defaulted to `true`, which no caller
   wanted: the request parser reads the box explicitly and all seven internal callers overrode it
   with a comment saying the default was wrong. The eighth to forget would have silently searched
@@ -547,41 +591,6 @@ WHERE 'koptelefon' <% title;
 
 All three verified passing 2026-08-07 against a two-row fixture.
 
-## The vocabulary row above the results
-
-`ResultTerms` counts the words genuinely present in a page of titles and offers the most
-characteristic ones as chips that *narrow* the search rather than replacing it. Reworked
-2026-08-16, for two defects that both made the row read as machine output.
-
-**Common words survived, in the wrong language.** The stopword list was chosen by the *market* —
-`STOPWORDS[$market->language()]` — while product titles are whatever the feed wrote. A Belgian feed
-is full of "Wireless Bluetooth Headphones with Noise Cancelling", so on `be-nl` the English function
-words were never filtered and "and", "with" and "for" were among the most frequent words on the
-page. Every language's list now applies at once; they are disjoint enough that unioning them costs
-nothing real.
-
-**Every chip was a single word.** "noise" and "cancelling" as two chips is one idea chopped in half,
-and clicking either narrows the page by half a concept. Adjacent pairs are now counted alongside
-single words, and a phrase **absorbs** its own words once it accounts for 60% of their occurrences.
-Three rules keep that from inventing language:
-
-- A stopword, a number or a short token **breaks the run**, so "Headphones with Case" never yields
-  "headphones case" — a phrase the page does not contain is exactly the invented vocabulary this
-  class exists to avoid.
-- **Phrases may not overlap.** "draadloze koptelefoon" and "koptelefoon model" share a word and are
-  one idea chained; the strongest wins and the rest is dropped.
-- **A brand is a stopword.** A title is overwhelmingly "Brand Attribute Noun", so without this the
-  strongest phrase on a page is routinely the brand plus whatever follows it — "Aurex draadloze",
-  which nobody would type. Brands already have their own filter and their own pages.
-
-One consequence worth knowing when reading the tests: the query's own words break a run too, so
-searching "koptelefoon" yields "draadloze" as a word while the *brand* page for the same products
-yields "draadloze koptelefoon" as a phrase. Both are right — the difference is which word is already
-on the page you are standing on.
-
-`extract()` no longer takes a `Market`. It took one only to pick the stopword list, and picking one
-was the bug.
-
 ## The box follows the query (2026-09-06)
 
 Every visit made by `go()` keeps the page mounted (`preserveState`), so the search field, seeded
@@ -608,7 +617,8 @@ Below `lg` the rail — sort, view, shops, brands, price and the Amazon fallback
 disclosure that pushed every result down when opened. It is a full-screen sheet now, on the search
 and brand pages both, with "show results" one press away, so the grid stays where it was. The
 search-help link under the box came back on 2026-09-06 and went again on 2026-09-07 at the owner's
-request; the help stays in the footer and the phone sheet.
+request; the page is linked from the footer, the popular-searches page and the search landing's tool
+cards.
 
 ## Before a search there are no products (2026-09-13)
 

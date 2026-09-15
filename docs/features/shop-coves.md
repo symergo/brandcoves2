@@ -54,6 +54,8 @@ bol is briefly refusing would tell a visitor we do not carry it.
 
 ## `CoveKind::Shop`, the sixth kind
 
+(Brand, added later, is the seventh; see [cove-entities.md](cove-entities.md))
+
 A Shop Cove is an article. It is planned, curated, written and published like any other Cove, and it
 is a database row a person can open and rewrite.
 
@@ -114,6 +116,14 @@ What is left is what we can stand behind — what they sell, who they suit, and 
 shop's own page. We earn a commission on what people buy through us, which is exactly why a piece
 that finds nothing to qualify would not be worth publishing.
 
+## Shop names are trimmed for display
+
+`Merchant::displayName()` drops a trailing country code (`Coolblue BE` -> `Coolblue`), because the
+suffix is the affiliate network's per-country advertiser bookkeeping rather than the shop's name, and
+the market is already the visitor's own choice. `merchants.name` keeps the feed's spelling — it is
+what identifies the advertiser account when a feed is being debugged. The rule, and the surfaces it
+covers, are in [search.md](search.md#shop-names-lose-the-country-suffix).
+
 ## Files
 
 - `app/Http/Controllers/ShopsController.php` — the directory and the band above it
@@ -137,24 +147,18 @@ exactly what restoring it involves — nothing was deleted.
 
 ## Still outstanding
 
-- **No shop page of its own.** A shop card links into `/search?merchant[]=<id>`, which works — with
-  no term the stored query still runs — but a real `/shop/{slug}` mirroring `/brand/{slug}` would be
-  better, and needs a slug column `merchants` does not have.
-- **`feeds.merchant_id` is never populated.** Not needed here any more, but it is a dangling FK that
-  will mislead the next person who reaches for it.
+- **No product listing per shop.** A row on `/shops` links to the shop's Cove where one is written
+  and to `/search?merchant[]=<id>` where none is; the `/coves` fallback band always links to the
+  search. A `/shop/{slug}` listing mirroring `/brand/{slug}` would be better, and needs a slug column
+  `merchants` does not have.
+- **`feeds.merchant_id` is set only by hand**, in the admin feed form; nothing in ingestion or
+  `bc:awin-feeds` fills it. Not needed here any more, but it is an FK that will mislead the next
+  person who reaches for it.
 - **The planner does not queue Shop Coves.** They are seeded and then editable; there is no topic
   miner proposing "write about this shop" the way `TopicPlanner` does for guides.
 
 ## See also
 
 - [all-coves.md](all-coves.md) — the overview that lists these alongside every other kind
-- [navigation.md](navigation.md#brand-coves-and-shop-coves-2026-08-29) — the menu that leads here
+- [navigation.md](navigation.md#brand-coves-and-shop-coves-are-built-and-withheld-2026-08-29) — the menu that leads here
 - [cove-curation.md](cove-curation.md) — how a Cove is planned, curated and built
-
-## Shop names are trimmed for display
-
-`Merchant::displayName()` drops a trailing country code (`Coolblue BE` -> `Coolblue`), because the
-suffix is the affiliate network's per-country advertiser bookkeeping rather than the shop's name, and
-the market is already the visitor's own choice. `merchants.name` keeps the feed's spelling — it is
-what identifies the advertiser account when a feed is being debugged. The rule, and the surfaces it
-covers, are in [search.md](search.md#shop-names-lose-the-country-suffix).

@@ -47,9 +47,10 @@ use Illuminate\Support\Facades\DB;
  * cosmetic - it either strips emphasis an article meant or leaves asterisks on
  * a column's standfirst.
  *
- * The legacy `guides` and `guide_items` tables are deliberately not touched.
- * Nothing has read them since the fold (`2026_08_30_000100_a_guide_is_a_cove`),
- * and rewriting rows on their way to being dropped is work with no reader.
+ * The legacy `guides` and `guide_items` tables were dropped on 2026-09-06
+ * (`2026_09_06_000100_the_guides_tables_retire`), once the fold
+ * (`2026_08_30_000100_a_guide_is_a_cove`) left nothing reading them. There is
+ * nothing left to walk that this command does not already reach.
  */
 class TidyProseCommand extends Command
 {

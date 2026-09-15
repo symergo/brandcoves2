@@ -148,28 +148,10 @@ The rule is about the render path.
 ## What sharing does not do
 
 **It does not decide who may see the thing.** Visibility lives on the record; see
-[wishlists.md](wishlists.md) for the claim rules and invariant 4 — the owner of a list must never
-learn what has been claimed from it. `ShareMenu` takes a URL that the page has already decided is
-shareable, and a private list simply has no share URL to give it.
-
-## Files
-
-- `resources/js/Components/ShareMenu.tsx` — the native sheet, or the channels and their quirks
-- `resources/js/Components/ShareRow.tsx` — the link field, copy, share
-- `resources/js/Components/ShareIcon.tsx` — the destinations, drawn
-- `resources/js/Components/ListTools.tsx` — the sharing panel these sit inside; see
-  [wishlists.md](wishlists.md)
-- `resources/js/Pages/Lists/Show.tsx` — list, quiz and recipient links
-- `resources/js/Pages/Quiz/Play.tsx` — the score
-- `resources/js/Pages/Santa/Group.tsx` — the invite
-- `lang/*/site.php` — `lists.share_*`, `lists.copy_link`, `lists.copy_message`, `lists.copy_manual`,
-  `lists.copied`
-
-## See also
-
-- [social-cards.md](social-cards.md) — what the shared link renders as once it lands
-- [list-quiz.md](list-quiz.md) — the score being shared
-- [secret-santa.md](secret-santa.md) — the invite being shared
+[wishlists.md](wishlists.md) for the claim rules and invariant 4 — the owner of a wish list does not
+learn what has been claimed from it unless they ask to (`owner_sees_claims`). `ShareMenu` takes a URL
+that the page has already decided is shareable, and a private list simply has no share URL to give
+it.
 
 ## Revoking a link asks first (2026-09-06)
 
@@ -183,3 +165,22 @@ deleting the whole list and removing a Secret Santa member both confirmed. It co
 `ShareMenu` existed on the quiz alone. It is on the product page, the Daily Cove edition and every
 guide now, sharing the canonical URL rather than the address bar so a retitled page's link still
 resolves.
+
+## Files
+
+- `resources/js/Components/ShareMenu.tsx` — the native sheet, or the channels and their quirks
+- `resources/js/Components/ShareRow.tsx` — the link field, copy, share
+- `resources/js/Components/ShareIcon.tsx` — the destinations, drawn
+- `resources/js/Components/ListTools.tsx` — the sharing panel, with the list, quiz and recipient
+  links; see [list-surfaces.md](list-surfaces.md#the-sharing-panel-redrawn-to-match-settings-2026-09-12)
+- `resources/js/Pages/Quiz/Play.tsx` — the score
+- `resources/js/Pages/Santa/Group.tsx` — the invite
+- `resources/js/Pages/Product.tsx`, `Daily/Edition.tsx`, `Guides/Show.tsx`
+- `lang/*/site.php` — `lists.share_*`, `lists.copy_link`, `lists.copy_message`, `lists.copy_manual`,
+  `lists.copied`
+
+## See also
+
+- [social-cards.md](social-cards.md) — what the shared link renders as once it lands
+- [list-quiz.md](list-quiz.md) — the score being shared
+- [secret-santa.md](secret-santa.md) — the invite being shared

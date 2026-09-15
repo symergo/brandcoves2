@@ -7,7 +7,7 @@ date_added: 2026-09-01
 
 # "Your mother's birthday is in two weeks."
 
-Three things in this product carry a date, and all three were written, validated
+Four things in this product carry a date. The first three were written, validated
 and scrubbed long before anything read them:
 
 | where | column | reminded since |
@@ -15,6 +15,7 @@ and scrubbed long before anything read them:
 | a person you shop for | `recipients.birthday` | the job's first version |
 | a Secret Friend exchange | `secret_santa_groups.exchange_date` | the job's first version |
 | the occasion on a list | `wishlists.event_date` | **2026-09-01** |
+| a friend | `users.birthday` if they publish it, else `friendships.friend_birthday_day`/`_month` | not recorded — fixed windows: 14, 5 and 0 days |
 
 The third is the one an owner types into the Gelegenheid panel. It was rendered
 on the shared page, sat in the sitemap of nothing, and did not cause a single
@@ -40,6 +41,20 @@ actionable. Thirty days is "there is time to find something good", fifteen is
 administrator types; the job filters again on read, because config is also
 reachable from `.env`, a test and anything calling `config()->set()` — and a `0`
 there would remind everybody about today, every day, forever.
+
+## A friend's birthday runs on its own windows
+
+`FRIEND_BIRTHDAY_LEADS = [14, 5, 0]`, a constant rather than the setting: two weeks to think, five
+days to order and have it arrive, and the morning itself, which the setting cannot hold because
+`leadDays()` filters 0 out. Their published date wins over your note, the order
+[friends.md](friends.md#two-birthdays-and-they-are-not-the-same-fact) sets.
+
+## A Secret Friend exchange reminds each member, not the organiser
+
+Every joined member with an account who has not pressed done is reminded, linked to their own page.
+The organiser is never sent a list of who is lagging: naming who has not bought yet would tell them
+something about everyone else's gift, which the group page carefully avoids. Members without an
+account are skipped; `notifications.user_id` is NOT NULL.
 
 ## Fire once per occurrence
 

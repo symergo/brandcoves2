@@ -40,12 +40,6 @@ Same discipline as `list_opens`, which this sits beside. Access to a list is its
 `friendships` to work out whether somebody may look at anything, and a friendship left behind after
 sharing is turned off grants nothing at all.
 
-This matters most for `show_to_friends`, which people will read as "stop these people seeing my
-list". It does not do that. It stops the friend page *listing* it; the link anybody already holds
-still works, because revoking a link is what turning sharing off is for, and this must not quietly
-become a second, weaker version of it.
-`one_list_can_be_kept_off_the_friends_page_without_unsharing_it` holds both halves.
-
 ## Two controls, and only one of them is a permission
 
 | control | scope | question | a permission? |
@@ -122,7 +116,7 @@ same message.
 
 Each friend row shows what they share with you *and* what they can see of yours. The second is the
 half nobody thinks to check — "what does Anna actually see of mine" — and it is the same question the
-switches answer, asked where the consequence is concrete: a name, and titles under it.
+share picker answers, asked where the consequence is concrete: a name, and titles under it.
 
 Each row is collapsed to one line — name, birthday, and two counts — and opens on a click. A friend
 list is a list of *people*: the thing you scan is names, and everything under a name is what you want
@@ -135,32 +129,7 @@ with, and who opened it — fetched once and indexed by list, rather than a quer
 
 **Your own lists there link to your own page**, not to the share token. Following one should land you
 where you can edit it; the visitor view deliberately carries none of the owner's controls, so sending
-an owner there makes their own list look read-only. Stating it once at the top instead ("these are shown to everyone")
-leaves people to work out the consequence themselves, which is how a setting ends up misunderstood.
-It is also the shape that stays correct if this ever does become per-person.
-
-**The account-wide switch is the master.** Off there means off for everything, whatever an individual
-list says — two switches where the specific one could override the general one would mean somebody
-who turned the feature off could still be surprised by a list, which is the one thing a master switch
-has to prevent. `the_account_switch_is_the_master` holds it.
-
-### One control, and the bug that proved it
-
-`show_to_friends` was briefly editable in two places: each list's own settings panel, and a row per
-list on the friends page. The two promptly disagreed, and it was found in the browser rather than by
-a test.
-
-The column is nullable, so the panel has to render the **effective** answer — `Wishlist::showsToFriends()`
-— and it was sending the raw column instead. An untouched wish list, which friends could already see,
-therefore drew an **unchecked** box while the friends page drew a ticked one. Two failures at once:
-the panel stated the opposite of the truth, and the click meant to turn the switch on turned it off,
-because the box had started in the wrong place. Three lists in the development database were switched
-off that way by somebody trying to switch them on.
-
-The friends-page copy is gone and the panel is the only control.
-`the_list_settings_draw_the_switch_the_way_the_list_actually_behaves` pins the payload. The general
-lesson is the ordinary one: a nullable setting whose default lives in code has exactly one correct
-thing to put on the wire, and it is never the column.
+an owner there makes their own list look read-only.
 
 ## Not claim state
 
@@ -285,7 +254,7 @@ random pair of test users pretending to know each other — and nulls `users.bir
 | Applied at sign-in | [`App\Listeners\LinkSharerAsFriend`](../../app/Listeners/LinkSharerAsFriend.php) |
 | The page | [`FriendController`](../../app/Http/Controllers/FriendController.php), `resources/js/Pages/Friends/Index.tsx` |
 | Where a friendship is made | [`SharedListController::show()`](../../app/Http/Controllers/SharedListController.php) |
-| The per-list switch | `wishlists.show_to_friends`, edited via `WishlistController::update()` |
+| Sharing with a named friend | `wishlist_shares`, written by `App\Services\Social\ListSharer` via `WishlistController::shareWithFriends()` / `unshareFromFriend()` |
 | Tests | [`FriendsTest`](../../tests/Feature/FriendsTest.php) |
 
 ## Related

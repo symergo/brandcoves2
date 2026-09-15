@@ -1,7 +1,7 @@
 ---
 name: The rename to GiftCoves
 area: Core
-status: Code done; infrastructure and third-party accounts outstanding
+status: Done on the site, verified 2026-09-05; third-party re-registrations not recorded as done
 date_added: 2026-08-15
 ---
 
@@ -39,6 +39,7 @@ One domain with the better name costs one migration. Two domains cost all three 
 | Config namespace | `config/brandcoves.php` → `config/giftcoves.php`, and every `config('brandcoves.*')` call |
 | Assets | `public/icons/giftcoves.svg`, `giftcoves-512.png`, and the `bc_logo/files/` sources |
 | bol click tracker | `BolConnector` sends `name=giftcoves-{market}`, so the affiliate report is labelled with the site that earned it. Reporting continuity breaks at the rename — that is the point of it |
+| Coolify application names | `GiftCoves-staging`, `GiftCoves-prod`. Renaming was expected to invalidate the deploy webhooks; staging kept deploying, and production deploys by API since 2026-08-31, so it no longer matters ([../deployment.md](../deployment.md)) |
 
 ## What deliberately did not change
 
@@ -48,10 +49,9 @@ real risk for nothing.
 | | Why not |
 |---|---|
 | `bc_search_vector()`, `bc_text_config()` | `bc_search_vector()` backs a **stored generated column** on `products`. Postgres cannot alter a generated column's expression, so renaming the function means dropping and re-adding the column — a full table rewrite of the entire catalogue's search index, to change a name nobody reads. See the search notes in CLAUDE.md |
-| `php artisan bc:*` | Fifteen commands, the scheduler and every runbook reference them. Operator-facing only |
+| `php artisan bc:*` | Two dozen commands, the scheduler and every runbook reference them. Operator-facing only |
 | The `bc_visitor` cookie | Renaming it orphans every anonymous identity a second time, on top of the loss the domain move already causes. Same class of permanent decision as `CLAIM_HASH_SECRET` |
 | Database name, user, password | A production database rename for a cosmetic gain. `docker-compose.yml` and `phpunit.xml` keep `brandcoves` |
-| Coolify application names (`brandcoves2-*`) | Renaming an application invalidates every deploy webhook already issued against it |
 
 ## Anonymous lists do not survive the move
 
@@ -88,8 +88,11 @@ handler at all.
 
 ```
 CANONICAL_HOST=giftcoves.com
-LEGACY_HOSTS=brandcoves.com,www.brandcoves.com
+LEGACY_HOSTS=brandcoves.com,www.brandcoves.com,www.giftcoves.com
 ```
+
+`www.giftcoves.com` is in the list so there is one address; `giftcoves.com` must never be, because
+the canonical host redirecting to itself is a loop.
 
 Three properties hold it together:
 
@@ -107,19 +110,11 @@ as `ERR_TOO_MANY_REDIRECTS`.
 
 ## The Coolify side
 
-**Staging is done and verified; production has domains only.** Both applications keep their
-`brandcoves2-*` names.
-
-| | `brandcoves2-staging` | `brandcoves2-prod` |
-|---|---|---|
-| Domains | ✅ both hosts | ✅ both hosts |
-| Env vars | ✅ set | ❌ **not set** |
-| Renamed code deployed | ✅ `0851fad` | ❌ `main` is pre-rename |
-
-**Production env vars are deliberately not set.** `main` still carries the old build, and `APP_NAME`
-renames the session cookie (`config/session.php` derives it) — setting it against the old image logs
-everyone out of a site that still says Brandcoves everywhere. Those variables belong in the same
-deploy as the code.
+**Done on both applications, verified 2026-09-05:** `www.giftcoves.com` and `brandcoves.com` 301 to
+`giftcoves.com`, the canonical tag names `giftcoves.com`, and both hosts issue a
+`giftcoves-session` cookie, so `APP_NAME` is `GiftCoves` everywhere. The applications are
+`GiftCoves-staging` and `GiftCoves-prod`. The steps below are the record of how it was done;
+production no longer auto-deploys, so step 4 is now an API trigger ([../deployment.md](../deployment.md)).
 
 Two Coolify API shapes, because neither is guessable and both cost a round of failed writes:
 
@@ -155,7 +150,7 @@ Order matters — DNS first, then domains, then env, and the env vars must move 
    APP_URL=https://giftcoves.com # https://staging.giftcoves.com on staging
    MAIL_FROM_ADDRESS=hello@giftcoves.com
    CANONICAL_HOST=giftcoves.com
-   LEGACY_HOSTS=brandcoves.com,www.brandcoves.com
+   LEGACY_HOSTS=brandcoves.com,www.brandcoves.com,www.giftcoves.com
    ```
 
    `APP_NAME` must be ticked **Build Variable** as well as set at runtime. `VITE_APP_NAME` is
@@ -194,12 +189,10 @@ approval, and the first three can cost the affiliate income the site runs on.
 - **The positioning copy still describes the old shape.** `resources/legal/{en,nl}/about.md` opens
   with *"GiftCoves is a brand and product discovery site"*, which is accurate and no longer the point
   of the name. Rewriting it is editorial work with legal weight — the "we are not a shop"
-  characterisation is load-bearing in the imprint — so it was left rather than quietly reworded. Note
-  that a rewrite of shipped copy needs `bc:seed-copy --replace`, or the seeded slot shadows the
-  language file and the rewrite is invisible.
-- **The interest-cove `GuideKind`** that motivated the rename is not built. See
-  [discovery-modes.md](discovery-modes.md) — *"a ghost-shop persona would be another pool feeding the
-  same retriever"*.
+  characterisation is load-bearing in the imprint — so it was left rather than quietly reworded.
+- **The interest cove that motivated the rename** was never built as a `GuideKind`. The retriever it
+  would have fed went with discovery modes on 2026-09-07 ([discovery-modes.md](discovery-modes.md));
+  the "who is it for" shelf shipped as [gift personas](gift-personas.md).
 
 ## Verification
 
@@ -215,6 +208,6 @@ curl -s  https://giftcoves.com/sitemap.xml | head         # market sitemaps on t
 
 - `app/Http/Middleware/RedirectLegacyHost.php`
 - `config/giftcoves.php` — `canonical_host`, `legacy_hosts`
-- `bootstrap/app.php` — global, prepended
+- `bootstrap/app.php` — global, appended (after TrustProxies)
 - `tests/Feature/LegacyHostRedirectTest.php`
-- `docs/deployment.md` — the Coolify table, still pre-rename
+- `docs/deployment.md` — the Coolify applications and how production is deployed

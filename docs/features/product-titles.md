@@ -9,11 +9,11 @@ date_added: 2026-09-05
 
 The string on 302,133 pages that nobody here wrote.
 
-`product_groups.title` is copied by `ProductGrouper::recomputeAggregates()` from whichever
-offer is cheapest and in stock. So the most important string on the most-crawled template on
-the site is chosen by whichever merchant undercut the others this morning, and it arrives
-carrying that merchant's feed conventions wholesale. It is the `<title>`, the `<h1>` and the
-schema.org `name`.
+`product_groups.title` is copied by `ProductGrouper::recomputeAggregates()` from one of the
+group's offers. Until 2026-09-05 that was whichever was cheapest and in stock, so the most
+important string on the most-crawled template was chosen by whichever merchant undercut the
+others that morning, carrying that merchant's feed conventions wholesale. It is the `<title>`,
+the `<h1>` and the schema.org `name`.
 
 Measured on production, 2026-09-05:
 
@@ -70,7 +70,9 @@ Presentation only. **Nothing here writes to the database**, because the stored t
 the input to search indexing, to `ProductDescription` matching and to the slug — all of which
 want the merchant's own words.
 
-Two methods, and the difference between them is the point:
+Three methods. `card()` is the title de-shouted and nothing else, for cards that print the brand
+beside it; `ProductGroup::displayTitle()` falls back to it. The other two, and the difference
+between them is the point:
 
 - **`heading()`** — de-shouted, carrying its brand, **untrimmed**. An `<h1>` has the width of
   the page; only a listing pays for length. This is what the page renders, what
@@ -78,6 +80,9 @@ Two methods, and the difference between them is the point:
   says), and what the breadcrumb carries.
 - **`listing()`** — the heading cut to fit, with `— at :count shops` when there is more than
   one. This is the `<title>` and the `og:title`.
+
+Since 2026-09-14 a hand-written `display_title` beats all three wherever it exists; see
+[display-titles.md](display-titles.md).
 
 #### De-shouting
 

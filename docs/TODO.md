@@ -34,22 +34,11 @@ which is the whole of the `invalid_client` above — the credentials were never 
 That endpoint now exists: `/webhooks/ebay/account-deletion`, tested, verified end to end against
 the local dev server ([ebay-account-deletion.md](features/ebay-account-deletion.md)).
 
-**So the remaining work is a sequence, and the order matters** — eBay validates the endpoint the
-moment it is saved in the portal, so the route has to be live first or the challenge hits a 404 and
-the application stays non compliant:
-
-1. **Deploy** to the host being registered. Until then the endpoint does not exist in the running
-   build.
-2. Set `EBAY_DELETION_VERIFICATION_TOKEN` and `EBAY_DELETION_ENDPOINT` on that Coolify app. The
-   endpoint must be the exact URL to be registered — it is an input to the challenge hash, so www
-   and non-www are different answers.
-3. Self-test with the `curl` in the feature doc **before** touching the portal, so a failure there
-   means eBay rather than us.
-4. Register endpoint + token in the portal (Alerts and Notifications → Marketplace Account
-   Deletion). The "non compliant" label should clear.
-5. Re-run `bc:check-ebay`. If it still answers `invalid_client`, then and only then is it worth
-   suspecting the keyset itself — an unaccepted API License Agreement, or a Cert ID regenerated
-   after being copied.
+**Remaining work:** the setup in
+[ebay-account-deletion.md](features/ebay-account-deletion.md#setting-it-up) — deploy before
+registering. If `bc:check-ebay` still answers `invalid_client` after the portal clears "non
+compliant", only then suspect the keyset itself (an unaccepted API License Agreement, or a Cert ID
+regenerated after being copied).
 
 Meanwhile nothing is broken: `supports()` requires the pair, so eBay is simply absent from search,
 and the connector's own 17 tests pass ([ebay-connector.md](features/ebay-connector.md)).
@@ -98,46 +87,9 @@ php artisan bc:check-tradedoubler --market=nl-nl
 → HTTP 403  {"message":"Invalid token, Request not Authorised","statuscode":"4001"}
 ```
 
-**What to provide, and the question behind it:** the connector is built against the **Open Product
-API**, which takes a single `token` from the publisher interface (Publisher → Product feeds) as a
-query parameter. The value supplied was labelled `client_secret`, and Tradedoubler issues client
-id/secret *pairs* for its OAuth APIs — a different product with a token exchange this connector does
-not perform. So either:
-
-- the Open Product API token, and this works as written; or
-- the **client_id** that goes with that secret, in which case the connector needs an
-  `accessToken()` method beside `request()`, exactly as bol and eBay have. Contained change, roughly
-  an hour.
-
-**Then run**
-
-```bash
-php artisan bc:check-tradedoubler --market=nl-nl --raw
-```
-
-**What a pass looks like** — and this one is not just "no error":
-
-| Line | What it must say | Why |
-|---|---|---|
-| `Envelope keys` | includes `products` | A wrong key parses zero offers out of a perfectly good response |
-| `Distinct shops` | 2 or more of N offers | One shop means `programName` is not being read, and the comparison this source exists for is not happening |
-| `Offers with a barcode` | most of them | Without an EAN these offers cannot join a product group, so each is a lone card rather than a price beside bol's |
-| `Tracked link` | `yes` on every row | |
-
-**Why `--raw` matters more here than anywhere else:** this is the only connector in the codebase
-whose field mapping has **never met a live response** — the 403 meant one could not be read. Its
-field names come from Tradedoubler's documented shape and nothing more, and a wrong field name in a
-connector fails *silently*: an empty list is indistinguishable from "the network has nothing for
-this query". That is how the Awin barcode-column bug survived for weeks. `--raw` prints the real
-envelope, one real product and one real offer field by field, so the mapping can be checked against
-the thing itself rather than inferred from an empty result.
-
-**Also worth a look once it answers:** market scoping is `language=nl` and friends, which is an
-opening bid rather than an answer. Tradedoubler spans every European market at once and *ignores* a
-filter parameter it does not recognise, so a wrong scope shows Belgian visitors German offers with
-nothing anywhere reporting a problem. Program-id scoping is the real fix once you know which
-advertisers you are joined to — the same shape as `connectors.awin.advertisers`. The currency guard
-(non-euro offers dropped, never converted) is what holds meanwhile.
+**Why `--raw`, and what to check after it answers** (market scoping, the currency guard):
+[tradedoubler-connector.md](features/tradedoubler-connector.md). Its field mapping has never met a
+live response.
 
 ---
 
@@ -179,15 +131,11 @@ fix. Any new horizontal scroll is that bug again somewhere else.
 
 - **`BolConnector` and `EbayConnector` retry a 4xx.** `TradedoublerConnector` does not any more: a
   rejected credential answers in milliseconds and an unconditional retry asks a second time for the
-  same refusal on every search. The other two are working and verified, so they were left alone
-  deliberately rather than changed in passing — but the same guard belongs in both, and it is a
-  small, testable change.
-- **eBay notification signatures are not verified.** Each account-deletion POST carries an
-  `x-ebay-signature` header, checkable against a public key from eBay's Notification API — which
-  needs an application access token, which a non-compliant keyset will not issue. Circular, so it is
-  deferred until tokens mint, at which point it can be written against a real signed payload rather
-  than a guess. It buys little meanwhile: the handler takes no action, so a forged notification
-  achieves nothing beyond a log line carrying no personal data.
+  same refusal on every search. bol is working and verified; eBay has never authenticated (see
+  above), so both were left alone deliberately rather than changed in passing — but the same guard
+  belongs in both, and it is a small, testable change.
+- **eBay notification signatures are not verified.** Deferred until tokens mint; see
+  [ebay-account-deletion.md](features/ebay-account-deletion.md#signature-verification-is-deferred-and-the-reason-is-circular).
 - **Drop `list_invitations`, and `guide_topics.last_attempt_at` / `attempts`, in the release after
   2026-09-14's.** The code behind both went that day: the invitation redemption path (production's
   table held no rows) and the "recently attempted" topic rule (nothing had written an attempt since
@@ -198,6 +146,9 @@ fix. Any new horizontal scroll is that bug again somewhere else.
   columns. Take `last_attempt_at` and `attempts` out of `ContentEnvelope`'s `topics` exclusion list
   in the same change. That is the contract half of expand/contract; delete this entry when it ships.
   See [list-taxonomy.md](features/list-taxonomy.md) and `App\Models\GuideTopic`.
-- **`fetchById()` has no callers.** All three live connectors implement it because `LiveConnector`
-  requires it, and no re-check job exists for any source. It is where a wishlist item would get a
-  fresh price — and, for eBay, the only place a barcode can come from.
+- **The wishlist refresh passes a bolProductId to bol.** `RefreshWishlistedProducts` calls
+  `fetchById($product->external_id)`, bol's product endpoint takes an EAN only, and
+  `BolConnector::fetchById()` returns null for anything else — so no bol offer is ever refreshed
+  there. Pass `products.ean` to `fetchByEan()`. See [page-import.md](features/page-import.md).
+- **Drop `copy_templates`.** Unread since page templates replaced the copy bank; see
+  [page-templates.md](features/page-templates.md).

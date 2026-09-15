@@ -120,8 +120,9 @@ the enum**, so retiring an interest quietly removes it from old questions rather
 
 ## Where it is reachable from
 
-Under **Discover**, in three places: the header menu, a card on `/discover-cove`, and a card in the
-front page's Discover band. It is the only entry in any of them whose content comes from other
+Under **Discover**, in two places: the header menu and a card on `/discover-cove`. The front page's
+Discover band also carried it until that band was removed on 2026-09-13 (see
+[homepage.md](homepage.md)). It is the only entry in any of them whose content comes from other
 visitors rather than from us, which is the argument for putting it there — Daily, Surprise and the
 Coves are all this site showing you something it chose, and Ask is the one where the answer comes
 from a person.
@@ -163,11 +164,9 @@ thin page made of one stranger's sentence; it becomes indexable the moment it is
 The slug is decoration and the id is identity, exactly as on a product page — `/ask/{id}/{slug}`,
 with a stale slug redirecting rather than 404ing, so retitling never strands a shared link.
 
-**Not in the sitemap yet.** `SitemapController` does not know about `/ask`, so questions are
-discoverable through the site and through links but are not submitted. That is the obvious next
-step and it is deliberately not done here: a sitemap of user-generated pages wants a floor on
-quality (answered, and not recently rejected) rather than "every published row", and that is a
-decision worth taking on its own.
+**In the sitemap, answered questions only.** `SitemapController` lists the board (`/ask`) and up to
+2,000 published questions that have at least one published answer. That is the same floor as the
+`noindex` rule above: a sitemap naming a noindex page asks for a crawl it then refuses.
 
 ## Files
 

@@ -1,7 +1,7 @@
 ---
 name: Amazon Associates compliance
 area: Core / Legal
-status: Active — enforced in code, Amazon itself deferred to Phase 8
+status: Active — enforced in code; no Amazon API connector; tagged Amazon search links live in nl-nl and both be-*; page import stores ASIN decisions since 2026-09-14
 date_added: 2026-08-07
 ---
 
@@ -48,8 +48,10 @@ record — a price chart, a "cheapest it has ever been" claim, a price-drop aler
 | Amazon | **yes** | **no** |
 
 `Source::allowsPriceStorage()` is true everywhere. `allowsPriceTracking()` is
-false for Amazon and gates the sparkline, the "typical price" claim, discount
-badges derived from history, and alerts.
+false for Amazon and gates the discount badge (`ProductGrouper` takes a
+group's `previous_price` from trackable sources only) and price-drop alerts.
+The sparkline and the "typical price" claim it once also gated are gone: the
+chart left the product page, and `price_history` was dropped on 2026-09-12.
 
 This also means internal uses of stored Amazon prices remain available —
 detecting that a feed moved, or spotting a merchant with a permanently inflated
@@ -74,7 +76,7 @@ read this will be deciding whether to go further.
 | Price, availability | not stored | **still not stored** |
 | Anything in `products` / search / email | never | **still never** |
 
-`Source::allowsCatalogueStorage()` is still `false` and the eight call sites
+`Source::allowsCatalogueStorage()` is still `false` and the nine call sites
 gated on it are untouched, so none of this reaches search, offer comparison, a
 chart, a wishlist or an email. `AmazonComplianceTest::the_capability_matrix_is_what_the_policy_says`
 asserts that gate directly rather than trusting it.
@@ -85,10 +87,9 @@ read by the scraper, not accepted by the validator, and has no column — three
 refusals rather than one. Adding one is a decision about this document, not a
 schema change.
 
-**The barcode is what this buys.** `amazon_products.identity_key` was described
-as "the bridge" to a product group when the table was created and nothing could
-ever fill it, because Amazon publishes no barcodes through any interface this
-site had. A product page prints one, on a minority of listings.
+**The barcode is what this buys:** a way to fill `amazon_products.identity_key`,
+the bridge to a product group. How often a page prints one, and what uses it,
+is in [page-import.md](page-import.md#the-barcode-is-the-point).
 
 ## The other restrictions that shape the product
 
@@ -111,8 +112,8 @@ email attached, so it collides with both.
 | **Search & offer comparison** | ✅ live only | ✅ | `allowsCatalogueStorage()`, in `SearchService::pullLiveResults()` — Amazon offers are never upserted into `products` |
 | **Cheapest-offer comparison** | ✅ at render | ✅ | Amazon prices come from a live fetch, never a stored aggregate |
 | **Price recording** | ✅ stored | ✅ | `allowsPriceStorage()` — true everywhere; storage is not the restricted act |
-| **Price history / sparkline** | ❌ not shown | ✅ | `allowsPriceTracking()` — filtered on read, so Amazon prices exist but never appear in the chart |
-| **"Typical price" / discount badge** | ❌ not shown | ✅ | Derived from history, so excluded by the same read-side gate |
+| **Price history / sparkline** | n/a | n/a | Gone: the chart was removed and `price_history` dropped on 2026-09-12 — see [ingestion.md](ingestion.md#three-prices-instead-of-a-history-2026-09-12) |
+| **"Previously €X" / discount badge** | ❌ not shown | ✅ | `ProductGrouper::recomputeAggregates()` takes `previous_price` from trackable sources only |
 | **Price-drop alerts** | ❌ | ✅ | `allowsPriceAlerts()` — the alert button is not offered |
 | **Back-in-stock alerts** | ❌ | ✅ | Same. Availability is pricing data under the 24-hour rule |
 | **Wishlists** | ⚠️ decision only | ✅ | Store the ASIN; re-fetch title, price and image at render |
@@ -203,30 +204,33 @@ cheaper to honour now than to retrofit:
 - **Email must be source-aware.** Every mail we send has to filter its contents
   by `allowsEmail()`. Building the alert system Amazon-blind and adding a filter
   later means auditing every template.
-- **Price history must be source-aware at write time.** Excluding Amazon rows
-  when the sparkline is *read* is not enough — the retention breach is the
-  storage, not the display.
+- **Discount references must be source-aware.** An offer carries its own
+  `previous_price`, and `ProductGrouper` reads it from trackable sources only,
+  so an Amazon price can never become the "previously" figure on a badge.
 
 ## Required disclosures
 
 - **Affiliate disclosure** on every page carrying affiliate links. Present in
   the footer and beneath the offer table.
-- **Amazon-specific wording** is mandated and differs per marketplace — the
+- **Amazon-specific wording** is mandated and differs per marketplace; the
   English form is "As an Amazon Associate I earn from qualifying purchases."
-  Must be added when Amazon is enabled, in each market's language.
+  It is on the terms page in Dutch and English (`resources/legal/{nl,en}/terms.md`).
+  **French is missing, and `be-fr` already carries tagged Amazon links**
+  ([amazon-search-cta.md](amazon-search-cta.md)).
 - **Price timestamp and disclaimer** next to any Amazon price
   (`requiresPriceTimestamp()`), stating the price may have changed.
 
 ## What changed in the code because of this audit
 
-1. `Source` gained `allowsPriceHistory()`, `allowsPriceAlerts()`,
-   `allowsEmail()`, `requiresPriceTimestamp()` and `maxPriceAgeSeconds()`
-   alongside the existing `allowsCatalogueStorage()`.
+1. `Source` gained `allowsPriceStorage()`, `allowsPriceTracking()`,
+   `allowsPriceAlerts()`, `allowsEmail()`, `requiresDirectLink()`,
+   `requiresPriceTimestamp()` and `maxPriceAgeSeconds()` alongside the
+   existing `allowsCatalogueStorage()`.
 2. `ProductGrouper` takes a group's previous price from trackable sources only, so an Amazon price never becomes a discount reference.
 3. Alert buttons are only offered where `allowsPriceAlerts()`.
 4. Mailables filter their contents through `allowsEmail()`.
-5. Tests assert each of the above, so an Amazon offer cannot acquire a price
-   history or an alert by accident.
+5. Tests assert each of the above, so an Amazon offer cannot drive a discount
+   badge or an alert by accident.
 
 ## Email: the link is not the only restriction
 
@@ -292,7 +296,7 @@ encodes:
 | | Where it lives | Why |
 |---|---|---|
 | **The decision** — ASIN, giftability, surprise score, category | `amazon_products`, **one row, no market column** | A property of the product, not the storefront. Ours, and expensive to derive. |
-| **What a shopper reads** — price, description, image, availability | Nowhere. Fetched live per locale at render | Mirroring is not permitted, and these genuinely differ per storefront. |
+| **What a shopper reads** — price, availability | Nowhere. Fetched live per locale at render | Mirroring is not permitted, and these genuinely differ per storefront. Description and image URL are the exception above: stored by the page import since 2026-09-14, read by nothing yet |
 
 **Classification runs once per ASIN.** Doing it per locale would spend five
 times the compute to produce five answers that ought to be identical — and

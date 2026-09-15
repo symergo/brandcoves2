@@ -23,7 +23,7 @@ this much since you last told me", one mail per person.
 - **`wishlists.price_watch_percent`**, nullable. Null is off. The allowed values are
   `ListPriceWatch::PERCENTAGES` (5, 10, 15, 20, 30): a short list rather than a free number, because
   1% is noise on a €30 item and the server is the only place that can refuse it. Set from the list's
-  options panel (`ListTools.tsx`), through the same `PATCH /lists/{id}` every other switch uses.
+  Settings panel (`ListTools.tsx`), through the same `PATCH /lists/{id}` every other switch uses.
 - **`wishlist_items.watch_reference_price`** (cents) and **`watch_seeded_at`**. The reference is
   what a drop is measured against. It is taken when the switch goes on, when an item is saved onto a
   list that is already watching (`ItemSaver::saveGroup()`), and, defensively, by the job for

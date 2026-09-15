@@ -20,9 +20,9 @@ use Throwable;
  *
  * ## The grid, and why it is a grid
  *
- * Five stages × six kinds × five markets is 150 switches, which is a list
+ * Five stages × seven kinds × five markets is 175 switches, which is a list
  * nobody can read. It is stored and edited as a **grid per market** — kinds
- * down, stages across — so the thirty cells of one market fit on a screen and
+ * down, stages across — so the thirty-five cells of one market fit on a screen and
  * the shape of the domain shows in the shape of the grid: the disabled cells
  * are exactly where a kind has no automatic source.
  *
@@ -60,10 +60,10 @@ class AutomationSettingsStore
      * The stages, in the order they run.
      *
      * `write` is a three-way rather than a switch, because the question is not
-     * whether prose happens but **who writes it** — and that answer settles a
-     * race the `writer` field was already needed for: the batch write stage
-     * picks only `builder` plans and `GET /coves/queue` hands out only
-     * `authored` ones, so the two can never target the same plan.
+     * whether prose happens but **who writes it**. The batch write stage picks
+     * only `builder` plans; `GET /coves/queue` does not filter on `writer`, so an
+     * external agent and the builder can still target the same unwritten
+     * `builder` plan.
      */
     public const STAGES = ['plan', 'curate', 'write', 'approve', 'build'];
 
@@ -74,9 +74,10 @@ class AutomationSettingsStore
      * Is this stage meaningful for this kind at all?
      *
      * A disabled cell is not a missing feature; it is the domain saying so.
-     * `PlanDrafter` refuses to draft advice, shop and brand — nothing in the
-     * catalogue or the search log proposes an opinion about how to shop — and a
-     * kind with no products has nothing to curate.
+     * `PlanDrafter` refuses to draft advice and shop — nothing in the catalogue
+     * or the search log proposes an opinion about how to shop — and a kind with
+     * no products has nothing to curate. (Brand should be refused here too, but
+     * `PlanDrafter` has no arm for it yet — see cove-entities.md.)
      */
     public static function applies(string $stage, CoveKind $kind): bool
     {

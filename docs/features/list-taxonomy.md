@@ -17,10 +17,10 @@ what.
 | Shared Lists | what has someone shown me? | somebody else's |
 | Group Lists | what are we choosing together? | jointly acted on, for a third person |
 
-> **My Lists became the superset on 2026-08-29.** It used to mean *lists I own, of two of the three
-> kinds* — so a group list I started and a list somebody invited me to were both absent from the page
-> named after finding a list, each reachable only from a nav entry you had to already know about. See
-> [One page with everything on it](#one-page-with-everything-on-it) below.
+> **Since 2026-09-13 the three views split by whom the lists are for:** My wish lists (my own `mine`
+> lists only), For others (my `for_someone` lists plus the wish and gift lists shared with me), Group
+> lists. The superset described below is history; see
+> [list-surfaces.md](list-surfaces.md#three-views-by-whom-the-lists-are-for-2026-09-13).
 
 ## What was there before, and what was wrong with it
 
@@ -51,11 +51,12 @@ row says which it is.
 Lists somebody else owns and has let me see, from **two routes, marked differently**:
 
 - **Invited** — a `wishlist_collaborators` row, role `viewer` or `editor`.
-- **Opened** — I followed a `/l/{token}` link. This needs a new record; opening a share link
-  currently leaves no trace, which is why the list vanishes the moment the message is lost.
+- **Opened** — I followed a `/l/{token}` link, recorded in `list_opens` since 2026-08-30 (see
+  *Sharing is a link*).
 
 They are shown as one section with the distinction visible, because they differ in what I can do: an
-invited editor can add and remove, someone who opened a link can only look and claim.
+invited editor can add; somebody who opened a link can look, claim, and add when the owner allows it
+(`link_can_add`); only the owner removes.
 
 > **Invariant #4 still binds here, and this view is a new way to break it.** A shared list I am
 > looking at may be a `mine` list belonging to its owner — I can see claim state. The moment that
@@ -82,7 +83,7 @@ want is exactly the person who has not signed up.
 **Both branches now do the same thing.** Whether or not the address has an account, a row is written
 and a mail is queued. The response was already identical, but only because the no-account path was a
 no-op — and "identical because both are real" is a much sturdier property than "identical because one
-of them does nothing". `inviting_does_not_reveal_whether_an_address_has_an_account` still passes, and
+of them does nothing". `inviting_does_not_reveal_whether_an_address_has_an_account` passed, and
 it is what stops the form being a way to test who is a member.
 
 **Redemption is on sign-in, not on click.** A link in an email is followed by whoever holds the
@@ -99,6 +100,22 @@ Two refusals worth recording. An invitation to a list that has since been **hand
 without granting anything — handing a list over purges its collaborators deliberately, and this
 would put one straight back. Inviting **yourself** is a no-op rather than an error, because it is a
 slip and the site should not argue with somebody.
+
+## The three kinds, and where `kind` came from
+
+`wishlists` used to carry both `is_gift_list` (boolean) and `recipient_id` (nullable), answering
+overlapping questions and able to disagree. So claiming ended up gated on *visibility* instead,
+which made every shared list claimable — including someone's private research about their own
+mother. One column, `kind`, decided by the recipient, replaced both.
+
+| `kind` | Subject | A shared link means | Claimable |
+|---|---|---|---|
+| `mine` | the owner | "here is what I'd like" | **yes, once somebody else is on it (`Wishlist::hasCoGivers()`)** |
+| `for_someone` | a `recipient_id` | "help me choose / don't double up" | **yes, once somebody else is on it (`Wishlist::hasCoGivers()`)**, since 2026-08-29 |
+| `group` | a `recipient_id` | "we are buying one present together" | **no** — pledges instead |
+
+The recipient decides the kind; there is no separate switch that can contradict it.
+`Wishlist::allowsClaiming()` is the one place any lens asks.
 
 ## Group Lists
 
@@ -311,18 +328,6 @@ The mode is a **default, not a lock**: the picker still reaches every list, and 
 goes there — which is why `markSaved()` takes an `onActiveList` flag. Saving to Books during a
 Camping run must not tick the bookmark, because the item is still not on Camping.
 
-## What already exists and is being reused
-
-Worth stating, because most of this was built and then never wired to anything:
-
-- `GiftPledge` model, `GiftPledgeController`, both `/l/{token}/pledge/{item}` routes, and the entire
-  `pledges` copy block — complete, with **zero** React referencing them.
-- `ListAccess::scope()` / `canEdit()` / `isOwner()` — the union query this view needs.
-- `Lists/Index.tsx`'s two-section grouping by `kind`.
-- `ListTools.tsx`'s panel pattern and the People roster with its `viewer` / `editor` select.
-- `Owner::attributes()` / `scope()` taking column names, which is what lets pledges and votes use
-  `user_id`/`anon_id` while wishlists use `owner_user_id`/`owner_anon_id`.
-
 ## How a group list is created, and why `together` is a boolean
 
 Both creation paths — the form on My Lists and the save picker's "new list" — went through twenty
@@ -356,6 +361,10 @@ complaint: the gift tools were built one at a time, and each one filed itself so
 the thing you made was a matter of remembering which page had adopted it.
 
 ### My Lists is now the superset
+
+*Reversed 2026-09-13:* My wish lists holds only my own wish lists again; see the note at the top.
+The `withCount('suggestions')` rule below still holds in `rows()`. The test is now
+`a_group_list_appears_under_group_lists_as_a_list_i_own_and_not_under_my_wish_lists`.
 
 `WishlistController::index()` runs **two queries** for the `mine` view — `Owner::scope()` for rows I
 own, and `ListAccess::scope()->whereNot(owned)` for rows somebody let me into — and concatenates
@@ -403,8 +412,7 @@ rest reads as a limit rather than as an omission.
 `GiftCoveController` now sends `wishlists` (plural, default first, then most recently touched) in
 place of `mine`, each carrying its occasion. The cards that act on "your wishlist" — wishlist,
 occasion, quiz — use the first, because that is the one somebody means when they have not said
-which. `?new=mine` starts another, the same way the other cards open the create form on their own
-shape.
+which. `?new=mine` starts another, the same way the other cards open the wizard on their own kind.
 
 Occasions are why the plural matters at all: a registry is an ordinary wish list with a date on it,
 so "my wedding" and "things I want some day" are two lists for me, not one list I have to choose
@@ -417,6 +425,8 @@ own wish list into one by attaching an occasion and a date, which is what "Speci
 `registry.heading` and `registry.none` moved with it; the stored `event_type` / `event_date` columns
 and everything downstream are untouched, because this is a rename of the control and not of the
 feature.
+
+(It has moved twice since: to `registry.occasion`, then to `lists.settings`; see list-surfaces.md.)
 
 The manual quotes the label on the screen, so `gift_cove.registry_step1` moved in all four languages
 at the same time. `the_occasion_panel_is_called_what_the_manual_calls_it` now asserts that the step
@@ -436,6 +446,9 @@ one screen is not twice as findable, which is why this is a move and not an addi
 
 A collaborator on an already-shared list still sees the tab: they cannot change visibility, but they
 can pass the link on.
+
+*Superseded:* opening Share no longer turns sharing on — the panel has a *Turn sharing on* button —
+and since 2026-09-12 Delete is the last button in the row; see list-surfaces.md.
 
 ## Claiming on a gift list, and the same inversion a second time
 
@@ -628,6 +641,10 @@ hub that exists to show what you already have could not show that a group gift e
 The two are one bug seen twice, which is the tell. The kind became creatable on 2026-08-16 and every
 surface that had been written before that date kept asking the question it was written to ask.
 
+*Since 2026-08-30 nobody is added by address, and the People tab became the "Invited before sharing
+became a link" section of Share, shown only when that roster is not empty. `Invitations` was removed
+on 2026-09-14.*
+
 ## Sharing is a link, 2026-08-30
 
 Co-givers were added one email address at a time, each with a viewer/editor
@@ -706,7 +723,8 @@ there is just no longer a way to add.
    via `ListAccess::scope()`; nav entries. Replaces the dead `?shared=1` filter. Finished 2026-08-16
    by making the kind creatable from both paths and widening the save picker, which filtered it out.
 2. ✅ **Real invitations**, built 2026-08-16 — a token, an email, and redemption on sign-in. The
-   *opened-link* record (remembering that I followed a `/l/{token}` link) is still open.
+   *opened-link* record followed on 2026-08-30 (`list_opens`). The invitation half was retired on
+   2026-09-14.
 3. ✅ **Voting.** `list_item_votes`, the tally on the card, ordering by it. Finished 2026-08-29,
    together with moving the money off the candidates so a card has one action rather than two.
 4. ✅ **Contributions.** Gate widened past `allowsClaiming()`, read path and UI built 2026-08-16.

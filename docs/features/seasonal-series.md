@@ -116,7 +116,8 @@ stop being current, so dating one invites a reader to treat it as stale. A seaso
 it is *defined* by a date range.
 
 The date means something slightly different on the two kinds, deliberately. On a Daily it is the
-**address**: the edition is read at `/daily/{date}`. On a seasonal part it is the **due date**: when
+**address**: the edition is reached by its date, and `/tips/{date}` redirects to its named URL,
+`/tips/{slug}`. On a seasonal part it is the **due date**: when
 the approved plan should be built. The published page is still slug-addressed and evergreen —
 `daily_pick_sets_address_check` is untouched, so no seasonal *edition* gains a date and nothing about
 how a reader reaches one changed. What the two kinds share is the sentence the planner is sorted by:
@@ -124,7 +125,7 @@ this is the day this plan is due.
 
 **One *Daily* per day, not one plan per day.** `cove_plans_market_date_idx` was unique on `(market,
 drop_date)`, described as "two plans for one Tuesday is an editorial argument the builder cannot
-settle". That argument is about the Daily: only one edition can be reached at `/daily/2026-04-12`. A
+settle". That argument is about the Daily: only one edition can be reached at `/tips/2026-04-12`. A
 seasonal part is reached by its slug and is not competing for that address, so the index is now
 partial on `kind = 'daily'` — narrowed to what it always meant, not dropped, because two Daily plans
 for one date would otherwise insert happily and the builder would pick by row order.
@@ -226,7 +227,7 @@ year.
 
 ## Where a season is drafted
 
-Three doors, one implementation.
+Four doors, one implementation.
 
 | Door | What it does |
 |---|---|
@@ -249,19 +250,9 @@ same answer.
 
 ## What the reader gets
 
-`CoveRail` adds a `series` band: the published parts of this Cove's series, in part order, with the
-current one marked and rendered as text rather than as a link to the page you are on.
-
-It is drawn **above** the article rather than in the rail beside it, which is a decision about what
-the block is for. The rest of the rail is somewhere to go afterwards; "which part am I reading" is
-something you need before you start, and a title reading "deel 2" raises the question immediately.
-
-Null unless at least two parts are actually published — one part is a page, not a series, and a
-heading over a list of one reads as a block whose contents failed to load. So a series with part two
-live and part one still in draft shows nothing, which is the correct transient state.
-
-The band reads the **plan** behind each edition, because the series is a fact about how the work was
-planned and the edition is an output every rebuild overwrites.
+A strip above the article lists the series' published parts in order, current one marked, and
+appears only once two parts are live. What it shows, and why it sits above the article rather than
+in the rail, is in [cove-rail.md](cove-rail.md#the-series-strip-above-the-article).
 
 ## Files
 
@@ -293,3 +284,52 @@ planned and the edition is an output every rebuild overwrites.
 - [cove-rail.md](cove-rail.md) — the rest of the rail
 - [cove-calendar.md](cove-calendar.md) — the year these seasons sit on
 - [cove-curation.md](cove-curation.md) — curating a part's shortlist
+
+## Why seasons are seeded ahead of demand
+
+`TopicMiner` reads 30 days of our own searches, which is the right primary signal — real demand no
+competitor can see. It has one structural blind spot: **it cannot know about a season before the
+season arrives.** Barbecue searches peak in June, so a log-only queue commissions the barbecue Cove in
+July and it first earns real traffic the following May. Halloween is worse — three weeks of demand
+means the log knows only after it is over.
+
+`config/cove_seasons.php` lists ~23 topics with windows that open well before their season: spring
+cleaning and spring running from mid-February, barbecue from mid-March, poolside and sun protection
+from April, back-to-school from mid-June, Halloween from 1 August, wintersport from mid-September,
+Easter, Mother's Day, Father's Day, Valentine's.
+
+`SeasonalTopics::opening()` offers every season whose window is open, or opens within the stretch of
+calendar being drawn, and `bc:plan-coves` hands each one to `SeasonalSeries::plan()` to lay out as
+dated parts. They come ordered by the day each window opens, so a run that takes the first few takes
+the most urgent. A timing argument: a Halloween Cove written on 20 October is nearly worthless and the
+same Cove written on 1 August is an asset for a decade.
+
+Until 2026-09-14 there was also `TopicMiner::ripest()` (with `SeasonalTopics::ripest()` behind it),
+which returned one in-season topic ahead of any evergreen one, ordered by how soon its window closed.
+It was written for a pipeline that built one guide at a time, and nothing had called it since the
+calendar replaced that pipeline, so it was removed.
+
+The "recently attempted" rule went the same day. A topic whose build failed used to sit out fourteen
+days (`guide_topics.last_attempt_at`), so one unbuildable topic at the head of that one-at-a-time
+queue could not block every topic behind it. The planner drafts a whole list of topics now, and
+nothing had recorded an attempt since the old builder went, so the filter could never trigger. It
+was removed from `opening()` and `PlanDrafter`, along with the admin's "Tried" column and the API's
+`lastAttemptAt`/`attempts` fields. The columns themselves go a release later (docs/TODO.md).
+
+Two things it deliberately does not do:
+
+- **It never fabricates a search volume.** A seasonal topic's `search_volume` is whatever the log
+  actually says, usually zero on a young site, and `opening()` does not test it. Writing a
+  plausible number there would corrupt the one honest demand signal the system has, and admin's
+  "180 searches, 0 products" report is useful exactly as long as every figure in it was measured.
+- **It never overturns an editor's decision.** Re-seeding is nightly; a rejected topic that reset
+  itself would return every single night.
+
+A seasonal topic colliding with a mined one is the *best* outcome — it means real demand exists for a
+season we already knew was coming — so the member queries are merged rather than replaced.
+
+### Not the same thing as an observance
+
+[Daily Coves](daily-cove.md) are dated and gone tomorrow; Coves are evergreen pages that happen to be
+*commissioned* seasonally. The window controls when a Cove is written, never what it claims — a Cove
+must not say "today", because it will be read in February.

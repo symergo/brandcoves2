@@ -23,11 +23,11 @@ use Carbon\CarbonImmutable;
  * `EditionBuilder`'s private methods, which meant only the built-in model could
  * ever be given it. An external author had to be told the same rules out of
  * band, and they were: copied by hand into the API root's `writing` block,
- * `docs/publishing-guide.md`, `docs/features/scheduled-writing.md` and the seed
- * skill. Four copies of one contract, and they had already drifted — the API
- * root omitted the one-paragraph-per-product rule that `ProseCards` exists to
- * make undroppable, so an agent following the server's own description of itself
- * wrote prose that publishes with bare cards at the foot of the page.
+ * `docs/features/scheduled-writing.md` and the seed skill. Three copies of one
+ * contract, and they had already drifted — the API root omitted the
+ * one-paragraph-per-product rule that `ProseCards` exists to make undroppable,
+ * so an agent following the server's own description of itself wrote prose
+ * that publishes with bare cards at the foot of the page.
  *
  * Extracted so both callers ask the same object:
  *

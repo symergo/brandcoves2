@@ -21,9 +21,9 @@ conversation.
    - production: `https://giftcoves.com`
    - staging: `https://staging.giftcoves.com`
 
-   Both serve the identical API. `GET /health` names the environment: `branch: "main"`
-   is production, `branch: "staging"` is not. `environment` says `production` on both,
-   because staging runs production config — it is not the field to read.
+   Both serve the identical API. `GET /health` names the environment. Both hosts report
+   `branch: main` since the staging branch was deleted on 2026-08-31, and `environment` says
+   `production` on both, so neither field distinguishes them. Trust the host you called.
 2. **Key** — `GIFTCOVES_API_KEY` from the environment if it is set. If it is not, ask
    the user to paste one, hold it for this session only, and never write it to a file
    that gets returned, echo it in a command you print, or repeat it back in a message.

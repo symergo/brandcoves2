@@ -46,10 +46,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * drift within a month.
  *
  * What the brand page adds is what a bare filtered search cannot have —
- * **indexability and editorial**. `?brand[]=Sony` is `noindex` because facet
- * URLs are a crawl-budget trap; `/brand/sony` is one canonical URL per brand per
- * market, with the brand's own vocabulary above the results, and below them the
- * long copy and the articles that mention it.
+ * **a canonical and editorial**. Every `?brand[]=Sony` variant canonicalises to
+ * the bare term (docs/features/seo.md); `/brand/sony` is one canonical URL per
+ * brand per market, with the brand's own vocabulary above the results, and
+ * below them the long copy and the articles that mention it.
  *
  * Above the results there is only that vocabulary, as links, and that part is not
  * coming back: the templated statistics that used to open the page said nothing a
@@ -62,11 +62,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * identical in shape across a thousand brand pages, is one template a crawler
  * sees through in a single sample.
  *
- * What changed is who writes it. Every sentence is a slot in `CopySlots`,
- * rewritten per language in admin, with alternates that `CopyBank` draws between
+ * What changed is who writes it. Every sentence is a block in a page region,
+ * written per language in admin, with variants that `PageCopy` draws between
  * per page and per period — so it is a corpus somebody maintains rather than a
  * template nobody can reach. The facts inside it are still read off *this* page,
- * which was always the honest half of the arrangement.
+ * which was always the honest half of the arrangement. As of 2026-09-06 the
+ * region ships empty; see docs/features/brand-pages.md.
  *
  * The articles stayed, below it. The two are not alternatives: the copy says how
  * to choose between the products above it, an article says what somebody thought.
@@ -435,8 +436,8 @@ class BrandController extends Controller
      *
      * ## Only the canonical page asks
      *
-     * Page two is `noindex` and is being read by someone who has already
-     * scrolled past everything a live source could add. A sub-search — `?q=`,
+     * Page two is read by someone who has already scrolled past everything a
+     * live source could add. A sub-search — `?q=`,
      * which the term chips now build up a word at a time — is worse: the chips
      * are a combinatorial URL space over the pages that are already the site's
      * crawl target, and a crawler walking it would fire one upstream search per
@@ -494,9 +495,8 @@ class BrandController extends Controller
      * brand they had already chosen. A word under a brand heading reads as a
      * filter, and it now behaves like one: `/brand/karcher?q=hogedrukreiniger`.
      *
-     * The wider search did not disappear — it is what the search box, the
-     * related-search chips under the narrative, and every card's own title link
-     * are for.
+     * The wider search did not disappear — it is what the search box and every
+     * card's own title link are for.
      *
      * ## The word is added, not swapped in
      *
@@ -508,9 +508,10 @@ class BrandController extends Controller
      * a term that swapped the previous one out could not offer.
      *
      * The combinatorial URL space that follows is why every `?q=` variant of a
-     * brand page is `noindex, follow` and canonicalises to the bare page — see
-     * seo(). Those are the pages the crawler must not spend its budget on, and
-     * they are precisely the ones a shopper wants.
+     * brand page canonicalises to the bare page — see seo(). Those were also
+     * `noindex, follow` until 2026-09-12; the canonical alone consolidates them
+     * now. They are pages a shopper wants, so the canonical is what keeps the
+     * crawler from spending its budget on dozens of copies of them.
      *
      * Empty beyond page one. Repeating one block of internal links across every
      * page of a brand's catalogue is the doorway-page pattern with fewer words.
@@ -584,20 +585,19 @@ class BrandController extends Controller
     }
 
     /**
-     * A variant of this page that must not be indexed — and must not repeat the
-     * copy either.
+     * A variant of this page that must not repeat the copy.
      *
-     * One definition, two readers. The robots tag and the long copy were asking
-     * the same question in two places, and only one of them counted sort, price
-     * bounds and the shop filter. So a filtered brand page was `noindex` and
-     * still carried several hundred words identical to the canonical one's: the
-     * doorway-page pattern with the warning label on and the cause left in place.
+     * Until 2026-09-12 this also decided the robots tag, and before it existed
+     * the copy and the tag disagreed: only one of them counted sort, price
+     * bounds and the shop filter, so a filtered brand page was `noindex` and
+     * still carried several hundred words identical to the canonical one's —
+     * the doorway-page pattern with the warning label on and the cause left in
+     * place. Every brand variant is indexable now and canonicalises to the bare
+     * page, so this guard is about copy alone.
      *
      * A sub-search counts. The term links narrow this page rather than leaving
      * it and each click adds a word, so `?q=` is the widest source of URL
-     * variants a brand page has — the exact crawl-budget trap `/search?brand[]=`
-     * is noindex for. `follow` on the tag, because the results under it are real
-     * product pages worth reaching.
+     * variants a brand page has.
      */
     private function isThin(SearchQuery $query): bool
     {
@@ -900,9 +900,10 @@ class BrandController extends Controller
      * canonical URL per brand per market, indexable, with the filter and sort
      * variants of it pointing back here.
      *
-     * Pagination is `noindex, follow` beyond page one — page 12 of a brand's
-     * products has nothing to rank for and everything to spend crawl budget on —
-     * but the canonical still names the bare page, so any signal consolidates.
+     * Pagination was `noindex, follow` beyond page one until 2026-09-12 — page
+     * 12 of a brand's products has nothing to rank for and everything to spend
+     * crawl budget on. It is indexable now; the canonical still names the bare
+     * page, so any signal consolidates there.
      */
     private function seo(BrandStat $stat, CurrentMarket $current, SearchQuery $query): void
     {

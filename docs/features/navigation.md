@@ -196,7 +196,7 @@ home page's "Alle Coves", for the same reason. The home page keeps `home.coves_h
 
 ### The Discover hub lists the Coves themselves
 
-Added 2026-08-15. Under the three cards, `/discover-cove` now lists up to twelve published Coves for
+Added 2026-08-15. Under the cards, `/discover-cove` now lists up to twelve published Coves for
 the market, newest first, with a link to the full archive.
 
 The hub still shows **no numbers** — a hub that totals things is the catalogue-counter mistake from
@@ -207,8 +207,9 @@ a reader one click away to find out whether any of them is about anything they c
 titles answers that on the page.
 
 Twelve rather than sixty: enough that the range is obvious, then a link. A hub that lists everything
-is a second copy of `/guides`. The band reuses the front page's `home.coves_*` copy keys, so the two
-pages describing the same shelf cannot drift into describing it differently. `DiscoverCoveHubTest`
+is a second copy of `/guides`. The band shared the front page's `home.coves_*` keys until
+2026-09-12; it now shares only `home.coves_intro`, and takes its heading and link from `nav.smart`
+and `discover_cove.guides_all` (see above). `DiscoverCoveHubTest`
 covers the two failures that are invisible on a page that otherwise looks right — a draft appearing,
 and another market's Coves appearing.
 
@@ -295,10 +296,10 @@ and each card names what it has in common with the brief instead of asserting th
 [gift-whisperer.md](gift-whisperer.md). The same teaser sits under the search card on the page this
 menu opens, so the entry and the page agree about what the Whisperer is for.
 
-**Search is the first entry under Find a gift** (moved in 2026-09-12, owner's request), so the wide
-header is now Find a gift, Make a list, Help, and the search field on every page remains the
-ordinary way in. The paragraph above about Search moving to the *end* described the loose links; it
-is no longer one of them. On the phone panel the "Search and help" group is gone with it: Help is
+**Search sits under Find a gift** (moved in 2026-09-12, owner's request), second since 2026-09-14
+behind the Gift Whisperer; the wide header is Make a list, Find a gift, Help, and the search field
+on every page remains the ordinary way in. The paragraph above about Search moving to the *end*
+described the loose links; it is no longer one of them. On the phone panel the "Search and help" group is gone with it: Help is
 a heading-weight row of its own, the shape Make a list has now that nothing is indented under it,
 because a heading over one row that repeats the heading's word is a box around nothing.
 `nav.search_and_help` was deleted.
@@ -337,6 +338,39 @@ the copy moved — the routes, tables and `SecretSanta*` classes keep their name
 
 **Scan is not in the header.** It is a way of entering a query, not a section — see
 [barcode-scanner.md](barcode-scanner.md).
+
+## Find a gift opens with the search card (2026-09-13)
+
+At the owner's request the `/discover-cove` page carries the same `SearchCard` as the home page,
+right under its title and intro, before the four cards. Somebody who chose "Find a gift" in the
+header most often knows what they are looking for, and the field is the shortest way there; the
+Daily Cove, Surprise, the Coves and Ask remain below for the ones who do not.
+
+## After the search: today, the days before, then the map (2026-09-13)
+
+At the owner's request the Find a gift page now reads, top to bottom: the search card, Today's
+Cove, a list of the editions before it (a week, newest first, each row a date and a title linking
+to that edition's page, with "All editions" to the Daily Cove's archive), and only then the cards
+for every kind of Cove. The cards had sat directly under the search, so the map came before any
+of the territory; a visitor who liked today's edition now sees at once that there was a yesterday.
+The list is `DiscoverCoveController::dailies()`, which is "the newest editions by `drop_date`,
+skipping the first", the first being exactly what `today()` shows. The bands below the cards
+(Surprise, questions, personas, guides) are unchanged.
+
+## The Whisperer sits under the search card on this hub (2026-09-14)
+
+`GiftWizardCard` is a dozen interest chips and a budget, directly under the search card on
+`/discover-cove` — the shape the front page gives the list wizard, and for the same reason: the
+search card answers the visitor who knows what they want, and the card under it answers the one who
+does not. On a page called "Find a gift" that is most of them. The Whisperer is the first entry in
+the menu again the same day; see [navigation.md](navigation.md) for what changed in between.
+
+It is a teaser, not a second wizard. The submit posts the brief to `/{market}/gift`, the same
+endpoint the full wizard's own form posts to, so the visitor lands on the Whisperer page at its own
+address with the board already on it and there is no lesser result screen to keep in step with this
+one. The five questions the chips skip — age, vibe, taste, what to avoid, who it is for — are one
+link away, and the controller sends every interest so what the card shows is a layout decision
+rather than a payload one.
 
 ## The header says where you are
 
@@ -391,8 +425,11 @@ has given up on a search and moved on has left both behind. See
 - `app/Http/Controllers/Auth/MagicLinkController.php` — `logout()`
 - `bootstrap/app.php` — `redirectGuestsTo` / `redirectUsersTo`, both market-aware
 - `tests/Feature/PageSmokeTest.php` — every page, opened signed out and signed in
-- `lang/*/site.php` — `nav.daily`, `nav.coves`, `nav.give`, `nav.sign_out`, `nav.admin`,
+- `lang/*/site.php` — `nav.make_list`, `nav.find_gift`, `nav.gift`, `nav.search_offers`,
+  `nav.daily`, `nav.smart`, `nav.gift_coves`, `nav.all_coves`, `nav.sign_out`, `nav.admin`,
   `nav.account` (the caption over the phone menu's account group)
+- `resources/js/Components/NavMenu.tsx`
+- `resources/js/Components/AccountSheet.tsx`
 
 ## See also
 
@@ -424,7 +461,7 @@ header overflowed the viewport by 100px (the switcher, Lists and the account men
 and the phone panel opened in the flow at 911px tall with its only close control at the top.
 
 - **The phone header now serves up to `md` (768px)**, and between `md` and `lg` the desktop
-  header drops the Lists link (it is inside Organise anyway), which is what makes it fit at 800px.
+  header drops the Lists link (it comes back from `lg`), which is what makes it fit at 800px.
 - **A search icon sits beside the hamburger.** Search was a text link inside the menu, two taps
   from every page but the home, for the site's primary action.
 - **The panel is a full-screen sheet** with its own top bar and a close at the bottom as well; the
@@ -434,6 +471,9 @@ and the phone panel opened in the flow at 911px tall with its only close control
   the friends page had no door on a phone.
 - **Every row is 44px**, the hamburger and close are `ToolIcon`s rather than the ☰ and ✕
   characters, and the dial has its own `CoveIcon` instead of borrowing the guides one.
+
+*(The "Search and help" group went on 2026-09-12 and the account block on 2026-09-13; the
+one-icon-per-row rule stands.)*
 
 ## The phone gets an account menu of its own (2026-09-13)
 

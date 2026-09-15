@@ -24,8 +24,8 @@ use Illuminate\Support\Facades\Route;
 | Editorial API
 |--------------------------------------------------------------------------
 |
-| Machine access to the writing surfaces: Daily Coves and buying guides. It
-| exists so an author — a person on a laptop, or Claude — can research, draft
+| Machine access to the writing surfaces: every kind of Cove, plus product display
+| titles and gift tags. It exists so an author — a person on a laptop, or Claude — can research, draft
 | and read back content without a shell on the server, which is both a
 | convenience and a security improvement: a key that can write a draft is a far
 | smaller thing to hand out than SSH.

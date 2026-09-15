@@ -1,3 +1,10 @@
+---
+name: The Amazon search hand-off
+area: Search / Affiliate
+status: Active
+date_added: 2026-08-30
+---
+
 # The Amazon search hand-off
 
 One link, in the search sidebar and on every product page with a barcode: **run this same search on
@@ -43,6 +50,9 @@ languages from one host, and there is no separate French-Belgian tag to route to
 An untagged Amazon link is the failure mode that looks exactly like a working one, so a visible
 absence is the safer default — and adding a market later is a config line, not a code change.
 
+Since 2026-09-14 both tags can also be set in `/admin` under the affiliate settings, which overrides
+the env value; see [affiliate-settings.md](affiliate-settings.md).
+
 ## Why the URL is built on the server
 
 The tag is the whole point of the link, and a URL assembled in the browser would be missing it with
@@ -85,7 +95,8 @@ middle of a button costs the click.
 
 - **Search:** the foot of the filter rail. It is an alternative to the whole page, not to any
   product on it; in the grid it would compete with the offers we do carry, which are the ones a
-  click here should be worth *less* than. The by-store view has no rail, so it carries no link.
+  click here should be worth *less* than. On a desktop the by-store view has no rail, so it carries
+  no link. On a phone both views open the same filter sheet, which does.
   Only when the URL carries a term. Since 2026-09-12 the page before anything is typed gets no
   link at all: `SearchController` sends null, so neither the rail nor the empty state can offer
   the bare storefront under "try searching on Amazon". The generic label was removed with it.

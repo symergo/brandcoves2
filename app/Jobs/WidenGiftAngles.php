@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
  *
  * ## Batched per market, not per interest
  *
- * 5 markets × 36 interests × 4 vibe states is 720 combinations, against a cap
+ * 5 markets × 39 interests × 4 vibe states is 780 combinations, against a cap
  * of 20 calls a day for this feature. One call per market covering the stalest
  * interests fits inside the cap with room for retries, and the model does a
  * better job when it can see several interests at once — it stops repeating

@@ -45,11 +45,12 @@ drifts.
 
 **The endpoint URL is an input to the hash, not merely where the request arrived.** This is the part
 that goes wrong in practice: `https://giftcoves.com/…` and `https://www.giftcoves.com/…` hash
-differently for an identical request. Production serves `giftcoves.com`, `www.giftcoves.com` and
-`brandcoves.com` and does not yet redirect between them (see CLAUDE.md on `canonical_host`), so a URL
-the app generates for itself is a guess — hence `EBAY_DELETION_ENDPOINT` is explicit config, with a
-request-derived fallback so local and staging work without ceremony. A trailing slash is trimmed:
-nobody should be able to break the hash with a keystroke that means nothing.
+differently for an identical request. Since 2026-09-05 `www.giftcoves.com` and `brandcoves.com` 301
+to `giftcoves.com` ([rebrand.md](rebrand.md)). The endpoint is still explicit config, because the
+hash covers the exact URL string registered in the portal and nothing guarantees the host a request
+arrives on matches it — hence `EBAY_DELETION_ENDPOINT`, with a request-derived fallback so local and
+staging work without ceremony. A trailing slash is trimmed: nobody should be able to break the hash
+with a keystroke that means nothing.
 
 ## The verification token
 

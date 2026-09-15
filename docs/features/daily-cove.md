@@ -28,35 +28,23 @@ picks get a permanent, indexable home instead of scrolling into nothing.
 
 ### The editorial, with the products inside it
 
-A theme, then prose, and each product where the prose is about it.
+A theme, then prose, and each product rendered under the paragraph that names it with a
+`[[product:N]]` token; whatever the prose does not name keeps the grid below. `EditionPresenter`
+does the pairing through `App\Services\Editorial\ProseCards`. Why the page stopped being an article
+followed by a grid, and the rules the pairing follows, are in
+[product-cards-in-prose.md](product-cards-in-prose.md).
 
-The page used to be an article followed by a grid: everything the writing was *about* sat below
-everything the writing *said*, so a paragraph discussing a kettle pointed at a card three screens
-down. That is a catalogue with an introduction.
+### The featured guide
 
-The pairing was already in the copy and unused. `[[product:12]]` is the writer — a model, or an
-author through [the editorial API](editorial-api.md) — saying "this paragraph is about that thing";
-`CoveMarkup` resolved it to a link and threw the association away. `DailyCoveController::editorial()`
-now reads the ids back out per paragraph, so the product renders under the paragraph that names it.
-
-Three rules, each one a way the naive version goes wrong:
-
-- **Only ids the article was allowed to mention.** A token naming a product outside today's edition
-  already renders as plain text rather than a broken link; it must not conjure a card either.
-- **First mention only.** Copy that names the same kettle three times would otherwise stutter it
-  three times down the page.
-- **Whatever the article did not name keeps the grid below.** An edition can carry more finds than
-  the copy gets to, and silently dropping them would lose products the builder deliberately chose.
-
-### The guide
-
-Today's buying guide, built from **what people actually searched on the site this week** — the
-`search_log` clustering that was Phase 6. "The five best X, and the one actually worth it."
+Each edition points at one article Cove, `daily_pick_sets.featured_cove_id`: the market's most
+recently published guide, seasonal guide or advice article (`EditionBuilder::featured()`). The
+edition no longer builds a guide. Topics are still mined from what people searched on the site
+(`BuildDailyEdition` runs `TopicMiner::mine()` and seeds the seasonal topics every morning), but each
+guide is its own Cove, planned, curated and built through the planner; see
+[cove-planner.md](cove-planner.md).
 
 This is where the SEO value lives. Every edition has a permanent URL, so the archive is a growing
-corpus of indexed pages, each one a guide plus a set of products plus the writing that connects them.
-Ninety days in, that is ninety pages per market that did not exist before, each answering a question
-someone demonstrably asked.
+corpus of indexed pages. Ninety days in, that is ninety pages per market that did not exist before.
 
 ### The address
 
@@ -280,11 +268,6 @@ The result on the live catalogue went from four phone cases in the top six to a
 robot vacuum at €599 → €299. `DailyDealsTest` pins each rule, because thresholds
 rot silently as a catalogue changes and nothing on the page would look wrong.
 
-**The Gift Cove.** The one part of the site a reader here has no reason to have
-found: the nav names it and nothing explains it. Four tool names and a link do
-more than a nav entry ever did, and it sits beside what they are already reading
-rather than interrupting it.
-
 ### The subscription card had no copy at all
 
 `cove.subscribe_*` resolved to nothing, in all four languages, because a second
@@ -437,10 +420,12 @@ selection for it. That gate is gone with the game; the general rule is unchanged
 
 ## AI
 
-Theme lines and the guide's editorial copy are the only AI-touched parts, and they run in the nightly
-build job under the `daily_picks` and `guide_copy` caps. The edition builds and publishes with
-`AI_ENABLED=false` — themes fall back to a curated rotation, guides to template copy. Choosing the
-picks involves no model at all. See [ai-invariant.md](ai-invariant.md).
+The theme line and the edition's editorial are the AI-touched parts of a Daily, written in the
+nightly `BuildDailyEdition` job under the `daily_picks` cap. Guide copy is written when the guide
+itself is built (`BuildCove`, `PublishDueCoves` or `bc:refresh-guide-copy`) under `guide_copy`.
+Everything publishes with `AI_ENABLED=false`: themes fall back to the curated rotation, guides to
+`GuideWriter`'s template copy. Choosing the picks involves no model at all. See
+[ai-invariant.md](ai-invariant.md).
 
 **Prose written by an author beats all of it.** A `cove_plans` row may carry the edition's editorial,
 and when it does the builder uses it verbatim and skips the model entirely — not as a seed to
@@ -468,9 +453,9 @@ Three rules it holds to:
 
 - **The shortlist is never re-chosen.** Only the words change. Re-picking products would reorder a
   page Google has already indexed, and the new copy would describe a guide nobody ranked.
-- **Existing copy is never traded for the template.** `GuideBuilder::copy()` reports whether the
-  answer came from a model, and a run that could not reach one leaves the guide exactly as it was.
-  Without that, every capped run would quietly strip prose from good guides.
+- **Existing copy is never traded for the template.** `EditionBuilder::refreshCopy()` asks whether
+  the writer's answer `isFromModel()`, and a run that could not reach one leaves the guide exactly as
+  it was. Without that, every capped run would quietly strip prose from good guides.
 - **The cap is checked per guide, not once up front.** Other features share the day's budget. Running
   on past it makes one failed call per remaining guide, each logged as if the model had let us down.
 
@@ -479,14 +464,62 @@ better shape than none, and the cap means a run usually cannot have both.
 
 ## Schema
 
-- `daily_pick_sets` — theme, editorial, `guide_id`, `kind` + nullable `drop_date`/`slug` (see gift
+- `daily_pick_sets` — theme, editorial, `featured_cove_id` (the article this edition points at;
+  replaced `guide_id`, dropped 2026-09-06), `kind` + nullable `drop_date`/`slug` (see gift
   personas), and the disused `challenge_*` columns above
 - `daily_picks` — the finds, with their reaction counts
 - `challenge_attempts` — disused; awaiting the contract migration
-- `guides` / `guide_items` / `guide_topics` — linked from an edition
+- `guide_topics` — the mined and seasonal topic queue. `guides` and `guide_items` were dropped by
+  `2026_09_06_000100_the_guides_tables_retire`; a guide is now a `daily_pick_sets` row of kind guide
 - `cove_plans` — the plan, with `kind` and `pick_mode`
 - `cove_plan_items` — the curated shortlist, ordered, each with the reason it is there
 
 ## Status
 
 Active. Editions build nightly and publish at the configured drop time.
+
+---
+
+## The build was being retried to death, and only on the big markets
+
+Fixed 2026-09-01. `/be-nl/daily` had answered **404 on production since the market launched**, while
+`/en/daily` and `/nl-nl/daily` served normally. There was no error page, no alert and no obviously
+broken job — the edition simply did not exist.
+
+`config/queue.php` shipped Laravel's stock `retry_after` of **90 seconds**. Every long job in
+`app/Jobs/` declares its own `$timeout` well above that — `BuildDailyEdition` 900s, `IngestFeed`
+3600s. Redis does not abort a job when `retry_after` elapses; it decides the worker died and releases
+the job to somebody else, while the original keeps working. The attempt counter climbs underneath it,
+and `$tries = 2` is spent after two releases. Horizon's own log is the whole story:
+
+```
+06:00:01 App\Jobs\BuildDailyEdition ..... RUNNING
+06:01:32 App\Jobs\BuildDailyEdition ..... RUNNING     <- released at 90s, re-reserved
+06:03:04 App\Jobs\BuildDailyEdition ..... RUNNING     <- and again
+06:03:04 App\Jobs\BuildDailyEdition ..... 5.44ms FAIL <- MaxAttemptsExceeded
+```
+
+**Why only some markets.** The build scans the market's catalogue. `en` holds 16k product groups and
+finishes in about 2m25s — over the 90s line, but its first attempt still completed and deleted the
+job before the retries could kill it. `be-nl` holds 114k and `be-fr` 101k; those never won that race,
+and failed every single morning. Which is why the symptom read as "the Belgian markets have no daily
+column" rather than as a queue setting.
+
+It was never only the Cove. `IngestFeed`, `GroupProducts`, `RefreshBrandStats` and `ScoreSerendipity`
+fill `failed_jobs` with the same exception for the same reason — every job on this queue that walks
+the catalogue.
+
+`retry_after` is now **3900** (`IngestFeed`'s 3600 plus headroom).
+[tests/Unit/QueueRetryAfterTest.php](../../tests/Unit/QueueRetryAfterTest.php) reads every
+`$timeout` out of `app/Jobs/` and fails if any of them reaches it, because the next break will arrive
+via a different file: somebody raises a timeout to give a growing catalogue room, and breaks a queue
+setting they never opened.
+
+The accepted cost: a job orphaned by a worker that really did die now waits 65 minutes for its retry.
+Everything here is scheduled daily and idempotent, so a late retry is cheap — a guaranteed daily
+failure was not.
+
+**Still open.** `nl-nl` hit the real 900s timeout on 2026-09-01 (`15m 1s FAIL`), so the build itself
+is getting slow as the catalogue grows; raising `retry_after` stops the retry storm but does not make
+that job finish. And `es` genuinely has no catalogue — `Edition skipped: not enough finds
+{"market":"es","found":0}` — so `/es/daily` is a correct 404 until that market has products.

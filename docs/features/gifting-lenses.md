@@ -19,7 +19,7 @@ own idea of what "claimed" means.
 |---|---|---|
 | Receiver — "what I want" | self-description, multi-source picking | `wishlists`, `wishlist_items`, `SearchService` |
 | Giver — "what I found for you" | the two-lane page | items, snapshots, `Owner` scoping |
-| Co-giver | invitations, roles, pooled contributions | `wishlist_collaborators`, `gift_pledges` |
+| Co-giver | a share link, votes, a pot | `list_opens`, `wishlist_collaborators` (the old roster, removal only), `gift_pledges` |
 | Secret Santa | a group, a draw, an assignment | *the entire list + claim system* |
 | Matching game | rounds, distractors, a share grid | list membership, `GuessBand`'s discipline |
 | Occasion | a trigger, a scoring signal | `recipients`, `notifications` |
@@ -33,45 +33,22 @@ Three consequences hold everywhere:
    *group* has no items, so it is not a list. A quiz is not a list. Otherwise
    `SharedListController::findShared()` could serve a non-list.
 3. **"Who am I shopping for" is an abstraction** — `GiftTarget` — not a column
-   read. It resolves from a recipient, a Secret Santa assignment, or nobody.
+   read. It resolves from a recipient (`fromRecipient()`), a Secret Santa giftee
+   (`fromPerson()`), or yourself (`myself()`).
 
 ---
 
 ## The bug this work started from
 
-`Wishlist::shouldHideClaimsFrom()` took a `?User` and returned `false` for null.
-`SharedListController` passed `$owner->user`, which **is** null for an anonymous
-owner — and lists are anonymous-first by design, so this was invariant #4 failing
-in the *ordinary* case:
-
-> An anonymous visitor creates a list, shares it, and reopens their own
-> `/l/{token}` — and is shown exactly what has been claimed.
-
-It now takes an `Owner` and compares both owner columns. The test
-(`an_anonymous_owner_never_sees_claim_state`) was written first and observed
-failing; one written afterwards would have proved nothing.
+Invariant #4 failed for every anonymous owner: `shouldHideClaimsFrom()` took a `?User` and answered
+`false` for null. Recorded in [wishlists.md](wishlists.md#a-bug-this-rule-had-for-a-year).
 
 ## `kind` replaced `is_gift_list`
 
-`wishlists` carried both `is_gift_list` (boolean) and `recipient_id` (nullable),
-answering overlapping questions and able to disagree. So claiming ended up gated
-on *visibility* instead, which made **every shared list claimable — including
-someone's private research about their own mother**.
-
-| `kind` | Subject | A shared link means | Claimable |
-|---|---|---|---|
-| `mine` | the owner | "here is what I'd like" | **yes** |
-| `for_someone` | a `recipient_id` | "help me choose / don't double up" | **yes**, since 2026-08-29 |
-| `group` | a `recipient_id` | "we are buying one present together" | **no** — pledges instead |
-
-> **The `for_someone` row said "no" for a year, and the row above it explains why that was wrong.**
-> "Don't double up" *is* claiming. What the `no` was really protecting is that claiming must not be
-> gated on visibility — which still holds, and is why `group` is not claimable either. Who may *see*
-> the claims inverts by kind; see
-> [list-taxonomy.md](list-taxonomy.md#claiming-on-a-gift-list-and-the-same-inversion-a-second-time).
-
-The recipient decides the kind; there is no separate switch that can contradict
-it. `Wishlist::allowsClaiming()` is the one place any lens asks.
+One column, `kind` (`mine` | `for_someone` | `group`), decided by the recipient, now answers what
+`is_gift_list` and `recipient_id` answered between them and could disagree about. The table and the
+claim rules are in
+[list-taxonomy.md](list-taxonomy.md#the-three-kinds-and-where-kind-came-from).
 
 ---
 
@@ -153,17 +130,8 @@ person; the wizard keeps its own, because there the third person is right.
 
 ### Signing in without leaving the page
 
-`Components/SignInDialog` is the same two ways in as the login page, in a `<dialog>` over whatever
-you were doing. The places that need it are places somebody has already arrived with an intention —
-saying "this is me", keeping a product, claiming something — and navigating away throws that
-context out. `wishlists.md` records what that cost the save path before `PendingSave` existed; a
-dialog avoids the crossing rather than carrying the intent across it.
-
-Native `<dialog>` with `showModal()`, not a div: focus trapping, Escape, an inert page behind and a
-top-layer backdrop, all of which a hand-rolled overlay gets wrong for exactly the people who would
-notice. `auth.googleEnabled` moved to the shared Inertia props, because signing in is no longer
-something that only happens *on* the login page and the Google button must stay hidden when the
-client id is unset.
+This page argued first for signing in inside a dialog; it became the site-wide default on
+2026-08-30. See [auth.md](auth.md#signing-in-is-a-dialog-not-a-destination).
 
 ## Two engines, one pipeline
 
@@ -177,7 +145,7 @@ search whose query was written by a brief.
 | Query | typed | derived from the brief | different input, same output |
 | Retrieve | tsvector + trigram + live bol | the same | **yes** |
 | Hard filters | market, in stock, giftable | + budget, `avoid` | **yes** |
-| Rank | relevance | five weighted signals | no |
+| Rank | relevance | weighted signals (nine; see [gift-whisperer.md](gift-whisperer.md#4-scoring)) | no |
 | Save | `WishlistItemController::store()` | the same | **yes** |
 
 `TasteBrief::searching()` folds a typed query in, first, ahead of every derived
@@ -200,13 +168,8 @@ unchanged would have quietly buried every affordable thing on your own wishlist
 and looked exactly like a working feature. `the_self_profile_does_not_penalise_a_cheap_item`
 is the test that would catch it coming back.
 
-`SuggestionProfile` is deliberately shaped like a Mode Profile from
-`config/discovery.php`, so folding these into the discovery dial later is a data
-change rather than a rewrite. The brief retriever is also the exact prerequisite
-`discovery-modes.md` named for turning on the `advisor` mode — that is now a
-decision to evaluate rather than a rewrite. Ranking should converge on
-measurement, not tidiness: the two objectives are different maths, and swapping
-blind would discard what makes the whisperer good.
+Its keys mirror the discovery modes' profiles, which were removed on 2026-09-07
+([discovery-modes.md](discovery-modes.md)); there is no dial left to fold them into.
 
 ---
 
@@ -269,18 +232,12 @@ of the list.
 
 ## The Gift Cove starts the tool it describes
 
-The hub explains nine tools, and six of its cards pointed at `/{market}/lists`. Reading "a list you
-build for somebody and then hand over to them" and pressing it got you an index of your existing
-lists and no indication which button began that — a card that teaches the vocabulary and then
-withholds the verb.
-
-The three that begin with a list *about someone* (gift list, co-giving, handover) now open the
-create form already on that shape, via `?new=for_someone`. The ones that act on a list you already
-have (registry, quiz) open that list, where their panel lives. Suggestions is a thing other people
-send you, so the index — where you see which list received one — remains the honest destination.
-
-`?new=for_someone` is read from `usePage().url`, not `window.location`; see
-[sharing.md](sharing.md) for why that distinction is load-bearing.
+The hub explained nine tools when this was written, and six of its cards pointed at
+`/{market}/lists` — a card that teaches the vocabulary and then withholds the verb. Now the cards
+that begin a list about someone (gift list, buying separately) open `?new=for_someone`, buying
+together opens `?new=group`, handover opens My Lists (there is no single list to hand over), and the
+cards about your own list (wishlist, registry, suggestions, quiz) open your first wish list. The hub
+has sixteen cards in four bands; `GiftCove.tsx` `cards` is the source.
 
 ### And then says how to work it
 
@@ -289,8 +246,9 @@ this for* in one sentence — the question somebody scanning nine cards is askin
 which leaves "invite other people onto a gift list so several of you can choose together" as a true
 sentence that names no control.
 
-So the page has a second layer: a manual below the grid, one entry per tool, **three steps and
-nothing else**. The two are written for different readers, which is why they are not merged. Putting
+So there is a second layer: a manual, now its own page at `/gift-cove/how-it-works` (see
+[list-surfaces.md](list-surfaces.md#how-each-one-works-is-its-own-page)), one entry per tool,
+**three steps and nothing else**. The two are written for different readers, which is why they are not merged. Putting
 the steps on the cards makes nine tools into a wall of instructions and buries the one-line version
 the scanner came for.
 
@@ -305,17 +263,20 @@ Three rules hold it together:
   true and each is enforced by the tool whether or not this page mentions it, and an entry that runs
   past the point where the reader could have started is one they stop reading.
 - **Not an accordion.** Collapsed steps are steps nobody reads, and hiding the longer answer behind
-  a second press reproduces exactly the problem the manual was written to solve.
+  a second press reproduces exactly the problem the manual was written to solve. The page is an
+  address, not a second press.
 
 `every_tool_on_the_gift_cove_has_its_three_steps` guards the shape from the direction
-`LocalisationTest` cannot see: that test catches a language falling behind English, this one catches
-a tenth tool added to the page with no steps written for it. A missing string renders as its own key
-— `gift_cove.quiz_step2`, in the middle of a numbered list.
+`LocalisationTest` cannot see: that test catches a language falling behind English, this one checks
+that each of the nine manual entries (`wishlist`, `giftlist`, `collab`, `handover`, `santa`,
+`registry`, `quiz`, `suggestions`, `whisperer`) has three steps. The list is written into the test,
+so a card added to the hub without a manual entry is not caught.
 
 ### The icons are drawn, not typed
 
-`resources/js/Components/ToolIcon.tsx` — nine line icons on one 24px grid, `currentColor`, one
-stroke weight, `aria-hidden` because the tool's name sits in words beside every one of them.
+`resources/js/Components/ToolIcon.tsx` — line icons on one 24px grid (nine at first; the set grew
+with the header menus, see [navigation.md](navigation.md)), `currentColor`, one stroke weight,
+`aria-hidden` because the tool's name sits in words beside every one of them.
 
 Emoji were the obvious cheaper answer and fail three ways at once: the glyph is rendered by the
 reader's operating system, so it is a different picture on Windows, Android and iOS; it arrives with
@@ -343,7 +304,7 @@ pressed.
 - `app/Services/Social/FollowGraph.php`
 - `resources/js/Pages/GiftCove.tsx`, `resources/js/Components/ToolIcon.tsx`
 - `app/Http/Controllers/` — `RecipientProfileController`, `SecretSantaController`,
-  `ListQuizController`, `WishlistCollaboratorController`
+  `ListQuizController`, `WishlistCollaboratorController` (removal only, since sharing became a link)
 - `app/Jobs/SendOccasionReminders.php`
 - `tests/Unit/SecretSantaDrawTest.php`, `tests/Feature/{RecipientProfile,SecretSanta,ListQuiz,WishlistCollaborator,OccasionReminder}Test.php`
 
@@ -361,7 +322,7 @@ human reading the page notices. What the audit found:
 | `collab_step1`: "press **People**" | **The label.** The tab read "Who else can see this" — a sentence in a row of one-word chips, and wrong for a group list where those people are co-organisers. The sentence survives as the panel hint. |
 | The `collab` card opened a *create* form while its step said "open a list you made" | **Both.** Buying together genuinely starts with a new list, and since group lists became creatable that list is a group one — so the card opens `?new=group` and the step names that choice. |
 | The `handover` card opened a create form while its step said "open the list" | **The link.** There is no single such list, so it goes to My Lists. |
-| The `suggestions` card pointed at `/lists`, which said nothing about suggestions | **The index, not the link.** The destination was right; the page just never mentioned them. It now carries a waiting badge — owner-only, and absent on a list somebody else owns, because a suggestion is a message addressed to its owner. |
+| The `suggestions` card pointed at `/lists`, which said nothing about suggestions | **The index, not the link.** The destination was right; the page just never mentioned them. It now carries a waiting badge — owner-only, and absent on a list somebody else owns, because a suggestion is a message addressed to its owner. Since changed: the card opens your first wish list, where suggestions arrive, and falls back to the index only when you have none. |
 | `suggestions_step2`: "with the name of whoever sent it" | **A fallback.** A suggestion from an anonymous cookie identity has no name and rendered nothing at all. A message from nobody is worse than one from somebody unnamed, and the accept/dismiss decision is largely a judgement about the sender. |
 
 `CopyMatchesCodeTest` is the human, for the claims that can be checked mechanically.

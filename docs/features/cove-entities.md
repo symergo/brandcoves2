@@ -225,7 +225,6 @@ shop page would be a sentence about the wrong kind of thing.
 - `app/Enums/CoveKind.php` — `Brand`, `isEntity()`
 - `app/Services/Cove/EntityRails.php`
 - `app/Services/Ai/Prompts/Defaults.php` — `BRAND_SYSTEM`, `BRAND_PROMPT`
-- `app/Services/Shops/ShopDirectory.php` — the shop slug rule and membership
 - `app/Http/Controllers/BrandController.php` — `cove()`, `covePage()`, and the landing-page rule
 - `app/Http/Controllers/ShopsController.php` — `coveSlugs()`, and where a directory row points
 - `app/Http/Controllers/GuideController.php` — `entityPage()`, `shopRails()`, `shopVocabulary()`
@@ -241,9 +240,9 @@ shop page would be a sentence about the wrong kind of thing.
 
 ## Open
 
-- **`PlanDrafter` refuses `brand`**, like advice and shop: nothing in the catalogue proposes which
-  brand is worth writing about. The candidate list is not a mystery, though — it is the brands that
-  already exist in a market and have no Cove yet, and a drafter arm for that is worth considering.
+- **`PlanDrafter` has no brand arm.** `POST /coves/drafts {kind: brand}` is a 500 and the Automation
+  grid's `plan` cell for brand is switchable. It should refuse like advice and shop, or draft from
+  the brands in a market with no Cove yet, which is the obvious candidate list.
 - **The popular rail includes the described shop's own chart.** Ordering `/shops/bol-com` by bol's
   ranks is the most exposed reading of the narrowed rule. `PopularRank.source` makes excluding it a
   one-clause change if attribution ever matters.

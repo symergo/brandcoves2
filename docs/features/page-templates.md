@@ -82,7 +82,7 @@ added next year without touching a block, the schema or the admin.
 
 | Token | Level | Returns | Notes |
 |---|---|---|---|
-| `:term` `:brand` `:count` `:shown` `:shops` `:comparable` `:reduced` `:percent` `:low` `:high` `:brands` `:shop` `:category` `:categories` | inline | text | Read off the products **on this page**, never the whole result set — a reader can check a claim about twenty-four visible products and cannot check one about four hundred they will never see. `:count` is the one exception and says so. |
+| `:term` `:brand` `:entity` `:count` `:shown` `:shops` `:comparable` `:reduced` `:percent` `:low` `:high` `:brands` `:shop` `:category` `:categories` | inline | text | Read off the products **on this page**, never the whole result set — a reader can check a claim about twenty-four visible products and cannot check one about four hundred they will never see. `:count` is the one exception and says so. |
 | `:brand_links` | inline | links | The brands in these results, each to its own page. Only brands that have one: a brand needs three products before it earns a page, and a link to a 404 from a sentence on every search page is the worst possible place for one. |
 | `:term_links` | inline | links | The vocabulary of the results, each to a narrower search. Also rendered as chips above the grid, so putting it in `above_grid` shows the same words twice. |
 | `:term_page_link` `:brand_page_link` | inline | links | The subject of the page, linked to the canonical page for it — and plain text on the page it would link to, because a self-link is noise for a reader and a wasted signal for a crawler. |
@@ -142,17 +142,21 @@ mentions it, on every page, for ever, and nothing throws or logs.
 | `search.below_grid` | after the products, up to three columns | yes | yes |
 | `search.empty_state` | under the "nothing found" line | yes | yes |
 | `brand.above_grid` | between the brand heading and the first card | no | no |
-| `brand.below_grid` | full width, after both columns | yes | yes |
+| `brand.below_grid` | full width, after both columns | emptied 2026-09-06 | no |
 | `brand.empty_state` | under the "nothing here" line | yes | yes |
+| `brand_cove` / `shop_cove` . `above_prose`, `below_prose`, `sidebar` | written brand and shop pages | no | no |
+
+See [cove-entities.md](cove-entities.md) for the written brand and shop pages these last three
+regions belong to.
 
 ### Which URLs may carry copy
 
-`above_grid` and `below_grid` are suppressed on any page a crawler is told to ignore — page two, a
-filtered URL, a brand sub-search, a re-sorted list. That is not an editorial rule: repeating several
-hundred words across dozens of near-identical `noindex` URLs is the doorway-page pattern at scale, and
-it is the reason `SearchController::isThin()` and `BrandController::isThin()` exist.
+`above_grid` and `below_grid` are suppressed on thin variants — page two, a filtered URL, a brand
+sub-search, a re-sorted brand list (`SearchController::isThin()`, `BrandController::isThin()`). Those
+were `noindex` until 2026-09-12; the copy stays off them because repeating several hundred words
+across near-identical URLs is the doorway-page pattern.
 
-`empty_state` takes the **opposite** guard. It renders because the page is empty, and on `noindex`
+`empty_state` takes the **opposite** guard. It renders because the page is empty, and on thin
 variants too. The doorway argument is about what a crawler is shown repeatedly; that region is for the
 reader, and a dead end is exactly where a way out belongs. This is why guards belong to regions rather
 than to pages.
@@ -179,10 +183,10 @@ about to ignore it will read it.
 2. One line in `RegionRegistry::PAGES` — an explicit list, never directory auto-discovery: a rename
    should fail at boot, not silently retire a region and orphan its blocks.
 3. A `PageContext` for that page producing exactly those facts and answering exactly those conditions.
-4. The controller builds the context, calls `PageCopy::forRegion()`, and passes the result as a prop.
-5. The page component renders it through `PageBlocks` (flow) or `BlockSections` + `PageNarrative`
-   (columns).
-6. `npm run build` and **commit the SSR bundle** — `bootstrap/ssr/ssr.js` is tracked.
+4. The controller builds the context, calls `PageCopy::forRegion()` (wrapped in
+   `BlockSections::assemble()` for a column layout), and passes the result as a prop.
+5. The page component renders it through `PageBlocks` (flow) or `PageNarrative` (columns).
+6. Nothing to commit for SSR: `/bootstrap/ssr` is gitignored and the Docker frontend stage builds it.
 
 Then adding a *place* is a deploy and adding *text* is not, which is the whole arrangement.
 
@@ -348,4 +352,4 @@ the bundle it started with.
   orphans and bulk delete. Worth adding back as a `PageBlockResource`.
 - **Reordering is drag-and-drop**, not the up/down buttons `CuratePlan` uses. Defensible because
   nothing is written until Save and a mis-drop is undone by reloading — but it is a divergence.
-- **`copy_templates` is still there**, unread, until the follow-up migration drops it.
+- **`copy_templates` is still there**, unread, as of 2026-09-15; its drop is not yet scheduled.

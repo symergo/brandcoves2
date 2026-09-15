@@ -66,6 +66,9 @@ Two smaller rules in the same spirit:
 - **It runs only on a list that is already shared.** A quiz reveals what is on
   the list, so publishing one over a private list would be a leak that never went
   through the sharing switch. Un-sharing the list takes the quiz with it.
+- **Only on a wish list (`mine`).** Over a list about somebody else it would publish one person's
+  research about a third; `ListQuizController::store()` refuses any other kind. See
+  [list-taxonomy.md](list-taxonomy.md#a-question-that-stopped-having-two-answers).
 - **No claim state anywhere.** Invariant #4 covers the quiz exactly as it covers
   the list.
 - **The payload never contains the answer.** `ListQuiz::questions()` strips it.
@@ -92,21 +95,6 @@ without that it is a toy.
 The owner sees an aggregate ("7 played, average 3/5") carrying nothing about
 claims and nothing about who played.
 
-## Files
-
-- `app/Services/Gift/QuizBuilder.php` — pure; owns the distractor rules
-- `app/Models/ListQuiz.php`, `ListQuizAttempt.php`
-- `app/Http/Controllers/ListQuizController.php`
-- `resources/js/Pages/Quiz/Play.tsx`
-- `tests/Feature/ListQuizTest.php`
-
-## Later
-
-**Match-the-gift-to-the-person** across a family or a Secret Santa group — a set
-of people who each have a list — follows almost free from this machinery, but
-only after the one-person version has proven itself.
-
-
 ## One go each, enforced
 
 Fixed 2026-08-16. The docblock above the attempt write said *"Replaying until you score five out of
@@ -132,3 +120,17 @@ existed in all four languages.
 It read "Share your score" — the label of the real share control on the result screen — on a form
 nobody had finished, and it was disabled with nothing saying why. It says "See how you did" now
 (`quiz.submit`), with "3 of 5 answered" beside it while it is off.
+
+## Files
+
+- `app/Services/Gift/QuizBuilder.php` — pure; owns the distractor rules
+- `app/Models/ListQuiz.php`, `ListQuizAttempt.php`
+- `app/Http/Controllers/ListQuizController.php`
+- `resources/js/Pages/Quiz/Play.tsx`
+- `tests/Feature/ListQuizTest.php`
+
+## Later
+
+**Match-the-gift-to-the-person** across a family or a Secret Santa group — a set
+of people who each have a list — follows almost free from this machinery, but
+only after the one-person version has proven itself.

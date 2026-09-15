@@ -73,7 +73,8 @@ never told the French twin lives at `/be-fr/zoek/...`.
 - `app/Http/Controllers/SearchController.php` — reads the path term; canonical
 - `app/Services/Seo/Alternates.php` — hreflang per market word
 - Producers switched: `SearchTermStats`, `SearchAlert::searchPath()`, `CoveRail`, `CoveMarkup`,
-  `ScanController`, `Pages/Search.tsx`, `Pages/Home.tsx`
+  `ScanController`, `RecentSearches`, `SubjectLink`, `SearchContext::narrowUrl()`, `Pages/Search.tsx`,
+  `Components/SearchCard.tsx`
 - `tests/Feature/SearchUrlTest.php`
 
 ## See also

@@ -103,7 +103,8 @@ return [
         //
         // 0.45 is a starting point: below Postgres' 0.6 default so single
         // misspelled words still match, but not so low that unrelated products
-        // leak in. Must be re-tuned against a real catalogue in Phase 2.
+        // leak in. Still the starting value — it was chosen with two rows in
+        // the table and has not been re-tuned against the real catalogue.
         //
         // THIS VALUE IS APPLIED AS A SESSION SETTING, not as a WHERE clause.
         // `pg_trgm.word_similarity_threshold` is what the `<%` operator compares
@@ -118,12 +119,13 @@ return [
         // What `<%` meant before the threshold above became global: Postgres'
         // own default.
         //
-        // Discover's anchor lookup and the narrative's related-search chips were
-        // written against 0.6 and are not search — they answer "what is near
-        // this?", where a loose match is a wrong neighbour rather than a
-        // forgiving typo. Lowering the session threshold would have widened them
-        // as a side effect, so both re-check against this explicitly. The `<%`
-        // still drives the index; this only narrows what survives.
+        // Unread. Discover's anchor lookup and `RelatedSearchQuery::for()`
+        // (removed 2026-09-05) were written against 0.6 and re-checked against
+        // this explicitly, because both answer "what is near this?", where a
+        // loose match is a wrong neighbour rather than a forgiving typo. Both
+        // readers are gone, and nothing re-checks against this key any more.
+        // Left in place rather than dropped, in case a future "what is near
+        // this?" feature needs it back.
         'trigram_threshold_strict' => 0.6,
 
         // Live connector results are cached this long. Long enough to absorb a
@@ -444,9 +446,9 @@ return [
         | affordable thing to the bottom — and look exactly like a working
         | feature while doing it.
         |
-        | Keys mirror the shape the discovery modes' profiles had (removed 2026-09-07) on
-        | purpose, so folding these into the discovery dial later is a data
-        | change rather than a rewrite.
+        | Keys mirror the shape the discovery modes' profiles had. The discovery
+        | modes themselves were removed on 2026-09-07 (see discovery-modes.md),
+        | so there is no dial left to fold these into; the shape just stayed.
         */
         'profiles' => [
             'for_someone' => [
@@ -459,10 +461,10 @@ return [
                     // twenty points to do that.
                     'surprise' => 10,
                     'vibe' => 10,
-                    // Which way their taste goes: modern or vintage, cosy or
-                    // sleek. Half of vibe, because the right present in the
-                    // wrong finish still beats the wrong present in the right
-                    // one.
+                    // Which way their taste goes: modern or vintage, natural
+                    // or technical, and the rest of the seven axes. Half of
+                    // vibe, because the right present in the wrong finish
+                    // still beats the wrong present in the right one.
                     'preference' => 5,
                     'values' => 10,
                     // An editor's `recipient:mother` tag meeting "mother" in
@@ -1344,8 +1346,9 @@ return [
             'cooldown_seconds' => 300,
         ],
 
-        // Deferred to Phase 8. The connector is written and registered but
-        // disabled, so enabling it is a credentials step rather than a refactor.
+        // Deferred to Phase 8. No connector class exists yet (grep AmazonConnector
+        // returns nothing) — enabling this needs the connector built and
+        // registered, not just credentials. See docs/features/market-supply.md.
         'amazon' => [
             'enabled' => (bool) env('AMAZON_ENABLED', false),
             'access_key' => env('AMAZON_ACCESS_KEY'),

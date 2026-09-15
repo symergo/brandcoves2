@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\DB;
  * ## The constraint that shapes everything here
  *
  * Editorial rows point at products by **environment-local integer id** —
- * `daily_picks.group_id`, `guide_items.group_id`, `cove_plans.pinned_group_ids`.
+ * `daily_picks.group_id`, `cove_plan_items.group_id`, `cove_plans.pinned_group_ids`.
  * Each environment assigns those ids from its own ingestion, so they do not
  * line up. Copying rows verbatim would not fail; it would point a hand-picked
  * Cove at whatever product happens to hold that id on the far side. **A wrong
@@ -43,9 +43,10 @@ use Illuminate\Support\Facades\DB;
  * it is the only handle both environments agree on.
  *
  * A reference the target cannot resolve is **dropped and named** — never
- * guessed at, never left dangling. `guide_items.group_id` is `NOT NULL`, which
- * makes dropping the only option there anyway; the rest follow the same rule so
- * the behaviour is one rule rather than a table of exceptions.
+ * guessed at, never left dangling. The rule was forced first by
+ * `guide_items.group_id`, which was `NOT NULL`; that table was dropped on
+ * 2026-09-06 and the rule stayed, so the behaviour is one rule rather than a
+ * table of exceptions.
  *
  * ## Allowlist, not denylist
  *

@@ -29,7 +29,7 @@ use Inertia\Response;
 /**
  * The Gift Whisperer.
  *
- * Describe someone, get four suggestions with a reason attached to each. The
+ * Describe someone, get eight suggestions with a reason attached to each. The
  * wizard is a GET page so it can be indexed and shared; the results come from a
  * POST, because a brief is a description of a real person and does not belong
  * in a URL that ends up in a referrer header or a browser history someone else
@@ -112,7 +112,7 @@ class GiftController extends Controller
     /**
      * "Show me something else" — one rejection, a whole board back.
      *
-     * ## Why this renders four cards and not one
+     * ## Why this renders eight cards and not one
      *
      * It used to score with `withLimit(1)` and render `picks` as that single
      * replacement, so the four-card grid collapsed to one card: the three the

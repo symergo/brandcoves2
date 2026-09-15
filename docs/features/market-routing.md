@@ -130,16 +130,12 @@ The root redirect, the legacy-URL 404 mapper and the guest/auth redirects in `bo
 ask `MarketPreference::resolve()`. A visitor who chose Belgium gets Belgium from those, not just from
 the homepage.
 
-**With one known gap: the legacy-URL 404 mapper cannot see the cookie.** A 404 is thrown by the
-router when nothing matches, which is *before* the `web` group runs — so `EncryptCookies` has not
-decrypted anything and `$request->cookie()` hands back the raw ciphertext. `Market::tryFrom()` fails
-on it and `stored()` returns null, so that path silently negotiates from `Accept-Language`.
-
-Left as is deliberately. The failure mode is "behaves the way it did before the cookie existed" on
-inbound v1 WordPress links only, and closing it means hand-decrypting the cookie against
-`CookieValuePrefix` outside the middleware that owns that job — more moving parts, and version-bound
-to internals, than the bug is worth. If it ever does matter, the cheaper fix is to promote
-`EncryptCookies` to global middleware rather than to decrypt by hand here.
+**The gap this section used to record is closed.** Until 2026-09-06 the legacy-URL mapper ran in
+the 404 handler, before the `web` group, so it saw the `bc_market` cookie still encrypted and fell
+back to `Accept-Language`. The two `Route::fallback()` entries added for
+[not-found.md](not-found.md) run inside the `web` group, so `EncryptCookies` has decrypted the
+cookie by the time `NotFoundController` asks `MarketPreference::resolve()`. Only a POST to an
+unknown URL still skips the middleware, and nobody follows a v1 link by POST.
 
 ## Published markets
 

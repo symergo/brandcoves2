@@ -84,11 +84,10 @@ Drag and drop was the obvious shape and is the wrong one:
 
 So: a control on the row, and a list of destinations by name.
 
-**The control is an icon on a list row and words in the Ask panel.** On a list
-row it sits beside the remove control at the end of every item, and "Kopieer naar
-een ander lijstje" was longer than most of the product titles it lined up
-against — repeated down twenty rows it read as the page's main verb, which it is
-not. In the Ask panel it *is* the point of the row, and it stands beside a text
+**The control is an icon on a hand-written row and words in the Ask panel.** Since 2026-09-12 only
+an item typed in by hand carries it on a list row — a catalogue row carries the save picker — as a
+round chip on the card; "Kopieer naar een ander lijstje" was longer than most titles and read as the
+page's main verb. In the Ask panel it *is* the point of the row, and it stands beside a text
 "Claim" button rather than in a column of glyphs, so it keeps its words. The name
 is spoken either way, through `aria-label` and `title`.
 
@@ -117,7 +116,7 @@ keeping both components anyway.
 | Service | [app/Services/Wishlist/ItemMover.php](../../app/Services/Wishlist/ItemMover.php) |
 | Endpoints | [app/Http/Controllers/ItemTransferController.php](../../app/Http/Controllers/ItemTransferController.php) — `POST /lists/{list}/items/{item}/copy`, `POST /l/{token}/items/{item}/copy` |
 | Component | [resources/js/Components/CopyToList.tsx](../../resources/js/Components/CopyToList.tsx) |
-| Rendered | `Lists/Show.tsx` on every item, `ListTools.tsx` on every Ask row |
+| Rendered | `Lists/Show.tsx` and `Lists/Shared.tsx` on hand-written items only (catalogue items get `SaveToList`); `ListTools.tsx` on every Ask row |
 | Copy | `site.lists.copy_to`, `copy_to_which`, `copied_to`, `add_to_my_list` |
 | Tests | [tests/Feature/CopyItemToListTest.php](../../tests/Feature/CopyItemToListTest.php) |
 

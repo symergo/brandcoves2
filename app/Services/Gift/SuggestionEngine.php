@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\DB;
  * "no alcohol" holding on the suggestions page and quietly not holding the
  * moment somebody uses the search box.
  *
- * Four suggestions out of a catalogue of tens of thousands, in under 100 ms, on
+ * Eight suggestions out of a catalogue of tens of thousands, in under 100 ms, on
  * a request that must never cost an AI call. Everything expensive or
  * non-deterministic happened earlier: giftability was classified after the last
  * ingest, and the interest → query map was widened overnight. This class is

@@ -80,8 +80,9 @@ that per guide rather than per kind, so a writer who keeps the two sections apar
 
 ## The rule the prompt bank cannot delete
 
-`ProseCards::promptContract()` lives next to the walk that enforces it, and both `EditionBuilder` and
-`GuideWriter` append it after the editable system prompt:
+`ProseCards::promptContract()` lives next to the walk that enforces it, and both `CovePrompt` (which
+assembles the Daily and persona prompt `EditionBuilder` sends) and `GuideWriter` append it after the
+editable system prompt:
 
 > - Write about EVERY product listed below. Each one gets its own paragraph, naming it with its link
 >   token where it is discussed.
@@ -98,9 +99,9 @@ Curation still adds two rules on top — *take them in the order given*, and *th
 is here* — because those are facts about the plan in front of the builder, which `ProseCards` knows
 nothing about. What curation no longer decides is **whether** every product is covered.
 
-## Three numbers moved with it
+## Five numbers moved with it
 
-All three are the same failure: a cut that lands mid-paragraph in the last product takes its link
+All five are the same failure: a cut that lands mid-paragraph in the last product takes its link
 token with it, so that product loses its card as well as its sentences.
 
 | | Was | Now | Why |

@@ -62,12 +62,12 @@ class WishlistController extends Controller
          * are we choosing together — so they select different rows through
          * different scopes rather than narrowing one pile.
          *
-         * `mine` answers the broadest of the three and therefore contains the
-         * other two: it is the page a person opens to find *a list*, and a page
-         * called My Lists that omits half of them sends people hunting through
-         * a nav menu for the one they are looking straight past. The narrow
-         * views still exist for the times the question really is only one of
-         * them.
+         * Since the 2026-09-13 split by whom a list is for, `mine` is "My wish
+         * lists" — my own `mine`-kind lists, and only those. `shared` is "For
+         * others" — my own `for_someone` lists plus what others have shared
+         * with me — and `group` is every group list I have a part in. None is
+         * a superset of the others any more; a list appears in exactly the
+         * view that matches who it is about.
          *
          * This replaces an earlier `?shared=1` that meant `visibility !=
          * private`, i.e. *"a list I own that I have shared outward"*. That is a
@@ -112,20 +112,11 @@ class WishlistController extends Controller
             ->whereNot(fn ($q) => $owner->scope($q));
 
         /*
-         * My Lists is now the whole picture: everything I own, and everything
-         * anybody has let me into, in one place with labelled sections.
-         *
-         * The three views remain three questions — the nav still asks each one
-         * on its own — but "where is that list?" was answerable only by
-         * guessing which of the three it had been filed under, and the two
-         * narrow views are reachable from one entry each. So the broad one is
-         * the superset and the sections carry the distinction that the separate
-         * pages used to carry.
-         *
-         * They are still separate QUERIES rather than one widened scope,
-         * because the suggestion count may only be attached to rows I own — see
-         * `rows()`. A single `ListAccess::scope()` with a `withCount` would put
-         * a message addressed to somebody else on their card in my list.
+         * Each view is its own query rather than one widened scope filtered
+         * afterwards, because the suggestion count may only be attached to
+         * rows I own — see `rows()`. A single `ListAccess::scope()` with a
+         * `withCount` would put a message addressed to somebody else on their
+         * card in my list.
          */
         /*
          * Three views, by whom the lists are for (owner's call, 2026-09-13).

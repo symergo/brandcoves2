@@ -35,37 +35,5 @@ answer the same "show me something" with editorial rather than a slider.
 `App\Services\Discovery\*` is a different namespace — catalogue-level signals (trends,
 serendipity, freshness, catalogue age) that the Surprise page, the Daily Cove builder and the
 charts use. `CatalogueAge` lost its one mode-specific test and kept the rest. `/discover-cove`,
-the hub page, is unrelated and stays.
-
-## Find a gift opens with the search card (2026-09-13)
-
-At the owner's request the `/discover-cove` page carries the same `SearchCard` as the home page,
-right under its title and intro, before the four cards. Somebody who chose "Find a gift" in the
-header most often knows what they are looking for, and the field is the shortest way there; the
-Daily Cove, Surprise, the Coves and Ask remain below for the ones who do not.
-
-## After the search: today, the days before, then the map (2026-09-13)
-
-At the owner's request the Find a gift page now reads, top to bottom: the search card, Today's
-Cove, a list of the editions before it (a week, newest first, each row a date and a title linking
-to that edition's page, with "All editions" to the Daily Cove's archive), and only then the cards
-for every kind of Cove. The cards had sat directly under the search, so the map came before any
-of the territory; a visitor who liked today's edition now sees at once that there was a yesterday.
-The list is `DiscoverCoveController::dailies()`, which is "the newest editions by `drop_date`,
-skipping the first", the first being exactly what `today()` shows. The bands below the cards
-(Surprise, questions, personas, guides) are unchanged.
-
-## The Whisperer sits under the search card on this hub (2026-09-14)
-
-`GiftWizardCard` is a dozen interest chips and a budget, directly under the search card on
-`/discover-cove` — the shape the front page gives the list wizard, and for the same reason: the
-search card answers the visitor who knows what they want, and the card under it answers the one who
-does not. On a page called "Find a gift" that is most of them. The Whisperer is the first entry in
-the menu again the same day; see [navigation.md](navigation.md) for what changed in between.
-
-It is a teaser, not a second wizard. The submit posts the brief to `/{market}/gift`, the same
-endpoint the full wizard's own form posts to, so the visitor lands on the Whisperer page at its own
-address with the board already on it and there is no lesser result screen to keep in step with this
-one. The five questions the chips skip — age, vibe, taste, what to avoid, who it is for — are one
-link away, and the controller sends every interest so what the card shows is a layout decision
-rather than a payload one.
+the hub page, is unrelated and stays; its later changes are in
+[navigation.md](navigation.md#the-discover-hub-lists-the-coves-themselves).

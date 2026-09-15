@@ -64,8 +64,9 @@ The search page, and the footer:
 
 | Surface | Link |
 |---|---|
-| Search page | Under the box, above the results, `search_help.link` |
 | Footer, every page | In the explore row, `search_help.footer_link` |
+| Popular searches | Under the lists, `search_help.footer_link` |
+| Search landing (no term) | A tool card, `search_help.title` + `search_help.intro` |
 
 Both changed on 2026-09-04. **The footer was added** because a search field is the right place to
 *offer* the page and the wrong place to *find* it later: somebody who read the results, gave up and
@@ -80,6 +81,9 @@ answered by trying, and the hero's own job is to get somebody into the box. On `
 line arrives after a result set, which is where somebody actually wants it. One offer beside a search
 that has run, plus a permanent footer entry, is the whole of it.
 
+*Changed 2026-09-07:* the link under the box went at the owner's request. Since 2026-09-13 the bare
+search page offers it as one of its tool cards.
+
 It links under a second, shorter name. `search_help.link` is a question ("What can I search for?"),
 which works directly under a box that has just disappointed somebody and reads oddly in a row of
 nouns beside *Brands* and *Privacy*; `search_help.footer_link` is the noun ("Search tips"). Two names
@@ -91,8 +95,8 @@ applies here too: this is not a *section* of the site, it is documentation of a 
 belongs beside the control. A nav entry would claim a sixth destination that is not one.
 
 Listed in the sitemap at priority 0.4, monthly. "How do I scan a barcode to compare prices" is a real
-query with real intent, and `/search` itself cannot answer it — a results page with nothing on it
-until somebody types.
+query with real intent, and `/search` itself cannot answer it — a landing of ways in (recent
+searches, the visitor's brands, the site's tools) until somebody types.
 
 ## Files
 

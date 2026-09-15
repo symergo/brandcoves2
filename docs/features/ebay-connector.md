@@ -28,7 +28,7 @@ The search sends `filter=conditions:{NEW},buyingOptions:{FIXED_PRICE}`
 (`giftcoves.connectors.ebay.filter`). Both halves are deliberate, and both cost recall:
 
 - **Fixed price only.** An auction's number on screen is a *bid*, not a price. Feeding it into the
-  min/median aggregates behind "cheapest offer" would make that badge a claim that stops being true
+  `min_price` and `previous_price` aggregates behind "cheapest offer" would make that badge a claim that stops being true
   the moment somebody else bids — and the badge is the one thing on the page that has to be exactly
   right.
 - **New only.** Used goods are genuinely giftable and this still excludes them, because condition on
@@ -82,9 +82,10 @@ Three things soften it, and none of them fixes it:
 
 - `BrandAttribution` fills the brand in when the *query itself* was a brand name, which is exactly
   when it matters most (a Sony page showing Sony listings) and gives those rows a fallback identity.
-- `fetchById()` calls the detail endpoint and **does** get `gtin` and `brand`. Nothing calls it yet
-  — it is the `LiveConnector` contract, and no re-check job exists for any source — but it is
-  where a barcode comes from when one does, and a re-checked offer groups properly from then on.
+- `fetchById()` calls the detail endpoint and **does** get `gtin` and `brand`. `RefreshWishlistedProducts`
+  calls it twice a day for every watched product with a live offer (since 2026-09-06), so a watched
+  eBay offer picks up its barcode and groups properly from then on. Unwatched results are never
+  re-checked.
 - eBay titles are written for eBay's search engine — `NEW Sony WH-1000XM5 Wireless Headphones Black
   *FREE SHIPPING*` — so a brand parsed out of one would be a guess, and a wrong brand splits a
   product or mislabels a facet. Left null on purpose.
@@ -108,7 +109,8 @@ The `X-EBAY-C-ENDUSERCTX: affiliateCampaignId=…` header is what makes eBay ret
 works, the links still resolve — and **no click is ever attributed**. Nothing on the site reports a
 problem; it shows up months later as an empty EPN statement.
 
-This is bol's site-id trap exactly ([search.md](search.md) tells the same story), which is why
+This is bol's site-id trap exactly (see `Market::bolPartnerSiteId()` and
+[market-supply.md](market-supply.md#serving-and-earning-nothing)), which is why
 `bc:check-ebay` prints a missing campaign id in red and its result table has a `Tracked link`
 column. That column tests for `campid=` / `mkcid=` and **not** for the host: the tracked and
 untracked URLs are the same `ebay.xx/itm/…` link, so a host check would print a green "yes" on every

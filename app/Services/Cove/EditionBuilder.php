@@ -478,7 +478,7 @@ class EditionBuilder
      * overwriting prose a reader is reading with a placeholder, because a
      * request timed out at 04:40, is a downgrade nobody asked for.
      *
-     * Returns whether anything was rewritten, so `bc:refresh-cove-copy` can
+     * Returns whether anything was rewritten, so `bc:refresh-guide-copy` can
      * report honestly rather than counting attempts as successes.
      */
     public function refreshCopy(DailyPickSet $edition): bool

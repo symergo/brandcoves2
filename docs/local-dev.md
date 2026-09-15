@@ -104,6 +104,17 @@ owner, and then `Start-ScheduledTask "GiftCoves Dev Server"`. Note that `dev-sto
 `storage/framework/dev-server.stop` file that the next supervisor start consumes and exits on, so
 starting the task immediately after stopping it appears to do nothing.
 
+## `composer dev` must not run Pail
+
+Pail streams the log and needs `pcntl`, which does not exist on Windows, so it crashes the moment it
+starts. `concurrently` runs the stack with `--kill-others`, so that crash took `artisan serve` down
+with it and left `localhost:8000` refusing connections seconds after start-up. It reads as "the dev
+server never came up", because by the time you look, it hasn't. Read the log file instead:
+
+```powershell
+Get-Content storage\logs\laravel.log -Wait -Tail 50
+```
+
 ## Day to day
 
 ```powershell

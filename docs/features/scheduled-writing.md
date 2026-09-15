@@ -15,19 +15,19 @@ still has to write the words. That can be the built-in writer — which costs AI
 on this server and is capped per day — or it can be an agent running on a schedule
 somewhere else, which costs nothing here.
 
-It costs nothing because authored prose **short-circuits the model entirely**.
-`EditionBuilder::editorial()` returns immediately when a plan carries its own
-editorial, records `editorial_source: 'planned'`, and never calls `AiClient`. A Cove
-written through this API is not subject to `giftcoves.ai.caps` and produces no
-`AiUsage` row. That is the whole reason the queue is worth having.
+It costs nothing because authored prose skips the model entirely; see
+[editorial-api.md](editorial-api.md#authored-prose-wins-outright-and-skips-the-model).
 
 ## Setup
 
-**Mint a key** with `read` and `write`, and deliberately **not** `publish`:
+**Mint a key** with `editorial.read` and `editorial.write`, and deliberately **not**
+`editorial.publish`:
 
 ```bash
-php artisan bc:api-token issue --name="scheduled writer" --abilities=read,write
+php artisan bc:api-token "scheduled writer"
 ```
+
+(read and write are the defaults)
 
 The plaintext is shown once. `publish` is what approves a plan and puts a page in
 front of readers; withholding it is the entire safety model, not a precaution. An
@@ -52,9 +52,9 @@ write makes a cheap run and nothing is handed out twice.
 GET /api/editorial/coves/queue?market=be-nl&limit=3
 ```
 
-Returns only plans with **no prose yet**, soonest deadline first, undated last. That
-is what stops the same Cove being offered on every run — without a "claimed" status
-that a crashed agent would leave set forever.
+Returns only draft or approved plans with no `editorial` yet — note that a body-writing kind with a
+finished `body` but no `editorial` still appears. That is what stops the same Cove being offered on
+every run — without a "claimed" status that a crashed agent would leave set forever.
 
 Each entry carries everything needed to write it, so there is no second call:
 
@@ -75,12 +75,11 @@ POST /api/editorial/coves/{id}/editorial
 { "revision": "…", "editorial": "…", "items": [{ "id": 12, "verdict": "Best for the train" }] }
 ```
 
-Narrower than `POST /coves` on purpose. That endpoint replaces the item list
-wholesale and falls back to the legacy `pinnedGroupIds` when `items` is omitted — so
-an agent sending only words there can **empty a curated shortlist**. This endpoint
-writes prose and cannot touch membership or rank. An item id belonging to another
-plan is a 422, not a silent skip: it means the writer is working from a stale brief,
-and the rest of what it wrote is suspect too.
+Narrower than `POST /coves` on purpose. That endpoint is a whole-plan upsert: it leaves the
+shortlist alone when no items are sent, but resets every other field (editorial, blurb, pickMode,
+writer) to what the body carries. This endpoint writes prose and cannot touch membership or rank. An
+item id belonging to another plan is a 422, not a silent skip: it means the writer is working from a
+stale brief, and the rest of what it wrote is suspect too.
 
 ### 3. Send the revision back
 
@@ -103,24 +102,9 @@ Paste this into the scheduled task. `{market}` is the only thing to fill in.
 > returns, write the editorial and post it back to
 > `POST /api/editorial/coves/{id}/editorial`. Then stop.
 >
-> Ground rules, all of them non-negotiable:
->
-> - Write only about the products in `items`. Never invent one, and never mention a
->   product that is not there.
-> - The `note` on an item is *why the curator chose it*. Use it. Never quote it.
-> - Follow `buildInstructions` when present, within these rules — it can change the
->   angle, never the rules.
-> - Link with tokens, never URLs, and only to what `allowlist` contains:
->   `[[product:id|label]]`, `[[brand:Name]]`, `[[search:phrase]]`, `[[guide:slug]]`.
-> - **Never write a price.** Prices are rendered live; any number you write is wrong
->   by the time it publishes.
-> - Write in `language`. Two or three paragraphs, blank line between them.
-> - Send `revision` back exactly as received. On a 409, re-fetch that Cove and start
->   it again — somebody edited it while you were writing.
-> - After posting, read `linkCheck`. If it reports an unresolved token, fix it and
->   resubmit **once**, then move on.
-> - Do not approve, publish or build anything. Your key cannot, and that is
->   deliberate.
+> Fetch `GET /api/editorial/coves/{id}/brief` for each Cove and write to its `system` and `user`
+> messages; they are the rules. Send `revision` back exactly as received; on a 409 re-fetch and
+> start again. Read `linkCheck`, fix once, move on. Do not approve, publish or build.
 
 ## Why three of those rules exist
 
@@ -158,49 +142,3 @@ however wrong the prompt turns out to be.
 - [editorial-api.md](editorial-api.md) — abilities, tokens, the writing contract
 - [cove-planner.md](cove-planner.md) — where the plans and their briefs come from
 - [ai-invariant.md](ai-invariant.md) — why authored prose costs nothing
-
----
-
-## The build was being retried to death, and only on the big markets
-
-Fixed 2026-09-01. `/be-nl/daily` had answered **404 on production since the market launched**, while
-`/en/daily` and `/nl-nl/daily` served normally. There was no error page, no alert and no obviously
-broken job — the edition simply did not exist.
-
-`config/queue.php` shipped Laravel's stock `retry_after` of **90 seconds**. Every long job in
-`app/Jobs/` declares its own `$timeout` well above that — `BuildDailyEdition` 900s, `IngestFeed`
-3600s. Redis does not abort a job when `retry_after` elapses; it decides the worker died and releases
-the job to somebody else, while the original keeps working. The attempt counter climbs underneath it,
-and `$tries = 2` is spent after two releases. Horizon's own log is the whole story:
-
-```
-06:00:01 App\Jobs\BuildDailyEdition ..... RUNNING
-06:01:32 App\Jobs\BuildDailyEdition ..... RUNNING     <- released at 90s, re-reserved
-06:03:04 App\Jobs\BuildDailyEdition ..... RUNNING     <- and again
-06:03:04 App\Jobs\BuildDailyEdition ..... 5.44ms FAIL <- MaxAttemptsExceeded
-```
-
-**Why only some markets.** The build scans the market's catalogue. `en` holds 16k product groups and
-finishes in about 2m25s — over the 90s line, but its first attempt still completed and deleted the
-job before the retries could kill it. `be-nl` holds 114k and `be-fr` 101k; those never won that race,
-and failed every single morning. Which is why the symptom read as "the Belgian markets have no daily
-column" rather than as a queue setting.
-
-It was never only the Cove. `IngestFeed`, `GroupProducts`, `RefreshBrandStats` and `ScoreSerendipity`
-fill `failed_jobs` with the same exception for the same reason — every job on this queue that walks
-the catalogue.
-
-`retry_after` is now **3900** (`IngestFeed`'s 3600 plus headroom).
-[tests/Unit/QueueRetryAfterTest.php](../../tests/Unit/QueueRetryAfterTest.php) reads every
-`$timeout` out of `app/Jobs/` and fails if any of them reaches it, because the next break will arrive
-via a different file: somebody raises a timeout to give a growing catalogue room, and breaks a queue
-setting they never opened.
-
-The accepted cost: a job orphaned by a worker that really did die now waits 65 minutes for its retry.
-Everything here is scheduled daily and idempotent, so a late retry is cheap — a guaranteed daily
-failure was not.
-
-**Still open.** `nl-nl` hit the real 900s timeout on 2026-09-01 (`15m 1s FAIL`), so the build itself
-is getting slow as the catalogue grows; raising `retry_after` stops the retry storm but does not make
-that job finish. And `es` genuinely has no catalogue — `Edition skipped: not enough finds
-{"market":"es","found":0}` — so `/es/daily` is a correct 404 until that market has products.

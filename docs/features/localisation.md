@@ -97,8 +97,11 @@ qualifier goes into the language*.
 | | en | nl | fr | es |
 |---|---|---|---|---|
 | Gift Cove | Gift Cove | Geschenk Cove | Cove Cadeau | Cove de Regalos |
-| Daily Cove | Daily Cove | Dagelijkse Cove | Cove Quotidienne | Cove Diaria |
-| Editorials index | Coves | Coves | Coves | Coves |
+| Daily Cove | Daily Cove | Cove van de dag (menu) / De Dagelijkse Cove (page title) | Cove Quotidienne | Cove Diaria |
+| All Coves (/coves) | All Coves | Alle Coves | Toutes les Coves | Todas las Coves |
+
+`/guides` is **Shop Smarter** and carries no Cove at all since 2026-09-01; see
+[navigation.md](navigation.md).
 
 `Cove` is half the company name and the URL segment (`/coves`, `/daily`), so
 translating it strands the reader: `nl` had `De Dagelijkse Cove` as the page
@@ -126,16 +129,17 @@ we take for the *names of the hubs*. A hub is a place with a name, like GiftCove
 translated name is a second name for the same place.
 
 > **This is currently half-applied, and the inconsistency is visible.** The rule above still governs
-> `gift_cove.title` (`De Geschenk Cove`, `La Cove Cadeau`, `La Cove de Regalos`), `nav.coves`
-> (`Idee Cove`, `Cove de Ideas`) and the Daily Cove everywhere. So the header and front page say
-> "Gift Cove" while the page they link to is headed "De Geschenk Cove". Either finish the change
-> across the table above or revert the two nav keys — the half-state is the one option that is wrong
-> in every language.
+> `gift_cove.title` (`De Geschenk Cove`, `La Cove Cadeau`, `La Cove de Regalos`) and the Daily Cove's
+> page title (`De Dagelijkse Cove`, while the Dutch menu says `Cove van de dag`). So the header and
+> front page say "Gift Cove" while the page they link to is headed "De Geschenk Cove". Either finish
+> the change across the table above or revert the two nav keys — the half-state is the one option
+> that is wrong in every language.
 
 ## hreflang
 
-Every page emits an `alternate` link for all five markets plus `x-default`
-pointing at the pan-European English market.
+Every page emits an `alternate` link for every **published** market (four today; `es` is hidden,
+see [market-routing.md](market-routing.md#published-markets)) plus `x-default` pointing at the
+pan-European English market.
 
 Without these the five market versions of a page compete with each other in
 search results, and the wrong language can rank in the wrong country.
@@ -143,9 +147,8 @@ search results, and the wrong language can rank in the wrong country.
 `/be-nl/guides/x` maps to `/be-fr/guides/x` rather than collapsing to a
 homepage.
 
-> Guide *slugs* are not translated yet. The alternate resolves and the page
-> loads, which is what hreflang requires; translated slugs are a Phase 6 concern
-> once guides exist per market.
+> Slugs are not translated by the system: each market's Cove carries the slug it was filed under.
+> The alternate resolves where `Alternates` knows a twin.
 
 ## A stored string we wrote: "My wishlist"
 
@@ -204,11 +207,33 @@ silent drift:
 2. Add it to `nl`, `fr` and `es`. The test fails until you do.
 3. Use it via `t('section.key')`.
 
+## Removing copy
+
+The 2026-09-03 pass removed 45 keys from all four languages. Two lessons from it:
+
+**Find the dynamic prefixes first.** Many keys are built at runtime and never appear literally:
+`registry.types.*`, `gift.interests.*`, `gift.vibes.*`, `nav.countries.*`, `ask.status.*` and
+`reminders.lead_*` from enums and jobs, and `lists.about_*`, `lists.empty_*`, `search.view_*`,
+`coves.*` and `gift.step_*` from template literals. A plain grep would have deleted about forty
+live strings. On the frontend a missing key prints the key; in `__()` on the server it fails
+silently.
+
+**A line earns its place by saying something the thing next to it does not.** A hint under a
+control called *Lists* that says you can keep lists goes; a hint under an optional email field
+saying it is only used to reply stays.
+
+`lists.friends`, `friends_empty`, `follow`, `unfollow` and `followed` are unused and were kept on
+purpose: they record a feature somebody means to build.
+
+`LocalisationTest` catches a key removed from one language, not a key removed from all four while
+still rendered; `tsc` cannot either, since `t()` takes a string. A page-by-page read is what stands
+behind a deletion.
+
 ## Not done yet
 
 - **Filament admin is English only.** It is staff-facing, so this is a
   deliberate deferral rather than an oversight.
-- **Emails and notifications** are not localised yet — Phase 3, when magic-link
-  login and price alerts start sending them.
+- **Emails** go out in the language of the market they concern (`locale: $market->language()`),
+  not the reader's current one.
 - **Slugs** are generated from the source title and are therefore in whatever
   language the feed supplied.

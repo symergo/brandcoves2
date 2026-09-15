@@ -28,7 +28,7 @@ Changed 2026-08-29. One boolean used to answer both, and got the second one wron
 | Column | Who reads it | Carries the price ceiling |
 |---|---|---|
 | `giftable` | `SuggestionEngine`, `ListQuizController` | **yes** |
-| `worth_showing` | `SerendipityEngine` (and therefore `/surprise`, the Cove, `OutlierRetriever`), the deals column | no |
+| `worth_showing` | `SerendipityEngine` (and therefore `/surprise` and the Cove), `CoveRail`, the deals column (`DailyCoveController`) | no |
 
 `>€500 is a decision rather than a suggestion` is a sound rule for a gift finder and plainly wrong
 for the editorial surfaces, where an expensive unusual object is exactly what people came to look
@@ -70,6 +70,17 @@ nothing in the list is a substring of them, not because of a special case bolted
 
 Where a compound is still ambiguous, `RESCUES` carries the exception — keyed **by term, not by
 group**, because rescuing at group level would let a lens filter drag printer toner in behind it.
+
+**A term must never sit in the list beside its own prefix.** Found the hard way: `navulling` and
+`navul` both matched a coffee hamper, and the shorter one — reached second, carrying no rescue of
+its own — silently overturned the longer one's rescue. Keep the prefix, hang the rescue on it.
+
+Accent folding is done by an explicit table rather than `iconv('ASCII//TRANSLIT')`, which produces
+different output on glibc, musl and Windows. Tests run on a Windows laptop; production is Alpine. A
+classifier that disagrees with its own test suite depending on the host is worse than none.
+
+The golden file in `tests/Unit/GiftabilityClassifierTest.php` **is** the specification — 31 cases,
+each a real shape from the Awin feeds.
 
 ## What was removed, and what it cost
 
@@ -114,4 +125,4 @@ parameter as text and Postgres will not coerce text into a boolean inside a `CAS
 
 `amazon_products` has its own `giftable` column with a scope reading it and **nothing writing it**.
 Either the Amazon rows should go through this classifier or the column should go; today the scope
-silently matches nothing.
+silently matches nothing. Nothing calls the scope either.

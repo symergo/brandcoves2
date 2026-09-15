@@ -40,8 +40,8 @@ state between "the shipped prompt" and "mine".
 ## Slots
 
 One per Cove kind, plus the theme call: `cove.daily`, `cove.persona`, `cove.guide`,
-`cove.seasonal`, `cove.advice`, `cove.theme`. Derived from `CoveKind::cases()`, so a
-sixth kind does not need remembering in two places.
+`cove.seasonal`, `cove.advice`, `cove.shop`, `cove.brand`, `cove.theme`. Derived from
+`CoveKind::cases()`, so a new kind does not need remembering in two places.
 
 The list lives in code. A row for a slot that no longer exists is **inert** rather
 than a way to reach something it should not — the same reasoning as
@@ -129,6 +129,8 @@ different facts:
 | `cove.guide` | `language` `topic` `title` `direction` `curated` `finds` |
 | `cove.seasonal` | …and `season` |
 | `cove.advice` | `language` `topic` `title` `direction` |
+| `cove.shop` | `language` `topic` `title` `direction` |
+| `cove.brand` | `language` `topic` `title` `direction` |
 | `cove.theme` | `language` `finds` `recent` |
 
 Offering a placeholder the writer never binds is worse than not offering it: it
@@ -150,8 +152,8 @@ has lost its product block asks the model to write about nothing, and **a model 
 to write about nothing writes a plausible article about products that are not on the
 page.** It reads fine and is entirely invented.
 
-`cove.advice` requires only `{language}`: it has no shortlist by definition, so
-requiring a product block there would be a rule that exists purely to be inert.
+`cove.advice`, `cove.shop` and `cove.brand` require only `{language}`: none has a shortlist, so
+requiring a product block would be a rule that exists purely to be inert.
 
 An unknown placeholder is rejected too, naming it, because `{merchnat}` renders as
 nothing and the failure is silent.
@@ -183,10 +185,11 @@ the angle; it cannot overturn a house rule.
 
 ## Deliberately not seeded
 
-`bc:seed-copy` has a documented trap: a seeded slot shadows the language file, so a
-later rewrite of the shipped copy becomes invisible. The trap is worse here, because
-a stale prompt produces plausible output rather than obviously missing text. There is
-no `bc:seed-prompts`, and a row exists only when somebody actually wrote one.
+The copy bank's `bc:seed-copy` (since removed, see [page-templates.md](page-templates.md)) had a
+documented trap: a seeded slot shadowed the language file, so a later rewrite of the shipped copy
+became invisible. The trap would be worse here, because a stale prompt produces plausible output
+rather than obviously missing text. There is no `bc:seed-prompts`, and a row exists only when
+somebody actually wrote one.
 
 ## Safety
 
@@ -218,9 +221,7 @@ escape-then-allowlist rendering, so an edited prompt cannot inject markup into a
 
 ## The list shows every prompt — since 2026-09-01
 
-`prompt_templates` holds **overrides**, and it is deliberately not seeded: a
-stale prompt produces plausible output, which is worse than an obviously missing
-one, so a slot with no row uses what the site shipped with.
+`prompt_templates` holds only overrides (see "Deliberately not seeded" above).
 
 That is the right storage design and it made a bad screen. The admin table read
 straight off the model, so its *normal* state was empty — "Every prompt is the

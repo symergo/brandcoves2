@@ -12,14 +12,16 @@ every morning and written by nothing anybody could reach. So the column sat empt
 on almost every row while the job that needs it ran on schedule — a reminder
 feature with no data to remind anybody about.
 
-Two places ask now, and they are not the same person:
+Several places ask now, and they are not the same person:
 
 | who | where | how well they know |
 |---|---|---|
-| the giver | creating a list for somebody | guessing — most people cannot name a friend's date |
-| the person themselves | `/for/{token}`, the self-describe page | exactly |
+| the giver, naming somebody new | the list wizard (`ListWizard.tsx`), minted by `ListMaker` | guessing |
+| the giver, for somebody they already have | the list wizard, when the occasion is a birthday and none is stored (`applyWizardSettings`, blank only) | guessing |
+| a friend | a list made for a friend copies their published birthday, else your note (`recipientForFriend`) | theirs, or your note |
+| the person themselves | `/for/{token}` | exactly |
 
-The second is the one that matters. The giver is asked because they already have
+The last is the one that matters. The giver is asked because they already have
 the person in mind and going back later to add a date is a trip nobody makes; the
 recipient is asked because the answer is free.
 
@@ -56,10 +58,10 @@ somebody on a day nobody named.
 
 ## Neither form overwrites what it did not ask about
 
-- **Choosing an existing person** when creating a list leaves their details
-  alone. The birthday rides along with a *name*, on somebody being minted — a
-  blank field quietly overwriting a date entered months ago is an edit nobody
-  would ever find.
+- **Choosing an existing person** never overwrites their date. If they have none and you type one
+  (the list wizard asks when the list's occasion is their birthday), it is filled in; a stored date
+  is left alone, because a field quietly overwriting a date entered months ago is an edit nobody
+  would find. Added 2026-09-14; before that the typed date was dropped.
 - **Describing yourself without a date** leaves the stored one standing. Absent
   means "left blank", not "clear it", so answering the taste questions cannot
   wipe a date the giver already knew.
@@ -83,15 +85,15 @@ typed it.
 | | |
 |---|---|
 | Model | [app/Models/Recipient.php](../../app/Models/Recipient.php) — `BIRTHDAY_YEAR`, `birthdayFrom()` |
-| Creating a list | `WishlistController::store`, `ListMaker::make`, `Lists/Index.tsx` |
+| Creating a list | `WishlistController::store`, `applyWizardSettings`, `recipientForFriend`, `ListMaker::make`, `Components/ListWizard.tsx` |
 | Their own page | `RecipientProfileController::update`, `Recipients/SelfDescribe.tsx` |
-| Read by | [occasion-reminders.md](occasion-reminders.md) |
+| Read by | [occasion-reminders.md](occasion-reminders.md); `OccasionDate`, to date a birthday list |
 | Copy | `site.lists.birthday_*`, `site.recipients.step_birthday`, `site.recipients.birthday_why` |
 | Tests | [tests/Feature/RecipientBirthdayTest.php](../../tests/Feature/RecipientBirthdayTest.php) |
 
 ## See also
 
-- [occasion-reminders.md](occasion-reminders.md) — the only reader, and why it
-  needs month and day rather than a date
+- [occasion-reminders.md](occasion-reminders.md) — the reminders, and why they
+  need month and day rather than a date
 - [gifting-lenses.md](gifting-lenses.md) — recipients, and what a giver may store
   about somebody

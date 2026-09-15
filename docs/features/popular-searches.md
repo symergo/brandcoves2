@@ -1,3 +1,10 @@
+---
+name: Popular searches
+area: Search / SEO
+status: Active
+date_added: 2026-09-05
+---
+
 # Popular searches
 
 A public page, one per market, showing what this market searches for: **a ranked
@@ -163,25 +170,9 @@ publish.
 did not claim is logged as typed. It is neither a search anyone would click nor
 something to print, and length is the right kind of blunt filter for it.
 
-*Since 2026-09-08 the log itself refuses them.* `SearchLog::record()` drops a query over
-sixty characters or more than six words (`SearchLog::MAX_LENGTH`, `MAX_WORDS`), and the
-migration `2026_09_08_000100_the_search_log_forgets_the_long_terms` went further on what was
-already there: it deleted every row of more than one word, because the two- to six-word steps of
-the crawler's walk cannot be told from a person's query by any rule. The log keeps its single words
-(23 thousand of 1.15 million rows on production) and fills up again with what people type from
-here on, under the crawler rules below. The read-time rule above stays as a second net. The change
-matters beyond this page because `TopicMiner` reads the same table and had no length rule at
-all, so the guide topic queue was being fed the same junk.
-
-*And a crawler's search is not logged at all.* `SearchQuery::fromRequest()` sets `logged` to
-false unless the request passes two tests: `App\Support\Crawlers::looksLikeOne()` does not
-recognise the user agent (a name match on the usual words and the crawlers seen in this site's
-logs, plus an empty user agent), **and** the request carries the session cookie. Crawlers keep no
-cookies whatever they call themselves, so the second test catches the ones the first does not. The
-price is a person's very first search after landing from elsewhere, which is not a pattern yet.
-The length rule catches the long strings a crawler mints; this catches the short steps on the
-same walk, which look like queries and are not demand. Asked for as "a crawler cannot trigger a
-pill addition", 2026-09-08.
+*Since 2026-09-08 the log itself refuses long terms and crawler searches* — the four layers are in
+[crawlers-and-the-search-log.md](crawlers-and-the-search-log.md). The read-time rule above stays as
+a second net.
 
 ## Indexable, and its links are followed
 
@@ -193,10 +184,8 @@ supply of URLs feeding the table that generated them. Every term here has alread
 been searched by real people, so following one mints nothing new and the set is
 bounded by the log rather than by the crawler's appetite.
 
-A page with **every column and both lists empty** is `noindex, follow`. A market
-that opened yesterday has no history, and a thin page spends crawl budget
-belonging to products and guides — the same rule the filtered search variants
-follow. It stays a real page for a visitor either way, with a sentence saying so
+A page with every column and both lists empty is indexable too, since 2026-09-12. It was
+`noindex, follow` before that. It stays a real page for a visitor, with a sentence saying so
 and a link to the search box, because the footer points here from every page in
 every market.
 

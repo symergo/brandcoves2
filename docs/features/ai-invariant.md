@@ -27,8 +27,8 @@ Three failure modes it prevents, all of which are cheap to create and expensive 
 - **Everything AI-touched is precomputed.** Daily-pick themes and blurbs, guide editorial copy and
   gift-angle expansion all run in scheduled jobs. The request path only ever *reads* the output.
 - **`gift_angles` is the pattern.** The gift engine needs interest → query expansion, which is a
-  natural LLM job. So the worker widens the angle map nightly and stores it; `GiftEngine` reads rows.
-  Recommendation stays pure, fast and free.
+  natural LLM job. So the `WidenGiftAngles` job widens the angle map nightly and stores it;
+  `AngleMap` reads rows. Recommendation stays pure, fast and free.
 - **Per-feature daily caps.** Every AI caller registers a `feature_key` in
   `config('giftcoves.ai.caps')` and goes through `AiUsage::withinCap()`. A feature with no key is
   invisible in the admin usage table, which is itself the incentive to register one.
@@ -40,20 +40,20 @@ Three failure modes it prevents, all of which are cheap to create and expensive 
 
 ## Visitor writes stay AI-free too
 
-The 🤯/meh reaction on a daily pick is an event insert and nothing more — rate-limited, honeypotted,
+The 👍/👎 reaction on a daily pick is an event insert and nothing more — rate-limited, honeypotted,
 no model call, no live API call. Same treatment for any future user-submission route.
 
 ## Enforcement
 
-Currently by convention and review. **Phase 5 should add an architecture test** asserting that no
-class under `App\Http\Controllers` transitively references the AI client — the invariant is worth
-more when a test protects it than when a document asserts it.
+By convention and review, and by the runtime check in `AiClient` described under *Settings in
+admin*. There is no test that fails when a controller reaches the client; *That check has no
+working test* below says what one would need.
 
 ## Files
 
 - `config/giftcoves.php` (`ai.*`)
 - `app/Models/AiUsage.php`
-- `app/Services/Ai/` (Phase 5)
+- `app/Services/Ai/` — `AiClient`, `PromptBank`, `Prompts/Defaults.php`
 
 ## Settings in admin
 
@@ -63,8 +63,9 @@ every change was a redeploy — turning generation off during an incident should
 not require a build.
 
 **The invariant is untouched.** Enabling AI here makes the *nightly jobs* able to
-call a model. It does not make a request able to: `AiClient` checks the queue
-context before anything else.
+call a model. It does not make a request able to: `AiClient` refuses to run
+outside a console process (a queue worker, the scheduler or artisan) before
+anything else.
 
 **That check has no working test.** An earlier version of this page said an
 architecture test asserts no controller can reach the client; there is no such

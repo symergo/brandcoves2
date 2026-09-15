@@ -88,15 +88,17 @@ What that means in code:
 |---|---|---|
 | Term search (`/zoek/term`; `?q=term` when the term cannot be a path) | none (index) | itself |
 | Filtered / sorted search or brand variant | none | the bare term or brand page |
-| Page 2 onwards | none | itself, with `page=` |
+| Search page 2 onwards | none | itself, with `page=` |
+| Brand page 2 onwards | none | the bare brand page |
 | Empty result, empty popular-searches page | none | itself |
 | Product, with or without a buyable offer | none | itself |
 | Guide with an empty shortlist | none | itself |
-| Previews, shared lists, Secret Santa, quiz, taste profile, magic link, 404 | **noindex** | — |
+| Previews, shared lists, Secret Santa, quiz, taste profile, magic link, an unanswered or held board question, 404 | **noindex** | — |
 
 The last row is the exception the rule allows for: those pages are private or
-transient, not thin. `robots.txt` keeps `/*/go/` (an outbound affiliate hop is
-not a page) and the capability URLs, and nothing else; the `?sort=`, `brand[`,
+transient, not thin. `robots.txt` keeps `/*/go/` (an outbound affiliate hop is not a page, and
+crawling it burns budget on redirects while looking like link-selling) and the capability URLs, and
+nothing else; the `?sort=`, `brand[`,
 `merchant[` and `page=` disallows are gone, because a link a crawler may not
 follow is not an indexable link.
 
@@ -141,8 +143,9 @@ then `watch Smartwatch`, then `watch Smartwatch 44mm` — so as anchors they wer
 combinatorial supply of URLs, each crawl minting a brand-new term. Worse, each was
 `index, follow` by the table above: no filter, page 1, default sort. They are
 `<button>`s calling `router.get()` now, so they navigate for a visitor and do not
-exist for a crawler. The narrowing behaviour is unchanged, and the URL stays the
-server's own — `SearchContext::narrowUrl()` is the only place that rule lives.
+exist for a crawler. The narrowing behaviour is unchanged, and the URL is still built on the
+server — `SearchController::terms()`, and `BrandController::terms()` on a brand page — never in
+the browser.
 
 **The related-search chips are gone entirely**, removed 2026-09-05. They were
 cached for an hour first, and that was not enough: production still took
@@ -157,9 +160,6 @@ itself. [Popular searches](popular-searches.md) is the replacement — one cheap
 cached, indexable hub rather than a scan on every page — and `:term_links` and
 `:brand_links` still link outward from the same regions, computed from the
 products already on the page. Product, brand and guide links are untouched.
-
-`robots.txt` blocks `/*/go/`: crawling an outbound affiliate hop burns budget on
-redirects and looks like link-selling to a search engine.
 
 ## Metadata is server-rendered, always
 
@@ -263,8 +263,8 @@ a quiz, a recipient's self-describe page and a Secret Santa group are reached by
 a token that *is* the access. None of them set `PageMeta`, and the shell
 defaults a page with no robots value to `index, follow` — so a share link
 posted anywhere public would have listed a family's gift list under a real
-name. Each sets `noindex, nofollow` now, and `/l/`, `/for/`, `/q/`, `/santa/`
-and `/invitations/` are disallowed in `robots.txt` as well, because a `noindex`
+name. Each sets `noindex, nofollow` now, and `/l/`, `/for/`, `/q/` and `/santa/`
+are disallowed in `robots.txt` as well, because a `noindex`
 only works on a page that gets fetched.
 
 **The environment wins over the page.** With `ROBOTS_ALLOW` off, the shell used
@@ -304,14 +304,13 @@ the index shows only the newest twenty — so without the sitemap the rest had n
 discovery path at all. Answered questions only, because `AskController`
 noindexes one nobody has answered.
 
-The `robots.txt` facet rules read `brand=` and `merchant=` until the same date,
-and matched nothing: both parameters are arrays, so the URL carries
-`brand%5B0%5D=`. They now match the bracket, encoded and bare.
+*(2026-09-06 to 2026-09-12)* The `robots.txt` facet rules read `brand=` and `merchant=` and matched
+nothing, because both parameters are arrays (`brand%5B0%5D=`). They were fixed to match the bracket,
+then removed with the rest of the facet disallows on 2026-09-12.
 
-**A product with no buyable offer is `noindex, follow`.** The check used to be
-"no offer rows", which an out-of-stock row satisfies — so a group whose shops had
-all sold out rendered `index` with no price on the page and no `AggregateOffer`
-in its markup, the soft-404 shape the sitemap's filter exists to avoid.
+*(Until 2026-09-12)* A product with no buyable offer was `noindex, follow`; the check had been "no
+offer rows", which an out-of-stock row satisfies. It is indexable now, like every product; the
+sitemap still lists only in-stock, priced products with an image.
 
 ## Guardrails
 
@@ -326,22 +325,17 @@ corresponding bug already happened once:
 - A title-grouped product never claims a `gtin13`.
 - Inertia is not told to look for an SSR bundle the `app` container never has.
 
-**The indexable-page sweep is derived from the route table, not listed.** It used
-to be six hard-coded paths under a docblock claiming it walked every static
-indexable page; it did not, and `/lists`, `/santa` and `/login` were all serving
-`index, follow` with no title and no description. A hand-kept list cannot catch
-the page nobody remembered to add to it, which is the only kind that ever has
-this bug. See [page-titles.md](page-titles.md#the-test-that-was-supposed-to-catch-this).
+The indexable-page sweep is derived from the route table, not listed — see
+[page-titles.md](page-titles.md#the-test-that-was-supposed-to-catch-this).
 
 `LocalisationTest` gates the two length budgets, beside the parity check that
 already walks the same four language files.
 
 ## Not done yet
 
-- **OG images** are the product photo. Generated cards showing price and seller
-  count would convert better on social.
-- **Guide and pick pages** (Phases 5–6) will need `Article` / `ItemList` markup.
-- **Core Web Vitals** have not been measured; the Lighthouse pass is Phase 7.
+- **`Article` markup** on Coves and guides — they emit `ItemList` and, where written, `FAQPage`, but
+  no `Article`.
+- **Core Web Vitals have not been measured.**
 - **Cross-language product titles.** ~4.5% of `be-fr` titles are Dutch. The
   honest fix is at ingestion, where the offer still knows its feed — see
   [product-titles.md](product-titles.md#language-is-not-one-of-the-tests).
@@ -357,19 +351,4 @@ kind in one query — the same batching the product block had, now for guides, S
 personas and dailies. Per-URL resolution on a cold cache was a query or two for each of five
 hundred editorial URLs, per chunk.
 
-## A shared list previews as itself (2026-09-13)
-
-A share link pasted into a chat used to turn into the market's default card, "Ontdek producten en
-merken": the shared list page set a title and a noindex but no image and no description, so the
-shell fell back to `og/default.png`. The person receiving "here is Mum's list" saw an advert for the
-site. `/og/l/{code}.png` now draws the list's own title, with "Wish list" or "Gift list" as the kicker
-and the number of ideas as the footnote, and the page sets an `og:description` from the owner's own
-description or a sentence that says what this is and how many ideas are on it.
-
-Two rules worth keeping. The card is drawn only for a list that is actually shared, by the same
-visibility check the page uses, so withdrawing a share withdraws the preview. And nothing from the
-list's *contents* reaches the card or the description, not a product name and not a claim: the card
-goes wherever the link goes, and the items are for whoever opens it. The card is cached like the
-brand and guide cards, keyed on the text it draws and the commit; shared lists are bounded by what
-people share and re-read by every chat they are pasted into, which is the profile that earns a cache
-entry.
+Shared lists get a card of their own — see [social-cards.md](social-cards.md).

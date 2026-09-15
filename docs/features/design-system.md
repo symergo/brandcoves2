@@ -1,7 +1,7 @@
 ---
 name: Design system
 area: Frontend / Brand
-status: Active — tokens, Button, Badge, the navigation beam; migration of call sites ongoing
+status: Active — tokens, Button, Badge, the navigation beam; most call sites not yet migrated
 date_added: 2026-09-06
 ---
 
@@ -55,10 +55,13 @@ under AA for text. `--color-accent-dark` (#a83f2c) is 6:1. The link recipe
 `font-medium text-accent hover:text-accent-dark` became `text-accent-dark hover:text-ink` in ten
 places; `hover:text-accent` on a transient state is fine.
 
+*(Values before 2026-09-13; see The action colour is amber.)*
+
 **Errors are `text-danger`.** A new token, `--color-danger` (#b42318, 6.4:1 on cream), clearly
 not the brand. Nineteen error lines moved to it.
 
-**Muted text is `text-ink-soft`, never `/70`.** Full strength is 6.9:1 and looks nearly the same.
+**Muted text is `text-ink-soft`, never `/70`.** Full strength is 6.4:1 on cream and looks nearly
+the same.
 
 **`text-2xs` is the floor.** A new token at 11px, matched to the legacy value so nothing moved,
 so the size is on the scale rather than beside it.
@@ -84,15 +87,18 @@ waits its turn, and the description has the same ~70-character measure as every 
 
 ## Still open
 
-- Migrating the remaining hand-rolled buttons and pills to the primitives. Done so far: the
-  product page, the home search, the list and Santa create forms, the product card and daily
-  deal badges.
+- Migrating the remaining hand-rolled buttons and pills to the primitives. `Button` is used in 3
+  files and `buttonClasses()`/`Badge` in 9; 48 hand-rolled `bg-accent … px-…` class strings remain
+  across 36 files (counted 2026-09-15), including the list wizard that replaced the list create
+  form.
 - Three h1 tiers with no rule for which page gets which; two prose measures on editorial pages.
-- Four icon stroke widths, and glyph characters (`☰ ✕ ▲ ▼ ×`, one emoji) standing in for icons.
+- Four icon stroke widths, and glyph characters (`▲ ▼ ✕ ×`, one emoji) standing in for icons on
+  the search, list, brand and question pages; the header's ☰ and ✕ became `ToolIcon`s on
+  2026-09-07.
 - Self-hosting Inter: the TTFs are vendored for the social cards and the site still loads a
   render-blocking stylesheet from bunny.net.
 - The footer carries no mark; the social card palette (teal and amber) and the site palette
-  (cream and terracotta) are strangers — a decision to make, not a bug.
+  (cream, and amber since 2026-09-13) are strangers — a decision to make, not a bug.
 - A sticky header, and tap targets under 40px on the picker chevron, pagination and chips.
 
 ## The phone pass (2026-09-07)

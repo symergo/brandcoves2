@@ -20,8 +20,9 @@ because one of them will eventually be edited by someone who does not know the r
    owner's item payload field by field and never adds a claim key. Not `false`, not `null` — absent.
    A `claimed: false` on every item is still a signal once one of them flips.
 
-`SharedListController::show()` is the only place claim state is computed, and it returns `null` for
-the owner rather than the truth. Tested in
+`App\Services\Wishlist\ClaimView` is the only place claim state is applied, and
+`Wishlist::shouldHideClaimsFrom()` the only place it is decided. The owner of a wish list receives no
+`claimed` key at all — absent, not null. Tested in
 [`WishlistTest::the_owner_never_sees_claim_state`](../../tests/Feature/WishlistTest.php).
 
 ### A bug this rule had, for a year
@@ -35,6 +36,9 @@ what has been claimed.
 It now takes an `Owner` and compares both owner columns. Worth recording because
 the signature looked right, the tests passed, and the failing case was the
 common one rather than an exotic one.
+
+The test (`an_anonymous_owner_never_sees_claim_state`) was written first and observed failing; one
+written afterwards would have proved nothing.
 
 ### Claiming is no longer `mine`-only, 2026-08-29
 
@@ -58,8 +62,8 @@ claims to worry about: a `for_someone` list is not claimable in the first place"
 `is_gift_list` sat beside a nullable `recipient_id`, answering an overlapping
 question and able to disagree with it — so claiming ended up gated on
 *visibility*, and every shared list was claimable, including private research
-about the person it was about. Replaced by `kind` (`mine` | `for_someone`); see
-[gifting-lenses.md](gifting-lenses.md).
+about the person it was about. Replaced by `kind` (`mine` | `for_someone` | `group`); see
+[list-taxonomy.md](list-taxonomy.md#the-three-kinds-and-where-kind-came-from).
 
 ## Keeping a list requires an account
 
@@ -81,6 +85,23 @@ Claiming used to be the second. It is not any more — see below.
 `Owner`, `AnonymousIdentity` and `IdentityMerger` all remain — quiz attempts and
 pick reactions still hang off a cookie identity, and a list built before the
 rule changed still merges into an account at sign-in.
+
+### The original reasoning, kept for the record
+
+Saving a product does not require an account. `App\Support\Owner` unifies the two identities:
+
+- signed in → `owner_user_id`
+- otherwise → `owner_anon_id`, from the cookie identity set by `TrackAnonymousIdentity`
+
+`Owner::scope()` returns `whereRaw('1 = 0')` when there is no owner at all, so a missing identity
+yields an empty result rather than every list in the database. Failing closed matters more here than
+anywhere else in the codebase.
+
+The database enforces the same shape: `CHECK (num_nonnulls(owner_user_id, owner_anon_id) = 1)`. A
+row owned by nobody is readable by nobody and deletable by nobody.
+
+Requiring a login before someone can press Save is how you lose the visit — the person came to
+compare a price, not to sign up.
 
 ## Claiming needs an account too, 2026-09-06
 
@@ -165,25 +186,6 @@ invitation.
 The button looks identical in both states. "Sign in to claim" as a label asks for
 the account first and the decision second, which is the wrong order.
 
-### The original reasoning, kept for the record
-
-
-
-Saving a product does not require an account. `App\Support\Owner` unifies the two identities:
-
-- signed in → `owner_user_id`
-- otherwise → `owner_anon_id`, from the cookie identity set by `TrackAnonymousIdentity`
-
-`Owner::scope()` returns `whereRaw('1 = 0')` when there is no owner at all, so a missing identity
-yields an empty result rather than every list in the database. Failing closed matters more here than
-anywhere else in the codebase.
-
-The database enforces the same shape: `CHECK (num_nonnulls(owner_user_id, owner_anon_id) = 1)`. A
-row owned by nobody is readable by nobody and deletable by nobody.
-
-Requiring a login before someone can press Save is how you lose the visit — the person came to
-compare a price, not to sign up.
-
 ## Sharing with a named friend is not a fourth visibility
 
 `wishlists.visibility` is the permission: private, link or public, and it decides who can reach a
@@ -193,10 +195,9 @@ appear on their friends page. Un-picking somebody takes it off that page and lea
 working.
 
 The distinction is worth keeping sharp, because a control on the same panel that reads "share"
-invites being treated as a way to unshare something. It is not one. There was a
-`show_to_friends` **switch** here briefly and it was removed for a related reason: a friendship is
-made by opening any share link, so "my friends can see this" published to a set nobody had chosen.
-See [friends.md](friends.md#sharing-is-an-act-not-a-setting).
+invites being treated as a way to unshare something. It is not one. Why no switch can do this job,
+and why `show_to_friends` was tried and removed:
+[friends.md](friends.md#sharing-is-an-act-not-a-setting).
 
 ## A list belongs to a person, not to a market
 
@@ -309,8 +310,8 @@ That was correct while it held; the toast names the list and carries the undo, s
 gone. What remained was the real cost — the same bookmark meaning "save it" on a product page and
 "ask me where" on a grid is not something anybody learns, it is something they get wrong. Both
 variants now follow one rule, **not saved → save; saved → open the picker**, and the card keeps a
-narrow chevron so that filing straight into a named list does not first cost a save into the wrong
-one.
+narrow chevron (desktop only since 2026-09-08) so that filing straight into a named list does not
+first cost a save into the wrong one.
 
 ### What order a list is in (2026-09-06)
 
@@ -483,11 +484,11 @@ Measured in the browser, per interaction:
 |---|---|---|
 | open the panel | `GET /list-options` | **nothing** |
 | pick a list | `POST` + `GET /list-options` | `POST` |
-| move to another | `POST` + `GET` + `DELETE` + `GET` | `POST` + `DELETE` |
+| move to another (until 2026-09-12) | `POST` + `GET` + `DELETE` + `GET` | `POST` + `DELETE` |
 | take it off | `DELETE` + `GET` | `DELETE` |
 
-`remove()` no longer recomputes membership across every list either: with one holder, removing from
-it means the product is on none — an answer already in hand, and not worth a round trip to be told.
+`remove()` no longer recomputes membership across every list either: the store drops that one holder
+(`markRemoved(groupId, listId)`) and the bookmark empties only when no list holds the product.
 
 **The marker moves on the response, not on the press.** The optimistic `markSaved` before the request
 can only say *that* something is saved; which list it landed in is not known until the reply names
@@ -525,10 +526,10 @@ override by looking; the other is the thing you look at.
 - **Neither `save()` nor `remove()` had an error branch.** A 403 or a 422 re-enabled the button and
   did nothing else, which is indistinguishable from a control that does not work — on the one control
   people press at the moment they have decided something. Failures now surface in the toast, and the
-  optimistic bookmark rolls back. Relatedly, the `/list-options` fetch fell back to `{lists: [],
-  recipients: []}`, so a dropped connection was indistinguishable from "you have no lists" — and that
-  second reading invites somebody to create a duplicate of a list they already own. It has its own
-  error state, with a retry.
+  optimistic bookmark rolls back. Relatedly, the `/list-options` fetch used to fall back to `{lists:
+  [], recipients: []}`, so a dropped connection read as "you have no lists", which invites creating a
+  duplicate. It had an error state and a retry until the picker stopped fetching altogether (see *The
+  picker asks the server nothing to open*).
 
 ## Signing in without losing the product
 
@@ -661,8 +662,8 @@ Two people tapping "I'll get this" at the same moment is the expected case, not 
 link gets shared in a group chat and read by everyone at once. A read-then-write would let both win
 and the recipient gets two of the same thing. The affected-row count decides the winner.
 
-Undo is limited to the claimer's own hash and to 24 hours. A claim released weeks later means
-nobody buys the thing and nobody knows.
+Undo is limited to the claimer's own hash. There is no time limit since 2026-09-06; see *Undo has no
+time limit* above.
 
 `claimed_by_hash` is an HMAC of the claimer's identity under `CLAIM_HASH_SECRET`, so the stored value
 identifies a claimer to *us* for the undo check without being reversible. Rotating that secret
@@ -729,10 +730,13 @@ answering 405 and the progress strip above.
 - **`results` is `null` before a search and `[]` after one that found nothing.** Collapsing them
   makes the first visit look like a failed search.
 
-`canSuggest` mirrors the three conditions the endpoint enforces — not the owner, a claimable list, an
-identity that exists — so the control is absent wherever the POST would be refused. Mirrored, never
-trusted: hiding a button stops nobody hand-building the request. No account is needed, for the same
-reason claiming needs none.
+`canSuggest` mirrors the two conditions the endpoint enforces — not the owner, and an identity that
+exists — so the control is absent wherever the POST would be refused. It also required a claimable
+list until 2026-08-29; see
+[list-taxonomy.md](list-taxonomy.md#adding-to-somebody-elses-list-2026-08-29). Mirrored, never
+trusted: hiding a button stops nobody hand-building the request. No account is needed: somebody who
+followed a link once should be able to say "she'd love this" without signing up. Claiming shared that
+reasoning until 2026-09-06.
 
 **Two things this surfaced, both invisible while the endpoint was unreachable:**
 
@@ -846,11 +850,12 @@ The schema already allowed it: `wishlist_items_identifiable` was widened in
 writes one. No `updateOrCreate` — there is no upstream identity to collide with, and two entries
 called "a nice scarf, dark green" are two wishes rather than a double-tap.
 
-**One form, two endpoints, because it is one act.** `Components/ManualItem` is used by the owner on
-`Lists/Show` and by a visitor on `Lists/Shared`. The owner's post lands on the list; the visitor's
-goes through `SuggestionController` and lands pending, with the same accept/dismiss row as any other
-suggestion. Neither page needs to know how the other behaves, and a second copy of the form would
-drift the moment one of them gained a field.
+**One form, two endpoints, because it was one act.** Until 2026-08-29 `Components/ManualItem` served
+the owner on `Lists/Show` and a visitor on `Lists/Shared`. The owner's path now lives inside
+`AddProduct`; `ManualItem` stays on `Lists/Shared`, where the visitor's post goes through
+`SuggestionController` and lands pending, with the same accept/dismiss row as any other suggestion.
+Neither page needs to know how the other behaves, and a second copy of the form would drift the
+moment one of them gained a field.
 
 Euros in the box, cents on the wire (invariant #7), converted in the component — and a comma is
 accepted, because half our markets write €12,50 and typing it the way you say it should not be a
@@ -913,7 +918,7 @@ product group, because a group holds offers from several sources with different 
 `AlertController::store()` checks eligibility before writing. Hiding the button is not enough — a
 hand-built POST would otherwise create the alert anyway.
 
-`RefreshWishlistedProducts::trackablePrice()` re-applies the same filter when deciding whether to
+`AlertEligibility::trackablePrice()`, which `RefreshWishlistedProducts` calls, re-applies the same filter when deciding whether to
 fire. This is the case a naive `min(price)` gets wrong: `product_groups.min_price` aggregates *every*
 source, so an untrackable offer being cheapest would silently trigger a notification that should
 never have existed. Tested in
@@ -930,8 +935,9 @@ a listing that is sold out; a price you cannot pay is not a price.
 ### Firing once
 
 An alert moves `active → triggered` when it fires. Without that transition, every scheduled run
-re-notifies until the price recovers. Re-arming happens through the UI, which is the honest place for
-it — the price went down and back up is a different event from the first drop.
+re-notifies until the price recovers. Since 2026-09-06 a fired alert re-arms on its own when the
+price recovers or the product sells out again (see *Alerts refresh, re-arm and email* below); before
+that it needed a press in the UI.
 
 A target price beats the baseline when set: someone who asked for "under €250" does not want to hear
 about €5 off.
@@ -976,11 +982,11 @@ and the badge then never clears.
 > says. Nothing below changed: the columns, the gate and the two readers are exactly as described.
 > See [list-taxonomy.md](list-taxonomy.md#registry-became-special-occasion).
 >
-> **Where you press it: a chip of its own on `Lists/Show`**, labelled `registry.occasion` — one word,
-> because it sits in a scrolling row. It spent 2026-08-29 to 2026-08-30 as a section inside the Share
-> panel and moved back out; see
-> [list-surfaces.md](list-surfaces.md#six-tabs-became-four-then-five) for why. The form, the columns
-> and the gate are untouched by either move.
+> **Where you press it: Settings on `Lists/Show`** (`lists.settings`) since 2026-09-12, under the
+> name, the note and the price watch. Before that it was a chip of its own (`registry.occasion`), and
+> from 2026-08-29 to 2026-08-30 a section inside Share; see
+> [list-surfaces.md](list-surfaces.md#three-buttons-share-settings-delete-2026-09-12). The form, the
+> columns and the gate are untouched by every move.
 
 
 Added 2026-08-16. `event_type`, `event_date` and `delivery_address` were stored and read back **to
@@ -1077,13 +1083,8 @@ two kinds of list**, which is the part worth reading before touching either. The
 three things that are load-bearing about it are in
 [list-taxonomy.md](list-taxonomy.md#built-2026-08-16-and-what-the-shape-turned-out-to-be).
 
-The one-line version, as it ended up: **a wish list has no money on it at all.** You claim a thing
-there — "I am buying this one" — and going in with somebody on one *is* a group gift, which is what a
-group list is for. On a group list the owner is the organiser rather than the recipient, so they see
-who put in what, and the other members see only the total and their own share.
-
-It pooled per item on a `mine` list until 2026-08-30, when it was rendered: an "I'm in" under every
-card of a six-item list, beside the claim button that is the real action there. See
+On a wish list you claim; on a group list you contribute, and only the organiser sees who put in
+what. Per-item pledging on wish lists was removed on 2026-08-30; see
 [list-taxonomy.md](list-taxonomy.md#and-then-off-the-wish-list-too-2026-08-30).
 
 `gift_pledges.display_name` has been required on write since the table shipped and was read by

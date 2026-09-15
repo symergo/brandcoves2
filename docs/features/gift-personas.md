@@ -1,7 +1,7 @@
 ---
 name: Gift personas
 area: Discovery / Content
-status: Active — 10 per market in be-nl, nl-nl, en
+status: Active — 10 planned per market in be-nl, nl-nl, en; not all published
 date_added: 2026-08-29
 ---
 
@@ -28,7 +28,7 @@ What differs, and why:
 |---|---|---|
 | Addressed by | its date | a permanent `slug` |
 | Built by | the 06:00 scheduler | an editor pressing a button |
-| Job | `BuildDailyEdition` | `BuildPersonaCove` |
+| Job | `BuildDailyEdition` | `BuildCove` |
 | Claims a theme slot | yes (`used_themes`) | **no** |
 | Enters the 90-day repeat memory | yes | **no** |
 | Page furniture | deals column, subscribe box | neither — but the same rail and cards |
@@ -40,7 +40,8 @@ nothing to catch up on. What it does carry, since the rail was shared out across
 the Gift Cove card, the category rail and the cards offering the other personas — see
 [cove-rail.md](cove-rail.md).
 
-`BuildPersonaCove` is a separate job rather than a flag on `BuildDailyEdition` for the same reason:
+A persona (and every other non-Daily kind) is built by `BuildCove` rather than by a flag on
+`BuildDailyEdition` for the same reason:
 that job also mines guide topics and seeds the seasonal ones, both of which are about the *day*. An
 editor pressing "build" should not also advance the guide queue — that is not what the button says.
 
@@ -72,8 +73,9 @@ None of those would have errored. Nothing would have looked broken. The wrong pa
 been served.
 
 `DailyPickSet::scopeDaily()` exists for this and is applied at every listing site — the four above
-plus the digest job, the OG image endpoint, the editorial API's edition read, the discover hub and
-the content envelope. It is an **explicit** scope rather than a global one, because a global default
+plus the digest job, the OG image endpoint, the editorial API's edition read and the discover hub.
+The content envelope asks `CoveKind::isDated()` instead, which answers the same question on import.
+It is an **explicit** scope rather than a global one, because a global default
 would also hide personas from the gift-ideas pages, which would then need `withoutGlobalScope` — an
 inversion that reads as a mistake and gets copied as a pattern.
 
@@ -103,13 +105,13 @@ refreshes the products and the prose; it does not republish the page. Stamping `
 rebuild would make a two-month-old persona look new to a crawler every time its products were
 refreshed, which is the fastest way to teach one to stop believing the date.
 
-Reactions (🤯 / 😐) are absent from a persona page. On a Daily they are a signal about a find on the
+Reactions (👍 / 👎) are absent from a persona page. On a Daily they are a signal about a find on the
 day it appeared; on a page that stands for a year they would accumulate into a rating nobody meant to
 give.
 
 ## Writing one
 
-1. **Admin → Content → Cove calendar → Create**, kind = *Gift persona*. A slug is required and is
+1. **Admin → Content → Cove planner → Create**, kind = *Gift persona*. A slug is required and is
    suggested from the title — but never rewritten from it afterwards, because the address is what has
    been linked and indexed.
 2. **Curate** its products. See [cove-curation.md](cove-curation.md). Most personas want `locked`:
@@ -124,10 +126,7 @@ Or the same three steps through [the editorial API](editorial-api.md), with `kin
 Added 2026-08-30. `cove_plans.scene` and `daily_pick_sets.scene`, nullable, string plus a CHECK,
 cast to `App\Enums\CoveScene` on both models.
 
-**The cover used to be a photograph of a product** — the first buyable find on the shelf. Wrong
-picture twice over. It made a shelf of *people* look like a shelf of product categories, and the
-cover moved whenever stock did: the same persona wearing a different face from one week to the next,
-for a reason no reader could see and no editor chose.
+**The cover is a drawing, not a product photograph** — why, in [cove-scenes.md](cove-scenes.md).
 
 `SceneIllustration` draws it instead, in the same language as `CoveIllustration` and
 `ListIllustration` — one `160x116` viewBox, one stroke weight, `currentColor` for every line, the
@@ -140,14 +139,8 @@ photography, DIY, outdoors — so a new persona almost always finds one that fit
 do not get `someone`, a featureless figure. Null means `someone`: every persona written before the
 field existed has no scene, and a missing drawing must not be a missing page.
 
-> **Nine became seventeen on 2026-09-05, and the enum stopped being about personas.** Filling the
-> shelves out to ten per market put six kinds of person past the original nine — gardeners, plant
-> owners, readers, listeners, gamers, travellers — and every one of them would have fallen back to
-> `someone`. Six identical portraits on one shelf is a shelf that looks unfinished. At the same time
-> `/guides` needed drawings of its own, so `PersonaScene` became `App\Enums\CoveScene`: one column,
-> one cast, one component, and `CoveScene::forKind()` deciding which half of the vocabulary a kind
-> may name. See [cove-scenes.md](cove-scenes.md) — including why the API now **refuses** a scene the
-> kind cannot mean rather than storing it.
+The vocabulary is now 38 scenes across personas and articles; how it grew from nine, and which
+drawings were redrawn before shipping, is in [cove-scenes.md](cove-scenes.md).
 
 **A field, not a lookup keyed on the slug.** Slugs are per market. `de-koffiefanaat` and
 `le-fanatique-de-cafe` are one persona wearing two addresses, so a table keyed on the slug would be
@@ -159,18 +152,9 @@ about someone who cooks is already in the planner.
 buildPersona()` copies it across with the title and the blurb. On the plan alone it would be a field
 you could set and never see; on the edition alone a rebuild would overwrite it.
 
-Set it in **Admin → Cove planner → Drawing** (the options follow the kind, and the field is hidden
+Set it in **Admin → Content → Cove planner → Drawing** (the options follow the kind, and the field is hidden
 on a kind with no vocabulary — a Daily, a Shop Cove), or send `scene` to
 `POST /api/editorial/coves`.
-
-> **Three of the nine were redrawn before they shipped**, and eight of the nineteen added later.
-> The first `coffee` was a grinder and read at card size as a phone with a cup beside it; `cooking`
-> was a pan from above and read as an artist's palette; `racing`'s pedals were a small detached
-> parallelogram that read as a stray shape. Later: `baking` read as a plant in a bowl, `fitness` as
-> two dumbbells, `reading` as a stack of boxes. All of them were found by rendering the shelf and
-> looking at it, which is the only way this class of mistake is ever found — an SVG that is
-> geometrically fine and semantically wrong throws no error. The full list is in
-> [cove-scenes.md](cove-scenes.md).
 
 > **A scene on the plan is not a scene on the page.** `EditionBuilder::buildPersona()` copies it
 > across at build time, so a persona that is already **published** keeps whatever drawing its
@@ -205,7 +189,7 @@ identical or the two stop being twins.
 
 ## Files
 
-- `app/Enums/CoveKind.php`, `app/Enums/CoveScene.php`, `app/Jobs/BuildPersonaCove.php`
+- `app/Enums/CoveKind.php`, `app/Enums/CoveScene.php`, `app/Jobs/BuildCove.php`
 - `resources/js/Components/SceneIllustration.tsx` — every drawing; see [cove-scenes.md](cove-scenes.md)
 - `database/migrations/2026_08_31_000200_a_persona_names_its_own_drawing.php`
 - `app/Services/Cove/EditionBuilder.php` — `buildPersona()`
@@ -227,17 +211,6 @@ identical or the two stop being twins.
   "nothing here yet". See [navigation.md](navigation.md).
 - **No OG image endpoint for a persona.** `/og/daily/{date}.png` is dated by construction. A persona
   shares as its title and blurb until one is added.
-- **A persona's picks do not reach the discovery `curated` pool.** `CuratedRetriever::pool()` bounds
-  the daily picks with `drop_date >= now() - 30 days`, and a null date fails that comparison. The
-  window is about freshness, which a persona has by construction — see
-  [discovery-modes.md](discovery-modes.md) for why the fix is a kind check rather than a wider
-  window, and why it was left for its own change.
-- **The sitemap lists personas without alternates.** `SitemapController` emits `loc`, `priority` and
-  `changefreq` for each one and no `alternates` key, so the hreflang pairing above reaches the head
-  and not the sitemap — half of the "two independent signals" [seo.md](seo.md) describes. The naive
-  fix is a `persona()` call per URL, which is exactly the two-queries-per-URL shape that once took
-  the product sitemap past the proxy's thirty-second timeout; it needs a batched lookup like
-  `Alternates::forProducts()`.
 - **`es` has no personas, and `be-fr` still has six.** `be-nl`, `nl-nl` and `en` were filled out to
   **ten planned personas each** on 2026-09-05. Nothing is market-specific about the mechanism; a
   persona is written per market like everything else, and the sets deliberately differ where the

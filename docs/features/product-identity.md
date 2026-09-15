@@ -1,7 +1,7 @@
 ---
 name: Product identity & offer grouping
 area: Catalogue
-status: Designed — schema built, resolver is Phase 1
+status: Active
 date_added: 2026-08-07
 ---
 
@@ -57,24 +57,24 @@ Guards against bad merges:
 
 ## Group aggregates
 
-`best_offer_id`, `min_price`, `max_price`, `offer_count`, `merchant_count` and `in_stock` are
-denormalised onto the group so a results page is **one query**, not one query plus N.
+`best_offer_id`, `min_price`, `max_price`, `previous_price`, `offer_count`, `merchant_count` and
+`in_stock` are denormalised onto the group so a results page is **one query**, not one query plus N.
 
-Recomputed **set-based**, one statement per group, after each ingestion chunk. Ties broken on lowest
-id so repeated runs are stable and never churn `best_offer_id` — a group whose "best offer" flickers
-between two equally-priced merchants produces pointless cache invalidation and a jumpy UI.
+Recomputed set-based, in one statement over the whole market, by `GroupProducts` after ingestion has
+landed (05:00 and 17:00) and never per chunk: a cheapest offer computed from a half-loaded catalogue
+is wrong. Ties broken on lowest id so repeated runs are stable and never churn `best_offer_id` — a
+group whose "best offer" flickers between two equally-priced merchants produces pointless cache
+invalidation and a jumpy UI.
 
 ## Prices are integer cents
 
-Floats accumulate error across exactly the min and previous-price aggregates that drive "cheapest offer" and
-discount badges. Both have to be exactly right, and a check constraint forbids negatives — a negative
-price would sort straight to the top of every cheapest-offer query.
+Integer cents, per invariant 7; the parsing rule is in [ingestion.md](ingestion.md#prices).
 
 ## Discounts measured against the offer's previous price
 
-`ProductGroup::discountPercent()` compares `min_price` against the **previous price of the offer the group links to** (a 30-day median from a price history until 2026-09-12), not against a merchant-supplied "was" price. Some merchants inflate the reference
-price so everything looks discounted; `merchants.trusts_reference_price` flags those, and the Daily
-Picks discount lane excludes them.
+`ProductGroup::discountPercent()` compares `min_price` against the **previous price of the offer the group links to** (a 30-day median from a price history until 2026-09-12), not against a merchant-supplied "was" price. Some merchants inflate the reference price so everything looks discounted, which is why the badge
+never uses it. `merchants.trusts_reference_price` is editable in the admin, but no code reads it
+today.
 
 The percentage is **floored, never rounded** — a badge must not overstate a saving.
 
@@ -82,11 +82,9 @@ The percentage is **floored, never rounded** — a badge must not overstate a sa
 
 - `database/migrations/2026_08_07_000200_create_catalogue_tables.php`
 - `app/Models/ProductGroup.php`, `app/Models/Product.php`
-- `app/Services/Identity/` (Phase 1)
+- `app/Services/Identity/`
 - `config/giftcoves.php` (`identity.*`)
 
-## Verification (Phase 1)
+## Verification
 
-Unit tests must cover: valid GS1 check digits, invalid ones, UPC-A → GTIN-13, ITF-14 → GTIN-13, and
-every placeholder form. Then an integration assertion that a product stocked by two merchants with a
-shared EAN produces exactly one group with `merchant_count = 2`.
+Covered by `tests/Unit/GtinTest.php` and `tests/Feature/IngestionTest.php`.

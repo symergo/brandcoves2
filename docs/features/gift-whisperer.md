@@ -7,7 +7,7 @@ date_added: 2026-08-08
 
 # Gift Whisperer
 
-Describe someone, get four suggestions, each with the reason it was chosen.
+Describe someone, get eight suggestions, each showing what it has in common with the brief.
 
 Gifting is **anti-search**: a shopper knows the product and needs the price; a gift-giver knows the
 person and has no idea what the product is. Every part of this feature exists because the search box
@@ -20,43 +20,15 @@ AngleMap ──▶ retrieve ──▶ filter ──▶ score ──▶ MMR ─�
  (queries)    (one SQL)   (hard)     (5 signals)  (diversify)
 ```
 
-Four suggestions out of tens of thousands of rows, in under 100 ms, on a request that can never cost
+Eight suggestions out of tens of thousands of rows, in under 100 ms, on a request that can never cost
 an AI call. Everything expensive happened earlier: giftability was classified after the last ingest,
 the angle map was widened overnight.
 
-## 1. Giftability — [see the classifier](#the-classifier)
+## 1. Giftability
 
-A merchant feed is mostly *not* gifts. Vacuum bags, printer toner, extended warranties and phone
-cases for one specific handset vastly outnumber the things a person would be pleased to unwrap. One
-of those in a gift result destroys trust in every other result on the page — so the classifier is
-tuned strict: a wrongly excluded gift costs one candidate out of tens of thousands, a wrongly
-included non-gift costs the feature.
-
-### The classifier
-
-Pure — text and a price in, a verdict out. No database, no network. Two decisions shape all of it:
-
-**Match substrings, not words.** Dutch and German write compounds closed: `stofzuigerzak`,
-`inktcartridge`, `waterfilterpatroon`. A `\bcartridge\b` regex matches none of them, so a
-word-boundary matcher waves every Dutch consumable straight through — and Dutch is two of our five
-markets.
-
-**List the compound, never the bare stem.** The obvious follow-up mistake is adding `filter` to the
-list, which then also kills `polarisatiefilter` and `ND-filter` — real presents for someone who takes
-photographs. So the list holds `waterfilter`, `stofzuigerfilter`, `filterpatroon`. Camera filters
-survive because nothing in the list is a substring of them, not because of a special case bolted on
-afterwards.
-
-**A term must never sit in the list beside its own prefix.** Found the hard way: `navulling` and
-`navul` both matched a coffee hamper, and the shorter one — reached second, carrying no rescue of its
-own — silently overturned the longer one's rescue. Keep the prefix, hang the rescue on it.
-
-Accent folding is done by an explicit table rather than `iconv('ASCII//TRANSLIT')`, which produces
-different output on glibc, musl and Windows. Tests run on a Windows laptop; production is Alpine. A
-classifier that disagrees with its own test suite depending on the host is worse than none.
-
-The golden file in `tests/Unit/GiftabilityClassifierTest.php` **is** the specification — 35 cases,
-each a real shape from the Awin feeds.
+A merchant feed is mostly *not* gifts, and one non-gift in a result destroys trust in every other
+card, so every candidate must be `giftable`. The classifier and why its lists match substrings are
+in [giftability.md](giftability.md).
 
 ## 2. The angle map
 
@@ -79,8 +51,8 @@ what to search for, and second-guessing them is worse than trusting them.
 ### Widening is the AI invariant in miniature
 
 The model runs in a scheduled job, under a daily cap, and writes rows the request path only reads.
-Batched one call per market covering the five stalest interests — 5 markets × 36 interests × 4 vibe
-states is 400 combinations against a cap of 20 calls a day, and the model writes better queries when
+Batched one call per market covering the five stalest interests — 5 markets × 39 interests × 4 vibe
+states is 780 combinations against a cap of 20 calls a day, and the model writes better queries when
 it can see several interests at once. Staleness is read off `updated_at`, so the timestamp *is* the
 cursor and it survives a redeploy for free.
 
@@ -89,9 +61,10 @@ toward what is already well stocked, which is the opposite of the point.
 
 ## 3. Retrieval
 
-One query. The angle queries are folded into a single `websearch_to_tsquery` joined with `OR`, not a
-subquery per term: twenty `EXISTS` clauses against a table this size is the difference between 40 ms
-and four seconds.
+One query per interest. Each interest the brief names retrieves its own share of the 300-row pool
+(see "A board of eight" below); within a share the angle queries fold into a single
+`websearch_to_tsquery` joined with `OR`, not a subquery per term: twenty `EXISTS` clauses against a
+table this size is the difference between 40 ms and four seconds.
 
 **"Avoid" is a hard filter, never a penalty.** Someone who wrote "no alcohol" or "she's allergic to
 wool" is not expressing a preference to be weighed against price. A single violation makes the whole
@@ -153,10 +126,10 @@ every result page shows four of the same thing.
 
 ## 6. Explaining
 
-One reason per card, not a breakdown. Three reasons read as a machine justifying itself, and the
-strongest signal is almost always the true one. The full `breakdown` is kept on `Suggestion` — "why did
-it pick this" is the first question everyone asks, the shopper now and whoever tunes the weights in
-six months. A recommender you cannot interrogate is one you cannot fix.
+Superseded 2026-09-14: the card lists what the present has in common with the brief, at most four
+items and no sentence (see "The card names what it fits" below). The full `breakdown` is still kept
+on `Suggestion` — "why did it pick this" is the first question everyone asks, the shopper now and
+whoever tunes the weights in six months. A recommender you cannot interrogate is one you cannot fix.
 
 ## Privacy
 
@@ -171,13 +144,15 @@ back to what was just rejected — the fastest way to lose trust in a recommende
 ## Files
 
 - `app/Services/Gift/GiftabilityClassifier.php`, `Giftability.php`
-- `app/Services/Gift/AngleMap.php`, `GiftEngine.php`, `TasteBrief.php`, `Suggestion.php`
+- `app/Services/Gift/AngleMap.php`, `SuggestionEngine.php`, `SuggestionProfile.php`, `TasteBrief.php`,
+  `Suggestion.php`, `GiftTags.php`
 - `app/Jobs/ClassifyGiftability.php`, `WidenGiftAngles.php`
 - `app/Services/Gift/RejectionMemory.php`
 - `app/Http/Controllers/GiftController.php`
 - `resources/js/Pages/Gift/Wizard.tsx`, `resources/js/Components/ChipInput.tsx`,
   `resources/js/Components/SaveToList.tsx` (the `into` prop)
 - `tests/Unit/GiftabilityClassifierTest.php`, `tests/Feature/SuggestionEngineTest.php`,
+  `tests/Feature/SuggestionEngineTagsTest.php`, `tests/Feature/SuggestionEngineDemandTest.php`,
   `tests/Feature/GiftWhispererTest.php`
 
 
@@ -248,14 +223,14 @@ Two changes, both in `SuggestionEngine`:
 Not changed: the reason on the card still names the matched term, and the catalogue is still thin
 on adult painting supplies. The first is a declined item, the second is a feed question.
 
-## Out of the header (2026-09-13)
+## Out of the header (2026-09-13), and back (2026-09-14)
 
 The owner took the Whisperer out of the "Find a gift" menu the same day the changes below shipped:
 it does not work well enough to be the most prominent answer to that label. The page stays at
 `/gift`, the How-it-works manual still explains it and the legacy redirect still lands on it, so it
 has an address but no door in the header, the same status the home page gave it when the search
-field replaced its button there. It comes back when the suggestions earn the place. See
-[navigation.md](navigation.md).
+field replaced its button there. It came back on 2026-09-14 as the first entry under Find a gift,
+once each interest got a share of the pool and of the board (below). See [navigation.md](navigation.md).
 
 ## Adjust, Four more, and the saved person (2026-09-13)
 
@@ -277,23 +252,25 @@ This exposed a bug. `swap()` used to remember the whole board it returned, so th
 re-post would show something new. The side effect was that the *second* swap excluded the three
 cards the visitor had kept and replaced all four. The docblock's promise ("the three that were kept
 plus the next one down") held for the first swap only, and no test asserted the kept three survived.
-`a_second_swap_keeps_the_three_you_did_not_reject` now does, and `swap()` remembers exactly the one
+`a_second_swap_keeps_the_cards_you_did_not_reject` now does, and `swap()` remembers exactly the one
 opinion it was given.
 
-**"Four more"** (`POST /gift/more`) is the explicit way past a board: recompute what is on screen,
-remember those ids, suggest again. Two engine runs per press, each well under 100 ms.
-`four_more_after_a_swap_does_not_skip_a_board` is the oracle: after a swap, the next board must equal
+**"Four more"** (`POST /gift/more`; the button reads "Acht andere" since the board became eight) is
+the explicit way past a board: recompute what is on screen, remember those ids, suggest again. Two
+engine runs per press, each well under 100 ms.
+`more_after_a_swap_does_not_skip_a_board` is the oracle: after a swap, the next board must equal
 the engine run directly with the rejected id and the current board excluded, which is only true if
-the swap did not poison the memory. The memory's cap of 60 ids per brief gives 15 presses before the
-oldest board is evicted; past that the brief is the problem, not the picks.
+the swap did not poison the memory. The memory's cap of 60 ids per brief holds seven boards of eight;
+the eighth press starts evicting the oldest. Past that the brief is the problem, not the picks.
 
 ### Adjust, not Start over
 
 The results used to hide the answers entirely, so disliking one card meant "Start over" and six
 questions again — while the controller's own comment claimed the wizard "keeps its answers on screen
 next to the results". Now a line of chips above the cards says what was answered (for whom, the
-interests, the feel, the budget, the avoid words, the values) with an **Adjust** button that returns
-to the questions with the answers kept. No request: component state was already the truth, and the
+interests, the age, the taste poles, the feel, the budget, the avoid words, and any values a saved
+person carries) with an **Adjust** button that returns to the questions with the answers kept. No
+request: component state was already the truth, and the
 results stay in props for "Back to the ideas".
 
 ### Words of your own
@@ -320,8 +297,8 @@ The id now travels with every request.
 
 - **The overlay contract.** `brief()` fills only *absent* keys from the profile (`+=`). A key the
   wizard posted wins even when it is `[]` or `null` — Laravel's `validated()` keeps an empty array —
-  so clearing "avoid" really clears it, while the occasion and age band, which the wizard never asks,
-  still come from what is stored. The wizard posts every key it edits for this reason, and
+  so clearing "avoid" really clears it, while the occasion, which the wizard never asks, still comes
+  from what is stored. The wizard posts every key it edits for this reason, and
   `a_cleared_answer_beats_the_stored_one` pins it.
 - **Remember is opt-in**, off by default, shown only when a saved person was chosen, on the last
   question and on the results (where a tick re-posts the brief at once; a plain post is idempotent,
@@ -329,9 +306,9 @@ The id now travels with every request.
   silly for the office must not become Mum's profile.
 - **The label says "answers", not "taste"**, and the hint says what it cannot do. `describeTaste()`
   refuses when the person has described their own taste through their link (`TasteSource::Self`
-  outranks `Suggested`). The budget is the *giver's* fact, not the person's taste, so it is written
-  directly and survives that gate — without it, "use what we know about Mum" restored everything
-  except what you spend on her.
+  outranks `Suggested`). The budget, the occasion and the age band are the *giver's* facts, not the
+  person's taste, so they are written directly and survive that gate — without it, "use what we know
+  about Mum" restored everything except what you spend on her.
 
 ### Saving lands on that person's list
 
@@ -349,32 +326,14 @@ never use would be noise in the picker. `RecipientProfileController::theirList()
 
 ## The vibe step asks which way their taste goes (2026-09-14)
 
-The owner's ask was "practical vs design, modern vs vintage, useful vs beautiful", and the first
-answer here was a flat list of looks. The correction came within the hour — "it's more than style"
-— and it is the design: the *vs* is the point. A taste is a handful of choices between two ways a
-present can go, and a person recognises their own by being shown both ends rather than by reading
-a bag of adjectives and picking none.
-
-`App\Enums\Preference` is seven axes of two poles: practical/design, modern/vintage,
-minimal/colourful, natural/technical, manual/powered, everyday/luxurious, classic/quirky. Manual or powered is a real fork in a present — a hand grinder and an electric
-one are different gifts for the same shelf — and it is the one axis a feed title almost always
-answers by itself. The wizard draws one row per axis inside
-the vibe step — not a step of its own, because every step after the first is one people skip —
-with up to three chosen across the whole answer, and picking one end clears the other because
-nothing is both modern and vintage. A saved person remembers them in `recipients.preferences`,
-next to the vibe and the values they already remembered.
-
-The first axis is the owner's headline pair, practical or design, and it asks the vibe question
-again on purpose: it belongs in the form the rest of the taste is asked in. The vibe itself does
-not change — one pick of three, and what thousands of products are already tagged with — so a
-product can carry both, and two signals that agree are the same fact said twice. The other six
-axes are everything the vibe cannot carry at all.
-
-Scored like `values` and for the same reason: an editor's `preference:` tag first, the title words
-as a fallback (a feed says "eiken" far more often than anyone tags `preference:natural`), and a
-neutral 0.5 when the question was not asked, so skipping it costs nothing. The opposite pole is
-never scored against a product: a cosy present shown to someone who said "sleek" is merely not
-what they asked for, and the rest of the brief judges it better than this signal would.
+The owner's ask and the vocabulary it produced, seven axes of two poles and why the first repeats
+the vibe question, are in
+[gift-tags.md](gift-tags.md#two-decisions-the-owner-asked-about-2026-09-14). In the wizard: one row
+per axis inside the vibe step (a step of its own is one people skip), up to three poles across the
+whole answer, and picking one end clears the other. A saved person remembers them in
+`recipients.preferences`. Scored like `values`: an editor's `preference:` tag first, title words
+second, 0.5 when unasked, 0.4 when asked and unmet; the opposite pole is never scored against a
+product.
 
 ## A board of eight, spread across the interests (2026-09-14)
 
@@ -439,7 +398,7 @@ words.
 
 ## The wizard asks the age, from fixed groups (2026-09-14)
 
-A seventh question, after the interests: "How old are they?", nine chips (0-2, 3-5, 6-9, 10-12,
+A step after the interests (six steps with a saved person, five without): "How old are they?", nine chips (0-2, 3-5, 6-9, 10-12,
 13-17, 18-29, 30-49, 50-64, 65+), skippable like every step after the first. The answer is one of
 the exact strings an editor tags a product with (`age:13-17`), so `recipient_fit` compares two
 fixed values and nothing is typed or folded. The server refuses anything else. See

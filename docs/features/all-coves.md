@@ -6,11 +6,12 @@ Added 2026-08-29.
 
 ## The gap
 
-A Cove has three shapes and each had an index of its own:
+When this page was added a Cove came in four shapes, each with an index of its own (a seventh kind,
+Brand, now lives on the brand pages; see [cove-entities.md](cove-entities.md)):
 
 | Kind | Index | What it is |
 |---|---|---|
-| `daily` | `/daily` | One edition every morning, addressed by date |
+| `daily` | `/tips` | One edition every morning, addressed by date |
 | `persona` | `/gift-ideas` | A shelf built around a person, permanent |
 | `guide`, `seasonal`, `advice` | `/guides` | Buying advice and guides — "Shop Smarter" |
 | `shop` | `/shops` | What a shop is like to buy from ([shop-coves.md](shop-coves.md)) |
@@ -52,9 +53,9 @@ to today's edition: an empty shelf is worse than no shelf, and a market that has
 personas yet should not be told it has a persona section.
 
 **Editions link by slug, not by date.** `CoveKind::path()` takes "whatever addresses it" and its
-docblock says a `Y-m-d` for a Daily — but `/daily/{date}` 301s onto `/daily/{slug}`, so linking by
-date would send every click on this page through a redirect. The cards under `/daily` already
-links by slug.
+docblock says a `Y-m-d` for a Daily — but `/tips/{date}` 301s onto `/tips/{slug}`, so linking by
+date would send every click on this page through a redirect. The cards under the Daily Cove already
+link by slug.
 
 **A persona carries no date.** On purpose: it never stops being current, which is why it has no
 `drop_date` in the first place, and printing its publication date would invite a reader to treat an

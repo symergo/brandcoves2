@@ -58,9 +58,8 @@ ssh root@51.75.78.173 'docker exec brandcoves-db-1 \
   sh -c "mysqldump -uroot -p\$MYSQL_ROOT_PASSWORD \$MYSQL_DATABASE" | gzip' > v1-cutover.sql.gz
 ```
 
-If it comes back to a laptop, `php artisan bc:scrub` is mandatory afterwards —
-`users`, `recipients` and `wishlists` hold real emails and personal gift notes,
-and this repo sits in a Synology-synced folder.
+If it comes back to a laptop, run `php artisan bc:scrub` afterwards; see
+[../deployment.md](../deployment.md#getting-production-data-onto-the-laptop).
 
 ### 3. Know what the v1 URLs do
 

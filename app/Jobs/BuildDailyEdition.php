@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * Builds one market's Daily Cove edition.
  *
- * The only place the daily theme and the guide's editorial copy touch a model,
+ * The only place the daily theme and the edition's editorial touch a model,
  * and it is a queued job under a daily cap — the AI invariant holding in the
  * feature most tempting to violate it, because "generate a theme for today"
  * reads like something a page could do on demand. It cannot: that would put

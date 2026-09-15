@@ -460,7 +460,8 @@ class SitemapController extends Controller
                 'Disallow: /*/for/',
                 'Disallow: /*/q/',
                 'Disallow: /*/santa/',
-                'Disallow: /*/invitations/',
+                // `/*/invitations/` went with list-invitation redemption on
+                // 2026-09-14: there is no such route left to protect.
                 'Disallow: /admin',
                 '',
                 'Sitemap: '.url('/sitemap.xml'),

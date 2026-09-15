@@ -170,10 +170,11 @@ class AccountDeletionController extends Controller
     /**
      * The endpoint URL, exactly as registered with eBay.
      *
-     * Config first, because production serves three hostnames and does not yet
-     * redirect between them, so a URL this app generates for itself is a guess
-     * — and a wrong guess here fails the challenge rather than merely looking
-     * untidy.
+     * Config first. Since 2026-09-05 the other two hostnames redirect to the
+     * canonical one, but the hash covers the exact URL string registered in
+     * the portal and nothing guarantees the host a request arrives on matches
+     * it — a URL this app generates for itself is still a guess, and a wrong
+     * guess here fails the challenge rather than merely looking untidy.
      *
      * The request-derived fallback keeps local and staging working without
      * ceremony. It uses the path only from the route, and the scheme and host

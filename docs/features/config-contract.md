@@ -31,7 +31,7 @@ disappeared without a word: a laptop ingested from two publishers and every depl
 ingested from one, reporting complete success either way. That is the whole bug class in one
 example — **correct locally, quietly diminished in production, no error anywhere**.
 
-## Three parts
+## Four parts
 
 ### 1. `tests/Unit/ConfigContractTest.php` — the guard
 

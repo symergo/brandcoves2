@@ -26,8 +26,8 @@ was a proxy for one:
 - `TopicMiner` reads 30 days of our own searches, on the premise that a site's own log is "the only
   demand signal that is both real and unavailable to competitors". True — and empty on a new market,
   which is exactly when guides would do the most good.
-- `FreshRetriever` measures `first_seen_at` and how many shops picked something up lately. That is
-  supply moving, not demand.
+- The discovery dial's `fresh` retriever measured `first_seen_at` and how many shops picked
+  something up lately. That is supply moving, not demand. (Removed with the dial, 2026-09-07.)
 - `SuggestionEngine::surprise()` uses merchant count as an inverse proxy for "you have seen this
   already".
 
@@ -37,8 +37,9 @@ bol publishes the real quantity, and we were already authenticated against it.
 
 Two consumers, both internal:
 
-1. **Product suggestions** — the `popular` retriever in the discovery pipeline, candidate coverage in
-   the gift engine, and the serendipity quality gate.
+1. **Product suggestions** — candidate coverage and the `for_myself` ranking term in the gift
+   engine, the serendipity quality gate, and the `popular` rail on shop and brand pages
+   (`EntityRails`, see the note at the top).
 2. **Market trend identification** — the admin trends page and chart-derived guide topics.
 
 **There is no public bestsellers page and no visible rank.** Partly scope, mostly this: a chart is
@@ -99,36 +100,22 @@ Three details worth keeping:
 
 ## Movement is the signal, not position
 
-This is why history is stored at all rather than a single snapshot being overwritten.
+This is why history is stored at all rather than a single snapshot being overwritten. A permanent
+number one is popular and is not *news*; a product that went from #40 to #6 in a week is what
+"what's current" means.
 
-A permanent number one is popular and is not *news*. A product that went from #40 to #6 in a week is
-what "what's current" actually means. So `PopularRetriever` splits the chart across two of the
-ranker's existing signals:
+Until 2026-09-07 a `popular` retriever fed movement into the discovery dial as a novelty score; it
+went with the dial ([discovery-modes.md](discovery-modes.md)). Movement is now read by the admin
+**Market trends** page, and position by `ChartDemand`:
 
-| Signal | From |
-|---|---|
-| `relevance` | rank, log-decayed: `1/(1+ln(rank))` — #1 ≈ 1.0, #10 ≈ 0.30, #100 ≈ 0.18 |
-| `novelty` | movement against the nearest snapshot ≥ 7 days old. New entry 1.0, climbing proportional to positions gained, flat or falling 0.2 |
-| `quality` | 0.9, raised to 1.0 at `merchant_count > 1` |
-| `unexpectedness` | `surprise_score`, as the other retrievers do |
-
-With `trends` at α = 0.3 and γ = 0.7, the climber wins. That is the whole point.
-
-Two calibration decisions:
-
-- **Log decay, not linear.** The gap between #1 and #10 is real; the gap between #90 and #100 is
-  rounding. A linear scale gets both backwards.
-- **A week, not a day.** Charts jitter — a competitor's stock-out moves three places overnight. And
-  the comparison reaches for the *nearest snapshot at least seven days old* rather than "exactly seven
-  days ago": a skipped run would otherwise find nothing there and award every product maximum novelty
-  for a gap in our own data.
-
-A product's **best** position across charts is the one that counts. Charting at #2 in headphones and
-#90 overall is a strong seller; averaging would punish it for appearing in a large category as well as
-a small one.
-
-`isAvailable()` returns false when the newest snapshot is over a fortnight old, so `trends`
-renormalises onto `fresh` instead of presenting month-old demand as current.
+- **A week, not a day, and the nearest snapshot rather than an exact date.** `MarketTrends` compares
+  against the nearest snapshot at least `WINDOW_DAYS` (7) old. Charts jitter (a competitor's
+  stock-out moves three places overnight), and asking for "exactly seven days ago" would find nothing
+  after a skipped run and report every product as new.
+- **Log decay, not linear.** `ChartDemand::fromRank()` is `1/(1+ln(rank))`: #1 ≈ 1.0, #10 ≈ 0.30,
+  #100 ≈ 0.18. The gap between #1 and #10 is real; the gap between #90 and #100 is rounding.
+- **Best position across charts counts.** Charting at #2 in headphones and #90 overall is a strong
+  seller; averaging would punish it for appearing in a large category as well as a small one.
 
 ## The part that had to be fenced off
 
@@ -226,8 +213,9 @@ suggestable. Once a day and no more: a bestseller chart does not turn over hourl
 would only overwrite the same snapshot.
 
 Rank history is retained for **400 days** — a year plus a margin, so "was this climbing last August
-too?" is answerable. Seasonality is most of what a chart has to say in a gifting catalogue. Pruned by
-`bc:prune-price-history`, which owns both daily time series.
+too?" is answerable. Seasonality is most of what a chart has to say in a gifting catalogue. Pruned nightly at 03:30 by
+`bc:prune-rank-history`; `popular_ranks` is the only time series left since `price_history` was
+dropped on 2026-09-12.
 
 **No new environment variables.** It reuses `BOL_CLIENT_ID` / `BOL_CLIENT_SECRET`, so there is nothing
 to add in Coolify and nothing for `bc:check-config`.
@@ -246,20 +234,18 @@ chart under storage rules that forbid mirroring. Adding it is:
 2. `registerPopularity()` in `AppServiceProvider`.
 3. A `popular` block under `connectors.amazon` in `config/giftcoves.php`.
 
-Nothing in `ChartPuller`, `PullPopularCharts`, `PopularRetriever` or `MarketTrends` changes.
+Nothing in `ChartPuller`, `PullPopularCharts`, `ChartDemand` or `MarketTrends` changes.
 `allowsCatalogueStorage()` already routes Amazon down the decision-only path, and
 `PopularChartPipelineTest::a_source_that_may_not_be_mirrored_still_gets_its_ranks_recorded` asserts
 it.
 
-## One thing worth checking
+## `BolConnector::fetchById()`
 
-`BolConnector::fetchById()` may be hitting a 404 on every call, and this feature does not depend on
-it. bol documents the single-product path as `/products/{ean}`, its key-concepts page treats
-`bolProductId` and `ean` as distinct, and there is a `/products/{bolProductId}/to-ean` converter —
-which exists only because they are not interchangeable. `normalise()` sets `externalId` from
-`bolProductId`, and `fetchById()` puts that value in the `{ean}` slot. If that is wrong, every bol
-wishlist and daily-pick refresh returns null *invisibly*, because the method is documented to degrade
-to null. One `bc:check-bol` run against a known bolProductId settles it.
+Settled on 2026-09-14: bol's product endpoint takes an EAN only, and a `bolProductId` answers 400.
+`fetchById()` now returns null for anything that is not a 13-digit barcode. The wishlist refresh
+still passes `products.external_id`, so bol offers are not refreshed there; see
+[page-import.md](page-import.md#getting-from-a-page-to-a-catalogue-record). This feature never
+depended on it.
 
 ## Files
 
@@ -269,10 +255,11 @@ to null. One `bc:check-bol` run against a known bolProductId settles it.
 - `app/Services/Charts/` — `ChartPuller`, `ChartPullResult`, `ChartDemand`
 - `app/Jobs/PullPopularCharts.php`, `app/Console/Commands/PullChartsCommand.php`
 - `app/Models/PopularRank.php`, `ChartCategory.php`
-- `app/Services/Discover/Retrievers/PopularRetriever.php`
+- `app/Services/Guides/TopicMiner.php`
+- `app/Services/Cove/EntityRails.php`
 - `app/Services/Discovery/MarketTrends.php`, `TrendMove.php`
 - `app/Filament/Pages/MarketTrends.php`
 - `database/migrations/2026_08_10_000300_create_popularity_chart_tables.php`
 - `database/migrations/2026_08_10_000400_let_a_guide_topic_come_from_a_chart.php`
 - `tests/Feature/BolPopularChartTest.php`, `PopularChartPipelineTest.php`,
-  `PopularRetrieverTest.php`, `MarketTrendsTest.php`, `SuggestionEngineDemandTest.php`
+  `MarketTrendsTest.php`, `SuggestionEngineDemandTest.php`

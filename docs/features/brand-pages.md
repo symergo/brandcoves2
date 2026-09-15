@@ -1,7 +1,7 @@
 ---
 name: Brand pages and on-page editorial
 area: SEO / Discovery
-status: Built
+status: Active
 date_added: 2026-08-08
 ---
 
@@ -24,9 +24,9 @@ A comparison site has two kinds of page and only one of them ranks.
 
 - **Product pages** rank. They are specific, they have structured data, and there is one per thing.
 - **Search results** do not. `?q=koptelefoon&brand[]=Sony` is almost pure markup — titles, prices, a
-  filter rail — with nothing on it for a crawler to understand the page as being *about*. It is also
-  `noindex` on purpose, because a facet UI generates a combinatorial explosion of near-identical URLs
-  and a crawler left loose in one spends its entire budget there.
+  filter rail — with nothing on it for a crawler to understand the page as being *about*. Until
+  2026-09-12 it was also `noindex`, because a facet UI generates a combinatorial explosion of
+  near-identical URLs. It is indexable now and canonicalises to the bare term ([seo.md](seo.md)).
 
 The consequence is that every brand mention on the site — on cards, in facets, in generated Cove
 prose — pointed at a URL we had explicitly told search engines to ignore. Thousands of internal links
@@ -44,11 +44,9 @@ month.
 
 What it adds is what a filtered search cannot have: a canonical URL, and links out to editorial.
 
-Above the grid there is one row of the brand's own vocabulary, as links — see
-[The statistics came off the top of the page](#the-statistics-came-off-the-top-of-the-page). Below it
-there are articles that mention the brand, and under those the long copy — removed on 2026-08-16 and
-back on 2026-08-30, on terms that answer why it went. See
-[The long copy below the grid went, and came back editable](#the-long-copy-below-the-grid-went-and-came-back-editable).
+The articles that mention the brand sit in the left column under the filters. The long copy below the
+grid was removed on 2026-08-16, back on 2026-08-30, and emptied again on 2026-09-06: `brand.below_grid`
+now ships empty ([cove-entities.md](cove-entities.md#the-six-generated-sections-are-gone)).
 
 The brand facet is absent from its filter rail, because filtering a Sony page by brand is a control
 with one option.
@@ -89,9 +87,9 @@ actually asked.
 
 ### Only on page one
 
-Page two of a brand's catalogue is `noindex` and is read by someone who has already scrolled past
-everything a live source could add. Across thousands of brand pages, asking again is a request per
-page per crawl for nothing.
+Page two onwards, and any sub-search, ask nobody (`BrandController::liveTerm()`). Both are read by
+someone who has already scrolled past everything a live source could add. Across thousands of brand
+pages, asking again is a request per page per crawl for nothing.
 
 ### The fold runs once per cache window
 
@@ -182,14 +180,14 @@ describing the grid immediately beneath it is a paragraph nobody needs. Someone 
 name came to see that brand's products, and on a phone the statistics were most of a screen between
 them and the first card.
 
-**The facts did not disappear.** They live in the long copy below the grid, which is where a reader
-who wants them goes looking, and which is what a crawler reads the page as a document from. The copy
-rule is unchanged and still governs every sentence there.
+*(Until 2026-09-06)* They lived in the long copy below the grid. That region now ships empty, so a
+brand page states them only where an editor writes a block that names them.
 
 ### What replaced it: the vocabulary, as links
 
 `ResultTerms` extracts the words that recur across the titles on the page — `noise cancelling`,
-`over-ear`, `cordless` — and each one renders as a link to `/{market}/search?q=<word>`.
+`over-ear`, `cordless` — and each one renders as a chip that narrows this brand page
+(`/brand/karcher?q=<word>`); see below.
 
 It survived the cut because it was the one part that was *not* a restatement of the grid. A count of
 products describes what the reader can already see; the vocabulary says what **kind** of thing the
@@ -230,9 +228,9 @@ not a control a page gets to rely on.
 
 A combinatorial URL space, over the pages that are already the site's crawl target. Two guards:
 
-- **Every `?q=` variant of a brand page is `noindex, follow`** and canonicalises to the bare page.
-  This is the same trap `/search?brand[]=` is noindex for. It also carries no narrative, for the same
-  reason a paginated variant does not.
+- **Every `?q=` variant canonicalises to the bare page.** It was also `noindex, follow` until
+  2026-09-12; since then the canonical alone consolidates it. It carries no copy (`isThin()`), for the
+  same reason a paginated variant does not.
 - **Only the canonical brand page queries the live sources.** A crawler walking the chips would
   otherwise fire one bol search per URL, and bol's rate limiter is a shared bucket — background
   crawling would be starving live visitors of it. Little is lost: the bare page's pull has already
@@ -275,8 +273,8 @@ nothing once no page calls that service.
 
 ## The copy rule
 
-Still the rule for every sentence the site generates. It now governs the long copy below the grid
-rather than an intro above it.
+Still the rule for every sentence the site generates. It governs every sentence an editor puts in a
+brand region rather than an intro above it.
 
 **Every sentence is a fact the page can back up.**
 
@@ -295,8 +293,8 @@ strikethrough is marketing; the previous price is evidence. Same arithmetic as
 `ProductGroup::discountPercent()` — floor, never round — because a badge and a sentence that disagree
 about whether something is reduced is worse than neither.
 
-`BrandPageTest` pins this: a brand whose previous price equals its minimum must produce copy containing no
-percentage at all.
+`PageCopyRenderTest` pins this: a brand whose previous price equals its minimum must produce copy
+containing no percentage at all.
 
 ### Why templates and not AI
 
@@ -308,14 +306,10 @@ it quotes, which is the worse failure.
 So the split is: **facts are templated, creativity is linked to.** The AI-written Coves that mention a
 brand appear on its page, and that is where the personality lives.
 
-### Why the opening line rotates
-
-Four `lead_*` variants per language, chosen by `hash(brand) % 4`. Thousands of pages opening with one
-identical sentence is a pattern a crawler sees in a single sample. The variant is a hash rather than a
-random draw so the page does not reword itself between two crawls, which reads as instability rather
-than variety.
-
 ## The copy is about the brand, not about the pricing
+
+*The sections this describes were deleted on 2026-09-06 and `brand.below_grid` ships empty; this is
+the reasoning to reuse if they are restored.*
 
 Every sentence on a brand page used to be about price: ranges, previous prices, how many shops we
 track, why comparing matters. All true, all backed by a number — and none of it an answer to the
@@ -346,8 +340,8 @@ sentence this class exists to avoid.
 A brand in a single category gets a different line from one with a range, because a list joiner given
 one item renders a bare word and reads as a truncated sentence.
 
-Still no AI. These pages number in the thousands and their facts change nightly; see the reasoning in
-`BrandCopy`'s docblock, which the new sections do not alter.
+Still no AI. These pages number in the thousands and their facts change nightly; see
+[Why templates and not AI](#why-templates-and-not-ai) above, which the new sections do not alter.
 
 ## `brand_stats` is the whole page
 
@@ -439,33 +433,22 @@ browsers resolve it by discarding one, unpredictably. It now uses the stretched-
 product link carries an `absolute inset-0` overlay, the brand link sits above it on the z-axis, and
 both are real crawlable anchors with neither inside the other.
 
-## `ResultTerms`: extraction, not generation
+## `ResultTerms`
 
-The one thing that still sits above the grid, on both surfaces.
-
-Asking a model for "related keywords" produces plausible words the page does not contain, which is
-keyword stuffing with extra steps *and* a lie about the page's contents. Counting the words genuinely
-there cannot do either, and costs one pass over 24 titles.
-
-Excluded, each for its own reason:
-
-- **The query's own words**, or the brand on a brand page. Echoing "bluetooth" at someone who searched
-  for "bluetooth" is filler, and on a brand page it is a link back to the page you are on.
-- **Per-language stopwords.** Without them the list is "de, met, voor".
-- **Anything under three characters, and pure numbers.** Model numbers and capacities are not
-  vocabulary; they are what makes a list look machine-made.
-- **Anything appearing in only one title.** A word in one of 24 listings does not characterise the
-  page — it is how a page of headphones ends up described with the word "keukenmachine".
-
-Each title contributes a word at most once, or twelve near-identical listings for one product make
-that product's model name the page's defining vocabulary.
+The same row as the search page, with the brand name passed as the query so a brand page cannot list
+itself. The extraction rules are in
+[search.md](search.md#above-the-grid-the-vocabulary-not-the-statistics).
 
 ## The long copy below the grid went, and came back editable
+
+**Removed again 2026-09-06.** `2026_09_06_000200_a_brand_page_stops_explaining_itself` deleted the
+shipped blocks; the region survives and ships empty. See
+[cove-entities.md](cove-entities.md#the-six-generated-sections-are-gone).
 
 **Removed 2026-08-16. Restored 2026-08-30.** Worth reading as one decision rather than two, because
 the second half only makes sense against the first.
 
-`PageNarrative::forBrand()` adds ~350–450 words below the articles: three sections — about the brand,
+`PageNarrative::forBrand()` added ~350–450 words below the articles: three sections — about the brand,
 where it is sold, how to choose one — plus an FAQ. Every line of it is a fact the catalogue can back
 up or a true explanation of how the site works. A strip of related searches closed it until
 2026-09-05, when the scan behind it was removed for cost.
@@ -490,12 +473,9 @@ word count was real and the document it made was not.
 > authoritative domains in 2023, so the questions survive as ordinary headings with their answers
 > under them, and only the markup went.
 
-**One guard, not two.** `BrandController::isThin()` is now the single definition of a brand URL that
-must not be indexed, and both the robots tag and the copy read it. They did not always: the copy's own
-guard counted the page number, the sort and a sub-search, while the robots tag also counted the price
-bounds and the shop filter. So a filtered brand page was `noindex` and still carried several hundred
-words identical to the canonical page's — the doorway-page pattern with the warning label on and the
-cause left in place.
+**One guard.** `BrandController::isThin()` decides which brand URLs carry no copy and when a Brand
+Cove gives way to the grid. Until 2026-09-12 it also set the robots tag; before it existed, the copy
+and the tag disagreed, so a filtered page was `noindex` and still carried the canonical page's words.
 
 **The price line under the grid went instead.** A page-level *"Price and availability as of the time
 shown and may change"*, with the brand's whole price range after it, sat under the products. It read
@@ -536,50 +516,8 @@ of anything — an article containing the word "OK" is not about the brand OK.
 Unindexed, deliberately. A market holds hundreds of published articles, not millions, so the
 sequential scan costs less than an index maintained on every publish.
 
-### Related searches — on both pages again
-
-From `search_log`, matched with the `<%` word-similarity operator — never `%`, whose whole-string
-`similarity()` scores a realistic neighbour under the 0.3 default and finds nothing. Real searches
-with real results, which is the demand signal no competitor has, and the outbound links that stop a
-results page being a leaf a crawler reaches and then stops at.
-
-These chips live inside the narrative, so a brand page lost them with it on 2026-08-16 and got them
-back on 2026-08-30. It was never a leaf without them — the term links above the grid, the
-related-brand list at the top of the rail and the article links below it are all outbound — which is
-why losing them was survivable rather than urgent.
-
-### Editable, and rotating — both surfaces
-
-The copy is not in the language files any more — or rather, it is, but only as the fallback.
-`copy_templates` holds **variants** of each **slot**, editable at `/admin` under *Page copy*, and
-`CopyBank` draws one per page.
-
-A slot is a position in the page's argument ("the second sentence about comparing"), and the code
-only ever asks for the slot. Add a fifth opening line for brand pages and a fifth of them start using
-it, immediately, with no deploy.
-
-**Turn all off** on that screen is the undo. It switches every variant for the page and language on
-screen out of use, so each slot falls back to the shipped sentence and the page reads the way it did
-before anyone edited it — and it deletes nothing, so the same button turns them back on at the
-weights they had. It is deliberately not a delete: "this page reads wrong, stop showing it" is the
-request, and the destructive version of it is the one an editor cannot take back. Variants at weight
-zero stay retired in both directions, because that is a per-variant decision somebody made on purpose.
-
-**Two axes of rotation.** *Across pages*, always: the page's own identity — the brand slug, the search
-term — is in the seed, so two pages drawing from the same three variants reliably get different ones.
-*Over time*, on a cadence: `COPY_ROTATION` is `weekly` by default, with `daily`, `monthly` and
-`static` available.
-
-**Not per request**, and that is the one decision worth defending. It is the obvious reading of
-"rotate constantly" and the only version that would hurt: a page whose wording changes on every load
-cannot be cached at the edge, flickers for anyone who hits back or opens two tabs, and shows a
-crawler a different document on every fetch — which reads as an *unstable* page rather than a fresh
-one. A search engine's judgement of "this content changes" is about substance, not about which of
-three synonyms for "compare" is in paragraph two. So the draw is deterministic given (slot, page,
-period) and the period is what moves.
-
-The slot is in the seed as well as the page, or every slot on a page would draw the same index and a
-site with six variants each would have six documents rather than many.
+Copy is edited at `/admin` → Page templates. Rotation, and why it is not per request, is in
+[page-templates.md](page-templates.md#rotation).
 
 > **The three subsections that stood here are history now, and are summarised rather than kept.**
 >
@@ -598,100 +536,18 @@ site with six variants each would have six documents rather than many.
 > Placeholder validation survives in a stronger form: a region declares which placeholders it offers,
 > the admin refuses the rest, and a sentence naming a value the page cannot supply does not render at
 > all rather than asserting a zero. See [page-templates.md](page-templates.md).
-
-### Disarming it: the bank holds only what someone wrote — since 2026-08-24
-
-The trap needs a row to spring. Seeding put one under *every* slot, so it was armed everywhere the
-command had run, on every sentence — and none of those rows was doing anything else. Read on
-2026-08-24: development held **140** of them, 17 brand slots and 18 search slots across four
-languages, every one byte-identical to its language file line and **not one edited** since the
-seeding run. They changed nothing a visitor read. They only shadowed.
-
-`2026_08_24_000100_drop_the_seeded_copy_that_only_shadows_the_language_file` deletes them, and a
-migration rather than a `psql` session for the same reason as the two copy migrations before it:
-`copy_templates` is per-environment state that no deploy otherwise touches, so a hand-run `DELETE`
-reaches whichever environment someone remembered.
-
-**The predicate has two halves and both are load-bearing.** A row goes only when its body is exactly
-the current language file line *and* it is the only row for that `(surface, slot, language)`.
-
-- *Exactly the file line* is what makes the delete non-destructive without inspecting each
-  environment by hand: such a body is recoverable from the file by definition. An edited row differs
-  from the file and is invisible to the migration, whatever it was edited into.
-- *Only row* is the half that is easy to miss. Where an editor has written a genuine alternative, the
-  slot holds their variant **and** the seeded shipped line, and the rotation draws between them.
-  Deleting the seeded row there would not fall back to the file — **the fallback fires only for a
-  slot with no rows at all** — it would drop the shipped sentence out of the rotation and leave every
-  page on that slot reading the alternative. So a slot anyone has actually used is left untouched.
-
-Together: every page renders precisely what it rendered before. Three tests in `CopyBankTest` hold
-all three cases — the shadow goes and the sentence is unchanged, an edited row survives, a slot with
-a real alternative keeps both rows.
-
-> **Retired 2026-09-01.** That migration's body was emptied when `CopySlots` was deleted — it had
-> already run everywhere, so its work stands, but a fresh database replays the whole history and it
-> would have fatalled on a class that no longer exists. Which is not hypothetical: it is
-> `RefreshDatabase`, on every test run.
 >
-> The shadow it was written to disarm cannot recur. There is no language file behind a block, so
-> there is nothing for a stored row to shadow, and `bc:seed-copy` — the command that re-armed it in
-> one click — is gone with the rest. See [page-templates.md](page-templates.md).
+> A 2026-08-24 migration deleted the 140 seeded rows that only shadowed their language-file lines; it
+> was emptied on 2026-09-01 when `CopySlots` went.
 
 ### Where it does not appear
 
-Null on any page that is `noindex` anyway: page 2+, a filtered search, a sorted brand page. Repeating
-four hundred words across dozens of near-identical URLs is the doorway-page pattern at scale, and
-those pages were never going to rank.
+Null on thin variants (`isThin()`): page 2+, a filtered search, a sorted or sub-searched brand page.
+They were `noindex` until 2026-09-12. The copy stays off them because four hundred words repeated
+across near-identical URLs is the doorway-page pattern, and skipping it is what keeps those variants
+fast ([seo.md](seo.md)).
 
-## Seasonal Coves
-
-`TopicMiner` reads 30 days of our own searches, which is the right primary signal — real demand no
-competitor can see. It has one structural blind spot: **it cannot know about a season before the
-season arrives.** Barbecue searches peak in June, so a log-only queue commissions the barbecue Cove in
-July and it first earns real traffic the following May. Halloween is worse — three weeks of demand
-means the log knows only after it is over.
-
-`config/cove_seasons.php` lists ~23 topics with windows that open well before their season: spring
-cleaning and spring running from mid-February, barbecue from mid-March, poolside and sun protection
-from April, back-to-school from mid-June, Halloween from 1 August, wintersport from mid-September,
-Easter, Mother's Day, Father's Day, Valentine's.
-
-`SeasonalTopics::opening()` offers every season whose window is open, or opens within the stretch of
-calendar being drawn, and `bc:plan-coves` hands each one to `SeasonalSeries::plan()` to lay out as
-dated parts — see [seasonal-series.md](seasonal-series.md). They come ordered by the day each window
-opens, so a run that takes the first few takes the most urgent. A timing argument: a Halloween Cove
-written on 20 October is nearly worthless and the same Cove written on 1 August is an asset for a
-decade.
-
-Until 2026-09-14 there was also `TopicMiner::ripest()` (with `SeasonalTopics::ripest()` behind it),
-which returned one in-season topic ahead of any evergreen one, ordered by how soon its window closed.
-It was written for a pipeline that built one guide at a time, and nothing had called it since the
-calendar replaced that pipeline, so it was removed.
-
-The "recently attempted" rule went the same day. A topic whose build failed used to sit out fourteen
-days (`guide_topics.last_attempt_at`), so one unbuildable topic at the head of that one-at-a-time
-queue could not block every topic behind it. The planner drafts a whole list of topics now, and
-nothing had recorded an attempt since the old builder went, so the filter could never trigger. It
-was removed from `opening()` and `PlanDrafter`, along with the admin's "Tried" column and the API's
-`lastAttemptAt`/`attempts` fields. The columns themselves go a release later (docs/TODO.md).
-
-Two things it deliberately does not do:
-
-- **It never fabricates a search volume.** A seasonal topic's `search_volume` is whatever the log
-  actually says, usually zero on a young site, and `opening()` does not test it. Writing a
-  plausible number there would corrupt the one honest demand signal the system has, and admin's
-  "180 searches, 0 products" report is useful exactly as long as every figure in it was measured.
-- **It never overturns an editor's decision.** Re-seeding is nightly; a rejected topic that reset
-  itself would return every single night.
-
-A seasonal topic colliding with a mined one is the *best* outcome — it means real demand exists for a
-season we already knew was coming — so the member queries are merged rather than replaced.
-
-### Not the same thing as an observance
-
-[Daily Coves](daily-cove.md) are dated and gone tomorrow; Coves are evergreen pages that happen to be
-*commissioned* seasonally. The window controls when a Cove is written, never what it claims — a Cove
-must not say "today", because it will be read in February.
+Seasonal topics: see [seasonal-series.md](seasonal-series.md).
 
 ## Structured data
 
@@ -702,18 +558,20 @@ because it is the half of the page a search engine reads literally.
 
 ## Crawl policy
 
+Since 2026-09-12 every variant is indexable; the canonical does the consolidating.
+
 | URL | Robots | Canonical |
 |---|---|---|
 | `/{market}/brand/sony` | indexable | itself |
-| `/{market}/brand/sony?sort=price_asc` | `noindex, follow` | the bare page |
-| `/{market}/brand/sony?page=3` | `noindex, follow` | the bare page |
-| `/{market}/brand/sony?q=over-ear` | `noindex, follow` | the bare page |
-| `/{market}/search?brand[]=Sony` | `noindex, follow` | the bare term |
+| `/{market}/brand/sony?sort=price_asc` | indexable | the bare page |
+| `/{market}/brand/sony?page=3` | indexable | the bare page |
+| `/{market}/brand/sony?q=over-ear` | indexable | the bare page |
+| `/{market}/search?brand[]=Sony` | indexable | the bare term |
 | `/{market}/brands` | indexable | itself |
 
-Brand pages are listed in the sitemap **only on page 1**. Product pages run to tens of thousands and
-brands to a few hundred; repeating the brand block in every chunk would list each one dozens of times,
-which a crawler reads as a sitemap it cannot trust.
+Brand pages are listed only in each market's first sitemap chunk. Product pages run to tens of
+thousands and brands to a few hundred; repeating the brand block in every chunk would list each one
+dozens of times, which a crawler reads as a sitemap it cannot trust.
 
 ## A trap worth remembering
 

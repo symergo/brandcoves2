@@ -49,7 +49,7 @@ may name. Three places ask it and none of them keeps its own list:
 | Asks | What it does with the answer |
 |---|---|
 | `CovePlanResource` | Which options the Drawing select offers, and whether it appears at all |
-| `CovePlanController::store()` | **422** on a scene the kind cannot mean |
+| `CovePlanController::store()`, `patch()` | **422** on a scene the kind cannot mean |
 | `AdviceCoveSeeder` | Reports a `scene` key in the content file that is not an article scene |
 
 A Daily and a Shop Cove get an **empty** list, which is how the planner knows
@@ -186,8 +186,8 @@ Three things that are deliberate:
   `CoveScene`, as every token is checked against an allowlist. A typo drops the paragraph and is
   reported in `rejected` as `figure:key`. It does not fall back to the default drawing, because a
   generic sheet of paper in the middle of an article about money reads as a rendering fault.
-- **Surfaces that render strings only skip it.** `CoveMarkup::paragraphs()` (FAQ answers, the
-  legacy guide path) leaves a figure paragraph out rather than printing a token.
+- **Surfaces that render strings only skip it.** `CoveMarkup::paragraphs()` (FAQ answers, brand and
+  shop Cove bodies, the digest email) leaves a figure paragraph out rather than printing a token.
 
 Any scene may be a figure. Ten were added with the feature, two covers (`money_gift`, `handmade`)
 and eight figures (`money_tree`, `folded_note`, `coin_jar`, `treasure_map`, `coupon_book`,

@@ -74,7 +74,8 @@ enum CoveKind: string
      * "what a good returns policy looks like".
      *
      * Demanding products would either block it or pad it with things the writing
-     * is not about, so it is the only kind whose minimum is zero.
+     * is not about, so its minimum is zero — like the two entity kinds below, for
+     * the same reason.
      */
     case Advice = 'advice';
 
@@ -159,10 +160,12 @@ enum CoveKind: string
      * everything else. The enum takes the string rather than the model so that
      * nothing in `app/Enums` has to know about Eloquent.
      *
-     * `$market` is required rather than optional because the Daily segment is
-     * localised — `cadeau-van-de-dag`, `cadeau-du-jour` — and a default would
-     * mean one market's word silently appearing in another's URL. Every caller
-     * already holds the market; making them say so is cheaper than the bug.
+     * `$market` is required rather than optional because the Daily segment used
+     * to be localised — `cadeau-van-de-dag`, `cadeau-du-jour` — and a default
+     * would mean one market's word silently appearing in another's URL. It has
+     * since collapsed to one word, `tips`, for every market, but the signature
+     * is kept explicit because it makes the dependency plain if it ever varies
+     * again.
      */
     public function path(string $address, Market $market): string
     {

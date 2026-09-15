@@ -30,8 +30,7 @@ because that data is real, and importing it would put it into a second live syst
 Editorial rows point at products by **environment-local integer id**:
 
 - `daily_picks.group_id`
-- `guide_items.group_id`
-- `cove_plans.pinned_group_ids`
+- the group each of a plan's `items` points at (`cove_plan_items`, nested in the plan on export)
 
 Each environment assigns those from its own ingestion, so **they do not line up**. Copying rows
 verbatim would not fail. It would point a hand-picked Cove at whatever product happens to hold that
@@ -42,13 +41,12 @@ The stable handle already exists: `product_groups` is unique on `(market, identi
 invariant 2. Every product reference is rewritten as that pair on the way out and resolved back on
 the way in.
 
-A reference the target cannot resolve is **dropped and named**, never guessed at.
-`guide_items.group_id` is `NOT NULL`, so dropping is the only option there anyway; everything else
-follows the same rule, so the behaviour is one rule rather than a table of exceptions.
+The rule was forced first by `guide_items.group_id`, which was `NOT NULL`; that table was dropped
+on 2026-09-06 and the rule stayed, so the behaviour is one rule rather than a table of exceptions.
 
 ## Allowlist, never denylist
 
-`ContentEnvelope::SURFACES` names what may travel: `feeds`, `blocks`, `topics`, `editions`, `plans`.
+`ContentEnvelope::SURFACES` names what may travel: `feeds`, `blocks`, `editions`, `topics`, `plans`.
 Asking for anything else is an error, not an empty result.
 
 `ContentEnvelope::RETIRED` names the ones an *older* envelope may still carry — `copy` and `guides`.
@@ -204,14 +202,15 @@ docker exec <staging-app> php artisan bc:export-content --out=/tmp/content.json
 docker exec -i <prod-app> php artisan bc:import-content --in=- --write < content.json
 ```
 
-`--surfaces=guides,editions` narrows it. Progress goes to **stderr** so stdout stays a clean pipe;
+`--surfaces=editions,plans` narrows it. Progress goes to **stderr** so stdout stays a clean pipe;
 a progress line inside the JSON would make the envelope unparseable at the far end.
 
 ## Verification
 
 Run the import twice. The second run must report the same counts and create nothing — idempotence is
 the property most likely to be got wrong, and the one that turns a promotion into two of every Cove.
-Natural keys do the work: `guides.(market, slug)`, `daily_pick_sets.(market, drop_date)`,
+Natural keys do the work: a dated Cove by `(market, drop_date)`, every other Cove and plan by
+`(market, slug)` (see *The natural key* above), a page block by `(page, region, language)`, and
 `feeds.(source, external_feed_id, market)`.
 
 ## Files

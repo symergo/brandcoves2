@@ -459,17 +459,6 @@ export default function ListShow({
                                         aside={
                                             <>
                                                 {/*
-                                                  Copy to another list, beside remove.
-
-                                                  The two together are also the move:
-                                                  copy, then remove. That is the whole
-                                                  argument for not having a move — a
-                                                  second verb whose only failure mode is
-                                                  destroying the original, for something
-                                                  the page can already do in two
-                                                  deliberate presses.
-                                                */}
-                                                {/*
                                                   Put it on another of my lists.
 
                                                   The save picker when there is a

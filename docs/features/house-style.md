@@ -1,3 +1,10 @@
+---
+name: House style
+area: Content / Operations
+status: Active — enforced at every write; production archive not yet tidied
+date_added: 2026-08-31
+---
+
 # House style
 
 Two punctuation habits that arrive with model-written prose, and where each one is dealt with.
@@ -57,8 +64,9 @@ This is the part that is easy to get backwards, and both directions are visible 
 
 `theme_blurb` is the awkward one. It is a guide's opening paragraph *and* a Daily's standfirst, in
 one column, because the fold (`2026_08_30_000100_a_guide_is_a_cove`) gave both kinds one table. Only
-`GuideController` runs it through the renderer, and only for the article kinds — guide, seasonal,
-advice and shop. `cove_plans.blurb` splits the same way, because it becomes `theme_blurb`.
+`GuideController` and `BrandController` run it through the renderer, and only for the kinds that
+write a body: guide, seasonal, advice, shop and brand. `cove_plans.blurb` splits the same way,
+because it becomes `theme_blurb`.
 
 `cove_plan_items.note` and `cove_plans.build_instructions` are deliberately untouched. They are an
 editor briefing the builder, not copy, and no reader ever sees them.
@@ -73,6 +81,11 @@ Every path that writes prose, because there is no single funnel:
 | Guide, seasonal, advice and shop articles | `GuideWriter::clean()`, which takes a `$prose` flag |
 | The editorial API (Claude, through `giftcoves-seed-coves`) | `CoveQueueController::store()`, `CovePlanController` |
 | The shipped articles | `AdviceCoveSeeder`, `SeedShopCovesCommand` |
+| Curation over the API (item copy, verdict) | `CoveItemController` |
+| Display titles | `ProductTitleController` |
+
+**Gap:** `POST /guides` (`GuideEditorialController::store()`) stores intro, body, FAQ and item copy
+untouched.
 
 Applying it at the write rather than at render is the decision worth recording. Six things read a
 Cove's prose — the page, the digest email, the JSON-LD, the `<meta>` description, the admin table,
@@ -80,8 +93,9 @@ the export envelope — and filtering at render means all six remembering, with 
 not. Stored correct, they all agree for free.
 
 **It is also stated in the prompts, and that is not redundant.** `Prompts\Defaults` carries the rule
-in all seven system prompts, worded identically, so the substitution usually has nothing to do. It
-cannot be *relied* on: those templates are editable from `/admin`, so a rewritten voice can take the
+in all eight system prompts (one per kind, plus the theme), worded identically, so the substitution
+usually has nothing to do. It cannot be *relied* on: those templates are editable from `/admin`, so a
+rewritten voice can take the
 rule with it, and a model holding eight rules drops the one whose absence looks like nothing. The
 prompt text itself was also de-dashed, because a prompt is the nearest thing the model has to an
 example of the voice being asked for, and one that punctuates the way it is telling the writer not to
@@ -113,7 +127,8 @@ The FAQ walk spreads each stored pair rather than rebuilding it: Postgres hands 
 own key order, and a rebuilt `{q, a}` would look like a change on every run and rewrite every FAQ in
 the archive every time.
 
-The legacy `guides` and `guide_items` tables are skipped. Nothing has read them since the fold.
+The legacy `guides` and `guide_items` tables were dropped on 2026-09-06, so there is nothing else
+to walk.
 
 **Applied locally on 2026-08-31**: 91 fields across 45 Coves and 13 plans. `resources/content/`
 (`advice-coves.php`, 153 dashes; `shop-coves.php`, 31) was de-dashed in the repo at the same time, so

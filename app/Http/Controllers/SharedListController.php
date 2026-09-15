@@ -134,10 +134,12 @@ class SharedListController extends Controller
         /*
          * "I think you would like this."
          *
-         * The same three conditions `SuggestionController::store()` enforces,
-         * asked here so the control is absent when the POST would be refused.
-         * Mirrored, never trusted: the endpoint re-checks all of it, because
-         * hiding a button stops nobody hand-building the request.
+         * The same two conditions `SuggestionController::store()` enforces —
+         * not the owner, and an identity that exists — asked here so the
+         * control is absent when the POST would be refused. It also required a
+         * claimable list until 2026-08-29. Mirrored, never trusted: the
+         * endpoint re-checks all of it, because hiding a button stops nobody
+         * hand-building the request.
          *
          * No account needed — an anonymous cookie identity is an owner. Somebody
          * followed a link once; requiring a signup before they can say "she'd
@@ -605,8 +607,10 @@ class SharedListController extends Controller
         $identity = $owner->claimIdentity();
         abort_if($identity === null, 403);
 
-        // Only a `mine` list is a registry. Hiding the button is not enough —
-        // a hand-built POST would otherwise claim on someone's private research.
+        // Claiming has to be allowed at all — `group` lists never are; `mine`
+        // and `for_someone` are, once somebody else is on the list. Hiding the
+        // button is not enough — a hand-built POST would otherwise claim on a
+        // list that is not claimable.
         abort_unless($list->allowsClaiming(), 403);
 
         // The owner claiming on their own list would tell them what is taken.

@@ -66,12 +66,17 @@ final readonly class AmazonSearchLink
     /**
      * The hand-off for this market and term, or null if this market has none.
      *
-     * An empty term is allowed and is not the same as no link. The search page
-     * with nothing typed, and a page that found nothing, are both moments where
-     * the shopper's question is wide open — and it was the *link* they wanted,
+     * An empty term is allowed and is not the same as no link: a brand page
+     * with nothing else narrowing it, or an empty result whose question is
+     * still wide open, are both moments where it was the *link* they wanted,
      * not the term. So a blank term produces the storefront's own home page,
      * still tagged, and the view says "search on Amazon" rather than quoting a
      * term that does not exist. Only a missing tag produces null.
+     *
+     * Since 2026-09-12 `SearchController` calls this only when the search page
+     * itself has a term (`hasTerm()`), so the blank-term case no longer arrives
+     * from there — it still does from a brand page and from a Cove's `[[amazon:]]`
+     * token.
      */
     public static function for(Market $market, string $term = ''): ?self
     {

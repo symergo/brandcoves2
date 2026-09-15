@@ -19,7 +19,7 @@ control, and there was nowhere to send it.
 Linked from underneath `/lists`, from the help hub at `/help`, and, since 2026-09-08, from the
 sitemap for every topic.
 
-## One page became nine (2026-09-08)
+## One page became ten (2026-09-08)
 
 The first version, 2026-09-06, was one page: three steps with screenshots. Two days later a list
 could be shared with friends by name, bought from, voted on, chipped in to, talked over, quizzed
@@ -48,7 +48,7 @@ people search for it by name. The quiz went the same way an hour later, out of t
 
 ## The prose is in `lang/{language}/help_lists.php`, not `site.php`
 
-`site.php` is shipped whole to the browser with every page. Nine pages of prose would have ridden
+`site.php` is shipped whole to the browser with every page. Ten pages of prose would have ridden
 along with the product grid. The help texts live in their own language file, are read on the server
 by `ListHelpController`, and reach the page as props, so a topic's words reach only the visitor who
 opened it. `lists_help.link` is the one key that stayed in `site.php`, because `Lists/Index`
@@ -112,7 +112,7 @@ one, the last item is "saved" at a fifth more than it costs so the price-drop ca
 account has one friend, Lea, so the share panel shows its friends block and the friends page has a
 row; and a group gift "Samen voor Lea" is made through `ListMaker`, the way the wizard makes one.
 
-Three decisions inside it are worth knowing, because each was a wrong screenshot first:
+Four decisions inside it are worth knowing, because each was a wrong screenshot first:
 
 - **It photographs a throwaway account**, created by `bc:seed-help-demo` (local only, refuses in
   production). The only accounts on a development machine are the developer's own, carrying real

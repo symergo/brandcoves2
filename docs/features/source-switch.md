@@ -80,7 +80,10 @@ that *failed* here would retry twice and land in the failed table for doing what
 `connector_settings`, the same encrypted store the AI settings use — **no migration needed**. That
 table's `source` column is CHECK-constrained, and `2026_09_02_000100_ebay_is_a_source` already
 rebuilds it as `Source::values()` plus the non-connector subsystems (`ai`, `ops`), so every source
-value is accepted today.
+value is accepted today. Later migrations added `automation`, `reminders` and `affiliate` (latest:
+`2026_09_14_000500_affiliate_and_reminder_settings_are_sources`). A new subsystem that stores here
+*does* need one: the reminders page shipped without it and could not save on production until
+2026-09-14.
 
 One row per source, `key = 'markets'`, holding a map of market value → `false`. A row per
 `(source, market)` would be thirty rows to express "eBay is off in Spain" plus twenty-nine defaults,

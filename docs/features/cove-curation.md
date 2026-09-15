@@ -33,8 +33,7 @@ function cannot supply and a writer cannot invent.
 ## The shortlist is a table
 
 `cove_plan_items` — one row per product, carrying its `rank`, the curator's `note`, an optional
-`verdict` ("best for small kitchens"), and who added it. `guide_items` is the same shape for the same
-reason.
+`verdict` ("best for small kitchens"), and who added it.
 
 Two ways to identify a product, because sources differ in what may be kept:
 
@@ -119,7 +118,7 @@ occasionally does not hit the network.
 
 ## The screen
 
-`/admin/cove-plans/{id}/curate`, and the calendar's rows link straight to it — curating is what an
+`/admin/cove-plans/{id}/curate`, and the planner's rows link straight to it — curating is what an
 editor opens that table to do, and editing a title is the occasional errand that keeps its own button.
 
 **Two panes from `xl` up: the list on the left, the search sticky on the right.** The first version
@@ -298,8 +297,8 @@ grid, is now where a product gets its writing.
 If the returned prose names none of the products (checked on the `[[product:id]]` token, not on the
 title — a title fragment can match by coincidence), the builder logs it and retries **once**. That
 check used to apply only to a curated plan, for the same reason the rule used to flip.
-Not a loop: the daily AI cap is shared with the guides and the trends pass, and a builder that argues
-with the model spends the budget every other feature needs that day. If the second attempt is no
+Not a loop: the `daily_picks` cap is shared by every Daily and persona build that day, and a builder
+that argues with the model spends it. If the second attempt is no
 better the prose still publishes — it is about the right products, it merely did not link them, and
 no prose at all is the worse outcome.
 
@@ -308,16 +307,8 @@ before. Curation feeds the writer; it does not overrule one.
 
 ## The editorial API
 
-`POST /api/editorial/coves` takes `items: [{groupId | source+externalId, note, verdict}]`, ordered.
-`pinnedGroupIds` is still accepted and written as items, so a key deployed before this change keeps
-working — and validation errors are reported under whichever field the caller actually sent, because
-being told your mistake is in `items` when you sent `pinnedGroupIds` is worse than no message.
-
-A write **replaces** the shortlist rather than merging into it. A merge would make "remove the third
-product" impossible to express, and a retry after a timeout would double the list.
-
-`GET` reads the items back with their notes, so an automated author can fetch the brief and the ids
-it may link to in one request instead of a search per product.
+`POST /api/editorial/coves` takes the shortlist as `items`, ordered; the contract, the
+`pinnedGroupIds` fallback and replace-not-merge are in [editorial-api.md](editorial-api.md).
 
 ## Promotion between environments
 
@@ -337,7 +328,8 @@ loss than refusing the whole plan.
 - `app/Models/CovePlanItem.php`, `app/Enums/PickMode.php`
 - `app/Filament/Resources/CovePlans/Pages/CuratePlan.php` +
   `resources/views/filament/resources/cove-plans/pages/curate-plan.blade.php`
-- `app/Services/Cove/EditionBuilder.php` — `curated()`, `liveFinds()`, `curationBrief()`
+- `app/Services/Cove/EditionBuilder.php` — `curated()`, `liveFinds()`; the curated brief is assembled
+  in `app/Services/Cove/CovePrompt.php`
 - `database/migrations/2026_08_29_000100_create_cove_plan_items.php`,
   `..._000200_a_plan_has_a_kind_and_a_pick_mode.php`
 - `tests/Feature/CovePlanCurationTest.php`, `CurationSearchTest.php`, `CuratePlanScreenTest.php`

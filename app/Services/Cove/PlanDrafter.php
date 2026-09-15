@@ -46,8 +46,8 @@ use InvalidArgumentException;
  * An advice article is an opinion about how to shop; nothing in the database
  * suggests one, and inventing titles from a template would fill the queue with
  * plausible-looking work nobody meant. A Shop Cove is seeded from the repository
- * by `bc:seed-shop-coves` and has no builder that reads a plan. Both are refused
- * with the reason rather than quietly returning zero.
+ * by `bc:seed-shop-coves`, not drafted here. Both are refused with the reason
+ * rather than quietly returning zero.
  *
  * Deliberately *not* merged with `bc:plan-coves`, which answers a different
  * question: that fills every themed day in a window, across all markets, as a
@@ -106,8 +106,8 @@ final readonly class PlanDrafter
             ),
 
             CoveKind::Shop => DraftedPlans::none(
-                'Shop Coves are seeded from the repository with bc:seed-shop-coves, not planned. Nothing builds a Shop '
-                .'plan, so a drafted one would sit here unbuildable.'
+                'Shop Coves are seeded from the repository with bc:seed-shop-coves, not planned, so a drafted one '
+                .'would be a title with no source behind it.'
             ),
         };
     }

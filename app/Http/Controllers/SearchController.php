@@ -193,8 +193,9 @@ class SearchController extends Controller
              * shopper and the first card is a worse page for them and for Google.
              *
              * Null on the same pages the intro is null on: a filtered variant is
-             * noindex anyway, and repeating several hundred words across dozens
-             * of near-identical URLs is the doorway-page pattern at scale.
+             * a thin page (`isThin()`), and repeating several hundred words
+             * across dozens of near-identical URLs is the doorway-page pattern
+             * at scale.
              */
             'narrative' => $this->narrative($query, $result),
 
@@ -203,8 +204,8 @@ class SearchController extends Controller
              *
              * Ships empty and stays empty until somebody deliberately fills it.
              * Gated exactly as the long copy is: an intro repeated across dozens
-             * of noindex, near-identical filtered URLs is the same doorway
-             * pattern with fewer words.
+             * of near-identical, thin filtered URLs is the same doorway pattern
+             * with fewer words.
              */
             'intro' => $this->intro($query, $result),
 
@@ -212,9 +213,9 @@ class SearchController extends Controller
              * What to read when nothing matched.
              *
              * The inverse guard — this is the one region that renders *because*
-             * the page is empty, and it renders on filtered and paginated
-             * variants too. Those are noindex, and this is not for a crawler: a
-             * dead end is exactly where a human needs a way out.
+             * the page is empty, and it renders on filtered and paginated thin
+             * variants too. This is not for a crawler: a dead end is exactly
+             * where a human needs a way out.
              */
             'emptyCopy' => $this->emptyCopy($query, $result),
         ]);
@@ -227,8 +228,9 @@ class SearchController extends Controller
      * ASIN, what we classified it as, and the identity it resolved to. One hit on
      * a unique index, and only when the URL actually carried an ASIN.
      *
-     * Empty until the connector runs, which is why the slug path is the one that
-     * works today and not a fallback.
+     * Filled by the page import when an imported page printed a barcode. Amazon
+     * prints one on a minority of listings, so the slug path below is still the
+     * one that usually answers.
      */
     private function knownAsin(AmazonLink $link): ?AmazonProduct
     {
@@ -374,10 +376,11 @@ class SearchController extends Controller
     /**
      * Pages that may not carry copy.
      *
-     * A filtered or paginated variant is `noindex` anyway, and repeating several
-     * hundred words across dozens of near-identical URLs is the doorway-page
-     * pattern at scale. The same rule the term links use, and it was one
-     * condition duplicated in three places before this.
+     * A filtered or paginated variant was `noindex` until 2026-09-12; it is
+     * indexable now and canonicalises to the bare term, but repeating several
+     * hundred words across dozens of near-identical URLs is still the
+     * doorway-page pattern at scale. The same rule the term links use, and it
+     * was one condition duplicated in three places before this.
      */
     private function isThin(SearchQuery $query, SearchResult $result): bool
     {
@@ -536,9 +539,10 @@ class SearchController extends Controller
      *
      * ## Why the same guard as the narrative
      *
-     * Empty on thin pages. A filtered or paginated variant is `noindex` anyway,
-     * and repeating one block of internal links across dozens of near-identical
-     * URLs is the doorway-page pattern with fewer words.
+     * Empty on thin pages (`isThin()`). Those were `noindex` until 2026-09-12;
+     * they are indexable now, but repeating one block of internal links across
+     * dozens of near-identical URLs is still the doorway-page pattern with
+     * fewer words.
      *
      * @return list<array{term: string, url: string}>
      */

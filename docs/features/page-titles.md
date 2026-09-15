@@ -67,7 +67,8 @@ the term is guarded now, at 30 characters. See below.
 
 ## Search
 
-One indexable URL per bare query term, and the highest-volume template on the site.
+One canonical URL per query term — filtered and sorted variants canonicalise to it — and the
+highest-volume template on the site.
 
 **`search.results_for` is not the title, and never was a good one.** "Results for
 &quot;koptelefoon&quot;" spent its first twelve characters — the ones weighted hardest — on

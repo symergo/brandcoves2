@@ -250,9 +250,10 @@ class PlanDrafterTest extends TestCase
             $result = $drafter->draft($kind, Market::BeNl, 5);
 
             /*
-             * Nothing in the data suggests an advice article, and nothing builds
-             * a Shop plan. Inventing titles from a template would fill the queue
-             * with plausible-looking work nobody meant.
+             * Nothing in the data suggests an advice article, and Shop Coves are
+             * seeded from the repository rather than drafted. Inventing titles
+             * from a template would fill the queue with plausible-looking work
+             * nobody meant.
              */
             $this->assertSame(0, $result->count());
             $this->assertNotNull($result->shortfall);

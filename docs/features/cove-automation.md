@@ -17,13 +17,13 @@ the scheduler instead of somebody asking. One stage runner, two callers. A third
 
 ## The grid, and why it is a grid
 
-Five stages × six kinds × five markets is 150 switches. As a list nobody can read it; as **one grid
-per market** — kinds down, stages across — it is thirty cells that fit on a screen.
+Five stages × seven kinds × five markets is 175 switches. As a list nobody can read it; as **one
+grid per market** — kinds down, stages across — it is thirty-five cells that fit on a screen.
 
-The shape then carries information. The disabled cells are exactly where a kind has no automatic
-source: `plan` is dead for advice, shop and brand because nothing in the catalogue proposes one, and
-`curate` is dead for every kind with no products. Each disabled cell shows its reason on hover
-rather than sitting blank, because a blank cell reads as an oversight.
+The shape then carries information. `plan` is dead for advice and shop because nothing in the
+catalogue proposes one (brand should be too, see PlanDrafter), and `curate` is dead for advice, shop
+and brand, which carry no products. Each disabled cell shows its reason on hover rather than sitting
+blank, because a blank cell reads as an oversight.
 
 | Stage | Control | Notes |
 |---|---|---|
@@ -69,9 +69,9 @@ Not on/off, because the question is not whether prose happens.
 - **`external`** — plans are marked `writer = authored` and left for an agent on
   `GET /coves/queue`, costing this server nothing.
 
-That settles a race the `writer` field was already needed for: the batch write stage picks only
-`builder` plans and the queue hands out only `authored` ones, so the two writers can never target
-the same plan and waste each other's work.
+The batch write stage picks only `builder` plans. `GET /coves/queue` does not filter on `writer` (it
+hands out any draft or approved plan with no `editorial`), so an external agent and the builder can
+still target the same unwritten `builder` plan.
 
 ## Two jobs are gated, not absorbed
 
@@ -119,7 +119,7 @@ have thrown and been retried.
 The risk is low — the job queries the database several times before reaching the gate, so the
 connection is already proven — but the failure is *quiet*, and a quietly missing Daily is a failure
 this codebase has been bitten by before (see the `retry_after` note in
-[scheduled-writing.md](scheduled-writing.md), where `/be-nl/daily` 404'd on production for weeks
+[daily-cove.md](daily-cove.md), where `/be-nl/daily` 404'd on production for weeks
 while `/health` said `ok`).
 
 **If it needs tightening, the fix is to distinguish the two cases**: "switched off" is a legitimate

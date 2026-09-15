@@ -1,7 +1,7 @@
 ---
 name: Feed ingestion
 area: Catalogue
-status: Active — Awin feed + bol live; Amazon deferred to Phase 8
+status: Active — Awin feeds; bol, eBay and Tradedoubler live; no Amazon connector
 date_added: 2026-08-07
 ---
 
@@ -11,8 +11,8 @@ Offers in, comparable physical products out.
 
 ```
 Awin CSV ──stream──▶ Offer ──▶ OfferUpserter ──▶ products
-                                    │                 │
-                              price_history      identity_key
+                                                      │
+                                                 identity_key
                                                       │
                                               ProductGrouper (SQL)
                                                       ▼
@@ -21,9 +21,9 @@ Awin CSV ──stream──▶ Offer ──▶ OfferUpserter ──▶ products
 
 ## Two kinds of source, because they fail differently
 
-| | Feed (Awin) | Live (bol, Amazon) |
+| | Feed (Awin) | Live (bol, eBay, Tradedoubler) |
 |---|---|---|
-| When | Hourly, into our index | Per request, cached 15 min |
+| When | Twice a day (04:10, 16:10), into our index | Per request, cached 15 min |
 | Size | Hundreds of MB | A page of results |
 | Failure | Resume from cursor | Degrade to fewer sources |
 | Interface | `FeedConnector` | `LiveConnector` |
@@ -186,19 +186,11 @@ from a half-loaded catalogue is simply wrong.
 equally priced would flip `best_offer_id` on every run, churning caches and
 making the UI visibly jump between merchants for no reason.
 
-**Which offer to link to and which title to quote are two questions.** They
-shared one answer until 2026-09-05: a single `best` CTE ordered on stock then
-price supplied `best_offer_id` *and* `title`, `brand`, `image_url`, `category`.
-So the string on 302,133 product pages was written by whichever merchant
-undercut the others that morning — 18,593 groups titled in ALL CAPS, 38,495 whose
-brand was known and absent from the title.
-
-There is a second `display` CTE now, ordered on those two defects before falling
-through to the same stock-and-price ordering. `best` is untouched and supplies
-only `best_offer_id`, because that is the offer a shopper is sent to and nothing
-cosmetic may move it to a dearer seller. Full reasoning, and what the render layer
-still has to clean up afterwards, in
-[product-titles.md](product-titles.md).
+**Which offer to link to and which title to quote are two questions**, answered
+by two CTEs since 2026-09-05: `best` (cheapest in stock) supplies only
+`best_offer_id`; `display` supplies title, brand, image and category,
+preferring offers whose title neither shouts nor omits the brand. Why, with
+the production numbers, in [product-titles.md](product-titles.md).
 
 ## Prices
 
@@ -208,9 +200,7 @@ which handles both European and Anglo formats correctly. A CHECK constraint
 forbids negatives; a negative price would sort straight to the top of every
 cheapest-offer query.
 
-`price_history` **no longer exists** since 2026-09-12; see *Three prices instead of a history* below. Until then it took **one sample per product per day**, enforced by a unique
-index. Ingestion runs hourly, and 24 identical rows per product per day across a
-60k catalogue is roughly half a billion rows a year to support a sparkline.
+`price_history` no longer exists since 2026-09-12; see *Three prices instead of a history* below.
 
 ## Rate limiting (live sources)
 
@@ -246,15 +236,19 @@ Or from `/admin/feeds`: **Ingest now** and **Reset cursor** per feed, with live
 progress under **Ingestion jobs** (polls every 10s) and a sidebar badge counting
 failing feeds.
 
-Scheduled: ingest hourly, group at :40, prune rank history nightly.
+Scheduled: ingest at 04:10 and 16:10, group at 05:00 and 17:00, prune rank history at 03:30. Twice a
+day rather than hourly because Awin regenerates a feed once or twice a day, so an hourly run
+re-downloaded an unchanged file (see `routes/console.php`).
 
 ## Files
 
 - `app/Services/Connectors/` — interfaces, `Offer`, `ConnectorRegistry`, `RateLimiter`
 - `app/Services/Connectors/Awin/AwinConnector.php`
 - `app/Services/Connectors/Bol/BolConnector.php`
+- `app/Services/Connectors/{Ebay,Tradedoubler}/`
 - `app/Services/Identity/{Gtin,IdentityResolver,Identity}.php`
 - `app/Services/Ingestion/{OfferUpserter,ProductGrouper}.php`
+- `app/Services/Ingestion/IncomingGrouper.php`
 - `app/Jobs/{IngestFeed,GroupProducts}.php`
 
 ## Verification
@@ -269,7 +263,8 @@ never to reach the database.
 `status` at the end of every ingest and had no index leading on the feed; the 30-day median CTE
 in `ProductGrouper` filters `price_history` on `captured_on` and both existing indexes led on
 `product_id`. `2026_09_06_000700_indexes_for_the_hot_paths` adds both, built `CONCURRENTLY` so
-the migrate step locks nothing while the site is already down for the deploy.
+the migrate step locks nothing while the site is already down for the deploy. (The `price_history`
+index and the median CTE went with the table on 2026-09-12.)
 
 ## Three prices instead of a history (2026-09-12)
 

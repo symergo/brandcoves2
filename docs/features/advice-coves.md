@@ -230,10 +230,10 @@ would be the one kind of page an editor could not open and re-curate. See
 - **`es`.** An unpublished market with no supply. An untranslated Cove is worse
   than an absent one, and the file simply has no `es` key; nothing needs
   changing but the content when that market opens.
-- **A `focus_keyphrase`.** Nothing rebuilds an advice Cove, so the field stays
-  null rather than carrying a guess.
-- **Any product.** `CoveKind::Advice` is the one kind whose minimum is zero, and
-  the prose is the substance. Several of these articles link to *other* Coves
+- **A `focus_keyphrase` on the shipped set.** The seeder writes none, so the field stays null
+  rather than carrying a guess. An advice Cove written over the API may send one.
+- **Any product.** `CoveKind::Advice` has a minimum of zero, like the two entity kinds, and the
+  prose is the substance. Several of these articles link to *other* Coves
   with `[[guide:slug]]`, which is checked at seed time to be a slug that exists
   in the same market.
 

@@ -45,10 +45,9 @@ final readonly class SearchQuery
         /**
          * Whether this search counts as public demand.
          *
-         * `search_log` is not a debugging record — it feeds the related-search
-         * chips on every narrative page and the demand signal that decides which
-         * buying guides get written. So a term typed there comes back out in
-         * front of strangers.
+         * `search_log` is not a debugging record — it feeds the popular-searches
+         * page and the demand signal that decides which buying guides get
+         * written. So a term typed there comes back out in front of strangers.
          *
          * That is right for the search box and wrong for a search run inside
          * somebody's shared gift list, which is an unauthenticated private URL
@@ -132,8 +131,7 @@ final readonly class SearchQuery
             /*
              * Bounded above as well as below. `?page=500000` is a deep OFFSET
              * over the whole match set on a route anyone can hit; nothing a
-             * person scrolls to lives past a couple of hundred pages, and a
-             * crawler is told not to follow `page=` at all.
+             * person scrolls to lives past a couple of hundred pages.
              */
             page: min(self::MAX_PAGE, max(1, (int) $request->query('page', 1))),
             logged: self::fromAPerson($request),

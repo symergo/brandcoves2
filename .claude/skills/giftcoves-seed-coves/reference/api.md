@@ -5,8 +5,10 @@ from the server it is actually talking to.
 
 Hosts, both serving the identical API:
 
-    production   https://giftcoves.com/api/editorial        GET /health -> branch: main
-    staging      https://staging.giftcoves.com/api/editorial GET /health -> branch: staging
+    production   https://giftcoves.com/api/editorial
+    staging      https://staging.giftcoves.com/api/editorial
+
+Both track `main` and report `branch: main`; tell them apart by the host you called.
 
 `/health` also reports the deployed `migration`, which is the reliable field for "does
 this host have that endpoint yet" — the build stamp is not.
@@ -37,7 +39,7 @@ Markets: `be-nl`, `be-fr`, `en`, `es`, `nl-nl`.
 ## Read
 
     GET /                              abilities, markets, endpoints, contract
-    GET /products                      market (req), q, category, brand,
+    GET /products                      market (req), q, ean, category, brand,
                                        minPriceCents, maxPriceCents,
                                        includeLive (0/1), limit (1..100, def 24)
     GET /products/{groupId}            adds the offers: merchant, priceCents, source
@@ -68,14 +70,7 @@ time rather than as a silently skipped pick at build time.
 
     POST /coves                        create or upsert a plan
     POST /coves/{planId}/editorial     prose only; requires the plan's `revision`
-    POST /guides                       a buying guide in the guides table
-
-**`POST /coves/drafts` does not exist on any host.** Probed against production
-2026-08-29: **405**, "Supported methods: GET, HEAD" — the wildcard `GET /coves/{plan}`
-is all that is registered there. `CoveDraftController`, `PlanDrafter`, `DraftedPlans`
-and `PlanSlugs` are untracked files in a local working tree, and the `routes/api.php`
-line that would register them is an uncommitted diff. Nothing was deployed, so nothing
-answers. Use `GET /topics` and `GET /coves/queue` and write the titles yourself.
+    POST /guides                       a buying or advice guide (written straight to daily_pick_sets)
 
 ## Publish
 
@@ -95,13 +90,13 @@ answers. Use `GET /topics` and `GET /coves/queue` and write the titles yourself.
 ```jsonc
 {
   "market": "be-nl",                  // required
-  "kind": "daily",                    // daily|persona|guide|seasonal|advice|shop
+  "kind": "daily",                    // daily|persona|guide|seasonal|advice|shop|brand
   "date": "2026-09-14",               // daily only, YYYY-MM-DD; may be omitted
                                       // entirely for an undated idea
   "slug": "voor-de-hondenliefhebber", // every other kind; alpha_dash, max 80
   "title": "…",                       // required, max 120
   "blurb": "…",                       // max 300 — it becomes the meta description
-  "editorial": "…",                   // max 4000; the article for daily/persona.
+  "editorial": "…",                   // max 8000; the article for daily/persona.
                                       // Set, the builder uses it verbatim and
                                       // never calls the model.
   "pickMode": "locked",               // open (default) | locked. locked publishes
@@ -109,7 +104,7 @@ answers. Use `GET /topics` and `GET /coves/queue` and write the titles yourself.
   "queries": ["hondenmand"],          // max 12, max 60 chars; product words
   "buildInstructions": "…",           // max 1000; direction for the whole piece
 
-  // Article kinds only (guide, seasonal, advice) — refused elsewhere:
+  // Article kinds only (guide, seasonal, advice, shop, brand) — refused elsewhere:
   "focusKeyphrase": "…",              // max 120
   "metaDescription": "…",             // max 160
   "body": "…",                        // max 20000
@@ -165,22 +160,11 @@ membership or rank.
 }
 ```
 
-## Resolving an EAN (not part of this API)
+## Resolving an EAN
 
-    GET https://<host>/<market>/scan/<ean>       public, no auth, 120/min
+    GET /products?market=…&ean=…
 
-```json
-{"status":"found","gtin":"8712345678901","title":"…","price":2999,
- "url":"/be-nl/p/8412/de-titel"}
-```
-
-The group id is the third path segment of `url`. `not_found` and a `422` for a failed
-check digit are the other two answers. GTIN-8, UPC-A (12) and ITF-14 are all
-normalised to GTIN-13 before the lookup, so a camera read of an American product
-still resolves.
-
-Coverage is EAN-grouped products only: a feed row with no barcode is grouped by brand
-and title instead, and the scan cannot see it even though the site holds it.
+`count: 1` found, `count: 0` not in this market, `422` bad check digit. See SKILL.md.
 
 ## Rate limits
 
@@ -218,7 +202,9 @@ any copy of the rules, including this file.
 
 **`POST /coves` no longer wipes a shortlist.** It replaces items when a list is sent and
 leaves them alone when none is; `items: []` still clears. Previously a prose-only write
-there deleted the curation.
+there deleted the curation. It still resets every other field (editorial, blurb,
+pickMode, writer) to what the body carries, so send the plan whole or use
+`PATCH /coves/{id}`.
 
 ## The state vocabulary
 

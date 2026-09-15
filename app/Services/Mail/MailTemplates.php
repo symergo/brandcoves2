@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mail;
 
-use App\Mail\TemplatedContent;
+use App\Mail\Concerns\UsesTemplate;
 use App\Models\MailTemplate;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
@@ -28,7 +28,7 @@ use Throwable;
  * destination, the fallback URL line, the layout. Those are the parts that fail
  * silently: a template that lost its button is an email nobody can act on, and
  * a URL typed into a body is wrong the moment the market changes. The editor
- * writes the sentences; {@see TemplatedContent} supplies everything
+ * writes the sentences; {@see UsesTemplate} supplies everything
  * that has to work.
  *
  * ## Two emails are deliberately not editable

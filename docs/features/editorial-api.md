@@ -7,8 +7,8 @@ date_added: 2026-08-09
 
 # The editorial API
 
-**Machine access to the writing surfaces — Daily Coves and buying guides — over HTTP, with a
-revocable key instead of a shell.**
+**Machine access to the writing surfaces (every kind of Cove, plus product display titles and gift
+tags) over HTTP, with a revocable key instead of a shell.**
 
 `/api/editorial/*`, bearer-authenticated, no session and no market prefix.
 
@@ -31,7 +31,7 @@ Three ability strings, not roles:
 |---|---|---|
 | `editorial.read` | Product lookup, ripe topics, plans, guides, published editions | The grounding calls. Useful on their own, safe on their own. |
 | `editorial.write` | Create and rewrite drafts | **Nothing in this group can reach a reader.** |
-| `editorial.publish` | Approve a plan, publish a guide, queue a build, write a product's display title | The calls that put something in front of people. |
+| `editorial.publish` | Approve a plan, publish a guide, queue a build, write a product's display title or gift tags | The calls that put something in front of people. |
 
 A role called "editor" would collapse write and publish the first time anyone needed the safer
 variant. The interesting configuration — an automated writer that drafts, a human who approves — is
@@ -215,8 +215,9 @@ reads an `acceptedAnswer` literally, so an anchor tag in one is markup in a fiel
 
 ## Two kinds of article
 
-`guides.kind` is `buying` or `advice`, and it decides one thing: whether a product shortlist is
-required.
+`POST /guides` takes `kind: buying | advice` (`App\Enums\GuideKind`), and it decides one thing:
+whether a product shortlist is required. The row is stored in `daily_pick_sets` as a `guide` or
+`advice` Cove.
 
 A **buying** guide is a ranked shortlist — "the five best X, and the one actually worth it". The
 products are the substance and the prose is presentation, which is why it needs at least three.
@@ -225,9 +226,9 @@ An **advice** article has no shortlist. "How to tell a paid review from a real o
 returns policy looks like", "how to shop safely on Amazon". The prose *is* the substance, and
 demanding products would either block the piece or pad it with things the writing is not about.
 
-One table rather than two, because everything else is identical — slug, market, status, meta, FAQ,
-freshness, the same URL space, the same sitemap entry. A separate table would duplicate a dozen
-columns to express one integer.
+Both are rows in `daily_pick_sets`, like every other Cove since the fold. `GuideKind` survives only
+as this endpoint's vocabulary, because it carries the lower authored floor: three products, not the
+builder's five.
 
 Two rules follow the kind rather than the item count, and both would be bugs the other way round:
 
@@ -252,16 +253,8 @@ search box, with how many products exist to answer each. That is a demand signal
 no competitor can measure, and until this endpoint the only way to act on it was a per-row button
 in the admin panel.
 
-Each kind draws on the source that knows something about it, and nothing else:
-
-| Kind | Where the ideas come from |
-|---|---|
-| `daily` | the observance calendar — the next themed days with no plan yet |
-| `guide` | the mined topic queue, most demand first |
-| `seasonal` | the seasonal calendar, soonest window first: a season is only useful if the page is indexed *before* it opens. **`count` means seasons, not plans** — each one comes back as several dated parts, one per subject it names |
-| `persona` | one per gift-wizard interest, carrying that interest's own product nouns from `AngleMap` |
-| `advice` | nothing. **422 with the reason** |
-| `shop` | nothing. **422 with the reason** |
+Each kind draws on its own source; the table and the reasons advice and shop are refused are in
+[cove-planner.md](cove-planner.md#filling-the-planner-give-me-ten-more-of-these).
 
 Every plan comes back as a `draft` with a shortlist of real, in-stock, priced products already on
 it — the same selection the builder would have made — so the next call has ids it may link to
@@ -280,8 +273,8 @@ more.
 
 Refusing `advice` and `shop` with a 422 rather than an empty 200 is the same decision. Nothing in
 the data suggests an advice article — it is an opinion about how to shop, not a topic a catalogue
-can propose — and a Shop Cove is seeded from the repository by `bc:seed-shop-coves` with no builder
-that reads a plan. An agent told that writes the titles itself; an agent handed a zero retries
+can propose — and Shop Coves come from the repository (`bc:seed-shop-coves`), not from anything a
+machine can propose. An agent told that writes the titles itself; an agent handed a zero retries
 forever.
 
 ### The loop
@@ -357,49 +350,16 @@ Tuesday should not advance the topic queue.
 `readBack` follows the kind too: a Daily points at the API endpoint that reports what the builder
 actually managed to put on the page, and every permanent kind points at its own URL.
 
-### The plan says who writes it
-
-`cove_plans.writer` is `builder` or `authored`, and it is the one question the build asks. It
-replaced an inference from whichever fields happened to be filled — which got it wrong for an author
-who sent a finished `body` and left the `blurb` to us, running the model over their article and
-replacing their title, reported nowhere. See [cove-writer.md](cove-writer.md).
-
-Nothing changes for a client that has been writing here for months: **sending prose still means you
-wrote it.** `POST /coves` sets `authored` when the body carries `editorial` or `body`, and
-`POST /coves/{id}/editorial` sets it unconditionally. Send `writer: "builder"` to go the other way —
-to file a first draft you want the model to finish.
-
-### The prompt is served, not described
-
-`GET /coves/{id}/brief` returns the assembled `system` and `user` messages the builder would send for
-that plan, **prompt-bank override included**, plus the link allowlist, the shortlist with its notes
-and card copy, the kind's product floor, and a `revision` you can quote straight back.
-
-That last one matters on its own: `GET /coves/queue` lists only plans with **no prose yet**, so it
-could never hand out a revision for the plan you wanted to *revise*. The only way back was the
-whole-plan upsert, which replaces the shortlist.
-
-Use it instead of working from a copy of the rules. Four hand-maintained copies of the writing
-contract exist — the `writing` block below, `docs/publishing-guide.md`,
-[scheduled-writing.md](scheduled-writing.md) and the seed skill — and they had already drifted apart:
-the API root omits the one-paragraph-per-product rule that `ProseCards` exists to make undroppable.
-
-One caveat, and it decides how you plan: the brief is exact for a **locked** plan, because the
-shortlist *is* the edition. For an `open` one the engine tops the list up on the day, so the
-allowlist may widen later. An authored Cove usually wants `pickMode: "locked"`.
-
-### `items[].copy` is the card's sentence, not the curator's reason
-
-`POST /coves/{id}/editorial` writes `items[].copy` into `cove_plan_items.copy`. It used to write it
-into `note` — the reason a person chose the product — so an author posting back the sentence they had
-just written destroyed the instruction that produced it, and the next rewrite was briefed with its
-own output.
-
-The two are read back separately, and only `copy` and `verdict` reach a reader.
+- `cove_plans.writer` — sending prose sets `authored`; send `writer: "builder"` to go the other way.
+  See [cove-writer.md](cove-writer.md).
+- `GET /coves/{id}/brief` serves the assembled prompt and a `revision`; exact for a locked plan. See
+  cove-writer.md.
+- `items[].copy` is the card's sentence, `note` the curator's reason; they are separate columns. See
+  cove-writer.md.
 
 ### Authored prose wins outright, and skips the model
 
-`cove_plans.editorial` is new. When it is set, `EditionBuilder` uses it verbatim and **never calls
+`cove_plans.editorial` holds authored prose. When it is set, `EditionBuilder` uses it verbatim and **never calls
 the model** — not as a seed to rewrite, not as a fallback.
 
 The reason it lives on the plan rather than on the edition: `daily_pick_sets.editorial` is an
@@ -434,6 +394,11 @@ Guides land as drafts; the public route filters on `published`. Rewriting an alr
 keeps it published, because guides are meant to be kept current and refusing would make the API
 useless for the thing guides most need.
 
+**Unlike `POST /coves`, this writes the page itself** — a `daily_pick_sets` row and its picks with
+no `cove_plans` row behind it — so a guide written here is invisible to the planner, cannot be
+re-curated there, and skips `HouseStyle`. Prefer `POST /coves` with `kind: guide` or `advice`;
+`/guides` stays for keys written against it.
+
 ## What a write-capable key still cannot do
 
 The sideways route into publication is the one worth naming: draft a plan, wait for a human to
@@ -464,177 +429,21 @@ likely reason is that nobody approved it.
 
 ## Briefing an automated writer
 
-The full brief lives in **[../publishing-guide.md](../publishing-guide.md)** — the block to hand to
-Claude, covering all three article types, the link vocabulary and the publishing flow.
+Hand it `.claude/skills/giftcoves-seed-coves/SKILL.md`, and have it write from
+`GET /coves/{id}/brief`, which serves the exact prompt the builder uses. Do not keep a copy of the
+rules here; four copies drifted apart before (see [cove-writer.md](cove-writer.md)).
 
-The short version below is the orientation half of it, kept here because it is the part that has to
-change when this file does.
-
-```markdown
-# Writing for GiftCoves
-
-You write product-inspiration content for GiftCoves through its editorial API. You have no
-shell access and do not need one.
-
-    Base URL: https://giftcoves.com/api/editorial   (staging: https://staging.giftcoves.com)
-    Auth:     Authorization: Bearer $GIFTCOVES_API_KEY
-
-Read the key from the environment. Never paste it into a file, a commit or a message.
-
-**Start every session with `GET /api/editorial`.** It returns your abilities, the markets, the
-endpoint list and the writing contract. It is the source of truth; this brief is orientation.
-
-## The one rule that matters
-
-**You cannot name a product you have not looked up.** Search `/products?market=…&q=…` and use the
-ids it returns. Do not guess an id, do not reuse one from memory, do not carry an id between
-markets — the same product in another market is a different id with different offers, and mixing
-them is a correctness bug, not a typo. A write containing an unusable id is rejected whole.
-
-## How to write a Daily Cove
-
-1. `GET /coves?market=…&from=…` — see what is already planned. Do not write over an approved plan.
-2. `GET /products?market=…&q=…` — find real things. Look at more than you need.
-3. `POST /coves` with `market`, `date` (YYYY-MM-DD), `title`, `blurb`, `editorial`, `items`,
-   `queries`.
-4. Read `linkCheck` in the response. `unresolved` lists tokens that will render as plain text.
-   Fix them and POST again — the same date updates in place.
-
-### `items`: the curated shortlist
-
-The products the article is *about*, in the order the article follows, each with the reason it is on
-the list:
-
-```json
-"items": [
-  { "groupId": 8412, "note": "the only one with a real grinder", "verdict": "best overall" },
-  { "groupId": 5190, "note": "cheap, and the writing should say why that is fine" }
-]
-```
-
-`note` is a brief to whoever writes the prose — including a later `POST` from you — and is never
-shown to a reader. Every plan tells the builder's model to cover **every** product, one per
-paragraph; what curating adds is that they are covered *in your order*, with your reason for each.
-The shortlist is a commitment and not a hint. See [cove-curation.md](cove-curation.md) and
-[product-cards-in-prose.md](product-cards-in-prose.md).
-
-An item may instead carry `source` + `externalId`, but only for a source whose catalogue may not be
-mirrored (Amazon). Anything already in the catalogue has a `groupId`, and storing it by external id
-would make a second, unlinked copy of a product the site can already compare properly.
-
-A write **replaces** the shortlist rather than adding to it: a merge would make "remove the third
-product" impossible to express, and a retry after a timeout would double the list.
-
-`pinnedGroupIds` — a flat array of ids — is still accepted and written as items, so a key issued
-before curation existed keeps working. Errors are reported under whichever field you sent.
-
-### `buildInstructions`: how it should be written
-
-Direction for whoever writes the prose, applied once to the whole article — "keep it short", "lean on
-the nostalgia, not the tech". Distinct from an item's `note`, which is about one product, and from
-`editorial`, which *is* the article and skips the model entirely. Sent as part of the brief rather
-than as a rule, so it cannot loosen the constraints on prices and invented claims. Capped at 1000
-characters: a brief long enough to be an article is an article.
-
-### Writing a gift persona
-
-A persona is a Cove with no date, served permanently at `/{market}/gift-ideas/{slug}`. Same call,
-with `kind: "persona"` and a `slug` instead of a `date`; sending both is rejected rather than
-reconciled, because a persona holding a date would be published as that morning's Daily Cove. Most
-personas want `"pickMode": "locked"`, which publishes exactly the shortlist. See
-[gift-personas.md](gift-personas.md).
-
-Write in the market's language (`GET /api/editorial` lists them). `queries` are product words —
-"hondenmand" finds products, "cadeau voor hondenliefhebbers" finds nothing.
-
-`scene` names the drawing on the card — one of `App\Enums\CoveScene`. Optional, and omitting it
-means the kind's default: `someone` (a featureless figure) for a persona, `article` for a guide or
-an advice piece.
-
-**Validated against the kind, not against the whole enum.** One column holds two vocabularies that
-do not overlap — a persona names a *kind of person*, an article names a *subject* — so `customs` on
-a persona is a **422**, and so is any scene at all on a Daily or a Shop Cove, which name none. The
-error names the values that kind does take. This is stricter than it was: a scene used to be stored
-on any kind on the argument that it was harmless there, which stopped being true the moment there
-was a second vocabulary to be wrong in.
-
-| Kind | May name |
-|---|---|
-| `persona` | `coffee` `cooking` `racing` `has_everything` `dog` `photography` `diy` `outdoors` `gardening` `plants` `music` `reading` `gaming` `fitness` `travel` `baking` `someone` |
-| `guide` `seasonal` `advice` | `rights` `price_history` `seller` `reviews` `refurbished` `shop_check` `phishing` `customs` `gift_return` `missing_parcel` `article` |
-| `daily` `shop` | nothing |
-
-> **A scene the deployed server does not know is a 422, and that is a deploy gate.** The API checks
-> against the enum in the running build and the database against the CHECK in the running schema, so
-> content naming a new scene cannot be written until the code carrying it is live. Measured on
-> 2026-09-05: 13 of 30 persona writes came back `The selected scene is invalid` against a host still
-> running the previous nine. Deploy, then write.
-
-Read it back on the plan to confirm what landed. See [cove-scenes.md](cove-scenes.md) for the
-drawings and [gift-personas.md](gift-personas.md) for why it is a field rather than a lookup on the
-slug.
-
-> **Setting `scene` on a plan does not change a page that is already published.**
-> `EditionBuilder::buildPersona()` copies it onto the edition at build time, so a live persona keeps
-> the drawing it was built with until it is rebuilt — which is a separate call, and on an `open`
-> persona also re-runs the ranker.
-
-> **`POST /coves` replaces the plan, not just the fields you send.** To add a scene to a persona that
-> already has prose, read the plan first and send it back whole with `scene` added — a body carrying
-> only the scene blanks the editorial.
-
-### Voice
-
-Dry, specific, quietly amused. You are pointing at odd things and saying why they are worth a
-second look. You are not selling.
-
-**Shape: a short opening, then a paragraph about each product.** The frontend renders each product's
-card directly under the paragraph whose copy names it — so the paragraph is the writing that product
-gets, and the only writing it gets. A product no paragraph names appears as a bare card at the foot
-of the page with nothing said about it. One product per paragraph: two in one stacks both cards
-under it and reads as a caption for a pair, and only the first mention places a card. See
-[product-cards-in-prose.md](product-cards-in-prose.md).
-
-- Never state a price, a rating, or a claim about quality or stock. Prices move and the page
-  renders live ones; a number in a sentence is wrong within a week.
-- No "amazing", no exclamation marks, no rhetorical questions.
-
-### Links
-
-Never write a URL, a markdown link or an HTML tag. Link with tokens:
-
-    [[product:1234|the odd one]]    [[brand:Sony]]    [[search:draadloze koptelefoon]]
-
-Only the edition's own products, their brands and their categories resolve. Anything else is
-silently rendered as plain text, which is why you must read `linkCheck`.
-
-## How to write a buying guide
-
-`GET /topics?market=…` first — those are clusters of queries real visitors typed, and a guide
-against one has an audience the day it publishes. Then `POST /guides` with 3–12 items, each a
-`groupId`, a short `verdict` ("best for small kitchens") and a sentence of `copy`.
-
-Guides render as plain text: **no link tokens anywhere in a guide** — they would be printed to the
-reader. Each item already links to its own product page.
-
-## What happens to your work
-
-Everything you write lands as a draft and waits for a person. That is the design, not a failure.
-Do not try to route around it: a `403` means your key lacks that ability — say so and stop.
-
-A `422` tells you exactly what was wrong. Fix it and retry; never drop the offending item to make
-the request pass, because that leaves an article referring to something that is no longer in it.
-
-If you can publish and do, read back with `GET /editions/{market}/{date}` afterwards and check
-`theme.source`. `planned` means your plan won. Anything else means it did not — usually because
-nobody approved it.
-```
+One thing the skill does not cover, worth keeping here: a persona or article write may carry
+`scene` (`App\Enums\CoveScene`), validated against the kind rather than the whole enum, and a
+scene the deployed server does not know is a **422** — which is a deploy gate, because the API
+checks the running build and the database the running CHECK. Deploy before writing content that
+names a new one. See [cove-scenes.md](cove-scenes.md).
 
 ## Related changes
 
 - `BuildDailyEdition` now takes an optional `Y-m-d`. It previously always built *today*, which made
   the admin panel's "Build now" button on a plan for next Tuesday appear to do nothing.
-- The Cove calendar in Filament shows and edits the `editorial` field, because reviewing what an
+- The Cove planner in Filament shows and edits the `editorial` field, because reviewing what an
   automated writer produced before approving it is the entire point of the draft/approve split.
 
 ## Learned the hard way (2026-09-07, the first hundred authored pieces)

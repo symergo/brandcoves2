@@ -1,7 +1,7 @@
 ---
 name: List surfaces — saying what a list is
 area: Wishlist / Gifting
-status: In progress
+status: Active
 date_added: 2026-08-29
 ---
 
@@ -53,7 +53,8 @@ share it and people can claim them, and you will never see which."*
 That second clause is doing real work. A settings panel is a worse teacher than a sentence, because
 you have to already suspect a feature exists before you go and open the panel that explains it.
 
-**The clearest case is the quiz.** `ListTools` gates it on `shared && claimable`, and
+**The clearest case is the quiz.** `ListTools` gates it on `shared && claimable`, and on
+`kind === 'mine'`, and
 [list-quiz.md](list-quiz.md) is right that the gate must stay: a quiz publishes what is on the list,
 so one over a private list would be a leak that never went through the sharing switch. The
 consequence, though, is that the feature invented to solve *"nobody fills in a wishlist"* was
@@ -156,6 +157,9 @@ asserts against `registry.occasion` — the chip — rather than `registry.badge
 would have gone green while the manual named a word the row does not print, which is the whole failure
 it exists to prevent.
 
+*Superseded 2026-09-12:* the occasion went into Settings and Hand over went under Share; the test now
+pins `lists.settings`. See *Three buttons: Share, Settings, Delete* below.
+
 ## Three buttons: Share, Settings, Delete (2026-09-12)
 
 The row had grown back to six chips (Share, Ask *name*, Quiz, Occasion, Hand over, Secret Friend)
@@ -208,6 +212,9 @@ now says press *Settings*, `handover_step2` says open *Share* and press *Hand ov
 the Settings tab for picture 15 and keeps the file name.
 
 ## The sharing panel, in the order the decision is made
+
+*Partly superseded by the 2026-09-12 redraw below:* the blocks are sections with their own `h3`s in
+a new order, the link switches lost their heading, and `link_can_add` is a switch.
 
 The merge above got the *contents* right and left the panel itself a stack. It read: the link → who
 sees the claims → a loose sentence about what the link grants → what the link allows → the roster,
@@ -265,6 +272,10 @@ It is two radios carrying the two sentences that already existed, `link_can_add_
 `link_can_add_off`, as their labels. Both outcomes are on screen; the one in force is the one
 selected. No copy was added for this.
 
+*No longer true:* `link_can_add` is a switch again (`lists.anyone_can_add`), and `link_can_add_on` /
+`_off` and `share_grants` are gone from the language files. The radio pair on the panel today is the
+group gift's pledge mode.
+
 ### A privacy switch that saves silently is a privacy switch you cannot trust
 
 Four settings here write on change, with no Save button and no confirmation: the request goes out,
@@ -289,8 +300,9 @@ sat under each other with nothing saying which was which. The earlier note above
 were scaffolding for a form this is not; that held while the panel was a link and three switches,
 and stopped holding once hand-over and the recipient's suggestions moved in under it. Each block now
 carries an `h3`, in the order the decision is made: the link, who gets it by name, what
-it allows, how a group collects, who was invited before links existed, then hand over, then what the
-recipient asked for.
+it allows, how a group collects, who was invited before links existed, then hand over. What the
+recipient asked for sat at the foot for one afternoon, before Ask went back to being a chip of its
+own.
 
 **It rendered blocks that were empty.** The options section existed on every list and had nothing
 in it on a private wish list of your own, which is most lists, so the panel opened onto a sentence,
@@ -338,7 +350,7 @@ first list. The four strings the band alone used (`gift_cove.my_wishlists`, `ite
 "Find a present" — the Gift Whisperer, Search, Ask and Alerts — is gone from `/gift-cove`, at the
 owner's request. The hub is the page for lists and the people around them; finding is the header's
 other half, where the entry now called "Find a gift" carried the Whisperer as its first item for
-one day (it came out again on 2026-09-13, see [navigation.md](navigation.md)), and Search is in the
+one day (it came out again on 2026-09-13 and returned on 2026-09-14, see [navigation.md](navigation.md)), and Search is in the
 header on every page. The four cards' strings stay: the manual at `/gift-cove/how-it-works` still
 explains the Whisperer. Only
 `gift_cove.band_find` was deleted. The `find` band was the one four-card band; the grid still
@@ -361,6 +373,10 @@ three kinds show the wizard's sentence for that kind (`wizard.kind_*_body`), Sha
 `lists.shared_subtitle`, and Secret Friend shows `santa.subtitle`. The icon sits beside the
 heading rather than inside it, because the heading is uppercase and the tip's text would inherit
 that.
+
+Since the 2026-09-13 split into three views the tips are `wizard.kind_for_someone_body` on my gift
+lists and `lists.others_shared_hint` on the two shared-with-me sections. The Secret Friend band and
+its tip are gone.
 
 ## "How each one works" is its own page
 
@@ -407,7 +423,8 @@ the end of the wizard arrived with no title and was refused. The effect now writ
 actually changes, so the mount run is a no-op. Reproduced and verified signed out, where the restore
 path is the same.
 
-It posts to the same `store()` as the form on My Lists. That endpoint learned `event_type`,
+It posts to `WishlistController::store()`, which the one-screen form on My Lists also used until
+that form was removed on 2026-09-07. That endpoint learned `event_type`,
 `event_date`, `visibility` (private or link), `link_can_add`, `voting_enabled` and `share_with`,
 because a wizard that explains an option and then sends you to the list page to turn it on has
 explained it to nobody. Each is optional and follows `update()`'s rule for the same column; voting is
@@ -425,6 +442,9 @@ count from the band (three or four) so every band is full rows. Coves keep their
 
 The privacy rule is said once, on the sharing step, where the decision it governs is made. The SEO
 description no longer counts "nine tools".
+
+*Since 2026-09-12 there are four: 'find a present' went; see* The hub has four bands, not five
+*above.*
 
 ### The picker that emptied itself, and the date nobody should be asked for
 
@@ -471,10 +491,10 @@ then demanding a date for Christmas, and stretching its unlabelled neighbour to 
 
 ## The front page stopped calling a gift list a registry
 
-`HomeController::registry()` has always looked for `event_type` rather than for a kind, on the sound
-reasoning that a registry is not a fourth kind of list. Once an occasion could sit on a list *about
-somebody else*, that same query started returning gift lists — and the card would have told somebody
-their research about their father was a wedding list of their own.
+`HomeController::registry()` briefly turned the front page's registry card into a next-occasion
+card, once an occasion could sit on a list about somebody else. The card and `registry()` went with
+the Organise band on 2026-09-13; see
+[homepage.md](homepage.md#the-list-wizard-where-the-organise-band-was-2026-09-13).
 
 The card is about **the next occasion** now, which is the more useful nudge anyway: a birthday you are
 shopping for beats a registry most people never create. It names the person when the occasion is not
@@ -580,6 +600,9 @@ matched it the row would read as two panels open at once.
 | Hand over | **never.** See below |
 | Secret Santa | some membership is `attached` — being in a group is why the chip exists at all |
 
+*Superseded 2026-09-12:* the row is Share, Ask, Settings, Quiz, Secret Friend and a labelled Delete.
+Settings lights when a price watch or an occasion is set; Hand over is a section under Share.
+
 Handing over is an act, not a setting. `canHandOver` is already false once it has happened, so the
 chip disappears rather than lighting up — and `handoverEmail` is only the recipient's address
 prefilled for convenience, so lighting the chip off *that* would announce a handover nobody has
@@ -625,20 +648,9 @@ other, so on today's data those are the same condition — but "ask them what th
 list of your own is the page asking you to interview yourself, and a kind derived somewhere else is
 exactly the sort of thing that stops being derived.
 
-## Files
-
-- `resources/js/Components/ListKindBadge.tsx` — the badge, and the one place the sentence is chosen
-- `resources/js/Pages/Lists/Show.tsx`, `Index.tsx`
-- `resources/js/Components/ListTools.tsx` — the chip row, the `set` flag per tool, and the sharing
-  panel's four blocks
-- `app/Services/Wishlist/ListMaker.php` — the recipient decides the kind, which the ask card mirrors
-- `lang/*/site.php` — `lists.kind_*`, `lists.new_*_body`, `lists.quiz_unlocks`, `lists.shop_for`,
-  `lists.shared_empty`, `lists.tool_on`, `lists.shared_short` / `private_short`. `lists.about_*`,
-  `lists.shared_badge` and `lists.private_badge` are kept but no longer rendered
-
 ## One door to a new list: the wizard (2026-09-07)
 
-"New list" on My Lists opens `ListWizard` — the same four questions the Gift Cove opens with —
+"New list" on My Lists opens `ListWizard` — the same three questions the Gift Cove opens with —
 and the one-screen create form that used to sit there is gone. Two reasons.
 
 (Since 2026-09-12 the button is the home page's **Make a new list** button, `NewListButton`,
@@ -664,11 +676,11 @@ page's disclosure — opens on the second question with the first answered (back
 Lists opens the wizard on arrival when a draft is waiting, because a magic link does not promise to
 land on the Gift Cove.
 
-Two smaller things on the list page the same day. The "Gift list for Anna" subtitle under the
-title is gone: the recipient is on the kind pill beside the title and in the title itself now that
-the wizard names a list "For Anna", so the line said it a third time. And the delete icon keeps the
-top-right corner on every width — the header used to wrap on a phone and drop the icon under the
-pills — at 44px, the site's minimum target.
+*(Until 2026-09-12.)* Two smaller things on the list page the same day. The "Gift list for Anna"
+subtitle under the title is gone: the recipient is on the kind pill beside the title and in the
+title itself now that the wizard names a list "For Anna", so the line said it a third time. And the
+delete icon keeps the top-right corner on every width — the header used to wrap on a phone and drop
+the icon under the pills — at 44px, the site's minimum target.
 
 ## The wizard makes a Secret Friend group too (2026-09-12)
 
@@ -760,8 +772,8 @@ a different shape.
 
 Below `lg` `ListItemCard` is a tile: the picture is the card's width and square, the controls sit
 on it in the top-right corner the product card already uses, and the words go underneath, two
-lines of title and the price. The list shows two tiles to a row on a phone and three between `sm`
-and `lg`. A row of two tiles is shorter than two of the old rows and every picture is twice the
+lines of title and the price. The list shows two tiles to a row on a phone and one column from `sm`
+(see *Three buttons* above). A row of two tiles is shorter than two of the old rows and every picture is twice the
 size (171px on a 390px phone, against 80). From `lg` the card is the row it was: the two-column
 grid gives it 490px there, and beside a picture that wide the words would be the afterthought.
 The picture is a link to wherever the title goes, hidden from the tab order and the screen reader
@@ -774,8 +786,20 @@ bookmark and a narrow chevron, the chevron there so a card can be filed straight
 list. On a phone the chevron was a 32px second target beside the first, and the pair covered a
 third of a tile's picture; there the bookmark is the whole control, a tap saves and a second tap
 opens the sheet, which is where a move lives anyway. The desktop keeps the pair. `CopyToList`'s
-icon button and the owner's edit and remove buttons became the same round chip with a background
-and a blur, because they now sit on a picture rather than beside a title.
+icon button (items typed in by hand only) and the owner's edit button became the same round chip
+with a background and a blur, because they now sit on a picture rather than beside a title (the
+remove ✕ went on 2026-09-12).
+
+## Files
+
+- `resources/js/Components/ListKindBadge.tsx` — the badge, and the one place the sentence is chosen
+- `resources/js/Pages/Lists/Show.tsx`, `Index.tsx`
+- `resources/js/Components/ListTools.tsx` — the chip row, the `set` flag per tool, and the sharing
+  panel's four blocks
+- `app/Services/Wishlist/ListMaker.php` — the recipient decides the kind, which the ask card mirrors
+- `lang/*/site.php` — `lists.kind_*`, `lists.quiz_unlocks`, `lists.shop_for`,
+  `lists.shared_empty`, `lists.tool_on`, `lists.shared_short` / `private_short`. `lists.about_*`,
+  `lists.shared_badge` and `lists.private_badge` are kept but no longer rendered
 
 ## See also
 

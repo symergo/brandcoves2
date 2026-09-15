@@ -130,7 +130,7 @@ snapshot. Set fixtures up first, or call `forget()`.
 `FeedResource` and `MerchantResource` had no `navigationGroup` and floated above the sidebar's groups
 while Ingestion jobs and Products sat inside **Catalogue**. Both moved in, because this page links
 into the feeds list and a link whose target sits outside its siblings' group reads as a different
-part of the app. Order: Market supply, Feeds, Discover Awin feeds, Ingestion jobs, Products,
+part of the app. Order: Market supply, Feeds, Discover Awin feeds, Ingestion jobs, Offers,
 Merchants — the pipeline, with the summary on top.
 
 ## Files

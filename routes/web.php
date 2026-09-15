@@ -822,22 +822,22 @@ Route::prefix('{market}')->group(function () {
     | editions 404 has no archive to link to.
     |
     | That URL is now the edition's *name* rather than its date:
-    | `/be-nl/cadeau-van-de-dag/vondsten-voor-thuiswerkers`, not
-    | `/be-nl/daily/2026-08-29`. A date tells a reader nothing and a search
-    | engine less.
+    | `/be-nl/tips/vondsten-voor-thuiswerkers`, not `/be-nl/daily/2026-08-29`.
+    | A date tells a reader nothing and a search engine less.
     |
-    | The segment is localised per market — `cadeau-van-de-dag`,
-    | `cadeau-du-jour`, `regalo-del-dia`, `gift-of-the-day` — because a path
+    | The segment is one word for every market — `tips` — because a path
     | segment is read by a person deciding whether to click and by a search
-    | engine deciding what the page is about, and "daily" did neither job in
-    | four of the five markets. See Market::coveSegment() for why the search
-    | phrase beats the product's own name here specifically.
+    | engine deciding what the page is about, and "daily" did that job in
+    | none of the markets. It was briefly localised per market
+    | (`cadeau-van-de-dag`, `cadeau-du-jour`, `regalo-del-dia`) and collapsed
+    | back to one word within hours; see Market::coveSegment() for why.
     |
     | These routes are declared once under the {market} prefix, so the segment
-    | cannot be a literal: the pattern admits every market's word and the
-    | controller rejects the ones that do not belong to the market in the URL.
-    | Without that check /es/cadeau-van-de-dag/... would resolve, which is one
-    | market's page on another's address — duplicate content carrying the wrong
+    | cannot be a literal: the pattern admits the current word plus every
+    | retired spelling in Market::HISTORICAL_SEGMENTS, and the controller
+    | redirects anything that is not the current word to it. Without that
+    | check /es/cadeau-van-de-dag/... would resolve, which is one market's
+    | page on another's address — duplicate content carrying the wrong
     | hreflang.
     |
     | The dated form is registered BEFORE the slug form, or `2026-08-29` is

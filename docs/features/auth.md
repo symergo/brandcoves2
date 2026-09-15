@@ -70,6 +70,12 @@ opening it — see [wishlists.md](wishlists.md) and `App\Services\Wishlist\Pendi
 shortens the journey; the email round trip still happens in another tab or another hour, and
 `PendingSave` is what finishes the save when the visitor returns.
 
+**The dialog is a native `<dialog>` with `showModal()`, not a div**: focus trapping, Escape, an
+inert page behind and a top-layer backdrop, all of which a hand-rolled overlay gets wrong for
+exactly the people who would notice. `auth.googleEnabled` moved to the shared Inertia props,
+because signing in is no longer something that only happens *on* the login page and the Google
+button must stay hidden when the client id is unset.
+
 ## Registration is not a separate flow
 
 There is no sign-up form. First sign-in creates the account, on either path. Google's `email` is
@@ -93,7 +99,7 @@ The site is useful before you sign up: `TrackAnonymousIdentity` issues a `bc_vis
 lists attach to that. On sign-in, `IdentityMerger` moves that work onto the real account.
 
 **The merge runs before `Auth::login()`, deliberately** — see
-[GoogleController.php:76](../../app/Http/Controllers/Auth/GoogleController.php#L76). Once the session
+[GoogleController::callback()](../../app/Http/Controllers/Auth/GoogleController.php). Once the session
 regenerates, the anonymous cookie is no longer the thing identifying this browser, and the window to
 resolve it has closed.
 

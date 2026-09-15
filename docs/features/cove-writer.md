@@ -94,11 +94,11 @@ output, the others are decisions.
 `App\Services\Cove\CovePrompt` is the one place a Cove's prompt is assembled, and both writers ask
 it: `EditionBuilder` when the model writes, and `GET /coves/{id}/brief` when somebody else does.
 
-Before this, the writing contract reached an external author as **four hand-maintained copies** — the
-API root's `writing` block, `docs/publishing-guide.md`, `docs/features/scheduled-writing.md` and the
-seed skill. They had already drifted: the API root, which the skill calls the source of truth, omits
-the one-paragraph-per-product rule that `ProseCards::promptContract()` exists to make undroppable. An
-agent following the server's own description of itself writes prose that publishes with bare cards.
+Before this, the writing contract reached an external author as **three hand-maintained copies** —
+the API root's `writing` block, `docs/features/scheduled-writing.md` and the seed skill. They had
+drifted: the API root omitted the one-paragraph-per-product rule, so an agent following the server's
+own description wrote prose that published with bare cards. The root now restates it
+(`writing.paragraphs`), but the brief is the contract.
 
 What comes back is the assembled `system` and `user`, **prompt-bank override included** — so an edit
 at *Operations → Prompts* governs Claude the same afternoon it governs the builder.
@@ -169,16 +169,8 @@ caller.
 
 ## A barcode is a lookup now
 
-`GET /products?ean=` resolves a barcode against `(market, identity_key)`, the same index the shopper
-path uses. `q` runs against `search_vector`, which holds title, brand, category and description and
-**no EAN at all**, so a barcode came back as an empty list that reads like "we don't stock it".
-
-The workaround the seed skill was built around — the *public* `/{market}/scan/{ean}` endpoint, then
-parsing a group id out of the URL it returned — is retired.
-
-Three outcomes an author must be able to tell apart, which is why an invalid barcode is a **422**
-rather than an empty list: a failed check digit is a misread, not a product we do not carry, and an
-author told "not found" would go looking for it in another market.
+`GET /products?ean=` replaced the public `/scan` workaround. See
+[editorial-api.md](editorial-api.md#a-barcode-is-a-lookup).
 
 ## Curating from outside the panel
 
@@ -251,9 +243,6 @@ is decoration: draft a plan, wait for a person to approve it, then change what i
   observance and no caller passes one, so the parameter is dead and a Christmas edition cannot link
   `[[search:kerstcadeau]]`. Worth changing; not worth changing inside a refactor whose value is that
   the served prompt and the sent prompt are identical.
-- **The panel has no `writer` switch yet.** Typing prose into the Filament plan form leaves the plan
-  marked `builder`, and the next build will rewrite it. The API defaults correctly; the panel does
-  not, and that is the next thing to fix.
 - `GET /coves/{id}/brief` describes an **open** plan's page approximately, because the engine tops
   the shortlist up on the day. An authored Cove usually wants `pickMode: locked`.
 

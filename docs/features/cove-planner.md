@@ -38,6 +38,7 @@ how the page is addressed, how its products are chosen, and how many it needs.
 | `seasonal` | `/guides/{slug}` | one per brand, price ladder | `guides.min_products` |
 | `advice` | `/guides/{slug}` | none — the prose *is* the substance | 0 |
 | `shop` | `/shops/{slug}` | none — see [shop-coves.md](shop-coves.md) | 0 |
+| `brand` | `/brand/{slug}` | none — live rails, see [cove-entities.md](cove-entities.md) | 0 |
 
 Putting these on the enum rather than in the callers is what removed the
 `isPersona() ? A : B` branch that had grown into four copies and would have needed a
@@ -152,6 +153,7 @@ and writes that many drafts. `App\Services\Cove\PlanDrafter` is the one implemen
 | `persona` | `App\Enums\Interest` + `AngleMap` | the enum's own order |
 | `advice` | — | refused, with the reason |
 | `shop` | — | refused, with the reason |
+| `brand` | — | nothing — currently a 500; see `PlanDrafter` |
 
 Three things this is careful about.
 
@@ -168,8 +170,7 @@ that would produce more.
 **Two kinds are refused rather than faked.** An advice article is an opinion about how to shop;
 nothing in the catalogue or the search log proposes one, and generating titles from a template would
 fill the queue with plausible-looking work nobody meant. A Shop Cove is seeded from the repository by
-`bc:seed-shop-coves` and **nothing builds a Shop plan** — `BuildCove` has no arm for it and
-`buildArticle()` excludes it by design — so a drafted one would sit in the planner unbuildable.
+`bc:seed-shop-coves`, so a drafted one would be a title with no source behind it.
 
 ### Why a persona is drafted from an interest
 
@@ -190,9 +191,10 @@ and one kind, as a queue top-up.
 
 ## Every published Cove has a plan
 
-Including the ones nobody planned. The 06:00 build mints one as a record
-(`CovePlan::recordFor()`), and a backfill migration minted one per existing edition,
-so the planner describes the past as well as the future and anything live can be
+Including the ones nobody planned. The one exception is a guide written through `POST /guides`,
+which writes the page directly and has no plan until something mints one. The 06:00 build mints
+one as a record (`CovePlan::recordFor()`), and a backfill migration minted one per existing
+edition, so the planner describes the past as well as the future and anything live can be
 re-curated.
 
 A minted plan is `used`, never `approved`. `approvedFor()` is what decides whether a
@@ -297,13 +299,16 @@ market. Their slugs are free again, so a real article can claim any of those add
 - `app/Filament/Resources/CovePlans/` — the planner and its curation screen
 - `app/Filament/Resources/CoveEditorials/` — everything published
 - `app/Services/Cove/Selectors/` — surprise versus ladder
-- `app/Services/Cove/Writers/` — column versus guide
+- `app/Services/Cove/Writers/GuideWriter.php` — the article writer (the column's prose is written in
+  `EditionBuilder`)
 - `app/Services/Cove/EditionBuilder.php` — orchestration, redo, copy refresh
 - `app/Services/Cove/PlanDrafter.php` — a kind and a number → that many draft plans
 - `app/Services/Cove/PlanSlugs.php` — the one place that respects the slug namespace
 - `app/Services/Guides/TopicPlanner.php` — topic → draft plan
 - `app/Http/Controllers/Api/CoveDraftController.php` — the same thing over HTTP
 - `app/Services/Content/GuideFold.php` — the one-time data move, and `hasAnArticle()`
+- `app/Enums/GuideKind.php` — the editorial API's `buying`/`advice` vocabulary and its three-product
+  floor
 - `database/migrations/2026_08_30_0001*` … `0004*`
 
 ## Open
@@ -311,9 +316,6 @@ market. Their slugs are free again, so a real article can claim any of those add
 - ~~`guides` and `guide_items` still exist, unread.~~ Dropped 2026-09-06 by
   `2026_09_06_000100_the_guides_tables_retire`. What that took to finish is worth reading
   before writing another data move — see **When the fold did nothing** above.
-- `GuideKind` survives only as the editorial API's vocabulary, where it also carries a
-  deliberately lower floor (three products for an authored guide, five for a
-  generated one).
 - ~~Seasonal Coves have a window but nothing surfaces them by it yet.~~ Done 2026-09-05: a season is
   laid out as a series of dated parts on this screen, and an approved part publishes on its day. See
   [seasonal-series.md](seasonal-series.md).

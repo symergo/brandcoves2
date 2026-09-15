@@ -96,22 +96,12 @@ explicitly *not the price, yet*. `amazon_products` gained `description`,
 says "no price, no availability, no description, no image", and two of those
 four are no longer true.
 
-**What did not change, and must not by accident.**
-`Source::allowsCatalogueStorage()` is still `false` for Amazon. Nothing an
-import writes reaches `products`, the search index, offer comparison, a
-wishlist, a chart, the serendipity pool or an email. Those are eight call sites,
-each with its own reasoning, and flipping that one boolean would re-enable all
-of them at once and silently. `AmazonComplianceTest::the_capability_matrix_is_what_the_policy_says`
-asserts the gate directly for that reason.
-
-**Why the price is the right field to hold back.** It is what the Associates
-agreement binds to a 24-hour refresh, and it is the one field a person acts on
-and is wrong about. It is not read by the scraper, not accepted by the
-validator, and there is no column for it — three independent refusals rather
-than one.
-
-[amazon-compliance.md](amazon-compliance.md) is the audit this sits against;
-mirroring is restriction 3 there. Read it before widening any of this.
+**What did not change, and why the price is held back**, is recorded in the audit, which is the
+document to change before widening any of this:
+[amazon-compliance.md](amazon-compliance.md#an-exception-was-made-on-2026-09-14-and-here-is-exactly-how-far-it-goes).
+In short: `Source::allowsCatalogueStorage()` is still false, so nothing an import writes reaches
+`products`, search, a wishlist, a chart or an email; and a price has no scraper field, no validator
+rule and no column.
 
 ### The barcode is the point
 

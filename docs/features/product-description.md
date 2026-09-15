@@ -31,7 +31,7 @@ page does not change between requests and read as unstable to a crawler.
 
 | Rejected | Why |
 |---|---|
-| Amazon | `Source::allowsCatalogueStorage()` is false, so no Amazon row should hold one at all. Filtering here means an upstream bug cannot surface one on a page — invariant 6 covers this field. |
+| Amazon | `Source::allowsCatalogueStorage()` is false, so no Amazon *offer* row should hold one. (The page import stores Amazon page descriptions in `amazon_products.description` since 2026-09-14; this service never reads that table.) |
 | Under 120 characters | A scrap under a heading looks like a page that failed to load, and the offer titles above already say more. Higher than `Excerpt`'s 30, which guards a single line of card copy rather than a section. |
 | The title again | Feeds routinely fill this column with the product name. Compared on a `Str::slug()` key, because the two differ by punctuation and casing far more often than by content. |
 
