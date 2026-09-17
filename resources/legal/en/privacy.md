@@ -1,7 +1,7 @@
 ---
 title: Privacy policy
 summary: What GiftCoves stores about you, on what legal basis, for how long, and how to get rid of it.
-updated: 2026-08-31
+updated: 2026-09-17
 ---
 
 ## The short version
@@ -95,21 +95,34 @@ normally as a parameter in the link, and they set their own tracking so a purcha
 can be attributed. That happens on their domain under their privacy policy, not
 this one. We never send them your email address, your account or your lists.
 
-**Google Analytics, if you allow it.** It counts visits: which pages are read,
-roughly where in the world from, which site sent you. If you decline, or simply
-ignore the question, none of it loads — no script is fetched from Google and no
-cookie is set. Nothing on this site works differently either way, which is why
-the question is a real one rather than a wall you have to click through.
+**Google Analytics.** It counts visits: which pages are read, roughly where in
+the world from, which site sent you.
 
-We have turned off the parts of it that we can: no advertising features, no
-data sharing with Google's other products, and the cookie it sets expires after
-thirteen months rather than the two years it would default to. What it collects
-is still processed in the United States under the safeguards above.
+**Nothing is stored until you say yes.** The measurement script loads on every
+page, but until you accept it keeps nothing: no cookie, and no identifier that
+could recognise you on your next visit. What reaches Google in that state is one
+anonymous signal per page — your IP address and the address of the page — from
+which Google estimates visitor numbers without being able to tell who you are.
+Accept, and it starts counting you properly. Decline, or ignore the question,
+and it stays in that storage-free state for as long as you are here. Nothing on
+this site works differently either way, which is why the question is a real one
+rather than a wall you have to click through.
+
+We have turned off the parts of it that we can: nothing measured here is ever
+used to build an advertising audience, there is no data sharing with Google's
+other products, and the cookie it sets expires after thirteen months rather than
+the two years it would default to. If you accept, Google may also set a cookie
+that lets a click on one of our advertisements be matched to a visit here, so we
+can tell which advertising was worth paying for; it is used for that count and
+nothing else. What it collects is still processed in the United States under the
+safeguards above.
 
 ## What we do not do
 
-- **No advertising trackers.** No Meta pixel, no advertising cookies, no data
-  broker, and nothing that follows you off this site.
+- **No advertising trackers.** No Meta pixel, no data broker, and nothing that
+  follows you off this site. The one exception, only if you accept: Google's
+  measurement of whether one of our advertisements led to a visit, which counts
+  the visit and builds no audience from it.
 - **No profile building.** We do not construct an interest profile from your
   browsing and we do not sell one.
 - **No selling data.** Not to shops, not to networks, not to anyone.
@@ -128,6 +141,7 @@ is still processed in the United States under the safeguards above.
 | Feedback you send us | 12 months, message and reply address together |
 | Server logs | 30 days |
 | Analytics cookie, if you allowed it | 13 months |
+| Advertising measurement cookie, if you allowed it | 90 days |
 | Your answer to the cookie question | 6 months, then we ask again |
 
 These are enforced by a job that runs every night, not by intention.
@@ -171,10 +185,13 @@ Four that are necessary for something you asked for:
 Article 5(3) of the ePrivacy Directive requires consent for cookies that are not
 strictly necessary. Those four are, so they need none.
 
-One that is not, and that we therefore ask about:
+Two that are not, and that we therefore ask about:
 
-- **Google Analytics:** counts visits. It is not loaded, and its cookie is not
-  set, unless you have said yes.
+- **Google Analytics:** counts visits. The script is on every page, but it sets
+  no cookie and keeps no identifier unless you have said yes; until then it sends
+  the single anonymous signal described above.
+- **Advertising measurement:** if you say yes, Google may also set a cookie that
+  matches a click on one of our advertisements to a visit here.
 
 Saying no is one click and costs you nothing — there is no feature behind it and
 no second prompt. Ignoring the banner counts as no, because consent has to be

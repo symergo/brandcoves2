@@ -1,6 +1,6 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import { useEffect, useState } from 'react'
-import { loadGoogleTag, reportPageView } from '../analytics'
+import { updateConsent } from '../analytics'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
 
@@ -70,15 +70,21 @@ export default function CookieBanner() {
         */
         router.post('/consent', { choice }, { preserveScroll: true, preserveState: true })
 
-        if (choice === 'granted' && analytics.id !== null) {
-            /*
-              Immediately, rather than from the next page's shell. Consent given
-              on a landing page is most useful as a measurement of that landing
-              page, and waiting for the next request throws exactly that away.
-            */
-            loadGoogleTag(analytics.id)
-            reportPageView()
-        }
+        /*
+          Immediately, rather than from the next page's shell. Consent given on a
+          landing page is most useful as a measurement of that landing page, and
+          waiting for the next request throws exactly that away.
+
+          Both answers are sent. Under Consent Mode the tag is already on the
+          page with everything denied, so accepting lifts the denial and
+          declining restates it — which is not redundant for somebody who
+          accepted earlier in this page's life and has just withdrawn.
+
+          No page view is re-sent. The tag reported this page as it loaded, and
+          firing another one after the consent update would count the landing
+          page twice — the one number on the site that must not be inflated.
+        */
+        updateConsent(choice === 'granted')
     }
 
     return (

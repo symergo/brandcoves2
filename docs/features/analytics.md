@@ -29,9 +29,16 @@ an account — and Article 5(3) of the ePrivacy Directive exempts exactly that c
 first thing here that falls outside it. Every published market is in the EU (Belgium, the
 Netherlands, and the English market under the EU flag), so this is not optional.
 
-**The gate is a cookie read in PHP, not a check the tag does after loading.** A tag that loads and
-then decides has already fetched a script from Google and already had its chance. `App\Support\
-CookieConsent::stored()` answers the question; `app.blade.php` is the only place it is asked.
+**Since 2026-09-17 the gate is Consent Mode, not the absence of the script.** The tag loads on every
+page with `ad_storage`, `ad_user_data`, `ad_personalization` and `analytics_storage` all denied, and
+a stored `granted` cookie is replayed as a `consent update` in the same inline block, before gtag.js
+is requested. `App\Support\CookieConsent::stored()` still answers the question and `app.blade.php` is
+still the only place it is asked — what changed is what a "no" produces: a loaded tag that stores
+nothing, rather than no tag.
+
+Why it changed is in [the section below](#google-ads-reported-the-tag-as-missing-2026-09-17). What it
+costs: a visitor who has not agreed causes a cookieless ping (IP and page address) to Google instead
+of nothing at all, and is modelled rather than counted. Both privacy pages say so, in those words.
 
 **Three states, not two.** `null` means nobody has been asked, and is the only state that shows the
 banner. A refusal is written down like an acceptance, or every page load re-asks somebody who
@@ -41,17 +48,31 @@ already said no — which the EDPB reads as nagging a consent out of someone rat
 expires rather than being given once and honoured forever. Deliberately shorter than `bc_market`'s
 year: a market choice is a convenience the visitor gets, consent is a permission we get.
 
-## The alternative that was considered and rejected
+## Google Ads reported the tag as missing (2026-09-17)
 
-Google Consent Mode v2 with `analytics_storage: 'denied'` by default would have needed no banner at
-all: gtag.js loads, sets no cookie, and sends cookieless pings that GA models into aggregate figures.
-Legally clean, and about a tenth of the work.
+Consent Mode v2 was considered when this was built and rejected: modelled numbers rather than
+counted ones, no unique users, no reliable returning-visitor split. That reasoning still holds, and
+it was overridden for a reason it did not anticipate.
 
-It was rejected because the numbers it produces are modelled rather than counted — no unique users,
-no returning-visitor split, no reliable session stitching — and the first question this site will
-ask of analytics is whether people come back. A banner that is genuinely easy to refuse buys real
-data from the people who agree, and the ones who do not are simply not measured, which is the
-correct outcome rather than a loss to be engineered around.
+**Google's own scanner arrives with no cookies.** It therefore met the state every unanswered
+visitor met — a page with no tag in it — and Google Ads reported "Google tag missing", with no
+conversion attributable to any campaign. Measured on 2026-09-17: the live page served no
+`googletagmanager.com` script at all, while `AnalyticsTest` proved the tag rendered correctly for a
+consenting visitor. Nothing was broken; the site was simply invisible to the checker.
+
+**The banner stays.** Consent Mode is not a way to stop asking — storage still waits for a yes, the
+cookie is still what decides, and refusing is still one click. The change is only that the script is
+present while the answer is no.
+
+**`ad_personalization` stays denied even after a yes.** The privacy pages promise that nothing
+measured here becomes an advertising audience, and conversion measurement does not need it:
+`ad_storage` and `ad_user_data` are what let Ads attribute a conversion to a click. Granting it is
+one line in `app.blade.php` and one paragraph in each privacy page, and neither should move without
+the other.
+
+**What Ads still cannot see.** Click-outs — the only revenue signal this site has — are recorded in
+`events` by `ClickOutController` and are not sent to GA4, so the only conversion Google knows about
+is `sign_up`. A tag that loads is a precondition for conversion tracking, not conversion tracking.
 
 ## The banner
 
@@ -64,9 +85,14 @@ Both buttons are the same size and shape; the accent is on Accept because it is 
 action, not because refusing should feel like a mistake. Nothing is blocked, nothing is overlaid,
 and ignoring the bar is a valid outcome that counts as no.
 
-Accepting posts to `/consent` **and** loads the tag client-side from `resources/js/analytics.ts`, so
-the page somebody agreed on is the page that gets reported. Waiting for the next request would throw
-away the landing page, which is usually the most interesting one we have.
+Accepting posts to `/consent` **and** calls `updateConsent()` in `resources/js/analytics.ts`, so the
+page somebody agreed on is the page that gets reported. Waiting for the next request would throw away
+the landing page, which is usually the most interesting one we have.
+
+Declining sends the update too, which is not redundant: somebody who accepted earlier in the same
+page's life and then withdrew needs the denial to take effect now rather than on the next document
+load. No page view is re-sent on acceptance — the tag already reported this page when it loaded, and
+firing a second one would count the landing page twice.
 
 Withdrawing is the **Cookies** link in the footer. It posts `choice=reset`, which clears the cookie
 and puts the question back rather than hiding a toggle in a settings page — withdrawal has to be as
@@ -144,7 +170,7 @@ The banner copy itself exists in all four languages.
 | `app/Support/CookieConsent.php` | has this visitor agreed |
 | `app/Http/Controllers/CookieConsentController.php` | records the answer |
 | `resources/views/app.blade.php` | the tag, for a visitor who accepted |
-| `resources/js/analytics.ts` | client-side load, the SPA page view, and the `sign_up` event |
+| `resources/js/analytics.ts` | the consent update, the SPA page view, and the `sign_up` event |
 | `app/Http/Controllers/Auth/GoogleController.php`, `MagicLinkController.php` | flash `signed_up` on a first sign-in |
 | `app/Http/Middleware/HandleInertiaRequests.php` | shares it as `flash.signUp` |
 | `resources/js/Components/CookieBanner.tsx` | the question |

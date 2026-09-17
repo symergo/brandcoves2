@@ -18,11 +18,16 @@ use Tests\TestCase;
  * dimension that survives the comparison a year later. The gate is
  * `robots_allow`, which this repo already uses to mean "the real public site".
  *
- * Two: the tag loading before anybody agreed to it. `_ga` is not strictly
- * necessary for anything the visitor asked for, so ePrivacy Art. 5(3) wants a
- * yes first — and a tag that loads and *then* checks has already fetched a
- * script from Google. Hence a server-side gate, and hence these tests assert on
- * the absence of the script tag rather than on any client-side behaviour.
+ * Two: the tag *storing* something before anybody agreed to it. `_ga` is not
+ * strictly necessary for anything the visitor asked for, so ePrivacy Art. 5(3)
+ * wants a yes first.
+ *
+ * Since 2026-09-17 that second guarantee is Consent Mode rather than a withheld
+ * script: the tag is on every page and every storage type starts denied. So
+ * these tests assert on the consent commands, and the one thing that must never
+ * appear without a yes is `'granted'`. The order matters as much as the values
+ * — a default that arrives after gtag.js has started is a default that arrived
+ * too late — so one test pins that too.
  */
 class AnalyticsTest extends TestCase
 {
@@ -58,18 +63,62 @@ class AnalyticsTest extends TestCase
         // with. See resources/legal/*/privacy.md.
         $this->assertStringContainsString('allow_google_signals: false', $html);
         $this->assertStringContainsString('allow_ad_personalization_signals: false', $html);
+
+        // The stored yes is replayed as a consent update, so a returning
+        // visitor is never measured as a cookieless stranger.
+        $this->assertStringContainsString("gtag('consent', 'update', {", $html);
+        $this->assertStringContainsString("analytics_storage: 'granted'", $html);
+        $this->assertStringContainsString("ad_storage: 'granted'", $html);
+        $this->assertStringContainsString("ad_user_data: 'granted'", $html);
+
+        /*
+         * Advertising personalisation stays denied even for somebody who said
+         * yes: both privacy pages promise that nothing measured here becomes an
+         * advertising audience, and conversion measurement does not need it.
+         * This assertion is the thing that makes that promise keepable — change
+         * it only alongside the two privacy pages.
+         */
+        $this->assertStringContainsString("ad_personalization: 'denied'", $html);
+        $this->assertStringNotContainsString("ad_personalization: 'granted'", $html);
     }
 
     #[Test]
-    public function nothing_loads_before_the_question_has_been_answered(): void
+    public function nothing_is_stored_before_the_question_has_been_answered(): void
     {
         $this->live();
 
         // No cookie at all: the visitor has not been asked yet, which is not a
-        // yes. This is the state most first-time visitors are in.
-        $this->get('/be-nl')
-            ->assertOk()
-            ->assertDontSee('googletagmanager.com', escape: false);
+        // yes. This is the state most first-time visitors are in, and it is the
+        // state Google's own tag checker arrives in.
+        $html = (string) $this->get('/be-nl')->assertOk()->getContent();
+
+        // The tag is there — that is the whole point of the 2026-09-17 change.
+        $this->assertStringContainsString('googletagmanager.com/gtag/js', $html);
+
+        $this->assertStringContainsString("gtag('consent', 'default', {", $html);
+        $this->assertStringContainsString("analytics_storage: 'denied'", $html);
+        $this->assertStringContainsString("ad_storage: 'denied'", $html);
+        $this->assertStringContainsString("ad_user_data: 'denied'", $html);
+
+        // And nothing anywhere on the page says granted.
+        $this->assertStringNotContainsString("'granted'", $html);
+    }
+
+    #[Test]
+    public function the_denied_defaults_are_queued_before_the_library_is_requested(): void
+    {
+        $this->live();
+
+        // Order, not just presence: gtag.js reads whatever is in dataLayer when
+        // it starts, so a default written after the script tag is a default the
+        // library never sees.
+        $html = (string) $this->get('/be-nl')->assertOk()->getContent();
+
+        $this->assertLessThan(
+            strpos($html, 'googletagmanager.com/gtag/js'),
+            strpos($html, "gtag('consent', 'default', {"),
+            'The consent defaults must be queued before gtag.js is requested.',
+        );
     }
 
     #[Test]
@@ -77,10 +126,11 @@ class AnalyticsTest extends TestCase
     {
         $this->live();
 
-        $this->withCookie(CookieConsent::COOKIE, CookieConsent::DENIED)
-            ->get('/be-nl')
-            ->assertOk()
-            ->assertDontSee('googletagmanager.com', escape: false);
+        $html = (string) $this->withCookie(CookieConsent::COOKIE, CookieConsent::DENIED)
+            ->get('/be-nl')->assertOk()->getContent();
+
+        $this->assertStringContainsString("gtag('consent', 'default', {", $html);
+        $this->assertStringNotContainsString("'granted'", $html);
     }
 
     #[Test]

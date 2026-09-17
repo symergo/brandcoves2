@@ -1,15 +1,20 @@
 /**
- * The Google tag, loaded from the client.
+ * The answer to the cookie question, told to a tag that is already loaded.
  *
- * The blade shell already renders the tag for a visitor who arrived with
- * consent stored, and that is the path almost every page load takes. This
- * exists for the one moment it cannot cover: the click on "Accept" itself.
- * Without it, consent takes effect on the *next* page — so the page somebody
- * was reading when they agreed, which is very often the page they landed on
- * and the most interesting one we have, is never reported at all.
+ * Under Consent Mode (adopted 2026-09-17, see app.blade.php) the shell renders
+ * gtag.js on every page with every storage type denied. So accepting does not
+ * load anything — it lifts the denial, and the tag begins keeping the cookie it
+ * was refusing to write a moment earlier. Declining says so explicitly, which
+ * matters for somebody who had accepted earlier in the same page's life and has
+ * just withdrawn.
  *
- * Idempotent, because the banner is not the only thing that can call it and a
- * second gtag.js would double every hit.
+ * This replaced a loader. Before Consent Mode the script did not exist until
+ * somebody agreed, so the banner had to fetch it; now fetching it again would
+ * mean two copies of gtag.js and two of every hit.
+ *
+ * ad_personalization is deliberately absent from the granted set: the privacy
+ * page promises that nothing measured here becomes an advertising audience, and
+ * conversion measurement does not need it. See the note in app.blade.php.
  */
 
 declare global {
@@ -19,36 +24,12 @@ declare global {
     }
 }
 
-const TAG_ID = 'ga-gtag'
-
-export function loadGoogleTag(measurementId: string): void {
-    if (document.getElementById(TAG_ID) !== null) {
-        return
-    }
-
-    const script = document.createElement('script')
-    script.id = TAG_ID
-    script.async = true
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`
-    document.head.appendChild(script)
-
-    /*
-      The queue is filled before the script arrives, exactly as the inline
-      snippet in app.blade.php does it. gtag.js drains whatever is already in
-      dataLayer when it loads, so the config and the first page view are not
-      lost to the round trip.
-    */
-    window.dataLayer = window.dataLayer || []
-    window.gtag = function gtag() {
-        window.dataLayer?.push(arguments)
-    }
-    window.gtag('js', new Date())
-    // Thirteen months, matching app.blade.php and the privacy page. See the
-    // comment there for why it is not GA4's two-year default.
-    window.gtag('config', measurementId, {
-        cookie_expires: 33696000,
-        allow_google_signals: false,
-        allow_ad_personalization_signals: false,
+export function updateConsent(granted: boolean): void {
+    window.gtag?.('consent', 'update', {
+        ad_storage: granted ? 'granted' : 'denied',
+        ad_user_data: granted ? 'granted' : 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: granted ? 'granted' : 'denied',
     })
 }
 

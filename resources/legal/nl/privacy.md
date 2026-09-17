@@ -1,7 +1,7 @@
 ---
 title: Privacybeleid
 summary: Wat GiftCoves over je bewaart, op welke rechtsgrond, hoe lang, en hoe je er vanaf komt.
-updated: 2026-08-31
+updated: 2026-09-17
 ---
 
 ## Kort samengevat
@@ -100,21 +100,34 @@ parameter in de link, en zetten ze hun eigen tracking zodat een aankoop toegewez
 kan worden. Dat gebeurt op hun domein onder hún privacybeleid, niet onder dit. Wij
 sturen hun nooit je e-mailadres, je account of je lijstjes.
 
-**Google Analytics, als jij het toestaat.** Het telt bezoeken: welke pagina's
-gelezen worden, ruwweg vanwaar ter wereld, welke site je stuurde. Weiger je, of
-laat je de vraag gewoon staan, dan wordt er niets geladen — geen script bij
-Google opgehaald en geen cookie geplaatst. Er werkt niets anders op deze site,
-en daarom is het een echte vraag en geen muur waar je doorheen moet klikken.
+**Google Analytics.** Het telt bezoeken: welke pagina's gelezen worden, ruwweg
+vanwaar ter wereld, welke site je stuurde.
 
-Wat we konden uitzetten, staat uit: geen advertentiefuncties, geen deling met
-Googles andere producten, en de cookie vervalt na dertien maanden in plaats van
-de twee jaar die het standaard zou zijn. Wat het verzamelt wordt nog steeds in
-de Verenigde Staten verwerkt, onder de waarborgen hierboven.
+**Er wordt niets bewaard tot jij ja zegt.** Het meetscript laadt op elke pagina,
+maar zolang je niet hebt toegestemd bewaart het niets: geen cookie, en geen
+kenmerk waarmee het je bij een volgend bezoek zou herkennen. Wat Google in die
+toestand bereikt, is één anoniem signaal per pagina — je IP-adres en het adres
+van de pagina — waarmee Google bezoekersaantallen schat zonder te kunnen zien
+wie je bent. Zeg je ja, dan begint het je echt te tellen. Weiger je, of laat je
+de vraag staan, dan blijft het die hele tijd zonder opslag werken. Er werkt
+niets anders op deze site, en daarom is het een echte vraag en geen muur waar je
+doorheen moet klikken.
+
+Wat we konden uitzetten, staat uit: wat hier gemeten wordt, wordt nooit gebruikt
+om een advertentiepubliek op te bouwen, er is geen deling met Googles andere
+producten, en de cookie vervalt na dertien maanden in plaats van de twee jaar
+die het standaard zou zijn. Stem je toe, dan kan Google ook een cookie plaatsen
+waarmee een klik op een van onze advertenties aan een bezoek hier gekoppeld
+wordt, zodat we weten welke advertenties hun geld waard waren; die telling is
+het enige waarvoor het dient. Wat het verzamelt wordt nog steeds in de Verenigde
+Staten verwerkt, onder de waarborgen hierboven.
 
 ## Wat we niet doen
 
-- **Geen advertentietrackers.** Geen Meta-pixel, geen advertentiecookies, geen
-  datahandelaar, en niets dat je volgt buiten deze site.
+- **Geen advertentietrackers.** Geen Meta-pixel, geen datahandelaar, en niets dat
+  je volgt buiten deze site. De enige uitzondering, en alleen als je toestemt:
+  Googles meting of een van onze advertenties tot een bezoek leidde, die dat
+  bezoek telt en er geen publiek uit opbouwt.
 - **Geen profielopbouw.** We bouwen geen interesseprofiel uit je surfgedrag en
   verkopen er ook geen.
 - **Geen gegevens verkopen.** Niet aan winkels, niet aan netwerken, aan niemand.
@@ -133,6 +146,7 @@ de Verenigde Staten verwerkt, onder de waarborgen hierboven.
 | Feedback die je ons stuurt | 12 maanden, bericht en antwoordadres samen |
 | Serverlogs | 30 dagen |
 | Analyticscookie, als je die toestond | 13 maanden |
+| Advertentiemetingcookie, als je die toestond | 90 dagen |
 | Je antwoord op de cookievraag | 6 maanden, daarna vragen we opnieuw |
 
 Deze termijnen worden elke nacht afgedwongen door een taak, niet door goede
@@ -178,10 +192,13 @@ Artikel 5(3) van de e-Privacyrichtlijn vereist toestemming voor cookies die niet
 strikt noodzakelijk zijn. Deze vier zijn dat wel, dus daarvoor is geen
 toestemming nodig.
 
-En één die dat niet is, en waar we het daarom over hebben:
+En twee die dat niet zijn, en waar we het daarom over hebben:
 
-- **Google Analytics:** telt bezoeken. Het wordt niet geladen en de cookie wordt
-  niet geplaatst tenzij je ja hebt gezegd.
+- **Google Analytics:** telt bezoeken. Het script staat op elke pagina, maar
+  plaatst geen cookie en bewaart geen kenmerk tenzij je ja hebt gezegd; tot dan
+  stuurt het het ene anonieme signaal dat hierboven beschreven staat.
+- **Advertentiemeting:** zeg je ja, dan kan Google ook een cookie plaatsen die
+  een klik op een van onze advertenties aan een bezoek hier koppelt.
 
 Nee zeggen is één klik en kost je niets — er zit geen functie achter en je krijgt
 de vraag niet nog eens. De banner negeren telt als nee, want toestemming moet

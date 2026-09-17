@@ -12,17 +12,24 @@
     $indexable = config('giftcoves.robots_allow') && $meta['robots'] === null;
 
     /*
-      The tag renders for a visitor who has accepted it, and for nobody else.
+      The tag renders on every page, and stores nothing until the visitor agrees.
 
-      Gated here, server-side, rather than loaded and then told to behave: a tag
-      that decides after loading is a tag that has already fetched a script from
-      Google and already had the chance to read what it came for. Consent Mode
-      would be the lighter-touch version of this and reports less; the decision
-      recorded in docs/features/analytics.md was to ask properly instead.
+      This is Consent Mode v2, adopted 2026-09-17 at the owner's request, and it
+      reverses what stood here before: the script itself used to be withheld
+      until somebody accepted. That kept Google out of the page entirely, and it
+      also made the site look untagged to Google's own scanner, which arrives
+      with no cookies — Google Ads reported the tag as missing and could
+      attribute no conversion at all.
+
+      What it costs, stated plainly because the privacy page has to say it too:
+      a visitor who has not agreed now causes a cookieless ping to Google (their
+      IP and the page address reach it) instead of nothing, and their visit is
+      modelled rather than counted. What it does not cost: no storage, on this
+      site or in their browser, until the answer is yes — that is what the
+      denied defaults below mean, and they are set before gtag.js is requested.
     */
-    $analyticsId = CookieConsent::stored(request()) === true
-        ? Analytics::measurementId()
-        : null;
+    $analyticsId = Analytics::measurementId();
+    $analyticsGranted = CookieConsent::stored(request()) === true;
 @endphp
 <!DOCTYPE html>
 {{-- lang comes from the market, not the app locale: nl-BE and nl-NL are the same
@@ -34,6 +41,56 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     @if ($analyticsId !== null)
+        {{-- The consent defaults come FIRST, in a blocking inline script, before
+             gtag.js is requested. That order is the whole guarantee: a default
+             that arrives after the library has started is a default that arrives
+             too late, and Google's own documentation is explicit that the
+             command must be queued before the tag loads. --}}
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+
+            /*
+              Everything denied until the visitor says otherwise. Denied does not
+              mean "do not measure" — it means store nothing: no cookie is
+              written and no identifier is kept, so the ping that goes out
+              carries no way to recognise this person again.
+
+              wait_for_update gives the client-side update from the banner half a
+              second to arrive before anything is sent, so a visitor who accepts
+              immediately is counted properly rather than as a stranger.
+            */
+            gtag('consent', 'default', {
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                analytics_storage: 'denied',
+                wait_for_update: 500,
+            });
+
+            @if ($analyticsGranted)
+                /*
+                  Replayed from the cookie for somebody who already said yes, in
+                  the same breath as the default, so a returning visitor is never
+                  measured as a cookieless one.
+
+                  ad_personalization stays denied even here. The privacy page
+                  promises in writing that nothing measured on this site becomes
+                  an advertising audience, and conversion measurement does not
+                  need it — ad_storage and ad_user_data are what let Google Ads
+                  attribute a conversion to a click. Granting it is the one line
+                  to change if remarketing is ever wanted, and the privacy page
+                  changes with it.
+                */
+                gtag('consent', 'update', {
+                    ad_storage: 'granted',
+                    ad_user_data: 'granted',
+                    ad_personalization: 'denied',
+                    analytics_storage: 'granted',
+                });
+            @endif
+        </script>
+
         {{-- Google tag (gtag.js). As high in <head> as the meta tags allow, so
              the request is in flight before the stylesheet blocks rendering;
              `async` keeps it off the critical path either way.
@@ -44,8 +101,6 @@
              visit and call every session a bounce. --}}
         <script async src="https://www.googletagmanager.com/gtag/js?id={{ urlencode($analyticsId) }}"></script>
         <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
 
             /*
