@@ -36,8 +36,10 @@ A tag is `<vocabulary>:<value>`. The whole list is `GiftTags::all()`, and `GET /
 returns it beside the products, so a writer never has to guess a spelling.
 
 **The vocabulary grows from the tagging, not only from the wizard.** A writer working a batch may
-invent an `interest` or `occasion` value when nothing on the list fits — `recipient`, `age`,
-`vibe`, `preference` and `values` are complete and are not open to it. `POST /products/tags` still
+invent a value in any vocabulary when nothing on the list fits — `interest` and `occasion` most
+often, and `preference` too (confirmed by the owner, 2026-09-18; nothing in the code treats one
+vocabulary as closed and another as open). A preference is an **axis of two poles**, so propose the
+pair rather than a lone pole: half an axis has nothing to be scored against. `POST /products/tags` still
 refuses anything outside the vocabulary, so an invented value is a **proposal**: the poster
 collects the rejected spellings with their counts, and the ones that recur are added here and the
 batch re-posted. `interest:hunting` is the first that arrived this way (five products on be-fr with

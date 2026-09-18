@@ -1,7 +1,7 @@
 ---
 name: House style
 area: Content / Operations
-status: Active — enforced at every write; production archive not yet tidied
+status: Active — enforced at every write; whether the production archive has been tidied is not known
 date_added: 2026-08-31
 ---
 
@@ -133,7 +133,10 @@ to walk.
 **Applied locally on 2026-08-31**: 91 fields across 45 Coves and 13 plans. `resources/content/`
 (`advice-coves.php`, 153 dashes; `shop-coves.php`, 31) was de-dashed in the repo at the same time, so
 a re-seed lands clean. Comments in those files were left as they are — they are code, not articles.
-**Production has not been tidied**; run `bc:tidy-prose` there after the deploy.
+**Whether production has been tidied is not known** (asked on 2026-09-18, nobody remembers). The
+command answers that itself: it is a dry run unless `--write`, so `php artisan bc:tidy-prose` against
+production reports what it would change and writes nothing. Nothing to report means the archive is
+already clean; a list of fields means it is not, and `--write` applies it.
 
 ## Related
 

@@ -74,7 +74,7 @@ is true now.
 | [seasonal-series.md](seasonal-series.md) | Content / Operations | Active |
 | [cove-calendar.md](cove-calendar.md) | Content / Operations | Active |
 | [prompt-bank.md](prompt-bank.md) | Content / Operations | Active — Cove kinds and the theme call |
-| [house-style.md](house-style.md) | Content / Operations | Active — enforced at every write; production archive not yet tidied |
+| [house-style.md](house-style.md) | Content / Operations | Active — enforced at every write; production archive state unknown |
 | [page-templates.md](page-templates.md) | Content / SEO | Active — replaces the copy bank |
 | [email-templates.md](email-templates.md) | Content / Operations | Active — 4 of 9 mails editable |
 | [product-cards-in-prose.md](product-cards-in-prose.md) | Content / Frontend | Active |

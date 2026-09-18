@@ -138,10 +138,14 @@ Order matters — DNS first, then domains, then env, and the env vars must move 
    ones attached. Traefik issues certificates on first request, so the old domain needs a valid cert
    for as long as it is redirecting.
 
-   | App | Domains after |
+   | App | Domains attached today |
    |---|---|
-   | `brandcoves2-staging` | `staging.giftcoves.com`, `staging.brandcoves.com` |
-   | `brandcoves2-prod` | `giftcoves.com`, `www.giftcoves.com`, `brandcoves.com`, `www.brandcoves.com` |
+   | `GiftCoves-staging` | `staging.giftcoves.com`, `staging.brandcoves.com` |
+   | `GiftCoves-prod` | `giftcoves.com`, `www.giftcoves.com`, `brandcoves.com` |
+
+   `www.brandcoves.com` is **not** attached to production (confirmed by the owner, 2026-09-18). It
+   stays in `LEGACY_HOSTS` harmlessly — nothing routes it to the app, so the redirect it would get is
+   never reached, and the entry costs nothing if the record is ever pointed back.
 
 3. **Environment**, both apps:
 
