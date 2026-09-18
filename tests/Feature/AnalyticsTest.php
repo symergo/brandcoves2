@@ -152,17 +152,74 @@ class AnalyticsTest extends TestCase
     #[Test]
     public function an_environment_can_switch_the_tag_off(): void
     {
-        // An empty GA_MEASUREMENT_ID is the opt-out, and it has to win even
-        // where the site is otherwise the live one.
+        /*
+         * An empty GA_MEASUREMENT_ID is the opt-out from *analytics*, and since
+         * 2026-09-18 that is no longer the whole tag: the Ads account loads
+         * gtag.js on its own, because a conversion cannot be reported without
+         * it. So switching Google off entirely means clearing both ids, and
+         * this test says so in both directions rather than asserting the old
+         * half-truth.
+         */
         config([
             'giftcoves.robots_allow' => true,
             'giftcoves.google_analytics_id' => '',
+            'giftcoves.google_ads_conversion' => 'AW-TEST123/LabelTest',
         ]);
+
+        $html = (string) $this->withCookie(CookieConsent::COOKIE, CookieConsent::GRANTED)
+            ->get('/be-nl')->assertOk()->getContent();
+
+        // The tag loads for Ads, and configures no analytics property.
+        $this->assertStringContainsString('googletagmanager.com/gtag/js?id=AW-TEST123', $html);
+        $this->assertStringNotContainsString("gtag('config', 'G-", $html);
+
+        // Both cleared: nothing from Google at all.
+        config(['giftcoves.google_ads_conversion' => '']);
 
         $this->withCookie(CookieConsent::COOKIE, CookieConsent::GRANTED)
             ->get('/be-nl')
             ->assertOk()
             ->assertDontSee('googletagmanager.com', escape: false);
+    }
+
+    #[Test]
+    public function the_outbound_click_conversion_is_configured_and_handed_to_the_client(): void
+    {
+        config([
+            'giftcoves.robots_allow' => true,
+            'giftcoves.google_analytics_id' => 'G-TESTID0001',
+            'giftcoves.google_ads_conversion' => 'AW-TEST123/LabelTest',
+        ]);
+
+        $response = $this->get('/be-nl')->assertOk();
+
+        /*
+         * The account has to be configured on the tag: an event sent to an
+         * account gtag.js was never configured for reports nowhere, and does it
+         * silently. That silence is the reason this is asserted rather than
+         * assumed.
+         */
+        $this->assertStringContainsString("gtag('config', 'AW-TEST123')", (string) $response->getContent());
+
+        // The whole send_to travels in the props, because the thing that fires
+        // it is a click listener in the browser, not the shell.
+        $response->assertInertia(fn ($page) => $page->where('analytics.adsConversion', 'AW-TEST123/LabelTest'));
+    }
+
+    #[Test]
+    public function staging_never_reports_a_conversion(): void
+    {
+        config([
+            'giftcoves.robots_allow' => false,
+            'giftcoves.google_ads_conversion' => 'AW-TEST123/LabelTest',
+        ]);
+
+        // Staging is a full duplicate of the site. A click there counting as a
+        // conversion would bid real money against our own smoke tests.
+        $this->get('/be-nl')
+            ->assertOk()
+            ->assertDontSee('AW-TEST123', escape: false)
+            ->assertInertia(fn ($page) => $page->where('analytics.adsConversion', null));
     }
 
     #[Test]

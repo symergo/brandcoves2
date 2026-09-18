@@ -30,6 +30,17 @@
     */
     $analyticsId = Analytics::measurementId();
     $analyticsGranted = CookieConsent::stored(request()) === true;
+
+    /*
+      The Google Ads account, for the outbound-click conversion.
+
+      One gtag.js serves both: the library is fetched once and each account is
+      configured on it. `$tagId` is what the script is fetched under, and it is
+      the measurement id when there is one — an environment with Ads configured
+      and analytics switched off still gets a working tag rather than none.
+    */
+    $adsAccount = Analytics::adsAccount();
+    $tagId = $analyticsId ?? $adsAccount;
 @endphp
 <!DOCTYPE html>
 {{-- lang comes from the market, not the app locale: nl-BE and nl-NL are the same
@@ -40,7 +51,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @if ($analyticsId !== null)
+    @if ($tagId !== null)
         {{-- The consent defaults come FIRST, in a blocking inline script, before
              gtag.js is requested. That order is the whole guarantee: a default
              that arrives after the library has started is a default that arrives
@@ -99,9 +110,11 @@
              reload the document, so every page after the first is reported from
              resources/js/app.tsx — without that, GA would record one hit per
              visit and call every session a bounce. --}}
-        <script async src="https://www.googletagmanager.com/gtag/js?id={{ urlencode($analyticsId) }}"></script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ urlencode($tagId) }}"></script>
         <script>
             gtag('js', new Date());
+
+            @if ($analyticsId !== null)
 
             /*
               Thirteen months, not the two years GA4 defaults to. That is the
@@ -123,6 +136,24 @@
                 allow_google_signals: false,
                 allow_ad_personalization_signals: false,
             });
+            @endif
+
+            @if ($adsAccount !== null)
+                /*
+                  The Google Ads account, configured on the same tag.
+
+                  An event may only report to an account the tag knows about, so
+                  without this line the outbound-click conversion is sent
+                  nowhere — and silently, which is the part that costs an
+                  afternoon. The event itself is fired from
+                  resources/js/analytics.ts when somebody leaves for a shop.
+
+                  Storage is still governed by the consent defaults above:
+                  before a yes this reports without cookies, and
+                  ad_personalization stays denied either way.
+                */
+                gtag('config', @js($adsAccount));
+            @endif
         </script>
     @endif
 

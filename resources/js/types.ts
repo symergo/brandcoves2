@@ -67,7 +67,24 @@ export interface SharedProps {
      * `consent` is null until the visitor has been asked — which is not the
      * same as a no, and is the only state that shows the banner.
      */
-    analytics: { id: string | null; consent: 'granted' | 'denied' | null }
+    analytics: {
+        id: string | null
+        consent: 'granted' | 'denied' | null
+        /**
+         * The Google Ads outbound-click conversion, account and label together
+         * (`AW-…/…`), or null where it is switched off. A click through to a
+         * shop is the only revenue signal this site has, so it is the one thing
+         * worth reporting as a conversion.
+         */
+        adsConversion: string | null
+    }
+    /**
+     * Does this market carry Amazon links? True wherever it has an Associates
+     * tag, which is what the footer's Amazon disclosure hangs off: the
+     * programme wants the statement with the links, and a Cove's prose can
+     * carry one on any page.
+     */
+    amazonAssociate: boolean
     /**
      * This page's canonical URL, written into the head on every client-side
      * navigation — the Blade shell renders that tag once and Inertia's <Head>

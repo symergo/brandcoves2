@@ -59,6 +59,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Google Ads: the outbound-click conversion
+    |--------------------------------------------------------------------------
+    |
+    | "Uitgaande klik", created in Google Ads by the owner on 2026-09-18. Held as
+    | the whole `send_to` string — account and label together, exactly as the Ads
+    | snippet prints it — because the two halves are one identifier and keeping
+    | them in separate keys is how they drift apart. The account id is derived
+    | from it for the `config` call: a tag configured for one account and
+    | reporting to another sends the conversion nowhere and says nothing.
+    |
+    | Public, like the measurement id, so it has a default rather than being a
+    | secret an environment must supply; empty switches it off. Gated on
+    | `robots_allow` with everything else, because a click on staging must never
+    | be counted as a conversion on the real account.
+    |
+    | What this measures is a click through to a shop, which is the only revenue
+    | signal this site has. See docs/features/analytics.md.
+    */
+    'google_ads_conversion' => env('GOOGLE_ADS_CONVERSION', 'AW-1014334487/EHXlCIrMuPwcEJeI1uMD'),
+
+    /*
+    |--------------------------------------------------------------------------
     | The domain, and the one it replaced
     |--------------------------------------------------------------------------
     |

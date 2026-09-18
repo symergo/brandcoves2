@@ -2,7 +2,7 @@ import { createInertiaApp, router } from '@inertiajs/react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 import type { ReactElement } from 'react'
 import Layout from './Layouts/SiteLayout'
-import { reportPageView, reportSignUp } from './analytics'
+import { installClickOutConversion, reportPageView, reportSignUp } from './analytics'
 
 const appName = import.meta.env.VITE_APP_NAME ?? 'GiftCoves'
 
@@ -40,6 +40,19 @@ createInertiaApp({
     },
 
     setup({ el, App, props }) {
+        /*
+          The outbound-click conversion, armed once for the document.
+
+          Here rather than in a component because it is one delegated listener
+          for every outbound link on the site — see analytics.ts. The id travels
+          in the shared props, so an environment without Ads configured (staging,
+          local) passes null and nothing is installed at all.
+        */
+        installClickOutConversion(
+            (props.initialPage.props.analytics as { adsConversion?: string | null } | undefined)
+                ?.adsConversion ?? null,
+        )
+
         // Server-rendered markup exists for SEO-critical pages, so hydrate
         // rather than replace it where it is present.
         if (el.hasChildNodes()) {

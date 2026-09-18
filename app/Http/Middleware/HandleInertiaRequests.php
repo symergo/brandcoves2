@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Models\Notification;
+use App\Services\Search\AmazonSearchLink;
 use App\Services\Seo\PageMeta;
 use App\Services\Wishlist\AddingMode;
 use App\Services\Wishlist\ListOptions;
@@ -100,7 +101,27 @@ class HandleInertiaRequests extends Middleware
             'analytics' => [
                 'id' => Analytics::measurementId(),
                 'consent' => CookieConsent::state($request),
+                // The outbound-click conversion, account and label together.
+                // Null switches the reporting off, the same way `id` does, and
+                // it is null on staging for the same reason.
+                'adsConversion' => Analytics::adsConversion(),
             ],
+
+            /*
+             * Whether this market carries Amazon links at all.
+             *
+             * The Associates programme requires its disclosure to sit with the
+             * links it is about, and those are not only on the search page: a
+             * Cove's prose can carry an `[[amazon:]]` link, so any page can.
+             * The footer is the one place that is on every page, so the layout
+             * needs this fact.
+             *
+             * A market with no tag of its own (`en`, `es`) shows no Amazon link
+             * anywhere, and a disclosure about links that are not there reads
+             * as boilerplate rather than as a disclosure. One config read per
+             * request, like `googleEnabled` above.
+             */
+            'amazonAssociate' => AmazonSearchLink::for($market) !== null,
 
             /*
              * The canonical URL of this page, for the client to write into the

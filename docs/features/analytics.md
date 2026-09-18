@@ -70,9 +70,43 @@ measured here becomes an advertising audience, and conversion measurement does n
 one line in `app.blade.php` and one paragraph in each privacy page, and neither should move without
 the other.
 
-**What Ads still cannot see.** Click-outs — the only revenue signal this site has — are recorded in
-`events` by `ClickOutController` and are not sent to GA4, so the only conversion Google knows about
-is `sign_up`. A tag that loads is a precondition for conversion tracking, not conversion tracking.
+**A tag that loads is a precondition for conversion tracking, not conversion tracking.** The
+outbound click became the conversion the next day; see below.
+
+## The outbound click is the conversion (2026-09-18)
+
+A click through to a shop is the only revenue signal this site has — `ClickOutController` records
+every one in `events` — and until now none of it reached Google, so the only conversion Ads knew
+about was `sign_up`, which is rare and earns nothing. The owner created an Ads conversion action
+("Uitgaande klik") and it is reported from the browser.
+
+**One delegated listener, not a handler per link.** `installClickOutConversion()` in
+`resources/js/analytics.ts` is armed once from `app.tsx` and recognises an outbound link by
+`rel="sponsored"` or a `/go/` path. Outbound links are rendered by the product page, the live-offer
+cards, the Amazon call to action, the list cards, the board and the brand page, and a seventh will be
+written one day by somebody who has never read this file. A listener that recognises the link cannot
+be forgotten; six handlers can.
+
+**Google's own snippet is not what this does, and deliberately.** The snippet Ads hands you cancels
+the click, fires the conversion and sends the browser on from `event_callback`. That is written for a
+link that navigates the current tab. Every outbound link here is `target="_blank"`, so cancelling the
+click and assigning `window.location` would replace the page being read instead of opening a tab, and
+a navigation started from a callback rather than from the click is exactly what popup blockers stop.
+Nothing is cancelled here; the conversion goes out beside the tab the browser opens itself.
+`transport_type: 'beacon'` covers the same-tab case, where the request would otherwise be cut off by
+the navigation that caused it.
+
+**The account is configured on the same tag.** `gtag('config', 'AW-…')` sits beside the GA4 config in
+`app.blade.php`, because an event sent to an account the tag was never configured for reports
+nowhere — silently, which is the failure worth a test. `config/giftcoves.php` holds the whole
+`send_to` (account and label together, as the snippet prints it) and the account is derived from it,
+so the two cannot name different accounts. It is gated on `robots_allow` like everything else: a
+click on staging must not bid real money.
+
+**Consent still governs storage.** Under Consent Mode the conversion fires whether or not somebody
+has accepted; before a yes it carries no identifier, so Ads models it rather than attributing it.
+`ad_personalization` stays denied throughout, which costs nothing here: attribution needs
+`ad_storage` and `ad_user_data`, not an advertising audience.
 
 ## The banner
 
@@ -165,7 +199,7 @@ The banner copy itself exists in all four languages.
 
 | | |
 |---|---|
-| `config/giftcoves.php` | `google_analytics_id` |
+| `config/giftcoves.php` | `google_analytics_id`, `google_ads_conversion` |
 | `app/Support/Analytics.php` | is the tag on here, and under which id |
 | `app/Support/CookieConsent.php` | has this visitor agreed |
 | `app/Http/Controllers/CookieConsentController.php` | records the answer |

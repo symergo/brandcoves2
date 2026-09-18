@@ -41,4 +41,44 @@ final class Analytics
 
         return $id === '' ? null : $id;
     }
+
+    /**
+     * The whole `send_to` for the outbound-click conversion, or null.
+     *
+     * Account and label together — `AW-1014334487/EHXlCIrMuPwcEJeI1uMD` — which
+     * is what `gtag('event', 'conversion')` wants and what Google's own snippet
+     * prints. Gated on `robots_allow` like the measurement id: staging is a full
+     * duplicate of this site, and a click there must not be counted as a
+     * conversion on the real Ads account.
+     */
+    public static function adsConversion(): ?string
+    {
+        if (! config('giftcoves.robots_allow')) {
+            return null;
+        }
+
+        $conversion = trim((string) config('giftcoves.google_ads_conversion'));
+
+        return $conversion === '' ? null : $conversion;
+    }
+
+    /**
+     * Just the account — `AW-1014334487` — for the `config` call.
+     *
+     * The tag has to be configured for the account before an event may report
+     * to it. Derived rather than configured separately so the two can never
+     * name different accounts.
+     */
+    public static function adsAccount(): ?string
+    {
+        $conversion = self::adsConversion();
+
+        if ($conversion === null) {
+            return null;
+        }
+
+        $account = trim(explode('/', $conversion)[0]);
+
+        return $account === '' ? null : $account;
+    }
 }
