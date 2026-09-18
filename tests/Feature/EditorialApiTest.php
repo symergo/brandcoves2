@@ -698,6 +698,141 @@ class EditorialApiTest extends TestCase
             ->assertStatus(422);
     }
 
+    #[Test]
+    public function prose_written_through_the_guides_endpoint_lands_in_house_style(): void
+    {
+        /*
+         * This endpoint used to store exactly what it was sent, while every
+         * other write path cleaned prose on the way in. So a guide filed here
+         * published in a voice no other page on the site uses: em dashes two or
+         * three to a paragraph, which is the most legible tell that nobody
+         * wrote the page, and `**bold**` reaching the reader as literal
+         * asterisks in the fields that have no renderer.
+         */
+        $items = collect(range(1, 3))->map(fn (int $i) => $this->find("Ding {$i}", 5000));
+
+        $response = $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
+            ->postJson('/api/editorial/guides', [
+                'market' => Market::BeNl->value,
+                // \u{2014} is the em dash, written as an escape so the rule
+                // under test is legible in the source.
+                'title' => "Koptelefoons\u{2014}de beste",
+                'intro' => "Vier die het waard zijn\u{2014}en een winnaar.",
+                'bodyMd' => "Begin hier\u{2014}en lees door.",
+                'metaDescription' => "Kort\u{2014}en bondig.",
+                'faq' => [[
+                    'question' => "Welke is het stilst\u{2014}en waarom?",
+                    'answer' => "De duurste\u{2014}meestal.",
+                ]],
+                'items' => $items->map(fn (ProductGroup $g) => [
+                    'groupId' => $g->id,
+                    'verdict' => '**Beste** voor de trein',
+                    'copy' => "Vouwt plat\u{2014}en past in een rugzak.",
+                ])->all(),
+            ])
+            ->assertStatus(201);
+
+        $guide = DailyPickSet::query()->articles()->findOrFail($response->json('data.id'));
+
+        $this->assertSame('Koptelefoons - de beste', $guide->theme_title);
+        $this->assertSame('Vier die het waard zijn - en een winnaar.', $guide->theme_blurb);
+        $this->assertSame('Begin hier - en lees door.', $guide->body);
+        $this->assertSame('Kort - en bondig.', $guide->meta_description);
+        $this->assertSame('Welke is het stilst - en waarom?', $guide->faq[0]['q']);
+        $this->assertSame('De duurste - meestal.', $guide->faq[0]['a']);
+
+        $pick = $guide->picks()->orderBy('rank')->firstOrFail();
+
+        $this->assertSame('Vouwt plat - en past in een rugzak.', $pick->blurb);
+        // A verdict is printed as a React text node, so the asterisks come off
+        // rather than surviving as emphasis nothing would render.
+        $this->assertSame('Beste voor de trein', $pick->verdict);
+    }
+
+    #[Test]
+    public function a_guide_written_through_the_api_has_a_plan_behind_it(): void
+    {
+        /*
+         * Every published Cove has a plan, and this endpoint was the one
+         * exception: it writes the page itself, so a guide filed here could not
+         * be opened, re-curated, redone or rebuilt from the planner, which is
+         * the screen every other kind is worked on from.
+         */
+        $items = collect(range(1, 3))->map(fn (int $i) => $this->find("Ding {$i}", 5000));
+
+        $body = [
+            'market' => Market::BeNl->value,
+            'title' => 'De beste koptelefoons',
+            'slug' => 'beste-koptelefoons',
+            'intro' => 'Drie die het waard zijn.',
+            'items' => $items->map(fn (ProductGroup $g) => ['groupId' => $g->id])->all(),
+        ];
+
+        $response = $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
+            ->postJson('/api/editorial/guides', $body)
+            ->assertStatus(201);
+
+        $guide = DailyPickSet::query()->articles()->findOrFail($response->json('data.id'));
+        $plan = CovePlan::query()->where('edition_id', $guide->id)->firstOrFail();
+
+        $this->assertSame(CoveKind::Guide, $plan->kind);
+        $this->assertSame('beste-koptelefoons', $plan->slug);
+        $this->assertSame(Market::BeNl, $plan->market);
+
+        /*
+         * `used`, never `approved`. A plan is also an instruction: an approved
+         * one outranks the theme calendar and its shortlist leads the edition,
+         * so a record of what a machine published must not be mistaken for a
+         * decision a person made.
+         */
+        $this->assertSame('used', $plan->status);
+
+        // Rewriting a live guide is the thing this endpoint is most used for,
+        // and it re-links the plan rather than minting a second one.
+        $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
+            ->postJson('/api/editorial/guides', $body)
+            ->assertOk();
+
+        $this->assertSame(1, CovePlan::query()->count());
+    }
+
+    #[Test]
+    public function a_slug_another_kind_has_already_planned_is_refused(): void
+    {
+        /*
+         * One slug namespace per market, across every kind. `POST /coves` has
+         * always said so. This endpoint keys its page on (market, kind, slug)
+         * and so did not, which mattered to nobody until it began minting a
+         * plan: `cove_plans_market_slug_idx` is (market, slug) with no kind in
+         * it, so the second kind at one address is a duplicate key. A 422
+         * naming the conflict beats a 500 from the constraint after the page
+         * has already been written.
+         */
+        CovePlan::create([
+            'market' => Market::BeNl->value,
+            'kind' => CoveKind::Persona->value,
+            'slug' => 'kado-voor-reizigers',
+            'title' => 'Kado voor reizigers',
+            'status' => 'draft',
+        ]);
+
+        $items = collect(range(1, 3))->map(fn (int $i) => $this->find("Ding {$i}", 5000));
+
+        $this->withToken($this->key([ApiToken::READ, ApiToken::WRITE]))
+            ->postJson('/api/editorial/guides', [
+                'market' => Market::BeNl->value,
+                'title' => 'Kado voor reizigers',
+                'slug' => 'kado-voor-reizigers',
+                'items' => $items->map(fn (ProductGroup $g) => ['groupId' => $g->id])->all(),
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('slug');
+
+        // Refused before anything was written. A page that exists only because
+        // the write failed halfway is the outcome this ordering prevents.
+        $this->assertSame(0, DailyPickSet::query()->articles()->count());
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────
 
     /** @param list<string> $abilities */

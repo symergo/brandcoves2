@@ -46,8 +46,11 @@ use InvalidArgumentException;
  * An advice article is an opinion about how to shop; nothing in the database
  * suggests one, and inventing titles from a template would fill the queue with
  * plausible-looking work nobody meant. A Shop Cove is seeded from the repository
- * by `bc:seed-shop-coves`, not drafted here. Both are refused with the reason
- * rather than quietly returning zero.
+ * by `bc:seed-shop-coves`, not drafted here. A Brand Cove is written about a
+ * brand's range from the brand page it sits above, and every brand holding
+ * products would qualify, which is a list of names rather than a list of things
+ * worth saying. All three are refused with the reason rather than quietly
+ * returning zero.
  *
  * Deliberately *not* merged with `bc:plan-coves`, which answers a different
  * question: that fills every themed day in a window, across all markets, as a
@@ -109,13 +112,20 @@ final readonly class PlanDrafter
                 'Shop Coves are seeded from the repository with bc:seed-shop-coves, not planned, so a drafted one '
                 .'would be a title with no source behind it.'
             ),
+
+            CoveKind::Brand => DraftedPlans::none(
+                'Brand Coves are not drafted automatically. A Brand Cove is written about a brand\'s range from the '
+                .'brand page it sits above, and the catalogue can only offer the brands that hold products, which is '
+                .'a list of names rather than a list of brands worth a piece. Write it from the brand page, or send '
+                .'one to the editorial API.'
+            ),
         };
     }
 
     /** Which kinds this can actually draft, for a screen that has to offer a choice. */
     public function canDraft(CoveKind $kind): bool
     {
-        return ! in_array($kind, [CoveKind::Advice, CoveKind::Shop], true);
+        return ! in_array($kind, [CoveKind::Advice, CoveKind::Shop, CoveKind::Brand], true);
     }
 
     /**

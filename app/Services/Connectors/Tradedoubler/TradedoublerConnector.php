@@ -156,6 +156,20 @@ class TradedoublerConnector implements LiveConnector
     }
 
     /**
+     * Re-check one stored offer, by our composite id.
+     *
+     * The barcode is deliberately unused. It identifies the *product*, and this
+     * source's whole point is that several advertisers sell that product at
+     * once — so a lookup by barcode could not say which of them this row is,
+     * and the exact-match filter in {@see fetchById} is what keeps a wishlist
+     * item from being repointed at another shop's offer.
+     */
+    public function refresh(string $externalId, ?string $ean, Market $market): ?Offer
+    {
+        return $this->fetchById($externalId, $market);
+    }
+
+    /**
      * Payload products to Offers, fanned out over each product's advertisers.
      *
      * @param  list<array<string, mixed>>  $products

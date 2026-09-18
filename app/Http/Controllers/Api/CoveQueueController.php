@@ -60,6 +60,10 @@ class CoveQueueController extends Controller
      * One call rather than an index plus a fetch per plan, because the shape of
      * the loop is the thing being designed: a scheduled run should be able to
      * ask what to do and then do it.
+     *
+     * "Needs writing" is two questions, and both have to be asked. Is this plan
+     * meant for an outside writer at all, and is its prose still missing from
+     * the field its kind writes?
      */
     public function index(Request $request): JsonResponse
     {
@@ -76,13 +80,37 @@ class CoveQueueController extends Controller
             ->when(isset($data['market']), fn ($q) => $q->where('market', $data['market']))
             ->when(isset($data['kinds']), fn ($q) => $q->whereIn('kind', $data['kinds']))
             /*
-             * Nothing that already has prose.
+             * Only the plans an outside writer is meant to write.
              *
-             * This is what stops the same Cove being handed out on every run
-             * without needing a "claimed" status that a crashed agent would
-             * leave set forever.
+             * `writer` says who the prose is waiting on, and the automation's
+             * write stage claims every `builder` plan. Handing one out here as
+             * well meant two writers on one plan: both produce something
+             * plausible, whoever finishes last wins, and nothing anywhere
+             * reports it. `write: external` is the setting that marks a plan
+             * `authored` and so puts it in this queue - see
+             * AutomationSettingsStore and docs/features/cove-automation.md.
              */
-            ->where(fn ($q) => $q->whereNull('editorial')->orWhere('editorial', ''))
+            ->where('writer', PlanWriter::Authored->value)
+            /*
+             * Nothing that already has prose - asked of the field the kind
+             * actually writes.
+             *
+             * A Daily and a persona carry a column in `editorial`; a guide,
+             * seasonal, advice, shop or brand Cove carries an article in
+             * `body`. Asking about `editorial` alone offered every finished
+             * article back on every run, for as long as it sat unapproved.
+             *
+             * This is also what stops the same Cove being handed out twice
+             * without a "claimed" status that a crashed agent would leave set
+             * forever.
+             */
+            ->where(fn ($q) => $q
+                ->where(fn ($body) => $body
+                    ->whereIn('kind', self::bodyKinds())
+                    ->where(fn ($blank) => $blank->whereNull('body')->orWhere('body', '')))
+                ->orWhere(fn ($column) => $column
+                    ->whereNotIn('kind', self::bodyKinds())
+                    ->where(fn ($blank) => $blank->whereNull('editorial')->orWhere('editorial', ''))))
             // A draft or an approved plan both want writing; a used or rejected
             // one does not.
             ->whereIn('status', ['draft', 'approved'])
@@ -267,8 +295,10 @@ class CoveQueueController extends Controller
             'id' => $plan->id,
             'revision' => $this->revision($plan),
             'kind' => $plan->kind->value,
-            // Who this plan expects to write it. A queue entry is normally
-            // `builder` until an author claims it by posting prose back.
+            // Who this plan expects to write it. Always `authored` on a queue
+            // entry, because that is the state the queue lists - reported all
+            // the same, so a client reading one plan back later can see when it
+            // has been handed to the builder instead.
             'writer' => $plan->writer->value,
             'market' => $plan->market->value,
             'language' => $plan->market->language(),
@@ -309,6 +339,23 @@ class CoveQueueController extends Controller
                 extraSearches: app(PlanLinks::class)->extraSearches($plan),
             ),
         ];
+    }
+
+    /**
+     * The kinds whose prose is a `body` rather than an `editorial`.
+     *
+     * Derived from the enum rather than listed, like every other version of
+     * this question in the codebase. A list written out a second time is a list
+     * that is wrong in one of the two places the day an eighth kind arrives.
+     *
+     * @return list<string>
+     */
+    private static function bodyKinds(): array
+    {
+        return array_values(array_map(
+            fn (CoveKind $kind) => $kind->value,
+            array_filter(CoveKind::cases(), fn (CoveKind $kind) => $kind->writesBody()),
+        ));
     }
 
     /**

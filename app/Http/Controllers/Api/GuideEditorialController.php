@@ -9,9 +9,11 @@ use App\Enums\GuideKind;
 use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Http\Controllers\Controller;
+use App\Models\CovePlan;
 use App\Models\DailyPick;
 use App\Models\DailyPickSet;
 use App\Models\ProductGroup;
+use App\Services\Editorial\HouseStyle;
 use App\Services\Editorial\LinkCheck;
 use App\Services\Editorial\ProductLookup;
 use App\Services\Guides\CoveMarkup;
@@ -105,12 +107,25 @@ class GuideEditorialController extends Controller
      * wholesale rather than diffed for the same reason GuideBuilder does it:
      * ranks are positional, and a partial update leaves a guide whose #3 is
      * missing.
+     *
+     * Prose goes through {@see HouseStyle} on the way in and the page it
+     * publishes gets a plan minted behind it, so a guide written here is the
+     * same sort of object as one written through `POST /coves`: same voice, and
+     * visible to the planner.
      */
     public function store(Request $request): JsonResponse
     {
         $data = $this->validated($request);
         $market = Market::from($data['market']);
 
+        /*
+         * From the title as it arrived, not from the tidied one.
+         *
+         * House style rewrites an em dash a few lines below, and a guide's URL
+         * must not move because its punctuation was cleaned up: the next
+         * rewrite would then miss the row it was meant to update and publish a
+         * second page beside the live one.
+         */
         $slug = Str::slug($data['slug'] ?? $data['title']);
 
         if ($slug === '') {
@@ -174,7 +189,55 @@ class GuideEditorialController extends Controller
             $status = PublishStatus::Draft;
         }
 
-        $guide = DB::transaction(function () use ($market, $slug, $data, $status, $kind, $items): DailyPickSet {
+        /*
+         * One slug namespace per market, across every kind.
+         *
+         * The page this writes is keyed on (market, kind, slug), so a guide and
+         * a persona could hold one slug between them here. The plan minted
+         * below cannot: `cove_plans_market_slug_idx` is (market, slug) with no
+         * kind in it, so a second kind's plan at the same address is a
+         * duplicate key rather than a second row.
+         *
+         * Refused for the reason `POST /coves` refuses it, and with its words:
+         * one address in a market names one page, and the two write paths must
+         * not disagree about that. Asked before anything is written, so the
+         * caller gets a 422 naming the conflict rather than a 500 from the
+         * constraint after the page has already been published.
+         */
+        $claimed = CovePlan::query()
+            ->where('market', $market->value)
+            ->where('slug', $slug)
+            ->where('kind', '!=', $kind->value)
+            ->first();
+
+        if ($claimed !== null) {
+            throw ValidationException::withMessages([
+                'slug' => "That slug is already a {$claimed->kind->label()} in {$market->value}. "
+                    .'One slug namespace covers every kind in a market, so pick another.',
+            ]);
+        }
+
+        /*
+         * House style, applied here because this is a writer's front door.
+         *
+         * Every other path that stores prose cleans it on the way in - the plan
+         * upsert, the item copy endpoint, the display-title endpoint - and this
+         * one did not, so a guide filed here published with the em dashes and
+         * the stray `**` that the fields it lands in cannot render. Applied at
+         * the write rather than at render because six things read a guide's
+         * prose (the page, the JSON-LD, the meta description, the listing card,
+         * the admin table, the export envelope) and filtering in each of them
+         * means one of them eventually not.
+         *
+         * `prose` where CoveMarkup renders what is stored, so `**` survives as
+         * emphasis; `plain` where the field is printed as a React text node and
+         * the asterisks would reach the reader. See HouseStyle.
+         */
+        $title = HouseStyle::plain($data['title']);
+        $intro = HouseStyle::prose($data['intro'] ?? null);
+        $body = HouseStyle::prose($data['bodyMd'] ?? null);
+
+        $guide = DB::transaction(function () use ($market, $slug, $data, $status, $kind, $items, $title, $intro, $body): DailyPickSet {
             $guide = DailyPickSet::updateOrCreate(
                 [
                     'market' => $market->value,
@@ -190,11 +253,11 @@ class GuideEditorialController extends Controller
                     'slug' => $slug,
                 ],
                 [
-                    'theme_title' => $data['title'],
+                    'theme_title' => $title,
                     'theme_slug' => $slug,
                     'theme_source' => 'planned',
-                    'theme_blurb' => $data['intro'] ?? null,
-                    'body' => $data['bodyMd'] ?? null,
+                    'theme_blurb' => $intro,
+                    'body' => $body,
                     'source_queries' => $data['sourceQueries'] ?? [],
                     'source_volume' => (int) ($data['sourceVolume'] ?? 0),
                     /*
@@ -205,9 +268,9 @@ class GuideEditorialController extends Controller
                      * a description reading "see [[page:search]]" is what a
                      * searcher would be shown in the result.
                      */
-                    'meta_description' => $data['metaDescription']
+                    'meta_description' => HouseStyle::plain($data['metaDescription'] ?? null)
                         ?? Str::limit(
-                            app(CoveMarkup::class)->plain($data['intro'] ?? ''),
+                            app(CoveMarkup::class)->plain($intro ?? ''),
                             155,
                             '',
                         ) ?: null,
@@ -235,11 +298,30 @@ class GuideEditorialController extends Controller
                     // old `guide_items` had none, which is why this is derived
                     // here rather than carried across.
                     'slug' => Str::slug($group->title).'-'.$group->id,
-                    'blurb' => $item['copy'] ?? null,
-                    'verdict' => $item['verdict'] ?? null,
+                    // The card's sentence is rendered by CoveMarkup, so it keeps
+                    // its `**` and may carry link tokens. The verdict is
+                    // printed as a text node and cannot, so it loses them.
+                    'blurb' => HouseStyle::prose($item['copy'] ?? null),
+                    'verdict' => HouseStyle::plain($item['verdict'] ?? null),
                     'unavailable' => false,
                 ]);
             }
+
+            /*
+             * The plan behind the page, minted as a record.
+             *
+             * This endpoint writes the page itself, so a guide filed here was
+             * the one published Cove on the site with nothing behind it: it
+             * could not be opened, re-curated, redone or rebuilt from the
+             * planner, which is the screen every other kind is worked on from.
+             *
+             * `recordFor()` is the seeder's method, reused rather than copied -
+             * it mints the plan `used` and never `approved`, so a record of
+             * what was published cannot be mistaken for an instruction the next
+             * build obeys, and it is idempotent, so rewriting a live guide
+             * re-links the existing plan instead of minting a second one.
+             */
+            CovePlan::recordFor($guide);
 
             return $guide;
         });
@@ -364,9 +446,13 @@ class GuideEditorialController extends Controller
         // Stored as q/a because that is what StructuredData::faq() reads and
         // what the existing rows hold. Accepted as question/answer because that
         // is what anyone writing one would send.
+        //
+        // The question is printed as a text node and read literally by a
+        // crawler out of the JSON-LD, so it loses its `**`; the answer is
+        // rendered, so it keeps it. Both lose their em dashes.
         return array_values(array_map(fn (array $pair) => [
-            'q' => $pair['question'],
-            'a' => $pair['answer'],
+            'q' => HouseStyle::plain($pair['question']),
+            'a' => HouseStyle::prose($pair['answer']),
         ], $faq));
     }
 

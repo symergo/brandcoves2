@@ -83,9 +83,12 @@ Three things soften it, and none of them fixes it:
 - `BrandAttribution` fills the brand in when the *query itself* was a brand name, which is exactly
   when it matters most (a Sony page showing Sony listings) and gives those rows a fallback identity.
 - `fetchById()` calls the detail endpoint and **does** get `gtin` and `brand`. `RefreshWishlistedProducts`
-  calls it twice a day for every watched product with a live offer (since 2026-09-06), so a watched
-  eBay offer picks up its barcode and groups properly from then on. Unwatched results are never
-  re-checked.
+  reaches it twice a day for every watched product with a live offer (since 2026-09-06), through
+  `EbayConnector::refresh()` since 2026-09-18. That method hands the stored item id straight to
+  `fetchById()` and ignores the barcode it is offered, because eBay's id is eBay's own and this call
+  *returns* a `gtin` rather than needing one. bol's `refresh()` does the opposite, which is the whole
+  reason the method exists ([wishlists.md](wishlists.md)). So a watched eBay offer picks up its
+  barcode and groups properly from then on. Unwatched results are never re-checked.
 - eBay titles are written for eBay's search engine — `NEW Sony WH-1000XM5 Wireless Headphones Black
   *FREE SHIPPING*` — so a brand parsed out of one would be a guess, and a wrong brand splits a
   product or mislabels a facet. Left null on purpose.

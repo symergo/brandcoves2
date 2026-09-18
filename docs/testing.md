@@ -89,8 +89,15 @@ delete:
 - `SearchHelpPageTest` and `LegalPagesTest`'s indexable checks never switch `robots_allow` on, so
   every page prints noindex and the check passes whatever the page asks for.
 - `SuggestionEngineTest::it_answers_fast_enough_to_sit_in_a_request` is wall-clock (see below).
-- The AI invariant (`AiClient` refuses outside a queued job) and the eBay webhook's CSRF exemption
-  now have no test at all; see `docs/features/ai-invariant.md`.
+Two of those gaps were closed on 2026-09-18, and both replacements had to work around the thing that
+made the originals vacuous:
+
+- The AI invariant has two tests now (`AiClientTest`): one flips the console flag Laravel caches, so
+  the guard is actually asked the question a web request asks; the other reads every file under
+  `app/Http` and fails if one resolves `AiClient`. See `docs/features/ai-invariant.md`.
+- The eBay webhook's exemption from the form-security check is asserted on the exemption list itself
+  (`EbayAccountDeletionTest`), because Laravel skips that check for the whole suite, so any test that
+  posts without a token passes whether or not the path is exempt.
 
 ## Parallel by default
 

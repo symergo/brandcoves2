@@ -253,8 +253,10 @@ search box, with how many products exist to answer each. That is a demand signal
 no competitor can measure, and until this endpoint the only way to act on it was a per-row button
 in the admin panel.
 
-Each kind draws on its own source; the table and the reasons advice and shop are refused are in
-[cove-planner.md](cove-planner.md#filling-the-planner-give-me-ten-more-of-these).
+Each kind draws on its own source; the table and the reasons advice, shop and brand are refused are
+in [cove-planner.md](cove-planner.md#filling-the-planner-give-me-ten-more-of-these). Since
+2026-09-18 `kind: brand` answers **422 with the reason**, like the other two; before that it was an
+unhandled case and a 500.
 
 Every plan comes back as a `draft` with a shortlist of real, in-stock, priced products already on
 it — the same selection the builder would have made — so the next call has ids it may link to
@@ -282,7 +284,9 @@ forever.
 `GET /api/editorial/` describes it, so a client never has to be told out of band:
 
 1. `POST /coves/drafts` — ask for ideas. Skip it when you already know what to write.
-2. `GET /coves/queue` — the briefs: shortlist, curator notes, link allowlist, revision.
+2. `GET /coves/queue` — the briefs (shortlist, curator notes, link allowlist, revision), for the
+   plans marked for an outside writer and still missing their prose. See
+   [scheduled-writing.md](scheduled-writing.md).
 3. `POST /coves/{id}/editorial` — the prose, quoting that revision.
 4. `POST /coves/{id}/approve` with `build=1` — needs `editorial.publish`. Without it a person
    approves in the panel, which is the intended shape.
@@ -394,10 +398,33 @@ Guides land as drafts; the public route filters on `published`. Rewriting an alr
 keeps it published, because guides are meant to be kept current and refusing would make the API
 useless for the thing guides most need.
 
-**Unlike `POST /coves`, this writes the page itself** — a `daily_pick_sets` row and its picks with
-no `cove_plans` row behind it — so a guide written here is invisible to the planner, cannot be
-re-curated there, and skips `HouseStyle`. Prefer `POST /coves` with `kind: guide` or `advice`;
-`/guides` stays for keys written against it.
+**Unlike `POST /coves`, this writes the page itself** rather than a plan the builder later reads.
+Two things used to follow from that, and neither does now:
+
+- **House style is applied.** Title, intro, body, FAQ question and answer, each item's copy and
+  verdict, and the meta description all go through `HouseStyle` on the way in, exactly as the plan
+  upsert and the item copy endpoint do. Prose keeps its `**` because `CoveMarkup` renders it; a
+  title, a verdict, an FAQ question and a meta description lose theirs, because nothing renders
+  those. See [house-style.md](house-style.md).
+- **A plan is minted behind the page.** `CovePlan::recordFor()`, the same call the advice and shop
+  seeders make, so the guide can be opened, re-curated, redone and rebuilt from the planner like
+  every other kind. The plan is `used`, never `approved`: it records what was published rather than
+  instructing the next build. Rewriting a live guide re-links that plan instead of minting a second
+  one.
+
+The slug is still derived from the title **as it arrived**, before house style touches it. A guide's
+URL must not move because its punctuation was tidied, or the next rewrite would publish a second
+page beside the live one.
+
+Minting the plan also brought this endpoint under the **one slug namespace per market** rule that
+`POST /coves` already enforced. It keys its own page on (market, kind, slug), so it used to accept a
+slug some other kind was already using; `cove_plans_market_slug_idx` is (market, slug) with no kind
+in it, so the plan behind that page cannot. A slug another kind holds is now a 422 naming the
+conflict, checked before anything is written.
+
+`POST /coves` with `kind: guide` or `advice` is still the richer route, because a plan can be
+curated, briefed and approved before anything is published. `/guides` is the one-shot version: it
+publishes the page and records it.
 
 ## What a write-capable key still cannot do
 

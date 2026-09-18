@@ -61,9 +61,9 @@ class AutomationSettingsStore
      *
      * `write` is a three-way rather than a switch, because the question is not
      * whether prose happens but **who writes it**. The batch write stage picks
-     * only `builder` plans; `GET /coves/queue` does not filter on `writer`, so an
-     * external agent and the builder can still target the same unwritten
-     * `builder` plan.
+     * only `builder` plans and `GET /coves/queue` offers only `authored` ones,
+     * so the built-in writer and an outside agent can never target the same
+     * plan.
      */
     public const STAGES = ['plan', 'curate', 'write', 'approve', 'build'];
 
@@ -74,15 +74,22 @@ class AutomationSettingsStore
      * Is this stage meaningful for this kind at all?
      *
      * A disabled cell is not a missing feature; it is the domain saying so.
-     * `PlanDrafter` refuses to draft advice and shop — nothing in the catalogue
-     * or the search log proposes an opinion about how to shop — and a kind with
-     * no products has nothing to curate. (Brand should be refused here too, but
-     * `PlanDrafter` has no arm for it yet — see cove-entities.md.)
+     * `PlanDrafter` refuses to draft advice, shop and brand: nothing in the
+     * catalogue or the search log proposes an opinion about how to shop, and
+     * nothing proposes which brand is worth a piece. A kind with no products has
+     * nothing to curate.
+     *
+     * The three kinds are spelled out here as well as in
+     * `PlanDrafter::canDraft()` rather than read from it, because that is an
+     * instance method on a service with six dependencies and this is a static
+     * question about a grid cell. They answer the same question and have to
+     * change together: a `plan` cell switched on for a kind the drafter refuses
+     * is a stage the 05:00 walk runs and gets nothing from.
      */
     public static function applies(string $stage, CoveKind $kind): bool
     {
         return match ($stage) {
-            'plan' => ! in_array($kind, [CoveKind::Advice, CoveKind::Shop], true),
+            'plan' => ! in_array($kind, [CoveKind::Advice, CoveKind::Shop, CoveKind::Brand], true),
             'curate' => $kind->targetItems() > 0,
             default => true,
         };

@@ -52,10 +52,18 @@ may name. Three places ask it and none of them keeps its own list:
 | `CovePlanController::store()`, `patch()` | **422** on a scene the kind cannot mean |
 | `AdviceCoveSeeder` | Reports a `scene` key in the content file that is not an article scene |
 
-A Daily and a Shop Cove get an **empty** list, which is how the planner knows
-not to offer the field. Neither draws one: a Daily is addressed by its date and
-carries the day's products, a Shop Cove is about a named shop with a name to
-print.
+A Daily, a Shop Cove and a Brand Cove get an **empty** list, which is how the
+planner knows not to offer the field. None of them draws one: a Daily is
+addressed by its date and carries the day's products, and an entity Cove is
+about a named shop or a named brand, whose name is what the page prints.
+
+**Brand was the case that was missing.** It reached `CoveKind` on 2026-09-05 and
+`forKind()` was never given an arm for it, so all three callers above threw
+`UnhandledMatchError` on a brand plan: a 500 from the API's scene validation,
+and a planner form that could not render at all, because the Drawing select
+decides whether to appear by asking this first. Given the Shop arm and a test
+that walks the enum on 2026-09-18, so the next kind added fails in
+`tests/Unit/Cove/CoveSceneTest.php` rather than on a screen somebody opens.
 
 **The API refuses rather than storing.** It used to store any scene on any kind
 on the argument that a scene on a Daily is harmless. That was true while there

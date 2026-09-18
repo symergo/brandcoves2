@@ -141,6 +141,19 @@ class EbayConnector implements LiveConnector
     }
 
     /**
+     * Re-check one stored offer, by the id eBay itself gave us.
+     *
+     * `products.external_id` holds the RESTful item id verbatim, and the item
+     * endpoint takes it back, so the barcode is not wanted here — this call
+     * *returns* a `gtin` rather than needing one, which is how a watched eBay
+     * offer picks up the barcode a search never carried.
+     */
+    public function refresh(string $externalId, ?string $ean, Market $market): ?Offer
+    {
+        return $this->fetchById($externalId, $market);
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $items
      * @return list<Offer>
      */

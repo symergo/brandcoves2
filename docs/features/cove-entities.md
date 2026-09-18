@@ -220,12 +220,33 @@ the reader can see. `:count` stays the one exception, and it is what the "see al
 `:entity` is a new placeholder, deliberately one name for both kinds: a block naming `:brand` on a
 shop page would be a sentence about the wrong kind of thing.
 
+## Nothing proposes a brand, so the planner refuses
+
+`PlanDrafter` drafts a kind only where something in the database already knows what is worth writing
+about: the observance calendar for a Daily, the mined topic queue for a guide, the gift wizard's
+interests for a persona. A brand has no such source. The catalogue can list the brands that hold
+products, and that is a list of names rather than a list of brands worth a piece. So `draft(Brand)`
+returns `DraftedPlans::none()` with the reason, exactly as advice and shop do, and `canDraft(Brand)`
+is false.
+
+It said nothing at all until 2026-09-18. `Brand` reached `CoveKind` after that `match` was written
+and never got an arm, so `POST /coves/drafts {"kind":"brand"}` threw `UnhandledMatchError` and
+answered **500** rather than refusing. Worse, `canDraft()` answered **true**, which offered the
+Automation grid a switchable `plan` cell for brand: turning it on would have put a stage in the
+05:00 walk whose only possible outcome was that throw. `AutomationSettingsStore::applies()` names
+the same three kinds and has to change with `canDraft()`.
+
+A Brand Cove is written from the brand page it sits above, in the planner or over the editorial API.
+That is the same route a Shop Cove takes, and it is why neither kind needs a source of ideas.
+
 ## Files
 
 - `app/Enums/CoveKind.php` — `Brand`, `isEntity()`
 - `app/Services/Cove/EntityRails.php`
 - `app/Services/Ai/Prompts/Defaults.php` — `BRAND_SYSTEM`, `BRAND_PROMPT`
 - `app/Http/Controllers/BrandController.php` — `cove()`, `covePage()`, and the landing-page rule
+- `app/Services/Cove/PlanDrafter.php` — why a brand is refused rather than drafted
+- `app/Services/Settings/AutomationSettingsStore.php` — the `plan` cell that follows that refusal
 - `app/Http/Controllers/ShopsController.php` — `coveSlugs()`, and where a directory row points
 - `app/Http/Controllers/GuideController.php` — `entityPage()`, `shopRails()`, `shopVocabulary()`
 - `app/Services/Shops/ShopDirectory.php` — the slug rule, membership, and `productCount()`
@@ -236,13 +257,15 @@ shop page would be a sentence about the wrong kind of thing.
 - `database/migrations/2026_09_05_001000_a_brand_is_a_cove_too.php`
 - `database/migrations/2026_09_06_000200_a_brand_page_stops_explaining_itself.php`
 - `tests/Feature/EntityRailsTest.php`, `tests/Feature/BrandPageTest.php`
+- `tests/Feature/PlanDrafterTest.php`, `tests/Feature/CoveDraftApiTest.php` — the refusal, and the
+  422 that replaced the 500
 - `tests/Feature/EntityCoveTemplateAdminTest.php` — the pages reach the admin screen
 
 ## Open
 
-- **`PlanDrafter` has no brand arm.** `POST /coves/drafts {kind: brand}` is a 500 and the Automation
-  grid's `plan` cell for brand is switchable. It should refuse like advice and shop, or draft from
-  the brands in a market with no Cove yet, which is the obvious candidate list.
+- ~~**`PlanDrafter` has no brand arm.**~~ Fixed 2026-09-18. It refuses brand with a reason, the way
+  advice and shop are refused, and `canDraft()` answers false so the Automation grid's `plan` cell
+  for brand is disabled rather than switchable. See **Nothing proposes a brand** above.
 - **The popular rail includes the described shop's own chart.** Ordering `/shops/bol-com` by bol's
   ranks is the most exposed reading of the narrowed rule. `PopularRank.source` makes excluding it a
   one-clause change if attribution ever matters.

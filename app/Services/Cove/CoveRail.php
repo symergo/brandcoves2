@@ -15,6 +15,7 @@ use App\Support\CurrentMarket;
 use App\Support\SearchUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use LogicException;
 
 /**
  * Where a Cove sends you next.
@@ -348,7 +349,7 @@ class CoveRail
     /**
      * Which band a kind belongs to.
      *
-     * Four bands out of six kinds: a buying guide, a seasonal guide and an
+     * Four bands out of seven kinds: a buying guide, a seasonal guide and an
      * advice article are one section to a reader — they share a URL space, an
      * index and a name on the header — so an advice article's rail lists the
      * buying guides too, which is the point of writing one.
@@ -357,6 +358,19 @@ class CoveRail
      * "all of these" already exists as `site.coves.{key}_heading` and
      * `site.coves.{key}_all`, and a second set of names for the same sections
      * would be more strings to keep in step across four languages.
+     *
+     * ## A Brand Cove has no band, and says so rather than borrowing one
+     *
+     * It cannot arrive here today. A Brand Cove is read on its brand page, which
+     * `BrandController` renders with live product rails of its own, and the two
+     * controllers that do build this rail scope to `articles()` and `shops()`.
+     *
+     * So the arm exists to explain, not to answer. It threw before this was
+     * written too, as an `UnhandledMatchError` naming a PHP class, which tells
+     * the reader nothing about why a brand has no band. The alternative was to
+     * fold it into the shop band, and that is the quiet failure worth avoiding:
+     * a page about Sony would offer six pieces about shops, and nothing
+     * downstream would report it.
      */
     public static function sectionOf(CoveKind $kind): string
     {
@@ -365,13 +379,20 @@ class CoveRail
             CoveKind::Persona => 'gift',
             CoveKind::Shop => 'shop',
             CoveKind::Guide, CoveKind::Seasonal, CoveKind::Advice => 'smart',
+
+            // Unreachable today, and loud if that ever changes. See above.
+            CoveKind::Brand => throw new LogicException(
+                'A Brand Cove has no rail band: it is read on its brand page, which carries its own live product '
+                .'rails. If a brand page should offer more Coves as well, decide which band it joins rather than '
+                .'letting it default into somebody else\'s.'
+            ),
         };
     }
 
     /**
      * Newest first, by the column each kind actually has.
      *
-     * `drop_date` is null on five of the six kinds and Postgres sorts
+     * `drop_date` is null on six of the seven kinds and Postgres sorts
      * `ORDER BY ... DESC` NULLS FIRST, so ordering every kind by it would put
      * the dateless Coves at the top in whatever order the planner happened to
      * write them. The same trap `scopeDaily()` documents.

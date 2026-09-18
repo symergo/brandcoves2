@@ -631,6 +631,9 @@ return [
 
     'footer' => [
         'affiliate' => 'We may earn a commission on purchases made through our links, it never changes what you pay.',
+        // Amazon's own wording, which the programme requires verbatim. Shown
+        // only in markets that carry Amazon links; see amazon-compliance.md.
+        'amazon' => 'As an Amazon Associate we earn from qualifying purchases.',
         'copyright' => '© :year GiftCoves.',
         'explore' => 'Explore',
     ],
@@ -1136,9 +1139,9 @@ return [
         'suggestions_step3' => 'Press "Add it" and it joins the list, or "No thanks" and it goes. Nothing lands on the list before you decide.',
 
         'whisperer_title' => 'Gift Whisperer',
-        'whisperer_body' => 'Describe a person and get four ideas, each with the reason it was chosen. For when you know who it is for and not what to buy.',
+        'whisperer_body' => 'Describe a person and get eight ideas, each showing what it has in common with your description. For when you know who it is for and not what to buy.',
         'whisperer_step1' => 'Answer a few short questions about them: who they are, what they are into, what you want to spend, anything to avoid.',
-        'whisperer_step2' => 'Four ideas come back, each with the reason it was chosen. Ask for something else and what you rejected is never offered again.',
+        'whisperer_step2' => 'Eight ideas come back, each showing what it has in common with your description. Ask for something else and what you rejected is never offered again.',
         'whisperer_step3' => 'Save the good ones straight onto a list for that person.',
         'band_own' => 'Your own list',
         'band_someone' => 'A list for somebody',
@@ -1295,7 +1298,7 @@ return [
     'gift' => [
         'title' => 'Gift Finder',
         'subtitle' => 'Tell us about them. We will find eight things worth giving.',
-        'seo_description' => 'Describe the person you are buying for and get eight gift ideas, each with the reason it was chosen and where to buy it.',
+        'seo_description' => 'Describe the person you are buying for and get eight gift ideas, each showing what it has in common with your description.',
 
         'step_who' => 'Who is it for?',
         'step_interests' => 'What are they into?',

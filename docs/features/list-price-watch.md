@@ -33,7 +33,10 @@ this much since you last told me", one mail per person.
   whose programme allows price tracking. It used to be a private method on
   `RefreshWishlistedProducts`; both callers now share it.
 - **`SendListPriceDigests`** runs once a day at 07:40, after the 05:20 live refresh, whose group set
-  now includes the items on watched lists so a bol-only price is today's. Per owner it seeds,
+  now includes the items on watched lists so a bol-only price is today's. That last clause only
+  became true on 2026-09-18: the refresh asked bol with a `bolProductId`, which bol's product
+  endpoint refuses, so a bol-only item was in fact compared against whatever ingestion last wrote.
+  See [wishlists.md](wishlists.md). Per owner it seeds,
   classifies (`ListPriceWatch::changes()`), moves the references (`apply()`), writes one
   `list_price_digest` notification per list with something to say, and sends one
   `ListPriceDigestMail` for all of them. Unique, like the other scheduled jobs.

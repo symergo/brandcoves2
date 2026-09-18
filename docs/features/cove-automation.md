@@ -20,9 +20,10 @@ the scheduler instead of somebody asking. One stage runner, two callers. A third
 Five stages × seven kinds × five markets is 175 switches. As a list nobody can read it; as **one
 grid per market** — kinds down, stages across — it is thirty-five cells that fit on a screen.
 
-The shape then carries information. `plan` is dead for advice and shop because nothing in the
-catalogue proposes one (brand should be too, see PlanDrafter), and `curate` is dead for advice, shop
-and brand, which carry no products. Each disabled cell shows its reason on hover rather than sitting
+The shape then carries information. `plan` is dead for advice, shop and brand because nothing in the
+catalogue proposes one, and `curate` is dead for the same three, which carry no products. Brand was
+switchable until 2026-09-18, when `PlanDrafter` learned to refuse it: the cell offered a stage that
+would have thrown on the 05:00 walk. Each disabled cell shows its reason on hover rather than sitting
 blank, because a blank cell reads as an oversight.
 
 | Stage | Control | Notes |
@@ -69,9 +70,18 @@ Not on/off, because the question is not whether prose happens.
 - **`external`** — plans are marked `writer = authored` and left for an agent on
   `GET /coves/queue`, costing this server nothing.
 
-The batch write stage picks only `builder` plans. `GET /coves/queue` does not filter on `writer` (it
-hands out any draft or approved plan with no `editorial`), so an external agent and the builder can
-still target the same unwritten `builder` plan.
+The batch write stage picks only `builder` plans and `GET /coves/queue` offers only `authored` ones,
+so the two writers can never be handed the same plan. That was a real race until the queue learned to
+ask: both writers produced something plausible, whoever finished last won, and nothing reported that
+the other one's work had been thrown away.
+
+The queue also asks about the field the kind actually writes. A guide, seasonal, advice, shop or
+brand plan carries its prose in `body`, so asking only about `editorial` kept offering finished
+articles back on every run.
+
+One consequence worth knowing before you go looking for a bug: **`write: external` is what fills the
+queue.** A plan nobody has marked stays `builder` and no outside writer is offered it. Mark one by
+hand with `PATCH /coves/{id}` `{"writer": "authored"}` when that is what you want.
 
 ## Two jobs are gated, not absorbed
 

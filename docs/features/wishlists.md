@@ -1137,6 +1137,40 @@ Three gaps the review found in the alert machinery, closed in `RefreshWishlisted
   product before judging the alerts, capped at 500 fetches a run, skipping a source that is
   cooling down. A fetch that answers nothing leaves the row alone: "the API did not answer" and
   "the product is gone" are different facts, and only ingestion's stale sweep decides the second.
+
+### Each source is asked by the key it accepts (2026-09-18)
+
+The bullet above was true of the job and false of bol for twelve days. The job called
+`fetchById($product->external_id)`, and bol's product endpoint is keyed on the barcode: it answers
+`400 must match "^\d{13}$"` for a `bolProductId`, which is exactly what `products.external_id` holds
+for a bol offer. `BolConnector::fetchById()` had already been taught to return null rather than
+issue that request, so the refresh skipped every bol row in silence. Nothing failed, nothing was
+logged above debug, and the visible symptom was the one the job was written to remove: a watched bol
+price that never moved, a price-drop alert that never fired, and a list price digest
+([list-price-watch.md](list-price-watch.md)) comparing against whatever ingestion last wrote.
+
+`LiveConnector` now carries a second method beside `fetchById()`:
+
+```php
+public function refresh(string $externalId, ?string $ean, Market $market): ?Offer;
+```
+
+The caller hands over both keys the row carries and the connector picks. `BolConnector` normalises
+the barcode through `App\Services\Identity\Gtin` (feeds write UPC-12s, padded GTIN-8s and
+placeholders into `products.ean`, and bol takes 13 digits) and calls `fetchByEan()`; a row with no
+usable barcode returns null **without a request**, because falling back to the id would spend a
+request and a slot in the run's cap of 500 on a guaranteed 400. `EbayConnector` and
+`TradedoublerConnector` ignore the barcode and delegate to `fetchById()`, since their ids are their
+own. eBay's case is the mirror image of bol's and worth stating: its item endpoint *returns* a
+`gtin` rather than taking one, which is how a watched eBay offer acquires the barcode its search
+results never carry ([ebay-connector.md](ebay-connector.md)).
+
+The alternative was a `match` on the source inside the job. It was rejected because every other fact
+about how a source identifies a product already lives in that source's connector, and a job that
+knows bol takes barcodes is a job that has to be edited when the fourth live source arrives.
+
+`AlertTest` pins all three paths: a bol offer refreshed by its barcode, a bol row without one
+skipped with no outbound request, and an eBay offer still refreshed by its id.
 - **A fired alert re-arms.** It used to stay `triggered` forever — one notification, ever, unless
   the person pressed "watch" again. A price alert goes back to `active` when the price is back at
   or above what it was watching, with today's price as the new baseline so the next drop is

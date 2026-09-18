@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Enums\Availability;
+use App\Enums\CoveKind;
 use App\Enums\Market;
+use App\Enums\PlanWriter;
 use App\Enums\ProductStatus;
 use App\Enums\Source;
 use App\Models\AiUsage;
@@ -25,9 +27,9 @@ use Tests\TestCase;
  *
  * Built for a scheduled agent, so the properties that matter are the ones that
  * hold when nobody is watching: it never hands out the same Cove twice, it
- * cannot be used to empty a curated shortlist, two overlapping runs cannot
- * overwrite each other, and nothing it writes reaches a reader without a person
- * approving it.
+ * never hands out one the built-in writer is already writing, it cannot be used
+ * to empty a curated shortlist, two overlapping runs cannot overwrite each
+ * other, and nothing it writes reaches a reader without a person approving it.
  */
 class CoveQueueApiTest extends TestCase
 {
@@ -93,6 +95,65 @@ class CoveQueueApiTest extends TestCase
             ->getJson('/api/editorial/coves/queue')
             ->assertOk()
             ->assertJsonPath('count', 0);
+    }
+
+    #[Test]
+    public function a_plan_the_builder_is_meant_to_write_is_not_offered(): void
+    {
+        /*
+         * Two writers, one plan. The automation's write stage claims every
+         * `builder` plan, so offering one here as well put an outside agent and
+         * the built-in writer on the same article: both produce something
+         * plausible, whoever finishes last wins, and nothing anywhere reports
+         * that the other one's work was thrown away.
+         */
+        $this->plan(['writer' => PlanWriter::Builder->value]);
+
+        $this->withToken($this->key([ApiToken::READ]))
+            ->getJson('/api/editorial/coves/queue')
+            ->assertOk()
+            ->assertJsonPath('count', 0);
+    }
+
+    #[Test]
+    public function a_body_writing_kind_whose_body_is_written_is_not_offered_again(): void
+    {
+        /*
+         * A guide, seasonal, advice, shop or brand Cove carries its prose in
+         * `body`; only a Daily and a persona write an `editorial`. Asking about
+         * `editorial` alone therefore handed a finished guide back on every
+         * run, for as long as it sat waiting to be approved.
+         */
+        $this->plan([
+            'kind' => CoveKind::Guide->value,
+            'drop_date' => null,
+            'slug' => 'beste-koptelefoons',
+            'body' => 'Het stuk is af.',
+        ]);
+
+        $this->withToken($this->key([ApiToken::READ]))
+            ->getJson('/api/editorial/coves/queue')
+            ->assertOk()
+            ->assertJsonPath('count', 0);
+    }
+
+    #[Test]
+    public function a_plan_marked_for_an_outside_writer_with_no_prose_is_offered(): void
+    {
+        // The queue's whole job, and the reason the two tests above are not
+        // enough on their own: narrowing it to what is really waiting must not
+        // narrow it to nothing.
+        $this->plan([
+            'kind' => CoveKind::Guide->value,
+            'drop_date' => null,
+            'slug' => 'nog-te-schrijven',
+        ]);
+
+        $this->withToken($this->key([ApiToken::READ]))
+            ->getJson('/api/editorial/coves/queue')
+            ->assertOk()
+            ->assertJsonPath('count', 1)
+            ->assertJsonPath('data.0.slug', 'nog-te-schrijven');
     }
 
     #[Test]
@@ -252,7 +313,17 @@ class CoveQueueApiTest extends TestCase
             ->json('data.0.revision');
     }
 
-    private function plan(): CovePlan
+    /**
+     * A plan waiting on an outside writer.
+     *
+     * `writer` is `authored` because that is the state the queue lists, and it
+     * is what *Operations > Automation* writes when a market and kind are set
+     * to `write: external`. A plan left on the default, `builder`, belongs to
+     * the built-in writer and is deliberately not offered here.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function plan(array $attributes = []): CovePlan
     {
         return CovePlan::create([
             'market' => Market::BeNl->value,
@@ -260,6 +331,8 @@ class CoveQueueApiTest extends TestCase
             'title' => 'Vondsten voor thuiswerkers',
             'build_instructions' => 'Nadruk op reizen.',
             'status' => 'draft',
+            'writer' => PlanWriter::Authored->value,
+            ...$attributes,
         ]);
     }
 

@@ -317,10 +317,11 @@ enum CoveScene: string
      * validation and the seeder all need the same answer, and three copies of
      * one list is a list that will be two places out of date.
      *
-     * A kind with no vocabulary of its own — a Daily, a Shop Cove — gets an
-     * empty list, which is how the planner knows not to offer the field at all.
-     * Neither draws one: a Daily is addressed by its date and carries the day's
-     * products, and a Shop Cove is about a named shop with a name to print.
+     * A kind with no vocabulary of its own gets an empty list, which is how the
+     * planner knows not to offer the field at all. Three kinds are in that
+     * state. A Daily is addressed by its date and carries the day's products;
+     * the two entity kinds are about a named shop or a named brand, and the name
+     * is what the page prints instead of a drawing.
      *
      * @return list<self>
      */
@@ -343,7 +344,7 @@ enum CoveScene: string
                 self::CouponBook, self::Letter, self::PlantCutting, self::CalendarDay,
                 self::Article,
             ],
-            CoveKind::Daily, CoveKind::Shop => [],
+            CoveKind::Daily, CoveKind::Shop, CoveKind::Brand => [],
         };
     }
 

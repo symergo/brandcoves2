@@ -515,6 +515,7 @@ return [
 
     'footer' => [
         'affiliate' => 'We verdienen mogelijk commissie op aankopen via onze links, dat verandert nooit wat jij betaalt.',
+        'amazon' => 'Als Amazon Associate verdienen we aan in aanmerking komende aankopen.',
         'copyright' => '© :year GiftCoves.',
         'explore' => 'Ontdekken',
     ],
@@ -971,9 +972,9 @@ return [
         'suggestions_step3' => 'Druk op "Zet erop" en hij komt op de lijst, of op "Liever niet" en hij verdwijnt. Er komt niets op te staan voordat jij beslist.',
 
         'whisperer_title' => 'Gift Whisperer',
-        'whisperer_body' => 'Beschrijf iemand en krijg vier ideeen, elk met de reden waarom. Voor als je weet voor wie het is, maar niet wat.',
+        'whisperer_body' => 'Beschrijf iemand en krijg acht ideeën, elk met wat het gemeen heeft met je beschrijving. Voor als je weet voor wie het is, maar niet wat.',
         'whisperer_step1' => 'Beantwoord een paar korte vragen over die persoon: wie het is, waar diegene van houdt, wat je wilt uitgeven, en wat vooral niet.',
-        'whisperer_step2' => 'Je krijgt vier ideeen terug, elk met de reden waarom. Vraag om iets anders en wat je wegstuurde komt nooit meer terug.',
+        'whisperer_step2' => 'Je krijgt acht ideeën terug, elk met wat het gemeen heeft met je beschrijving. Vraag om iets anders en wat je wegstuurde komt nooit meer terug.',
         'whisperer_step3' => 'Zet de goede meteen op een lijst voor die persoon.',
         'band_own' => 'Je eigen lijst',
         'band_someone' => 'Een lijst voor iemand',
@@ -1130,7 +1131,7 @@ return [
     'gift' => [
         'title' => 'Cadeauzoeker',
         'subtitle' => 'Vertel ons over die persoon. Wij zoeken acht cadeaus die kloppen.',
-        'seo_description' => 'Beschrijf voor wie je zoekt en krijg acht cadeau-ideeën, elk met de reden erbij en waar je het koopt.',
+        'seo_description' => 'Beschrijf voor wie je zoekt en krijg acht cadeau-ideeën, elk met wat het gemeen heeft met je beschrijving.',
 
         'step_who' => 'Voor wie is het?',
         'step_interests' => 'Waar houdt die persoon van?',

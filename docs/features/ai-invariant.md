@@ -45,9 +45,19 @@ no model call, no live API call. Same treatment for any future user-submission r
 
 ## Enforcement
 
-By convention and review, and by the runtime check in `AiClient` described under *Settings in
-admin*. There is no test that fails when a controller reaches the client; *That check has no
-working test* below says what one would need.
+The runtime check in `AiClient` described under *Settings in admin*, and two tests, because the
+invariant can break in two directions.
+
+- **`AiClientTest::nothing_a_web_request_reaches_resolves_the_client`** walks `app/Http` and fails if
+  a controller, a middleware or a form request resolves `AiClient` or type-hints it. This is the half
+  that fails while the code that would spend is being written, rather than in production. It scans
+  for a resolution, not a mention: several files name the class in a comment saying why they
+  deliberately do not call it. `app/Filament` is not scanned, because the AI settings page asks
+  `isEnabled()`, which spends nothing, and its credential test dispatches a job.
+- **`AiClientTest::the_client_refuses_outside_a_console_process`** flips the console flag Laravel
+  caches, calls the client, and asserts it throws, sends no request and records no usage. The flip is
+  the whole point: PHPUnit *is* the console, so without it the guard stands down and the test proves
+  nothing, which is exactly what happened before (below).
 
 ## Files
 
@@ -67,14 +77,13 @@ call a model. It does not make a request able to: `AiClient` refuses to run
 outside a console process (a queue worker, the scheduler or artisan) before
 anything else.
 
-**That check has no working test.** An earlier version of this page said an
-architecture test asserts no controller can reach the client; there is no such
-test in `tests/`. `AiSettingsTest` had one that claimed to prove it, and it could
-not fail: the check stands down under `runningInConsole()`, which is true for
-all of PHPUnit, so the test was really sending an unmocked request to the
-Anthropic API with a fake key and passing on the 401. It was removed on
-2026-09-14. A real test needs to exercise the check with the console flag
-faked, or assert statically that nothing under `app/Http` resolves `AiClient`.
+**That check went untested for a while, and the way it failed is worth keeping.** An earlier version
+of this page claimed an architecture test asserted no controller could reach the client. There was no
+such test. `AiSettingsTest` had one that claimed to prove the guard and could not fail: the check
+stands down under `runningInConsole()`, true for all of PHPUnit, so the test was really sending an
+unmocked request to the Anthropic API with a fake key and passing on the 401. It was removed on
+2026-09-14 and replaced on 2026-09-18 by the two tests under *Enforcement*, which do what that one
+only appeared to do: fake the console flag, and read the source of everything a request can reach.
 
 ### How it reaches the rest of the code
 

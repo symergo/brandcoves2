@@ -240,20 +240,28 @@ class PlanDrafterTest extends TestCase
     }
 
     #[Test]
-    public function advice_and_shop_are_refused_with_the_reason(): void
+    public function advice_shop_and_brand_are_refused_with_the_reason(): void
     {
         $drafter = $this->drafter();
 
-        foreach ([CoveKind::Advice, CoveKind::Shop] as $kind) {
+        foreach ([CoveKind::Advice, CoveKind::Shop, CoveKind::Brand] as $kind) {
             $this->assertFalse($drafter->canDraft($kind));
 
             $result = $drafter->draft($kind, Market::BeNl, 5);
 
             /*
-             * Nothing in the data suggests an advice article, and Shop Coves are
-             * seeded from the repository rather than drafted. Inventing titles
-             * from a template would fill the queue with plausible-looking work
-             * nobody meant.
+             * Nothing in the data suggests an advice article; Shop Coves are
+             * seeded from the repository rather than drafted; and the only
+             * brands the catalogue could offer are the ones holding products,
+             * which is a list of names rather than a list of brands worth a
+             * piece. Inventing titles from a template would fill the queue with
+             * plausible-looking work nobody meant.
+             *
+             * Brand reached `CoveKind` after this match was written and had no
+             * arm in it at all, so asking for one was an UnhandledMatchError
+             * rather than a refusal: a 500 on the editorial API, and `canDraft`
+             * answering **true**, which offered the automation grid a `plan`
+             * cell for brand that the 05:00 walk would have run.
              */
             $this->assertSame(0, $result->count());
             $this->assertNotNull($result->shortfall);

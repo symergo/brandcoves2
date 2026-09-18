@@ -82,10 +82,12 @@ Every path that writes prose, because there is no single funnel:
 | The editorial API (Claude, through `giftcoves-seed-coves`) | `CoveQueueController::store()`, `CovePlanController` |
 | The shipped articles | `AdviceCoveSeeder`, `SeedShopCovesCommand` |
 | Curation over the API (item copy, verdict) | `CoveItemController` |
+| Guides and advice written through `POST /guides` | `GuideEditorialController::store()` |
 | Display titles | `ProductTitleController` |
 
-**Gap:** `POST /guides` (`GuideEditorialController::store()`) stores intro, body, FAQ and item copy
-untouched.
+`POST /guides` was the gap and is now closed: title, intro, body, FAQ, item copy, verdict and the
+meta description all go through it. Worth naming because the gap was invisible from outside. The
+endpoint answered `201` either way, and the em dashes only showed up on the published page.
 
 Applying it at the write rather than at render is the decision worth recording. Six things read a
 Cove's prose — the page, the digest email, the JSON-LD, the `<meta>` description, the admin table,

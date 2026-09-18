@@ -76,11 +76,11 @@ catch. Measured at rank 1 for 8 of 8 titles from a live listing page.
 > ever been refreshed** — the job added on 2026-09-06 to fix exactly that
 > silently did nothing. The connector now has `fetchByEan()`, and `fetchById()`
 > routes an EAN-shaped id to it and returns null for anything else rather than
-> issuing a request that cannot succeed. The refresh job still passes
-> `products.external_id`, a `bolProductId`, so **it is still not fixed** — it
-> needs to pass `products.ean`. Left alone deliberately: it is a different
-> feature with its own tests, and quietly changing a compliance-adjacent job
-> while building an import is how two bugs become one confusing diff.
+> issuing a request that cannot succeed. The refresh job went on passing
+> `products.external_id`, a `bolProductId`, so it stayed broken until
+> 2026-09-18: `LiveConnector` gained `refresh($externalId, $ean, $market)`, and
+> each connector answers with the key its own source understands — bol by
+> barcode, eBay and Tradedoubler by id. See [wishlists.md](wishlists.md).
 
 ---
 

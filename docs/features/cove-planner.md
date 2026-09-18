@@ -153,7 +153,7 @@ and writes that many drafts. `App\Services\Cove\PlanDrafter` is the one implemen
 | `persona` | `App\Enums\Interest` + `AngleMap` | the enum's own order |
 | `advice` | — | refused, with the reason |
 | `shop` | — | refused, with the reason |
-| `brand` | — | nothing — currently a 500; see `PlanDrafter` |
+| `brand` | — | refused, with the reason |
 
 Three things this is careful about.
 
@@ -167,10 +167,19 @@ anybody does is press the button again. `DraftedPlans::shortfall` is written whe
 discovered, because that is the only place that knows which source ran dry, and it names the command
 that would produce more.
 
-**Two kinds are refused rather than faked.** An advice article is an opinion about how to shop;
+**Three kinds are refused rather than faked.** An advice article is an opinion about how to shop;
 nothing in the catalogue or the search log proposes one, and generating titles from a template would
 fill the queue with plausible-looking work nobody meant. A Shop Cove is seeded from the repository by
-`bc:seed-shop-coves`, so a drafted one would be a title with no source behind it.
+`bc:seed-shop-coves`, so a drafted one would be a title with no source behind it. A Brand Cove is
+written about a brand's range from the brand page it sits above, and all the catalogue can offer is
+the brands that hold products, which is a list of names rather than a list of brands worth a piece.
+
+Brand was refused in neither sense until 2026-09-18: it reached `CoveKind` after that `match` was
+written and had no arm in it, so asking for one was an `UnhandledMatchError` rather than a sentence.
+`POST /coves/drafts {"kind":"brand"}` answered 500, and `canDraft()` answered **true**, which offered
+the automation grid a `plan` cell for brand whose only possible outcome was a throw inside the 05:00
+walk. `AutomationSettingsStore::applies()` names the same three kinds and has to change with this
+list. See [cove-entities.md](cove-entities.md).
 
 ### Why a persona is drafted from an interest
 
@@ -191,11 +200,14 @@ and one kind, as a queue top-up.
 
 ## Every published Cove has a plan
 
-Including the ones nobody planned. The one exception is a guide written through `POST /guides`,
-which writes the page directly and has no plan until something mints one. The 06:00 build mints
-one as a record (`CovePlan::recordFor()`), and a backfill migration minted one per existing
-edition, so the planner describes the past as well as the future and anything live can be
-re-curated.
+Including the ones nobody planned. The 06:00 build mints one as a record (`CovePlan::recordFor()`),
+a backfill migration minted one per existing edition, and since 2026-09-18 a guide filed through
+`POST /guides` mints one as it publishes — so the planner describes the past as well as the future,
+and anything live can be re-curated.
+
+Guides filed that way *before* 2026-09-18 are the exception nobody has closed: they were written
+straight into `daily_pick_sets` with no plan behind them, and nothing backfills one. See
+[../TODO.md](../TODO.md).
 
 A minted plan is `used`, never `approved`. `approvedFor()` is what decides whether a
 plan *drives* the next build, so marking a record approved would turn the machine's

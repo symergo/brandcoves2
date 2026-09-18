@@ -52,9 +52,19 @@ write makes a cheap run and nothing is handed out twice.
 GET /api/editorial/coves/queue?market=be-nl&limit=3
 ```
 
-Returns only draft or approved plans with no `editorial` yet — note that a body-writing kind with a
-finished `body` but no `editorial` still appears. That is what stops the same Cove being offered on
-every run — without a "claimed" status that a crashed agent would leave set forever.
+Returns only draft or approved plans that are **marked for an outside writer**
+(`writer: authored`) and still have no prose, asked of the field the kind
+actually writes: `body` for a guide, seasonal, advice, shop or brand Cove,
+`editorial` for a Daily or a persona. That is what stops the same Cove being
+offered on every run, without a "claimed" status that a crashed agent would
+leave set forever, and what keeps this agent and the built-in writer off the
+same plan.
+
+**An empty queue is usually the marking, not the calendar.** A plan is marked by
+*Operations → Automation*, setting `write` to `external` for that market and
+kind, or one at a time with `PATCH /coves/{id}` `{"writer": "authored"}`. Left
+on the default, `builder`, a plan belongs to the writer on this server and is
+deliberately not offered here.
 
 Each entry carries everything needed to write it, so there is no second call:
 

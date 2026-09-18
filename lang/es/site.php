@@ -511,6 +511,7 @@ return [
 
     'footer' => [
         'affiliate' => 'Podemos recibir una comisión por las compras realizadas a través de nuestros enlaces, eso nunca cambia lo que pagas tú.',
+        'amazon' => 'En calidad de Afiliado de Amazon, obtenemos ingresos por las compras adscritas que cumplen los requisitos aplicables.',
         'copyright' => '© :year GiftCoves.',
         'explore' => 'Explorar',
     ],
@@ -967,9 +968,9 @@ return [
         'suggestions_step3' => 'Pulsa «Añadir» y pasa a la lista, o «No, gracias» y desaparece. No aparece nada hasta que tú decidas.',
 
         'whisperer_title' => 'Gift Whisperer',
-        'whisperer_body' => 'Describe a alguien y recibe cuatro ideas, cada una con su motivo. Para cuando sabes para quién es, pero no qué.',
+        'whisperer_body' => 'Describe a alguien y recibe ocho ideas, cada una con lo que tiene en común con tu descripción. Para cuando sabes para quién es, pero no qué.',
         'whisperer_step1' => 'Responde unas preguntas cortas sobre esa persona: quién es, qué le gusta, cuánto quieres gastar y qué hay que evitar.',
-        'whisperer_step2' => 'Vuelven cuatro ideas, cada una con su motivo. Pide otra cosa y lo que descartaste no se ofrece nunca más.',
+        'whisperer_step2' => 'Vuelven ocho ideas, cada una con lo que tiene en común con tu descripción. Pide otra cosa y lo que descartaste no se ofrece nunca más.',
         'whisperer_step3' => 'Guarda las buenas directamente en una lista para esa persona.',
         'band_own' => 'Tu propia lista',
         'band_someone' => 'Una lista para alguien',
@@ -1126,7 +1127,7 @@ return [
     'gift' => [
         'title' => 'Buscador de regalos',
         'subtitle' => 'Cuéntanos cómo es. Buscamos ocho regalos que encajen.',
-        'seo_description' => 'Describe a la persona a quien regalas y recibe cuatro ideas, cada una con su motivo y dónde comprarla.',
+        'seo_description' => 'Describe a la persona a quien regalas y recibe ocho ideas, cada una con lo que tiene en común con tu descripción.',
 
         'step_who' => '¿Para quién es?',
         'step_interests' => '¿Qué le gusta?',

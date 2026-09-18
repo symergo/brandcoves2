@@ -136,6 +136,12 @@ fix. Any new horizontal scroll is that bug again somewhere else.
   belongs in both, and it is a small, testable change.
 - **eBay notification signatures are not verified.** Deferred until tokens mint; see
   [ebay-account-deletion.md](features/ebay-account-deletion.md#signature-verification-is-deferred-and-the-reason-is-circular).
+- **Guides filed through `POST /guides` before 2026-09-18 have no plan, and keep their em dashes.**
+  Both holes were closed at the endpoint that day: it applies `HouseStyle` and mints a plan with
+  `CovePlan::recordFor()`. Nothing backfilled what was already published, so those pages cannot be
+  re-curated, redone or rebuilt from the planner. `bc:tidy-prose` fixes the prose; the plans need a
+  one-off `recordFor()` pass over article Coves that have none. Count them first: if production has
+  no such pages, delete this entry instead.
 - **Drop `list_invitations`, and `guide_topics.last_attempt_at` / `attempts`, in the release after
   2026-09-14's.** The code behind both went that day: the invitation redemption path (production's
   table held no rows) and the "recently attempted" topic rule (nothing had written an attempt since
@@ -146,9 +152,14 @@ fix. Any new horizontal scroll is that bug again somewhere else.
   columns. Take `last_attempt_at` and `attempts` out of `ContentEnvelope`'s `topics` exclusion list
   in the same change. That is the contract half of expand/contract; delete this entry when it ships.
   See [list-taxonomy.md](features/list-taxonomy.md) and `App\Models\GuideTopic`.
-- **The wishlist refresh passes a bolProductId to bol.** `RefreshWishlistedProducts` calls
-  `fetchById($product->external_id)`, bol's product endpoint takes an EAN only, and
-  `BolConnector::fetchById()` returns null for anything else — so no bol offer is ever refreshed
-  there. Pass `products.ean` to `fetchByEan()`. See [page-import.md](features/page-import.md).
+- **Done 2026-09-18: the wishlist refresh asks each source by the key that source accepts.**
+  `RefreshWishlistedProducts` called `fetchById($product->external_id)`, and for bol that could
+  never work: its product endpoint takes an EAN, `products.external_id` holds a `bolProductId`, and
+  `BolConnector::fetchById()` returns null for anything else. No bol offer was ever refreshed, so
+  watched bol prices never moved, price-drop alerts never fired on them, and the list price digest
+  reported them from whatever ingestion last wrote. `LiveConnector` now carries
+  `refresh($externalId, $ean, $market)`: bol answers it with `products.ean` normalised through
+  `Gtin` and sends no request at all when the row has no barcode, eBay and Tradedoubler answer it
+  with their own ids. See [wishlists.md](features/wishlists.md).
 - **Drop `copy_templates`.** Unread since page templates replaced the copy bank; see
   [page-templates.md](features/page-templates.md).

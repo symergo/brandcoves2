@@ -18,11 +18,16 @@ use App\Models\Product;
 use App\Models\ProductGroup;
 use App\Models\RestockAlert;
 use App\Models\User;
+use App\Services\Connectors\Bol\BolConnector;
 use App\Services\Connectors\ConnectorRegistry;
+use App\Services\Connectors\Ebay\EbayConnector;
 use App\Services\Connectors\LiveConnector;
 use App\Services\Connectors\Offer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Redis;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -53,8 +58,20 @@ class AlertTest extends TestCase
         ]);
     }
 
-    private function offer(ProductGroup $group, Source $source, ?int $price, bool $inStock = true): Product
-    {
+    /**
+     * One offer on a group.
+     *
+     * `externalId` and `ean` are spelled out only by the refresh tests, which
+     * need the row to carry the keys its source is actually asked with.
+     */
+    private function offer(
+        ProductGroup $group,
+        Source $source,
+        ?int $price,
+        bool $inStock = true,
+        ?string $externalId = null,
+        ?string $ean = null,
+    ): Product {
         $merchant = Merchant::firstOrCreate(
             ['source' => $source->value, 'external_id' => $source->value.'-shop'],
             ['name' => ucfirst($source->value)]
@@ -65,7 +82,8 @@ class AlertTest extends TestCase
             'market' => $group->market,
             'merchant_id' => $merchant->id,
             'group_id' => $group->id,
-            'external_id' => 'x'.bin2hex(random_bytes(4)),
+            'external_id' => $externalId ?? 'x'.bin2hex(random_bytes(4)),
+            'ean' => $ean,
             'title' => $group->title,
             'price' => $price,
             'currency' => 'EUR',
@@ -446,6 +464,16 @@ class AlertTest extends TestCase
                     availability: Availability::InStock,
                 ) : null;
             }
+
+            /*
+             * The job calls refresh(), not fetchById(): which key a source can
+             * be asked with is the source's own fact. A stand-in whose ids are
+             * its own delegates, exactly as eBay and Tradedoubler do.
+             */
+            public function refresh(string $externalId, ?string $ean, Market $market): ?Offer
+            {
+                return $this->fetchById($externalId, $market);
+            }
         });
 
         (new RefreshWishlistedProducts)->handle();
@@ -454,5 +482,177 @@ class AlertTest extends TestCase
         $this->assertSame($group->id, $offer->fresh()->group_id, 'a refresh must not unhook the offer from its group');
         $this->assertSame(AlertState::Triggered, $alert->fresh()->state);
         $this->assertSame(25000, Notification::query()->firstOrFail()->payload['price']);
+    }
+
+    /**
+     * bol, configured, registered, and with an empty token bucket.
+     *
+     * The rate limiter talks to Redis directly rather than through the cache,
+     * on purpose, because its job is sharing state across processes. A bucket
+     * drained by an earlier test would make the job send no request at all and
+     * fail every assertion below for a reason that has nothing to do with the
+     * refresh. Same reset BolConnectorTest does, and for the same reason.
+     */
+    private function enableBol(): void
+    {
+        config([
+            'giftcoves.connectors.bol.enabled' => true,
+            'giftcoves.connectors.bol.client_id' => 'test-id',
+            'giftcoves.connectors.bol.client_secret' => 'test-secret',
+            'giftcoves.connectors.bol.partner_site_id' => ['BE' => '25421', 'NL' => '1005548'],
+        ]);
+
+        foreach (['search', 'product'] as $bucket) {
+            Redis::del("bc:ratelimit:bol:{$bucket}", "bc:ratelimit:bol:{$bucket}:cooldown");
+        }
+
+        app(ConnectorRegistry::class)->registerLive(new BolConnector);
+    }
+
+    /**
+     * One product as bol's product endpoint returns it.
+     *
+     * Field names off a live response, as BolConnectorTest's fixture note
+     * insists: `bolProductId`, a singular `image`, and an `offer` block whose
+     * presence is the only availability signal there is.
+     *
+     * @return array<string, mixed>
+     */
+    private function bolProduct(): array
+    {
+        return [
+            'bolProductId' => '9200000123456',
+            'ean' => '4006381333931',
+            'title' => 'Sony WH-1000XM5 Koptelefoon',
+            'url' => 'https://www.bol.com/nl/p/sony/9200000123456/',
+            'image' => ['url' => 'https://media.bol.com/1.jpg'],
+            'offer' => ['price' => 250.00],
+        ];
+    }
+
+    #[Test]
+    public function a_watched_bol_offer_is_refreshed_by_its_barcode(): void
+    {
+        Mail::fake();
+        $this->enableBol();
+
+        $group = $this->group();
+        $offer = $this->offer($group, Source::Bol, 32999, externalId: '9200000123456', ean: '4006381333931');
+
+        PriceAlert::create([
+            'group_id' => $group->id,
+            'user_id' => $this->user()->id,
+            'baseline_price' => 32999,
+            'state' => AlertState::Active->value,
+        ]);
+
+        Http::fake([
+            'login.bol.com/*' => Http::response(['access_token' => 'tok', 'expires_in' => 300]),
+            'api.bol.com/*' => Http::response($this->bolProduct()),
+        ]);
+
+        (new RefreshWishlistedProducts)->handle();
+
+        /*
+         * The barcode, not the bolProductId.
+         *
+         * This job passed the external id until 2026-09-18, and bol's product
+         * endpoint answers 400 for one, so every bol offer here was skipped
+         * without anything reporting a problem: a watched bol price simply
+         * never moved.
+         */
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'api.bol.com')
+            && str_contains($r->url(), '/products/4006381333931')
+            && str_contains($r->url(), 'country-code=BE'));
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), '/products/9200000123456'));
+
+        $fresh = $offer->fresh();
+        $this->assertSame(25000, $fresh->price);
+        $this->assertSame($group->id, $fresh->group_id, 'a refresh must not unhook the offer from its group');
+    }
+
+    #[Test]
+    public function a_bol_offer_with_no_barcode_is_not_asked_for_at_all(): void
+    {
+        Mail::fake();
+        $this->enableBol();
+
+        $group = $this->group();
+        // A bol row with no barcode: the only key bol accepts is missing.
+        $offer = $this->offer($group, Source::Bol, 32999, externalId: '9200000123456');
+
+        PriceAlert::create([
+            'group_id' => $group->id,
+            'user_id' => $this->user()->id,
+            'baseline_price' => 32999,
+            'state' => AlertState::Active->value,
+        ]);
+
+        Http::fake();
+
+        (new RefreshWishlistedProducts)->handle();
+
+        // Falling back to the id would spend a request, and a slot in the run's
+        // cap of 500, on a call that can only ever 400.
+        Http::assertNothingSent();
+        $this->assertSame(32999, $offer->fresh()->price, 'a row we cannot ask about is left exactly as it was');
+    }
+
+    #[Test]
+    public function a_watched_ebay_offer_is_still_refreshed_by_its_id(): void
+    {
+        Mail::fake();
+
+        config([
+            'giftcoves.connectors.ebay.enabled' => true,
+            'giftcoves.connectors.ebay.client_id' => 'test-id',
+            'giftcoves.connectors.ebay.client_secret' => 'test-secret',
+            'giftcoves.connectors.ebay.marketplace' => ['be-nl' => 'EBAY_NL'],
+            'giftcoves.connectors.ebay.campaign_id' => ['EBAY_NL' => '5338111111'],
+        ]);
+
+        foreach (['search', 'item'] as $bucket) {
+            Redis::del("bc:ratelimit:ebay:{$bucket}", "bc:ratelimit:ebay:{$bucket}:cooldown");
+        }
+
+        app(ConnectorRegistry::class)->registerLive(new EbayConnector);
+
+        $group = $this->group();
+        // No barcode on the row, deliberately: eBay's id is eBay's own, so the
+        // per-source refresh must not have made a barcode a precondition.
+        $offer = $this->offer($group, Source::Ebay, 32999, externalId: 'v1|123456789012|0');
+
+        PriceAlert::create([
+            'group_id' => $group->id,
+            'user_id' => $this->user()->id,
+            'baseline_price' => 32999,
+            'state' => AlertState::Active->value,
+        ]);
+
+        Http::fake([
+            'api.ebay.com/identity/*' => Http::response(['access_token' => 'tok', 'expires_in' => 7200]),
+            'api.ebay.com/buy/*' => Http::response([
+                'itemId' => 'v1|123456789012|0',
+                'title' => 'Sony WH-1000XM5 Draadloze Koptelefoon Zwart',
+                'price' => ['value' => '250.00', 'currency' => 'EUR'],
+                'itemWebUrl' => 'https://www.ebay.nl/itm/123456789012',
+                'itemAffiliateWebUrl' => 'https://www.ebay.nl/itm/123456789012?mkcid=1&campid=5338111111',
+                'gtin' => '4006381333931',
+            ]),
+        ]);
+
+        (new RefreshWishlistedProducts)->handle();
+
+        // The pipes have to survive into the path rather than being read as a
+        // delimiter, which is why the id is sent encoded.
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), '/item/')
+            && str_contains(urldecode($r->url()), 'v1|123456789012|0'));
+
+        $fresh = $offer->fresh();
+        $this->assertSame(25000, $fresh->price);
+
+        // And the barcode the search endpoint never carried, which is what lets
+        // a watched eBay offer group with the same product at another shop.
+        $this->assertSame('4006381333931', $fresh->ean);
     }
 }

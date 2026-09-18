@@ -15,8 +15,10 @@ use App\Models\DailyPickSet;
 use App\Models\Merchant;
 use App\Models\Product;
 use App\Models\ProductGroup;
+use App\Services\Cove\CoveRail;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -123,6 +125,49 @@ class CoveRailTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('rail.coves.key', 'smart')
                 ->where('rail.coves.coves', fn ($coves) => count($coves) === 2));
+    }
+
+    #[Test]
+    public function every_kind_that_reaches_the_rail_has_a_band(): void
+    {
+        /*
+         * `coves()` asks `sectionOf()` what it is holding before it queries
+         * anything, so a kind with no arm there is a fatal on the page rather
+         * than a block that does not render. Asserted kind by kind because the
+         * band is a *decision* about what a reader is offered next, and the only
+         * way to make somebody take it is for the missing one to fail here.
+         */
+        $this->assertSame('daily', CoveRail::sectionOf(CoveKind::Daily));
+        $this->assertSame('gift', CoveRail::sectionOf(CoveKind::Persona));
+        $this->assertSame('shop', CoveRail::sectionOf(CoveKind::Shop));
+
+        // Three kinds, one shelf. That is the whole reason the bands are not
+        // simply the kinds: an advice article's rail offers the buying guides
+        // too, which on most markets is the only thing it can offer at all.
+        $this->assertSame('smart', CoveRail::sectionOf(CoveKind::Guide));
+        $this->assertSame('smart', CoveRail::sectionOf(CoveKind::Seasonal));
+        $this->assertSame('smart', CoveRail::sectionOf(CoveKind::Advice));
+    }
+
+    #[Test]
+    public function a_brand_cove_says_it_has_no_band_rather_than_borrowing_one(): void
+    {
+        /*
+         * A Brand Cove cannot reach the rail today: it is read on its brand
+         * page, which `BrandController` renders with live product rails of its
+         * own, and the two controllers that do build this rail scope to
+         * `articles()` and `shops()` — neither of which selects a brand.
+         *
+         * It threw before this test existed too, as an `UnhandledMatchError`
+         * naming a PHP class. The arm is here to explain rather than to answer,
+         * because the alternative was worse than the fatal: folding brand into
+         * the shop band would put six pieces about shops under an article about
+         * Sony, and no test and no log would ever report it.
+         */
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageMatches('/no rail band/');
+
+        CoveRail::sectionOf(CoveKind::Brand);
     }
 
     // ── The products in the rail ──────────────────────────────────────────

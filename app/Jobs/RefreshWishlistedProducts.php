@@ -81,6 +81,15 @@ class RefreshWishlistedProducts implements ShouldQueue
      * for; a fetch that answers nothing leaves the row as it was, because
      * "the API did not answer" and "the product is gone" are different facts
      * and only ingestion's stale sweep is entitled to the second.
+     *
+     * Each source is asked through `LiveConnector::refresh()`, which is handed
+     * both keys the row carries — the external id and the barcode — and picks
+     * the one it can answer for. Until 2026-09-18 this called `fetchById()`
+     * with the external id, and for bol that could never work: bol's product
+     * endpoint takes an EAN and answers 400 for the `bolProductId` we store, so
+     * every bol offer here was skipped, silently, and a watched bol product's
+     * price never moved. The job cannot make that choice itself — which key a
+     * source accepts is a fact about the source.
      */
     private function refreshLiveOffers(ConnectorRegistry $registry, OfferUpserter $upserter): int
     {
@@ -121,7 +130,9 @@ class RefreshWishlistedProducts implements ShouldQueue
             ->whereIn('group_id', $groupIds)
             ->whereIn('source', $liveSources)
             ->where('status', ProductStatus::Active->value)
-            ->select(['id', 'source', 'external_id', 'market', 'group_id'])
+            // `ean` rides along because it is the only key bol can be asked
+            // with; every other column here was already needed.
+            ->select(['id', 'source', 'external_id', 'ean', 'market', 'group_id'])
             ->orderBy('id')
             ->chunkById(100, function ($products) use ($registry, $upserter, &$fetched, &$written): bool {
                 foreach ($products as $product) {
@@ -136,7 +147,7 @@ class RefreshWishlistedProducts implements ShouldQueue
                     }
 
                     try {
-                        $offer = $connector->fetchById($product->external_id, $product->market);
+                        $offer = $connector->refresh($product->external_id, $product->ean, $product->market);
                     } catch (Throwable $e) {
                         report($e);
 

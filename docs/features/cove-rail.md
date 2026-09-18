@@ -40,8 +40,15 @@ folds them into `smart`. Splitting them would leave an advice article offering o
 articles, which on most markets is nothing. The band keys are `/coves`'s keys deliberately: the copy
 for a heading and for "all of these" already exists as `site.coves.{key}_heading` and
 `site.coves.{key}_all`, and a second set of names for the same sections would be more strings to keep
-in step across four languages. A Brand Cove is read on its brand page, which does not carry this
-rail.
+in step across four languages.
+
+A Brand Cove is read on its brand page, which does not carry this rail, so `sectionOf()` throws a
+`LogicException` saying exactly that rather than answering. It is unreachable today:
+`BrandController` renders the brand page itself, and the two controllers that do build the rail
+scope to `articles()` and `shops()`. Throwing is still better than the alternative it replaced on
+2026-09-18, which was no arm at all and an `UnhandledMatchError` naming a PHP class. Folding brand
+into the shop band would have been worse than either: an article about Sony ending in six pieces
+about shops, with nothing downstream to report it.
 
 **Brands and shops are not bands here.** `/coves` publishes those two as directories, and a page of
 writing that offered a grid of brand names would be navigation dressed as a recommendation.

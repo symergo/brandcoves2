@@ -110,6 +110,28 @@ class CoveDraftApiTest extends TestCase
     }
 
     #[Test]
+    public function a_brand_is_refused_with_the_reason_rather_than_a_500(): void
+    {
+        $this->withToken($this->key([ApiToken::WRITE]))
+            ->postJson('/api/editorial/coves/drafts', [
+                'market' => Market::BeNl->value,
+                'kind' => CoveKind::Brand->value,
+                'count' => 5,
+            ])
+            /*
+             * The controller calls `draft()` before `canDraft()`, because the
+             * refusal sentence is what `draft()` returns. So a kind with no arm
+             * in that match threw before the refusal was ever reached, and the
+             * caller got a 500 naming a PHP class instead of a sentence telling
+             * it to write the piece from the brand page.
+             */
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('kind');
+
+        $this->assertSame(0, CovePlan::query()->count());
+    }
+
+    #[Test]
     public function drafting_needs_a_key_that_may_write(): void
     {
         $this->withToken($this->key([ApiToken::READ]))

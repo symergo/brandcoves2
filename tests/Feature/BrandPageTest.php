@@ -1052,6 +1052,11 @@ class BrandPageTest extends TestCase
             {
                 return null;
             }
+
+            public function refresh(string $externalId, ?string $ean, Market $market): ?Offer
+            {
+                return null;
+            }
         });
 
         $this->get('/be-nl/brand/aurex')

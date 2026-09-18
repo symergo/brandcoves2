@@ -512,6 +512,7 @@ return [
 
     'footer' => [
         'affiliate' => 'Nous pouvons percevoir une commission sur les achats effectués via nos liens, cela ne change jamais le prix que vous payez.',
+        'amazon' => 'En tant que Partenaire Amazon, nous réalisons un bénéfice sur les achats remplissant les conditions requises.',
         'copyright' => '© :year GiftCoves.',
         'explore' => 'Explorer',
     ],
@@ -968,9 +969,9 @@ return [
         'suggestions_step3' => 'Appuyez sur « Ajouter » et elle rejoint la liste, ou sur « Non merci » et elle disparaît. Rien n’y figure avant votre décision.',
 
         'whisperer_title' => 'Gift Whisperer',
-        'whisperer_body' => 'Décrivez une personne et recevez quatre idées, chacune avec sa raison. Pour quand vous savez pour qui, mais pas quoi.',
+        'whisperer_body' => 'Décrivez une personne et recevez huit idées, chacune avec ce qu’elle a en commun avec votre description. Pour quand vous savez pour qui, mais pas quoi.',
         'whisperer_step1' => 'Répondez à quelques courtes questions sur la personne : qui elle est, ce qu’elle aime, ce que vous voulez dépenser, ce qu’il faut éviter.',
-        'whisperer_step2' => 'Quatre idées reviennent, chacune avec sa raison. Demandez autre chose et ce que vous avez écarté ne revient jamais.',
+        'whisperer_step2' => 'Huit idées reviennent, chacune avec ce qu’elle a en commun avec votre description. Demandez autre chose et ce que vous avez écarté ne revient jamais.',
         'whisperer_step3' => 'Enregistrez les bonnes directement sur une liste pour cette personne.',
         'band_own' => 'Votre propre liste',
         'band_someone' => 'Une liste pour quelqu\'un',
@@ -1127,7 +1128,7 @@ return [
     'gift' => [
         'title' => 'Trouveur de cadeaux',
         'subtitle' => 'Parlez-nous d’elle ou de lui. Nous trouvons huit cadeaux qui tiennent la route.',
-        'seo_description' => 'Décrivez la personne à qui vous offrez et recevez quatre idées de cadeaux, chacune avec sa raison et où l\'acheter.',
+        'seo_description' => 'Décrivez la personne à qui vous offrez et recevez huit idées de cadeaux, chacune avec ce qu’elle a en commun avec votre description.',
 
         'step_who' => 'C’est pour qui ?',
         'step_interests' => 'Qu’est-ce qui lui plaît ?',

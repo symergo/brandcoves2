@@ -10,6 +10,9 @@ use App\Services\Ai\AiUnavailable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ReflectionProperty;
 use Tests\TestCase;
 
 /**
@@ -173,6 +176,78 @@ class AiClientTest extends TestCase
             ['ok' => true],
             app(AiClient::class)->json('gift_angles', 'x', 'y', []),
         );
+    }
+
+    #[Test]
+    public function nothing_a_web_request_reaches_resolves_the_client(): void
+    {
+        /*
+         * The other half of invariant 1, and the half that fails early.
+         *
+         * The runtime guard below throws in whatever environment first reaches
+         * it, which is a bug report. This fails while the code that would spend
+         * is being written, which is a diff.
+         *
+         * `app/Http` is the surface a visitor's request reaches. `app/Filament`
+         * is deliberately not scanned: the AI settings page asks `isEnabled()`,
+         * which spends nothing, and its credential test dispatches a job.
+         */
+        $offenders = [];
+
+        /** @var iterable<\SplFileInfo> $files */
+        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(app_path('Http')));
+
+        foreach ($files as $file) {
+            if ($file->getExtension() !== 'php') {
+                continue;
+            }
+
+            $source = (string) file_get_contents($file->getPathname());
+
+            // Resolved from the container, or type-hinted into a method. A
+            // comment naming the class is not a call, and several say why they
+            // deliberately do not make one.
+            if (str_contains($source, 'AiClient::class') || preg_match('/AiClient\s+\$/', $source) === 1) {
+                $offenders[] = $file->getFilename();
+            }
+        }
+
+        $this->assertSame([], $offenders, 'AI is only ever called from a queued job, the scheduler or a command.');
+    }
+
+    #[Test]
+    public function the_client_refuses_outside_a_console_process(): void
+    {
+        /*
+         * Invariant 1, proved rather than assumed.
+         *
+         * The guard is `! app()->runningInConsole()`, and PHPUnit *is* the
+         * console, so it stands down for every other test in this suite. That
+         * is how a test claiming to hold this invariant passed for weeks while
+         * proving nothing: it was reaching the real API and passing on the 401.
+         *
+         * Laravel caches the answer on the application, so flipping that cached
+         * flag is the only way to ask the question a web request would ask. It
+         * is put back afterwards, because everything else here needs it true.
+         */
+        $this->fakeResponse([['type' => 'text', 'text' => '{}']]);
+
+        $console = new ReflectionProperty($this->app, 'isRunningInConsole');
+        $console->setValue($this->app, false);
+
+        try {
+            app(AiClient::class)->json('gift_angles', 'x', 'y', []);
+
+            $this->fail('The client answered inside a web request.');
+        } catch (AiUnavailable) {
+            // What a controller reaching this class must get.
+        } finally {
+            $console->setValue($this->app, true);
+        }
+
+        // And it refused before spending: no request left, no usage recorded.
+        Http::assertNothingSent();
+        $this->assertSame(0, AiUsage::query()->count());
     }
 
     #[Test]

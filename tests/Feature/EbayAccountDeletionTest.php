@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionProperty;
 use Tests\TestCase;
 
 /**
@@ -168,6 +170,25 @@ class EbayAccountDeletionTest extends TestCase
          */
         $this->postJson('/webhooks/ebay/account-deletion', ['unexpected' => true])->assertNoContent();
         $this->postJson('/webhooks/ebay/account-deletion', [])->assertNoContent();
+    }
+
+    #[Test]
+    public function the_webhook_is_exempt_from_the_form_security_check(): void
+    {
+        /*
+         * Asserted on the exemption list rather than by posting without a
+         * token, because Laravel skips that check for the whole suite
+         * (`PreventRequestForgery` returns early under `runningUnitTests()`).
+         * A test that posts and gets a 204 therefore passes whether or not
+         * this path is exempt, which is how the previous one proved nothing.
+         *
+         * eBay posts server to server, with no session and no token to carry,
+         * and a 419 here marks the application non compliant in their portal —
+         * which stops the production keyset minting tokens at all.
+         */
+        $never = new ReflectionProperty(PreventRequestForgery::class, 'neverVerify');
+
+        $this->assertContains('webhooks/ebay/account-deletion', $never->getValue());
     }
 
     /** @return array<string, mixed> */

@@ -242,10 +242,15 @@ it.
 ## `BolConnector::fetchById()`
 
 Settled on 2026-09-14: bol's product endpoint takes an EAN only, and a `bolProductId` answers 400.
-`fetchById()` now returns null for anything that is not a 13-digit barcode. The wishlist refresh
-still passes `products.external_id`, so bol offers are not refreshed there; see
+`fetchById()` returns null for anything that is not a 13-digit barcode, and `fetchByEan()` is the
+same call under its real name.
+
+The wishlist refresh stopped passing `products.external_id` on 2026-09-18. It calls
+`LiveConnector::refresh()` instead, which `BolConnector` answers with `products.ean` normalised
+through `Gtin`, and which returns null without a request when the row carries no barcode. Until then
+no bol offer was refreshed at all; see [wishlists.md](wishlists.md) and
 [page-import.md](page-import.md#getting-from-a-page-to-a-catalogue-record). This feature never
-depended on it.
+depended on either.
 
 ## Files
 

@@ -15,6 +15,7 @@ use App\Services\Connectors\PopularChart;
 use App\Services\Connectors\PopularityConnector;
 use App\Services\Connectors\RateLimiter;
 use App\Services\Connectors\SourceSwitch;
+use App\Services\Identity\Gtin;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -193,6 +194,26 @@ class BolConnector implements LiveConnector, PopularityConnector
         $product = $response->json('product') ?? $response->json();
 
         return is_array($product) ? $this->normalise($product, $market) : null;
+    }
+
+    /**
+     * Re-check one stored offer: by its barcode, or not at all.
+     *
+     * The `external_id` we hold for a bol offer is a `bolProductId`, which this
+     * API refuses ({@see fetchById}), so the barcode is the only key that can
+     * answer. It is normalised through {@see Gtin} because `products.ean` holds
+     * whatever wrote the row — a UPC-12, a padded GTIN-8, a feed's placeholder
+     * — and this endpoint takes 13 digits and validates them itself.
+     *
+     * A row with no usable barcode returns null WITHOUT a request. Falling back
+     * to the id would spend a request, and a slot in the run's cap, on a
+     * guaranteed 400.
+     */
+    public function refresh(string $externalId, ?string $ean, Market $market): ?Offer
+    {
+        $gtin = Gtin::normalise($ean);
+
+        return $gtin === null ? null : $this->fetchByEan($gtin, $market);
     }
 
     public function isChartCoolingDown(): bool
