@@ -99,6 +99,12 @@ unreachable, which is itself a compliance gap.
 French and Spanish translations are outstanding; both markets currently serve English with the
 fallback notice.
 
+**Amazon's required disclosure no longer waits on them.** It was only on the English and Dutch terms
+pages while `be-fr` already carried tagged Amazon links, so French readers never saw it. Since
+2026-09-18 it is `site.footer.amazon`, written in all four languages and rendered in the footer of
+every page of a market that has an Associates tag. The terms pages keep their copy; see
+[amazon-compliance.md](amazon-compliance.md).
+
 ## The about page was brought up to date on 2026-09-08
 
 The text dated from 2026-08-09 and described the site as it was then. It now names what was built

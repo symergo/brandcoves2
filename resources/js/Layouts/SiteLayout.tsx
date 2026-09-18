@@ -82,7 +82,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
 
 function Chrome({ children }: PropsWithChildren) {
     const page = usePage<SharedProps>()
-    const { market, auth, unreadCount, analytics } = page.props
+    const { market, auth, unreadCount, analytics, amazonAssociate } = page.props
     const { t } = useTranslations()
     const base = `/${market.key}`
     const [menuOpen, setMenuOpen] = useState(false)
@@ -880,8 +880,17 @@ function Chrome({ children }: PropsWithChildren) {
                       copyright line already says it, and the header is where
                       the name belongs.
                     */}
+                    {/*
+                      The Amazon sentence is Amazon's own, required verbatim by
+                      the Associates programme, and it sits here rather than on
+                      the terms page because the programme wants it with the
+                      links: a Cove's prose can carry an Amazon link, so any
+                      page can. Only in markets that have a tag, since the
+                      others show no Amazon link at all.
+                    */}
                     <p className="mt-3 border-t border-line/60 pt-3 text-2xs">
                         {t('footer.copyright', { year: String(new Date().getFullYear()) })} {t('footer.affiliate')}
+                        {amazonAssociate && ` ${t('footer.amazon')}`}
                     </p>
                 </div>
             </footer>

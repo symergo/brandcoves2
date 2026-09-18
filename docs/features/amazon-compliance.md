@@ -214,9 +214,23 @@ cheaper to honour now than to retrofit:
   the footer and beneath the offer table.
 - **Amazon-specific wording** is mandated and differs per marketplace; the
   English form is "As an Amazon Associate I earn from qualifying purchases."
-  It is on the terms page in Dutch and English (`resources/legal/{nl,en}/terms.md`).
-  **French is missing, and `be-fr` already carries tagged Amazon links**
+  Since 2026-09-18 it is `site.footer.amazon`, written in all four languages and
+  rendered in the footer of **every page of a market that has an Associates
+  tag**. The terms pages keep their own copy in Dutch and English
+  (`resources/legal/{nl,en}/terms.md`).
+
+  It moved because the terms page was the only place it appeared, and `be-fr`
+  has carried tagged Amazon links since the CTA shipped while its terms page
+  falls back to English ([legal-pages.md](legal-pages.md)) — so a French reader
+  never met the statement at all. The footer is also simply where it belongs:
+  the programme wants the disclosure with the links, and an Amazon link is not
+  only on the search page, because a Cove's prose can carry one
   ([amazon-search-cta.md](amazon-search-cta.md)).
+
+  Gated on the tag rather than shown everywhere: `en` and `es` have none, show
+  no Amazon link anywhere, and a disclosure about links that are not there reads
+  as boilerplate. `HandleInertiaRequests` shares the fact as `amazonAssociate`;
+  `AmazonSearchCtaTest` pins both halves, and that every language has the line.
 - **Price timestamp and disclaimer** next to any Amazon price
   (`requiresPriceTimestamp()`), stating the price may have changed.
 

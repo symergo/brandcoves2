@@ -44,6 +44,45 @@ class AmazonSearchCtaTest extends TestCase
     }
 
     #[Test]
+    public function the_disclosure_reaches_every_page_of_a_market_that_carries_amazon_links(): void
+    {
+        /*
+         * The Associates programme requires its statement where the links are,
+         * and an Amazon link is not only on the search page: a Cove's prose can
+         * carry one, so any page can. The footer is the one place on all of
+         * them, so the layout is told per market rather than per page.
+         *
+         * `be-fr` is the case that prompted this. It has carried a tagged
+         * Amazon link since the CTA shipped, and the terms page it would
+         * otherwise rely on exists in English and Dutch only.
+         */
+        foreach (['nl-nl', 'be-nl', 'be-fr'] as $market) {
+            $this->get("/{$market}")
+                ->assertOk()
+                ->assertInertia(fn ($page) => $page->where('amazonAssociate', true));
+        }
+
+        // No tag, no Amazon link anywhere, so nothing to disclose. A statement
+        // about links that are not on the page is boilerplate, not a notice.
+        $this->get('/en')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('amazonAssociate', false));
+    }
+
+    #[Test]
+    public function every_language_carries_the_disclosure_in_its_own_words(): void
+    {
+        // Amazon's wording, per marketplace language. English on a French page
+        // satisfies nobody: not the reader, and not the programme.
+        foreach (['en', 'nl', 'fr', 'es'] as $language) {
+            $line = (string) ((require lang_path("{$language}/site.php"))['footer']['amazon'] ?? '');
+
+            $this->assertNotSame('', trim($line), "{$language} has no Amazon disclosure");
+            $this->assertStringContainsString('Amazon', $line);
+        }
+    }
+
+    #[Test]
     public function a_market_without_a_tag_gets_no_link(): void
     {
         $this->get('/en/search?q=headphones')

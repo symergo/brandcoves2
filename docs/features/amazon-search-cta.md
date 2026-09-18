@@ -115,6 +115,11 @@ above it.
 Both render `rel="sponsored noopener nofollow"` in a new tab, the same as every other outbound
 affiliate link on the site.
 
+**And every page of these markets carries Amazon's own disclosure in the footer**, in the market's
+language, since 2026-09-18. The programme requires that wording where the links are, and the links
+are not only here: a Cove's prose can carry an `[[amazon:]]` one. Markets with no tag show neither
+the link nor the sentence. See [amazon-compliance.md](amazon-compliance.md#required-disclosures).
+
 **It is drawn as loudly as our own buttons** — accent fill, the shop's mark, an arrow — because a
 quiet version does not get the click, and the click is the whole point. As a bordered note in the
 rail it read as a footnote *about* Amazon rather than a way to go there, and the shopper still left
