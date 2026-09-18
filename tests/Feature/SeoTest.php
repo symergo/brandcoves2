@@ -494,24 +494,30 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function the_sitemap_lists_only_products_worth_landing_on(): void
+    public function the_sitemap_does_not_list_product_pages(): void
     {
+        /*
+         * The owner's decision, 2026-09-18. It replaces a test that asserted
+         * the opposite — that a presentable product was listed and an
+         * imageless one was not.
+         *
+         * A product page is still indexable and still reachable: nothing about
+         * this makes it `noindex`, and the internal links from search, brand
+         * pages and Coves are followed. It is only no longer submitted.
+         */
         config(['giftcoves.robots_allow' => true]);
         $group = $this->seedCatalogue();
 
         $xml = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
 
-        $this->assertStringContainsString("/be-nl/p/{$group->id}/{$group->slug}", $xml);
-        // hreflang in the sitemap as well as the head: Google treats them as
-        // independent signals and picks the sitemap up faster on a new URL.
+        $this->assertStringNotContainsString("/be-nl/p/{$group->id}/{$group->slug}", $xml);
+        $this->assertStringNotContainsString('/p/', $xml);
+
+        // The editorial surfaces are still listed, and still carry hreflang in
+        // the sitemap as well as the head: Google treats the two as independent
+        // signals and picks the sitemap up faster on a new URL.
+        $this->assertStringContainsString('<loc>'.url('/be-nl/search').'</loc>', $xml);
         $this->assertStringContainsString('hreflang="fr-BE"', $xml);
-
-        // A product with no image cannot be a good landing page.
-        ProductGroup::query()->whereKey($group->id)->update(['image_url' => null]);
-        Cache::flush();
-
-        $xml = (string) $this->get('/sitemap/be-nl/1.xml')->getContent();
-        $this->assertStringNotContainsString("/p/{$group->id}/", $xml);
     }
 
     #[Test]
@@ -662,12 +668,13 @@ class SeoTest extends TestCase
     }
 
     #[Test]
-    public function editorial_urls_are_listed_once_in_the_first_chunk_only(): void
+    public function a_market_has_one_sitemap_file_and_its_urls_are_listed_once(): void
     {
         config(['giftcoves.robots_allow' => true]);
 
         $first = (string) $this->get('/sitemap/be-nl/1.xml')->assertOk()->getContent();
         $second = (string) $this->get('/sitemap/be-nl/2.xml')->assertOk()->getContent();
+        $index = (string) $this->get('/sitemap.xml')->assertOk()->getContent();
 
         // A market with eight product chunks used to list its editorial URLs
         // eight times — which a crawler reads as a sitemap it cannot trust.
@@ -675,6 +682,13 @@ class SeoTest extends TestCase
             $this->assertStringContainsString('<loc>'.url($path).'</loc>', $first);
             $this->assertStringNotContainsString(url($path), $second);
         }
+
+        // Since the catalogue left the sitemap there is one file per market,
+        // and the index names only that one. A second file still answers,
+        // empty: a crawler told about `2.xml` last week should meet a valid
+        // file rather than a 404 while it forgets.
+        $this->assertStringNotContainsString('/sitemap/be-nl/2.xml', $index);
+        $this->assertStringNotContainsString('<url>', $second);
     }
 
     #[Test]

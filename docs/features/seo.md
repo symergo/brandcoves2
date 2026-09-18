@@ -283,19 +283,32 @@ preview tests now switch indexing on.
 
 ## Sitemaps
 
-An index plus per-market files, 5,000 URLs each (the format caps at 50,000 and
-the catalogue will pass that in one market alone; the smaller chunk is a memory
-ceiling, explained on the constant). Only products worth landing on are listed —
-in stock, priced, with an image. Submitting URLs that render as "currently
-unavailable" wastes crawl budget and teaches the crawler that the sitemap is
-unreliable. Multi-shop products get a higher priority, because a page that
-actually compares offers is the better landing page.
+An index plus one file per market.
 
-**Everything that is not a product is in the first chunk only.** The brand block
-was gated that way from the start; the statics, the discovery modes, the guides,
-the Shop Coves, the personas and four hundred dailies were not, so a market with
-eight product chunks listed its editorial URLs eight times and rebuilt them,
-alternates included, eight times over. Gated together since 2026-09-06.
+**Product pages are not listed, since 2026-09-18.** The owner's decision. What
+is submitted is the editorial surface: the home page, the Coves, the guides, the
+personas, the brand pages, the answered questions, the help and legal pages.
+
+A product page is **still indexable and still crawlable** — nothing about this
+makes it `noindex`, and the links to it from search, brand pages and Coves are
+followed. It is only no longer submitted. The catalogue was 96 of every 100 URLs
+in the file and the least stable part of it: offers come and go daily, and a
+submitted URL that reads "currently unavailable" a week later is what teaches a
+crawler the file is not worth re-reading.
+
+The 5,000-URL chunking went with it. It existed because the catalogue passed a
+single file's 50,000-URL limit in one market alone; a market's editorial URLs are
+a few thousand, so one file holds them. `2.xml` still answers, empty, while
+crawlers forget it.
+
+**Everything is in the first file, and the gate that put it there is still in the
+code.** It was written when there were product chunks to keep it out of: the
+brand block was gated from the start; the statics, the discovery modes, the
+guides, the Shop Coves, the personas and four hundred dailies were not, so a
+market with eight product chunks listed its editorial URLs eight times and
+rebuilt them, alternates included, eight times over (gated together 2026-09-06).
+With the chunks gone the gate is what makes any later file empty rather than a
+duplicate.
 
 **The board's answered questions, the popular-searches hub and the list help
 are listed.** All three were linked from the header or footer and in no sitemap.
@@ -309,8 +322,9 @@ nothing, because both parameters are arrays (`brand%5B0%5D=`). They were fixed t
 then removed with the rest of the facet disallows on 2026-09-12.
 
 *(Until 2026-09-12)* A product with no buyable offer was `noindex, follow`; the check had been "no
-offer rows", which an out-of-stock row satisfies. It is indexable now, like every product; the
-sitemap still lists only in-stock, priced products with an image.
+offer rows", which an out-of-stock row satisfies. It is indexable now, like every product — and
+since 2026-09-18 no product is in the sitemap at all, so the rule that listed only in-stock, priced
+products with an image has no URLs left to filter.
 
 ## Guardrails
 

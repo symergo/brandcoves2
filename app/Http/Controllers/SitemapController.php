@@ -9,7 +9,6 @@ use App\Enums\Market;
 use App\Enums\PublishStatus;
 use App\Models\BrandStat;
 use App\Models\CommunityQuestion;
-use App\Models\ProductGroup;
 use App\Services\Seo\Alternates;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
@@ -17,53 +16,46 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Sitemaps.
+ * Sitemaps: an index, plus one file per market.
  *
- * Split into an index plus per-market files: a single sitemap is capped at
- * 50,000 URLs and the catalogue will pass that in one market alone.
+ * ## Product pages are deliberately not listed (2026-09-18)
  *
- * Only products worth landing on are listed — in stock, priced, with an image.
- * Submitting URLs that render as "currently unavailable" wastes crawl budget
- * and teaches the crawler that the sitemap is unreliable.
+ * The owner's decision. Everything a person is meant to land on from a search
+ * engine is editorial — the home page, the Coves, the guides, the brand pages,
+ * the personas, the answered questions — and those are what this submits.
+ *
+ * A product page is **still indexable and still crawlable**: nothing here is
+ * `noindex`, the internal links are followed, and a crawler that arrives from a
+ * brand page or a Cove is welcome to it. It is simply not submitted. What that
+ * changes: the catalogue was 96 of every 100 URLs in the file, it turns over
+ * daily as offers come and go, and a submitted URL that reads "currently
+ * unavailable" a week later is what teaches a crawler that the sitemap is not
+ * worth re-reading.
+ *
+ * What went with it: the 5,000-URL chunking, which existed only because the
+ * catalogue passed a single file's 50,000-URL limit in one market. The
+ * editorial surfaces of one market are a few thousand URLs, so one file holds
+ * them with room to spare, and the index names `1.xml` and nothing else.
  */
 class SitemapController extends Controller
 {
-    /**
-     * URLs per sitemap file.
-     *
-     * The protocol allows 50,000 and 50 MB uncompressed, so 20,000 looked
-     * comfortable. It was not: every entry carries five `<xhtml:link>`
-     * alternates, one per market, which makes a URL roughly 550 bytes rather
-     * than the ~90 a bare `<loc>` costs. 20,000 of those is **11 MB**, and
-     * building that string, holding the Eloquent collection behind it and
-     * writing the result to Redis all inside one request exceeded the web
-     * process's memory limit — a 500 on a file that generated perfectly from the
-     * CLI, where memory_limit is different. The 500 is what a crawler sees.
-     *
-     * 5,000 keeps a file near 3 MB and costs four times as many files, which is
-     * free: the index lists them and a crawler fetches them independently.
-     */
-    private const CHUNK = 5_000;
-
     public function index(): Response
     {
         $xml = Cache::remember('bc:sitemap:index', 3600, function (): string {
-            $entries = [];
-
-            // Published only. Advertising a market sitemap that resolves to an
-            // empty catalogue spends crawl budget to prove there is nothing
-            // there.
-            foreach (Market::published() as $market) {
-                $count = ProductGroup::query()
-                    ->forMarket($market)
-                    ->presentable()
-                    ->count();
-
-                $pages = max(1, (int) ceil($count / self::CHUNK));
-                for ($page = 1; $page <= $pages; $page++) {
-                    $entries[] = url("/sitemap/{$market->value}/{$page}.xml");
-                }
-            }
+            /*
+             * One file per market, and no count to make first.
+             *
+             * The number of files used to follow the product count, which is
+             * why this ran a `count()` per market on a cold cache. With the
+             * catalogue out of the sitemap there is exactly one file each.
+             *
+             * Published markets only: advertising a sitemap for a market that
+             * is not open spends crawl budget to prove there is nothing there.
+             */
+            $entries = array_map(
+                fn (Market $market): string => url("/sitemap/{$market->value}/1.xml"),
+                Market::published(),
+            );
 
             $body = implode('', array_map(
                 fn (string $loc) => '<sitemap><loc>'.e($loc).'</loc></sitemap>',
@@ -88,16 +80,14 @@ class SitemapController extends Controller
             $urls = [];
 
             /*
-             * Everything that is not a product goes in the first chunk only.
+             * Everything lives in the first file, and there is no second one.
              *
-             * The brand block was gated this way from the start, with the
-             * reason written beside it: repeating a block in every chunk lists
-             * each URL dozens of times, which a crawler reads as a sitemap it
-             * cannot trust. The statics, the discovery modes, the guides, the
-             * Shop Coves, the personas and four hundred dailies were not gated,
-             * so a market with eight product chunks listed its five hundred
-             * editorial URLs eight times — and rebuilt them, with their
-             * alternates, eight times over.
+             * This gate was how a repeated block was kept out of every product
+             * chunk — listing each editorial URL eight times reads as a sitemap
+             * a crawler cannot trust. The chunks went with the products on
+             * 2026-09-18 and the gate stayed: the index names `1.xml` only, and
+             * a stale crawler asking for `2.xml` gets a valid empty file rather
+             * than a 404 for something it was told about last week.
              */
             if ($page === 1) {
                 $urls = [
@@ -330,44 +320,16 @@ class SitemapController extends Controller
                     });
             }
 
-            $groups = ProductGroup::query()
-                ->forMarket($resolved)
-                ->presentable()
-                ->orderBy('id')
-                ->forPage($page, self::CHUNK)
-                ->get(['id', 'slug', 'updated_at', 'merchant_count', 'identity_key']);
-
             /*
-             * Product alternates, batched.
+             * Alternates, resolved per kind rather than per URL.
              *
-             * Resolved per URL this cost two queries each — ten thousand for one
-             * file, fifty seconds to build, and a 500 for every crawler because
-             * the proxy gives up at thirty. Precomputed here they are one query
-             * and the alternates travel with the URL.
-             */
-            $productAlternates = $alternates->forProducts(
-                $groups->pluck('identity_key', 'id')->all(),
-            );
-
-            $groups->each(function (ProductGroup $group) use (&$urls, $resolved, $productAlternates): void {
-                $urls[] = [
-                    'loc' => url("/{$resolved->value}/p/{$group->id}/{$group->slug}"),
-                    'lastmod' => $group->updated_at?->toAtomString(),
-                    'alternates' => $productAlternates[$group->id] ?? [],
-                    // A product several shops carry is a better landing page
-                    // than one with a single offer — that is the comparison
-                    // this site exists to show.
-                    'priority' => $group->merchant_count > 1 ? '0.8' : '0.6',
-                    'changefreq' => 'daily',
-                ];
-            });
-
-            /*
-             * Alternates for everything that did not arrive with its own,
-             * resolved per kind rather than per URL. On a cold cache the
-             * editorial block used to cost a query or two for each of its
-             * five hundred URLs — the failure the product block's docblock
-             * describes, left in place for everything else.
+             * On a cold cache this used to cost a query or two for each of the
+             * five hundred editorial URLs. The product block that stood here
+             * until 2026-09-18 had the same problem far worse — two queries per
+             * URL, ten thousand for one file, fifty seconds to build and a 500
+             * for every crawler, because the proxy gives up at thirty — and it
+             * is `Alternates::forProducts()` that still carries the note. That
+             * method is not dead: the product page itself uses it.
              */
             $batched = $alternates->forPaths(
                 array_values(array_map(
