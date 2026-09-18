@@ -45,9 +45,23 @@ every prompt the builders assemble (`CovePrompt`, `EditionBuilder`, `GuideWriter
 `ClassifyGiftability`). The editorial lookup (`ProductLookup::describe()`) carries both `title` and
 `displayTitle`: an author matching a product needs the feed's words.
 
-`wishlist_items.snapshot_title` is a write, not a render. New saves snapshot the display title;
-existing rows are left as they are. A snapshot is a record of what the person saw when they chose,
-and it is editable by them, so a backfill would overwrite decisions.
+**A saved item shows its product's title, since 2026-09-18.** `WishlistItem::displayTitle()` reads
+the product's and falls back to `snapshot_title` only when there is no product left. Every surface
+that renders a saved item goes through it: the list, pending suggestions, a shared list, Secret
+Santa, the recipient profile, the stated-wishes view and the price digest.
+
+It was the snapshot alone until the owner asked why their own list still showed merchant strings
+after the titles were written. `ItemSaver` takes the snapshot once, at the save, so nothing written
+afterwards could ever reach an item somebody had already kept — and a backfill of those copies would
+have been a migration that fixed only the past. Live-with-fallback is also the rule the same card
+already followed for price, stock and shop count, and `SharedListController` already preferred the
+live price over the snapshot.
+
+`snapshot_title` keeps the two jobs it is really for: a product that has since been deleted
+(`group_id` is `nullOnDelete`, so the row outlives the product) and a manual item, which has no
+product and whose title is the one thing its owner may edit. Claim and activity messages
+("somebody claimed X") keep the snapshot too: those record what was said at a moment rather than
+showing the thing now.
 
 ## Search finds both titles
 

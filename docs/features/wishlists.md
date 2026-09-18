@@ -236,11 +236,19 @@ whichever list the item happens to sit on.
 ## Snapshots, not references
 
 `wishlist_items` stores `snapshot_title`, `snapshot_image_url`, `snapshot_price` and `snapshot_url`
-alongside `group_id`. The feed can drop, rename or re-key a product tomorrow; the list must still
-show what the person actually chose. The live group is joined for *current* price, so the owner sees
-both "you saved it at €329" and "it is €279 now".
+alongside `group_id`. The feed can drop or re-key a product tomorrow; the list must still show what
+the person actually chose. The live group is joined for *current* price, so the owner sees both "you
+saved it at €329" and "it is €279 now".
 
 `group_id` is `nullOnDelete` for the same reason: losing the product must not lose the entry.
+
+**The title is the exception, since 2026-09-18.** `WishlistItem::displayTitle()` reads the product's
+title while there is a product and falls back to `snapshot_title` when there is not, so a
+gift-friendly title written after somebody saved an item still reaches their list. The image and the
+saved price stay frozen, because those are what the person saw; a title is what the thing is called,
+and the merchant's own string was never worth preserving. See
+[display-titles.md](display-titles.md) — and note that claim and activity messages keep the snapshot,
+since they record what was said at a moment rather than showing the thing now.
 
 ## The save control is a toggle, not a one-way door
 

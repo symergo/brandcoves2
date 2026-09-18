@@ -184,7 +184,7 @@ partial.
 
 | Rule | Says |
 |---|---|
-| snapshots, not references | freeze title, image and price at add time |
+| snapshots, not references | freeze image and price at add time (the title is read live since 2026-09-18, falling back to the snapshot when the product is gone — see display-titles.md) |
 | invariant #6 — Amazon may not be mirrored | store the decision only; re-fetch at render |
 
 `ItemSaver` gates on `Source::allowsCatalogueStorage()`. Feed and bol products

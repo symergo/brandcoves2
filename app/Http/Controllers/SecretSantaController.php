@@ -762,7 +762,7 @@ class SecretSantaController extends Controller
             ->flatMap(fn (Wishlist $list) => $list->items->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
                 'token' => $list->share_token,
-                'title' => $item->snapshot_title,
+                'title' => $item->displayTitle(),
                 'image' => $item->snapshot_image_url,
                 'price' => $item->group?->min_price ?? $item->snapshot_price,
                 'live' => $item->rendersLive(),

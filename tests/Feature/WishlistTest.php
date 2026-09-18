@@ -246,8 +246,11 @@ class WishlistTest extends TestCase
 
         $item = WishlistItem::query()->firstOrFail();
 
-        // A snapshot, not just a reference: the feed can drop or rename this
-        // product tomorrow and the list must still show what was chosen.
+        // A snapshot, not just a reference: the feed can drop this product
+        // tomorrow and the list must still show what was chosen. Since
+        // 2026-09-18 the title is read from the product while there is one, so
+        // this stored copy is the fallback rather than the render; the image
+        // and the saved price are still what the person saw.
         $this->assertSame('Sony WH-1000XM5', $item->snapshot_title);
         $this->assertSame(32999, $item->snapshot_price);
     }

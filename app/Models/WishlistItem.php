@@ -183,6 +183,37 @@ class WishlistItem extends Model
         return $this->source === Source::Manual;
     }
 
+    /**
+     * What this item is called on screen.
+     *
+     * The product's own title when there is still a product, and the stored
+     * snapshot otherwise. Adopted 2026-09-18, when the owner asked why a list
+     * showed merchant strings after gift-friendly titles had been written: the
+     * snapshot is taken once, at the save, so nothing written afterwards ever
+     * reached an item somebody had already kept.
+     *
+     * Live-with-fallback rather than a backfill of the stored copies. The same
+     * card already reads price, stock and shop count straight from the product
+     * (`WishlistController`), and `SharedListController` already prefers the
+     * live price over the snapshot — so this is the rule that was already in
+     * force everywhere except the title. It also means the next title written
+     * appears on every list at once, with nothing rewritten and nothing to
+     * migrate.
+     *
+     * The snapshot keeps the two jobs it is actually for: a product that has
+     * since been deleted (`group_id` is `nullOnDelete`, so the row outlives it)
+     * and a manual item, which has no product and whose title is the one thing
+     * its owner may edit.
+     *
+     * Not used for claim and activity messages. "Somebody claimed X" is a
+     * record of what was said at a moment, not a view of the thing, so those
+     * keep the snapshot deliberately.
+     */
+    public function displayTitle(): string
+    {
+        return $this->group?->displayTitle() ?? (string) $this->snapshot_title;
+    }
+
     public function isClaimed(): bool
     {
         return $this->claimed_by_hash !== null;

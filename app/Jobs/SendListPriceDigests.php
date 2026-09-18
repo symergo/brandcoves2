@@ -122,8 +122,9 @@ class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
      * One list's part of the mail, or null when nothing on it is worth a line.
      *
      * Only `drop` and `back` are shown; `gone` and `up` moved a reference and
-     * say nothing. Titles are the item's snapshot, the words the owner chose;
-     * links are our own product page, never a shop.
+     * say nothing. Titles are the product's own, falling back to the item's
+     * snapshot when the product is gone; links are our own product page, never
+     * a shop.
      *
      * @param  list<array{item: WishlistItem, kind: string, was: int|null, now: int|null, percent: int|null}>  $changes
      * @return array{title: string, url: string, drops: list<array<string, mixed>>, back: list<array<string, mixed>>}|null
@@ -140,7 +141,7 @@ class SendListPriceDigests implements ShouldBeUnique, ShouldQueue
 
             $item = $change['item'];
             $line = [
-                'title' => (string) $item->snapshot_title,
+                'title' => $item->displayTitle(),
                 'url' => url($item->snapshot_url ?? $item->group?->path() ?? "/{$list->market->value}/lists/{$list->id}"),
                 'was' => $change['was'],
                 'now' => $change['now'],

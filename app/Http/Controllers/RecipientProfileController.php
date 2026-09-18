@@ -294,7 +294,7 @@ class RecipientProfileController extends Controller
     {
         return $list->items()->with('group')->get()->map(fn (WishlistItem $item) => [
             'id' => $item->id,
-            'title' => $item->snapshot_title,
+            'title' => $item->displayTitle(),
             'image' => $item->snapshot_image_url,
             'price' => $item->snapshot_price,
             'note' => $item->note,

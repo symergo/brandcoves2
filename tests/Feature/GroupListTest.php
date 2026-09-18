@@ -299,6 +299,18 @@ class GroupListTest extends TestCase
         $quiet = WishlistItem::factory()->create(['wishlist_id' => $list->id, 'snapshot_title' => 'Quiet']);
         $popular = WishlistItem::factory()->create(['wishlist_id' => $list->id, 'snapshot_title' => 'Popular']);
 
+        /*
+         * The names this test reads belong on the products.
+         *
+         * Since 2026-09-18 a saved item is rendered under its product's title
+         * and falls back to the snapshot only when the product is gone, so
+         * naming the snapshot alone left each row showing whatever the factory
+         * had called its product. The assertions below are about ordering; this
+         * is only what makes the two rows tellable apart.
+         */
+        $quiet->group->update(['display_title' => 'Quiet']);
+        $popular->group->update(['display_title' => 'Popular']);
+
         foreach ([User::factory()->create(), User::factory()->create()] as $voter) {
             ListItemVote::create(['item_id' => $popular->id, 'user_id' => $voter->id, 'anon_id' => null]);
         }
@@ -311,8 +323,6 @@ class GroupListTest extends TestCase
                 ->where('items.0.votes', 2)
                 ->where('items.1.title', 'Quiet')
                 ->where('items.1.votes', 0));
-
-        unset($quiet);
     }
 
     #[Test]

@@ -632,7 +632,7 @@ class WishlistController extends Controller
                 ? $wishlist->suggestions()->with(['group', 'suggestedBy'])->get()
                     ->map(fn (WishlistItem $item) => [
                         'id' => $item->id,
-                        'title' => $item->snapshot_title,
+                        'title' => $item->displayTitle(),
                         'image' => $item->snapshot_image_url,
                         'price' => $item->snapshot_price,
                         'note' => $item->note,
@@ -719,7 +719,9 @@ class WishlistController extends Controller
                 ->values()
                 ->map(fn ($item) => [
                     'id' => $item->id,
-                    'title' => $item->snapshot_title,
+                    // The product's title, falling back to the snapshot when
+                    // the product is gone. See WishlistItem::displayTitle().
+                    'title' => $item->displayTitle(),
                     'image' => $item->snapshot_image_url,
                     'price' => $item->snapshot_price,
                     'note' => $item->note,
@@ -1095,7 +1097,7 @@ class WishlistController extends Controller
                 'id' => $item->id,
                 'token' => $list->share_token,
                 'listTitle' => $list->displayTitle(),
-                'title' => $item->snapshot_title,
+                'title' => $item->displayTitle(),
                 'image' => $item->snapshot_image_url,
                 'price' => $item->group?->min_price ?? $item->snapshot_price,
                 'note' => $item->note,

@@ -509,7 +509,7 @@ class SharedListController extends Controller
             'progress' => $claims->progress($list, $hideClaims),
             'items' => $items->map(fn (WishlistItem $item) => [
                 'id' => $item->id,
-                'title' => $item->snapshot_title,
+                'title' => $item->displayTitle(),
                 'image' => $item->snapshot_image_url,
                 'price' => $item->group?->min_price ?? $item->snapshot_price,
                 'note' => $item->note,

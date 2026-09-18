@@ -207,8 +207,12 @@ class DisplayTitleTest extends TestCase
     #[Test]
     public function a_saved_item_snapshots_the_written_title(): void
     {
-        // A list shows what the person saw when they saved it, and what they
-        // saw is the written title.
+        /*
+         * The snapshot is still taken at the save. It is no longer what the
+         * list renders — see the three tests below — but it is what a list
+         * falls back to once the product is deleted, so it has to be the
+         * written title rather than the feed's.
+         */
         $user = User::factory()->create();
         $list = Wishlist::factory()->create(['owner_user_id' => $user->id, 'market' => Market::BeNl]);
         $group = $this->group('SONY WH-1000XM5 DRAADLOZE KOPTELEFOON', 'Sony');
@@ -223,6 +227,86 @@ class DisplayTitleTest extends TestCase
             'Sony WH-1000XM5: stilte om je heen',
             WishlistItem::query()->where('group_id', $group->id)->firstOrFail()->snapshot_title,
         );
+    }
+
+    #[Test]
+    public function a_list_shows_the_products_title_as_it_is_now(): void
+    {
+        /*
+         * The owner's report, 2026-09-18: their own list still read like a
+         * feed after the titles were written. It would have, for ever — the
+         * snapshot is taken once, at the save, so nothing written afterwards
+         * could reach an item somebody had already kept.
+         */
+        $user = User::factory()->create();
+        $list = Wishlist::factory()->create(['owner_user_id' => $user->id, 'market' => Market::BeNl]);
+        $group = $this->group('SONY WH-1000XM5 DRAADLOZE KOPTELEFOON MET RUISONDERDRUKKING', 'Sony');
+
+        $item = WishlistItem::factory()->of($group)->create([
+            'wishlist_id' => $list->id,
+            'snapshot_title' => 'SONY WH-1000XM5 DRAADLOZE KOPTELEFOON MET RUISONDERDRUKKING',
+        ]);
+
+        // Written after the item was saved, which is the whole point.
+        $group->update(['display_title' => 'Sony WH-1000XM5: stilte om je heen']);
+
+        $this->actingAs($user)
+            ->get("/be-nl/lists/{$list->id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('items.0.title', 'Sony WH-1000XM5: stilte om je heen'));
+
+        // The stored copy is untouched: it is a fallback, not the render.
+        $this->assertSame(
+            'SONY WH-1000XM5 DRAADLOZE KOPTELEFOON MET RUISONDERDRUKKING',
+            $item->fresh()->snapshot_title,
+        );
+    }
+
+    #[Test]
+    public function a_deleted_product_leaves_the_item_reading_its_snapshot(): void
+    {
+        /*
+         * `group_id` is `nullOnDelete`, so losing the product does not lose the
+         * entry — and this is the case the snapshot exists for. A feed drops a
+         * product and the list still shows what the person chose.
+         */
+        $user = User::factory()->create();
+        $list = Wishlist::factory()->create(['owner_user_id' => $user->id, 'market' => Market::BeNl]);
+        $group = $this->group('SONY WH-1000XM5', 'Sony');
+
+        WishlistItem::factory()->of($group)->create([
+            'wishlist_id' => $list->id,
+            'snapshot_title' => 'Sony WH-1000XM5 koptelefoon',
+        ]);
+
+        $group->delete();
+
+        $this->actingAs($user)
+            ->get("/be-nl/lists/{$list->id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('items.0.title', 'Sony WH-1000XM5 koptelefoon'));
+    }
+
+    #[Test]
+    public function a_hand_written_item_keeps_the_title_its_owner_typed(): void
+    {
+        // The one kind of title a person may edit, and the one kind with no
+        // product behind it. Nothing may overwrite it.
+        $user = User::factory()->create();
+        $list = Wishlist::factory()->create(['owner_user_id' => $user->id, 'market' => Market::BeNl]);
+
+        WishlistItem::create([
+            'wishlist_id' => $list->id,
+            'group_id' => null,
+            'source' => Source::Manual->value,
+            'snapshot_title' => 'Een dag zeilen op de Schelde',
+            'accepted_at' => now(),
+        ]);
+
+        $this->actingAs($user)
+            ->get("/be-nl/lists/{$list->id}")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('items.0.title', 'Een dag zeilen op de Schelde'));
     }
 
     #[Test]
