@@ -44,6 +44,13 @@ interface Block {
      * cover. Absent on blocks built before figures existed.
      */
     figure?: SceneKey | null
+    /**
+     * A table instead of a paragraph, from a block of `| a | b |` lines.
+     * `html` is empty then. Cells are safe HTML from CoveMarkup, escaped
+     * before its own links were put in, exactly like `html`. Absent on blocks
+     * built before tables existed.
+     */
+    table?: { head: string[]; rows: string[][] } | null
 }
 
 interface Props {
@@ -187,7 +194,44 @@ function Article({
         <>
             {blocks.map((block, i) => (
                 <div key={i}>
-                    {block.figure ? (
+                    {block.table ? (
+                        /*
+                          The table scrolls inside this box rather than widening
+                          the article: a dates table has four or five columns and
+                          a phone has none to spare, and a page that scrolls
+                          sideways as a whole loses the reader's place in the
+                          prose above it.
+                        */
+                        <div className="my-5 overflow-x-auto">
+                            <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
+                                <thead>
+                                    <tr className="border-b border-line">
+                                        {block.table.head.map((cell, c) => (
+                                            <th
+                                                key={c}
+                                                scope="col"
+                                                className="py-2 pr-4 font-medium"
+                                                dangerouslySetInnerHTML={{ __html: cell }}
+                                            />
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {block.table.rows.map((row, r) => (
+                                        <tr key={r} className="border-b border-line/60 align-top">
+                                            {row.map((cell, c) => (
+                                                <td
+                                                    key={c}
+                                                    className="py-2 pr-4 text-ink-soft [&_a]:underline"
+                                                    dangerouslySetInnerHTML={{ __html: cell }}
+                                                />
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : block.figure ? (
                         /*
                           Drawn, not photographed, like the cover: one hand
                           through the whole article. Wider than the cover

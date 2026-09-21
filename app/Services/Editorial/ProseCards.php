@@ -74,8 +74,30 @@ final class ProseCards
             $figure = $this->markup->figureKey($paragraph);
             if ($figure !== null) {
                 if (CoveMarkup::knownFigure($figure)) {
-                    $out[] = ['html' => '', 'groupIds' => [], 'figure' => $figure];
+                    $out[] = ['html' => '', 'groupIds' => [], 'figure' => $figure, 'table' => null];
                 }
+
+                continue;
+            }
+
+            /*
+             * A table, and deliberately with no products claimed.
+             *
+             * `claim()` pairs a card to the paragraph that DISCUSSES a product,
+             * and a cell is a reference rather than writing: a row naming a
+             * product would otherwise plant its card under the table and spend
+             * the first mention there, leaving the paragraph that actually
+             * argues for it bare. So a token in a cell still renders as a link
+             * and the card still lands under the prose further down.
+             */
+            $table = $this->markup->table($paragraph, $this->market, $this->allowed);
+            if ($table !== null) {
+                $out[] = [
+                    'html' => '',
+                    'groupIds' => [],
+                    'figure' => null,
+                    'table' => ['head' => $table['head'], 'rows' => $table['rows']],
+                ];
 
                 continue;
             }
@@ -86,6 +108,7 @@ final class ProseCards
                 // mention wins" is decided in reading order.
                 'groupIds' => $this->claim($paragraph),
                 'figure' => null,
+                'table' => null,
             ];
         }
 

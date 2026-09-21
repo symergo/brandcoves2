@@ -149,11 +149,56 @@ Slot.'
         // wrong one, and never a paragraph reading "[[figure:not_a_scene]]".
         $this->assertCount(4, $blocks);
 
-        $this->assertSame(['html' => '', 'groupIds' => [], 'figure' => 'coin_jar'], $blocks[1]);
+        $this->assertSame(
+            ['html' => '', 'groupIds' => [], 'figure' => 'coin_jar', 'table' => null],
+            $blocks[1],
+        );
 
         $this->assertNull($blocks[0]['figure']);
         $this->assertSame([12], $blocks[2]['groupIds']);
         $this->assertNull($blocks[2]['figure']);
         $this->assertSame('Slot.', $blocks[3]['html']);
+    }
+
+    #[Test]
+    public function a_table_paragraph_becomes_a_block_the_page_draws_as_a_table(): void
+    {
+        $blocks = $this->cards()->blocks(
+            'De data.
+
+| Stad | Markt |
+|---|---|
+| Brussel | Winterpret |
+
+De [[product:12|Sony]] is de stille.'
+        );
+
+        $this->assertCount(3, $blocks);
+        $this->assertSame('', $blocks[1]['html']);
+        $this->assertSame(['Stad', 'Markt'], $blocks[1]['table']['head']);
+        $this->assertSame([['Brussel', 'Winterpret']], $blocks[1]['table']['rows']);
+        $this->assertNull($blocks[0]['table']);
+    }
+
+    #[Test]
+    public function a_product_named_in_a_cell_keeps_its_card_for_the_prose(): void
+    {
+        $blocks = $this->cards()->blocks(
+            '| Wat | Waar |
+|---|---|
+| Koptelefoon | [[product:12|Sony]] |
+
+De [[product:12|Sony]] is de stille.'
+        );
+
+        /*
+         * A cell is a reference, not the writing about a product. Claiming the
+         * first mention here would plant the card under the table and leave the
+         * paragraph that argues for it bare — so the table links and the
+         * paragraph below keeps the card.
+         */
+        $this->assertSame([], $blocks[0]['groupIds']);
+        $this->assertStringContainsString('/be-nl/p/12/', $blocks[0]['table']['rows'][0][1]);
+        $this->assertSame([12], $blocks[1]['groupIds']);
     }
 }

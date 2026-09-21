@@ -476,4 +476,103 @@ Twee.',
         $this->assertFalse(CoveMarkup::knownFigure('not_a_scene'));
         $this->assertTrue(CoveMarkup::knownFigure('coin_jar'));
     }
+
+    #[Test]
+    public function a_block_of_pipe_lines_is_a_table(): void
+    {
+        $table = $this->markup()->tableFrom(
+            '| Stad | Markt | 2026 |
+|---|---|---|
+| Brussel | Winterpret | 27 nov - 3 jan |
+| Gent | Winterfeesten | 3 dec - 3 jan |'
+        );
+
+        $this->assertSame(['Stad', 'Markt', '2026'], $table['head']);
+        $this->assertSame(['Brussel', 'Winterpret', '27 nov - 3 jan'], $table['rows'][0]);
+        $this->assertCount(2, $table['rows']);
+    }
+
+    #[Test]
+    public function prose_is_never_mistaken_for_a_table(): void
+    {
+        $markup = $this->markup();
+
+        // The defence is the pipe at both ends plus the rule line, and this is
+        // the case it exists for: a paragraph silently rendered as a
+        // one-column table is a worse failure than a table that did not render.
+        $this->assertNull($markup->tableFrom('Een zin met een | erin, en nog een |.'));
+
+        // A header and a rule with no rows: the writer meant a paragraph.
+        $this->assertNull($markup->tableFrom("| Stad | Markt |\n|---|---|"));
+
+        // No rule line, so the lines are prose that happens to be piped.
+        $this->assertNull($markup->tableFrom("| Stad | Markt |\n| Brussel | Winterpret |"));
+
+        // One line that does not close with a pipe takes the whole block back
+        // to prose, rather than producing a table with a mangled row.
+        $this->assertNull($markup->tableFrom(
+            "| Stad | Markt |\n|---|---|\n| Brussel | Winterpret"
+        ));
+    }
+
+    #[Test]
+    public function a_cell_is_escaped_and_resolves_its_tokens(): void
+    {
+        $table = $this->markup()->table(
+            '| Stad | Waar |
+|---|---|
+| <b>Brussel</b> | [[search:draadloze koptelefoon|zoek]] |
+| Gent | **vet** |',
+            Market::BeNl,
+            $this->allowed(),
+        );
+
+        // Escaped first, exactly as in prose: the writer cannot introduce a tag.
+        $this->assertSame('&lt;b&gt;Brussel&lt;/b&gt;', $table['rows'][0][0]);
+
+        // And the tokens a cell may carry still resolve.
+        $this->assertStringContainsString('/be-nl/zoek/draadloze-koptelefoon', $table['rows'][0][1]);
+        $this->assertSame('<strong>vet</strong>', $table['rows'][1][1]);
+        $this->assertSame(1, $table['links']);
+    }
+
+    #[Test]
+    public function a_ragged_row_is_padded_rather_than_dropping_the_table(): void
+    {
+        $table = $this->markup()->tableFrom(
+            '| Stad | Markt | 2026 |
+|---|---|---|
+| Brussel | Winterpret |
+| Gent | Winterfeesten | 3 dec | te veel |'
+        );
+
+        $this->assertSame(['Brussel', 'Winterpret', ''], $table['rows'][0]);
+        $this->assertSame(['Gent', 'Winterfeesten', '3 dec'], $table['rows'][1]);
+    }
+
+    #[Test]
+    public function a_string_only_surface_leaves_the_table_out_and_still_counts_its_links(): void
+    {
+        /*
+         * An email, a meta description and the legacy guide path all read
+         * `paragraphs()`. A row of pipes in any of those is worse than an
+         * absence — but LinkCheck reads this method too, so a link inside a
+         * cell that nothing checked is exactly the link that breaks.
+         */
+        $result = $this->markup()->paragraphs(
+            'Een.
+
+| Stad | Waar |
+|---|---|
+| Brussel | [[search:draadloze koptelefoon|zoek]] |
+
+Twee.',
+            Market::BeNl,
+            $this->allowed(),
+        );
+
+        $this->assertSame(['Een.', 'Twee.'], $result['html']);
+        $this->assertSame(1, $result['links']);
+        $this->assertSame([], $result['rejected']);
+    }
 }

@@ -117,6 +117,43 @@ class CoveMarkup
     private const INLINE_FIGURE = '/ ?\[\[figure:[a-z_]{1,40}\]\]/u';
 
     /**
+     * A block of pipe-separated lines: a table.
+     *
+     * Added 2026-09-21, when four articles listing the dates of sixty Christmas
+     * markets were published as prose and read as prose: a paragraph per
+     * country, each a run of "city, market, dates" sentences. Nobody reads that
+     * to find one city. A table is the shape the content already had.
+     *
+     * This is the second structure the renderer understands, and it is
+     * deliberately not a step towards Markdown. {@see BOLD} explains the rule:
+     * a syntax is added when the writing is already producing it and the
+     * absence is visible on the page, not because a parser would be tidier.
+     *
+     *     | Stad | Markt | 2026 |
+     *     |---|---|---|
+     *     | Brussel | Winterpret | 27 nov - 3 jan |
+     *
+     * **Every line must open and close with a pipe**, and the second line must
+     * be the rule. Markdown lets both be sloppy; here they are the whole
+     * defence against a paragraph becoming a table by accident. A sentence
+     * would have to begin and end with a pipe to qualify, and the cost of
+     * guessing wrong is not a wrong style: it is a paragraph of prose silently
+     * rendered as a one-column table.
+     *
+     * Cells are rendered by {@see render()}, so bold and every link token work
+     * inside one, labels included: the pipes inside `[[...]]` are hidden while
+     * the row is split (see {@see cells()}), because the column delimiter and
+     * a token's label separator are the same character.
+     *
+     * A literal pipe in cell *text* is still not supported, and will not be:
+     * the alternative is an escaping layer, and the writing that asked for
+     * tables has no pipes in it.
+     */
+    private const TABLE_LINE = '/^\|.*\|$/u';
+
+    private const TABLE_RULE = '/^\|(?:\s*:?-{2,}:?\s*\|)+$/u';
+
+    /**
      * Injected rather than resolved inside `render()`.
      *
      * Reaching for the container mid-render made a **database query a hidden
@@ -286,6 +323,22 @@ class CoveMarkup
                 continue;
             }
 
+            /*
+             * A table has no shape here either: these callers hand the result
+             * to an email, a `<meta>` description or a page that prints
+             * paragraphs, and a row of pipes in any of those is worse than an
+             * absence. Its links are still counted and its rejects still
+             * reported, because `LinkCheck` reads this method and a link that
+             * nothing checked is exactly the link that breaks.
+             */
+            $table = $this->table($paragraph, $market, $allowed);
+            if ($table !== null) {
+                $links += $table['links'];
+                $rejected = [...$rejected, ...$table['rejected']];
+
+                continue;
+            }
+
             $result = $this->render($paragraph, $market, $allowed);
             $out[] = $result['html'];
             $links += $result['links'];
@@ -314,6 +367,128 @@ class CoveMarkup
     public static function knownFigure(string $key): bool
     {
         return CoveScene::tryFrom($key) !== null;
+    }
+
+    /**
+     * The cells of a paragraph that is a table, else null. Raw text, unrendered.
+     *
+     * Raw for the same reason `figureKey()` is raw: the caller decides what the
+     * block means on its surface. {@see table()} is the one that resolves the
+     * tokens inside the cells.
+     *
+     * @return array{head: list<string>, rows: list<list<string>>}|null
+     */
+    public function tableFrom(string $paragraph): ?array
+    {
+        $lines = [];
+
+        foreach (preg_split('/\R/u', trim($paragraph)) ?: [] as $line) {
+            $line = trim($line);
+
+            if ($line !== '') {
+                $lines[] = $line;
+            }
+        }
+
+        // Header, rule, and at least one row. A table with no rows is a heading
+        // wearing a border, and the writer meant a paragraph.
+        if (count($lines) < 3) {
+            return null;
+        }
+
+        foreach ($lines as $line) {
+            if (preg_match(self::TABLE_LINE, $line) !== 1) {
+                return null;
+            }
+        }
+
+        if (preg_match(self::TABLE_RULE, $lines[1]) !== 1) {
+            return null;
+        }
+
+        $head = self::cells($lines[0]);
+        $width = count($head);
+
+        if ($width === 0) {
+            return null;
+        }
+
+        $rows = [];
+
+        foreach (array_slice($lines, 2) as $line) {
+            /*
+             * A ragged row is padded and truncated rather than refusing the
+             * block. A missing cell is a typo in one row; dropping the whole
+             * table over it would take sixty markets off the page to punish
+             * one, and the reader would see no table and no reason.
+             */
+            $rows[] = array_slice(array_pad(self::cells($line), $width, ''), 0, $width);
+        }
+
+        return ['head' => $head, 'rows' => $rows];
+    }
+
+    /**
+     * A table with its cells rendered: escaped, tokens resolved, bold honoured.
+     *
+     * @param  array{brands?: list<string>, searches?: list<string>, products?: array<int, array{slug: string, title: string}>, guides?: list<string>, guideTitles?: array<string, string>}  $allowed
+     * @return array{head: list<string>, rows: list<list<string>>, links: int, rejected: list<string>}|null
+     */
+    public function table(string $paragraph, Market $market, array $allowed): ?array
+    {
+        $raw = $this->tableFrom($paragraph);
+
+        if ($raw === null) {
+            return null;
+        }
+
+        $links = 0;
+        $rejected = [];
+
+        $cell = function (string $text) use ($market, $allowed, &$links, &$rejected): string {
+            $result = $this->render($text, $market, $allowed);
+            $links += $result['links'];
+            $rejected = [...$rejected, ...$result['rejected']];
+
+            return $result['html'];
+        };
+
+        return [
+            'head' => array_map($cell, $raw['head']),
+            'rows' => array_map(
+                fn (array $row): array => array_map($cell, $row),
+                $raw['rows'],
+            ),
+            'links' => $links,
+            'rejected' => $rejected,
+        ];
+    }
+
+    /** The cells of one `| a | b |` line, trimmed. @return list<string> */
+    private static function cells(string $line): array
+    {
+        // The pipes at both ends are the delimiters, not content, and they are
+        // removed by position rather than by trim(): `trim($line, '|')` would
+        // also eat an empty leading cell, shifting every column left by one.
+        $inner = mb_substr($line, 1, max(0, mb_strlen($line) - 2));
+
+        /*
+         * The column delimiter and a token's label separator are the same
+         * character, so `| [[search:kerstmarkt|markten]] |` would split down
+         * the middle of the token and render as two cells of broken syntax.
+         * The pipes inside `[[...]]` are hidden for the split and restored
+         * after it, which is the whole reason this is not one explode().
+         */
+        $protected = preg_replace_callback(
+            '/\[\[[^\]]*\]\]/u',
+            static fn (array $m): string => str_replace('|', "\x00", $m[0]),
+            $inner,
+        ) ?? $inner;
+
+        return array_map(
+            static fn (string $cell): string => trim(str_replace("\x00", '|', $cell)),
+            explode('|', $protected),
+        );
     }
 
     private function brand(string $value, array $brands, string $base, array $brandUrls = []): ?string

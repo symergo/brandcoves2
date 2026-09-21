@@ -81,6 +81,7 @@ is true now.
 | [scheduled-writing.md](scheduled-writing.md) | Content / Operations | Active |
 | [gift-personas.md](gift-personas.md) | Discovery / Content | Active — 10 planned per market in be-nl, nl-nl, en; not all published |
 | [cove-scenes.md](cove-scenes.md) | Content / Frontend | Active — 38 scenes; personas, articles, and figures inside articles |
+| [article-tables.md](article-tables.md) | Content / Frontend | Active — authored articles only; the builder is not told |
 | [cove-subscriptions.md](cove-subscriptions.md) | Discovery / Email | Active |
 | [editorial-api.md](editorial-api.md) | Content / Operations | Active |
 | [content-promotion.md](content-promotion.md) | Content / Operations | Active |
