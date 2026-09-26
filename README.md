@@ -1,7 +1,9 @@
 # GiftCoves 2
 
-Multi-market product search with **offer comparison**, a **Gift Whisperer**, **Daily Picks** and
-**buying guides** generated from real search demand.
+A place to keep anything you might give or get, organised into **Coves** (lists of products, some
+with editorial writing on top) and shared with the people around you. Products come from anywhere;
+affiliate feeds supply some of them, with **offer comparison** across shops, a **Gift Whisperer**,
+**Daily Coves** and **buying guides** built on top. Where this is going: [docs/strategy.md](docs/strategy.md).
 
 Markets: `be-nl`, `be-fr`, `en`, `es`, `nl-nl`.
 

@@ -1,6 +1,8 @@
 # CLAUDE.md — GiftCoves 2
 
-Multi-market product search, offer comparison, gift discovery and buying guides.
+An open product catalogue organised into Coves (lists of products; editorial Coves add writing) and
+shared between people. Affiliate feeds supply products; they are not the boundary of what the site
+holds. Direction and where each part stands: [docs/strategy.md](../docs/strategy.md).
 A clean-room rebuild of the v1 WordPress site at `../brandcoves` (referenced for *scope and product
 thinking* only — no code is ported).
 
@@ -30,6 +32,11 @@ diff.
 [docs/map.md](../docs/map.md) answers "where does this change go": the request path, the route
 surface, one line per service directory, which test covers what. Read it before `ls`-ing and
 grepping for the usual entry points.
+
+[docs/strategy.md](../docs/strategy.md) answers "where is this going": the three layers (open
+catalogue, Coves, people) and the roadmap. One decision there changes an old rule: the server may
+now read a page a visitor pasted, in a queued job under the guards listed there. The code comments
+that say "we never request the link" describe the site before that step, not a rule to restore.
 
 ## Shell facts — read before the first command
 
