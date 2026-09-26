@@ -2405,7 +2405,7 @@ return [
         'button' => 'Accepter l\'invitation',
         'nothing_to_do' => 'Pas intéressé ? Vous n\'avez rien à faire.',
         'why' => 'Vous recevez cet e-mail parce que :name a saisi votre adresse sur GiftCoves.',
-        'not_wanted' => 'Pas demandé ? Dites-le-nous',
+        'not_wanted' => 'Vous ne voulez plus recevoir d\'invitations ?',
         'page_title' => 'Invitations via GiftCoves',
         'ask' => 'Ne plus recevoir d\'invitations via GiftCoves ? Plus personne ne pourra alors vous inviter par e-mail.',
         'stop' => 'Ne plus m\'envoyer d\'invitations',

@@ -57,7 +57,7 @@ class FriendInviteMailTest extends TestCase
                 // The button: the sign-in page, address filled in.
                 && $mail->url === url('/be-nl/login?email=bo%40example.com')
                 && str_contains($html, 'Uitnodiging aannemen')
-                && str_contains($html, 'Niet gevraagd? Laat het ons weten')
+                && str_contains($html, 'Wil je geen uitnodigingen meer ontvangen?')
                 // RFC 8058 one-click, pointing at the same signed link.
                 && $mail->headers()->text['List-Unsubscribe'] === "<{$mail->notWantedUrl}>"
                 && $mail->headers()->text['List-Unsubscribe-Post'] === 'List-Unsubscribe=One-Click';

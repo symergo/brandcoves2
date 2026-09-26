@@ -108,7 +108,7 @@ for 365 days after you last invited them. We also keep a record that you sent an
 invitation, with a one-way code made from the address instead of the address,
 for 90 days: it is what the two limits count.
 
-Every invitation email has a "Not asked for? Let us know" link that works
+Every invitation email has a "Don't want to receive invitations any more?" link that works
 without an account. Pressing it means no invitation from anybody is emailed to
 that address again, and counts one complaint against the member who sent it.
 For that we keep only the one-way code, never the address: the request for as

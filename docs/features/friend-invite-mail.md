@@ -179,6 +179,6 @@ The first staging tests landed in spam. What was checked: giftcoves.com's SPF al
 hello@giftcoves.com), so SPF passes; DMARC is `p=quarantine`; but **no DKIM record exists**, so
 nothing signs the mail. Unsigned mail from a young domain, inviting a stranger to click a button, is
 exactly what filters distrust. The fix that matters is **enabling DKIM in the OVH control panel**
-(the DNS is at OVH, so it adds its own records). The footer link no longer says "spam" ("Niet
-gevraagd? Laat het ons weten"): the word itself counts against a mail in several filters. The link
+(the DNS is at OVH, so it adds its own records). The footer link no longer says "spam" (since the owner's wording the same
+day: "Wil je geen uitnodigingen meer ontvangen?"): the word itself counts against a mail in several filters. The link
 still does exactly the same.

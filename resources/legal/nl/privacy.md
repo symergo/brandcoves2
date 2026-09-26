@@ -114,7 +114,7 @@ hen voor het laatst uitnodigde. We houden ook 90 dagen bij dat je een uitnodigin
 stuurde, met een eenrichtingscode gemaakt van het adres in plaats van het adres:
 dat is wat de twee grenzen tellen.
 
-Elke uitnodiging per e-mail heeft een link "Niet gevraagd? Laat het ons weten" die zonder
+Elke uitnodiging per e-mail heeft een link "Wil je geen uitnodigingen meer ontvangen?" die zonder
 account werkt. Wie erop drukt, krijgt van niemand nog een uitnodiging per e-mail,
 en dat telt als één klacht tegen het lid dat ze stuurde. Daarvoor bewaren we
 alleen de eenrichtingscode, nooit het adres: het verzoek zolang het geldt (de
