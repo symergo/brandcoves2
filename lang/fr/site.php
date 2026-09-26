@@ -8,9 +8,6 @@ return [
         'friends' => 'Amis',
         'search' => 'Rechercher',
         'feedback' => 'Votre avis',
-        'organise' => 'Organiser',
-        'make_list' => 'Créer une liste',
-        'find_gift' => 'Trouver un cadeau',
         'submenu' => 'Ce que contient :section',
         'gift' => 'Trouver un cadeau',
         'daily' => 'Cove Quotidienne',
@@ -46,7 +43,6 @@ return [
          * Le qualificatif se traduit, le nom non — voir localisation.md.
          */
         'gift_coves' => 'Coves Cadeaux',
-        'all_coves' => 'Toutes les Coves',
         'brand_coves' => 'Coves Marques',
 
         /*
@@ -80,11 +76,8 @@ return [
 
         // Des noms, pas des mots : les Coves portent le même nom dans toutes les
         // langues, comme GiftCoves lui-même. Un nom traduit est un second nom.
-        'cove' => 'Gift Cove',
-        'discover_cove' => 'Discover Cove',
         'discover' => 'Découvrir',
         'coves' => 'Coves',
-        'gifts' => 'Cadeaux',
         'how_it_works' => 'Comment ça marche',
     ],
 
@@ -339,7 +332,7 @@ return [
     'discover_cove' => [
         'seo_title' => 'Idées cadeaux et trouvailles, chaque jour',
         'seo_description' => 'Trois façons de trouver ce que vous ne cherchiez pas : une nouvelle édition chaque jour, une surprise choisie pour sa rareté, et des lectures par thème.',
-        'title' => 'Trouver un cadeau - découvrez les Coves',
+        'title' => 'Découvrir - des façons de trouver quelque chose',
         'intro' => "Des façons de trouver ce que vous ne cherchiez pas. L'une change chaque jour, une autre est volontairement imprévisible, une autre parle d'une personne plutôt que d'un objet, et les dernières se lisent tranquillement.",
         'daily_what' => 'Une nouvelle édition chaque jour : un thème, quelques trouvailles et une énigme de prix. Chaque édition passée garde sa page.',
         'surprise_what' => "Quelque chose dont vous ignoriez l'existence, choisi pour sa rareté et non pour ses ventes.",
@@ -588,7 +581,7 @@ return [
         // at all until 2026-09-05.
         'seo_title' => 'Des listes d’envies à partager',
         'seo_description' => 'Tenez une liste d’envies, partagez-la avec ceux qui vous offrent quelque chose, et laissez-les réserver un cadeau sans savoir qui a pris quoi.',
-        'title' => 'Mes listes de souhaits',
+        'title' => 'Mes Coves',
         'shared_subtitle' => 'Vos listes cadeaux, et les listes qu’on a partagées avec vous. C’est ainsi que vous leur trouvez un cadeau.',
         // The hint on the two "shared with me" groups of that view: what to do
         // with them. The subtitle above stays; owner's call, 2026-09-13.
@@ -603,7 +596,6 @@ return [
         'group_subtitle' => 'Un cadeau, choisi ensemble. Chacun vote, et ce que vous mettez reste entre vous et l’organisateur.',
         'default_title' => 'Ma liste de souhaits',
         'default_badge' => 'Par défaut',
-        'remove_item' => 'Retirer de cette liste',
         'shared_short' => 'Partagée',
         'private_short' => 'Privée',
         'tool_on' => 'activé',
@@ -611,6 +603,7 @@ return [
         'manual_add' => 'Ajoutez-le vous-même',
         'manual_title' => 'De quoi s’agit-il ?',
         'edit_item' => 'Modifier',
+        'remove_item' => 'Retirer de cette liste',
         'save_changes' => 'Enregistrer',
         'manual_url' => 'Lien (facultatif)',
         'manual_price' => 'Prix (facultatif)',
@@ -1930,7 +1923,6 @@ return [
         'search_blurb' => 'Ce que le champ accepte, comment fonctionne le scanner, et pourquoi une faute de frappe trouve quand même.',
         'lists_title' => 'Listes',
         'lists_blurb' => 'Enregistrer, partager, offrir à plusieurs, Ami secret, amis et rappels. Neuf pages courtes.',
-        'link' => 'Aide',
     ],
 
     /*

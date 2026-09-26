@@ -8,9 +8,6 @@ return [
         'friends' => 'Vrienden',
         'search' => 'Zoek',
         'feedback' => 'Feedback',
-        'organise' => 'Organiseer',
-        'make_list' => 'Maak een lijst',
-        'find_gift' => 'Vind een cadeau',
         'submenu' => 'Wat zit er in :section',
         'gift' => 'Cadeauzoeker',
         'daily' => 'Cove van de dag',
@@ -46,7 +43,6 @@ return [
          * localisation.md.
          */
         'gift_coves' => 'Cadeau Coves',
-        'all_coves' => 'Alle Coves',
         'brand_coves' => 'Merk Coves',
 
         /*
@@ -79,11 +75,8 @@ return [
 
         // Namen, geen woorden: de Coves heten in elke taal hetzelfde, net als
         // GiftCoves zelf. Een vertaalde naam is een tweede naam.
-        'cove' => 'Gift Cove',
-        'discover_cove' => 'Discover Cove',
         'discover' => 'Ontdek',
         'coves' => 'Coves',
-        'gifts' => 'Cadeaus',
         'how_it_works' => 'Hoe het werkt',
     ],
 
@@ -342,7 +335,7 @@ return [
     'discover_cove' => [
         'seo_title' => 'Cadeau-ideeën en vondsten, elke dag nieuw',
         'seo_description' => 'Drie manieren om iets te vinden waar je niet naar zocht: elke dag een nieuwe editie, een verrassing gekozen op zeldzaamheid, en lange verhalen per thema.',
-        'title' => 'Een cadeau vinden - ontdek de Coves',
+        'title' => 'Ontdek - manieren om iets te vinden',
         'intro' => 'Manieren om iets te vinden waar je niet naar zocht. Eén verandert elke dag, één is met opzet onvoorspelbaar, één gaat over een persoon in plaats van een ding, en de rest is om rustig te lezen.',
         'daily_what' => 'Elke dag een nieuwe editie: een thema, een handvol vondsten en een prijsraadsel. Elke oude editie houdt zijn eigen pagina.',
         'surprise_what' => 'Iets waarvan je niet wist dat het bestond, gekozen op hoe zeldzaam het is en niet op hoe goed het verkoopt.',
@@ -591,7 +584,7 @@ return [
         // at all until 2026-09-05.
         'seo_title' => 'Verlanglijsten die je kunt delen',
         'seo_description' => 'Hou een verlanglijst bij, deel hem met wie voor je koopt, en laat ze een cadeau claimen zonder dat jij ziet wie wat koos.',
-        'title' => 'Mijn verlanglijsten',
+        'title' => 'Mijn Coves',
         'shared_subtitle' => 'Cadeaulijsten van jou, en lijsten die anderen met je deelden. Zo koop je iets voor hen.',
         // The hint on the two "shared with me" groups of that view: what to do
         // with them. The subtitle above stays; owner's call, 2026-09-13.
@@ -606,7 +599,6 @@ return [
         'group_subtitle' => 'Eén cadeau, samen gekozen. Iedereen stemt, en wat je bijdraagt blijft tussen jou en de organisator.',
         'default_title' => 'Mijn wenslijst',
         'default_badge' => 'Standaard',
-        'remove_item' => 'Van deze lijst halen',
         'shared_short' => 'Gedeeld',
         'private_short' => 'Privé',
         'tool_on' => 'aan',
@@ -614,6 +606,7 @@ return [
         'manual_add' => 'Zet er zelf iets op',
         'manual_title' => 'Wat is het?',
         'edit_item' => 'Aanpassen',
+        'remove_item' => 'Van deze lijst halen',
         'save_changes' => 'Opslaan',
         'manual_url' => 'Link (optioneel)',
         'manual_price' => 'Prijs (optioneel)',
@@ -1941,7 +1934,6 @@ return [
         'search_blurb' => 'Wat het zoekvak aankan, hoe de scanner werkt, en waarom een typfout toch iets vindt.',
         'lists_title' => 'Lijsten',
         'lists_blurb' => 'Bewaren, delen, samen kopen, Geheime Vriend, vrienden en herinneringen. Negen korte pagina\'s.',
-        'link' => 'Help',
     ],
 
     /*

@@ -14,9 +14,6 @@ return [
         'friends' => 'Friends',
         'search' => 'Search',
         'feedback' => 'Feedback',
-        'organise' => 'Organise',
-        'make_list' => 'Make a list',
-        'find_gift' => 'Find a gift',
         'submenu' => 'What is in :section',
         'gift' => 'Gift Finder',
         'daily' => 'Daily Cove',
@@ -63,7 +60,6 @@ return [
          * localisation.md: Gift Coves / Cadeau Coves / Coves Cadeau.
          */
         'gift_coves' => 'Gift Coves',
-        'all_coves' => 'All Coves',
         'brand_coves' => 'Brand Coves',
 
         /*
@@ -105,12 +101,9 @@ return [
 
         // Names, not words: a Cove is called the same thing in every language,
         // exactly like GiftCoves itself. A translated name is a second name.
-        'cove' => 'Gift Cove',
-        'discover_cove' => 'Discover Cove',
         // The header since 2026-09-26: Discover | Coves | Gifts | How it works.
         'discover' => 'Discover',
         'coves' => 'Coves',
-        'gifts' => 'Gifts',
         'how_it_works' => 'How it works',
     ],
 
@@ -450,7 +443,7 @@ return [
     'discover_cove' => [
         'seo_title' => 'Gift ideas and product finds, new every day',
         'seo_description' => 'Three ways to find something you were not looking for: a new edition every day, a surprise chosen for how rare it is, and long reads around one theme.',
-        'title' => 'Find a gift - discover the Coves',
+        'title' => 'Discover - ways to find something',
         // Counts no longer. The hub described "three" while the cards were
         // four, and the persona card made it five — a number in the copy is a
         // promise the card row has to keep, and this one has been broken twice.
@@ -720,7 +713,7 @@ return [
         // at all until 2026-09-05.
         'seo_title' => 'Wish lists you can share',
         'seo_description' => 'Keep a wish list, share it with the people buying for you, and let them claim a gift without you seeing who claimed what.',
-        'title' => 'My wish lists',
+        'title' => 'My Coves',
         'shared_subtitle' => 'Your gift lists, and the lists others shared with you. This is how you shop for them.',
         // The hint on the two "shared with me" groups of that view: what to do
         // with them. The subtitle above stays; owner's call, 2026-09-13.
@@ -735,7 +728,6 @@ return [
         'group_subtitle' => 'One gift, chosen together. Everyone votes, and what each of you puts in stays between you and the organiser.',
         'default_title' => 'My wishlist',
         'default_badge' => 'Default',
-        'remove_item' => 'Remove from this list',
         'shared_short' => 'Shared',
         'private_short' => 'Private',
         'tool_on' => 'on',
@@ -743,6 +735,7 @@ return [
         'manual_add' => 'Add something yourself',
         'manual_title' => 'What is it?',
         'edit_item' => 'Edit',
+        'remove_item' => 'Remove from this list',
         'save_changes' => 'Save',
         'manual_url' => 'Link (optional)',
         'manual_price' => 'Price (optional)',
@@ -2166,7 +2159,6 @@ return [
         'search_blurb' => 'What the box accepts, how the scanner works, and why a typo still finds things.',
         'lists_title' => 'Lists',
         'lists_blurb' => 'Saving, sharing, buying together, Secret Santa, friends and reminders. Nine short pages.',
-        'link' => 'Help',
     ],
 
     /*

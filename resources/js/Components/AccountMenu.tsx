@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react'
 import SignInLink from './SignInLink'
 import ToolIcon from './ToolIcon'
+import { myCovesLinks } from './myCovesLinks'
 import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -48,7 +49,7 @@ export default function AccountMenu() {
         // every page, so whatever the visitor was reading when they decided to
         // sign in is exactly what a navigation would throw away.
         return (
-            <SignInLink className="inline-block rounded-lg border border-line px-3 py-1.5 text-sm font-medium hover:border-ink">
+            <SignInLink className="inline-block whitespace-nowrap rounded-lg border border-line px-3 py-1.5 text-sm font-medium hover:border-ink">
                 {t('nav.sign_in')}
             </SignInLink>
         )
@@ -86,32 +87,21 @@ export default function AccountMenu() {
                         {auth.user.email}
                     </p>
 
-                    <Link
-                        href={`/${market.key}/lists`}
-                        role="menuitem"
-                        onClick={() => setOpen(false)}
-                        className="block rounded px-3 py-2 text-sm hover:bg-line/40"
-                    >
-                        <span className="flex items-center gap-2.5">
-                            <span className="text-accent"><ToolIcon name="wishlist" className="h-5 w-5" /></span>
-                            {t('nav.lists')}
-                        </span>
-                    </Link>
-                    {/* Beside Lists rather than under it: the people are not a
-                        property of any one list, and the commonest reason to
-                        open this page — where is that registry again — starts
-                        with a person's name, not a list's. */}
-                    <Link
-                        href={`/${market.key}/friends`}
-                        role="menuitem"
-                        onClick={() => setOpen(false)}
-                        className="block rounded px-3 py-2 text-sm hover:bg-line/40"
-                    >
-                        <span className="flex items-center gap-2.5">
-                            <span className="text-accent"><ToolIcon name="friends" className="h-5 w-5" /></span>
-                            {t('nav.friends')}
-                        </span>
-                    </Link>
+                    {/* The same links as the phone sheet, from one list: see myCovesLinks. */}
+                    {myCovesLinks(`/${market.key}`, t, true).map((link) => (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            role="menuitem"
+                            onClick={() => setOpen(false)}
+                            className="block rounded px-3 py-2 text-sm hover:bg-line/40"
+                        >
+                            <span className="flex items-center gap-2.5">
+                                <span className="text-accent"><ToolIcon name={link.icon} className="h-5 w-5" /></span>
+                                {link.label}
+                            </span>
+                        </Link>
+                    ))}
                     <Link
                         href={`/${market.key}/notifications`}
                         role="menuitem"

@@ -132,33 +132,20 @@ function Chrome({ children }: PropsWithChildren) {
     const isCurrent = (href: string) => path === href || path.startsWith(`${href}/`)
 
     /*
-     * Editorial first, tools second.
+     * Discover ▾ | Coves ▾ | Gift Finder | How it works, and My Coves on the
+     * right (owner's calls, 2026-09-26; docs/features/navigation.md).
      *
-     * The two Cove surfaces lead, because they are the only things here that
-     * are *ours* — everything else is a way of querying a catalogue that any
-     * competitor also has. Search, gifting and Surprise follow as the three
-     * things you can do.
+     * Two rules shape it. **One name per page**: the entry for `/gift` says
+     * Gift Finder because the page does, and `/help` is How it works in the
+     * header and the footer alike. **A heading is never its own first item**:
+     * Coves already goes to `/coves`, so All Coves is not repeated under it,
+     * and Gift Finder has nothing under it, so it is a plain link.
      *
-     * The labels say "Cove", not "Guides" or "Daily Picks". That is the name
-     * the homepage, the subscription mails and the page titles already use;
-     * the header was the last surface still calling them something else.
-     */
-    /*
-     * Four entries: Discover | Coves | Gifts | How it works (owner's call,
-     * 2026-09-26; docs/strategy.md, section 6). The visitor's own lists sit
-     * on the right as My Coves.
-     *
-     * Before this the header had "Make a list" and "Find a gift" with eight
-     * surfaces under the second, so Daily Cove, Surprise, Shop Smarter, Ask
-     * others and the rest all read as equal top-level ideas. They are grouped
-     * under what they are now: ways to discover, kinds of Cove, ways to find a
-     * gift. Secret Friend, group lists and occasions live inside My Coves.
-     * Help moved to the footer, where every page already links it.
-     *
-     * Each entry still points at a hub page, so the label is a destination and
-     * not just a menu handle. See NavMenu for why the chevron is a separate
+     * Each menu heading points at a hub page, so the label is a destination
+     * and not just a handle; see NavMenu for why the chevron is a separate
      * control. Scan stays absent: it is a way of entering a query, and the
-     * scan button in the search field opens it.
+     * scan button in the search field opens it. Secret Friend, group lists and
+     * occasions live under My Coves, in the account menus.
      */
     const discover = {
         href: `${base}/discover-cove`,
@@ -203,43 +190,29 @@ function Chrome({ children }: PropsWithChildren) {
                 hint: t('nav.hint_smart'),
                 icon: <CoveIcon name="idea" className="h-5 w-5" />,
             },
-            /*
-             * Brand Coves (`/brands`) and Shop Coves (`/shops`) are still
-             * withheld, deliberately, not removed: both pages exist, are
-             * linked from All Coves and are in the sitemap. Restoring them is
-             * two entries here, before All Coves.
-             */
-            {
-                href: `${base}/coves`,
-                label: t('nav.all_coves'),
-                hint: t('nav.hint_all_coves'),
-                icon: <CoveIcon name="all" className="h-5 w-5" />,
-            },
-        ] as NavMenuItem[],
-    }
-
-    const gifts = {
-        href: `${base}/gift`,
-        label: t('nav.gifts'),
-        icon: <ToolIcon name="whisperer" className="h-4 w-4" />,
-        items: [
-            {
-                href: `${base}/gift`,
-                label: t('nav.gift'),
-                hint: t('nav.hint_gift'),
-                icon: <CoveIcon name="dial" className="h-5 w-5" />,
-            },
+            // Under Coves, not beside the Gift Finder: a Gift Cove is a kind
+            // of Cove, a set of products around a person.
             {
                 href: `${base}/gift-ideas`,
                 label: t('nav.gift_coves'),
                 hint: t('nav.hint_gift_coves'),
                 icon: <CoveIcon name="persona" className="h-5 w-5" />,
             },
+            /*
+             * Brand Coves (`/brands`) and Shop Coves (`/shops`) are withheld,
+             * deliberately, not removed: both pages exist, are linked from All
+             * Coves and are in the sitemap. Restoring them is two entries here.
+             */
         ] as NavMenuItem[],
     }
 
-    // The one flat link beside the three menus.
+    // The flat links beside the two menus, each named as its page is.
     const nav = [
+        {
+            href: `${base}/gift`,
+            label: t('nav.gift'),
+            icon: <ToolIcon name="whisperer" className="h-5 w-5" />,
+        },
         {
             href: `${base}/help`,
             label: t('nav.how_it_works'),
@@ -249,11 +222,11 @@ function Chrome({ children }: PropsWithChildren) {
 
     /*
      * The phone gets the same sections, as sections: the hub is a heading you
-     * can press, its surfaces are indented under a rule, and the flat link,
+     * can press, its surfaces are indented under a rule, and the flat links,
      * the account block and the market switcher are groups after them. Same
      * links, same order, same single tap to any of them.
      */
-    const sections: { href: string; label: string; icon: ReactNode; items: NavMenuItem[] }[] = [discover, coves, gifts]
+    const sections: { href: string; label: string; icon: ReactNode; items: NavMenuItem[] }[] = [discover, coves]
 
     /*
      * "You are here", in a menu where three entries share a path.
@@ -297,7 +270,7 @@ function Chrome({ children }: PropsWithChildren) {
                       (2026-09-08). 28px, with the line height pulled in so the
                       header does not grow.
                     */}
-                    <Link href={base} className="flex items-center gap-2 text-[1.75rem] leading-none font-semibold tracking-tight">
+                    <Link href={base} className="flex shrink-0 items-center gap-2 text-[1.75rem] leading-none font-semibold tracking-tight">
                         {/*
                           Decorative, so it is hidden from screen readers: the
                           word next to it already names the link, and a reader
@@ -319,7 +292,7 @@ function Chrome({ children }: PropsWithChildren) {
                     </Link>
 
                     <nav
-                        className="hidden items-center gap-4 text-sm text-ink-soft md:flex"
+                        className="hidden items-center gap-3 text-sm text-ink-soft xl:flex xl:gap-4"
                         aria-label={t('nav.main')}
                     >
                         {sections.map((section) => (
@@ -329,7 +302,7 @@ function Chrome({ children }: PropsWithChildren) {
                                 label={section.label}
                                 icon={section.icon}
                                 items={section.items}
-                                current={isCurrent(section.href)}
+                                current={isCurrent(section.href) || section.items.some((item) => isCurrent(item.href))}
                                 isCurrent={isCurrent}
                                 submenuLabel={t('nav.submenu', { section: section.label })}
                             />
@@ -346,8 +319,8 @@ function Chrome({ children }: PropsWithChildren) {
                                         : 'hover:text-ink'
                                 }
                             >
-                                <span className="inline-flex items-center gap-1.5">
-                                    <span className="text-accent">{item.icon}</span>
+                                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                                    <span className="hidden text-accent xl:inline">{item.icon}</span>
                                     {item.label}
                                 </span>
                             </Link>
@@ -369,7 +342,7 @@ function Chrome({ children }: PropsWithChildren) {
                       the stylesheet applies to fields below `sm` applied to
                       nothing here.
                     */}
-                    <div className="ml-auto flex items-center gap-1 md:hidden">
+                    <div className="ml-auto flex items-center gap-1 xl:hidden">
                         <Link
                             href={`${base}/search`}
                             aria-label={t('nav.search')}
@@ -421,7 +394,7 @@ function Chrome({ children }: PropsWithChildren) {
                         </button>
                     </div>
 
-                    <div className="ml-auto hidden items-center gap-3 md:flex">
+                    <div className="ml-auto hidden shrink-0 items-center gap-2 xl:flex xl:gap-3">
                         <MarketSwitcher id="header" />
 
                         {auth.user && unreadCount > 0 && (
@@ -447,7 +420,7 @@ function Chrome({ children }: PropsWithChildren) {
                         <Link
                             href={`${base}/lists`}
                             aria-current={isCurrent(`${base}/lists`) ? 'page' : undefined}
-                            className={`hidden text-sm lg:block ${isCurrent(`${base}/lists`) ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}`}
+                            className={`hidden whitespace-nowrap text-sm lg:block ${isCurrent(`${base}/lists`) ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}`}
                         >
                             {t('nav.lists')}
                         </Link>
@@ -480,7 +453,7 @@ function Chrome({ children }: PropsWithChildren) {
                 {menuOpen && (
                     <div
                         id="mobile-menu"
-                        className="fixed inset-0 z-50 overflow-y-auto bg-cream px-4 pb-4 md:hidden"
+                        className="fixed inset-0 z-50 overflow-y-auto bg-cream px-4 pb-4 xl:hidden"
                     >
                         {/* Its own top bar, so the sheet does not have to know
                             how tall the header under it is. */}
@@ -593,15 +566,13 @@ function Chrome({ children }: PropsWithChildren) {
                             ))}
 
                             {/*
-                              The loose links, drawn like the section headings
-                              above: an icon in the accent, a label, 44px, and
-                              an arrow. This group was "Search and help", a
-                              heading over two indented rows; Search moved
-                              under Find a gift on 2026-09-12, and a heading
-                              over one row that repeats the heading's word is
-                              a box around nothing. So each remaining link is
-                              its own heading-weight row, the shape Make a
-                              list already has now that it carries no items.
+                              The flat links (Gift Finder, How it works),
+                              drawn like the section headings above: an icon
+                              in the accent, a label, 44px, and an arrow. Each
+                              is its own heading-weight row rather than a
+                              heading over indented rows, because a heading
+                              over one row that repeats its word is a box
+                              around nothing.
                             */}
                             {nav.map((item) => (
                                 <div key={item.href} className="mb-4 border-b border-line pb-4">
@@ -724,34 +695,26 @@ function Chrome({ children }: PropsWithChildren) {
                             <Link href={`/${market.key}/brands`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
                                 {t('brand.index_title')}
                             </Link>
-                            {/* Same name as the header uses. Two links to one page
-                                under two different words is the exact confusion the
-                                Cove naming pass set out to remove. */}
-                            <Link href={`/${market.key}/guides`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
-                                {t('nav.smart')}
-                            </Link>
-                            <Link href={`/${market.key}/${market.coveSegment}`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
-                                {t('nav.daily')}
-                            </Link>
-                            <Link href={`/${market.key}/surprise`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
-                                {t('nav.surprise')}
-                            </Link>
+                            {/* Only what the header lacks (2026-09-26). Shop
+                                Smarter, Daily Cove and Surprise Cove are one
+                                tap away in the header on every page; a footer
+                                copy of them was a second list to keep in step. */}
                             {/* What this market searches for: the hub that
                                 replaced the related-search chips, and the only
                                 place a crawler reaches them from any page. */}
                             <Link href={`/${market.key}/popular-searches`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
                                 {t('popular_searches.title')}
                             </Link>
-                            {/* The search help under its short name, and Help,
-                                which gathers the how-to pages and the report
-                                form. Both, rather than one "Help": somebody
-                                looking for "how do I search" scans for that
-                                phrase. */}
+                            {/* The search tips under their short name, and How it
+                                works, which gathers the how-to pages and the
+                                report form. Both: somebody looking for "how do I
+                                search" scans for that phrase. How it works under
+                                the header's name for it, so /help has one name. */}
                             <Link href={`/${market.key}/search-help`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
                                 {t('search_help.footer_link')}
                             </Link>
                             <Link href={`/${market.key}/help`} className="inline-flex min-h-10 items-center hover:text-ink sm:min-h-0">
-                                {t('help.link')}
+                                {t('nav.how_it_works')}
                             </Link>
                         </nav>
 

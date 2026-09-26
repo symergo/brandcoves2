@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react'
-import { useEffect } from 'react'
+import { Fragment, useEffect } from 'react'
 import SignInLink from './SignInLink'
+import { myCovesLinks } from './myCovesLinks'
 import ToolIcon, { type ToolKey } from './ToolIcon'
 import type { SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
@@ -72,7 +73,7 @@ export default function AccountSheet({
     )
 
     return (
-        <div id="account-sheet" className="fixed inset-0 z-50 overflow-y-auto bg-cream px-4 pb-4 md:hidden">
+        <div id="account-sheet" className="fixed inset-0 z-50 overflow-y-auto bg-cream px-4 pb-4 xl:hidden">
             <div className="flex items-center justify-between py-4">
                 <p className="flex min-w-0 items-center gap-2 text-base font-semibold text-ink">
                     {label !== null ? (
@@ -106,11 +107,9 @@ export default function AccountSheet({
                   wanted: a person opening this is usually after a list.
                 */}
                 <ul className="border-l border-line pl-3">
-                    {row(`${base}/lists`, 'wishlist', t('nav.lists'))}
-                    {auth.user && row(`${base}/lists?view=shared`, 'shared', t('nav.shared_lists'))}
-                    {auth.user && row(`${base}/lists?view=group`, 'collab', t('nav.group_lists'))}
-                    {auth.user && row(`${base}/santa`, 'santa', t('nav.santa'))}
-                    {auth.user && row(`${base}/friends`, 'friends', t('nav.friends'))}
+                    {myCovesLinks(base, t, auth.user !== null).map((link) => (
+                        <Fragment key={link.href}>{row(link.href, link.icon, link.label)}</Fragment>
+                    ))}
                     {auth.user &&
                         row(
                             `${base}/notifications`,

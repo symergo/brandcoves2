@@ -8,9 +8,6 @@ return [
         'friends' => 'Amigos',
         'search' => 'Buscar',
         'feedback' => 'Sugerencias',
-        'organise' => 'Organizar',
-        'make_list' => 'Crear una lista',
-        'find_gift' => 'Encontrar un regalo',
         'submenu' => 'Qué hay en :section',
         'gift' => 'Buscador de regalos',
         'daily' => 'Cove Diaria',
@@ -46,7 +43,6 @@ return [
          * El calificativo se traduce, el nombre no — véase localisation.md.
          */
         'gift_coves' => 'Coves de Regalo',
-        'all_coves' => 'Todas las Coves',
         'brand_coves' => 'Coves de Marca',
 
         /*
@@ -79,11 +75,8 @@ return [
 
         // Nombres, no palabras: las Coves se llaman igual en todos los idiomas,
         // como el propio GiftCoves. Un nombre traducido es un segundo nombre.
-        'cove' => 'Gift Cove',
-        'discover_cove' => 'Discover Cove',
         'discover' => 'Descubrir',
         'coves' => 'Coves',
-        'gifts' => 'Regalos',
         'how_it_works' => 'Cómo funciona',
     ],
 
@@ -338,7 +331,7 @@ return [
     'discover_cove' => [
         'seo_title' => 'Ideas de regalo y hallazgos, nuevos cada día',
         'seo_description' => 'Tres maneras de encontrar algo que no buscabas: una edición nueva cada día, una sorpresa elegida por lo rara que es, y lecturas largas por tema.',
-        'title' => 'Encontrar un regalo - descubre las Coves',
+        'title' => 'Descubrir - maneras de encontrar algo',
         'intro' => 'Maneras de encontrar algo que no estabas buscando. Una cambia cada día, otra es deliberadamente impredecible, otra trata de una persona y no de un objeto, y las demás se leen con calma.',
         'daily_what' => 'Una edición nueva cada día: un tema, un puñado de hallazgos y un acertijo de precios. Cada edición pasada conserva su página.',
         'surprise_what' => 'Algo que no sabías que existía, elegido por lo raro que es y no por lo bien que se vende.',
@@ -587,7 +580,7 @@ return [
         // at all until 2026-09-05.
         'seo_title' => 'Listas de deseos para compartir',
         'seo_description' => 'Guarda una lista de deseos, compártela con quien te hace regalos y deja que reserven uno sin que tú veas quién eligió qué.',
-        'title' => 'Mis listas de deseos',
+        'title' => 'Mis Coves',
         'shared_subtitle' => 'Tus listas de regalos y las listas que otros compartieron contigo. Así es como les compras algo.',
         // The hint on the two "shared with me" groups of that view: what to do
         // with them. The subtitle above stays; owner's call, 2026-09-13.
@@ -602,7 +595,6 @@ return [
         'group_subtitle' => 'Un regalo, elegido entre todos. Cada uno vota, y lo que pones queda entre tú y quien lo organiza.',
         'default_title' => 'Mi lista de deseos',
         'default_badge' => 'Predeterminada',
-        'remove_item' => 'Quitar de esta lista',
         'shared_short' => 'Compartida',
         'private_short' => 'Privada',
         'tool_on' => 'activado',
@@ -610,6 +602,7 @@ return [
         'manual_add' => 'Añádelo tú',
         'manual_title' => '¿Qué es?',
         'edit_item' => 'Editar',
+        'remove_item' => 'Quitar de esta lista',
         'save_changes' => 'Guardar',
         'manual_url' => 'Enlace (opcional)',
         'manual_price' => 'Precio (opcional)',
@@ -1928,7 +1921,6 @@ return [
         'search_blurb' => 'Qué acepta el buscador, cómo funciona el escáner y por qué una errata encuentra igual.',
         'lists_title' => 'Listas',
         'lists_blurb' => 'Guardar, compartir, regalar entre varios, Amigo invisible, amigos y recordatorios. Nueve páginas cortas.',
-        'link' => 'Ayuda',
     ],
 
     /*

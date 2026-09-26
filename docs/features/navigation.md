@@ -2,27 +2,53 @@
 
 The site shell: what the header offers, and the two things it did not.
 
-## The header since 2026-09-26: Discover | Coves | Gifts | How it works
+## The header since 2026-09-26: Discover ▾ | Coves ▾ | Gift Finder | How it works
 
 The owner's call, with the repositioning ([../strategy.md](../strategy.md), section 6): the header
 stops presenting a dozen features as equal top-level ideas. Everything that was there still is,
 grouped under what it is (`Layouts/SiteLayout.tsx`, `sections` and `nav`):
 
-| Entry | Hub | Under it |
+| Entry | Goes to | Under it |
 |---|---|---|
-| **Discover** | `/discover-cove` | Search offers, Surprise Cove, Ask others |
-| **Coves** | `/coves` | Daily Cove, Shop Smarter, All Coves |
-| **Gifts** | `/gift` | Gift Finder, Gift Coves |
+| **Discover** ▾ | `/discover-cove` | Search offers, Surprise Cove, Ask others |
+| **Coves** ▾ | `/coves` | Daily Cove, Shop Smarter, Gift Coves |
+| **Gift Finder** | `/gift` | (a plain link) |
 | **How it works** | `/help` | (a plain link) |
 
-On the right, **My Coves** (`/lists`, `nav.lists`, the same words in all four languages by the
-owner's decision): the visitor's own lists, with Secret Friend, group lists and occasions inside it
-as before. **How it works** is `/help`: the whole site explained, then the detailed guides, then the help form (see [feedback.md](feedback.md)). The footer still links it as Help. "Make a list"
-went: My Coves and the homepage's Create a Cove do that job, and its hub `/gift-cove` still
-exists. Brand and Shop Coves stay withheld from the menu, as before.
+On the right, **My Coves** (`/lists`), the same words in all four languages by the owner's
+decision, and the `/lists` page's own heading since the same day.
 
-The phone panel builds from the same `sections`, so it changed with the desktop header. Most of the
-dated sections below describe the header before this change.
+### Two rules, from a review the same afternoon
+
+The first version of this header (Discover | Coves | Gifts | How it works) broke the rule this doc
+has always held, one page never has two names, in several places at once. The fixes:
+
+- **One name per page.** `/gift` was "Gifts" in the header and "Gift Finder" as the first item under
+  it; the header now says Gift Finder. `/help` was "How it works" in the header and "Help" in the
+  footer; it is How it works in both. `/lists` was "My Coves" in every menu and "My wish lists" on
+  the page; the page says My Coves. The Discover page was titled "Find a gift - discover the
+  Coves", which in French reused the Gift Finder's own name; it is "Discover - ways to find
+  something" now.
+- **A heading is never its own first item.** Coves goes to `/coves`, so "All Coves" under it
+  repeated it; it is gone from the menu. Gifts held only the Gift Finder and Gift Coves, so it
+  became a plain link and Gift Coves moved under Coves, where it belongs: a Gift Cove is a kind of
+  Cove, a set of products around a person.
+
+### The footer holds only what the header lacks
+
+Brands, What people search for, Search tips and How it works. Shop Smarter, Daily Cove and
+Surprise Cove went: they are one tap away in the header on every page, and a footer copy of them
+was a second list to keep in step.
+
+### One list for both account menus
+
+The desktop account menu lacked For others, Group lists and Secret Friend, which the phone sheet
+had, so on a desktop no menu reached them. Both now draw from `Components/myCovesLinks.ts`: My
+Coves, For others, Group lists, Secret Friend, Friends; then each menu adds notifications, the
+admin and signing in or out itself.
+
+The phone panel builds from the same `sections` and `nav`, so it changed with the desktop header.
+Most of the dated sections below describe the header before these changes.
 
 ## You could not sign out
 
@@ -442,16 +468,16 @@ has given up on a search and moved on has left both behind. See
 
 ## Files
 
-- `resources/js/Components/AccountMenu.tsx`
-- `resources/js/Layouts/SiteLayout.tsx`
+- `resources/js/Layouts/SiteLayout.tsx` — `sections`, `nav`, the phone panel and the footer
+- `resources/js/Components/NavMenu.tsx`
+- `resources/js/Components/AccountMenu.tsx`, `resources/js/Components/AccountSheet.tsx`, both
+  from `resources/js/Components/myCovesLinks.ts`
 - `app/Http/Controllers/Auth/MagicLinkController.php` — `logout()`
 - `bootstrap/app.php` — `redirectGuestsTo` / `redirectUsersTo`, both market-aware
 - `tests/Feature/PageSmokeTest.php` — every page, opened signed out and signed in
-- `lang/*/site.php` — `nav.make_list`, `nav.find_gift`, `nav.gift`, `nav.search_offers`,
-  `nav.daily`, `nav.smart`, `nav.gift_coves`, `nav.all_coves`, `nav.sign_out`, `nav.admin`,
-  `nav.account` (the caption over the phone menu's account group)
-- `resources/js/Components/NavMenu.tsx`
-- `resources/js/Components/AccountSheet.tsx`
+- `lang/*/site.php` — `nav.discover`, `nav.coves`, `nav.gift`, `nav.how_it_works`, `nav.lists`,
+  `nav.search_offers`, `nav.daily`, `nav.smart`, `nav.gift_coves`, `nav.shared_lists`,
+  `nav.group_lists`, `nav.santa`, `nav.sign_out`, `nav.admin`, `nav.account`
 
 ## See also
 
