@@ -89,6 +89,14 @@ Verlanglijsten die je vanaf 26 september 2026 maakt staan aan, lijsten van
 daarvoor staan uit; je zet het per lijst om, onder Delen. Verwijder je iemand als
 vriend, of zet je het uit, dan ziet die de lijst meteen niet meer.
 
+Sinds 26 september 2026 gaat een vraag die je stelt bij Vraag het aan anderen ook
+naar je vrienden op GiftCoves zodra ze op het openbare bord staat, nooit eerder:
+een melding met je naam en de vraag, en een e-mail voor vrienden die dat willen.
+Hoogstens één per dag van jou naar elke vriend, en niets van je lijsten. Je kunt
+dit uitzetten ("Stuur mijn vragen naar mijn mensen"), en de vragen van je vrienden
+niet meer krijgen, of alleen de e-mails niet, bij je meldingen of via de link in
+zo'n e-mail.
+
 ### Geen geautomatiseerde besluitvorming
 
 Niets hier neemt een besluit met rechtsgevolgen voor jou of dat jou in

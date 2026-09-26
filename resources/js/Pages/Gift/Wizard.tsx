@@ -3,6 +3,8 @@ import { Fragment, useState } from 'react'
 import type { Cents, SavingTo, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
+import { stashAskBrief } from '../../askBrief'
+import CoveIcon from '../../Components/CoveIcon'
 import ChipInput from '../../Components/ChipInput'
 import GiftResults, { type GiftPick, type GiftResultsExtras } from '../../Components/GiftResults'
 import InfoTip from '../../Components/InfoTip'
@@ -331,6 +333,33 @@ export default function GiftWizard(props: Props) {
         .slice(0, TYPES_SHOWN)
         .map(({ persona }) => persona)
 
+    /*
+      The fourth way, "Ask other people": the ask form, filled in from what is
+      known. Who it is for travels in the link, as This or that's does (a
+      saved person by id, checked on the server; a kind of person by value);
+      what was said about them waits in this tab's sessionStorage (askBrief.ts),
+      because answers never go in an address. Never the person's name: the
+      question is public, and the asker types a name only if they choose to.
+    */
+    const askHref = (() => {
+        const base = `/${market.key}/ask?from=gift`
+
+        if (recipient) {
+            return `${base}&person=${encodeURIComponent(recipient.id)}`
+        }
+
+        return kind ? `${base}&relationship=${encodeURIComponent(kind)}` : base
+    })()
+
+    const stashForAsk = () =>
+        stashAskBrief({
+            interests: chosenChips,
+            vibe,
+            values,
+            budget_max: budgetMax,
+            age_band: ageBand ? (options.ages.find((o) => o.value === ageBand)?.label ?? '') : '',
+        })
+
     const showResults = picks !== null && !editing
 
     /** "For Mum · change", above the ways and the questions. */
@@ -371,7 +400,8 @@ export default function GiftWizard(props: Props) {
                     communityCoves={props.communityCoves}
                     nextSteps={props.nextSteps}
                     personUrl={props.personUrl}
-                    askUrl={props.askUrl}
+                    askUrl={props.askUrl ? askHref : null}
+                    onAsk={stashForAsk}
                     into={recipientList}
                     personName={recipient?.name ?? null}
                     onSwap={swap}
@@ -521,11 +551,11 @@ export default function GiftWizard(props: Props) {
                     </h2>
 
                     {/*
-                      Three ways side by side, or two when this market has no
+                      Four ways side by side, or three when this market has no
                       persona Coves yet: nothing for a column means no column
-                      (owner, 2026-09-26), so the other two share the width.
+                      (owner, 2026-09-26), so the others share the width.
                     */}
-                    <div className={`mt-4 grid gap-4 sm:grid-cols-2 ${types.length > 0 ? 'lg:grid-cols-3' : ''}`}>
+                    <div className={`mt-4 grid gap-4 sm:grid-cols-2 ${types.length > 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
                         <button
                             type="button"
                             onClick={() => {
@@ -554,11 +584,33 @@ export default function GiftWizard(props: Props) {
                             <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_taste_cta')} →</span>
                         </Link>
 
+                        {/*
+                          The fourth way (owner, 2026-09-26): ask other people,
+                          on a form already filled in with who it is for and
+                          what is known. It was only the last line of the
+                          results, which nobody reached who had not already
+                          looked the other ways.
+                        */}
+                        <Link
+                            href={askHref}
+                            onClick={stashForAsk}
+                            className={`group flex flex-col rounded-card border border-line bg-card p-5 transition hover:border-ink ${
+                                types.length > 0 ? '' : 'sm:col-span-2 lg:col-span-1'
+                            }`}
+                        >
+                            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                                <CoveIcon name="ask" className="h-5 w-5" />
+                            </span>
+                            <span className="mt-3 font-medium text-ink">{t('gift.way_ask')}</span>
+                            <span className="mt-1 text-sm text-ink-soft">{t('gift.way_ask_hint')}</span>
+                            <span className="mt-auto pt-4 text-sm font-medium text-accent-dark">{t('gift.way_ask_cta')} →</span>
+                        </Link>
+
                         {types.length > 0 && (
-                            <div className="flex flex-col rounded-card border border-line bg-card p-5 sm:col-span-2 lg:col-span-1">
+                            <div className="flex flex-col rounded-card border border-line bg-card p-5">
                                 <span className="font-medium">{t('gift.way_types')}</span>
                                 <span className="mt-1 text-sm text-ink-soft">{t('gift.personas_hint')}</span>
-                                <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                                <ul className="mt-3 grid gap-2">
                                     {types.map((persona) => (
                                         <li key={persona.url}>
                                             <Link

@@ -83,6 +83,14 @@ share its link. Wish lists you make from 26 September 2026 have it on, and lists
 from before that have it off; you change it per list, under Share. Removing
 somebody as a friend, or switching it off, takes the list away from them at once.
 
+Since 26 September 2026, a question you ask in Ask others is also sent to your
+friends on GiftCoves once it is on the public board, never before: a notification
+with your name and the question, and an email to friends who want one. At most one
+a day from you to each friend, and nothing from any of your lists. You can switch
+this off ("Send my questions to my people"), and stop receiving your friends'
+questions, or only the emails, on your notifications page or from the link in
+any such email.
+
 ### No automated decision-making
 
 Nothing here makes a decision that produces legal effects for you or similarly

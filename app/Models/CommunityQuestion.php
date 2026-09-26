@@ -8,6 +8,7 @@ use App\Enums\Interest;
 use App\Enums\Market;
 use App\Enums\ModerationStatus;
 use App\Enums\Vibe;
+use App\Jobs\SendQuestionToPeople;
 use Database\Factories\CommunityQuestionFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,6 +36,7 @@ class CommunityQuestion extends Model
             'market' => Market::class,
             'status' => ModerationStatus::class,
             'published_at' => 'datetime',
+            'people_notified_at' => 'datetime',
 
             /*
              * Optional structure, in Find a gift's own vocabulary.
@@ -91,6 +93,19 @@ class CommunityQuestion extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * The list the question was asked from, if any.
+     *
+     * The asker's own: it is read only to give *them* a "save to this list"
+     * button on the answers, and never shown to anybody else.
+     *
+     * @return BelongsTo<Wishlist, $this>
+     */
+    public function wishlist(): BelongsTo
+    {
+        return $this->belongsTo(Wishlist::class, 'wishlist_id');
     }
 
     /**
@@ -152,6 +167,14 @@ class CommunityQuestion extends Model
             'status' => ModerationStatus::Published,
             'published_at' => now(),
         ])->save();
+
+        /*
+         * Now, and only now, the asker's people may hear about it: a question
+         * that is not on the board must not travel by another route. Queued
+         * after the commit, so the job never reads the row before it is
+         * published. Sent once however often this runs (`people_notified_at`).
+         */
+        SendQuestionToPeople::dispatch($this->id)->afterCommit();
     }
 
     public function refuse(?string $note = null): void

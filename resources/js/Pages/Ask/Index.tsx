@@ -1,5 +1,7 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { takeAskBrief } from '../../askBrief'
+import InfoTip from '../../Components/InfoTip'
 import CoveIcon from '../../Components/CoveIcon'
 import type { SharedProps } from '../../types'
 import { formatPrice } from '../../types'
@@ -30,6 +32,27 @@ interface Props {
     mine: Question[]
     canAsk: boolean
     options: { interests: Option[]; vibes: Option[]; values: string[] }
+    /**
+     * The form filled in from what is known about who it is for (Find a gift,
+     * or a list page). Null when nothing is. Never a name; see AskPrefill.
+     */
+    prefill?: Prefill | null
+    /** Open the form at once: arrived from an "ask your question" button. */
+    open?: boolean
+    /** A published question also goes to this asker's people. */
+    sendsToPeople?: boolean
+}
+
+interface Prefill {
+    title: string
+    interests: string[]
+    vibe: string | null
+    values: string[]
+    age_band: string
+    budget_max: string
+    occasion: string
+    /** The list it is asked from: answers get "save to" this list. */
+    list: { id: string; title: string } | null
 }
 
 /**
@@ -62,15 +85,36 @@ interface Props {
  * is not there. `mine` carries your own unpublished posts back so the page can
  * say "we have it". It is not a disclosure — it is your own writing.
  */
-export default function AskIndex({ questions, mine, canAsk, options }: Props) {
+export default function AskIndex({
+    questions,
+    mine,
+    canAsk,
+    options,
+    prefill = null,
+    open = false,
+    sendsToPeople = false,
+}: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
 
-    const [asking, setAsking] = useState(false)
+    /*
+      Open straight away when somebody came here to ask: from Find a gift's
+      fourth way, a list page, or an "ask your question" button.
+    */
+    const [asking, setAsking] = useState(canAsk && (open || prefill !== null))
     // The optional half, folded away. A form that opens with nine fields is a
-    // form people close.
-    const [detailed, setDetailed] = useState(false)
+    // form people close; unfolded when something in it was filled in for them,
+    // so they can see (and clear) what will be posted.
+    const [detailed, setDetailed] = useState(
+        prefill !== null &&
+            (prefill.interests.length > 0 ||
+                prefill.vibe !== null ||
+                prefill.values.length > 0 ||
+                prefill.age_band !== '' ||
+                prefill.budget_max !== '' ||
+                prefill.occasion !== ''),
+    )
 
     const form = useForm<{
         title: string
@@ -81,16 +125,51 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
         values: string[]
         age_band: string
         occasion: string
+        list_id: string | null
     }>({
-        title: '',
+        title: prefill?.title ?? '',
         body: '',
-        budget_max: '',
-        interests: [],
-        vibe: null,
-        values: [],
-        age_band: '',
-        occasion: '',
+        budget_max: prefill?.budget_max ?? '',
+        interests: prefill?.interests ?? [],
+        vibe: prefill?.vibe ?? null,
+        values: prefill?.values ?? [],
+        age_band: prefill?.age_band ?? '',
+        occasion: prefill?.occasion ?? '',
+        list_id: prefill?.list?.id ?? null,
     })
+
+    /*
+      What Find a gift learned in this tab (the interests ticked, the budget
+      typed), handed over through sessionStorage rather than the address; see
+      askBrief.ts. Read once, after the first render, so the server's page and
+      the browser's first paint agree.
+    */
+    useEffect(() => {
+        if (!canAsk || !window.location.search.includes('from=gift')) return
+
+        const brief = takeAskBrief()
+
+        if (brief === null) return
+
+        const known = new Set(options.interests.map((o) => o.value))
+        const interests = (brief.interests ?? []).filter((v) => known.has(v))
+        const values = (brief.values ?? []).filter((v) => options.values.includes(v))
+
+        form.setData((data) => ({
+            ...data,
+            interests: interests.length > 0 ? interests : data.interests,
+            vibe: brief.vibe ?? data.vibe,
+            values: values.length > 0 ? values : data.values,
+            budget_max: brief.budget_max || data.budget_max,
+            age_band: brief.age_band || data.age_band,
+        }))
+
+        if (interests.length > 0 || brief.vibe || values.length > 0 || brief.budget_max || brief.age_band) {
+            setDetailed(true)
+        }
+        // Once, on arrival.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     function toggle(field: 'interests' | 'values', value: string) {
         const list = form.data[field]
@@ -236,6 +315,18 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
             {asking && (
                 <form onSubmit={submit} className="mt-6 space-y-5 rounded-card border border-line bg-card p-6 lg:p-8">
                     <h2 className="font-medium">{t('ask.ask_heading')}</h2>
+
+                    {/*
+                      Asked from a list: say so, because it is why the answers
+                      will have a "save to" that list on them. Only the asker
+                      ever sees which list; the question does not name it.
+                    */}
+                    {prefill?.list && (
+                        <p className="flex flex-wrap items-center gap-1 text-sm text-ink-soft">
+                            <span>{t('ask.from_list', { list: prefill.list.title })}</span>
+                            <InfoTip>{t('ask.from_list_hint')}</InfoTip>
+                        </p>
+                    )}
 
                     {/* The question, full width — it is the only required field
                         and the one people came to write. */}
@@ -384,7 +475,7 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
                         </div>
                     )}
 
-                    <div className="flex gap-2 border-t border-line pt-5">
+                    <div className="flex flex-wrap items-center gap-2 border-t border-line pt-5">
                         <button
                             type="submit"
                             disabled={form.processing}
@@ -399,6 +490,22 @@ export default function AskIndex({ questions, mine, canAsk, options }: Props) {
                         >
                             {t('ask.cancel')}
                         </button>
+                        {/*
+                          Where else it goes. One line, the detail behind the
+                          (i): once published it is sent to your people, and
+                          the switch is on the notifications page.
+                        */}
+                        {sendsToPeople && (
+                            <span className="flex items-center gap-1 text-xs text-ink-soft sm:ml-auto">
+                                {t('ask.people.form_note')}
+                                <InfoTip>
+                                    {t('ask.people.form_note_hint')}{' '}
+                                    <Link href={`${base}/notifications`} className="underline">
+                                        {t('notifications.title')}
+                                    </Link>
+                                </InfoTip>
+                            </span>
+                        )}
                     </div>
                 </form>
             )}

@@ -980,3 +980,12 @@ the add control and the items, exactly as on the shared page; on a phone it foll
 two columns only appear when there is a discussion to show (`hasBoard`: a board exists and the list
 has a share link); otherwise the items keep the full width, per the owner's layout rule. The rest of
 "Items first" stands.
+
+## "Vraag het aan anderen" beside the add control (2026-09-26)
+
+On your own gift list or group list, a *Vraag het aan anderen* button sits next to *Product
+toevoegen*, in the empty state and above the items. Visible rather than in the More menu: the owner
+asked for it "on the list page where you build your list". It opens the ask form filled in from the
+list's person, relationship, occasion and date, never their name, and the ideas in the answers save
+straight back onto this list for the asker. Not on a wish list of your own, which is about you.
+See [ask-others.md](ask-others.md), "Easier to reach".

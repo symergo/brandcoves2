@@ -53,6 +53,13 @@ class NotificationController extends Controller
             'watching' => $this->watching($request, $current),
             // Reminder emails on or off (ReminderEmailController).
             'reminderEmails' => $user->reminder_emails_off_at === null,
+            // Ask others and your people (AskPeopleSettingsController); all on
+            // unless turned off, because null is on.
+            'askPeople' => [
+                'ask' => $user->ask_people_off_at === null,
+                'receive' => $user->people_questions_off_at === null,
+                'email' => $user->people_question_emails_off_at === null,
+            ],
         ]);
     }
 

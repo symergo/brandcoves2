@@ -43,6 +43,10 @@ class User extends Authenticatable implements FilamentUser, HasName
             'birthday' => 'date',
             'friends_see_birthday' => 'boolean',
             'reminder_emails_off_at' => 'datetime',
+            // Ask others and your people; null is on. See QuestionToPeople.
+            'ask_people_off_at' => 'datetime',
+            'people_questions_off_at' => 'datetime',
+            'people_question_emails_off_at' => 'datetime',
         ];
     }
 

@@ -37,6 +37,8 @@ export interface GiftResultsExtras {
     personUrl?: string | null
     /** The board where people ask others what to buy. */
     askUrl?: string | null
+    /** Called as the ask link is followed, to hand what is known to the form (askBrief.ts). */
+    onAsk?: () => void
 }
 
 interface Props extends GiftResultsExtras {
@@ -97,6 +99,7 @@ export default function GiftResults({
     nextSteps = [],
     personUrl = null,
     askUrl = null,
+    onAsk,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
@@ -248,7 +251,7 @@ export default function GiftResults({
             {askUrl && (
                 <p className="mt-10 border-t border-line pt-5 text-sm text-ink-soft">
                     {t('gift.ask_prompt')}{' '}
-                    <Link href={askUrl} className="font-medium text-accent-dark underline hover:text-ink">
+                    <Link href={askUrl} onClick={onAsk} className="font-medium text-accent-dark underline hover:text-ink">
                         {t('gift.ask_link')}
                     </Link>
                 </p>
