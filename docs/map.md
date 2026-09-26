@@ -68,7 +68,8 @@ Grouped by what a visitor is doing, not by file order:
   `/people` (My people: saved people and friends on one list; `/friends` redirects here),
   `/people/{recipient}` (a saved person's gift history and next step)
 - **Account** — `/login`, `/auth/magic/{token}`, `/auth/google`, `/logout`, `/notifications`,
-  `/alerts`, `/reminders/stop/{user}` (signed, from every reminder email)
+  `/alerts`, `/reminders/stop/{user}` (signed, from every reminder email),
+  `/invites/not-wanted/{inviter}/{hash}` (signed, "this is spam" from every invitation email)
 - **Machine** — `/og/**.png`, `/health`, sitemaps, `/api/editorial/**`
 
 ## Services, one line each
@@ -97,7 +98,7 @@ Grouped by what a visitor is doing, not by file order:
 | `Search/` | `SearchService`, `SearchQuery`, the gift-intent reading of the search box (`GiftIntentParser`), Amazon links, brand attribution; the Coves a term matches (`CoveMatches`) and what people keep for it (`SearchSignals`), features/search.md |
 | `Seo/` | meta, OG images, structured data, alternates, legacy redirects |
 | `Settings/` | admin-editable settings backed by the database |
-| `Social/` | friends (`Friends`, `FriendInvites`, `ShareReferral`), sharing a list with a named friend (`ListSharer`), My people (`MyPeople`: saved people and friends on one list); `FollowGraph` is built and unused |
+| `Social/` | friends (`Friends`, `FriendInvites`, `ShareReferral`), the invitation email and its limits and spam link (`InviteMailer`), sharing a list with a named friend (`ListSharer`), My people (`MyPeople`: saved people and friends on one list); `FollowGraph` is built and unused |
 | `Wishlist/` | saving (`ItemSaver`), making a list in one step (`ListMaker`, `DefaultTitle`), claim visibility (`ClaimView` — see invariant 4), the group-gift board |
 | `PageReading/` | a pasted link, read in a queued job: known sources first (`LinkRouter`), then Iframely or the page itself through `SafeFetch` (private addresses refused); see features/pasted-links.md |
 | `Images/` | a picture copied to our own storage and re-encoded (`ImageStore`) |

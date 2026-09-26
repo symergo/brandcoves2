@@ -5,14 +5,16 @@ import { useTranslations } from '../../useTranslations'
 
 interface Props {
     googleEnabled: boolean
+    /** Filled in from `?email=`, which the button in an invitation email carries. */
+    email?: string | null
 }
 
-export default function Login({ googleEnabled }: Props) {
+export default function Login({ googleEnabled, email }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
     const base = `/${market.key}`
 
-    const form = useForm({ email: '', name: '' })
+    const form = useForm({ email: email ?? '', name: '' })
 
     function submit(e: FormEvent) {
         e.preventDefault()

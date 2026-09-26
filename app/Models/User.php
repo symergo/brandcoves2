@@ -92,6 +92,17 @@ class User extends Authenticatable implements FilamentUser, HasName
     }
 
     /**
+     * "This is spam" presses under this member's invitation emails. Read by
+     * the admin screen of the same name; see App\Services\Social\InviteMailer.
+     *
+     * @return HasMany<InviteComplaint, $this>
+     */
+    public function inviteComplaints(): HasMany
+    {
+        return $this->hasMany(InviteComplaint::class, 'inviter_id');
+    }
+
+    /**
      * Filament admin access.
      *
      * Deliberately a database flag with no self-service path: the admin panel

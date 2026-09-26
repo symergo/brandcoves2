@@ -47,6 +47,8 @@ staat, heb je recht van bezwaar; onder *Je rechten* lees je hoe.
 | Feedback die je ons stuurt: het bericht, de pagina, en een e-mailadres als je dat geeft | Rechtzetten wat je meldde, en antwoorden als je daarom vroeg | Gerechtvaardigd belang (art. 6(1)(f)) |
 | Dit of dat samen: de keuzes die mensen maken via een link die je stuurde over een van je personen (welke producten, welk gekozen werd), zonder naam en met een eenrichtingscode in plaats van een identiteit | Je tonen wat ze samen vonden | Overeenkomst (art. 6(1)(b)) |
 | Een cadeauprofielkaart die je maakt: de interesses en het budget erop, en een naam alleen als je er een typte | De kaart tonen aan wie de link opent | Toestemming (art. 6(1)(a)), ingetrokken door de kaart te verwijderen |
+| Een e-mailadres dat een lid ons geeft om iemand uit te nodigen, en één e-mail naar dat adres | De uitnodiging bezorgen, en jullie verbinden zodra die persoon inlogt | Gerechtvaardigd belang (art. 6(1)(f)): het jouwe om mensen te bereiken die je kent, en het hunne om ervan te horen; de link "Dit is spam" is het bezwaar |
+| Verzoeken om geen uitnodigingen meer en klachten "Dit is spam", als eenrichtingscode gemaakt van het adres, nooit het adres zelf | Dat adres nooit meer een uitnodiging mailen, en leden stoppen van wie mensen de uitnodigingen spam noemen | Gerechtvaardigd belang (art. 6(1)(f)) |
 
 ### Een woord over de bezoekerscookie
 
@@ -97,6 +99,32 @@ dit uitzetten ("Stuur mijn vragen naar mijn mensen"), en de vragen van je vriend
 niet meer krijgen, of alleen de e-mails niet, bij je meldingen of via de link in
 zo'n e-mail.
 
+### Iemand uitnodigen met een e-mailadres
+
+Sinds 26 september 2026 sturen we, als je iemand uitnodigt bij Mijn mensen met
+een e-mailadres, dat adres één e-mail: je naam, wat GiftCoves is, en een knop om
+in te loggen. Niets van je lijsten. Dezelfde e-mail gaat uit of het adres nu al
+een account heeft of niet, en jij krijgt in beide gevallen hetzelfde te horen. Je
+kunt hoogstens 20 adressen per dag uitnodigen, en hetzelfde adres één keer per
+30 dagen. Je eigen adres mailen we nooit.
+
+We bewaren het adres bij de uitnodiging tot die persoon inlogt (dan wordt de
+uitnodiging de verbinding en verdwijnt het adres eruit), of 365 dagen nadat je
+hen voor het laatst uitnodigde. We houden ook 90 dagen bij dat je een uitnodiging
+stuurde, met een eenrichtingscode gemaakt van het adres in plaats van het adres:
+dat is wat de twee grenzen tellen.
+
+Elke uitnodiging per e-mail heeft een link "Niet gevraagd? Dit is spam" die zonder
+account werkt. Wie erop drukt, krijgt van niemand nog een uitnodiging per e-mail,
+en dat telt als één klacht tegen het lid dat ze stuurde. Daarvoor bewaren we
+alleen de eenrichtingscode, nooit het adres: het verzoek zolang het geldt (de
+pagina waar de link naartoe leidt kan het ongedaan maken), de klacht 365 dagen.
+Van een lid met 3 klachten mailen we de uitnodigingen niet meer, en wij kijken
+ernaar. Het lid krijgt van geen van beide iets te horen.
+
+Werd je uitgenodigd en wil je dat we het adres verwijderen, schrijf dan naar
+{{privacy_email}}.
+
 ### Geen geautomatiseerde besluitvorming
 
 Niets hier neemt een besluit met rechtsgevolgen voor jou of dat jou in
@@ -122,7 +150,7 @@ Onze verwerkers, en wat de EER verlaat:
 | Wie | Waarvoor | Waar |
 |---|---|---|
 | OVH | De site en de database hosten | Frankfurt, Duitsland (EU) |
-| Resend | Inloglinks, meldingen en de dagelijkse mail versturen | Verenigde Staten |
+| Resend | Inloglinks, meldingen, uitnodigingen en de dagelijkse mail versturen | Verenigde Staten |
 | Anthropic | Redactionele teksten genereren | Verenigde Staten |
 | Google | Bezoeken tellen, alleen als jij het toestaat | Verenigde Staten |
 
@@ -189,6 +217,10 @@ Staten verwerkt, onder de waarborgen hierboven.
 | Feedback die je ons stuurt | 12 maanden, bericht en antwoordadres samen |
 | Keuzes via een Dit of dat samen-link | 180 dagen, daarna ook de link zodra er geen keuzes meer op staan |
 | Cadeauprofielkaart | Tot je ze verwijdert, of 365 dagen nadat iemand ze voor het laatst opende |
+| Een uitnodiging die nog niemand aannam (het uitgenodigde adres) | Tot die persoon inlogt, of 365 dagen nadat het lid hen voor het laatst uitnodigde |
+| Overzicht van de uitnodigingen die een lid stuurde (een eenrichtingscode, niet het adres) | 90 dagen |
+| Klacht "Dit is spam" over een uitnodiging | 365 dagen |
+| Verzoek om geen uitnodigingen meer (een eenrichtingscode, niet het adres) | Tot het ongedaan wordt gemaakt |
 | Serverlogs | 30 dagen |
 | Analyticscookie, als je die toestond | 13 maanden |
 | Advertentiemetingcookie, als je die toestond | 90 dagen |

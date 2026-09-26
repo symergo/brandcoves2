@@ -117,6 +117,11 @@ return Application::configure(basePath: dirname(__DIR__))
             // The same for "stop emails about my people's questions".
             '*/ask/people-emails/stop/*',
 
+            // "This is spam" under an invitation email, one-click from the
+            // mail client (and its undo). Signed; all it can do is stop
+            // invitation emails to the address that received the link.
+            '*/invites/not-wanted/*',
+
             // eBay's account-deletion webhook. A server-to-server POST from
             // outside, so there is no session and no token to carry — and
             // rejecting it would mark the application non compliant in eBay's

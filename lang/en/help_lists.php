@@ -310,7 +310,7 @@ Everyone plays once.',
                 ],
                 [
                     'title' => 'Becoming friends',
-                    'body' => "When someone opens your share link while signed in, you are friends. To invite someone yourself:\n\n1. Go to [My people](people).\n2. Tap “Invite on GiftCoves” and fill in their email address, and the birthday if you like.\n3. Tap “Invite”.\n\nThey get no email about it, so tell them yourself. If they already have an account you are connected at once; otherwise as soon as they sign in.",
+                    'body' => "When someone opens your share link while signed in, you are friends. To invite someone yourself:\n\n1. Go to [My people](people).\n2. Tap “Invite on GiftCoves” and fill in their email address, and the birthday if you like.\n3. Tap “Invite”.\n\nWe email them your invitation. If they already have an account you are connected at once; otherwise as soon as they sign in.",
                 ],
                 [
                     'title' => 'What a friend sees',

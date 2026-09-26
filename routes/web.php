@@ -33,6 +33,7 @@ use App\Http\Controllers\HandoverController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InviteNotWantedController;
 use App\Http\Controllers\ItemTransferController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\ListHelpController;
@@ -1141,6 +1142,32 @@ Route::prefix('{market}')->group(function () {
         ->whereNumber('user')
         ->middleware(['signed', 'throttle:30,1'])
         ->name('ask.people-emails.stop');
+
+    /*
+     * "This is spam / not asked for?", from every invitation email. Signed and
+     * without an account, like the stop links above, but the GET only shows a
+     * page with one button: a press counts a complaint against the member who
+     * sent it, and mail scanners open every link. The POST is the button and
+     * RFC 8058 one-click, exempt from CSRF in bootstrap/app.php.
+     * See InviteNotWantedController.
+     */
+    Route::get('/invites/not-wanted/{inviter}/{hash}', [InviteNotWantedController::class, 'show'])
+        ->whereNumber('inviter')
+        ->where('hash', '[a-f0-9]{64}')
+        ->middleware(['signed', 'throttle:30,1'])
+        ->name('invites.not-wanted');
+
+    Route::post('/invites/not-wanted/{inviter}/{hash}', [InviteNotWantedController::class, 'store'])
+        ->whereNumber('inviter')
+        ->where('hash', '[a-f0-9]{64}')
+        ->middleware(['signed', 'throttle:30,1'])
+        ->name('invites.not-wanted.store');
+
+    Route::post('/invites/not-wanted/{inviter}/{hash}/undo', [InviteNotWantedController::class, 'undo'])
+        ->whereNumber('inviter')
+        ->where('hash', '[a-f0-9]{64}')
+        ->middleware(['signed', 'throttle:30,1'])
+        ->name('invites.not-wanted.undo');
 
     Route::post('/picks/{pick}/react', PickReactionController::class)
         ->whereNumber('pick')

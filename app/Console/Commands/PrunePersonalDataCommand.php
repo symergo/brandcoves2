@@ -70,6 +70,10 @@ class PrunePersonalDataCommand extends Command
         'taste_runs' => 180,
         // A gift profile card nobody has opened for this long (2026-09-26).
         'gift_profile_cards' => 365,
+        // Invitations by email (2026-09-26, docs/features/friend-invite-mail.md).
+        'friend_invites' => 365,
+        'friend_invite_mails' => 90,
+        'invite_complaints' => 365,
     ];
 
     /**
@@ -213,6 +217,38 @@ class PrunePersonalDataCommand extends Command
         $report['gift history'] = $this->prune(
             'recipient_gifts',
             fn () => DB::table('recipient_gifts')->where('given_year', '<', (int) now()->year - self::GIFT_HISTORY_YEARS),
+            $dry,
+        );
+
+        /*
+         * Invitations by email (friend-invite-mail.md).
+         *
+         * A pending invitation holds the address a member typed, of somebody
+         * who has not signed in. A year without signing in means they are not
+         * coming, and we would be keeping a stranger's address for nobody.
+         * `updated_at`, so inviting again restarts the year.
+         */
+        $report['pending invitations'] = $this->prune(
+            'friend_invites',
+            fn () => DB::table('friend_invites')->where('updated_at', '<', now()->subDays(self::RETENTION['friend_invites'])),
+            $dry,
+        );
+
+        // The log the two limits count (a day, thirty days). Ninety leaves an
+        // admin looking at a complaint the member's recent invitations.
+        $report['invitation log'] = $this->prune(
+            'friend_invite_mails',
+            fn () => DB::table('friend_invite_mails')->where('created_at', '<', now()->subDays(self::RETENTION['friend_invite_mails'])),
+            $dry,
+        );
+
+        // Complaints go after a year, which also lifts a stop on a member's
+        // invitation emails that nobody has renewed. The suppression list is
+        // deliberately NOT pruned: it is the record of somebody asking never
+        // to be mailed, and it holds no address, only a keyed hash.
+        $report['invitation complaints'] = $this->prune(
+            'invite_complaints',
+            fn () => DB::table('invite_complaints')->where('created_at', '<', now()->subDays(self::RETENTION['invite_complaints'])),
             $dry,
         );
 

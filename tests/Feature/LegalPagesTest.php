@@ -155,13 +155,29 @@ class LegalPagesTest extends TestCase
             );
 
             // This or that together and gift profile cards (2026-09-26).
-            foreach (['taste_runs', 'gift_profile_cards'] as $window) {
+            // And invitations by email (2026-09-26).
+            foreach (['taste_runs', 'gift_profile_cards', 'friend_invites', 'friend_invite_mails', 'invite_complaints'] as $window) {
                 $this->assertStringContainsString(
                     $windows[$window].($language === 'en' ? ' days' : ' dagen'),
                     $text,
                     "the {$language} policy does not state the {$window} window the pruner uses",
                 );
             }
+        }
+    }
+
+    #[Test]
+    public function the_published_invitation_limits_are_the_ones_the_code_applies(): void
+    {
+        // The privacy policy tells an invited person how often they can be
+        // mailed and when a sender is stopped. Those are config, so a changed
+        // number must not leave the policy saying the old one.
+        foreach (['en' => ['a day', 'days', 'complaints'], 'nl' => ['per dag', 'dagen', 'klachten']] as $language => [$day, $days, $complaints]) {
+            $text = file_get_contents(resource_path("legal/{$language}/privacy.md"));
+
+            $this->assertStringContainsString(config('giftcoves.invites.daily_limit').' '.($language === 'en' ? 'addresses '.$day : 'adressen '.$day), $text);
+            $this->assertStringContainsString(config('giftcoves.invites.repeat_days').' '.$days, $text);
+            $this->assertStringContainsString(config('giftcoves.invites.complaint_limit').' '.$complaints, $text);
         }
     }
 

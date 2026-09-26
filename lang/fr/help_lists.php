@@ -310,7 +310,7 @@ Chacun joue une fois.',
                 ],
                 [
                     'title' => 'Devenir amis',
-                    'body' => "Quand quelqu’un ouvre votre lien de partage en étant connecté, vous êtes amis. Pour inviter quelqu’un vous-même :\n\n1. Allez sur [Mes proches](people).\n2. Touchez « Inviter sur GiftCoves » et indiquez son adresse e-mail, et l’anniversaire si vous voulez.\n3. Touchez « Inviter ».\n\nCette personne ne reçoit pas d’e-mail pour cela, dites-le-lui vous-même. Si elle a déjà un compte, vous êtes reliés tout de suite ; sinon dès qu’elle se connecte.",
+                    'body' => "Quand quelqu’un ouvre votre lien de partage en étant connecté, vous êtes amis. Pour inviter quelqu’un vous-même :\n\n1. Allez sur [Mes proches](people).\n2. Touchez « Inviter sur GiftCoves » et indiquez son adresse e-mail, et l’anniversaire si vous voulez.\n3. Touchez « Inviter ».\n\nNous lui envoyons un e-mail avec votre invitation. Si elle a déjà un compte, vous êtes reliés tout de suite ; sinon dès qu’elle se connecte.",
                 ],
                 [
                     'title' => 'Ce qu’un ami voit',
