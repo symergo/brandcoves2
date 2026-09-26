@@ -17,6 +17,7 @@ use App\Models\CommunityAnswer;
 use App\Models\CommunityQuestion;
 use App\Models\DailyPickSet;
 use App\Models\Feed;
+use App\Models\Feedback;
 use App\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -219,7 +220,19 @@ class AdminPanelTest extends TestCase
             ]);
         }
 
+        /*
+         * The same trap a third time, in a filter rather than a column: the
+         * feedback queue built its market filter by plucking `market` off the
+         * rows, which the model casts to an enum, and Filament refused an enum
+         * as an option label. 500 from the first report onward (2026-09-26).
+         */
+        Feedback::query()->create([
+            'market' => Market::BeNl->value,
+            'message' => 'A report, so the queue has a row to render.',
+        ]);
+
         foreach ([
+            '/admin/feedback',
             '/admin/cove-editorials',
             '/admin/cove-plans',
             '/admin/guide-topics',

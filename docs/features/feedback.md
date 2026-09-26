@@ -137,3 +137,14 @@ rather than a question anybody can answer, for a fact the page already knows —
 there. It stays in `form.data` and is posted from there, so every report still says which page it is
 about and the form is one field shorter. `feedback.path_label` and `path_placeholder` are deleted in
 all four languages.
+
+## The queue 500'd from the first report (2026-09-26)
+
+`/admin/feedback` failed with a server error as soon as the table held a row. The market filter
+built its options by plucking `market` off the feedback rows, and the model casts that column to the
+`Market` enum, so Filament received an enum where it needs a label string and threw. With an empty
+table the list of options was empty and nothing failed, which is how it shipped: nobody had sent
+feedback yet. The options now come from `Market::cases()` with their labels, as every other market
+filter in the panel does. `AdminPanelTest::the_content_and_operations_pages_render` now seeds a
+report and opens the page. It is the same trap that test already records for the community queues:
+Filament code that only runs once a row exists.

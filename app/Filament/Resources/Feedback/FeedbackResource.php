@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Feedback;
 
+use App\Enums\Market;
 use App\Filament\Resources\Feedback\Pages\ListFeedback;
 use App\Models\Feedback;
 use BackedEnum;
@@ -116,11 +117,13 @@ class FeedbackResource extends Resource
                     // reason to come to this screen.
                     ->default(false),
 
+                // From the enum, not from the rows: `market` is cast to Market
+                // on the model, so plucking it hands Filament enum objects as
+                // labels and the whole page 500s — but only once a row exists,
+                // which is how it shipped past an empty table (2026-09-26).
                 SelectFilter::make('market')
-                    ->options(fn () => Feedback::query()
-                        ->distinct()
-                        ->orderBy('market')
-                        ->pluck('market', 'market')
+                    ->options(collect(Market::cases())
+                        ->mapWithKeys(fn (Market $m) => [$m->value => $m->label()])
                         ->all()),
             ])
             ->recordActions([
