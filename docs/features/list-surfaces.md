@@ -832,3 +832,65 @@ The choice travels as `ask[]` to `WishlistController::store()`, comes back once 
 the list's own share controls are there for every visit after. A wish list for yourself drops the
 choice: nobody asks on your behalf. `AskForIdeasTest` holds it; the help page describes it under
 sharing.
+
+## Items first: Share, a More menu, and a "⋯" per item (2026-09-26)
+
+The owner's audit of their own list page: it put features before content. On a list for somebody
+it opened on a row of tool chips (Share, Ask, Settings, and on a wish list also Quiz and Secret
+Friend, then Delete), a large "Find out together what {name} likes" card, a "What you gave {name}"
+link and a discussion column on the right. The items and "+ Add a product" came last; on a phone
+the first screen held no item at all. And every item on your own list carried a filled bookmark
+with a split "▾" beside it that, at 10px, read as a minus sign.
+
+What changed is only where things are; no tool behaves differently:
+
+| Before | Now |
+|---|---|
+| Row of chips under the title | **Share** stays a button in the header, beside the title. Everything else is in one **More** menu next to it |
+| Settings, Ask, Quiz, Secret Friend chips | More → Settings, "Ask {name} for suggestions", Quiz, Secret Friend. Each opens the same panel under the header, which now has its own ✕ (closing used to be pressing the chip again) |
+| "Find out together" card, always open between the header and the items | More → "Find out together what {name} likes", opening the same `TasteTogetherPanel` where the other panels open |
+| "What you gave {name}" link under the title | More → the same link, to the person's page |
+| Delete, last chip in the row | More → Delete: last, below a rule, in the danger colour, with the same confirmation |
+| Discussion (`ListBoard`) in a sticky right column from `lg` | Under the items, capped to a reading width. The items take the full width, per the owner's rule that content is full width when nothing is in a right column |
+| Group pot above the items | Under the items it collects for |
+| Bookmark, pencil and bin on your own items | One "⋯" per item: Edit (hand-written items only), Copy to another list (with "+ New list"), Remove from this list |
+| `SaveToList`'s "▾" character | A drawn chevron (`ToolIcon` `chevron`) with a label and tooltip, everywhere that control appears |
+
+**Decisions taken without the owner**, so they can be revisited:
+
+- **The panels still open under the header**, above the items, not in a dialog. A tool you just
+  picked is what you are looking at; closing it puts the items back directly under the title.
+  Pending suggestions also stay above the items: a message somebody sent is not something to hide
+  behind a button (the rule `ListTools` already had).
+- **The Ask tool is named in full in the menu** ("Ask Anna for suggestions"), because the chip's
+  single word leaned on the row around it for its meaning. "Find out together" uses its panel title.
+- **Remove asks no question**, as neither of the two controls it replaces did (the bin on a
+  hand-written item, unticking the bookmark on a catalogue one).
+- **Copying a catalogue item now goes through `ItemTransferController::between`**, the endpoint
+  hand-written items always used. The bookmark's picker saved the product to other lists; the copy
+  does the same and also carries the note. A product already on the target list is not doubled
+  (`ItemMover::copy`). The browser's saved-items cache is told on copy and on remove, as the
+  bookmark did.
+- **The bookmark stays for a collaborator** who may add to a list that is not theirs, and on every
+  other surface (product cards, other people's shared lists). It answers "is this saved?", and on
+  your own list the answer is always yes.
+- **A switched-on tool says "on"** after its name in the menu, in sage; the chips said it with their
+  colour. Share keeps the sage tint while the list has a live link.
+
+**`Menu`** (`Components/Menu.tsx`) is new and serves both menus: a real menu button
+(`aria-haspopup`, `aria-expanded`, `role="menu"` and `menuitem`), focus on the first item when it
+opens, arrow keys, Home and End, Escape back to the button, Tab or a click outside closes it. It
+renders in a portal for the same reason `SaveToList` does: a list item card is `overflow-hidden`.
+When a tool opens from the menu its panel takes focus and scrolls into view, so a keyboard reader
+lands on what they asked for rather than on "More". The older menus (`AccountMenu`, `CopyToList`,
+`SaveToList`) were left as they are.
+
+The help pages (`lang/*/help_lists.php`: editing, copying, removing, the quiz, the discussion,
+Secret Friend) and the Gift Cove manual (`gift_cove.registry_step1`, `quiz_step2`) name the new
+places in all four languages. The `/lists-help` screenshots that show the old chip row were not
+regenerated.
+
+Files: `Pages/Lists/Show.tsx`, `Components/ListTools.tsx` (`ListToolsBar` added, the chip row
+removed), `Components/Menu.tsx`, `Components/OwnItemMenu.tsx`, `Components/TasteTogetherPanel.tsx`
+(a `className` prop), `Components/SaveToList.tsx`, `Components/ToolIcon.tsx` (`more`, `chevron`,
+`edit`, `copy`); keys `lists.more_tools`, `lists.more_tools_label`, `lists.item_menu`.

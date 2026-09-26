@@ -108,7 +108,7 @@ is true now.
 | [saved-coves.md](saved-coves.md) | Coves / Wishlist | Active: save a Cove into My Coves, or copy it into a list of your own |
 | [save-button.md](save-button.md) | Wishlist / Coves / UI | Active: one Save button and one panel for products and Coves; the "▾" is gone |
 | [community-coves.md](community-coves.md) | Coves / Wishlist / Community | Active: an owner publishes a list as a public Cove; browsed on /coves, suggested by the Gift Finder, admin can hide |
-| [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | Active |
+| [list-surfaces.md](list-surfaces.md) | Wishlist / Gifting | Active — your own list opens on its items; Share plus a More menu in the header, a "⋯" per item (2026-09-26) |
 | [ai-invariant.md](ai-invariant.md) | Core | Active |
 | [legal-pages.md](legal-pages.md) | Compliance / Content | Active — fr/es untranslated |
 | [cutover.md](cutover.md) | Operations | ✅ Done 2026-08-10 |

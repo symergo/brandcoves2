@@ -829,6 +829,11 @@ return [
         'asked_none' => ':name heeft nog niets op een lijst gezet.',
         'ask_tab' => 'Vraag suggesties aan :name',
         'ask_chip' => 'Vraag',
+        // The list page's menus (2026-09-26): the secondary tools behind one
+        // button, and the actions on an item of your own list.
+        'more_tools' => 'Meer',
+        'more_tools_label' => 'Meer voor deze lijst',
+        'item_menu' => 'Opties voor :title',
         'collaborator_removed' => 'Verwijderd.',
         'who_sees_what' => 'Wie ziet wat',
         'share_link' => 'De link naar deze lijst',
@@ -1106,14 +1111,14 @@ return [
 
         'registry_title' => 'Een geschenkenlijst',
         'registry_body' => 'Een wenslijst met een gelegenheid en een datum, voor een huwelijk, een baby of een nieuwe woning. Zet er een adres bij: alleen wie iets geclaimd heeft, ziet het.',
-        'registry_step1' => 'Open een van je verlanglijsten en klik op Instellingen.',
+        'registry_step1' => 'Open een van je verlanglijsten, klik op Meer en dan op Instellingen.',
         'registry_step2' => 'Kies de gelegenheid en de datum, en zet er een adres bij als mensen dingen moeten opsturen.',
         'registry_step3' => 'Deel hem zoals elk andere lijst. Hij gedraagt zich ook zo: mensen claimen, en jou wordt nooit verteld wat.',
 
         'quiz_title' => 'Hoe goed kennen ze je?',
         'quiz_body' => 'Maak van je wenslijst een quiz: vier dingen, een ervan staat er echt op. Je deelt de score, niet de antwoorden.',
         'quiz_step1' => 'Open je lijst en druk op Delen.',
-        'quiz_step2' => 'Druk op Quiz en dan op "Maak een quiz van deze lijst".',
+        'quiz_step2' => 'Druk op Meer, dan op Quiz en dan op "Maak een quiz van deze lijst".',
         'quiz_step3' => 'Stuur de quizlink rond. Vijf rondes van vier dingen, een poging per persoon.',
 
         'suggestions_title' => 'Suggesties',

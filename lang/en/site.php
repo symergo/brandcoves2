@@ -976,6 +976,11 @@ return [
         'asked_none' => ':name has not put anything on a list yet.',
         'ask_tab' => 'Ask :name for suggestions',
         'ask_chip' => 'Ask',
+        // The list page's menus (2026-09-26): the secondary tools behind one
+        // button, and the actions on an item of your own list.
+        'more_tools' => 'More',
+        'more_tools_label' => 'More for this list',
+        'item_menu' => 'Options for :title',
         'collaborator_removed' => 'Removed.',
         'who_sees_what' => 'Who sees what',
         'share_link' => 'The link to this list',
@@ -1292,14 +1297,14 @@ return [
 
         'registry_title' => 'A registry',
         'registry_body' => 'A wishlist with an occasion and a date on it, for a wedding, a baby or a new home. Add a delivery address and only people who have claimed something can see it.',
-        'registry_step1' => 'Open one of your wishlists and press Settings.',
+        'registry_step1' => 'Open one of your wishlists, press More and then Settings.',
         'registry_step2' => 'Pick the occasion and the date, and add a delivery address if people should be posting things to you.',
         'registry_step3' => 'Share it as you would any list. It behaves like one: people claim, and you are never told what.',
 
         'quiz_title' => 'How well do they know you?',
         'quiz_body' => 'Turn your wishlist into a quiz: four things, one of them really on it. Share the score, not the answers.',
         'quiz_step1' => 'Open your list and press Share.',
-        'quiz_step2' => 'Press Quiz, then "Make a quiz from this list".',
+        'quiz_step2' => 'Press More, then Quiz, then "Make a quiz from this list".',
         'quiz_step3' => 'Send the quiz link. Five rounds of four things, one go each.',
 
         'suggestions_title' => 'Suggestions',

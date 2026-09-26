@@ -20,7 +20,7 @@ alone, and a group list already has those five people.
 
 | | |
 |---|---|
-| Giver's side | a card on the list page for the list's person (`Lists/Show`, `TasteTogetherPanel`), for the list's owner only; on group lists and on lists for somebody |
+| Giver's side | a card on the list page for the list's person (`Lists/Show`, `TasteTogetherPanel`), opened from the More menu since 2026-09-26 (list-surfaces.md, "Items first"), for the list's owner only; on group lists and on lists for somebody |
 | Giver's routes | `POST` / `DELETE /{market}/recipients/{id}/taste-together`, `POST .../apply` (behind `auth`, owner-scoped, `throttle:20,1`) |
 | Player's page | `/{market}/t/{token}`: the ordinary This or that page in mode `together` (`Gift/Taste.tsx`) |
 | Controller | `App\Http\Controllers\TasteTogetherController` (extends `TasteController` for its rounds, validation and result) |

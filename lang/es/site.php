@@ -825,6 +825,11 @@ return [
         'asked_none' => ':name aún no ha puesto nada en una lista.',
         'ask_tab' => 'Pedir sugerencias a :name',
         'ask_chip' => 'Preguntar',
+        // The list page's menus (2026-09-26): the secondary tools behind one
+        // button, and the actions on an item of your own list.
+        'more_tools' => 'Más',
+        'more_tools_label' => 'Más para esta lista',
+        'item_menu' => 'Opciones para :title',
         'collaborator_removed' => 'Eliminado.',
         'who_sees_what' => 'Quién ve qué',
         'share_link' => 'El enlace a esta lista',
@@ -1102,14 +1107,14 @@ return [
 
         'registry_title' => 'Una lista de regalos',
         'registry_body' => 'Una lista con una ocasión y una fecha: boda, bebé o casa nueva. Añade una dirección y solo la ve quien haya reservado algo.',
-        'registry_step1' => 'Abre una de tus listas de deseos y pulsa Ajustes.',
+        'registry_step1' => 'Abre una de tus listas de deseos, pulsa Más y luego Ajustes.',
         'registry_step2' => 'Elige la ocasión y la fecha, y añade una dirección de envío si te van a mandar las cosas.',
         'registry_step3' => 'Compártela como cualquier lista. Se comporta igual: la gente reserva y a ti nunca se te dice qué.',
 
         'quiz_title' => '¿Cuánto te conocen?',
         'quiz_body' => 'Convierte tu lista en un quiz: cuatro cosas, una está de verdad en ella. Se comparte la puntuación, no las respuestas.',
         'quiz_step1' => 'Abre tu lista y pulsa Compartir.',
-        'quiz_step2' => 'Pulsa Quiz y luego «Crear un quiz con esta lista».',
+        'quiz_step2' => 'Pulsa Más, luego Quiz y luego «Crear un quiz con esta lista».',
         'quiz_step3' => 'Manda el enlace. Cinco rondas de cuatro productos, un intento por persona.',
 
         'suggestions_title' => 'Sugerencias',

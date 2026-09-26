@@ -111,11 +111,11 @@ return [
                 ],
                 [
                     'title' => 'Quelque chose qui n’est pas sur ce site',
-                    'body' => "1. Touchez « + Ajouter un produit ».\n2. Sous le champ de recherche, choisissez « Ajoutez-le vous-même ».\n3. Indiquez ce que c’est. Un lien, un prix et une note comme « taille M, en bleu » peuvent l’accompagner.\n4. Enregistrez.\n\nVos propres articles se modifient plus tard avec « Modifier ». Les produits du catalogue non : leur titre et leur prix viennent de la boutique.",
+                    'body' => "1. Touchez « + Ajouter un produit ».\n2. Sous le champ de recherche, choisissez « Ajoutez-le vous-même ».\n3. Indiquez ce que c’est. Un lien, un prix et une note comme « taille M, en bleu » peuvent l’accompagner.\n4. Enregistrez.\n\nVos propres articles se modifient plus tard : touchez « ⋯ » sur l’article, puis « Modifier ». Les produits du catalogue non : leur titre et leur prix viennent de la boutique.",
                 ],
                 [
                     'title' => 'Copier, pas déplacer',
-                    'body' => 'Chaque article a « Copier vers une autre liste ». Sur la [liste partagée](lists-help/claiming) de quelqu’un d’autre, c’est « Ajouter à ma liste ». L’original reste ; la note et le prix suivent, la personne qui l’achète non.',
+                    'body' => 'Sur votre propre liste, « Copier vers une autre liste » se trouve sous « ⋯ » sur chaque article. Sur la [liste partagée](lists-help/claiming) de quelqu’un d’autre, c’est « Ajouter à ma liste ». L’original reste ; la note et le prix suivent, la personne qui l’achète non.',
                 ],
                 [
                     'title' => 'Quand le prix baisse',
@@ -125,7 +125,7 @@ return [
                 ],
                 [
                     'title' => 'Retirer',
-                    'body' => 'Touchez la croix sur l’article et confirmez. Seule la personne qui gère la liste peut retirer un article. Le plus récent est en haut.',
+                    'body' => 'Touchez « ⋯ » sur l’article et choisissez « Retirer de cette liste ». Seule la personne qui gère la liste peut retirer un article. Le plus récent est en haut.',
                 ],
             ],
         ],
@@ -210,7 +210,7 @@ return [
                 [
                     'title' => 'Créer un quiz',
                     'body' => '1. Ouvrez votre liste. Elle doit être [partagée](lists-help/sharing) et avoir au moins cinq articles.
-2. Touchez « Quiz ».
+2. Touchez « Plus », puis « Quiz ».
 3. Touchez « Créer un quiz à partir de cette liste ».
 4. Faites passer le lien.',
                     'shot' => 'quiz',
@@ -254,7 +254,7 @@ Chacun joue une fois.',
                 ],
                 [
                     'title' => 'En discuter',
-                    'body' => 'À côté de la liste se trouve « Discussion », un fil pour tous ceux qui ont le lien. La personne pour qui est la liste ne le lit pas. Vous publiez avec votre nom ; vous pouvez retirer vos propres messages, la personne qui gère la liste tous. Une liste privée n’a pas de discussion.',
+                    'body' => 'Sous la liste se trouve « Discussion », un fil pour tous ceux qui ont le lien. La personne pour qui est la liste ne le lit pas. Vous publiez avec votre nom ; vous pouvez retirer vos propres messages, la personne qui gère la liste tous. Une liste privée n’a pas de discussion.',
                 ],
             ],
         ],
@@ -286,7 +286,7 @@ Chacun joue une fois.',
                 ],
                 [
                     'title' => 'Rattacher ma liste de souhaits au groupe',
-                    'body' => "Choisissez votre liste sous « Votre liste de souhaits » quand vous créez le groupe, ou ensuite sur la page du groupe. L’inverse marche aussi : ouvrez votre [liste de souhaits](lists) et touchez « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.",
+                    'body' => "Choisissez votre liste sous « Votre liste de souhaits » quand vous créez le groupe, ou ensuite sur la page du groupe. L’inverse marche aussi : ouvrez votre [liste de souhaits](lists) et touchez « Plus », puis « Ami Secret » et « Utiliser cette liste » à côté du groupe.\n\nLa personne qui vous a tiré voit alors ce qui vous ferait plaisir, sans que vous sachiez qui c’est. Pas encore de liste ? [Créez-en une](lists-help/saving) en trois étapes.",
                 ],
                 [
                     'title' => 'Un rappel avant',

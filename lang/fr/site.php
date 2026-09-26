@@ -826,6 +826,11 @@ return [
         'asked_none' => ":name n'a encore rien mis sur une liste.",
         'ask_tab' => 'Demander des suggestions à :name',
         'ask_chip' => 'Demander',
+        // The list page's menus (2026-09-26): the secondary tools behind one
+        // button, and the actions on an item of your own list.
+        'more_tools' => 'Plus',
+        'more_tools_label' => 'Plus pour cette liste',
+        'item_menu' => 'Options pour :title',
         'collaborator_removed' => 'Retiré.',
         'who_sees_what' => 'Qui voit quoi',
         'share_link' => 'Le lien vers cette liste',
@@ -1103,14 +1108,14 @@ return [
 
         'registry_title' => 'Une liste de cadeaux',
         'registry_body' => 'Une liste avec une occasion et une date : mariage, naissance, nouveau logement. Ajoutez une adresse : seuls ceux qui ont réservé la voient.',
-        'registry_step1' => 'Ouvrez une de vos listes d’envies et appuyez sur Réglages.',
+        'registry_step1' => 'Ouvrez une de vos listes d’envies, appuyez sur Plus puis sur Réglages.',
         'registry_step2' => 'Choisissez l’occasion et la date, et ajoutez une adresse de livraison si l’on doit vous envoyer les choses.',
         'registry_step3' => 'Partagez-la comme n’importe quelle liste. Elle se comporte pareil : on réserve, et on ne vous dit jamais quoi.',
 
         'quiz_title' => 'Vous connaissent-ils vraiment ?',
         'quiz_body' => 'Transformez votre liste en quiz : quatre objets, un seul y figure. On partage le score, pas les réponses.',
         'quiz_step1' => 'Ouvrez votre liste et appuyez sur Partager.',
-        'quiz_step2' => 'Appuyez sur Quiz, puis sur « Créer un quiz à partir de cette liste ».',
+        'quiz_step2' => 'Appuyez sur Plus, puis sur Quiz, puis sur « Créer un quiz à partir de cette liste ».',
         'quiz_step3' => 'Envoyez le lien. Cinq manches de quatre produits, un essai par personne.',
 
         'suggestions_title' => 'Suggestions',

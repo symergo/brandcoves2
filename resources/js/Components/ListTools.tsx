@@ -1,10 +1,12 @@
 import { router, usePage } from '@inertiajs/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { SharedProps } from '../types'
 import { formatPrice } from '../types'
 import CopyToList from './CopyToList'
+import Menu, { MenuItem, MenuSeparator } from './Menu'
 import PublishCove, { type Publication } from './PublishCove'
 import ShareRow from './ShareRow'
+import TasteTogetherPanel, { type TasteTogetherState } from './TasteTogetherPanel'
 import { invalidate } from '../savedItems'
 import ToolIcon, { type ToolKey } from './ToolIcon'
 import { useTranslations } from '../useTranslations'
@@ -123,9 +125,11 @@ interface Props {
     onPanel: (panel: Panel | null) => void
     /** Publishing as a Community Cove; the owner's alone, null for anybody else. */
     publication?: Publication | null
+    /** This or that together about the list's person: the owner's alone, null otherwise. */
+    tasteTogether?: TasteTogetherState | null
 }
 
-export type Panel = 'share' | 'ask' | 'settings' | 'quiz' | 'santa'
+export type Panel = 'share' | 'ask' | 'settings' | 'quiz' | 'santa' | 'together'
 
 /**
  * One choice, as a card you press rather than a dot you aim at.
@@ -181,7 +185,8 @@ function Option({
 }
 
 /**
- * Everything you can do with a list, behind one row of buttons.
+ * The panels behind a list's tools, opened one at a time from the header
+ * (`ListToolsBar` below: Share, and a More menu for the rest).
  *
  * The page had grown a panel per feature — share, quiz, Secret Santa,
  * suggestions, registry, handover, co-givers — each permanently open, each with
@@ -214,6 +219,7 @@ export default function ListTools({
     panel: open,
     onPanel,
     publication = null,
+    tasteTogether = null,
 }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
@@ -224,8 +230,6 @@ export default function ListTools({
     // And who it is for, on a list about somebody else. Lives on the recipient,
     // not the list, so it is saved through its own endpoint first.
     const [personName, setPersonName] = useState(list.recipient?.name ?? '')
-
-    const shared = list.visibility !== 'private'
 
     /*
      * Every sharing setting saves the moment it is pressed, and says so.
@@ -272,179 +276,53 @@ export default function ListTools({
      */
     const linkOptions = access.isOwner && ((list.shareUrl !== null && list.kind !== 'mine') || list.kind === 'group')
 
-    /*
-     * `show` is whether the chip exists; `set` is whether the thing behind it
-     * is switched on.
-     *
-     * The row said nothing about state, so the only way to learn whether this
-     * list had an occasion, a quiz or a live link was to open each panel in
-     * turn and read it. Five identical chips, one of which was already doing
-     * something. `set` lights the ones that are — and it is deliberately the
-     * *stored* fact each panel writes, never a proxy for it.
-     */
-    const tabs: { key: Panel; icon: ToolKey; label: string; show: boolean; set: boolean }[] = [
-        /*
-         * Share sits in this row, always, and is the first thing in it.
-         *
-         * It used to appear here only once sharing was already on, with the
-         * button that turns it on living up in the header beside Delete — a row
-         * about administering the list. So the one control people came for was
-         * in a different place before and after the single press that matters,
-         * and the row of things you can do with a list did not include the main
-         * one. `toggle()` below turns sharing on when it is off, so the button
-         * means the same thing in both states.
-         *
-         * **The owner's, and nobody else's.** It was shown to a collaborator on
-         * an already-shared list too, on the argument that they cannot change
-         * visibility but can pass the link on. That argument was about the old
-         * panel, which was a link and a copy button. This one is the list's
-         * sharing settings — who may add, whether names are shown, who was
-         * invited before — and none of that is a guest's to look at, let alone
-         * to decide. Handing a list on is what a browser's address bar is for;
-         * a settings panel is not a share sheet.
-         */
-        {
-            key: 'share',
-            icon: 'shared',
-            label: t('lists.share'),
-            show: access.isOwner,
-            // Lit when there is a live link, not merely when the list is not
-            // private: the link is the thing the panel hands out.
-            set: shared && Boolean(list.shareUrl),
-        },
-        /*
-         * Ask the recipient for suggestions, on a list about somebody else.
-         *
-         * It spent an afternoon as a section under Share, on the argument that
-         * it is the same errand as sharing: the people you sent the list to.
-         * The owner wanted it back as a button of its own, and the case is
-         * fair: the link it hands out goes to the one person the list must
-         * stay hidden from, which is the opposite direction to everything in
-         * Share, and the answers that come back are a list to read, not a
-         * setting. Second in the row because it is the other half of the same
-         * job as Share: one is what you send them, the other what they sent
-         * you. Lit once they have actually answered.
-         *
-         * Gated on the kind as well as on the recipient: ListMaker derives one
-         * from the other today, and "ask them what they want" on a wish list
-         * of your own would be the page asking you to interview yourself.
-         */
-        {
-            key: 'ask',
-            icon: 'suggestions',
-            label: t('lists.ask_chip'),
-            show:
-                access.isOwner
-                && target !== null
-                && (list.kind === 'for_someone' || list.kind === 'group'),
-            set: asked.length > 0,
-        },
-        /*
-         * The list's own settings: its name, the note under it, whether its
-         * prices are watched, and what it is for.
-         *
-         * Share is who may see the list; this is what the list is. The
-         * occasion used to be a chip of its own and the price switch sat among
-         * the sharing options, so the row named one property and hid another
-         * under a word that means something else. Lit when any of it is set:
-         * a watched price or an occasion is a fact about the list worth seeing
-         * from the row.
-         */
-        {
-            key: 'settings',
-            icon: 'settings',
-            label: t('lists.settings'),
-            show: access.isOwner,
-            set: list.priceWatchPercent !== null || Boolean(list.eventType) || Boolean(list.eventDate),
-        },
-        /*
-         * A quiz asks "how well do you know **me**", so it only exists over a
-         * wish list of your own.
-         *
-         * This was `shared && claimable`, which were the same thing as "mine"
-         * until gift lists became claimable — at which point the tab appeared
-         * on private research about a named person, offering to publish it as a
-         * game. `ListQuizController` enforces the kind too; this is the mirror.
-         */
-        {
-            key: 'quiz',
-            icon: 'quiz',
-            label: t('quiz.badge'),
-            /*
-             * `access.isOwner` is not decoration here.
-             *
-             * This page is reachable by somebody who merely opened the list's
-             * link — `ListAccess::scope()` unions `list_opens` — and without
-             * the check a visitor to your wish list was offered a tab to
-             * publish it as a game about you. `ListQuizController` refuses
-             * them, so it was a button that 403s rather than a hole; the cards
-             * on My Lists now send readers to `l/{token}` instead, and this is
-             * the second lock on a door that should not have been ajar.
-             */
-            show: access.isOwner && shared && list.claimable && list.kind === 'mine',
-            // A quiz exists or it does not; `quizPlays` is how it went, which
-            // is a fact for inside the panel.
-            set: quizUrl !== null,
-        },
-        {
-            key: 'santa',
-            icon: 'santa',
-            label: t('santa.title'),
-            // The owner's too, and for the reason spelled out on `quiz` above:
-            // this page is reachable by anybody who has opened the link.
-            show: access.isOwner && santaMemberships.length > 0,
-            // Being in a group is why the chip is there at all; being the list
-            // that group reads is the setting.
-            set: santaMemberships.some((membership) => membership.attached),
-        },
-    ]
 
     /*
-     * Ordered by what this kind is for, not by the order they were written in.
+     * The panel a tool opened is brought into view and given focus.
      *
-     * A group list leads with the people, because it does nothing at all until
-     * somebody else is on it. Everything else leads with Share. The array below
-     * is a fixed order, so without this the tab that matters most for a kind
-     * falls wherever it happens to.
+     * Since 2026-09-26 the tools are picked from the More menu in the header,
+     * and the menu hands focus back to its button when it closes. Without this
+     * a keyboard reader would press "Settings" and stay on "More", with the
+     * form they asked for somewhere below, unannounced.
      */
-    const visible = tabs.filter((tab) => tab.show)
+    const panelRef = useRef<HTMLDivElement>(null)
 
-    function toggle(panel: Panel) {
-        if (open === panel) {
-            onPanel(null)
+    useEffect(() => {
+        if (open === null) return
 
-            return
-        }
+        panelRef.current?.focus({ preventScroll: true })
+        panelRef.current?.scrollIntoView({
+            block: 'nearest',
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        })
+    }, [open])
 
-        /*
-         * Opening this panel used to publish the list.
-         *
-         * That was right while the panel was only the link: sharing took two
-         * presses in two places, people turned it on and left without the URL,
-         * and collapsing them meant the button meant the same thing in both
-         * states.
-         *
-         * It stopped being right when the panel absorbed the roster. An
-         * invited sibling is something an owner adds to a list they have
-         * **not** decided to share, and a tab that published the list as a
-         * side effect of being opened would be a privacy change nobody asked
-         * for, on the one page where privacy is the whole point.
-         *
-         * So the press is inside the panel now, where it is a button that says
-         * what it does. The two-press objection is answered by that button
-         * being the first thing in it rather than in a different place.
-         */
-        onPanel(panel)
+    const pending = access.isOwner && suggestions.length > 0
+
+    if (open === null && !pending) {
+        return null
     }
 
-    return (
-        <div className="mt-6">
-            {/*
-              Pending suggestions stay in the open. Everything else is a thing
-              you go looking for; this is a thing somebody sent you.
-            */}
-            {access.isOwner && suggestions.length > 0 && (
-                <section className="mb-4 rounded-card border border-accent/40 bg-accent/5 p-4">
+    // Closing a panel was pressing its chip again. The chips are a menu now,
+    // so each panel carries its own way out.
+    const closeButton = (
+        <button
+            type="button"
+            onClick={() => onPanel(null)}
+            aria-label={t('nav.close')}
+            title={t('nav.close')}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-soft hover:bg-line/40 hover:text-ink"
+        >
+            <ToolIcon name="close" className="h-4 w-4" />
+        </button>
+    )
+
+    /*
+      Pending suggestions stay in the open. Everything else is a thing
+      you go looking for; this is a thing somebody sent you.
+    */
+    const suggestionsBlock = pending && (
+                <section className="mt-4 rounded-card border border-accent/40 bg-accent/5 p-4">
                     <h2 className="text-sm font-medium">{t('suggestions.heading')}</h2>
 
                     <ul className="mt-3 space-y-3">
@@ -511,86 +389,36 @@ export default function ListTools({
                         ))}
                     </ul>
                 </section>
-            )}
+            )
 
-            {visible.length > 0 && (
-                /*
-                 * Scrolls rather than wraps on a phone. Four chips wrap to two
-                 * rows on a narrow screen and push the list itself below the
-                 * fold, which is the thing the page is for.
-                 */
-                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                    {visible.map((tab) => (
-                        <button
-                            key={tab.key}
-                            type="button"
-                            onClick={() => toggle(tab.key)}
-                            aria-expanded={open === tab.key}
-                            aria-controls="list-tools-panel"
-                            /*
-                             * Three states, and open beats set.
-                             *
-                             * Accent is "you are looking at this one" and has
-                             * to stay the loudest, or the row reads as two
-                             * things being open at once. Sage is the colour
-                             * this product already uses for a live, benign
-                             * state — the Shared chip on an index card, a
-                             * claimed item — so a switched-on tool matches the
-                             * badge that says the same thing elsewhere.
-                             */
-                            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition ${
-                                open === tab.key
-                                    ? 'border-accent bg-accent/10 text-accent'
-                                    : tab.set
-                                      ? 'border-sage/60 bg-sage/10 text-sage hover:border-sage'
-                                      : 'border-line hover:border-ink'
-                            }`}
-                        >
-                            <ToolIcon name={tab.icon} className="h-4 w-4 shrink-0" />
-                            {/*
-                              The colour says whether the tool is switched on;
-                              a filled dot used to say it too, from before the
-                              chips had icons. With an icon in front of every
-                              label the dot was a third mark for one fact, and
-                              the owner asked for it to go. The words below
-                              still carry the state for a reader who gets no
-                              colour at all.
-                            */}
-                            {tab.label}
-                            {/* And in words, for a reader who gets neither. */}
-                            {tab.set && <span className="sr-only"> — {t('lists.tool_on')}</span>}
-                        </button>
-                    ))}
-                    {/*
-                      Getting rid of the list, last in the row and pushed to its
-                      far end. It sat in the page header before, an icon with no
-                      word, level with the title; the row of things you can do with
-                      a list is where somebody looks for it, and the one
-                      destructive control reads better with its name beside it.
-                      Not a panel: it asks once and acts.
-                    */}
-                    {access.isOwner && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (confirm(t('lists.delete_confirm'))) {
-                                    // The store cannot infer a deleted list: every
-                                    // bookmark on the next page would still report
-                                    // its products as saved, into a list that is gone.
-                                    router.delete(`${base}/lists/${list.id}`, { onSuccess: () => invalidate() })
-                                }
-                            }}
-                            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm whitespace-nowrap text-ink-soft transition hover:border-accent hover:text-accent"
-                        >
-                            <ToolIcon name="trash" className="h-4 w-4 shrink-0" />
-                            {t('lists.delete')}
-                        </button>
-                    )}
+    /*
+     * "Find out together what :name likes" is a card of its own
+     * (`TasteTogetherPanel`), drawn full size where the other panels open.
+     * It sat permanently between the header and the items until 2026-09-26;
+     * it is a tool you use now and then, like the others in the menu.
+     */
+    if (open === 'together' && tasteTogether !== null && list.recipient !== null) {
+        return (
+            <div>
+                <div ref={panelRef} tabIndex={-1} id="list-tools-panel" className="relative mt-4 outline-none">
+                    <div className="absolute top-3 right-3">{closeButton}</div>
+                    <TasteTogetherPanel name={list.recipient.name} state={tasteTogether} className="pr-12" />
                 </div>
-            )}
+                {suggestionsBlock}
+            </div>
+        )
+    }
 
+    return (
+        <div>
             {open !== null && (
-                <div id="list-tools-panel" className="mt-3 rounded-card border border-line bg-card p-4">
+                <div
+                    ref={panelRef}
+                    tabIndex={-1}
+                    id="list-tools-panel"
+                    className="mt-4 rounded-card border border-line bg-card p-4 outline-none"
+                >
+                    <div className="-mt-2 -mr-2 mb-1 flex justify-end">{closeButton}</div>
                     {open === 'share' && (
                         /*
                           Sections, most with a heading, a gap between them and
@@ -1534,6 +1362,244 @@ export default function ListTools({
                     )}
                 </div>
             )}
+
+            {suggestionsBlock}
+        </div>
+    )
+}
+
+/**
+ * Share, and everything else behind one "More" button, in the page header.
+ *
+ * ## Why the row of chips became a menu (owner's audit, 2026-09-26)
+ *
+ * The owner's own list opened on features rather than on the list: a row of
+ * five or six chips, then the This-or-that-together card, then the link to the
+ * person's page, a discussion column beside it all, and only then the items.
+ * On a phone the first screen held no item at all. The list is what the page is
+ * for, so the items now start directly under the title, and the tools you
+ * reach for now and then sit behind one button.
+ *
+ * Share stays out in the open because it is the one thing most owners come
+ * back to do. Everything else — settings, asking the person, finding out
+ * together, the person's page, the quiz, Secret Santa and deleting — is in
+ * the menu, in that order, with Delete last and apart. Each item opens the
+ * same panel its chip opened, under the header; nothing about what a tool does
+ * has changed, only where it is found.
+ *
+ * A tool that does not apply to this list is left out of the menu, exactly as
+ * its chip was left out of the row, and the menu itself is left out when
+ * nothing is in it (a collaborator's view of somebody else's list).
+ */
+export function ListToolsBar({
+    base,
+    list,
+    access,
+    quizUrl,
+    santaMemberships,
+    target,
+    asked,
+    panel: open,
+    onPanel,
+    tasteTogether = null,
+}: Pick<
+    Props,
+    'base' | 'list' | 'access' | 'quizUrl' | 'santaMemberships' | 'target' | 'asked' | 'panel' | 'onPanel' | 'tasteTogether'
+>) {
+    const { t } = useTranslations()
+    const shared = list.visibility !== 'private'
+
+    /*
+     * `show` is whether the tool exists here; `set` is whether the thing behind
+     * it is switched on.
+     *
+     * The row once said nothing about state, so the only way to learn whether
+     * this list had an occasion, a quiz or a live link was to open each panel
+     * in turn and read it. `set` marks the ones that are, and it is
+     * deliberately the *stored* fact each panel writes, never a proxy for it.
+     * In the menu it is a small "on" after the name.
+     */
+    const tools: { key: Panel; icon: ToolKey; label: string; show: boolean; set: boolean }[] = [
+        /*
+         * The list's own settings: its name, the note under it, whether its
+         * prices are watched, and what it is for. Share is who may see the
+         * list; this is what the list is. The owner's alone.
+         */
+        {
+            key: 'settings',
+            icon: 'settings',
+            label: t('lists.settings'),
+            show: access.isOwner,
+            set: list.priceWatchPercent !== null || Boolean(list.eventType) || Boolean(list.eventDate),
+        },
+        /*
+         * Ask the recipient for suggestions, on a list about somebody else.
+         *
+         * Its own tool rather than a section under Share: the link it hands
+         * out goes to the one person the list must stay hidden from, the
+         * opposite direction to everything in Share. Named in full in the menu
+         * ("Ask Anna for suggestions"): the chip's one word, "Ask", leaned on
+         * the row around it for its meaning.
+         *
+         * Gated on the kind as well as on the recipient: "ask them what they
+         * want" on a wish list of your own would be the page asking you to
+         * interview yourself.
+         */
+        {
+            key: 'ask',
+            icon: 'suggestions',
+            label: target !== null ? t('lists.ask_tab', { name: target.name }) : t('lists.ask_chip'),
+            show: access.isOwner && target !== null && (list.kind === 'for_someone' || list.kind === 'group'),
+            set: asked.length > 0,
+        },
+        /*
+         * This or that, played by the others about the list's person
+         * (taste-together.md). The server sends the state to the owner only,
+         * and only where there is a person; null hides the tool.
+         */
+        {
+            key: 'together',
+            icon: 'taste',
+            label: list.recipient !== null ? t('gift.together.panel_title', { name: list.recipient.name }) : '',
+            show: access.isOwner && tasteTogether !== null && list.recipient !== null,
+            set: tasteTogether !== null && tasteTogether.open,
+        },
+        /*
+         * A quiz asks "how well do you know **me**", so it only exists over a
+         * shared wish list of your own. `access.isOwner` is not decoration:
+         * this page is reachable by somebody who merely opened the list's link
+         * (`ListAccess::scope()` unions `list_opens`), and `ListQuizController`
+         * refuses them; this is the mirror.
+         */
+        {
+            key: 'quiz',
+            icon: 'quiz',
+            label: t('quiz.badge'),
+            show: access.isOwner && shared && list.claimable && list.kind === 'mine',
+            set: quizUrl !== null,
+        },
+        {
+            key: 'santa',
+            icon: 'santa',
+            label: t('santa.title'),
+            // The owner's too, for the reason on `quiz` above.
+            show: access.isOwner && santaMemberships.length > 0,
+            set: santaMemberships.some((membership) => membership.attached),
+        },
+    ]
+
+    const visible = tools.filter((tool) => tool.show)
+
+    // The person's own page: what you gave them and the next step
+    // (gift-history.md). The owner's only, on a list about somebody else.
+    const personPage =
+        access.isOwner && list.kind !== 'mine' && list.recipient !== null
+            ? { href: `${base}/people/${list.recipient.id}`, label: t('gift_history.link', { name: list.recipient.name }) }
+            : null
+
+    const shareOn = shared && Boolean(list.shareUrl)
+
+    if (!access.isOwner) {
+        return null
+    }
+
+    return (
+        <div className="flex shrink-0 items-center gap-2">
+            {/*
+              Share, the one primary action, as a button with its word.
+              Lit (sage) while the list has a live link, the colour this
+              product uses for a live, benign state; accent while its panel
+              is open. Pressing it again closes the panel, as the chip did.
+            */}
+            <button
+                type="button"
+                onClick={() => onPanel(open === 'share' ? null : 'share')}
+                aria-expanded={open === 'share'}
+                aria-controls="list-tools-panel"
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium whitespace-nowrap transition ${
+                    open === 'share'
+                        ? 'border-accent bg-accent/10 text-accent'
+                        : shareOn
+                          ? 'border-sage/60 bg-sage/10 text-sage hover:border-sage'
+                          : 'border-line bg-card hover:border-ink'
+                }`}
+            >
+                <ToolIcon name="shared" className="h-4 w-4 shrink-0" />
+                {t('lists.share')}
+                {shareOn && <span className="sr-only"> — {t('lists.tool_on')}</span>}
+            </button>
+
+            <Menu
+                label={t('lists.more_tools_label')}
+                width={280}
+                button={
+                    <>
+                        <ToolIcon name="more" className="h-4 w-4 shrink-0" />
+                        <span>{t('lists.more_tools')}</span>
+                        <ToolIcon name="chevron" className="h-3.5 w-3.5 shrink-0 text-ink-soft" />
+                    </>
+                }
+                buttonClassName={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm whitespace-nowrap transition ${
+                    open !== null && open !== 'share'
+                        ? 'border-accent bg-accent/10 text-accent'
+                        : 'border-line bg-card hover:border-ink'
+                }`}
+            >
+                {(close) => (
+                    <>
+                        {visible.map((tool) => (
+                            <MenuItem
+                                key={tool.key}
+                                icon={<ToolIcon name={tool.icon} className="h-4 w-4" />}
+                                onSelect={() => {
+                                    close()
+                                    onPanel(tool.key)
+                                }}
+                            >
+                                <span className="flex items-baseline justify-between gap-2">
+                                    <span>{tool.label}</span>
+                                    {tool.set && (
+                                        <span className="shrink-0 text-xs font-medium text-sage">
+                                            {t('lists.tool_on')}
+                                        </span>
+                                    )}
+                                </span>
+                            </MenuItem>
+                        ))}
+
+                        {personPage !== null && (
+                            <MenuItem
+                                href={personPage.href}
+                                icon={<ToolIcon name="people" className="h-4 w-4" />}
+                            >
+                                {personPage.label}
+                            </MenuItem>
+                        )}
+
+                        {/*
+                          Getting rid of the list: last, set apart by a rule, in
+                          the danger colour, and still asking once before it acts.
+                          The store cannot infer a deleted list: every bookmark on
+                          the next page would still report its products as saved,
+                          into a list that is gone, hence `invalidate()`.
+                        */}
+                        <MenuSeparator />
+                        <MenuItem
+                            danger
+                            icon={<ToolIcon name="trash" className="h-4 w-4" />}
+                            onSelect={() => {
+                                close()
+
+                                if (confirm(t('lists.delete_confirm'))) {
+                                    router.delete(`${base}/lists/${list.id}`, { onSuccess: () => invalidate() })
+                                }
+                            }}
+                        >
+                            {t('lists.delete')}
+                        </MenuItem>
+                    </>
+                )}
+            </Menu>
         </div>
     )
 }
