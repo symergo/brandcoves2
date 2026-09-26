@@ -1516,6 +1516,24 @@ export function ListToolsBar({
                             </MenuItem>
                         ))}
 
+                        {/*
+                          Ask others, also here (owner, 2026-09-26: "voeg Vraag
+                          het aan anderen toe aan het Meer menu"), besides the
+                          button next to "Product toevoegen". The same address:
+                          the form is filled in on the server from this list
+                          (AskPrefill), and ideas saved from the answers come
+                          back onto it. Only on a list about somebody else, as
+                          the button.
+                        */}
+                        {list.kind !== 'mine' && (
+                            <MenuItem
+                                href={`${base}/ask?list=${list.id}`}
+                                icon={<ToolIcon name="board" className="h-4 w-4" />}
+                            >
+                                {t('lists.ask_others')}
+                            </MenuItem>
+                        )}
+
                         {personPage !== null && (
                             <MenuItem
                                 href={personPage.href}

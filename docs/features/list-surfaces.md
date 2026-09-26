@@ -989,3 +989,10 @@ asked for it "on the list page where you build your list". It opens the ask form
 list's person, relationship, occasion and date, never their name, and the ideas in the answers save
 straight back onto this list for the asker. Not on a wish list of your own, which is about you.
 See [ask-others.md](ask-others.md), "Easier to reach".
+
+## "Vraag het aan anderen" in the Meer menu too (2026-09-26)
+
+The owner asked for Ask others in the Meer menu as well as the button next to "Product toevoegen".
+On a gift or group list the menu now has "Vraag het aan anderen", linking to the same pre-filled form
+(`/ask?list=<id>`, filled in on the server by `AskPrefill`; see ask-others.md). Not on a wish list
+of your own, as with the button.
