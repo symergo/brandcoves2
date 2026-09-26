@@ -63,6 +63,8 @@ class PrunePersonalDataCommand extends Command
         'search_log' => 365,
         'unconfirmed_subscribers' => 30,
         'anonymous_identities' => 365,
+        // An identity seen on one day only, which owns nothing (2026-09-26).
+        'anonymous_identities_single_visit' => 30,
         'feedback' => 365,
     ];
 
@@ -121,6 +123,28 @@ class PrunePersonalDataCommand extends Command
         );
 
         /*
+         * An identity seen on one day only, a month on, that owns nothing.
+         *
+         * 99% of production's 2.56 million identities (2026-09-26) were this:
+         * a visit without a cookie, mostly crawlers, that made a row nothing
+         * would ever read. Crawlers no longer get one (TrackAnonymousIdentity);
+         * this clears what they left and what one-off visitors leave.
+         *
+         * "One day only" is `last_seen_at` less than a day after `created_at`,
+         * because the middleware refreshes `last_seen_at` at most once a day.
+         * "Owns nothing" checks every table that points at an identity, not
+         * just lists and recipients: a vote or a pledge is somebody's too, and
+         * its foreign key would refuse the delete.
+         */
+        $report['one-visit identities'] = $this->prune(
+            'anonymous_identities',
+            fn () => $this->ownsNothing(DB::table('anonymous_identities')
+                ->where('created_at', '<', now()->subDays(self::RETENTION['anonymous_identities_single_visit']))
+                ->whereRaw("last_seen_at < created_at + interval '1 day'")),
+            $dry,
+        );
+
+        /*
          * Handled or not. A report nobody got to inside a year is not going to
          * be acted on, and keeping it does not make that more likely — it only
          * keeps the address.
@@ -175,6 +199,28 @@ class PrunePersonalDataCommand extends Command
         }
 
         return count($orphans);
+    }
+
+    /**
+     * Only identities no row points at: every foreign key to
+     * `anonymous_identities`, as listed on 2026-09-26.
+     */
+    private function ownsNothing(Builder $query): Builder
+    {
+        foreach ([
+            'wishlists' => 'owner_anon_id',
+            'recipients' => 'owner_anon_id',
+            'challenge_attempts' => 'anon_id',
+            'list_quiz_attempts' => 'anon_id',
+            'gift_pledges' => 'anon_id',
+            'list_messages' => 'anon_id',
+            'list_item_votes' => 'anon_id',
+            'list_opens' => 'anon_id',
+        ] as $table => $column) {
+            $query->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from($table)->whereColumn("{$table}.{$column}", 'anonymous_identities.id'));
+        }
+
+        return $query;
     }
 
     /**

@@ -139,7 +139,7 @@ safeguards above.
 
 | | |
 |---|---|
-| Visitor cookie | 1 year from your last visit |
+| Visitor cookie | 1 year from your last visit; 30 days if you came once and saved nothing |
 | Interaction log | 90 days |
 | Search terms | 12 months, aggregated and unlinked from the start |
 | Account, lists, recipients | Until you delete them |

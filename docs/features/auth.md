@@ -117,6 +117,21 @@ social cards, `/health` and the webhooks. A crawler keeps no cookies, so every f
 insert an `anonymous_identities` row — one per product page for a full crawl — and the `Set-Cookie`
 it queued made the sitemap and the cards uncacheable by any shared cache.
 
+**Machines get no identity on any path either (2026-09-26).** Skipping those routes was not enough:
+production held 2.56 million identities, 99% seen on one day only (20,000 to 60,000 new rows a
+day), and a restore showed that just 4 of them were used by anything. Every page a crawler fetches
+arrives without a cookie. `TrackAnonymousIdentity::isMachine()` now skips any request whose
+User-Agent contains a crawler or script marker (`bot/`, `crawler`, `spider`, `curl/`,
+`facebookexternalhit`, `whatsapp`, an empty agent, and so on; "bot" alone would also match phone
+names like CUBOT). A crawler never saves a list, so nothing is lost.
+
+And `bc:prune-personal-data` deletes an identity **seen on one day only, a month on, that owns
+nothing**: no row in any of the eight tables that point at it (lists, recipients, votes, pledges,
+messages, list opens, quiz and challenge attempts). The privacy policy says so, in both languages
+("30 days if you came once and saved nothing"); the one-year window still applies to everyone else.
+Lazily creating the row on first save was considered and rejected: eight tables write with the
+identity, and a first visit to a shared list already records a `list_opens` row.
+
 ## Google: the redirect URI is unprefixed, and has to be
 
 Every other public route lives under `/{market}/`. The OAuth callback does not, and this is the one

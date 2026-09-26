@@ -50,6 +50,27 @@ class TrackAnonymousIdentity
         'webhooks/*',
     ];
 
+    /**
+     * Crawlers and link-preview fetchers, recognised by their User-Agent.
+     *
+     * The paths above were not enough. On 2026-09-26 production held 2.56
+     * million identities, 99% of them seen exactly once: 20,000 to 60,000 new
+     * rows a day, because every page a crawler fetches arrives without a cookie
+     * and made a row that nothing would ever read. A crawler never saves a
+     * list, so it gets no identity, on any path.
+     *
+     * Fragments, matched case-insensitively. `bot/` and `bot;` rather than a
+     * bare "bot", which is also inside ordinary words and phone model names.
+     * An empty User-Agent is a script, not a browser.
+     *
+     * @var list<string>
+     */
+    private const MACHINE_AGENTS = [
+        'bot/', 'bot;', 'bot)', 'crawler', 'spider', 'slurp', 'facebookexternalhit', 'whatsapp',
+        'headlesschrome', 'python-requests', 'python-urllib', 'curl/', 'wget/', 'go-http-client',
+        'okhttp', 'scrapy', 'httpclient', 'bingpreview', 'lighthouse', 'pingdom', 'uptimerobot',
+    ];
+
     public function handle(Request $request, Closure $next): Response
     {
         // A signed-in user has a real identity; a second anonymous one would
@@ -58,7 +79,7 @@ class TrackAnonymousIdentity
             return $next($request);
         }
 
-        if ($request->is(...self::MACHINE_PATHS)) {
+        if ($request->is(...self::MACHINE_PATHS) || self::isMachine((string) $request->userAgent())) {
             return $next($request);
         }
 
@@ -86,5 +107,23 @@ class TrackAnonymousIdentity
         ));
 
         return $response;
+    }
+
+    /** Whether this User-Agent is a crawler or a script rather than a person's browser. */
+    public static function isMachine(string $userAgent): bool
+    {
+        $agent = strtolower(trim($userAgent));
+
+        if ($agent === '') {
+            return true;
+        }
+
+        foreach (self::MACHINE_AGENTS as $fragment) {
+            if (str_contains($agent, $fragment)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

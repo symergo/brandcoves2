@@ -144,7 +144,7 @@ Staten verwerkt, onder de waarborgen hierboven.
 
 | | |
 |---|---|
-| Bezoekerscookie | 1 jaar na je laatste bezoek |
+| Bezoekerscookie | 1 jaar na je laatste bezoek; 30 dagen als je één keer langskwam en niets bewaarde |
 | Interactielog | 90 dagen |
 | Zoektermen | 12 maanden, van meet af aan samengevoegd en losgekoppeld |
 | Account, lijstjes, ontvangers | Tot je ze verwijdert |
