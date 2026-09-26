@@ -407,6 +407,30 @@ return [
         // this the large share of feed rows that carry no EAN could never be
         // compared across merchants at all.
         'allow_title_fallback' => true,
+
+        /*
+         * Proposing products that may be one (FindMatchCandidates). Nothing
+         * here merges: every pair goes to a person at /admin, Catalogue >
+         * Match review. See docs/features/match-review.md.
+         */
+        'matching' => [
+            // Trigram similarity two titles of one brand need to be proposed.
+            // 0.6 is where the plan started: low enough to catch "LEGO Technic
+            // Ferrari 488" beside "LEGO Ferrari 488 Technic", high enough that
+            // two sets of one theme rarely meet. The review page shows each
+            // rule's precision, which is how this number gets tuned.
+            'title_similarity' => 0.6,
+            // Most similar-title partners proposed per product, so one generic
+            // title cannot flood the queue with its whole brand.
+            'title_partners' => 3,
+            // A model number shared by more than this many products of one
+            // brand names a series or a platform, not a product; its pairs are
+            // skipped. Also caps the pairs one token can produce (n² / 2).
+            'model_bucket_max' => 6,
+            // The nightly run compares only products first seen this many days
+            // ago or later; `bc:find-matches --full` compares everything.
+            'recent_days' => 3,
+        ],
     ],
 
     /*

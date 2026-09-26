@@ -75,6 +75,7 @@ class OfferUpserter
                 'merchant_deep_link' => $offer->merchantDeepLink,
                 'availability' => $offer->availability->value,
                 'ean' => $offer->ean,
+                'mpn' => $offer->mpn,
                 'commission_rate' => $offer->commissionRate,
                 'identity_key' => $identity?->key,
                 'identity_kind' => $identity?->kind->value,
@@ -104,7 +105,7 @@ class OfferUpserter
                     'merchant_id', 'feed_id', 'title', 'description', 'brand',
                     'merchant_category', 'price', 'reference_price', 'currency',
                     'image_url', 'affiliate_url', 'merchant_deep_link',
-                    'availability', 'ean', 'commission_rate',
+                    'availability', 'ean', 'mpn', 'commission_rate',
                     'identity_key', 'identity_kind', 'status',
                     'last_seen_at', 'updated_at',
                     /*

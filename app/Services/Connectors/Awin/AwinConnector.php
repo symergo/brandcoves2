@@ -68,6 +68,9 @@ class AwinConnector implements FeedConnector
         'ean',
         'upc',
         'product_GTIN',
+        // Kept for matching, never for identity: see barcode() below and
+        // ModelNumber::fromMpn().
+        'mpn',
         'in_stock',
         'merchant_category',
         'commission_group',
@@ -271,6 +274,9 @@ class AwinConnector implements FeedConnector
             currency: strtoupper(trim((string) ($record['currency'] ?? 'EUR'))) ?: 'EUR',
             availability: Availability::fromFeedValue($record['in_stock'] ?? null),
             commissionRate: $this->parseCommission($record['commission_group'] ?? null),
+            // Cut to the column's 64 characters: one over-long value would
+            // otherwise fail the whole chunk's upsert.
+            mpn: mb_substr(trim((string) ($record['mpn'] ?? '')), 0, 64) ?: null,
         );
     }
 
@@ -285,7 +291,9 @@ class AwinConnector implements FeedConnector
      *
      * `mpn` is deliberately excluded. Some advertisers copy the EAN into it, but
      * it is a manufacturer part number by definition, and two manufacturers can
-     * legitimately use the same one.
+     * legitimately use the same one. Since 2026-09-27 it is kept on the offer
+     * (`products.mpn`) for the match finder, which only ever proposes a pair
+     * to a person, within one brand.
      *
      * @param  array<string, string|null>  $record
      */

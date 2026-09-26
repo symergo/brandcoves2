@@ -7,6 +7,7 @@ use App\Jobs\BuildDailyEdition;
 use App\Jobs\CheckSearchAlerts;
 use App\Jobs\ClassifyGiftability;
 use App\Jobs\CountListSignals;
+use App\Jobs\FindMatchCandidates;
 use App\Jobs\GroupProducts;
 use App\Jobs\IngestFeed;
 use App\Jobs\LinkBarcodeItems;
@@ -76,6 +77,20 @@ Schedule::call(function (): void {
 })
     ->name('group-products')
     ->twiceDailyAt(5, 17, 0)
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// Products that may be one, proposed for a person to confirm at /admin,
+// Catalogue > Match review. Forty minutes after grouping starts, because it
+// reads the groups grouping writes and a large market takes a while. Nothing
+// merges here. See docs/features/match-review.md.
+Schedule::call(function (): void {
+    foreach (Market::cases() as $market) {
+        FindMatchCandidates::dispatch($market);
+    }
+})
+    ->name('find-match-candidates')
+    ->twiceDailyAt(5, 17, 40)
     ->withoutOverlapping()
     ->onOneServer();
 

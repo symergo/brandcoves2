@@ -96,6 +96,18 @@ class BarcodeColumnTest extends TestCase
     }
 
     #[Test]
+    public function the_mpn_column_is_kept_for_matching_and_never_used_as_identity(): void
+    {
+        // Kept since 2026-09-27 so the match finder can propose two products
+        // by part number; identity still comes from the barcode columns only.
+        $product = Product::query()->where('external_id', '2001')->firstOrFail();
+
+        $this->assertSame('WH-1000XM5/B', $product->mpn);
+        $this->assertSame('4006381333931', $product->identity_key);
+        $this->assertNull(Product::query()->where('external_id', '2002')->value('mpn'));
+    }
+
+    #[Test]
     public function a_upc_a_barcode_is_normalised_to_gtin13(): void
     {
         // 12-digit UPC-A zero-pads to 13, so a shop quoting UPC-A and a shop
