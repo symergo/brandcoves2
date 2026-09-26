@@ -992,7 +992,8 @@ See [ask-others.md](ask-others.md), "Easier to reach".
 
 ## "Vraag het aan anderen" in the Meer menu too (2026-09-26)
 
-The owner asked for Ask others in the Meer menu as well as the button next to "Product toevoegen".
+The owner asked for Ask others in the Meer menu, and then for the button next to "Product toevoegen"
+to go: it lives in the menu only.
 On a gift or group list the menu now has "Vraag het aan anderen", linking to the same pre-filled form
 (`/ask?list=<id>`, filled in on the server by `AskPrefill`; see ask-others.md). Not on a wish list
 of your own, as with the button.

@@ -18,7 +18,6 @@ import { type TasteTogetherState } from '../../Components/TasteTogetherPanel'
 import ShareMenu from '../../Components/ShareMenu'
 import TheirWishes, { type Wish } from '../../Components/TheirWishes'
 import { useTranslations } from '../../useTranslations'
-import CoveIcon from '../../Components/CoveIcon'
 
 interface Item {
     id: number
@@ -283,26 +282,8 @@ export default function ListShow({
     // prose (App\Services\Wishlist\Board). Posted through the share token.
     const hasBoard = board !== null && list.shareUrl !== null
 
-    /*
-      "Ask other people", beside the add control, while you build a list
-      about somebody (owner, 2026-09-26: "add it to the list page where you
-      build your list"). The owner's own gift and group lists only: a wish
-      list of your own is about you, and "what should people buy me" is not a
-      question for strangers. The link carries only the list's id; the form is
-      filled in on the server from the list's person, relationship, occasion
-      and date, never their name (AskPrefill), and the answers' ideas save
-      straight back onto this list.
-    */
-    const askOthers =
-        access.isOwner && list.kind !== 'mine' ? (
-            <Link
-                href={`${base}/ask?list=${list.id}`}
-                className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm hover:border-ink"
-            >
-                <CoveIcon name="ask" className="h-4 w-4 text-accent" />
-                {t('lists.ask_others')}
-            </Link>
-        ) : null
+    // "Vraag het aan anderen" lives in the Meer menu only (owner, 2026-09-26);
+    // see ListToolsBar and docs/features/list-surfaces.md.
 
     return (
         <>
@@ -476,7 +457,6 @@ export default function ListShow({
                     {access.canEdit && (
                         <div className="mt-4 flex flex-wrap items-start justify-center gap-2">
                             <AddProduct base={base} listId={list.id} market={market} defaultOpen theirWishes={theirWishes} />
-                            {askOthers}
                         </div>
                     )}
                 </div>
@@ -491,7 +471,6 @@ export default function ListShow({
                     {access.canEdit && (
                         <div className="mt-6 flex flex-wrap items-start gap-2">
                             <AddProduct base={base} listId={list.id} market={market} theirWishes={theirWishes} />
-                            {askOthers}
                         </div>
                     )}
 

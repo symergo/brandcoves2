@@ -142,10 +142,11 @@ Discover that appeared only with three questions, and a few search states. Now a
 - **Discover, always.** A short invitation with a *Stel een vraag* button (`/ask?new=1`, which
   opens the form at once), even with no questions. The list of questions still appears under it
   only with three or more.
-- **The list page.** On your own gift list or group list, *Vraag het aan anderen* sits next to the
-  add control (`/ask?list=<id>`), visible rather than in the More menu, because the owner asked
-  for it "where you build your list". Not on a wish list of your own: that list is about you, and
-  "what should people buy me" is not a question for strangers.
+- **The list page.** On your own gift list or group list, *Vraag het aan anderen* is an item in the
+  Meer menu (`/ask?list=<id>`). It first shipped as a button next to the add control; the owner
+  moved it into the menu the same day (2026-09-26) and asked for the button to go. Not on a wish
+  list of your own: that list is about you, and "what should people buy me" is not a question for
+  strangers.
 
 ### Filled in, never with a name
 
