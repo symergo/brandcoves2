@@ -596,6 +596,23 @@ return [
         'empty' => 'Aún no has guardado ninguna Cove. Pulsa Guardar en una Cove para encontrarla aquí.',
     ],
 
+    // The one Save button, on products and Coves; see docs/features/save-button.md.
+    'save_button' => [
+        'save' => 'Guardar',
+        'saved' => 'Guardado',
+        'saved_label' => 'Guardado. Elegir listas',
+        'quick_hint' => 'Un toque en Guardar lo pone en :list. Marca aquí otras listas.',
+        'pick_hint' => 'Marca las listas donde debe ir.',
+        'saved_hint' => 'Está en las listas marcadas. Desmarca una para quitarlo.',
+        'cove_title' => 'Guardar esta Cove',
+        'cove_keep' => 'Guardar en Mis Coves',
+        'cove_keep_hint' => 'La encuentras allí, y cambia cuando su autor la actualiza.',
+        'cove_saved_in' => 'Guardada en Mis Coves',
+        'open_my_coves' => 'Abrir Mis Coves',
+        'cove_remove' => 'Quitar de Mis Coves',
+        'cove_copy_hint' => 'Pone sus productos en una lista nueva tuya, que cambias como quieras.',
+    ],
+
     // Coves de la comunidad; ver lang/en/site.php y docs/features/community-coves.md.
     'community' => [
         'index_heading' => 'Coves de la comunidad',
@@ -2220,7 +2237,7 @@ return [
         'coves_body1' => 'Una Cove es una colección de cosas en torno a una idea: cosas que quieres, regalos para el cumpleaños de Emma, tu casa nueva, la Navidad de este año.',
         'coves_body2' => 'Tú creas tus propias Coves. Algunas son para ti, otras las haces para otra persona y otras se llenan entre varios. GiftCoves también crea Coves: algo nuevo cada día, ideas de regalo por tipo de persona y guías de compra.',
         'coves_body3' => 'En una Cove cabe lo que sea, de cualquier tienda, y cada Cove se puede compartir.',
-        'coves_body4' => 'Pulsa Guardar en una Cove para encontrarla en Mis Coves, Coves guardadas. Se mantiene al día con la Cove. Hacerla mi lista copia sus productos en una lista tuya, que puedes cambiar a tu gusto.',
+        'coves_body4' => 'Pulsa Guardar en una Cove y elige. Guardar en Mis Coves la deja en Coves guardadas; se mantiene al día con la Cove. Hacerla mi lista copia sus productos en una lista tuya, que puedes cambiar a tu gusto. Es el mismo botón Guardar que en un producto.',
         'find_title' => 'Encontrar cosas',
         'find_search' => 'Busca por nombre, marca o tipo de cosa, o di para quién es: «regalo para mi hermana que le gusta la jardinería, entre 30 y 50 euros». Miramos en muchas tiendas a la vez y comparamos sus precios.',
         'find_scan' => 'Escanea un código de barras con la cámara del móvil para ver el producto y lo que cuesta en otras tiendas.',

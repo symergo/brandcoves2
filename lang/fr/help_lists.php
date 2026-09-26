@@ -35,7 +35,7 @@ return [
                 ],
                 [
                     'title' => 'Enregistrez-le et choisissez une liste',
-                    'body' => 'Touchez le marque-page et c’est dans votre liste. Touchez encore pour choisir une autre liste ou en commencer une. Sur un ordinateur, une petite flèche à côté du marque-page ouvre ce volet directement.',
+                    'body' => 'Touchez le marque-page et c’est dans votre liste. Touchez encore pour choisir une autre liste ou en commencer une. Le volet met en haut la liste qu’utilise un seul toucher, et coche chaque liste où il se trouve déjà.',
                     'shot' => 'choose',
                     'alt' => 'Le volet ouvert à côté d’un produit, avec les listes où enregistrer et l’option d’en commencer une nouvelle.',
                 ],
@@ -101,7 +101,7 @@ return [
             'sections' => [
                 [
                     'title' => 'Le marque-page',
-                    'body' => 'Sur chaque fiche produit, dans la [recherche](search) et dans chaque [Cove](cove). Un toucher enregistre dans la dernière liste où vous avez enregistré, sinon dans votre liste par défaut. Un autre toucher ouvre le volet : vous y choisissez une autre liste, le déplacez, ou le retirez. Sur un ordinateur, une petite flèche à côté du marque-page ouvre le volet directement.',
+                    'body' => 'Sur chaque fiche produit, dans la [recherche](search) et dans chaque [Cove](cove). Un toucher enregistre dans la dernière liste où vous avez enregistré, sinon dans votre liste par défaut. Une fois enregistré, le marque-page est plein et indique Enregistré, et un autre toucher ouvre le volet : cochez une autre liste, ou décochez-en une pour le retirer. Sur une page produit, c’est le même bouton avec le mot Enregistrer à côté, et sur une Cove aussi.',
                 ],
                 [
                     'title' => 'Ajouter depuis la liste',

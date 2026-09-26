@@ -50,7 +50,7 @@ return [
                 ],
                 [
                     'title' => 'Bewaar het en kies een lijst',
-                    'body' => 'Tik op de bladwijzer en het staat in je lijst. Tik nog eens om een andere lijst te kiezen of een nieuwe te beginnen. Op een computer staat naast de bladwijzer een pijltje dat dat venster meteen opent.',
+                    'body' => 'Tik op de bladwijzer en het staat in je lijst. Tik nog eens om een andere lijst te kiezen of een nieuwe te beginnen. Het venster zet de lijst waar één tik in bewaart bovenaan, en vinkt elke lijst aan waar het al op staat.',
                     'shot' => 'choose',
                     'alt' => 'Het geopende venster naast een product, met de lijsten om in te bewaren en de optie om een nieuwe lijst te beginnen.',
                 ],
@@ -116,7 +116,7 @@ return [
             'sections' => [
                 [
                     'title' => 'De bladwijzer',
-                    'body' => 'Op elke productkaart, bij het [zoeken](search) en in elke [Cove](cove). Eén tik bewaart in de lijst waar je het laatst iets in bewaarde, anders in je standaardlijst. Nog een tik opent het venster: daar kies je een andere lijst, verplaats je het, of haal je het eraf. Op een computer staat naast de bladwijzer een pijltje dat het venster meteen opent.',
+                    'body' => 'Op elke productkaart, bij het [zoeken](search) en in elke [Cove](cove). Eén tik bewaart in de lijst waar je het laatst iets in bewaarde, anders in je standaardlijst. Eenmaal bewaard is de bladwijzer gevuld en staat er Bewaard, en nog een tik opent het venster: vink een andere lijst aan, of vink er een uit om het eraf te halen. Op een productpagina is het dezelfde knop met het woord Bewaar ernaast, en op een Cove ook.',
                 ],
                 [
                     'title' => 'Toevoegen vanuit de lijst',

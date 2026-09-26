@@ -597,6 +597,23 @@ return [
         'empty' => 'Vous n\'avez pas encore enregistré de Cove. Cliquez sur Enregistrer sur une Cove pour la retrouver ici.',
     ],
 
+    // The one Save button, on products and Coves; see docs/features/save-button.md.
+    'save_button' => [
+        'save' => 'Enregistrer',
+        'saved' => 'Enregistré',
+        'saved_label' => 'Enregistré. Choisir les listes',
+        'quick_hint' => 'Un clic sur Enregistrer le met dans :list. Cochez ici d’autres listes.',
+        'pick_hint' => 'Cochez les listes où il doit aller.',
+        'saved_hint' => 'Il est sur les listes cochées. Décochez-en une pour l’en retirer.',
+        'cove_title' => 'Enregistrer cette Cove',
+        'cove_keep' => 'Garder dans Mes Coves',
+        'cove_keep_hint' => 'Vous la retrouvez là, et elle change quand son auteur la met à jour.',
+        'cove_saved_in' => 'Enregistrée dans Mes Coves',
+        'open_my_coves' => 'Ouvrir Mes Coves',
+        'cove_remove' => 'Retirer de Mes Coves',
+        'cove_copy_hint' => 'Met ses produits dans une nouvelle liste à vous, à modifier comme vous voulez.',
+    ],
+
     // Coves de la communauté ; voir lang/en/site.php et docs/features/community-coves.md.
     'community' => [
         'index_heading' => 'Coves de la communauté',
@@ -2222,7 +2239,7 @@ return [
         'coves_body1' => 'Une Cove est une collection de choses autour d\'une idée : ce que vous voulez, des cadeaux pour l\'anniversaire d\'Emma, votre nouvelle maison, Noël cette année.',
         'coves_body2' => 'Vous créez vos propres Coves. Certaines sont pour vous, d\'autres pour quelqu\'un d\'autre, et d\'autres se remplissent à plusieurs. GiftCoves crée aussi des Coves : du nouveau chaque jour, des idées cadeaux par type de personne, et des guides d\'achat.',
         'coves_body3' => 'Tout peut aller dans une Cove, de n\'importe quelle boutique, et chaque Cove se partage.',
-        'coves_body4' => 'Cliquez sur Enregistrer sur une Cove pour la retrouver dans Mes Coves, Coves enregistrées. Elle suit nos mises à jour. En faire ma liste copie ses produits dans une liste à vous, que vous modifiez comme vous voulez.',
+        'coves_body4' => 'Cliquez sur Enregistrer sur une Cove et choisissez. Garder dans Mes Coves la range sous Coves enregistrées ; elle suit nos mises à jour. En faire ma liste copie ses produits dans une liste à vous, que vous modifiez comme vous voulez. C’est le même bouton Enregistrer que sur un produit.',
         'find_title' => 'Trouver',
         'find_search' => 'Cherchez par nom, marque ou type de chose, ou dites pour qui c\'est : « cadeau pour ma sœur qui aime le jardinage, 30 à 50 € ». Nous regardons dans de nombreuses boutiques à la fois et comparons leurs prix.',
         'find_scan' => 'Scannez un code-barres avec l\'appareil photo de votre téléphone pour voir le produit et son prix ailleurs.',

@@ -35,7 +35,7 @@ return [
                 ],
                 [
                     'title' => 'Guárdalo y elige una lista',
-                    'body' => 'Toca el marcador y ya está en tu lista. Toca otra vez para elegir otra lista o empezar una nueva. En un ordenador, una flecha pequeña junto al marcador abre ese panel directamente.',
+                    'body' => 'Toca el marcador y ya está en tu lista. Toca otra vez para elegir otra lista o empezar una nueva. El panel pone arriba la lista que usa un solo toque, y marca cada lista donde ya está.',
                     'shot' => 'choose',
                     'alt' => 'El panel abierto junto a un producto, con las listas donde guardar y la opción de empezar una nueva.',
                 ],
@@ -101,7 +101,7 @@ return [
             'sections' => [
                 [
                     'title' => 'El marcador',
-                    'body' => 'En cada ficha de producto, en la [búsqueda](search) y en cada [Cove](cove). Un toque guarda en la última lista donde guardaste, si no en tu lista por defecto. Otro toque abre el panel: ahí eliges otra lista, lo mueves, o lo quitas. En un ordenador, una flecha pequeña junto al marcador abre el panel directamente.',
+                    'body' => 'En cada ficha de producto, en la [búsqueda](search) y en cada [Cove](cove). Un toque guarda en la última lista donde guardaste, si no en tu lista por defecto. Una vez guardado, el marcador está relleno y dice Guardado, y otro toque abre el panel: marca otra lista, o desmarca una para quitarlo. En la página de un producto es el mismo botón con la palabra Guardar al lado, y en una Cove también.',
                 ],
                 [
                     'title' => 'Añadir desde la lista',

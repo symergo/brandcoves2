@@ -1,6 +1,5 @@
 import { router, usePage } from '@inertiajs/react'
-import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { createPortal } from 'react-dom'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { countAdded, countRemoved } from '../addingMode'
 import { HttpError, send } from '../http'
 import {
@@ -26,6 +25,8 @@ import { show as showToast } from '../saveToast'
 import { useSignIn } from '../signIn'
 import type { ListOption, SavingTo, SharedProps } from '../types'
 import { useTranslations } from '../useTranslations'
+import SaveButton from './SaveButton'
+import SaveSheet from './SaveSheet'
 
 interface SaveResult {
     itemId: number
@@ -33,18 +34,6 @@ interface SaveResult {
     listTitle: string
     message: string
 }
-
-/** Where the panel goes, and which way up it is. */
-interface Placement {
-    top: number
-    left: number
-    maxHeight: number
-    /** Anchored by its bottom edge, because there was no room below the trigger. */
-    flipped: boolean
-}
-
-const PANEL_WIDTH = 288
-const EDGE = 8
 
 /**
  * Save a product — to a list for yourself, or to one about somebody else.
@@ -62,18 +51,22 @@ const EDGE = 8
  * makes Undo possible at all: the endpoint answers with the row's id, and a
  * flash string can name a list but never a row.
  *
- * ## Why the menu is a portal
+ * ## One button, one sheet (2026-09-26)
  *
- * A product card is `overflow-hidden` (rounded corners, and the image scales on
- * hover), so an absolutely positioned panel inside it is simply clipped away —
- * the menu opened correctly and was invisible. Rendering it into `document.body`
- * escapes every `overflow-hidden` ancestor and every stacking context at once,
- * which no amount of z-index on the panel can do.
+ * This used to be a bookmark with a narrow "▾" beside it that opened the list
+ * picker; at card size the chevron read as a minus sign, and a Cove, a product
+ * page and This or that each had a save control of their own. It is now the
+ * site's one Save button (`SaveButton`) and the one panel it opens
+ * (`SaveSheet`), shared with `SaveCove`. The panel is a portal because a
+ * product card clips anything positioned inside it. See
+ * docs/features/save-button.md.
  *
  * ## One rule for both variants
  *
- * Not saved → save. Saved → open the picker, which is the only place it can be
- * taken off again.
+ * Not saved → save, straight to the list named in the button's label. Saved →
+ * open the sheet, which says where it is and is the only place it can be taken
+ * off again or put on another list. So the sheet is always one press away: the
+ * press after the save.
  *
  * The card variant used to open the picker in both cases, on the stated grounds
  * that saving somewhere unnamed and making people undo it is worse than asking
@@ -158,13 +151,10 @@ export default function SaveToList({
     const [open, setOpen] = useState(false)
     const [creating, setCreating] = useState<null | 'mine' | 'for_someone' | 'group'>(null)
     const [name, setName] = useState('')
-    const [place, setPlace] = useState<Placement | null>(null)
-    const [sheet, setSheet] = useState(false)
-
-    // A button on the full control, the wrapper on the compact one, where the
-    // chevron that used to hold it is not on screen below `lg`.
-    const trigger = useRef<HTMLElement>(null)
-    const menu = useRef<HTMLDivElement>(null)
+    // The Save button itself: the sheet is placed against it, and focus goes
+    // back to it when the sheet closes.
+    const trigger = useRef<HTMLButtonElement>(null)
+    const close = useCallback(() => setOpen(false), [])
 
     // The product, however it is identified. A live bol result and an Amazon
     // product have no stored group; the server decides what may be kept.
@@ -200,96 +190,10 @@ export default function SaveToList({
           ? t('lists.save_to', { list: lastListTitle })
           : t('lists.save_to_list')
 
-    /*
-     * A phone gets a sheet, not a popover.
-     *
-     * A 288px panel anchored to a 36px button is a desktop shape. On a phone
-     * every card is at both edges of the viewport at once, the panel is most of
-     * the screen anyway, and anchoring it just makes it land somewhere
-     * arbitrary. Matched once and on change rather than read per render, and
-     * defaulted to false so the server-rendered pass agrees with the first
-     * client paint.
-     */
-    useEffect(() => {
-        const query = window.matchMedia('(max-width: 639px)')
-        const apply = () => setSheet(query.matches)
-
-        apply()
-        query.addEventListener('change', apply)
-
-        return () => query.removeEventListener('change', apply)
-    }, [])
-
-    const position = useCallback(() => {
-        const button = trigger.current
-
-        if (!button || sheet) return
-
-        const box = button.getBoundingClientRect()
-
-        // Keep it on screen: a card at the right edge of the grid would push the
-        // panel off the viewport, and on a phone every card is at both edges.
-        const left = Math.min(
-            Math.max(EDGE, box.right - PANEL_WIDTH),
-            window.innerWidth - PANEL_WIDTH - EDGE,
-        )
-
-        /*
-         * And vertically, which it never did.
-         *
-         * `top` was `box.bottom + 6` with no bound at all, so a card in the
-         * bottom row of a grid — an entirely ordinary place to save from —
-         * opened a three-section panel below the fold, where it could be
-         * neither read nor reached. It now flips above the trigger when there
-         * is more room there, and is capped either way so somebody with twenty
-         * lists gets a panel that scrolls rather than one that runs off the
-         * screen.
-         */
-        const below = window.innerHeight - box.bottom - EDGE - 6
-        const above = box.top - EDGE - 6
-        const flipped = below < 240 && above > below
-
-        setPlace({
-            top: flipped ? box.top - 6 : box.bottom + 6,
-            left,
-            maxHeight: Math.max(160, flipped ? above : below),
-            flipped,
-        })
-    }, [sheet])
-
-    useLayoutEffect(() => {
-        if (open) position()
-    }, [open, position])
-
     // Lazily, and never for a visitor who cannot save anything.
     useEffect(() => {
         load(market.key, Boolean(auth.user), savingTo?.id ?? null)
     }, [market.key, auth.user, savingTo?.id])
-
-    useEffect(() => {
-        if (!open) return
-
-        const away = (e: MouseEvent) => {
-            const target = e.target as Node
-            if (menu.current?.contains(target) || trigger.current?.contains(target)) return
-            setOpen(false)
-        }
-        const escape = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
-
-        document.addEventListener('mousedown', away)
-        document.addEventListener('keydown', escape)
-        // Fixed positioning does not follow the page, so it is repositioned
-        // rather than left floating over the wrong card.
-        window.addEventListener('scroll', position, true)
-        window.addEventListener('resize', position)
-
-        return () => {
-            document.removeEventListener('mousedown', away)
-            document.removeEventListener('keydown', escape)
-            window.removeEventListener('scroll', position, true)
-            window.removeEventListener('resize', position)
-        }
-    }, [open, position])
 
     /*
      * Sign in first — but not empty-handed, and without leaving the product.
@@ -518,9 +422,21 @@ export default function SaveToList({
      */
     const held: Holder[] = groupId === undefined ? [] : (holders?.[groupId] ?? [])
 
-    const mine = lists.filter((l) => l.kind === 'mine')
-    const forOthers = lists.filter((l) => l.kind === 'for_someone')
-    const groups = lists.filter((l) => l.kind === 'group')
+    /*
+     * Where one press on Save goes, first in its section.
+     *
+     * The same order the save itself resolves in (the page's choice, the list
+     * being filled, the last list used). Otherwise the server's order stands,
+     * which already puts the default list first. The row is what the sheet's
+     * hint line names, so "one press puts it here" and the row it means sit
+     * next to each other.
+     */
+    const quick = into ?? savingTo ?? (lastList ? { id: lastList.id, title: lastListTitle ?? lastList.title } : null)
+    const quickFirst = (a: ListOption, b: ListOption) => Number(b.id === quick?.id) - Number(a.id === quick?.id)
+
+    const mine = lists.filter((l) => l.kind === 'mine').sort(quickFirst)
+    const forOthers = lists.filter((l) => l.kind === 'for_someone').sort(quickFirst)
+    const groups = lists.filter((l) => l.kind === 'group').sort(quickFirst)
 
     /**
      * A row is a tick: on, the product is on that list; off, it is not.
@@ -548,7 +464,7 @@ export default function SaveToList({
             <button
                 key={list.id}
                 type="button"
-                role="menuitemcheckbox"
+                role="checkbox"
                 aria-checked={on}
                 disabled={busy}
                 onClick={() => {
@@ -638,7 +554,6 @@ export default function SaveToList({
                     </button>
                     <button
                         type="button"
-                        role="menuitem"
                         onClick={() => setCreating(null)}
                         className="rounded border border-line px-3 py-1.5 text-xs"
                     >
@@ -648,13 +563,24 @@ export default function SaveToList({
             </form>
         ) : (
             <>
-                <p className="px-2 pt-1 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
+                {/*
+                  Says, in one line, what the button did or will do, so the
+                  one-press save is never a mystery: where a press goes before
+                  it is saved, and how to take it off after.
+                */}
+                <p className="px-2 pt-1 pb-2 text-sm text-ink-soft">
+                    {saved
+                        ? t('save_button.saved_hint')
+                        : quick
+                          ? t('save_button.quick_hint', { list: quick.title })
+                          : t('save_button.pick_hint')}
+                </p>
+                <p className="border-t border-line px-2 pt-2 pb-1 text-xs font-medium tracking-wide text-ink-soft uppercase">
                     {t('lists.for_me')}
                 </p>
                 {mine.map((l) => row(l, l.title))}
                 <button
                     type="button"
-                    role="menuitem"
                     onClick={() => setCreating('mine')}
                     className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
                 >
@@ -667,7 +593,6 @@ export default function SaveToList({
                 {forOthers.map((l) => row(l, l.recipient ?? l.title))}
                 <button
                     type="button"
-                    role="menuitem"
                     onClick={() => setCreating('for_someone')}
                     className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
                 >
@@ -687,7 +612,6 @@ export default function SaveToList({
                 {groups.map((l) => row(l, l.recipient ?? l.title))}
                 <button
                     type="button"
-                    role="menuitem"
                     onClick={() => setCreating('group')}
                     className="block w-full rounded px-2 py-1.5 text-left text-sm text-accent hover:bg-line/40"
                 >
@@ -696,148 +620,49 @@ export default function SaveToList({
             </>
         )
 
-    const panel = !open ? null : sheet ? (
-        createPortal(
-            <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal="true">
-                <button
-                    type="button"
-                    aria-label={t('lists.cancel')}
-                    onClick={() => setOpen(false)}
-                    className="absolute inset-0 bg-ink/40"
-                />
-                <div
-                    ref={menu}
-                    role="menu"
-                    className="relative max-h-[75vh] w-full overflow-y-auto rounded-t-card border-t border-line bg-card p-2 pb-6 text-left shadow-xl"
-                >
-                    {body}
-                </div>
-            </div>,
-            document.body,
-        )
-    ) : place ? (
-        createPortal(
-            <div
-                ref={menu}
-                role="menu"
-                style={{
-                    position: 'fixed',
-                    left: place.left,
-                    width: PANEL_WIDTH,
-                    maxHeight: place.maxHeight,
-                    // Anchored by whichever edge meets the trigger, so a flipped
-                    // panel grows upwards instead of covering the button.
-                    ...(place.flipped
-                        ? { bottom: window.innerHeight - place.top }
-                        : { top: place.top }),
-                }}
-                className="z-50 overflow-y-auto rounded-card border border-line bg-card p-2 text-left shadow-xl"
-            >
-                {body}
-            </div>,
-            document.body,
-        )
-    ) : null
+    const panel = (
+        <SaveSheet open={open} onClose={close} anchor={trigger} label={t('lists.save_to_list')}>
+            {body}
+        </SaveSheet>
+    )
 
     /*
      * `relative z-20` on the card variant is load-bearing: a card is one big
      * click target made from a stretched link at z-10, and without lifting the
      * control above it the overlay swallows every click here.
+     *
+     * No chevron any more, on either shape. It was a second, 20px target that
+     * opened the sheet before a save; at card size it read as a minus sign,
+     * and on a phone it was already gone (2026-09-08). Choosing a list now
+     * costs the press that saves and the press that opens the sheet, and the
+     * sheet opens with the list just used on top.
      */
+    const button = (
+        <SaveButton
+            ref={trigger}
+            compact={compact}
+            saved={saved}
+            busy={busy}
+            onClick={() => (saved ? openPicker() : void save())}
+            label={saved ? t('save_button.saved_label') : destination}
+            opensSheet={saved}
+            expanded={open}
+        />
+    )
+
     if (compact) {
         return (
             <>
-                <span ref={trigger} className="relative z-20 inline-flex items-stretch">
-                    <button
-                        type="button"
-                        onClick={() => (saved ? openPicker() : void save())}
-                        disabled={busy}
-                        aria-pressed={saved}
-                        aria-label={saved ? t('lists.saved') : destination}
-                        title={saved ? t('lists.saved') : destination}
-                        className={`flex h-10 w-10 items-center justify-center rounded-full border shadow-sm backdrop-blur transition disabled:opacity-50 lg:h-9 lg:w-9 lg:rounded-r-none ${
-                            saved
-                                ? 'border-sage bg-sage text-white'
-                                : 'border-line bg-card/90 text-ink hover:border-ink hover:bg-card'
-                        }`}
-                    >
-                        {/* A bookmark, filled once saved. Recognisable at 16px in
-                            a way a word is not, and it does not compete with the
-                            product title for attention. */}
-                        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
-                            <path
-                                d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1z"
-                                fill={saved ? 'currentColor' : 'none'}
-                                stroke="currentColor"
-                                strokeWidth="1.8"
-                                strokeLinejoin="round"
-                            />
-                        </svg>
-                    </button>
-
-                    {/*
-                      The chevron is kept on a desktop, narrow, and gone below
-                      `lg`.
-
-                      On a desktop it earns its 20px: without it, filing a card
-                      straight into a named list would cost a save into the
-                      default one, a second press to reopen, and a move — so
-                      the fast path would have made the deliberate path slower.
-                      On a phone it was a 32px second target next to the first,
-                      and the pair covered a third of a list tile's picture
-                      (2026-09-08). There the bookmark is the whole control: a
-                      tap saves, a second tap opens the sheet, and the sheet is
-                      where the move lives anyway.
-                    */}
-                    <button
-                        type="button"
-                        onClick={openPicker}
-                        aria-expanded={open}
-                        aria-haspopup="menu"
-                        aria-label={t('lists.save_to_list')}
-                        className="-ml-px hidden h-9 w-5 items-center justify-center rounded-r-full border border-line bg-card/90 text-2xs text-ink-soft shadow-sm backdrop-blur hover:border-ink hover:text-ink lg:flex"
-                    >
-                        ▾
-                    </button>
-                </span>
+                <span className="relative z-20 inline-flex">{button}</span>
                 {panel}
             </>
         )
     }
 
     return (
-        <div className="relative inline-flex items-stretch">
-            <button
-                type="button"
-                // Already saved? Then the useful action is not saving it twice
-                // but seeing where it went — and that is the only screen with a
-                // way to take it off again.
-                onClick={() => (saved ? openPicker() : void save())}
-                disabled={busy}
-                aria-pressed={saved}
-                className={`rounded-l-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${
-                    saved ? 'border-sage bg-sage/10 text-sage' : 'border-line hover:border-ink'
-                }`}
-            >
-                {saved
-                    ? `✓ ${t('lists.saved')}`
-                    : savingTo
-                      ? t('lists.add_to_this', { list: savingTo.title })
-                      : t('lists.save')}
-            </button>
-
-            <button
-                ref={trigger as RefObject<HTMLButtonElement | null>}
-                type="button"
-                onClick={openPicker}
-                aria-expanded={open}
-                aria-haspopup="menu"
-                aria-label={t('lists.save_to_list')}
-                className="-ml-px rounded-r-lg border border-line px-2.5 py-2 text-sm hover:border-ink"
-            >
-                ▾
-            </button>
+        <>
+            {button}
             {panel}
-        </div>
+        </>
     )
 }
