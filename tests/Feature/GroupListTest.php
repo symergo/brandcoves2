@@ -134,23 +134,22 @@ class GroupListTest extends TestCase
     }
 
     #[Test]
-    public function a_group_list_appears_under_group_lists_as_a_list_i_own_and_not_under_my_wish_lists(): void
+    public function a_group_list_appears_under_give_together_as_a_list_i_own_and_not_under_wish_lists(): void
     {
-        // Since 2026-09-13 the default view is my wish lists alone; a group
-        // list I own lives under Group lists, still marked as mine.
+        // Since 2026-09-26 My Coves is one page with sections; a group list I
+        // own sits in the Give together section, once, still marked as mine.
         $user = User::factory()->create();
         $list = $this->groupList($user);
 
-        $response = $this->actingAs($user)->get('/be-nl/lists?view=group')->assertOk();
+        $response = $this->actingAs($user)->get('/be-nl/lists')->assertOk();
 
-        $row = collect($this->props($response)['lists'])->firstWhere('id', $list->id);
+        $rows = collect($this->props($response)['lists'])->where('id', $list->id);
 
-        $this->assertNotNull($row, 'A group list I own is missing from Group lists.');
+        $this->assertCount(1, $rows, 'A group list I own should be on My Coves exactly once.');
+        $row = $rows->first();
+        $this->assertSame('group', $row['section']);
         $this->assertSame(ListKind::Group->value, $row['kind']);
         $this->assertFalse($row['sharedWithMe']);
-
-        $mine = $this->actingAs($user)->get('/be-nl/lists')->assertOk();
-        $this->assertNotContains($list->id, array_column($this->props($mine)['lists'], 'id'));
     }
 
     #[Test]

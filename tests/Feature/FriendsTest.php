@@ -471,7 +471,7 @@ class FriendsTest extends TestCase
          * shared page. The one thing they came to do was the one thing missing.
          */
         $owner = User::factory()->create();
-        $list = $this->sharedListFor($owner, 'Mijn wenslijst');
+        $list = $this->sharedListFor($owner, 'Mijn verlanglijst');
 
         $reader = User::factory()->create();
         $this->actingAs($reader)->get("/be-nl/l/{$list->share_token}")->assertOk();
@@ -481,7 +481,7 @@ class FriendsTest extends TestCase
             ->assertOk()
             ->viewData('page')['props'];
 
-        $card = collect($props['lists'])->firstWhere('title', 'Mijn wenslijst');
+        $card = collect($props['lists'])->firstWhere('id', $list->id);
 
         $this->assertNotNull($card, 'A list you opened belongs under Shared.');
         $this->assertStringContainsString("l/{$list->share_token}", $card['url']);
@@ -495,7 +495,7 @@ class FriendsTest extends TestCase
 
         $this->assertStringContainsString(
             "lists/{$list->id}",
-            collect($ownProps['lists'])->firstWhere('title', 'Mijn wenslijst')['url'],
+            collect($ownProps['lists'])->firstWhere('id', $list->id)['url'],
         );
     }
 

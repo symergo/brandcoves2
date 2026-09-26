@@ -11,12 +11,12 @@ return [
     'index' => [
         'title' => 'Cómo funcionan las listas',
         'seo_title' => 'Cómo funcionan las listas',
-        'seo_description' => 'Todo lo que permite una lista: guardar, compartir, regalar entre varios, Amigo invisible, amigos y recordatorios. Paso a paso, con imágenes.',
+        'seo_description' => 'Todo lo que permite una lista: guardar, compartir, regalar juntos, Amigo invisible, amigos y recordatorios. Paso a paso, con imágenes.',
         'intro' => 'Una [lista de deseos](lists) guarda lo que [encuentras](search) aquí, para ti o para otra persona. Abajo, lo que puedes hacer con ella y cómo, tema por tema, con imágenes. Empieza por el primero si nunca has guardado nada.',
         'back' => 'Todos los temas',
         'next' => 'Siguiente',
         'cta_search' => 'Buscar algo que guardar',
-        'cta_lists' => 'Ir a mis listas',
+        'cta_lists' => 'Ir a Mis Coves',
     ],
 
     'topics' => [
@@ -41,13 +41,13 @@ return [
                 ],
                 [
                     'title' => 'Abre tus listas',
-                    'body' => 'Todo lo que guardaste está en [Mis listas](lists). Cada lista muestra qué contiene, si es privada y para quién es. Cuando baja un precio, la ficha lo dice.',
+                    'body' => 'Todo lo que guardaste está en [Mis Coves](lists), en una sola página: Listas de deseos, Para otros, Regalar juntos y Guardadas, cada una con su número. Cada lista muestra qué contiene, si es privada y para quién es. Cuando baja un precio, la ficha lo dice.',
                     'shot' => 'lists',
-                    'alt' => 'La página Mis listas, con dos listas y el botón para crear una.',
+                    'alt' => 'La página Mis Coves, con dos listas y el botón para crear una.',
                 ],
                 [
                     'title' => 'Crear una lista en tres pasos',
-                    'body' => "1. Toca «Nueva lista» en [Mis listas](lists), o «Crear una lista nueva» en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Toca «Siguiente».\n3. Ponle un nombre y una ocasión a la lista. Toca «Siguiente».\n4. Elige «Privada (o compartir después)» o «Compartir con un enlace», y toca «Crear lista».\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalo en grupo](lists-help/kinds).",
+                    'body' => "1. Toca «Nueva lista» en [Mis Coves](lists), o «Crear una lista nueva» en la portada.\n2. Elige para quién es: «Para mi», «Para otra persona» o «Entre varios, para alguien». Toca «Siguiente».\n3. Ponle un nombre y una ocasión a la lista. Toca «Siguiente».\n4. Elige «Privada (o compartir después)» o «Compartir con un enlace», y toca «Crear lista».\n\nO sáltate esto: al guardar, toca el marcador y elige ahí una lista nueva. Lo que estabas guardando entra en ella al momento.\n\nUna elección queda fija después: para quién es. Todo lo demás se puede cambiar. Lo que permite cada tipo está en [Lista de deseos, lista de regalos o regalar juntos](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'El primer paso de una lista nueva, con las tres opciones de para quién es.',
                 ],
@@ -59,9 +59,9 @@ return [
         ],
 
         'kinds' => [
-            'title' => 'Lista de deseos, lista de regalos o regalo en grupo',
+            'title' => 'Lista de deseos, lista de regalos o regalar juntos',
             'blurb' => 'La única elección que queda fija, y lo que permite cada tipo de lista.',
-            'seo_description' => 'Tres tipos de lista: una lista de deseos para ti, una lista de regalos para otra persona, o un regalo en grupo. Qué permite cada una y qué queda fijo.',
+            'seo_description' => 'Tres tipos de lista: una lista de deseos para ti, una lista de regalos para otra persona, o una lista para regalar juntos. Qué permite cada una y qué queda fijo.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
@@ -80,7 +80,7 @@ return [
                     'body' => 'Ideas para alguien que nunca abre la lista. Quienes la reciben marcan lo que [compran](lists-help/claiming), para que nadie compre dos veces. Tú sí lo ves, porque también regalas.',
                 ],
                 [
-                    'title' => 'Entre varios, para alguien: un regalo en grupo',
+                    'title' => 'Entre varios, para alguien: regalar juntos',
                     'body' => 'Un regalo, varios que regalan. Cualquiera con el enlace puede añadir ideas, votarlas y decir con cuánto contribuye. Aquí no se mueve dinero; eso lo arregláis entre vosotros. Más en [Regalar entre varios](lists-help/group).',
                 ],
                 [
@@ -105,7 +105,7 @@ return [
                 ],
                 [
                     'title' => 'Añadir desde la lista',
-                    'body' => "1. Abre tu lista en [Mis listas](lists).\n2. Toca «+ Añadir un producto».\n3. Escribe lo que buscas y pulsa Intro, o toca el icono de escanear y apunta con la cámara al código de barras.\n4. Toca el producto en los resultados. Entra directamente en tu lista.",
+                    'body' => "1. Abre tu lista en [Mis Coves](lists).\n2. Toca «+ Añadir un producto».\n3. Escribe lo que buscas y pulsa Intro, o toca el icono de escanear y apunta con la cámara al código de barras.\n4. Toca el producto en los resultados. Entra directamente en tu lista.",
                     'shot' => 'add',
                     'alt' => 'El campo de búsqueda al principio de una lista para añadir un producto, con debajo el enlace para añadirlo tú mismo.',
                 ],
@@ -233,16 +233,16 @@ Cada uno juega una vez.',
 
         'group' => [
             'title' => 'Regalar entre varios',
-            'blurb' => 'Regalo en grupo, votos, aportaciones, y conversación con quienes participan.',
+            'blurb' => 'Regalar juntos, votos, aportaciones, y conversación con quienes participan.',
             'seo_description' => 'Comprar un regalo entre varios: reunir ideas, votar, acordar quién aporta qué, y hablarlo.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
-                    'title' => 'Un regalo en grupo',
-                    'body' => "1. Crea una [lista nueva](lists-help/saving) y elige «Entre varios, para alguien» en el primer paso.\n2. Di para quién es y ponle un nombre.\n3. Comparte el enlace con quienes participan.\n\nCualquiera con el enlace puede añadir ideas y votarlas. No hay nada que reservar: es un solo [regalo en grupo](lists-help/kinds) de todos vosotros. Sortear nombres es otra cosa; está en [Amigo invisible](lists-help/santa).",
+                    'title' => 'Regalar juntos',
+                    'body' => "1. Crea una [lista nueva](lists-help/saving) y elige «Entre varios, para alguien» en el primer paso.\n2. Di para quién es y ponle un nombre.\n3. Comparte el enlace con quienes participan.\n\nCualquiera con el enlace puede añadir ideas y votarlas. No hay nada que reservar: es un solo regalo que [regaláis juntos](lists-help/kinds). Sortear nombres es otra cosa; está en [Amigo invisible](lists-help/santa).",
                     'shot' => 'group',
-                    'alt' => 'La página de un regalo en grupo, con las ideas para votar y la casilla para aportar.',
+                    'alt' => 'La página de una lista para regalar juntos, con las ideas para votar y la casilla para aportar.',
                 ],
                 [
                     'title' => 'Votar',

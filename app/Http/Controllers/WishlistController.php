@@ -57,40 +57,29 @@ class WishlistController extends Controller
         }
 
         /*
-         * One page, three views: `?view=mine|shared|group`, defaulting to mine.
+         * One page, four sections, nothing hidden (owner's call, 2026-09-26).
          *
-         * They are **views, not filters**, and the difference decides the query
-         * rather than decorating it. Each answers a different question about
-         * whose list it is — what am I keeping, what has somebody shown me, what
-         * are we choosing together — so they select different rows through
-         * different scopes rather than narrowing one pile.
+         * Wish lists (my own `mine` lists), For others (my `for_someone` lists
+         * plus the wish and gift lists others shared with me), Give together
+         * (every group list I have a part in) and Saved (Coves I bookmarked).
+         * Every row goes to exactly one section, by whom the list is for.
          *
-         * Since the 2026-09-13 split by whom a list is for, `mine` is "My wish
-         * lists" — my own `mine`-kind lists, and only those. `shared` is "For
-         * others" — my own `for_someone` lists plus what others have shared
-         * with me — and `group` is every group list I have a part in. None is
-         * a superset of the others any more; a list appears in exactly the
-         * view that matches who it is about.
+         * From 2026-09-13 to 2026-09-26 these were four separate *views*,
+         * `?view=mine|shared|group|saved`, with only `mine` on the plain URL.
+         * The reasoning was that each answers a different question. It held
+         * on paper and failed in use: somebody with two wish lists and two
+         * lists for other people opened My Coves, saw two, and thought the
+         * other two had gone. A view you have to know about is a place things
+         * disappear into. The sections keep the split; the page shows all of
+         * it.
          *
-         * This replaces an earlier `?shared=1` that meant `visibility !=
-         * private`, i.e. *"a list I own that I have shared outward"*. That is a
-         * property of my own list, not a separate collection, and it made the
-         * Shared view a second copy of My Lists. Nothing ever linked to it,
-         * which is the only reason replacing it is free.
-         *
-         * An unrecognised value falls back to `mine` rather than to nothing:
-         * it is the view every row this person may see belongs to, and each row
-         * says on its own card whose it is.
-         *
-         * See docs/features/list-taxonomy.md.
+         * `?view=` still works, because menus, mails and old links carry it:
+         * it now names the section to scroll to, not the rows to send. An
+         * unknown value scrolls nowhere. See docs/features/list-taxonomy.md.
          */
         $view = match ($request->query('view')) {
-            'shared' => 'shared',
-            'group' => 'group',
-            // Coves somebody bookmarked, since 2026-09-26: not lists, but kept
-            // here because My Coves is where a person looks for what they keep.
-            'saved' => 'saved',
-            default => 'mine',
+            'mine', 'shared', 'group', 'saved' => $request->query('view'),
+            default => null,
         };
 
         /*
@@ -118,41 +107,32 @@ class WishlistController extends Controller
             ->whereNot(fn ($q) => $owner->scope($q));
 
         /*
-         * Each view is its own query rather than one widened scope filtered
+         * Each section is its own query rather than one widened scope filtered
          * afterwards, because the suggestion count may only be attached to
          * rows I own — see `rows()`. A single `ListAccess::scope()` with a
          * `withCount` would put a message addressed to somebody else on their
          * card in my list.
-         */
-        /*
-         * Three views, by whom the lists are for (owner's call, 2026-09-13).
          *
-         * "My wish lists" is only that: my own lists of what I want. "For
-         * others" is everything about giving to somebody: my lists about a
-         * person, and what others shared with me — their wish lists and their
-         * gift lists. "Group lists" is one present bought together, mine and
-         * the ones I was let into. Until then the default view held every
-         * list I could open, sectioned by kind, and "Shared" held only what
-         * others sent me; the errand a visitor arrives with is "what do I
-         * want" or "what am I giving", and the views now split on that.
-         *
+         * Split by whom the list is for (owner's call, 2026-09-13): the errand
+         * a visitor arrives with is "what do I want" or "what am I giving".
          * The kind is chosen at creation, never derived, so a list must not
-         * change view because somebody was invited to it.
+         * change section because somebody was invited to it.
+         *
+         * `section` rides on every row, and the page groups on it. For others
+         * lists my own gift lists first, then the gift lists and the wish lists
+         * others shared with me; each card says whose it is.
          */
-        $lists = match ($view) {
-            'shared' => $this->rows($owned->where('kind', ListKind::ForSomeone->value), $owner, $current, owned: true)
-                ->concat($this->rows(
-                    $sharedWithMe->whereIn('kind', [ListKind::Mine->value, ListKind::ForSomeone->value]),
-                    $owner,
-                    $current,
-                    owned: false,
-                )),
+        $section = fn (Collection $rows, string $name): Collection => $rows->map(fn (array $row) => [...$row, 'section' => $name]);
+        $shared = fn (array $kinds): Builder => (clone $sharedWithMe)->whereIn('kind', $kinds);
+        $mineOf = fn (ListKind $kind): Builder => (clone $owned)->where('kind', $kind->value);
 
-            'group' => $this->rows($owned->where('kind', ListKind::Group->value), $owner, $current, owned: true)
-                ->concat($this->rows($sharedWithMe->where('kind', ListKind::Group->value), $owner, $current, owned: false)),
-
-            default => $this->rows($owned->where('kind', ListKind::Mine->value), $owner, $current, owned: true),
-        };
+        $lists = $section($this->rows($mineOf(ListKind::Mine), $owner, $current, owned: true), 'mine')
+            ->concat($section($this->rows($mineOf(ListKind::ForSomeone), $owner, $current, owned: true), 'shared'))
+            ->concat($section($this->rows($shared([ListKind::ForSomeone->value]), $owner, $current, owned: false), 'shared'))
+            ->concat($section($this->rows($shared([ListKind::Mine->value]), $owner, $current, owned: false), 'shared'))
+            ->concat($section($this->rows($mineOf(ListKind::Group), $owner, $current, owned: true), 'group'))
+            ->concat($section($this->rows($shared([ListKind::Group->value]), $owner, $current, owned: false), 'group'))
+            ->values();
 
         /*
          * Public, and indexable, and until 2026-09-05 it carried no <title> and
@@ -170,20 +150,14 @@ class WishlistController extends Controller
         );
 
         return Inertia::render('Lists/Index', [
-            'lists' => $view === 'saved' ? [] : $lists,
+            // Every list this person may open, each carrying its `section`.
+            'lists' => $lists,
 
-            // The saved view's rows; empty on every other view. See
-            // docs/features/saved-coves.md.
-            'savedCoves' => $view === 'saved' ? $this->savedCoves($owner) : [],
-            /*
-             * Which view this is, so the page can say so.
-             *
-             * Sent rather than re-derived from the URL in React: the page has
-             * to name what an empty result means, and "you have no shared
-             * lists" and "you have no lists" are different sentences. A page
-             * that shows one empty state for three questions tells the visitor
-             * nothing about which one they asked.
-             */
+            // The Saved section. See docs/features/saved-coves.md.
+            'savedCoves' => $this->savedCoves($owner),
+
+            // The section a `?view=` link asked for, which the page scrolls
+            // to; null on the plain URL.
             'view' => $view,
             /*
              * Everything the list wizard offers — people, friends, occasions —

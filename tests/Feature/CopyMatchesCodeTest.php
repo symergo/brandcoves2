@@ -140,7 +140,7 @@ class CopyMatchesCodeTest extends TestCase
     }
 
     #[Test]
-    public function every_list_i_can_open_is_on_one_of_the_three_views_and_says_whose_it_is(): void
+    public function every_list_i_can_open_is_on_one_of_the_sections_and_says_whose_it_is(): void
     {
         /*
          * My Lists used to mean "lists I own, of two of the three kinds". A
@@ -150,12 +150,12 @@ class CopyMatchesCodeTest extends TestCase
          * them could not be found.
          *
          * Since 2026-09-13 the page splits by whom a list is for (owner's
-         * call): "My wish lists" is only my own wants, "For others" is giving,
-         * "Group lists" is buying together. So the two lists here sit on two
-         * views rather than one page — and each still has to be findable, and
-         * still has to say whose it is, because what I may do with my own
-         * research list and with somebody else's wish list is not the same
-         * thing.
+         * call): wish lists are my own wants, "For others" is giving, "Give
+         * together" is one present bought together. Since 2026-09-26 those
+         * are sections of one page rather than separate views, and the
+         * `?view=` links below only say where to scroll. Each list still has
+         * to say whose it is, because what I may do with my own research list
+         * and with somebody else's wish list is not the same thing.
          */
         $me = User::factory()->create();
         $friend = User::factory()->create(['name' => 'Sanne']);
@@ -192,12 +192,14 @@ class CopyMatchesCodeTest extends TestCase
         $this->assertNotNull($mine, 'A group list I own is missing from Group lists.');
         $this->assertFalse($mine['sharedWithMe']);
         $this->assertNull($mine['ownerName']);
+        $this->assertSame('group', $mine['section']);
 
         $invited = $rows('shared')->firstWhere('id', $theirs->id);
         $this->assertNotNull($invited, 'A list shared with me is missing from For others.');
         $this->assertTrue($invited['sharedWithMe']);
         $this->assertSame('Sanne', $invited['ownerName']);
         $this->assertSame('editor', $invited['role']);
+        $this->assertSame('shared', $invited['section']);
 
         // Invariant: a pending suggestion is a message to the owner. Null
         // rather than zero, so nothing can render a count for it.

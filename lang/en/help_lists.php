@@ -11,12 +11,12 @@ return [
     'index' => [
         'title' => 'How lists work',
         'seo_title' => 'How lists work',
-        'seo_description' => 'Everything a list can do: saving, sharing, buying together, Secret Santa, friends and reminders. Step by step, with pictures.',
+        'seo_description' => 'Everything a list can do: saving, sharing, giving together, Secret Santa, friends and reminders. Step by step, with pictures.',
         'intro' => 'A [wish list](lists) keeps what you [find](search) here, for yourself or for someone else. Below, what you can do with one and how, by topic, with pictures. Start with the first if you have never saved anything.',
         'back' => 'All topics',
         'next' => 'Next',
         'cta_search' => 'Find something to save',
-        'cta_lists' => 'Go to my lists',
+        'cta_lists' => 'Go to My Coves',
     ],
 
     'topics' => [
@@ -41,13 +41,13 @@ return [
                 ],
                 [
                     'title' => 'Open your lists',
-                    'body' => 'Everything you saved is under [My lists](lists). Each list shows what is on it, whether it is private and who it is for. When a price drops, the card says so.',
+                    'body' => 'Everything you saved is under [My Coves](lists), on one page: Wish lists, For others, Give together and Saved, each with its count. Each list shows what is on it, whether it is private and who it is for. When a price drops, the card says so.',
                     'shot' => 'lists',
-                    'alt' => 'The My lists page, with two lists and the button that makes one.',
+                    'alt' => 'The My Coves page, with two lists and the button that makes one.',
                 ],
                 [
                     'title' => 'Making a list in three steps',
-                    'body' => "1. Tap “New list” under [My lists](lists), or “Make a new list” on the home page.\n2. Choose who it is for: “For me”, “For someone else” or “Together, for someone”. Tap “Next”.\n3. Give the list a name and an occasion. Tap “Next”.\n4. Choose “Private (or share later)” or “Share with a link”, and tap “Create list”.\n\nOr skip this: while saving, tap the bookmark and choose a new list there. What you were saving goes straight onto it.\n\nOne choice is then fixed: who it is for. Everything else you can still change. What the three kinds can do is under [Wish list, gift list or group gift](lists-help/kinds).",
+                    'body' => "1. Tap “New list” under [My Coves](lists), or “Make a new list” on the home page.\n2. Choose who it is for: “For me”, “For someone else” or “Together, for someone”. Tap “Next”.\n3. Give the list a name and an occasion. Tap “Next”.\n4. Choose “Private (or share later)” or “Share with a link”, and tap “Create list”.\n\nOr skip this: while saving, tap the bookmark and choose a new list there. What you were saving goes straight onto it.\n\nOne choice is then fixed: who it is for. Everything else you can still change. What the three kinds can do is under [Wish list, gift list or give together](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'The first step of a new list, with the three choices of who it is for.',
                 ],
@@ -59,9 +59,9 @@ return [
         ],
 
         'kinds' => [
-            'title' => 'Wish list, gift list or group gift',
+            'title' => 'Wish list, gift list or give together',
             'blurb' => 'The one choice that is fixed, and what each kind of list can do.',
-            'seo_description' => 'Three kinds of list: a wish list for yourself, a gift list for someone else, or a group gift. What each can do and what is fixed.',
+            'seo_description' => 'Three kinds of list: a wish list for yourself, a gift list for someone else, or a list to give together. What each can do and what is fixed.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
@@ -80,7 +80,7 @@ return [
                     'body' => 'Ideas for someone who never opens the list themselves. Whoever you share it with ticks what they are [buying](lists-help/claiming), so nobody buys twice. You do see that, because you are giving too.',
                 ],
                 [
-                    'title' => 'Together, for someone: a group gift',
+                    'title' => 'Together, for someone: give together',
                     'body' => 'One gift, several givers. Everyone with the link can add ideas, vote on them and say what they will chip in. No money moves here; you settle that between you. More under [Buying a gift together](lists-help/group).',
                 ],
                 [
@@ -105,7 +105,7 @@ return [
                 ],
                 [
                     'title' => 'Adding from the list itself',
-                    'body' => "1. Open your list under [My lists](lists).\n2. Tap “+ Add a product”.\n3. Type what you are looking for and press Enter, or tap the scan icon and point your camera at the barcode.\n4. Tap the product in the results. It is on your list straight away.",
+                    'body' => "1. Open your list under [My Coves](lists).\n2. Tap “+ Add a product”.\n3. Type what you are looking for and press Enter, or tap the scan icon and point your camera at the barcode.\n4. Tap the product in the results. It is on your list straight away.",
                     'shot' => 'add',
                     'alt' => 'The search field at the top of a list for adding a product, with the link below it to write something in yourself.',
                 ],
@@ -233,16 +233,16 @@ Everyone plays once.',
 
         'group' => [
             'title' => 'Buying a gift together',
-            'blurb' => 'Group gift, voting, chipping in, and talking it over with everyone in.',
+            'blurb' => 'Giving together, voting, chipping in, and talking it over with everyone in.',
             'seo_description' => 'Buy one gift with several people: gather ideas, vote, agree who chips in what, and talk it over.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
-                    'title' => 'A group gift',
-                    'body' => "1. Make a [new list](lists-help/saving) and choose “Together, for someone” in the first step.\n2. Say who it is for and give it a name.\n3. Share the link with everyone in.\n\nEveryone with the link can add ideas and vote on them. There is nothing to reserve: it is one [group gift](lists-help/kinds) from all of you. Drawing names is something else; that is under [Secret Santa](lists-help/santa).",
+                    'title' => 'Give together',
+                    'body' => "1. Make a [new list](lists-help/saving) and choose “Together, for someone” in the first step.\n2. Say who it is for and give it a name.\n3. Share the link with everyone in.\n\nEveryone with the link can add ideas and vote on them. There is nothing to reserve: it is one present you [give together](lists-help/kinds). Drawing names is something else; that is under [Secret Santa](lists-help/santa).",
                     'shot' => 'group',
-                    'alt' => 'The page of a group gift, with the ideas to vote on and the box to chip in.',
+                    'alt' => 'The page of a list to give together, with the ideas to vote on and the box to chip in.',
                 ],
                 [
                     'title' => 'Voting',

@@ -95,11 +95,11 @@ class GiftingMechanismsTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Created on English, so the row stores "My wishlist" forever.
+        // Created on English, so the row stores "My wish list" forever.
         $this->actingAs($user)->get('/en/lists')->assertOk();
 
         $list = Wishlist::query()->where('owner_user_id', $user->id)->sole();
-        $this->assertSame('My wishlist', $list->title);
+        $this->assertSame('My wish list', $list->title);
 
         /*
          * Read on a Dutch market it must say so anyway. The title is stored,
@@ -109,10 +109,10 @@ class GiftingMechanismsTest extends TestCase
          */
         $this->actingAs($user)
             ->get('/be-nl/lists')
-            ->assertInertia(fn ($page) => $page->where('lists.0.title', 'Mijn wenslijst'));
+            ->assertInertia(fn ($page) => $page->where('lists.0.title', 'Mijn verlanglijst'));
 
         // And the stored value is untouched: this is a rendering decision.
-        $this->assertSame('My wishlist', $list->fresh()->title);
+        $this->assertSame('My wish list', $list->fresh()->title);
     }
 
     #[Test]
@@ -158,7 +158,33 @@ class GiftingMechanismsTest extends TestCase
          * exists to prevent.
          */
         $this->get("/be-nl/l/{$list->share_token}")
-            ->assertInertia(fn ($page) => $page->where('list.heading', 'Wenslijst van Sanne'));
+            ->assertInertia(fn ($page) => $page->where('list.heading', 'Verlanglijst van Sanne'));
+    }
+
+    #[Test]
+    public function a_default_list_stored_under_the_old_word_reads_with_the_new_one(): void
+    {
+        /*
+         * 2026-09-26: one word per list kind. The default list was called
+         * "Mijn wenslijst" while its badge said "Verlanglijst". Rows made before
+         * the change keep their stored title — user data is never rewritten —
+         * and render in the new word, because the old one is still ours.
+         */
+        $user = User::factory()->create();
+
+        $list = Wishlist::factory()->create([
+            'owner_user_id' => $user->id,
+            'kind' => ListKind::Mine,
+            'market' => Market::BeNl,
+            'is_default' => true,
+            'title' => 'Mijn wenslijst',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/be-nl/lists')
+            ->assertInertia(fn ($page) => $page->where('lists.0.title', 'Mijn verlanglijst'));
+
+        $this->assertSame('Mijn wenslijst', $list->fresh()->title);
     }
 
     #[Test]

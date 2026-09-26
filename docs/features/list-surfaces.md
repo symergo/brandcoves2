@@ -894,3 +894,77 @@ Files: `Pages/Lists/Show.tsx`, `Components/ListTools.tsx` (`ListToolsBar` added,
 removed), `Components/Menu.tsx`, `Components/OwnItemMenu.tsx`, `Components/TasteTogetherPanel.tsx`
 (a `className` prop), `Components/SaveToList.tsx`, `Components/ToolIcon.tsx` (`more`, `chevron`,
 `edit`, `copy`); keys `lists.more_tools`, `lists.more_tools_label`, `lists.item_menu`.
+
+## One page, four sections (2026-09-26)
+
+From the owner's UX audit. `/lists` had four views (`?view=mine|shared|group|saved`) and the plain
+URL showed only the first: my own wish lists. The owner, with two wish lists and two lists for other
+people, opened My Coves, saw two, and thought the other two had disappeared. The other views were
+reachable only from the account menu. A view you have to know about is a place things go missing.
+
+So My Coves is one page with every section on it, in this order:
+
+| Section | nl | Holds |
+|---|---|---|
+| `mine` | Verlanglijsten | my own `mine` lists |
+| `shared` | Voor anderen | my `for_someone` lists, then gift lists and wish lists others shared with me |
+| `group` | Samen geven | group lists I own, then the ones I was let into |
+| `saved` | Bewaard | Coves I saved, editorial and community |
+
+- `WishlistController::index()` sends every row with a `section` key, plus `savedCoves`, always.
+  Each section is still its own query, for the reason `rows()` gives (the suggestion count only on
+  rows I own). The three sub-headings "For others" had (my gift lists / gift lists from others /
+  wish lists from others) are gone: each card already says whose a list is, and nested headings on
+  a page meant to get simpler was the wrong direction. `lists.others_*` were removed.
+- Each heading carries its count, with its explanation behind the info icon. **A section with
+  nothing in it is not drawn** (owner's rule: no empty blocks).
+- **`?view=` still works**, because the account menus, mails and old bookmarks carry it. It no
+  longer selects rows; it names the section to scroll to, which is ringed for a moment. If that
+  section is empty, one line at the top says so in that section's own words (`lists.shared_empty`,
+  `lists.group_empty`, `saved_coves.empty`). An unknown value scrolls nowhere. The menus keep
+  `?view=` rather than `#anchors` because SiteLayout marks "you are here" by comparing `page.url`,
+  which never carries a fragment.
+- `myCovesLinks.ts`: My Coves, then For others, Give together, Saved (the page's order), then
+  Secret Friend and Friends.
+- The help pages (`/lists-help`, the Saving topic) name the four sections, and "My lists" there is
+  now "My Coves", the page's name.
+- Tests: `ListsViewsTest` (every section on the plain page, each row once, empty sections send
+  nothing, every `?view=` lands on the whole page, no claim state on the index); `GroupListTest` and
+  `CopyMatchesCodeTest` assert a row's `section`.
+
+## One word per list kind (2026-09-26)
+
+Same audit. The Dutch UI said both "wenslijst" and "verlanglijst" for the same thing: the default
+list was titled "Mijn wenslijst" and carried a "Verlanglijst" badge. The group kind was
+"Groepscadeau", "Groepslijsten", "Samen cadeau" or "Samen kopen" depending on the screen. Now each
+kind has one name per language, used for the badge, the section, the save picker, the Gift Cove
+cards and the help pages:
+
+| Kind | nl | en | fr | es |
+|---|---|---|---|---|
+| `mine` | Verlanglijst | Wish list | Liste d’envies | Lista de deseos |
+| `for_someone` | Cadeaulijst | Gift list | Liste de cadeaux | Lista de regalos |
+| `group` | Samen geven | Give together | Offrir ensemble | Regalar juntos |
+
+The nl words are the owner's; the others match them and what each language file mostly used
+already. In running text the group kind is written as the verb ("een lijst om samen te geven", "one
+present you give together"), because a verb takes no article. The section heading for it is
+"Samen geven", not the "Samen" of the audit note, so the heading and the badge agree.
+
+Left alone on purpose:
+
+- **Stored titles.** A list keeps the title it was given. The default list's title was always ours,
+  not the owner's, so `DefaultTitle::RETIRED` now lists "Mijn wenslijst", "My wishlist" and "Ma
+  liste de souhaits", and `Wishlist::displayTitle()` renders them in the current word. No row is
+  rewritten. `GiftingMechanismsTest::a_default_list_stored_under_the_old_word_reads_with_the_new_one`.
+- **The wizard's first question.** "Voor mezelf / Voor iemand anders / Samen, voor iemand" answer
+  *who is it for*, not *what is it called*, and were named that way on purpose (the comment on
+  `lists.for_group`).
+- **SEO titles that lead with the searched word:** the home page ("GiftCoves verlanglijsten", see
+  seo.md), `lists.seo_title`, and the Community Coves index ("verlanglijstjes", "cadeaulijstjes":
+  the same words, in the diminutive people search for). The help topic titles "Samen een cadeau
+  kopen" / "Buying a gift together" / "Offrir un cadeau à plusieurs" / "Regalar entre varios" name a
+  task somebody searches for, and stayed.
+- **The registry** ("A registry", "Een geschenkenlijst") is a wish list with an occasion, not a
+  kind. In fr and es it was called "liste de cadeaux" / "lista de regalos", which is now the gift
+  list's name, so there it became "Une liste pour une occasion" / "Una lista para una ocasión".

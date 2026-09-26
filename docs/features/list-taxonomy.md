@@ -21,6 +21,13 @@ what.
 > lists only), For others (my `for_someone` lists plus the wish and gift lists shared with me), Group
 > lists. The superset described below is history; see
 > [list-surfaces.md](list-surfaces.md#three-views-by-whom-the-lists-are-for-2026-09-13).
+>
+> **Since 2026-09-26 they are sections of one page, not views.** The "views, not filters" argument
+> below held on paper and failed in use: the owner, with two wish lists and two lists for other
+> people, opened My Coves, saw two, and thought the other two had gone. The split by whom a list is
+> for survives as the section each row sits in (`section` on every row); what went is hiding the
+> other sections behind a URL nobody sees. `?view=` now only scrolls to a section. See
+> [list-surfaces.md](list-surfaces.md#one-page-four-sections-2026-09-26).
 
 ## What was there before, and what was wrong with it
 
@@ -382,7 +389,8 @@ collaborator row — never the whole roster, which would hand every card the nam
 invited — so the card can say *From Sanne · may add and remove*.
 
 `?view=shared` and `?view=group` still answer the narrow questions and the nav still links to them.
-What changed is that they are no longer the *only* way to reach those rows.
+What changed is that they are no longer the *only* way to reach those rows. (*Since 2026-09-26* they
+select nothing at all: every row is sent, and `?view=` names the section to scroll to.)
 
 A fourth value, `?view=saved` (2026-09-26), is not a list view at all: it shows the Coves this
 person saved. It lives on this page because My Coves is where people look for what they keep. See

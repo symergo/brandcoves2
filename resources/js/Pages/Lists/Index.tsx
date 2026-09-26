@@ -39,8 +39,11 @@ interface ListSummary {
     ownerName: string | null
     /** `viewer` or `editor`, on a list shared with me. */
     role: string | null
+    /** Which section of the page it goes under; decided by the server. */
+    section: Exclude<ListsView, 'saved'>
 }
 
+/** The page's sections, and the `?view=` values that scroll to them. */
 type ListsView = 'mine' | 'shared' | 'group' | 'saved'
 
 /** A Cove somebody saved into My Coves; see docs/features/saved-coves.md. */
@@ -63,8 +66,8 @@ interface SavedCoveRow {
  */
 interface Props extends WizardOffer {
     lists: ListSummary[]
-    view: ListsView
-    /** Only on the saved view. */
+    /** The section a `?view=` link asked for; null on the plain URL. */
+    view: ListsView | null
     savedCoves: SavedCoveRow[]
     isSignedIn: boolean
 }
@@ -282,73 +285,58 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
     }, [isSignedIn])
 
     /*
-     * Three views, and only one of them splits.
+     * One page, four sections, nothing hidden (owner's call, 2026-09-26).
      *
-     * My Lists is now every list this person may open — mine of all three
-     * kinds, and the ones other people have let me into — so the sections carry
-     * the whole taxonomy rather than a two-way split. They are not decoration:
-     * a wish list exists to be seen, a list about somebody is research they
-     * must never see, a group list is money and a third person, and a list
-     * shared with me belongs to somebody who can change it. Same table, four
-     * different sets of rules.
+     * Until then these were four views behind `?view=`, and the plain page
+     * showed only my own wish lists: somebody with two wish lists and two
+     * lists for other people saw two and thought the others had gone. Now
+     * every section is on the page, each heading carries its count, and a
+     * section with nothing in it is left out rather than shown empty: a
+     * heading over nothing reads as a thing that failed to load.
      *
-     * Shared and Group as their own views are already one thing each, and
-     * splitting those would invent a distinction the rows do not have.
-     *
-     * Empty sections are dropped rather than shown empty: a heading over
-     * nothing reads as a thing that failed to load.
+     * The split is still by whom the lists are for (2026-09-13): what I want,
+     * what I am giving, what we give together, and the Coves I kept.
      */
+    const sections: { key: ListsView; label: string; hint: string; lists: ListSummary[] }[] = [
+        { key: 'mine', label: t('lists.section_mine'), hint: t('wizard.kind_mine_body'), lists: [] },
+        { key: 'shared', label: t('lists.section_shared'), hint: t('lists.shared_subtitle'), lists: [] },
+        { key: 'group', label: t('lists.section_group'), hint: t('lists.group_subtitle'), lists: [] },
+    ]
+    for (const section of sections) {
+        section.lists = lists.filter((l) => l.section === section.key)
+    }
+    const filled = sections.filter((s) => s.lists.length > 0)
+
     /*
-     * Three views by whom the lists are for (2026-09-13; see the controller):
-     * "My wish lists" is one group and needs no heading; "For others" is my
-     * gift lists, then the gift lists and the wish lists others shared with
-     * me; "Group lists" is one group of mine and theirs. A heading only earns
-     * its place when more than one group has something in it.
+     * A `?view=` link (the account menu, a mail, an old bookmark) scrolls to
+     * its section and marks it for a moment, so the link still lands where it
+     * said it would. When that section is empty there is nothing to scroll
+     * to, so the page says so in one line at the top instead.
      */
-    const groups =
-        view === 'shared'
-            ? [
-                  {
-                      key: 'own',
-                      label: t('lists.others_own'),
-                      hint: t('wizard.kind_for_someone_body'),
-                      lists: lists.filter((l) => !l.sharedWithMe),
-                  },
-                  {
-                      key: 'gift-shared',
-                      label: t('lists.others_gift_shared'),
-                      hint: t('lists.others_shared_hint'),
-                      lists: lists.filter((l) => l.sharedWithMe && l.kind === 'for_someone'),
-                  },
-                  {
-                      key: 'wish-shared',
-                      label: t('lists.others_wish_shared'),
-                      hint: t('lists.others_shared_hint'),
-                      lists: lists.filter((l) => l.sharedWithMe && l.kind === 'mine'),
-                  },
-              ].filter((g) => g.lists.length > 0)
-            : [{ key: view, label: '', hint: '', lists }]
+    const asked = view !== null && (view === 'saved' ? savedCoves.length > 0 : filled.some((s) => s.key === view)) ? view : null
+    const [marked, setMarked] = useState<ListsView | null>(asked)
 
-    // Each view names itself and its own empty state. "You have no lists" and
-    // "nobody has shared a list with you" are different facts, and one sentence
-    // for three questions tells the reader nothing about which they asked.
-    const heading = {
-        mine: t('lists.title'),
-        shared: t('nav.shared_lists'),
-        group: t('nav.group_lists'),
-        saved: t('nav.saved_coves'),
-    }[view]
+    useEffect(() => {
+        if (asked === null) {
+            return
+        }
 
-    // "My lists" carries no subtitle: the groups below it are already labelled
-    // ("For me", "Shared with me"), so a sentence restating that was saying
-    // nothing the page did not show. The other two views are reached from the
-    // nav without that context and still explain themselves.
-    const subtitle = {
-        mine: null,
-        shared: t('lists.shared_subtitle'),
-        group: t('lists.group_subtitle'),
-        saved: t('saved_coves.subtitle'),
-    }[view]
+        document.getElementById(`section-${asked}`)?.scrollIntoView({ block: 'start' })
+        setMarked(asked)
+        const timer = window.setTimeout(() => setMarked(null), 2500)
+
+        return () => window.clearTimeout(timer)
+    }, [asked])
+
+    const missing =
+        isSignedIn && view !== null && asked === null
+            ? { mine: t('lists.empty'), shared: t('lists.shared_empty'), group: t('lists.group_empty'), saved: t('saved_coves.empty') }[view]
+            : null
+
+    const sectionClass = (key: ListsView) =>
+        `mt-10 scroll-mt-24 rounded-card transition-shadow duration-700 ${marked === key ? 'ring-2 ring-accent/40 ring-offset-8 ring-offset-cream' : ''}`
+
+    const heading = t('lists.title')
 
     return (
         <>
@@ -357,7 +345,6 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
             <header className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h1 className="text-xl sm:text-2xl font-semibold">{heading}</h1>
-                    {subtitle && <p className="mt-1 text-ink-soft">{subtitle}</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {/*
@@ -427,22 +414,21 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                 </div>
             )}
 
-            {view === 'saved' ? (
-                <SavedCoves coves={savedCoves} base={`/${market.key}`} />
-            ) : lists.length === 0 ? (
+            {/*
+              A link asked for a section that has nothing in it. One line, in
+              that section's own words: "nobody shared a list with you" is not
+              "you have no lists", and a menu entry that lands on a page
+              without the thing it named should say why.
+            */}
+            {missing !== null && (
+                <p role="status" className="mt-6 rounded-card border border-line bg-card px-4 py-3 text-sm text-ink-soft">
+                    {missing}
+                </p>
+            )}
+
+            {filled.length === 0 && savedCoves.length === 0 ? (
                 <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
-                    {/*
-                      Shared Lists says something different when it is empty,
-                      and the difference is not cosmetic: "You have no lists yet"
-                      is *wrong* here — you may have a dozen — and the button
-                      under it sends somebody off to build a fourteenth when what
-                      they came to do was find a list somebody sent them. The
-                      page already draws this distinction for its heading and its
-                      subtitle; the empty state was the one place it did not.
-                    */}
-                    {view === 'shared' ? (
-                        <p className="font-medium">{t('lists.shared_empty')}</p>
-                    ) : !isSignedIn ? (
+                    {!isSignedIn ? (
                         <>
                             {/*
                               Keeping anything needs an account now, so "find
@@ -473,34 +459,33 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
                     )}
                 </div>
             ) : (
-                groups.map((group) => (
-                    <section key={group.key} className="mt-8">
-                        {/* The heading only earns its place when both groups
-                            exist; with one group it is a label for the obvious. */}
-                        {groups.length > 1 && (
-                            /* The icon is a sibling of the heading, not inside
-                               it: the heading is uppercase and the tip's text
-                               would inherit that. */
-                            <div className="flex flex-wrap items-center gap-1">
-                                <h2 className="text-xs font-medium tracking-wide text-ink-soft uppercase">
-                                    {group.label}
-                                </h2>
-                                {/* `flex-wrap` above is what puts the opened note under
-                                    the heading rather than beside it: see InfoTip. */}
-                                <InfoTip>{group.hint}</InfoTip>
-                            </div>
-                        )}
-                        <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {group.lists.map((list) => (
-                                <li key={list.id}>
-                                    <ListCard list={list} />
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                ))
+                <>
+                    {filled.map((section) => (
+                        <section key={section.key} id={`section-${section.key}`} aria-labelledby={`heading-${section.key}`} className={sectionClass(section.key)}>
+                            <SectionHeading id={`heading-${section.key}`} label={section.label} count={section.lists.length} hint={section.hint} />
+                            <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {section.lists.map((list) => (
+                                    <li key={list.id}>
+                                        <ListCard list={list} />
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    ))}
+                    {savedCoves.length > 0 && (
+                        <section id="section-saved" aria-labelledby="heading-saved" className={sectionClass('saved')}>
+                            <SectionHeading
+                                id="heading-saved"
+                                label={t('lists.section_saved')}
+                                count={savedCoves.length}
+                                hint={t('saved_coves.subtitle')}
+                            />
+                            <SavedCoves coves={savedCoves} />
+                        </section>
+                    )}
+                </>
             )}
-        
+
 
             {/*
               Under the lists rather than over them.
@@ -520,25 +505,35 @@ export default function ListsIndex({ lists, view, recipients, friends, occasions
 }
 
 /**
- * The saved view: the Coves this person bookmarked, each with the way back to
- * it, "Make it my list" (a copy into a list of their own) and a way to let go.
+ * A section's heading: its name, how many are in it, and the explanation
+ * behind the info icon (the site standard since 2026-09-07). The count is
+ * what tells somebody at a glance that their four lists are all here.
  */
-function SavedCoves({ coves, base }: { coves: SavedCoveRow[]; base: string }) {
-    const { t } = useTranslations()
-
-    if (coves.length === 0) {
-        return (
-            <div className="mt-10 rounded-card border border-line bg-card p-8 text-center">
-                <p className="font-medium">{t('saved_coves.empty')}</p>
-                <Link href={`${base}/coves`} className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white">
-                    {t('home.cta_explore')}
-                </Link>
-            </div>
-        )
-    }
+function SectionHeading({ id, label, count, hint }: { id: string; label: string; count: number; hint: string }) {
+    const { n } = useTranslations()
 
     return (
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        /* `flex-wrap` is what puts the opened note under the heading rather
+           than beside it: see InfoTip. */
+        <div className="flex flex-wrap items-center gap-1">
+            <h2 id={id} className="text-lg font-semibold">
+                {label} <span className="font-normal text-ink-soft">({n(count)})</span>
+            </h2>
+            <InfoTip>{hint}</InfoTip>
+        </div>
+    )
+}
+
+/**
+ * The Saved section: the Coves this person bookmarked, each with the way back
+ * to it, "Make it my list" (a copy into a list of their own) and a way to let
+ * go. Only drawn when there is at least one.
+ */
+function SavedCoves({ coves }: { coves: SavedCoveRow[] }) {
+    const { t } = useTranslations()
+
+    return (
+        <ul className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {coves.map((cove) => (
                 <li key={cove.id} className="flex flex-col rounded-card border border-line bg-card">
                     <Link href={cove.url} className="group block p-4">

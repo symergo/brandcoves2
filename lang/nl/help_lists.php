@@ -26,12 +26,12 @@ return [
     'index' => [
         'title' => 'Hoe lijsten werken',
         'seo_title' => 'Hoe lijsten werken',
-        'seo_description' => 'Alles wat je met een lijst kunt: bewaren, delen, samen kopen, Geheime Vriend, vrienden en herinneringen. Stap voor stap, met beeld.',
+        'seo_description' => 'Alles wat je met een lijst kunt: bewaren, delen, samen geven, Geheime Vriend, vrienden en herinneringen. Stap voor stap, met beeld.',
         'intro' => 'Een [verlanglijst](lists) bewaart wat je hier [vindt](search), voor jezelf of voor iemand anders. Hieronder staat per onderwerp wat er kan en hoe je het doet, met beeld. Begin bij het eerste als je nog nooit iets bewaard hebt.',
         'back' => 'Alle onderwerpen',
         'next' => 'Volgende',
         'cta_search' => 'Zoek iets om te bewaren',
-        'cta_lists' => 'Naar mijn lijsten',
+        'cta_lists' => 'Naar Mijn Coves',
     ],
 
     'topics' => [
@@ -56,13 +56,13 @@ return [
                 ],
                 [
                     'title' => 'Open je lijsten',
-                    'body' => 'Alles wat je bewaarde staat onder [Mijn lijsten](lists). Je ziet per lijst wat erin zit, of het privé is en voor wie het bedoeld is. Zakt de prijs van iets, dan zie je dat op de kaart.',
+                    'body' => 'Alles wat je bewaarde staat onder [Mijn Coves](lists), op één pagina: Verlanglijsten, Voor anderen, Samen geven en Bewaard, elk met het aantal erbij. Je ziet per lijst wat erin zit, of het privé is en voor wie het bedoeld is. Zakt de prijs van iets, dan zie je dat op de kaart.',
                     'shot' => 'lists',
-                    'alt' => 'De pagina met mijn lijsten, met twee lijsten en de knop waarmee je er een maakt.',
+                    'alt' => 'De pagina Mijn Coves, met twee lijsten en de knop waarmee je er een maakt.',
                 ],
                 [
                     'title' => 'Een lijst maken in drie stappen',
-                    'body' => "1. Tik op “Nieuwe lijst” onder [Mijn lijsten](lists), of op “Maak een nieuwe lijst” op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Tik op “Volgende”.\n3. Geef de lijst een naam en een gelegenheid. Tik op “Volgende”.\n4. Kies “Privé (of deel later)” of “Delen via een link”, en tik op “Lijst maken”.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuwe lijst. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of groepscadeau](lists-help/kinds).",
+                    'body' => "1. Tik op “Nieuwe lijst” onder [Mijn Coves](lists), of op “Maak een nieuwe lijst” op de startpagina.\n2. Kies voor wie het is: “Voor mezelf”, “Voor iemand anders” of “Samen, voor iemand”. Tik op “Volgende”.\n3. Geef de lijst een naam en een gelegenheid. Tik op “Volgende”.\n4. Kies “Privé (of deel later)” of “Delen via een link”, en tik op “Lijst maken”.\n\nOf sla dit over: tik bij het bewaren op de bladwijzer en kies daar voor een nieuwe lijst. Wat je aan het bewaren was staat er meteen in.\n\nEén keuze ligt daarna vast: voor wie het is. Al het andere verander je later nog. Wat de drie soorten kunnen, staat bij [Verlanglijst, cadeaulijst of samen geven](lists-help/kinds).",
                     'shot' => 'wizard',
                     'alt' => 'De eerste stap van een nieuwe lijst, met de drie keuzes voor wie het is.',
                 ],
@@ -74,9 +74,9 @@ return [
         ],
 
         'kinds' => [
-            'title' => 'Verlanglijst, cadeaulijst of groepscadeau',
+            'title' => 'Verlanglijst, cadeaulijst of samen geven',
             'blurb' => 'De ene keuze die vastligt, en wat elk soort lijst kan.',
-            'seo_description' => 'Drie soorten lijsten: een verlanglijst voor jezelf, een cadeaulijst voor iemand anders, of een groepscadeau. Wat elk kan en wat vastligt.',
+            'seo_description' => 'Drie soorten lijsten: een verlanglijst voor jezelf, een cadeaulijst voor iemand anders, of een lijst om samen te geven. Wat elk kan en wat vastligt.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
@@ -95,7 +95,7 @@ return [
                     'body' => 'Ideeën voor iemand die de lijst zelf nooit opent. Wie je hem deelt, vinkt aan wat hij [koopt](lists-help/claiming), zodat niemand dubbel koopt. Jij ziet dat wel, want jij geeft mee.',
                 ],
                 [
-                    'title' => 'Samen, voor iemand: een groepscadeau',
+                    'title' => 'Samen, voor iemand: samen geven',
                     'body' => 'Eén cadeau, meerdere gevers. Iedereen met de link kan ideeën toevoegen, erop stemmen en zeggen wat hij bijdraagt. Er wordt hier geen geld verstuurd; dat regelen jullie onderling. Meer daarover bij [Samen een cadeau kopen](lists-help/group).',
                 ],
                 [
@@ -120,7 +120,7 @@ return [
                 ],
                 [
                     'title' => 'Toevoegen vanuit de lijst',
-                    'body' => "1. Open je lijst onder [Mijn lijsten](lists).\n2. Tik op “+ Product toevoegen”.\n3. Typ wat je zoekt en druk op Enter, of tik op het scan-icoon en richt je camera op de streepjescode.\n4. Tik op het product in de resultaten. Het staat meteen op je lijst.",
+                    'body' => "1. Open je lijst onder [Mijn Coves](lists).\n2. Tik op “+ Product toevoegen”.\n3. Typ wat je zoekt en druk op Enter, of tik op het scan-icoon en richt je camera op de streepjescode.\n4. Tik op het product in de resultaten. Het staat meteen op je lijst.",
                     'shot' => 'add',
                     'alt' => 'Het zoekvak bovenaan een lijst om een product toe te voegen, met daaronder de link om het er zelf op te zetten.',
                 ],
@@ -248,16 +248,16 @@ Iedereen speelt één keer.',
 
         'group' => [
             'title' => 'Samen een cadeau kopen',
-            'blurb' => 'Groepscadeau, stemmen, bijdragen, en overleggen met wie meedoet.',
+            'blurb' => 'Samen geven, stemmen, bijdragen, en overleggen met wie meedoet.',
             'seo_description' => 'Met meerdere mensen één cadeau kopen: ideeën verzamelen, stemmen, bijdragen afspreken en overleggen.',
             'intro' => null,
             'numbered' => false,
             'sections' => [
                 [
-                    'title' => 'Een groepscadeau',
-                    'body' => "1. Maak een [nieuwe lijst](lists-help/saving) en kies in de eerste stap “Samen, voor iemand”.\n2. Zeg voor wie het is en geef hem een naam.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één [groepscadeau](lists-help/kinds) van jullie samen. Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
+                    'title' => 'Samen geven',
+                    'body' => "1. Maak een [nieuwe lijst](lists-help/saving) en kies in de eerste stap “Samen, voor iemand”.\n2. Zeg voor wie het is en geef hem een naam.\n3. Deel de link met wie meedoet.\n\nIedereen met de link kan ideeën toevoegen en erop stemmen. Er valt niets te reserveren: het is één cadeau dat jullie [samen geven](lists-help/kinds). Lootjes trekken is iets anders; dat staat bij [Geheime Vriend](lists-help/santa).",
                     'shot' => 'group',
-                    'alt' => 'De pagina van een groepscadeau, met de ideeën om op te stemmen en het vak om bij te dragen.',
+                    'alt' => 'De pagina van een lijst om samen te geven, met de ideeën om op te stemmen en het vak om bij te dragen.',
                 ],
                 [
                     'title' => 'Stemmen',
