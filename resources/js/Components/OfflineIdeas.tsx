@@ -21,7 +21,7 @@ interface SaveResult {
 
 /**
  * Ideas nobody sells here: things other people typed onto their own lists by
- * hand (a workshop, a day out), shown under the Gift Finder's and This or
+ * hand (a workshop, a day out), shown under Find a gift's and This or
  * that's results once a person approved the wording.
  *
  * Only an id and the approved wording ever reach the page, never who wrote it

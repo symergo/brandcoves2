@@ -18,7 +18,7 @@ use App\Enums\Vibe;
  */
 final readonly class TasteProfile
 {
-    /** The Gift Finder's caps, so a saved profile never breaks its form. */
+    /** Find a gift's caps, so a saved profile never breaks its form. */
     public const MAX_INTERESTS = 8;
 
     public const MAX_AVOID = 10;

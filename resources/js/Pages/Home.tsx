@@ -126,7 +126,7 @@ export default function Home({ today, coves }: Props) {
                         body={t('home.entry_list_body')}
                         cta={t('home.entry_list_cta')}
                         // This card has already answered "for whom": a wish
-                        // list is for yourself, so the wizard skips that step.
+                        // list is for yourself, so the form opens with it chosen.
                         href={`${base}/lists?new=mine`}
                     />
                     <Entry

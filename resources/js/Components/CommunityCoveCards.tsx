@@ -15,7 +15,7 @@ export interface CommunityCoveCard {
 /**
  * Community Coves as a grid of cards: lists other people published
  * (docs/features/community-coves.md). Drawn by the Community Coves index and
- * by the Gift Finder's "Coves others made for someone like this".
+ * by Find a gift's "Coves others made for someone like this".
  */
 export default function CommunityCoveCards({ coves }: { coves: CommunityCoveCard[] }) {
     return (

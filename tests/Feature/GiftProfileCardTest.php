@@ -17,7 +17,7 @@ use Tests\TestCase;
 
 /**
  * "My gift profile": made after This or that about yourself, opened as the
- * Gift Finder filled in. See docs/features/gift-profile-card.md.
+ * Find a gift filled in. See docs/features/gift-profile-card.md.
  */
 class GiftProfileCardTest extends TestCase
 {

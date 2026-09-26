@@ -221,7 +221,7 @@ class Wishlist extends Model
      *
      * An act rather than a setting: created by picking somebody in "Share with
      * friends". Not a permission — see the migration — and not the only way a
-     * list reaches a friends page; opening its link is the other.
+     * list reaches a friend's My people page; opening its link is the other.
      *
      * @return HasMany<WishlistShare, $this>
      */

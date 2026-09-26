@@ -45,7 +45,7 @@ use Illuminate\Support\Facades\Mail;
  *
  * The share row is written first and the mail is attempted after, one at a
  * time. A bounced address must not cost the other four their share — and the
- * share is the part that lasts, while the mail is a nudge that the friends page
+ * share is the part that lasts, while the mail is a nudge that the My people page
  * makes redundant the moment they next open it.
  */
 class ListSharer
@@ -116,7 +116,7 @@ class ListSharer
         return $new->count();
     }
 
-    /** Take the list off somebody's friends page. Their link, if they have one, still works. */
+    /** Take the list off somebody's My people page. Their link, if they have one, still works. */
     public function unshare(Wishlist $list, int $friendId): void
     {
         WishlistShare::query()
@@ -175,7 +175,7 @@ class ListSharer
              *
              * A bad address, a full queue or a misconfigured mailer must not
              * undo a decision the owner has already made and been told about —
-             * and the friends page shows the list the moment they next open it,
+             * and My people shows the list the moment they next open it,
              * which is what makes the email a convenience rather than the
              * mechanism.
              */

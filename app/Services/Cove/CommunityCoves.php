@@ -27,7 +27,7 @@ use Illuminate\Support\Str;
  *
  * This class is the one place that decides what a stranger may see of a list.
  * Everything that renders a Community Cove (its page, the listing, the band on
- * /coves, the Gift Finder's suggestions, the saved view) reads it from here, so
+ * /coves, Find a gift's suggestions, the saved view) reads it from here, so
  * there is one answer to "does this leak?" rather than five.
  *
  * What a stranger sees: the title the owner wrote for the public, the products,
@@ -309,7 +309,7 @@ class CommunityCoves
 
     /**
      * A card for a listing: the band on /coves, the Community Coves index, the
-     * Gift Finder and the saved view all draw this.
+     * Find a gift and the saved view all draw this.
      *
      * @return array<string, mixed>
      */
@@ -368,7 +368,7 @@ class CommunityCoves
 
     /**
      * "Coves others made for someone like this": the Community Coves nearest a
-     * Gift Finder brief.
+     * Find a gift brief.
      *
      * A Cove qualifies when it is for the same kind of person or holds products
      * tagged with one of the brief's interests (by editors or by people's

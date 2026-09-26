@@ -32,9 +32,10 @@ return [
         'choose_market' => 'Choose your market',
 
         /*
-         * The flags on the switcher. Europe is not a country and is not
-         * pretending to be one — it is where the English market lives, because
-         * that market exists for a language rather than for a place.
+         * The countries in the country-and-language button's list. Europe is
+         * not a country and is not pretending to be one — it is where the
+         * English market lives, because that market exists for a language
+         * rather than for a place.
          */
         'countries' => [
             'be' => 'Belgium',
@@ -81,8 +82,8 @@ return [
         /*
          * One line under each entry in the Discover menu.
          *
-         * Five Cove entries whose names differ by one word — Daily, Surprise,
-         * Theme, Gift, All — cannot be told apart by their labels alone the
+         * Cove entries whose names differ by one word (Daily, Surprise, Gift
+         * ideas, Community) cannot be told apart by their labels alone the
          * first time somebody opens the menu. Deliberately short: this is a
          * dropdown, not the hub page, and the hub is one click away for the
          * argument.

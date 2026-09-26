@@ -496,7 +496,7 @@ class SendOccasionReminders implements ShouldQueue
      * Three ideas for this person, or none.
      *
      * None when the email will not go (there is nowhere to show them; the
-     * inbox links to the Gift Finder, which has them live), or when this
+     * inbox links to Find a gift, which has them live), or when this
      * person's ideas already went for this occasion this year.
      *
      * @param  array{recipient: Recipient, occasion: string|null, key: string}  $ideasFor

@@ -26,7 +26,7 @@ use Tests\TestCase;
 /**
  * Gift history per person (docs/features/gift-history.md): what a giver noted
  * and their own claims, never anybody else's; never suggested again in the
- * Gift Finder or This or that; and the next step after it.
+ * Find a gift or This or that; and the next step after it.
  */
 class GiftHistoryTest extends TestCase
 {
@@ -337,7 +337,7 @@ class GiftHistoryTest extends TestCase
         $this->assertArrayNotHasKey($sixCup->id, $steps->all(), 'Another moka pot is the same gift again.');
         $this->assertArrayNotHasKey($moka->id, $steps->all());
 
-        // And the Gift Finder shows the same row when she is chosen.
+        // And Find a gift shows the same row when she is chosen.
         $finder = $this->actingAs($this->giver)->post('/be-nl/gift', ['recipient_id' => $this->mum->id])
             ->assertOk()->viewData('page')['props'];
         $this->assertContains($beans->id, array_column($finder['nextSteps'], 'id'));

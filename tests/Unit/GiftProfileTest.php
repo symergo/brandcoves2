@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * What a gift profile card stores, how it becomes the Gift Finder's answers,
+ * What a gift profile card stores, how it becomes Find a gift's answers,
  * and the line of words it shows. See docs/features/gift-profile-card.md.
  *
  * Laravel's TestCase only for the translator the summary uses; nothing here

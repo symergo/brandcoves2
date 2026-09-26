@@ -317,7 +317,7 @@ class CommunityCoveTest extends TestCase
         // The owner is not shown their own Cove.
         $this->assertSame([], $coves->forBrief(new TasteBrief(market: Market::BeNl, relationship: 'father'), $this->owner));
 
-        // And the Gift Finder's results page carries them.
+        // And Find a gift's results page carries them.
         $this->post('/be-nl/gift', ['relationship' => 'father', 'interests' => ['gaming']])
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page->has('communityCoves', 1));

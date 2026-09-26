@@ -529,11 +529,11 @@ class WishlistController extends Controller
         /*
          * Their birthday travels with them into the profile.
          *
-         * The Friends page already holds one -- published by them, or noted by
+         * My people already holds one -- published by them, or noted by
          * me -- and without this the profile made from that friend arrives
          * blank, so the reminders miss the date and the wizard cannot fill in
          * "Birthday" for a person whose birthday is on the previous screen.
-         * Theirs wins over my note, the same order the Friends page reads them.
+         * Theirs wins over my note, the same order My people reads them.
          */
         $birthday = $friend->friends_see_birthday && $friend->birthday !== null
             ? DayAndMonth::fromDate($friend->birthday)

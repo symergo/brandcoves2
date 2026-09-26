@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
  *
  * "Fit the interest" is the engine's own verdict (`Suggestion::
  * matchedInterests`), not "the engine returned something": with nothing
- * matching, the engine falls back to a budget browse so the Gift Finder is
+ * matching, the engine falls back to a budget browse so Find a gift is
  * never empty, and a page of that would be "gifts for dad who loves fishing"
  * showing a candle.
  *

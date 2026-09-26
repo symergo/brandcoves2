@@ -36,7 +36,7 @@ interface Props {
  * The board.
  *
  * Every other way into this site assumes you can already describe what you
- * want: search needs a noun, the Gift Finder needs six answers about a person,
+ * want: search needs a noun, Find a gift needs six answers about a person,
  * a Cove is a theme somebody else picked. "She's turning forty and has
  * everything" is not a query — it is a question for a person, and this is the
  * only surface that takes one.
@@ -52,7 +52,7 @@ interface Props {
  * under €40* attached, and most people will tick that if the ticking is free;
  * almost nobody will fill in a nine-field form to ask a question.
  *
- * The vocabulary is the Gift Finder's own, so a question and a brief describe a
+ * The vocabulary is Find a gift's own, so a question and a brief describe a
  * person the same way and an answerer can search from one without translating.
  *
  * ## Your held questions are shown to you

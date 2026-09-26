@@ -491,7 +491,7 @@ return [
         // person still reads and rewrites every idea before it is shown.
         'min_owners' => (int) env('GIFT_MIN_OWNERS', 5),
 
-        // Ideas shown under the Gift Finder's and This or that's results. A
+        // Ideas shown under Find a gift's and This or that's results. A
         // few: they are a side note to the products, not a second board.
         'shown' => 3,
     ],

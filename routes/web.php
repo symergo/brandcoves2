@@ -909,7 +909,7 @@ Route::prefix('{market}')->group(function () {
 
     /*
      * "My gift profile": a card made after choosing for yourself, whose link
-     * opens the Gift Finder filled in. Making one writes a row, so it is
+     * opens Find a gift filled in. Making one writes a row, so it is
      * throttled like a save. See docs/features/gift-profile-card.md.
      */
     Route::post('/gift/card', [GiftProfileCardController::class, 'store'])

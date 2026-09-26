@@ -68,7 +68,7 @@ interface Props {
 /**
  * The discovery landing page, rebuilt 2026-09-26 after a review with the owner.
  *
- * The earlier page tried to be everything: a search card and the Gift Finder
+ * The earlier page tried to be everything: a search card and Find a gift
  * first (both already in the header, and both for somebody who already knows
  * what they want), then five explainer tiles that repeated the sections below
  * them word for word, then eight bands, nine phone screens long. A page called

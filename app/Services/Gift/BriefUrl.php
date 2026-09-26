@@ -23,7 +23,7 @@ use App\Enums\RecipientType;
  * every path this can produce is one a page can answer. The budget is a query
  * parameter (`?budget=50-100`, in euros): it narrows the same page rather than
  * making a new one, and the page's canonical drops it. Everything else in a
- * brief (vibe, age, things to avoid) is the Gift Finder's job, not an address.
+ * brief (vibe, age, things to avoid) is Find a gift's job, not an address.
  *
  * ## Why `/gift-ideas/for/` in every market
  *

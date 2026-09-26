@@ -12,7 +12,7 @@ use App\Models\Recipient;
 /**
  * Three ideas for somebody's birthday, to put in the reminder email.
  *
- * Matched to the person the way the Gift Finder would match them (their
+ * Matched to the person the way Find a gift would match them (their
  * saved taste, their budget, the occasion), with everything they were already
  * given left out. The first idea is the best "next step" after a past gift
  * when there is one, because "last year the moka pot, now the grinder" is the
@@ -48,7 +48,7 @@ final class ReminderIdeas
         $stored = TasteBrief::fromRecipient($recipient, $market, $count);
 
         /*
-         * The brief the Gift Finder would build from the saved person, with
+         * The brief Find a gift would build from the saved person, with
          * the occasion this reminder is about. Written out rather than
          * derived with a helper so TasteBrief, which other work shares, is
          * not changed for one caller.

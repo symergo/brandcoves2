@@ -7,7 +7,7 @@ export interface SwitcherLanguage {
     market: string
 }
 
-/** One flag on the switcher: a country, and everything it can be read in. */
+/** One country in the market list: a country, and everything it can be read in. */
 export interface SwitcherCountry {
     country: string
     name: string
