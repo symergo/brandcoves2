@@ -114,6 +114,9 @@ return Application::configure(basePath: dirname(__DIR__))
             // all it can do is turn emails off.
             '*/reminders/stop/*',
 
+            // The same for "stop emails about my people's questions".
+            '*/ask/people-emails/stop/*',
+
             // eBay's account-deletion webhook. A server-to-server POST from
             // outside, so there is no session and no token to carry — and
             // rejecting it would mark the application non compliant in eBay's

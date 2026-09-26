@@ -27,8 +27,11 @@ Five explainer tiles then repeated the sections below them word for word. The re
    fails to load, the band stands as words and a button.
 5. **Surprise** (4), **gift ideas per person** (6 personas, plus the gift landing pages per person
    as a row of words, [gift-landing-pages.md](gift-landing-pages.md)), **Shop Smarter** (6, was 12).
-6. **Ask others** and **earlier editions**, each only with three or more: one lonely question or
-   one earlier edition under its own heading read as an empty shelf.
+6. **Ask others**, always: since 2026-09-26 a short invitation with a button (`/ask?new=1`, which
+   opens the form), even with no questions, because the invitation is not an empty shelf. The
+   questions themselves still appear under it only with three or more ([ask-others.md](ask-others.md)).
+   **Earlier editions** only with three or more: one earlier edition under its own heading read as
+   an empty shelf.
 
 Result on local data: 2,245 px on a desktop (was 3,603), about 4,200 px on a phone (was 7,800).
 

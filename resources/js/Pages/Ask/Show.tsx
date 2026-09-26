@@ -1,7 +1,7 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react'
 import { useState } from 'react'
 import SaveToList from '../../Components/SaveToList'
-import type { SharedProps } from '../../types'
+import type { SavingTo, SharedProps } from '../../types'
 import { formatPrice } from '../../types'
 import { useTranslations } from '../../useTranslations'
 import SignInLink from '../../Components/SignInLink'
@@ -49,6 +49,8 @@ interface Props {
     /** null before a search is run; `[]` once one found nothing. */
     results: { id: number; title: string; image: string | null; price: number | null }[] | null
     searchTerm: string
+    /** The list the question was asked from; the asker's alone. Saves land there first. */
+    into?: SavingTo | null
 }
 
 /**
@@ -69,7 +71,7 @@ interface Props {
  * done nothing. The server decides who sees what — `isVisibleTo` on the model —
  * and this page renders what it is given.
  */
-export default function AskShow({ question, answers, canAnswer, maxPicks, results, searchTerm }: Props) {
+export default function AskShow({ question, answers, canAnswer, maxPicks, results, searchTerm, into = null }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t, n } = useTranslations()
     const base = `/${market.key}`
@@ -141,6 +143,19 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                     )}
                 </p>
 
+                {/*
+                  To the asker alone, when they asked from a list: an idea in
+                  an answer is saved straight onto it, and they can go back.
+                */}
+                {into && (
+                    <p className="mt-3 text-sm text-ink-soft">
+                        {t('ask.save_into', { list: into.title })}{' '}
+                        <Link href={`${base}/lists/${into.id}`} className="font-medium text-accent-dark underline hover:text-ink">
+                            {t('ask.back_to_list')}
+                        </Link>
+                    </p>
+                )}
+
                 {question.status !== 'published' && (
                     <p className="mt-4 rounded-card border border-amber/40 bg-amber/10 p-4 text-sm">
                         {question.status === 'rejected' ? t('ask.rejected_notice') : t('ask.pending_notice')}
@@ -181,7 +196,7 @@ export default function AskShow({ question, answers, canAnswer, maxPicks, result
                                                   anchor, which owns the click.
                                                 */}
                                                 <div className="absolute top-2 right-2 z-10">
-                                                    <SaveToList groupId={pick.id} compact />
+                                                    <SaveToList groupId={pick.id} compact into={into ?? undefined} />
                                                 </div>
                                                 <Link
                                                     href={pick.url}

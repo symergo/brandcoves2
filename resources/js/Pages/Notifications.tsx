@@ -38,9 +38,16 @@ interface Props {
     watching: Watched[]
     /** Reminder emails on; off keeps reminders in this inbox only. */
     reminderEmails?: boolean
+    /** Ask others and your people. All on unless turned off. */
+    askPeople?: { ask: boolean; receive: boolean; email: boolean }
 }
 
-export default function Notifications({ notifications, watching, reminderEmails = true }: Props) {
+export default function Notifications({
+    notifications,
+    watching,
+    reminderEmails = true,
+    askPeople = { ask: true, receive: true, email: true },
+}: Props) {
     const { market, unreadCount } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -58,6 +65,10 @@ export default function Notifications({ notifications, watching, reminderEmails 
             )
         }
     }, [unreadCount, market.key])
+
+    function askSetting(setting: 'ask' | 'receive' | 'email', on: boolean) {
+        router.post(`/${market.key}/notifications/ask-people`, { setting, on }, { preserveScroll: true })
+    }
 
     /**
      * The second line under a notification's title, or null when it has none.
@@ -124,6 +135,42 @@ export default function Notifications({ notifications, watching, reminderEmails 
                 <InfoTip>{t('reminders.email_toggle_hint')}</InfoTip>
             </label>
 
+            {/*
+              Ask others and your people: whether my questions go to my
+              people, and whether theirs come to me (in this inbox, and by
+              email). Beside the reminder switch, because it is the same kind
+              of choice: what may reach me, and what I send.
+            */}
+            <label className="mt-2 flex items-center gap-2 text-sm">
+                <input
+                    type="checkbox"
+                    checked={askPeople.ask}
+                    onChange={(e) => askSetting('ask', e.target.checked)}
+                />
+                <span>{t('ask.people.setting_ask')}</span>
+                <InfoTip>{t('ask.people.setting_ask_hint')}</InfoTip>
+            </label>
+            <label className="mt-2 flex items-center gap-2 text-sm">
+                <input
+                    type="checkbox"
+                    checked={askPeople.receive}
+                    onChange={(e) => askSetting('receive', e.target.checked)}
+                />
+                <span>{t('ask.people.setting_receive')}</span>
+                <InfoTip>{t('ask.people.setting_receive_hint')}</InfoTip>
+            </label>
+            {/* By email only means something while their questions reach you at all. */}
+            {askPeople.receive && (
+                <label className="ml-6 mt-2 flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        checked={askPeople.email}
+                        onChange={(e) => askSetting('email', e.target.checked)}
+                    />
+                    <span>{t('ask.people.setting_email')}</span>
+                </label>
+            )}
+
             <section className="mt-8">
                 <h2 className="text-sm font-medium text-ink-soft">{t('notifications.recent')}</h2>
 
@@ -154,6 +201,8 @@ export default function Notifications({ notifications, watching, reminderEmails 
                                           ? '🔎'
                                         : notice.kind.startsWith('occasion.')
                                           ? '🎁'
+                                        : notice.kind.startsWith('ask.')
+                                          ? '💬'
                                           : /*
                                               List activity: somebody shared,
                                               suggested, added, wrote or chipped

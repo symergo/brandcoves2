@@ -11,10 +11,13 @@ use App\Jobs\TriageCommunityPost;
 use App\Models\CommunityAnswer;
 use App\Models\CommunityQuestion;
 use App\Models\ProductGroup;
+use App\Models\Wishlist;
+use App\Services\Community\AskPrefill;
 use App\Services\Search\SearchQuery;
 use App\Services\Search\SearchService;
 use App\Services\Seo\PageMeta;
 use App\Support\CurrentMarket;
+use App\Support\Owner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -97,6 +100,23 @@ class AskController extends Controller
             // The same vocabulary Find a gift offers, so a question and a
             // brief describe a person the same way.
             'options' => $this->options(),
+
+            /*
+             * The form filled in from Find a gift or a list page, which carry
+             * only who it is about (`?relationship=`, `?person=`, `?list=`).
+             * Null when nothing is known. Never a name or a note: see
+             * AskPrefill. The form opens on it, and nothing is posted until
+             * the asker presses Ask.
+             */
+            'prefill' => app(AskPrefill::class)->build($request, $current),
+
+            // "Ask your question" from an invitation elsewhere (Discover):
+            // open the form straight away rather than make them find it.
+            'open' => $request->boolean('new'),
+
+            // Whether a published question reaches this asker's people, so
+            // the form can say so (and where to change it).
+            'sendsToPeople' => $user !== null && $user->ask_people_off_at === null,
         ]);
     }
 
@@ -161,7 +181,17 @@ class AskController extends Controller
             'values.*' => ['string', 'in:sustainable,local,handmade'],
             'age_band' => ['nullable', 'string', 'max:20'],
             'occasion' => ['nullable', 'string', 'max:40'],
+            // The list it was asked from; checked against the owner below.
+            'list_id' => ['nullable', 'string'],
         ]);
+
+        /*
+         * Kept only when it is the asker's own gift or group list. The id
+         * arrives from the client, so it is looked up again rather than
+         * trusted; anything else is dropped without a word; the question
+         * itself is still asked.
+         */
+        $list = app(AskPrefill::class)->list($request, Owner::fromRequest($request));
 
         $question = CommunityQuestion::create([
             'market' => $current->get(),
@@ -180,6 +210,7 @@ class AskController extends Controller
             'values' => filled($validated['values'] ?? null) ? array_values($validated['values']) : null,
             'age_band' => $validated['age_band'] ?? null,
             'occasion' => $validated['occasion'] ?? null,
+            'wishlist_id' => $list?->id,
 
             // Stated rather than inherited from the column default: `create()`
             // hands back the instance it built, and a value only Postgres knows
@@ -265,6 +296,15 @@ class AskController extends Controller
                     'url' => $current->url("p/{$g->id}/{$g->slug}"),
                 ])->all(),
             ])->all(),
+
+            /*
+             * The list the asker asked from, for the asker alone: every pick in
+             * an answer gets "save to <list>" as its first choice, so an idea
+             * from somebody else is one press from the list it was asked for.
+             * Null for everybody else, and when the list was deleted or is no
+             * longer theirs.
+             */
+            'into' => $this->askersList($found, $request),
 
             'canAnswer' => $viewer !== null && $found->status->isPublished(),
             'maxPicks' => self::MAX_PICKS,
@@ -361,6 +401,24 @@ class AskController extends Controller
             'image' => $g->image_url,
             'price' => $g->min_price,
         ], array_slice($results, 0, 8));
+    }
+
+    /** @return array{id: string, title: string}|null */
+    private function askersList(CommunityQuestion $question, Request $request): ?array
+    {
+        $viewer = $request->user();
+
+        if ($viewer === null || $question->user_id !== $viewer->id || $question->wishlist_id === null) {
+            return null;
+        }
+
+        $list = Wishlist::query()->find($question->wishlist_id);
+
+        if ($list === null || ! $list->isOwnedBy(Owner::fromRequest($request))) {
+            return null;
+        }
+
+        return ['id' => $list->id, 'title' => $list->displayTitle()];
     }
 
     /** @return array<string, mixed> */

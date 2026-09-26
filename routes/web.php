@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Market;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\AskController;
+use App\Http\Controllers\AskPeopleSettingsController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MagicLinkController;
 use App\Http\Controllers\BrandController;
@@ -843,6 +844,9 @@ Route::prefix('{market}')->group(function () {
         // Reminder emails on or off; see ReminderEmailController.
         Route::post('/notifications/reminder-emails', [ReminderEmailController::class, 'update'])
             ->name('reminders.email');
+        // Ask others and your people: send mine, show me theirs, by email.
+        Route::post('/notifications/ask-people', [AskPeopleSettingsController::class, 'update'])
+            ->name('ask.people.settings');
     });
 
     /*
@@ -1127,6 +1131,16 @@ Route::prefix('{market}')->group(function () {
         ->whereNumber('user')
         ->middleware(['signed', 'throttle:30,1'])
         ->name('reminders.stop');
+
+    /*
+     * "Stop these emails", from the link in every email about a friend's
+     * question. Signed, like the reminders' link; it turns the email off and
+     * leaves the inbox row. See AskPeopleSettingsController.
+     */
+    Route::match(['get', 'post'], '/ask/people-emails/stop/{user}', [AskPeopleSettingsController::class, 'stopEmails'])
+        ->whereNumber('user')
+        ->middleware(['signed', 'throttle:30,1'])
+        ->name('ask.people-emails.stop');
 
     Route::post('/picks/{pick}/react', PickReactionController::class)
         ->whereNumber('pick')

@@ -71,6 +71,7 @@ export default function Help({ guides, path }: Props) {
                         { icon: 'barcode', text: t('help.find_scan') },
                         { icon: 'info', text: t('help.find_country') },
                         { icon: 'whisperer', text: t('help.find_gift') },
+                        { icon: 'suggestions', text: t('help.find_ask') },
                         { icon: 'people', text: t('people.help') },
                         { icon: 'people', text: t('help.find_history') },
                         { icon: 'alerts', text: t('help.find_reminders') },

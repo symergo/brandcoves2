@@ -36,6 +36,15 @@ after a past gift on one. The owner approved item 6 of the proposal: one entry a
    - **Start from a type**: the persona Coves, four of them, the ones written for this kind of
      person first. When a market has no persona yet the column is left out and the other two share
      the width (owner's rule: nothing for a column means no column).
+   - **Ask others** (added 2026-09-26, owner's request): the ask form at `/ask`, already filled in.
+     The link carries only who it is for (`?from=gift&person=<id>` or `&relationship=mother`), the
+     same rule as This or that's link; the server fills the title ("Cadeau-ideeën voor mijn
+     mama?"), interests, taste, what matters, age group and budget from the saved person, never
+     their name or notes. What was said in this tab and is not on the person (a typed budget,
+     ticked interests) travels through `sessionStorage` (`resources/js/askBrief.ts`), never the
+     address. The asker checks it and presses Ask; moderation is unchanged. Details:
+     [ask-others.md](ask-others.md), "Filled in".
+   Four cards side by side on a wide screen (three without personas), two by two on a tablet.
 3. **One results page** (below).
 
 A gift profile card (`/gift/card/{token}`) opens straight on the questions, filled in from the card,
@@ -54,7 +63,8 @@ draws it. Top to bottom:
 4. Ideas without a shop.
 5. The next step after what a saved person was given, and the way to their page.
 6. Coves others made for someone like this.
-7. Last line: *Nothing that fits? Ask other people* (`/ask`).
+7. Last line: *Nothing that fits? Ask other people* (`/ask`). From Find a gift itself it opens the
+   form filled in, like the fourth way; from a landing page it is the plain board.
 
 Every way in gets every section. The questions' board already had most of them; This or that's
 result now has *Open as a page*, the Coves others made, the next steps and the saved person's list,

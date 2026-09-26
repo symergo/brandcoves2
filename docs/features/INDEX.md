@@ -57,7 +57,7 @@ is true now.
 | [product-description.md](product-description.md) | Catalogue / Frontend | Active |
 | [amazon-link-paste.md](amazon-link-paste.md) | Search | Active — ASIN redirect works for ASINs imported with a barcode (page import) |
 | [amazon-search-cta.md](amazon-search-cta.md) | Search / Affiliate | Active on search, brand and product; `nl-nl` + both `be-*`, no tag for `en`/`es` |
-| [find-a-gift.md](find-a-gift.md) | Gifting | Active — `/gift` as one flow: who first, then three ways (questions, This or that, a type), all ending on one results page (`GiftResults`) that the landing pages draw too |
+| [find-a-gift.md](find-a-gift.md) | Gifting | Active — `/gift` as one flow: who first, then four ways (questions, This or that, a type, Ask others), the first three ending on one results page (`GiftResults`) that the landing pages draw too |
 | [gift-whisperer.md](gift-whisperer.md) | Gifting | Active — the engine behind Find a gift; its questions are the first way in since 2026-09-26 |
 | [taste-discovery.md](taste-discovery.md) | Gifting | Active — This or that: a dozen choices between products become a taste, a budget and ideas; can be kept on a person |
 | [taste-together.md](taste-together.md) | Gifting / Lists | Active — This or that played by several people about one person through a link; the giver sees a count and the combined result and can add it to the person |
@@ -75,7 +75,7 @@ is true now.
 | [copying-items.md](copying-items.md) | Wishlist / Gifting | Active — copy only, never move |
 | [serendipity.md](serendipity.md) | Discovery | Active |
 | [recently-viewed.md](recently-viewed.md) | Discovery / Frontend | Active |
-| [ask-others.md](ask-others.md) | Discovery / Community | Active |
+| [ask-others.md](ask-others.md) | Discovery / Community | Active. Since 2026-09-26 filled in from Find a gift and gift lists, always invited to on Discover, and sent to your people once published (two switches, one a day) |
 | [discovery-modes.md](discovery-modes.md) | Core / Discovery | Removed 2026-09-07 |
 | [daily-cove.md](daily-cove.md) | Discovery / Content | Active |
 | [all-coves.md](all-coves.md) | Discovery / Content | Active |

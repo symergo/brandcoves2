@@ -131,6 +131,94 @@ The hub also lists the six most recent questions. An unanswered one is the most 
 the feature has: somebody who happens to know the answer recognises it on sight, which is a far
 better reason to click than a card explaining what a question board is.
 
+### Easier to reach (2026-09-26)
+
+The owner found it too hard to find: only the last line of Find a gift's results, a band on
+Discover that appeared only with three questions, and a few search states. Now also:
+
+- **Find a gift, the fourth way.** After "Voor wie?", beside the questions, This or that and a type:
+  a card *Vraag het aan anderen* that opens the form filled in (below). See
+  [find-a-gift.md](find-a-gift.md).
+- **Discover, always.** A short invitation with a *Stel een vraag* button (`/ask?new=1`, which
+  opens the form at once), even with no questions. The list of questions still appears under it
+  only with three or more.
+- **The list page.** On your own gift list or group list, *Vraag het aan anderen* sits next to the
+  add control (`/ask?list=<id>`), visible rather than in the More menu, because the owner asked
+  for it "where you build your list". Not on a wish list of your own: that list is about you, and
+  "what should people buy me" is not a question for strangers.
+
+### Filled in, never with a name
+
+`App\Services\Community\AskPrefill`. The three ways in carry only who it is about: `?relationship=`
+(a vocabulary value), `?person=` (a saved person's id) or `?list=` (a list's id). The rest is
+looked up on the server, for the owner only; somebody else's person or list fills nothing.
+
+- **Title**: "Cadeau-ideeën voor mijn mama?" (`ask.prefill_title` + `ask.prefill_who.<kind>`,
+  written per language because French and Spanish need the right possessive). Only when the
+  relationship reads as the closed vocabulary: a relationship typed by hand ("Tante Mieke") is left
+  out, because free text about a person can hold their name.
+- **The optional half**: interests (the fixed list only; a typed word has no chip), taste, what
+  matters, age group as its label ("50-64 jaar"), budget in euros; from a list also the occasion
+  and date ("Verjaardag, 12 oktober").
+- **Never** the name, the notes, the birthday or what they were given.
+- From Find a gift, what was said in the tab but is not on a saved person (a typed budget, ticked
+  interests) comes through `sessionStorage` (`resources/js/askBrief.ts`), read once and only when
+  the address says `from=gift`. Find a gift never puts answers in an address.
+
+The form opens unfolded when something was filled, so the asker sees what will be posted and can
+change or clear it. Nothing is posted until they press Ask, and moderation is the same as for a
+question typed from scratch.
+
+### Answers onto the list
+
+A question asked from a list keeps `community_questions.wishlist_id` (checked again on the way in:
+only your own gift or group list; anything else is dropped without a word). On the question page
+**the asker alone** gets `into` = that list, so every product in an answer saves straight onto it
+("save to Verjaardag mama"), with a line saying so and a link back. Nobody else ever learns which
+list it was; the question does not name it. `ON DELETE SET NULL`: deleting the list never deletes a
+public question.
+
+## Sent to your people (2026-09-26)
+
+`App\Services\Community\QuestionToPeople`, run by the queued `SendQuestionToPeople`, which
+`CommunityQuestion::publish()` queues after the commit. `publish()` is called by the triage job and
+by the admin's Publish button, so every way onto the board sends it and nothing short of the board
+does. **Held and refused questions are never sent**: sending one to twenty people would be
+publishing it by another route.
+
+- **Who**: every account linked to the asker by a friendship (My people with an account). Not a
+  saved person without an account, not somebody who only opened a link, never the asker.
+- **What**: an inbox row, kind `ask.people_question`, "Bram vraagt: “…”" in the receiver's
+  language (their chosen market, else the question's), linking to the question. And an email
+  (`PeopleQuestionMail`) to receivers who have not turned the email off. Only the asker's name and
+  the question's title, both public on the board. Nothing from any list.
+- **Once**: `community_questions.people_notified_at` is claimed by an update that only succeeds
+  while it is null, so two workers or a question refused and published again still send once.
+- **One a day**: at most one per asker per receiver in a rolling 24 hours, read from the inbox's
+  `payload->asker_id`. The second question of an evening is on the board for anybody who follows
+  the first.
+
+### The switches, all on by default
+
+Three nullable timestamps on `users`, null is on, so every account has the owner's default with no
+backfill. On the notifications page, beside the reminder email switch, explanations behind (i):
+
+| switch | column | side |
+|---|---|---|
+| Stuur mijn vragen naar mijn mensen | `ask_people_off_at` | asker |
+| Toon me de vragen van mijn mensen | `people_questions_off_at` | receiver: inbox and email |
+| Ook per e-mail | `people_question_emails_off_at` | receiver: email only |
+
+The email's unsubscribe link (signed, GET and RFC 8058 POST, CSRF-exempt like the reminders' one)
+sets only the email column: the question still reaches the inbox, as the reminder emails' stop
+link does. `AskPeopleSettingsController`.
+
+**Decided without the owner**: the brief asked for one receiver setting and "email only for
+receivers who get email notifications". There is no general email-notifications switch on this
+site (the only one is the reminder emails'), so the email got a switch of its own under the
+receiver's, which is also what the unsubscribe link needs to turn off. The form says "Gaat ook naar
+je mensen" with (i) while the asker's switch is on.
+
 ## Schema notes
 
 - **`status` is a string with a CHECK**, per the enum-ish convention: altering a native PG enum
@@ -182,6 +270,11 @@ with a stale slug redirecting rather than 404ing, so retitling never strands a s
 - `app/Http/Controllers/AskController.php`
 - `app/Filament/Resources/CommunityPosts/` — the two queues, defaulting to pending
 - `database/migrations/2026_08_16_000200_create_the_community_ask_tables.php`
+- `app/Services/Community/AskPrefill.php`, `QuestionToPeople.php`, `app/Jobs/SendQuestionToPeople.php`,
+  `app/Mail/PeopleQuestionMail.php`, `resources/views/mail/people-question.blade.php`,
+  `app/Http/Controllers/AskPeopleSettingsController.php`, `resources/js/askBrief.ts`
+- `database/migrations/2026_09_28_000300_ask_others_reaches_your_people.php`
+- `tests/Feature/AskOthersReachTest.php`
 - `resources/js/Pages/Ask/Index.tsx`, `Show.tsx`
 - `resources/js/Components/CoveIcon.tsx` — the `ask` mark
 - `lang/*/site.php` — `ask.*`

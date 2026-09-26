@@ -104,7 +104,8 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
             ? [{ id: 'gift-ideas', label: t('gift_ideas.title'), icon: <CoveIcon name="persona" className="h-4 w-4" /> }]
             : []),
         ...(coves.length > 0 ? [{ id: 'guides', label: t('nav.smart'), icon: <CoveIcon name="idea" className="h-4 w-4" /> }] : []),
-        ...(questions.length > 0 ? [{ id: 'ask', label: t('ask.title'), icon: <CoveIcon name="ask" className="h-4 w-4" /> }] : []),
+        // Always: the invitation to ask is there even before anybody has.
+        { id: 'ask', label: t('ask.title'), icon: <CoveIcon name="ask" className="h-4 w-4" /> },
     ]
 
     return (
@@ -286,9 +287,31 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
                 </Band>
             )}
 
-            {questions.length > 0 && (
-                <Band id="ask" title={t('ask.title')} intro={t('ask.nav_hint')} more={{ href: urls.ask, label: t('ask.all') }}>
-                    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/*
+              Always on the page (owner, 2026-09-26): a short invitation with
+              a button, even while nobody has asked anything. The questions
+              themselves follow once there are enough to look like a board
+              (MIN_LIST on the controller); one lonely question reads as a
+              dead feature, an invitation does not.
+            */}
+            <Band id="ask" title={t('ask.title')} more={{ href: urls.ask, label: t('ask.all') }}>
+                <div className="flex flex-col gap-4 rounded-card border border-accent/30 bg-accent/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                            <CoveIcon name="ask" className="h-5 w-5" />
+                        </span>
+                        <p className="max-w-xl text-ink">{t('ask.invite')}</p>
+                    </div>
+                    <Link
+                        href={`${urls.ask}?new=1`}
+                        className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-accent px-4 font-medium text-white hover:bg-accent-dark"
+                    >
+                        {t('ask.ask_cta')}
+                    </Link>
+                </div>
+
+                {questions.length > 0 && (
+                    <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {questions.map((question) => (
                             <li key={question.url}>
                                 <Link
@@ -311,8 +334,8 @@ export default function DiscoverCove({ urls, coves, personas, forWhom, today, da
                             </li>
                         ))}
                     </ul>
-                </Band>
-            )}
+                )}
+            </Band>
 
             {dailies.length > 0 && (
                 <Band id="dailies" title={t('discover_cove.dailies_heading')} more={{ href: urls.daily, label: t('discover_cove.dailies_all') }}>
