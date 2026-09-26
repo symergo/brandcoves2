@@ -1371,6 +1371,7 @@ return [
         'swap' => 'Otra cosa',
         'start_over' => 'Empezar de nuevo',
         'open_as_page' => 'Abrir como página',
+        'personas_hint' => '¿Reconoces a la persona? Empieza por una Cove ya hecha.',
         'offline_ideas' => [
             'title' => 'Ideas sin tienda',
             'hint' => 'Cosas que otras personas apuntaron a mano en sus listas, como un taller o una salida. No las vendemos: las compras tú, donde quieras. Revisamos cada idea antes de mostrarla aquí.',

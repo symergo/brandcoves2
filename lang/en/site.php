@@ -1560,6 +1560,7 @@ return [
         'swap' => 'Something else',
         'start_over' => 'Start over',
         'open_as_page' => 'Open as a page',
+        'personas_hint' => 'Recognise the person? Start from a ready-made Cove.',
         'offline_ideas' => [
             'title' => 'Ideas without a shop',
             'hint' => 'Things other people put on their own lists by hand, like a workshop or a day out. We do not sell them: you buy them yourself, where you like. We read each one before it appears here.',

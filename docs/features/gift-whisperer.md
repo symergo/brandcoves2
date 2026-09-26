@@ -427,3 +427,15 @@ of person, or holding products tagged with one of the brief's interests, in the 
 the visitor's own. The occasion only breaks ties. One query, one self-contained section
 (`communityCoves`, drawn by `CommunityCoveCards`). See
 [community-coves.md](community-coves.md#the-gift-finder-coves-others-made-for-someone-like-this).
+
+## Persona Coves beside the questions (2026-09-26)
+
+The questions filled half the page and the other half was empty. The owner asked for the persona
+Coves there: up to six (newest first, as on the /gift-ideas shelf), each with its drawing and one
+line, and a link to all of them. Somebody who recognises "the home cook" on sight is one click from
+a finished shelf rather than six questions from one. Beside the questions from `lg`, below them on
+a phone; only on the questions, since the results need the full width.
+
+The owner's rule with it: **when there is nothing for a right column, the content takes the full
+width.** A market with no persona gets no second column, and the questions are no longer capped at
+`max-w-2xl`.

@@ -9,6 +9,7 @@ import InfoTip from '../../Components/InfoTip'
 import NextSteps, { type NextStepCard } from '../../Components/NextSteps'
 import OfflineIdeas, { type OfflineIdea } from '../../Components/OfflineIdeas'
 import SaveToList from '../../Components/SaveToList'
+import SceneIllustration, { type SceneKey } from '../../Components/SceneIllustration'
 import ToolIcon from '../../Components/ToolIcon'
 import GiftProfileCardBanner, { type GiftProfileCardProps } from '../../Components/GiftProfileCardBanner'
 
@@ -60,7 +61,17 @@ interface Brief {
     remember?: boolean
 }
 
+/** A persona Cove in the column beside the questions. */
+interface PersonaCard {
+    title: string
+    intro: string | null
+    url: string
+    scene: SceneKey | null
+}
+
 interface Props {
+    /** The persona Coves beside the questions; empty means no second column. */
+    personas?: PersonaCard[]
     options: {
         interests: Option[]
         vibes: Option[]
@@ -101,7 +112,7 @@ const STEPS = ['who', 'interests', 'age', 'vibe', 'budget', 'avoid'] as const
 /** The server caps a brief at eight interests; refusing the ninth here is the only visible place. */
 const MAX_INTERESTS = 8
 
-export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null, offlineIdeas = [], communityCoves = [], card = null, nextSteps = [], personUrl = null }: Props) {
+export default function GiftWizard({ options, recipients, picks, brief, recipientList, pageUrl = null, offlineIdeas = [], communityCoves = [], card = null, nextSteps = [], personUrl = null, personas = [] }: Props) {
     const { market } = usePage<SharedProps>().props
     const { t } = useTranslations()
 
@@ -506,7 +517,15 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                     )}
                 </section>
             ) : (
-                <>
+                /*
+                  Two columns only when there is something for the second one
+                  (owner, 2026-09-26: "if there is nothing in a right column,
+                  the content should be full width"). With persona Coves the
+                  questions take the left and the Coves the right; without,
+                  the questions use the whole width rather than half of it.
+                */
+                <div className={personas.length > 0 ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-12' : ''}>
+                <div>
                 {/*
                   The other way in (owner's request, 2026-09-26): somebody who
                   cannot say what the person likes chooses between products
@@ -518,7 +537,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                 {step === 0 && !editing && !card && (
                     <Link
                         href={`/${market.key}/gift/taste`}
-                        className="mt-6 flex max-w-2xl items-center gap-3 rounded-card border border-line bg-accent/5 p-4 transition hover:border-ink"
+                        className="mt-6 flex items-center gap-3 rounded-card border border-line bg-accent/5 p-4 transition hover:border-ink"
                     >
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-card text-accent">
                             <ToolIcon name="taste" className="h-5 w-5" />
@@ -533,7 +552,7 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                     </Link>
                 )}
 
-                <section className="mt-8 max-w-2xl">
+                <section className="mt-8">
                     <div className="flex items-baseline justify-between gap-3">
                         <p className="text-xs text-ink-soft">
                             {t('gift.step', { current: step + 1, total: steps.length })}
@@ -835,8 +854,51 @@ export default function GiftWizard({ options, recipients, picks, brief, recipien
                         )}
                     </div>
                 </section>
-                </>
+                </div>
+                {personas.length > 0 && <PersonaShelf personas={personas} />}
+                </div>
             )}
         </>
+    )
+}
+
+/**
+ * The persona Coves beside the questions: somebody who recognises the person
+ * they shop for ("the home cook") is one click from a finished shelf. Below
+ * the questions on a phone, beside them from `lg`.
+ */
+function PersonaShelf({ personas }: { personas: PersonaCard[] }) {
+    const { t } = useTranslations()
+    const { market } = usePage<SharedProps>().props
+
+    return (
+        <aside aria-labelledby="persona-shelf-heading" className="mt-12 lg:mt-8">
+            <h2 id="persona-shelf-heading" className="text-lg font-medium">
+                {t('gift_ideas.title')}
+            </h2>
+            <p className="mt-1 text-sm text-ink-soft">{t('gift.personas_hint')}</p>
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                {personas.map((persona) => (
+                    <li key={persona.url}>
+                        <Link
+                            href={persona.url}
+                            className="group flex items-center gap-3 rounded-card border border-line bg-card p-3 transition hover:border-ink"
+                        >
+                            <SceneIllustration
+                                name={persona.scene}
+                                className="h-10 w-14 shrink-0 text-ink-soft transition group-hover:text-accent"
+                            />
+                            <span className="min-w-0">
+                                <span className="block text-sm font-medium text-ink">{persona.title}</span>
+                                {persona.intro && <span className="line-clamp-1 block text-xs text-ink-soft">{persona.intro}</span>}
+                            </span>
+                        </Link>
+                    </li>
+                ))}
+            </ul>
+            <Link href={`/${market.key}/gift-ideas`} className="mt-3 inline-block text-sm font-medium text-accent-dark hover:text-ink">
+                {t('discover_cove.persona_all')} →
+            </Link>
+        </aside>
     )
 }

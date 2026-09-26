@@ -1372,6 +1372,7 @@ return [
         'swap' => 'Autre chose',
         'start_over' => 'Recommencer',
         'open_as_page' => 'Ouvrir en page',
+        'personas_hint' => 'Vous reconnaissez la personne ? Partez d\'une Cove toute prête.',
         'offline_ideas' => [
             'title' => 'Idées hors boutique',
             'hint' => 'Des choses que d\'autres ont notées eux-mêmes sur leur liste, comme un atelier ou une sortie. Nous ne les vendons pas : vous les achetez vous-même, où vous voulez. Nous relisons chaque idée avant de l\'afficher ici.',

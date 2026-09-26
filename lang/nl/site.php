@@ -1375,6 +1375,7 @@ return [
         'swap' => 'Iets anders',
         'start_over' => 'Opnieuw beginnen',
         'open_as_page' => 'Open als pagina',
+        'personas_hint' => 'Herken je de persoon? Begin bij een kant-en-klare Cove.',
         'offline_ideas' => [
             'title' => 'Ideeën zonder winkel',
             'hint' => 'Dingen die andere mensen zelf op hun lijst zetten, zoals een workshop of een dagje uit. Wij verkopen ze niet: je koopt ze zelf, waar je wilt. We lazen elk idee na voor het hier verschijnt.',

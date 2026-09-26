@@ -9,6 +9,7 @@ use App\Enums\ListKind;
 use App\Enums\Preference;
 use App\Enums\TasteSource;
 use App\Enums\Vibe;
+use App\Models\DailyPickSet;
 use App\Models\Event;
 use App\Models\Recipient;
 use App\Models\Wishlist;
@@ -21,6 +22,7 @@ use App\Services\Gift\RejectionMemory;
 use App\Services\Gift\Suggestion;
 use App\Services\Gift\SuggestionEngine;
 use App\Services\Gift\TasteBrief;
+use App\Services\Guides\CoveMarkup;
 use App\Services\Ideas\OfflineIdeaPicker;
 use App\Services\Search\GiftIntentParser;
 use App\Services\Seo\PageMeta;
@@ -84,7 +86,38 @@ class GiftController extends Controller
             'picks' => null,
             'brief' => null,
             'recipientList' => null,
+            'personas' => $this->personaShelf($current),
         ]);
+    }
+
+    /**
+     * The persona Coves, in the column beside the questions (owner, 2026-09-26).
+     *
+     * The questions filled half the page and the other half was empty. A
+     * visitor who recognises "the home cook" or "the one who has everything"
+     * on sight is one click from a finished shelf rather than six questions
+     * away from one. Same query and order as the /gift-ideas shelf and the
+     * Discover page's band; a new market with none shows no column.
+     *
+     * @return list<array{title: string, intro: string, url: string, scene: string|null}>
+     */
+    private function personaShelf(CurrentMarket $current): array
+    {
+        return DailyPickSet::query()
+            ->forMarket($current->get())
+            ->personas()
+            ->published()
+            ->orderByDesc('published_at')
+            ->limit(6)
+            ->get(['id', 'kind', 'slug', 'theme_title', 'theme_blurb', 'scene'])
+            ->map(fn (DailyPickSet $persona): array => [
+                'title' => (string) $persona->theme_title,
+                'intro' => app(CoveMarkup::class)->plain($persona->theme_blurb),
+                'url' => $current->url($persona->kind->path((string) $persona->slug, $current->get())),
+                'scene' => $persona->scene?->value,
+            ])
+            ->values()
+            ->all();
     }
 
     /**
